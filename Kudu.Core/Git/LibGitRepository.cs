@@ -21,6 +21,12 @@ namespace Kudu.Core.Git {
             WorkingDirectory = workingDirectory;
         }
 
+        public string CurrentId {
+            get {
+                return Repository.Head.Tip.Sha;
+            }
+        }
+
         private string WorkingDirectory { get; set; }
 
         private string RepositoryPath {
@@ -35,6 +41,16 @@ namespace Kudu.Core.Git {
                     _repository = new Repository(RepositoryPath);
                 }
                 return _repository;
+            }
+        }
+
+        public void Initialize() {
+            // libgit2 throws when trying to reinitialize a git repository so skip it if it exists.
+            if (!Directory.Exists(RepositoryPath)) {
+                Directory.CreateDirectory(WorkingDirectory);
+                // REVIEW: Shold we make the directory hidden like git exe does?
+                Repository.Init(WorkingDirectory);
+                _repository = null;
             }
         }
 
@@ -60,16 +76,6 @@ namespace Kudu.Core.Git {
         
         public void RemoveFile(string path) {
             Repository.Index.Unstage(path);
-        }
-
-        public void Initialize() {
-            // libgit2 throws when trying to reinitialize a git repository so skip it if it exists.
-            if (!Directory.Exists(RepositoryPath)) {
-                Directory.CreateDirectory(WorkingDirectory);
-                // REVIEW: Shold we make the directory hidden like git exe does?
-                Repository.Init(WorkingDirectory);
-                _repository = null;
-            }
         }
     }
 }

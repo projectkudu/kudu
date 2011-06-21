@@ -5,6 +5,8 @@ using System.Text;
 
 namespace Kudu.Core {
     public interface IRepository {
+        string CurrentId { get; }
+
         void Initialize();
         IEnumerable<FileStatus> GetStatus();
         IEnumerable<ChangeSet> GetChanges();

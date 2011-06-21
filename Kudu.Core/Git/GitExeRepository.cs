@@ -21,6 +21,22 @@ namespace Kudu.Core.Git {
         public GitExeRepository(string pathToGitExe, string path) {
             _gitExe = new Executable(pathToGitExe, path);
         }
+        
+        public string CurrentId {
+            get {
+                var head = Head;
+                if (head != null) {
+                    return head.Id;
+                }
+                return null;
+            }
+        }
+
+        private ChangeSet Head {
+            get {
+                return Log(1).SingleOrDefault();
+            }
+        }
 
         public void Initialize() {
             _gitExe.Execute("init");
@@ -34,7 +50,7 @@ namespace Kudu.Core.Git {
         public IEnumerable<ChangeSet> GetChanges() {
             return Log();
         }
-        
+
         public void AddFile(string path) {
             _gitExe.Execute("add {0}", path);
         }
@@ -48,7 +64,7 @@ namespace Kudu.Core.Git {
             _gitExe.Execute("add .");
             _gitExe.Execute("commit -m\"{0}\" --author=\"{1}\"", message, authorName);
 
-            return Log(1).Single();
+            return Head;
         }
 
         private bool IsEmpty() {
