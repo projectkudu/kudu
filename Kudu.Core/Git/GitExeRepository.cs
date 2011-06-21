@@ -10,7 +10,7 @@ namespace Kudu.Core.Git {
     /// </summary>
     public class GitExeRepository : IRepository {
         private readonly Executable _gitExe;
-        private const char CommitSeparator = '~';
+        private const char CommitSeparator = '`';
         private const char CommitInfoSeparator = '|';
 
         public GitExeRepository(string path)
