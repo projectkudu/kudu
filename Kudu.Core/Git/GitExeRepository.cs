@@ -14,7 +14,7 @@ namespace Kudu.Core.Git {
         private const char CommitInfoSeparator = '|';
 
         public GitExeRepository(string path)
-            : this(GetDefaultGitExePath(), path) {
+            : this(ResolveGitPath(), path) {
 
         }
 
@@ -56,7 +56,7 @@ namespace Kudu.Core.Git {
             return String.IsNullOrWhiteSpace(_gitExe.Execute("branch"));
         }
 
-        private static string GetDefaultGitExePath() {
+        private static string ResolveGitPath() {
             string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
             string path = Path.Combine(programFiles, "Git", "bin", "git.exe");
 

@@ -1,11 +1,16 @@
 ﻿using System;
+using System.Linq;
 using System.IO;
 using Kudu.Core;
 using Kudu.Core.Git;
 
 namespace Kudu {
     class Program {
-        static void Main(string[] args) {
+        static void Main(string[] args) {            
+            RunInteractive(args);
+        }
+
+        private static void RunInteractive(string[] args) {
             string path;
             if (args.Length > 0) {
                 path = args[0];
