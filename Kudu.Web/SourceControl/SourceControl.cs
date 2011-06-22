@@ -11,6 +11,10 @@ namespace Kudu.Web {
             Caller.repository = path;
         }
 
+        public void Show(string id) {
+
+        }
+
         public IEnumerable<ChangeSetViewModel> GetChanges() {
             var repository = GetRepository();
             Caller.id = repository.CurrentId;
@@ -24,12 +28,12 @@ namespace Kudu.Web {
             return GetRepository().GetStatus();
         }
 
-        public void Update(string changeSetId) {
+        public void Update(string id) {
             var repository = GetRepository();
 
-            repository.Update(changeSetId);
+            repository.Update(id);
 
-            Caller.id = changeSetId;
+            Caller.id = id;
         }
 
         private IRepository GetRepository() {

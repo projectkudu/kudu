@@ -44,6 +44,9 @@ $(function () {
     function show(id) {
         $('#log').hide();
         $('#diff').show();
+
+        scm.show(id, function () {
+        });
     }
 
     $('#connect').submit(function () {
