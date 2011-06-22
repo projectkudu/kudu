@@ -21,7 +21,7 @@ namespace Kudu.Core.Git {
         public GitExeRepository(string pathToGitExe, string path) {
             _gitExe = new Executable(pathToGitExe, path);
         }
-        
+
         public string CurrentId {
             get {
                 var head = Head;
@@ -34,7 +34,7 @@ namespace Kudu.Core.Git {
 
         private ChangeSet Head {
             get {
-                return Log(1).SingleOrDefault();
+                return Log(1, all: false).SingleOrDefault();
             }
         }
 
@@ -67,6 +67,10 @@ namespace Kudu.Core.Git {
             return Head;
         }
 
+        public void Update(string id) {
+            _gitExe.Execute("checkout {0} --force", id);
+        }
+
         private bool IsEmpty() {
             // REVIEW: Is this reliable
             return String.IsNullOrWhiteSpace(_gitExe.Execute("branch"));
@@ -83,7 +87,7 @@ namespace Kudu.Core.Git {
             return path;
         }
 
-        private IEnumerable<ChangeSet> Log(int? limit = null) {
+        private IEnumerable<ChangeSet> Log(int? limit = null, bool all = true) {
             if (IsEmpty()) {
                 return Enumerable.Empty<ChangeSet>();
             }
@@ -91,6 +95,11 @@ namespace Kudu.Core.Git {
             if (limit != null) {
                 command += " -" + limit;
             }
+
+            if (all) {
+                command += " --all";
+            }
+
             return ParseCommits(_gitExe.Execute(command, CommitInfoSeparator, CommitSeparator));
         }
 

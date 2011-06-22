@@ -58,6 +58,10 @@ namespace Kudu.Core.Git {
             throw new NotImplementedException();
         }
 
+        public void Update(string id) {
+            throw new NotImplementedException();
+        }
+
         public IEnumerable<ChangeSet> GetChanges() {
             return Repository.Commits.Select(CreateCommit);
         }

@@ -13,5 +13,6 @@ namespace Kudu.Core {
         void AddFile(string path);
         void RemoveFile(string path);
         ChangeSet Commit(string authorName, string message);
+        void Update(string id);
     }
 }

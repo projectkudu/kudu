@@ -1,0 +1,37 @@
+﻿body {
+    font-family: Trebuchet MS;
+    font-size: 13px;
+}
+
+#changes {
+    font-family: Trebuchet MS;
+    font-size: 13px;
+    border-collapse: collapse;
+    border: 1px solid #ccc;
+    width: 90%;
+}
+
+#changes td {
+    padding: 4px;
+}
+
+#changes th {
+    padding: 4px;
+    text-align: left;
+    border-bottom: 1px solid #ccc;
+}
+
+#changes th:nth-child(1) {
+    width: 10%;
+}
+
+#changes th:nth-child(3) {
+    width: 15%;
+}
+#changes th:nth-child(4) {
+    width: 20%;
+}
+
+#changes .active {
+    background-color: #FFFFCC;
+}

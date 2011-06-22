@@ -1,0 +1,35 @@
+﻿<!DOCTYPE htm>
+<html>
+<head>
+    <title></title>
+    <link href="SourceControl.css" rel="stylesheet" type="text/css" />
+    <script src="Scripts/jquery-1.6.1.min.js" type="text/javascript"></script>
+    <script src="Scripts/jQuery.tmpl.min.js" type="text/javascript"></script>
+    <script src="signalr/js" type="text/javascript"></script>
+    <script src="SourceControl.js" type="text/javascript"></script>
+    <script id="changeset" type="text/x-jquery-tmpl"> 
+        <tr class="changeset${Active ? " active" : ""}" id="${Id}">
+            <td>${ShortId}</td>
+            <td>{{html Message}}</td>
+            <td>${AuthorName}</td>
+            <td>${Date}</td>
+            <td>                
+                <a href="#" class="update">update</a>                
+            </td>
+        </tr>
+    </script> 
+</head>
+<body>
+    <table id="changes">
+        <thead>
+            <tr>
+                <th>Change Set</th>
+                <th>Comment</th>
+                <th>User</th>
+                <th>Date</th>
+                <th></th>
+            </tr>
+        </thead>
+    </table>
+</body>
+</html>
