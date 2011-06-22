@@ -1,0 +1,72 @@
+﻿body {
+    font-family: Trebuchet MS;
+    font-size: 13px;
+}
+
+#log {
+    font-family: Trebuchet MS;
+    font-size: 13px;
+    border-collapse: collapse;
+    border: 1px solid #ccc;
+    width: 90%;
+}
+
+#log td {
+    padding: 4px;
+}
+
+#log th {
+    padding: 4px;
+    text-align: left;
+    border-bottom: 1px solid #ccc;
+}
+
+#log th:nth-child(1) {
+    width: 10%;
+}
+
+#log th:nth-child(3) {
+    width: 10%;
+}
+
+#log th:nth-child(4) {
+    width: 20%;
+}
+
+#log .active {
+    background-color: #FFFFCC;
+}
+
+#menu {
+    margin-bottom: 1%;
+}
+
+#menu input[type="text"] {
+    font-family: Trebuchet MS;
+    font-size: 13px;
+    padding: 3px;
+    width: 300px;
+}
+
+.icon-loading {
+    background-image: url('images/loading.gif');
+}
+
+.icon {
+    background-repeat: no-repeat;
+    background-position: 0 50%;
+    padding-left: 20px;
+    line-height: 20px;
+}
+
+#status {
+    display: none;
+}
+
+#status-container {
+    height: 30px;
+}
+
+#log .actions a {
+    margin-left: 5px;
+}
