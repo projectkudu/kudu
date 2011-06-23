@@ -11,9 +11,9 @@ namespace Kudu.Web {
             Caller.repository = path;
         }
 
-        public ChangeSetDetail Show(string id) {
+        public ChangeSetDetailViewModel Show(string id) {
             var repository = GetRepository();
-            return repository.GetDetails(id);
+            return new ChangeSetDetailViewModel(repository.GetDetails(id));
         }
 
         public IEnumerable<ChangeSetViewModel> GetChanges() {
@@ -40,6 +40,24 @@ namespace Kudu.Web {
 
         private IRepository GetRepository() {
             return new GitExeRepository(Caller.repository);
+        }
+
+        public class ChangeSetDetailViewModel {
+            public ChangeSetDetailViewModel(ChangeSetDetail detail) {
+                ChangeSet = new ChangeSetViewModel(detail.ChangeSet);
+                Deletions = detail.Deletions;
+                FilesChanged = detail.FilesChanged;
+                Insertions = detail.Insertions;
+                FileStats = detail.FileStats;
+                Diffs = detail.Diffs;
+            }
+
+            public ChangeSetViewModel ChangeSet { get; set; }
+            public int Deletions { get; set; }
+            public int FilesChanged { get; set; }
+            public int Insertions { get; set; }
+            public IDictionary<string, FileStats> FileStats { get; set; }
+            public IList<FileDiff> Diffs { get; set; }
         }
 
         public class ChangeSetViewModel {

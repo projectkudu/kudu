@@ -22,9 +22,10 @@
     </script>
     <script id="changeset-detail" type="text/x-jquery-tmpl">
         <div class="commit-detail">
-            <div>${ChangeSet.Id}</div>
+            <div>${ChangeSet.ShortId}</div>
             <p>{{html ChangeSet.Message}}<p>
             ${ChangeSet.AuthorName}
+            <div>${ChangeSet.Date}</div>
         </div>
         <div class="commit-summary">
             Showing ${FilesChanged} changed files with ${Insertions} additions and ${Deletions} deletions.
