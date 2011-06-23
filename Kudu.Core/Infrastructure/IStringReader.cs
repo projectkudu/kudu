@@ -11,11 +11,12 @@ namespace Kudu.Core.Infrastructure {
         string ReadUntil(Func<char, bool> condition);
         string ReadUntil(string value);
         string ReadUntilWhitespace();
+        string ReadToEnd();
         void Skip();
         void Skip(int n);
         void SkipWhitespace();
         bool TryReadUntil(char delimiter, out string result);
         bool TryReadUntil(Func<char, bool> condition, out string result);
-        bool TryReadUntil(string value, out string result);
+        bool TryReadUntil(string value, out string result);        
     }
 }

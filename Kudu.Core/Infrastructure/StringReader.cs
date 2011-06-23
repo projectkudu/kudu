@@ -117,7 +117,7 @@ namespace Kudu.Core.Infrastructure {
                 return false;
             }
 
-            if (_index + value.Length >= _raw.Length) {
+            if (_index + value.Length > _raw.Length) {
                 return false;
             }
 
@@ -145,6 +145,16 @@ namespace Kudu.Core.Infrastructure {
 
         public override string ToString() {
             return _raw.Substring(_index);
+        }
+
+        public string ReadToEnd() {
+            if (Done) {
+                return null;
+            }
+
+            string value = _raw.Substring(_index);
+            _index = _raw.Length;
+            return value;
         }
     }
 

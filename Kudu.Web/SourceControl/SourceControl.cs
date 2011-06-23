@@ -18,10 +18,11 @@ namespace Kudu.Web {
 
         public IEnumerable<ChangeSetViewModel> GetChanges() {
             var repository = GetRepository();
-            Caller.id = repository.CurrentId;
+            string id = repository.CurrentId;
+            Caller.id = id;
             return from c in repository.GetChanges()
                    select new ChangeSetViewModel(c) {
-                       Active = c.Id == repository.CurrentId
+                       Active = c.Id == id
                    };
         }
 

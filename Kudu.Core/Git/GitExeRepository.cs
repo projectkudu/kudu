@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
-using Kudu.Core.Infrastructure;
 using System.Text;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Git {
     /// <summary>
@@ -11,8 +12,6 @@ namespace Kudu.Core.Git {
     /// </summary>
     public class GitExeRepository : IRepository {
         private readonly Executable _gitExe;
-        private const char CommitSeparator = '`';
-        private const char CommitInfoSeparator = '|';
 
         public GitExeRepository(string path)
             : this(ResolveGitPath(), path) {
@@ -74,7 +73,7 @@ namespace Kudu.Core.Git {
         }
 
         public ChangeSetDetail GetDetails(string id) {
-            string show = _gitExe.Execute("show {0} --patch-with-stat --format=\"%H{1}%aN{1}%B{1}%ci{2}\"", id, CommitInfoSeparator, CommitSeparator);
+            string show = _gitExe.Execute("show {0} -m --patch-with-stat", id);
             return ParseShow(show.AsReader());
         }
 
@@ -98,7 +97,7 @@ namespace Kudu.Core.Git {
             if (IsEmpty()) {
                 return Enumerable.Empty<ChangeSet>();
             }
-            string command = "log --format=\"%H{0}%aN{0}%B{0}%ci{1}\"";
+            string command = "log";
             if (limit != null) {
                 command += " -" + limit;
             }
@@ -106,29 +105,44 @@ namespace Kudu.Core.Git {
             if (all) {
                 command += " --all";
             }
-            string log = _gitExe.Execute(command, CommitInfoSeparator, CommitSeparator);
+            string log = _gitExe.Execute(command);
             return ParseCommits(log.AsReader());
         }
 
         private IEnumerable<ChangeSet> ParseCommits(IStringReader reader) {
-            while (!reader.Done) {
-                string commit = reader.ReadUntil(CommitSeparator);
-                // Skip the separator
-                reader.Skip();
-                reader.SkipWhitespace();
-                yield return ParseCommit(commit.AsReader());
-            }
+            var builder = new StringBuilder();
+
+            do {
+                string line = reader.ReadLine();
+
+                // If we see a new diff header then process the previous diff if any
+                if ((reader.Done || IsCommitHeader(line)) && builder.Length > 0) {
+                    if (reader.Done) {
+                        builder.Append(line);
+                    }
+                    string commit = builder.ToString();
+                    yield return ParseCommit(commit.AsReader());
+                    builder.Clear();
+                }
+
+                if (!reader.Done) {
+                    builder.Append(line);
+                }
+            } while (!reader.Done);
+        }
+
+        private bool IsCommitHeader(string value) {
+            return value.StartsWith("commit ");
         }
 
         private ChangeSetDetail ParseShow(IStringReader reader) {
             // Parse the changeset
-            ChangeSet changeSet = ParseCommit(reader);
-
-            reader.ReadUntil("---");
-            // Skip the --- separator
-            reader.Skip(3);
+            ChangeSet changeSet = ParseCommit(reader.ReadUntil("---").AsReader());
 
             var detail = new ChangeSetDetail(changeSet);
+            
+            // Skip the --- separator
+            reader.Skip(3);
 
             ParseSummary(reader, detail);
 
@@ -181,6 +195,9 @@ namespace Kudu.Core.Git {
 
                 // If we see a new diff header then process the previous diff if any
                 if ((reader.Done || IsDiffHeader(line)) && builder.Length > 0) {
+                    if (reader.Done) {
+                        builder.Append(line);
+                    }
                     string diffChunk = builder.ToString();
                     yield return ParseDiffChunk(diffChunk.AsReader());
                     builder.Clear();
@@ -206,14 +223,10 @@ namespace Kudu.Core.Git {
             var diff = new FileDiff(fileName);
 
             // Parse the diff
-            if (reader.TryReadUntil("@@", out result)) {
-                // Add the @@ @@ line first
-                string line = reader.Read(2) + reader.ReadUntil("@@") + reader.Read(2);
-                diff.Lines.Add(new LineDiff(ChangeType.None, line));
-                reader.SkipWhitespace();
-
+            if (reader.TryReadUntil("@@", out result)) {                
                 while (!reader.Done) {
-                    line = reader.ReadLine();
+                    string line = reader.ReadLine();
+                    reader.SkipWhitespace();
                     if (line.StartsWith("+")) {
                         diff.Lines.Add(new LineDiff(ChangeType.Added, line));
                     }
@@ -229,14 +242,44 @@ namespace Kudu.Core.Git {
         }
 
         private ChangeSet ParseCommit(IStringReader reader) {
-            string id = reader.ReadUntil(CommitInfoSeparator);
-            reader.Skip();
-            string author = reader.ReadUntil(CommitInfoSeparator);
-            reader.Skip();
-            string message = reader.ReadUntil(CommitInfoSeparator);
-            reader.Skip();
-            string date = reader.ReadUntil(CommitSeparator);
-            return new ChangeSet(id, author, message, DateTimeOffset.Parse(date));
+            // commit hash
+            reader.ReadUntilWhitespace();
+            reader.SkipWhitespace();
+            string id = reader.ReadLine().Trim();
+
+            string author = null;
+            string email = null;
+            string date = null;
+
+            while (!reader.Done) {
+                string line = reader.ReadLine();
+
+                // Done reading name value pairs to stop
+                if (String.IsNullOrWhiteSpace(line)) {
+                    break;
+                }
+
+                var subReader = line.AsReader();
+                string key = subReader.ReadUntil(':');
+                // Skip :
+                subReader.Skip();
+                subReader.SkipWhitespace();
+                string value = subReader.ReadToEnd().Trim();
+
+                if (key.Equals("Author", StringComparison.OrdinalIgnoreCase)) {
+                    // Author <email>
+                    var authorReader = value.AsReader();
+                    author = authorReader.ReadUntil('<').Trim();
+                    authorReader.Skip();
+                    email = authorReader.ReadUntil('>');
+                }
+                else if (key.Equals("Date", StringComparison.OrdinalIgnoreCase)) {
+                    date = value;
+                }
+            }
+
+            string message = reader.ReadToEnd();
+            return new ChangeSet(id, author, message, DateTimeOffset.ParseExact(date, "ddd MMM d HH:mm:ss yyyy zzz", CultureInfo.InvariantCulture));
         }
 
         private IEnumerable<FileStatus> ParseStatus(IStringReader reader) {
