@@ -140,11 +140,9 @@ namespace Kudu.Core.Git {
         }
 
         private void ParseSummary(IStringReader reader, ChangeSetDetail detail) {
-            var summaryReader = reader.ReadUntil("diff --git").AsReader();
-            summaryReader.SkipWhitespace();
-
-            while (!summaryReader.Done) {
-                string line = summaryReader.ReadLine();
+            while (true) {
+                reader.SkipWhitespace();
+                string line = reader.ReadLine();
                 if (line.Contains("|")) {
                     string[] parts = line.Split('|');
                     detail.FileStats[parts[0].Trim()] = ParseStats(parts[1].Trim());
@@ -162,7 +160,8 @@ namespace Kudu.Core.Git {
                     subReader.Skip(1);
                     subReader.SkipWhitespace();
                     detail.Deletions = subReader.ReadInt();
-                    summaryReader.SkipWhitespace();
+                    reader.SkipWhitespace();
+                    break;
                 }
             }
         }
@@ -175,15 +174,26 @@ namespace Kudu.Core.Git {
         }
 
         private IEnumerable<FileDiff> ParseDiff(IStringReader reader) {
+            var builder = new StringBuilder();
+
             do {
-                string diffHeader = reader.ReadLine();
-                if (String.IsNullOrWhiteSpace(diffHeader)) {
-                    break;
+                string line = reader.ReadLine();
+
+                // If we see a new diff header then process the previous diff if any
+                if ((reader.Done || IsDiffHeader(line)) && builder.Length > 0) {
+                    string diffChunk = builder.ToString();
+                    yield return ParseDiffChunk(diffChunk.AsReader());
+                    builder.Clear();
                 }
 
-                string diffChunk = diffHeader + reader.ReadUntil("diff --git");
-                yield return ParseDiffChunk(diffChunk.AsReader());
-            } while (true);
+                if (!reader.Done) {
+                    builder.Append(line);
+                }
+            } while (!reader.Done);
+        }
+
+        private bool IsDiffHeader(string line) {
+            return line.StartsWith("diff --git", StringComparison.InvariantCulture);
         }
 
         private FileDiff ParseDiffChunk(IStringReader reader) {
