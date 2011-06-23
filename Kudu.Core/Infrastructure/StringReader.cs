@@ -2,11 +2,11 @@
 using System.Text;
 
 namespace Kudu.Core.Infrastructure {
-    internal class BetterStringReader {
+    internal class StringReader : IStringReader {
         private string _raw;
         private int _index;
 
-        public BetterStringReader(string raw) {
+        public StringReader(string raw) {
             _raw = raw;
         }
 
@@ -46,13 +46,9 @@ namespace Kudu.Core.Infrastructure {
             return ch;
         }
 
-        public int? ReadInt() {
+        public int ReadInt() {
             string value = ReadUntil(ch => !Char.IsDigit(ch));
-            int val;
-            if (Int32.TryParse(value, out val)) {
-                return val;
-            }
-            return null;
+            return Int32.Parse(value);
         }
 
         public string ReadUntilWhitespace() {
@@ -138,9 +134,9 @@ namespace Kudu.Core.Infrastructure {
         }
     }
 
-    internal static class BetterStringReaderExtensions {
-        public static BetterStringReader AsReader(this string value) {
-            return new BetterStringReader(value);
+    internal static class StringExtensions {
+        public static IStringReader AsReader(this string value) {
+            return new StringReader(value);
         }
     }
 }

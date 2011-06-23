@@ -20,6 +20,31 @@
             </td>
         </tr>
     </script>
+    <script id="changeset-detail" type="text/x-jquery-tmpl">
+        <div class="commit-detail">
+            <div>${ChangeSet.Id}</div>
+            <p>{{html ChangeSet.Message}}<p>
+            ${ChangeSet.AuthorName}
+        </div>
+        <div class="commit-summary">
+            Showing ${FilesChanged} changed files with ${Insertions} additions and ${Deletions} deletions.
+        </div>
+        <ul class="commit-file-summary">
+            {{each(key, stats) FileStats}}
+                <li><a href="#${getDiffId(key)}">${key}</a> ${stats.Insertions}+ ${stats.Deletions}-</li>
+            {{/each}}
+        </ul>
+        {{each(i, diff) Diffs}}
+            <div id="${getDiffId(diff.FileName)}" class="diff">
+                <div class="diff-header">
+                    ${diff.FileName}
+                </div>
+<pre>
+{{each(j, line) diff.Lines}}<div class="line${getDiffClass(line.Type)}">${line.Value}</div>{{/each}}
+</pre>
+            </div>
+        {{/each}}
+    </script>
 </head>
 <body>
     <div id="menu">
@@ -46,7 +71,7 @@
         <tbody id="changes">
         </tbody>
     </table>
-    <div id="diff">
+    <div id="show">
     </div>
 </body>
 </html>

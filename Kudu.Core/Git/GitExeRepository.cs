@@ -45,7 +45,8 @@ namespace Kudu.Core.Git {
         }
 
         public IEnumerable<FileStatus> GetStatus() {
-            return ParseStatus(_gitExe.Execute("status --porcelain"));
+            string status = _gitExe.Execute("status --porcelain");
+            return ParseStatus(status.AsReader());
         }
 
         public IEnumerable<ChangeSet> GetChanges() {
@@ -73,7 +74,8 @@ namespace Kudu.Core.Git {
         }
 
         public ChangeSetDetail GetDetails(string id) {
-            return ParseShow(_gitExe.Execute("show {0} --patch-with-stat --format=\"%H{1}%aN{1}%B{1}%ci{2}\"", id, CommitInfoSeparator, CommitSeparator));
+            string show = _gitExe.Execute("show {0} --patch-with-stat --format=\"%H{1}%aN{1}%B{1}%ci{2}\"", id, CommitInfoSeparator, CommitSeparator);
+            return ParseShow(show.AsReader());
         }
 
         private bool IsEmpty() {
@@ -104,28 +106,26 @@ namespace Kudu.Core.Git {
             if (all) {
                 command += " --all";
             }
-
-            return ParseCommits(_gitExe.Execute(command, CommitInfoSeparator, CommitSeparator));
+            string log = _gitExe.Execute(command, CommitInfoSeparator, CommitSeparator);
+            return ParseCommits(log.AsReader());
         }
 
-        private IEnumerable<ChangeSet> ParseCommits(string raw) {
-            foreach (var line in raw.Split(new[] { CommitSeparator }, StringSplitOptions.RemoveEmptyEntries)) {
-                if (String.IsNullOrWhiteSpace(line)) {
-                    continue;
-                }
-                string commit = line.Trim();
-                yield return ParseCommit(new BetterStringReader(commit));
+        private IEnumerable<ChangeSet> ParseCommits(IStringReader reader) {
+            while (!reader.Done) {
+                string commit = reader.ReadUntil(CommitSeparator);
+                // Skip the separator
+                reader.Skip();
+                reader.SkipWhitespace();
+                yield return ParseCommit(commit.AsReader());
             }
         }
 
-        private ChangeSetDetail ParseShow(string raw) {
-            var reader = new BetterStringReader(raw);
-
+        private ChangeSetDetail ParseShow(IStringReader reader) {
             // Parse the changeset
             ChangeSet changeSet = ParseCommit(reader);
 
-            // Skip the --- separator
             reader.ReadUntil("---");
+            // Skip the --- separator
             reader.Skip(3);
 
             var detail = new ChangeSetDetail(changeSet);
@@ -139,11 +139,11 @@ namespace Kudu.Core.Git {
             return detail;
         }
 
-        private void ParseSummary(BetterStringReader reader, ChangeSetDetail detail) {
-            string summary = reader.ReadUntil("diff").Trim();
-            var summaryReader = summary.AsReader();
+        private void ParseSummary(IStringReader reader, ChangeSetDetail detail) {
+            var summaryReader = reader.ReadUntil("diff").AsReader();
+            summaryReader.SkipWhitespace();
 
-            do {
+            while (!summaryReader.Done) {
                 string line = summaryReader.ReadLine();
                 if (line.Contains("|")) {
                     string[] parts = line.Split('|');
@@ -153,19 +153,18 @@ namespace Kudu.Core.Git {
                     // n files changed, n insertions(+), n deletions(-)
                     var subReader = line.AsReader();
                     subReader.SkipWhitespace();
-                    detail.FilesChanged = subReader.ReadInt().Value;
+                    detail.FilesChanged = subReader.ReadInt();
                     subReader.ReadUntil(',');
                     subReader.Skip(1);
                     subReader.SkipWhitespace();
-                    detail.Insertions = subReader.ReadInt().Value;
+                    detail.Insertions = subReader.ReadInt();
                     subReader.ReadUntil(',');
                     subReader.Skip(1);
                     subReader.SkipWhitespace();
-                    detail.Deletions = subReader.ReadInt().Value;
-                    break;
+                    detail.Deletions = subReader.ReadInt();
+                    summaryReader.SkipWhitespace();
                 }
-
-            } while (true);
+            }
         }
 
         private FileStats ParseStats(string raw) {
@@ -175,7 +174,7 @@ namespace Kudu.Core.Git {
             };
         }
 
-        private IEnumerable<FileDiff> ParseDiff(BetterStringReader reader) {
+        private IEnumerable<FileDiff> ParseDiff(IStringReader reader) {
             do {
                 string diffHeader = reader.ReadLine();
                 if (String.IsNullOrWhiteSpace(diffHeader)) {
@@ -183,12 +182,12 @@ namespace Kudu.Core.Git {
                 }
 
                 string diffChunk = diffHeader + reader.ReadUntil("diff");
-                yield return ParseDiffChunk(new BetterStringReader(diffChunk));
+                yield return ParseDiffChunk(diffChunk.AsReader());
 
             } while (true);
         }
 
-        private FileDiff ParseDiffChunk(BetterStringReader reader) {
+        private FileDiff ParseDiffChunk(IStringReader reader) {
             // Extract the file name from the diff header
             var headerReader = reader.ReadLine().AsReader();
             headerReader.ReadUntil("a/");
@@ -199,13 +198,18 @@ namespace Kudu.Core.Git {
 
             // Parse the diff
             if (reader.TryReadUntil("@@", out result)) {
-                string line = reader.ReadLine();
-                while ((line = reader.ReadLine()) != null) {
+                // Add the @@ @@ line first
+                string line = reader.Read(2) + reader.ReadUntil("@@") + reader.Read(2);
+                diff.Lines.Add(new LineDiff(ChangeType.None, line));
+                reader.SkipWhitespace();
+
+                while (!reader.Done) {
+                    line = reader.ReadLine();
                     if (line.StartsWith("+")) {
-                        diff.Lines.Add(new LineDiff(ChangeType.Added, line.Substring(1)));
+                        diff.Lines.Add(new LineDiff(ChangeType.Added, line));
                     }
                     else if (line.StartsWith("-")) {
-                        diff.Lines.Add(new LineDiff(ChangeType.Deleted, line.Substring(1)));
+                        diff.Lines.Add(new LineDiff(ChangeType.Deleted, line));
                     }
                     else {
                         diff.Lines.Add(new LineDiff(ChangeType.None, line));
@@ -215,7 +219,7 @@ namespace Kudu.Core.Git {
             return diff;
         }
 
-        private ChangeSet ParseCommit(BetterStringReader reader) {
+        private ChangeSet ParseCommit(IStringReader reader) {
             string id = reader.ReadUntil(CommitInfoSeparator);
             reader.Skip();
             string author = reader.ReadUntil(CommitInfoSeparator);
@@ -226,11 +230,11 @@ namespace Kudu.Core.Git {
             return new ChangeSet(id, author, message, DateTimeOffset.Parse(date));
         }
 
-        private IEnumerable<FileStatus> ParseStatus(string raw) {
-            foreach (var line in raw.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries)) {
-                // Status Path
-                string status = line.Substring(0, 2).Trim();
-                string path = line.Substring(2).Trim();
+        private IEnumerable<FileStatus> ParseStatus(IStringReader reader) {
+            while (!reader.Done) {
+                var subReader = reader.ReadLine().AsReader();
+                string status = subReader.ReadUntilWhitespace().Trim();
+                string path = subReader.ReadLine().Trim();
                 yield return new FileStatus(path, Convert(status));
             }
         }

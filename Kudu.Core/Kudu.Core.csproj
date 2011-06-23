@@ -47,12 +47,13 @@
     <Compile Include="ChangeStats.cs" />
     <Compile Include="ChangeType.cs" />
     <Compile Include="FileDiff.cs" />
-    <Compile Include="Infrastructure\BetterStringReader.cs" />
+    <Compile Include="Infrastructure\StringReader.cs" />
     <Compile Include="Infrastructure\Executable.cs" />
     <Compile Include="ChangeSet.cs" />
     <Compile Include="Git\GitExeRepository.cs" />
     <Compile Include="Git\LibGitRepository.cs" />
     <Compile Include="FileStatus.cs" />
+    <Compile Include="Infrastructure\IStringReader.cs" />
     <Compile Include="IRepository.cs" />
     <Compile Include="LineDiff.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

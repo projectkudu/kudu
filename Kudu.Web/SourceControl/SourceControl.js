@@ -4,14 +4,32 @@
 $(function () {
     var scm = signalR.SourceControl;
 
+    function getDiffClass(type) {
+        if (type == 1) {
+            return ' diff-add';
+        }
+        else if (type == 2) {
+            return ' diff-remove';
+        }
+        return '';
+    }
+
+    function getDiffId(path) {
+        return path.replace(/\/|\./g, "-")
+    }
+
+    window.getDiffClass = getDiffClass;
+    window.getDiffId = getDiffId;
+
     function loadRepository(path, onComplete) {
         $('#changes').html('');
-        $('#hide').hide();
+
+        $('#show').hide();
         $('#log').show();
         window.loader.show('Updating repository...');
 
         scm.connect(path, function () {
-            scm.getChanges(function (changeSets) {                
+            scm.getChanges(function (changeSets) {
                 $('#changeset').tmpl(changeSets).appendTo($('#changes'));
 
                 var id = scm.state.id;
@@ -41,10 +59,14 @@ $(function () {
     }
 
     function show(id) {
+        $('#show').html('');
         $('#log').hide();
-        $('#diff').show();
-
+        $('#show').show();
+        window.loader.show('Loading commit ' + id);
         scm.show(id, function (details) {
+            $('#changeset-detail').tmpl(details).appendTo($('#show'));
+        }).complete(function () {
+            window.loader.hide();
         });
     }
 

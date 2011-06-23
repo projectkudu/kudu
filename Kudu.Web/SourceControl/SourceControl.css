@@ -70,3 +70,50 @@
 #log .actions a {
     margin-left: 5px;
 }
+
+.commit-detail {
+    margin-bottom: 2%;
+    padding: 1%;
+    border: 1px solid #ccc;
+}
+
+.commit-summary {
+    margin-bottom: 2%;
+}
+
+.commit-file-summary {
+    margin-bottom: 2%;
+}
+
+.diff {
+    margin-bottom: 3%;
+    border: 1px solid #ccc;
+    padding: 5px;
+    overflow: auto;
+}
+
+.diff-header {
+    font-weight: bold;
+}
+
+.diff-add {
+    background-color: #DDFFDD;
+}
+
+.diff-remove {
+    background-color: #FFDDDD;
+}
+
+.diff pre {
+    padding: 0;
+    margin: 0;
+    font-size: 12px;
+}
+
+a {
+    color: Blue;
+}
+
+a:visited {
+    color: Blue;
+}
