@@ -92,13 +92,13 @@
 }
 
 .diff-header span {
-    padding: 1%;
+    
 }
 
 .diff-header {
     font-weight: bold;
     border-bottom: 1px solid #ccc;
-    margin: 1%;
+    margin: 5px;
 }
 
 .diff-add {
