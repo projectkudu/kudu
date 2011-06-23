@@ -37,7 +37,7 @@
         {{each(i, diff) Diffs}}
             <div id="${getDiffId(diff.FileName)}" class="diff">
                 <div class="diff-header">
-                    ${diff.FileName}
+                    <span>${diff.FileName}</span>
                 </div>
 <pre>
 {{each(j, line) diff.Lines}}<div class="line${getDiffClass(line.Type)}">${line.Value}</div>{{/each}}

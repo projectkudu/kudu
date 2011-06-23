@@ -88,12 +88,17 @@
 .diff {
     margin-bottom: 3%;
     border: 1px solid #ccc;
-    padding: 5px;
     overflow: auto;
+}
+
+.diff-header span {
+    padding: 1%;
 }
 
 .diff-header {
     font-weight: bold;
+    border-bottom: 1px solid #ccc;
+    margin: 1%;
 }
 
 .diff-add {

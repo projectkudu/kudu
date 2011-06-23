@@ -73,7 +73,7 @@ namespace Kudu.Core.Git {
         }
 
         public ChangeSetDetail GetDetails(string id) {
-            string show = _gitExe.Execute("show {0} -m --patch-with-stat", id);
+            string show = _gitExe.Execute("show {0} -m -p --numstat", id);
             return ParseShow(show.AsReader());
         }
 
@@ -110,24 +110,8 @@ namespace Kudu.Core.Git {
         }
 
         private IEnumerable<ChangeSet> ParseCommits(IStringReader reader) {
-            var builder = new StringBuilder();
-
             do {
-                string line = reader.ReadLine();
-
-                // If we see a new diff header then process the previous diff if any
-                if ((reader.Done || IsCommitHeader(line)) && builder.Length > 0) {
-                    if (reader.Done) {
-                        builder.Append(line);
-                    }
-                    string commit = builder.ToString();
-                    yield return ParseCommit(commit.AsReader());
-                    builder.Clear();
-                }
-
-                if (!reader.Done) {
-                    builder.Append(line);
-                }
+                yield return ParseCommit(reader);
             } while (!reader.Done);
         }
 
@@ -136,15 +120,7 @@ namespace Kudu.Core.Git {
         }
 
         private ChangeSetDetail ParseShow(IStringReader reader) {
-            // Parse the changeset
-            ChangeSet changeSet = ParseCommit(reader.ReadUntil("---").AsReader());
-
-            var detail = new ChangeSetDetail(changeSet);
-            
-            // Skip the --- separator
-            reader.Skip(3);
-
-            ParseSummary(reader, detail);
+            var detail = ParseCommitAndSummary(reader);
 
             foreach (var diff in ParseDiff(reader)) {
                 detail.Diffs.Add(diff);
@@ -153,13 +129,38 @@ namespace Kudu.Core.Git {
             return detail;
         }
 
+        private ChangeSetDetail ParseCommitAndSummary(IStringReader reader) {
+            // Parse the changeset
+            ChangeSet changeSet = ParseCommit(reader);
+
+            var detail = new ChangeSetDetail(changeSet);
+
+            ParseSummary(reader, detail);
+
+            return detail;
+        }
+
         private void ParseSummary(IStringReader reader, ChangeSetDetail detail) {
-            while (true) {
-                reader.SkipWhitespace();
+            while (!reader.Done) {
                 string line = reader.ReadLine();
-                if (line.Contains("|")) {
-                    string[] parts = line.Split('|');
-                    detail.FileStats[parts[0].Trim()] = ParseStats(parts[1].Trim());
+
+                if (IsSingleLineFeed(line)) {
+                    break;
+                }
+                else if (line.Contains('\t')) {
+                    // n	n	path
+                    string[] parts = line.Split('\t');
+                    int insertions;
+                    Int32.TryParse(parts[0], out insertions);
+                    int deletions;
+                    Int32.TryParse(parts[1], out deletions);
+                    string path = parts[2].Trim();
+
+                    detail.FileStats[path] = new FileStats {
+                        Insertions = insertions,
+                        Deletions = deletions,
+                        Binary = parts[0] == "-" && parts[1] == "-"
+                    };
                 }
                 else {
                     // n files changed, n insertions(+), n deletions(-)
@@ -174,21 +175,16 @@ namespace Kudu.Core.Git {
                     subReader.Skip(1);
                     subReader.SkipWhitespace();
                     detail.Deletions = subReader.ReadInt();
-                    reader.SkipWhitespace();
-                    break;
                 }
             }
         }
 
-        private FileStats ParseStats(string raw) {
-            return new FileStats {
-                Deletions = raw.Count(c => c == '-'),
-                Insertions = raw.Count(c => c == '+'),
-            };
-        }
-
         private IEnumerable<FileDiff> ParseDiff(IStringReader reader) {
             var builder = new StringBuilder();
+
+            // If this was a merge change set then we'll parse the details out of the
+            // first diff
+            ChangeSetDetail merge = null;
 
             do {
                 string line = reader.ReadLine();
@@ -199,7 +195,12 @@ namespace Kudu.Core.Git {
                         builder.Append(line);
                     }
                     string diffChunk = builder.ToString();
-                    yield return ParseDiffChunk(diffChunk.AsReader());
+                    FileDiff diff = ParseDiffChunk(diffChunk.AsReader(), ref merge);
+
+                    if (diff != null) {
+                        yield return diff;
+                    }
+
                     builder.Clear();
                 }
 
@@ -213,17 +214,23 @@ namespace Kudu.Core.Git {
             return line.StartsWith("diff --git", StringComparison.InvariantCulture);
         }
 
-        private FileDiff ParseDiffChunk(IStringReader reader) {
+        private FileDiff ParseDiffChunk(IStringReader reader, ref ChangeSetDetail merge) {
             // Extract the file name from the diff header
             var headerReader = reader.ReadLine().AsReader();
             headerReader.ReadUntil("a/");
             headerReader.Skip(2);
             string fileName = headerReader.ReadUntilWhitespace();
+
+            // Skip files from merged changesets
+            if (merge != null && merge.FileStats.ContainsKey(fileName)) {
+                return null;
+            }
+
             string result;
             var diff = new FileDiff(fileName);
 
             // Parse the diff
-            if (reader.TryReadUntil("@@", out result)) {                
+            if (reader.TryReadUntil("@@", out result)) {
                 while (!reader.Done) {
                     string line = reader.ReadLine();
                     if (line.StartsWith("+")) {
@@ -231,6 +238,10 @@ namespace Kudu.Core.Git {
                     }
                     else if (line.StartsWith("-")) {
                         diff.Lines.Add(new LineDiff(ChangeType.Deleted, line));
+                    }
+                    else if (IsCommitHeader(line)) {
+                        reader.PutBack(line.Length);
+                        merge = ParseCommitAndSummary(reader);
                     }
                     else {
                         diff.Lines.Add(new LineDiff(ChangeType.None, line));
@@ -244,7 +255,10 @@ namespace Kudu.Core.Git {
             // commit hash
             reader.ReadUntilWhitespace();
             reader.SkipWhitespace();
-            string id = reader.ReadLine().Trim();
+            string id = reader.ReadUntilWhitespace();
+
+            // Merges will have (from hash) so we're skipping that
+            reader.ReadLine();
 
             string author = null;
             string email = null;
@@ -253,8 +267,7 @@ namespace Kudu.Core.Git {
             while (!reader.Done) {
                 string line = reader.ReadLine();
 
-                // Done reading name value pairs to stop
-                if (String.IsNullOrWhiteSpace(line)) {
+                if (IsSingleLineFeed(line)) {
                     break;
                 }
 
@@ -277,8 +290,22 @@ namespace Kudu.Core.Git {
                 }
             }
 
-            string message = reader.ReadToEnd();
+            var messageBuilder = new StringBuilder();
+            while (!reader.Done) {
+                string line = reader.ReadLine();
+
+                if (IsSingleLineFeed(line)) {
+                    break;
+                }
+                messageBuilder.Append(line);
+            }
+
+            string message = messageBuilder.ToString();
             return new ChangeSet(id, author, message, DateTimeOffset.ParseExact(date, "ddd MMM d HH:mm:ss yyyy zzz", CultureInfo.InvariantCulture));
+        }
+
+        private bool IsSingleLineFeed(string value) {
+            return value.Length == 1 && value[0] == '\n';
         }
 
         private IEnumerable<FileStatus> ParseStatus(IStringReader reader) {

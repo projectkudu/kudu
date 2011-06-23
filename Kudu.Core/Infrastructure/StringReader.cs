@@ -140,7 +140,7 @@ namespace Kudu.Core.Infrastructure {
         }
 
         public void Skip(int n) {
-            _index += n;
+            _index = Math.Min(_raw.Length, _index + n);
         }
 
         public override string ToString() {
@@ -155,6 +155,10 @@ namespace Kudu.Core.Infrastructure {
             string value = _raw.Substring(_index);
             _index = _raw.Length;
             return value;
+        }
+
+        public void PutBack(int n) {
+            _index = Math.Max(0, _index - n);
         }
     }
 
