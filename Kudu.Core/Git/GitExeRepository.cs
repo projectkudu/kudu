@@ -226,7 +226,6 @@ namespace Kudu.Core.Git {
             if (reader.TryReadUntil("@@", out result)) {                
                 while (!reader.Done) {
                     string line = reader.ReadLine();
-                    reader.SkipWhitespace();
                     if (line.StartsWith("+")) {
                         diff.Lines.Add(new LineDiff(ChangeType.Added, line));
                     }
