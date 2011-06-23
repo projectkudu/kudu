@@ -117,3 +117,11 @@ a {
 a:visited {
     color: Blue;
 }
+
+#back {
+    display: none;
+}
+
+form {
+    display: inline;
+}

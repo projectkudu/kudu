@@ -24,6 +24,7 @@ $(function () {
     function loadRepository(path, onComplete) {
         $('#changes').html('');
 
+        $('#back').hide();
         $('#show').hide();
         $('#log').show();
         window.loader.show('Updating repository...');
@@ -62,6 +63,7 @@ $(function () {
         $('#show').html('');
         $('#log').hide();
         $('#show').show();
+        $('#back').show();
         window.loader.show('Loading commit ' + id);
         scm.show(id, function (details) {
             $('#changeset-detail').tmpl(details).appendTo($('#show'));
@@ -78,6 +80,13 @@ $(function () {
             $(button).removeAttr('disabled');
         });
 
+        return false;
+    });
+
+    $('#back').click(function () {
+        $('#show').hide();
+        $('#log').show();
+        $(this).hide();
         return false;
     });
 

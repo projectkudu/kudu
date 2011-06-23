@@ -113,8 +113,22 @@ namespace Kudu.Core.Infrastructure {
         }
 
         public bool Peek(string value) {
-            // REVIEW: This isn't fast but it doesn't need to be right now
-            return !Done && _raw.Substring(_index).StartsWith(value);
+            if (Done) {
+                return false;
+            }
+
+            if (_index + value.Length >= _raw.Length) {
+                return false;
+            }
+
+            int i = _index;
+            int j = 0;
+            while (j < value.Length) {
+                if (_raw[i++] != value[j++]) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         public void SkipWhitespace() {
