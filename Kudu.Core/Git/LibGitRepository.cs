@@ -82,6 +82,10 @@ namespace Kudu.Core.Git {
             Repository.Index.Unstage(path);
         }
 
+        public ChangeSetDetail GetDetails(string id) {
+            throw new NotImplementedException();
+        }
+
         private static ChangeSet CreateCommit(Commit commit) {
             return new ChangeSet(commit.Id.Sha, 
                                  commit.Author.Name, 

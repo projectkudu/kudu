@@ -11,8 +11,9 @@ namespace Kudu.Web {
             Caller.repository = path;
         }
 
-        public void Show(string id) {
-
+        public ChangeSetDetail Show(string id) {
+            var repository = GetRepository();
+            return repository.GetDetails(id);
         }
 
         public IEnumerable<ChangeSetViewModel> GetChanges() {

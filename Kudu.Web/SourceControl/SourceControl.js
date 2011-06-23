@@ -5,14 +5,13 @@ $(function () {
     var scm = signalR.SourceControl;
 
     function loadRepository(path, onComplete) {
+        $('#changes').html('');
         $('#hide').hide();
         $('#log').show();
         window.loader.show('Updating repository...');
 
         scm.connect(path, function () {
-            scm.getChanges(function (changeSets) {
-                $('#changes').html('');
-
+            scm.getChanges(function (changeSets) {                
                 $('#changeset').tmpl(changeSets).appendTo($('#changes'));
 
                 var id = scm.state.id;
@@ -45,7 +44,7 @@ $(function () {
         $('#log').hide();
         $('#diff').show();
 
-        scm.show(id, function () {
+        scm.show(id, function (details) {
         });
     }
 
