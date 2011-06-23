@@ -140,7 +140,7 @@ namespace Kudu.Core.Git {
         }
 
         private void ParseSummary(IStringReader reader, ChangeSetDetail detail) {
-            var summaryReader = reader.ReadUntil("diff ").AsReader();
+            var summaryReader = reader.ReadUntil("diff --git").AsReader();
             summaryReader.SkipWhitespace();
 
             while (!summaryReader.Done) {
@@ -181,7 +181,7 @@ namespace Kudu.Core.Git {
                     break;
                 }
 
-                string diffChunk = diffHeader + reader.ReadUntil("diff ");
+                string diffChunk = diffHeader + reader.ReadUntil("diff --git");
                 yield return ParseDiffChunk(diffChunk.AsReader());
             } while (true);
         }
