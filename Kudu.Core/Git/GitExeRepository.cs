@@ -73,7 +73,7 @@ namespace Kudu.Core.Git {
         }
 
         public ChangeSetDetail GetDetails(string id) {
-            string show = _gitExe.Execute("show {0} -m -p --numstat", id);
+            string show = _gitExe.Execute("show {0} -m -p --numstat --shortstat", id);
             return ParseShow(show.AsReader());
         }
 
