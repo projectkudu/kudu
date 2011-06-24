@@ -21,6 +21,58 @@ $(function () {
     window.getDiffClass = getDiffClass;
     window.getDiffId = getDiffId;
 
+    var changesXhr = null;
+
+    function getChangeSets(index, onComplete) {
+        if (changesXhr) {
+            changesXhr.abort();
+        }
+
+        changesXhr = scm.getChanges(index, function (result) {
+            setupActions($('#changeset').tmpl(result.Items).appendTo($('#changes')));
+            $('.timeago').timeago();
+
+            if (result.More === true) {
+                getChangeSets(result.Current, onComplete);
+            }
+            else {
+                if (onComplete) {
+                    onComplete();
+                }
+            }
+        }).error(function () {
+            if (onComplete) {
+                onComplete();
+            }
+        });
+    }
+
+    function setupActions(element) {
+        var id = scm.state.id;
+
+        element.find('.update').click(function () {
+            var item = $.tmplItem(this);
+            var newId = item.data.Id;
+
+            $('#' + newId).find('.loading').show();
+
+            scm.update(newId, function () {
+                $('#' + newId).find('.loading').hide();
+                $('#' + id).find('.status').addClass('hide');
+                $('#' + newId).find('.status').removeClass('hide');
+
+                id = newId;
+            });
+
+            return false;
+        });
+
+        element.find('.view').click(function () {
+            var item = $.tmplItem(this);
+            show(item.data.Id);
+        });
+    }
+
     function loadRepository(path, onComplete) {
         $('#back').hide();
         $('#show').hide();
@@ -32,45 +84,28 @@ $(function () {
 
         window.loader.show('Updating repository...');
 
-        scm.connect(path, function () {
-            scm.getChanges(function (changeSets) {
-                $('#changeset').tmpl(changeSets).appendTo($('#changes'));
-                $('.timeago').timeago();
+        var callback = function () {
+            if (onComplete) {
+                onComplete();
+            }
+            window.loader.hide();
+        };
 
-                var id = scm.state.id;
-
-                $('#changes').find('.update').click(function () {
-                    var item = $.tmplItem(this);
-                    var newId = item.data.Id;
-
-                    $('#' + newId).find('.loading').show();
-
-                    scm.update(newId, function () {
-                        $('#' + newId).find('.loading').hide();
-                        $('#' + id).find('.status').addClass('hide');
-                        $('#' + newId).find('.status').removeClass('hide');
-
-                        id = newId;
-                    });
-
-                    return false;
-                });
-
-                $('#changes').find('.view').click(function () {
-                    var item = $.tmplItem(this);
-                    show(item.data.Id);
-                });
-
-            }).complete(function () {
-                if (onComplete) {
-                    onComplete();
-                }
-                window.loader.hide();
+        if (scm.state.repository !== path) {
+            scm.connect(path, function () {
+                getChangeSets(0, callback);
             });
-        });
+        }
+        else {
+            getChangeSets(0, callback);
+        }
     }
 
     function show(id) {
+        if (changesXhr) {
+            changesXhr.abort();
+        }
+
         $('#log').hide();
         $('#working').hide();
         $('#show-working').hide();
@@ -89,6 +124,10 @@ $(function () {
     }
 
     function viewWorking() {
+        if (changesXhr) {
+            changesXhr.abort();
+        }
+
         $('#log').hide();
         $('#show').hide();
 

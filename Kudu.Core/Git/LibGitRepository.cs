@@ -63,7 +63,11 @@ namespace Kudu.Core.Git {
         }
 
         public IEnumerable<ChangeSet> GetChanges() {
-            return Repository.Commits.Select(CreateCommit);
+            return Repository.Commits.Select(CreateChangeSet);
+        }
+
+        public IEnumerable<ChangeSet> GetChanges(int index, int limit) {
+            return Repository.Commits.Skip(index).Take(limit).Select(CreateChangeSet);
         }
 
         public ChangeSetDetail GetWorkingChanges() {
@@ -75,7 +79,7 @@ namespace Kudu.Core.Git {
             var signature = new Signature(authorName, authorName, DateTimeOffset.UtcNow);
             Commit commit = Repository.Commit(signature, signature, message);
 
-            return CreateCommit(commit);
+            return CreateChangeSet(commit);
         }
 
         public void AddFile(string path) {
@@ -90,7 +94,7 @@ namespace Kudu.Core.Git {
             throw new NotImplementedException();
         }
 
-        private static ChangeSet CreateCommit(Commit commit) {
+        private static ChangeSet CreateChangeSet(Commit commit) {
             return new ChangeSet(commit.Id.Sha, 
                                  commit.Author.Name,
                                  commit.Author.Email,

@@ -42,6 +42,10 @@ namespace Kudu.Core.Git {
             return Log();
         }
 
+        public IEnumerable<ChangeSet> GetChanges(int index, int limit) {
+            return Log("log --skip {0} -n {1}", index, limit);
+        }
+
         public void AddFile(string path) {
             _gitExe.Execute("add {0}", path);
         }
@@ -102,19 +106,12 @@ namespace Kudu.Core.Git {
             return path;
         }
 
-        private IEnumerable<ChangeSet> Log(int? limit = null, bool all = true) {
+        private IEnumerable<ChangeSet> Log(string command = "log --all", params object[] args) {
             if (IsEmpty()) {
                 return Enumerable.Empty<ChangeSet>();
             }
-            string command = "log";
-            if (limit != null) {
-                command += " -" + limit;
-            }
 
-            if (all) {
-                command += " --all";
-            }
-            string log = _gitExe.Execute(command);
+            string log = _gitExe.Execute(command, args);
             return ParseCommits(log.AsReader());
         }
 

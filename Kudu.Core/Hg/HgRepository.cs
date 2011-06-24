@@ -8,6 +8,7 @@ using Mercurial;
 namespace Kudu.Core.Hg {
     public class HgRepository : IRepository {
         private readonly Repository _repository;
+
         public HgRepository(string path) {
             _repository = new Repository(path);
         }
@@ -29,8 +30,33 @@ namespace Kudu.Core.Hg {
         }
 
         public IEnumerable<ChangeSet> GetChanges() {
-            return from changeSet in _repository.Log()
-                   select CreateChangeSet(changeSet);
+            const int bufferSize = 10;
+
+            int index = 0;
+            bool some = false;
+
+            do {
+                some = false;
+                foreach (var changeSet in GetChanges(index, bufferSize)) {
+                    some = true;
+                    yield return changeSet;
+                }
+
+                index += bufferSize;
+            } while (some);
+        }
+
+        public IEnumerable<ChangeSet> GetChanges(int index, int limit) {
+            int max = _repository.Tip().RevisionNumber;
+
+            if (index > max) {
+                return Enumerable.Empty<ChangeSet>();
+            }
+
+            int from = max - index;
+            int to = Math.Max(0, from - limit);
+            var spec = RevSpec.Range(from, to);
+            return _repository.Log(spec).Select(CreateChangeSet);
         }
 
         public ChangeSetDetail GetDetails(string id) {
@@ -102,7 +128,7 @@ namespace Kudu.Core.Hg {
             var diffReader = _repository.Diff(diffCommand).AsReader();
 
             GitExeRepository.ParseDiffAndPopulate(diffReader, detail);
-            
+
             return detail;
         }
 

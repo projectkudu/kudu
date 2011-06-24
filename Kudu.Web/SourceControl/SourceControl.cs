@@ -38,14 +38,23 @@ namespace Kudu.Web {
             return null;
         }
 
-        public IEnumerable<ChangeSetViewModel> GetChanges() {
+        public BufferedResult<ChangeSetViewModel> GetChanges(int index) {
+            const int pageSize = 25;
             var repository = GetRepository();
             string id = repository.CurrentId;
             Caller.id = id;
-            return from c in repository.GetChanges()
-                   select new ChangeSetViewModel(c) {
-                       Active = c.Id == id
-                   };
+
+            var items = (from c in repository.GetChanges(index * pageSize, pageSize)
+                         select new ChangeSetViewModel(c) {
+                             Active = c.Id == id
+                         })
+                         .ToList();
+
+            return new BufferedResult<ChangeSetViewModel> {
+                Current = index + 1,
+                Items = items,
+                More = items.Count >= pageSize
+            };
         }
 
         public IEnumerable<FileStatus> GetStatus() {
@@ -109,6 +118,12 @@ namespace Kudu.Web {
                          .ComputeHash(Encoding.Default.GetBytes(value))
                          .Select(b => b.ToString("x2")));
             }
+        }
+
+        public class BufferedResult<T> {
+            public bool More { get; set; }
+            public int Current { get; set; }
+            public IEnumerable<T> Items { get; set; }
         }
     }
 }

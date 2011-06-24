@@ -7,6 +7,7 @@ namespace Kudu.Core {
         void Initialize();
         IEnumerable<FileStatus> GetStatus();
         IEnumerable<ChangeSet> GetChanges();
+        IEnumerable<ChangeSet> GetChanges(int index, int limit);
         ChangeSetDetail GetDetails(string id);
         ChangeSetDetail GetWorkingChanges();
         void AddFile(string path);
