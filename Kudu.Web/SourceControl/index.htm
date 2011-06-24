@@ -29,8 +29,14 @@
     <script id="changeset-detail" type="text/x-jquery-tmpl">
         <div class="commit-detail gray-gradient">            
             <p>{{html ChangeSet.Message}}<p>
-            ${ChangeSet.AuthorName} <span class="details">(author)<span>
-            <div class="timeago" title="${ChangeSet.Date}"></div>
+            {{if ChangeSet.EmailHash}}
+            <img src="http://www.gravatar.com/avatar/${ChangeSet.EmailHash}?s=32&d=mm" class="gravatar" />
+            {{/if}}
+            <div class="author">
+                ${ChangeSet.AuthorName} <span class="details">(author)</span>
+                <div class="timeago" title="${ChangeSet.Date}"></div>
+            </div>
+            <div class="clear" />
         </div>
         {{tmpl "#diff-view"}}
     </script>

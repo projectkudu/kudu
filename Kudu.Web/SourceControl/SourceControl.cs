@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using Kudu.Core;
 using Kudu.Core.Git;
+using Kudu.Core.Hg;
 using ServerSync;
 
 namespace Kudu.Web {
@@ -57,7 +61,11 @@ namespace Kudu.Web {
         }
 
         private IRepository GetRepository() {
-            return new GitExeRepository(Caller.repository);
+            string path = Caller.repository;
+            if (Directory.EnumerateDirectories(path, ".hg").Any()) {
+                return new HgRepository(path);
+            }
+            return new GitExeRepository(path);
         }
 
         public class ChangeSetDetailViewModel {
@@ -84,6 +92,7 @@ namespace Kudu.Web {
             public string Id { get; set; }
             public string ShortId { get; set; }
             public string AuthorName { get; set; }
+            public string EmailHash { get; set; }
             public string Date { get; set; }
             public string Message { get; set; }
             public bool Active { get; set; }
@@ -92,8 +101,15 @@ namespace Kudu.Web {
                 Id = changeSet.Id;
                 ShortId = changeSet.Id.Substring(0, 12);
                 AuthorName = changeSet.AuthorName;
+                EmailHash = String.IsNullOrEmpty(changeSet.AuthorEmail) ? null : Hash(changeSet.AuthorEmail);
                 Date = changeSet.Timestamp.ToString("u");
                 Message = changeSet.Message.Trim().Replace("\n", "<br/>");
+            }
+
+            private string Hash(string value) {
+                return String.Join(String.Empty, MD5.Create()
+                         .ComputeHash(Encoding.Default.GetBytes(value))
+                         .Select(b => b.ToString("x2")));
             }
         }
     }

@@ -34,6 +34,9 @@
     <Reference Include="LibGit2Sharp">
       <HintPath>..\packages\LibGit2Sharp.0.3\lib\net35\LibGit2Sharp.dll</HintPath>
     </Reference>
+    <Reference Include="Mercurial.Net">
+      <HintPath>..\packages\Mercurial.Net.1.0.2.572\lib\net35-Client\Mercurial.Net.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -47,6 +50,8 @@
     <Compile Include="ChangeStats.cs" />
     <Compile Include="ChangeType.cs" />
     <Compile Include="FileDiff.cs" />
+    <Compile Include="Hg\HgRepository.cs" />
+    <Compile Include="Infrastructure\ParserHelpers.cs" />
     <Compile Include="Infrastructure\StringReader.cs" />
     <Compile Include="Infrastructure\Executable.cs" />
     <Compile Include="ChangeSet.cs" />
@@ -61,6 +66,7 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>

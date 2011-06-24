@@ -3,9 +3,10 @@ using LibGit2Sharp;
 
 namespace Kudu.Core {
     public class ChangeSet {
-        public ChangeSet(string id, string authorName, string message, DateTimeOffset timestamp) {
+        public ChangeSet(string id, string authorName, string authorEmail, string message, DateTimeOffset timestamp) {
             Id = id;
             AuthorName = authorName;
+            AuthorEmail = authorEmail;
             Message = message;
             Timestamp = timestamp;
         }
@@ -16,6 +17,11 @@ namespace Kudu.Core {
         }
 
         public string AuthorName {
+            get;
+            private set;
+        }
+
+        public string AuthorEmail {
             get;
             private set;
         }

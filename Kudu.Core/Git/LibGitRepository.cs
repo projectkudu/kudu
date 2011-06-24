@@ -92,8 +92,9 @@ namespace Kudu.Core.Git {
 
         private static ChangeSet CreateCommit(Commit commit) {
             return new ChangeSet(commit.Id.Sha, 
-                                 commit.Author.Name, 
-                                 commit.Message, 
+                                 commit.Author.Name,
+                                 commit.Author.Email,
+                                 commit.Message,
                                  commit.Author.When);
         }
     }

@@ -133,7 +133,7 @@ namespace Kudu.Core.Git {
             } while (!reader.Done);
         }
 
-        private bool IsCommitHeader(string value) {
+        private static bool IsCommitHeader(string value) {
             return value.StartsWith("commit ");
         }
 
@@ -154,7 +154,7 @@ namespace Kudu.Core.Git {
             return detail;
         }
 
-        private ChangeSetDetail ParseCommitAndSummary(IStringReader reader) {
+        private static ChangeSetDetail ParseCommitAndSummary(IStringReader reader) {
             // Parse the changeset
             ChangeSet changeSet = ParseCommit(reader);
 
@@ -165,11 +165,11 @@ namespace Kudu.Core.Git {
             return detail;
         }
 
-        private void ParseSummary(IStringReader reader, ChangeSetDetail detail) {
+        private static void ParseSummary(IStringReader reader, ChangeSetDetail detail) {
             while (!reader.Done) {
                 string line = reader.ReadLine();
 
-                if (IsSingleLineFeed(line)) {
+                if (ParserHelpers.IsSingleLineFeed(line)) {
                     break;
                 }
                 else if (line.Contains('\t')) {
@@ -189,22 +189,12 @@ namespace Kudu.Core.Git {
                 }
                 else {
                     // n files changed, n insertions(+), n deletions(-)
-                    var subReader = line.AsReader();
-                    subReader.SkipWhitespace();
-                    detail.FilesChanged = subReader.ReadInt();
-                    subReader.ReadUntil(',');
-                    subReader.Skip(1);
-                    subReader.SkipWhitespace();
-                    detail.Insertions = subReader.ReadInt();
-                    subReader.ReadUntil(',');
-                    subReader.Skip(1);
-                    subReader.SkipWhitespace();
-                    detail.Deletions = subReader.ReadInt();
+                    ParserHelpers.ParseSummaryFooter(line, detail);
                 }
             }
         }
 
-        private IEnumerable<FileDiff> ParseDiff(IStringReader reader) {
+        internal static IEnumerable<FileDiff> ParseDiff(IStringReader reader) {
             var builder = new StringBuilder();
 
             // If this was a merge change set then we'll parse the details out of the
@@ -235,11 +225,11 @@ namespace Kudu.Core.Git {
             } while (!reader.Done);
         }
 
-        private bool IsDiffHeader(string line) {
+        private static bool IsDiffHeader(string line) {
             return line.StartsWith("diff --git", StringComparison.InvariantCulture);
         }
 
-        private FileDiff ParseDiffChunk(IStringReader reader, ref ChangeSetDetail merge) {
+        private static FileDiff ParseDiffChunk(IStringReader reader, ref ChangeSetDetail merge) {
             // Extract the file name from the diff header
             var headerReader = reader.ReadLine().AsReader();
             headerReader.ReadUntil("a/");
@@ -276,7 +266,7 @@ namespace Kudu.Core.Git {
             return diff;
         }
 
-        private ChangeSet ParseCommit(IStringReader reader) {
+        private static ChangeSet ParseCommit(IStringReader reader) {
             // commit hash
             reader.ReadUntilWhitespace();
             reader.SkipWhitespace();
@@ -292,7 +282,7 @@ namespace Kudu.Core.Git {
             while (!reader.Done) {
                 string line = reader.ReadLine();
 
-                if (IsSingleLineFeed(line)) {
+                if (ParserHelpers.IsSingleLineFeed(line)) {
                     break;
                 }
 
@@ -319,18 +309,14 @@ namespace Kudu.Core.Git {
             while (!reader.Done) {
                 string line = reader.ReadLine();
 
-                if (IsSingleLineFeed(line)) {
+                if (ParserHelpers.IsSingleLineFeed(line)) {
                     break;
                 }
                 messageBuilder.Append(line);
             }
 
             string message = messageBuilder.ToString();
-            return new ChangeSet(id, author, message, DateTimeOffset.ParseExact(date, "ddd MMM d HH:mm:ss yyyy zzz", CultureInfo.InvariantCulture));
-        }
-
-        private bool IsSingleLineFeed(string value) {
-            return value.Length == 1 && value[0] == '\n';
+            return new ChangeSet(id, author, email, message, DateTimeOffset.ParseExact(date, "ddd MMM d HH:mm:ss yyyy zzz", CultureInfo.InvariantCulture));
         }
 
         private IEnumerable<FileStatus> ParseStatus(IStringReader reader) {
