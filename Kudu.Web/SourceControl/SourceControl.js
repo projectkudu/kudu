@@ -40,11 +40,16 @@ $(function () {
 
                 $('#changes').find('.update').click(function () {
                     var item = $.tmplItem(this);
-                    scm.update(item.data.Id, function () {
-                        $('#' + id).removeClass('active');
-                        $('#' + item.data.Id).addClass('active');
+                    var newId = item.data.Id;
 
-                        id = item.data.Id;
+                    $('#' + newId).find('.loading').show();
+
+                    scm.update(newId, function () {
+                        $('#' + newId).find('.loading').hide();
+                        $('#' + id).find('.status').addClass('hide');
+                        $('#' + newId).find('.status').removeClass('hide');
+
+                        id = newId;
                     });
 
                     return false;
@@ -119,8 +124,14 @@ $(function () {
         $(button).attr('disabled', 'disabled');
         scm.commit($('#commit-message').val(), function (changeSet) {
             if (changeSet) {
-                alert('Successfully commited ' + changeSet.ShortId);
+                $('#new-commit').html('Successfully commited ' + changeSet.ShortId);
+                $('#new-commit').show();
+                $('#diff').html('');
                 $('#commit-message').val('');
+
+                window.setTimeout(function () {
+                    $('#new-commit').fadeOut('slow');
+                }, 1000);
             }
             else {
                 alert('No pending changes');

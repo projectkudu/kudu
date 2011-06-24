@@ -6,7 +6,7 @@
 #page {
     width: 90%;
     margin-left: auto;
-    margin-right: auto;    
+    margin-right: auto;
 }
 
 #log {
@@ -18,11 +18,16 @@
 }
 
 #log td {
-    padding: 4px;
+    height: 65px;
+    padding: 5px;
+    border-bottom: 1px solid #ccc;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f5f5f5', endColorstr='#ebebeb'); /* for IE */
+    background: -webkit-gradient(linear, left top, left bottom, from(#f5f5f5), to(#ebebeb)); /* for webkit browsers */
+    background: -moz-linear-gradient(top,  #f5f5f5,  #ebebeb); /* for firefox 3.6+ */
 }
 
 #log th {
-    padding: 4px;
+    padding: 5px;
     text-align: left;
     border-bottom: 1px solid #ccc;
 }
@@ -39,8 +44,8 @@
     width: 20%;
 }
 
-#log .active {
-    background-color: #FFFFCC;
+#log .hide {
+    display: none;
 }
 
 #menu {
@@ -170,4 +175,13 @@ form {
 
 .details {
     color: #aaa;
+}
+
+#new-commit {
+    display: none;
+    background-color: #e6efc2;
+    border: 1px solid #c6d880;
+    font-size: 15px;
+    font-weight: bold;
+    padding: 1%;
 }
