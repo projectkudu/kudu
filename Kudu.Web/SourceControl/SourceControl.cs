@@ -93,7 +93,7 @@ namespace Kudu.Web {
                 ShortId = changeSet.Id.Substring(0, 12);
                 AuthorName = changeSet.AuthorName;
                 Date = changeSet.Timestamp.ToLocalTime().ToString();
-                Message = changeSet.Message.Trim().Replace(Environment.NewLine, "<br/>");
+                Message = changeSet.Message.Trim().Replace("\n", "<br/>");
             }
         }
     }

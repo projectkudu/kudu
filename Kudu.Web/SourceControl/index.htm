@@ -21,10 +21,9 @@
         </tr>
     </script>
     <script id="changeset-detail" type="text/x-jquery-tmpl">
-        <div class="commit-detail">
-            <div>${ChangeSet.ShortId}</div>
+        <div class="commit-detail">            
             <p>{{html ChangeSet.Message}}<p>
-            ${ChangeSet.AuthorName}
+            ${ChangeSet.AuthorName} <span class="details">(author)<span>
             <div>${ChangeSet.Date}</div>
         </div>
         {{tmpl "#diff-view"}}
@@ -51,43 +50,45 @@
     </script>
 </head>
 <body>
-    <div id="menu">
-        <form id="connect" action="#" method="post">
-            <label for="path">Repository: </label>
-            <input type="text" name="path" id="path" value="" />
-            <input type="submit" id="update" value="Update" />
-        </form>        
-        <a href="#" id="back">Back to repository</a>
-        <a href="#" id="show-working">Working Directory</a>
-    </div>
-    <div id="status-container">
-        <div id="status">
+    <div id="page">
+        <div id="menu">
+            <form id="connect" action="#" method="post">
+                <label for="path">Repository: </label>
+                <input type="text" name="path" id="path" value="" />
+                <input type="submit" id="update" value="Update" />
+            </form>        
+            <a href="#" id="back">Back to repository</a>
+            <a href="#" id="show-working">Working Directory</a>
         </div>
-    </div> 
-    <table id="log">
-        <thead>
-            <tr>
-                <th>Change Set</th>
-                <th>Comment</th>
-                <th>User</th>
-                <th>Date</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody id="changes">
-        </tbody>
-    </table>
-    <div id="show">
-    </div>
-    <div id="working">
-        <div id="commit-area">
-            <form id="commit" action="#" method="post">
-                <label for="message">Enter commit message:</label>
-                <textarea id="commit-message" name="message"></textarea>
-                <input type="submit" id="perform-commit" name="commit" value="Commit changes" />
-            </form>
+        <div id="status-container">
+            <div id="status">
+            </div>
+        </div> 
+        <table id="log">
+            <thead>
+                <tr>
+                    <th>Change Set</th>
+                    <th>Comment</th>
+                    <th>User</th>
+                    <th>Date</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="changes">
+            </tbody>
+        </table>
+        <div id="show">
         </div>
-        <div id="diff">
+        <div id="working">
+            <div id="commit-area">
+                <form id="commit" action="#" method="post">
+                    <label for="message">Enter commit message:</label>
+                    <textarea id="commit-message" name="message"></textarea>
+                    <input type="submit" id="perform-commit" name="commit" value="Commit changes" />
+                </form>
+            </div>
+            <div id="diff">
+            </div>
         </div>
     </div>
 </body>
