@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Kudu.Core {
+﻿namespace Kudu.Core {
     public class LineDiff {
-        public LineDiff(ChangeType type, string value) {
+        public LineDiff(ChangeType type, string text) {
             Type = type;
-            Value = value;
+            Text = text;
         }
         public ChangeType Type { get; set; }
-        public string Value { get; set; }
+        public string Text { get; set; }
     }
 }

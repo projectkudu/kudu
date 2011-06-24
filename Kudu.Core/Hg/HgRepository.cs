@@ -25,12 +25,12 @@ namespace Kudu.Core.Hg {
         }
 
         public IEnumerable<FileStatus> GetStatus() {
-            return _repository.Status().Select(s => new Kudu.Core.FileStatus(s.Path, Convert(s.State)));
+            return _repository.Status().Select(s => new FileStatus(s.Path, Convert(s.State)));
         }
 
         public IEnumerable<ChangeSet> GetChanges() {
-            return from c in _repository.Log()
-                   select CreateChangeSet(c);
+            return from changeSet in _repository.Log()
+                   select CreateChangeSet(changeSet);
         }
 
         public ChangeSetDetail GetDetails(string id) {
@@ -45,6 +45,7 @@ namespace Kudu.Core.Hg {
             if (!GetStatus().Any()) {
                 return null;
             }
+
             _repository.AddRemove();
             return PopulateDetails(null, new ChangeSetDetail());
         }
@@ -111,9 +112,9 @@ namespace Kudu.Core.Hg {
                 if (line.Contains("|")) {
                     string[] parts = line.Split('|');
                     string path = parts[0].Trim();
+
                     // TODO: Figure out a way to get this information
-                    detail.Files[path] = new FileInfo {
-                    };
+                    detail.Files[path] = new FileInfo();
                 }
                 else {
                     // n files changed, n insertions(+), n deletions(-)
