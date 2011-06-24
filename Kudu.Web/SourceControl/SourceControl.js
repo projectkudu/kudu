@@ -104,6 +104,7 @@ $(function () {
             else {
                 $('#diff').html('No changes');
             }
+            $('#diff').show();
         }).complete(function () {
             window.loader.hide();
         });
@@ -122,6 +123,8 @@ $(function () {
 
     $('#commit').submit(function () {
         var button = $('#perform-commit');
+
+        window.loader.show('Commiting changes');
 
         $(button).attr('disabled', 'disabled');
         scm.commit($('#commit-message').val(), function (changeSet) {
@@ -144,6 +147,7 @@ $(function () {
             }
         }).complete(function () {
             $(button).removeAttr('disabled');
+            window.loader.hide();
         });
 
         return false;

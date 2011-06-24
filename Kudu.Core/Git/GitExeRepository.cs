@@ -24,17 +24,7 @@ namespace Kudu.Core.Git {
 
         public string CurrentId {
             get {
-                var head = Head;
-                if (head != null) {
-                    return head.Id;
-                }
-                return null;
-            }
-        }
-
-        private ChangeSet Head {
-            get {
-                return Log(1, all: false).SingleOrDefault();
+                return _gitExe.Execute("rev-parse HEAD").Trim();
             }
         }
 
@@ -70,7 +60,8 @@ namespace Kudu.Core.Git {
                 return null;
             }
 
-            return Head;
+            string newCommit = _gitExe.Execute("show HEAD");
+            return ParseCommit(newCommit.AsReader());
         }
 
         public void Update(string id) {
