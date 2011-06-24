@@ -66,6 +66,10 @@ namespace Kudu.Core.Git {
             return Repository.Commits.Select(CreateCommit);
         }
 
+        public ChangeSetDetail GetWorkingChanges() {
+            throw new NotImplementedException();
+        }
+
         public ChangeSet Commit(string authorName, string message) {
             // REVIEW: Should we loop over all files and stage unstaged ones?
             var signature = new Signature(authorName, authorName, DateTimeOffset.UtcNow);

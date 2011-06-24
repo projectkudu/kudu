@@ -22,11 +22,14 @@ $(function () {
     window.getDiffId = getDiffId;
 
     function loadRepository(path, onComplete) {
-        $('#changes').html('');
-
         $('#back').hide();
         $('#show').hide();
+        $('#working').hide();
+
+        $('#changes').html('');
         $('#log').show();
+        $('#show-working').show();
+
         window.loader.show('Updating repository...');
 
         scm.connect(path, function () {
@@ -53,20 +56,47 @@ $(function () {
                 });
 
             }).complete(function () {
-                onComplete();
+                if (onComplete) {
+                    onComplete();
+                }
                 window.loader.hide();
             });
         });
     }
 
     function show(id) {
-        $('#show').html('');
         $('#log').hide();
+        $('#working').hide();
+        $('#show-working').hide();
+
+        $('#show').html('');
         $('#show').show();
         $('#back').show();
+
         window.loader.show('Loading commit ' + id);
         scm.show(id, function (details) {
             $('#changeset-detail').tmpl(details).appendTo($('#show'));
+        }).complete(function () {
+            window.loader.hide();
+        });
+    }
+
+    function viewWorking() {
+        $('#log').hide();
+        $('#show').hide();
+
+        $('#diff').html('');
+        $('#working').show();
+        $('#back').show();
+        window.loader.show('Loading working directory');
+
+        scm.getWorking(function (details) {
+            if (details) {
+                $('#diff-view').tmpl(details).appendTo($('#diff'));
+            }
+            else {
+                $('#diff').html('No changes');
+            }
         }).complete(function () {
             window.loader.hide();
         });
@@ -83,10 +113,38 @@ $(function () {
         return false;
     });
 
+    $('#commit').submit(function () {
+        var button = $('#perform-commit');
+
+        $(button).attr('disabled', 'disabled');
+        scm.commit($('#commit-message').val(), function (changeSet) {
+            if (changeSet) {
+                alert('Successfully commited ' + changeSet.ShortId);
+                $('#commit-message').val('');
+            }
+            else {
+                alert('No pending changes');
+            }
+        }).complete(function () {
+            $(button).removeAttr('disabled');
+        });
+
+        return false;
+    });
+
     $('#back').click(function () {
         $('#show').hide();
-        $('#log').show();
+        $('#working').hide();
         $(this).hide();
+
+        loadRepository(scm.state.repository);
+        return false;
+    });
+
+    $('#show-working').click(function () {
+        $(this).hide();
+
+        viewWorking();
         return false;
     });
 

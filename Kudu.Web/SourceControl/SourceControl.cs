@@ -16,6 +16,24 @@ namespace Kudu.Web {
             return new ChangeSetDetailViewModel(repository.GetDetails(id));
         }
 
+        public ChangeSetViewModel Commit(string message) {
+            var repository = GetRepository();
+            var changeSet = repository.Commit("Test <foo@test.com>", message);
+            if (changeSet != null) {
+                return new ChangeSetViewModel(changeSet);
+            }
+            return null;
+        }
+
+        public ChangeSetDetailViewModel GetWorking() {
+            var repository = GetRepository();
+            ChangeSetDetail workingChanges = repository.GetWorkingChanges();
+            if (workingChanges != null) {
+                return new ChangeSetDetailViewModel(workingChanges);
+            }
+            return null;
+        }
+
         public IEnumerable<ChangeSetViewModel> GetChanges() {
             var repository = GetRepository();
             string id = repository.CurrentId;
@@ -44,7 +62,9 @@ namespace Kudu.Web {
 
         public class ChangeSetDetailViewModel {
             public ChangeSetDetailViewModel(ChangeSetDetail detail) {
-                ChangeSet = new ChangeSetViewModel(detail.ChangeSet);
+                if (detail.ChangeSet != null) {
+                    ChangeSet = new ChangeSetViewModel(detail.ChangeSet);
+                }
                 Deletions = detail.Deletions;
                 FilesChanged = detail.FilesChanged;
                 Insertions = detail.Insertions;

@@ -27,6 +27,9 @@
             ${ChangeSet.AuthorName}
             <div>${ChangeSet.Date}</div>
         </div>
+        {{tmpl "#diff-view"}}
+    </script>
+    <script id="diff-view" type="text/x-jquery-tmpl">
         <div class="commit-summary">
             Showing ${FilesChanged} changed files with ${Insertions} additions and ${Deletions} deletions.
         </div>
@@ -54,7 +57,8 @@
             <input type="text" name="path" id="path" value="" />
             <input type="submit" id="update" value="Update" />
         </form>        
-        <a href="#" id="back">Back to repository</a>        
+        <a href="#" id="back">Back to repository</a>
+        <a href="#" id="show-working">Working Directory</a>
     </div>
     <div id="status-container">
         <div id="status">
@@ -74,6 +78,17 @@
         </tbody>
     </table>
     <div id="show">
+    </div>
+    <div id="working">
+        <div id="commit-area">
+            <form id="commit" action="#" method="post">
+                <label for="message">Enter commit message:</label>
+                <textarea id="commit-message" name="message"></textarea>
+                <input type="submit" id="perform-commit" name="commit" value="Commit changes" />
+            </form>
+        </div>
+        <div id="diff">
+        </div>
     </div>
 </body>
 </html>

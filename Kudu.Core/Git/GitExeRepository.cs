@@ -63,7 +63,12 @@ namespace Kudu.Core.Git {
         public ChangeSet Commit(string authorName, string message) {
             // Add all unstaged files
             _gitExe.Execute("add .");
-            _gitExe.Execute("commit -m\"{0}\" --author=\"{1}\"", message, authorName);
+            string output = _gitExe.Execute("commit -m\"{0}\" --author=\"{1}\"", message, authorName);
+
+            // No pending changes
+            if (output.Contains("working directory clean")) {
+                return null;
+            }
 
             return Head;
         }
@@ -75,6 +80,19 @@ namespace Kudu.Core.Git {
         public ChangeSetDetail GetDetails(string id) {
             string show = _gitExe.Execute("show {0} -m -p --numstat --shortstat", id);
             return ParseShow(show.AsReader());
+        }
+
+        public ChangeSetDetail GetWorkingChanges() {
+            // Add everything so we can see a diff of the current changes
+            _gitExe.Execute("add .");
+
+            string diff = _gitExe.Execute("diff --no-ext-diff -p --numstat --shortstat --staged");
+
+            // No working changes
+            if (String.IsNullOrEmpty(diff)) {
+                return null;
+            }
+            return ParseShow(diff.AsReader(), includeChangeSet: false);
         }
 
         private bool IsEmpty() {
@@ -119,8 +137,15 @@ namespace Kudu.Core.Git {
             return value.StartsWith("commit ");
         }
 
-        private ChangeSetDetail ParseShow(IStringReader reader) {
-            var detail = ParseCommitAndSummary(reader);
+        private ChangeSetDetail ParseShow(IStringReader reader, bool includeChangeSet = true) {
+            ChangeSetDetail detail = null;
+            if (includeChangeSet) {
+                detail = ParseCommitAndSummary(reader);
+            }
+            else {
+                detail = new ChangeSetDetail();
+                ParseSummary(reader, detail);
+            }
 
             foreach (var diff in ParseDiff(reader)) {
                 detail.Diffs.Add(diff);

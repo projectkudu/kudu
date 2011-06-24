@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Kudu.Core {
     public class ChangeSetDetail {
+        public ChangeSetDetail()
+            : this(null) {
+        }
+
         public ChangeSetDetail(ChangeSet changeSet) {
             ChangeSet = changeSet;
             FileStats = new Dictionary<string, FileStats>(StringComparer.OrdinalIgnoreCase);

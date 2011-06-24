@@ -92,7 +92,6 @@
 }
 
 .diff-header span {
-    
 }
 
 .diff-header {
@@ -127,6 +126,21 @@ a:visited {
     display: none;
 }
 
+#working {
+    display: none;
+}
+
 form {
     display: inline;
+}
+
+#commit-message {
+    width: 50%;
+    height: 150px;
+    display: block;
+    margin-bottom: 10px;
+}
+
+#commit-area {
+    margin-bottom: 1%;
 }
