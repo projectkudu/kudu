@@ -110,8 +110,9 @@ namespace Kudu.Core.Hg {
                 string line = reader.ReadLine();
                 if (line.Contains("|")) {
                     string[] parts = line.Split('|');
+                    string path = parts[0].Trim();
                     // TODO: Figure out a way to get this information
-                    detail.FileStats[parts[0].Trim()] = new FileInfo {
+                    detail.Files[path] = new FileInfo {
                     };
                 }
                 else {

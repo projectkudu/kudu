@@ -46,15 +46,15 @@
             Showing ${FilesChanged} changed files with ${Insertions} additions and ${Deletions} deletions.
         </div>
         <ul class="commit-file-summary">
-            {{each(fileName, fileInfo) FileStats}}
-                <li class="${fileInfo.Binary ? "binary-file" : "file"}"><a href="#${getDiffId(fileName)}">${fileName}</a> {{if fileInfo.Binary}}<span class="details">(binary)</span>{{/if}}</li>
+            {{each(fileName, file) Files}}
+                <li class="${file.Binary ? "binary-file" : "file"}"><a href="#${getDiffId(fileName)}">${fileName}</a> {{if file.Binary}}<span class="details">(binary)</span>{{/if}}</li>
             {{/each}}
         </ul>
-        {{each(fileName, fileInfo) FileStats}}
+        {{each(fileName, file) Files}}
             <div id="${getDiffId(fileName)}" class="diff">
                 <div class="diff-header gray-gradient">
-                    <span class="icon ${fileInfo.Binary ? "icon-binary-file" : "icon-file"}">${fileName}</span>
-                </div>{{if fileInfo.Binary}}<div class="binary-text">Binary file not shown</div>{{else}}<pre>{{each(i, line) fileInfo.DiffLines}}<div class="line${getDiffClass(line.Type)}">${line.Value}</div>{{/each}}</pre>{{/if}}
+                    <span class="icon ${file.Binary ? "icon-binary-file" : "icon-file"}">${fileName}</span>
+                </div>{{if file.Binary}}<div class="binary-text">Binary file not shown</div>{{else}}<pre>{{each(i, line) file.DiffLines}}<div class="line${getDiffClass(line.Type)}">${line.Value}</div>{{/each}}</pre>{{/if}}
             </div>
         {{/each}}
     </script>

@@ -76,14 +76,14 @@ namespace Kudu.Web {
                 Deletions = detail.Deletions;
                 FilesChanged = detail.FilesChanged;
                 Insertions = detail.Insertions;
-                FileStats = detail.FileStats;
+                Files = detail.Files;
             }
 
             public ChangeSetViewModel ChangeSet { get; set; }
             public int Deletions { get; set; }
             public int FilesChanged { get; set; }
             public int Insertions { get; set; }
-            public IDictionary<string, Kudu.Core.FileInfo> FileStats { get; set; }
+            public IDictionary<string, Kudu.Core.FileInfo> Files { get; set; }
         }
 
         public class ChangeSetViewModel {

@@ -9,7 +9,7 @@ namespace Kudu.Core {
 
         public ChangeSetDetail(ChangeSet changeSet) {
             ChangeSet = changeSet;
-            FileStats = new Dictionary<string, FileInfo>(StringComparer.OrdinalIgnoreCase);
+            Files = new Dictionary<string, FileInfo>(StringComparer.OrdinalIgnoreCase);
         }
 
         public int FilesChanged { get; set; }
@@ -17,6 +17,6 @@ namespace Kudu.Core {
         public int Insertions { get; set; }
 
         public ChangeSet ChangeSet { get; private set; }
-        public IDictionary<string, FileInfo> FileStats { get; private set; }
+        public IDictionary<string, FileInfo> Files { get; private set; }
     }
 }

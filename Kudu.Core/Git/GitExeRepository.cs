@@ -155,9 +155,9 @@ namespace Kudu.Core.Git {
         internal static void ParseDiffAndPopulate(IStringReader reader, ChangeSetDetail detail) {
             foreach (var diff in ParseDiff(reader)) {
                 FileInfo stats;
-                if (!detail.FileStats.TryGetValue(diff.FileName, out stats)) {
+                if (!detail.Files.TryGetValue(diff.FileName, out stats)) {
                     stats = new FileInfo();
-                    detail.FileStats.Add(diff.FileName, stats);
+                    detail.Files.Add(diff.FileName, stats);
                 }
 
                 // Set the binary flag if any of the files are binary
@@ -198,7 +198,7 @@ namespace Kudu.Core.Git {
                     Int32.TryParse(parts[1], out deletions);
                     string path = parts[2].Trim();
 
-                    detail.FileStats[path] = new FileInfo {
+                    detail.Files[path] = new FileInfo {
                         Insertions = insertions,
                         Deletions = deletions,
                         Binary = parts[0] == "-" && parts[1] == "-"
@@ -254,7 +254,7 @@ namespace Kudu.Core.Git {
             string fileName = headerReader.ReadUntilWhitespace();
 
             // Skip files from merged changesets
-            if (merge != null && merge.FileStats.ContainsKey(fileName)) {
+            if (merge != null && merge.Files.ContainsKey(fileName)) {
                 return null;
             }
 
