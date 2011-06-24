@@ -78,6 +78,17 @@
     background-image: url('images/page_white.png');
 }
 
+.icon-file-added {
+    background-image: url('images/page_white_add.png');
+}
+
+.icon-file-deleted {
+    background-image: url('images/page_white_delete.png');
+}
+
+.icon-file-modified {
+    background-image: url('images/page_white_edit.png');
+}
 
 #status {
     display: none;
@@ -102,17 +113,18 @@
 }
 
 .commit-summary {
-    margin-bottom: 2%;
+    margin-bottom: 1%;
     border-bottom: 1px solid #ccc;
 }
 
 .commit-file-summary {
-    margin-bottom: 2%;
-    padding: 0 0 0 2%;
+    padding: 0;
+    margin: 0 0 1% 0;
 }
 
 .commit-file-summary li {
     margin-bottom: 5px;
+    list-style-type: none;
 }
 
 .commit-file-summary li a {
@@ -190,14 +202,6 @@ form {
     font-weight: bold;
     padding: 1%;
     margin-bottom: 10px;
-}
-
-.binary-file {
-    list-style-image: url('images/page_white_gear.png');
-}
-
-.file {
-    list-style-image: url('images/page_white.png');
 }
 
 .gray-gradient {

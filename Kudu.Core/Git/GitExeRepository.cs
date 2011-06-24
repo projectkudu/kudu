@@ -74,7 +74,16 @@ namespace Kudu.Core.Git {
 
         public ChangeSetDetail GetDetails(string id) {
             string show = _gitExe.Execute("show {0} -m -p --numstat --shortstat", id);
-            return ParseShow(show.AsReader());
+            var detail = ParseShow(show.AsReader());
+
+            string showStatus = _gitExe.Execute("show {0} --name-status --oneline", id);
+            var statusReader = showStatus.AsReader();
+
+            // Skip the commit details
+            statusReader.ReadLine();
+            PopulateStatus(statusReader, detail);
+
+            return detail;
         }
 
         public ChangeSetDetail GetWorkingChanges() {
@@ -86,8 +95,12 @@ namespace Kudu.Core.Git {
             _gitExe.Execute("add .");
 
             string diff = _gitExe.Execute("diff --no-ext-diff -p --numstat --shortstat --staged");
+            var detail = ParseShow(diff.AsReader(), includeChangeSet: false);
 
-            return ParseShow(diff.AsReader(), includeChangeSet: false);
+            string status = _gitExe.Execute("diff --name-status --staged");
+            PopulateStatus(status.AsReader(), detail);
+
+            return detail;
         }
 
         private bool IsEmpty() {
@@ -119,6 +132,19 @@ namespace Kudu.Core.Git {
             do {
                 yield return ParseCommit(reader);
             } while (!reader.Done);
+        }
+
+        private void PopulateStatus(IStringReader reader, ChangeSetDetail detail) {
+            while (!reader.Done) {
+                string status = reader.ReadUntilWhitespace();
+                reader.SkipWhitespace();
+                string name = reader.ReadUntilWhitespace();
+                reader.SkipWhitespace();
+                FileInfo file;
+                if (detail.Files.TryGetValue(name, out file)) {
+                    file.Status = ConvertStatus(status);
+                }
+            }
         }
 
         private static bool IsCommitHeader(string value) {
@@ -341,11 +367,11 @@ namespace Kudu.Core.Git {
                 var subReader = reader.ReadLine().AsReader();
                 string status = subReader.ReadUntilWhitespace().Trim();
                 string path = subReader.ReadLine().Trim();
-                yield return new FileStatus(path, Convert(status));
+                yield return new FileStatus(path, ConvertStatus(status));
             }
         }
 
-        private ChangeType Convert(string status) {
+        private ChangeType ConvertStatus(string status) {
             switch (status) {
                 case "A":
                 case "AM":

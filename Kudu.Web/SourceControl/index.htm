@@ -47,7 +47,7 @@
         </div>
         <ul class="commit-file-summary">
             {{each(fileName, file) Files}}
-                <li class="${file.Binary ? "binary-file" : "file"}"><a href="#${getDiffId(fileName)}">${fileName}</a> {{if file.Binary}}<span class="details">(binary)</span>{{/if}}</li>
+                <li class="icon ${getFileClass(file)}"><a href="#${getDiffId(fileName)}">${fileName}</a> {{if file.Binary}}<span class="details">(binary)</span>{{/if}}</li>
             {{/each}}
         </ul>
         {{each(fileName, file) Files}}

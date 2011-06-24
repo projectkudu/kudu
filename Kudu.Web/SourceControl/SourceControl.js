@@ -18,8 +18,25 @@ $(function () {
         return path.replace(/\/|\./g, "-")
     }
 
+    function getFileClass(file) {
+        if (file.Status == 1) {
+            return 'icon-file-added';
+        }
+        else if (file.Status == 2) {
+            return 'icon-file-deleted';
+        }
+        else if (file.Status == 3) {
+            return 'icon-file-modified';
+        }
+        else if (file.Binary) {
+            return 'icon-binary-file';
+        }
+        return 'icon-file';
+    }
+
     window.getDiffClass = getDiffClass;
     window.getDiffId = getDiffId;
+    window.getFileClass = getFileClass;
 
     var changesXhr = null;
 

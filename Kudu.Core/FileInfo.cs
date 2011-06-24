@@ -10,10 +10,11 @@ namespace Kudu.Core {
         public int Deletions { get; set; }
         public int Insertions { get; set; }
         public bool Binary { get; set; }
+        public ChangeType Status { get; set; }
         public IList<LineDiff> DiffLines { get; private set; }
 
         public override string ToString() {
-            return String.Format("{0} (+), {1} (-)", Insertions, Deletions);
+            return String.Format("{0} {1} (+), {1} (-)", Status, Insertions, Deletions);
         }
     }
 }

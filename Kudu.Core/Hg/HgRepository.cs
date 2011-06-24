@@ -26,7 +26,9 @@ namespace Kudu.Core.Hg {
         }
 
         public IEnumerable<FileStatus> GetStatus() {
-            return _repository.Status().Select(s => new FileStatus(s.Path, Convert(s.State)));
+            return from fileStatus in _repository.Status()
+                   let path = fileStatus.Path.Replace('\\', '/')
+                   select new FileStatus(path, Convert(fileStatus.State));
         }
 
         public IEnumerable<ChangeSet> GetChanges() {
@@ -68,12 +70,22 @@ namespace Kudu.Core.Hg {
         }
 
         public ChangeSetDetail GetWorkingChanges() {
-            if (!GetStatus().Any()) {
+            var status = GetStatus().ToList();
+            if (!status.Any()) {
                 return null;
             }
 
             _repository.AddRemove();
-            return PopulateDetails(null, new ChangeSetDetail());
+            var detail = PopulateDetails(null, new ChangeSetDetail());
+
+            foreach (var fileStatus in status) {
+                FileInfo info;
+                if (detail.Files.TryGetValue(fileStatus.Path, out info)) {
+                    info.Status = fileStatus.Status;
+                }
+            }
+
+            return detail;
         }
 
         public void AddFile(string path) {

@@ -62,6 +62,9 @@
     <Content Include="Scripts\signalR.js" />
     <Content Include="signalR.js" />
     <Content Include="SourceControl\images\page_white.png" />
+    <Content Include="SourceControl\images\page_white_add.png" />
+    <Content Include="SourceControl\images\page_white_delete.png" />
+    <Content Include="SourceControl\images\page_white_edit.png" />
     <Content Include="SourceControl\images\page_white_gear.png" />
     <Content Include="SourceControl\images\tick.png" />
     <Content Include="SourceControl\index.htm" />
