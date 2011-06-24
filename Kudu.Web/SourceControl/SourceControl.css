@@ -219,3 +219,7 @@ form {
     float: left;
     margin-left: 5px;
 }
+
+.binary-text {
+    padding: 5px;
+}

@@ -53,7 +53,7 @@
             <div id="${getDiffId(diff.FileName)}" class="diff">
                 <div class="diff-header gray-gradient">
                     <span class="icon ${diff.Binary ? "icon-binary-file" : "icon-file"}">${diff.FileName}</span>
-                </div>{{if diff.Binary}}Binary file not shown{{else}}<pre>{{each(j, line) diff.Lines}}<div class="line${getDiffClass(line.Type)}">${line.Value}</div>{{/each}}</pre>{{/if}}
+                </div>{{if diff.Binary}}<div class="binary-text">Binary file not shown</div>{{else}}<pre>{{each(j, line) diff.Lines}}<div class="line${getDiffClass(line.Type)}">${line.Value}</div>{{/each}}</pre>{{/if}}
             </div>
         {{/each}}
     </script>
