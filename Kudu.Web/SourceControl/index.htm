@@ -26,7 +26,7 @@
         </tr>
     </script>
     <script id="changeset-detail" type="text/x-jquery-tmpl">
-        <div class="commit-detail">            
+        <div class="commit-detail gray-gradient">            
             <p>{{html ChangeSet.Message}}<p>
             ${ChangeSet.AuthorName} <span class="details">(author)<span>
             <div>${ChangeSet.Date}</div>
@@ -44,12 +44,9 @@
         </ul>
         {{each(i, diff) Diffs}}
             <div id="${getDiffId(diff.FileName)}" class="diff">
-                <div class="diff-header">
+                <div class="diff-header gray-gradient">
                     <span>${diff.FileName}</span>
-                </div>
-<pre>
-{{each(j, line) diff.Lines}}<div class="line${getDiffClass(line.Type)}">${line.Value}</div>{{/each}}
-</pre>
+                </div><pre>{{each(j, line) diff.Lines}}<div class="line${getDiffClass(line.Type)}">${line.Value}</div>{{/each}}</pre>
             </div>
         {{/each}}
     </script>

@@ -86,9 +86,6 @@
     margin-bottom: 2%;
     padding: 1%;
     border: 1px solid #ccc;
-    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f5f5f5', endColorstr='#ebebeb'); /* for IE */
-    background: -webkit-gradient(linear, left top, left bottom, from(#f5f5f5), to(#ebebeb)); /* for webkit browsers */
-    background: -moz-linear-gradient(top,  #f5f5f5,  #ebebeb); /* for firefox 3.6+ */
 }
 
 .commit-detail p {
@@ -97,10 +94,12 @@
 
 .commit-summary {
     margin-bottom: 2%;
+    border-bottom: 1px solid #ccc;
 }
 
 .commit-file-summary {
     margin-bottom: 2%;
+    padding: 0 0 0 2%;    
 }
 
 .commit-file-summary li {
@@ -118,13 +117,10 @@
     overflow: auto;
 }
 
-.diff-header span {
-}
-
 .diff-header {
     font-weight: bold;
+    padding: 5px;
     border-bottom: 1px solid #ccc;
-    margin: 5px;
 }
 
 .diff-add {
@@ -192,4 +188,10 @@ form {
 
 .file {
     list-style-image: url('images/page_white.png');
+}
+
+.gray-gradient {    
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f5f5f5', endColorstr='#ebebeb'); /* for IE */
+    background: -webkit-gradient(linear, left top, left bottom, from(#f5f5f5), to(#ebebeb)); /* for webkit browsers */
+    background: -moz-linear-gradient(top,  #f5f5f5,  #ebebeb); /* for firefox 3.6+ */
 }
