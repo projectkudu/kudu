@@ -34,8 +34,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="ServerSync.Core">
-      <HintPath>..\packages\ServerSync.Core.1.0.4188.12794\lib\net40\ServerSync.Core.dll</HintPath>
+    <Reference Include="ServerSync.Core, Version=1.0.4191.36048, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\ServerSync.Core.1.0.4191.36048\lib\net40\ServerSync.Core.dll</HintPath>
     </Reference>
     <Reference Include="SignalR">
       <HintPath>..\packages\SignalR.0.1.4178.22460\lib\net40\SignalR.dll</HintPath>
@@ -57,6 +58,7 @@
     <Reference Include="System.EnterpriseServices" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="signalR.js" />
     <Content Include="SourceControl\images\tick.png" />
     <Content Include="SourceControl\index.htm" />
     <Content Include="Scripts\jquery-1.6.1-vsdoc.js" />
@@ -68,7 +70,9 @@
     <Content Include="SourceControl\loader.js" />
     <Content Include="SourceControl\SourceControl.css" />
     <Content Include="SourceControl\SourceControl.js" />
-    <Content Include="Web.config" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </Content>
