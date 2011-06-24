@@ -35,6 +35,7 @@ $(function () {
         scm.connect(path, function () {
             scm.getChanges(function (changeSets) {
                 $('#changeset').tmpl(changeSets).appendTo($('#changes'));
+                $('.timeago').timeago();
 
                 var id = scm.state.id;
 
@@ -81,6 +82,7 @@ $(function () {
         window.loader.show('Loading commit ' + id);
         scm.show(id, function (details) {
             $('#changeset-detail').tmpl(details).appendTo($('#show'));
+            $('.timeago').timeago();
         }).complete(function () {
             window.loader.hide();
         });

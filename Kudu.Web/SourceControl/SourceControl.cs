@@ -92,7 +92,7 @@ namespace Kudu.Web {
                 Id = changeSet.Id;
                 ShortId = changeSet.Id.Substring(0, 12);
                 AuthorName = changeSet.AuthorName;
-                Date = changeSet.Timestamp.ToLocalTime().ToString();
+                Date = changeSet.Timestamp.ToString("u");
                 Message = changeSet.Message.Trim().Replace("\n", "<br/>");
             }
         }
