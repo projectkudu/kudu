@@ -169,16 +169,15 @@ $(function () {
         scm.commit($('#commit-message').val(), function (changeSet) {
             if (changeSet) {
                 $('#new-commit').html('Successfully commited ' + changeSet.ShortId);
-                $('#new-commit').show();
-
-                $('#diff').fadeOut('slow', function () {
-                    $('#diff').html('');
-                });
-
+                $('#new-commit').slideDown();
                 $('#commit-message').val('');
 
                 window.setTimeout(function () {
-                    $('#new-commit').fadeOut('slow');
+                    $('#new-commit').slideUp('slow', function () {
+                        window.setTimeout(function () {
+                            loadRepository(scm.state.repository);
+                        }, 500);
+                    });
                 }, 1000);
             }
             else {
