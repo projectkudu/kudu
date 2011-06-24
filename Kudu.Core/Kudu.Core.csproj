@@ -47,7 +47,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ChangeSetDetail.cs" />
-    <Compile Include="ChangeStats.cs" />
+    <Compile Include="FileInfo.cs" />
     <Compile Include="ChangeType.cs" />
     <Compile Include="FileDiff.cs" />
     <Compile Include="Hg\HgRepository.cs" />

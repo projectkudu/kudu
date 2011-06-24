@@ -100,14 +100,8 @@ namespace Kudu.Core.Hg {
 
             var diffReader = _repository.Diff(diffCommand).AsReader();
 
-            foreach (var diff in GitExeRepository.ParseDiff(diffReader)) {
-                detail.Diffs.Add(diff);
-                FileStats stats;
-                if (detail.FileStats.TryGetValue(diff.FileName, out stats)) {
-                    stats.Binary = diff.Binary;
-                }
-            }
-
+            GitExeRepository.ParseDiffAndPopulate(diffReader, detail);
+            
             return detail;
         }
 
@@ -117,7 +111,7 @@ namespace Kudu.Core.Hg {
                 if (line.Contains("|")) {
                     string[] parts = line.Split('|');
                     // TODO: Figure out a way to get this information
-                    detail.FileStats[parts[0].Trim()] = new FileStats {
+                    detail.FileStats[parts[0].Trim()] = new FileInfo {
                     };
                 }
                 else {

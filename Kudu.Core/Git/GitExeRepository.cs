@@ -147,15 +147,28 @@ namespace Kudu.Core.Git {
                 ParseSummary(reader, detail);
             }
 
-            foreach (var diff in ParseDiff(reader)) {
-                detail.Diffs.Add(diff);
-                FileStats stats;
-                if (detail.FileStats.TryGetValue(diff.FileName, out stats)) {
-                    diff.Binary = stats.Binary;
-                }
-            }
+            ParseDiffAndPopulate(reader, detail);
 
             return detail;
+        }
+
+        internal static void ParseDiffAndPopulate(IStringReader reader, ChangeSetDetail detail) {
+            foreach (var diff in ParseDiff(reader)) {
+                FileInfo stats;
+                if (!detail.FileStats.TryGetValue(diff.FileName, out stats)) {
+                    stats = new FileInfo();
+                    detail.FileStats.Add(diff.FileName, stats);
+                }
+
+                // Set the binary flag if any of the files are binary
+                bool binary = diff.Binary || stats.Binary;
+                stats.Binary = binary;
+                diff.Binary = binary;
+
+                foreach (var line in diff.Lines) {
+                    stats.DiffLines.Add(line);
+                }
+            }
         }
 
         private static ChangeSetDetail ParseCommitAndSummary(IStringReader reader) {
@@ -185,7 +198,7 @@ namespace Kudu.Core.Git {
                     Int32.TryParse(parts[1], out deletions);
                     string path = parts[2].Trim();
 
-                    detail.FileStats[path] = new FileStats {
+                    detail.FileStats[path] = new FileInfo {
                         Insertions = insertions,
                         Deletions = deletions,
                         Binary = parts[0] == "-" && parts[1] == "-"
@@ -336,6 +349,7 @@ namespace Kudu.Core.Git {
 
         private IEnumerable<FileStatus> ParseStatus(IStringReader reader) {
             while (!reader.Done) {
+                reader.SkipWhitespace();
                 var subReader = reader.ReadLine().AsReader();
                 string status = subReader.ReadUntilWhitespace().Trim();
                 string path = subReader.ReadLine().Trim();
@@ -349,6 +363,7 @@ namespace Kudu.Core.Git {
                 case "AM":
                     return ChangeType.Added;
                 case "M":
+                case "MM":
                     return ChangeType.Modified;
                 case "D":
                     return ChangeType.Deleted;
