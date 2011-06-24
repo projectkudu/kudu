@@ -102,6 +102,7 @@ namespace Kudu.Web {
             public string EmailHash { get; set; }
             public string Date { get; set; }
             public string Message { get; set; }
+            public string Summary { get; set; }
             public bool Active { get; set; }
 
             public ChangeSetViewModel(ChangeSet changeSet) {
@@ -110,7 +111,19 @@ namespace Kudu.Web {
                 AuthorName = changeSet.AuthorName;
                 EmailHash = String.IsNullOrEmpty(changeSet.AuthorEmail) ? null : Hash(changeSet.AuthorEmail);
                 Date = changeSet.Timestamp.ToString("u");
-                Message = changeSet.Message.Trim().Replace("\n", "<br/>");
+                Message = Process(changeSet.Message);
+                Summary = Process(Trim(changeSet.Message, 300));
+            }
+
+            private string Trim(string value, int max) {
+                if (value.Length > max) {
+                    return value.Substring(0, max) + "...";
+                }
+                return value;
+            }
+
+            private string Process(string value) {
+                return value.Trim().Replace("\n", "<br/>");
             }
 
             private string Hash(string value) {
