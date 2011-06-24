@@ -83,15 +83,15 @@ namespace Kudu.Core.Git {
         }
 
         public ChangeSetDetail GetWorkingChanges() {
+            if (!GetStatus().Any()) {
+                return null;
+            }
+
             // Add everything so we can see a diff of the current changes
             _gitExe.Execute("add .");
 
             string diff = _gitExe.Execute("diff --no-ext-diff -p --numstat --shortstat --staged");
 
-            // No working changes
-            if (String.IsNullOrEmpty(diff)) {
-                return null;
-            }
             return ParseShow(diff.AsReader(), includeChangeSet: false);
         }
 

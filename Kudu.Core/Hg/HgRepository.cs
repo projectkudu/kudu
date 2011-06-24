@@ -25,7 +25,7 @@ namespace Kudu.Core.Hg {
         }
 
         public IEnumerable<FileStatus> GetStatus() {
-            throw new NotImplementedException();
+            return _repository.Status().Select(s => new Kudu.Core.FileStatus(s.Path, Convert(s.State)));
         }
 
         public IEnumerable<ChangeSet> GetChanges() {
@@ -42,6 +42,10 @@ namespace Kudu.Core.Hg {
         }
 
         public ChangeSetDetail GetWorkingChanges() {
+            if (!GetStatus().Any()) {
+                return null;
+            }
+            _repository.AddRemove();
             return PopulateDetails(null, new ChangeSetDetail());
         }
 
@@ -56,12 +60,17 @@ namespace Kudu.Core.Hg {
         public ChangeSet Commit(string authorName, string message) {
             _repository.AddRemove();
 
-            var id = _repository.Commit(new CommitCommand {
-                OverrideAuthor = authorName,
-                Message = message
-            });
+            try {
+                var id = _repository.Commit(new CommitCommand {
+                    OverrideAuthor = authorName,
+                    Message = message
+                });
 
-            return GetChangeSet(id);
+                return GetChangeSet(id);
+            }
+            catch {
+                return null;
+            }
         }
 
         public void Update(string id) {
@@ -103,6 +112,7 @@ namespace Kudu.Core.Hg {
                 string line = reader.ReadLine();
                 if (line.Contains("|")) {
                     string[] parts = line.Split('|');
+                    // TODO: Figure out a way to get this information
                     detail.FileStats[parts[0].Trim()] = new FileStats {
                     };
                 }
@@ -120,6 +130,29 @@ namespace Kudu.Core.Hg {
 
         private ChangeSet CreateChangeSet(Changeset changeSet) {
             return new ChangeSet(changeSet.Hash, changeSet.AuthorName, changeSet.AuthorEmailAddress, changeSet.CommitMessage, new DateTimeOffset(changeSet.Timestamp));
+        }
+
+        private ChangeType Convert(FileState state) {
+            switch (state) {
+                case FileState.Added:
+                    return ChangeType.Added;
+                case FileState.Clean:
+                    break;
+                case FileState.Ignored:
+                    break;
+                case FileState.Missing:
+                    break;
+                case FileState.Modified:
+                    return ChangeType.Modified;
+                case FileState.Removed:
+                    return ChangeType.Deleted;
+                case FileState.Unknown:
+                    return ChangeType.Untracked;
+                default:
+                    break;
+            }
+
+            throw new InvalidOperationException("Unsupported status " + state);
         }
     }
 }
