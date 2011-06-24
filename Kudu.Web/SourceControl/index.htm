@@ -39,7 +39,7 @@
         </div>
         <ul class="commit-file-summary">
             {{each(key, stats) FileStats}}
-                <li><a href="#${getDiffId(key)}">${key}</a></li>
+                <li class="${stats.Binary ? "binary-file" : "file"}"><a href="#${getDiffId(key)}">${key}</a> {{if stats.Binary}}<span class="details">(binary)</span>{{/if}}</li>
             {{/each}}
         </ul>
         {{each(i, diff) Diffs}}

@@ -58,7 +58,10 @@
     <Reference Include="System.EnterpriseServices" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Scripts\signalR.js" />
     <Content Include="signalR.js" />
+    <Content Include="SourceControl\images\page_white.png" />
+    <Content Include="SourceControl\images\page_white_gear.png" />
     <Content Include="SourceControl\images\tick.png" />
     <Content Include="SourceControl\index.htm" />
     <Content Include="Scripts\jquery-1.6.1-vsdoc.js" />

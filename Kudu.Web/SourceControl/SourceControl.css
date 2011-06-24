@@ -185,3 +185,11 @@ form {
     font-weight: bold;
     padding: 1%;
 }
+
+.binary-file {
+    list-style-image: url('images/page_white_gear.png');
+}
+
+.file {
+    list-style-image: url('images/page_white.png');
+}

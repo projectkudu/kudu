@@ -126,7 +126,11 @@ $(function () {
             if (changeSet) {
                 $('#new-commit').html('Successfully commited ' + changeSet.ShortId);
                 $('#new-commit').show();
-                $('#diff').html('');
+
+                $('#diff').fadeOut('slow', function () {
+                    $('#diff').html('');
+                });
+
                 $('#commit-message').val('');
 
                 window.setTimeout(function () {
