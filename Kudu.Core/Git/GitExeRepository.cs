@@ -43,7 +43,7 @@ namespace Kudu.Core.Git {
         }
 
         public IEnumerable<ChangeSet> GetChanges(int index, int limit) {
-            return Log("log --skip {0} -n {1}", index, limit);
+            return Log("log --all --skip {0} -n {1}", index, limit);
         }
 
         public void AddFile(string path) {
