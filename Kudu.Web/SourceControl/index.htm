@@ -52,8 +52,8 @@
         {{each(i, diff) Diffs}}
             <div id="${getDiffId(diff.FileName)}" class="diff">
                 <div class="diff-header gray-gradient">
-                    <span>${diff.FileName}</span>
-                </div><pre>{{each(j, line) diff.Lines}}<div class="line${getDiffClass(line.Type)}">${line.Value}</div>{{/each}}</pre>
+                    <span class="icon ${diff.Binary ? "icon-binary-file" : "icon-file"}">${diff.FileName}</span>
+                </div>{{if diff.Binary}}Binary file not shown{{else}}<pre>{{each(j, line) diff.Lines}}<div class="line${getDiffClass(line.Type)}">${line.Value}</div>{{/each}}</pre>{{/if}}
             </div>
         {{/each}}
     </script>

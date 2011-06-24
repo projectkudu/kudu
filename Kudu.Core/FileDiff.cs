@@ -6,7 +6,7 @@ namespace Kudu.Core {
             FileName = fileName;
             Lines = new List<LineDiff>();
         }
-
+        public bool Binary { get; set; }
         public string FileName { get; private set; }
         public IList<LineDiff> Lines { get; private set; }
     }

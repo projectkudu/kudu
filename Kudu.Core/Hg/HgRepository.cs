@@ -102,6 +102,10 @@ namespace Kudu.Core.Hg {
 
             foreach (var diff in GitExeRepository.ParseDiff(diffReader)) {
                 detail.Diffs.Add(diff);
+                FileStats stats;
+                if (detail.FileStats.TryGetValue(diff.FileName, out stats)) {
+                    stats.Binary = diff.Binary;
+                }
             }
 
             return detail;

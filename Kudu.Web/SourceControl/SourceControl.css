@@ -70,6 +70,15 @@
     line-height: 20px;
 }
 
+.icon-binary-file {
+    background-image: url('images/page_white_gear.png');
+}
+
+.icon-file {
+    background-image: url('images/page_white.png');
+}
+
+
 #status {
     display: none;
 }

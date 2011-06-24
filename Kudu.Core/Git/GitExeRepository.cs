@@ -149,6 +149,10 @@ namespace Kudu.Core.Git {
 
             foreach (var diff in ParseDiff(reader)) {
                 detail.Diffs.Add(diff);
+                FileStats stats;
+                if (detail.FileStats.TryGetValue(diff.FileName, out stats)) {
+                    diff.Binary = stats.Binary;
+                }
             }
 
             return detail;
@@ -241,28 +245,39 @@ namespace Kudu.Core.Git {
                 return null;
             }
 
-            string result;
             var diff = new FileDiff(fileName);
 
-            // Parse the diff
-            if (reader.TryReadUntil("@@", out result)) {
-                while (!reader.Done) {
-                    string line = reader.ReadLine();
-                    if (line.StartsWith("+")) {
-                        diff.Lines.Add(new LineDiff(ChangeType.Added, line));
-                    }
-                    else if (line.StartsWith("-")) {
-                        diff.Lines.Add(new LineDiff(ChangeType.Deleted, line));
-                    }
-                    else if (IsCommitHeader(line)) {
-                        reader.PutBack(line.Length);
-                        merge = ParseCommitAndSummary(reader);
-                    }
-                    else {
-                        diff.Lines.Add(new LineDiff(ChangeType.None, line));
-                    }
+            while (!reader.Done) {
+                string line = reader.ReadLine();
+                if (line.StartsWith("@@")) {
+                    reader.PutBack(line.Length);
+                    break;
+                }
+                else if (line.StartsWith("GIT binary patch")) {
+                    diff.Binary = true;
+                    // Skip binary files
+                    reader.ReadToEnd();
                 }
             }
+
+            // Parse the file diff
+            while (!reader.Done) {
+                string line = reader.ReadLine();
+                if (line.StartsWith("+")) {
+                    diff.Lines.Add(new LineDiff(ChangeType.Added, line));
+                }
+                else if (line.StartsWith("-")) {
+                    diff.Lines.Add(new LineDiff(ChangeType.Deleted, line));
+                }
+                else if (IsCommitHeader(line)) {
+                    reader.PutBack(line.Length);
+                    merge = ParseCommitAndSummary(reader);
+                }
+                else {
+                    diff.Lines.Add(new LineDiff(ChangeType.None, line));
+                }
+            }
+
             return diff;
         }
 
