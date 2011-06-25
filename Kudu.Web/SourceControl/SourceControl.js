@@ -39,23 +39,25 @@ $(function () {
     window.getFileClass = getFileClass;
 
     var changesXhr = null;
+    var pageSize = 25;
 
     function getChangeSets(index, onComplete) {
         if (changesXhr) {
             changesXhr.abort();
         }
 
-        changesXhr = scm.getChanges(index, function (result) {
-            setupActions($('#changeset').tmpl(result.Items).appendTo($('#changes')));
+        changesXhr = scm.getChanges(index, pageSize, function (changes) {
+            setupActions($('#changeset').tmpl(changes).appendTo($('#changes')));
             $('.timeago').timeago();
 
-            if (result.More === true) {
-                getChangeSets(result.Current, onComplete);
-            }
-            else {
+            if (changes.length < pageSize) {
                 if (onComplete) {
                     onComplete();
                 }
+            }
+            else {
+                var next = index + changes.length;
+                getChangeSets(next, onComplete);
             }
         }).error(function () {
             if (onComplete) {
