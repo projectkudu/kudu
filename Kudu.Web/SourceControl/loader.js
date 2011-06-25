@@ -1,14 +1,16 @@
 ﻿(function ($, window) {
     var hide = false,
-        pendingShow = null;
+        pendingShow = null,
+        id = 0;
 
     var loader = {
         show: function (value, cssClass) {
-            if ($('#status').is(':hidden')) {
-                $('#status').html(value);
-                $('#status').attr('class', 'icon ' + (cssClass || 'icon-loading'));
-                $('#status').show();
-            }
+            var newId = id++;
+            $('#status').attr('data-id', newId);
+            $('#status').html(value);
+            $('#status').attr('class', 'icon ' + (cssClass || 'icon-loading'));
+            $('#status').show();
+            return newId;
         },
         showAfter: function (delay, value, cssClass) {
             hide = false;
@@ -18,7 +20,7 @@
                 }
             }, this), delay);
         },
-        hide: function () {
+        hide: function (id) {
             hide = true;
 
             if (pendingShow) {
@@ -26,7 +28,9 @@
             }
 
             window.setTimeout($.proxy(function () {
-                $('#status').fadeOut('slow');
+                if ($('#status').attr('data-id') == id) {
+                    $('#status').fadeOut('slow');
+                }
             }, this), 100);
         }
     };

@@ -95,20 +95,17 @@ $(function () {
         });
     }
 
-    function loadRepository(path, onComplete) {
+    function loadRepository(path) {
         $('#show').hide();
         $('#working').hide();
 
         $('#changes').html('');
         $('#log').show();
 
-        window.loader.show('Updating repository...');
+        var token = window.loader.show('Loading commits...');
 
         getChangeSets(0, function () {
-            if (onComplete) {
-                onComplete();
-            }
-            window.loader.hide();
+            window.loader.hide(token);
         });
     }
 
@@ -123,14 +120,16 @@ $(function () {
         $('#show').html('');
         $('#show').show();
 
-        window.loader.show('Loading commit ' + id);
+        var token = window.loader.show('Loading commit ' + id);
 
         scm.show(id, function (details) {
             $('#changeset-detail').tmpl(details).appendTo($('#show'));
             $('.timeago').timeago();
+
+            window.loader.hide(token);
         })
-        .complete(function () {
-            window.loader.hide();
+        .error(function () {
+            window.loader.hide(token);
         });
     }
 
@@ -146,7 +145,7 @@ $(function () {
         $('#diff').show();
         $('#working').show();
 
-        window.loader.show('Loading working directory');
+        var token = window.loader.show('Loading working directory');
 
         scm.getWorking(function (details) {
             if (details) {
@@ -157,7 +156,7 @@ $(function () {
             }
         })
         .complete(function () {
-            window.loader.hide();
+            window.loader.hide(token);
         });
     }
 
@@ -188,7 +187,7 @@ $(function () {
         this.post('#/commit', function () {
             var context = this;
 
-            window.loader.show('Commiting changes');
+            var token= window.loader.show('Commiting changes');
 
             scm.commit(this.params.message, function (changeSet) {
                 if (changeSet) {
@@ -209,7 +208,7 @@ $(function () {
                 }
             })
             .complete(function () {
-                window.loader.hide();
+                window.loader.hide(token);
             });
 
             return false;
