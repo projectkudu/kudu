@@ -146,8 +146,7 @@
 
 .diff {
     margin-bottom: 3%;
-    border: 1px solid #ccc;
-    overflow: auto;
+    border: 1px solid #ccc;    
 }
 
 .diff-header {
@@ -169,6 +168,10 @@
     margin: 0;
     font-size: 13px;
     font-family: Consolas, Lucida Grande;
+}
+
+.diff-source {
+   overflow: auto;
 }
 
 a {
@@ -239,4 +242,8 @@ form {
 
 .binary-text {
     padding: 5px;
+}
+
+.line {
+    width: 100%;
 }
