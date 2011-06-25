@@ -10,11 +10,7 @@ using Kudu.Core.Hg;
 using ServerSync;
 
 namespace Kudu.Web {
-    public class SourceControl : Hub {
-        public void Connect(string path) {
-            Caller.repository = path;
-        }
-
+    public class SourceControl : Hub {        
         public ChangeSetDetailViewModel Show(string id) {
             var repository = GetRepository();
             return new ChangeSetDetailViewModel(repository.GetDetails(id));
@@ -62,7 +58,12 @@ namespace Kudu.Web {
         }
 
         private IRepository GetRepository() {
-            string path = Caller.repository;
+            string path = Caller.path;
+
+            if (String.IsNullOrEmpty(path)) {
+                throw new InvalidOperationException("No repository path!");
+            }
+
             if (Directory.EnumerateDirectories(path, ".hg").Any()) {
                 return new HgRepository(path);
             }

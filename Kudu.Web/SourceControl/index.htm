@@ -4,7 +4,9 @@
     <title></title>
     <link href="SourceControl.css" rel="stylesheet" type="text/css" />
     <script src="../Scripts/jquery-1.6.1.min.js" type="text/javascript"></script>
+    <script src="../Scripts/jquery.cookie.js" type="text/javascript"></script>
     <script src="../Scripts/jQuery.tmpl.min.js" type="text/javascript"></script> 
+    <script src="../Scripts/sammy.js" type="text/javascript"></script>
     <script src="../Scripts/jquery.timeago.js" type="text/javascript"></script>
     <script src="../Scripts/signalR.js" type="text/javascript"></script>   
     <script src="../../signalr/hubs" type="text/javascript"></script>
@@ -18,7 +20,7 @@
             <td class="timeago" title="${Date}"></td>
             <td class="actions">                
                 <a href="#" class="update">update</a>
-                <a href="#" class="view">view</a>
+                <a href="#/view/${Id}" class="view">view</a>
             </td>
             <td>
                 <img class="loading hide" src="images/loading.gif" />
@@ -77,13 +79,12 @@
         <div id="new-commit">
         </div>
         <div id="menu">
-            <form id="connect" action="#" method="post">
+            <form action="#/" method="post">
                 <label for="path">Repository: </label>
                 <input type="text" name="path" id="path" value="" />
                 <input type="submit" id="update" value="Update" />
             </form>        
-            <a href="#" id="back">Back to repository</a>
-            <a href="#" id="show-working">Working Directory</a>
+            <a href="#/working" id="show-working">Working Directory</a>
         </div>
         <div id="status-container">
             <div id="status">
@@ -110,7 +111,7 @@
 
         <div id="working">
             <div id="commit-area">
-                <form id="commit" action="#" method="post">
+                <form action="#/commit" method="post">
                     <label for="message">Enter commit message:</label>
                     <textarea id="commit-message" name="message"></textarea>
                     <input type="submit" id="perform-commit" name="commit" value="Commit changes" />

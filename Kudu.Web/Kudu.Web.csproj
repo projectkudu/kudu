@@ -58,7 +58,9 @@
     <Reference Include="System.EnterpriseServices" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Scripts\jquery.cookie.js" />
     <Content Include="Scripts\jquery.timeago.js" />
+    <Content Include="Scripts\sammy.js" />
     <Content Include="Scripts\signalR.js" />
     <Content Include="signalR.js" />
     <Content Include="SourceControl\images\page_white.png" />

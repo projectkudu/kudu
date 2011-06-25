@@ -1,8 +1,13 @@
 ﻿/// <reference path="Scripts/jquery-1.6.1.js" />
 /// <reference path="loader.js" />
+/// <reference path="../Scripts/sammy-latest.min.js" />
+/// <reference path="../Scripts/jquery.cookie.js" />
 
 $(function () {
     var scm = signalR.SourceControl;
+    var path = $.cookie("path");
+    scm.state.path = path;
+    $('#path').val(path || '');
 
     function getDiffClass(type) {
         if (type == 1) {
@@ -47,6 +52,8 @@ $(function () {
         }
 
         changesXhr = scm.getChanges(index, pageSize, function (changes) {
+            $.cookie("path", scm.state.path);
+
             setupActions($('#changeset').tmpl(changes).appendTo($('#changes')));
             $('.timeago').timeago();
 
@@ -59,7 +66,8 @@ $(function () {
                 var next = index + changes.length;
                 getChangeSets(next, onComplete);
             }
-        }).error(function () {
+        })
+        .error(function () {
             if (onComplete) {
                 onComplete();
             }
@@ -85,39 +93,23 @@ $(function () {
 
             return false;
         });
-
-        element.find('.view').click(function () {
-            var item = $.tmplItem(this);
-            show(item.data.Id);
-        });
     }
 
     function loadRepository(path, onComplete) {
-        $('#back').hide();
         $('#show').hide();
         $('#working').hide();
 
         $('#changes').html('');
         $('#log').show();
-        $('#show-working').show();
 
         window.loader.show('Updating repository...');
 
-        var callback = function () {
+        getChangeSets(0, function () {
             if (onComplete) {
                 onComplete();
             }
             window.loader.hide();
-        };
-
-        if (scm.state.repository !== path) {
-            scm.connect(path, function () {
-                getChangeSets(0, callback);
-            });
-        }
-        else {
-            getChangeSets(0, callback);
-        }
+        });
     }
 
     function show(id) {
@@ -127,17 +119,17 @@ $(function () {
 
         $('#log').hide();
         $('#working').hide();
-        $('#show-working').hide();
 
         $('#show').html('');
         $('#show').show();
-        $('#back').show();
 
         window.loader.show('Loading commit ' + id);
+
         scm.show(id, function (details) {
             $('#changeset-detail').tmpl(details).appendTo($('#show'));
             $('.timeago').timeago();
-        }).complete(function () {
+        })
+        .complete(function () {
             window.loader.hide();
         });
     }
@@ -151,8 +143,9 @@ $(function () {
         $('#show').hide();
 
         $('#diff').html('');
+        $('#diff').show();
         $('#working').show();
-        $('#back').show();
+
         window.loader.show('Loading working directory');
 
         scm.getWorking(function (details) {
@@ -162,68 +155,66 @@ $(function () {
             else {
                 $('#diff').html('No changes');
             }
-            $('#diff').show();
-        }).complete(function () {
+        })
+        .complete(function () {
             window.loader.hide();
         });
     }
 
-    $('#connect').submit(function () {
-        var button = $('#update');
-
-        $(button).attr('disabled', 'disabled');
-        loadRepository($('#path').val(), function () {
-            $(button).removeAttr('disabled');
+    var app = $.sammy(function () {
+        this.get('#/', function () {
+            var path = scm.state.path;
+            if (path) {
+                loadRepository(path);
+            }
+            return false;
         });
 
-        return false;
-    });
+        this.post('#/', function () {
+            scm.state.path = this.params.path;
+            this.redirect('#/');
 
-    $('#commit').submit(function () {
-        var button = $('#perform-commit');
-
-        window.loader.show('Commiting changes');
-
-        $(button).attr('disabled', 'disabled');
-        scm.commit($('#commit-message').val(), function (changeSet) {
-            if (changeSet) {
-                $('#new-commit').html('Successfully commited ' + changeSet.ShortId);
-                $('#new-commit').slideDown();
-                $('#commit-message').val('');
-
-                window.setTimeout(function () {
-                    $('#new-commit').slideUp('slow', function () {
-                        window.setTimeout(function () {
-                            loadRepository(scm.state.repository);
-                        }, 500);
-                    });
-                }, 1000);
-            }
-            else {
-                alert('No pending changes');
-            }
-        }).complete(function () {
-            $(button).removeAttr('disabled');
-            window.loader.hide();
+            return false;
         });
 
-        return false;
+        this.get('#/view/:id', function () {
+            show(this.params.id);
+        });
+
+        this.get('#/working', function () {
+            viewWorking();
+        });
+
+        this.post('#/commit', function () {
+            var context = this;
+
+            window.loader.show('Commiting changes');
+
+            scm.commit(this.params.message, function (changeSet) {
+                if (changeSet) {
+                    $('#new-commit').html('Successfully commited ' + changeSet.ShortId);
+                    $('#new-commit').slideDown();
+                    $('#commit-message').val('');
+
+                    window.setTimeout(function () {
+                        $('#new-commit').slideUp('slow', function () {
+                            window.setTimeout(function () {
+                                context.redirect('#/');
+                            }, 500);
+                        });
+                    }, 1000);
+                }
+                else {
+                    alert('No pending changes');
+                }
+            })
+            .complete(function () {
+                window.loader.hide();
+            });
+
+            return false;
+        });
     });
 
-    $('#back').click(function () {
-        $('#show').hide();
-        $('#working').hide();
-        $(this).hide();
-
-        loadRepository(scm.state.repository);
-        return false;
-    });
-
-    $('#show-working').click(function () {
-        $(this).hide();
-
-        viewWorking();
-        return false;
-    });
-
+    app.run('#/');
 });
