@@ -63,6 +63,7 @@
     <Content Include="Scripts\sammy.js" />
     <Content Include="Scripts\signalR.js" />
     <Content Include="signalR.js" />
+    <Content Include="SourceControl\images\folder_table.png" />
     <Content Include="SourceControl\images\page_white.png" />
     <Content Include="SourceControl\images\page_white_add.png" />
     <Content Include="SourceControl\images\page_white_delete.png" />

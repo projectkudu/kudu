@@ -145,7 +145,7 @@ $(function () {
         $('#diff').show();
         $('#working').show();
 
-        var token = window.loader.show('Loading working directory');
+        var token = window.loader.show('Loading working directory...');
 
         scm.getWorking(function (details) {
             if (details) {
@@ -187,7 +187,7 @@ $(function () {
         this.post('#/commit', function () {
             var context = this;
 
-            var token= window.loader.show('Commiting changes');
+            var token= window.loader.show('Commiting changes...');
 
             scm.commit(this.params.message, function (changeSet) {
                 if (changeSet) {

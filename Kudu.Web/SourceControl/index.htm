@@ -77,14 +77,18 @@
 <body>
     <div id="page">
         <div id="new-commit">
-        </div>
-        <div id="menu">
+        </div>        
+        <div id="menu" class="gray-gradient">
+            <div id="links">
+                <a href="#/">Commits</a>
+                <a href="#/working" class="icon icon-working-dir" id="show-working">Working directory</a>
+            </div>
             <form action="#/" method="post">
                 <label for="path">Repository: </label>
                 <input type="text" name="path" id="path" value="" />
                 <input type="submit" id="update" value="Update" />
-            </form>
-            <a href="#/working" id="show-working">Working Directory</a>
+            </form>            
+            <div class="clear"></div>
         </div>
         <div id="status-container">
             <div id="status">
