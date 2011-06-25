@@ -33,7 +33,11 @@
 }
 
 #log th:nth-child(1) {
-    width: 10%;
+    width: 9%;
+}
+
+#log th:nth-child(2) {
+    width: 60%;
 }
 
 #log th:nth-child(3) {
@@ -42,6 +46,14 @@
 
 #log th:nth-child(4) {
     width: 10%;
+}
+
+#log th:nth-child(5) {
+    width: 10%;
+}
+
+#log th:nth-child(6) {
+    width: 1%;
 }
 
 #log .hide {

@@ -81,6 +81,7 @@ namespace Kudu.Core.Git {
 
             // Skip the commit details
             statusReader.ReadLine();
+            statusReader.SkipWhitespace();
             PopulateStatus(statusReader, detail);
 
             return detail;

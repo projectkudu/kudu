@@ -18,7 +18,7 @@
             <td class="timeago" title="${Date}"></td>
             <td class="actions">                
                 <a href="#" class="update">update</a>
-                <a href="#?id=${Id}" class="view">view</a>
+                <a href="#" class="view">view</a>
             </td>
             <td>
                 <img class="loading hide" src="images/loading.gif" />
@@ -47,7 +47,7 @@
         </div>
         <ul class="commit-file-summary">
             {{each(fileName, file) Files}}
-                <li class="icon ${getFileClass(file)}"><a href="#${getDiffId(fileName)}">${fileName}</a> {{if file.Binary}}<span class="details">(binary)</span>{{/if}}</li>
+                <li class="icon ${getFileClass(file)}"><a href="#">${fileName}</a> {{if file.Binary}}<span class="details">(binary)</span>{{/if}}</li>
             {{/each}}
         </ul>
         {{each(fileName, file) Files}}
