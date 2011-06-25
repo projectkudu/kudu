@@ -112,7 +112,9 @@ namespace Kudu.Web {
                 EmailHash = String.IsNullOrEmpty(changeSet.AuthorEmail) ? null : Hash(changeSet.AuthorEmail);
                 Date = changeSet.Timestamp.ToString("u");
                 Message = Process(changeSet.Message);
-                Summary = Process(Trim(changeSet.Message, 300));
+                // Show first line only
+                var reader = new StringReader(changeSet.Message);
+                Summary = Process(Trim(reader.ReadLine(), 300));
             }
 
             private string Trim(string value, int max) {

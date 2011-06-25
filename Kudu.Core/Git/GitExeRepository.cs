@@ -76,7 +76,7 @@ namespace Kudu.Core.Git {
             string show = _gitExe.Execute("show {0} -m -p --numstat --shortstat", id);
             var detail = ParseShow(show.AsReader());
 
-            string showStatus = _gitExe.Execute("show {0} --name-status --oneline", id);
+            string showStatus = _gitExe.Execute("show {0} -m --name-status --format=\"%H\"", id);
             var statusReader = showStatus.AsReader();
 
             // Skip the commit details
@@ -137,10 +137,16 @@ namespace Kudu.Core.Git {
 
         private void PopulateStatus(IStringReader reader, ChangeSetDetail detail) {
             while (!reader.Done) {
-                string status = reader.ReadUntilWhitespace();
-                reader.SkipWhitespace();
-                string name = reader.ReadUntilWhitespace();
-                reader.SkipWhitespace();
+                string line = reader.ReadLine();
+                // Status lines contain tabs
+                if (!line.Contains("\t")) {
+                    continue;
+                }
+                var lineReader = line.AsReader();
+                string status = lineReader.ReadUntilWhitespace();
+                lineReader.SkipWhitespace();
+                string name = lineReader.ReadUntilWhitespace();
+                lineReader.SkipWhitespace();
                 FileInfo file;
                 if (detail.Files.TryGetValue(name, out file)) {
                     file.Status = ConvertStatus(status);

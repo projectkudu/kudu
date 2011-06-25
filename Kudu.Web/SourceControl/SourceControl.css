@@ -4,9 +4,9 @@
 }
 
 #page {
-    width: 90%;
-    margin-left: auto;
-    margin-right: auto;
+    margin: 0 auto;
+    padding: 0 15px;
+    width: 920px;
 }
 
 #log {
