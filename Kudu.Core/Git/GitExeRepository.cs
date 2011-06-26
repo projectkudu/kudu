@@ -56,7 +56,7 @@ namespace Kudu.Core.Git {
 
         public ChangeSet Commit(string authorName, string message) {
             // Add all unstaged files
-            _gitExe.Execute("add .");
+            _gitExe.Execute("add -A");
             string output = _gitExe.Execute("commit -m\"{0}\" --author=\"{1}\"", message, authorName);
 
             // No pending changes
@@ -93,7 +93,7 @@ namespace Kudu.Core.Git {
             }
 
             // Add everything so we can see a diff of the current changes
-            _gitExe.Execute("add .");
+            _gitExe.Execute("add -A");
 
             string diff = _gitExe.Execute("diff --no-ext-diff -p --numstat --shortstat --staged");
             var detail = ParseShow(diff.AsReader(), includeChangeSet: false);
