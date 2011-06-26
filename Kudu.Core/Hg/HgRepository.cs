@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Kudu.Core.Git;
 using Kudu.Core.Infrastructure;
 using Mercurial;
@@ -123,13 +124,16 @@ namespace Kudu.Core.Hg {
             // the branches command (http://mercurialnet.codeplex.com/workitem/14)
             var branchReader = _hgExe.Execute("branches").AsReader();
 
-            while (!branchReader.Done) {
+            while (!branchReader.Done) {                
                 // name WS revision:hash
-                var lineReader = branchReader.ReadLine().AsReader();
-                string name = lineReader.ReadUntil(Char.IsNumber).Trim();
-                int revision = lineReader.ReadInt();
-                string id = GetChangeSet(revision).Id;
-                yield return new Branch(id, name);
+                string line = branchReader.ReadLine();
+                var match = Regex.Match(line, @"(?<rev>\d+)\:");
+                if (match.Success) {
+                    string name = line.Substring(0, match.Index).Trim();
+                    int revision = Int32.Parse(match.Groups["rev"].Value);
+                    string id = GetChangeSet(revision).Id;
+                    yield return new Branch(id, name);
+                }
             }
         }
 
