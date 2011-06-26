@@ -117,6 +117,10 @@ namespace Kudu.Web {
             }
 
             private string Trim(string value, int max) {
+                if (String.IsNullOrEmpty(value)) {
+                    return value;
+                }
+
                 if (value.Length > max) {
                     return value.Substring(0, max) + "...";
                 }
@@ -124,6 +128,9 @@ namespace Kudu.Web {
             }
 
             private string Process(string value) {
+                if (String.IsNullOrEmpty(value)) {
+                    return value;
+                }
                 return value.Trim().Replace("\n", "<br/>");
             }
 
