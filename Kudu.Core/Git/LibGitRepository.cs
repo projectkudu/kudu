@@ -85,7 +85,7 @@ namespace Kudu.Core.Git {
         public void AddFile(string path) {
             Repository.Index.Stage(path);
         }
-        
+
         public void RemoveFile(string path) {
             Repository.Index.Unstage(path);
         }
@@ -95,13 +95,13 @@ namespace Kudu.Core.Git {
         }
 
         public IEnumerable<Branch> GetBranches() {
-            return from b in _repository.Branches
-                   where !b.IsRemote
-                   select new Branch(b.Tip.Id.Sha, b.Name);
+            return from branch in _repository.Branches
+                   where !branch.IsRemote
+                   select new Branch(branch.Tip.Id.Sha, branch.Name);
         }
 
         private static ChangeSet CreateChangeSet(Commit commit) {
-            return new ChangeSet(commit.Id.Sha, 
+            return new ChangeSet(commit.Id.Sha,
                                  commit.Author.Name,
                                  commit.Author.Email,
                                  commit.Message,

@@ -205,11 +205,11 @@
    overflow: auto;
 }
 
-a {
+.actions a {
     color: Blue;
 }
 
-a:visited {
+.actions a:visited {
     color: Blue;
 }
 
@@ -288,7 +288,7 @@ form {
     filter:progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#3700ff', endColorstr='#0015ff');
     background:-webkit-gradient(linear, left top, left bottom, from(#3700ff), to(#0015ff));
     background:-moz-linear-gradient(top,  #3700ff,  #0015ff);  
-    color: #FFFFFF;  
+    color: #fff;
     text-shadow:-1px -1px 0 rgba(0,0,0,0.2);
     margin-bottom: 1%;
 }

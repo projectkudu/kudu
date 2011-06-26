@@ -126,8 +126,7 @@ namespace Kudu.Core.Hg {
             while (!branchReader.Done) {
                 // name WS revision:hash
                 var lineReader = branchReader.ReadLine().AsReader();
-                string name = lineReader.ReadUntilWhitespace();
-                lineReader.SkipWhitespace();
+                string name = lineReader.ReadUntil(Char.IsNumber).Trim();
                 int revision = lineReader.ReadInt();
                 string id = GetChangeSet(revision).Id;
                 yield return new Branch(id, name);

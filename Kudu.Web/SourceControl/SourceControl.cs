@@ -61,8 +61,6 @@ namespace Kudu.Web {
             var repository = GetRepository();
 
             repository.Update(id);
-
-            Caller.id = id;
         }
 
         private IRepository GetRepository() {

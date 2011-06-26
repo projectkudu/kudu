@@ -17,7 +17,7 @@
             <td>${ShortId}</td>
             <td>
                 {{each(i, branch) getBranches($data.Id)}}
-                <span class="branch">${branch}</span>
+                <a href="#" class="branch update" data-id="${Id}" data-branch="${branch}">${branch}</a>
                 {{/each}}
                 <div class="description">
                     {{html Summary}}
@@ -26,7 +26,7 @@
             <td>${AuthorName}</td>
             <td class="timeago" title="${Date}"></td>
             <td class="actions">                
-                <a href="#" class="update">update</a>
+                <a href="#" class="update" data-id="${Id}">update</a>
                 <a href="#/view/${Id}" class="view">view</a>
             </td>
             <td>

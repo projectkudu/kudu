@@ -86,14 +86,17 @@ $(function () {
         var id = scm.state.id;
 
         element.find('.update').click(function () {
-            var item = $.tmplItem(this);
-            var newId = item.data.Id;
+            var newId = $(this).attr('data-id');
+            var branch = $(this).attr('data-branch');
 
             $('#' + newId).find('.loading').show();
+            $('#' + id).find('.status').addClass('hide');
 
-            scm.update(newId, function () {
+            scm.update(branch || newId, function () {
+                scm.state.id = newId;
+                scm.state.branch = branch;
+
                 $('#' + newId).find('.loading').hide();
-                $('#' + id).find('.status').addClass('hide');
                 $('#' + newId).find('.status').removeClass('hide');
 
                 id = newId;
