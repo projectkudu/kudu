@@ -74,7 +74,7 @@ $(function () {
 
             $.cookie("path", scm.state.path);
 
-            setupActions($('#changeset').tmpl(changes).appendTo($('#changes')));
+            setupActions($('#changes').append($('#changeset').render(changes)));
             scm.state.index = index + changes.length;
 
             $('.timeago').timeago();
@@ -151,7 +151,7 @@ $(function () {
         var token = window.loader.show('Loading commit ' + id);
 
         scm.show(id, function (details) {
-            $('#changeset-detail').tmpl(details).appendTo($('#show'));
+            $('#show').append($('#changeset-detail').render(details));
             $('.timeago').timeago();
 
             window.loader.hide(token);
@@ -177,7 +177,7 @@ $(function () {
 
         scm.getWorking(function (details) {
             if (details) {
-                $('#diff-view').tmpl(details).appendTo($('#diff'));
+                $('#diff').html($('#diff-view').render(details));
             }
             else {
                 $('#diff').html('No changes');

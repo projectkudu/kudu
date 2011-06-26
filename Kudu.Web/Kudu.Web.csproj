@@ -59,10 +59,10 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Scripts\jquery.cookie.js" />
+    <Content Include="Scripts\jquery.render.min.js" />
     <Content Include="Scripts\jquery.timeago.js" />
     <Content Include="Scripts\sammy.js" />
     <Content Include="Scripts\signalR.js" />
-    <Content Include="signalR.js" />
     <Content Include="SourceControl\images\folder_table.png" />
     <Content Include="SourceControl\images\page_white.png" />
     <Content Include="SourceControl\images\page_white_add.png" />
@@ -74,8 +74,6 @@
     <Content Include="Scripts\jquery-1.6.1-vsdoc.js" />
     <Content Include="Scripts\jquery-1.6.1.js" />
     <Content Include="Scripts\jquery-1.6.1.min.js" />
-    <Content Include="Scripts\jQuery.tmpl.js" />
-    <Content Include="Scripts\jQuery.tmpl.min.js" />
     <Content Include="SourceControl\images\loading.gif" />
     <Content Include="SourceControl\loader.js" />
     <Content Include="SourceControl\SourceControl.css" />
