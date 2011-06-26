@@ -52,7 +52,7 @@ $(function () {
     window.getBranches = getBranches;
 
     var changesXhr = null;
-    var pageSize = 25;
+    var pageSize = 15;
 
     function getChangeSets(index, onComplete) {
         if (changesXhr) {
