@@ -6,7 +6,7 @@
 #page {
     margin: 0 auto;
     padding: 0 15px;
-    width: 1020;
+    width: 1020px;
 }
 
 #log {
@@ -15,6 +15,7 @@
     border-collapse: collapse;
     border: 1px solid #ccc;
     width: 100%;
+    margin-bottom: 1%;
 }
 
 #log td {
@@ -177,7 +178,7 @@
 
 .diff {
     margin-bottom: 3%;
-    border: 1px solid #ccc;    
+    border: 1px solid #ccc;
 }
 
 .diff-header {
@@ -202,7 +203,7 @@
 }
 
 .diff-source {
-   overflow: auto;
+    overflow: auto;
 }
 
 .actions a {
@@ -285,10 +286,19 @@ form {
     padding: 1px 4px;
     text-decoration: none;
     background: #3700ff;
-    filter:progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#3700ff', endColorstr='#0015ff');
-    background:-webkit-gradient(linear, left top, left bottom, from(#3700ff), to(#0015ff));
-    background:-moz-linear-gradient(top,  #3700ff,  #0015ff);  
+    filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#3700ff', endColorstr='#0015ff');
+    background: -webkit-gradient(linear, left top, left bottom, from(#3700ff), to(#0015ff));
+    background: -moz-linear-gradient(top,  #3700ff,  #0015ff);
     color: #fff;
-    text-shadow:-1px -1px 0 rgba(0,0,0,0.2);
+    text-shadow: -1px -1px 0 rgba(0,0,0,0.2);
     margin-bottom: 1%;
+}
+
+#infinite-status {
+    margin: 0 auto;
+    width: 200px;
+}
+
+#footer {
+    margin-top: 100px;
 }

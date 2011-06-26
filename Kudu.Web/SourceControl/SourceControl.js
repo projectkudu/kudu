@@ -56,26 +56,28 @@ $(function () {
 
     function getChangeSets(index, onComplete) {
         if (changesXhr) {
-            changesXhr.abort();
+            return;
+        }
+
+        if (scm.state.full === true) {
+            return;
         }
 
         changesXhr = scm.getChanges(index, pageSize, function (changes) {
+            changesXhr = null;
+
             $.cookie("path", scm.state.path);
 
             setupActions($('#changeset').tmpl(changes).appendTo($('#changes')));
+            scm.state.index = index + changes.length;
+
             $('.timeago').timeago();
 
             if (changes.length < pageSize) {
-                if (onComplete) {
-                    onComplete();
-                }
-            }
-            else {
-                var next = index + changes.length;
-                getChangeSets(next, onComplete);
+                scm.state.full = true;
             }
         })
-        .error(function () {
+        .complete(function () {
             if (onComplete) {
                 onComplete();
             }
@@ -114,6 +116,8 @@ $(function () {
         $('#log').show();
 
         var token = window.loader.show('Loading commits...');
+        scm.state.index = 0;
+        scm.state.full = false;
 
         scm.getBranches(function (branches) {
             scm.state.branches = branches;
@@ -177,6 +181,34 @@ $(function () {
             window.loader.hide(token);
         });
     }
+
+    function getMoreChanges() {
+        if (!scm.state.id || scm.state.full === true) {
+            return;
+        }
+
+        var threshold = 25;
+        var min = $(document).scrollTop();
+        var max = min + $(window).height();
+
+        var e = $('#changes').find('tr:last');
+        var pos = e.position();
+
+        if (pos) {
+            var top = pos.top - threshold;
+
+            // Load more changes if we're in range
+            if (top >= min && top <= max) {
+                var token = window.infititeLoader.show('Loading more commits...');
+
+                getChangeSets(scm.state.index, function () {
+                    window.infititeLoader.hide(token);
+                });
+            }
+        }
+    }
+
+    window.setInterval(getMoreChanges, 500);
 
     var app = $.sammy(function () {
         this.get('#/', function () {

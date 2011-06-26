@@ -1,40 +1,28 @@
 ﻿(function ($, window) {
-    var hide = false,
-        pendingShow = null,
-        id = 0;
+    var loader = function (selector) {
+        this.selector = selector;
+        this.token = 0;
+    };
 
-    var loader = {
-        show: function (value, cssClass) {
-            var newId = id++;
-            $('#status').attr('data-id', newId);
-            $('#status').html(value);
-            $('#status').attr('class', 'icon ' + (cssClass || 'icon-loading'));
-            $('#status').show();
-            return newId;
+    loader.prototype = {
+        show: function (value) {
+            var token = this.token++;
+            $(this.selector).attr('data-token', token);
+            $(this.selector).html(value);
+            $(this.selector).attr('class', 'icon icon-loading');
+            $(this.selector).show();
+            return token;
         },
-        showAfter: function (delay, value, cssClass) {
-            hide = false;
-            pendingShow = window.setTimeout($.proxy(function () {
-                if (hide === false) {
-                    this.show(value, cssClass);
-                }
-            }, this), delay);
-        },
-        hide: function (id) {
-            hide = true;
-
-            if (pendingShow) {
-                window.clearTimeout(pendingShow);
-            }
-
+        hide: function (token) {
             window.setTimeout($.proxy(function () {
-                if ($('#status').attr('data-id') == id) {
-                    $('#status').fadeOut('slow');
+                if ($(this.selector).attr('data-token') == token) {
+                    $(this.selector).fadeOut('slow');
                 }
             }, this), 100);
         }
     };
 
-    window.loader = loader;
+    window.loader = new loader('#status');
+    window.infititeLoader = new loader('#infinite-status');
 
 })(jQuery, window);
