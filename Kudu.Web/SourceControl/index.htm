@@ -15,7 +15,14 @@
     <script id="changeset" type="text/x-jquery-tmpl"> 
         <tr class="changeset" id="${Id}">
             <td>${ShortId}</td>
-            <td>{{html Summary}}</td>
+            <td>
+                {{each(i, branch) getBranches($data.Id)}}
+                <span class="branch">${branch}</span>
+                {{/each}}
+                <div class="description">
+                    {{html Summary}}
+                </div>
+            </td>
             <td>${AuthorName}</td>
             <td class="timeago" title="${Date}"></td>
             <td class="actions">                

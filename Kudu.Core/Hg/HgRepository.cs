@@ -8,9 +8,11 @@ using Mercurial;
 namespace Kudu.Core.Hg {
     public class HgRepository : IRepository {
         private readonly Repository _repository;
+        private readonly Executable _hgExe;
 
         public HgRepository(string path) {
             _repository = new Repository(path);
+            _hgExe = new Executable(Client.ClientPath, path);
         }
 
         public string CurrentId {
@@ -116,6 +118,22 @@ namespace Kudu.Core.Hg {
             _repository.Update(id);
         }
 
+        public IEnumerable<Branch> GetBranches() {
+            // Need to work around a bug in Mercurial.net where it fails to parse the output of 
+            // the branches command (http://mercurialnet.codeplex.com/workitem/14)
+            var branchReader = _hgExe.Execute("branches").AsReader();
+
+            while (!branchReader.Done) {
+                // name WS revision:hash
+                var lineReader = branchReader.ReadLine().AsReader();
+                string name = lineReader.ReadUntilWhitespace();
+                lineReader.SkipWhitespace();
+                int revision = lineReader.ReadInt();
+                string id = GetChangeSet(revision).Id;
+                yield return new Branch(id, name);
+            }
+        }
+
         private ChangeSetDetail PopulateDetails(string id, ChangeSetDetail detail) {
             var summaryCommand = new DiffCommand {
                 SummaryOnly = true
@@ -161,7 +179,7 @@ namespace Kudu.Core.Hg {
             }
         }
 
-        private ChangeSet GetChangeSet(string id) {
+        private ChangeSet GetChangeSet(RevSpec id) {
             var log = _repository.Log(id);
             return CreateChangeSet(log.SingleOrDefault());
         }

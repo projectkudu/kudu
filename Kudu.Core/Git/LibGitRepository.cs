@@ -94,6 +94,12 @@ namespace Kudu.Core.Git {
             throw new NotImplementedException();
         }
 
+        public IEnumerable<Branch> GetBranches() {
+            return from b in _repository.Branches
+                   where !b.IsRemote
+                   select new Branch(b.Tip.Id.Sha, b.Name);
+        }
+
         private static ChangeSet CreateChangeSet(Commit commit) {
             return new ChangeSet(commit.Id.Sha, 
                                  commit.Author.Name,

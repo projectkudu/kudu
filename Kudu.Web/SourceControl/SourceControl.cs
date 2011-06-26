@@ -10,7 +10,7 @@ using Kudu.Core.Hg;
 using ServerSync;
 
 namespace Kudu.Web {
-    public class SourceControl : Hub {        
+    public class SourceControl : Hub {
         public ChangeSetDetailViewModel Show(string id) {
             var repository = GetRepository();
             return new ChangeSetDetailViewModel(repository.GetDetails(id));
@@ -32,6 +32,14 @@ namespace Kudu.Web {
                 return new ChangeSetDetailViewModel(workingChanges);
             }
             return null;
+        }
+
+        public IDictionary<string, IEnumerable<string>> GetBranches() {
+            var repository = GetRepository();
+
+            return repository.GetBranches()
+                             .ToLookup(b => b.Id)
+                             .ToDictionary(p => p.Key, p => p.Select(b => b.Name));
         }
 
         public IEnumerable<ChangeSetViewModel> GetChanges(int index, int pageSize) {

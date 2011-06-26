@@ -5,6 +5,7 @@ namespace Kudu.Core {
         string CurrentId { get; }
 
         void Initialize();
+        IEnumerable<Branch> GetBranches();
         IEnumerable<FileStatus> GetStatus();
         IEnumerable<ChangeSet> GetChanges();
         IEnumerable<ChangeSet> GetChanges(int index, int limit);

@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Branch.cs" />
     <Compile Include="ChangeSetDetail.cs" />
     <Compile Include="FileInfo.cs" />
     <Compile Include="ChangeType.cs" />

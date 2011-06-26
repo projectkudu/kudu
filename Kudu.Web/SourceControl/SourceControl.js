@@ -39,9 +39,17 @@ $(function () {
         return 'icon-file';
     }
 
+    function getBranches(id) {
+        if (scm.state.branches && scm.state.branches[id]) {
+            return scm.state.branches[id];
+        }
+        return [];
+    }
+
     window.getDiffClass = getDiffClass;
     window.getDiffId = getDiffId;
     window.getFileClass = getFileClass;
+    window.getBranches = getBranches;
 
     var changesXhr = null;
     var pageSize = 25;
@@ -104,7 +112,14 @@ $(function () {
 
         var token = window.loader.show('Loading commits...');
 
-        getChangeSets(0, function () {
+        scm.getBranches(function (branches) {
+            scm.state.branches = branches;
+
+            getChangeSets(0, function () {
+                window.loader.hide(token);
+            });
+        })
+        .error(function () {
             window.loader.hide(token);
         });
     }
@@ -187,7 +202,7 @@ $(function () {
         this.post('#/commit', function () {
             var context = this;
 
-            var token= window.loader.show('Commiting changes...');
+            var token = window.loader.show('Commiting changes...');
 
             scm.commit(this.params.message, function (changeSet) {
                 if (changeSet) {

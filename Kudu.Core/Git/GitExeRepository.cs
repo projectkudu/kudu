@@ -104,6 +104,29 @@ namespace Kudu.Core.Git {
             return detail;
         }
 
+        public IEnumerable<Branch> GetBranches() {
+            string branches = _gitExe.Execute("branch");
+            var reader = branches.AsReader();
+
+            var branchNames = new List<string>();
+            while (!reader.Done) {
+                // * branchname
+                var lineReader = reader.ReadLine().AsReader();
+                lineReader.ReadUntilWhitespace();
+                lineReader.SkipWhitespace();
+                string branchName = lineReader.ReadToEnd();
+                if (branchName.Contains("(no branch)")) {
+                    continue;
+                }
+                branchNames.Add(branchName.Trim());
+            }
+
+            foreach (var branchName in branchNames) {
+                string id = _gitExe.Execute("rev-parse {0}", branchName);
+                yield return new Branch(id.Trim(), branchName);
+            }
+        }
+
         private bool IsEmpty() {
             // REVIEW: Is this reliable
             return String.IsNullOrWhiteSpace(_gitExe.Execute("branch"));
