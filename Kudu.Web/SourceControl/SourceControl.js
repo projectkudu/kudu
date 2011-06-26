@@ -56,10 +56,16 @@ $(function () {
 
     function getChangeSets(index, onComplete) {
         if (changesXhr) {
+            if (onComplete) {
+                onComplete();
+            }
             return;
         }
 
         if (scm.state.full === true) {
+            if (onComplete) {
+                onComplete();
+            }
             return;
         }
 
