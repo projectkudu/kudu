@@ -5,7 +5,11 @@
 
 $(function () {
     var scm = signalR.SourceControl;
+    var infiniteScrollCheck = false;
+    var changesXhr = null;
+    var pageSize = 15;
     var path = $.cookie("path");
+
     scm.state.path = path;
     $('#path').val(path || '');
 
@@ -51,27 +55,24 @@ $(function () {
     window.getFileClass = getFileClass;
     window.getBranches = getBranches;
 
-    var changesXhr = null;
-    var pageSize = 15;
-
     function getChangeSets(index, onComplete) {
-        if (changesXhr) {
+        var callback = function () {
             if (onComplete) {
                 onComplete();
             }
+        };
+
+        if (changesXhr) {
+            callback();
             return;
         }
 
         if (scm.state.full === true) {
-            if (onComplete) {
-                onComplete();
-            }
+            callback();
             return;
         }
 
         changesXhr = scm.getChanges(index, pageSize, function (changes) {
-            changesXhr = null;
-
             $.cookie("path", scm.state.path);
 
             setupActions($('#changes').append($('#changeset').render(changes)));
@@ -82,11 +83,13 @@ $(function () {
             if (changes.length < pageSize) {
                 scm.state.full = true;
             }
+
+            callback();
+            changesXhr = null;
         })
-        .complete(function () {
-            if (onComplete) {
-                onComplete();
-            }
+        .error(function () {
+            callback();
+            changesXhr = null;
         });
     }
 
@@ -130,6 +133,11 @@ $(function () {
 
             getChangeSets(0, function () {
                 window.loader.hide(token);
+
+                if (infiniteScrollCheck === false) {
+                    getMoreChanges();
+                    infiniteScrollCheck = true;
+                }
             });
         })
         .error(function () {
@@ -189,7 +197,12 @@ $(function () {
     }
 
     function getMoreChanges() {
-        if (!scm.state.id || scm.state.full === true) {
+        var callback = function () {
+            setTimeout(getMoreChanges, 500);
+        };
+
+        if (!scm.state.path || scm.state.full === true) {
+            callback();
             return;
         }
 
@@ -209,12 +222,18 @@ $(function () {
 
                 getChangeSets(scm.state.index, function () {
                     window.infititeLoader.hide(token);
+
+                    callback();
                 });
             }
+            else {
+                callback();
+            }
+        }
+        else {
+            callback();
         }
     }
-
-    window.setInterval(getMoreChanges, 500);
 
     var app = $.sammy(function () {
         this.get('#/', function () {
