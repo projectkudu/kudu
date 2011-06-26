@@ -73,7 +73,7 @@ namespace Kudu.Web {
             if (Directory.EnumerateDirectories(path, ".hg").Any()) {
                 return new HgRepository(path);
             }
-            return new GitExeRepository(path);
+            return new HybridRepository(path);
         }
 
         public class ChangeSetDetailViewModel {

@@ -51,6 +51,7 @@
     <Compile Include="FileInfo.cs" />
     <Compile Include="ChangeType.cs" />
     <Compile Include="FileDiff.cs" />
+    <Compile Include="Git\HybridRepository.cs" />
     <Compile Include="Hg\HgRepository.cs" />
     <Compile Include="Infrastructure\ParserHelpers.cs" />
     <Compile Include="Infrastructure\StringReader.cs" />

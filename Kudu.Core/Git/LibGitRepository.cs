@@ -23,7 +23,7 @@ namespace Kudu.Core.Git {
 
         public string CurrentId {
             get {
-                return Repository.Head.Tip.Sha;
+                return Repository.Lookup(Repository.Head.CanonicalName).Sha;
             }
         }
 
@@ -95,7 +95,7 @@ namespace Kudu.Core.Git {
         }
 
         public IEnumerable<Branch> GetBranches() {
-            return from branch in _repository.Branches
+            return from branch in Repository.Branches
                    where !branch.IsRemote
                    select new Branch(branch.Tip.Id.Sha, branch.Name);
         }
