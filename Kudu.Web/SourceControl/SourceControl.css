@@ -222,10 +222,12 @@ form {
 }
 
 #commit-message {
-    width: 50%;
+    width: 60%;
     height: 150px;
     display: block;
     margin-bottom: 10px;
+    font-family: Trebuchet MS;
+    font-size: 13px;
 }
 
 #commit-area {

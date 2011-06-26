@@ -199,7 +199,7 @@ $(function () {
                         $('#new-commit').slideUp('slow', function () {
                             window.setTimeout(function () {
                                 context.redirect('#/');
-                            }, 500);
+                            }, 300);
                         });
                     }, 1000);
                 }
