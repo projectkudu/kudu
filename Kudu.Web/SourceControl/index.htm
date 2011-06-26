@@ -63,11 +63,15 @@
             <div id="${getDiffId(fileName)}" class="diff">
                 <div class="diff-header gray-gradient">
                     <span class="icon ${file.Binary ? "icon-binary-file" : "icon-file"}">${fileName}</span>
-                </div>{{if file.Binary}}<div class="binary-text">Binary file not shown</div>{{else}}{{tmpl(file) "#diff-lines"}}{{/if}}
+                </div>
+                {{tmpl(file) "#file-view"}}
             </div>
         {{/each}}
     </script>
-    <script id="diff-lines" type="text/x-jquery-tmpl">
+    <script id="file-view" type="text/x-jquery-tmpl">
+        {{if Binary}}
+        <div class="binary-text">Binary file not shown</div>
+        {{else}}
         <div class="diff-source">
             <table width="100%" cellpadding="0" cellspacing="0">
                 {{each(i, line) DiffLines}}
@@ -79,6 +83,7 @@
                 {{/each}}
             </table>
         </div>
+        {{/if}}
     </script>
 </head>
 <body>
