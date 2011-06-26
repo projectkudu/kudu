@@ -153,9 +153,9 @@ namespace Kudu.Core.Git {
         }
 
         private IEnumerable<ChangeSet> ParseCommits(IStringReader reader) {
-            do {
+            while (!reader.Done) {
                 yield return ParseCommit(reader);
-            } while (!reader.Done);
+            }
         }
 
         private void PopulateStatus(IStringReader reader, ChangeSetDetail detail) {
