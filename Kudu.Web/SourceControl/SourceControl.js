@@ -73,7 +73,7 @@ $(function () {
         }
 
         changesXhr = scm.getChanges(index, pageSize, function (changes) {
-            $.cookie("path", scm.state.path);
+            $.cookie("path", scm.state.path, { expires: 30 });
 
             setupActions($('#changes').append($('#changeset').render(changes)));
             scm.state.index = index + changes.length;
@@ -290,5 +290,7 @@ $(function () {
         });
     });
 
-    app.run('#/');
+    window.setTimeout(function () {
+        app.run('#/');
+    }, 0);
 });
