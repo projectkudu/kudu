@@ -20,7 +20,7 @@
                 <a href="#" class="branch update" data-id="${Id}" data-branch="${branch}">${branch}</a>
                 {{/each}}
                 <div class="description">
-                    {{html Summary}}
+                    ${Summary}
                 </div>
             </td>
             <td>${AuthorName}</td>
@@ -38,7 +38,7 @@
     <script id="changeset-detail" type="text/x-jquery-tmpl">
         <div class="commit-detail gray-gradient">
             <p class="details">${ChangeSet.Id}</p>
-            <p>{{html ChangeSet.Message}}<p>
+            <p>${ChangeSet.Message}<p>
             {{if ChangeSet.EmailHash}}
             <img src="http://www.gravatar.com/avatar/${ChangeSet.EmailHash}?s=32&d=mm" class="gravatar" />
             {{/if}}
