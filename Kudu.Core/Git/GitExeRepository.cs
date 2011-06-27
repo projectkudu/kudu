@@ -317,21 +317,56 @@ namespace Kudu.Core.Git {
                 }
             }
 
+            // Current diff range
+            DiffRange currentRange = null;
+            int? leftCounter = null;
+            int? rightCounter = null;
+
             // Parse the file diff
             while (!reader.Done) {
+                int? currentLeft = null;
+                int? currentRight = null;
                 string line = reader.ReadLine();
+                bool isDiffRange = line.StartsWith("@@");
+                ChangeType? changeType = null;
+
                 if (line.StartsWith("+")) {
-                    diff.Lines.Add(new LineDiff(ChangeType.Added, line));
+                    changeType = ChangeType.Added;
+                    currentRight = ++rightCounter;
+                    currentLeft = null;
                 }
                 else if (line.StartsWith("-")) {
-                    diff.Lines.Add(new LineDiff(ChangeType.Deleted, line));
+                    changeType = ChangeType.Deleted;
+                    currentLeft = ++leftCounter;
+                    currentRight = null;
                 }
                 else if (IsCommitHeader(line)) {
                     reader.PutBack(line.Length);
                     merge = ParseCommitAndSummary(reader);
                 }
                 else {
-                    diff.Lines.Add(new LineDiff(ChangeType.None, line));
+                    if (!isDiffRange) {
+                        currentLeft = ++leftCounter;
+                        currentRight = ++rightCounter;
+                    }
+                    changeType = ChangeType.None;
+                }
+
+                if (changeType != null) {
+                    var lineDiff = new LineDiff(changeType.Value, line);
+                    if (!isDiffRange) {
+                        lineDiff.LeftLine = currentLeft;
+                        lineDiff.RightLine = currentRight;
+                    }
+
+                    diff.Lines.Add(lineDiff);
+                }
+
+                if (isDiffRange) {
+                    // Parse the new diff range
+                    currentRange = DiffRange.Parse(line.AsReader());
+                    leftCounter = currentRange.LeftFrom - 1;
+                    rightCounter = currentRange.RightFrom - 1;
                 }
             }
 
@@ -420,6 +455,31 @@ namespace Kudu.Core.Git {
             }
 
             throw new InvalidOperationException("Unsupported status " + status);
+        }
+
+        private class DiffRange {
+            public int LeftFrom { get; set; }
+            public int LeftTo { get; set; }
+            public int RightFrom { get; set; }
+            public int RightTo { get; set; }
+
+            public static DiffRange Parse(IStringReader reader) {
+                var range = new DiffRange();
+                reader.Skip("@@");
+                reader.SkipWhitespace();
+                reader.Skip('-');
+                range.LeftFrom = reader.ReadInt();
+                reader.Skip(',');
+                range.LeftTo = range.LeftFrom + reader.ReadInt();
+                reader.SkipWhitespace();
+                reader.Skip('+');
+                range.RightFrom = reader.ReadInt();
+                reader.Skip(',');
+                range.RightTo = range.RightFrom + reader.ReadInt();
+                reader.SkipWhitespace();
+                reader.Skip("@@");
+                return range;
+            }
         }
     }
 }

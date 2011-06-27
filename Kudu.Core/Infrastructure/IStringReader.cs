@@ -14,6 +14,8 @@ namespace Kudu.Core.Infrastructure {
         string ReadToEnd();
         void Skip();
         void Skip(int n);
+        void Skip(string value);
+        void Skip(char value);
         void SkipWhitespace();
         bool TryReadUntil(char delimiter, out string result);
         bool TryReadUntil(Func<char, bool> condition, out string result);

@@ -139,6 +139,22 @@ namespace Kudu.Core.Infrastructure {
             Skip(1);
         }
 
+        public void Skip(string value) {
+            if (!Peek(value)) {
+                throw new InvalidOperationException(String.Format("Expected {0} but got {1}", value, Peek(value.Length)));
+            }
+
+            Skip(value.Length);
+        }
+
+        public void Skip(char value) {
+            if (Current != value) {
+                throw new InvalidOperationException(String.Format("Expected {0} but got {1}", value, Current));
+            }
+
+            Skip(1);
+        }
+
         public void Skip(int n) {
             _index = Math.Min(_raw.Length, _index + n);
         }
@@ -159,6 +175,13 @@ namespace Kudu.Core.Infrastructure {
 
         public void PutBack(int n) {
             _index = Math.Max(0, _index - n);
+        }
+
+        private string Peek(int n) {
+            int prev = _index;
+            string value = Read(n);
+            _index = prev;
+            return value;
         }
     }
 

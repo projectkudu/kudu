@@ -27,7 +27,7 @@
             <td class="timeago" title="${Date}"></td>
             <td class="actions">                
                 <a href="#" class="update" data-id="${Id}">update</a>
-                <a href="#/view/${Id}" class="view">view</a>
+                <a href="#/commit/${Id}" class="view">view</a>
             </td>
             <td>
                 <img class="loading hide" src="images/loading.gif" />
@@ -76,6 +76,8 @@
             <table width="100%" cellpadding="0" cellspacing="0">
                 {{each(i, line) DiffLines}}
                     <tr>
+                        <td class="line-number details">${line.LeftLine ? line.LeftLine : "&nbsp;"}</td>
+                        <td class="line-number details">${line.RightLine ? line.RightLine : "&nbsp;"}</td>
                         <td class="line${getDiffClass(line.Type)}">
                             <pre>${line.Text}</pre>
                         </td>

@@ -302,3 +302,12 @@ form {
 #footer {
     margin-top: 100px;
 }
+
+.line-number {
+    font-family: Consolas;
+    font-size: 12px;
+    padding: 0 0.5em;
+    background-color: #ECECEC;
+    border-right: 1px solid #DDDDDD;
+    color: #AAAAAA;
+}

@@ -251,7 +251,7 @@ $(function () {
             return false;
         });
 
-        this.get('#/view/:id', function () {
+        this.get('#/commit/:id', function () {
             show(this.params.id);
         });
 
