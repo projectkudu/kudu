@@ -5,8 +5,7 @@
     </PropertyGroup>
     <Target Name="AfterBuild">
         <ItemGroup>
-            <NativeBinaries Include="$(KuduRoot)\Kudu.Core\bin\$(Configuration)\git2.dll" />
-            <NativeBinaries Include="$(KuduRoot)\Kudu.Core\bin\$(Configuration)\msvcr100.dll" />
+            <NativeBinaries Include="$(KuduRoot)\packages\LibGit2Sharp*\NativeBinaries\x86\*.dll" />
         </ItemGroup>
         <Copy SourceFiles="@(NativeBinaries)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
     </Target>
