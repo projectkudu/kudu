@@ -31,7 +31,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="LibGit2Sharp">
+    <Reference Include="LibGit2Sharp, Version=0.3.0.0, Culture=neutral, processorArchitecture=x86">
       <HintPath>..\packages\LibGit2Sharp.0.3\lib\net35\LibGit2Sharp.dll</HintPath>
     </Reference>
     <Reference Include="Mercurial.Net">
@@ -69,11 +69,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup />
-  <ItemGroup>
-    <Content Include="git2.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>
