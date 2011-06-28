@@ -87,6 +87,7 @@
     <Content Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
     </Content>
+    <None Include="_bin_deployableAssemblies\Microsoft.Web.Infrastructure.dll" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
