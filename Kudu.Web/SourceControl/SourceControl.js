@@ -218,10 +218,10 @@ $(function () {
 
             // Load more changes if we're in range
             if (top >= min && top <= max) {
-                var token = window.infititeLoader.show('Loading more commits...');
+                var token = window.infiniteLoader.show('Loading more commits...');
 
                 getChangeSets(scm.state.index, function () {
-                    window.infititeLoader.hide(token);
+                    window.infiniteLoader.hide(token);
 
                     callback();
                 });

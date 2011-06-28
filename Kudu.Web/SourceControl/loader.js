@@ -23,6 +23,6 @@
     };
 
     window.loader = new loader('#status');
-    window.infititeLoader = new loader('#infinite-status');
+    window.infiniteLoader = new loader('#infinite-status');
 
 })(jQuery, window);
