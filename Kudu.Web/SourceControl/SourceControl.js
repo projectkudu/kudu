@@ -206,20 +206,29 @@ $(function () {
             return;
         }
 
+        var threshold = 25;
         var min = $(document).scrollTop();
         var max = min + $(window).height();
 
-        var top = $('#footer').position().top;
+        var e = $('#changes').find('tr:last');
+        var pos = e.position();
 
-        // Load more changes if we're in range
-        if (top >= min && top <= max) {
-            var token = window.infititeLoader.show('Loading more commits...');
+        if (pos) {
+            var top = pos.top - threshold;
 
-            getChangeSets(scm.state.index, function () {
-                window.infititeLoader.hide(token);
+            // Load more changes if we're in range
+            if (top >= min && top <= max) {
+                var token = window.infititeLoader.show('Loading more commits...');
 
+                getChangeSets(scm.state.index, function () {
+                    window.infititeLoader.hide(token);
+
+                    callback();
+                });
+            }
+            else {
                 callback();
-            });
+            }
         }
         else {
             callback();
