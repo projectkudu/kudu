@@ -2,7 +2,7 @@
 (function ($, window) {
     /// <param name="$" type="jQuery" />
     "use strict";
-
+    
     if (typeof (window.signalR) === "function") {
         return;
     }
@@ -19,7 +19,7 @@
         init: function (url) {
             this.url = url;
         },
-
+        
         start: function (callback) {
             /// <summary>Starts the connection</summary>
             /// <param name="callback" type="Function">A callback function to execute when the connection has started</param>
@@ -35,9 +35,35 @@
                     callback.call(that);
                 });
             }
+            
+            var initialize = function (transports, index) {
+                index = index || 0;
+                if (index >= transports.length) {
+                    return;
+                }
 
-            that.method = 'longPolling';
-            $(that).trigger("onStart");
+                var method = transports[index];
+                var transport = signalR.transports[method];
+
+                transport.start(that, function () {
+                    that.method = method;
+                }, 
+                function () {
+                    initialize(transports, index + 1);
+                });                
+            };
+
+            $.post(this.url + '/negotiate', {}, function (res) {                
+                that.appRelativeUrl = res.url;
+
+                $(that).trigger("onStarting");
+                var transports = [];
+                $.each(signalR.transports, function (key) {
+                    transports.push(key);    
+                });
+
+                initialize(transports);
+            });
 
             return that;
         },
@@ -118,6 +144,63 @@
 
     // Transports
     signalR.transports = {
+        webSockets: {
+            send: function (connection, data) {
+                connection.socket.send(data);
+            },
+            start: function (connection, onSuccess, onFailed) {
+                if (typeof window.WebSocket !== "function") {
+                    onFailed();
+                    return;
+                }
+
+                if (!connection.socket) {
+                    // Build the url
+                    var url = document.location.host + connection.appRelativeUrl;
+
+                    $(connection).trigger("onSending");
+                    if (connection.data) {
+                        url += "?data=" + connection.data;
+                    }
+
+                    connection.socket = new WebSocket("ws://" + url);
+                    var opened = false;
+                    connection.socket.onopen = function () {
+                        opened = true;
+                        if (onSuccess) { 
+                            onSuccess();
+                        }
+                        $(connection).trigger("onStart");
+                    };
+
+                    connection.socket.onclose = function (event) {
+                        if (!opened) {
+                            if (onFailed) {
+                                onFailed();
+                            }
+                        }
+                    };
+
+                    connection.socket.onmessage = function (event) {
+                        var data = window.JSON.parse(event.data);
+                        if (data.Messages) {
+                            $.each(data.Messages, function () {
+                                $(connection).trigger("onReceived", [this]);
+                            });
+                        }
+                        else {
+                            $(connection).trigger("onReceived", [data]);
+                        }
+                    };
+                }
+            },
+            stop: function (connection) {
+                if (connection.socket != null) {
+                    connection.socket.close();
+                    connection.socket = null;
+                }
+            }
+        },
         longPolling: {
             start: function (connection, onSuccess, onFailed) {
                 /// <summary>Starts the long polling connection</summary>
@@ -125,11 +208,59 @@
                 if (connection.pollXhr) {
                     connection.stop();
                 }
-
+                
                 // Always supported
                 onSuccess();
                 $(connection).trigger("onStart");
+
+                connection.messageId = null;
+                
+                window.setTimeout(function () {
+                    (function poll(instance) {
+                        $(instance).trigger("onSending");
+
+                        var messageId = instance.messageId,
+                            connect = (messageId === null),
+                            url = instance.url + (connect ? "/connect" : "");
+
+                        instance.pollXhr = $.ajax(url, {
+                            type: "POST",
+                            data: {
+                                messageId: messageId,
+                                data: instance.data,
+                                transport: "longPolling"
+                            },
+                            dataType: "json",
+                            success: function (data) {
+                                if (data) {
+                                    if (data.Messages) {
+                                        $.each(data.Messages, function () {
+                                            $(instance).trigger("onReceived", [this]);
+                                        });
+                                    }
+                                    else {
+                                        $(instance).trigger("onReceived", [data]);
+                                    }
+                                    instance.messageId = data.MessageId;
+                                }
+                                poll(instance);
+                            },
+                            error: function (data, textStatus) {
+                                if (textStatus === "abort") {
+                                    return;
+                                }
+
+                                $(instance).trigger("onError", [data]);
+
+                                window.setTimeout(function () {
+                                    poll(instance);
+                                }, 2 * 1000);
+                            }
+                        });
+                    })(connection);
+                }, 0); // Have to delay initial poll so Chrome doesn't show loader spinner in tab
             },
+
             send: function (connection, data, callback) {
                 /// <summary>Sends data over this connection</summary>
                 /// <param name="connection" type="signalR">The signalR connection to send data over</param>

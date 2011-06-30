@@ -290,7 +290,7 @@ $(function () {
         });
     });
 
-    window.setTimeout(function () {
+    signalR.hub.start(function () {
         app.run('#/');
-    }, 0);
+    });
 });

@@ -34,9 +34,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="ServerSync.Core, Version=1.0.4191.36048, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="ServerSync.Core, Version=1.0.4197.35834, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\ServerSync.Core.1.0.4191.36048\lib\net40\ServerSync.Core.dll</HintPath>
+      <HintPath>..\packages\ServerSync.Core.1.0.4197.35834\lib\net40\ServerSync.Core.dll</HintPath>
     </Reference>
     <Reference Include="SignalR">
       <HintPath>..\packages\SignalR.0.1.4178.22460\lib\net40\SignalR.dll</HintPath>
