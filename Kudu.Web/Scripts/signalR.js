@@ -68,9 +68,8 @@
             }
 
             var args = $.makeArray([that]).concat($.makeArray(arguments));
-            transport.send.apply(transport, args);
 
-            return that;
+            return transport.send.apply(transport, args);
         },
 
         sending: function (callback) {
@@ -135,7 +134,7 @@
                 /// <param name="connection" type="signalR">The signalR connection to send data over</param>
                 /// <param name="data" type="String">The data to send</param>
                 /// <param name="callback" type="Function">A callback to be invoked when the send has completed</param>
-                $.ajax(connection.url + '/send', {
+                return $.ajax(connection.url + '/send', {
                     type: "POST",
                     data: { data: data, transport: "longPolling" },
                     dataType: "json",
