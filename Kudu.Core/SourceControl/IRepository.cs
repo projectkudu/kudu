@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Kudu.Core {
+namespace Kudu.Core.SourceControl {
     public interface IRepository {
         string CurrentId { get; }
 

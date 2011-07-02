@@ -5,9 +5,10 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Kudu.Core;
-using Kudu.Core.Git;
-using Kudu.Core.Hg;
+using Kudu.Core.SourceControl.Git;
+using Kudu.Core.SourceControl.Hg;
 using ServerSync;
+using Kudu.Core.SourceControl;
 
 namespace Kudu.Web {
     public class SourceControl : Hub {
@@ -97,7 +98,7 @@ namespace Kudu.Web {
             public int Deletions { get; set; }
             public int FilesChanged { get; set; }
             public int Insertions { get; set; }
-            public IDictionary<string, Kudu.Core.FileInfo> Files { get; set; }
+            public IDictionary<string, Kudu.Core.SourceControl.FileInfo> Files { get; set; }
         }
 
         public class ChangeSetViewModel {

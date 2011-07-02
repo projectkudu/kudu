@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Kudu.Core.Git;
+using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Infrastructure;
 using Mercurial;
 
-namespace Kudu.Core.Hg {
+namespace Kudu.Core.SourceControl.Hg {
     public class HgRepository : IRepository {
         private readonly Repository _repository;
         private readonly Executable _hgExe;

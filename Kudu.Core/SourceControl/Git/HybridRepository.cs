@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Kudu.Core.Git {
+namespace Kudu.Core.SourceControl.Git {
     /// <summary>
     /// The goal of this repository is to implement a full repository using as much as
     /// libgit2sharp as possible unti it works for all scenarios.

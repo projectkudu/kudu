@@ -1,4 +1,4 @@
-﻿namespace Kudu.Core {
+﻿namespace Kudu.Core.SourceControl {
     public enum ChangeType {
         None,
         Added,

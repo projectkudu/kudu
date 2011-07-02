@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Kudu.Core {
+namespace Kudu.Core.SourceControl {
     public class FileInfo {
         public FileInfo() {
             DiffLines = new List<LineDiff>();

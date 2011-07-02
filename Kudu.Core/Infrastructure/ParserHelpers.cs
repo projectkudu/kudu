@@ -1,4 +1,6 @@
-﻿namespace Kudu.Core.Infrastructure {
+﻿using Kudu.Core.SourceControl;
+
+namespace Kudu.Core.Infrastructure {
     internal static class ParserHelpers {
         internal static void ParseSummaryFooter(string line, ChangeSetDetail detail) {
             // n files changed, n insertions(+), n deletions(-)

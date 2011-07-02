@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Kudu.Core {
+namespace Kudu.Core.SourceControl {
     public class ChangeSet {
         public ChangeSet(string id, string authorName, string authorEmail, string message, DateTimeOffset timestamp) {
             Id = id;

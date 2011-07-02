@@ -1,4 +1,4 @@
-﻿namespace Kudu.Core {
+﻿namespace Kudu.Core.SourceControl {
     public class FileStatus {
         public FileStatus(string path, ChangeType status) {
             Path = path;

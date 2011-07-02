@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using LibGit2Sharp;
 
-namespace Kudu.Core.Git {
+namespace Kudu.Core.SourceControl.Git {
     /// <summary>
     /// Implementation of a git repository over LibGit2Sharp
     /// </summary>

@@ -2,7 +2,7 @@
 using System.Net.Http;
 using Newtonsoft.Json;
 
-namespace Kudu.Core {
+namespace Kudu.Core.SourceControl {
     public class RemoteRepository : IRepository {
         private readonly HttpClient _client;
 

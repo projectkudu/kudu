@@ -52,25 +52,25 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Branch.cs" />
-    <Compile Include="ChangeSetDetail.cs" />
-    <Compile Include="FileInfo.cs" />
-    <Compile Include="ChangeType.cs" />
-    <Compile Include="FileDiff.cs" />
-    <Compile Include="Git\HybridRepository.cs" />
-    <Compile Include="Hg\HgRepository.cs" />
     <Compile Include="Infrastructure\ParserHelpers.cs" />
     <Compile Include="Infrastructure\StringReader.cs" />
     <Compile Include="Infrastructure\Executable.cs" />
-    <Compile Include="ChangeSet.cs" />
-    <Compile Include="Git\GitExeRepository.cs" />
-    <Compile Include="Git\LibGitRepository.cs" />
-    <Compile Include="FileStatus.cs" />
     <Compile Include="Infrastructure\IStringReader.cs" />
-    <Compile Include="IRepository.cs" />
-    <Compile Include="LineDiff.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RemoteRepository.cs" />
+    <Compile Include="SourceControl\Branch.cs" />
+    <Compile Include="SourceControl\ChangeSet.cs" />
+    <Compile Include="SourceControl\ChangeSetDetail.cs" />
+    <Compile Include="SourceControl\ChangeType.cs" />
+    <Compile Include="SourceControl\FileDiff.cs" />
+    <Compile Include="SourceControl\FileInfo.cs" />
+    <Compile Include="SourceControl\FileStatus.cs" />
+    <Compile Include="SourceControl\Git\GitExeRepository.cs" />
+    <Compile Include="SourceControl\Git\HybridRepository.cs" />
+    <Compile Include="SourceControl\Git\LibGitRepository.cs" />
+    <Compile Include="SourceControl\Hg\HgRepository.cs" />
+    <Compile Include="SourceControl\IRepository.cs" />
+    <Compile Include="SourceControl\LineDiff.cs" />
+    <Compile Include="SourceControl\RemoteRepository.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

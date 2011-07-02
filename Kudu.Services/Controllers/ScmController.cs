@@ -3,9 +3,9 @@ using System.IO;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
-using Kudu.Core;
-using Kudu.Core.Git;
-using Kudu.Core.Hg;
+using Kudu.Core.SourceControl;
+using Kudu.Core.SourceControl.Git;
+using Kudu.Core.SourceControl.Hg;
 
 namespace Kudu.Services.Controllers {
     [JsonExceptionFilter]

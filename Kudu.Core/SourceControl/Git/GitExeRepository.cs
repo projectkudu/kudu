@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using Kudu.Core.Infrastructure;
 
-namespace Kudu.Core.Git {
+namespace Kudu.Core.SourceControl.Git {
     /// <summary>
     /// Implementation of a git repository over git.exe
     /// </summary>

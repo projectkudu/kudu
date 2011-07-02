@@ -1,4 +1,4 @@
-﻿namespace Kudu.Core {
+﻿namespace Kudu.Core.SourceControl {
     public class Branch {
         public Branch(string id, string name) {
             Id = id;

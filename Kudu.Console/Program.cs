@@ -2,7 +2,8 @@
 using System.Linq;
 using System.IO;
 using Kudu.Core;
-using Kudu.Core.Git;
+using Kudu.Core.SourceControl.Git;
+using Kudu.Core.SourceControl;
 
 namespace Kudu {
     class Program {
