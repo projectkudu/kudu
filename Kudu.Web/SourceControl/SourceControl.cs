@@ -1,5 +1,4 @@
-﻿#define REMOTE
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -65,20 +64,22 @@ namespace Kudu.Web {
         }
 
         private IRepository GetRepository() {
-#if REMOTE
-            return new RemoteRepository("http://localhost:52590/scm/");
-#else
             string path = Caller.path;
 
             if (String.IsNullOrEmpty(path)) {
                 throw new InvalidOperationException("No repository path!");
             }
 
+            var uri = new Uri(path);          
+
+            if (!uri.IsFile && !uri.IsUnc) {
+                return new RemoteRepository(path);
+            }
+
             if (Directory.EnumerateDirectories(path, ".hg").Any()) {
                 return new HgRepository(path);
             }
             return new HybridRepository(path);
-#endif
         }
 
         public class ChangeSetDetailViewModel {

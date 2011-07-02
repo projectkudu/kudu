@@ -19,7 +19,7 @@ namespace Kudu.Core {
         }
 
         public void Initialize() {
-            _client.Post("init", new FormUrlEncodedContent(new Dictionary<string, string>()))
+            _client.Post("init", new StringContent(null))
                    .EnsureSuccessStatusCode();
         }
 
