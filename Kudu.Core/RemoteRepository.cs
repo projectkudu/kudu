@@ -19,7 +19,8 @@ namespace Kudu.Core {
         }
 
         public void Initialize() {
-            _client.Post("init", null).EnsureSuccessStatusCode();
+            _client.Post("init", new FormUrlEncodedContent(new Dictionary<string, string>()))
+                   .EnsureSuccessStatusCode();
         }
 
         public IEnumerable<Branch> GetBranches() {
@@ -75,7 +76,7 @@ namespace Kudu.Core {
 
         private T GetJson<T>(string url) {
             var json = _client.Get(url).EnsureSuccessStatusCode().Content.ReadAsString();
-            return (T)JsonConvert.DeserializeObject(json, typeof(T));
+            return JsonConvert.DeserializeObject<T>(json);
         }
     }
 }
