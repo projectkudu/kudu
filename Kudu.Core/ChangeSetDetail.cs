@@ -16,7 +16,7 @@ namespace Kudu.Core {
         public int Deletions { get; set; }
         public int Insertions { get; set; }
 
-        public ChangeSet ChangeSet { get; private set; }
+        public ChangeSet ChangeSet { get; set; }
         public IDictionary<string, FileInfo> Files { get; private set; }
     }
 }

@@ -37,6 +37,12 @@
     <Reference Include="Mercurial.Net">
       <HintPath>..\packages\Mercurial.Net.1.0.2.572\lib\net35-Client\Mercurial.Net.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.Net.Http">
+      <HintPath>..\packages\HttpClient.0.3.0\lib\40\Microsoft.Net.Http.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\packages\Newtonsoft.Json.4.0.2\lib\net40\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -64,6 +70,7 @@
     <Compile Include="IRepository.cs" />
     <Compile Include="LineDiff.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RemoteRepository.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -469,8 +469,12 @@ namespace Kudu.Core.Git {
                 reader.SkipWhitespace();
                 reader.Skip('-');
                 range.LeftFrom = reader.ReadInt();
-                reader.Skip(',');
-                range.LeftTo = range.LeftFrom + reader.ReadInt();
+                if (reader.Skip(',')) {
+                    range.LeftTo = range.LeftFrom + reader.ReadInt();
+                }
+                else {
+                    range.LeftTo = range.LeftFrom;
+                }
                 reader.SkipWhitespace();
                 reader.Skip('+');
                 range.RightFrom = reader.ReadInt();
