@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Web;
@@ -9,6 +8,7 @@ using Kudu.Core.Git;
 using Kudu.Core.Hg;
 
 namespace Kudu.Services.Controllers {
+    [JsonExceptionFilter]
     public class ScmController : Controller {
         [HttpGet]
         [ActionName("id")]
@@ -28,14 +28,13 @@ namespace Kudu.Services.Controllers {
             return Json(GetRepository().GetBranches(), JsonRequestBehavior.AllowGet);
         }
 
-        [HttpPost]
         [ActionName("status")]
         public ActionResult GetStatus() {
             return Json(GetRepository().GetStatus(), JsonRequestBehavior.AllowGet);
         }
 
         [HttpGet]
-        [ActionName("changes")]
+        [ActionName("log")]
         public ActionResult GetChanges(int? index, int? limit) {
             IEnumerable<ChangeSet> changeSets = null;
             if (index == null && limit == null) {
@@ -79,8 +78,8 @@ namespace Kudu.Services.Controllers {
 
         [HttpPost]
         [ActionName("commit")]
-        public ActionResult Commit(string authorName, string message) {
-            return Json(GetRepository().Commit(authorName, message));
+        public ActionResult Commit(string name, string message) {
+            return Json(GetRepository().Commit(name, message));
         }
 
         [HttpPost]
@@ -90,16 +89,27 @@ namespace Kudu.Services.Controllers {
         }
 
         private IRepository GetRepository() {
-            string path = Path.Combine(HttpRuntime.AppDomainAppPath, @"..\");
+            string path = Path.Combine(GetRootPath(), @"repository");
 
-            if (String.IsNullOrEmpty(path)) {
-                throw new InvalidOperationException("No repository path!");
+            if (!Directory.Exists(path)) {
+                Directory.CreateDirectory(path);
             }
 
             if (Directory.EnumerateDirectories(path, ".hg").Any()) {
                 return new HgRepository(path);
             }
             return new HybridRepository(path);
+        }
+
+        private string GetRootPath() {
+            // Temporary path (under bin folder so we don't need to ignore it in source control)
+            string path = Path.Combine(HttpRuntime.BinDirectory, "_root");
+
+            if (!Directory.Exists(path)) {
+                Directory.CreateDirectory(path);
+            }
+
+            return path;
         }
     }
 }

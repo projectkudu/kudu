@@ -13,7 +13,7 @@ namespace Kudu.Services {
             routes.MapRoute(
                 "Default", // Route name
                 "{controller}/{action}/{id}", // URL with parameters
-                new { controller = "Scm", action = "Id", id = UrlParameter.Optional } // Parameter defaults
+                new { id = UrlParameter.Optional } // Parameter defaults
             );
 
         }
