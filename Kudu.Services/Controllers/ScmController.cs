@@ -78,6 +78,7 @@ namespace Kudu.Services.Controllers {
 
         [HttpPost]
         [ActionName("commit")]
+        [ValidateInput(false)]
         public ActionResult Commit(string name, string message) {
             return Json(GetRepository().Commit(name, message));
         }

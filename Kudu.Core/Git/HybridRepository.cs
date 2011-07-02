@@ -57,11 +57,11 @@ namespace Kudu.Core.Git {
         }
 
         public void AddFile(string path) {
-            _libgitRepository.AddFile(path);
+            _exeRepository.AddFile(path);
         }
 
         public void RemoveFile(string path) {
-            _libgitRepository.RemoveFile(path);
+            _exeRepository.RemoveFile(path);
         }
 
         public ChangeSet Commit(string authorName, string message) {
