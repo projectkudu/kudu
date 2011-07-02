@@ -474,8 +474,12 @@ namespace Kudu.Core.Git {
                 reader.SkipWhitespace();
                 reader.Skip('+');
                 range.RightFrom = reader.ReadInt();
-                reader.Skip(',');
-                range.RightTo = range.RightFrom + reader.ReadInt();
+                if (reader.Skip(',')) {
+                    range.RightTo = range.RightFrom + reader.ReadInt();
+                }
+                else {
+                    range.RightTo = range.RightFrom;
+                }
                 reader.SkipWhitespace();
                 reader.Skip("@@");
                 return range;

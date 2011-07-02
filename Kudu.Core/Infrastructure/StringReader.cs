@@ -139,20 +139,22 @@ namespace Kudu.Core.Infrastructure {
             Skip(1);
         }
 
-        public void Skip(string value) {
+        public bool Skip(string value) {
             if (!Peek(value)) {
-                throw new InvalidOperationException(String.Format("Expected {0} but got {1}", value, Peek(value.Length)));
+                return false;
             }
 
             Skip(value.Length);
+            return true;
         }
 
-        public void Skip(char value) {
+        public bool Skip(char value) {
             if (Current != value) {
-                throw new InvalidOperationException(String.Format("Expected {0} but got {1}", value, Current));
+                return false;
             }
 
             Skip(1);
+            return true;
         }
 
         public void Skip(int n) {

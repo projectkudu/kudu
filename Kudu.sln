@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.Web", "Kudu.Web\Kudu.W
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.Console", "Kudu.Console\Kudu.Console.csproj", "{C29A5191-0DFC-4B7E-BEB9-E6D740BDCA86}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.Services", "Kudu.Services\Kudu.Services.csproj", "{6295D938-63FD-4C26-AE00-B32776CC689E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +49,16 @@ Global
 		{C29A5191-0DFC-4B7E-BEB9-E6D740BDCA86}.Release|Mixed Platforms.Build.0 = Release|x86
 		{C29A5191-0DFC-4B7E-BEB9-E6D740BDCA86}.Release|x86.ActiveCfg = Release|x86
 		{C29A5191-0DFC-4B7E-BEB9-E6D740BDCA86}.Release|x86.Build.0 = Release|x86
+		{6295D938-63FD-4C26-AE00-B32776CC689E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6295D938-63FD-4C26-AE00-B32776CC689E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6295D938-63FD-4C26-AE00-B32776CC689E}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{6295D938-63FD-4C26-AE00-B32776CC689E}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{6295D938-63FD-4C26-AE00-B32776CC689E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6295D938-63FD-4C26-AE00-B32776CC689E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6295D938-63FD-4C26-AE00-B32776CC689E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6295D938-63FD-4C26-AE00-B32776CC689E}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{6295D938-63FD-4C26-AE00-B32776CC689E}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{6295D938-63FD-4C26-AE00-B32776CC689E}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
