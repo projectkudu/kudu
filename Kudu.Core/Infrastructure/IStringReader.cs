@@ -1,6 +1,7 @@
 ﻿using System;
+
 namespace Kudu.Core.Infrastructure {
-    interface IStringReader {
+    internal interface IStringReader {
         bool Done { get; }
         bool Peek(string value);
         char Read();

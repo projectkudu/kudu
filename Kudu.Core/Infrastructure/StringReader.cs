@@ -28,6 +28,10 @@ namespace Kudu.Core.Infrastructure {
             if (String.IsNullOrEmpty(value) && ch == '\0') {
                 return null;
             }
+            else if (ch == '\0') {
+                return value;
+            }
+
             return value + ch;
         }
 

@@ -215,7 +215,7 @@ namespace Kudu.Core.SourceControl.Git {
             }
         }
 
-        private static ChangeSetDetail ParseCommitAndSummary(IStringReader reader) {
+        internal static ChangeSetDetail ParseCommitAndSummary(IStringReader reader) {
             // Parse the changeset
             ChangeSet changeSet = ParseCommit(reader);
 
@@ -226,11 +226,13 @@ namespace Kudu.Core.SourceControl.Git {
             return detail;
         }
 
-        private static void ParseSummary(IStringReader reader, ChangeSetDetail detail) {
+        internal static void ParseSummary(IStringReader reader, ChangeSetDetail detail) {
+            reader.SkipWhitespace();
+
             while (!reader.Done) {
                 string line = reader.ReadLine();
 
-                if (ParserHelpers.IsSingleLineFeed(line)) {
+                if (ParserHelpers.IsSingleNewLine(line)) {
                     break;
                 }
                 else if (line.Contains('\t')) {
@@ -286,11 +288,11 @@ namespace Kudu.Core.SourceControl.Git {
             } while (!reader.Done);
         }
 
-        private static bool IsDiffHeader(string line) {
+        internal static bool IsDiffHeader(string line) {
             return line.StartsWith("diff --git", StringComparison.InvariantCulture);
         }
 
-        private static FileDiff ParseDiffChunk(IStringReader reader, ref ChangeSetDetail merge) {
+        internal static FileDiff ParseDiffChunk(IStringReader reader, ref ChangeSetDetail merge) {
             // Extract the file name from the diff header
             var headerReader = reader.ReadLine().AsReader();
             headerReader.ReadUntil("a/");
@@ -373,7 +375,7 @@ namespace Kudu.Core.SourceControl.Git {
             return diff;
         }
 
-        private static ChangeSet ParseCommit(IStringReader reader) {
+        internal static ChangeSet ParseCommit(IStringReader reader) {
             // commit hash
             reader.ReadUntilWhitespace();
             reader.SkipWhitespace();
@@ -389,7 +391,7 @@ namespace Kudu.Core.SourceControl.Git {
             while (!reader.Done) {
                 string line = reader.ReadLine();
 
-                if (ParserHelpers.IsSingleLineFeed(line)) {
+                if (ParserHelpers.IsSingleNewLine(line)) {
                     break;
                 }
 
@@ -416,7 +418,7 @@ namespace Kudu.Core.SourceControl.Git {
             while (!reader.Done) {
                 string line = reader.ReadLine();
 
-                if (ParserHelpers.IsSingleLineFeed(line)) {
+                if (ParserHelpers.IsSingleNewLine(line)) {
                     break;
                 }
                 messageBuilder.Append(line);
@@ -426,17 +428,19 @@ namespace Kudu.Core.SourceControl.Git {
             return new ChangeSet(id, author, email, message, DateTimeOffset.ParseExact(date, "ddd MMM d HH:mm:ss yyyy zzz", CultureInfo.InvariantCulture));
         }
 
-        private IEnumerable<FileStatus> ParseStatus(IStringReader reader) {
+        internal static IEnumerable<FileStatus> ParseStatus(IStringReader reader) {
+            reader.SkipWhitespace();
+
             while (!reader.Done) {
-                reader.SkipWhitespace();
                 var subReader = reader.ReadLine().AsReader();
                 string status = subReader.ReadUntilWhitespace().Trim();
                 string path = subReader.ReadLine().Trim();
                 yield return new FileStatus(path, ConvertStatus(status));
+                reader.SkipWhitespace();
             }
         }
 
-        private ChangeType ConvertStatus(string status) {
+        internal static ChangeType ConvertStatus(string status) {
             switch (status) {
                 case "A":
                 case "AM":
@@ -457,7 +461,7 @@ namespace Kudu.Core.SourceControl.Git {
             throw new InvalidOperationException("Unsupported status " + status);
         }
 
-        private class DiffRange {
+        internal class DiffRange {
             public int LeftFrom { get; set; }
             public int LeftTo { get; set; }
             public int RightFrom { get; set; }

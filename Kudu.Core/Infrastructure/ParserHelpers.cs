@@ -17,7 +17,10 @@ namespace Kudu.Core.Infrastructure {
             detail.Deletions = subReader.ReadInt();
         }
 
-        internal static bool IsSingleLineFeed(string value) {
+        internal static bool IsSingleNewLine(string value) {
+            if (value.Length == 2 && value[0] == '\r' && value[1] == '\n') {
+                return true;
+            }
             return value.Length == 1 && value[0] == '\n';
         }
     }

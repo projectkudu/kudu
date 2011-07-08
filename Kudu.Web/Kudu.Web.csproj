@@ -71,9 +71,6 @@
     <Content Include="SourceControl\images\page_white_gear.png" />
     <Content Include="SourceControl\images\tick.png" />
     <Content Include="SourceControl\index.htm" />
-    <Content Include="Scripts\jquery-1.6.1-vsdoc.js" />
-    <Content Include="Scripts\jquery-1.6.1.js" />
-    <Content Include="Scripts\jquery-1.6.1.min.js" />
     <Content Include="SourceControl\images\loading.gif" />
     <Content Include="SourceControl\loader.js" />
     <Content Include="SourceControl\SourceControl.css" />
