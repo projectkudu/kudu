@@ -13,3 +13,4 @@ _ReSharper.*
 *.csproj.user
 *[Rr]e[Ss]harper.user
 _ReSharper.*/
+packages/*
