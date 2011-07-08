@@ -7,6 +7,11 @@ namespace Kudu.Core.SourceControl {
         private readonly HttpClient _client;
 
         public RemoteRepository(string serviceUrl) {
+            // The URL needs to end with a slash for HttpClient to do the right thing with relative paths
+            if (!serviceUrl.EndsWith("/")) {
+                serviceUrl += "/";
+            }
+
             _client = new HttpClient(serviceUrl);
         }
 
