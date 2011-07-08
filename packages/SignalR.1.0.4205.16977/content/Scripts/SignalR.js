@@ -1,16 +1,20 @@
-﻿/// <reference path="jquery-1.6.1.js" />
+﻿/// <reference path="jquery-1.6.2.js" />
 (function ($, window) {
     /// <param name="$" type="jQuery" />
     "use strict";
-    
-    if (typeof (window.signalR) === "function") {
+    if (typeof (window.SignalR) === "function") {
         return;
     }
 
+    function getTransport(connection) {
+        /// <param name="instance" type="signalR">The signalR connection</param>
+        return $.type(connection.method) === "object" ? connection.method : signalR.transports[connection.method];
+    }
+
     var signalR = function (url) {
-        /// <summary>Creates a new signalR connection for the given url</summary>
+        /// <summary>Creates a new SignalR connection for the given url</summary>
         /// <param name="url" type="String">The URL of the long polling endpoint</param>
-        /// <returns type="signalR" />
+        /// <returns type="SignalR" />
 
         return new signalR.fn.init(url);
     };
@@ -19,51 +23,93 @@
         init: function (url) {
             this.url = url;
         },
-        
-        start: function (callback) {
+
+        start: function (options, callback) {
             /// <summary>Starts the connection</summary>
+            /// <param name="options" type="Object">Options map</param>
             /// <param name="callback" type="Function">A callback function to execute when the connection has started</param>
-            /// <returns type="signalR" />
-            var that = this;
+            /// <returns type="SignalR" />
+            var that = this,
+                config = {
+                    transport: "auto"
+                };
 
             if (that.method) {
                 return that;
             }
 
-            if (typeof (callback) === "function") {
+            if ($.type(options) === "function") {
+                // Support calling with single callback parameter
+                callback = options;
+            } else if ($.type(options) === "object") {
+                $.extend(config, options);
+                if ($.type(config.callback) === "function") {
+                    callback = config.callback;
+                }
+            }
+
+            if ($.type(callback) === "function") {
                 $(that).bind("onStart", function (e, data) {
                     callback.call(that);
                 });
             }
-            
+
             var initialize = function (transports, index) {
                 index = index || 0;
                 if (index >= transports.length) {
+                    if (!that.method) {
+                        // No transport initialized successfully
+                        throw "SignalR: No transport could be initialized successfully. Try specifying a different transport or none at all for auto initialization.";
+                    }
                     return;
                 }
 
                 var method = transports[index];
-                var transport = signalR.transports[method];
+                var transport = $.type(method) === "object" ? method : signalR.transports[method];
 
                 transport.start(that, function () {
                     that.method = method;
-                }, 
+                    $(that).trigger("onStart");
+                },
                 function () {
                     initialize(transports, index + 1);
-                });                
+                });
             };
 
-            $.post(this.url + '/negotiate', {}, function (res) {                
-                that.appRelativeUrl = res.url;
+            window.setTimeout(function () {
+                $.post(that.url + '/negotiate', {}, function (res) {
+                    that.appRelativeUrl = res.Url;
+                    that.clientId = res.ClientId;
 
-                $(that).trigger("onStarting");
-                var transports = [];
-                $.each(signalR.transports, function (key) {
-                    transports.push(key);    
+                    $(that).trigger("onStarting");
+
+                    var transports = [],
+                        supportedTransports = [];
+
+                    $.each(signalR.transports, function (key) {
+                        supportedTransports.push(key);
+                    });
+
+                    if ($.isArray(config.transport)) {
+                        // ordered list provided
+                        $.each(config.transport, function () {
+                            var t = this;
+                            if ($.type(t) === "object" || ($.type(t) === "string" && $.inArray("" + t, supportedTransports) >= 0)) {
+                                transports.push($.type(t) === "string" ? "" + t : t);
+                            }
+                        });
+                    } else if ($.type(config.transport) === "object" ||
+                               $.inArray(config.transport, supportedTransports) >= 0) {
+                        // specific transport provided, as object or a named transport, e.g. "longPolling"
+                        transports.push(config.transport);
+                    }
+                    else { // default "auto"
+                        transports = supportedTransports;
+                    }
+
+                    initialize(transports);
                 });
-
-                initialize(transports);
-            });
+            }, 0);
 
             return that;
         },
@@ -71,7 +117,7 @@
         starting: function (callback) {
             /// <summary>Adds a callback that will be invoked before the connection is started</summary>
             /// <param name="callback" type="Function">A callback function to execute when the connection is starting</param>
-            /// <returns type="signalR" />
+            /// <returns type="SignalR" />
             var that = this;
 
             $(that).bind("onStarting", function (e, data) {
@@ -84,17 +130,16 @@
         send: function (data) {
             /// <summary>Sends data over the connection</summary>
             /// <param name="data" type="String">The data to send over the connection</param>
-            /// <returns type="signalR" />
+            /// <returns type="SignalR" />
             var that = this;
 
-            var transport = signalR.transports[that.method];
+            var transport = getTransport(that);
             if (!transport) {
                 // Connection hasn't been started yet
-                throw "signalR: Connection must be started before data can be sent. Call .start() before .send()";
+                throw "SignalR: Connection must be started before data can be sent. Call .start() before .send()";
             }
 
-            var args = $.makeArray([that]).concat($.makeArray(arguments));
-            transport.send.apply(transport, args);
+            transport.send(that, data);
 
             return that;
         },
@@ -102,7 +147,7 @@
         sending: function (callback) {
             /// <summary>Adds a callback that will be invoked before anything is sent over the connection</summary>
             /// <param name="callback" type="Function">A callback function to execute before each time data is sent on the connection</param>
-            /// <returns type="signalR" />
+            /// <returns type="SignalR" />
             var that = this;
             $(that).bind("onSending", function (e, data) {
                 callback.call(that);
@@ -113,7 +158,7 @@
         received: function (callback) {
             /// <summary>Adds a callback that will be invoked after anything is received over the connection</summary>
             /// <param name="callback" type="Function">A callback function to execute when any data is received on the connection</param>
-            /// <returns type="signalR" />
+            /// <returns type="SignalR" />
             var that = this;
             $(that).bind("onReceived", function (e, data) {
                 callback.call(that, data);
@@ -124,7 +169,7 @@
         error: function (callback) {
             /// <summary>Adds a callback that will be invoked after an error occurs with the connection</summary>
             /// <param name="callback" type="Function">A callback function to execute when an error occurs on the connection</param>
-            /// <returns type="signalR" />
+            /// <returns type="SignalR" />
             var that = this;
             $(that).bind("onError", function (e, data) {
                 callback.call(that);
@@ -133,10 +178,12 @@
         },
         stop: function () {
             /// <summary>Stops listening</summary>
-            /// <returns type="signalR" />
-            signalR.transports[this.method].stop(this);
-            this.method = null;
-            return this;
+            /// <returns type="SignalR" />
+            var that = this,
+                transport = getTransport(that);
+            transport.stop(that);
+            that.method = null;
+            return that;
         }
     };
 
@@ -144,6 +191,7 @@
 
     // Transports
     signalR.transports = {
+
         webSockets: {
             send: function (connection, data) {
                 connection.socket.send(data);
@@ -160,17 +208,19 @@
 
                     $(connection).trigger("onSending");
                     if (connection.data) {
-                        url += "?data=" + connection.data;
+                        url += "?data=" + connection.data + "&clientId=" + connection.clientId;
+                    }
+                    else {
+                        url += "?clientId=" + connection.clientId;
                     }
 
                     connection.socket = new WebSocket("ws://" + url);
                     var opened = false;
                     connection.socket.onopen = function () {
                         opened = true;
-                        if (onSuccess) { 
+                        if (onSuccess) {
                             onSuccess();
                         }
-                        $(connection).trigger("onStart");
                     };
 
                     connection.socket.onclose = function (event) {
@@ -183,13 +233,15 @@
 
                     connection.socket.onmessage = function (event) {
                         var data = window.JSON.parse(event.data);
-                        if (data.Messages) {
-                            $.each(data.Messages, function () {
-                                $(connection).trigger("onReceived", [this]);
-                            });
-                        }
-                        else {
-                            $(connection).trigger("onReceived", [data]);
+                        if (data) {
+                            if (data.Messages) {
+                                $.each(data.Messages, function () {
+                                    $(connection).trigger("onReceived", [this]);
+                                });
+                            }
+                            else {
+                                $(connection).trigger("onReceived", [data]);
+                            }
                         }
                     };
                 }
@@ -201,20 +253,20 @@
                 }
             }
         },
+
         longPolling: {
             start: function (connection, onSuccess, onFailed) {
                 /// <summary>Starts the long polling connection</summary>
-                /// <param name="connection" type="signalR">The signalR connection to start</param>
+                /// <param name="connection" type="SignalR">The SignalR connection to start</param>
                 if (connection.pollXhr) {
                     connection.stop();
                 }
-                
+
                 // Always supported
                 onSuccess();
-                $(connection).trigger("onStart");
 
                 connection.messageId = null;
-                
+
                 window.setTimeout(function () {
                     (function poll(instance) {
                         $(instance).trigger("onSending");
@@ -226,6 +278,7 @@
                         instance.pollXhr = $.ajax(url, {
                             type: "POST",
                             data: {
+                                clientId: instance.clientId,
                                 messageId: messageId,
                                 data: instance.data,
                                 transport: "longPolling"
@@ -238,10 +291,7 @@
                                             $(instance).trigger("onReceived", [this]);
                                         });
                                     }
-                                    else {
-                                        $(instance).trigger("onReceived", [data]);
-                                    }
-                                    instance.messageId = data.MessageId;
+                                    instance.messageId = data.MessageId || null;
                                 }
                                 poll(instance);
                             },
@@ -258,19 +308,27 @@
                             }
                         });
                     })(connection);
-                }, 0); // Have to delay initial poll so Chrome doesn't show loader spinner in tab
+                }, 250); // Have to delay initial poll so Chrome doesn't show loader spinner in tab
             },
 
-            send: function (connection, data, callback) {
+            send: function (connection, data) {
                 /// <summary>Sends data over this connection</summary>
-                /// <param name="connection" type="signalR">The signalR connection to send data over</param>
+                /// <param name="connection" type="SignalR">The SignalR connection to send data over</param>
                 /// <param name="data" type="String">The data to send</param>
                 /// <param name="callback" type="Function">A callback to be invoked when the send has completed</param>
                 $.ajax(connection.url + '/send', {
                     type: "POST",
-                    data: { data: data, transport: "longPolling" },
                     dataType: "json",
-                    success: callback,
+                    data: { 
+                        data: data,
+                        transport: "longPolling",
+                        clientId: connection.clientId
+                    },
+                    success: function (result) {
+                        if (result) {
+                            $(connection).trigger("onReceived", [result]);
+                        }
+                    },
                     error: function (data, textStatus) {
                         if (textStatus === "abort") {
                             return;
@@ -282,7 +340,7 @@
 
             stop: function (connection) {
                 /// <summary>Stops the long polling connection</summary>
-                /// <param name="connection" type="signalR">The signalR connection to stop</param>
+                /// <param name="connection" type="SignalR">The SignalR connection to stop</param>
                 if (connection.pollXhr) {
                     connection.pollXhr.abort();
                     connection.pollXhr = null;

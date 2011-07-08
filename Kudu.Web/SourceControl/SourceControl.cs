@@ -7,8 +7,8 @@ using System.Text;
 using Kudu.Core;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.SourceControl.Hg;
-using ServerSync;
 using Kudu.Core.SourceControl;
+using SignalR.Hubs;
 
 namespace Kudu.Web {
     public class SourceControl : Hub {

@@ -4,7 +4,8 @@
 /// <reference path="../Scripts/jquery.cookie.js" />
 
 $(function () {
-    var scm = signalR.SourceControl;
+    var scm = signalR.sourceControl;
+
     var infiniteScrollCheck = false;
     var changesXhr = null;
     var pageSize = 15;

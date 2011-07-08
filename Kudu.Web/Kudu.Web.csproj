@@ -34,12 +34,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="ServerSync.Core, Version=1.0.4197.35834, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="SignalR, Version=1.0.4205.16977, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\ServerSync.Core.1.0.4197.35834\lib\net40\ServerSync.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="SignalR">
-      <HintPath>..\packages\SignalR.0.1.4178.22460\lib\net40\SignalR.dll</HintPath>
+      <HintPath>..\packages\SignalR.1.0.4205.16977\lib\net40\SignalR.dll</HintPath>
     </Reference>
     <Reference Include="System.Web.DynamicData" />
     <Reference Include="System.Web.Entity" />
@@ -58,11 +55,14 @@
     <Reference Include="System.EnterpriseServices" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Scripts\jquery-1.6.2-vsdoc.js" />
+    <Content Include="Scripts\jquery-1.6.2.js" />
+    <Content Include="Scripts\jquery-1.6.2.min.js" />
     <Content Include="Scripts\jquery.cookie.js" />
     <Content Include="Scripts\jquery.render.min.js" />
     <Content Include="Scripts\jquery.timeago.js" />
     <Content Include="Scripts\sammy.js" />
-    <Content Include="Scripts\signalR.js" />
+    <Content Include="Scripts\SignalR.js" />
     <Content Include="SourceControl\images\folder_table.png" />
     <Content Include="SourceControl\images\page_white.png" />
     <Content Include="SourceControl\images\page_white_add.png" />
