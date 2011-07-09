@@ -7,7 +7,7 @@ using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.SourceControl.Hg;
 
-namespace Kudu.Services.Controllers {
+namespace Kudu.Services.SourceControl {
     [JsonExceptionFilter]
     public class ScmController : Controller {
         [HttpGet]
