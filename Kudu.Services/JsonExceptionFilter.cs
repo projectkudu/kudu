@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Web.Mvc;
 
-namespace Kudu.Services.Controllers {
+namespace Kudu.Services {
     [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
     public sealed class JsonExceptionFilterAttribute : FilterAttribute, IExceptionFilter {
         public void OnException(ExceptionContext filterContext) {
@@ -14,5 +14,8 @@ namespace Kudu.Services.Controllers {
                 Data = filterContext.Exception.Message
             };
         }
+    }
+
+    public class Hello {
     }
 }
