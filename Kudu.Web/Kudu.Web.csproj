@@ -35,10 +35,13 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AjaxMin">
+      <HintPath>..\packages\AjaxMin.4.19.4141.18463\lib\AjaxMin.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="SignalR, Version=1.0.4205.16977, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="SignalR, Version=1.0.4208.26890, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\SignalR.1.0.4205.16977\lib\net40\SignalR.dll</HintPath>
+      <HintPath>..\packages\SignalR.1.0.4208.26890\lib\net40\SignalR.dll</HintPath>
     </Reference>
     <Reference Include="System.Web.DynamicData" />
     <Reference Include="System.Web.Entity" />
@@ -65,6 +68,7 @@
     <Content Include="Scripts\jquery.timeago.js" />
     <Content Include="Scripts\sammy.js" />
     <Content Include="Scripts\SignalR.js" />
+    <Content Include="Scripts\SignalR.min.js" />
     <Content Include="SourceControl\images\folder_table.png" />
     <Content Include="SourceControl\images\page_white.png" />
     <Content Include="SourceControl\images\page_white_add.png" />

@@ -249,6 +249,16 @@ form {
     margin-bottom: 10px;
 }
 
+#error {
+    display: none;
+    background-color: #FFEBE8;
+    border: 1px solid #DD3C10;
+    font-size: 15px;
+    font-weight: bold;
+    padding: 1%;
+    margin-bottom: 10px;
+}
+
 .gray-gradient {
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f5f5f5', endColorstr='#ebebeb'); /* for IE */
     background: -webkit-gradient(linear, left top, left bottom, from(#f5f5f5), to(#ebebeb)); /* for webkit browsers */

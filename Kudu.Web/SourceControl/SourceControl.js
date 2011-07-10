@@ -88,7 +88,7 @@ $(function () {
             callback();
             changesXhr = null;
         })
-        .error(function () {
+        .fail(function (e) {
             callback();
             changesXhr = null;
         });
@@ -141,7 +141,9 @@ $(function () {
                 }
             });
         })
-        .error(function () {
+        .fail(function (e) {
+            $('#error').html(e);
+            $('#error').show();
             window.loader.hide(token);
         });
     }
@@ -165,7 +167,7 @@ $(function () {
 
             window.loader.hide(token);
         })
-        .error(function () {
+        .fail(function () {
             window.loader.hide(token);
         });
     }
@@ -192,7 +194,7 @@ $(function () {
                 $('#diff').html('No changes');
             }
         })
-        .complete(function () {
+        .done(function () {
             window.loader.hide(token);
         });
     }
@@ -283,7 +285,7 @@ $(function () {
                     alert('No pending changes');
                 }
             })
-            .complete(function () {
+            .done(function () {
                 window.loader.hide(token);
             });
 

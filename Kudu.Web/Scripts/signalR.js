@@ -6,8 +6,18 @@
         return;
     }
 
+    if (typeof ($) !== "function") {
+        // no jQuery!
+        throw "SignalR: jQuery not found. Please ensure jQuery is referenced before the SignalR.js file.";
+    }
+
+    if (!window.JSON) {
+        // no JSON!
+        throw "SignalR: No JSON parser found. Please ensure json2.js is referenced before the SignalR.js file if you need to support clients without native JSON parsing support, e.g. IE<8.";
+    }
+
     function getTransport(connection) {
-        /// <param name="instance" type="signalR">The signalR connection</param>
+        /// <param name="connection" type="signalR">The signalR connection</param>
         return $.type(connection.method) === "object" ? connection.method : signalR.transports[connection.method];
     }
 
@@ -285,15 +295,25 @@
                             },
                             dataType: "json",
                             success: function (data) {
+                                var delay = 0;
                                 if (data) {
                                     if (data.Messages) {
                                         $.each(data.Messages, function () {
                                             $(instance).trigger("onReceived", [this]);
                                         });
                                     }
-                                    instance.messageId = data.MessageId || null;
+                                    instance.messageId = data.MessageId;
+                                    if ($.type(data.TransportData.LongPollDelay) === "number") {
+                                        delay = data.TransportData.LongPollDelay;
+                                    }
                                 }
-                                poll(instance);
+                                if (delay > 0) {
+                                    window.setTimeout(function () {
+                                        poll(instance);
+                                    }, delay);
+                                } else {
+                                    poll(instance);
+                                }
                             },
                             error: function (data, textStatus) {
                                 if (textStatus === "abort") {
@@ -319,7 +339,7 @@
                 $.ajax(connection.url + '/send', {
                     type: "POST",
                     dataType: "json",
-                    data: { 
+                    data: {
                         data: data,
                         transport: "longPolling",
                         clientId: connection.clientId
