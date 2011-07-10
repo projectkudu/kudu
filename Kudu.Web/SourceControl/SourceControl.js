@@ -145,6 +145,10 @@ $(function () {
             $('#error').html(e);
             $('#error').show();
             window.loader.hide(token);
+
+            window.setTimeout(function () {
+                $('#error').slideUp();
+            }, 5000);
         });
     }
 

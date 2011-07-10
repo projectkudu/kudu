@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Net.Http;
 using Newtonsoft.Json;
+using System;
 
 namespace Kudu.Core.SourceControl {
     public class RemoteRepository : IRepository {
@@ -80,8 +81,14 @@ namespace Kudu.Core.SourceControl {
         }
 
         private T GetJson<T>(string url) {
-            var json = _client.Get(url).EnsureSuccessStatusCode().Content.ReadAsString();
-            return JsonConvert.DeserializeObject<T>(json);
+            var message = _client.Get(url);
+            var content = message.Content.ReadAsString();
+
+            if(!message.IsSuccessStatusCode){
+                throw new InvalidOperationException(content);
+            }
+
+            return JsonConvert.DeserializeObject<T>(content);
         }
     }
 }
