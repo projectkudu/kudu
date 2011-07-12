@@ -317,9 +317,16 @@
             }
 
             function updateFiles() {
+                var token = loader.show('Loading files...');
                 return documents.getStatus()
-                         .done(refresh)
-                         .fail(onError);
+                         .done(function (project) {
+                             refresh(project);
+                             loader.hide(token);
+                         })
+                         .fail(function (e) {
+                             onError(e);
+                             loader.hide(token);
+                         });
             }
 
             function collapseFolders() {
@@ -402,7 +409,7 @@
                                     operation.always(function () {
                                         loader.hide(token);
                                     });
-                                } 
+                                }
                                 else {
                                     loader.hide(token);
                                 }

@@ -14,6 +14,7 @@ namespace Kudu.Core.Editor {
             }
 
             _client = new HttpClient(serviceUrl);
+            _client.MaxResponseContentBufferSize = 30 * 1024 * 1024;
         }
 
         public string ReadAllText(string path) {
