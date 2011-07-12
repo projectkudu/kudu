@@ -33,7 +33,7 @@ namespace Kudu.Services {
             routes.MapRoute(
                 "Default", // Route name
                 "{controller}/{action}/{id}", // URL with parameters
-                new { id = UrlParameter.Optional } // Parameter defaults
+                new { action = "Index", id = UrlParameter.Optional } // Parameter defaults
             );
         }
 

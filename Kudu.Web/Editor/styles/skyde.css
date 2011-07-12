@@ -1,0 +1,425 @@
+﻿#skyde {
+    font-family: Trebuchet MS;
+    font-size: 13px;
+    height: 450px;
+}
+
+#skyde a {
+    text-decoration: none;
+    color: Blue;
+}
+
+#skyde a:visited {
+    color: Blue;
+}
+
+#skyde a img {
+    border: 0px;
+}
+
+#skyde #file-browser {
+    margin-left: 5px;
+    padding-left: 5px;
+}
+
+#skyde #file-browser li {
+    list-style-type: none;
+}
+
+#skyde .folder {
+    padding-left: 10px;
+    margin-left: 10px;
+}
+
+#skyde {
+    padding-left: 10px;
+    margin-left: 10px;
+}
+
+#skyde .files {
+    padding-left: 10px;
+    margin-left: 10px;
+}
+
+#skyde .new-file {
+    margin-left: 3px;
+}
+
+#skyde #pending-changes {
+    margin-left: 5px;
+    padding-left: 5px;
+}
+
+#skyde .scm-change {
+    margin-right: 5px;
+    font-weight: bold;
+}
+
+#skyde #file-browser .delete {
+    margin-left: 3px;
+}
+
+#skyde #file-browser .delete-folder {
+    margin-left: 0px;
+}
+
+#skyde #pending-changes li {
+    list-style: none;
+}
+
+#skyde #pending-changes .delete {
+    margin-left: 5px;
+}
+
+#skyde .CodeMirror {
+    border: 1px solid #ccc;
+    width: 100%;
+    height: inherit;
+    font-family: Consolas, Monospace;
+    font-size: 10pt;
+    line-height: 12pt;
+}
+
+#skyde .icon-cs {
+    background-image: url('../../images/cs.png');
+}
+
+#skyde .icon-cs-add {
+    background-image: url('../../images/cs-add.png');
+}
+
+#skyde .icon-cs-edit {
+    background-image: url('../../images/cs-edit.png');
+}
+
+#skyde .icon-cshtml {
+    background-image: url('../../images/cshtml.png');
+}
+
+#skyde .icon-cshtml-add {
+    background-image: url('../../images/cshtml-add.png');
+}
+
+#skyde .icon-cshtml-edit {
+    background-image: url('../../images/cshtml-edit.png');
+}
+
+#skyde .icon-aspx {
+    background-image: url('../../images/aspx.png');
+}
+
+#skyde .icon-aspx-add {
+    background-image: url('../../images/aspx-add.png');
+}
+
+#skyde .icon-aspx-edit {
+    background-image: url('../../images/aspx-edit.png');
+}
+
+#skyde .icon-ascx {
+    background-image: url('../../images/ascx.png');
+}
+
+#skyde .icon-ascx-add {
+    background-image: url('../../images/ascx-add.png');
+}
+
+#skyde .icon-ascx-edit {
+    background-image: url('../../images/ascx-edit.png');
+}
+
+#skyde .icon-config {
+    background-image: url('../../images/config.png');
+}
+
+#skyde .icon-config-add {
+    background-image: url('../../images/config-add.png');
+}
+
+#skyde .icon-config-edit {
+    background-image: url('../../images/config-edit.png');
+}
+
+#skyde .icon-tt {
+    background-image: url('../../images/tt.png');
+}
+
+#skyde .icon-css {
+    background-image: url('../../images/css.png');
+}
+
+#skyde .icon-css-add {
+    background-image: url('../../images/css-add.png');
+}
+
+#skyde .icon-css-edit {
+    background-image: url('../../images/css-edit.png');
+}
+
+#skyde .icon-js {
+    background-image: url('../../images/js.png');
+}
+
+#skyde .icon-js-add {
+    background-image: url('../../images/js-add.png');
+}
+
+#skyde .icon-js-edit {
+    background-image: url('../../images/js-edit.png');
+}
+
+#skyde .icon-dll {
+    background-image: url('../../images/dll.png');
+}
+
+#skyde .icon-php {
+    background-image: url('../../images/php.png');
+}
+
+#skyde .icon-php-add {
+    background-image: url('../../images/php-add.png');
+}
+
+#skyde .icon-php-edit {
+    background-image: url('../../images/php-edit.png');
+}
+
+#skyde .icon-master {
+    background-image: url('../../images/master.png');
+}
+
+#skyde .icon-default {
+    background-image: url('../../images/page_white.png');
+}
+
+#skyde .icon-default-add {
+    background-image: url('../../images/page_white_add.png');
+}
+
+#skyde .icon-default-edit {
+    background-image: url('../../images/page_white_edit.png');
+}
+
+#skyde .icon {
+    background-repeat: no-repeat;
+    background-position: 0 50%;
+    padding-left: 20px;
+    line-height: 20px;
+}
+
+#skyde .icon-notext {
+    background-repeat: no-repeat;
+    background-position: 0 50%;
+    padding-left: 10px;
+    line-height: 20px;
+}
+
+#skyde .icon-project {
+    background-image: url('../../images/solution.png');
+    float: left;
+}
+
+#skyde .icon-loading {
+    background-image: url('../../images/loading.gif');
+}
+
+#skyde .icon-connecting {
+    background-image: url('../../images/connecting.gif');
+}
+
+#skyde .icon-connect {
+    background-image: url('../../images/connect.png');
+}
+
+#skyde .icon-disconnect {
+    background-image: url('../../images/disconnect.png');
+}
+
+#skyde .icon-save {
+    background-image: url('../../images/saveall.png');
+}
+
+#skyde .icon-close {
+    background-image: url('../../images/close.png');
+}
+
+#skyde .icon-refresh {
+    background-image: url('../../images/refresh.png');
+}
+
+#skyde .icon-new-file {
+    background-image: url('../../images/addfile.png');
+}
+
+#skyde .icon-new-folder {
+    background-image: url('../../images/new-folder.png');
+}
+
+#skyde .icon-sync {
+    background-image: url('../../images/sync.png');
+}
+
+#skyde .icon-menu {
+    background-image: url('../../images/application_side_list.png');
+}
+
+#skyde .icon-folder {
+    background-image: url('../../images/folder-expanded.png');
+    padding-left: 36px;
+    float: left;
+}
+
+#skyde .icon-folder.folder-collapsed {
+    background-image: url('../../images/folder-collapsed.png');
+    padding-left: 36px;
+}
+
+#skyde #status {
+    margin-top: 5px;
+    display: none;
+}
+
+#skyde #text-editor {
+    float: left;
+    width: 70%;
+    height: inherit;
+    margin-right: 1%;
+}
+
+#skyde #editor {
+    width: 100%;
+    height: inherit;
+}
+
+#skyde #file-browser {
+    float: left;
+    width: 25%;
+    height: inherit;
+    border: 1px solid #ccc;
+    overflow: auto;
+    white-space: nowrap;
+}
+
+#skyde #connect {
+    display: none;
+}
+
+#skyde #commit {
+    display: none;
+}
+
+#skyde #file-browser .menu {
+    float: left;
+    margin-left: 0px;
+    padding-left: 0px;
+    background-color: #fff;
+    padding: 0;
+    margin: 0;
+    margin-left: 2px;
+    margin-bottom: 1px;
+}
+
+#skyde #file-browser .menu-launcher {
+    margin-left: 5px;
+}
+
+#skyde .clear {
+    clear: both;
+}
+
+#skyde #file-browser .menu li {
+    float: left;
+    list-style: none;
+    background-color: #fff;
+    padding: 0;
+    margin: 0;
+}
+
+#skyde #file-browser .menu li a {
+    display: block;
+    text-decoration: none;
+    border-right: 1px solid white;
+    padding-left: 20px;
+    white-space: nowrap;
+    background-color: #fff;
+}
+
+#skyde #file-browser .menu li ul {
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    display: none;
+    border: 1px solid #ccc;
+    background-color: #fff;
+}
+
+#skyde #file-browser .menu li ul li {
+    float: none;
+    display: inline;
+}
+
+#skyde #file-browser .menu li ul li a {
+    width: auto;
+    padding: 3px 0px 3px 25px;
+    min-width: 100px;
+    background-color: #fff;
+}
+
+
+#skyde ul#tabs {
+    float: left;
+    width: 70%;
+    clear: both;
+    margin: 0;
+    padding: 0 0 2px;
+    position: relative;
+    margin-bottom: 1px;
+    min-height: 20px;
+}
+
+#skyde ul#tabs li {
+    display: inline;
+    list-style: none outside none;
+    padding: 4px 8px;
+    border: 1px solid #fff;
+    border-bottom: none;
+    border-radius: 4px 4px 0px 0px;
+    -moz-border-radius: 4px 4px 0px 0px;
+    -webkit-border-radius: 4px 4px 0px 0px;
+}
+
+#skyde ul#tabs a {
+    outline: none;
+    color: #000;
+}
+
+#skyde ul#tabs a.delete {
+    visibility: hidden;
+}
+
+#skyde ul#tabs li .dirty {
+    margin-left: 1px;
+}
+
+#skyde ul#tabs li:hover a.delete,
+#skyde ul#tabs li.active a.delete {
+    visibility: visible;
+}
+
+#skyde ul#tabs li.active,
+#skyde ul#tabs li:hover {
+    border: 1px solid #ccc;
+    background: #f5f5ee;
+    border-bottom: 1px solid #f5f5ee;
+}
+
+#skyde ul#tabs li:hover {
+    border-color: #d6d6d6;
+    background: #fefefe;
+}
+
+#skyde ul#tabs li.active:hover {
+    border: 1px solid #ccc;
+    background: #f5f5ee;
+    border-bottom: 1px solid #f5f5ee;
+}

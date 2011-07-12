@@ -55,6 +55,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Editor\IFileSystem.cs" />
+    <Compile Include="Editor\PhysicalFileSystem.cs" />
+    <Compile Include="Editor\RemoteFileSystem.cs" />
+    <Compile Include="Infrastructure\HttpClientExtensions.cs" />
     <Compile Include="Infrastructure\ParserHelpers.cs" />
     <Compile Include="Infrastructure\StringReader.cs" />
     <Compile Include="Infrastructure\Executable.cs" />

@@ -65,7 +65,8 @@ namespace Kudu.Web {
         }
 
         private IRepository GetRepository() {
-            string path = Caller.path;
+            // TODO: Replace with service location
+            string path = "http://localhost:52590/scm";
 
             if (String.IsNullOrEmpty(path)) {
                 throw new InvalidOperationException("No repository path!");

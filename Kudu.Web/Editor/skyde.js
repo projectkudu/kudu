@@ -1,0 +1,603 @@
+﻿/// <reference path="jquery-1.5.2.js" />
+
+(function (window, $) {
+    window.skyDE = {
+        fly: function (settings) {
+            var config = {
+                textArea: '#editor'
+            };
+
+            $.extend(config, settings);
+
+            var editor = CodeMirror.fromTextArea($(config.textArea)[0], {
+                lineNumbers: true,
+                matchBrackets: true,
+                indentUnit: 4,
+                indentWithTabs: false,
+                enterMode: "keep",
+                tabMode: "shift",
+                readOnly: true,
+                onChange: function (editor) {
+                    if (updatingEditor === false) {
+                        onDocumentChange();
+                    }
+                }
+            });
+
+            var documentTabs = (function () {
+                // ordered tabs
+                var tabs = [];
+
+                // for fast lookup
+                var tabsLookup = {};
+
+                function removeTab(tab) {
+                    var index = $.inArray(tab, tabs);
+                    if (index != -1) {
+                        tabs.splice(index, 1);
+                        $.each(tabs, function () {
+                            this.index--;
+                        });
+                    }
+                }
+
+                function moveToFront(tab) {
+                    if (tab.index !== (tabs.length - 1)) {
+                        removeTab(tab);
+                        tabs.push(tab);
+                        tab.index = tabs.length - 1;
+                    }
+                }
+
+                return {
+                    add: function (file) {
+                        var path = file.getPath();
+                        var tab = tabsLookup[path];
+                        if (!tab) {
+                            tab = { file: file };
+                            tabs.push(tab);
+                            tab.index = tabs.length - 1;
+                            tabsLookup[path] = tab;
+                        }
+                    },
+                    setActive: function (path) {
+                        var tab = tabsLookup[path];
+
+                        if (tab) {
+                            moveToFront(tab);
+                        }
+                    },
+                    get: function (path) {
+                        return tabsLookup[path];
+                    },
+                    remove: function (path) {
+                        removeTab(tabsLookup[path]);
+                        delete tabsLookup[path];
+                    },
+                    getActive: function () {
+                        if (tabs.length) {
+                            return tabs[tabs.length - 1];
+                        }
+                        return null;
+                    },
+                    nextTab: function () {
+                        if (tabs.length > 1) {
+                            moveToFront(tabs[0]);
+                        }
+                    },
+                    getAll: function () {
+                        var tabsClone = [];
+                        $.each(tabsLookup, function () {
+                            tabsClone.push(this);
+                        });
+                        return tabsClone;
+                    }
+                };
+            })();
+
+            var loader = function (selector) {
+                this.selector = selector;
+                this.token = 0;
+            };
+
+            loader.prototype = {
+                show: function (value) {
+                    var token = this.token++;
+                    $(this.selector).attr('data-token', token);
+                    $(this.selector).html(value);
+                    $(this.selector).attr('class', 'icon icon-loading');
+                    $(this.selector).show();
+                    return token;
+                },
+                hide: function (token) {
+                    var that = this;
+                    window.setTimeout(function () {
+                        if ($(that.selector).attr('data-token') == token) {
+                            $(that.selector).fadeOut('slow');
+                        }
+                    }, 100);
+                }
+            };
+
+            var loader = new loader('#status');
+
+            editor.setValue('');
+
+            var documents = signalR.documents;
+
+            var fileSystem = new FileSystem(),
+                                 iconMap = {},
+                                 updatingEditor = false;
+
+
+            iconMap['.cshtml'] = 'cshtml';
+            iconMap['.ascx'] = 'ascx';
+            iconMap['.aspx'] = 'aspx';
+            iconMap['.cs'] = 'cs';
+            iconMap['.config'] = 'config';
+            iconMap['.tt'] = 'tt';
+            iconMap['.css'] = 'css';
+            iconMap['.js'] = 'js';
+            iconMap['.dll'] = 'dll';
+            iconMap['.master'] = 'master';
+            iconMap['.php'] = 'php';
+
+            function getMode(extension) {
+                if (extension == '.css') {
+                    return 'css';
+                }
+                if (extension == '.js') {
+                    return 'javascript';
+                }
+
+                if (extension == '.html' ||
+                    extension == '.htm' ||
+                    extension == '.aspx' ||
+                    extension == '.ascx' ||
+                    extension == '.master') {
+                    return 'htmlmixed';
+                }
+
+                if (extension == '.cshtml') {
+                    return 'razor';
+                }
+
+                if (extension == '.php') {
+                    return 'php';
+                }
+
+                if (extension == '.xml' || extension == '.config' || extension == '.nuspec') {
+                    return 'xml';
+                }
+                if (extension == '.cs') {
+                    return 'text/x-java';
+                }
+                return '';
+            }
+
+            $(document).bind('keydown', 'ctrl+s', function (evt) {
+                saveDocument();
+                evt.stopPropagation();
+                evt.preventDefault();
+                return false;
+            });
+
+            $(document).bind('keyup', 'ctrl+tab', function (evt) {
+                documentTabs.nextTab();
+                var active = documentTabs.getActive();
+                if (active && active.file != getActiveDocument()) {
+                    openDocument(active.file.getPath());
+                }
+
+                evt.stopPropagation();
+                evt.preventDefault();
+                return false;
+            });
+
+            function openDocument(path) {
+                // If document is active save the content locally
+                var activeDocument = getActiveDocument();
+                if (activeDocument && activeDocument.isDirty() === true) {
+                    activeDocument.setBuffer(editor.getValue());
+                }
+
+                var file = fileSystem.getFile(path);
+
+                // If this file is dirty then just reopen it with the local changes
+                if (file.isDirty() === true) {
+                    setContent(file, file.getBuffer());
+                }
+                else {
+                    documents.openFile(file.getRelativePath())
+                             .done(function (content) {
+                                 setContent(file, content);
+                             })
+                             .fail(onError);
+                }
+            }
+
+            function setContent(file, content) {
+                var mode = getMode(file.getExtension());
+                updatingEditor = true;
+
+                editor.setOption('mode', mode);
+                editor.setOption('readOnly', false);
+                editor.setValue(content);
+
+                updatingEditor = false;
+
+                var path = file.getPath();
+
+                documents.state.activeDocument = path;
+                documentTabs.add(file);
+                documentTabs.setActive(path);
+
+                refreshTabs();
+            }
+
+            function getActiveDocument() {
+                if (documents && documents.state.activeDocument) {
+                    return fileSystem.getFile(documents.state.activeDocument);
+                }
+                return null;
+            }
+
+            function getNewDocument(dir) {
+                var fileCount = 0;
+
+                do {
+                    var targetFile = null;
+                    if (fileCount) {
+                        targetFile = dir + 'New File' + fileCount;
+                    }
+                    else {
+                        targetFile = dir + 'New File';
+                    }
+
+                    if (!fileSystem.fileExists(targetFile)) {
+                        break;
+                    }
+
+                    fileCount++;
+                } while (fileSystem.fileExists(targetFile));
+
+                return prompt('Enter the file name', targetFile.substr(dir.length));
+            }
+
+            function saveDocument() {
+                var document = getActiveDocument();
+
+                if (document) {
+                    var path = document.getRelativePath();
+                    var token = loader.show('Saving ' + path + '...');
+
+                    documents.saveFile({
+                        path: path,
+                        content: editor.getValue()
+                    })
+                    .done(function () {
+                        document.setDirty(false);
+                        refreshTabs();
+                    })
+                    .fail(onError)
+                    .always(function () {
+                        loader.hide(token);
+                    });
+                }
+            }
+
+            function refreshTabs() {
+                var tabs = documentTabs.getAll();
+                var active = documentTabs.getActive();
+
+                $.each(tabs, function () {
+                    this.css = iconMap[this.file.getExtension()] || 'default';
+                    this.active = this == active;
+                });
+
+                $('#tabs').html($('#tabTemplate').render(tabs));
+
+                if (!documents.state.activeDocument && active) {
+                    openDocument(active.file.getPath());
+                }
+            }
+
+            function updateFiles() {
+                return documents.getStatus()
+                         .done(refresh)
+                         .fail(onError);
+            }
+
+            function collapseFolders() {
+                $.each($('#file-browser').find('.icon-folder'), function () {
+                    $(this).addClass('folder-collapsed');
+                    $(this).siblings('.folder-contents').hide();
+                });
+            }
+
+            function onDocumentChange() {
+                var activeDocument = getActiveDocument();
+
+                if (activeDocument) {
+                    activeDocument.setDirty(true);
+                    refreshTabs();
+                }
+            }
+
+            function onError(e) {
+                alert(e);
+            }
+
+            function initilize() {
+                var browser = $('#file-browser');
+
+                browser.delegate('.open', 'click', function () {
+                    var path = $(this).closest('.file').attr('data-path');
+                    openDocument(path);
+
+                    $('.menu-contents').hide();
+                    return false;
+                });
+
+                browser.delegate('.delete', 'click', function () {
+                    var path = $(this).closest('.file').attr('data-path');
+                    var file = fileSystem.getFile(path);
+
+                    if (confirm('Are you sure you want to delete "' + file.getName() + '"')) {
+                        documents.deleteFile(file.getRelativePath())
+                                 .done(function () {
+                                     updateFiles();
+
+                                     closeTab(path);
+                                 })
+                                 .fail(onError);
+                    }
+                    return false;
+                });
+
+                browser.delegate('.new-file', 'click', function () {
+                    var path = $(this).closest('.folder').attr('data-path');
+                    var directory = fileSystem.getDirectory(path);
+                    var relativePath = directory.getRelativePath();
+                    var name = getNewDocument(relativePath);
+
+                    if (name) {
+                        // Expand the folder where the new file was added
+                        $(this).parents('.menu').siblings('.icon-folder').removeClass('folder-collapsed');
+                        $(this).parents('.menu').siblings('.folder-contents').show();
+
+                        var fullPath = relativePath + name;
+
+                        documents.saveFile({
+                            path: fullPath,
+                            content: ""
+                        })
+                        .done(function () {
+                            updateFiles().done(function () {
+                                var file = fileSystem.getFile(fullPath);
+                                openDocument(file.getPath());
+                            });
+                        })
+                        .fail(onError);
+
+                        $('.menu-contents').hide();
+                    }
+                    return false;
+                });
+
+                browser.delegate('.new-folder', 'click', function () {
+                    var path = $(this).closest('.folder').attr('data-path');
+                    var directory = fileSystem.getDirectory(path);
+                    var relativePath = directory.getRelativePath();
+                    var name = prompt('Enter folder name', 'New Folder');
+                    if (name) {
+                        // Expand the folder where the new file was added
+                        $(this).parents('.menu').siblings('.icon-folder').removeClass('folder-collapsed');
+                        $(this).parents('.menu').siblings('.folder-contents').show();
+
+                        var fullPath = relativePath + name + '/';
+
+                        documents.saveFile({
+                            path: fullPath,
+                            content: ""
+                        })
+                        .done(updateFiles)
+                        .fail(onError);
+
+                        $('.menu-contents').hide();
+                    }
+                    return false;
+                });
+
+                browser.delegate('.icon-folder', 'click', function () {
+                    var path = $(this).closest('.folder').attr('data-path');
+                    var directory = fileSystem.getDirectory(path);
+
+                    if (!directory._isRoot()) {
+                        $(this).toggleClass('folder-collapsed');
+                        $(this).siblings('.folder-contents').toggle();
+                        $('.menu-contents').hide();
+                    }
+                    return false;
+                });
+
+                browser.delegate('.menu > li', 'click', function (e) {
+                    // Hide the other menus
+                    var menuContents = $(this).find('.menu-contents');
+                    browser.find('.menu > li').find('.menu-contents').not(menuContents).hide()
+                    menuContents.toggle();
+                    e.stopPropagation();
+                    e.preventDefault();
+                    return false;
+                });
+
+                var tabs = $('#tabs');
+
+                tabs.delegate('.open', 'click', function () {
+                    var path = $(this).closest('.file').attr('data-path');
+                    var file = getActiveDocument();
+                    if (file.getPath() != path) {
+                        openDocument(path);
+                    }
+                });
+
+                tabs.delegate('.delete', 'click', function () {
+                    var path = $(this).closest('.file').attr('data-path');
+
+                    var document = documentTabs.get(path);
+                    if (document.file.isDirty() === true) {
+                        // TODO: We really need Yes, No, Cancel here
+                        if (!confirm('Do you want to save the changes to "' + document.file.getName() + '"?')) {
+                            return;
+                        }
+                        else {
+                            var token = loader.show('Saving ' + path + '...');
+
+                            documents.saveFile({
+                                path: document.file.getRelativePath(),
+                                content: document.file.getBuffer()
+                            })
+                            .done(function () {
+                                document.file.setDirty(false);
+                                closeTab(path);
+                            })
+                            .fail(onError)
+                            .always(function () {
+                                loader.hide(token);
+                            });
+                        }
+                    }
+                    else {
+                        closeTab(path);
+                    }
+                });
+            }
+
+            function closeTab(path) {
+                if (documents.state.activeDocument == path) {
+                    documents.state.activeDocument = null;
+                    editor.setValue('');
+                    editor.setOption('readOnly', true);
+                }
+
+                documentTabs.remove(path);
+
+                refreshTabs();
+            }
+
+            function refresh(project) {
+                fileSystem.create(project.Files);
+                fileSystem.setReadOnly(project.IsReadOnly);
+                fileSystem.setRootName(project.Name || '~/');
+
+                var browser = $('#file-browser');
+
+                // Store the state of each of the folders so we preserve them after the bind
+                var folderCollapsedState = {};
+                $.each(browser.find('.icon-folder'), function () {
+                    var path = $(this).closest('.folder').attr('data-path');
+                    folderCollapsedState[path] = $(this).hasClass('folder-collapsed');
+                });
+
+                var root = fileSystem.getRoot();
+
+                browser.html($('#folderTemplate').render(root));
+
+                // Setup images for file types
+                $.each(browser.find('.open'), function () {
+                    var path = $(this).closest('.file').attr('data-path');
+                    var file = fileSystem.getFile(path);
+                    var extension = file.getExtension();
+                    var iconMapping = iconMap[extension] || 'default';
+
+                    $(this).addClass('icon-' + iconMapping).addClass('icon');
+                });
+
+                // Preserve folder collapsed state
+                $.each(browser.find('.icon-folder'), function () {
+                    var path = $(this).closest('.folder').attr('data-path');
+                    var directory = fileSystem.getDirectory(path);
+
+                    if (folderCollapsedState[path] || directory.isEmpty()) {
+                        $(this).addClass('folder-collapsed');
+                        $(this).siblings('.folder-contents').hide();
+                    }
+                });
+            }
+
+            initilize();
+
+            signalR.hub.start(function () {
+                updateFiles().done(collapseFolders);
+            });
+
+            $(window.document).click(function () {
+                $('.menu-contents').hide();
+            });
+        }
+    };
+
+    $(function () {
+        skyDE.fly();
+
+        var currentHeight;
+
+        function isiPad() {
+            return navigator.userAgent.match(/iPad/i) != null
+        }
+
+        function resolveHeight() {
+            if (isiPad()) {
+                if (window.innerWidth == 320) {
+                    return window.innerWidth;
+                }
+                else {
+                    return window.innerHeight;
+                }
+            }
+
+            return window.innerHeight || (screen.height - 150);
+        }
+
+        var minHeight = 400;
+
+        function adjustHeight() {
+            var height = resolveHeight();
+
+            if (currentHeight == height) {
+                return;
+            }
+
+            currentHeight = height;
+
+            if (window.console) {
+                console.log('Screen height is ' + height);
+            }
+
+            var adjusted = height - 150;
+
+            if (adjusted < minHeight) {
+                return;
+            }
+
+
+            if (window.console) {
+                console.log('Adjusting ide height to ' + adjusted + 'px');
+            }
+
+            $('#skyde').css('height', adjusted + 'px');
+            $('#file-browser').css('height', adjusted + 'px');
+            $('.CodeMirror').css('height', adjusted + 'px');
+        }
+
+        adjustHeight();
+
+        if (isiPad()) {
+            // Detect screen layout changes
+            setInterval(function () {
+                adjustHeight();
+            }, 500);
+        }
+    });
+
+})(window, jQuery);

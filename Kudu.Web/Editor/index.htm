@@ -1,0 +1,88 @@
+﻿<!DOCTYPE>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Skyde</title>
+    <!-- CODE MIRROR INCLUDES -->
+    <link rel="stylesheet" href="styles/codemirror.css">
+    <script src="../scripts/codemirror/codemirror.js"></script>
+    <!-- CODE MIRROR INCLUDES -->
+    <!-- LANGUAGES -->
+    <link href="../scripts/codemirror/mode/clike/clike.css" rel="stylesheet" type="text/css" />
+    <script src="../scripts/codemirror/mode/clike/clike.js" type="text/javascript"></script>
+    <script src="../scripts/codemirror/mode/htmlmixed/htmlmixed.js" type="text/javascript"></script>
+    <link href="../scripts/codemirror/mode/css/css.css" rel="stylesheet" type="text/css" />
+    <script src="../scripts/codemirror/mode/css/css.js" type="text/javascript"></script>
+    <link href="../scripts/codemirror/mode/javascript/javascript.css" rel="stylesheet" type="text/css" />
+    <script src="../scripts/codemirror/mode/javascript/javascript.js" type="text/javascript"></script>
+    <script src="../scripts/codemirror/mode/xml/xml.js" type="text/javascript"></script>
+    <link href="../scripts/codemirror/mode/xml/xml.css" rel="stylesheet" type="text/css" />
+    <link href="../scripts/codemirror/mode/razor/razor.css" rel="stylesheet" type="text/css" />
+    <script src="../scripts/codemirror/mode/razor/razor.js" type="text/javascript"></script>
+    <script src="../scripts/codemirror/mode/php/php.js" type="text/javascript"></script>
+    <!-- LANGUAGES -->
+    <link href="styles/skyde.css" rel="stylesheet" type="text/css" />
+    <script id="folderTemplate" type="text/x-jquery-tmpl"> 
+        <ul class="folder" data-path="${$data.getPath()}">
+            <li>
+                <a href="#" class="icon ${$data._isRoot() ? 'icon-project' : 'icon-folder'}">${$data.getName()}</a>
+                <ul class="menu">
+                    <li><a href="#" class="menu-launcher icon-notext icon-menu">&nbsp;</a>
+                    <ul class="menu-contents">
+                    {{if !$data.isReadOnly()}}
+                        <li><a href="#" class="new-file icon icon-new-file">New File</a></li>
+                        <li><a href="#" class="new-folder icon icon-new-folder">New Folder</a></li>
+                    {{/if}}
+                    </ul>
+                    </li>
+                </ul>
+                <div class="clear" />              
+                <div class="folder-contents">
+                    {{tmpl(getDirectories()) "#folderTemplate"}}
+                    <ul class="files">
+                        {{tmpl(getFiles()) "#fileTemplate"}}
+                    </ul>
+                </div>
+            </li>            
+        </ul>
+    </script>
+    <script id="fileTemplate" type="text/x-jquery-tmpl"> 
+        <li class="file" data-path="${$data.getPath()}">
+            <a href="#" class="open" id="${$data.getElementId()}">${$data.getName()}</a>
+            {{if !$data.isReadOnly()}}
+            <a href="#" class="delete icon-notext icon-close">&nbsp;</a>
+            {{/if}}
+        </li>
+    </script>
+    <script id="tabTemplate" type="text/x-jquery-tmpl"> 
+        <li class="file${active ? " active" : ""}" data-path="${file.getPath()}">
+            <a href="#" class="tab open icon icon-${css}">${file.getName()}</a>
+            {{if file.isDirty()}}<span class="dirty">*</span>{{/if}}
+            <a href="#" class="delete icon-notext icon-close">&nbsp;</a>
+        </li>
+    </script>
+</head>
+<body>
+    <div id="skyde">        
+        <ul id="tabs">               
+        </ul>
+        <div id="text-editor">
+            <textarea id="editor"></textarea>
+        </div>
+        <div id="file-browser">
+        </div>
+        <div class="clear">
+        </div> 
+        <p id="status" class="icon icon-save">
+        </p> 
+    </div>
+</body>    
+    <script src="../scripts/jquery-1.6.2.min.js" type="text/javascript"></script>
+    <script src="../scripts/jquery.hotkeys-patched.js" type="text/javascript"></script>
+    <script src="../scripts/SignalR.min.js" type="text/javascript"></script>
+    <script src="../SignalR/hubs" type="text/javascript"></script>
+    <script src="../scripts/jquery.render.min.js" type="text/javascript"></script>
+    <script src="../scripts/io/file.js" type="text/javascript"></script>
+    <script src="../scripts/io/fileSystem.js" type="text/javascript"></script>
+    <script src="../scripts/io/directory.js" type="text/javascript"></script>
+    <script src="skyde.js" type="text/javascript"></script>
+</html>

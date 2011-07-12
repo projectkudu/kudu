@@ -39,9 +39,9 @@
       <HintPath>..\packages\AjaxMin.4.19.4141.18463\lib\AjaxMin.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="SignalR, Version=1.0.4208.26890, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="SignalR, Version=1.0.4209.30842, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\SignalR.1.0.4208.26890\lib\net40\SignalR.dll</HintPath>
+      <HintPath>..\packages\SignalR.1.0.4209.30842\lib\net40\SignalR.dll</HintPath>
     </Reference>
     <Reference Include="System.Web.DynamicData" />
     <Reference Include="System.Web.Entity" />
@@ -60,13 +60,92 @@
     <Reference Include="System.EnterpriseServices" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Editor\styles\codemirror.css" />
+    <Content Include="Editor\index.htm" />
+    <Content Include="Editor\styles\skyde.css" />
+    <Content Include="images\addfile.png" />
+    <Content Include="images\addview.png" />
+    <Content Include="images\application_side_list.png" />
+    <Content Include="images\asax-edit.png" />
+    <Content Include="images\asax.png" />
+    <Content Include="images\ascx-add.png" />
+    <Content Include="images\ascx-edit.png" />
+    <Content Include="images\ascx.png" />
+    <Content Include="images\aspx-add.png" />
+    <Content Include="images\aspx-edit.png" />
+    <Content Include="images\aspx.png" />
+    <Content Include="images\build.png" />
+    <Content Include="images\close.png" />
+    <Content Include="images\config-add.png" />
+    <Content Include="images\config-edit.png" />
+    <Content Include="images\config.png" />
+    <Content Include="images\connect.png" />
+    <Content Include="images\connecting.gif" />
+    <Content Include="images\cs-add.png" />
+    <Content Include="images\cs-edit.png" />
+    <Content Include="images\cs.png" />
+    <Content Include="images\cshtml-add.png" />
+    <Content Include="images\cshtml-edit.png" />
+    <Content Include="images\cshtml.png" />
+    <Content Include="images\css-add.png" />
+    <Content Include="images\css-edit.png" />
+    <Content Include="images\css.png" />
+    <Content Include="images\disconnect.png" />
+    <Content Include="images\dll.png" />
+    <Content Include="images\error.png" />
+    <Content Include="images\folder-collapsed.png" />
+    <Content Include="images\folder-expanded.png" />
+    <Content Include="images\folder.png" />
+    <Content Include="images\js-add.png" />
+    <Content Include="images\js-edit.png" />
+    <Content Include="images\js.png" />
+    <Content Include="images\loading.gif" />
+    <Content Include="images\managedata.png" />
+    <Content Include="images\master.png" />
+    <Content Include="images\new-folder.png" />
+    <Content Include="images\page_white.png" />
+    <Content Include="images\page_white_add.png" />
+    <Content Include="images\page_white_edit.png" />
+    <Content Include="images\php-add.png" />
+    <Content Include="images\php-edit.png" />
+    <Content Include="images\php.png" />
+    <Content Include="images\project.png" />
+    <Content Include="images\refresh.png" />
+    <Content Include="images\run.png" />
+    <Content Include="images\saveall.png" />
+    <Content Include="images\scaffold.png" />
+    <Content Include="images\solution.png" />
+    <Content Include="images\sync.png" />
+    <Content Include="images\tt.png" />
+    <Content Include="Scripts\codemirror\codemirror.js" />
+    <Content Include="Scripts\codemirror\mode\clike\clike.css" />
+    <Content Include="Scripts\codemirror\mode\clike\clike.js" />
+    <Content Include="Scripts\codemirror\mode\css\css.css" />
+    <Content Include="Scripts\codemirror\mode\css\css.js" />
+    <Content Include="Scripts\codemirror\mode\diff\diff.css" />
+    <Content Include="Scripts\codemirror\mode\diff\diff.js" />
+    <Content Include="Scripts\codemirror\mode\haskell\haskell.css" />
+    <Content Include="Scripts\codemirror\mode\haskell\haskell.js" />
+    <Content Include="Scripts\codemirror\mode\htmlmixed\htmlmixed.js" />
+    <Content Include="Scripts\codemirror\mode\javascript\javascript.css" />
+    <Content Include="Scripts\codemirror\mode\javascript\javascript.js" />
+    <Content Include="Scripts\codemirror\mode\php\php.js" />
+    <Content Include="Scripts\codemirror\mode\razor\razor.css" />
+    <Content Include="Scripts\codemirror\mode\razor\razor.js" />
+    <Content Include="Scripts\codemirror\mode\xml\xml.css" />
+    <Content Include="Scripts\codemirror\mode\xml\xml.js" />
+    <Content Include="Scripts\io\directory.js" />
+    <Content Include="Scripts\io\file.js" />
+    <Content Include="Scripts\io\fileSystem.js" />
     <Content Include="Scripts\jquery-1.6.2-vsdoc.js" />
     <Content Include="Scripts\jquery-1.6.2.js" />
     <Content Include="Scripts\jquery-1.6.2.min.js" />
     <Content Include="Scripts\jquery.cookie.js" />
+    <Content Include="Scripts\jquery.hotkeys-patched.js" />
     <Content Include="Scripts\jquery.render.min.js" />
     <Content Include="Scripts\jquery.timeago.js" />
     <Content Include="Scripts\sammy.js" />
+    <Content Include="Editor\skyde.js" />
     <Content Include="Scripts\SignalR.js" />
     <Content Include="Scripts\SignalR.min.js" />
     <Content Include="SourceControl\images\folder_table.png" />
@@ -93,6 +172,9 @@
     <None Include="_bin_deployableAssemblies\Microsoft.Web.Infrastructure.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Editor\Documents.cs" />
+    <Compile Include="Editor\Model\File.cs" />
+    <Compile Include="Editor\Model\Project.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SourceControl\SourceControl.cs" />
   </ItemGroup>

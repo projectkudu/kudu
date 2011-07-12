@@ -2,6 +2,7 @@
 using System.Net.Http;
 using Newtonsoft.Json;
 using System;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.SourceControl {
     public class RemoteRepository : IRepository {
@@ -30,27 +31,27 @@ namespace Kudu.Core.SourceControl {
         }
 
         public IEnumerable<Branch> GetBranches() {
-            return GetJson<IEnumerable<Branch>>("branches");
+            return _client.GetJson<IEnumerable<Branch>>("branches");
         }
 
         public IEnumerable<FileStatus> GetStatus() {
-            return GetJson<IEnumerable<FileStatus>>("status");
+            return _client.GetJson<IEnumerable<FileStatus>>("status");
         }
 
         public IEnumerable<ChangeSet> GetChanges() {
-            return GetJson<IEnumerable<ChangeSet>>("log");
+            return _client.GetJson<IEnumerable<ChangeSet>>("log");
         }
 
         public IEnumerable<ChangeSet> GetChanges(int index, int limit) {
-            return GetJson<IEnumerable<ChangeSet>>("log?index=" + index + "&limit=" + limit);
+            return _client.GetJson<IEnumerable<ChangeSet>>("log?index=" + index + "&limit=" + limit);
         }
 
         public ChangeSetDetail GetDetails(string id) {
-            return GetJson<ChangeSetDetail>("details/" + id);
+            return _client.GetJson<ChangeSetDetail>("details/" + id);
         }
 
         public ChangeSetDetail GetWorkingChanges() {
-            return GetJson<ChangeSetDetail>("working");
+            return _client.GetJson<ChangeSetDetail>("working");
         }
 
         public void AddFile(string path) {
@@ -78,17 +79,6 @@ namespace Kudu.Core.SourceControl {
             _client.Post("update", new FormUrlEncodedContent(new Dictionary<string, string> {
                 { "id", id }
             })).EnsureSuccessStatusCode();
-        }
-
-        private T GetJson<T>(string url) {
-            var message = _client.Get(url);
-            var content = message.Content.ReadAsString();
-
-            if(!message.IsSuccessStatusCode){
-                throw new InvalidOperationException(content);
-            }
-
-            return JsonConvert.DeserializeObject<T>(content);
-        }
+        }        
     }
 }

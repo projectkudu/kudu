@@ -1,0 +1,12 @@
+span.xml-tag {color: rgb(163,21,21);}
+span.xml-attribute {color: rgb(0,0,255);}
+span.xml-attname {color: rgb(255,0,0);}
+span.xml-comment {color: rgb(0,128,0);}
+span.xml-cdata {color: #777;}
+span.xml-processing {color: #777;}
+span.xml-entity {color: #a22;}
+
+span.razor {background-color: rgb(236, 242, 245)}
+span.razor-tag {background-color: yellow;}
+span.razor-keyword {color: blue; background-color: rgb(236, 242, 245)}
+span.razor-string {color: rgb(163,21,21); background-color: rgb(236, 242, 245)}
