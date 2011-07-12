@@ -10,6 +10,12 @@ using Kudu.Core.SourceControl.Hg;
 namespace Kudu.Services.SourceControl {
     [JsonExceptionFilter]
     public class ScmController : Controller {
+        private ILocationProvider _locationProvider;
+
+        public ScmController(ILocationProvider locationProvider) {
+            _locationProvider = locationProvider;
+        }
+
         [HttpGet]
         [ActionName("id")]
         public string GetCurrentId() {
@@ -90,7 +96,7 @@ namespace Kudu.Services.SourceControl {
         }
 
         private IRepository GetRepository() {
-            string path = Path.Combine(GetRootPath(), @"repository");
+            string path = _locationProvider.RepositoryRoot;
 
             if (!Directory.Exists(path)) {
                 Directory.CreateDirectory(path);
@@ -100,17 +106,6 @@ namespace Kudu.Services.SourceControl {
                 return new HgRepository(path);
             }
             return new HybridRepository(path);
-        }
-
-        private string GetRootPath() {
-            // Temporary path (under bin folder so we don't need to ignore it in source control)
-            string path = Path.Combine(HttpRuntime.BinDirectory, "_root");
-
-            if (!Directory.Exists(path)) {
-                Directory.CreateDirectory(path);
-            }
-
-            return path;
         }
     }
 }
