@@ -56,6 +56,11 @@ $(function () {
     window.getFileClass = getFileClass;
     window.getBranches = getBranches;
 
+    function onError(e) {
+        $('#error').html(e);
+        $('#error').show();
+    }
+
     function getChangeSets(index, onComplete) {
         var callback = function () {
             if (onComplete) {
@@ -88,7 +93,9 @@ $(function () {
             callback();
             changesXhr = null;
         })
-        .fail(function (e) {
+        .fail(onError)
+        .always(function (e) {
+            onError(e);
             callback();
             changesXhr = null;
         });
@@ -141,15 +148,7 @@ $(function () {
                 }
             });
         })
-        .fail(function (e) {
-            $('#error').html(e);
-            $('#error').show();
-            window.loader.hide(token);
-
-            window.setTimeout(function () {
-                $('#error').slideUp();
-            }, 5000);
-        });
+        .fail(onError);
     }
 
     function show(id) {
@@ -171,7 +170,8 @@ $(function () {
 
             window.loader.hide(token);
         })
-        .fail(function () {
+        .fail(onError)
+        .always(function () {
             window.loader.hide(token);
         });
     }
@@ -198,7 +198,8 @@ $(function () {
                 $('#diff').html('No changes');
             }
         })
-        .done(function () {
+        .fail(onError)
+        .always(function () {
             window.loader.hide(token);
         });
     }
@@ -289,7 +290,8 @@ $(function () {
                     alert('No pending changes');
                 }
             })
-            .done(function () {
+            .fail(onError)
+            .always(function () {
                 window.loader.hide(token);
             });
 

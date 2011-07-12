@@ -204,7 +204,7 @@
                 var file = fileSystem.getFile(path);
 
                 // If this file is dirty then just reopen it with the local changes
-                if (file.isDirty() === true || documentTabs.get(path)) {
+                if ((file.isDirty() === true || documentTabs.get(path)) && file.getBuffer() !== null) {
                     setContent(file, file.getBuffer());
                 }
                 else {

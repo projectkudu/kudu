@@ -10,7 +10,7 @@ File.prototype = {
         this.name = null;
         this.directory = null;
         this.fileSystem = fileSystem;
-        var buffer = "";
+        var buffer = null;
         var dirty = false;
 
         this.setBuffer = function (value) {
