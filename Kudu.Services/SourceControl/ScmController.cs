@@ -10,7 +10,7 @@ using Kudu.Core.SourceControl.Hg;
 namespace Kudu.Services.SourceControl {
     [JsonExceptionFilter]
     public class ScmController : Controller {
-        private ILocationProvider _locationProvider;
+        private readonly ILocationProvider _locationProvider;
 
         public ScmController(ILocationProvider locationProvider) {
             _locationProvider = locationProvider;
