@@ -14,3 +14,4 @@ _ReSharper.*
 *[Rr]e[Ss]harper.user
 _ReSharper.*/
 packages/*
+Kudu.Services.Web/_root/*
