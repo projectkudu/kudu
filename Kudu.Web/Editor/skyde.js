@@ -243,8 +243,8 @@
 
                 documents.state.activeDocument = path;
                 documentTabs.add(file);
-                file.setBuffer(content);
                 documentTabs.setActive(path);
+                file.setBuffer(content);
 
                 refreshTabs();
             }
@@ -317,7 +317,7 @@
             }
 
             function updateFiles() {
-                var token = loader.show('Loading files...');
+                var token = loader.show('Updating project...');
                 return documents.getStatus()
                          .done(function (project) {
                              refresh(project);
@@ -492,10 +492,12 @@
                         }
                         else {
                             var token = loader.show('Saving ' + path + '...');
+                            var activeDoc = documentTabs.getActive();
+                            var content = activeDoc == document ? editor.getValue() : document.file.getBuffer();
 
                             documents.saveFile({
                                 path: document.file.getRelativePath(),
-                                content: document.file.getBuffer()
+                                content: content
                             })
                             .done(function () {
                                 document.file.setDirty(false);
