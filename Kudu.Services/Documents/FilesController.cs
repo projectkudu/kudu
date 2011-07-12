@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Web.Mvc;
 using Kudu.Core.Editor;
 
@@ -24,6 +21,7 @@ namespace Kudu.Services.Documents {
         }
 
         [HttpPost]
+        [ValidateInput(false)]
         public void Save(string path, string content) {
             _fileSystem.WriteAllText(path, content);
         }

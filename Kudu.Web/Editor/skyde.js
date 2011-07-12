@@ -194,25 +194,38 @@
                 return false;
             });
 
-            function openDocument(path) {
+            function openDocument(path, suppressLoading) {
                 // If document is active save the content locally
                 var activeDocument = getActiveDocument();
-                if (activeDocument && activeDocument.isDirty() === true) {
+                if (activeDocument) {
                     activeDocument.setBuffer(editor.getValue());
                 }
 
                 var file = fileSystem.getFile(path);
 
                 // If this file is dirty then just reopen it with the local changes
-                if (file.isDirty() === true) {
+                if (file.isDirty() === true || documentTabs.get(path)) {
                     setContent(file, file.getBuffer());
                 }
                 else {
-                    documents.openFile(file.getRelativePath())
-                             .done(function (content) {
-                                 setContent(file, content);
-                             })
-                             .fail(onError);
+                    var token = null;
+                    if (!suppressLoading) {
+                        token = loader.show('Opening ' + file.getName() + '...');
+                    }
+
+                    var operation = documents.openFile(file.getRelativePath())
+                                            .done(function (content) {
+                                                setContent(file, content);
+                                            })
+                                            .fail(onError);
+
+                    if (!suppressLoading) {
+                        operation.always(function () {
+                            loader.hide(token);
+                        });
+                    }
+
+                    return operation;
                 }
             }
 
@@ -230,6 +243,7 @@
 
                 documents.state.activeDocument = path;
                 documentTabs.add(file);
+                file.setBuffer(content);
                 documentTabs.setActive(path);
 
                 refreshTabs();
@@ -344,13 +358,20 @@
                     var file = fileSystem.getFile(path);
 
                     if (confirm('Are you sure you want to delete "' + file.getName() + '"')) {
+                        var token = loader.show('Deleting ' + file.getName() + '...');
                         documents.deleteFile(file.getRelativePath())
                                  .done(function () {
-                                     updateFiles();
-
-                                     closeTab(path);
+                                     updateFiles().done(function () {
+                                         closeTab(path);
+                                     })
+                                     .always(function () {
+                                         loader.hide(token);
+                                     });
                                  })
-                                 .fail(onError);
+                                 .fail(function (e) {
+                                     onError(e);
+                                     loader.hide(token);
+                                 });
                     }
                     return false;
                 });
@@ -368,6 +389,7 @@
 
                         var fullPath = relativePath + name;
 
+                        var token = loader.show('Creating file ' + fullPath + '...');
                         documents.saveFile({
                             path: fullPath,
                             content: ""
@@ -375,10 +397,21 @@
                         .done(function () {
                             updateFiles().done(function () {
                                 var file = fileSystem.getFile(fullPath);
-                                openDocument(file.getPath());
+                                var operation = openDocument(file.getPath(), true);
+                                if (operation) {
+                                    operation.always(function () {
+                                        loader.hide(token);
+                                    });
+                                } 
+                                else {
+                                    loader.hide(token);
+                                }
                             });
                         })
-                        .fail(onError);
+                        .fail(function (e) {
+                            onError(e);
+                            loader.hide(token);
+                        });
 
                         $('.menu-contents').hide();
                     }
