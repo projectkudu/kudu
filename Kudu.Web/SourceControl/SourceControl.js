@@ -9,10 +9,6 @@ $(function () {
     var infiniteScrollCheck = false;
     var changesXhr = null;
     var pageSize = 15;
-    var path = $.cookie("path");
-
-    scm.state.path = path;
-    $('#path').val(path || '');
 
     function getDiffClass(type) {
         if (type == 1) {
@@ -78,9 +74,7 @@ $(function () {
             return;
         }
 
-        changesXhr = scm.getChanges(index, pageSize, function (changes) {
-            $.cookie("path", scm.state.path, { expires: 30 });
-
+        changesXhr = scm.getChanges(index, pageSize, function (changes) {            
             setupActions($('#changes').append($('#changeset').render(changes)));
             scm.state.index = index + changes.length;
 
@@ -94,8 +88,7 @@ $(function () {
             changesXhr = null;
         })
         .fail(onError)
-        .always(function (e) {
-            onError(e);
+        .always(function () {
             callback();
             changesXhr = null;
         });
@@ -125,7 +118,7 @@ $(function () {
         });
     }
 
-    function loadRepository(path) {
+    function loadRepository() {
         $('#show').hide();
         $('#working').hide();
 
@@ -209,7 +202,7 @@ $(function () {
             setTimeout(getMoreChanges, 500);
         };
 
-        if (!scm.state.path || scm.state.full === true) {
+        if (scm.state.full === true) {
             callback();
             return;
         }
@@ -245,15 +238,11 @@ $(function () {
 
     var app = $.sammy(function () {
         this.get('#/', function () {
-            var path = scm.state.path;
-            if (path) {
-                loadRepository(path);
-            }
+            loadRepository();
             return false;
         });
 
         this.post('#/', function () {
-            scm.state.path = this.params.path;
             this.redirect('#/');
 
             return false;
