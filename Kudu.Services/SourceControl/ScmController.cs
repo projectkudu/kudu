@@ -10,33 +10,32 @@ using Kudu.Core.SourceControl.Hg;
 namespace Kudu.Services.SourceControl {
     [JsonExceptionFilter]
     public class ScmController : Controller {
-        private readonly ILocationProvider _locationProvider;
-
-        public ScmController(ILocationProvider locationProvider) {
-            _locationProvider = locationProvider;
+        private readonly IRepository _repository;
+        public ScmController(IRepository repository) {
+            _repository = repository;
         }
 
         [HttpGet]
         [ActionName("id")]
         public string GetCurrentId() {
-            return GetRepository().CurrentId;
+            return _repository.CurrentId;
         }
 
         [HttpPost]
         [ActionName("init")]
         public void Initialize() {
-            GetRepository().Initialize();
+            _repository.Initialize();
         }
 
         [HttpGet]
         [ActionName("branches")]
         public ActionResult GetBranches() {
-            return Json(GetRepository().GetBranches(), JsonRequestBehavior.AllowGet);
+            return Json(_repository.GetBranches(), JsonRequestBehavior.AllowGet);
         }
 
         [ActionName("status")]
         public ActionResult GetStatus() {
-            return Json(GetRepository().GetStatus(), JsonRequestBehavior.AllowGet);
+            return Json(_repository.GetStatus(), JsonRequestBehavior.AllowGet);
         }
 
         [HttpGet]
@@ -44,10 +43,10 @@ namespace Kudu.Services.SourceControl {
         public ActionResult GetChanges(int? index, int? limit) {
             IEnumerable<ChangeSet> changeSets = null;
             if (index == null && limit == null) {
-                changeSets = GetRepository().GetChanges();
+                changeSets = _repository.GetChanges();
             }
             else {
-                changeSets = GetRepository().GetChanges(index.Value, limit.Value);
+                changeSets = _repository.GetChanges(index.Value, limit.Value);
             }
 
             return Json(changeSets, JsonRequestBehavior.AllowGet);
@@ -57,7 +56,7 @@ namespace Kudu.Services.SourceControl {
         [ActionName("details")]
         public ActionResult GetDetails(string id) {
             try {
-                return Json(GetRepository().GetDetails(id), JsonRequestBehavior.AllowGet);
+                return Json(_repository.GetDetails(id), JsonRequestBehavior.AllowGet);
             }
             catch {
                 return HttpNotFound();
@@ -67,45 +66,32 @@ namespace Kudu.Services.SourceControl {
         [HttpGet]
         [ActionName("working")]
         public ActionResult GetWorkingChanges() {
-            return Json(GetRepository().GetWorkingChanges(), JsonRequestBehavior.AllowGet);
+            return Json(_repository.GetWorkingChanges(), JsonRequestBehavior.AllowGet);
         }
 
         [HttpPost]
         [ActionName("add")]
         public void AddFile(string path) {
-            GetRepository().AddFile(path);
+            _repository.AddFile(path);
         }
 
         [HttpPost]
         [ActionName("remove")]
         public void RemoveFile(string path) {
-            GetRepository().RemoveFile(path);
+            _repository.RemoveFile(path);
         }
 
         [HttpPost]
         [ActionName("commit")]
         [ValidateInput(false)]
         public ActionResult Commit(string name, string message) {
-            return Json(GetRepository().Commit(name, message));
+            return Json(_repository.Commit(name, message));
         }
 
         [HttpPost]
         [ActionName("update")]
         public void Update(string id) {
-            GetRepository().Update(id);
-        }
-
-        private IRepository GetRepository() {
-            string path = _locationProvider.RepositoryRoot;
-
-            if (!Directory.Exists(path)) {
-                Directory.CreateDirectory(path);
-            }
-
-            if (Directory.EnumerateDirectories(path, ".hg").Any()) {
-                return new HgRepository(path);
-            }
-            return new HybridRepository(path);
+            _repository.Update(id);
         }
     }
 }

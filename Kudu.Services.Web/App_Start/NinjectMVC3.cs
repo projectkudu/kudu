@@ -6,6 +6,8 @@ namespace Kudu.Services.Web.App_Start {
     using Microsoft.Web.Infrastructure.DynamicModuleHelper;
     using Ninject;
     using Ninject.Web.Mvc;
+    using Kudu.Core.Editor;
+    using Kudu.Core.SourceControl;
 
     public static class NinjectMVC3 {
         private static readonly Bootstrapper bootstrapper = new Bootstrapper();
@@ -42,6 +44,8 @@ namespace Kudu.Services.Web.App_Start {
         /// <param name="kernel">The kernel.</param>
         private static void RegisterServices(IKernel kernel) {
             kernel.Bind<ILocationProvider>().To<LocationProvider>();
+            kernel.Bind<IFileSystem>().To<ServiceFileSystem>();
+            kernel.Bind<IRepository>().To<ServiceRepository>();
         }
     }
 }

@@ -5,10 +5,9 @@ using Kudu.Core.Editor;
 namespace Kudu.Services.Documents {
     [JsonExceptionFilter]
     public class FilesController : Controller {
-        private readonly PhysicalFileSystem _fileSystem;
-
-        public FilesController(ILocationProvider locationProvider) {
-            _fileSystem = new PhysicalFileSystem(locationProvider.RepositoryRoot);
+        private readonly IFileSystem _fileSystem;
+        public FilesController(IFileSystem fileSystem) {
+            _fileSystem = fileSystem;
         }
 
         [HttpGet]

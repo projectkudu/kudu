@@ -5,11 +5,11 @@ namespace Kudu.Core.SourceControl.Git {
     /// The goal of this repository is to implement a full repository using as much as
     /// libgit2sharp as possible unti it works for all scenarios.
     /// </summary>
-    public class HybridRepository : IRepository {
+    public class HybridGitRepository : IRepository {
         private readonly GitExeRepository _exeRepository;
         private readonly LibGitRepository _libgitRepository;
 
-        public HybridRepository(string path) {
+        public HybridGitRepository(string path) {
             _exeRepository = new GitExeRepository(path);
             _libgitRepository = new LibGitRepository(path);
         }
