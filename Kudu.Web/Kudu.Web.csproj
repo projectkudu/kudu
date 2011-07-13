@@ -140,9 +140,9 @@
     <Content Include="Scripts\codemirror\mode\razor\razor.js" />
     <Content Include="Scripts\codemirror\mode\xml\xml.css" />
     <Content Include="Scripts\codemirror\mode\xml\xml.js" />
-    <Content Include="Scripts\io\directory.js" />
-    <Content Include="Scripts\io\file.js" />
-    <Content Include="Scripts\io\fileSystem.js" />
+    <Content Include="Editor\io\directory.js" />
+    <Content Include="Editor\io\file.js" />
+    <Content Include="Editor\io\fileSystem.js" />
     <Content Include="Scripts\jquery-1.6.2-vsdoc.js" />
     <Content Include="Scripts\jquery-1.6.2.js" />
     <Content Include="Scripts\jquery-1.6.2.min.js" />
