@@ -2,12 +2,11 @@
 [assembly: WebActivator.ApplicationShutdownMethodAttribute(typeof(Kudu.Services.Web.App_Start.NinjectMVC3), "Stop")]
 
 namespace Kudu.Services.Web.App_Start {
-    using System.Reflection;
+    using Kudu.Core.Editor;
+    using Kudu.Core.SourceControl;
     using Microsoft.Web.Infrastructure.DynamicModuleHelper;
     using Ninject;
     using Ninject.Web.Mvc;
-    using Kudu.Core.Editor;
-    using Kudu.Core.SourceControl;
 
     public static class NinjectMVC3 {
         private static readonly Bootstrapper bootstrapper = new Bootstrapper();
