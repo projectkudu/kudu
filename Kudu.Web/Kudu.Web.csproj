@@ -42,9 +42,9 @@
     <Reference Include="Ninject">
       <HintPath>..\packages\Ninject.2.2.1.4\lib\net40-Full\Ninject.dll</HintPath>
     </Reference>
-    <Reference Include="SignalR, Version=1.0.4210.33874, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="SignalR, Version=1.0.4211.22279, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\SignalR.1.0.4210.33874\lib\net40\SignalR.dll</HintPath>
+      <HintPath>..\packages\SignalR.1.0.4211.22279\lib\net40\SignalR.dll</HintPath>
     </Reference>
     <Reference Include="System.Web.DynamicData" />
     <Reference Include="System.Web.Entity" />
@@ -179,7 +179,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\HubStart.cs" />
-    <Compile Include="App_Start\NinjectHubActivator.cs" />
+    <Compile Include="App_Start\NinjectDependencyResolver.cs" />
     <Compile Include="Editor\Documents.cs" />
     <Compile Include="Editor\Model\File.cs" />
     <Compile Include="Editor\Model\Project.cs" />

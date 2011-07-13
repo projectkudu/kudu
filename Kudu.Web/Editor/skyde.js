@@ -50,11 +50,17 @@
                 }
 
                 return {
-                    add: function (file) {
-                        var path = file.getPath();
+                    add: function (path) {
                         var tab = tabsLookup[path];
                         if (!tab) {
-                            tab = { file: file };
+                            tab = (function (path) {
+                                return {
+                                    getFile: function () {
+                                        return fileSystem.getFile(path);
+                                    }
+                                }
+                            })(path);
+
                             tabs.push(tab);
                             tab.index = tabs.length - 1;
                             tabsLookup[path] = tab;
@@ -185,8 +191,8 @@
             $(document).bind('keyup', 'ctrl+tab', function (evt) {
                 documentTabs.nextTab();
                 var active = documentTabs.getActive();
-                if (active && active.file != getActiveDocument()) {
-                    openDocument(active.file.getPath());
+                if (active && active.getFile() != getActiveDocument()) {
+                    openDocument(active.getFile().getPath());
                 }
 
                 evt.stopPropagation();
@@ -242,7 +248,7 @@
                 var path = file.getPath();
 
                 documents.state.activeDocument = path;
-                documentTabs.add(file);
+                documentTabs.add(path);
                 documentTabs.setActive(path);
                 file.setBuffer(content);
 
@@ -305,6 +311,7 @@
                 var active = documentTabs.getActive();
 
                 $.each(tabs, function () {
+                    this.file = this.getFile();
                     this.css = iconMap[this.file.getExtension()] || 'default';
                     this.active = this == active;
                 });
@@ -312,7 +319,7 @@
                 $('#tabs').html($('#tabTemplate').render(tabs));
 
                 if (!documents.state.activeDocument && active) {
-                    openDocument(active.file.getPath());
+                    openDocument(active.getFile().getPath());
                 }
             }
 
@@ -485,22 +492,22 @@
                     var path = $(this).closest('.file').attr('data-path');
 
                     var document = documentTabs.get(path);
-                    if (document.file.isDirty() === true) {
+                    if (document.getFile().isDirty() === true) {
                         // TODO: We really need Yes, No, Cancel here
-                        if (!confirm('Do you want to save the changes to "' + document.file.getName() + '"?')) {
+                        if (!confirm('Do you want to save the changes to "' + document.getFile().getName() + '"?')) {
                             return;
                         }
                         else {
                             var token = loader.show('Saving ' + path + '...');
                             var activeDoc = documentTabs.getActive();
-                            var content = activeDoc == document ? editor.getValue() : document.file.getBuffer();
+                            var content = activeDoc == document ? editor.getValue() : document.getFile().getBuffer();
 
                             documents.saveFile({
-                                path: document.file.getRelativePath(),
+                                path: document.getFile().getRelativePath(),
                                 content: content
                             })
                             .done(function () {
-                                document.file.setDirty(false);
+                                document.getFile().setDirty(false);
                                 closeTab(path);
                             })
                             .fail(onError)
@@ -528,6 +535,8 @@
             }
 
             function refresh(project) {
+                var oldFiles = fileSystem.getFiles();
+
                 fileSystem.create(project.Files);
                 fileSystem.setReadOnly(project.IsReadOnly);
                 fileSystem.setRootName(project.Name || '~/');
@@ -563,6 +572,16 @@
                     if (folderCollapsedState[path] || directory.isEmpty()) {
                         $(this).addClass('folder-collapsed');
                         $(this).siblings('.folder-contents').hide();
+                    }
+                });
+
+                // REVIEW: Temporary hack until we have a databinding framework or until we send back diffs from the server
+                $.each(oldFiles, function () {
+                    var newFile = fileSystem.getFile(this.getPath());
+                    if (newFile) {
+                        // Preserve the dirty and buffer
+                        newFile.setDirty(this.isDirty());
+                        newFile.setBuffer(this.getBuffer());
                     }
                 });
             }

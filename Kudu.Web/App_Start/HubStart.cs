@@ -1,7 +1,7 @@
 using Kudu.Core.Editor;
 using Kudu.Core.SourceControl;
 using Ninject;
-using SignalR.Hubs;
+using SignalR.Infrastructure;
 
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Web.App_Start.HubStart), "Start")]
 
@@ -15,7 +15,8 @@ namespace Kudu.Web.App_Start {
         /// Starts the application
         /// </summary>
         public static void Start() {
-            HubActivator.Current = new NinjectHubActivator(CreateKernel());
+            var kernel = CreateKernel();
+            DependencyResolver.SetResolver(new NinjectDependencyResolver(kernel));
         }
 
         /// <summary>
