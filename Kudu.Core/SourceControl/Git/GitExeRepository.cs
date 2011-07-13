@@ -248,7 +248,7 @@ namespace Kudu.Core.SourceControl.Git {
                     Int32.TryParse(parts[0], out insertions);
                     int deletions;
                     Int32.TryParse(parts[1], out deletions);
-                    string path = parts[2].Trim();
+                    string path = parts[2].TrimEnd();
 
                     detail.Files[path] = new FileInfo {
                         Insertions = insertions,
@@ -299,30 +299,10 @@ namespace Kudu.Core.SourceControl.Git {
         }
 
         internal static FileDiff ParseDiffChunk(IStringReader reader, ref ChangeSetDetail merge) {
-            // Extract the file name from the diff header
-            var headerReader = reader.ReadLine().AsReader();
-            headerReader.ReadUntil("a/");
-            headerReader.Skip(2);
-            string fileName = headerReader.ReadUntil("b/").Trim();
+            var diff = ParseDiffHeader(reader, merge);
 
-            // Skip files from merged changesets
-            if (merge != null && merge.Files.ContainsKey(fileName)) {
+            if (diff == null) {
                 return null;
-            }
-
-            var diff = new FileDiff(fileName);
-
-            while (!reader.Done) {
-                string line = reader.ReadLine();
-                if (line.StartsWith("@@")) {
-                    reader.PutBack(line.Length);
-                    break;
-                }
-                else if (line.StartsWith("GIT binary patch")) {
-                    diff.Binary = true;
-                    // Skip binary files
-                    reader.ReadToEnd();
-                }
             }
 
             // Current diff range
@@ -384,6 +364,48 @@ namespace Kudu.Core.SourceControl.Git {
             }
 
             return diff;
+        }
+
+        private static FileDiff ParseDiffHeader(IStringReader reader, ChangeSetDetail merge) {
+            string fileName = ParseFileName(reader.ReadLine());
+            bool binary = false;
+
+            while (!reader.Done) {
+                string line = reader.ReadLine();
+                if (line.StartsWith("@@")) {
+                    reader.PutBack(line.Length);
+                    break;
+                }
+                else if (line.StartsWith("GIT binary patch")) {
+                    binary = true;
+                }
+            }
+
+            if (binary) {
+                // Skip binary files
+                reader.ReadToEnd();
+            }
+
+            var diff = new FileDiff(fileName) {
+                Binary = binary
+            };
+
+            // Skip files from merged changesets
+            if (merge != null && merge.Files.ContainsKey(fileName)) {
+                return null;
+            }
+
+            return diff;
+        }
+
+        internal static string ParseFileName(string diffHeader) {
+            // Get rid of the diff header (git --diff)
+            diffHeader = diffHeader.TrimEnd().Substring(diffHeader.IndexOf("a/"));
+
+            // the format is always a/{file name} b/{file name}
+            int mid = diffHeader.Length / 2;
+            
+            return diffHeader.Substring(0, mid).Substring(2);
         }
 
         internal static ChangeSet ParseCommit(IStringReader reader) {

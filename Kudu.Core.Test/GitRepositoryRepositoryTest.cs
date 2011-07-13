@@ -169,6 +169,24 @@ index 0000000..261a6bf
             Assert.Equal("+Ayayayya", diffChunk.Lines[1].Text.TrimEnd());
         }
 
+        [Fact]
+        public void ParseDiffFileName() {
+            string singleCharFileName = GitExeRepository.ParseFileName("git --diff a/a b/a");
+            string evenNumberFileName = GitExeRepository.ParseFileName("git --diff a/aa b/aa");
+            string moreAmbiguous = GitExeRepository.ParseFileName("git --diff a/ b  b/ b ");
+            string fileNameWithSpaces = GitExeRepository.ParseFileName("git --diff a/New File b/New File");
+            string fileNameWithSlashB = GitExeRepository.ParseFileName("git --diff a/foo/bar/lib/a.dll b/foo/bar/lib/a.dll");
+            string ambiguous = GitExeRepository.ParseFileName("diff --git a/Folder b/blah.txt b/Folder b/blah.txt");
+
+
+            Assert.Equal("a", singleCharFileName);
+            Assert.Equal("aa", evenNumberFileName);
+            Assert.Equal("New File", fileNameWithSpaces);
+            Assert.Equal("foo/bar/lib/a.dll", fileNameWithSlashB);
+            Assert.Equal("Folder b/blah.txt", ambiguous);
+            Assert.Equal(" b ", moreAmbiguous);
+        }
+
         private void AssertFile(ChangeSetDetail detail, string path, int? insertions = null, int? deletions = null, bool binary = false) {
             FileInfo fi;
             Assert.True(detail.Files.TryGetValue(path, out fi));
