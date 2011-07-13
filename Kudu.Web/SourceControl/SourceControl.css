@@ -9,6 +9,18 @@
     width: 1020px;
 }
 
+#menu #clone-url input {
+    font-size: 12px;
+    padding: 5px;
+    width: 330px;
+    height: 26px;
+}
+
+#menu #clone-url {
+    float: right;
+    margin-right: 50px;
+}
+
 #log {
     font-family: Trebuchet MS;
     font-size: 13px;
