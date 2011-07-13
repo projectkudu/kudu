@@ -88,7 +88,9 @@ namespace Kudu.Core.SourceControl.Git {
         }
 
         public ChangeSetDetail GetWorkingChanges() {
-            if (!GetStatus().Any()) {
+            var statuses = GetStatus().ToList();
+
+            if (!statuses.Any()) {
                 return null;
             }
 
@@ -98,8 +100,12 @@ namespace Kudu.Core.SourceControl.Git {
             string diff = _gitExe.Execute("diff --no-ext-diff -p --numstat --shortstat --staged");
             var detail = ParseShow(diff.AsReader(), includeChangeSet: false);
 
-            string status = _gitExe.Execute("diff --name-status --staged");
-            PopulateStatus(status.AsReader(), detail);
+            foreach (var fileStatus in statuses) {
+                FileInfo fileInfo;
+                if (detail.Files.TryGetValue(fileStatus.Path, out fileInfo)) {
+                    fileInfo.Status = fileStatus.Status;
+                }
+            }
 
             return detail;
         }
@@ -158,7 +164,7 @@ namespace Kudu.Core.SourceControl.Git {
             }
         }
 
-        private void PopulateStatus(IStringReader reader, ChangeSetDetail detail) {
+        internal static void PopulateStatus(IStringReader reader, ChangeSetDetail detail) {
             while (!reader.Done) {
                 string line = reader.ReadLine();
                 // Status lines contain tabs
@@ -168,7 +174,7 @@ namespace Kudu.Core.SourceControl.Git {
                 var lineReader = line.AsReader();
                 string status = lineReader.ReadUntilWhitespace();
                 lineReader.SkipWhitespace();
-                string name = lineReader.ReadUntilWhitespace();
+                string name = lineReader.ReadToEnd().TrimEnd();
                 lineReader.SkipWhitespace();
                 FileInfo file;
                 if (detail.Files.TryGetValue(name, out file)) {
@@ -297,7 +303,7 @@ namespace Kudu.Core.SourceControl.Git {
             var headerReader = reader.ReadLine().AsReader();
             headerReader.ReadUntil("a/");
             headerReader.Skip(2);
-            string fileName = headerReader.ReadUntilWhitespace();
+            string fileName = headerReader.ReadUntil("b/").Trim();
 
             // Skip files from merged changesets
             if (merge != null && merge.Files.ContainsKey(fileName)) {
@@ -329,6 +335,11 @@ namespace Kudu.Core.SourceControl.Git {
                 int? currentLeft = null;
                 int? currentRight = null;
                 string line = reader.ReadLine();
+
+                if (line.Equals(@"\ No newline at end of file", StringComparison.OrdinalIgnoreCase)) {
+                    continue;
+                }
+
                 bool isDiffRange = line.StartsWith("@@");
                 ChangeType? changeType = null;
 

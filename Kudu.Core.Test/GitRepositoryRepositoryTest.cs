@@ -43,10 +43,11 @@ AM g.txt
 MM a.txt
 M  b.txt
 ?? x.txt
+A  New File With Spaces.txt
 
 ";
             var status = GitExeRepository.ParseStatus(statusText.AsReader()).ToList();
-            Assert.Equal(7, status.Count);
+            Assert.Equal(8, status.Count);
 
             Assert.Equal("a", status[0].Path);
             Assert.Equal(ChangeType.Modified, status[0].Status);
@@ -68,6 +69,21 @@ M  b.txt
 
             Assert.Equal("x.txt", status[6].Path);
             Assert.Equal(ChangeType.Untracked, status[6].Status);
+
+            Assert.Equal("New File With Spaces.txt", status[7].Path);
+            Assert.Equal(ChangeType.Added, status[7].Status);
+        }
+
+        [Fact]
+        public void PopulateStatusHandlesFilesWithSpaces() {
+            string status = @"
+A	New File
+";
+            ChangeSetDetail detail = new ChangeSetDetail();
+            detail.Files["New File"] = new FileInfo();
+            GitExeRepository.PopulateStatus(status.AsReader(), detail);
+
+            Assert.Equal(ChangeType.Added, detail.Files["New File"].Status);
         }
 
         [Fact]
@@ -133,6 +149,24 @@ Date:   Thu Jul 7 19:05:40 2011 -0700
             AssertFile(detail, "src/NGitHub/RepositoryService.cs", insertions: 5, deletions: 5, binary: false);
             AssertFile(detail, "src/NGitHub/SharedAssemblyInfo.cs", insertions: 1, deletions: 1, binary: false);
             AssertFile(detail, "Test.dll", binary: true);
+        }
+
+        [Fact]
+        public void ParseDiffChunkHandlesFilesWithSpacesInName() {
+            string diff = @"diff --git a/New File b/New File
+new file mode 100644
+index 0000000..261a6bf
+--- /dev/null
++++ b/New File	
+@@ -0,0 +1 @@
++Ayayayya
+\ No newline at end of file";
+            ChangeSetDetail detail = null;
+            var diffChunk = GitExeRepository.ParseDiffChunk(diff.AsReader(), ref detail);
+            Assert.False(diffChunk.Binary);
+            Assert.Equal("New File", diffChunk.FileName);
+            Assert.Equal(2, diffChunk.Lines.Count);
+            Assert.Equal("+Ayayayya", diffChunk.Lines[1].Text.TrimEnd());
         }
 
         private void AssertFile(ChangeSetDetail detail, string path, int? insertions = null, int? deletions = null, bool binary = false) {
