@@ -12,7 +12,7 @@ namespace Kudu.Services.Web {
         }
 
         private string GetRootPath() {
-            return Path.Combine(HttpRuntime.AppDomainAppPath, "_root");
+            return Path.Combine(HttpRuntime.AppDomainAppPath, "App_Data", "_root");
         }
 
         private void EnsureDirectory(string path) {
