@@ -97,6 +97,10 @@ namespace Kudu.Core.SourceControl.Git {
             // Add everything so we can see a diff of the current changes
             _gitExe.Execute("add -A");
 
+            if (IsEmpty()) {
+                return MakeNewFileDiff(statuses);
+            }
+
             string diff = _gitExe.Execute("diff --no-ext-diff -p --numstat --shortstat --staged");
             var detail = ParseShow(diff.AsReader(), includeChangeSet: false);
 
@@ -108,6 +112,37 @@ namespace Kudu.Core.SourceControl.Git {
             }
 
             return detail;
+        }
+
+        private ChangeSetDetail MakeNewFileDiff(IEnumerable<FileStatus> statuses) {
+            var changeSetDetail = new ChangeSetDetail();
+            foreach (var fileStatus in statuses) {
+                var fileInfo = new FileInfo {
+                    Status = fileStatus.Status
+                };
+                foreach (var diff in CreateDiffLines(fileStatus.Path)) {
+                    fileInfo.DiffLines.Add(diff);
+                }
+                changeSetDetail.Files[fileStatus.Path] = fileInfo;
+                changeSetDetail.FilesChanged++;
+                changeSetDetail.Insertions += fileInfo.DiffLines.Count;
+            }
+            return changeSetDetail;
+        }
+
+        private IEnumerable<LineDiff> CreateDiffLines(string path) {
+            if (Directory.Exists(path)) {
+                return Enumerable.Empty<LineDiff>();
+            }
+
+            // TODO: Detect binary files
+            path = Path.Combine(_gitExe.WorkingDirectory, path);
+            var diff = new List<LineDiff>();
+            string[] lines = File.ReadAllLines(path);
+            foreach (var line in lines) {
+                diff.Add(new LineDiff(ChangeType.Added, "+" + line));
+            }
+            return diff;
         }
 
         public IEnumerable<Branch> GetBranches() {
@@ -404,7 +439,7 @@ namespace Kudu.Core.SourceControl.Git {
 
             // the format is always a/{file name} b/{file name}
             int mid = diffHeader.Length / 2;
-            
+
             return diffHeader.Substring(0, mid).Substring(2);
         }
 

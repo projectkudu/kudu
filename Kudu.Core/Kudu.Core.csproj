@@ -80,6 +80,7 @@
     <Compile Include="SourceControl\IRepository.cs" />
     <Compile Include="SourceControl\IRepositoryManager.cs" />
     <Compile Include="SourceControl\LineDiff.cs" />
+    <Compile Include="SourceControl\NullRepository.cs" />
     <Compile Include="SourceControl\RemoteRepository.cs" />
     <Compile Include="SourceControl\RemoteRepositoryManager.cs" />
     <Compile Include="SourceControl\RepositoryManager.cs" />

@@ -39,9 +39,7 @@ namespace Kudu.Services.Web.App_Start {
         /// </summary>
         /// <returns>The created kernel.</returns>
         private static IKernel CreateKernel() {
-            var kernel = new StandardKernel(new NinjectSettings {
-                AllowNullInjection = true
-            });
+            var kernel = new StandardKernel();
 
             RegisterServices(kernel);
             return kernel;
@@ -55,7 +53,7 @@ namespace Kudu.Services.Web.App_Start {
             IRepositoryManager repositoryManager = GetRepositoryManager();
 
             kernel.Bind<IRepositoryManager>().ToConstant(repositoryManager);
-            kernel.Bind<IRepository>().ToMethod(_ => repositoryManager.GetRepository());
+            kernel.Bind<IRepository>().ToMethod(_ => repositoryManager.GetRepository() ?? NullRepository.Instance);
             kernel.Bind<IFileSystem>().ToMethod(_ => GetFileSystem());
             kernel.Bind<ServerRepository>().ToMethod(_ => GetServerRepository());
         }

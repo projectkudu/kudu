@@ -4,19 +4,19 @@ using System.IO;
 using System.Text;
 
 namespace Kudu.Core.Infrastructure {
-    internal class Executable {
-        private readonly string _path;
-        private readonly string _workingDirectory;
-
+    internal class Executable {        
         public Executable(string path, string workingDirectory) {
-            _path = path;
-            _workingDirectory = workingDirectory;
+            Path = path;
+            WorkingDirectory = workingDirectory;
         }
+
+        public string WorkingDirectory { get; private set; }
+        public string Path { get; private set; }
 
         public string Execute(string arguments, params object[] args) {
             var psi = new ProcessStartInfo {
-                FileName = _path,
-                WorkingDirectory = _workingDirectory,
+                FileName = Path,
+                WorkingDirectory = WorkingDirectory,
                 RedirectStandardInput = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
