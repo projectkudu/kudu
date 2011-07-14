@@ -7,9 +7,12 @@ using SignalR.Hubs;
 namespace Kudu.Web {
     public class SourceControl : Hub {
         private readonly IRepository _repository;
-        
-        public SourceControl(IRepository repository) {
+        private readonly IRepositoryManager _repositoryManager;
+
+        public SourceControl(IRepository repository,
+                             IRepositoryManager repositoryManager) {
             _repository = repository;
+            _repositoryManager = repositoryManager;
         }
 
         public ChangeSetDetailViewModel Show(string id) {
@@ -32,10 +35,13 @@ namespace Kudu.Web {
             return null;
         }
 
-        public IDictionary<string, IEnumerable<string>> GetBranches() {
-            return _repository.GetBranches()
-                             .ToLookup(b => b.Id)
-                             .ToDictionary(p => p.Key, p => p.Select(b => b.Name));
+        public RepositoryViewModel GetRepositoryInfo() {
+            return new RepositoryViewModel {
+                Branches = _repository.GetBranches()
+                                 .ToLookup(b => b.Id)
+                                 .ToDictionary(p => p.Key, p => p.Select(b => b.Name)),
+                RepositoryType = _repositoryManager.GetRepositoryType().ToString()
+            };
         }
 
         public IEnumerable<ChangeSetViewModel> GetChanges(int index, int pageSize) {

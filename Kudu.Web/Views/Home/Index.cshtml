@@ -1,38 +1,17 @@
 ﻿@using Kudu.Core.SourceControl
-@model Kudu.Core.SourceControl.RepositoryType
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Kudu</title>
-    <style type="text/css">
-        body {
-            font-family: Trebuchet MS;
-            font-size: 13px;
-        }
-        
-        li {
-            margin-bottom: 5px;
-        }
-    </style>
-</head>
-<body>
-    <ul>
-        <li>
-            <a href="../../Editor/index.htm">View/Edit Files</a>
-        </li>
-        @if (Model != RepositoryType.None) {
-        <li>
-            <a href="../../SourceControl/index.htm" >View Repository</a>
-        </li>
-        }
-    </ul>
 
-    @if (Model == RepositoryType.None) {
-        <h3>You don't have source control configured</h3>
-        <form action="@Url.Action("create")" method="post">
-            @Html.DropDownList("type")
-            <input type="submit" value="Create" />
-        </form>
-    }
-</body>
-</html>
+@model RepositoryType
+
+<div id="action-links">
+<a href="../../Hubs/Editor/index.htm">View/Edit Files</a> <br />
+@if (Model != RepositoryType.None) {
+<a href="../../Hubs/SourceControl/index.htm">View Repository</a>
+}
+else { 
+    <h3>You don't have source control configured</h3>
+    <form action="@Url.Action("create")" method="post">
+        @Html.DropDownList("type")
+        <input type="submit" value="Create" />
+    </form>
+}
+</div>

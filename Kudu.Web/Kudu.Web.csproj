@@ -71,10 +71,27 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Editor\styles\codemirror.css" />
-    <Content Include="Editor\index.htm" />
-    <Content Include="Editor\styles\skyde.css" />
+    <Content Include="Content\Site.css" />
     <Content Include="Global.asax" />
+    <Content Include="Hubs\Editor\index.htm" />
+    <Content Include="Hubs\Editor\io\directory.js" />
+    <Content Include="Hubs\Editor\io\file.js" />
+    <Content Include="Hubs\Editor\io\fileSystem.js" />
+    <Content Include="Hubs\Editor\skyde.js" />
+    <Content Include="Hubs\Editor\styles\codemirror.css" />
+    <Content Include="Hubs\Editor\styles\skyde.css" />
+    <Content Include="Hubs\SourceControl\images\folder_table.png" />
+    <Content Include="Hubs\SourceControl\images\loading.gif" />
+    <Content Include="Hubs\SourceControl\images\page_white.png" />
+    <Content Include="Hubs\SourceControl\images\page_white_add.png" />
+    <Content Include="Hubs\SourceControl\images\page_white_delete.png" />
+    <Content Include="Hubs\SourceControl\images\page_white_edit.png" />
+    <Content Include="Hubs\SourceControl\images\page_white_gear.png" />
+    <Content Include="Hubs\SourceControl\images\tick.png" />
+    <Content Include="Hubs\SourceControl\index.htm" />
+    <Content Include="Hubs\SourceControl\loader.js" />
+    <Content Include="Hubs\SourceControl\SourceControl.css" />
+    <Content Include="Hubs\SourceControl\SourceControl.js" />
     <Content Include="images\addfile.png" />
     <Content Include="images\addview.png" />
     <Content Include="images\application_side_list.png" />
@@ -146,9 +163,6 @@
     <Content Include="Scripts\codemirror\mode\razor\razor.js" />
     <Content Include="Scripts\codemirror\mode\xml\xml.css" />
     <Content Include="Scripts\codemirror\mode\xml\xml.js" />
-    <Content Include="Editor\io\directory.js" />
-    <Content Include="Editor\io\file.js" />
-    <Content Include="Editor\io\fileSystem.js" />
     <Content Include="Scripts\jquery-1.6.2-vsdoc.js" />
     <Content Include="Scripts\jquery-1.6.2.js" />
     <Content Include="Scripts\jquery-1.6.2.min.js" />
@@ -157,21 +171,8 @@
     <Content Include="Scripts\jquery.render.min.js" />
     <Content Include="Scripts\jquery.timeago.js" />
     <Content Include="Scripts\sammy.js" />
-    <Content Include="Editor\skyde.js" />
     <Content Include="Scripts\SignalR.js" />
     <Content Include="Scripts\SignalR.min.js" />
-    <Content Include="SourceControl\images\folder_table.png" />
-    <Content Include="SourceControl\images\page_white.png" />
-    <Content Include="SourceControl\images\page_white_add.png" />
-    <Content Include="SourceControl\images\page_white_delete.png" />
-    <Content Include="SourceControl\images\page_white_edit.png" />
-    <Content Include="SourceControl\images\page_white_gear.png" />
-    <Content Include="SourceControl\images\tick.png" />
-    <Content Include="SourceControl\index.htm" />
-    <Content Include="SourceControl\images\loading.gif" />
-    <Content Include="SourceControl\loader.js" />
-    <Content Include="SourceControl\SourceControl.css" />
-    <Content Include="SourceControl\SourceControl.js" />
     <Content Include="Web.config">
       <SubType>Designer</SubType>
     </Content>
@@ -183,22 +184,26 @@
     </Content>
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Web.config" />
+    <Content Include="Views\Shared\Error.cshtml" />
+    <Content Include="Views\Shared\_Layout.cshtml" />
+    <Content Include="Views\_ViewStart.cshtml" />
     <None Include="_bin_deployableAssemblies\Microsoft.Web.Infrastructure.dll" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\NinjectServices.cs" />
     <Compile Include="App_Start\NinjectDependencyResolver.cs" />
     <Compile Include="Controllers\HomeController.cs" />
-    <Compile Include="Editor\Documents.cs" />
-    <Compile Include="Editor\Model\File.cs" />
-    <Compile Include="Editor\Model\Project.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Hubs\Editor\Documents.cs" />
+    <Compile Include="Hubs\Editor\Model\File.cs" />
+    <Compile Include="Hubs\Editor\Model\Project.cs" />
+    <Compile Include="Hubs\SourceControl\Model\ChangeSetDetailViewModel.cs" />
+    <Compile Include="Hubs\SourceControl\Model\ChangeSetViewModel.cs" />
+    <Compile Include="Hubs\SourceControl\Model\RepositoryViewModel.cs" />
+    <Compile Include="Hubs\SourceControl\SourceControl.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SourceControl\Model\ChangeSetDetailViewModel.cs" />
-    <Compile Include="SourceControl\Model\ChangeSetViewModel.cs" />
-    <Compile Include="SourceControl\SourceControl.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Kudu.Core\Kudu.Core.csproj">

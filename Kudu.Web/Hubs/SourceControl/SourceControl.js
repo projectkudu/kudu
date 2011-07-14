@@ -131,8 +131,11 @@ $(function () {
         scm.state.index = 0;
         scm.state.full = false;
 
-        scm.getBranches(function (branches) {
-            scm.state.branches = branches;
+        scm.getRepositoryInfo(function (info) {
+            scm.state.branches = info.Branches;
+            scm.state.type = info.RepositoryType;
+
+            $('#repository-type').html(scm.state.type).hide().fadeIn();
 
             getChangeSets(0, function () {
                 window.loader.hide(token);

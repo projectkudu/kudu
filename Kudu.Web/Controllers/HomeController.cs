@@ -26,7 +26,7 @@ namespace Kudu.Web.Controllers {
         public ActionResult Create(RepositoryType type) {
             _repositoryManager.CreateRepository(type);
 
-            return Redirect("~/SourceControl/index.htm");
+            return Redirect("~/SourceControl/Hubs/index.htm");
         }
     }
 }

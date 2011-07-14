@@ -73,6 +73,8 @@
     margin-bottom: 15px;
     border: 1px solid #ccc;
     padding: 5px;
+    font-weight: bold;    
+    font-size: 14px;
 }
 
 #menu #links {
@@ -90,11 +92,8 @@
 
 #menu a {
     margin-right: 10px;
-    border-radius: 4px 4px 4px 4px;
-    font-weight: bold;
-    color: #000;
-    font-size: 14px;
     text-decoration: none;
+    color: #000;
 }
 
 #menu a:hover {
@@ -332,4 +331,11 @@ form {
     background-color: #ECECEC;
     border-right: 1px solid #DDDDDD;
     color: #AAAAAA;
+}
+
+#repository-type {
+    float: left;
+    margin-top: 4px;
+    margin-right: 10px;
+    font-weight: bold;
 }

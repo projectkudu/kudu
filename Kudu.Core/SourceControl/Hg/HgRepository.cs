@@ -105,19 +105,18 @@ namespace Kudu.Core.SourceControl.Hg {
         }
 
         public ChangeSet Commit(string authorName, string message) {
-            _repository.AddRemove();
-
-            try {
-                var id = _repository.Commit(new CommitCommand {
-                    OverrideAuthor = authorName,
-                    Message = message
-                });
-
-                return GetChangeSet(id);
-            }
-            catch {
+            if (!GetStatus().Any()) {
                 return null;
             }
+
+            _repository.AddRemove();
+
+            var id = _repository.Commit(new CommitCommand {
+                OverrideAuthor = authorName,
+                Message = message
+            });
+
+            return GetChangeSet(id);
         }
 
         public void Update(string id) {
@@ -129,7 +128,7 @@ namespace Kudu.Core.SourceControl.Hg {
             // the branches command (http://mercurialnet.codeplex.com/workitem/14)
             var branchReader = _hgExe.Execute("branches").AsReader();
 
-            while (!branchReader.Done) {                
+            while (!branchReader.Done) {
                 // name WS revision:hash
                 string line = branchReader.ReadLine();
                 var match = Regex.Match(line, @"(?<rev>\d+)\:");
