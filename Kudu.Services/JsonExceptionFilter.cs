@@ -9,13 +9,9 @@ namespace Kudu.Services {
             filterContext.HttpContext.Response.TrySkipIisCustomErrors = true;
             filterContext.HttpContext.ClearError();
             filterContext.HttpContext.Response.StatusCode = 500;
-            filterContext.Result = new JsonResult {
-                JsonRequestBehavior = JsonRequestBehavior.AllowGet,
-                Data = filterContext.Exception.Message
+            filterContext.Result = new ContentResult {
+                Content = filterContext.Exception.Message
             };
         }
-    }
-
-    public class Hello {
     }
 }

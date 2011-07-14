@@ -9,6 +9,7 @@
 }
 else { 
     <h3>You don't have source control configured</h3>
+    @Html.ValidationSummary()
     <form action="@Url.Action("create")" method="post">
         @Html.DropDownList("type")
         <input type="submit" value="Create" />

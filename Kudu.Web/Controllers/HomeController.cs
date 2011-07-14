@@ -11,6 +11,27 @@ namespace Kudu.Web.Controllers {
         }
 
         public ActionResult Index() {
+            PopulateRepositoyTypes();
+
+            return View(_repositoryManager.GetRepositoryType());
+        }
+
+        [HttpPost]
+        public ActionResult Create(RepositoryType type) {
+            try {
+                _repositoryManager.CreateRepository(type);
+
+                return Redirect("~/Hubs/SourceControl/index.htm");
+            }
+            catch(Exception e) {
+                ModelState.AddModelError("_FORM", e.Message);
+            }
+
+            PopulateRepositoyTypes();
+            return View("Index", RepositoryType.None);
+        }
+
+        private void PopulateRepositoyTypes() {
             ViewBag.Type = Enum.GetNames(typeof(RepositoryType))
                                .Select((name, value) => new SelectListItem {
                                    Text = name,
@@ -18,15 +39,6 @@ namespace Kudu.Web.Controllers {
                                })
                                .Skip(1);
 
-
-            return View(_repositoryManager.GetRepositoryType());
-        }
-
-        [HttpPost]
-        public ActionResult Create(RepositoryType type) {
-            _repositoryManager.CreateRepository(type);
-
-            return Redirect("~/SourceControl/Hubs/index.htm");
         }
     }
 }
