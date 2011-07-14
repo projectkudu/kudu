@@ -13,7 +13,7 @@ body {
 }
 
 a:link {
-    color: #034af3;
+    color: #505abc;
     text-decoration: underline;
 }
 
@@ -22,7 +22,7 @@ a:visited {
 }
 
 a:hover {
-    color: #1d60ff;
+    color: #505abc;
     text-decoration: none;
 }
 
@@ -327,4 +327,6 @@ div#title {
     font-size: 25px;
     text-decoration: none;
     margin-bottom: 5px;
+    display: block;
+    width: 200px;
 }
