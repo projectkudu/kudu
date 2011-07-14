@@ -16,7 +16,7 @@ namespace Kudu.Core.SourceControl.Git {
 
         public string CurrentId {
             get {
-                return _exeRepository.CurrentId;
+                return _libgitRepository.CurrentId;
             }
         }
 

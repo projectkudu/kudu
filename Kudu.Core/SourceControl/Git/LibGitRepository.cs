@@ -23,6 +23,9 @@ namespace Kudu.Core.SourceControl.Git {
 
         public string CurrentId {
             get {
+                if (Repository.Info.IsEmpty) {
+                    return null;
+                }
                 return Repository.Lookup(Repository.Head.CanonicalName).Sha;
             }
         }
@@ -95,6 +98,9 @@ namespace Kudu.Core.SourceControl.Git {
         }
 
         public IEnumerable<Branch> GetBranches() {
+            if (Repository.Info.IsEmpty) {
+                return Enumerable.Empty<Branch>();
+            }
             return from branch in Repository.Branches
                    where !branch.IsRemote
                    select new Branch(branch.Tip.Id.Sha, branch.Name);
