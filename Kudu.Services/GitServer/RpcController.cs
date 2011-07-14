@@ -30,10 +30,10 @@ namespace Kudu.Services.GitServer {
     // Handles project/git-upload-pack and project/git-receive-pack
     [SessionState(SessionStateBehavior.Disabled)]
     public class RpcController : Controller {
-        private readonly ILocationProvider _locationProvider;
+        private readonly Repository _repository;
 
-        public RpcController(ILocationProvider locationProvider) {
-            _locationProvider = locationProvider;
+        public RpcController(Repository repository) {
+            _repository = repository;
         }
 
         [HttpPost]
@@ -57,18 +57,11 @@ namespace Kudu.Services.GitServer {
             return Request.InputStream;
         }
 
-        ActionResult ExecuteRpc(string project, string rpc, Action<Repository> action) {
+        private ActionResult ExecuteRpc(string project, string rpc, Action<Repository> action) {
             Response.ContentType = "application/x-git-{0}-result".With(rpc);
             Response.WriteNoCache();
 
-            string repositoryPath = _locationProvider.RepositoryRoot;
-            var repository = new Repository(repositoryPath);
-
-            if (repository == null) {
-                return new NotFoundResult();
-            }
-
-            action(repository);
+            action(_repository);
 
             return new EmptyResult();
         }

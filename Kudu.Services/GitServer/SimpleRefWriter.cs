@@ -20,8 +20,10 @@ namespace Kudu.Services.GitServer {
         protected override void writeFile(string file, byte[] content) {
             FileInfo p = PathUtil.CombineFilePath(_db.Directory, file);
             LockFile lck = new LockFile(p);
-            if (!lck.Lock())
+            if (!lck.Lock()) {
                 throw new ObjectWritingException("Can't write " + p);
+            }
+
             try {
                 lck.Write(content);
             }

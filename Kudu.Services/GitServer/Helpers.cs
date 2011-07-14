@@ -45,7 +45,7 @@ namespace Kudu.Services.GitServer {
         }
 
         public static string With(this string format, params string[] args) {
-            return string.Format(format, args);
+            return String.Format(format, args);
         }
 
         public static void WriteNoCache(this HttpResponseBase response) {
@@ -55,7 +55,7 @@ namespace Kudu.Services.GitServer {
         }
 
         public static void PktWrite(this HttpResponseBase response, string input, params object[] args) {
-            input = string.Format(input, args);
+            input = String.Format(input, args);
             var toWrite = (input.Length + 4).ToString("x").PadLeft(4, '0') + input;
             response.Write(toWrite);
         }

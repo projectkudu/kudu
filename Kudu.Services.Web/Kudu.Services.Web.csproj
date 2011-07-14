@@ -74,14 +74,11 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="App_Start\NinjectMVC3.cs" />
+    <Compile Include="App_Start\NinjectServices.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="LocationProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ServiceFileSystem.cs" />
-    <Compile Include="ServiceRepository.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Kudu.Core\Kudu.Core.csproj">

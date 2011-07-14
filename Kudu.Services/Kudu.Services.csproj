@@ -63,11 +63,9 @@
     <Compile Include="GitServer\ForbiddenResult.cs" />
     <Compile Include="GitServer\Helpers.cs" />
     <Compile Include="GitServer\InfoRefsController.cs" />
-    <Compile Include="GitServer\NotFoundResult.cs" />
     <Compile Include="GitServer\Repository.cs" />
     <Compile Include="GitServer\RpcController.cs" />
     <Compile Include="GitServer\SimpleRefWriter.cs" />
-    <Compile Include="ILocationProvider.cs" />
     <Compile Include="JsonExceptionFilter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SourceControl\ScmController.cs" />

@@ -21,6 +21,7 @@
 #endregion
 
 namespace Kudu.Services.GitServer {
+    using System;
     using System.IO;
     using System.Web.Mvc;
     using System.Web.SessionState;
@@ -28,10 +29,10 @@ namespace Kudu.Services.GitServer {
     // Handles /project/info/refs
     [SessionState(SessionStateBehavior.Disabled)]
     public class InfoRefsController : Controller {
-        private readonly ILocationProvider _locationProvider;
+        private readonly Repository _repository;
 
-        public InfoRefsController(ILocationProvider locationProvider) {
-            _locationProvider = locationProvider;
+        public InfoRefsController(Repository repository) {
+            _repository = repository;
         }
 
         public ActionResult Execute(string service) {
@@ -47,7 +48,7 @@ namespace Kudu.Services.GitServer {
             return DumbInfoRefs();
         }
 
-        ActionResult SmartInfoRefs(string service) {
+        private ActionResult SmartInfoRefs(string service) {
             Response.ContentType = "application/x-git-{0}-advertisement".With(service);
             Response.WriteNoCache();
 
@@ -55,47 +56,37 @@ namespace Kudu.Services.GitServer {
             // We do this as certain git clients (jgit) require it to be empty.
             // If we don't set it, then it defaults to utf-8, which breaks jgit's logic for detecting smart http
             Response.Charset = "";
-
-            string repositoryPath = _locationProvider.RepositoryRoot;
-            var repository = new Repository(repositoryPath);
-
-            if (repository == null) {
-                return new NotFoundResult();
-            }
-
+ 
             Response.PktWrite("# service=git-{0}\n", service);
             Response.PktFlush();
 
             if (service == "upload-pack") {
-                repository.AdvertiseUploadPack(Response.OutputStream);
+                _repository.AdvertiseUploadPack(Response.OutputStream);
             }
 
             else if (service == "receive-pack") {
-                repository.AdvertiseReceivePack(Response.OutputStream);
+                _repository.AdvertiseReceivePack(Response.OutputStream);
             }
 
             return new EmptyResult();
         }
 
-        ActionResult DumbInfoRefs() {
+        private ActionResult DumbInfoRefs() {
             Response.WriteNoCache();
 
             Response.ContentType = "text/plain; charset=utf-8";
-
-            string repositoryPath = _locationProvider.RepositoryRoot;
-            var repository = new Repository(repositoryPath);
-
-            if (repository == null) {
-                return new NotFoundResult();
-            }
-
-            repository.UpdateServerInfo();
-            Response.WriteFile(Path.Combine(repository.GitDirectory(), "info/refs"));
+           
+            _repository.UpdateServerInfo();
+            string infoRefsPath = Path.Combine(_repository.GitDirectory(), "info/refs");
+            Response.WriteFile(infoRefsPath);
             return new EmptyResult();
         }
 
         protected string GetServiceType(string service) {
-            if (string.IsNullOrWhiteSpace(service)) return null;
+            if (String.IsNullOrWhiteSpace(service)) {
+                return null;
+            }
+
             return service.Replace("git-", "");
         }
     }
