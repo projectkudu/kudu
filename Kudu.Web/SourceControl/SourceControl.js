@@ -74,7 +74,7 @@ $(function () {
             return;
         }
 
-        changesXhr = scm.getChanges(index, pageSize, function (changes) {            
+        changesXhr = scm.getChanges(index, pageSize, function (changes) {
             setupActions($('#changes').append($('#changeset').render(changes)));
             scm.state.index = index + changes.length;
 
@@ -104,15 +104,17 @@ $(function () {
             $('#' + newId).find('.loading').show();
             $('#' + id).find('.status').addClass('hide');
 
-            scm.update(branch || newId, function () {
-                scm.state.id = newId;
-                scm.state.branch = branch;
+            scm.update(branch || newId)
+               .done(function () {
+                   scm.state.id = newId;
+                   scm.state.branch = branch;
 
-                $('#' + newId).find('.loading').hide();
-                $('#' + newId).find('.status').removeClass('hide');
+                   $('#' + newId).find('.loading').hide();
+                   $('#' + newId).find('.status').removeClass('hide');
 
-                id = newId;
-            });
+                   id = newId;
+               })
+               .fail(onError);
 
             return false;
         });
@@ -141,7 +143,10 @@ $(function () {
                 }
             });
         })
-        .fail(onError);
+        .fail(function (e) {
+            onError(e);
+            window.loader.hide(token);
+        });
     }
 
     function show(id) {
