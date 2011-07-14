@@ -131,25 +131,36 @@ $(function () {
         scm.state.index = 0;
         scm.state.full = false;
 
-        scm.getRepositoryInfo(function (info) {
-            scm.state.branches = info.Branches;
-            scm.state.type = info.RepositoryType;
+        scm.getRepositoryInfo()
+           .done(function (info) {
+               scm.state.branches = info.Branches;
+               scm.state.type = info.RepositoryType;
+               scm.state.cloneUrl = info.CloneUrl;
 
-            $('#repository-type').html(scm.state.type).hide().fadeIn();
+               var url = $('#url');
+               if (scm.state.cloneUrl) {
+                   url.val(scm.state.cloneUrl);
+                   url.removeAttr('disabled');
+               }
+               else {
+                   url.val('Not supported');
+               }
 
-            getChangeSets(0, function () {
-                window.loader.hide(token);
+               $('#repository-type').html(scm.state.type).hide().fadeIn();
 
-                if (infiniteScrollCheck === false) {
-                    getMoreChanges();
-                    infiniteScrollCheck = true;
-                }
-            });
-        })
-        .fail(function (e) {
-            onError(e);
-            window.loader.hide(token);
-        });
+               getChangeSets(0, function () {
+                   window.loader.hide(token);
+
+                   if (infiniteScrollCheck === false) {
+                       getMoreChanges();
+                       infiniteScrollCheck = true;
+                   }
+               });
+           })
+           .fail(function (e) {
+               onError(e);
+               window.loader.hide(token);
+           });
     }
 
     function show(id) {

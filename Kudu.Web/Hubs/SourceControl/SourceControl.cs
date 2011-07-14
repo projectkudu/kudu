@@ -36,11 +36,13 @@ namespace Kudu.Web {
         }
 
         public RepositoryViewModel GetRepositoryInfo() {
+            var type = _repositoryManager.GetRepositoryType();
             return new RepositoryViewModel {
                 Branches = _repository.GetBranches()
                                  .ToLookup(b => b.Id)
                                  .ToDictionary(p => p.Key, p => p.Select(b => b.Name)),
-                RepositoryType = _repositoryManager.GetRepositoryType().ToString()
+                RepositoryType = type.ToString(),
+                CloneUrl = type == RepositoryType.Git ? "http://localhost:52590/SampleRepo.git" : null
             };
         }
 
