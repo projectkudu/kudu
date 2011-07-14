@@ -1,30 +1,39 @@
 ﻿using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Web;
 using System.Web.Mvc;
 using Kudu.Core.SourceControl;
-using Kudu.Core.SourceControl.Git;
-using Kudu.Core.SourceControl.Hg;
 
 namespace Kudu.Services.SourceControl {
     [JsonExceptionFilter]
     public class ScmController : Controller {
         private readonly IRepository _repository;
-        public ScmController(IRepository repository) {
+        private readonly IRepositoryManager _repositoryManager;
+
+        public ScmController(IRepository repository,
+                             IRepositoryManager repositoryManager) {
             _repository = repository;
+            _repositoryManager = repositoryManager;
+        }
+
+        [HttpPost]
+        public void Create(RepositoryType type) {
+            _repositoryManager.CreateRepository(type);
+        }
+
+        [HttpPost]
+        public void Delete() {
+            _repositoryManager.Delete();
+        }
+
+        [HttpGet]
+        [ActionName("kind")]
+        public ActionResult GetRepositoryType() {
+            return Json(_repositoryManager.GetRepositoryType(), JsonRequestBehavior.AllowGet);
         }
 
         [HttpGet]
         [ActionName("id")]
         public string GetCurrentId() {
             return _repository.CurrentId;
-        }
-
-        [HttpPost]
-        [ActionName("init")]
-        public void Initialize() {
-            _repository.Initialize();
         }
 
         [HttpGet]

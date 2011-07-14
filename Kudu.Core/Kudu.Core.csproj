@@ -58,8 +58,9 @@
     <Compile Include="Editor\IFileSystem.cs" />
     <Compile Include="Editor\PhysicalFileSystem.cs" />
     <Compile Include="Editor\RemoteFileSystem.cs" />
-    <Compile Include="Editor\VsFileSystem.cs" />
+    <Compile Include="Editor\SolutionFileSystem.cs" />
     <Compile Include="Infrastructure\HttpClientExtensions.cs" />
+    <Compile Include="Infrastructure\HttpClientHelper.cs" />
     <Compile Include="Infrastructure\ParserHelpers.cs" />
     <Compile Include="Infrastructure\StringReader.cs" />
     <Compile Include="Infrastructure\Executable.cs" />
@@ -77,8 +78,12 @@
     <Compile Include="SourceControl\Git\LibGitRepository.cs" />
     <Compile Include="SourceControl\Hg\HgRepository.cs" />
     <Compile Include="SourceControl\IRepository.cs" />
+    <Compile Include="SourceControl\IRepositoryManager.cs" />
     <Compile Include="SourceControl\LineDiff.cs" />
     <Compile Include="SourceControl\RemoteRepository.cs" />
+    <Compile Include="SourceControl\RemoteRepositoryManager.cs" />
+    <Compile Include="SourceControl\RepositoryManager.cs" />
+    <Compile Include="SourceControl\RepositoryType.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

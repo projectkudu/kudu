@@ -5,14 +5,20 @@ using Newtonsoft.Json;
 namespace Kudu.Core.Infrastructure {
     public static class HttpClientExtensions {
         public static T GetJson<T>(this HttpClient client, string url) {
-            var message = client.Get(url);
-            var content = message.Content.ReadAsString();
+            HttpResponseMessage response = client.Get(url);
+            var content = response.EnsureSuccessful().Content.ReadAsString();
 
-            if (!message.IsSuccessStatusCode) {
+            return JsonConvert.DeserializeObject<T>(content);
+        }
+
+        public static HttpResponseMessage EnsureSuccessful(this HttpResponseMessage response) {
+            var content = response.Content.ReadAsString();
+
+            if (!response.IsSuccessStatusCode) {
                 throw new InvalidOperationException(content);
             }
 
-            return JsonConvert.DeserializeObject<T>(content);
+            return response;
         }
     }
 }

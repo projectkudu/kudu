@@ -39,7 +39,10 @@ namespace Kudu.Services.Web.App_Start {
         /// </summary>
         /// <returns>The created kernel.</returns>
         private static IKernel CreateKernel() {
-            var kernel = new StandardKernel();
+            var kernel = new StandardKernel(new NinjectSettings {
+                AllowNullInjection = true
+            });
+
             RegisterServices(kernel);
             return kernel;
         }
@@ -49,9 +52,16 @@ namespace Kudu.Services.Web.App_Start {
         /// </summary>
         /// <param name="kernel">The kernel.</param>
         private static void RegisterServices(IKernel kernel) {
+            IRepositoryManager repositoryManager = GetRepositoryManager();
+
+            kernel.Bind<IRepositoryManager>().ToConstant(repositoryManager);
+            kernel.Bind<IRepository>().ToMethod(_ => repositoryManager.GetRepository());
             kernel.Bind<IFileSystem>().ToMethod(_ => GetFileSystem());
-            kernel.Bind<IRepository>().ToMethod(_ => GetRepository());
             kernel.Bind<ServerRepository>().ToMethod(_ => GetServerRepository());
+        }
+
+        private static IRepositoryManager GetRepositoryManager() {
+            return new RepositoryManager(GetRepositoryPath());
         }
 
         private static string Root {
@@ -59,7 +69,7 @@ namespace Kudu.Services.Web.App_Start {
                 return Path.Combine(HttpRuntime.AppDomainAppPath, "App_Data", "_root");
             }
         }
-        
+
         private static string GetRepositoryPath() {
             string path = Path.Combine(Root, RepositoryPath);
             EnsureDirectory(path);
@@ -77,28 +87,18 @@ namespace Kudu.Services.Web.App_Start {
                 Directory.CreateDirectory(path);
             }
         }
-        
+
         private static ServerRepository GetServerRepository() {
             return new ServerRepository(GetRepositoryPath());
         }
-
-        private static IRepository GetRepository() {
-            string path = GetRepositoryPath();
-
-            if (Directory.EnumerateDirectories(path, ".hg").Any()) {
-                return new HgRepository(path);
-            }
-
-            return new HybridGitRepository(path);
-        }
-
+        
         private static IFileSystem GetFileSystem() {
             string path = GetEditorPath();
 
             // If we find a solution file then use the vs implementation so only get a subset
             // of the files (ones included in the project)
             if (Directory.EnumerateFiles(path, "*.sln").Any()) {
-                return new VsFileSystem(path);
+                return new SolutionFileSystem(path);
             }
 
             return new PhysicalFileSystem(path);

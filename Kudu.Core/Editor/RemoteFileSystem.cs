@@ -8,19 +8,13 @@ namespace Kudu.Core.Editor {
         private readonly HttpClient _client;
 
         public RemoteFileSystem(string serviceUrl) {
-            // The URL needs to end with a slash for HttpClient to do the right thing with relative paths
-            if (!serviceUrl.EndsWith("/")) {
-                serviceUrl += "/";
-            }
-
-            _client = new HttpClient(serviceUrl);
-            _client.MaxResponseContentBufferSize = 30 * 1024 * 1024;
+            _client = HttpClientHelper.Create(serviceUrl);
         }
 
         public string ReadAllText(string path) {
             // REVIEW: Do we need to url encode?
             return _client.Get("?path=" + path)
-                          .EnsureSuccessStatusCode()
+                          .EnsureSuccessful()
                           .Content
                           .ReadAsString();
         }
@@ -33,13 +27,13 @@ namespace Kudu.Core.Editor {
             _client.Post("save", new FormUrlEncodedContent(new Dictionary<string, string> {
                     { "path", path },
                     { "content", content }
-            })).EnsureSuccessStatusCode();
+            })).EnsureSuccessful();
         }
 
         public void Delete(string path) {
             _client.Post("delete", new FormUrlEncodedContent(new Dictionary<string, string> {
                     { "path", path }
-            })).EnsureSuccessStatusCode();
+            })).EnsureSuccessful();
         }
     }
 }

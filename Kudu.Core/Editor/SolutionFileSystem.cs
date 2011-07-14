@@ -4,10 +4,10 @@ using System.Linq;
 using System.Xml.Linq;
 
 namespace Kudu.Core.Editor {
-    public class VsFileSystem : PhysicalFileSystem {
+    public class SolutionFileSystem : PhysicalFileSystem {
         private readonly string _path;
 
-        public VsFileSystem(string path)
+        public SolutionFileSystem(string path)
             : base(path) {
             _path = path;
         }

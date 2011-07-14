@@ -19,8 +19,13 @@ namespace Kudu.Core.SourceControl.Hg {
         public string CurrentId {
             get {
                 string id = _repository.Identify();
-                // Get the full hash
-                return _repository.Log(id).Single().Hash;
+
+                Changeset changeSet = _repository.Log(id).SingleOrDefault();
+                if (changeSet != null) {
+                    // Get the full hash
+                    return changeSet.Hash;
+                }
+                return null;
             }
         }
 
