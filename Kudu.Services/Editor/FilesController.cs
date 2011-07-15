@@ -3,11 +3,12 @@ using System.Web.Mvc;
 using Kudu.Core.Editor;
 
 namespace Kudu.Services.Documents {
-    [JsonExceptionFilter]
+    [FormattedExceptionFilter]
     public class FilesController : Controller {
         private readonly IFileSystem _fileSystem;
-        public FilesController(IFileSystem fileSystem) {
-            _fileSystem = fileSystem;
+
+        public FilesController(IFileSystemFactory fileSystemFactory) {
+            _fileSystem = fileSystemFactory.CreateFileSystem();
         }
 
         [HttpGet]

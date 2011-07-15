@@ -3,15 +3,14 @@ using System.Web.Mvc;
 using Kudu.Core.SourceControl;
 
 namespace Kudu.Services.SourceControl {
-    [JsonExceptionFilter]
+    [FormattedExceptionFilter]
     public class ScmController : Controller {
         private readonly IRepository _repository;
         private readonly IRepositoryManager _repositoryManager;
 
-        public ScmController(IRepository repository,
-                             IRepositoryManager repositoryManager) {
-            _repository = repository;
+        public ScmController(IRepositoryManager repositoryManager) {
             _repositoryManager = repositoryManager;
+            _repository = repositoryManager.GetRepository() ?? NullRepository.Instance;
         }
 
         [HttpPost]

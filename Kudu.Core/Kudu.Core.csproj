@@ -55,7 +55,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Deployment\BasicDeployer.cs" />
+    <Compile Include="Deployment\DeploymentManager.cs" />
+    <Compile Include="Deployment\DeployResult.cs" />
+    <Compile Include="Deployment\DeployStatus.cs" />
+    <Compile Include="Deployment\IDeployer.cs" />
+    <Compile Include="Deployment\IDeploymentManager.cs" />
+    <Compile Include="Editor\FileSystemFactory.cs" />
     <Compile Include="Editor\IFileSystem.cs" />
+    <Compile Include="Editor\IFileSystemFactory.cs" />
     <Compile Include="Editor\PhysicalFileSystem.cs" />
     <Compile Include="Editor\RemoteFileSystem.cs" />
     <Compile Include="Editor\SolutionFileSystem.cs" />

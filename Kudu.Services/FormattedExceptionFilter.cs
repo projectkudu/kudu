@@ -3,7 +3,7 @@ using System.Web.Mvc;
 
 namespace Kudu.Services {
     [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
-    public sealed class JsonExceptionFilterAttribute : FilterAttribute, IExceptionFilter {
+    public sealed class FormattedExceptionFilterAttribute : FilterAttribute, IExceptionFilter {
         public void OnException(ExceptionContext filterContext) {
             filterContext.ExceptionHandled = true;
             filterContext.HttpContext.Response.TrySkipIisCustomErrors = true;

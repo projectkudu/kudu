@@ -1,22 +1,21 @@
+using System.IO;
+using System.Web;
+using Kudu.Core.Deployment;
+using Kudu.Core.Editor;
+using Kudu.Core.SourceControl;
+using Microsoft.Web.Infrastructure.DynamicModuleHelper;
+using Ninject;
+using Ninject.Web.Mvc;
+using ServerRepository = Kudu.Services.GitServer.Repository;
+
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Start")]
 [assembly: WebActivator.ApplicationShutdownMethodAttribute(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Stop")]
 
-namespace Kudu.Services.Web.App_Start {
-    using System.IO;
-    using System.Linq;
-    using System.Web;
-    using Kudu.Core.Editor;
-    using Kudu.Core.SourceControl;
-    using Kudu.Core.SourceControl.Git;
-    using Kudu.Core.SourceControl.Hg;
-    using Microsoft.Web.Infrastructure.DynamicModuleHelper;
-    using Ninject;
-    using Ninject.Web.Mvc;
-    using ServerRepository = GitServer.Repository;
-
+namespace Kudu.Services.Web.App_Start {    
     public static class NinjectServices {
         private static readonly Bootstrapper bootstrapper = new Bootstrapper();
         private const string RepositoryPath = "repository";
+        private const string DeploymentTargetPath = "wwwroot";
 
         /// <summary>
         /// Starts the application
@@ -50,18 +49,20 @@ namespace Kudu.Services.Web.App_Start {
         /// </summary>
         /// <param name="kernel">The kernel.</param>
         private static void RegisterServices(IKernel kernel) {
-            IRepositoryManager repositoryManager = GetRepositoryManager();
+            string repositoryPath = GetRepositoryPath();
+            string deployPath = GetDeployRoot();
+
+            var repositoryManager = new RepositoryManager(repositoryPath);
+            var deploymentManager = new DeploymentManager(repositoryPath, deployPath);
+            // TODO: We might want this factory to have more knowledge of all the paths in the system
+            var fileSystemFactory = new FileSystemFactory(repositoryPath);
 
             kernel.Bind<IRepositoryManager>().ToConstant(repositoryManager);
-            kernel.Bind<IRepository>().ToMethod(_ => repositoryManager.GetRepository() ?? NullRepository.Instance);
-            kernel.Bind<IFileSystem>().ToMethod(_ => GetFileSystem());
-            kernel.Bind<ServerRepository>().ToMethod(_ => GetServerRepository());
+            kernel.Bind<IDeploymentManager>().ToConstant(deploymentManager);
+            kernel.Bind<IFileSystemFactory>().ToConstant(fileSystemFactory);
+            kernel.Bind<ServerRepository>().ToMethod(_ => new ServerRepository(repositoryPath));
         }
-
-        private static IRepositoryManager GetRepositoryManager() {
-            return new RepositoryManager(GetRepositoryPath());
-        }
-
+        
         private static string Root {
             get {
                 return Path.Combine(HttpRuntime.AppDomainAppPath, "App_Data", "_root");
@@ -74,8 +75,8 @@ namespace Kudu.Services.Web.App_Start {
             return path;
         }
 
-        private static string GetEditorPath() {
-            string path = Path.Combine(Root, RepositoryPath);
+        private static string GetDeployRoot() {
+            string path = Path.Combine(Root, DeploymentTargetPath);
             EnsureDirectory(path);
             return path;
         }
@@ -84,22 +85,6 @@ namespace Kudu.Services.Web.App_Start {
             if (!Directory.Exists(path)) {
                 Directory.CreateDirectory(path);
             }
-        }
-
-        private static ServerRepository GetServerRepository() {
-            return new ServerRepository(GetRepositoryPath());
-        }
-        
-        private static IFileSystem GetFileSystem() {
-            string path = GetEditorPath();
-
-            // If we find a solution file then use the vs implementation so only get a subset
-            // of the files (ones included in the project)
-            if (Directory.EnumerateFiles(path, "*.sln").Any()) {
-                return new SolutionFileSystem(path);
-            }
-
-            return new PhysicalFileSystem(path);
         }
     }
 }
