@@ -121,6 +121,17 @@
     line-height: 20px;
 }
 
+.icon-notext {
+    background-repeat: no-repeat;
+    background-position: 0 50%;
+    padding-left: 10px;
+    line-height: 20px;
+}
+
+.icon-close {
+    background-image: url('../../../images/close.png');
+}
+
 .icon-binary-file {
     background-image: url('images/page_white_gear.png');
 }
@@ -338,4 +349,12 @@ form {
     margin-top: 4px;
     margin-right: 10px;
     font-weight: bold;
+}
+
+#working .revert {
+    visibility: visible;
+}
+
+#show .revert {
+    visibility: hidden;
 }

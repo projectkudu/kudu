@@ -100,7 +100,7 @@ namespace Kudu.Core.SourceControl.Hg {
             _repository.Add(path);
         }
 
-        public void RemoveFile(string path) {
+        public void RevertFile(string path) {
             _repository.Remove(path);
         }
 

@@ -12,7 +12,7 @@ namespace Kudu.Core.SourceControl {
         ChangeSetDetail GetDetails(string id);
         ChangeSetDetail GetWorkingChanges();
         void AddFile(string path);
-        void RemoveFile(string path);
+        void RevertFile(string path);
         ChangeSet Commit(string authorName, string message);
         void Update(string id);
     }

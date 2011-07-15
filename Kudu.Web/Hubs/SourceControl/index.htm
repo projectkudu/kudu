@@ -56,7 +56,10 @@
         </div>
         <ul class="commit-file-summary">
             {{each(fileName, file) Files}}
-                <li class="icon ${getFileClass(file)}"><a href="#">${fileName}</a> {{if file.Binary}}<span class="details">(binary)</span>{{/if}}</li>
+                <li class="file icon ${getFileClass(file)}" data-path="${fileName}">
+                    <a href="#">${fileName}</a> {{if file.Binary}}<span class="details">(binary)</span>{{/if}}
+                    <a href="#/working" class="icon-notext icon-close revert">&nbsp;</a>
+                </li>
             {{/each}}
         </ul>
         {{each(fileName, file) Files}}

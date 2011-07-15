@@ -60,8 +60,8 @@ namespace Kudu.Core.SourceControl.Git {
             _exeRepository.AddFile(path);
         }
 
-        public void RemoveFile(string path) {
-            _exeRepository.RemoveFile(path);
+        public void RevertFile(string path) {
+            _exeRepository.RevertFile(path);
         }
 
         public ChangeSet Commit(string authorName, string message) {

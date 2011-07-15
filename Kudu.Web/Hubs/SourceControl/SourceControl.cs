@@ -65,6 +65,10 @@ namespace Kudu.Web {
                    };
         }
 
+        public void Revert(string path) {
+            _repository.RevertFile(path);
+        }
+
         public IEnumerable<FileStatus> GetStatus() {
             return _repository.GetStatus();
         }

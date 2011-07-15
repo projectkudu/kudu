@@ -50,7 +50,7 @@ namespace Kudu.Core.SourceControl {
             
         }
 
-        public void RemoveFile(string path) {
+        public void RevertFile(string path) {
             
         }
 

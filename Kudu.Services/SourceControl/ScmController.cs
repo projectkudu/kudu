@@ -86,7 +86,7 @@ namespace Kudu.Services.SourceControl {
         [HttpPost]
         [ActionName("remove")]
         public void RemoveFile(string path) {
-            _repository.RemoveFile(path);
+            _repository.RevertFile(path);
         }
 
         [HttpPost]

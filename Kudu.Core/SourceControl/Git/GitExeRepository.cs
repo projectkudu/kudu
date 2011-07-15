@@ -50,8 +50,26 @@ namespace Kudu.Core.SourceControl.Git {
             _gitExe.Execute("add {0}", path);
         }
 
-        public void RemoveFile(string path) {
-            _gitExe.Execute("rm {0} --cached", path);
+        public void RevertFile(string path) {
+            if (IsEmpty()) {
+                _gitExe.Execute("rm --cached \"{0}\"", path);
+            }
+            else {
+                _gitExe.Execute("reset HEAD \"{0}\"", path);
+            }
+
+            // Now get the status of the file
+            var fileStatuses = GetStatus().ToDictionary(fs => fs.Path, fs => fs.Status);
+
+            ChangeType status;
+            if (fileStatuses.TryGetValue(path, out status) && status != ChangeType.Untracked) {
+                _gitExe.Execute("checkout -- \"{0}\"", path);
+            }
+            else {
+                // If the file is untracked, delete it
+                string fullPath = Path.Combine(_gitExe.WorkingDirectory, path);
+                File.Delete(fullPath);
+            }
         }
 
         public ChangeSet Commit(string authorName, string message) {
@@ -68,7 +86,7 @@ namespace Kudu.Core.SourceControl.Git {
             return ParseCommit(newCommit.AsReader());
         }
 
-        public void Update(string id) {            
+        public void Update(string id) {
             _gitExe.Execute("checkout {0} --force", id);
         }
 
@@ -88,14 +106,14 @@ namespace Kudu.Core.SourceControl.Git {
         }
 
         public ChangeSetDetail GetWorkingChanges() {
+            // Add everything so we can see a diff of the current changes
+            _gitExe.Execute("add -A");
+
             var statuses = GetStatus().ToList();
 
             if (!statuses.Any()) {
                 return null;
             }
-
-            // Add everything so we can see a diff of the current changes
-            _gitExe.Execute("add -A");
 
             if (IsEmpty()) {
                 return MakeNewFileDiff(statuses);
@@ -516,6 +534,7 @@ namespace Kudu.Core.SourceControl.Git {
                 case "M":
                 case "MM":
                     return ChangeType.Modified;
+                case "AD":
                 case "D":
                     return ChangeType.Deleted;
                 case "R":

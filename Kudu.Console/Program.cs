@@ -64,7 +64,7 @@ namespace Kudu {
                     Console.WriteLine("No file to remove!");
                 }
                 else {
-                    RunAction("remove", () => repository.RemoveFile(path));
+                    RunAction("remove", () => repository.RevertFile(path));
                 }
             }
             else if (command.StartsWith("l", StringComparison.OrdinalIgnoreCase)) {

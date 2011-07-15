@@ -89,7 +89,7 @@ namespace Kudu.Core.SourceControl.Git {
             Repository.Index.Stage(path);
         }
 
-        public void RemoveFile(string path) {
+        public void RevertFile(string path) {
             Repository.Index.Unstage(path);
         }
 

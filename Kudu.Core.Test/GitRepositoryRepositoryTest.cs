@@ -14,13 +14,14 @@ namespace Kudu.Core.Test {
 
         [Fact]
         public void ConvertStatusUnknownStatusThrows() {
-            Assert.Throws<InvalidOperationException>(() => GitExeRepository.ConvertStatus("AD"));
+            Assert.Throws<InvalidOperationException>(() => GitExeRepository.ConvertStatus("AG"));
         }
 
         [Fact]
         public void ConvertStatusKnownStatuses() {
             ChangeType add = GitExeRepository.ConvertStatus("A");
             ChangeType addModified = GitExeRepository.ConvertStatus("AM");
+            ChangeType addDeleted = GitExeRepository.ConvertStatus("AD");
             ChangeType modifiedAdd = GitExeRepository.ConvertStatus("M");
             ChangeType modifiedModified = GitExeRepository.ConvertStatus("MM");
             ChangeType deleted = GitExeRepository.ConvertStatus("D");
@@ -28,6 +29,7 @@ namespace Kudu.Core.Test {
 
             Assert.Equal(ChangeType.Added, add);
             Assert.Equal(ChangeType.Added, addModified);
+            Assert.Equal(ChangeType.Deleted, addDeleted);
             Assert.Equal(ChangeType.Modified, modifiedAdd);
             Assert.Equal(ChangeType.Modified, modifiedModified);
             Assert.Equal(ChangeType.Deleted, deleted);

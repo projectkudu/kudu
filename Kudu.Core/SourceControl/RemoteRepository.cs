@@ -54,7 +54,7 @@ namespace Kudu.Core.SourceControl {
             })).EnsureSuccessful();
         }
 
-        public void RemoveFile(string path) {
+        public void RevertFile(string path) {
             _client.Post("remove", new FormUrlEncodedContent(new Dictionary<string, string> {
                 { "path", path }
             })).EnsureSuccessful();

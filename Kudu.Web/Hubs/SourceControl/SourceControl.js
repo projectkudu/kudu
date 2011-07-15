@@ -75,7 +75,7 @@ $(function () {
         }
 
         changesXhr = scm.getChanges(index, pageSize, function (changes) {
-            setupActions($('#changes').append($('#changeset').render(changes)));
+            $('#changes').append($('#changeset').render(changes));
             scm.state.index = index + changes.length;
 
             $('.timeago').timeago();
@@ -94,10 +94,19 @@ $(function () {
         });
     }
 
-    function setupActions(element) {
+    function initialize() {
         var id = scm.state.id;
 
-        element.find('.update').click(function () {
+        $('#diff').delegate('.revert', 'click', function () {
+            var path = $(this).closest('.file').attr('data-path');
+            if (confirm('Are you sure you want to revert "' + path + '" ?')) {
+                scm.revert(path)
+                   .done(viewWorking)
+                   .fail(onError);
+            }
+        });
+
+        $('#changes').delegate('.update', 'click', function () {
             var newId = $(this).attr('data-id');
             var branch = $(this).attr('data-branch');
 
@@ -311,6 +320,8 @@ $(function () {
             return false;
         });
     });
+
+    initialize();
 
     signalR.hub.start(function () {
         app.run('#/');
