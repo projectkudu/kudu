@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 
 namespace Kudu.Core.Deployment {
-    public class DeploymentManager : IDeploymentManager {
+    public class DeploymentManager : IDeploymentManager, IDeployerFactory {
         private readonly string _source;
         private readonly string _destination;
 

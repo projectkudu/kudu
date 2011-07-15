@@ -60,7 +60,9 @@
     <Compile Include="Deployment\DeployResult.cs" />
     <Compile Include="Deployment\DeployStatus.cs" />
     <Compile Include="Deployment\IDeployer.cs" />
+    <Compile Include="Deployment\IDeployerFactory.cs" />
     <Compile Include="Deployment\IDeploymentManager.cs" />
+    <Compile Include="Deployment\RemoteDeploymentManager.cs" />
     <Compile Include="Editor\FileSystemFactory.cs" />
     <Compile Include="Editor\IFileSystem.cs" />
     <Compile Include="Editor\IFileSystemFactory.cs" />

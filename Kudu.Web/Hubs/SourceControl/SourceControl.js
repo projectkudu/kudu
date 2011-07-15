@@ -104,7 +104,7 @@ $(function () {
             $('#' + newId).find('.loading').show();
             $('#' + id).find('.status').addClass('hide');
 
-            scm.update(branch || newId)
+            scm.deploy(branch || newId)
                .done(function () {
                    scm.state.id = newId;
                    scm.state.branch = branch;
@@ -114,7 +114,12 @@ $(function () {
 
                    id = newId;
                })
-               .fail(onError);
+               .fail(function (e) {
+                   $('#' + id).find('.loading').hide();
+                   $('#' + id).find('.status').removeClass('hide');
+                   $('#' + newId).find('.loading').hide();
+                   onError(e);
+               });
 
             return false;
         });

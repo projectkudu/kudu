@@ -69,6 +69,10 @@ namespace Kudu.Core.SourceControl.Git {
         }
 
         public void Update(string id) {
+            if (GetStatus().Any()) {
+                throw new InvalidOperationException("Unable to update. You have changes in your working directory.");
+            }
+
             _gitExe.Execute("checkout {0} --force", id);
         }
 

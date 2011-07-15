@@ -4,6 +4,7 @@ using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 using Ninject;
 using Ninject.Web.Mvc;
 using SignalR.Infrastructure;
+using Kudu.Core.Deployment;
 
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Web.App_Start.NinjectServices), "Start")]
 [assembly: WebActivator.ApplicationShutdownMethodAttribute(typeof(Kudu.Web.App_Start.NinjectServices), "Stop")]
@@ -13,6 +14,7 @@ namespace Kudu.Web.App_Start {
         private const string ServiceUrl = "http://localhost:52590/";
         private const string FilesService = ServiceUrl + "files";
         private const string ScmService = ServiceUrl + "scm";
+        private const string DeploymentService = ServiceUrl + "deploy";
 
         private static readonly Bootstrapper bootstrapper = new Bootstrapper();
 
@@ -55,6 +57,9 @@ namespace Kudu.Web.App_Start {
             kernel.Bind<IFileSystem>().ToConstant(new RemoteFileSystem(FilesService));
             kernel.Bind<IRepository>().ToConstant(new RemoteRepository(ScmService));
             kernel.Bind<IRepositoryManager>().ToConstant(new RemoteRepositoryManager(ScmService));
+            var deploymentManager = new RemoteDeploymentManager(DeploymentService);
+            kernel.Bind<IDeploymentManager>().ToConstant(deploymentManager);
+            kernel.Bind<IDeployer>().ToConstant(deploymentManager);
         }
     }
 }

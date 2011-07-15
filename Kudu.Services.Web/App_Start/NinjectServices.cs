@@ -59,6 +59,7 @@ namespace Kudu.Services.Web.App_Start {
 
             kernel.Bind<IRepositoryManager>().ToConstant(repositoryManager);
             kernel.Bind<IDeploymentManager>().ToConstant(deploymentManager);
+            kernel.Bind<IDeployerFactory>().ToConstant(deploymentManager);
             kernel.Bind<IFileSystemFactory>().ToConstant(fileSystemFactory);
             kernel.Bind<ServerRepository>().ToMethod(_ => new ServerRepository(repositoryPath));
         }

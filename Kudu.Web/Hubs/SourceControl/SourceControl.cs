@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
 using Kudu.Web.Model;
 using SignalR.Hubs;
@@ -8,11 +9,17 @@ namespace Kudu.Web {
     public class SourceControl : Hub {
         private readonly IRepository _repository;
         private readonly IRepositoryManager _repositoryManager;
+        private readonly IDeploymentManager _deploymentManager;
+        private readonly IDeployer _deployer;
 
         public SourceControl(IRepository repository,
-                             IRepositoryManager repositoryManager) {
+                             IRepositoryManager repositoryManager,
+                             IDeploymentManager deploymentManager,
+                             IDeployer deployer) {
             _repository = repository;
             _repositoryManager = repositoryManager;
+            _deploymentManager = deploymentManager;
+            _deployer = deployer;
         }
 
         public ChangeSetDetailViewModel Show(string id) {
@@ -35,7 +42,7 @@ namespace Kudu.Web {
             return null;
         }
 
-        public RepositoryViewModel GetRepositoryInfo() {
+        public RepositoryViewModel GetRepositoryInfo() {            
             var type = _repositoryManager.GetRepositoryType();
             return new RepositoryViewModel {
                 Branches = _repository.GetBranches()
@@ -60,8 +67,9 @@ namespace Kudu.Web {
             return _repository.GetStatus();
         }
 
-        public void Update(string id) {
+        public void Deploy(string id) {
             _repository.Update(id);
+            _deployer.Deploy(id);
         }
     }
 }

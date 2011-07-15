@@ -7,9 +7,10 @@ namespace Kudu.Services.Deployment {
         private readonly IDeploymentManager _deploymentManager;
         private readonly IDeployer _deployer;
 
-        public DeployController(IDeploymentManager deploymentManager) {
+        public DeployController(IDeploymentManager deploymentManager, 
+                                IDeployerFactory factory) {
             _deploymentManager = deploymentManager;
-            _deployer = _deploymentManager.CreateDeployer();
+            _deployer = factory.CreateDeployer();
         }
 
         [HttpPost]
