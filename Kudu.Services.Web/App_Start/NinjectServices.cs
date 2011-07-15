@@ -55,7 +55,7 @@ namespace Kudu.Services.Web.App_Start {
             var repositoryManager = new RepositoryManager(repositoryPath);
             var deploymentManager = new DeploymentManager(repositoryPath, deployPath);
             // TODO: We might want this factory to have more knowledge of all the paths in the system
-            var fileSystemFactory = new FileSystemFactory(repositoryPath);
+            var fileSystemFactory = new FileSystemFactory(repositoryPath, deployPath);
 
             kernel.Bind<IRepositoryManager>().ToConstant(repositoryManager);
             kernel.Bind<IDeploymentManager>().ToConstant(deploymentManager);

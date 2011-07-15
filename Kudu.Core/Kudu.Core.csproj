@@ -66,6 +66,7 @@
     <Compile Include="Editor\FileSystemFactory.cs" />
     <Compile Include="Editor\IFileSystem.cs" />
     <Compile Include="Editor\IFileSystemFactory.cs" />
+    <Compile Include="Editor\MirrorRepository.cs" />
     <Compile Include="Editor\PhysicalFileSystem.cs" />
     <Compile Include="Editor\RemoteFileSystem.cs" />
     <Compile Include="Editor\SolutionFileSystem.cs" />
