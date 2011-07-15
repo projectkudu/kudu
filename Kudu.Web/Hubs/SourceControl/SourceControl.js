@@ -94,9 +94,7 @@ $(function () {
         });
     }
 
-    function initialize() {
-        var id = scm.state.id;
-
+    function initialize() {        
         $('#diff').delegate('.revert', 'click', function () {
             var path = $(this).closest('.file').attr('data-path');
             if (confirm('Are you sure you want to revert "' + path + '" ?')) {
@@ -107,6 +105,8 @@ $(function () {
         });
 
         $('#changes').delegate('.update', 'click', function () {
+            var id = scm.state.id;
+
             var newId = $(this).attr('data-id');
             var branch = $(this).attr('data-branch');
 
