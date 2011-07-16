@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.SourceControl.Git;
 using Mercurial;
 
 namespace Kudu.Core.SourceControl.Hg {
@@ -127,6 +127,7 @@ namespace Kudu.Core.SourceControl.Hg {
             // Need to work around a bug in Mercurial.net where it fails to parse the output of 
             // the branches command (http://mercurialnet.codeplex.com/workitem/14)
             var branchReader = _hgExe.Execute("branches").AsReader();
+            string currentId = CurrentId;
 
             while (!branchReader.Done) {
                 // name WS revision:hash
@@ -136,7 +137,7 @@ namespace Kudu.Core.SourceControl.Hg {
                     string name = line.Substring(0, match.Index).Trim();
                     int revision = Int32.Parse(match.Groups["rev"].Value);
                     string id = GetChangeSet(revision).Id;
-                    yield return new Branch(id, name);
+                    yield return new Branch(id, name, currentId == id);
                 }
             }
         }

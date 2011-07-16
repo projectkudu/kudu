@@ -23,31 +23,44 @@
 namespace Kudu.Services.GitServer {
     using System;
     using System.IO;
+    using System.Linq;
+    using System.Threading;
     using System.Web.Mvc;
     using System.Web.SessionState;
     using ICSharpCode.SharpZipLib.GZip;
+    using Kudu.Core.Deployment;
+    using Kudu.Core.SourceControl;
 
     // Handles project/git-upload-pack and project/git-receive-pack
     [SessionState(SessionStateBehavior.Disabled)]
     public class RpcController : Controller {
         private readonly Repository _repository;
+        private readonly IDeployer _deployer;
+        private readonly IRepository _deployRepository;
 
-        public RpcController(Repository repository) {
+        public RpcController(Repository repository,
+                             IRepositoryManager repositoryManager,
+                             IDeployerFactory factory) {
             _repository = repository;
+            _deployRepository = repositoryManager.GetRepository();
+            _deployer = factory.CreateDeployer();
         }
 
         [HttpPost]
-        public ActionResult UploadPack(string project) {
-            return ExecuteRpc(project, "upload-pack", repository => {
-                repository.Upload(GetInputStream(), Response.OutputStream);
+        public void UploadPack(string project) {
+            ExecuteRpc("upload-pack", () => {
+                _repository.Upload(GetInputStream(), Response.OutputStream);
             });
         }
 
         [HttpPost]
-        public ActionResult ReceivePack(string project) {
-            return ExecuteRpc(project, "receive-pack", repository => {
-                repository.Receive(GetInputStream(), Response.OutputStream);
+        public void ReceivePack(string project) {
+            ExecuteRpc("receive-pack", () => {
+                _repository.Receive(GetInputStream(), Response.OutputStream);
             });
+
+            // Queue a build (TODO: Report information about the build we're queuing)
+            ThreadPool.QueueUserWorkItem(_ => Deploy());
         }
 
         private Stream GetInputStream() {
@@ -57,13 +70,25 @@ namespace Kudu.Services.GitServer {
             return Request.InputStream;
         }
 
-        private ActionResult ExecuteRpc(string project, string rpc, Action<Repository> action) {
+        private void ExecuteRpc(string rpc, Action action) {
             Response.ContentType = "application/x-git-{0}-result".With(rpc);
             Response.WriteNoCache();
 
-            action(_repository);
+            action();
+        }
 
-            return new EmptyResult();
+        private void Deploy() {
+            var activeBranch = _deployRepository.GetBranches().FirstOrDefault(b => b.Active);
+            string id = _deployRepository.CurrentId;
+
+            if (activeBranch != null) {
+                _deployRepository.Update(activeBranch.Name);
+            }
+            else {
+                _deployRepository.Update(id);
+            }
+
+            _deployer.Deploy(id);
         }
     }
 }

@@ -103,7 +103,7 @@ namespace Kudu.Core.SourceControl.Git {
             }
             return from branch in Repository.Branches
                    where !branch.IsRemote
-                   select new Branch(branch.Tip.Id.Sha, branch.Name);
+                   select new Branch(branch.Tip.Id.Sha, branch.Name, branch.IsCurrentRepositoryHead);
         }
 
         private static ChangeSet CreateChangeSet(Commit commit) {

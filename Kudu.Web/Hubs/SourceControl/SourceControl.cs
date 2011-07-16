@@ -9,16 +9,13 @@ namespace Kudu.Web {
     public class SourceControl : Hub {
         private readonly IRepository _repository;
         private readonly IRepositoryManager _repositoryManager;
-        private readonly IDeploymentManager _deploymentManager;
         private readonly IDeployer _deployer;
 
         public SourceControl(IRepository repository,
                              IRepositoryManager repositoryManager,
-                             IDeploymentManager deploymentManager,
                              IDeployer deployer) {
             _repository = repository;
             _repositoryManager = repositoryManager;
-            _deploymentManager = deploymentManager;
             _deployer = deployer;
         }
 

@@ -166,6 +166,7 @@ namespace Kudu.Core.SourceControl.Git {
         public IEnumerable<Branch> GetBranches() {
             string branches = _gitExe.Execute("branch");
             var reader = branches.AsReader();
+            string currentId = CurrentId;
 
             var branchNames = new List<string>();
             while (!reader.Done) {
@@ -181,8 +182,8 @@ namespace Kudu.Core.SourceControl.Git {
             }
 
             foreach (var branchName in branchNames) {
-                string id = _gitExe.Execute("rev-parse {0}", branchName);
-                yield return new Branch(id.Trim(), branchName);
+                string id = _gitExe.Execute("rev-parse {0}", branchName).Trim();
+                yield return new Branch(id, branchName, currentId == id);
             }
         }
 
