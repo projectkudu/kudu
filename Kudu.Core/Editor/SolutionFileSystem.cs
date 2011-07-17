@@ -5,16 +5,22 @@ using System.Xml.Linq;
 
 namespace Kudu.Core.Editor {
     public class SolutionFileSystem : PhysicalFileSystem {
-        private readonly string _path;
+        private readonly IEnumerable<string> _solutionFiles;
 
-        public SolutionFileSystem(string path)
+        public SolutionFileSystem(string path, IEnumerable<string> solutionFiles)
             : base(path) {
-            _path = path;
+            _solutionFiles = solutionFiles;
         }
 
-        public override IEnumerable<string> GetFiles() {
+        public override IEnumerable<string> GetFiles() {            
+            return from solutionFile in _solutionFiles
+                   from file in GetSolutionFiles(Path.GetDirectoryName(solutionFile))
+                   select file;
+        }
+
+        private IEnumerable<string> GetSolutionFiles(string path) {
             // Get all project files under the root
-            var projects = from file in Directory.GetFiles(_path, "*proj", SearchOption.AllDirectories)
+            var projects = from file in Directory.GetFiles(path, "*proj", SearchOption.AllDirectories)
                            select new {
                                Document = XDocument.Parse(File.ReadAllText(file)),
                                Path = file

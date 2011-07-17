@@ -22,8 +22,10 @@ namespace Kudu.Core.Editor {
 
             // If we find a solution file then use the solution implementation so only get a subset
             // of the files (ones included in the project)
-            if (Directory.EnumerateFiles(_environment.RepositoryPath, "*.sln").Any()) {
-                return new SolutionFileSystem(_environment.RepositoryPath);
+            var solutionFiles = Directory.EnumerateFiles(_environment.RepositoryPath, "*.sln", SearchOption.AllDirectories)
+                                         .ToList();
+            if (solutionFiles.Any()) {
+                return new SolutionFileSystem(_environment.RepositoryPath, solutionFiles);
             }
 
             return new PhysicalFileSystem(_environment.DeploymentPath);
