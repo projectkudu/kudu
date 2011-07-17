@@ -26,12 +26,14 @@ namespace Kudu.Core {
 
         public string RepositoryPath {
             get {
+                EnsureDirectory(_repositoryRoot);
                 return _repositoryRoot;
             }
         }
 
         public string DeploymentPath {
             get {
+                EnsureDirectory(_deployRoot);
                 return _deployRoot;
             }
         }
@@ -63,6 +65,12 @@ namespace Kudu.Core {
 
         private static XName GetName(string name) {
             return XName.Get(name, "http://schemas.microsoft.com/developer/msbuild/2003");
+        }
+
+        private static void EnsureDirectory(string path) {
+            if (!Directory.Exists(path)) {
+                Directory.CreateDirectory(path);
+            }
         }
     }
 }
