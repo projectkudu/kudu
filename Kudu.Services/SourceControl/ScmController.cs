@@ -90,14 +90,12 @@ namespace Kudu.Services.SourceControl {
         }
 
         [HttpPost]
-        [ActionName("commit")]
         [ValidateInput(false)]
         public ActionResult Commit(string name, string message) {
             return Json(_repository.Commit(name, message));
         }
 
         [HttpPost]
-        [ActionName("update")]
         public void Update(string id) {
             _repository.Update(id);
         }

@@ -14,7 +14,8 @@ namespace Kudu.Services.Deployment {
         }
 
         [HttpPost]
-        public void Index(string id) {
+        [ActionName("index")]
+        public void Deploy(string id) {
             _deployer.Deploy(id);
         }
 
