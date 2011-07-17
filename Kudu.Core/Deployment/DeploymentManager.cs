@@ -3,16 +3,20 @@ using System.Collections.Generic;
 
 namespace Kudu.Core.Deployment {
     public class DeploymentManager : IDeploymentManager, IDeployerFactory {
-        private readonly string _source;
-        private readonly string _destination;
+        private readonly IEnvironment _environment;
 
-        public DeploymentManager(string source, string destination) {
-            _source = source;
-            _destination = destination;
+        public DeploymentManager(IEnvironment environment) {
+            _environment = environment;
         }
 
         public IDeployer CreateDeployer() {
-            return new BasicDeployer(_source, _destination);
+            if (_environment.RequiresBuild) {
+                return new MSBuildDeployer(_environment.RepositoryPath,
+                                           _environment.DeploymentPath);
+            }
+
+            return new BasicDeployer(_environment.RepositoryPath,
+                                     _environment.DeploymentPath);
         }
 
         public IEnumerable<DeployResult> GetResults() {

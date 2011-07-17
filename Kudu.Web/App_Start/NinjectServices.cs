@@ -1,10 +1,10 @@
+using Kudu.Core.Deployment;
 using Kudu.Core.Editor;
 using Kudu.Core.SourceControl;
 using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 using Ninject;
 using Ninject.Web.Mvc;
 using SignalR.Infrastructure;
-using Kudu.Core.Deployment;
 
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Web.App_Start.NinjectServices), "Start")]
 [assembly: WebActivator.ApplicationShutdownMethodAttribute(typeof(Kudu.Web.App_Start.NinjectServices), "Stop")]

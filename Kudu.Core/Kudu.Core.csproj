@@ -62,6 +62,7 @@
     <Compile Include="Deployment\IDeployer.cs" />
     <Compile Include="Deployment\IDeployerFactory.cs" />
     <Compile Include="Deployment\IDeploymentManager.cs" />
+    <Compile Include="Deployment\MSBuildDeployer.cs" />
     <Compile Include="Deployment\RemoteDeploymentManager.cs" />
     <Compile Include="Editor\FileSystemFactory.cs" />
     <Compile Include="Editor\IFileSystem.cs" />
@@ -70,6 +71,8 @@
     <Compile Include="Editor\PhysicalFileSystem.cs" />
     <Compile Include="Editor\RemoteFileSystem.cs" />
     <Compile Include="Editor\SolutionFileSystem.cs" />
+    <Compile Include="Environment.cs" />
+    <Compile Include="IEnvironment.cs" />
     <Compile Include="Infrastructure\HttpClientExtensions.cs" />
     <Compile Include="Infrastructure\HttpClientHelper.cs" />
     <Compile Include="Infrastructure\ParserHelpers.cs" />

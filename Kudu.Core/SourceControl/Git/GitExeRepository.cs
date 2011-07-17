@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Kudu.Core.Infrastructure;
+using SystemEnviroment = System.Environment;
 
 namespace Kudu.Core.SourceControl.Git {
     /// <summary>
@@ -193,7 +194,7 @@ namespace Kudu.Core.SourceControl.Git {
         }
 
         private static string ResolveGitPath() {
-            string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+            string programFiles = SystemEnviroment.GetFolderPath(SystemEnviroment.SpecialFolder.ProgramFilesX86);
             string path = Path.Combine(programFiles, "Git", "bin", "git.exe");
 
             if (!File.Exists(path)) {

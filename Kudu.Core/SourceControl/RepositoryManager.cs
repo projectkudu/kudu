@@ -11,7 +11,6 @@ namespace Kudu.Core.SourceControl {
         public RepositoryManager(string path) {
             _path = path;
         }
-
         
         public void CreateRepository(RepositoryType type) {
             RepositoryType currentType = GetRepositoryType();

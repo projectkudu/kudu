@@ -7,6 +7,7 @@ using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 using Ninject;
 using Ninject.Web.Mvc;
 using ServerRepository = Kudu.Services.GitServer.Repository;
+using Kudu.Core;
 
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Start")]
 [assembly: WebActivator.ApplicationShutdownMethodAttribute(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Stop")]
@@ -51,11 +52,11 @@ namespace Kudu.Services.Web.App_Start {
         private static void RegisterServices(IKernel kernel) {
             string repositoryPath = GetRepositoryPath();
             string deployPath = GetDeployRoot();
+            var environment = new Environment(repositoryPath, deployPath);
 
             var repositoryManager = new RepositoryManager(repositoryPath);
-            var deploymentManager = new DeploymentManager(repositoryPath, deployPath);
-            // TODO: We might want this factory to have more knowledge of all the paths in the system
-            var fileSystemFactory = new FileSystemFactory(repositoryPath, deployPath);
+            var deploymentManager = new DeploymentManager(environment);
+            var fileSystemFactory = new FileSystemFactory(environment);
 
             kernel.Bind<IRepositoryManager>().ToConstant(repositoryManager);
             kernel.Bind<IDeploymentManager>().ToConstant(deploymentManager);
