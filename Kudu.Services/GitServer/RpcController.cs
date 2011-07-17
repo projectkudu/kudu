@@ -35,15 +35,15 @@ namespace Kudu.Services.GitServer {
     [SessionState(SessionStateBehavior.Disabled)]
     public class RpcController : Controller {
         private readonly Repository _repository;
-        private readonly IDeployer _deployer;
+        private readonly IDeployerFactory _deployerFactory;
         private readonly IRepository _deployRepository;
 
         public RpcController(Repository repository,
                              IRepositoryManager repositoryManager,
-                             IDeployerFactory factory) {
+                             IDeployerFactory deployerFactory) {
             _repository = repository;
             _deployRepository = repositoryManager.GetRepository();
-            _deployer = factory.CreateDeployer();
+            _deployerFactory = deployerFactory;
         }
 
         [HttpPost]
@@ -88,7 +88,8 @@ namespace Kudu.Services.GitServer {
                 _deployRepository.Update(id);
             }
 
-            _deployer.Deploy(id);
+            IDeployer deployer = _deployerFactory.CreateDeployer();
+            deployer.Deploy(id);
         }
     }
 }

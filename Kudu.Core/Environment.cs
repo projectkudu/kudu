@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
@@ -35,9 +36,13 @@ namespace Kudu.Core {
             }
         }
 
-        private bool IsWap() {
+        public IEnumerable<string> GetWebApplicationProjects() {
             return Directory.EnumerateFiles(_repositoryRoot, "*proj", SearchOption.AllDirectories)
-                            .Any(path => IsProjectFile(path) && IsProjectFileWap(path));
+                            .Where(path => IsProjectFile(path) && IsProjectFileWap(path));
+        }
+
+        private bool IsWap() {
+            return GetWebApplicationProjects().Any();
         }
 
         private static bool IsProjectFile(string path) {

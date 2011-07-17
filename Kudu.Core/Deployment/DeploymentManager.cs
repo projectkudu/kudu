@@ -11,12 +11,10 @@ namespace Kudu.Core.Deployment {
 
         public IDeployer CreateDeployer() {
             if (_environment.RequiresBuild) {
-                return new MSBuildDeployer(_environment.RepositoryPath,
-                                           _environment.DeploymentPath);
+                return new MSBuildDeployer(_environment);
             }
 
-            return new BasicDeployer(_environment.RepositoryPath,
-                                     _environment.DeploymentPath);
+            return new BasicDeployer(_environment);
         }
 
         public IEnumerable<DeployResult> GetResults() {

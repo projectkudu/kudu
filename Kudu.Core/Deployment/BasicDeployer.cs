@@ -5,17 +5,15 @@ using System.Linq;
 
 namespace Kudu.Core.Deployment {
     public class BasicDeployer : IDeployer {
-        private readonly string _source;
-        private readonly string _destination;
+        private readonly IEnvironment _environment;
 
-        public BasicDeployer(string source, string destination) {
-            _source = source;
-            _destination = destination;
+        public BasicDeployer(IEnvironment environment) {
+            _environment = environment;
         }
 
         public void Deploy(string id) {
-            var source = new DirectoryInfo(_source);
-            var dest = new DirectoryInfo(_destination);
+            var source = new DirectoryInfo(_environment.RepositoryPath);
+            var dest = new DirectoryInfo(_environment.DeploymentPath);
             Sync(source, dest);
         }
 
@@ -84,10 +82,10 @@ namespace Kudu.Core.Deployment {
 
         private string GetDestinationPath(FileSystemInfo info) {
             string sourcePath = info.FullName;
-            sourcePath = sourcePath.Substring(_source.Length)
+            sourcePath = sourcePath.Substring(_environment.RepositoryPath.Length)
                                    .Trim(Path.DirectorySeparatorChar);
 
-            return Path.Combine(_destination, sourcePath);
+            return Path.Combine(_environment.DeploymentPath, sourcePath);
         }
 
         private IDictionary<string, FileInfo> GetFiles(DirectoryInfo info) {
