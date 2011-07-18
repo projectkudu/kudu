@@ -1,20 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using Kudu.Core.SourceControl;
 
 namespace Kudu.Core.Deployment {
-    public class DeploymentManager : IDeploymentManager, IDeployerFactory {
-        private readonly IEnvironment _environment;
+    public class DeploymentManager : IDeploymentManager {
+        private readonly IRepository _repository;
+        private readonly IDeployerFactory _deployerFactory;
 
-        public DeploymentManager(IEnvironment environment) {
-            _environment = environment;
-        }
-
-        public IDeployer CreateDeployer() {
-            if (_environment.RequiresBuild) {
-                return new MSBuildDeployer(_environment);
-            }
-
-            return new BasicDeployer(_environment);
+        public DeploymentManager(IRepositoryManager repositoryManager, 
+                                 IDeployerFactory deployerFactory) {
+            _repository = repositoryManager.GetRepository();
+            _deployerFactory = deployerFactory;
         }
 
         public IEnumerable<DeployResult> GetResults() {
@@ -23,6 +20,25 @@ namespace Kudu.Core.Deployment {
 
         public DeployResult GetResult(string id) {
             throw new NotImplementedException();
+        }
+
+        public void Deploy(string id) {
+            IDeployer deployer = _deployerFactory.CreateDeployer();
+            deployer.Deploy(id);
+        }
+
+        public void Deploy() {
+            var activeBranch = _repository.GetBranches().FirstOrDefault(b => b.Active);
+            string id = _repository.CurrentId;
+
+            if (activeBranch != null) {
+                _repository.Update(activeBranch.Name);
+            }
+            else {
+                _repository.Update(id);
+            }
+
+            Deploy(id);
         }
     }
 }

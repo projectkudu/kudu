@@ -3,14 +3,14 @@ using Moq;
 using Xunit;
 
 namespace Kudu.Core.Test {
-    public class DeploymentManagerTest {
+    public class DeployerFactoryTest {
         [Fact]
         public void RequiesBuildCreatesMSBuildDeployer() {
             var environment = new Mock<IEnvironment>();
             environment.Setup(m => m.RequiresBuild).Returns(true);
-            var deploymentManager = new DeploymentManager(environment.Object);
+            var deployerFactory = new DeployerFactory(environment.Object);
 
-            IDeployer deployer = deploymentManager.CreateDeployer();
+            IDeployer deployer = deployerFactory.CreateDeployer();
             Assert.IsType(typeof(MSBuildDeployer), deployer);
         }
 
@@ -18,9 +18,9 @@ namespace Kudu.Core.Test {
         public void WhenRequiesBuildFalseCreatesBasicDeployer() {
             var environment = new Mock<IEnvironment>();
             environment.Setup(m => m.RequiresBuild).Returns(false);
-            var deploymentManager = new DeploymentManager(environment.Object);
+            var deployerFactory = new DeployerFactory(environment.Object);
 
-            IDeployer deployer = deploymentManager.CreateDeployer();
+            IDeployer deployer = deployerFactory.CreateDeployer();
             Assert.IsType(typeof(BasicDeployer), deployer);
         }
     }

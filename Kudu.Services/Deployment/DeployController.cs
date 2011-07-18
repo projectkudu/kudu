@@ -5,18 +5,15 @@ namespace Kudu.Services.Deployment {
     [FormattedExceptionFilter]
     public class DeployController : Controller {
         private readonly IDeploymentManager _deploymentManager;
-        private readonly IDeployer _deployer;
 
-        public DeployController(IDeploymentManager deploymentManager, 
-                                IDeployerFactory factory) {
+        public DeployController(IDeploymentManager deploymentManager) {
             _deploymentManager = deploymentManager;
-            _deployer = factory.CreateDeployer();
         }
 
         [HttpPost]
         [ActionName("index")]
         public void Deploy(string id) {
-            _deployer.Deploy(id);
+            _deploymentManager.Deploy(id);
         }
 
         [HttpGet]

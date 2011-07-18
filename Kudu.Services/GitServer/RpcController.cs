@@ -23,27 +23,22 @@
 namespace Kudu.Services.GitServer {
     using System;
     using System.IO;
-    using System.Linq;
     using System.Threading;
     using System.Web.Mvc;
     using System.Web.SessionState;
     using ICSharpCode.SharpZipLib.GZip;
     using Kudu.Core.Deployment;
-    using Kudu.Core.SourceControl;
 
     // Handles project/git-upload-pack and project/git-receive-pack
     [SessionState(SessionStateBehavior.Disabled)]
     public class RpcController : Controller {
         private readonly Repository _repository;
-        private readonly IDeployerFactory _deployerFactory;
-        private readonly IRepository _deployRepository;
+        private readonly IDeploymentManager _deploymentManager;
 
         public RpcController(Repository repository,
-                             IRepositoryManager repositoryManager,
-                             IDeployerFactory deployerFactory) {
+                             IDeploymentManager deploymentManager) {
             _repository = repository;
-            _deployRepository = repositoryManager.GetRepository();
-            _deployerFactory = deployerFactory;
+            _deploymentManager = deploymentManager;
         }
 
         [HttpPost]
@@ -59,8 +54,7 @@ namespace Kudu.Services.GitServer {
                 _repository.Receive(GetInputStream(), Response.OutputStream);
             });
 
-            // Queue a build (TODO: Report information about the build we're queuing)
-            ThreadPool.QueueUserWorkItem(_ => Deploy());
+            ThreadPool.QueueUserWorkItem(_ => _deploymentManager.Deploy());
         }
 
         private Stream GetInputStream() {
@@ -75,21 +69,6 @@ namespace Kudu.Services.GitServer {
             Response.WriteNoCache();
 
             action();
-        }
-
-        private void Deploy() {
-            var activeBranch = _deployRepository.GetBranches().FirstOrDefault(b => b.Active);
-            string id = _deployRepository.CurrentId;
-
-            if (activeBranch != null) {
-                _deployRepository.Update(activeBranch.Name);
-            }
-            else {
-                _deployRepository.Update(id);
-            }
-
-            IDeployer deployer = _deployerFactory.CreateDeployer();
-            deployer.Deploy(id);
         }
     }
 }

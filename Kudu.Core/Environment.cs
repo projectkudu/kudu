@@ -9,12 +9,14 @@ namespace Kudu.Core {
         private static readonly string[] _projectFileExtensions = new[] { ".csproj", ".vbproj" };
         private static readonly Guid _wapGuid = new Guid("349c5851-65df-11da-9384-00065b846f21");
 
-        private readonly string _repositoryRoot;
-        private readonly string _deployRoot;
+        private readonly string _repositoryPath;
+        private readonly string _deployPath;
+        private readonly string _buildPath;
 
-        public Environment(string repositoryRoot, string deployRoot) {
-            _repositoryRoot = repositoryRoot;
-            _deployRoot = deployRoot;
+        public Environment(string repositoryPath, string deployPath, string buildPath) {
+            _repositoryPath = repositoryPath;
+            _deployPath = deployPath;
+            _buildPath = buildPath;
         }
 
         public bool RequiresBuild {
@@ -26,20 +28,27 @@ namespace Kudu.Core {
 
         public string RepositoryPath {
             get {
-                EnsureDirectory(_repositoryRoot);
-                return _repositoryRoot;
+                EnsureDirectory(_repositoryPath);
+                return _repositoryPath;
             }
         }
 
         public string DeploymentPath {
             get {
-                EnsureDirectory(_deployRoot);
-                return _deployRoot;
+                EnsureDirectory(_deployPath);
+                return _deployPath;
+            }
+        }
+
+        public string BuildPath {
+            get {
+                EnsureDirectory(_buildPath);
+                return _buildPath;
             }
         }
 
         public IEnumerable<string> GetWebApplicationProjects() {
-            return Directory.EnumerateFiles(_repositoryRoot, "*proj", SearchOption.AllDirectories)
+            return Directory.EnumerateFiles(_repositoryPath, "*proj", SearchOption.AllDirectories)
                             .Where(path => IsProjectFile(path) && IsProjectFileWap(path));
         }
 

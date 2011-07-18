@@ -56,6 +56,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Deployment\BasicDeployer.cs" />
+    <Compile Include="Deployment\DeployerFactory.cs" />
     <Compile Include="Deployment\DeploymentManager.cs" />
     <Compile Include="Deployment\DeployResult.cs" />
     <Compile Include="Deployment\DeployStatus.cs" />

@@ -6,5 +6,6 @@ namespace Kudu.Core {
         IEnumerable<string> GetWebApplicationProjects();
         string RepositoryPath { get; }
         string DeploymentPath { get; }
+        string BuildPath { get; }
     }
 }

@@ -59,7 +59,6 @@ namespace Kudu.Web.App_Start {
             kernel.Bind<IRepositoryManager>().ToConstant(new RemoteRepositoryManager(ScmService));
             var deploymentManager = new RemoteDeploymentManager(DeploymentService);
             kernel.Bind<IDeploymentManager>().ToConstant(deploymentManager);
-            kernel.Bind<IDeployer>().ToConstant(deploymentManager);
         }
     }
 }

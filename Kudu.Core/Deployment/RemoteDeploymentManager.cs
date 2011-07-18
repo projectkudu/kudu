@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Net.Http;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment {
-    public class RemoteDeploymentManager : IDeploymentManager, IDeployer {
+    public class RemoteDeploymentManager : IDeploymentManager {
         private readonly HttpClient _client;
 
         public RemoteDeploymentManager(string serviceUrl) {
@@ -25,6 +23,10 @@ namespace Kudu.Core.Deployment {
             _client.Post(String.Empty, new FormUrlEncodedContent(new Dictionary<string, string> {
                 { "id", id }
             })).EnsureSuccessful();
+        }
+
+        public void Deploy() {
+            _client.Post(String.Empty, new StringContent(null)).EnsureSuccessful();
         }
     }
 }

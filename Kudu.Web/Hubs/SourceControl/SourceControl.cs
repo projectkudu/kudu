@@ -9,14 +9,14 @@ namespace Kudu.Web {
     public class SourceControl : Hub {
         private readonly IRepository _repository;
         private readonly IRepositoryManager _repositoryManager;
-        private readonly IDeployer _deployer;
+        private readonly IDeploymentManager _deploymentManager;
 
         public SourceControl(IRepository repository,
                              IRepositoryManager repositoryManager,
-                             IDeployer deployer) {
+                             IDeploymentManager deploymentManager) {
             _repository = repository;
             _repositoryManager = repositoryManager;
-            _deployer = deployer;
+            _deploymentManager = deploymentManager;
         }
 
         public ChangeSetDetailViewModel Show(string id) {
@@ -27,7 +27,7 @@ namespace Kudu.Web {
             var changeSet = _repository.Commit("Test <foo@test.com>", message);
             if (changeSet != null) {
                 // Deploy after comitting
-                _deployer.Deploy(changeSet.Id);
+                _deploymentManager.Deploy(changeSet.Id);
                 return new ChangeSetViewModel(changeSet);
             }
             return null;
@@ -72,7 +72,7 @@ namespace Kudu.Web {
 
         public void Deploy(string id) {
             _repository.Update(id);
-            _deployer.Deploy(id);
+            _deploymentManager.Deploy(id);
         }
     }
 }
