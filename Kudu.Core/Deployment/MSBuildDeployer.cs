@@ -18,7 +18,7 @@ namespace Kudu.Core.Deployment {
             string projectFile = _environment.GetWebApplicationProjects().FirstOrDefault();
 
             // REVIEW: Should we use the msbuild API?
-            _msbuildExe.Execute("{0} /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir={1};AutoParameterizationWebConfigConnectionStrings=false", projectFile, _environment.DeploymentPath);
+            _msbuildExe.Execute(@"""{0}"" /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir={1};AutoParameterizationWebConfigConnectionStrings=false", projectFile, _environment.DeploymentPath);
         }
 
         private string ResolveMSBuildPath() {
