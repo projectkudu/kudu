@@ -48,7 +48,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DeploymentManagerTest.cs" />
+    <Compile Include="DeployerFactoryTest.cs" />
     <Compile Include="GitRepositoryRepositoryTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
