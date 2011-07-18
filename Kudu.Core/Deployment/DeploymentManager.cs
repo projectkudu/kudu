@@ -5,12 +5,12 @@ using Kudu.Core.SourceControl;
 
 namespace Kudu.Core.Deployment {
     public class DeploymentManager : IDeploymentManager {
-        private readonly IRepository _repository;
+        private readonly IRepositoryManager _repositoryManager;
         private readonly IDeployerFactory _deployerFactory;
 
-        public DeploymentManager(IRepositoryManager repositoryManager, 
+        public DeploymentManager(IRepositoryManager repositoryManager,
                                  IDeployerFactory deployerFactory) {
-            _repository = repositoryManager.GetRepository();
+            _repositoryManager = repositoryManager;
             _deployerFactory = deployerFactory;
         }
 
@@ -28,14 +28,20 @@ namespace Kudu.Core.Deployment {
         }
 
         public void Deploy() {
-            var activeBranch = _repository.GetBranches().FirstOrDefault(b => b.Active);
-            string id = _repository.CurrentId;
+            var repository = _repositoryManager.GetRepository();
+            
+            if (repository == null) {
+                return;
+            }
+
+            var activeBranch = repository.GetBranches().FirstOrDefault(b => b.Active);
+            string id = repository.CurrentId;
 
             if (activeBranch != null) {
-                _repository.Update(activeBranch.Name);
+                repository.Update(activeBranch.Name);
             }
             else {
-                _repository.Update(id);
+                repository.Update(id);
             }
 
             Deploy(id);
