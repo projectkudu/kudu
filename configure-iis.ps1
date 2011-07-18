@@ -11,21 +11,15 @@ Add-Type -Path $iisDllPath
 
 # Create the server manager
 $iis = New-Object Microsoft.Web.Administration.ServerManager
-$defaultWebSite = $iis.Sites["Default Web Site"]
+$kuduWebSite = $iis.Sites["kudu"]
 
-if ($defaultWebSite) {
-    $kuduApp = $defaultWebSite.Applications["/kudu"]
-    if ($kuduApp) {
-        "Removing existing kudu application"
-        $defaultWebSite.Applications.Remove($kuduApp)
-    }
+if ($kuduWebSite) {
+    "Removing existing kudu site"
+    $kuduWebSite.Delete()
+}
 
-    "Creating kudu application pointing to $webRoot"
-    $kuduApp = $defaultWebSite.Applications.Add("/kudu", $webRoot)
-    $kuduApp.ApplicationPoolName = "ASP.NET v4.0";
-    $iis.CommitChanges()
-    "Kudu demo application is now running on Default Web Site"
-}
-else {
-    "Unable to find site 'Default Web Site'."
-}
+"Creating kudu site pointing to $webRoot"
+$kuduWebSite = $iis.Sites.Add("kudu", $webRoot, 8080)
+$kuduWebSite.ApplicationDefaults.ApplicationPoolName = "ASP.NET v4.0";
+$iis.CommitChanges()
+"Kudu demo site is now running on http://localhost:8080/"
