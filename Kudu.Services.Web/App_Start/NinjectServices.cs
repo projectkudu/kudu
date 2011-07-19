@@ -8,6 +8,7 @@ using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 using Ninject;
 using Ninject.Web.Mvc;
 using ServerRepository = Kudu.Services.GitServer.Repository;
+using Kudu.Services.Authorization;
 
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Start")]
 [assembly: WebActivator.ApplicationShutdownMethodAttribute(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Stop")]
@@ -67,6 +68,7 @@ namespace Kudu.Services.Web.App_Start {
             kernel.Bind<IDeploymentManager>().ToConstant(deploymentManager);
             kernel.Bind<IFileSystemFactory>().ToConstant(fileSystemFactory);
             kernel.Bind<ServerRepository>().ToMethod(_ => new ServerRepository(repositoryPath));
+            kernel.Bind<IUserValidator>().To<SimpleUserValidator>();
         }
 
         private static string Root {

@@ -25,9 +25,11 @@ namespace Kudu.Services.GitServer {
     using System.IO;
     using System.Web.Mvc;
     using System.Web.SessionState;
+    using Kudu.Services.Authorization;
 
     // Handles /project/info/refs
     [SessionState(SessionStateBehavior.Disabled)]
+    [BasicAuthorize]
     public class InfoRefsController : Controller {
         private readonly Repository _repository;
 

@@ -60,6 +60,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Authorization\BasicAuthorizeAttribute.cs" />
+    <Compile Include="Authorization\IUserValidator.cs" />
     <Compile Include="Deployment\DeployController.cs" />
     <Compile Include="Editor\FilesController.cs" />
     <Compile Include="GitServer\Helpers.cs" />
