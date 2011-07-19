@@ -28,9 +28,11 @@ namespace Kudu.Services.GitServer {
     using System.Web.SessionState;
     using ICSharpCode.SharpZipLib.GZip;
     using Kudu.Core.Deployment;
+    using Kudu.Services.Authorization;
 
     // Handles project/git-upload-pack and project/git-receive-pack
     [SessionState(SessionStateBehavior.Disabled)]
+    [BasicAuthorize]
     public class RpcController : Controller {
         private readonly Repository _repository;
         private readonly IDeploymentManager _deploymentManager;
