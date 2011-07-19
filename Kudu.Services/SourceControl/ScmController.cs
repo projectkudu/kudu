@@ -26,8 +26,8 @@ namespace Kudu.Services.SourceControl {
 
         [HttpGet]
         [ActionName("kind")]
-        public ActionResult GetRepositoryType() {
-            return Json(_repositoryManager.GetRepositoryType(), JsonRequestBehavior.AllowGet);
+        public RepositoryType GetRepositoryType() {
+            return _repositoryManager.GetRepositoryType();
         }
 
         [HttpGet]
@@ -38,18 +38,18 @@ namespace Kudu.Services.SourceControl {
 
         [HttpGet]
         [ActionName("branches")]
-        public ActionResult GetBranches() {
-            return Json(_repository.GetBranches(), JsonRequestBehavior.AllowGet);
+        public IEnumerable<Branch> GetBranches() {
+            return _repository.GetBranches();
         }
 
         [ActionName("status")]
-        public ActionResult GetStatus() {
-            return Json(_repository.GetStatus(), JsonRequestBehavior.AllowGet);
+        public IEnumerable<FileStatus> GetStatus() {
+            return _repository.GetStatus();
         }
 
         [HttpGet]
         [ActionName("log")]
-        public ActionResult GetChanges(int? index, int? limit) {
+        public IEnumerable<ChangeSet> GetChanges(int? index, int? limit) {
             IEnumerable<ChangeSet> changeSets = null;
             if (index == null && limit == null) {
                 changeSets = _repository.GetChanges();
@@ -58,7 +58,7 @@ namespace Kudu.Services.SourceControl {
                 changeSets = _repository.GetChanges(index.Value, limit.Value);
             }
 
-            return Json(changeSets, JsonRequestBehavior.AllowGet);
+            return changeSets;
         }
 
         [HttpGet]
@@ -74,8 +74,8 @@ namespace Kudu.Services.SourceControl {
 
         [HttpGet]
         [ActionName("working")]
-        public ActionResult GetWorkingChanges() {
-            return Json(_repository.GetWorkingChanges(), JsonRequestBehavior.AllowGet);
+        public ChangeSetDetail GetWorkingChanges() {
+            return _repository.GetWorkingChanges();
         }
 
         [HttpPost]
@@ -92,8 +92,8 @@ namespace Kudu.Services.SourceControl {
 
         [HttpPost]
         [ValidateInput(false)]
-        public ActionResult Commit(string name, string message) {
-            return Json(_repository.Commit(name, message));
+        public ChangeSet Commit(string name, string message) {
+            return _repository.Commit(name, message);
         }
 
         [HttpPost]

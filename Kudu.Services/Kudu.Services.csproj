@@ -69,6 +69,7 @@
     <Compile Include="GitServer\RpcController.cs" />
     <Compile Include="GitServer\SimpleRefWriter.cs" />
     <Compile Include="FormattedExceptionFilter.cs" />
+    <Compile Include="Infrastructure\KuduActionInvoker.cs" />
     <Compile Include="Infrastructure\KuduController.cs" />
     <Compile Include="Infrastructure\KuduJsonResult.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
