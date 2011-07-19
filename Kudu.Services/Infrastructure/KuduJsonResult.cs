@@ -27,7 +27,7 @@ namespace System.Web.Mvc {
             }
             if (JsonRequestBehavior == JsonRequestBehavior.DenyGet &&
                 String.Equals(context.HttpContext.Request.HttpMethod, "GET", StringComparison.OrdinalIgnoreCase)) {
-                throw new InvalidOperationException("JSON GET request not allowed"/* MvcResources.JsonRequest_GetNotAllowed */);
+                throw new InvalidOperationException("JSON GET request not allowed");
             }
 
             HttpResponseBase response = context.HttpContext.Response;
@@ -43,7 +43,7 @@ namespace System.Web.Mvc {
             }
             if (Data != null) {
                 JavaScriptSerializer serializer = new JavaScriptSerializer {
-                    MaxJsonLength = this.MaxJsonLength
+                    MaxJsonLength = MaxJsonLength
                 };
                 response.Write(serializer.Serialize(Data));
             }

@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using System.Web.Mvc;
 
 namespace Kudu.Services.Infrastructure {
@@ -13,7 +14,7 @@ namespace Kudu.Services.Infrastructure {
                 ContentType = contentType,
                 ContentEncoding = contentEncoding,
                 JsonRequestBehavior = behavior,
-                MaxJsonLength = int.MaxValue
+                MaxJsonLength = Int32.MaxValue
             };
         }
     }

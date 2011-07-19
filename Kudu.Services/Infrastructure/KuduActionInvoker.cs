@@ -20,7 +20,7 @@ namespace Kudu.Services.Infrastructure {
             return new KuduJsonResult {
                 Data = actionReturnValue,
                 JsonRequestBehavior = JsonRequestBehavior.AllowGet,
-                MaxJsonLength = int.MaxValue
+                MaxJsonLength = Int32.MaxValue
             };
         }
     }
