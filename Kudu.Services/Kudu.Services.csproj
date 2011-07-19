@@ -42,6 +42,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\lib\GitSharp\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
+    <Reference Include="Ninject">
+      <HintPath>..\packages\Ninject.2.2.1.4\lib\net40-Full\Ninject.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Web" />
@@ -60,6 +63,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Authorization\BasicAuthorizeAttribute.cs" />
+    <Compile Include="Authorization\IUserValidator.cs" />
     <Compile Include="Deployment\DeployController.cs" />
     <Compile Include="Editor\FilesController.cs" />
     <Compile Include="GitServer\Helpers.cs" />
