@@ -7,15 +7,15 @@
 using System;
 using System.Text;
 using System.Web.Mvc;
-using Ninject;
 
 namespace Kudu.Services.Authorization {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class BasicAuthorizeAttribute : AuthorizeAttribute {
+        private IUserValidator _userValidator;
 
-        // This is not as clean as ctor injection, but that doesn't work in attributes
-        [Inject]
-        public IUserValidator UserValidator { get; set; }
+        public BasicAuthorizeAttribute() {
+            _userValidator = DependencyResolver.Current.GetService<IUserValidator>();
+        }
 
         public override void OnAuthorization(AuthorizationContext filterContext) {
             var authorizationHeader = filterContext.HttpContext.Request.Headers["Authorization"];
@@ -26,7 +26,7 @@ namespace Kudu.Services.Authorization {
                 string username = value.Substring(0, value.IndexOf(':'));
                 string password = value.Substring(value.IndexOf(':') + 1);
 
-                if (UserValidator.Validate(username, password)) {
+                if (_userValidator.Validate(username, password)) {
                     return;
                 }
             }
