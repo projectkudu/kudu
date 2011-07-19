@@ -33,8 +33,6 @@ namespace Kudu.Services.Authorization {
 
             // Get the client to prompt for credentials
 
-            filterContext.Result = new HttpUnauthorizedResult();
-
             filterContext.HttpContext.Response.Clear();
             filterContext.HttpContext.Response.StatusCode = 401;
             filterContext.HttpContext.Response.StatusDescription = "Unauthorized";
