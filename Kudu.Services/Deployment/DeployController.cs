@@ -1,9 +1,10 @@
 ﻿using System.Web.Mvc;
 using Kudu.Core.Deployment;
+using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.Deployment {
     [FormattedExceptionFilter]
-    public class DeployController : Controller {
+    public class DeployController : KuduController {
         private readonly IDeploymentManager _deploymentManager;
 
         public DeployController(IDeploymentManager deploymentManager) {

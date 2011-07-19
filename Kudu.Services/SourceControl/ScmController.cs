@@ -1,10 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Web.Mvc;
 using Kudu.Core.SourceControl;
+using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.SourceControl {
     [FormattedExceptionFilter]
-    public class ScmController : Controller {
+    public class ScmController : KuduController {
         private readonly IRepository _repository;
         private readonly IRepositoryManager _repositoryManager;
 
