@@ -6,17 +6,3 @@
     ViewBag.Title = "Kudu Daskboard";
 }
 
-<div id="action-links">
-<a href="../../Hubs/Editor/index.htm" target="_blank">View/Edit Files</a> 
-@if (Model != RepositoryType.None) {
-<a href="../../Hubs/SourceControl/index.htm" target="_blank">View Repository</a>
-}
-else { 
-    <h3>You don't have source control configured</h3>
-    @Html.ValidationSummary()
-    <form action="@Url.Action("create")" method="post">
-        @Html.DropDownList("type")
-        <input type="submit" value="Create" />
-    </form>
-}
-</div>
