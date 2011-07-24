@@ -305,6 +305,7 @@
 #scm .line {
     width: 100%;
     padding: 0;
+    border: none;
 }
 
 #scm .branch {

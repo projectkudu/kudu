@@ -22,7 +22,7 @@ namespace Kudu.Core.Deployment {
             string solutionDir = GetSolutionDir(projectFile);
 
             // REVIEW: Should we use the msbuild API?
-            _msbuildExe.Execute(@"""{0}"" /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir={1};AutoParameterizationWebConfigConnectionStrings=false;SolutionDir={2}", projectFile, _environment.DeploymentPath, solutionDir);
+            string log = _msbuildExe.Execute(@"""{0}"" /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir={1};AutoParameterizationWebConfigConnectionStrings=false;SolutionDir={2}", projectFile, _environment.DeploymentPath, solutionDir);
         }
 
         private string GetSolutionDir(string projectPath) {
@@ -34,7 +34,7 @@ namespace Kudu.Core.Deployment {
                     // TODO: Ensure that this project is in this solution
 
                     // Add the trailing slash
-                    return path + "//";
+                    return path + "\\";
                 }
             }
 
