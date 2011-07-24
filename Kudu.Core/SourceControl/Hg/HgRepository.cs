@@ -111,10 +111,15 @@ namespace Kudu.Core.SourceControl.Hg {
 
             _repository.AddRemove();
 
-            var id = _repository.Commit(new CommitCommand {
+            var command = new CommitCommand {
                 OverrideAuthor = authorName,
                 Message = message
-            });
+            };
+
+            var id = _repository.Commit(command);
+
+            // TODO: Figure out why is id null
+            id = id ?? CurrentId;
 
             return GetChangeSet(id);
         }

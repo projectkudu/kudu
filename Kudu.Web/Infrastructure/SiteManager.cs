@@ -1,14 +1,13 @@
 ﻿using System;
 using System.IO;
 using System.Web;
-using Ionic.Zip;
 using Kudu.Web.Models;
 using IIS = Microsoft.Web.Administration;
 
 namespace Kudu.Web.Infrastructure {
     public class SiteManager : ISiteManager {
-        private const string ServiceWebZip = "Kudu.Web.Infrastructure.Site.serviceweb.zip";
-        private static readonly string ServiceSitePath = Path.Combine(HttpRuntime.AppDomainAppPath, "App_Data", "service");
+        // Hard code the path to the services site (makes it easier to debug)
+        private static readonly string ServiceSitePath = Path.GetFullPath(Path.Combine(HttpRuntime.AppDomainAppPath, "..", "Kudu.Services.Web"));
 
         public Site CreateSite(string siteName) {
             var iis = new IIS.ServerManager();
@@ -69,21 +68,7 @@ namespace Kudu.Web.Infrastructure {
                 site = iis.Sites.Add("kudu_services", ServiceSitePath, GetRandomPort());
                 site.ApplicationDefaults.ApplicationPoolName = appPool.Name;
             }
-            EnsureServiceSite();
             return site;
-        }
-
-        private void EnsureServiceSite() {            
-            try {
-                using (var stream = typeof(SiteManager).Assembly.GetManifestResourceStream(ServiceWebZip)) {
-                    using (var file = ZipFile.Read(stream)) {
-                        file.ExtractAll(ServiceSitePath, ExtractExistingFileAction.OverwriteSilently);
-                    }
-                }
-            }
-            catch (UnauthorizedAccessException) {
-                // File might be locked
-            }
         }
 
         private int GetRandomPort() {

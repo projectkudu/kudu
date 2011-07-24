@@ -41,9 +41,6 @@
     <Reference Include="EntityFramework">
       <HintPath>..\packages\EntityFramework.4.1.10331.0\lib\EntityFramework.dll</HintPath>
     </Reference>
-    <Reference Include="Ionic.Zip">
-      <HintPath>..\packages\DotNetZip.1.9\lib\Ionic.Zip.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Microsoft.Web.Administration, Version=7.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\..\..\Windows\System32\inetsrv\Microsoft.Web.Administration.dll</HintPath>
@@ -254,9 +251,6 @@
   <ItemGroup>
     <Content Include="Views\Application\Editor.cshtml" />
   </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Infrastructure\Site\serviceweb.zip" />
-  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" />
   <Import Project="..\Build\Kudu.targets" />
@@ -282,8 +276,4 @@
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   -->
-  <Target Name="BeforeBuild">
-    <MSBuild Projects="..\Kudu.Services.Web\Kudu.Services.Web.csproj" Targets="pipelinePreDeployCopyAllFilesToOneFolder" Properties="_PackageTempDir=$(TargetDir)_serviceweb;AutoParameterizationWebConfigConnectionStrings=false" />
-    <Copy SourceFiles="$(OutputPath)git2.dll" DestinationFolder="$(TargetDir)_serviceweb\bin" />
-  </Target>
 </Project>
