@@ -1,10 +1,10 @@
 ﻿using System;
 using System.IO;
-using System.Threading;
 using System.Web;
 using Ionic.Zip;
 using Kudu.Web.Models;
 using IIS = Microsoft.Web.Administration;
+using System.Threading;
 
 namespace Kudu.Web.Infrastructure {
     public class SiteManager : ISiteManager {
@@ -14,34 +14,36 @@ namespace Kudu.Web.Infrastructure {
             var iis = new IIS.ServerManager();
 
             var kuduAppPool = EnsureAppPool(iis);
-            string prefix = "kudu_" + siteName;
-            string serviceSiteName = prefix + "_service";
-            string liveSiteName = prefix + "_site";
+            string liveSiteName = "kudu_" + siteName;
 
             try {
-                string serviceSiteRoot = GetServiceSitePath(siteName);
-                string siteRoot = Path.Combine(serviceSiteRoot, @"App_Data", "_root", "wwwroot");
+                // Create the services site
+                var serviceSite = EnsureServiceSite(iis, kuduAppPool);
 
-                int servicePort = GetRandomPort();
-                var serviceSite = iis.Sites.Add(serviceSiteName, serviceSiteRoot, servicePort);
+                // Get the physical path of the services site
+                string serviceSiteRoot = EnsureServiceSite();
+
+                // Get the port of the site
+                int servicePort = serviceSite.Bindings[0].EndPoint.Port;
+                var serviceApp = serviceSite.Applications.Add("/" + siteName, serviceSiteRoot);
+                serviceApp.ApplicationPoolName = kuduAppPool.Name;
+
+                // Get the path to the website
+                string siteRoot = Path.Combine(serviceSiteRoot, @"App_Data", "_root", siteName, "wwwroot");
                 int sitePort = GetRandomPort();
                 var site = iis.Sites.Add(liveSiteName, siteRoot, sitePort);
-
-                serviceSite.ApplicationDefaults.ApplicationPoolName = kuduAppPool.Name;
                 site.ApplicationDefaults.ApplicationPoolName = kuduAppPool.Name;
 
                 iis.CommitChanges();
 
                 return new Site {
                     SiteName = liveSiteName,
-                    ServiceName = serviceSiteName,
-                    ServiceUrl = String.Format("http://localhost:{0}/", servicePort),
+                    ServiceUrl = String.Format("http://localhost:{0}/{1}/", servicePort, siteName),
                     SiteUrl = String.Format("http://localhost:{0}/", sitePort),
                 };
             }
             catch {
-                DeleteSite(siteName);
-                DeleteSite(serviceSiteName);
+                DeleteSite(liveSiteName, siteName);
                 throw;
             }
         }
@@ -61,14 +63,29 @@ namespace Kudu.Web.Infrastructure {
             return kuduAppPool;
         }
 
-        private string GetServiceSitePath(string siteName) {
-            string root = Path.Combine(HttpRuntime.AppDomainAppPath, "App_Data", siteName);
+        private IIS.Site EnsureServiceSite(IIS.ServerManager iis, IIS.ApplicationPool appPool) {
+            var site = iis.Sites["kudu_services"];
+            if (site == null) {
+                string path = Path.Combine(HttpRuntime.AppDomainAppPath, "App_Data", "sites");
+                site = iis.Sites.Add("kudu_services", path, GetRandomPort());
+                site.ApplicationDefaults.ApplicationPoolName = appPool.Name;
+            }
+            return site;
+        }
+
+        private string EnsureServiceSite() {
+            string root = Path.Combine(HttpRuntime.AppDomainAppPath, "App_Data", "sites");
             string destPath = Path.Combine(root, "wwwroot");
 
-            using (var stream = typeof(SiteManager).Assembly.GetManifestResourceStream(ServiceWebZip)) {
-                using (var file = ZipFile.Read(stream)) {
-                    file.ExtractAll(destPath, ExtractExistingFileAction.OverwriteSilently);
+            try {
+                using (var stream = typeof(SiteManager).Assembly.GetManifestResourceStream(ServiceWebZip)) {
+                    using (var file = ZipFile.Read(stream)) {
+                        file.ExtractAll(destPath, ExtractExistingFileAction.OverwriteSilently);
+                    }
                 }
+            }
+            catch (UnauthorizedAccessException) {
+                // File might be locked
             }
 
             return destPath;
@@ -79,13 +96,22 @@ namespace Kudu.Web.Infrastructure {
             return new Random((int)DateTime.Now.Ticks).Next(1025, 65535);
         }
 
-        public void DeleteSite(string siteName) {
+        public void DeleteSite(string siteName, string applicationName) {
             var iis = new IIS.ServerManager();
             var site = iis.Sites[siteName];
             if (site != null) {
                 string physicalPath = site.Applications[0].VirtualDirectories[0].PhysicalPath;
                 DeleteSafe(physicalPath);
                 iis.Sites.Remove(site);
+
+                // Delete the services application
+                var servicesSite = iis.Sites["kudu_services"];
+                if (servicesSite != null) {
+                    var app = servicesSite.Applications["/" + applicationName];
+                    if (app != null) {
+                        servicesSite.Applications.Remove(app);
+                    }
+                }
             }
             iis.CommitChanges();
         }

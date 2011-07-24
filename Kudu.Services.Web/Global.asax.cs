@@ -1,4 +1,5 @@
-﻿using System.Web.Mvc;
+﻿using System.Web;
+using System.Web.Mvc;
 using System.Web.Routing;
 
 namespace Kudu.Services {
@@ -8,7 +9,8 @@ namespace Kudu.Services {
         }
 
         public static void RegisterRoutes(RouteCollection routes) {
-            const string gitServerPathRoot = "SampleRepo.git";
+            string site = HttpRuntime.AppDomainAppVirtualPath.Trim('/');
+            string gitServerPathRoot = site + ".git";
 
             routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
 

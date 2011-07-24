@@ -4,6 +4,7 @@ using System.Web.Mvc;
 using Kudu.Core.SourceControl;
 using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
+using System.Threading;
 
 namespace Kudu.Web.Controllers {
     public class ApplicationController : Controller {
@@ -61,12 +62,18 @@ namespace Kudu.Web.Controllers {
                         ServiceUrl = site.ServiceUrl,
                         SiteUrl = site.SiteUrl,
                         SiteName = site.SiteName,
-                        ServiceName = site.ServiceName,
                         RepositoryType = (int)appViewModel.RepositoryType
                     };
 
-                    string repositoryUrl = app.ServiceUrl + "scm";
-                    new RemoteRepositoryManager(repositoryUrl).CreateRepository(appViewModel.RepositoryType);
+                    ThreadPool.QueueUserWorkItem(_ => {
+                        // Give iis a chance to start the app up
+                        // if we send requests too quickly, we'll end up getting 404s
+                        Thread.Sleep(250);
+
+                        string repositoryUrl = app.ServiceUrl + "scm";
+                        var repositoryManager = new RemoteRepositoryManager(repositoryUrl);
+                        repositoryManager.CreateRepository(appViewModel.RepositoryType);
+                    });
 
                     db.Applications.Add(app);
                     db.SaveChanges();
@@ -75,8 +82,7 @@ namespace Kudu.Web.Controllers {
                 }
                 catch (Exception ex) {
                     if (site != null) {
-                        _siteManager.DeleteSite(site.ServiceName);
-                        _siteManager.DeleteSite(site.SiteName);
+                        _siteManager.DeleteSite(site.SiteName, appViewModel.Name);
                     }
 
                     ModelState.AddModelError("__FORM", ex.Message);
@@ -116,8 +122,7 @@ namespace Kudu.Web.Controllers {
             Application application = db.Applications.Find(id);
             if (application != null) {
 
-                _siteManager.DeleteSite(application.ServiceName);
-                _siteManager.DeleteSite(application.SiteName);
+                _siteManager.DeleteSite(application.SiteName, application.Name);
 
                 try {
                     string repositoryUrl = application.ServiceUrl + "scm";
