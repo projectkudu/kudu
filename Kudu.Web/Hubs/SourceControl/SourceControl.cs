@@ -81,7 +81,7 @@ namespace Kudu.Web {
 
         private string GetCloneUrl(RepositoryType type) {
             if (type == RepositoryType.Git) {
-                return _siteConfiguraiton.ServiceUrl + _siteConfiguraiton.Name + ".git";
+                return _siteConfiguraiton.ServiceUrl + "SampleRepo.git";
             }
             return null;
         }

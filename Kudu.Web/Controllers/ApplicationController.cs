@@ -45,9 +45,16 @@ namespace Kudu.Web.Controllers {
 
         [HttpPost]
         public ActionResult Create(ApplicationViewModel appViewModel) {
+            if (db.Applications.Any(a => a.Name == appViewModel.Name)) {
+                ModelState.AddModelError("Name", "Site already exists");
+            }
+
             if (ModelState.IsValid) {
+
+                Site site = null;
+
                 try {
-                    var site = _siteManager.CreateSite(appViewModel.Name);
+                    site = _siteManager.CreateSite(appViewModel.Name);
 
                     var app = new Application {
                         Name = appViewModel.Name,
@@ -67,6 +74,11 @@ namespace Kudu.Web.Controllers {
                     return RedirectToAction("Index");
                 }
                 catch (Exception ex) {
+                    if (site != null) {
+                        _siteManager.DeleteSite(site.ServiceName);
+                        _siteManager.DeleteSite(site.SiteName);
+                    }
+
                     ModelState.AddModelError("__FORM", ex.Message);
                 }
             }
@@ -104,7 +116,9 @@ namespace Kudu.Web.Controllers {
             Application application = db.Applications.Find(id);
             if (application != null) {
 
-                _siteManager.DeleteSite(application);
+                _siteManager.DeleteSite(application.ServiceName);
+                _siteManager.DeleteSite(application.SiteName);
+
                 try {
                     string repositoryUrl = application.ServiceUrl + "scm";
                     new RemoteRepositoryManager(repositoryUrl).Delete();
