@@ -26,6 +26,7 @@
 #scm #log td {
     height: 65px;
     padding: 5px;
+    border: none;
     border-bottom: 1px solid #ccc;
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f5f5f5', endColorstr='#ebebeb'); /* for IE */
     background: -webkit-gradient(linear, left top, left bottom, from(#f5f5f5), to(#ebebeb)); /* for webkit browsers */
@@ -35,6 +36,8 @@
 #scm #log th {
     padding: 5px;
     text-align: left;
+    background-color: #fff;
+    border: none;
     border-bottom: 1px solid #ccc;
 }
 
@@ -301,6 +304,7 @@
 
 #scm .line {
     width: 100%;
+    padding: 0;
 }
 
 #scm .branch {

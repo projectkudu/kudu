@@ -2,6 +2,7 @@
     ViewBag.Title = "Editor";
 }
 
+@section head {
 <!-- CODE MIRROR INCLUDES -->
 <link rel="stylesheet" href="@Url.Content("~/Hubs/Editor/styles/codemirror.css")">
 <script src="@Url.Content("~/Scripts/codemirror/codemirror.js")"></script>
@@ -21,6 +22,22 @@
 <script src="@Url.Content("~/Scripts/codemirror/mode/php/php.js")" type="text/javascript"></script>
 <!-- LANGUAGES -->
 <link href="@Url.Content("~/Hubs/Editor/styles/skyde.css")" rel="stylesheet" type="text/css" />
+}
+
+<div id="skyde">        
+    <ul id="tabs">               
+    </ul>
+    <div id="text-editor">
+        <textarea id="editor"></textarea>
+    </div>
+    <div id="file-browser">
+    </div>
+    <div class="clear">
+    </div> 
+    <p id="status" class="icon icon-save">
+    </p> 
+</div>
+
 <script id="folderTemplate" type="text/x-jquery-tmpl"> 
     <ul class="folder" data-path="${$data.getPath()}">
         <li>
@@ -60,22 +77,6 @@
         <a href="#" class="delete icon-notext icon-close">&nbsp;</a>
     </li>
 </script>
-
-<div id="skyde">        
-    <ul id="tabs">               
-    </ul>
-    <div id="text-editor">
-        <textarea id="editor"></textarea>
-    </div>
-    <div id="file-browser">
-    </div>
-    <div class="clear">
-    </div> 
-    <p id="status" class="icon icon-save">
-    </p> 
-</div>
-
-<script src="@Url.Content("~/Scripts/jquery-1.6.2.min.js")" type="text/javascript"></script>
 <script src="@Url.Content("~/Scripts/jquery.hotkeys-patched.js")" type="text/javascript"></script>
 <script src="@Url.Content("~/Scripts/SignalR.min.js")" type="text/javascript"></script>
 <script src="@Url.Content("~/SignalR/hubs")" type="text/javascript"></script>

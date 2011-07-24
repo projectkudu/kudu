@@ -486,6 +486,8 @@
                     if (file.getPath() != path) {
                         openDocument(path);
                     }
+
+                    return false;
                 });
 
                 tabs.delegate('.delete', 'click', function () {
@@ -519,6 +521,8 @@
                     else {
                         closeTab(path);
                     }
+
+                    return false;
                 });
             }
 

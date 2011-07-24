@@ -62,7 +62,6 @@
 </div>
 
 <link href="@Url.Content("~/Hubs/SourceControl/SourceControl.css")" rel="stylesheet" type="text/css" />
-<script src="@Url.Content("~/Scripts/jquery-1.6.2.min.js")" type="text/javascript"></script>
 <script src="@Url.Content("~/Scripts/jquery.cookie.js")" type="text/javascript"></script>
 <script src="@Url.Content("~/Scripts/jquery.render.min.js")" type="text/javascript"></script>
 <script src="@Url.Content("~/Scripts/sammy.js")" type="text/javascript"></script>
@@ -94,8 +93,8 @@
             <a href="#/commit/${Id}" class="view">view</a>
         </td>
         <td>
-            <img class="loading hide" src="images/loading.gif" />
-            <img class="status${Active ? "" : " hide"}" src="images/tick.png" />
+            <img class="loading hide" src="@Url.Content("~/Hubs/SourceControl/images/loading.gif")" />
+            <img class="status${Active ? "" : " hide"}" src="@Url.Content("~/Hubs/SourceControl/images/tick.png")" />
         </td>
     </tr>
 </script>
