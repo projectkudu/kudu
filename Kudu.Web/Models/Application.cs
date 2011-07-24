@@ -2,8 +2,9 @@
 
 namespace Kudu.Web.Models {
     public class Application {
-        public int Id { get; set; }
+        [Key]
         public string Name { get; set; }
+        public string Slug { get; set; }
         public string SiteName { get; set; }
         public string ServiceUrl { get; set; }
         public string SiteUrl { get; set; }

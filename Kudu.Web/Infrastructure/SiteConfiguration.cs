@@ -9,34 +9,25 @@ namespace Kudu.Web.Infrastructure {
             var request = serializer.Deserialize<HubRequest>(httpContext.Request["data"]);
 
             using (var db = new KuduContext()) {
-                var application = db.Applications.Find(request.State.AppId);
+                var application = db.Applications.Find(request.State.AppName);
                 ServiceUrl = application.ServiceUrl;
                 SiteUrl = application.SiteUrl;
                 Name = application.Name;
+                Slug = application.Slug;
             }
         }
 
-        public string Name {
-            get;
-            private set;
-        }
-
-        public string ServiceUrl {
-            get;
-            private set;
-        }
-
-        public string SiteUrl {
-            get;
-            private set;
-        }
+        public string Name { get; private set; }
+        public string ServiceUrl { get; private set; }
+        public string SiteUrl { get; private set; }
+        public string Slug { get; private set; }
 
         private class HubRequest {
             public ClientState State { get; set; }
         }
 
         private class ClientState {
-            public int AppId { get; set; }
+            public string AppName { get; set; }
         }
     }
 }

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
 using System.Web.Mvc;
 using Kudu.Core.SourceControl;
 using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
-using System.Threading;
 
 namespace Kudu.Web.Controllers {
     public class ApplicationController : Controller {
@@ -25,8 +25,8 @@ namespace Kudu.Web.Controllers {
         //
         // GET: /Application/Details/5
 
-        public ActionResult Details(int id) {
-            Application application = db.Applications.Find(id);
+        public ActionResult Details(string slug) {
+            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             if (application != null) {
                 return View(new ApplicationViewModel(application));
             }
@@ -49,16 +49,21 @@ namespace Kudu.Web.Controllers {
             if (db.Applications.Any(a => a.Name == appViewModel.Name)) {
                 ModelState.AddModelError("Name", "Site already exists");
             }
+            string slug = appViewModel.Name.GenerateSlug();
+            if (db.Applications.Any(a => a.Slug == slug)) {
+                ModelState.AddModelError("Name", "Site already exists");
+            }
 
             if (ModelState.IsValid) {
 
                 Site site = null;
 
                 try {
-                    site = _siteManager.CreateSite(appViewModel.Name);
+                    site = _siteManager.CreateSite(slug);
 
                     var app = new Application {
                         Name = appViewModel.Name,
+                        Slug = slug,
                         ServiceUrl = site.ServiceUrl,
                         SiteUrl = site.SiteUrl,
                         SiteName = site.SiteName,
@@ -94,20 +99,24 @@ namespace Kudu.Web.Controllers {
         }
 
         [ActionName("scm")]
-        public ActionResult ViewSourceControl(int id) {
-            return View(id);
+        public ActionResult ViewSourceControl(string slug) {
+            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
+            ViewBag.AppName = application.Name;
+            return View();
         }
 
         [ActionName("editor")]
-        public ActionResult EditFiles(int id) {
-            return View(id);
+        public ActionResult EditFiles(string slug) {
+            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
+            ViewBag.AppName = application.Name;
+            return View();
         }
 
         //
         // GET: /Application/Delete/5
 
-        public ActionResult Delete(int id) {
-            Application application = db.Applications.Find(id);
+        public ActionResult Delete(string slug) {
+            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             if (application != null) {
                 return View(new ApplicationViewModel(application));
             }
@@ -118,8 +127,8 @@ namespace Kudu.Web.Controllers {
         // POST: /Application/Delete/5
 
         [HttpPost, ActionName("Delete")]
-        public ActionResult DeleteConfirmed(int id) {
-            Application application = db.Applications.Find(id);
+        public ActionResult DeleteConfirmed(string slug) {
+            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             if (application != null) {
 
                 _siteManager.DeleteSite(application.SiteName, application.Name);

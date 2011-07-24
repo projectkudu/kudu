@@ -1,5 +1,4 @@
-﻿@model int
-@{
+﻿@{
     ViewBag.Title = "Scm";
 }
 
@@ -69,12 +68,12 @@
 <script src="@Url.Content("~/Scripts/sammy.js")" type="text/javascript"></script>
 <script src="@Url.Content("~/Scripts/jquery.timeago.js")" type="text/javascript"></script>
 <script src="@Url.Content("~/Scripts/SignalR.min.js")" type="text/javascript"></script>
-<script src="/signalr/hubs" type="text/javascript"></script>
+<script src="@Url.Content("~/signalr/hubs")" type="text/javascript"></script>
 <script src="@Url.Content("~/Hubs/SourceControl/loader.js")" type="text/javascript"></script>
 <script src="@Url.Content("~/Hubs/SourceControl/SourceControl.js")" type="text/javascript"></script>
 <script type="text/javascript">
     $(function () {
-        signalR.sourceControl.state.appId = '@Model';
+        signalR.sourceControl.state.appName = '@ViewBag.AppName';
     });
 </script>
 <script id="changeset" type="text/x-jquery-tmpl"> 

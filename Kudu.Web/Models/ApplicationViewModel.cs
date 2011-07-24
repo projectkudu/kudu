@@ -7,16 +7,16 @@ namespace Kudu.Web.Models {
         }
 
         public ApplicationViewModel(Application app) {
-            Id = app.Id;
             Name = app.Name;
             RepositoryType = (RepositoryType)app.RepositoryType;
             SiteUrl = app.SiteUrl;
+            Slug = app.Slug;
         }
 
-        public int Id { get; set; }
         [Required]
         public string Name { get; set; }
         public string SiteUrl { get; set; }
         public RepositoryType RepositoryType { get; set; }
+        public string Slug { get; set; }
     }
 }

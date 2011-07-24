@@ -8,5 +8,6 @@ namespace Kudu.Web.Infrastructure {
         string Name { get; }
         string ServiceUrl { get; }
         string SiteUrl { get; }
+        string Slug { get; }
     }
 }

@@ -14,8 +14,8 @@ namespace Kudu.Web {
 
             routes.MapRoute(
                 "Default", // Route name
-                "{controller}/{action}/{id}", // URL with parameters
-                new { controller = "Application", action = "Index", id = UrlParameter.Optional } // Parameter defaults
+                "{controller}/{action}/{slug}", // URL with parameters
+                new { controller = "Application", action = "Index", slug = UrlParameter.Optional } // Parameter defaults
             );
         }
 

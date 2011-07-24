@@ -218,6 +218,7 @@
     <Compile Include="Infrastructure\ISiteManager.cs" />
     <Compile Include="Infrastructure\SiteConfiguration.cs" />
     <Compile Include="Infrastructure\SiteManager.cs" />
+    <Compile Include="Infrastructure\SlugGenerator.cs" />
     <Compile Include="Models\Application.cs" />
     <Compile Include="Models\ApplicationViewModel.cs" />
     <Compile Include="Models\KuduContext.cs" />

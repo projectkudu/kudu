@@ -35,10 +35,10 @@
             <a href="@item.SiteUrl" target="_blank">@item.SiteUrl</a>
         </td>
         <td>
-            @Html.ActionLink("Details", "Details", new { id=item.Id }) |
-            @Html.ActionLink("Source Control", "Scm", new { id=item.Id }) |
-            @Html.ActionLink("Show/Edit Files", "Editor", new { id=item.Id }) |
-            @Html.ActionLink("Delete", "Delete", new { id=item.Id })
+            @Html.ActionLink("Details", "Details", new { slug = item.Slug }) |
+            @Html.ActionLink("Source Control", "Scm", new { slug = item.Slug }) |
+            @Html.ActionLink("Show/Edit Files", "Editor", new { slug = item.Slug }) |
+            @Html.ActionLink("Delete", "Delete", new { slug = item.Slug })
         </td>
     </tr>
 }
