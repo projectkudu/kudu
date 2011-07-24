@@ -26,6 +26,11 @@
     list-style-type: none;
 }
 
+#skyde #file-browser ul {
+    list-style-type: none;
+    margin-bottom: 0;
+}
+
 #skyde .folder {
     padding-left: 10px;
     margin-left: 10px;
