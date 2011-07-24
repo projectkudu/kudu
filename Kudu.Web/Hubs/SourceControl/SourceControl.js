@@ -148,20 +148,7 @@ $(function () {
         scm.getRepositoryInfo()
            .done(function (info) {
                scm.state.branches = info.Branches;
-               scm.state.type = info.RepositoryType;
-               scm.state.cloneUrl = info.CloneUrl;
-
-               var url = $('#url');
-               if (scm.state.cloneUrl) {
-                   url.val(scm.state.cloneUrl);
-                   url.removeAttr('disabled');
-               }
-               else {
-                   url.val('Not supported');
-               }
-
-               $('#repository-type').html(scm.state.type).hide().fadeIn();
-
+               
                getChangeSets(0, function () {
                    window.loader.hide(token);
 

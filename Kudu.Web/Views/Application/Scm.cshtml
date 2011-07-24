@@ -1,5 +1,5 @@
 ﻿@{
-    ViewBag.Title = "Scm";
+    ViewBag.Title = "Source Control";
 }
 
 <div id="scm">
@@ -9,14 +9,14 @@
         <div id="error">
         </div>
         <div id="menu" class="gray-gradient">
-            <span id="repository-type"><img src="@Url.Content("~/Hubs/SourceControl/images/loading.gif")" /> </span>
+            <span id="repository-type">@ViewBag.RepositoryType</span>
             <div id="links">
                 <a href="#/">Commits</a>
                 <a href="#/working" class="icon icon-working-dir" id="show-working">Working directory</a>
             </div>
             <div id="clone-url">
                 <label for="url">HTTP: </label>
-                <input type="text" name="url" id="url" value="" readonly="readonly" disabled="disabled" />
+                <input type="text" name="url" id="url" value="@(ViewBag.CloneUrl ?? "Not supported")" readonly="readonly" @(ViewBag.CloneUrl == null ? "disabled=\"disabled\"" : "") />
             </div>
             <div class="clear"></div>
         </div>

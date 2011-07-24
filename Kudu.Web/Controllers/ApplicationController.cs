@@ -75,8 +75,7 @@ namespace Kudu.Web.Controllers {
                         // if we send requests too quickly, we'll end up getting 404s
                         Thread.Sleep(250);
 
-                        string repositoryUrl = app.ServiceUrl + "scm";
-                        var repositoryManager = new RemoteRepositoryManager(repositoryUrl);
+                        IRepositoryManager repositoryManager = GetRepositoryManager(app);
                         repositoryManager.CreateRepository(appViewModel.RepositoryType);
                     });
 
@@ -101,7 +100,12 @@ namespace Kudu.Web.Controllers {
         [ActionName("scm")]
         public ActionResult ViewSourceControl(string slug) {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
+            var repositoryManager = GetRepositoryManager(application);
+            var type = repositoryManager.GetRepositoryType();
+            ViewBag.CloneUrl = type == RepositoryType.Git ? application.ServiceUrl + application.Slug + ".git" : null;
+            ViewBag.RepositoryType = type;
             ViewBag.AppName = application.Name;
+
             return View();
         }
 
@@ -164,5 +168,8 @@ namespace Kudu.Web.Controllers {
                                          .Skip(1);
         }
 
+        private static IRepositoryManager GetRepositoryManager(Application application) {
+            return new RemoteRepositoryManager(application.ServiceUrl + "scm");
+        }
     }
 }

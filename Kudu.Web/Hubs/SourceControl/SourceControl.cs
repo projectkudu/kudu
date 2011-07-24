@@ -11,14 +11,11 @@ namespace Kudu.Web {
         private readonly IRepository _repository;
         private readonly IRepositoryManager _repositoryManager;
         private readonly IDeploymentManager _deploymentManager;
-        private readonly ISiteConfiguration _siteConfiguraiton;
 
         public SourceControl(IRepository repository,
-                             ISiteConfiguration siteConfiguraiton,
                              IRepositoryManager repositoryManager,
                              IDeploymentManager deploymentManager) {
             _repository = repository;
-            _siteConfiguraiton = siteConfiguraiton;
             _repositoryManager = repositoryManager;
             _deploymentManager = deploymentManager;
         }
@@ -50,9 +47,7 @@ namespace Kudu.Web {
             return new RepositoryViewModel {
                 Branches = _repository.GetBranches()
                                  .ToLookup(b => b.Id)
-                                 .ToDictionary(p => p.Key, p => p.Select(b => b.Name)),
-                RepositoryType = type.ToString(),
-                CloneUrl = GetCloneUrl(type)
+                                 .ToDictionary(p => p.Key, p => p.Select(b => b.Name))
             };
         }
 
@@ -77,13 +72,6 @@ namespace Kudu.Web {
         public void Deploy(string id) {
             _repository.Update(id);
             _deploymentManager.Deploy(id);
-        }
-
-        private string GetCloneUrl(RepositoryType type) {
-            if (type == RepositoryType.Git) {
-                return _siteConfiguraiton.ServiceUrl + _siteConfiguraiton.Slug + ".git";
-            }
-            return null;
         }
     }
 }
