@@ -4,7 +4,6 @@ using System.Web;
 using Ionic.Zip;
 using Kudu.Web.Models;
 using IIS = Microsoft.Web.Administration;
-using System.Threading;
 
 namespace Kudu.Web.Infrastructure {
     public class SiteManager : ISiteManager {
