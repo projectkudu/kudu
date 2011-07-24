@@ -106,10 +106,7 @@
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>
-xcopy /s /y "$(SolutionDir)packages\LibGit2Sharp.0.3\NativeBinaries\x86\*.*" "$(TargetDir)"</PostBuildEvent>
-  </PropertyGroup>
+  <Import Project="..\Build\Kudu.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

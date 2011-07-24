@@ -7,7 +7,7 @@
     </ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{B0265397-6FCD-4C67-8785-3272D8C1AD79}</ProjectGuid>
-    <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <ProjectTypeGuids>{E53F8FEA-EAE0-44A6-8774-FFD645390401};{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Kudu.Web</RootNamespace>
@@ -38,7 +38,16 @@
     <Reference Include="AjaxMin">
       <HintPath>..\packages\AjaxMin.4.19.4141.18463\lib\AjaxMin.dll</HintPath>
     </Reference>
+    <Reference Include="EntityFramework">
+      <HintPath>..\packages\EntityFramework.4.1.10331.0\lib\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="Ionic.Zip">
+      <HintPath>..\packages\DotNetZip.1.9\lib\Ionic.Zip.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.Web.Administration, Version=7.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\..\..\Windows\System32\inetsrv\Microsoft.Web.Administration.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Web.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\lib\Microsoft.Web.Infrastructure.dll</HintPath>
     </Reference>
@@ -52,6 +61,8 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\SignalR.1.0.4211.22279\lib\net40\SignalR.dll</HintPath>
     </Reference>
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Data.Entity" />
     <Reference Include="System.Web.DynamicData" />
     <Reference Include="System.Web.Entity" />
     <Reference Include="System.Web.ApplicationServices" />
@@ -184,7 +195,6 @@
     <Content Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
     </Content>
-    <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Web.config" />
     <Content Include="Views\Shared\Error.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
@@ -193,7 +203,7 @@
   <ItemGroup>
     <Compile Include="App_Start\NinjectServices.cs" />
     <Compile Include="App_Start\NinjectDependencyResolver.cs" />
-    <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\ApplicationController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -204,6 +214,14 @@
     <Compile Include="Hubs\SourceControl\Model\ChangeSetViewModel.cs" />
     <Compile Include="Hubs\SourceControl\Model\RepositoryViewModel.cs" />
     <Compile Include="Hubs\SourceControl\SourceControl.cs" />
+    <Compile Include="Infrastructure\ISiteConfiguration.cs" />
+    <Compile Include="Infrastructure\ISiteManager.cs" />
+    <Compile Include="Infrastructure\SiteConfiguration.cs" />
+    <Compile Include="Infrastructure\SiteManager.cs" />
+    <Compile Include="Models\Application.cs" />
+    <Compile Include="Models\ApplicationViewModel.cs" />
+    <Compile Include="Models\KuduContext.cs" />
+    <Compile Include="Models\Site.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -217,6 +235,27 @@
       <SubType>Designer</SubType>
     </Content>
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\Application\Index.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\Application\Details.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\Application\Create.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\Application\Delete.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\Application\Scm.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\Application\Editor.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Infrastructure\Site\serviceweb.zip" />
+  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" />
   <Import Project="..\Build\Kudu.targets" />
@@ -226,7 +265,7 @@
         <WebProjectProperties>
           <UseIIS>False</UseIIS>
           <AutoAssignPort>True</AutoAssignPort>
-          <DevelopmentServerPort>23327</DevelopmentServerPort>
+          <DevelopmentServerPort>13079</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>
           <IISUrl>http://localhost:23327/</IISUrl>
           <NTLMAuthentication>False</NTLMAuthentication>
@@ -241,7 +280,9 @@
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
   -->
+  <Target Name="BeforeBuild">
+    <MSBuild Projects="..\Kudu.Services.Web\Kudu.Services.Web.csproj" Targets="pipelinePreDeployCopyAllFilesToOneFolder" Properties="_PackageTempDir=$(TargetDir)_serviceweb;AutoParameterizationWebConfigConnectionStrings=false" />
+    <Copy SourceFiles="$(OutputPath)git2.dll" DestinationFolder="$(TargetDir)_serviceweb\bin" />
+  </Target>
 </Project>

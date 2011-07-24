@@ -1,0 +1,41 @@
+﻿@model Kudu.Web.Models.ApplicationViewModel
+
+@{
+    ViewBag.Title = "New Application";
+}
+
+<h2>New Application</h2>
+
+<script src="@Url.Content("~/Scripts/jquery.validate.min.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Scripts/jquery.validate.unobtrusive.min.js")" type="text/javascript"></script>
+
+@using (Html.BeginForm()) {
+    @Html.ValidationSummary()
+    <fieldset>
+        <legend>Application</legend>
+
+        <div class="editor-label">
+            @Html.LabelFor(model => model.Name)
+        </div>
+        <div class="editor-field">
+            @Html.EditorFor(model => model.Name)
+            @Html.ValidationMessageFor(model => model.Name)
+        </div>
+
+        <div class="editor-label">
+            @Html.LabelFor(model => model.RepositoryType, "Repository Type")
+        </div>
+        <div class="editor-field">
+            @Html.DropDownList("RepositoryType")
+            @Html.ValidationMessageFor(model => model.RepositoryType)
+        </div>
+
+        <p>
+            <input type="submit" value="Create" />
+        </p>
+    </fieldset>
+}
+
+<div>
+    @Html.ActionLink("Back to Applications", "Index")
+</div>

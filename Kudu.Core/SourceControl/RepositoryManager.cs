@@ -19,6 +19,8 @@ namespace Kudu.Core.SourceControl {
                 throw new InvalidOperationException("Repository already exists. Delete it before creating a new one.");
             }
 
+            Directory.CreateDirectory(_path);
+
             switch (type) {
                 case RepositoryType.Git:
                     new HybridGitRepository(_path).Initialize();
@@ -45,10 +47,16 @@ namespace Kudu.Core.SourceControl {
         }
 
         public void Delete() {
-            throw new NotImplementedException();
+            if (Directory.Exists(_path)) {
+                Directory.Delete(_path, recursive: true);
+            }
         }
 
         public RepositoryType GetRepositoryType() {
+            if (!Directory.Exists(_path)) {
+                return RepositoryType.None;
+            }
+
             if (Directory.EnumerateDirectories(_path, ".hg").Any()) {
                 return RepositoryType.Mercurial;
             }

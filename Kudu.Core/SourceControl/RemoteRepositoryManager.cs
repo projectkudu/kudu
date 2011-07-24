@@ -22,7 +22,7 @@ namespace Kudu.Core.SourceControl {
         }
 
         public void Delete() {
-            _client.Post("delete", new StringContent(null))
+            _client.Post("delete", new StringContent(String.Empty))
                    .EnsureSuccessful();
         }
 

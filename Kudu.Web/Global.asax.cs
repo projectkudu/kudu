@@ -1,5 +1,7 @@
 ﻿using System.Web.Mvc;
 using System.Web.Routing;
+using System.Data.Entity;
+using Kudu.Web.Models;
 
 namespace Kudu.Web {
     public class MvcApplication : System.Web.HttpApplication {
@@ -13,7 +15,7 @@ namespace Kudu.Web {
             routes.MapRoute(
                 "Default", // Route name
                 "{controller}/{action}/{id}", // URL with parameters
-                new { controller = "Home", action = "Index", id = UrlParameter.Optional } // Parameter defaults
+                new { controller = "Application", action = "Index", id = UrlParameter.Optional } // Parameter defaults
             );
         }
 
@@ -22,6 +24,8 @@ namespace Kudu.Web {
 
             RegisterGlobalFilters(GlobalFilters.Filters);
             RegisterRoutes(RouteTable.Routes);
+
+            Database.SetInitializer(new DropCreateDatabaseIfModelChanges<KuduContext>());
         }
     }
 }

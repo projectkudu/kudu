@@ -2,8 +2,12 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <KuduRoot>$(MSBuildProjectDirectory)\..</KuduRoot>
+        <BuildDependsOn>
+            CopyNativeBinaries;
+            $(BuildDependsOn);
+        </BuildDependsOn>
     </PropertyGroup>
-    <Target Name="AfterBuild">
+    <Target Name="CopyNativeBinaries">
         <ItemGroup>
             <NativeBinaries Include="$(KuduRoot)\packages\LibGit2Sharp*\NativeBinaries\x86\*.dll" />
         </ItemGroup>

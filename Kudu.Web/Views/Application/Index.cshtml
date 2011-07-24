@@ -1,0 +1,46 @@
+﻿@model IEnumerable<Kudu.Web.Models.ApplicationViewModel>
+
+@{
+    ViewBag.Title = "Applications";
+}
+
+<h2>Applications</h2>
+
+<p>
+    @Html.ActionLink("Create Application", "Create")
+</p>
+<table>
+    <tr>
+        <th>
+            Name
+        </th>
+        <th>
+            Repository Type
+        </th>
+        <th>
+            Site Url
+        </th>
+        <th></th>
+    </tr>
+
+@foreach (var item in Model) {
+    <tr>
+        <td>
+            @Html.DisplayFor(modelItem => item.Name)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.RepositoryType)
+        </td>
+        <td>
+            <a href="@item.SiteUrl" target="_blank">@item.SiteUrl</a>
+        </td>
+        <td>
+            @Html.ActionLink("Details", "Details", new { id=item.Id }) |
+            @Html.ActionLink("Source Control", "Scm", new { id=item.Id }) |
+            @Html.ActionLink("Show/Edit Files", "Editor", new { id=item.Id }) |
+            @Html.ActionLink("Delete", "Delete", new { id=item.Id })
+        </td>
+    </tr>
+}
+
+</table>

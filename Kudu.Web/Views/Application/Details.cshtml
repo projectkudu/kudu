@@ -1,0 +1,28 @@
+﻿@model Kudu.Web.Models.ApplicationViewModel
+
+@{
+    ViewBag.Title = "Details";
+}
+
+<h2>Details</h2>
+
+<fieldset>
+    <legend>Application</legend>
+
+    <div class="display-label">Name</div>
+    <div class="display-field">
+        @Html.DisplayFor(model => model.Name)
+    </div>
+
+    <div class="display-label">Repository Type</div>
+    <div class="display-field">
+        @Html.DisplayFor(modelItem => modelItem.RepositoryType)
+    </div>
+    <div class="display-label">Site Url</div>
+    <div class="display-field">
+        <a href="@Model.SiteUrl" target="_blank">@Model.SiteUrl</a>
+    </div>
+</fieldset>
+<p>
+    @Html.ActionLink("Back to Applications", "Index")
+</p>

@@ -1,27 +1,20 @@
-﻿body {
-    font-family: Trebuchet MS;
-    font-size: 13px;
-}
-
-#page {
+﻿#scm #page {
     margin: 0 auto;
     padding: 0 15px;
     width: 1020px;
 }
 
-#menu #clone-url input {
-    font-size: 12px;
-    padding: 5px;
+#scm #menu #clone-url input {
+    font-size: 12px; 
     width: 330px;
-    height: 26px;
 }
 
-#menu #clone-url {
+#scm #menu #clone-url {
     float: right;
     margin-right: 50px;
 }
 
-#log {
+#scm #log {
     font-family: Trebuchet MS;
     font-size: 13px;
     border-collapse: collapse;
@@ -30,7 +23,7 @@
     margin-bottom: 1%;
 }
 
-#log td {
+#scm #log td {
     height: 65px;
     padding: 5px;
     border-bottom: 1px solid #ccc;
@@ -39,37 +32,37 @@
     background: -moz-linear-gradient(top,  #f5f5f5,  #ebebeb); /* for firefox 3.6+ */
 }
 
-#log th {
+#scm #log th {
     padding: 5px;
     text-align: left;
     border-bottom: 1px solid #ccc;
 }
 
-#log th:nth-child(1) {
+#scm #log th:nth-child(1) {
     width: 90px;
 }
 
-#log th:nth-child(3) {
+#scm #log th:nth-child(3) {
     width: 10%;
 }
 
-#log th:nth-child(4) {
+#scm #log th:nth-child(4) {
     width: 10%;
 }
 
-#log th:nth-child(5) {
+#scm #log th:nth-child(5) {
     width: 10%;
 }
 
-#log th:nth-child(6) {
+#scm #log th:nth-child(6) {
     width: 20px;
 }
 
-#log .hide {
+#scm #log .hide {
     display: none;
 }
 
-#menu {
+#scm #menu {
     margin-bottom: 15px;
     border: 1px solid #ccc;
     padding: 5px;
@@ -77,26 +70,26 @@
     font-size: 14px;
 }
 
-#menu #links {
+#scm #menu #links {
     float: left;
     width: 50%;
     margin-top: 3px;
 }
 
-#menu form {
+#scm #menu form {
     float: right;
     padding: 0;
     margin: 0;
     width: 50%;
 }
 
-#menu a {
+#scm #menu a {
     margin-right: 10px;
     text-decoration: none;
     color: #000;
 }
 
-#menu a:hover {
+#scm #menu a:hover {
     margin-right: 10px;
     background-color: #fff;
     border-radius: 4px 4px 4px 4px;
@@ -104,147 +97,147 @@
     text-decoration: none;
 }
 
-#menu input[type="text"] {
+#scm #menu input[type="text"] {
     font-family: Trebuchet MS;
     font-size: 13px;
     width: 300px;
 }
 
-.icon-loading {
+#scm .icon-loading {
     background-image: url('images/loading.gif');
 }
 
-.icon {
+#scm .icon {
     background-repeat: no-repeat;
     background-position: 0 50%;
     padding-left: 20px;
     line-height: 20px;
 }
 
-.icon-notext {
+#scm .icon-notext {
     background-repeat: no-repeat;
     background-position: 0 50%;
     padding-left: 10px;
     line-height: 20px;
 }
 
-.icon-close {
+#scm .icon-close {
     background-image: url('../../../images/close.png');
 }
 
-.icon-binary-file {
+#scm .icon-binary-file {
     background-image: url('images/page_white_gear.png');
 }
 
-.icon-file {
+#scm .icon-file {
     background-image: url('images/page_white.png');
 }
 
-.icon-file-added {
+#scm .icon-file-added {
     background-image: url('images/page_white_add.png');
 }
 
-.icon-file-deleted {
+#scm .icon-file-deleted {
     background-image: url('images/page_white_delete.png');
 }
 
-.icon-file-modified {
+#scm .icon-file-modified {
     background-image: url('images/page_white_edit.png');
 }
 
-.icon-working-dir {
+#scm .icon-working-dir {
     background-image: url('images/folder_table.png');
 }
 
-#status {
+#scm #status {
     display: none;
 }
 
-#status-container {
+#scm #status-container {
     height: 30px;
 }
 
-#log .actions a {
+#scm #log .actions a {
     margin-left: 5px;
 }
 
-.commit-detail {
+#scm .commit-detail {
     margin-bottom: 2%;
     padding: 1%;
     border: 1px solid #ccc;
 }
 
-.commit-detail p {
+#scm .commit-detail p {
     margin-top: 0;
 }
 
-.commit-summary {
+#scm .commit-summary {
     margin-bottom: 1%;
     border-bottom: 1px solid #ccc;
 }
 
-.commit-file-summary {
+#scm .commit-file-summary {
     padding: 0;
     margin: 0 0 1% 0;
 }
 
-.commit-file-summary li {
+#scm .commit-file-summary li {
     margin-bottom: 5px;
     list-style-type: none;
 }
 
-.commit-file-summary li a {
+#scm .commit-file-summary li a {
     text-decoration: none;
     color: #4183C4;
 }
 
-.diff {
+#scm .diff {
     margin-bottom: 3%;
     border: 1px solid #ccc;
 }
 
-.diff-header {
+#scm .diff-header {
     font-weight: bold;
     padding: 5px;
     border-bottom: 1px solid #ccc;
 }
 
-.diff-add {
+#scm .diff-add {
     background-color: #DDFFDD;
 }
 
-.diff-remove {
+#scm .diff-remove {
     background-color: #FFDDDD;
 }
 
-.diff pre {
+#scm .diff pre {
     padding: 0;
     margin: 0;
     font-size: 13px;
     font-family: Consolas, Lucida Grande;
 }
 
-.diff-source {
+#scm .diff-source {
     overflow: auto;
 }
 
-.actions a {
+#scm .actions a {
     color: Blue;
 }
 
-.actions a:visited {
+#scm .actions a:visited {
     color: Blue;
 }
 
-#working {
+#scm #working {
     display: none;
 }
 
-form {
+#scm form {
     display: inline;
 }
 
-#commit-message {
+#scm #commit-message {
     width: 60%;
     height: 150px;
     display: block;
@@ -253,15 +246,15 @@ form {
     font-size: 13px;
 }
 
-#commit-area {
+#scm #commit-area {
     margin-bottom: 1%;
 }
 
-.details {
+#scm .details {
     color: #aaa;
 }
 
-#new-commit {
+#scm #new-commit {
     display: none;
     background-color: #e6efc2;
     border: 1px solid #c6d880;
@@ -271,7 +264,7 @@ form {
     margin-bottom: 10px;
 }
 
-#error {
+#scm #error {
     display: none;
     background-color: #FFEBE8;
     border: 1px solid #DD3C10;
@@ -281,36 +274,36 @@ form {
     margin-bottom: 10px;
 }
 
-.gray-gradient {
+#scm .gray-gradient {
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f5f5f5', endColorstr='#ebebeb'); /* for IE */
     background: -webkit-gradient(linear, left top, left bottom, from(#f5f5f5), to(#ebebeb)); /* for webkit browsers */
     background: -moz-linear-gradient(top,  #f5f5f5,  #ebebeb); /* for firefox 3.6+ */
 }
 
-.clear {
+#scm .clear {
     clear: both;
 }
 
-.gravatar {
+#scm .gravatar {
     border: 1px solid #ccc;
     padding: 2px;
     float: left;
 }
 
-.author {
+#scm .author {
     float: left;
     margin-left: 5px;
 }
 
-.binary-text {
+#scm .binary-text {
     padding: 5px;
 }
 
-.line {
+#scm .line {
     width: 100%;
 }
 
-.branch {
+#scm .branch {
     border-radius: 2px 2px 2px 2px;
     display: inline-block;
     font-size: 11px;
@@ -326,16 +319,16 @@ form {
     margin-bottom: 1%;
 }
 
-#infinite-status {
+#scm #infinite-status {
     margin: 0 auto;
     width: 200px;
 }
 
-#footer {
+#scm #footer {
     margin-top: 100px;
 }
 
-.line-number {
+#scm .line-number {
     font-family: Consolas;
     font-size: 12px;
     padding: 0 0.5em;
@@ -344,17 +337,17 @@ form {
     color: #AAAAAA;
 }
 
-#repository-type {
+#scm #repository-type {
     float: left;
     margin-top: 4px;
     margin-right: 10px;
     font-weight: bold;
 }
 
-#working .revert {
+#scm #working .revert {
     visibility: visible;
 }
 
-#show .revert {
+#scm #show .revert {
     visibility: hidden;
 }

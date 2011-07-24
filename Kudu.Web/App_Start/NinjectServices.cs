@@ -1,21 +1,23 @@
+using System;
+using System.Web;
+using System.Web.Routing;
 using Kudu.Core.Deployment;
 using Kudu.Core.Editor;
 using Kudu.Core.SourceControl;
+using Kudu.Web.Infrastructure;
+using Kudu.Web.Models;
 using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 using Ninject;
+using Ninject.Activation;
 using Ninject.Web.Mvc;
 using SignalR.Infrastructure;
+using System.Web.Script.Serialization;
 
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Web.App_Start.NinjectServices), "Start")]
 [assembly: WebActivator.ApplicationShutdownMethodAttribute(typeof(Kudu.Web.App_Start.NinjectServices), "Stop")]
 
 namespace Kudu.Web.App_Start {
-    public static class NinjectServices {
-        private const string ServiceUrl = "http://localhost:52590/";
-        private const string FilesService = ServiceUrl + "files";
-        private const string ScmService = ServiceUrl + "scm";
-        private const string DeploymentService = ServiceUrl + "deploy";
-
+    public static class NinjectServices {        
         private static readonly Bootstrapper bootstrapper = new Bootstrapper();
 
         /// <summary>
@@ -54,11 +56,33 @@ namespace Kudu.Web.App_Start {
         /// </summary>
         /// <param name="kernel">The kernel.</param>
         private static void RegisterServices(IKernel kernel) {
-            kernel.Bind<IFileSystem>().ToConstant(new RemoteFileSystem(FilesService));
-            kernel.Bind<IRepository>().ToConstant(new RemoteRepository(ScmService));
-            kernel.Bind<IRepositoryManager>().ToConstant(new RemoteRepositoryManager(ScmService));
-            var deploymentManager = new RemoteDeploymentManager(DeploymentService);
-            kernel.Bind<IDeploymentManager>().ToConstant(deploymentManager);
+            kernel.Bind<ISiteManager>().ToConstant(new SiteManager());
+            kernel.Bind<HttpContextBase>().ToMethod(_ => new HttpContextWrapper(HttpContext.Current));
+            kernel.Bind<ISiteConfiguration>().To<SiteConfiguration>();
+            kernel.Bind<IFileSystem>().ToMethod(context => GetFileSystem(context));
+            kernel.Bind<IRepository>().ToMethod(context => GetRepository(context));
+            kernel.Bind<IRepositoryManager>().ToMethod(context => GetRepositoryManager(context));
+            kernel.Bind<IDeploymentManager>().ToMethod(context => GetDeploymentManager(context));
+        }
+
+        private static IRepository GetRepository(IContext context) {
+            var siteConfiguraiton = context.Kernel.Get<ISiteConfiguration>();
+            return new RemoteRepository(siteConfiguraiton.ServiceUrl + "scm");
+        }
+
+        private static IFileSystem GetFileSystem(IContext context) {
+            var siteConfiguraiton = context.Kernel.Get<ISiteConfiguration>();
+            return new RemoteFileSystem(siteConfiguraiton.ServiceUrl + "files");
+        }
+
+        private static IDeploymentManager GetDeploymentManager(IContext context) {
+            var siteConfiguraiton = context.Kernel.Get<ISiteConfiguration>();
+            return new RemoteDeploymentManager(siteConfiguraiton.ServiceUrl + "deploy");
+        }
+
+        private static IRepositoryManager GetRepositoryManager(IContext context) {
+            var siteConfiguraiton = context.Kernel.Get<ISiteConfiguration>();
+            return new RemoteRepositoryManager(siteConfiguraiton.ServiceUrl + "scm");
         }
     }
 }
