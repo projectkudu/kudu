@@ -8,6 +8,7 @@ using IIS = Microsoft.Web.Administration;
 namespace Kudu.Web.Infrastructure {
     public class SiteManager : ISiteManager {
         private const string ServiceWebZip = "Kudu.Web.Infrastructure.Site.serviceweb.zip";
+        private static readonly string ServiceSitePath = Path.Combine(HttpRuntime.AppDomainAppPath, "App_Data", "service");
 
         public Site CreateSite(string siteName) {
             var iis = new IIS.ServerManager();
@@ -17,10 +18,10 @@ namespace Kudu.Web.Infrastructure {
 
             try {
                 // Create the services site
-                var serviceSite = EnsureServiceSite(iis, kuduAppPool);
+                var serviceSite = GetServiceSite(iis, kuduAppPool);
 
                 // Get the physical path of the services site
-                string serviceSiteRoot = EnsureServiceSite();
+                string serviceSiteRoot = ServiceSitePath;
 
                 // Get the port of the site
                 int servicePort = serviceSite.Bindings[0].EndPoint.Port;
@@ -28,7 +29,7 @@ namespace Kudu.Web.Infrastructure {
                 serviceApp.ApplicationPoolName = kuduAppPool.Name;
 
                 // Get the path to the website
-                string siteRoot = Path.Combine(serviceSiteRoot, @"App_Data", "_root", siteName, "wwwroot");
+                string siteRoot = Path.Combine(serviceSiteRoot, @"App_Data", "apps", siteName, "wwwroot");
                 int sitePort = GetRandomPort();
                 var site = iis.Sites.Add(liveSiteName, siteRoot, sitePort);
                 site.ApplicationDefaults.ApplicationPoolName = kuduAppPool.Name;
@@ -62,32 +63,27 @@ namespace Kudu.Web.Infrastructure {
             return kuduAppPool;
         }
 
-        private IIS.Site EnsureServiceSite(IIS.ServerManager iis, IIS.ApplicationPool appPool) {
+        private IIS.Site GetServiceSite(IIS.ServerManager iis, IIS.ApplicationPool appPool) {
             var site = iis.Sites["kudu_services"];
             if (site == null) {
-                string path = Path.Combine(HttpRuntime.AppDomainAppPath, "App_Data", "sites");
-                site = iis.Sites.Add("kudu_services", path, GetRandomPort());
+                site = iis.Sites.Add("kudu_services", ServiceSitePath, GetRandomPort());
                 site.ApplicationDefaults.ApplicationPoolName = appPool.Name;
             }
+            EnsureServiceSite();
             return site;
         }
 
-        private string EnsureServiceSite() {
-            string root = Path.Combine(HttpRuntime.AppDomainAppPath, "App_Data", "sites");
-            string destPath = Path.Combine(root, "wwwroot");
-
+        private void EnsureServiceSite() {            
             try {
                 using (var stream = typeof(SiteManager).Assembly.GetManifestResourceStream(ServiceWebZip)) {
                     using (var file = ZipFile.Read(stream)) {
-                        file.ExtractAll(destPath, ExtractExistingFileAction.OverwriteSilently);
+                        file.ExtractAll(ServiceSitePath, ExtractExistingFileAction.OverwriteSilently);
                     }
                 }
             }
             catch (UnauthorizedAccessException) {
                 // File might be locked
             }
-
-            return destPath;
         }
 
         private int GetRandomPort() {
