@@ -74,6 +74,7 @@
     <Compile Include="Infrastructure\KuduActionInvoker.cs" />
     <Compile Include="Infrastructure\KuduController.cs" />
     <Compile Include="Infrastructure\KuduJsonResult.cs" />
+    <Compile Include="IServerConfiguration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SourceControl\ScmController.cs" />
   </ItemGroup>

@@ -1,5 +1,4 @@
-﻿using System.Web;
-using System.Web.Mvc;
+﻿using System.Web.Mvc;
 using System.Web.Routing;
 
 namespace Kudu.Services {
@@ -9,32 +8,31 @@ namespace Kudu.Services {
         }
 
         public static void RegisterRoutes(RouteCollection routes) {
-            string site = HttpRuntime.AppDomainAppVirtualPath.Trim('/');
-            string gitServerPathRoot = site + ".git";
+            var configuration = DependencyResolver.Current.GetService<IServerConfiguration>();
 
             routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
 
             routes.MapRoute(
                 "proxy", // Route name
-                "hg/{*url}", // URL with parameters
-                new { controller = "Proxy", action = "ProxyRequest", id = UrlParameter.Optional } // Parameter defaults
+                configuration.HgServerRoot + "/{*url}", // URL with parameters
+                new { controller = "Proxy", action = "ProxyRequest" } // Parameter defaults
             );
 
             routes.MapRoute(
                 "InfoRefs", // Route name
-                gitServerPathRoot + "/info/refs", // URL with parameters
+                configuration.GitServerRoot + "/info/refs", // URL with parameters
                 new { Controller = "InfoRefs", Action = "Execute" } // Parameter defaults
             );
 
             routes.MapRoute(
                 "UploadPack", // Route name
-                gitServerPathRoot + "/git-upload-pack", // URL with parameters
+                configuration.GitServerRoot + "/git-upload-pack", // URL with parameters
                 new { Controller = "Rpc", Action = "UploadPack" } // Parameter defaults
             );
 
             routes.MapRoute(
                 "ReceivePack", // Route name
-                gitServerPathRoot + "/git-receive-pack", // URL with parameters
+                configuration.GitServerRoot + "/git-receive-pack", // URL with parameters
                 new { Controller = "Rpc", Action = "ReceivePack" } // Parameter defaults
             );
 

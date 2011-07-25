@@ -8,13 +8,16 @@ using Kudu.Core.SourceControl.Hg;
 namespace Kudu.Services.HgServer {
     public class ProxyController : Controller {
         private readonly HgServerManager _serverManager;
+        private readonly IServerConfiguration _configuration;
 
-        public ProxyController(HgServerManager serverManager) {
+        public ProxyController(HgServerManager serverManager, 
+                               IServerConfiguration configuration) {
             _serverManager = serverManager;
+            _configuration = configuration;
         }
 
         public ActionResult ProxyRequest() {
-            string hgRoot = HttpRuntime.AppDomainAppVirtualPath + "/hg";
+            string hgRoot = HttpRuntime.AppDomainAppVirtualPath + "/" + _configuration.HgServerRoot;
 
             if (!Request.RawUrl.StartsWith(hgRoot, StringComparison.OrdinalIgnoreCase)) {
                 throw new ArgumentException();

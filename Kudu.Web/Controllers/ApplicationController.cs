@@ -50,7 +50,7 @@ namespace Kudu.Web.Controllers {
             if (db.Applications.Any(a => a.Name == appViewModel.Name || a.Slug == slug)) {
                 ModelState.AddModelError("Name", "Site already exists");
             }
-            
+
             if (ModelState.IsValid) {
                 Site site = null;
 
@@ -71,7 +71,7 @@ namespace Kudu.Web.Controllers {
                         // Give iis a chance to start the app up
                         // if we send requests too quickly, we'll end up getting 404s
                         Thread.Sleep(500);
-                        
+
                         IRepositoryManager repositoryManager = GetRepositoryManager(app);
                         try {
                             repositoryManager.CreateRepository(appViewModel.RepositoryType);
@@ -104,7 +104,8 @@ namespace Kudu.Web.Controllers {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             var repositoryManager = GetRepositoryManager(application);
             var type = repositoryManager.GetRepositoryType();
-            ViewBag.CloneUrl = type == RepositoryType.Git ? application.ServiceUrl + application.Slug + ".git" : application.ServiceUrl + "hg";
+
+            ViewBag.CloneUrl = GetCloneUrl(application, type);
             ViewBag.RepositoryType = type;
             ViewBag.AppName = application.Name;
 
@@ -158,6 +159,11 @@ namespace Kudu.Web.Controllers {
         protected override void Dispose(bool disposing) {
             db.Dispose();
             base.Dispose(disposing);
+        }
+
+        private string GetCloneUrl(Application application, RepositoryType type) {
+            string prefix = application.ServiceUrl + application.Slug;
+            return prefix + (type == RepositoryType.Git ? ".git" : String.Empty);
         }
 
         private void PopulateRepositoyTypes() {
