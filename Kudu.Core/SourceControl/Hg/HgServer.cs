@@ -8,7 +8,7 @@ namespace Kudu.Core.SourceControl.Hg {
         private readonly string _appName;
         private readonly string _configFile;
 
-        internal HgServer(Infrastructure.Executable hgExe, string appName, string configFile) {
+        internal HgServer(Executable hgExe, string appName, string configFile) {
             _hgExe = hgExe;
             _appName = appName;
             _configFile = configFile;
