@@ -12,8 +12,11 @@ namespace Kudu.Core {
         private readonly string _repositoryPath;
         private readonly string _deployPath;
         private readonly string _buildPath;
+        private readonly string _root;
 
-        public Environment(string repositoryPath, string deployPath, string buildPath) {
+        public Environment(string appName, string applicationRootPath, string repositoryPath, string deployPath, string buildPath) {
+            AppName = appName;
+            ApplicationRootPath = applicationRootPath;
             _repositoryPath = repositoryPath;
             _deployPath = deployPath;
             _buildPath = buildPath;
@@ -45,6 +48,16 @@ namespace Kudu.Core {
                 EnsureDirectory(_buildPath);
                 return _buildPath;
             }
+        }
+
+        public string ApplicationRootPath {
+            get;
+            private set;
+        }
+
+        public string AppName {
+            get;
+            private set;
         }
 
         public IEnumerable<string> GetWebApplicationProjects() {

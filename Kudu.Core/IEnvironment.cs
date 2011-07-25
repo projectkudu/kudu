@@ -7,5 +7,7 @@ namespace Kudu.Core {
         string RepositoryPath { get; }
         string DeploymentPath { get; }
         string BuildPath { get; }
+        string ApplicationRootPath { get; }
+        string AppName { get; }
     }
 }

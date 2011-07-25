@@ -104,7 +104,7 @@ namespace Kudu.Web.Controllers {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             var repositoryManager = GetRepositoryManager(application);
             var type = repositoryManager.GetRepositoryType();
-            ViewBag.CloneUrl = type == RepositoryType.Git ? application.ServiceUrl + application.Slug + ".git" : null;
+            ViewBag.CloneUrl = type == RepositoryType.Git ? application.ServiceUrl + application.Slug + ".git" : application.ServiceUrl + "hg";
             ViewBag.RepositoryType = type;
             ViewBag.AppName = application.Name;
 

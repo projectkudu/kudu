@@ -12,6 +12,7 @@ namespace Kudu.Core.Infrastructure {
 
         public string WorkingDirectory { get; private set; }
         public string Path { get; private set; }
+        public int ProcessId { get; set; }
 
         public string Execute(string arguments, params object[] args) {
             var psi = new ProcessStartInfo {
@@ -31,6 +32,8 @@ namespace Kudu.Core.Infrastructure {
 
             var process = Process.Start(psi);
 
+            ProcessId = process.Id;
+
             Func<StreamReader, string> reader = (StreamReader streamReader) => streamReader.ReadToEnd();
 
             IAsyncResult outputReader = reader.BeginInvoke(process.StandardOutput, null, null);
@@ -48,6 +51,13 @@ namespace Kudu.Core.Infrastructure {
             }
 
             return output;
+        }
+
+        public void Kill() {
+            var process = Process.GetProcessById(ProcessId);
+            if (process != null) {
+                process.Kill();
+            }
         }
     }
 }

@@ -15,6 +15,12 @@ namespace Kudu.Services {
             routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
 
             routes.MapRoute(
+                "proxy", // Route name
+                "hg/{*url}", // URL with parameters
+                new { controller = "Proxy", action = "ProxyRequest", id = UrlParameter.Optional } // Parameter defaults
+            );
+
+            routes.MapRoute(
                 "InfoRefs", // Route name
                 gitServerPathRoot + "/info/refs", // URL with parameters
                 new { Controller = "InfoRefs", Action = "Execute" } // Parameter defaults
