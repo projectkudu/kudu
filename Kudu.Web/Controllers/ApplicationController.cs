@@ -46,16 +46,12 @@ namespace Kudu.Web.Controllers {
 
         [HttpPost]
         public ActionResult Create(ApplicationViewModel appViewModel) {
-            if (db.Applications.Any(a => a.Name == appViewModel.Name)) {
-                ModelState.AddModelError("Name", "Site already exists");
-            }
             string slug = appViewModel.Name.GenerateSlug();
-            if (db.Applications.Any(a => a.Slug == slug)) {
+            if (db.Applications.Any(a => a.Name == appViewModel.Name || a.Slug == slug)) {
                 ModelState.AddModelError("Name", "Site already exists");
             }
-
+            
             if (ModelState.IsValid) {
-
                 Site site = null;
 
                 try {
@@ -91,7 +87,7 @@ namespace Kudu.Web.Controllers {
                 }
                 catch (Exception ex) {
                     if (site != null) {
-                        _siteManager.DeleteSite(site.SiteName, appViewModel.Name);
+                        _siteManager.DeleteSite(site.SiteName, slug);
                     }
 
                     ModelState.AddModelError("__FORM", ex.Message);
@@ -140,7 +136,7 @@ namespace Kudu.Web.Controllers {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             if (application != null) {
 
-                _siteManager.DeleteSite(application.SiteName, application.Name);
+                _siteManager.DeleteSite(application.SiteName, slug);
 
                 try {
                     string repositoryUrl = application.ServiceUrl + "scm";
