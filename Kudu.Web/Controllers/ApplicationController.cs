@@ -67,19 +67,12 @@ namespace Kudu.Web.Controllers {
                         RepositoryType = (int)appViewModel.RepositoryType
                     };
 
-                    ThreadPool.QueueUserWorkItem(_ => {
-                        // Give iis a chance to start the app up
-                        // if we send requests too quickly, we'll end up getting 404s
-                        Thread.Sleep(500);
+                    // Give iis a chance to start the app up
+                    // if we send requests too quickly, we'll end up getting 404s
+                    Thread.Sleep(500);
 
-                        IRepositoryManager repositoryManager = GetRepositoryManager(app);
-                        try {
-                            repositoryManager.CreateRepository(appViewModel.RepositoryType);
-                        }
-                        catch {
-
-                        }
-                    });
+                    IRepositoryManager repositoryManager = GetRepositoryManager(app);
+                    repositoryManager.CreateRepository(appViewModel.RepositoryType);
 
                     db.Applications.Add(app);
                     db.SaveChanges();
