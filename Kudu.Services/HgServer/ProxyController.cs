@@ -7,12 +7,12 @@ using Kudu.Core.SourceControl.Hg;
 
 namespace Kudu.Services.HgServer {
     public class ProxyController : Controller {
-        private readonly HgServerManager _serverManager;
+        private readonly IServer _server;
         private readonly IServerConfiguration _configuration;
 
-        public ProxyController(HgServerManager serverManager, 
+        public ProxyController(IServer server, 
                                IServerConfiguration configuration) {
-            _serverManager = serverManager;
+            _server = server;
             _configuration = configuration;
         }
 
@@ -25,11 +25,11 @@ namespace Kudu.Services.HgServer {
 
             string pathToProxy = Request.RawUrl.Substring(hgRoot.Length);
 
-            if (!_serverManager.Server.IsRunning) {
-                _serverManager.Server.Start();
+            if (!_server.IsRunning) {
+                _server.Start();
             }
 
-            var uri = new Uri(_serverManager.Server.Url + pathToProxy);
+            var uri = new Uri(_server.Url + pathToProxy);
 
             var proxyRequest = (HttpWebRequest)WebRequest.Create(uri);
 

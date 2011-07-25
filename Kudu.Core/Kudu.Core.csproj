@@ -93,7 +93,7 @@
     <Compile Include="SourceControl\Git\LibGitRepository.cs" />
     <Compile Include="SourceControl\Hg\HgRepository.cs" />
     <Compile Include="SourceControl\Hg\HgServer.cs" />
-    <Compile Include="SourceControl\Hg\HgServerManager.cs" />
+    <Compile Include="SourceControl\Hg\IServer.cs" />
     <Compile Include="SourceControl\IRepository.cs" />
     <Compile Include="SourceControl\IRepositoryManager.cs" />
     <Compile Include="SourceControl\LineDiff.cs" />

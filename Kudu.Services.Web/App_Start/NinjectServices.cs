@@ -60,7 +60,7 @@ namespace Kudu.Services.Web.App_Start {
             kernel.Bind<IFileSystemFactory>().To<FileSystemFactory>();
             kernel.Bind<GitServerRepository>().ToMethod(context => new GitServerRepository(context.Kernel.Get<IEnvironment>().RepositoryPath));
             kernel.Bind<IUserValidator>().To<SimpleUserValidator>();
-            kernel.Bind<HgServerManager>().ToSelf().InSingletonScope();
+            kernel.Bind<IServer>().To<Kudu.Core.SourceControl.Hg.HgServer>().InSingletonScope();
             kernel.Bind<IServerConfiguration>().To<DefaultServerConfiguration>().InSingletonScope();
         }
 

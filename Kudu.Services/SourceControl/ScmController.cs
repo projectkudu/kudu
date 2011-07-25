@@ -2,16 +2,20 @@
 using System.Web.Mvc;
 using Kudu.Core.SourceControl;
 using Kudu.Services.Infrastructure;
+using Kudu.Core.SourceControl.Hg;
 
 namespace Kudu.Services.SourceControl {
     [FormattedExceptionFilter]
     public class ScmController : KuduController {
         private readonly IRepository _repository;
         private readonly IRepositoryManager _repositoryManager;
+        private readonly IServer _serverManager;
 
-        public ScmController(IRepositoryManager repositoryManager) {
+        public ScmController(IRepositoryManager repositoryManager, 
+                             IServer serverManager) {
             _repositoryManager = repositoryManager;
             _repository = repositoryManager.GetRepository() ?? NullRepository.Instance;
+            _serverManager = serverManager;
         }
 
         [HttpPost]
@@ -21,6 +25,8 @@ namespace Kudu.Services.SourceControl {
 
         [HttpPost]
         public void Delete() {
+            // Stop the server manager (will no-op if nothing is running)
+            _serverManager.Stop();
             _repositoryManager.Delete();
         }
 
