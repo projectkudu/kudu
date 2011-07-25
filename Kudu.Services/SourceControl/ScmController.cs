@@ -9,13 +9,13 @@ namespace Kudu.Services.SourceControl {
     public class ScmController : KuduController {
         private readonly IRepository _repository;
         private readonly IRepositoryManager _repositoryManager;
-        private readonly IServer _serverManager;
+        private readonly IServer _server;
 
-        public ScmController(IRepositoryManager repositoryManager, 
-                             IServer serverManager) {
+        public ScmController(IRepositoryManager repositoryManager,
+                             IServer server) {
             _repositoryManager = repositoryManager;
             _repository = repositoryManager.GetRepository() ?? NullRepository.Instance;
-            _serverManager = serverManager;
+            _server = server;
         }
 
         [HttpPost]
@@ -25,8 +25,8 @@ namespace Kudu.Services.SourceControl {
 
         [HttpPost]
         public void Delete() {
-            // Stop the server manager (will no-op if nothing is running)
-            _serverManager.Stop();
+            // Stop the server (will no-op if nothing is running)
+            _server.Stop();
             _repositoryManager.Delete();
         }
 

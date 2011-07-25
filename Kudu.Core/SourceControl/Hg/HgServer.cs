@@ -18,7 +18,6 @@ allow_push = *
 [paths]
 {0} = {1}
 ";
-
         public HgServer(IEnvironment environment) {
             _environment = environment;
             _server = GetServer(environment);
@@ -47,7 +46,7 @@ allow_push = *
         private static Server GetServer(IEnvironment environment) {
             string configFile = EnsureConfiguration(environment);
             string pidFilePath = Path.Combine(environment.ApplicationRootPath, "serverpid");
- 
+
             var hgExe = new Executable(Client.ClientPath, environment.RepositoryPath);
 
             return new Server(hgExe, environment.AppName, configFile, pidFilePath);
@@ -123,7 +122,7 @@ allow_push = *
                         var process = Process.GetProcessById(pid);
                         process.Kill();
                     }
-                    catch(ArgumentException) {
+                    catch (ArgumentException) {
                     }
                 }
             }
