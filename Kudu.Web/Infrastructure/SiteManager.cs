@@ -36,6 +36,7 @@ namespace Kudu.Web.Infrastructure {
                 iis.CommitChanges();
 
                 return new Site {
+                    ServiceAppName = siteName,
                     SiteName = liveSiteName,
                     ServiceUrl = String.Format("http://localhost:{0}/{1}/", servicePort, siteName),
                     SiteUrl = String.Format("http://localhost:{0}/", sitePort),

@@ -62,6 +62,7 @@ namespace Kudu.Web.Controllers {
                         Slug = slug,
                         ServiceUrl = site.ServiceUrl,
                         SiteUrl = site.SiteUrl,
+                        ServiceAppName = site.ServiceAppName,
                         SiteName = site.SiteName,
                         RepositoryType = (int)appViewModel.RepositoryType
                     };
@@ -87,7 +88,7 @@ namespace Kudu.Web.Controllers {
                 }
                 catch (Exception ex) {
                     if (site != null) {
-                        _siteManager.DeleteSite(site.SiteName, slug);
+                        _siteManager.DeleteSite(site.SiteName, site.ServiceAppName);
                     }
 
                     ModelState.AddModelError("__FORM", ex.Message);
@@ -135,12 +136,11 @@ namespace Kudu.Web.Controllers {
         public ActionResult DeleteConfirmed(string slug) {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             if (application != null) {
-
-                _siteManager.DeleteSite(application.SiteName, slug);
+                _siteManager.DeleteSite(application.SiteName, application.ServiceAppName);
 
                 try {
-                    string repositoryUrl = application.ServiceUrl + "scm";
-                    new RemoteRepositoryManager(repositoryUrl).Delete();
+                    IRepositoryManager repositoryManager = GetRepositoryManager(application);
+                    repositoryManager.Delete();
                 }
                 catch {
 
