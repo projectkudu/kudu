@@ -52,11 +52,11 @@
     width: 10%;
 }
 
-#scm #log th:nth-child(5) {
+#scm #log th:nth-child(6) {
     width: 20%;
 }
 
-#scm #log th:nth-child(6) {
+#scm #log th:nth-child(7) {
     width: 20px;
 }
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Web;
+using Kudu.Core.Infrastructure;
 using Kudu.Web.Models;
 using IIS = Microsoft.Web.Administration;
 
@@ -104,12 +105,7 @@ namespace Kudu.Web.Infrastructure {
                 return;
             }
 
-            try {
-                Directory.Delete(physicalPath, recursive: true);
-            }
-            catch {
-
-            }
+            FileSystemHelpers.DeleteDirectorySafe(physicalPath);
         }
     }
 }

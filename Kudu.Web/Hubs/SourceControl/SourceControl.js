@@ -40,9 +40,20 @@ $(function () {
         return 'icon-file';
     }
 
+    function getDeploymentStatus(deploymentInfo) {
+        if (deploymentInfo.Status == 0) {
+            return "Pending";
+        }
+        if (deploymentInfo.Status == 1) {
+            return "Failed";
+        }
+        return "Success";
+    }
+
     window.getDiffClass = getDiffClass;
     window.getDiffId = getDiffId;
     window.getFileClass = getFileClass;
+    window.getDeploymentStatus = getDeploymentStatus;
 
     function onError(e) {
         $('#error').html(e);

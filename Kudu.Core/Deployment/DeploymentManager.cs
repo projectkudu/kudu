@@ -19,6 +19,10 @@ namespace Kudu.Core.Deployment {
         }
 
         public IEnumerable<DeployResult> GetResults() {
+            if (!Directory.Exists(_environment.DeploymentCachePath)) {
+                yield break;
+            }
+
             foreach (var id in Directory.EnumerateDirectories(_environment.DeploymentCachePath)) {
                 yield return GetResult(id);
             }

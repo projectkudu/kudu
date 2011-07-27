@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.SourceControl.Hg;
 
@@ -48,7 +49,7 @@ namespace Kudu.Core.SourceControl {
 
         public void Delete() {
             if (Directory.Exists(_path)) {
-                Directory.Delete(_path, recursive: true);
+                FileSystemHelpers.DeleteDirectorySafe(_path);
             }
         }
 
