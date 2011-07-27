@@ -5,8 +5,8 @@ namespace Kudu.Core {
         bool RequiresBuild { get; }
         IEnumerable<string> GetWebApplicationProjects();
         string RepositoryPath { get; }
-        string DeploymentPath { get; }
-        string BuildPath { get; }
+        string DeploymentTargetPath { get; }
+        string DeploymentCachePath { get; }
         string ApplicationRootPath { get; }
         string AppName { get; }
     }

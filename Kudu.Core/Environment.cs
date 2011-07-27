@@ -11,15 +11,15 @@ namespace Kudu.Core {
 
         private readonly string _repositoryPath;
         private readonly string _deployPath;
-        private readonly string _buildPath;
+        private readonly string _deployCachePath;
         private readonly string _root;
 
-        public Environment(string appName, string applicationRootPath, string repositoryPath, string deployPath, string buildPath) {
+        public Environment(string appName, string applicationRootPath, string repositoryPath, string deployPath, string deployCachePath) {
             AppName = appName;
             ApplicationRootPath = applicationRootPath;
             _repositoryPath = repositoryPath;
             _deployPath = deployPath;
-            _buildPath = buildPath;
+            _deployCachePath = deployCachePath;
         }
 
         public bool RequiresBuild {
@@ -36,17 +36,17 @@ namespace Kudu.Core {
             }
         }
 
-        public string DeploymentPath {
+        public string DeploymentTargetPath {
             get {
                 EnsureDirectory(_deployPath);
                 return _deployPath;
             }
         }
 
-        public string BuildPath {
+        public string DeploymentCachePath {
             get {
-                EnsureDirectory(_buildPath);
-                return _buildPath;
+                EnsureDirectory(_deployCachePath);
+                return _deployCachePath;
             }
         }
 

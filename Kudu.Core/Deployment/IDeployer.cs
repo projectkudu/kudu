@@ -1,6 +1,7 @@
-﻿using System;
+﻿using System.Threading.Tasks;
+
 namespace Kudu.Core.Deployment {
     public interface IDeployer {
-        void Deploy(string id);
+        Task Deploy(string targetPath, ILogger logger);
     }
 }

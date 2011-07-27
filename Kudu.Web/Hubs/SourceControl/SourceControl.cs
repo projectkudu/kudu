@@ -2,7 +2,6 @@
 using System.Linq;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
-using Kudu.Web.Infrastructure;
 using Kudu.Web.Model;
 using SignalR.Hubs;
 
@@ -45,6 +44,8 @@ namespace Kudu.Web {
         public RepositoryViewModel GetRepositoryInfo() {
             var type = _repositoryManager.GetRepositoryType();
             return new RepositoryViewModel {
+                Deployments = _deploymentManager.GetResults()
+                                                .ToDictionary(d => d.Id),
                 Branches = _repository.GetBranches()
                                  .ToLookup(b => b.Id)
                                  .ToDictionary(p => p.Key, p => p.Select(b => b.Name))
@@ -61,6 +62,10 @@ namespace Kudu.Web {
                    };
         }
 
+        public string GetDeployLog(string id) {
+            return _deploymentManager.GetLog(id);
+        }
+
         public void Revert(string path) {
             _repository.RevertFile(path);
         }
@@ -70,7 +75,6 @@ namespace Kudu.Web {
         }
 
         public void Deploy(string id) {
-            _repository.Update(id);
             _deploymentManager.Deploy(id);
         }
     }

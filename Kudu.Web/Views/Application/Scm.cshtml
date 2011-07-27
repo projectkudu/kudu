@@ -57,6 +57,10 @@
             </div>
         </div>
 
+<div id="deploy-log-container">
+<pre id="deploy-log"></pre>
+</div>
+
         <div id="footer" />
     </div>
 </div>
@@ -79,7 +83,7 @@
     <tr class="changeset" id="${Id}">
         <td>${ShortId}</td>
         <td>
-            {{each(i, branch) getBranches($data.Id)}}
+            {{each(i, branch) branches}}
             <a href="#" class="branch update" data-id="${Id}" data-branch="${branch}">${branch}</a>
             {{/each}}
             <div class="description">
@@ -88,9 +92,14 @@
         </td>
         <td>${AuthorName}</td>
         <td class="timeago" title="${Date}"></td>
-        <td class="actions">                
+        <td class="actions">            
+            <a href="#/commit/${Id}" class="view">view diff</a>            
+            {{if deploymentInfo }}
+            <a href="#/view-log/${Id}" class="view-log">view log</a>
+            {{/if}}
+            {{if deploymentInfo && deploymentInfo.Status != 1 }}
             <a href="#" class="update" data-id="${Id}">deploy</a>
-            <a href="#/commit/${Id}" class="view">view</a>
+            {{/if}}
         </td>
         <td>
             <img class="loading hide" src="@Url.Content("~/Hubs/SourceControl/images/loading.gif")" />

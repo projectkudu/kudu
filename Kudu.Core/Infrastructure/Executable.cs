@@ -43,8 +43,10 @@ namespace Kudu.Core.Infrastructure {
 
             // Sometimes, we get an exit code of 1 even when the command succeeds (e.g. with 'git reset .').
             // So also make sure there is an error string
-            if (process.ExitCode != 0 && !String.IsNullOrEmpty(error)) {
-                throw new Exception(error);
+            if (process.ExitCode != 0) {
+                string text = String.IsNullOrEmpty(error) ? output : error;
+
+                throw new Exception(text);
             }
 
             return output;

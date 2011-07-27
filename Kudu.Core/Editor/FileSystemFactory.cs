@@ -17,7 +17,7 @@ namespace Kudu.Core.Editor {
                 // If this isn't a wap (Web Application Project), then mirror changes
                 // in both repositories.
                 return new MirrorRepository(new PhysicalFileSystem(_environment.RepositoryPath),
-                                            new PhysicalFileSystem(_environment.DeploymentPath));
+                                            new PhysicalFileSystem(_environment.DeploymentTargetPath));
             }
 
             // If we find a solution file then use the solution implementation so only get a subset
@@ -28,7 +28,7 @@ namespace Kudu.Core.Editor {
                 return new SolutionFileSystem(_environment.RepositoryPath, solutionFiles);
             }
 
-            return new PhysicalFileSystem(_environment.DeploymentPath);
+            return new PhysicalFileSystem(_environment.DeploymentTargetPath);
         }
     }
 }

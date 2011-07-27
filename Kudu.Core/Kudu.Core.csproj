@@ -57,12 +57,15 @@
   <ItemGroup>
     <Compile Include="Deployment\BasicDeployer.cs" />
     <Compile Include="Deployment\DeployerFactory.cs" />
+    <Compile Include="Deployment\DeploymentHelpers.cs" />
     <Compile Include="Deployment\DeploymentManager.cs" />
+    <Compile Include="Deployment\DeploymentTrackingFile.cs" />
     <Compile Include="Deployment\DeployResult.cs" />
     <Compile Include="Deployment\DeployStatus.cs" />
     <Compile Include="Deployment\IDeployer.cs" />
     <Compile Include="Deployment\IDeployerFactory.cs" />
     <Compile Include="Deployment\IDeploymentManager.cs" />
+    <Compile Include="Deployment\ILogger.cs" />
     <Compile Include="Deployment\MSBuildDeployer.cs" />
     <Compile Include="Deployment\RemoteDeploymentManager.cs" />
     <Compile Include="Editor\FileSystemFactory.cs" />

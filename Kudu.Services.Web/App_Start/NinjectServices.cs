@@ -19,7 +19,7 @@ namespace Kudu.Services.Web.App_Start {
         private static readonly Bootstrapper bootstrapper = new Bootstrapper();
         private const string RepositoryPath = "repository";
         private const string DeploymentTargetPath = "wwwroot";
-        private const string BuildOutputPath = "builds";
+        private const string DeploymentCachePath = "deployments";
 
         /// <summary>
         /// Starts the application
@@ -75,9 +75,9 @@ namespace Kudu.Services.Web.App_Start {
             string root = Path.Combine(Root, site);
             string repositoryPath = Path.Combine(root, RepositoryPath);
             string deployPath = Path.Combine(root, DeploymentTargetPath);
-            string buildPath = Path.Combine(root, BuildOutputPath);
+            string deployCachePath = Path.Combine(root, DeploymentCachePath);
 
-            return new Environment(site, root, repositoryPath, deployPath, buildPath);
+            return new Environment(site, root, repositoryPath, deployPath, deployCachePath);
         }
     }
 }

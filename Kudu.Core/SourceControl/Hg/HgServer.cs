@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace Kudu.Core.SourceControl.Hg {
     public class HgServer : IServer {
-        private readonly Server _server;
+        private readonly Lazy<Server> _server;
         private readonly IEnvironment _environment;
 
         private const string HgConfigurationFile = "hgweb.config";
@@ -20,27 +20,32 @@ allow_push = *
 ";
         public HgServer(IEnvironment environment) {
             _environment = environment;
-            _server = GetServer(environment);
+            _server = new Lazy<Server>(() => GetServer(environment));
         }
 
         public bool IsRunning {
             get {
-                return _server.IsRunning;
+                return _server.IsValueCreated && _server.Value.IsRunning;
             }
         }
 
         public string Url {
             get {
-                return _server.Url;
+                if (!_server.IsValueCreated) {
+                    return null;
+                }
+                return _server.Value.Url;
             }
         }
 
         public void Start() {
-            _server.Start();
+            _server.Value.Start();
         }
 
         public void Stop() {
-            _server.Stop();
+            if (_server.IsValueCreated) {
+                _server.Value.Stop();
+            }
         }
 
         private static Server GetServer(IEnvironment environment) {

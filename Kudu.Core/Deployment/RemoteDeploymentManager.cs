@@ -19,6 +19,10 @@ namespace Kudu.Core.Deployment {
             return _client.GetJson<DeployResult>("details?id=" + id);
         }
 
+        public string GetLog(string id) {
+            return _client.Get("log?id=" + id).EnsureSuccessful().Content.ReadAsString();
+        }
+
         public void Deploy(string id) {
             _client.Post(String.Empty, new FormUrlEncodedContent(new Dictionary<string, string> {
                 { "id", id }

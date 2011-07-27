@@ -40,17 +40,9 @@ $(function () {
         return 'icon-file';
     }
 
-    function getBranches(id) {
-        if (scm.state.branches && scm.state.branches[id]) {
-            return scm.state.branches[id];
-        }
-        return [];
-    }
-
     window.getDiffClass = getDiffClass;
     window.getDiffId = getDiffId;
     window.getFileClass = getFileClass;
-    window.getBranches = getBranches;
 
     function onError(e) {
         $('#error').html(e);
@@ -75,6 +67,12 @@ $(function () {
         }
 
         changesXhr = scm.getChanges(index, pageSize, function (changes) {
+            $.each(changes, function () {
+                // Add the cross cutting data
+                this.branches = scm.state.branches[this.Id];
+                this.deploymentInfo = scm.state.deployments[this.Id];
+            });
+
             $('#changes').append($('#changeset').render(changes));
             scm.state.index = index + changes.length;
 
@@ -94,7 +92,7 @@ $(function () {
         });
     }
 
-    function initialize() {        
+    function initialize() {
         $('#diff').delegate('.revert', 'click', function () {
             var path = $(this).closest('.file').attr('data-path');
             if (confirm('Are you sure you want to revert "' + path + '" ?')) {
@@ -137,6 +135,7 @@ $(function () {
     function loadRepository() {
         $('#show').hide();
         $('#working').hide();
+        $('#deploy-log').hide();
 
         $('#changes').html('');
         $('#log').show();
@@ -148,7 +147,8 @@ $(function () {
         scm.getRepositoryInfo()
            .done(function (info) {
                scm.state.branches = info.Branches;
-               
+               scm.state.deployments = info.Deployments;
+
                getChangeSets(0, function () {
                    window.loader.hide(token);
 
@@ -171,6 +171,7 @@ $(function () {
 
         $('#log').hide();
         $('#working').hide();
+        $('#deploy-log').hide();
 
         $('#show').html('');
         $('#show').show();
@@ -189,6 +190,27 @@ $(function () {
         });
     }
 
+    function viewDeployLog(id) {
+        if (changesXhr) {
+            changesXhr.abort();
+        }
+        $('#log').hide();
+        $('#show').hide();
+        $('#diff').hide();
+        $('#working').hide();
+
+        var token = window.loader.show('Loading deployment log...');
+
+        scm.getDeployLog(id, function (log) {
+            $('#deploy-log').html(log);
+            $('#deploy-log').show();
+        })
+        .fail(onError)
+        .always(function () {
+            window.loader.hide(token);
+        });
+    }
+
     function viewWorking() {
         if (changesXhr) {
             changesXhr.abort();
@@ -196,6 +218,7 @@ $(function () {
 
         $('#log').hide();
         $('#show').hide();
+        $('#deploy-log').hide();
 
         $('#diff').html('');
         $('#diff').show();
@@ -270,6 +293,10 @@ $(function () {
 
         this.get('#/commit/:id', function () {
             show(this.params.id);
+        });
+
+        this.get('#/view-log/:id', function () {
+            viewDeployLog(this.params.id);
         });
 
         this.get('#/working', function () {

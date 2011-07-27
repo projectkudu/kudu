@@ -90,6 +90,8 @@ namespace Kudu.Web.Infrastructure {
                 if (servicesSite != null) {
                     var app = servicesSite.Applications["/" + applicationName];
                     if (app != null) {
+                        string appPath = Path.Combine(ServiceSitePath, @"App_Data", "apps", applicationName);
+                        DeleteSafe(appPath);
                         servicesSite.Applications.Remove(app);
                     }
                 }

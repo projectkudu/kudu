@@ -1,6 +1,7 @@
 ﻿using System.Web.Mvc;
 using Kudu.Core.Deployment;
 using Kudu.Services.Infrastructure;
+using System;
 
 namespace Kudu.Services.Deployment {
     [FormattedExceptionFilter]
@@ -19,8 +20,11 @@ namespace Kudu.Services.Deployment {
 
         [HttpGet]
         [ActionName("log")]
-        public ActionResult GetResults() {
-            return Json(_deploymentManager.GetResults(), JsonRequestBehavior.AllowGet);
+        public ActionResult GetResults(string id) {
+            if (String.IsNullOrEmpty(id)) {
+                return Json(_deploymentManager.GetResults(), JsonRequestBehavior.AllowGet);
+            }
+            return Content(_deploymentManager.GetLog(id));
         }
 
         [HttpGet]

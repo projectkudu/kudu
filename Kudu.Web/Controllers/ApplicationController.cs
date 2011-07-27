@@ -130,15 +130,15 @@ namespace Kudu.Web.Controllers {
         public ActionResult DeleteConfirmed(string slug) {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             if (application != null) {
-                _siteManager.DeleteSite(application.SiteName, application.ServiceAppName);
 
                 try {
                     IRepositoryManager repositoryManager = GetRepositoryManager(application);
                     repositoryManager.Delete();
                 }
                 catch {
-
                 }
+
+                _siteManager.DeleteSite(application.SiteName, application.ServiceAppName);
 
                 db.Applications.Remove(application);
                 db.SaveChanges();
