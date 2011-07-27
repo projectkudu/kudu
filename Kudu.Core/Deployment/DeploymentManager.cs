@@ -30,6 +30,7 @@ namespace Kudu.Core.Deployment {
 
         public DeployResult GetResult(string id) {
             var file = OpenTrackingFile(id);
+
             if (file == null) {
                 return null;
             }

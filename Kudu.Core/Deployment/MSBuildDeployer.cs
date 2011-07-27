@@ -1,8 +1,8 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 using Kudu.Core.Infrastructure;
 using SystemEnvironment = System.Environment;
-using System;
 
 namespace Kudu.Core.Deployment {
     public class MSBuildDeployer : IDeployer {
@@ -20,7 +20,7 @@ namespace Kudu.Core.Deployment {
             var tcs = new TaskCompletionSource<object>();
 
             // Locate the solution directory
-            string solutionDir = Path.GetDirectoryName(_solutionPath);
+            string solutionDir = Path.GetDirectoryName(_solutionPath) + "\\";
 
             try {
                 // Build the solution first
