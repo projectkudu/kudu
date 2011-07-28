@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Kudu.Core.SourceControl;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.SourceControl;
 
 namespace Kudu.Core.Deployment {
     public class DeploymentManager : IDeploymentManager {
@@ -165,7 +165,7 @@ namespace Kudu.Core.Deployment {
                 logger.Log("Copying files to {0}", _environment.DeploymentTargetPath);
 
                 // Copy to target
-                DeploymentHelpers.SmartCopy(cachePath, _environment.DeploymentTargetPath, skipOldFiles);
+                FileSystemHelpers.SmartCopy(cachePath, _environment.DeploymentTargetPath, skipOldFiles);
 
                 logger.Log("Done");
 

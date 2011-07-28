@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment {
     public class BasicBuilder : ISiteBuilder {
@@ -15,7 +16,7 @@ namespace Kudu.Core.Deployment {
             try {
                 logger.Log("Copying files to {0}", outputPath);
 
-                DeploymentHelpers.SmartCopy(_sourcePath, outputPath);
+                FileSystemHelpers.SmartCopy(_sourcePath, outputPath);
 
                 logger.Log("Success.");
             }
