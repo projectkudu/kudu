@@ -58,9 +58,8 @@
             </div>
         </div>
 
-<div id="deploy-log-container">
-<pre id="deploy-log"></pre>
-</div>
+        <ul id="deploy-log"> 
+        </ul>
 
         <div id="footer" />
     </div>
@@ -80,6 +79,13 @@
         signalR.sourceControl.state.appName = '@ViewBag.AppName';
     });
 </script>
+<script id="logTemplate" type="text/x-jquery-tmpl"> 
+    <li>
+        <strong>${LogTime}</strong>
+        <pre>${Message}</pre>
+    </li>
+</script>
+
 <script id="changeset" type="text/x-jquery-tmpl"> 
     <tr class="changeset" id="${Id}">
         <td>${ShortId}</td>

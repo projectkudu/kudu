@@ -212,8 +212,8 @@ $(function () {
 
         var token = window.loader.show('Loading deployment log...');
 
-        scm.getDeployLog(id, function (log) {
-            $('#deploy-log').html(log);
+        scm.getDeployLog(id, function (logs) {
+            $('#deploy-log').html($('#logTemplate').render(logs));
             $('#deploy-log').show();
         })
         .fail(onError)

@@ -66,8 +66,10 @@
     <Compile Include="Deployment\IDeployerFactory.cs" />
     <Compile Include="Deployment\IDeploymentManager.cs" />
     <Compile Include="Deployment\ILogger.cs" />
+    <Compile Include="Deployment\LogEntry.cs" />
     <Compile Include="Deployment\MSBuildDeployer.cs" />
     <Compile Include="Deployment\RemoteDeploymentManager.cs" />
+    <Compile Include="Deployment\XmlLogger.cs" />
     <Compile Include="Editor\FileSystemFactory.cs" />
     <Compile Include="Editor\IFileSystem.cs" />
     <Compile Include="Editor\IFileSystemFactory.cs" />
@@ -80,6 +82,7 @@
     <Compile Include="Infrastructure\FileSystemHelpers.cs" />
     <Compile Include="Infrastructure\HttpClientExtensions.cs" />
     <Compile Include="Infrastructure\HttpClientHelper.cs" />
+    <Compile Include="Deployment\LoggerExtensions.cs" />
     <Compile Include="Infrastructure\ParserHelpers.cs" />
     <Compile Include="Infrastructure\StringReader.cs" />
     <Compile Include="Infrastructure\Executable.cs" />

@@ -15,7 +15,7 @@ namespace Kudu.Core.Deployment {
 
         public static DeploymentTrackingFile Create(string path) {
             return new DeploymentTrackingFile(path) {
-                DeployTime = DateTime.UtcNow
+                DeploymentStartTime = DateTime.UtcNow
             };
         }
 
@@ -42,7 +42,8 @@ namespace Kudu.Core.Deployment {
                 Status = status,
                 StatusText = document.Root.Element("statusText").Value,
                 Percentage = percentage,
-                DeployTime = DateTime.Parse(document.Root.Element("deployTime").Value)
+                DeploymentStartTime = DateTime.Parse(document.Root.Element("deploymentStartTime").Value),
+                DeploymentEndTime = DateTime.Parse(document.Root.Element("deploymentEndTime").Value)
             };
         }
 
@@ -50,7 +51,8 @@ namespace Kudu.Core.Deployment {
         public DeployStatus Status { get; set; }
         public string StatusText { get; set; }
         public int Percentage { get; set; }
-        public DateTime DeployTime { get; private set; }
+        public DateTime DeploymentStartTime { get; private set; }
+        public DateTime DeploymentEndTime { get; set; }
 
         public void Save() {
             if (String.IsNullOrEmpty(Id)) {
@@ -62,7 +64,8 @@ namespace Kudu.Core.Deployment {
                     new XElement("status", Status),
                     new XElement("statusText", StatusText),
                     new XElement("percentage", Percentage),
-                    new XElement("deployTime", DeployTime)
+                    new XElement("deploymentStartTime", DeploymentStartTime),
+                    new XElement("deploymentEndTime", DeploymentEndTime)
                 )).Save(_path);
         }
     }

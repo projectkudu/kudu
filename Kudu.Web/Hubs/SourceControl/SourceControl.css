@@ -363,6 +363,6 @@
     font-family: Consolas, Lucida Grande;
 }
 
-#scm #deploy-log-container {
+#deploy-log pre {
     overflow: auto;
 }

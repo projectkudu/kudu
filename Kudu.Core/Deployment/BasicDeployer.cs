@@ -13,9 +13,15 @@ namespace Kudu.Core.Deployment {
             var tcs = new TaskCompletionSource<object>();
 
             try {
+                logger.Log("Copying files to {0}", targetPath);
+
                 DeploymentHelpers.SmartCopy(_sourcePath, targetPath);
+
+                logger.Log("Success.");
             }
             catch(Exception ex) {
+                logger.Log("Copying files failed.");
+                logger.Log(ex.Message);
                 tcs.SetException(ex);
             }
 

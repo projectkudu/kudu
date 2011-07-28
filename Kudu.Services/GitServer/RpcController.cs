@@ -56,7 +56,14 @@ namespace Kudu.Services.GitServer {
                 _repository.Receive(GetInputStream(), Response.OutputStream);
             });
 
-            ThreadPool.QueueUserWorkItem(_ => _deploymentManager.Deploy());
+            ThreadPool.QueueUserWorkItem(_ => {
+                try {
+                    _deploymentManager.Deploy();
+                }
+                catch (Exception) {
+                    // TODO: Log something
+                }
+            });
         }
 
         private Stream GetInputStream() {

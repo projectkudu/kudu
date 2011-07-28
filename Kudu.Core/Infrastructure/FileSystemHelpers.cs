@@ -8,6 +8,13 @@ namespace Kudu.Core.Infrastructure {
             DoSafeAction(() => Directory.Delete(path, recursive: true));
         }
 
+        public static string EnsureDirectory(string path) {
+            if (!Directory.Exists(path)) {
+                Directory.CreateDirectory(path);
+            }
+            return path;
+        }
+
         private static void DoSafeAction(Action action) {
             try {
                 Attempt(action);

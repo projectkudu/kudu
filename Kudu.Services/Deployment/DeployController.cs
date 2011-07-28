@@ -30,7 +30,7 @@ namespace Kudu.Services.Deployment {
             if (String.IsNullOrEmpty(id)) {
                 return Json(_deploymentManager.GetResults(), JsonRequestBehavior.AllowGet);
             }
-            return Content(_deploymentManager.GetLog(id));
+            return Json(_deploymentManager.GetLogEntries(id), JsonRequestBehavior.AllowGet);
         }
 
         [HttpGet]

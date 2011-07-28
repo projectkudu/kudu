@@ -19,8 +19,8 @@ namespace Kudu.Core.Deployment {
             return _client.GetJson<DeployResult>("details?id=" + id);
         }
 
-        public string GetLog(string id) {
-            return _client.Get("log?id=" + id).EnsureSuccessful().Content.ReadAsString();
+        public IEnumerable<LogEntry> GetLogEntries(string id) {
+            return _client.GetJson<IEnumerable<LogEntry>>("log?id=" + id);
         }
 
         public void Deploy(string id) {

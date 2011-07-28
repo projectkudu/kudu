@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core {
     public class Environment : IEnvironment {
@@ -12,7 +13,6 @@ namespace Kudu.Core {
         private readonly string _repositoryPath;
         private readonly string _deployPath;
         private readonly string _deployCachePath;
-        private readonly string _root;
 
         public Environment(string appName, string applicationRootPath, string repositoryPath, string deployPath, string deployCachePath) {
             AppName = appName;
@@ -31,21 +31,21 @@ namespace Kudu.Core {
 
         public string RepositoryPath {
             get {
-                EnsureDirectory(_repositoryPath);
+                FileSystemHelpers.EnsureDirectory(_repositoryPath);
                 return _repositoryPath;
             }
         }
 
         public string DeploymentTargetPath {
             get {
-                EnsureDirectory(_deployPath);
+                FileSystemHelpers.EnsureDirectory(_deployPath);
                 return _deployPath;
             }
         }
 
         public string DeploymentCachePath {
             get {
-                EnsureDirectory(_deployCachePath);
+                FileSystemHelpers.EnsureDirectory(_deployCachePath);
                 return _deployCachePath;
             }
         }
@@ -87,12 +87,6 @@ namespace Kudu.Core {
 
         private static XName GetName(string name) {
             return XName.Get(name, "http://schemas.microsoft.com/developer/msbuild/2003");
-        }
-
-        private static void EnsureDirectory(string path) {
-            if (!Directory.Exists(path)) {
-                Directory.CreateDirectory(path);
-            }
         }
     }
 }

@@ -62,8 +62,9 @@ namespace Kudu.Web {
                    };
         }
 
-        public string GetDeployLog(string id) {
-            return _deploymentManager.GetLog(id);
+        public IEnumerable<LogEntryViewModel> GetDeployLog(string id) {
+            return from entry in _deploymentManager.GetLogEntries(id)
+                   select new LogEntryViewModel(entry);
         }
 
         public void Revert(string path) {

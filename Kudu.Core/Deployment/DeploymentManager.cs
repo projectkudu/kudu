@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Kudu.Core.SourceControl;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment {
     public class DeploymentManager : IDeploymentManager {
@@ -37,20 +38,21 @@ namespace Kudu.Core.Deployment {
 
             return new DeployResult {
                 Id = file.Id,
-                DeployTime = file.DeployTime,
+                DeployTime = file.DeploymentStartTime,
                 Status = file.Status,
                 Percentage = file.Percentage,
                 StatusText = file.StatusText
             };
         }
 
-        public string GetLog(string id) {
+        public IEnumerable<LogEntry> GetLogEntries(string id) {
             string path = GetLogPath(id);
+
             if (!File.Exists(path)) {
                 throw new InvalidOperationException(String.Format("No log found for '{0}'.", id));
             }
 
-            return File.ReadAllText(path);
+            return new XmlLogger(path).GetLogEntries();
         }
 
         public void Deploy(string id) {
@@ -85,54 +87,77 @@ namespace Kudu.Core.Deployment {
         }
 
         public void Build(string id) {
-            // Put bits in the cache folder
-            string cachePath = GetCachePath(id);
-            Directory.CreateDirectory(cachePath);
+            ILogger logger = null;
+            DeploymentTrackingFile trackingFile = null;
 
-            // The initial status
-            DeploymentTrackingFile trackingFile = CreateTrackingFile(id);
-            trackingFile.Id = id;
-            trackingFile.Status = DeployStatus.Pending;
-            trackingFile.StatusText = String.Format("Building {0}...", id);
-            trackingFile.Save();
+            try {
+                // Get the logger for this id
+                logger = GetLogger(id);
 
-            // Create a logger over the text file
-            var writer = new StreamWriter(GetLogPath(id));
+                logger.Log("Preparing deployment for {0}", id);
 
-            // Create a deployer
-            IDeployer deployer = _deployerFactory.CreateDeployer();
+                // Put bits in the cache folder
+                string cachePath = GetCachePath(id);
 
-            deployer.Deploy(cachePath, new Logger(writer))
-                    .ContinueWith(t => {
-                        if (t.IsFaulted) {
-                            // failed to deploy
-                            trackingFile.Percentage = 100;
-                            trackingFile.Status = DeployStatus.Failed;
-                            trackingFile.StatusText = t.Exception.GetBaseException().Message;
-                            trackingFile.Save();
-                        }
-                        else {
-                            trackingFile.Percentage = 50;
-                            trackingFile.Save();
-                            DeployToTarget(id);
-                        }
+                // The initial status
+                trackingFile = CreateTrackingFile(id);
+                trackingFile.Id = id;
+                trackingFile.Status = DeployStatus.Pending;
+                trackingFile.StatusText = String.Format("Building {0}...", id);
+                trackingFile.Save();
 
-                        writer.Close();
-                    });
+                // Create a deployer
+                IDeployer deployer = _deployerFactory.CreateDeployer();
+
+                deployer.Deploy(cachePath, logger)
+                        .ContinueWith(t => {
+                            if (t.IsFaulted) {
+                                // We need to read the exception so the process doesn't go down
+                                Exception exception = t.Exception;
+
+                                logger.Log("Deployment failed");
+
+                                // failed to deploy
+                                trackingFile.Percentage = 100;
+                                trackingFile.Status = DeployStatus.Failed;
+                                trackingFile.StatusText = String.Empty;
+                                trackingFile.DeploymentEndTime = DateTime.Now;
+                                trackingFile.Save();
+                            }
+                            else {
+                                trackingFile.Percentage = 50;
+                                trackingFile.Save();
+
+                                DeployToTarget(id);
+                            }
+                        });
+            }
+            catch (Exception e) {
+                if (logger != null) {
+                    logger.Log("Deployment failed");
+                    logger.Log(e.Message);
+                }
+            }
         }
 
         private void DeployToTarget(string id, bool skipOldFiles = true) {
             DeploymentTrackingFile trackingFile = null;
+            ILogger logger = null;
 
             try {
                 string cachePath = GetCachePath(id);
                 trackingFile = OpenTrackingFile(id);
+                logger = GetLogger(id);
 
                 trackingFile.StatusText = "Deploying to webroot...";
                 trackingFile.Save();
 
+                logger.Log("Copying files to {0}", _environment.DeploymentTargetPath);
+
                 // Copy to target
                 DeploymentHelpers.SmartCopy(cachePath, _environment.DeploymentTargetPath, skipOldFiles);
+
+                logger.Log("Done");
 
                 trackingFile.Status = DeployStatus.Done;
                 trackingFile.StatusText = String.Empty;
@@ -140,11 +165,16 @@ namespace Kudu.Core.Deployment {
             catch (Exception e) {
                 if (trackingFile != null) {
                     trackingFile.Status = DeployStatus.Failed;
-                    trackingFile.StatusText = e.GetBaseException().Message;
+                }
+
+                if (logger != null) {
+                    logger.Log("Deploying to web root failed.");
+                    logger.Log(e.Message);
                 }
             }
             finally {
                 if (trackingFile != null) {
+                    trackingFile.DeploymentEndTime = DateTime.Now;
                     trackingFile.Percentage = 100;
                     trackingFile.Save();
                 }
@@ -159,31 +189,26 @@ namespace Kudu.Core.Deployment {
             return DeploymentTrackingFile.Create(GetTrackingFilePath(id));
         }
 
+        private ILogger GetLogger(string id) {
+            return new XmlLogger(GetLogPath(id));
+        }
+
         private string GetTrackingFilePath(string id) {
             return Path.Combine(GetRoot(id), "status.xml");
         }
 
         private string GetCachePath(string id) {
-            return Path.Combine(GetRoot(id), "cache");
+            string path = Path.Combine(GetRoot(id), "cache");
+            return FileSystemHelpers.EnsureDirectory(path);
         }
 
         private string GetLogPath(string id) {
-            return Path.Combine(GetRoot(id), "log.txt");
+            return Path.Combine(GetRoot(id), "log.xml");
         }
 
         private string GetRoot(string id) {
-            return Path.Combine(_environment.DeploymentCachePath, id);
-        }
-
-        private class Logger : ILogger {
-            private readonly TextWriter _writer;
-            public Logger(TextWriter writer) {
-                _writer = writer;
-            }
-
-            public void WriteLog(string value) {
-                _writer.Write(value);
-            }
+            string path = Path.Combine(_environment.DeploymentCachePath, id);
+            return FileSystemHelpers.EnsureDirectory(path);
         }
     }
 }

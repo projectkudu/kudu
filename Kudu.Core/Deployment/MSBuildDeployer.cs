@@ -23,23 +23,31 @@ namespace Kudu.Core.Deployment {
             string solutionDir = Path.GetDirectoryName(_solutionPath) + "\\";
 
             try {
+                logger.Log("Builing solution {0}.", _solutionPath);
+
                 // Build the solution first
-                _msbuildExe.Execute(@"""{0}""", _solutionPath);
+                string log = _msbuildExe.Execute(@"""{0}""", _solutionPath);
+
+                logger.Log(log);
             }
             catch (Exception e) {
-                logger.WriteLog(e.Message);
+                logger.Log("Building solution failed.");
+                logger.Log(e.Message);
                 tcs.TrySetException(e);
                 return tcs.Task;
             }
 
             try {
+                logger.Log("Building web project {0}.", _projectPath);
+
                 // REVIEW: Should we use the msbuild API?
                 string log = _msbuildExe.Execute(@"""{0}"" /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir={1};AutoParameterizationWebConfigConnectionStrings=false;SolutionDir={2}", _projectPath, targetPath, solutionDir);
 
-                logger.WriteLog(log);
+                logger.Log(log);
             }
             catch (Exception e) {
-                logger.WriteLog(e.Message);
+                logger.Log("Building web project failed.");
+                logger.Log(e.Message);
                 tcs.TrySetException(e);
                 return tcs.Task;
             }
