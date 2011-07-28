@@ -2,20 +2,20 @@
 using System.Threading.Tasks;
 
 namespace Kudu.Core.Deployment {
-    public class BasicDeployer : IDeployer {
+    public class BasicBuilder : ISiteBuilder {
         private readonly string _sourcePath;
         
-        public BasicDeployer(string sourcePath) {
+        public BasicBuilder(string sourcePath) {
             _sourcePath = sourcePath;
         }
 
-        public Task Deploy(string targetPath, ILogger logger) {
+        public Task Build(string outputPath, ILogger logger) {
             var tcs = new TaskCompletionSource<object>();
 
             try {
-                logger.Log("Copying files to {0}", targetPath);
+                logger.Log("Copying files to {0}", outputPath);
 
-                DeploymentHelpers.SmartCopy(_sourcePath, targetPath);
+                DeploymentHelpers.SmartCopy(_sourcePath, outputPath);
 
                 logger.Log("Success.");
             }

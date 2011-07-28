@@ -5,18 +5,18 @@ using Kudu.Core.Infrastructure;
 using SystemEnvironment = System.Environment;
 
 namespace Kudu.Core.Deployment {
-    public class MSBuildDeployer : IDeployer {
+    public class WapBuilder : ISiteBuilder {
         private readonly string _solutionPath;
         private readonly string _projectPath;
         private readonly Executable _msbuildExe;
 
-        public MSBuildDeployer(string sourcePath, string solutionPath, string projectPath) {
+        public WapBuilder(string sourcePath, string solutionPath, string projectPath) {
             _solutionPath = solutionPath;
             _projectPath = projectPath;
             _msbuildExe = new Executable(ResolveMSBuildPath(), sourcePath);
         }
 
-        public Task Deploy(string targetPath, ILogger logger) {
+        public Task Build(string outputPath, ILogger logger) {
             var tcs = new TaskCompletionSource<object>();
 
             // Locate the solution directory
@@ -41,7 +41,7 @@ namespace Kudu.Core.Deployment {
                 logger.Log("Building web project {0}.", _projectPath);
 
                 // REVIEW: Should we use the msbuild API?
-                string log = _msbuildExe.Execute(@"""{0}"" /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir={1};AutoParameterizationWebConfigConnectionStrings=false;SolutionDir={2}", _projectPath, targetPath, solutionDir);
+                string log = _msbuildExe.Execute(@"""{0}"" /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir={1};AutoParameterizationWebConfigConnectionStrings=false;SolutionDir={2}", _projectPath, outputPath, solutionDir);
 
                 logger.Log(log);
             }

@@ -55,7 +55,7 @@ namespace Kudu.Services.Web.App_Start {
         private static void RegisterServices(IKernel kernel) {
             kernel.Bind<IEnvironment>().ToMethod(_ => GetEnvironment()).InSingletonScope();
             kernel.Bind<IRepositoryManager>().ToMethod(context => new RepositoryManager(context.Kernel.Get<IEnvironment>().RepositoryPath));
-            kernel.Bind<IDeployerFactory>().To<DeployerFactory>();
+            kernel.Bind<ISiteBuilderFactory>().To<SiteBuilderFactory>();
             kernel.Bind<IDeploymentManager>().To<DeploymentManager>();
             kernel.Bind<IFileSystemFactory>().To<FileSystemFactory>();
             kernel.Bind<GitServerRepository>().ToMethod(context => new GitServerRepository(context.Kernel.Get<IEnvironment>().RepositoryPath));

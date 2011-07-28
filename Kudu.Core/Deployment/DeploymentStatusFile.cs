@@ -6,20 +6,20 @@ namespace Kudu.Core.Deployment {
     /// <summary>
     /// An xml file that keeps track of deployment status
     /// </summary>
-    public class DeploymentTrackingFile {
+    public class DeploymentStatusFile {
         private readonly string _path;
 
-        private DeploymentTrackingFile(string path) {
+        private DeploymentStatusFile(string path) {
             _path = path;
         }
 
-        public static DeploymentTrackingFile Create(string path) {
-            return new DeploymentTrackingFile(path) {
+        public static DeploymentStatusFile Create(string path) {
+            return new DeploymentStatusFile(path) {
                 DeploymentStartTime = DateTime.UtcNow
             };
         }
 
-        public static DeploymentTrackingFile Open(string path) {
+        public static DeploymentStatusFile Open(string path) {
             XDocument document;
 
             try {
@@ -37,7 +37,7 @@ namespace Kudu.Core.Deployment {
             DeployStatus status;
             Enum.TryParse(document.Root.Element("status").Value, out status);
 
-            return new DeploymentTrackingFile(path) {
+            return new DeploymentStatusFile(path) {
                 Id = document.Root.Element("id").Value,
                 Status = status,
                 StatusText = document.Root.Element("statusText").Value,

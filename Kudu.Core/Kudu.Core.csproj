@@ -55,19 +55,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Deployment\BasicDeployer.cs" />
-    <Compile Include="Deployment\DeployerFactory.cs" />
+    <Compile Include="Deployment\BasicBuilder.cs" />
+    <Compile Include="Deployment\SiteBuilderFactory.cs" />
     <Compile Include="Deployment\DeploymentHelpers.cs" />
     <Compile Include="Deployment\DeploymentManager.cs" />
-    <Compile Include="Deployment\DeploymentTrackingFile.cs" />
+    <Compile Include="Deployment\DeploymentStatusFile.cs" />
     <Compile Include="Deployment\DeployResult.cs" />
     <Compile Include="Deployment\DeployStatus.cs" />
-    <Compile Include="Deployment\IDeployer.cs" />
-    <Compile Include="Deployment\IDeployerFactory.cs" />
+    <Compile Include="Deployment\ISiteBuilder.cs" />
+    <Compile Include="Deployment\ISiteBuilderFactory.cs" />
     <Compile Include="Deployment\IDeploymentManager.cs" />
     <Compile Include="Deployment\ILogger.cs" />
     <Compile Include="Deployment\LogEntry.cs" />
-    <Compile Include="Deployment\MSBuildDeployer.cs" />
+    <Compile Include="Deployment\WapBuilder.cs" />
     <Compile Include="Deployment\RemoteDeploymentManager.cs" />
     <Compile Include="Deployment\XmlLogger.cs" />
     <Compile Include="Editor\FileSystemFactory.cs" />

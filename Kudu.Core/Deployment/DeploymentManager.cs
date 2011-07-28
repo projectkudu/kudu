@@ -8,14 +8,14 @@ using Kudu.Core.Infrastructure;
 namespace Kudu.Core.Deployment {
     public class DeploymentManager : IDeploymentManager {
         private readonly IRepositoryManager _repositoryManager;
-        private readonly IDeployerFactory _deployerFactory;
+        private readonly ISiteBuilderFactory _builderFactory;
         private readonly IEnvironment _environment;
 
         public DeploymentManager(IRepositoryManager repositoryManager,
-                                 IDeployerFactory deployerFactory,
+                                 ISiteBuilderFactory builderFactory,
                                  IEnvironment environment) {
             _repositoryManager = repositoryManager;
-            _deployerFactory = deployerFactory;
+            _builderFactory = builderFactory;
             _environment = environment;
         }
 
@@ -88,7 +88,7 @@ namespace Kudu.Core.Deployment {
 
         public void Build(string id) {
             ILogger logger = null;
-            DeploymentTrackingFile trackingFile = null;
+            DeploymentStatusFile trackingFile = null;
 
             try {
                 // Get the logger for this id
@@ -107,30 +107,30 @@ namespace Kudu.Core.Deployment {
                 trackingFile.Save();
 
                 // Create a deployer
-                IDeployer deployer = _deployerFactory.CreateDeployer();
+                ISiteBuilder builder = _builderFactory.CreateBuilder();
 
-                deployer.Deploy(cachePath, logger)
-                        .ContinueWith(t => {
-                            if (t.IsFaulted) {
-                                // We need to read the exception so the process doesn't go down
-                                Exception exception = t.Exception;
+                builder.Build(cachePath, logger)
+                       .ContinueWith(t => {
+                           if (t.IsFaulted) {
+                               // We need to read the exception so the process doesn't go down
+                               Exception exception = t.Exception;
 
-                                logger.Log("Deployment failed");
+                               logger.Log("Deployment failed");
 
-                                // failed to deploy
-                                trackingFile.Percentage = 100;
-                                trackingFile.Status = DeployStatus.Failed;
-                                trackingFile.StatusText = String.Empty;
-                                trackingFile.DeploymentEndTime = DateTime.Now;
-                                trackingFile.Save();
-                            }
-                            else {
-                                trackingFile.Percentage = 50;
-                                trackingFile.Save();
+                               // failed to deploy
+                               trackingFile.Percentage = 100;
+                               trackingFile.Status = DeployStatus.Failed;
+                               trackingFile.StatusText = String.Empty;
+                               trackingFile.DeploymentEndTime = DateTime.Now;
+                               trackingFile.Save();
+                           }
+                           else {
+                               trackingFile.Percentage = 50;
+                               trackingFile.Save();
 
-                                DeployToTarget(id);
-                            }
-                        });
+                               DeployToTarget(id);
+                           }
+                       });
             }
             catch (Exception e) {
                 if (logger != null) {
@@ -141,7 +141,7 @@ namespace Kudu.Core.Deployment {
         }
 
         private void DeployToTarget(string id, bool skipOldFiles = true) {
-            DeploymentTrackingFile trackingFile = null;
+            DeploymentStatusFile trackingFile = null;
             ILogger logger = null;
 
             try {
@@ -181,12 +181,12 @@ namespace Kudu.Core.Deployment {
             }
         }
 
-        private DeploymentTrackingFile OpenTrackingFile(string id) {
-            return DeploymentTrackingFile.Open(GetTrackingFilePath(id));
+        private DeploymentStatusFile OpenTrackingFile(string id) {
+            return DeploymentStatusFile.Open(GetTrackingFilePath(id));
         }
 
-        private DeploymentTrackingFile CreateTrackingFile(string id) {
-            return DeploymentTrackingFile.Create(GetTrackingFilePath(id));
+        private DeploymentStatusFile CreateTrackingFile(string id) {
+            return DeploymentStatusFile.Create(GetTrackingFilePath(id));
         }
 
         private ILogger GetLogger(string id) {
