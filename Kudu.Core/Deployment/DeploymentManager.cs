@@ -97,11 +97,19 @@ namespace Kudu.Core.Deployment {
         }
 
         public void Build(string id) {
+            if (String.IsNullOrEmpty(id)) {
+                throw new ArgumentException();
+            }
+
+            // TODO: Make sure if the if is a valid changeset
+
             ILogger logger = null;
             DeploymentStatusFile trackingFile = null;
 
             try {
                 // Get the logger for this id
+                string logPath = GetLogPath(id);
+                FileSystemHelpers.DeleteFileSafe(logPath);
                 logger = GetLogger(id);
 
                 logger.Log("Preparing deployment for {0}", id);

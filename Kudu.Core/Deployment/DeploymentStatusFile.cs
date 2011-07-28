@@ -15,7 +15,7 @@ namespace Kudu.Core.Deployment {
 
         public static DeploymentStatusFile Create(string path) {
             return new DeploymentStatusFile(path) {
-                DeploymentStartTime = DateTime.UtcNow
+                DeploymentStartTime = DateTime.Now
             };
         }
 

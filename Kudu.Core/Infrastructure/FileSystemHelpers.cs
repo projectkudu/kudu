@@ -25,6 +25,16 @@ namespace Kudu.Core.Infrastructure {
             return path;
         }
 
+        public static void DeleteFileSafe(string path) {
+            try {
+                if (File.Exists(path)) {
+                    File.Delete(path);
+                }
+            }
+            catch (UnauthorizedAccessException) { }
+            catch (FileNotFoundException) { }
+        }
+
         private static void DoSafeAction(Action action) {
             try {
                 Attempt(action);
