@@ -111,7 +111,7 @@
             {{if deploymentInfo }}
             <a href="#/view-log/${Id}" class="view-log">view log</a>
             {{/if}}
-            {{if deploymentInfo && deploymentInfo.Status == 2 }}
+            {{if !Active && deploymentInfo && deploymentInfo.Status == 2 }}
             <a href="#" class="update" data-id="${Id}">deploy</a>
             {{/if}}
         </td>

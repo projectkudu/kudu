@@ -19,6 +19,16 @@ namespace Kudu.Core.Deployment {
             _environment = environment;
         }
 
+        public string ActiveDeploymentId {
+            get {
+                string path = GetActiveDeploymentFilePath();
+                if (File.Exists(path)) {
+                    return File.ReadAllText(path);
+                }
+                return null;
+            }
+        }
+
         public IEnumerable<DeployResult> GetResults() {
             if (!Directory.Exists(_environment.DeploymentCachePath)) {
                 yield break;
@@ -161,6 +171,9 @@ namespace Kudu.Core.Deployment {
 
                 trackingFile.Status = DeployStatus.Done;
                 trackingFile.StatusText = String.Empty;
+
+                string activeFilePath = GetActiveDeploymentFilePath();
+                File.WriteAllText(activeFilePath, id);
             }
             catch (Exception e) {
                 if (trackingFile != null) {
@@ -209,6 +222,10 @@ namespace Kudu.Core.Deployment {
         private string GetRoot(string id) {
             string path = Path.Combine(_environment.DeploymentCachePath, id);
             return FileSystemHelpers.EnsureDirectory(path);
+        }
+
+        private string GetActiveDeploymentFilePath() {
+            return Path.Combine(_environment.DeploymentCachePath, "active");
         }
     }
 }

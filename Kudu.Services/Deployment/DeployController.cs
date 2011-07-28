@@ -12,6 +12,12 @@ namespace Kudu.Services.Deployment {
             _deploymentManager = deploymentManager;
         }
 
+        [HttpGet]
+        [ActionName("id")]
+        public string GetActiveDeploymentId() {
+            return _deploymentManager.ActiveDeploymentId;
+        }
+
         [HttpPost]
         [ActionName("index")]
         public void Deploy(string id) {

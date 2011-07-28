@@ -2,6 +2,8 @@
 
 namespace Kudu.Core.Deployment {
     public interface IDeploymentManager {
+        string ActiveDeploymentId { get; }
+
         IEnumerable<DeployResult> GetResults();
         DeployResult GetResult(string id);
         IEnumerable<LogEntry> GetLogEntries(string id);

@@ -95,21 +95,29 @@ namespace Kudu.Web.Controllers {
         [ActionName("scm")]
         public ActionResult ViewSourceControl(string slug) {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
-            var repositoryManager = GetRepositoryManager(application);
-            var type = repositoryManager.GetRepositoryType();
+            if (application != null) {
+                var repositoryManager = GetRepositoryManager(application);
+                var type = repositoryManager.GetRepositoryType();
 
-            ViewBag.CloneUrl = GetCloneUrl(application, type);
-            ViewBag.RepositoryType = type;
-            ViewBag.AppName = application.Name;
+                ViewBag.CloneUrl = GetCloneUrl(application, type);
+                ViewBag.RepositoryType = type;
+                ViewBag.AppName = application.Name;
 
-            return View();
+                return View();
+            }
+
+            return HttpNotFound();
         }
 
         [ActionName("editor")]
         public ActionResult EditFiles(string slug) {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
-            ViewBag.AppName = application.Name;
-            return View();
+            if (application != null) {
+                ViewBag.AppName = application.Name;
+                return View();
+            }
+
+            return HttpNotFound();
         }
 
         //

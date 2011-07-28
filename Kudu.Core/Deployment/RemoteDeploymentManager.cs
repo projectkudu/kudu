@@ -11,6 +11,14 @@ namespace Kudu.Core.Deployment {
             _client = HttpClientHelper.Create(serviceUrl);
         }
 
+        public string ActiveDeploymentId {
+            get {
+                return _client.Get("id").EnsureSuccessful()
+                              .Content
+                              .ReadAsString();
+            }
+        }
+
         public IEnumerable<DeployResult> GetResults() {
             return _client.GetJson<IEnumerable<DeployResult>>("log");
         }

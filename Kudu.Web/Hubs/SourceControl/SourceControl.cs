@@ -42,6 +42,8 @@ namespace Kudu.Web {
         }
 
         public RepositoryViewModel GetRepositoryInfo() {
+            Caller.id = _deploymentManager.ActiveDeploymentId;
+
             var type = _repositoryManager.GetRepositoryType();
             return new RepositoryViewModel {
                 Deployments = _deploymentManager.GetResults()
@@ -53,8 +55,7 @@ namespace Kudu.Web {
         }
 
         public IEnumerable<ChangeSetViewModel> GetChanges(int index, int pageSize) {
-            string id = _repository.CurrentId;
-            Caller.id = id;
+            string id = Caller.id;
 
             return from c in _repository.GetChanges(index, pageSize)
                    select new ChangeSetViewModel(c) {
