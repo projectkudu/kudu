@@ -172,6 +172,7 @@ namespace Kudu.Core.Deployment {
                 trackingFile.Status = DeployStatus.Done;
                 trackingFile.StatusText = String.Empty;
 
+                // Write the active deployment file
                 string activeFilePath = GetActiveDeploymentFilePath();
                 File.WriteAllText(activeFilePath, id);
             }
