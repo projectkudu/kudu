@@ -83,11 +83,21 @@ namespace Kudu.Core.Deployment {
                 return;
             }
 
-            Branch activeBranch = repository.GetBranches().FirstOrDefault(b => b.Active);
             string id = repository.CurrentId;
+
+            if (String.IsNullOrEmpty(id)) {
+                id = repository.GetChanges(0, 1).Single().Id;
+                repository.Update(id);
+            }
+
+            Branch activeBranch = (from b in repository.GetBranches()
+                                   let change = repository.GetDetails(b.Id)
+                                   orderby change.ChangeSet.Timestamp descending
+                                   select b).FirstOrDefault();
 
             if (activeBranch != null) {
                 repository.Update(activeBranch.Name);
+                id = activeBranch.Id;
             }
             else {
                 repository.Update(id);
