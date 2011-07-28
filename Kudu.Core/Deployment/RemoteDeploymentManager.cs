@@ -30,7 +30,11 @@ namespace Kudu.Core.Deployment {
         }
 
         public void Deploy() {
-            _client.Post(String.Empty, new StringContent(null)).EnsureSuccessful();
+            _client.Post(String.Empty, new StringContent(String.Empty)).EnsureSuccessful();
+        }
+
+        public void Build(string id) {
+            _client.Post("create", new StringContent(String.Empty)).EnsureSuccessful();
         }
     }
 }

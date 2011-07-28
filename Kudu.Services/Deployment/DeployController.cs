@@ -18,6 +18,12 @@ namespace Kudu.Services.Deployment {
             _deploymentManager.Deploy(id);
         }
 
+        [HttpPost]
+        [ActionName("new")]
+        public void CreateBuild(string id) {
+            _deploymentManager.Build(id);
+        }
+
         [HttpGet]
         [ActionName("log")]
         public ActionResult GetResults(string id) {

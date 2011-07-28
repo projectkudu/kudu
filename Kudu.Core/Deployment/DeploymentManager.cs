@@ -81,6 +81,10 @@ namespace Kudu.Core.Deployment {
                 repository.Update(id);
             }
 
+            Build(id);
+        }
+
+        public void Build(string id) {
             // Put bits in the cache folder
             string cachePath = GetCachePath(id);
             Directory.CreateDirectory(cachePath);

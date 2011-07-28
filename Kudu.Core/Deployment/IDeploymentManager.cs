@@ -5,6 +5,7 @@ namespace Kudu.Core.Deployment {
         IEnumerable<DeployResult> GetResults();
         DeployResult GetResult(string id);
         string GetLog(string id);
+        void Build(string id);
         void Deploy(string id);
         void Deploy();
     }
