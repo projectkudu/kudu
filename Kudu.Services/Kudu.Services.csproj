@@ -32,15 +32,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="GitSharp">
-      <HintPath>..\lib\GitSharp\GitSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="GitSharp.Core">
-      <HintPath>..\lib\GitSharp\GitSharp.Core.dll</HintPath>
-    </Reference>
     <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.0.518, Culture=neutral, PublicKeyToken=1b03e6acf1164f73, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\lib\GitSharp\ICSharpCode.SharpZipLib.dll</HintPath>
+      <HintPath>..\packages\SharpZipLib.0.86.0\lib\20\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -52,12 +46,6 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="Tamir.SharpSSH">
-      <HintPath>..\packages\Tamir.SharpSSH.1.1.1.13\lib\Tamir.SharpSSH.dll</HintPath>
-    </Reference>
-    <Reference Include="Winterdom.IO.FileMap">
-      <HintPath>..\packages\Winterdom.IO.FileMap.2.0.2.0\lib\Winterdom.IO.FileMap.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Authorization\BasicAuthorizeAttribute.cs" />
@@ -66,9 +54,7 @@
     <Compile Include="Editor\FilesController.cs" />
     <Compile Include="GitServer\Helpers.cs" />
     <Compile Include="GitServer\InfoRefsController.cs" />
-    <Compile Include="GitServer\Repository.cs" />
     <Compile Include="GitServer\RpcController.cs" />
-    <Compile Include="GitServer\SimpleRefWriter.cs" />
     <Compile Include="FormattedExceptionFilter.cs" />
     <Compile Include="HgServer\ProxyController.cs" />
     <Compile Include="Infrastructure\KuduActionInvoker.cs" />
