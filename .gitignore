@@ -9,9 +9,11 @@ deploy/*
 *.suo
 *.cache
 *.docstates
+*.dgml
 _ReSharper.*
 *.csproj.user
 *[Rr]e[Ss]harper.user
 _ReSharper.*/
 packages/*
 App_Data/
+/apps
