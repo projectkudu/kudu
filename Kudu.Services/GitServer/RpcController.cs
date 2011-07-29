@@ -23,10 +23,10 @@
 namespace Kudu.Services.GitServer {
     using System;
     using System.IO;
+    using System.IO.Compression;
     using System.Threading;
     using System.Web.Mvc;
     using System.Web.SessionState;
-    using ICSharpCode.SharpZipLib.GZip;
     using Kudu.Core.Deployment;
     using Kudu.Core.SourceControl.Git;
     using Kudu.Services.Authorization;
@@ -69,7 +69,7 @@ namespace Kudu.Services.GitServer {
 
         private Stream GetInputStream() {
             if (Request.Headers["Content-Encoding"] == "gzip") {
-                return new GZipInputStream(Request.InputStream);
+                return new GZipStream(Request.InputStream, CompressionMode.Decompress);
             }
             return Request.InputStream;
         }
