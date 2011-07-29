@@ -10,6 +10,7 @@ using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 using Ninject;
 using Ninject.Web.Mvc;
 using GitServerRepository = Kudu.Services.GitServer.Repository;
+using Kudu.Core.SourceControl.Git;
 
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Start")]
 [assembly: WebActivator.ApplicationShutdownMethodAttribute(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Stop")]
@@ -59,6 +60,7 @@ namespace Kudu.Services.Web.App_Start {
             kernel.Bind<IDeploymentManager>().To<DeploymentManager>();
             kernel.Bind<IFileSystemFactory>().To<FileSystemFactory>();
             kernel.Bind<GitServerRepository>().ToMethod(context => new GitServerRepository(context.Kernel.Get<IEnvironment>().RepositoryPath));
+            kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(context.Kernel.Get<IEnvironment>().RepositoryPath));
             kernel.Bind<IUserValidator>().To<SimpleUserValidator>();
             kernel.Bind<IServer>().To<Kudu.Core.SourceControl.Hg.HgServer>().InSingletonScope();
             kernel.Bind<IServerConfiguration>().To<DefaultServerConfiguration>().InSingletonScope();

@@ -26,15 +26,18 @@ namespace Kudu.Services.GitServer {
     using System.Web.Mvc;
     using System.Web.SessionState;
     using Kudu.Services.Authorization;
+    using Kudu.Core.SourceControl.Git;
 
     // Handles /project/info/refs
     [SessionState(SessionStateBehavior.Disabled)]
     [BasicAuthorize]
     public class InfoRefsController : Controller {
         private readonly Repository _repository;
+        private readonly IGitServer _gitServer;
 
-        public InfoRefsController(Repository repository) {
+        public InfoRefsController(Repository repository, IGitServer gitServer) {
             _repository = repository;
+            _gitServer = gitServer;
         }
 
         public ActionResult Execute(string service) {
@@ -46,8 +49,7 @@ namespace Kudu.Services.GitServer {
                 return SmartInfoRefs(service);
             }
 
-            // working with the dumb protocol.
-            return DumbInfoRefs();
+            throw new Exception("Dump protocol not supported");
         }
 
         private ActionResult SmartInfoRefs(string service) {
@@ -63,24 +65,13 @@ namespace Kudu.Services.GitServer {
             Response.PktFlush();
 
             if (service == "upload-pack") {
-                _repository.AdvertiseUploadPack(Response.OutputStream);
+                _gitServer.AdvertiseUploadPack(Response.OutputStream);
             }
 
             else if (service == "receive-pack") {
-                _repository.AdvertiseReceivePack(Response.OutputStream);
+                _gitServer.AdvertiseReceivePack(Response.OutputStream);
             }
 
-            return new EmptyResult();
-        }
-
-        private ActionResult DumbInfoRefs() {
-            Response.WriteNoCache();
-
-            Response.ContentType = "text/plain; charset=utf-8";
-           
-            _repository.UpdateServerInfo();
-            string infoRefsPath = Path.Combine(_repository.GitDirectory(), "info/refs");
-            Response.WriteFile(infoRefsPath);
             return new EmptyResult();
         }
 

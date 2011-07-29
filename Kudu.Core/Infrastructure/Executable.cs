@@ -41,11 +41,21 @@ namespace Kudu.Core.Infrastructure {
             var process = CreateProcess(arguments, args);
 
             Func<StreamReader, string> reader = (StreamReader streamReader) => streamReader.ReadToEnd();
-            Action<Stream, Stream> copyStream = (Stream from, Stream to) => from.CopyTo(to);
+            Action<Stream, Stream, bool> copyStream = (Stream from, Stream to, bool closeAfterCopy) => {
+                from.CopyTo(to);
+                if (closeAfterCopy) {
+                    to.Close();
+                }
+            };
 
             IAsyncResult errorReader = reader.BeginInvoke(process.StandardError, null, null);
-            IAsyncResult inputWriter = copyStream.BeginInvoke(input, process.StandardInput.BaseStream, null, null);
-            IAsyncResult outputReader = copyStream.BeginInvoke(process.StandardOutput.BaseStream, output, null, null);
+            if (input != null) {
+                // Copy into the input stream, and close it to tell the exe it can process it
+                copyStream.BeginInvoke(input, process.StandardInput.BaseStream, true, null, null);
+            }
+
+            // Copy the exe's output into the output stream
+            copyStream.BeginInvoke(process.StandardOutput.BaseStream, output, false, null, null);
 
             process.WaitForExit();
 
@@ -72,8 +82,7 @@ namespace Kudu.Core.Infrastructure {
                 Arguments = String.Format(arguments, args)
             };
 
-            var process = Process.Start(psi);
-            return process;
+            return Process.Start(psi);
         }
     }
 }
