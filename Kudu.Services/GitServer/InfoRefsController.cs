@@ -22,11 +22,10 @@
 
 namespace Kudu.Services.GitServer {
     using System;
-    using System.IO;
     using System.Web.Mvc;
     using System.Web.SessionState;
-    using Kudu.Services.Authorization;
     using Kudu.Core.SourceControl.Git;
+    using Kudu.Services.Authorization;
 
     // Handles /project/info/refs
     [SessionState(SessionStateBehavior.Disabled)]

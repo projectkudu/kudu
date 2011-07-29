@@ -27,23 +27,7 @@ namespace Kudu.Services.GitServer {
     using System.Web.Mvc;
     using System.Web.Routing;
 
-    public static class Helpers {
-        static readonly string version;
-
-        static Helpers() {
-            version = typeof(Helpers).Assembly.GetName().Version.ToString();
-        }
-
-        public static string Version {
-            get { return version; }
-        }
-
-        public static string ProjectUrl(this UrlHelper urlHelper, string project) {
-            return urlHelper.RouteUrl("project", new RouteValueDictionary(new { project }),
-                                      urlHelper.RequestContext.HttpContext.Request.Url.Scheme,
-                                      urlHelper.RequestContext.HttpContext.Request.Url.Host);
-        }
-
+    public static class Helpers {        
         public static string With(this string format, params string[] args) {
             return String.Format(format, args);
         }
