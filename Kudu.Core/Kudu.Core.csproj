@@ -95,7 +95,10 @@
     <Compile Include="SourceControl\FileInfo.cs" />
     <Compile Include="SourceControl\FileStatus.cs" />
     <Compile Include="SourceControl\Git\GitExeRepository.cs" />
+    <Compile Include="SourceControl\Git\GitExeServer.cs" />
+    <Compile Include="SourceControl\Git\GitUtility.cs" />
     <Compile Include="SourceControl\Git\HybridGitRepository.cs" />
+    <Compile Include="SourceControl\Git\IGitServer.cs" />
     <Compile Include="SourceControl\Git\LibGitRepository.cs" />
     <Compile Include="SourceControl\Hg\HgRepository.cs" />
     <Compile Include="SourceControl\Hg\HgServer.cs" />

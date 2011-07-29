@@ -29,31 +29,32 @@ namespace Kudu.Services.GitServer {
     using ICSharpCode.SharpZipLib.GZip;
     using Kudu.Core.Deployment;
     using Kudu.Services.Authorization;
+    using Kudu.Core.SourceControl.Git;
 
     // Handles project/git-upload-pack and project/git-receive-pack
     [SessionState(SessionStateBehavior.Disabled)]
     [BasicAuthorize]
     public class RpcController : Controller {
-        private readonly Repository _repository;
         private readonly IDeploymentManager _deploymentManager;
+        private readonly IGitServer _gitServer;
 
-        public RpcController(Repository repository,
+        public RpcController(IGitServer gitServer,
                              IDeploymentManager deploymentManager) {
-            _repository = repository;
+            _gitServer = gitServer;
             _deploymentManager = deploymentManager;
         }
 
         [HttpPost]
         public void UploadPack(string project) {
             ExecuteRpc("upload-pack", () => {
-                _repository.Upload(GetInputStream(), Response.OutputStream);
+                _gitServer.Upload(GetInputStream(), Response.OutputStream);
             });
         }
 
         [HttpPost]
         public void ReceivePack(string project) {
             ExecuteRpc("receive-pack", () => {
-                _repository.Receive(GetInputStream(), Response.OutputStream);
+                _gitServer.Receive(GetInputStream(), Response.OutputStream);
             });
 
             ThreadPool.QueueUserWorkItem(_ => {
