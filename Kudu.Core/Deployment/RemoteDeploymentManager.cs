@@ -42,7 +42,9 @@ namespace Kudu.Core.Deployment {
         }
 
         public void Build(string id) {
-            _client.Post("create", new StringContent(String.Empty)).EnsureSuccessful();
+            _client.Post("new", new FormUrlEncodedContent(new Dictionary<string, string> {
+                { "id", id }
+            })).EnsureSuccessful();
         }
     }
 }

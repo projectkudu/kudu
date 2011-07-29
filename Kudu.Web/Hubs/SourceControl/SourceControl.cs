@@ -27,7 +27,7 @@ namespace Kudu.Web {
             var changeSet = _repository.Commit("Test <foo@test.com>", message);
             if (changeSet != null) {
                 // Deploy after comitting
-                _deploymentManager.Deploy(changeSet.Id);
+                _deploymentManager.Build(changeSet.Id);
                 return new ChangeSetViewModel(changeSet);
             }
             return null;

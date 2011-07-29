@@ -35,7 +35,10 @@ namespace Kudu.Core.Deployment {
             }
 
             foreach (var id in Directory.EnumerateDirectories(_environment.DeploymentCachePath)) {
-                yield return GetResult(id);
+                var result = GetResult(id);
+                if (result != null) {
+                    yield return result;
+                }
             }
         }
 
