@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Kudu.Core.Infrastructure;
-using SystemEnviroment = System.Environment;
 
 namespace Kudu.Core.SourceControl.Git {
     /// <summary>
@@ -15,7 +14,7 @@ namespace Kudu.Core.SourceControl.Git {
         private readonly Executable _gitExe;
 
         public GitExeRepository(string path)
-            : this(ResolveGitPath(), path) {
+            : this(GitUtility.ResolveGitPath(), path) {
 
         }
 
@@ -191,17 +190,6 @@ namespace Kudu.Core.SourceControl.Git {
         private bool IsEmpty() {
             // REVIEW: Is this reliable
             return String.IsNullOrWhiteSpace(_gitExe.Execute("branch"));
-        }
-
-        private static string ResolveGitPath() {
-            string programFiles = SystemEnviroment.GetFolderPath(SystemEnviroment.SpecialFolder.ProgramFilesX86);
-            string path = Path.Combine(programFiles, "Git", "bin", "git.exe");
-
-            if (!File.Exists(path)) {
-                throw new InvalidOperationException("Unable to locate git.exe");
-            }
-
-            return path;
         }
 
         private IEnumerable<ChangeSet> Log(string command = "log --all", params object[] args) {

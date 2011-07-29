@@ -14,22 +14,7 @@ namespace Kudu.Core.Infrastructure {
         public string Path { get; private set; }
 
         public string Execute(string arguments, params object[] args) {
-            var psi = new ProcessStartInfo {
-                FileName = Path,
-                WorkingDirectory = WorkingDirectory,
-                RedirectStandardInput = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                StandardOutputEncoding = Encoding.UTF8,
-                StandardErrorEncoding = Encoding.UTF8,
-                CreateNoWindow = true,
-                WindowStyle = ProcessWindowStyle.Hidden,
-                UseShellExecute = false,
-                ErrorDialog = false,
-                Arguments = String.Format(arguments, args)
-            };
-
-            var process = Process.Start(psi);
+            var process = CreateProcess(arguments, args);
 
             Func<StreamReader, string> reader = (StreamReader streamReader) => streamReader.ReadToEnd();
 
@@ -50,6 +35,45 @@ namespace Kudu.Core.Infrastructure {
             }
 
             return output;
+        }
+
+        public void Execute(Stream input, Stream output, string arguments, params object[] args) {
+            var process = CreateProcess(arguments, args);
+
+            Func<StreamReader, string> reader = (StreamReader streamReader) => streamReader.ReadToEnd();
+            Action<Stream, Stream> copyStream = (Stream from, Stream to) => from.CopyTo(to);
+
+            IAsyncResult errorReader = reader.BeginInvoke(process.StandardError, null, null);
+            IAsyncResult inputWriter = copyStream.BeginInvoke(input, process.StandardInput.BaseStream, null, null);
+            IAsyncResult outputReader = copyStream.BeginInvoke(process.StandardOutput.BaseStream, output, null, null);
+
+            process.WaitForExit();
+
+            string error = reader.EndInvoke(errorReader);
+
+            if (process.ExitCode != 0) {
+                throw new Exception(error);
+            }
+        }
+
+        private Process CreateProcess(string arguments, object[] args) {
+            var psi = new ProcessStartInfo {
+                FileName = Path,
+                WorkingDirectory = WorkingDirectory,
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8,
+                CreateNoWindow = true,
+                WindowStyle = ProcessWindowStyle.Hidden,
+                UseShellExecute = false,
+                ErrorDialog = false,
+                Arguments = String.Format(arguments, args)
+            };
+
+            var process = Process.Start(psi);
+            return process;
         }
     }
 }
