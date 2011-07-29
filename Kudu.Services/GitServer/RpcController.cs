@@ -35,14 +35,11 @@ namespace Kudu.Services.GitServer {
     [SessionState(SessionStateBehavior.Disabled)]
     [BasicAuthorize]
     public class RpcController : Controller {
-        private readonly Repository _repository;
         private readonly IDeploymentManager _deploymentManager;
         private readonly IGitServer _gitServer;
 
-        public RpcController(Repository repository,
-                             IDeploymentManager deploymentManager,
-                             IGitServer gitServer) {
-            _repository = repository;
+        public RpcController(IGitServer gitServer,
+                             IDeploymentManager deploymentManager) {
             _gitServer = gitServer;
             _deploymentManager = deploymentManager;
         }

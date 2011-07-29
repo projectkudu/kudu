@@ -32,11 +32,9 @@ namespace Kudu.Services.GitServer {
     [SessionState(SessionStateBehavior.Disabled)]
     [BasicAuthorize]
     public class InfoRefsController : Controller {
-        private readonly Repository _repository;
         private readonly IGitServer _gitServer;
 
-        public InfoRefsController(Repository repository, IGitServer gitServer) {
-            _repository = repository;
+        public InfoRefsController(IGitServer gitServer) {
             _gitServer = gitServer;
         }
 
