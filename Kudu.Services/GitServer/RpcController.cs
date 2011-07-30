@@ -30,6 +30,7 @@ namespace Kudu.Services.GitServer {
     using Kudu.Core.Deployment;
     using Kudu.Core.SourceControl.Git;
     using Kudu.Services.Authorization;
+    using System.Diagnostics;
 
     // Handles project/git-upload-pack and project/git-receive-pack
     [SessionState(SessionStateBehavior.Disabled)]
@@ -61,8 +62,9 @@ namespace Kudu.Services.GitServer {
                 try {
                     _deploymentManager.Deploy();
                 }
-                catch (Exception) {
-                    // TODO: Log something
+                catch (Exception ex) {
+                    Debug.WriteLine("Error deploying");
+                    Debug.WriteLine(ex.Message);
                 }
             });
         }

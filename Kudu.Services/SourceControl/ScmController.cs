@@ -9,10 +9,10 @@ namespace Kudu.Services.SourceControl {
     public class ScmController : KuduController {
         private readonly IRepository _repository;
         private readonly IRepositoryManager _repositoryManager;
-        private readonly IServer _server;
+        private readonly IHgServer _server;
 
         public ScmController(IRepositoryManager repositoryManager,
-                             IServer server) {
+                             IHgServer server) {
             _repositoryManager = repositoryManager;
             _repository = repositoryManager.GetRepository() ?? NullRepository.Instance;
             _server = server;

@@ -1,19 +1,25 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
+using System.Threading;
 using System.Web;
 using System.Web.Mvc;
+using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl.Hg;
 
 namespace Kudu.Services.HgServer {
     public class ProxyController : Controller {
-        private readonly IServer _server;
+        private readonly IHgServer _hgServer;
         private readonly IServerConfiguration _configuration;
+        private readonly IDeploymentManager _deploymentManager;
 
-        public ProxyController(IServer server, 
-                               IServerConfiguration configuration) {
-            _server = server;
+        public ProxyController(IHgServer hgServer, 
+                               IServerConfiguration configuration,
+                               IDeploymentManager deploymentManager) {
+            _hgServer = hgServer;
             _configuration = configuration;
+            _deploymentManager = deploymentManager;
         }
 
         public ActionResult ProxyRequest() {
@@ -25,11 +31,11 @@ namespace Kudu.Services.HgServer {
 
             string pathToProxy = Request.RawUrl.Substring(hgRoot.Length);
 
-            if (!_server.IsRunning) {
-                _server.Start();
+            if (!_hgServer.IsRunning) {
+                _hgServer.Start();
             }
 
-            var uri = new Uri(_server.Url + pathToProxy);
+            var uri = new Uri(_hgServer.Url + pathToProxy);
 
             var proxyRequest = (HttpWebRequest)WebRequest.Create(uri);
 
@@ -76,6 +82,20 @@ namespace Kudu.Services.HgServer {
                 using (Stream proxyResponseStream = proxyResponse.GetResponseStream()) {
                     proxyResponseStream.CopyTo(Response.OutputStream);
                 }
+            }
+
+            // After we run the unbundle command we can start the deployment
+            string cmd = Request["cmd"];
+            if (String.Equals(cmd, "unbundle", StringComparison.OrdinalIgnoreCase)) {
+                ThreadPool.QueueUserWorkItem(_ => {
+                    try {
+                        _deploymentManager.Deploy();
+                    }
+                    catch (Exception ex) {
+                        Debug.WriteLine("Error deploying");
+                        Debug.WriteLine(ex.Message);
+                    }
+                });
             }
 
             return new EmptyResult();

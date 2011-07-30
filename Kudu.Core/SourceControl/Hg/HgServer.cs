@@ -6,7 +6,7 @@ using Mercurial;
 using System.Diagnostics;
 
 namespace Kudu.Core.SourceControl.Hg {
-    public class HgServer : IServer {
+    public class HgServer : IHgServer {
         private readonly Lazy<Server> _server;
         private readonly IEnvironment _environment;
 
