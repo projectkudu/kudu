@@ -12,17 +12,17 @@ namespace Kudu.Core.Infrastructure {
         private const string SolutionParserTypeName = "Microsoft.Build.Construction.SolutionParser, Microsoft.Build, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
 
         private static readonly Type _solutionParser;
-        private static readonly PropertyInfo solutionReaderProperty;
-        private static readonly MethodInfo parseSolutionMethod;
-        private static readonly PropertyInfo projectsProperty;
+        private static readonly PropertyInfo _solutionReaderProperty;
+        private static readonly MethodInfo _parseSolutionMethod;
+        private static readonly PropertyInfo _projectsProperty;
 
         static VsSolution() {
             _solutionParser = Type.GetType(SolutionParserTypeName, throwOnError: false, ignoreCase: false);
 
             if (_solutionParser != null) {
-                solutionReaderProperty = ReflectionUtility.GetInternalProperty(_solutionParser, "SolutionReader");
-                projectsProperty = ReflectionUtility.GetInternalProperty(_solutionParser, "Projects");
-                parseSolutionMethod = ReflectionUtility.GetInternalMethod(_solutionParser, "ParseSolution");
+                _solutionReaderProperty = ReflectionUtility.GetInternalProperty(_solutionParser, "SolutionReader");
+                _projectsProperty = ReflectionUtility.GetInternalProperty(_solutionParser, "Projects");
+                _parseSolutionMethod = ReflectionUtility.GetInternalMethod(_solutionParser, "ParseSolution");
             }
         }
 
@@ -37,12 +37,12 @@ namespace Kudu.Core.Infrastructure {
             var solutionParser = GetSolutionParserInstance();
 
             using (var streamReader = new StreamReader(solutionPath)) {
-                solutionReaderProperty.SetValue(solutionParser, streamReader);
-                parseSolutionMethod.Invoke(solutionParser, null);
+                _solutionReaderProperty.SetValue(solutionParser, streamReader);
+                _parseSolutionMethod.Invoke(solutionParser, null);
             }
 
             var projects = new List<VsSolutionProject>();
-            var projectsArray = projectsProperty.GetValue<object[]>(solutionParser);
+            var projectsArray = _projectsProperty.GetValue<object[]>(solutionParser);
 
             foreach (var project in projectsArray) {
                 projects.Add(new VsSolutionProject(solutionPath, project));
