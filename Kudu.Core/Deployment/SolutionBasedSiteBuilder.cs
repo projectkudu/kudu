@@ -29,7 +29,7 @@ namespace Kudu.Core.Deployment {
             var tcs = new TaskCompletionSource<object>();
 
             try {
-                logger.Log("Builing solution {0}.", Path.GetFileName(SolutionPath));
+                logger.Log("Building solution {0}.", Path.GetFileName(SolutionPath));
 
                 // Build the solution first
                 string log = ExecuteMSBuild(@"""{0}"" /verbosity:m /nologo", SolutionPath);

@@ -35,9 +35,7 @@ namespace Kudu.Core.Infrastructure {
             AbsolutePath = Path.Combine(Path.GetDirectoryName(solutionPath), relativePath);
             var projectType = (int)_projectInSolution_ProjectType.GetValue(solutionProject, null);
             IsWebSite = projectType == 3;
-            if (!IsWebSite) {
-                IsWap = IsProjectFileWap(AbsolutePath);
-            }
+            IsWap = projectType == 1 && IsProjectFileWap(AbsolutePath);
         }
 
 
