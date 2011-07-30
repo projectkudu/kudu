@@ -45,14 +45,14 @@ namespace Kudu.Services.GitServer {
         }
 
         [HttpPost]
-        public void UploadPack(string project) {
+        public void UploadPack() {
             ExecuteRpc("upload-pack", () => {
                 _gitServer.Upload(GetInputStream(), Response.OutputStream);
             });
         }
 
         [HttpPost]
-        public void ReceivePack(string project) {
+        public void ReceivePack() {
             ExecuteRpc("receive-pack", () => {
                 _gitServer.Receive(GetInputStream(), Response.OutputStream);
             });
