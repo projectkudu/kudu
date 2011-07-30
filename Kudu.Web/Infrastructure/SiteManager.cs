@@ -20,16 +20,13 @@ namespace Kudu.Web.Infrastructure {
                 // Create the services site
                 var serviceSite = GetServiceSite(iis, kuduAppPool);
 
-                // Get the physical path of the services site
-                string serviceSiteRoot = ServiceSitePath;
-
                 // Get the port of the site
                 int servicePort = serviceSite.Bindings[0].EndPoint.Port;
-                var serviceApp = serviceSite.Applications.Add("/" + siteName, serviceSiteRoot);
+                var serviceApp = serviceSite.Applications.Add("/" + siteName, ServiceSitePath);
                 serviceApp.ApplicationPoolName = kuduAppPool.Name;
 
                 // Get the path to the website
-                string siteRoot = Path.GetFullPath(Path.Combine(serviceSiteRoot, "..", "apps", siteName, "wwwroot"));
+                string siteRoot = Path.Combine(GetApplicationPath(siteName), "wwwroot");
                 int sitePort = GetRandomPort();
                 var site = iis.Sites.Add(liveSiteName, siteRoot, sitePort);
                 site.ApplicationDefaults.ApplicationPoolName = kuduAppPool.Name;
@@ -82,6 +79,7 @@ namespace Kudu.Web.Infrastructure {
             var iis = new IIS.ServerManager();
             var site = iis.Sites[siteName];
             if (site != null) {
+                site.Stop();
                 string physicalPath = site.Applications[0].VirtualDirectories[0].PhysicalPath;
                 DeleteSafe(physicalPath);
                 iis.Sites.Remove(site);
@@ -91,13 +89,17 @@ namespace Kudu.Web.Infrastructure {
                 if (servicesSite != null) {
                     var app = servicesSite.Applications["/" + applicationName];
                     if (app != null) {
-                        string appPath = Path.Combine(ServiceSitePath, @"App_Data", "apps", applicationName);
+                        string appPath = GetApplicationPath(applicationName);
                         DeleteSafe(appPath);
                         servicesSite.Applications.Remove(app);
                     }
                 }
             }
             iis.CommitChanges();
+        }
+
+        private static string GetApplicationPath(string applicationName) {
+            return Path.GetFullPath(Path.Combine(ServiceSitePath, "..", "apps", applicationName));
         }
 
         private static void DeleteSafe(string physicalPath) {

@@ -15,7 +15,7 @@ namespace Kudu.Core.Infrastructure {
         }
 
         public static void DeleteDirectorySafe(string path) {
-            DoSafeAction(() => Directory.Delete(path, recursive: true));
+            DeleteFileSystemInfo(new DirectoryInfo(path));
         }
 
         public static string EnsureDirectory(string path) {
@@ -35,6 +35,25 @@ namespace Kudu.Core.Infrastructure {
             catch (FileNotFoundException) { }
         }
 
+        private static void DeleteFileSystemInfo(FileSystemInfo fsi) {
+            try {
+                if (fsi.Exists) {
+                    fsi.Attributes = FileAttributes.Normal;
+                }
+            }
+            catch {
+            }
+            var di = fsi as DirectoryInfo;
+
+            if (di != null) {
+                foreach (var dirInfo in di.GetFileSystemInfos()) {
+                    DeleteFileSystemInfo(dirInfo);
+                }
+            }
+
+            DoSafeAction(fsi.Delete);
+        }
+
         private static void DoSafeAction(Action action) {
             try {
                 Attempt(action);
@@ -43,7 +62,7 @@ namespace Kudu.Core.Infrastructure {
             }
         }
 
-        private static void Attempt(Action action, int retries = 3, int delayBeforeRetry = 150) {
+        private static void Attempt(Action action, int retries = 3, int delayBeforeRetry = 250) {
             while (retries > 0) {
                 try {
                     action();
