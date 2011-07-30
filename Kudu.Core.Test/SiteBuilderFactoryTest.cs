@@ -5,7 +5,7 @@ using Xunit;
 namespace Kudu.Core.Test {
     public class SiteBuilderFactoryTest {
         [Fact]
-        public void RequiesBuildCreatesMSBuildDeployer() {
+        public void RequiresBuildCreatesMSBuildDeployer() {
             var environment = new Mock<IEnvironment>();
             environment.Setup(m => m.RequiresBuild).Returns(true);
             var builderFactory = new SiteBuilderFactory(environment.Object);
@@ -15,7 +15,7 @@ namespace Kudu.Core.Test {
         }
 
         [Fact]
-        public void WhenRequiesBuildFalseCreatesBasicDeployer() {
+        public void WhenRequiresBuildFalseCreatesBasicDeployer() {
             var environment = new Mock<IEnvironment>();
             environment.Setup(m => m.RequiresBuild).Returns(false);
             var builderFactory = new SiteBuilderFactory(environment.Object);
