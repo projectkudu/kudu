@@ -32,7 +32,7 @@ namespace Kudu.Core.Deployment {
             }
             catch (Exception e) {
                 logger.Log("Building solution failed.");
-                logger.Log(e.Message);
+                logger.Log(e);
                 tcs.TrySetException(e);
                 return tcs.Task;
             }
@@ -47,7 +47,7 @@ namespace Kudu.Core.Deployment {
             }
             catch (Exception e) {
                 logger.Log("Building web project failed.");
-                logger.Log(e.Message);
+                logger.Log(e);
                 tcs.TrySetException(e);
                 return tcs.Task;
             }

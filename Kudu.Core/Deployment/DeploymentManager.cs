@@ -166,7 +166,7 @@ namespace Kudu.Core.Deployment {
             catch (Exception e) {
                 if (logger != null) {
                     logger.Log("Deployment failed");
-                    logger.Log(e.Message);
+                    logger.Log(e);
                 }
             }
         }
@@ -204,7 +204,7 @@ namespace Kudu.Core.Deployment {
 
                 if (logger != null) {
                     logger.Log("Deploying to web root failed.");
-                    logger.Log(e.Message);
+                    logger.Log(e);
                 }
             }
             finally {

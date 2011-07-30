@@ -66,7 +66,7 @@ namespace Kudu.Services.Web.App_Start {
 
         private static string Root {
             get {
-                return Path.Combine(HttpRuntime.AppDomainAppPath, "..", "apps");
+                return Path.GetFullPath(Path.Combine(HttpRuntime.AppDomainAppPath, "..", "apps"));
             }
         }
 

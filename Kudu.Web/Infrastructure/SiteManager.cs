@@ -29,7 +29,7 @@ namespace Kudu.Web.Infrastructure {
                 serviceApp.ApplicationPoolName = kuduAppPool.Name;
 
                 // Get the path to the website
-                string siteRoot = Path.Combine(serviceSiteRoot, "..", "apps", siteName, "wwwroot");
+                string siteRoot = Path.GetFullPath(Path.Combine(serviceSiteRoot, "..", "apps", siteName, "wwwroot"));
                 int sitePort = GetRandomPort();
                 var site = iis.Sites.Add(liveSiteName, siteRoot, sitePort);
                 site.ApplicationDefaults.ApplicationPoolName = kuduAppPool.Name;

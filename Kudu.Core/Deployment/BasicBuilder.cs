@@ -22,7 +22,7 @@ namespace Kudu.Core.Deployment {
             }
             catch(Exception ex) {
                 logger.Log("Copying files failed.");
-                logger.Log(ex.Message);
+                logger.Log(ex);
                 tcs.SetException(ex);
             }
 
