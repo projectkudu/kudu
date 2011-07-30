@@ -12,11 +12,12 @@ namespace Kudu.Core.Deployment {
             _path = path;
         }
 
-        public void Log(string value) {
+        public void Log(string value, LogEntryType type) {
             XDocument document = GetDocument();
 
             document.Root.Add(new XElement("entry",
                                   new XAttribute("time", DateTime.Now),
+                                  new XAttribute("type", (int)type),
                                   value));
 
             document.Save(_path);
@@ -27,7 +28,8 @@ namespace Kudu.Core.Deployment {
 
             return from e in document.Root.Elements("entry")
                    let time = DateTime.Parse(e.Attribute("time").Value)
-                   select new LogEntry(time, e.Value);
+                   let type = (LogEntryType)Int32.Parse(e.Attribute("type").Value)
+                   select new LogEntry(time, e.Value, type);
         }
 
         private XDocument GetDocument() {

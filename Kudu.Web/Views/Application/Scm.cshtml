@@ -80,7 +80,7 @@
     });
 </script>
 <script id="logTemplate" type="text/x-jquery-tmpl"> 
-    <li>
+    <li class="${getLogClass(Type)}">
         <strong>${LogTime}</strong> 
         <pre class="message">${Message}</pre>
     </li>

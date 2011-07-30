@@ -50,6 +50,18 @@ $(function () {
         return "Success";
     }
 
+    function getLogClass(type) {
+        switch (type) {
+            case 0:
+                return "icon-message";
+            case 1:
+                return "icon-warning";
+            case 2:
+                return "icon-error";
+        }
+    }
+
+    window.getLogClass = getLogClass;
     window.getDiffClass = getDiffClass;
     window.getDiffId = getDiffId;
     window.getFileClass = getFileClass;

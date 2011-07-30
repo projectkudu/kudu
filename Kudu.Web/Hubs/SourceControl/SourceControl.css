@@ -151,6 +151,19 @@
     background-image: url('images/folder_table.png');
 }
 
+#scm .icon-message {
+    list-style-image: url('images/tick.png');
+}
+
+#scm .icon-error {
+    list-style-image: url('../../../images/error.png');
+}
+
+#scm .icon-warning {
+    list-style-image: url('../../../images/warning.png');
+}
+
+
 #scm #status {
     display: none;
 }
@@ -362,6 +375,10 @@
     font-family: Consolas, Lucida Grande;
 }
 
-#deploy-log pre {
+#scm #deploy-log pre {
     overflow: auto;
+}
+
+#scm #deploy-log li {
+    list-style-type: none;
 }

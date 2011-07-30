@@ -14,11 +14,11 @@ namespace Kudu.Core.Deployment {
             var tcs = new TaskCompletionSource<object>();
 
             try {
-                logger.Log("Copying files to {0}", outputPath);
+                logger.Log("Copying files to {0}.", outputPath);
 
                 FileSystemHelpers.SmartCopy(_sourcePath, outputPath);
 
-                logger.Log("Success.");
+                logger.Log("Done.");
             }
             catch(Exception ex) {
                 logger.Log("Copying files failed.");

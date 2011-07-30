@@ -125,7 +125,7 @@ namespace Kudu.Core.Deployment {
                 FileSystemHelpers.DeleteFileSafe(logPath);
                 logger = GetLogger(id);
 
-                logger.Log("Preparing deployment for {0}", id);
+                logger.Log("Preparing deployment for {0}.", id);
 
                 // Put bits in the cache folder
                 string cachePath = GetCachePath(id);
@@ -146,7 +146,7 @@ namespace Kudu.Core.Deployment {
                                // We need to read the exception so the process doesn't go down
                                Exception exception = t.Exception;
 
-                               logger.Log("Deployment failed");
+                               logger.Log("Deployment failed.", LogEntryType.Error);
 
                                // failed to deploy
                                trackingFile.Percentage = 100;
@@ -165,7 +165,7 @@ namespace Kudu.Core.Deployment {
             }
             catch (Exception e) {
                 if (logger != null) {
-                    logger.Log("Deployment failed");
+                    logger.Log("Deployment failed.", LogEntryType.Error);
                     logger.Log(e);
                 }
             }
@@ -183,12 +183,10 @@ namespace Kudu.Core.Deployment {
                 trackingFile.StatusText = "Deploying to webroot...";
                 trackingFile.Save();
 
-                logger.Log("Copying files to {0}", _environment.DeploymentTargetPath);
+                logger.Log("Copying files to {0}.", _environment.DeploymentTargetPath);
 
                 // Copy to target
                 FileSystemHelpers.SmartCopy(cachePath, _environment.DeploymentTargetPath, skipOldFiles);
-
-                logger.Log("Done");
 
                 trackingFile.Status = DeployStatus.Done;
                 trackingFile.StatusText = String.Empty;
@@ -196,6 +194,8 @@ namespace Kudu.Core.Deployment {
                 // Write the active deployment file
                 string activeFilePath = GetActiveDeploymentFilePath();
                 File.WriteAllText(activeFilePath, id);
+
+                logger.Log("Deployment successful.");
             }
             catch (Exception e) {
                 if (trackingFile != null) {
@@ -203,7 +203,7 @@ namespace Kudu.Core.Deployment {
                 }
 
                 if (logger != null) {
-                    logger.Log("Deploying to web root failed.");
+                    logger.Log("Deploying to web root failed.", LogEntryType.Error);
                     logger.Log(e);
                 }
             }

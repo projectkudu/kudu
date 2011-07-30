@@ -31,7 +31,7 @@ namespace Kudu.Core.Deployment {
                 logger.Log(log);
             }
             catch (Exception e) {
-                logger.Log("Building solution failed.");
+                logger.Log("Building solution failed.", LogEntryType.Error);
                 logger.Log(e);
                 tcs.TrySetException(e);
                 return tcs.Task;
@@ -46,7 +46,7 @@ namespace Kudu.Core.Deployment {
                 logger.Log(log);
             }
             catch (Exception e) {
-                logger.Log("Building web project failed.");
+                logger.Log("Building web project failed.", LogEntryType.Error);
                 logger.Log(e);
                 tcs.TrySetException(e);
                 return tcs.Task;
