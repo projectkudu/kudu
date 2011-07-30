@@ -1,9 +1,9 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using Kudu.Core.Infrastructure;
 using Mercurial;
-using System.Diagnostics;
 
 namespace Kudu.Core.SourceControl.Hg {
     public class HgServer : IHgServer {
@@ -121,15 +121,33 @@ allow_push = *
                 }
 
                 // Read the pid file and kill the process
-                int pid;
-                if (Int32.TryParse(File.ReadAllText(_pidFile), out pid)) {
+                int? processId = GetServerProcessId();
+                if (processId != null) {
                     try {
-                        var process = Process.GetProcessById(pid);
+                        var process = Process.GetProcessById(processId.Value);
                         process.Kill();
                     }
                     catch (ArgumentException) {
                     }
                 }
+            }
+
+            private int? GetServerProcessId() {
+                try {
+                    // Check if the pid file exists
+                    if (File.Exists(_pidFile)) {
+                        int processId;
+                        if (Int32.TryParse(File.ReadAllText(_pidFile), out processId)) {
+                            return processId;
+                        }
+                    }
+                }
+                catch (Exception ex) {
+                    Debug.WriteLine("Failed to get server process id.");
+                    Debug.WriteLine(ex.Message);
+                }
+
+                return null;
             }
 
             private int GetRandomPort() {
