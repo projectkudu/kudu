@@ -1,4 +1,5 @@
 ﻿using System.Web;
+using System;
 
 namespace Kudu.Services.Web {
     public class DefaultServerConfiguration : IServerConfiguration {
@@ -10,12 +11,18 @@ namespace Kudu.Services.Web {
 
         public string HgServerRoot {
             get {
+                if (String.IsNullOrEmpty(ApplicationName)) {
+                    return "hg";
+                }
                 return ApplicationName;
             }
         }
 
         public string GitServerRoot {
             get {
+                if (String.IsNullOrEmpty(ApplicationName)) {
+                    return "git";
+                }
                 return ApplicationName + ".git";
             }
         }
