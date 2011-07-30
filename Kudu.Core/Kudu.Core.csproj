@@ -86,6 +86,7 @@
     <Compile Include="Infrastructure\HttpClientHelper.cs" />
     <Compile Include="Deployment\LoggerExtensions.cs" />
     <Compile Include="Infrastructure\ParserHelpers.cs" />
+    <Compile Include="Infrastructure\ReflectionUtility.cs" />
     <Compile Include="Infrastructure\StringReader.cs" />
     <Compile Include="Infrastructure\Executable.cs" />
     <Compile Include="Infrastructure\IStringReader.cs" />
