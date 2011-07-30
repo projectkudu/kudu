@@ -35,23 +35,30 @@ namespace Kudu.Core.Infrastructure {
             catch (FileNotFoundException) { }
         }
 
-        private static void DeleteFileSystemInfo(FileSystemInfo fsi) {
+        private static void DeleteFileSystemInfo(FileSystemInfo fileSystemInfo) {
             try {
-                if (fsi.Exists) {
-                    fsi.Attributes = FileAttributes.Normal;
+                if (fileSystemInfo.Exists) {
+                    fileSystemInfo.Attributes = FileAttributes.Normal;
                 }
             }
             catch {
             }
-            var di = fsi as DirectoryInfo;
 
-            if (di != null) {
-                foreach (var dirInfo in di.GetFileSystemInfos()) {
-                    DeleteFileSystemInfo(dirInfo);
+            var directoryInfo = fileSystemInfo as DirectoryInfo;
+
+            if (directoryInfo != null) {
+                try {
+                    if (directoryInfo.Exists) {
+                        foreach (var dirInfo in directoryInfo.GetFileSystemInfos()) {
+                            DeleteFileSystemInfo(dirInfo);
+                        }
+                    }
+                }
+                catch {
                 }
             }
 
-            DoSafeAction(fsi.Delete);
+            DoSafeAction(fileSystemInfo.Delete);
         }
 
         private static void DoSafeAction(Action action) {
