@@ -26,7 +26,7 @@ namespace Kudu.Core.Deployment {
                 logger.Log("Builing solution {0}.", Path.GetFileName(_solutionPath));
 
                 // Build the solution first
-                string log = _msbuildExe.Execute(@"""{0}""", _solutionPath);
+                string log = _msbuildExe.Execute(@"""{0}"" /verbosity:m /nologo", _solutionPath);
 
                 logger.Log(log);
             }
@@ -41,7 +41,7 @@ namespace Kudu.Core.Deployment {
                 logger.Log("Building web project {0}.", Path.GetFileName(_projectPath));
 
                 // REVIEW: Should we use the msbuild API?
-                string log = _msbuildExe.Execute(@"""{0}"" /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir={1};AutoParameterizationWebConfigConnectionStrings=false;SolutionDir={2}", _projectPath, outputPath, solutionDir);
+                string log = _msbuildExe.Execute(@"""{0}"" /nologo /verbosity:m /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir={1};AutoParameterizationWebConfigConnectionStrings=false;SolutionDir={2}", _projectPath, outputPath, solutionDir);
 
                 logger.Log(log);
             }
