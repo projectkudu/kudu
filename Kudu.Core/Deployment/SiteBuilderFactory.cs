@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Linq;
-using System.IO;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment {
     public class SiteBuilderFactory : ISiteBuilderFactory {
@@ -10,32 +10,33 @@ namespace Kudu.Core.Deployment {
             _environment = environment;
         }
 
-        public ISiteBuilder CreateBuilder() {            
-            if (_environment.RequiresBuild) {
-                // TODO: Have some convention (or setting to determine the deployment project if more than one)
-                string projectFile = _environment.GetWebApplicationProjects().FirstOrDefault();
+        public ISiteBuilder CreateBuilder() {
+            // Get all solutions in the current repository path
+            var solutions = VsSolution.GetSolutions(_environment.RepositoryPath).ToList();
 
-                return new WapBuilder(_environment.RepositoryPath, GetSolutionPath(projectFile), projectFile);
+            if (!solutions.Any()) {
+                // If there's none then use the basic builder (the site is xcopy deployable)
+                return new BasicBuilder(_environment.RepositoryPath);
             }
 
-            return new BasicBuilder(_environment.RepositoryPath);
-        }        
-
-        private string GetSolutionPath(string projectPath) {
-            string path = projectPath;
-
-            while (!_environment.RepositoryPath.Equals(path, StringComparison.OrdinalIgnoreCase)) {
-                path = Path.GetDirectoryName(path);
-                var solutionFiles = Directory.EnumerateFiles(path, "*.sln").ToList();
-                if (solutionFiles.Any()) {
-                    // TODO: Ensure that this project is in this solution
-
-                    // Add the trailing slash
-                    return solutionFiles.First();
-                }
+            // More than one solution is ambiguous
+            if (solutions.Count > 1) {
+                throw new InvalidOperationException("Unable to determine which solution file to build.");
             }
 
-            return null;
+            // We have a solution
+            VsSolution solution = solutions[0];
+
+            // TODO: We need to determine what project to deploy so get a list of all web projects and
+            // figure out with some heuristic, which one to deploy.
+            // For now just pick the first one we find.
+            VsSolutionProject project = solution.Projects.Where(p => p.IsWap || p.IsWebSite).FirstOrDefault();
+
+            if (project.IsWap) {
+                return new WapBuilder(_environment.RepositoryPath, solution.Path, project.AbsolutePath);
+            }
+
+            return new WebSiteBuilder(_environment.RepositoryPath, solution.Path, project.AbsolutePath);
         }
     }
 }

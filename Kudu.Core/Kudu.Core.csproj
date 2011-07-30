@@ -57,6 +57,7 @@
   <ItemGroup>
     <Compile Include="Deployment\BasicBuilder.cs" />
     <Compile Include="Deployment\LogEntryType.cs" />
+    <Compile Include="Deployment\SolutionBasedSiteBuilder.cs" />
     <Compile Include="Deployment\SiteBuilderFactory.cs" />
     <Compile Include="Deployment\DeploymentManager.cs" />
     <Compile Include="Deployment\DeploymentStatusFile.cs" />
@@ -69,6 +70,7 @@
     <Compile Include="Deployment\LogEntry.cs" />
     <Compile Include="Deployment\WapBuilder.cs" />
     <Compile Include="Deployment\RemoteDeploymentManager.cs" />
+    <Compile Include="Deployment\WebSiteBuilder.cs" />
     <Compile Include="Deployment\XmlLogger.cs" />
     <Compile Include="Editor\FileSystemFactory.cs" />
     <Compile Include="Editor\IFileSystem.cs" />
@@ -87,6 +89,8 @@
     <Compile Include="Infrastructure\StringReader.cs" />
     <Compile Include="Infrastructure\Executable.cs" />
     <Compile Include="Infrastructure\IStringReader.cs" />
+    <Compile Include="Infrastructure\VsSolution.cs" />
+    <Compile Include="Infrastructure\VsSolutionProject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SourceControl\Branch.cs" />
     <Compile Include="SourceControl\ChangeSet.cs" />

@@ -48,7 +48,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="SiteBuilderFactoryTest.cs" />
     <Compile Include="GitRepositoryRepositoryTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
