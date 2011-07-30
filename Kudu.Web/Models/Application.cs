@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace Kudu.Web.Models {
     public class Application {
@@ -10,5 +11,6 @@ namespace Kudu.Web.Models {
         public string ServiceUrl { get; set; }
         public string SiteUrl { get; set; }
         public int RepositoryType { get; set; }
+        public DateTime Created { get; set; }
     }
 }

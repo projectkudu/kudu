@@ -19,7 +19,8 @@ namespace Kudu.Web.Controllers {
         // GET: /Application/
 
         public ViewResult Index() {
-            return View(db.Applications.ToList().Select(a => new ApplicationViewModel(a)));
+            var applications = db.Applications.OrderBy(a => a.Created);
+            return View(applications.ToList().Select(a => new ApplicationViewModel(a)));
         }
 
         //
@@ -64,7 +65,8 @@ namespace Kudu.Web.Controllers {
                         SiteUrl = site.SiteUrl,
                         ServiceAppName = site.ServiceAppName,
                         SiteName = site.SiteName,
-                        RepositoryType = (int)appViewModel.RepositoryType
+                        RepositoryType = (int)appViewModel.RepositoryType,
+                        Created = DateTime.Now
                     };
 
                     // Give iis a chance to start the app up
