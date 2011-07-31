@@ -103,9 +103,6 @@
         <td class="timeago" title="${Date}"></td>
         <td>            
             {{if deploymentInfo }}
-                {{if deploymentInfo.Status !== 'Success' && deploymentInfo.Status !== 'Failed' }}
-                <span class="progress icon-notext icon-loading">&nbsp;</span>
-                {{/if}}
                 <span class="deploy-status">${deploymentInfo.Status}</status>
             {{else}}
                 -

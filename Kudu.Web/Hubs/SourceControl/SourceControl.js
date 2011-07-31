@@ -106,6 +106,40 @@ $(function () {
         });
     }
 
+    function updateStatus(result) {
+        if (scm.id === result.Id) {
+            return;
+        }
+
+        var oldItem = $('#' + scm.id);
+        var newItem = $('#' + result.Id);
+
+        newItem.find('.loading').show();
+        oldItem.find('.status').hide();
+
+        // Update the deployment status
+        var status = newItem.find('.deploy-status');
+        status.html(result.Status);
+        status.show();
+
+        if (result.Status == 'Success') {
+            newItem.find('.loading').hide();
+            newItem.find('.deploy').hide();
+            newItem.find('.status').show();
+
+            oldItem.find('.deploy').show();
+
+            scm.id = result.Id;
+        }
+        else if (result.Status == 'Failed') {
+            oldItem.find('.loading').hide();
+            oldItem.find('.deploy').show();
+            oldItem.find('.status').show();
+
+            newItem.find('.loading').hide();
+        }
+    }
+
     function processChanges() {
         var deploymentsOnly = $('#filter-changes').is(':checked');
         if (deploymentsOnly) {
@@ -168,7 +202,7 @@ $(function () {
         });
     }
 
-    function loadRepository() {
+    function loadRepository(onComplete) {
         $('#show').hide();
         $('#working').hide();
         $('#deploy-log').hide();
@@ -187,6 +221,10 @@ $(function () {
 
                getChangeSets(0, function () {
                    window.loader.hide(token);
+
+                   if (onComplete) {
+                       onComplete();
+                   }
 
                    if (infiniteScrollCheck === false) {
                        getMoreChanges();
@@ -375,19 +413,12 @@ $(function () {
 
     scm.updateDeployStatus = function (result) {
         if (!document.getElementById(result.Id)) {
-            loadRepository();
+            loadRepository(function () {
+                updateStatus(result);
+            });
         }
-        else {
-            var row = $('#' + result.Id);
-
-            // Update the deployment status
-            var status = row.find('.deploy-status');
-            status.html(result.Status);
-            status.show();
-
-            if (result.Status == 'Success') {
-                row.find('.progress').hide();
-            }
+        else if (changesXhr == null) {
+            updateStatus(result);
         }
     };
 
