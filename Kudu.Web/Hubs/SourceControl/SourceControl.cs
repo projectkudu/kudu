@@ -2,6 +2,7 @@
 using System.Linq;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
+using Kudu.Web.Hubs.SourceControl.Model;
 using Kudu.Web.Model;
 using SignalR.Hubs;
 
@@ -47,7 +48,8 @@ namespace Kudu.Web {
             var type = _repositoryManager.GetRepositoryType();
             return new RepositoryViewModel {
                 Deployments = _deploymentManager.GetResults()
-                                                .ToDictionary(d => d.Id),
+                                                .ToDictionary(d => d.Id, 
+                                                              d => new DeployResultViewModel(d)),
                 Branches = _repository.GetBranches()
                                  .ToLookup(b => b.Id)
                                  .ToDictionary(p => p.Key, p => p.Select(b => b.Name))

@@ -51,7 +51,8 @@ namespace Kudu.Core.Deployment {
 
             return new DeployResult {
                 Id = file.Id,
-                DeployTime = file.DeploymentStartTime,
+                DeployStartTime = file.DeploymentStartTime,
+                DeployEndTime = file.DeploymentEndTime,
                 Status = file.Status,
                 Percentage = file.Percentage,
                 StatusText = file.StatusText
@@ -133,7 +134,7 @@ namespace Kudu.Core.Deployment {
                 // The initial status
                 trackingFile = CreateTrackingFile(id);
                 trackingFile.Id = id;
-                trackingFile.Status = DeployStatus.Pending;
+                trackingFile.Status = DeployStatus.Building;
                 trackingFile.StatusText = String.Format("Building {0}...", id);
                 trackingFile.Save();
 
@@ -188,7 +189,7 @@ namespace Kudu.Core.Deployment {
                 // Copy to target
                 FileSystemHelpers.SmartCopy(cachePath, _environment.DeploymentTargetPath, skipOldFiles);
 
-                trackingFile.Status = DeployStatus.Done;
+                trackingFile.Status = DeployStatus.Success;
                 trackingFile.StatusText = String.Empty;
 
                 // Write the active deployment file

@@ -209,6 +209,7 @@
     <Compile Include="Hubs\Editor\Model\Project.cs" />
     <Compile Include="Hubs\SourceControl\Model\ChangeSetDetailViewModel.cs" />
     <Compile Include="Hubs\SourceControl\Model\ChangeSetViewModel.cs" />
+    <Compile Include="Hubs\SourceControl\Model\DeployResultViewModel.cs" />
     <Compile Include="Hubs\SourceControl\Model\LogEntryViewModel.cs" />
     <Compile Include="Hubs\SourceControl\Model\RepositoryViewModel.cs" />
     <Compile Include="Hubs\SourceControl\SourceControl.cs" />

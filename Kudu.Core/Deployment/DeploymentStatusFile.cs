@@ -37,13 +37,16 @@ namespace Kudu.Core.Deployment {
             DeployStatus status;
             Enum.TryParse(document.Root.Element("status").Value, out status);
 
+            string deploymentEndTime = document.Root.Element("deploymentEndTime").Value;
+            string deploymentStartTime = document.Root.Element("deploymentStartTime").Value;
+
             return new DeploymentStatusFile(path) {
                 Id = document.Root.Element("id").Value,
                 Status = status,
                 StatusText = document.Root.Element("statusText").Value,
                 Percentage = percentage,
-                DeploymentStartTime = DateTime.Parse(document.Root.Element("deploymentStartTime").Value),
-                DeploymentEndTime = DateTime.Parse(document.Root.Element("deploymentEndTime").Value)
+                DeploymentStartTime = DateTime.Parse(deploymentStartTime),
+                DeploymentEndTime = !String.IsNullOrEmpty(deploymentEndTime) ? DateTime.Parse(deploymentEndTime) : (DateTime?)null
             };
         }
 
@@ -52,7 +55,7 @@ namespace Kudu.Core.Deployment {
         public string StatusText { get; set; }
         public int Percentage { get; set; }
         public DateTime DeploymentStartTime { get; private set; }
-        public DateTime DeploymentEndTime { get; set; }
+        public DateTime? DeploymentEndTime { get; set; }
 
         public void Save() {
             if (String.IsNullOrEmpty(Id)) {

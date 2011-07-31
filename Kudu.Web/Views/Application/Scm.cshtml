@@ -103,7 +103,7 @@
         <td class="timeago" title="${Date}"></td>
         <td>
             {{if deploymentInfo }}
-                ${getDeploymentStatus(deploymentInfo)}
+                ${deploymentInfo.Status}
             {{else}}
                 -
             {{/if}}
