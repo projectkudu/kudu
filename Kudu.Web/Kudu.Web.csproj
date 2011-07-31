@@ -90,14 +90,6 @@
     <Content Include="Hubs\Editor\skyde.js" />
     <Content Include="Hubs\Editor\styles\codemirror.css" />
     <Content Include="Hubs\Editor\styles\skyde.css" />
-    <Content Include="Hubs\SourceControl\images\folder_table.png" />
-    <Content Include="Hubs\SourceControl\images\loading.gif" />
-    <Content Include="Hubs\SourceControl\images\page_white.png" />
-    <Content Include="Hubs\SourceControl\images\page_white_add.png" />
-    <Content Include="Hubs\SourceControl\images\page_white_delete.png" />
-    <Content Include="Hubs\SourceControl\images\page_white_edit.png" />
-    <Content Include="Hubs\SourceControl\images\page_white_gear.png" />
-    <Content Include="Hubs\SourceControl\images\tick.png" />
     <Content Include="Hubs\SourceControl\index.htm" />
     <Content Include="Hubs\SourceControl\loader.js" />
     <Content Include="Hubs\SourceControl\SourceControl.css" />
@@ -135,6 +127,7 @@
     <Content Include="images\folder-collapsed.png" />
     <Content Include="images\folder-expanded.png" />
     <Content Include="images\folder.png" />
+    <Content Include="images\folder_table.png" />
     <Content Include="images\js-add.png" />
     <Content Include="images\js-edit.png" />
     <Content Include="images\js.png" />
@@ -144,7 +137,9 @@
     <Content Include="images\new-folder.png" />
     <Content Include="images\page_white.png" />
     <Content Include="images\page_white_add.png" />
+    <Content Include="images\page_white_delete.png" />
     <Content Include="images\page_white_edit.png" />
+    <Content Include="images\page_white_gear.png" />
     <Content Include="images\php-add.png" />
     <Content Include="images\php-edit.png" />
     <Content Include="images\php.png" />
@@ -155,7 +150,9 @@
     <Content Include="images\scaffold.png" />
     <Content Include="images\solution.png" />
     <Content Include="images\sync.png" />
+    <Content Include="images\tick.png" />
     <Content Include="images\tt.png" />
+    <Content Include="images\warning.png" />
     <Content Include="Scripts\codemirror\codemirror.js" />
     <Content Include="Scripts\codemirror\mode\clike\clike.css" />
     <Content Include="Scripts\codemirror\mode\clike\clike.js" />

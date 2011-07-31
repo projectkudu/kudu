@@ -106,7 +106,7 @@
 }
 
 #scm .icon-loading {
-    background-image: url('images/loading.gif');
+    background-image: url('../../../images/loading.gif');
 }
 
 #scm .icon {
@@ -128,31 +128,31 @@
 }
 
 #scm .icon-binary-file {
-    background-image: url('images/page_white_gear.png');
+    background-image: url('../../../images/page_white_gear.png');
 }
 
 #scm .icon-file {
-    background-image: url('images/page_white.png');
+    background-image: url('../../../images/page_white.png');
 }
 
 #scm .icon-file-added {
-    background-image: url('images/page_white_add.png');
+    background-image: url('../../../images/page_white_add.png');
 }
 
 #scm .icon-file-deleted {
-    background-image: url('images/page_white_delete.png');
+    background-image: url('../../../images/page_white_delete.png');
 }
 
 #scm .icon-file-modified {
-    background-image: url('images/page_white_edit.png');
+    background-image: url('../../../images/page_white_edit.png');
 }
 
 #scm .icon-working-dir {
-    background-image: url('images/folder_table.png');
+    background-image: url('../../../images/folder_table.png');
 }
 
 #scm .icon-message {
-    list-style-image: url('images/tick.png');
+    list-style-image: url('../../../images/tick.png');
 }
 
 #scm .icon-error {
