@@ -30,7 +30,7 @@ namespace Kudu.Web.Infrastructure {
             return _cache.GetOrAdd(applicationName, name => {
                 using (var db = new KuduContext()) {
                     var application = db.Applications.Find(name);
-                    return new Connection(application.ServiceUrl + "deploy/progress");
+                    return new Connection(application.ServiceUrl + "deploy/status");
                 }
             });
         }

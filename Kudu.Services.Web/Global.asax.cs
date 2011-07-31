@@ -39,9 +39,9 @@ namespace Kudu.Services {
             );
 
             routes.MapHttpHandler(
-                "DeploymentProgress",
-                "deploy/progress/{*url}",
-               context => new DeploymentProgress()
+                "DeploymentStatus",
+                "deploy/status/{*url}",
+               context => new DeploymentStatusHandler()
             );
 
             routes.MapRoute(
