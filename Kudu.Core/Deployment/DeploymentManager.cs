@@ -10,13 +10,16 @@ namespace Kudu.Core.Deployment {
         private readonly IRepositoryManager _repositoryManager;
         private readonly ISiteBuilderFactory _builderFactory;
         private readonly IEnvironment _environment;
+        private readonly IDeploymentNotifier _notifier;
 
         public DeploymentManager(IRepositoryManager repositoryManager,
                                  ISiteBuilderFactory builderFactory,
-                                 IEnvironment environment) {
+                                 IEnvironment environment,
+                                 IDeploymentNotifier notifier) {
             _repositoryManager = repositoryManager;
             _builderFactory = builderFactory;
             _environment = environment;
+            _notifier = notifier;
         }
 
         public string ActiveDeploymentId {
@@ -138,6 +141,8 @@ namespace Kudu.Core.Deployment {
                 trackingFile.StatusText = String.Format("Building {0}...", id);
                 trackingFile.Save();
 
+                NotifyStatus(id);
+
                 // Create a deployer
                 ISiteBuilder builder = _builderFactory.CreateBuilder();
 
@@ -155,10 +160,13 @@ namespace Kudu.Core.Deployment {
                                trackingFile.StatusText = String.Empty;
                                trackingFile.DeploymentEndTime = DateTime.Now;
                                trackingFile.Save();
+
+                               NotifyStatus(id);
                            }
                            else {
                                trackingFile.Percentage = 50;
                                trackingFile.Save();
+                               NotifyStatus(id);
 
                                DeployToTarget(id);
                            }
@@ -168,6 +176,7 @@ namespace Kudu.Core.Deployment {
                 if (logger != null) {
                     logger.Log("Deployment failed.", LogEntryType.Error);
                     logger.Log(e);
+                    NotifyStatus(id);
                 }
             }
         }
@@ -183,6 +192,7 @@ namespace Kudu.Core.Deployment {
 
                 trackingFile.StatusText = "Deploying to webroot...";
                 trackingFile.Save();
+                NotifyStatus(id);
 
                 logger.Log("Copying files to {0}.", _environment.DeploymentTargetPath);
 
@@ -213,8 +223,13 @@ namespace Kudu.Core.Deployment {
                     trackingFile.DeploymentEndTime = DateTime.Now;
                     trackingFile.Percentage = 100;
                     trackingFile.Save();
+                    NotifyStatus(id);
                 }
             }
+        }
+
+        private void NotifyStatus(string id) {
+            _notifier.NotifyStatus(GetResult(id));
         }
 
         private DeploymentStatusFile OpenTrackingFile(string id) {

@@ -78,7 +78,7 @@
 <script src="@Url.Content("~/Hubs/SourceControl/SourceControl.js")" type="text/javascript"></script>
 <script type="text/javascript">
     $(function () {
-        signalR.sourceControl.state.appName = '@ViewBag.AppName';
+        signalR.sourceControl.appName = '@ViewBag.AppName';
     });
 </script>
 <script id="logTemplate" type="text/x-jquery-tmpl"> 
@@ -93,7 +93,7 @@
         <td>${ShortId}</td>
         <td>
             {{each(i, branch) branches}}
-            <a href="#" class="branch update" data-id="${Id}" data-branch="${branch}">${branch}</a>
+            <a href="#" class="branch" data-id="${Id}" data-branch="${branch}">${branch}</a>
             {{/each}}
             <div class="description">
                 {{html Summary}}
@@ -101,9 +101,9 @@
         </td>
         <td>${AuthorName}</td>
         <td class="timeago" title="${Date}"></td>
-        <td>
+        <td>            
             {{if deploymentInfo }}
-                ${deploymentInfo.Status}
+                <span class="deploy-status">${deploymentInfo.Status}</status>
             {{else}}
                 -
             {{/if}}

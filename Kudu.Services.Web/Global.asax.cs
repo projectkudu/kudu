@@ -1,5 +1,7 @@
 ﻿using System.Web.Mvc;
 using System.Web.Routing;
+using Kudu.Services.Deployment;
+using RouteMagic;
 
 namespace Kudu.Services {
     public class MvcApplication : System.Web.HttpApplication {
@@ -34,6 +36,12 @@ namespace Kudu.Services {
                 "ReceivePack", // Route name
                 configuration.GitServerRoot + "/git-receive-pack", // URL with parameters
                 new { Controller = "Rpc", Action = "ReceivePack" } // Parameter defaults
+            );
+
+            routes.MapHttpHandler(
+                "DeploymentProgress",
+                "deploy/progress/{*url}",
+               context => new DeploymentProgress()
             );
 
             routes.MapRoute(

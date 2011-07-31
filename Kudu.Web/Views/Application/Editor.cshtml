@@ -82,7 +82,7 @@
 <script src="@Url.Content("~/SignalR/hubs")" type="text/javascript"></script>
 <script type="text/javascript">
     $(function () {
-        signalR.documents.state.appName = '@ViewBag.AppName';
+        signalR.documents.appName = '@ViewBag.AppName';
     });
 </script>
 <script src="@Url.Content("~/Scripts/jquery.render.min.js")" type="text/javascript"></script>

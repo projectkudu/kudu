@@ -1,9 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
 using Kudu.Web.Hubs.SourceControl.Model;
 using Kudu.Web.Model;
+using Newtonsoft.Json;
+using SignalR.Client;
 using SignalR.Hubs;
 
 namespace Kudu.Web {
@@ -11,13 +14,16 @@ namespace Kudu.Web {
         private readonly IRepository _repository;
         private readonly IRepositoryManager _repositoryManager;
         private readonly IDeploymentManager _deploymentManager;
+        private readonly Connection _connection;
 
         public SourceControl(IRepository repository,
                              IRepositoryManager repositoryManager,
-                             IDeploymentManager deploymentManager) {
+                             IDeploymentManager deploymentManager,
+                             Connection connection) {
             _repository = repository;
             _repositoryManager = repositoryManager;
             _deploymentManager = deploymentManager;
+            _connection = connection;
         }
 
         public ChangeSetDetailViewModel Show(string id) {
@@ -48,7 +54,7 @@ namespace Kudu.Web {
             var type = _repositoryManager.GetRepositoryType();
             return new RepositoryViewModel {
                 Deployments = _deploymentManager.GetResults()
-                                                .ToDictionary(d => d.Id, 
+                                                .ToDictionary(d => d.Id,
                                                               d => new DeployResultViewModel(d)),
                 Branches = _repository.GetBranches()
                                  .ToLookup(b => b.Id)
@@ -80,6 +86,18 @@ namespace Kudu.Web {
 
         public void Deploy(string id) {
             _deploymentManager.Deploy(id);
+        }
+
+        public Task WaitForStatus() {
+            var tcs = new TaskCompletionSource<object>();
+            
+            _connection.Received += json => {
+                var result = JsonConvert.DeserializeObject<DeployResult>(json);
+                Clients.updateDeployStatus(new DeployResultViewModel(result));
+            };
+
+            _connection.Start();
+            return tcs.Task;
         }
     }
 }

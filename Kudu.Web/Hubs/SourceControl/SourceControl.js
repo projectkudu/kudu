@@ -73,7 +73,7 @@ $(function () {
             return;
         }
 
-        if (scm.state.full === true) {
+        if (scm.full === true) {
             callback();
             return;
         }
@@ -81,19 +81,19 @@ $(function () {
         changesXhr = scm.getChanges(index, pageSize, function (changes) {
             $.each(changes, function () {
                 // Add the cross cutting data
-                this.branches = scm.state.branches[this.Id];
-                this.deploymentInfo = scm.state.deployments[this.Id];
+                this.branches = scm.branches[this.Id];
+                this.deploymentInfo = scm.deployments[this.Id];
             });
 
             $('#changes').append($('#changeset').render(changes));
-            scm.state.index = index + changes.length;
+            scm.index = index + changes.length;
 
             processChanges();
 
             $('.timeago').timeago();
 
             if (changes.length < pageSize) {
-                scm.state.full = true;
+                scm.full = true;
             }
 
             callback();
@@ -131,7 +131,7 @@ $(function () {
         });
 
         $('#changes').delegate('.update', 'click', function () {
-            var id = scm.state.id;
+            var id = scm.id;
 
             var newId = $(this).attr('data-id');
             var branch = $(this).attr('data-branch');
@@ -144,8 +144,8 @@ $(function () {
 
             scm.deploy(branch || newId)
                .done(function () {
-                   scm.state.id = newId;
-                   scm.state.branch = branch;
+                   scm.id = newId;
+                   scm.branch = branch;
 
                    newItem.find('.loading').hide();
                    newItem.find('.deploy').hide();
@@ -177,13 +177,13 @@ $(function () {
         $('#log').show();
 
         var token = window.loader.show('Loading commits...');
-        scm.state.index = 0;
-        scm.state.full = false;
+        scm.index = 0;
+        scm.full = false;
 
         scm.getRepositoryInfo()
            .done(function (info) {
-               scm.state.branches = info.Branches;
-               scm.state.deployments = info.Deployments;
+               scm.branches = info.Branches;
+               scm.deployments = info.Deployments;
 
                getChangeSets(0, function () {
                    window.loader.hide(token);
@@ -281,7 +281,7 @@ $(function () {
             setTimeout(getMoreChanges, 500);
         };
 
-        if (scm.state.full === true) {
+        if (scm.full === true) {
             callback();
             return;
         }
@@ -300,7 +300,7 @@ $(function () {
             if (top >= min && top <= max) {
                 var token = window.infiniteLoader.show('Loading more commits...');
 
-                getChangeSets(scm.state.index, function () {
+                getChangeSets(scm.index, function () {
                     window.infiniteLoader.hide(token);
 
                     callback();
@@ -373,7 +373,19 @@ $(function () {
 
     initialize();
 
+    scm.updateDeployStatus = function (result) {
+        if (scm.index === 0) {
+            loadRepository();
+        }
+        else {
+            // Update the deployment status
+            $('#' + result.Id).find('.deploy-status').html(result.Status);
+        }
+    };
+
     signalR.hub.start(function () {
         app.run('#/');
+
+        scm.waitForStatus();
     });
 });

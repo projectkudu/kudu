@@ -22,5 +22,9 @@ namespace Kudu.Web.App_Start {
         public void Register(Type serviceType, Func<object> activator) {
             _kernel.Bind(serviceType).ToMethod(_ => activator());
         }
+
+        public void Register(Type serviceType, IEnumerable<Func<object>> activators) {
+            
+        }
     }
 }

@@ -247,7 +247,7 @@
 
                 var path = file.getPath();
 
-                documents.state.activeDocument = path;
+                documents.activeDocument = path;
                 documentTabs.add(path);
                 documentTabs.setActive(path);
                 file.setBuffer(content);
@@ -256,8 +256,8 @@
             }
 
             function getActiveDocument() {
-                if (documents && documents.state.activeDocument) {
-                    return fileSystem.getFile(documents.state.activeDocument);
+                if (documents && documents.activeDocument) {
+                    return fileSystem.getFile(documents.activeDocument);
                 }
                 return null;
             }
@@ -318,7 +318,7 @@
 
                 $('#tabs').html($('#tabTemplate').render(tabs));
 
-                if (!documents.state.activeDocument && active) {
+                if (!documents.activeDocument && active) {
                     openDocument(active.getFile().getPath());
                 }
             }
@@ -527,8 +527,8 @@
             }
 
             function closeTab(path) {
-                if (documents.state.activeDocument == path) {
-                    documents.state.activeDocument = null;
+                if (documents.activeDocument == path) {
+                    documents.activeDocument = null;
                     editor.setValue('');
                     editor.setOption('readOnly', true);
                 }

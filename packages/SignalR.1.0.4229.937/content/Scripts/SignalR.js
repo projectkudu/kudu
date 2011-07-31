@@ -2,7 +2,7 @@
 (function ($, window) {
     /// <param name="$" type="jQuery" />
     "use strict";
-    if (typeof (window.SignalR) === "function") {
+    if (typeof (window.signalR) === "function") {
         return;
     }
 
@@ -36,13 +36,13 @@
             /// <param name="options" type="Object">Options map</param>
             /// <param name="callback" type="Function">A callback function to execute when the connection has started</param>
             /// <returns type="SignalR" />
-            var that = this,
+            var connection = this,
                 config = {
                     transport: "auto"
                 };
 
-            if (that.method) {
-                return that;
+            if (connection.transport) {
+                return connection;
             }
 
             if ($.type(options) === "function") {
@@ -56,39 +56,38 @@
             }
 
             if ($.type(callback) === "function") {
-                $(that).bind("onStart", function (e, data) {
-                    callback.call(that);
+                $(connection).bind("onStart", function (e, data) {
+                    callback.call(connection);
                 });
             }
 
             var initialize = function (transports, index) {
                 index = index || 0;
                 if (index >= transports.length) {
-                    if (!that.transport) {
+                    if (!connection.transport) {
                         // No transport initialized successfully
                         throw "SignalR: No transport could be initialized successfully. Try specifying a different transport or none at all for auto initialization.";
                     }
                     return;
                 }
 
-                var method = transports[index],
-                    transport = $.type(method) === "object" ? method : signalR.transports[method];
+                var transportName = transports[index],
+                    transport = $.type(transportName) === "object" ? transportName : signalR.transports[transportName];
 
-                transport.start(that, function () {
-                    //that.method = method;
-                    that.transport = transport;
-                    $(that).trigger("onStart");
+                transport.start(connection, function () {
+                    connection.transport = transport;
+                    $(connection).trigger("onStart");
                 }, function () {
                     initialize(transports, index + 1);
                 });
             };
 
             window.setTimeout(function () {
-                $.post(that.url + '/negotiate', {}, function (res) {
-                    that.appRelativeUrl = res.Url;
-                    that.clientId = res.ClientId;
+                $.post(connection.url + '/negotiate', {}, function (res) {
+                    connection.appRelativeUrl = res.Url;
+                    connection.clientId = res.ClientId;
 
-                    $(that).trigger("onStarting");
+                    $(connection).trigger("onStarting");
 
                     var transports = [],
                         supportedTransports = [];
@@ -100,9 +99,9 @@
                     if ($.isArray(config.transport)) {
                         // ordered list provided
                         $.each(config.transport, function () {
-                            var t = this;
-                            if ($.type(t) === "object" || ($.type(t) === "string" && $.inArray("" + t, supportedTransports) >= 0)) {
-                                transports.push($.type(t) === "string" ? "" + t : t);
+                            var transport = this;
+                            if ($.type(transport) === "object" || ($.type(transport) === "string" && $.inArray("" + transport, supportedTransports) >= 0)) {
+                                transports.push($.type(transport) === "string" ? "" + transport : transport);
                             }
                         });
                     } else if ($.type(config.transport) === "object" ||
@@ -117,7 +116,7 @@
                 });
             }, 0);
 
-            return that;
+            return connection;
         },
 
         starting: function (callback) {
@@ -185,12 +184,11 @@
         stop: function () {
             /// <summary>Stops listening</summary>
             /// <returns type="SignalR" />
-            var connection = this,
-                transport = connection.transport;
+            var connection = this;
 
-            if (transport) {
-                transport.stop(connection);
-                transport = null;    
+            if (connection.transport) {
+                connection.transport.stop(connection);
+                connection.transport = null;
             }
 
             return connection;
@@ -208,7 +206,7 @@
             },
 
             start: function (connection, onSuccess, onFailed) {
-                if ($.type(window.WebSocket) !== "function") {
+                if (!window.WebSocket) {
                     onFailed();
                     return;
                 }
@@ -219,9 +217,9 @@
 
                     $(connection).trigger("onSending");
                     if (connection.data) {
-                        url += "?data=" + connection.data + "&clientId=" + connection.clientId;
+                        url += "?data=" + connection.data + "&transport=webSockets&clientId=" + connection.clientId;
                     } else {
-                        url += "?clientId=" + connection.clientId;
+                        url += "?transport=webSockets&clientId=" + connection.clientId;
                     }
 
                     connection.socket = new window.WebSocket("ws://" + url);
@@ -239,6 +237,7 @@
                                 onFailed();
                             }
                         }
+                        connection.socket = null;
                     };
 
                     connection.socket.onmessage = function (event) {
@@ -272,9 +271,6 @@
                     connection.stop();
                 }
 
-                // Always supported
-                onSuccess();
-
                 connection.messageId = null;
 
                 window.setTimeout(function () {
@@ -291,7 +287,8 @@
                                 clientId: instance.clientId,
                                 messageId: messageId,
                                 data: instance.data,
-                                transport: "longPolling"
+                                transport: "longPolling",
+                                groups: (instance.groups || []).toString()
                             },
                             dataType: "json",
                             success: function (data) {
@@ -306,6 +303,7 @@
                                     if ($.type(data.TransportData.LongPollDelay) === "number") {
                                         delay = data.TransportData.LongPollDelay;
                                     }
+                                    instance.groups = data.TransportData.Groups;
                                 }
                                 if (delay > 0) {
                                     window.setTimeout(function () {
@@ -327,7 +325,11 @@
                                 }, 2 * 1000);
                             }
                         });
-                    }(connection));
+                    } (connection));
+
+                    // Now connected
+                    onSuccess();
+
                 }, 250); // Have to delay initial poll so Chrome doesn't show loader spinner in tab
             },
 

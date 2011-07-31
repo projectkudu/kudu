@@ -48,15 +48,21 @@
     <Reference Include="Microsoft.Web.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\lib\Microsoft.Web.Infrastructure.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=4.0.2.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.4.0.2\lib\net40\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="Ninject">
       <HintPath>..\packages\Ninject.2.2.1.4\lib\net40-Full\Ninject.dll</HintPath>
     </Reference>
     <Reference Include="Ninject.Web.Mvc">
       <HintPath>..\packages\Ninject.MVC3.2.2.2.0\lib\net40-Full\Ninject.Web.Mvc.dll</HintPath>
     </Reference>
-    <Reference Include="SignalR, Version=1.0.4211.22279, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="SignalR, Version=1.0.4229.937, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\SignalR.1.0.4211.22279\lib\net40\SignalR.dll</HintPath>
+      <HintPath>..\packages\SignalR.1.0.4229.937\lib\net40\SignalR.dll</HintPath>
+    </Reference>
+    <Reference Include="SignalR.Client">
+      <HintPath>..\packages\SignalR.Client.1.0.4228.42959\lib\net40\SignalR.Client.dll</HintPath>
     </Reference>
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Data.Entity" />
@@ -210,6 +216,8 @@
     <Compile Include="Hubs\SourceControl\Model\LogEntryViewModel.cs" />
     <Compile Include="Hubs\SourceControl\Model\RepositoryViewModel.cs" />
     <Compile Include="Hubs\SourceControl\SourceControl.cs" />
+    <Compile Include="Infrastructure\ConnectionManager.cs" />
+    <Compile Include="Infrastructure\IConnectionManager.cs" />
     <Compile Include="Infrastructure\ISiteConfiguration.cs" />
     <Compile Include="Infrastructure\ISiteManager.cs" />
     <Compile Include="Infrastructure\SiteConfiguration.cs" />
