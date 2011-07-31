@@ -93,7 +93,7 @@
         <td>${ShortId}</td>
         <td>
             {{each(i, branch) branches}}
-            <a href="#" class="branch" data-id="${Id}" data-branch="${branch}">${branch}</a>
+            <span class="branch" data-id="${Id}" data-branch="${branch}">${branch}</span>
             {{/each}}
             <div class="description">
                 {{html Summary}}
