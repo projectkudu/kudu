@@ -49,7 +49,10 @@ namespace Kudu.Core.Deployment {
             var file = OpenTrackingFile(id);
 
             if (file == null) {
-                return null;
+                return new DeployResult {
+                    Id = file.Id,
+                    Status = DeployStatus.Pending
+                };
             }
 
             return new DeployResult {
@@ -118,8 +121,7 @@ namespace Kudu.Core.Deployment {
                 throw new ArgumentException();
             }
 
-            // TODO: Make sure if the if is a valid changeset
-
+            // TODO: Make sure if the if is a valid changeset            
             ILogger logger = null;
             DeploymentStatusFile trackingFile = null;
 
@@ -127,6 +129,8 @@ namespace Kudu.Core.Deployment {
                 // Get the logger for this id
                 string logPath = GetLogPath(id);
                 FileSystemHelpers.DeleteFileSafe(logPath);
+                NotifyStatus(id);
+
                 logger = GetLogger(id);
 
                 logger.Log("Preparing deployment for {0}.", id);
