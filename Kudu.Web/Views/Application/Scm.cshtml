@@ -113,7 +113,7 @@
             {{if deploymentInfo }}
             <a href="#/view-log/${Id}" class="view-log">view log</a>
             {{/if}}
-            <a href="#" class="update deploy${!Active && deploymentInfo && deploymentInfo.Status == 2 ? "" : " hide"}" data-id="${Id}">deploy</a>
+            <a href="#" class="update deploy${!Active && deploymentInfo && deploymentInfo.Status == 'Success' ? "" : " hide"}" data-id="${Id}">deploy</a>
         </td>
         <td>
             <img class="loading hide" src="@Url.Content("~/images/loading.gif")" />
