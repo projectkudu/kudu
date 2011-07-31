@@ -2,7 +2,7 @@
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.SourceControl.Git {
-    public class GitExeServer: IGitServer {
+    public class GitExeServer : IGitServer {
         private readonly Executable _gitExe;
 
         public GitExeServer(string path)
