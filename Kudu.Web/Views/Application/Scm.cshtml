@@ -103,6 +103,9 @@
         <td class="timeago" title="${Date}"></td>
         <td>            
             {{if deploymentInfo }}
+                {{if deploymentInfo.Status !== 'Success' && deploymentInfo.Status !== 'Failed' }}
+                <span class="progress icon-notext icon-loading">&nbsp;</span>
+                {{/if}}
                 <span class="deploy-status">${deploymentInfo.Status}</status>
             {{else}}
                 -
@@ -116,7 +119,7 @@
             <a href="#" class="update deploy${!Active && deploymentInfo && deploymentInfo.Status == 'Success' ? "" : " hide"}" data-id="${Id}">deploy</a>
         </td>
         <td>
-            <img class="loading hide" src="@Url.Content("~/images/loading.gif")" />
+            <span class="loading hide icon-notext icon-loading">&nbsp;</span>
             <img class="status${Active ? "" : " hide"}" src="@Url.Content("~/images/tick.png")" />
         </td>
     </tr>

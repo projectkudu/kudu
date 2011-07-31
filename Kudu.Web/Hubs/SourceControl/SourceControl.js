@@ -378,14 +378,20 @@ $(function () {
             loadRepository();
         }
         else {
+            var row = $('#' + result.Id);
+
             // Update the deployment status
-            $('#' + result.Id).find('.deploy-status').html(result.Status);
+            var status = row.find('.deploy-status');
+            status.html(result.Status);
+            status.show();
+
+            if (result.Status == 'Success') {
+                row.find('.progress').hide();
+            }
         }
     };
 
     signalR.hub.start(function () {
         app.run('#/');
-
-        scm.waitForStatus();
     });
 });

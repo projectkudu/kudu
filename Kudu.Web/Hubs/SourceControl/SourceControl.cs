@@ -14,7 +14,6 @@ namespace Kudu.Web {
         private readonly IRepository _repository;
         private readonly IRepositoryManager _repositoryManager;
         private readonly IDeploymentManager _deploymentManager;
-        private readonly Connection _connection;
 
         public SourceControl(IRepository repository,
                              IRepositoryManager repositoryManager,
@@ -23,7 +22,9 @@ namespace Kudu.Web {
             _repository = repository;
             _repositoryManager = repositoryManager;
             _deploymentManager = deploymentManager;
-            _connection = connection;
+
+            connection.Received += OnDeploymentStatusChanged;
+            connection.Start();
         }
 
         public ChangeSetDetailViewModel Show(string id) {
@@ -88,16 +89,9 @@ namespace Kudu.Web {
             _deploymentManager.Deploy(id);
         }
 
-        public Task WaitForStatus() {
-            var tcs = new TaskCompletionSource<object>();
-            
-            _connection.Received += json => {
-                var result = JsonConvert.DeserializeObject<DeployResult>(json);
-                Clients.updateDeployStatus(new DeployResultViewModel(result));
-            };
-
-            _connection.Start();
-            return tcs.Task;
+        private void OnDeploymentStatusChanged(string data) {
+            var result = JsonConvert.DeserializeObject<DeployResult>(data);
+            Clients.updateDeployStatus(new DeployResultViewModel(result));
         }
     }
 }
