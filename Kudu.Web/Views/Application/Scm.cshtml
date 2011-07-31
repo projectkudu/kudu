@@ -13,6 +13,8 @@
             <div id="links">
                 <a href="#/">Commits</a>
                 <a href="#/working" class="icon icon-working-dir" id="show-working">Working directory</a>
+                <input type="checkbox" id="filter-changes" checked="checked" />
+                <span>Show deployments only</span>
             </div>
             <div id="clone-url">
                 <label for="url">HTTP: </label>
@@ -87,7 +89,7 @@
 </script>
 
 <script id="changeset" type="text/x-jquery-tmpl"> 
-    <tr class="changeset" id="${Id}">
+    <tr class="changeset${deploymentInfo ? "" : " not-deployed"}" id="${Id}">
         <td>${ShortId}</td>
         <td>
             {{each(i, branch) branches}}
@@ -111,9 +113,7 @@
             {{if deploymentInfo }}
             <a href="#/view-log/${Id}" class="view-log">view log</a>
             {{/if}}
-            {{if !Active && deploymentInfo && deploymentInfo.Status == 2 }}
-            <a href="#" class="update" data-id="${Id}">deploy</a>
-            {{/if}}
+            <a href="#" class="update deploy${!Active && deploymentInfo && deploymentInfo.Status == 2 ? "" : " hide"}" data-id="${Id}">deploy</a>
         </td>
         <td>
             <img class="loading hide" src="@Url.Content("~/Hubs/SourceControl/images/loading.gif")" />

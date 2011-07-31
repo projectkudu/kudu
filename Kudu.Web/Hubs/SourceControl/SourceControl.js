@@ -99,6 +99,8 @@ $(function () {
             $('#changes').append($('#changeset').render(changes));
             scm.state.index = index + changes.length;
 
+            processChanges();
+
             $('.timeago').timeago();
 
             if (changes.length < pageSize) {
@@ -115,7 +117,21 @@ $(function () {
         });
     }
 
+    function processChanges() {
+        var deploymentsOnly = $('#filter-changes').is(':checked');
+        if (deploymentsOnly) {
+            $('#changes').find('.not-deployed').hide();
+        }
+        else {
+            $('#changes').find('.not-deployed').show();
+        }
+    }
+
     function initialize() {
+        $('#filter-changes').click(function () {
+            processChanges();
+        });
+
         $('#diff').delegate('.revert', 'click', function () {
             var path = $(this).closest('.file').attr('data-path');
             if (confirm('Are you sure you want to revert "' + path + '" ?')) {
@@ -131,23 +147,31 @@ $(function () {
             var newId = $(this).attr('data-id');
             var branch = $(this).attr('data-branch');
 
-            $('#' + newId).find('.loading').show();
-            $('#' + id).find('.status').addClass('hide');
+            var oldItem = $('#' + id);
+            var newItem = $('#' + newId);
+
+            newItem.find('.loading').show();
+            oldItem.find('.status').hide();
 
             scm.deploy(branch || newId)
                .done(function () {
                    scm.state.id = newId;
                    scm.state.branch = branch;
 
-                   $('#' + newId).find('.loading').hide();
-                   $('#' + newId).find('.status').removeClass('hide');
+                   newItem.find('.loading').hide();
+                   newItem.find('.deploy').hide();
+
+                   newItem.find('.status').show();
+                   oldItem.find('.deploy').show();
 
                    id = newId;
                })
                .fail(function (e) {
-                   $('#' + id).find('.loading').hide();
-                   $('#' + id).find('.status').removeClass('hide');
-                   $('#' + newId).find('.loading').hide();
+                   oldItem.find('.loading').hide();
+                   oldItem.find('.deploy').show();
+                   oldItem.find('.status').show();
+
+                   newItem.find('.loading').hide();
                    onError(e);
                });
 
