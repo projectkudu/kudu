@@ -58,7 +58,12 @@ namespace Kudu.Core.SourceControl.Git {
                 _gitExe.Execute("rm --cached \"{0}\"", path);
             }
             else {
-                _gitExe.Execute("reset HEAD \"{0}\"", path);
+                try {
+                    _gitExe.Execute("reset HEAD \"{0}\"", path);
+                }
+                catch {
+                    // This command returns a non zero exit code even when it succeeds
+                }
             }
 
             // Now get the status of the file
