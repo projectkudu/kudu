@@ -49,10 +49,7 @@ namespace Kudu.Core.Deployment {
             var file = OpenTrackingFile(id);
 
             if (file == null) {
-                return new DeployResult {
-                    Id = file.Id,
-                    Status = DeployStatus.Pending
-                };
+                return null;
             }
 
             return new DeployResult {
@@ -194,6 +191,7 @@ namespace Kudu.Core.Deployment {
                 trackingFile = OpenTrackingFile(id);
                 logger = GetLogger(id);
 
+                trackingFile.Status = DeployStatus.Deploying;
                 trackingFile.StatusText = "Deploying to webroot...";
                 trackingFile.Save();
                 NotifyStatus(id);
@@ -233,7 +231,16 @@ namespace Kudu.Core.Deployment {
         }
 
         private void NotifyStatus(string id) {
-            _notifier.NotifyStatus(GetResult(id));
+            var result = GetResult(id);
+
+            if (result == null) {
+                result = new DeployResult {
+                    Id = id,
+                    Status = DeployStatus.Pending
+                };
+            }
+
+            _notifier.NotifyStatus(result);
         }
 
         private DeploymentStatusFile OpenTrackingFile(string id) {
