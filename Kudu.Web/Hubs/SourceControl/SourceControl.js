@@ -374,7 +374,7 @@ $(function () {
     initialize();
 
     scm.updateDeployStatus = function (result) {
-        if (scm.index === 0) {
+        if (!document.getElementById(result.Id)) {
             loadRepository();
         }
         else {

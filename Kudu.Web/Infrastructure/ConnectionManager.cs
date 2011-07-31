@@ -20,7 +20,8 @@ namespace Kudu.Web.Infrastructure {
 
         public void RemoveConnection(string applicationName) {
             Connection connection;
-            if (_cache.TryRemove(applicationName, out connection)) {
+            _cache.TryRemove(applicationName, out connection);
+            if (connection != null) {
                 connection.Stop();
             }
         }
