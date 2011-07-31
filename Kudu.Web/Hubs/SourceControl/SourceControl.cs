@@ -23,8 +23,10 @@ namespace Kudu.Web {
             _repositoryManager = repositoryManager;
             _deploymentManager = deploymentManager;
 
-            connection.Received += OnDeploymentStatusChanged;
-            connection.Start();
+            if (!connection.IsActive) {
+                connection.Received += OnDeploymentStatusChanged;
+                connection.Start();
+            }
         }
 
         public ChangeSetDetailViewModel Show(string id) {

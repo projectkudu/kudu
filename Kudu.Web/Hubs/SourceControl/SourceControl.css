@@ -119,7 +119,7 @@
 #scm .icon-notext {
     background-repeat: no-repeat;
     background-position: 0 50%;
-    padding-left: 10px;
+    padding-left: 12px;
     line-height: 20px;
 }
 
@@ -149,6 +149,10 @@
 
 #scm .icon-working-dir {
     background-image: url('../../../images/folder_table.png');
+}
+
+#scm .icon-tick {
+    background-image: url('../../../images/tick.png');
 }
 
 #scm .icon-message {

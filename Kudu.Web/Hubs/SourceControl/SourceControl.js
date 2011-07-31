@@ -8,6 +8,7 @@ $(function () {
 
     var infiniteScrollCheck = false;
     var changesXhr = null;
+    var loadingRepository = false;
     var pageSize = 15;
 
     function getDiffClass(type) {
@@ -83,6 +84,13 @@ $(function () {
                 // Add the cross cutting data
                 this.branches = scm.branches[this.Id];
                 this.deploymentInfo = scm.deployments[this.Id];
+                this.showDeploy = !this.Active &&
+                                   this.deploymentInfo &&
+                                   this.deploymentInfo.Status == 'Success';
+
+                this.showLoading = this.deploymentInfo &&
+                                   this.deploymentInfo.Status !== 'Success' && 
+                                   this.deploymentInfo.Status !== 'Failed';
             });
 
             $('#changes').append($('#changeset').render(changes));
@@ -203,6 +211,8 @@ $(function () {
     }
 
     function loadRepository(onComplete) {
+        loadingRepository = true;
+
         $('#show').hide();
         $('#working').hide();
         $('#deploy-log').hide();
@@ -222,6 +232,8 @@ $(function () {
                getChangeSets(0, function () {
                    window.loader.hide(token);
 
+                   loadingRepository = false;
+
                    if (onComplete) {
                        onComplete();
                    }
@@ -235,6 +247,7 @@ $(function () {
            .fail(function (e) {
                onError(e);
                window.loader.hide(token);
+               loadingRepository = false;
            });
     }
 
@@ -412,13 +425,13 @@ $(function () {
     initialize();
 
     scm.updateDeployStatus = function (result) {
-        if (!document.getElementById(result.Id)) {
-            loadRepository(function () {
+        if (loadingRepository === false) {
+            if (!document.getElementById(result.Id)) {
+                loadRepository();
+            }
+            else {
                 updateStatus(result);
-            });
-        }
-        else if (changesXhr == null) {
-            updateStatus(result);
+            }
         }
     };
 
