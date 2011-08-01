@@ -8,7 +8,6 @@ using Mercurial;
 namespace Kudu.Core.SourceControl.Hg {
     public class HgServer : IHgServer {
         private readonly Lazy<Server> _server;
-        private readonly IEnvironment _environment;
 
         private const string HgConfigurationFile = "hgweb.config";
         private const string HgConfiguration = @"[web]
@@ -19,7 +18,6 @@ allow_push = *
 {0} = {1}
 ";
         public HgServer(IEnvironment environment) {
-            _environment = environment;
             _server = new Lazy<Server>(() => GetServer(environment));
         }
 
