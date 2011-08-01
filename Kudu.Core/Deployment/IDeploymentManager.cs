@@ -1,8 +1,11 @@
 ﻿using System.Collections.Generic;
+using System;
 
 namespace Kudu.Core.Deployment {
     public interface IDeploymentManager {
         string ActiveDeploymentId { get; }
+
+        event Action<DeployResult> StatusChanged;
 
         IEnumerable<DeployResult> GetResults();
         DeployResult GetResult(string id);

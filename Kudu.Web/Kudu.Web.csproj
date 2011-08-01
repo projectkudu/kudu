@@ -61,10 +61,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\SignalR.1.0.4229.41499\lib\net40\SignalR.dll</HintPath>
     </Reference>
-    <Reference Include="SignalR.Client, Version=1.0.4229.41741, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\SignalR.Client.1.0.4229.41741\lib\net40\SignalR.Client.dll</HintPath>
-    </Reference>
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Data.Entity" />
     <Reference Include="System.Web.DynamicData" />
@@ -217,8 +213,6 @@
     <Compile Include="Hubs\SourceControl\Model\LogEntryViewModel.cs" />
     <Compile Include="Hubs\SourceControl\Model\RepositoryViewModel.cs" />
     <Compile Include="Hubs\SourceControl\SourceControl.cs" />
-    <Compile Include="Infrastructure\ConnectionManager.cs" />
-    <Compile Include="Infrastructure\IConnectionManager.cs" />
     <Compile Include="Infrastructure\ISiteConfiguration.cs" />
     <Compile Include="Infrastructure\ISiteManager.cs" />
     <Compile Include="Infrastructure\SiteConfiguration.cs" />

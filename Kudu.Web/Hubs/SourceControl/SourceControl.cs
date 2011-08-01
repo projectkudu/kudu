@@ -1,12 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
 using Kudu.Web.Hubs.SourceControl.Model;
 using Kudu.Web.Model;
-using Newtonsoft.Json;
-using SignalR.Client;
 using SignalR.Hubs;
 
 namespace Kudu.Web {
@@ -17,16 +14,11 @@ namespace Kudu.Web {
 
         public SourceControl(IRepository repository,
                              IRepositoryManager repositoryManager,
-                             IDeploymentManager deploymentManager,
-                             Connection connection) {
+                             IDeploymentManager deploymentManager) {
             _repository = repository;
             _repositoryManager = repositoryManager;
             _deploymentManager = deploymentManager;
-
-            if (!connection.IsActive) {
-                connection.Received += OnDeploymentStatusChanged;
-                connection.Start();
-            }
+            _deploymentManager.StatusChanged += OnDeploymentStatusChanged;
         }
 
         public ChangeSetDetailViewModel Show(string id) {
@@ -91,8 +83,7 @@ namespace Kudu.Web {
             _deploymentManager.Deploy(id);
         }
 
-        private void OnDeploymentStatusChanged(string data) {
-            var result = JsonConvert.DeserializeObject<DeployResult>(data);
+        private void OnDeploymentStatusChanged(DeployResult result) {            
             Clients.updateDeployStatus(new DeployResultViewModel(result));
         }
     }

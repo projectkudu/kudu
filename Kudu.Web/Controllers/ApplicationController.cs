@@ -5,17 +5,14 @@ using System.Web.Mvc;
 using Kudu.Core.SourceControl;
 using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
-using SignalR.Client;
 
 namespace Kudu.Web.Controllers {
     public class ApplicationController : Controller {
         private KuduContext db = new KuduContext();
         private readonly ISiteManager _siteManager;
-        private readonly IConnectionManager _cache;
 
-        public ApplicationController(ISiteManager siteManager, IConnectionManager cache) {
+        public ApplicationController(ISiteManager siteManager) {
             _siteManager = siteManager;
-            _cache = cache;
         }
 
         //
@@ -69,7 +66,8 @@ namespace Kudu.Web.Controllers {
                         ServiceAppName = site.ServiceAppName,
                         SiteName = site.SiteName,
                         RepositoryType = (int)appViewModel.RepositoryType,
-                        Created = DateTime.Now
+                        Created = DateTime.Now,
+                        UniqueId = Guid.NewGuid()
                     };
 
                     // Give iis a chance to start the app up
@@ -143,10 +141,6 @@ namespace Kudu.Web.Controllers {
         public ActionResult DeleteConfirmed(string slug) {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             if (application != null) {
-
-                // Stop the connection for this app
-                _cache.RemoveConnection(application.Name);
-
                 try {
                     IRepositoryManager repositoryManager = GetRepositoryManager(application);
                     repositoryManager.Delete();

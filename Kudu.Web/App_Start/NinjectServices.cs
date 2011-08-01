@@ -8,13 +8,12 @@ using Ninject;
 using Ninject.Activation;
 using Ninject.Web.Mvc;
 using SignalR.Infrastructure;
-using SignalR.Client;
 
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Web.App_Start.NinjectServices), "Start")]
 [assembly: WebActivator.ApplicationShutdownMethodAttribute(typeof(Kudu.Web.App_Start.NinjectServices), "Stop")]
 
 namespace Kudu.Web.App_Start {
-    public static class NinjectServices {        
+    public static class NinjectServices {
         private static readonly Bootstrapper bootstrapper = new Bootstrapper();
 
         /// <summary>
@@ -60,34 +59,26 @@ namespace Kudu.Web.App_Start {
             kernel.Bind<IRepository>().ToMethod(context => GetRepository(context));
             kernel.Bind<IRepositoryManager>().ToMethod(context => GetRepositoryManager(context));
             kernel.Bind<IDeploymentManager>().ToMethod(context => GetDeploymentManager(context));
-            kernel.Bind<IConnectionManager>().ToConstant(ConnectionManager.Instance);
-            kernel.Bind<Connection>().ToMethod(context => GetConnection(context));
-        }
-
-        private static Connection GetConnection(IContext context) {
-            var siteConfiguraiton = context.Kernel.Get<ISiteConfiguration>();
-            var connectionManager = context.Kernel.Get<IConnectionManager>();
-            return connectionManager.CreateConnection(siteConfiguraiton.Name);
         }
 
         private static IRepository GetRepository(IContext context) {
             var siteConfiguraiton = context.Kernel.Get<ISiteConfiguration>();
-            return new RemoteRepository(siteConfiguraiton.ServiceUrl + "scm");
+            return siteConfiguraiton.Repository;
         }
 
         private static IFileSystem GetFileSystem(IContext context) {
             var siteConfiguraiton = context.Kernel.Get<ISiteConfiguration>();
-            return new RemoteFileSystem(siteConfiguraiton.ServiceUrl + "files");
+            return siteConfiguraiton.FileSystem;
         }
 
         private static IDeploymentManager GetDeploymentManager(IContext context) {
             var siteConfiguraiton = context.Kernel.Get<ISiteConfiguration>();
-            return new RemoteDeploymentManager(siteConfiguraiton.ServiceUrl + "deploy");
+            return siteConfiguraiton.DeploymentManager;
         }
 
         private static IRepositoryManager GetRepositoryManager(IContext context) {
             var siteConfiguraiton = context.Kernel.Get<ISiteConfiguration>();
-            return new RemoteRepositoryManager(siteConfiguraiton.ServiceUrl + "scm");
+            return siteConfiguraiton.RepositoryManager;
         }
     }
 }

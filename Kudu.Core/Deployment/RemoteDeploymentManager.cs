@@ -2,13 +2,29 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using Kudu.Core.Infrastructure;
+using Newtonsoft.Json;
+using SignalR.Client;
 
 namespace Kudu.Core.Deployment {
     public class RemoteDeploymentManager : IDeploymentManager {
         private readonly HttpClient _client;
 
+        public event Action<DeployResult> StatusChanged;
+
         public RemoteDeploymentManager(string serviceUrl) {
+            serviceUrl = UrlUtility.EnsureTrailingSlash(serviceUrl);
             _client = HttpClientHelper.Create(serviceUrl);
+
+            // Raise the event when data comes in
+            var connection = new Connection(serviceUrl + "status");
+            connection.Received += data => {
+                if (StatusChanged != null) {
+                    var result = JsonConvert.DeserializeObject<DeployResult>(data);
+                    StatusChanged(result);
+                }
+            };
+
+            connection.Start();
         }
 
         public string ActiveDeploymentId {

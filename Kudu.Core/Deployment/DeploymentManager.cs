@@ -10,16 +10,15 @@ namespace Kudu.Core.Deployment {
         private readonly IRepositoryManager _repositoryManager;
         private readonly ISiteBuilderFactory _builderFactory;
         private readonly IEnvironment _environment;
-        private readonly IDeploymentNotifier _notifier;
+        
+        public event Action<DeployResult> StatusChanged;
 
         public DeploymentManager(IRepositoryManager repositoryManager,
                                  ISiteBuilderFactory builderFactory,
-                                 IEnvironment environment,
-                                 IDeploymentNotifier notifier) {
+                                 IEnvironment environment) {
             _repositoryManager = repositoryManager;
             _builderFactory = builderFactory;
             _environment = environment;
-            _notifier = notifier;
         }
 
         public string ActiveDeploymentId {
@@ -240,7 +239,9 @@ namespace Kudu.Core.Deployment {
                 };
             }
 
-            _notifier.NotifyStatus(result);
+            if (StatusChanged != null) {
+                StatusChanged(result);
+            }
         }
 
         private DeploymentStatusFile OpenTrackingFile(string id) {
