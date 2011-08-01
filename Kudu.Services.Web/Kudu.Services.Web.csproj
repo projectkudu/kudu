@@ -55,9 +55,9 @@
     <Reference Include="RouteMagic">
       <HintPath>..\packages\RouteMagic.1.1.1\lib\net40\RouteMagic.dll</HintPath>
     </Reference>
-    <Reference Include="SignalR, Version=1.0.4229.937, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="SignalR, Version=1.0.4229.41499, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\SignalR.1.0.4229.937\lib\net40\SignalR.dll</HintPath>
+      <HintPath>..\packages\SignalR.1.0.4229.41499\lib\net40\SignalR.dll</HintPath>
     </Reference>
     <Reference Include="System.Web.DynamicData" />
     <Reference Include="System.Web.Entity" />
@@ -81,7 +81,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Global.asax" />
-    <Content Include="Web.config" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </Content>

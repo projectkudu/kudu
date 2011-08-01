@@ -4,7 +4,7 @@
 /// <reference path="../Scripts/jquery.cookie.js" />
 
 $(function () {
-    var scm = signalR.sourceControl;
+    var scm = $.connection.sourceControl;
 
     var infiniteScrollCheck = false;
     var changesXhr = null;
@@ -435,7 +435,7 @@ $(function () {
         }
     };
 
-    signalR.hub.start(function () {
+    $.connection.hub.start(function () {
         app.run('#/');
     });
 });

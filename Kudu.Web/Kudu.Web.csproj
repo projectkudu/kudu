@@ -57,13 +57,13 @@
     <Reference Include="Ninject.Web.Mvc">
       <HintPath>..\packages\Ninject.MVC3.2.2.2.0\lib\net40-Full\Ninject.Web.Mvc.dll</HintPath>
     </Reference>
-    <Reference Include="SignalR, Version=1.0.4229.937, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="SignalR, Version=1.0.4229.41499, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\SignalR.1.0.4229.937\lib\net40\SignalR.dll</HintPath>
+      <HintPath>..\packages\SignalR.1.0.4229.41499\lib\net40\SignalR.dll</HintPath>
     </Reference>
-    <Reference Include="SignalR.Client, Version=1.0.4229.4422, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="SignalR.Client, Version=1.0.4229.41741, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\SignalR.Client.1.0.4229.4422\lib\net40\SignalR.Client.dll</HintPath>
+      <HintPath>..\packages\SignalR.Client.1.0.4229.41741\lib\net40\SignalR.Client.dll</HintPath>
     </Reference>
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Data.Entity" />
@@ -183,10 +183,10 @@
     <Content Include="Scripts\jquery.cookie.js" />
     <Content Include="Scripts\jquery.hotkeys-patched.js" />
     <Content Include="Scripts\jquery.render.min.js" />
+    <Content Include="Scripts\jquery.signalR.js" />
+    <Content Include="Scripts\jquery.signalR.min.js" />
     <Content Include="Scripts\jquery.timeago.js" />
     <Content Include="Scripts\sammy.js" />
-    <Content Include="Scripts\SignalR.js" />
-    <Content Include="Scripts\SignalR.min.js" />
     <Content Include="Web.config">
       <SubType>Designer</SubType>
     </Content>

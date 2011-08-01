@@ -129,7 +129,7 @@
 
             editor.setValue('');
 
-            var documents = signalR.documents;
+            var documents = $.connection.documents;
 
             var fileSystem = new FileSystem(),
                                  iconMap = {},
@@ -592,7 +592,7 @@
 
             initilize();
 
-            signalR.hub.start(function () {
+            $.connection.hub.start(function () {
                 updateFiles().done(collapseFolders);
             });
 
