@@ -28,6 +28,18 @@ Website:      http://jquery.com
 Copyright:    Copyright (c) 2010 John Resig, http://jquery.com
 License:      MIT
 
+jQuery Cookie
+-----
+Website:      http://plugins.jquery.com/project/Cookie
+Copyright:    Copyright (c) 2006 Klaus Hartl (stilbuero.de)
+License:      MIT
+
+jQuery timeago
+-----
+Website:      http://timeago.yarp.com/
+Copyright:    Copyright © 2008-2011 Ryan McGeary (@rmm5t)
+License:      MIT
+
 jQuery UI (Core, Widget, Datepicker)
 -----
 Website:      http://docs.jquery.com/UI
@@ -76,8 +88,14 @@ Website:      http://nuget.codeplex.com
 Copyright:    Copyright 2010-2011 Outercurve Foundation
 License:      Apache Software Foundation License 2.0
 
+Sammy
+-----
+Website:      http://sammyjs.org/
+Copyright:    Copyright (c) 2008 Aaron Quint, Quirkey NYC, LLC
+License:      Custom - https://github.com/quirkey/sammy/blob/master/LICENSE
+
 xUnit
 ----------
 Website:      http://xunit.codeplex.com/
-Copyright:    Copyright 2010-2011 James Newkirk and Brad Wilson
+Copyright:    Copyright 2010-2011 Microsoft Corporation
 License:      Ms-Pl
