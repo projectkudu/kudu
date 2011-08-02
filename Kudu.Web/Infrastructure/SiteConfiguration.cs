@@ -5,7 +5,10 @@ using System.Web.Script.Serialization;
 using Kudu.Core.Deployment;
 using Kudu.Core.Editor;
 using Kudu.Core.SourceControl;
+using Kudu.Web.Hubs.SourceControl.Model;
 using Kudu.Web.Models;
+using SignalR;
+using SignalR.Hubs;
 
 namespace Kudu.Web.Infrastructure {
     public class SiteConfiguration : ISiteConfiguration {
@@ -36,9 +39,22 @@ namespace Kudu.Web.Infrastructure {
                     DeploymentManager = new RemoteDeploymentManager(ServiceUrl + "deploy");
                     RepositoryManager = new RemoteRepositoryManager(ServiceUrl + "scm");
 
+                    DeploymentManager.StatusChanged += OnDeploymentStatusChanged;
+
                     _cache[UniqueId] = this;
                 }
             }
+        }
+
+        private void OnDeploymentStatusChanged(DeployResult result) {
+            // HACK: This is kinda hacky for now since Signalr doesn't have good support
+            // for sending messages through hubs from arbitrary code. I promise it will get better
+            var connection = Connection.GetConnection<HubDispatcher>();
+            ClientAgent.Invoke(connection,
+                               "updateDeployStatus",
+                               typeof(SourceControl).FullName,
+                               "updateDeployStatus",
+                               new[] { new DeployResultViewModel(result) });
         }
 
         public string Name { get; private set; }

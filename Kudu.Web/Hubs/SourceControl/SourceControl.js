@@ -89,7 +89,7 @@ $(function () {
                                    this.deploymentInfo.Status == 'Success';
 
                 this.showLoading = this.deploymentInfo &&
-                                   this.deploymentInfo.Status !== 'Success' && 
+                                   this.deploymentInfo.Status !== 'Success' &&
                                    this.deploymentInfo.Status !== 'Failed';
             });
 
@@ -172,39 +172,11 @@ $(function () {
             }
         });
 
-        $('#changes').delegate('.update', 'click', function () {
-            var id = scm.id;
-
+        $('#changes').delegate('.update', 'click', function () {            
             var newId = $(this).attr('data-id');
             var branch = $(this).attr('data-branch');
 
-            var oldItem = $('#' + id);
-            var newItem = $('#' + newId);
-
-            newItem.find('.loading').show();
-            oldItem.find('.status').hide();
-
-            scm.deploy(branch || newId)
-               .done(function () {
-                   scm.id = newId;
-                   scm.branch = branch;
-
-                   newItem.find('.loading').hide();
-                   newItem.find('.deploy').hide();
-
-                   newItem.find('.status').show();
-                   oldItem.find('.deploy').show();
-
-                   id = newId;
-               })
-               .fail(function (e) {
-                   oldItem.find('.loading').hide();
-                   oldItem.find('.deploy').show();
-                   oldItem.find('.status').show();
-
-                   newItem.find('.loading').hide();
-                   onError(e);
-               });
+            scm.deploy(branch || newId);
 
             return false;
         });

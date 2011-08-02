@@ -86,14 +86,12 @@
   <ItemGroup>
     <Content Include="Content\Site.css" />
     <Content Include="Global.asax" />
-    <Content Include="Hubs\Editor\index.htm" />
     <Content Include="Hubs\Editor\io\directory.js" />
     <Content Include="Hubs\Editor\io\file.js" />
     <Content Include="Hubs\Editor\io\fileSystem.js" />
     <Content Include="Hubs\Editor\skyde.js" />
     <Content Include="Hubs\Editor\styles\codemirror.css" />
     <Content Include="Hubs\Editor\styles\skyde.css" />
-    <Content Include="Hubs\SourceControl\index.htm" />
     <Content Include="Hubs\SourceControl\loader.js" />
     <Content Include="Hubs\SourceControl\SourceControl.css" />
     <Content Include="Hubs\SourceControl\SourceControl.js" />

@@ -18,7 +18,6 @@ namespace Kudu.Web {
             _repository = repository;
             _repositoryManager = repositoryManager;
             _deploymentManager = deploymentManager;
-            _deploymentManager.StatusChanged += OnDeploymentStatusChanged;
         }
 
         public ChangeSetDetailViewModel Show(string id) {
@@ -81,10 +80,6 @@ namespace Kudu.Web {
 
         public void Deploy(string id) {
             _deploymentManager.Deploy(id);
-        }
-
-        private void OnDeploymentStatusChanged(DeployResult result) {            
-            Clients.updateDeployStatus(new DeployResultViewModel(result));
         }
     }
 }
