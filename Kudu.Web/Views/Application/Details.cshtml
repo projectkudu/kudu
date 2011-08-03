@@ -1,28 +1,50 @@
-﻿@model Kudu.Web.Models.ApplicationViewModel
+﻿@using Kudu.Core.SourceControl
+@using Kudu.Web.Models
+
+@model ApplicationViewModel
 
 @{
-    ViewBag.Title = "Details";
+    ViewBag.Title = Model.Name;
+}
+<h2>@Model.Name</h2>
+
+<ul id="app-links" class="tab-menu">
+    @if (Model.RepositoryType != RepositoryType.None) {
+    <li>
+        @Html.ActionLink("Manage Repository", "scm", new { slug = Model.Slug })
+    </li>
+    }
+    <li>
+        @Html.ActionLink("Manage Files", "editor", new { slug = Model.Slug })
+    </li>
+</ul>
+
+@if (Model.RepositoryType == RepositoryType.None) {
+    <p class="notice">@Model.Name does not have a source control repository configured. You can push to one of the URLs below to create the repository.</p>
 }
 
-<h2>Details</h2>
-
-<fieldset>
-    <legend>Application</legend>
-
-    <div class="display-label">Name</div>
+@if (Model.RepositoryType == RepositoryType.None) {
+    <div class="display-label">Git URL</div>
     <div class="display-field">
-        @Html.DisplayFor(model => model.Name)
+        @Model.GitUrl
     </div>
+    <div class="display-label">Mercurial URL</div>
+    <div class="display-field">
+        @Model.HgUrl
+    </div>
+}
+else {
+    <div class="display-label">@Model.RepositoryType URL</div>
+    <div class="display-field">
+        @Model.CloneUrl
+    </div>
+}
+<div class="display-label">Application URL</div>
+<div class="display-field">
+    <a href="@Model.SiteUrl" target="_blank">@Model.SiteUrl</a>
+</div>
 
-    <div class="display-label">Repository Type</div>
-    <div class="display-field">
-        @Html.DisplayFor(modelItem => modelItem.RepositoryType)
-    </div>
-    <div class="display-label">Site Url</div>
-    <div class="display-field">
-        <a href="@Model.SiteUrl" target="_blank">@Model.SiteUrl</a>
-    </div>
-</fieldset>
-<p>
-    @Html.ActionLink("Back to Applications", "Index")
-</p>
+<h2 id="delete-header">Delete Application</h2>
+@using (Html.BeginForm("Delete", "Application", new { slug = Model.Slug })) { 
+    <input type="submit" name="name" value="Delete" />
+}

@@ -1,15 +1,27 @@
-﻿@{
+﻿@using Kudu.Core.SourceControl
+@using Kudu.Web.Models
+
+@model ApplicationViewModel
+           
+@{
     ViewBag.Title = "Source Control";
 }
 
 <div id="scm">
+    <h2>@Model.Name</h2>
+    
+    <div class="display-label">Application URL</div>
+    <div class="display-field">
+        <a href="@Model.SiteUrl" target="_blank">@Model.SiteUrl</a>
+    </div>
+
     <div id="page">
         <div id="new-commit">
         </div>
         <div id="error">
         </div>
         <div id="menu" class="gray-gradient">
-            <span id="repository-type">@ViewBag.RepositoryType</span>
+            <span id="repository-type">@Model.RepositoryType</span>
             <div id="links">
                 <a href="#/">Commits</a>
                 <a href="#/working" class="icon icon-working-dir" id="show-working">Working directory</a>
@@ -17,8 +29,8 @@
                 <span>Show deployments only</span>
             </div>
             <div id="clone-url">
-                <label for="url">HTTP: </label>
-                <input type="text" name="url" id="url" value="@(ViewBag.CloneUrl ?? "Not supported")" readonly="readonly" @(ViewBag.CloneUrl == null ? "disabled=\"disabled\"" : "") />
+                <label for="url">Repository URL: </label>
+                <input type="text" name="url" id="url" value="@(Model.CloneUrl ?? "None")" readonly="readonly" @(Model.CloneUrl == null ? "disabled=\"disabled\"" : "") />
             </div>
             <div class="clear"></div>
         </div>
@@ -77,7 +89,7 @@
 <script src="@Url.Content("~/Hubs/SourceControl/SourceControl.js")" type="text/javascript"></script>
 <script type="text/javascript">
     $(function () {
-        $.connection.sourceControl.appName = '@ViewBag.AppName';
+        $.connection.sourceControl.appName = '@Model.Name';
     });
 </script>
 <script id="logTemplate" type="text/x-jquery-tmpl"> 

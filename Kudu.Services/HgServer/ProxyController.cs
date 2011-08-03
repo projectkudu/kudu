@@ -7,19 +7,24 @@ using System.Web;
 using System.Web.Mvc;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl.Hg;
+using Kudu.Services.Infrastructure;
+using Kudu.Core.SourceControl;
 
 namespace Kudu.Services.HgServer {
     public class ProxyController : Controller {
         private readonly IHgServer _hgServer;
         private readonly IServerConfiguration _configuration;
         private readonly IDeploymentManager _deploymentManager;
+        private readonly IRepositoryManager _repositoryManager;
 
         public ProxyController(IHgServer hgServer, 
                                IServerConfiguration configuration,
-                               IDeploymentManager deploymentManager) {
+                               IDeploymentManager deploymentManager,
+                               IRepositoryManager repositoryManager) {
             _hgServer = hgServer;
             _configuration = configuration;
             _deploymentManager = deploymentManager;
+            _repositoryManager = repositoryManager;
         }
 
         public ActionResult ProxyRequest() {
@@ -32,6 +37,7 @@ namespace Kudu.Services.HgServer {
             string pathToProxy = Request.RawUrl.Substring(hgRoot.Length);
 
             if (!_hgServer.IsRunning) {
+                EnsureHgRepository();
                 _hgServer.Start();
             }
 
@@ -99,6 +105,10 @@ namespace Kudu.Services.HgServer {
             }
 
             return new EmptyResult();
+        }
+
+        private void EnsureHgRepository() {
+            RepositoryUtility.EnsureRepository(_repositoryManager, RepositoryType.Mercurial);
         }
     }
 }

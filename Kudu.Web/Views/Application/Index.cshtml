@@ -1,4 +1,7 @@
-﻿@model IEnumerable<Kudu.Web.Models.ApplicationViewModel>
+﻿@using Kudu.Core.SourceControl
+@using Kudu.Web.Models
+
+@model IEnumerable<ApplicationViewModel>
 
 @{
     ViewBag.Title = "Applications";
@@ -9,38 +12,18 @@
 <p>
     @Html.ActionLink("Create Application", "Create")
 </p>
-<table>
+<table id="app-list">
     <tr>
         <th>
             Name
         </th>
-        <th>
-            Repository Type
-        </th>
-        <th>
-            Site Url
-        </th>
-        <th></th>
     </tr>
 
 @foreach (var item in Model) {
     <tr>
         <td>
-            @Html.DisplayFor(modelItem => item.Name)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.RepositoryType)
-        </td>
-        <td>
-            <a href="@item.SiteUrl" target="_blank">@item.SiteUrl</a>
-        </td>
-        <td>
-            @Html.ActionLink("Details", "Details", new { slug = item.Slug }) |
-            @Html.ActionLink("Source Control", "Scm", new { slug = item.Slug }) |
-            @Html.ActionLink("Edit Files", "Editor", new { slug = item.Slug }) |
-            @Html.ActionLink("Delete", "Delete", new { slug = item.Slug })
+            <a href="@Url.Action("Details", new { slug = item.Slug })">@Html.DisplayFor(modelItem => item.Name)</a>
         </td>
     </tr>
 }
-
 </table>

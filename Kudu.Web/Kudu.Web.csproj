@@ -243,9 +243,6 @@
     <Content Include="Views\Application\Create.cshtml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Views\Application\Delete.cshtml" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="Views\Application\Scm.cshtml" />
   </ItemGroup>
   <ItemGroup>

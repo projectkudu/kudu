@@ -24,17 +24,21 @@ namespace Kudu.Services.GitServer {
     using System;
     using System.Web.Mvc;
     using System.Web.SessionState;
+    using Kudu.Core.SourceControl;
     using Kudu.Core.SourceControl.Git;
     using Kudu.Services.Authorization;
+    using Kudu.Services.Infrastructure;
 
     // Handles /project/info/refs
     [SessionState(SessionStateBehavior.Disabled)]
     [BasicAuthorize]
     public class InfoRefsController : Controller {
         private readonly IGitServer _gitServer;
+        private readonly IRepositoryManager _repositoryManager;
 
-        public InfoRefsController(IGitServer gitServer) {
+        public InfoRefsController(IGitServer gitServer, IRepositoryManager repositoryManager) {
             _gitServer = gitServer;
+            _repositoryManager = repositoryManager;
         }
 
         public ActionResult Execute(string service) {
@@ -46,7 +50,7 @@ namespace Kudu.Services.GitServer {
                 return SmartInfoRefs(service);
             }
 
-            throw new Exception("Dump protocol not supported");
+            throw new Exception("Dumb protocol not supported");
         }
 
         private ActionResult SmartInfoRefs(string service) {
@@ -57,15 +61,17 @@ namespace Kudu.Services.GitServer {
             // We do this as certain git clients (jgit) require it to be empty.
             // If we don't set it, then it defaults to utf-8, which breaks jgit's logic for detecting smart http
             Response.Charset = "";
- 
+
             Response.PktWrite("# service=git-{0}\n", service);
             Response.PktFlush();
 
             if (service == "upload-pack") {
+                EnsureGitRepository();
                 _gitServer.AdvertiseUploadPack(Response.OutputStream);
             }
 
             else if (service == "receive-pack") {
+                EnsureGitRepository();
                 _gitServer.AdvertiseReceivePack(Response.OutputStream);
             }
 
@@ -78,6 +84,11 @@ namespace Kudu.Services.GitServer {
             }
 
             return service.Replace("git-", "");
+        }
+
+        private void EnsureGitRepository() {
+            // Ensure the git repository is set up before accepting the push
+            RepositoryUtility.EnsureRepository(_repositoryManager, RepositoryType.Git);
         }
     }
 }

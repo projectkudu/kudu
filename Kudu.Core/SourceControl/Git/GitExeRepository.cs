@@ -172,6 +172,10 @@ namespace Kudu.Core.SourceControl.Git {
         }
 
         public IEnumerable<Branch> GetBranches() {
+            if (IsEmpty()) {
+                yield break;
+            }
+
             string branches = _gitExe.Execute("branch");
             var reader = branches.AsReader();
             string currentId = CurrentId;

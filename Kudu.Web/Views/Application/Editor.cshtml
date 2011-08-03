@@ -1,4 +1,9 @@
-﻿@{
+﻿@using Kudu.Core.SourceControl
+@using Kudu.Web.Models
+
+@model ApplicationViewModel
+           
+@{
     ViewBag.Title = "Editor";
 }
 
@@ -41,7 +46,7 @@
 <script id="folderTemplate" type="text/x-jquery-tmpl"> 
     <ul class="folder" data-path="${$data.getPath()}">
         <li>
-            <a href="#" class="icon ${$data._isRoot() ? 'icon-project' : 'icon-folder'}">${$data.getName()}</a>
+            <a href="#" class="icon ${$data._isRoot() ? 'icon-project' : 'icon-folder'}">${$data._isRoot() ? '@Model.Name' : $data.getName()}</a>
             <ul class="menu">
                 <li><a href="#" class="menu-launcher icon-notext icon-menu">&nbsp;</a>
                 <ul class="menu-contents">
@@ -82,7 +87,7 @@
 <script src="@Url.Content("~/SignalR/hubs")" type="text/javascript"></script>
 <script type="text/javascript">
     $(function () {
-        $.connection.documents.appName = '@ViewBag.AppName';
+        $.connection.documents.appName = '@Model.Name';
     });
 </script>
 <script src="@Url.Content("~/Scripts/jquery.render.min.js")" type="text/javascript"></script>

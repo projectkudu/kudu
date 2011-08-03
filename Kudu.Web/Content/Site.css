@@ -43,6 +43,12 @@ section {
 
 /* HEADINGS   
 ----------------------------------------------------------*/
+
+#delete-header {
+    padding-bottom:0px;
+    margin-top:40px;
+}
+
 h1, h2, h3, h4, h5, h6 {
     font-size: 1.5em;
     color: #000;
@@ -123,7 +129,25 @@ footer,
 
 /* TAB MENU   
 ----------------------------------------------------------*/
-ul#menu {
+ul#app-links.tab-menu {
+    border-bottom: 1px solid #ccc;
+    text-align: left;
+    padding:0px;
+}
+
+ul#app-links.tab-menu li a {
+    color: #000;
+    background-color: #f5f5f5;
+    border: 1px solid #ccc;
+}
+
+ul#app-links.tab-menu li a:hover {
+    color: #000;
+    background-color: #fff;
+    border: 1px solid #ccc;
+}
+
+ul.tab-menu {
     border-bottom: 1px #5C87B2 solid;
     padding: 0 0 2px;
     position: relative;
@@ -131,12 +155,12 @@ ul#menu {
     text-align: right;
 }
 
-ul#menu li {
+ul.tab-menu li {
     display: inline;
     list-style: none;
 }
 
-ul#menu li#greeting {
+ul.tab-menu li#greeting {
     padding: 10px 20px;
     font-weight: bold;
     text-decoration: none;
@@ -144,7 +168,7 @@ ul#menu li#greeting {
     color: #fff;
 }
 
-ul#menu li a {
+ul.tab-menu li a {
     padding: 10px 20px;
     font-weight: bold;
     text-decoration: none;
@@ -156,17 +180,17 @@ ul#menu li a {
     -moz-border-radius: 4px 4px 0 0;
 }
 
-ul#menu li a:hover {
+ul.tab-menu li a:hover {
     background-color: #fff;
     text-decoration: none;
 }
 
-ul#menu li a:active {
+ul.tab-menu li a:active {
     background-color: #a6e2a6;
     text-decoration: none;
 }
 
-ul#menu li.selected a {
+ul.tab-menu li.selected a {
     background-color: #fff;
     color: #000;
 }
@@ -303,6 +327,7 @@ div#title {
 .display-label, 
 .editor-label {
     margin: 1em 0 0 0;
+    font-weight: bold;
 }
 
 .display-field, 
@@ -328,4 +353,21 @@ div#title {
     margin-bottom: 5px;
     display: block;
     width: 200px;
+}
+
+.app-links a {
+    margin-right: 10px;
+}
+
+.notice {
+    background-color: #e6efc2;
+    border: 1px solid #c6d880;
+    font-size: 15px;
+    font-weight: bold;
+    padding: 1%;
+    margin-bottom: 10px;
+}
+
+#app-list {
+    width: 100%;
 }

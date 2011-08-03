@@ -29,7 +29,10 @@ namespace Kudu.Web.Controllers {
         public ActionResult Details(string slug) {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             if (application != null) {
-                return View(new ApplicationViewModel(application));
+                var appViewModel = new ApplicationViewModel(application);
+                appViewModel.RepositoryType = GetRepositoryManager(application).GetRepositoryType();
+
+                return View(appViewModel);
             }
             return HttpNotFound();
         }
@@ -65,7 +68,6 @@ namespace Kudu.Web.Controllers {
                         SiteUrl = site.SiteUrl,
                         ServiceAppName = site.ServiceAppName,
                         SiteName = site.SiteName,
-                        RepositoryType = (int)appViewModel.RepositoryType,
                         Created = DateTime.Now,
                         UniqueId = Guid.NewGuid()
                     };
@@ -74,13 +76,15 @@ namespace Kudu.Web.Controllers {
                     // if we send requests too quickly, we'll end up getting 404s
                     Thread.Sleep(500);
 
-                    IRepositoryManager repositoryManager = GetRepositoryManager(app);
-                    repositoryManager.CreateRepository(appViewModel.RepositoryType);
+                    if (appViewModel.RepositoryType != RepositoryType.None) {
+                        IRepositoryManager repositoryManager = GetRepositoryManager(app);
+                        repositoryManager.CreateRepository(appViewModel.RepositoryType);
+                    }
 
                     db.Applications.Add(app);
                     db.SaveChanges();
 
-                    return RedirectToAction("Index");
+                    return RedirectToAction("Details", new { slug = slug });
                 }
                 catch (Exception ex) {
                     if (site != null) {
@@ -99,14 +103,10 @@ namespace Kudu.Web.Controllers {
         public ActionResult ViewSourceControl(string slug) {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             if (application != null) {
-                var repositoryManager = GetRepositoryManager(application);
-                var type = repositoryManager.GetRepositoryType();
+                var appViewModel = new ApplicationViewModel(application);
+                appViewModel.RepositoryType = GetRepositoryManager(application).GetRepositoryType();
 
-                ViewBag.CloneUrl = GetCloneUrl(application, type);
-                ViewBag.RepositoryType = type;
-                ViewBag.AppName = application.Name;
-
-                return View();
+                return View(appViewModel);
             }
 
             return HttpNotFound();
@@ -117,28 +117,17 @@ namespace Kudu.Web.Controllers {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             if (application != null) {
                 ViewBag.AppName = application.Name;
-                return View();
-            }
-
-            return HttpNotFound();
-        }
-
-        //
-        // GET: /Application/Delete/5
-
-        public ActionResult Delete(string slug) {
-            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
-            if (application != null) {
                 return View(new ApplicationViewModel(application));
             }
+
             return HttpNotFound();
         }
 
         //
         // POST: /Application/Delete/5
 
-        [HttpPost, ActionName("Delete")]
-        public ActionResult DeleteConfirmed(string slug) {
+        [HttpPost]
+        public ActionResult Delete(string slug) {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             if (application != null) {
                 try {
@@ -164,18 +153,12 @@ namespace Kudu.Web.Controllers {
             base.Dispose(disposing);
         }
 
-        private string GetCloneUrl(Application application, RepositoryType type) {
-            string prefix = application.ServiceUrl + application.Slug;
-            return prefix + (type == RepositoryType.Git ? ".git" : String.Empty);
-        }
-
         private void PopulateRepositoyTypes() {
             ViewBag.RepositoryType = Enum.GetNames(typeof(RepositoryType))
                                          .Select((name, value) => new SelectListItem {
                                              Text = name,
                                              Value = value.ToString()
-                                         })
-                                         .Skip(1);
+                                         });
         }
 
         private static IRepositoryManager GetRepositoryManager(Application application) {

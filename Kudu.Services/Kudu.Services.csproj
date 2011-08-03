@@ -59,12 +59,13 @@
     <Compile Include="GitServer\Helpers.cs" />
     <Compile Include="GitServer\InfoRefsController.cs" />
     <Compile Include="GitServer\RpcController.cs" />
-    <Compile Include="FormattedExceptionFilter.cs" />
+    <Compile Include="Infrastructure\FormattedExceptionFilter.cs" />
     <Compile Include="HgServer\ProxyController.cs" />
     <Compile Include="Infrastructure\KuduActionInvoker.cs" />
     <Compile Include="Infrastructure\KuduController.cs" />
     <Compile Include="Infrastructure\KuduJsonResult.cs" />
-    <Compile Include="IServerConfiguration.cs" />
+    <Compile Include="Infrastructure\IServerConfiguration.cs" />
+    <Compile Include="Infrastructure\RepositoryUtility.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SourceControl\ScmController.cs" />
   </ItemGroup>

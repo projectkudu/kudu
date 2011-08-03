@@ -1,6 +1,5 @@
 ﻿#scm #page {
-    margin: 0 auto;
-    padding: 0 15px;
+    margin-top: 2%;
 }
 
 #scm #menu #clone-url input {
@@ -10,7 +9,6 @@
 
 #scm #menu #clone-url {
     float: right;
-    margin-right: 50px;
 }
 
 #scm #log {

@@ -11,7 +11,6 @@ namespace Kudu.Web.Models {
         public string ServiceUrl { get; set; }
         public string SiteUrl { get; set; }
         public Guid UniqueId { get; set; }
-        public int RepositoryType { get; set; }
         public DateTime Created { get; set; }
     }
 }
