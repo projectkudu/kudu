@@ -172,7 +172,7 @@ $(function () {
             }
         });
 
-        $('#changes').delegate('.update', 'click', function () {            
+        $('#changes').delegate('.update', 'click', function () {
             var newId = $(this).attr('data-id');
             var branch = $(this).attr('data-branch');
 
@@ -397,6 +397,11 @@ $(function () {
     initialize();
 
     scm.updateDeployStatus = function (result) {
+        // Don't force the view to change if it's not visible
+        if (!$('#log').is(':visible')) {
+            return;
+        }
+
         if (loadingRepository === false) {
             if (!document.getElementById(result.Id)) {
                 loadRepository();

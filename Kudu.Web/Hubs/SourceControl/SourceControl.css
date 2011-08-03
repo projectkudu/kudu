@@ -52,6 +52,10 @@
     width: 10%;
 }
 
+#scm #log th:nth-child(5) {
+    width: 10%;
+}
+
 #scm #log th:nth-child(6) {
     width: 20%;
 }
