@@ -159,15 +159,19 @@
     background-image: url('../../../images/tick.png');
 }
 
-#scm .icon-message {
+#scm .icon-error {
+    background-image: url('../../../images/error.png');
+}
+
+#scm .icon-log-message {
     list-style-image: url('../../../images/tick.png');
 }
 
-#scm .icon-error {
+#scm .icon-log-error {
     list-style-image: url('../../../images/error.png');
 }
 
-#scm .icon-warning {
+#scm .icon-log-warning {
     list-style-image: url('../../../images/warning.png');
 }
 

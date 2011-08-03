@@ -44,11 +44,11 @@ $(function () {
     function getLogClass(type) {
         switch (type) {
             case 0:
-                return "icon-message";
+                return "icon-log-message";
             case 1:
-                return "icon-warning";
+                return "icon-log-warning";
             case 2:
-                return "icon-error";
+                return "icon-log-error";
         }
     }
 
@@ -91,6 +91,9 @@ $(function () {
                 this.showLoading = this.deploymentInfo &&
                                    this.deploymentInfo.Status !== 'Success' &&
                                    this.deploymentInfo.Status !== 'Failed';
+
+                this.failed = this.deploymentInfo &&
+                              this.deploymentInfo.Status === 'Failed';
             });
 
             $('#changes').append($('#changeset').render(changes));
