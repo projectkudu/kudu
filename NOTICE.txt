@@ -1,0 +1,101 @@
+Kudu Project
+Copyright 2011 David Ebbo, David Fowler and Phil Haack
+
+Kudu includes works distributed under the licenses listed below. The full text for most of the licenses listed below can be found in the LICENSE.txt file accompanying each work. The original copyright notices have been preserved within the respective files and or packages. Please refer to the specific files and/or packages for more detailed information about the authors, copyright notices, and licenses.
+
+ASP.NET MVC
+-----
+Website:      http://aspnet.codeplex.com/wikipage?title=MVC&referringTitle=Home
+Copyright:    Copyright (c) 2008-2011 Microsoft Corporation
+License:      MICROSOFT ASP.NET MODEL VIEW CONTROLLER 3 EULA
+              http://go.microsoft.com/fwlink/?LinkID=207621
+
+CodeMirror
+----------
+Website:      http://codemirror.net/
+Copyright:    Copyright (C) 2011 by Marijn Haverbeke
+License:      MIT
+
+git-dot-aspx
+----------
+Website:      https://github.com/JeremySkinner/git-dot-aspx
+Copyright:    Copyright 2010 Jeremy Skinner (http://www.jeremyskinner.co.uk)
+License:      Apache 2.0
+
+jQuery
+-----
+Website:      http://jquery.com
+Copyright:    Copyright (c) 2010 John Resig, http://jquery.com
+License:      MIT
+
+jQuery Cookie
+-----
+Website:      http://plugins.jquery.com/project/Cookie
+Copyright:    Copyright (c) 2006 Klaus Hartl (stilbuero.de)
+License:      MIT
+
+jQuery timeago
+-----
+Website:      http://timeago.yarp.com/
+Copyright:    Copyright © 2008-2011 Ryan McGeary (@rmm5t)
+License:      MIT
+
+jQuery UI (Core, Widget, Datepicker)
+-----
+Website:      http://docs.jquery.com/UI
+Copyright:    Copyright (c) 2010 lib/jquery.ui/AUTHORS.txt (http://jqueryui.com/about)
+License:      MIT
+
+Json.NET
+----------
+Website:      http://json.codeplex.com/
+Copyright:    Copyright (c) 2007 James Newton-King
+License:      MIT
+
+libgit2
+----------
+Website:      https://github.com/libgit2/libgit2
+Copyright:    Copyright (C) 2007-2009, The Git Development Community and the GitSharp Team
+License:      GPL2 with linking exemption
+
+libgit2sharp
+----------
+Website:      https://github.com/libgit2/libgit2sharp
+Copyright:    Copyright (c) 2011 LibGit2Sharp contributors
+License:      MIT
+
+Mercurial.Net
+----------
+Website:      http://mercurialnet.codeplex.com/
+Copyright:    Copyright (c) 2010-2011, Lasse V. Karlsen
+License:      BSD
+
+Moq
+-----
+Website:      http://code.google.com/p/moq/
+Copyright:    Copyright (c) 2007. Clarius Consulting, Manas Technology Solutions, InSTEDD
+License:      New BSD
+
+Ninject
+----------
+Website:      http://code.google.com/p/ninject/
+Copyright:    Copyright (c) 2007-2010 Enkari, Ltd and contributors
+License:      Apache 2.0
+
+NuGet
+-----
+Website:      http://nuget.codeplex.com
+Copyright:    Copyright 2010-2011 Outercurve Foundation
+License:      Apache Software Foundation License 2.0
+
+Sammy
+-----
+Website:      http://sammyjs.org/
+Copyright:    Copyright (c) 2008 Aaron Quint, Quirkey NYC, LLC
+License:      Custom - https://github.com/quirkey/sammy/blob/master/LICENSE
+
+xUnit
+----------
+Website:      http://xunit.codeplex.com/
+Copyright:    Copyright 2010-2011 Microsoft Corporation
+License:      Ms-Pl
