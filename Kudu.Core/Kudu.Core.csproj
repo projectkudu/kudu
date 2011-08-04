@@ -34,11 +34,13 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="LibGit2Sharp, Version=0.3.0.0, Culture=neutral, processorArchitecture=x86">
-      <HintPath>..\packages\LibGit2Sharp.0.3\lib\net35\LibGit2Sharp.dll</HintPath>
+    <Reference Include="LibGit2Sharp, Version=0.4.0.0, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\LibGit2Sharp.0.4\lib\net35\LibGit2Sharp.dll</HintPath>
     </Reference>
-    <Reference Include="Mercurial.Net">
-      <HintPath>..\packages\Mercurial.Net.1.0.2.572\lib\net35-Client\Mercurial.Net.dll</HintPath>
+    <Reference Include="Mercurial.Net, Version=1.1.1.607, Culture=neutral, PublicKeyToken=9e2fabf3af85dba9, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Mercurial.Net.1.1.1.607\lib\net35-Client\Mercurial.Net.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Net.Http">
       <HintPath>..\packages\HttpClient.0.3.0\lib\40\Microsoft.Net.Http.dll</HintPath>
