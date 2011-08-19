@@ -5,8 +5,10 @@ using Kudu.Core.Infrastructure;
 namespace Kudu.Core.Deployment {
     public class SiteBuilderFactory : ISiteBuilderFactory {
         private readonly IEnvironment _environment;
+        private readonly IBuildPropertyProvider _propertyProvider;
 
-        public SiteBuilderFactory(IEnvironment environment) {
+        public SiteBuilderFactory(IBuildPropertyProvider propertyProvider, IEnvironment environment) {
+            _propertyProvider = propertyProvider;
             _environment = environment;
         }
 
@@ -33,10 +35,10 @@ namespace Kudu.Core.Deployment {
             VsSolutionProject project = solution.Projects.Where(p => p.IsWap || p.IsWebSite).FirstOrDefault();
 
             if (project.IsWap) {
-                return new WapBuilder(_environment.RepositoryPath, solution.Path, project.AbsolutePath);
+                return new WapBuilder(_propertyProvider, _environment.RepositoryPath, solution.Path, project.AbsolutePath);
             }
 
-            return new WebSiteBuilder(_environment.RepositoryPath, solution.Path, project.AbsolutePath);
+            return new WebSiteBuilder(_propertyProvider, _environment.RepositoryPath, solution.Path, project.AbsolutePath);
         }
     }
 }

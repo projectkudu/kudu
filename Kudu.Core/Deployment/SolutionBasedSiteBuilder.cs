@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Kudu.Core.Infrastructure;
 using SystemEnvironment = System.Environment;
@@ -7,6 +8,7 @@ using SystemEnvironment = System.Environment;
 namespace Kudu.Core.Deployment {
     public abstract class SolutionBasedSiteBuilder : ISiteBuilder {
         private readonly Executable _msbuildExe;
+        private readonly IBuildPropertyProvider _propertyProvider;
         
         public string SolutionDir {
             get {
@@ -14,11 +16,16 @@ namespace Kudu.Core.Deployment {
             }
         }
 
-        public string SolutionPath { get; set; }
+        public string SolutionPath { get; private set; }
 
-        public SolutionBasedSiteBuilder(string repositoryPath, string solutionPath) {
+        public SolutionBasedSiteBuilder(IBuildPropertyProvider propertyProvider, string repositoryPath, string solutionPath) {
+            _propertyProvider = propertyProvider;
             SolutionPath = solutionPath;
             _msbuildExe = new Executable(ResolveMSBuildPath(), repositoryPath);
+        }
+
+        protected string GetPropertyString() {
+            return String.Join(";", _propertyProvider.GetProperties().Select(p => p.Key + "=" + p.Value));
         }
 
         public string ExecuteMSBuild(string arguments, params object[] args) {
@@ -31,8 +38,14 @@ namespace Kudu.Core.Deployment {
             try {
                 logger.Log("Building solution {0}.", Path.GetFileName(SolutionPath));
 
+                string propertyString = GetPropertyString();
+
+                if (!String.IsNullOrEmpty(propertyString)) {
+                    propertyString = " /p:" + propertyString;
+                }
+
                 // Build the solution first
-                string log = ExecuteMSBuild(@"""{0}"" /verbosity:m /nologo", SolutionPath);
+                string log = ExecuteMSBuild(@"""{0}"" /verbosity:m /nologo{1}", SolutionPath, propertyString);
 
                 logger.Log(log);
             }

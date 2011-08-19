@@ -61,6 +61,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Deployment\BasicBuilder.cs" />
+    <Compile Include="Deployment\IBuildPropertyProvider.cs" />
     <Compile Include="Deployment\LogEntryType.cs" />
     <Compile Include="Deployment\SolutionBasedSiteBuilder.cs" />
     <Compile Include="Deployment\SiteBuilderFactory.cs" />

@@ -1,0 +1,481 @@
+﻿<!--
+***********************************************************************************************
+Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets
+
+WARNING:  DO NOT MODIFY this file unless you are knowledgeable about MSBuild and have
+          created a backup copy.  Incorrect changes to this file will make it
+          impossible to load or build your web deploy projects from the command-line or the IDE.
+
+This file defines the steps in the standard package/publish process for collecting only files to run the web appliation.
+
+Copyright (C) Microsoft Corporation. All rights reserved.
+***********************************************************************************************
+-->
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--Import task from our dll-->
+  <UsingTask TaskName="GetPublishingLocalizedString" AssemblyFile="Microsoft.Web.Publishing.Tasks.dll"/>
+  
+  <PropertyGroup>
+    <PublishPipelineCollectFilesCore>
+      $(PublishPipelineCollectFilesCore);
+      CollectFilesFromIntermediateAssembly;
+      CollectFilesFromContent;
+      CollectFilesFromAddModules;
+      CollectFilesFrom_SGenDllCreated;
+      CollectFilesFromIntermediateSatelliteAssembliesWithTargetPath;
+      CollectFilesFromReference;
+      CollectFilesFromAllExtraReferenceFiles;
+      CollectFilesFrom_SourceItemsToCopyToOutputDirectory;
+      CollectFilesFromDocFileItem;
+      CollectFilesFrom_WebApplicationSilverlightXapFiles;
+      CollectFilesFrom_binDeployableAssemblies;
+    </PublishPipelineCollectFilesCore>
+    <ExcludeTransformAssistFilesFromPublish Condition="'$(ExcludeTransformAssistFilesFromPublish)'==''">True</ExcludeTransformAssistFilesFromPublish>
+  </PropertyGroup>
+  
+  <!--***************************************************************-->
+  <!-- Task CollectFilesFromIntermediateAssembly                     -->
+  <!-- Note $(OutDir) can be not in the bin like in Team build system -->
+  <!--***************************************************************-->
+  <PropertyGroup>
+    <!--Targets get execute before this Target-->
+    <OnBeforeCollectFilesFromIntermediateAssembly Condition="'$(OnBeforeCollectFilesFromIntermediateAssembly)'==''">
+    </OnBeforeCollectFilesFromIntermediateAssembly>
+    <!--Targets get execute after this Target-->
+    <OnAfterCollectFilesFromIntermediateAssembly Condition="'$(OnAfterCollectFilesFromIntermediateAssembly)'==''">
+    </OnAfterCollectFilesFromIntermediateAssembly>
+
+    <CollectFilesFromIntermediateAssemblyDependsOn Condition="'$(CollectFilesFromIntermediateAssemblyDependsOn)'==''">
+      $(OnBeforeCollectFilesFromIntermediateAssembly);
+    </CollectFilesFromIntermediateAssemblyDependsOn>
+  </PropertyGroup>
+
+  <Target Name="CollectFilesFromIntermediateAssembly"
+          DependsOnTargets="$(CollectFilesFromIntermediateAssemblyDependsOn)"
+          Condition="'@(IntermediateAssembly)'!=''">
+
+    <!--Get Localized string before display message-->
+    <GetPublishingLocalizedString
+      ID="PublishLocalizedString_GatherSpecificItemsFromProject"
+      ArgumentCount="1"
+      Arguments="IntermediateAssembly"
+      LogType="Message" />
+    <Message Text="@(IntermediateAssembly->'$(OutDir)%(FileName)%(Extension) to bin\%(FileName)%(Extension)')" />
+    
+    <ItemGroup>
+      <FilesForPackagingFromProject
+        Include="@(IntermediateAssembly->'$(OutDir)%(FileName)%(Extension)')">
+        <DestinationRelativePath>bin\%(FileName)%(Extension)</DestinationRelativePath>
+        <FromTarget>CollectFilesFromIntermediateAssembly</FromTarget>
+        <Category>Run</Category>
+      </FilesForPackagingFromProject>
+    </ItemGroup>
+    <Message Text="@(IntermediateAssembly->'$(OutDir)%(FileName).pdb to bin\%(FileName).pdb')"
+             Condition="$(_DebugSymbolsProduced) AND !$(ExcludeGeneratedDebugSymbol) AND Exists(@(IntermediateAssembly->'$(OutDir)%(FileName).pdb')) "/>
+    <ItemGroup Condition="$(_DebugSymbolsProduced) AND !$(ExcludeGeneratedDebugSymbol) AND Exists(@(IntermediateAssembly->'$(OutDir)%(FileName).pdb'))">
+      <FilesForPackagingFromProject
+        Include="@(IntermediateAssembly->'$(OutDir)%(FileName).pdb')"
+        Condition="Exists(@(IntermediateAssembly->'$(OutDir)%(FileName).pdb'))">
+        <DestinationRelativePath>bin\%(FileName).pdb</DestinationRelativePath>
+        <FromTarget>CollectFilesFromIntermediateAssembly</FromTarget>
+        <Category>Debug</Category>
+      </FilesForPackagingFromProject>
+    </ItemGroup>
+
+    <CallTarget Targets="$(OnAfterCollectFilesFromIntermediateAssembly)" RunEachTargetSeparately="false" />
+  </Target>
+
+  <!--********************************************************************-->
+  <!-- Task CollectFilesFromContent -->
+  <!--********************************************************************-->
+  <PropertyGroup>
+    <!--Targets get execute before this Target-->
+    <OnBeforeCollectFilesFromContent Condition="'$(OnBeforeCollectFilesFromContent)'==''">
+    </OnBeforeCollectFilesFromContent>
+    <!--Targets get execute after this Target-->
+    <OnAfterCollectFilesFromContent Condition="'$(OnAfterCollectFilesFromContent)'==''">
+    </OnAfterCollectFilesFromContent>
+
+    <CollectFilesFromContentDependsOn Condition="'$(CollectFilesFromContentDependsOn)'==''">
+      $(OnBeforeCollectFilesFromContent);      
+    </CollectFilesFromContentDependsOn>
+  </PropertyGroup>
+  <Target Name="CollectFilesFromContent"
+          DependsOnTargets="$(CollectFilesFromContentDependsOn)"
+          Condition="'@(Content)'!=''">
+    <!--Get Localized string before display message-->
+    <GetPublishingLocalizedString
+      ID="PublishLocalizedString_GatherSpecificItemsFromProject"
+      ArgumentCount="1"
+      Arguments="Content"
+      LogType="Message" />
+    <Message Text="@(Content)" />
+    
+    <ItemGroup>
+      <FilesForPackagingFromProject Include="@(Content)" Condition="'%(Content.Link)'==''">
+        <DestinationRelativePath>%(Content.Identity)</DestinationRelativePath>
+        <FromTarget>CollectFilesFromContent</FromTarget>
+        <Category>Run</Category>
+      </FilesForPackagingFromProject>
+      <FilesForPackagingFromProject Include="@(Content)" Condition="'%(Content.Link)'!='' And $(EnableCollectLinkFilesInProject)">
+        <DestinationRelativePath>%(Content.Link)</DestinationRelativePath>
+        <FromTarget>CollectFilesFromContent</FromTarget>
+        <Category>Run</Category>
+        <Exclude>$(ExcludeLinkFilesInProject)</Exclude>
+        <ProjectFileType>Link</ProjectFileType>
+      </FilesForPackagingFromProject>
+    </ItemGroup>
+    <CallTarget Targets="$(OnAfterCollectFilesFromContent)" RunEachTargetSeparately="false" />
+  </Target>
+
+
+  <!--********************************************************************-->
+  <!-- Task CollectFilesFromAddModules -->
+  <!--********************************************************************-->
+  <PropertyGroup>
+    <!--Targets get execute before this Target-->
+    <OnBeforeCollectFilesFromAddModulesDependsOn Condition="'$(OnBeforeCollectFilesFromAddModulesDependsOn)'==''">
+    </OnBeforeCollectFilesFromAddModulesDependsOn>
+    <!--Targets get execute after this Target-->
+    <OnAfterCollectFilesFromAddModulesDependsOn Condition="'$(OnAfterCollectFilesFromAddModulesDependsOn)'==''">
+    </OnAfterCollectFilesFromAddModulesDependsOn>
+    <CollectFilesFromAddModulesDependsOn Condition="'$(CollectFilesFromAddModulesDependsOn)'==''">
+      $(OnBeforeCollectFilesFromAddModulesDependsOn);      
+    </CollectFilesFromAddModulesDependsOn>
+  </PropertyGroup>
+  <Target Name="CollectFilesFromAddModules"
+          DependsOnTargets="$(CollectFilesFromAddModulesDependsOn)"
+          Condition="'@(AddModules)'!=''">
+
+    <!--Get Localized string before display message-->
+    <GetPublishingLocalizedString
+      ID="PublishLocalizedString_GatherSpecificOutputsFromProject"
+      ArgumentCount="1"
+      Arguments="AddModules"
+      LogType="Message" />
+    <Message Text="@(AddModules->'$(OutDir)%(FileName)%(Extension) to bin\%(FileName)%(Extension)')"/>
+    <ItemGroup>
+      <FilesForPackagingFromProject  Include="@(AddModules->'$(OutDir)%(FileName)%(Extension)')">
+        <DestinationRelativePath>bin\%(FileName)%(Extension)</DestinationRelativePath>
+        <FromTarget>CollectFilesFromAddModules</FromTarget>
+        <Category>Run</Category>
+      </FilesForPackagingFromProject>
+    </ItemGroup>
+    <CallTarget Targets="$(OnAfterCollectFilesFromAddModulesDependsOn)" RunEachTargetSeparately="false" />
+  </Target>
+
+  <!--********************************************************************-->
+  <!-- Task CollectFilesFrom_SGenDllCreated -->
+  <!--********************************************************************-->
+  <PropertyGroup>
+    <!--Targets get execute before this Target-->
+    <OnBeforeCollectFilesFrom_SGenDllCreated Condition="'$(OnBeforeCollectFilesFrom_SGenDllCreated)'==''">
+    </OnBeforeCollectFilesFrom_SGenDllCreated>
+    <!--Targets get execute after this Target-->
+    <OnAfterCollectFilesFrom_SGenDllCreated Condition="'$(OnAfterCollectFilesFrom_SGenDllCreated)'==''">
+    </OnAfterCollectFilesFrom_SGenDllCreated>
+    <CollectFilesFrom_SGenDllCreatedDependsOn Condition="'$(CollectFilesFrom_SGenDllCreatedDependsOn)'==''">
+      $(OnBeforeCollectFilesFrom_SGenDllCreated);      
+    </CollectFilesFrom_SGenDllCreatedDependsOn>
+  </PropertyGroup>
+  <Target Name="CollectFilesFrom_SGenDllCreated"
+          DependsOnTargets="$(CollectFilesFrom_SGenDllCreatedDependsOn)"
+          Condition="$(_SGenDllCreated)">
+    <!--Get Localized string before display message-->
+    <GetPublishingLocalizedString
+      ID="PublishLocalizedString_GatherSpecificOutputsFromProject"
+      ArgumentCount="1"
+      Arguments="_SGenDllName"
+      LogType="Message" />
+    <Message Text="bin\$(_SGenDllName)" />
+    
+    <ItemGroup>
+      <FilesForPackagingFromProject  Include="$(OutDir)$(_SGenDllName)">
+        <DestinationRelativePath>bin\$(_SGenDllName)</DestinationRelativePath>
+        <FromTarget>CollectFilesFrom_SGenDllCreated</FromTarget>
+        <Category>Run</Category>
+      </FilesForPackagingFromProject>
+    </ItemGroup>
+    <CallTarget Targets="$(OnAfterCollectFilesFrom_SGenDllCreated)" RunEachTargetSeparately="false" />
+  </Target>
+
+  <!--********************************************************************-->
+  <!-- Task CollectFilesFromIntermediateSatelliteAssembliesWithTargetPath -->
+  <!--********************************************************************-->
+  <PropertyGroup>
+    <!--Targets get execute before this Target-->
+    <OnBeforeCollectFilesFromIntermediateSatelliteAssembliesWithTargetPath Condition="'$(OnBeforeCollectFilesFromIntermediateSatelliteAssembliesWithTargetPath)'==''">
+    </OnBeforeCollectFilesFromIntermediateSatelliteAssembliesWithTargetPath>
+    <!--Targets get execute after this Target-->
+    <OnAfterCollectFilesFromIntermediateSatelliteAssembliesWithTargetPath Condition="'$(OnAfterCollectFilesFromIntermediateSatelliteAssembliesWithTargetPath)'==''">
+    </OnAfterCollectFilesFromIntermediateSatelliteAssembliesWithTargetPath>
+    <CollectFilesFromIntermediateSatelliteAssembliesWithTargetPathDependsOn
+      Condition="'$(CollectFilesFromIntermediateSatelliteAssembliesWithTargetPathDependsOn)'==''">
+      $(OnBeforeCollectFilesFromIntermediateSatelliteAssembliesWithTargetPath);      
+    </CollectFilesFromIntermediateSatelliteAssembliesWithTargetPathDependsOn>
+  </PropertyGroup>
+  <Target Name="CollectFilesFromIntermediateSatelliteAssembliesWithTargetPath"
+          DependsOnTargets="$(CollectFilesFromIntermediateSatelliteAssembliesWithTargetPathDependsOn)">
+
+    <!--Get Localized string before display message-->
+    <GetPublishingLocalizedString
+      ID="PublishLocalizedString_GatherSpecificOutputsFromProject"
+      ArgumentCount="1"
+      Arguments="IntermediateSatelliteAssembliesWithTargetPath"
+      LogType="Message" />
+    <Message Text="@(IntermediateSatelliteAssembliesWithTargetPath->'$(OutDir)%(TargetPath) to bin\%(TargetPath)')"
+             Condition="Exists('$(OutDir)\%(TargetPath)')"/>
+    <ItemGroup>
+      <FilesForPackagingFromProject
+        Include="@(IntermediateSatelliteAssembliesWithTargetPath->'$(OutDir)%(TargetPath)')">
+        <DestinationRelativePath>bin\%(IntermediateSatelliteAssembliesWithTargetPath.TargetPath)</DestinationRelativePath>
+        <FromTarget>CollectFilesFromIntermediateSatelliteAssembliesWithTargetPath</FromTarget>
+        <Category>Run</Category>
+      </FilesForPackagingFromProject>
+    </ItemGroup>
+    <CallTarget Targets="$(OnAfterCollectFilesFromIntermediateSatelliteAssembliesWithTargetPath)"  RunEachTargetSeparately="false" />
+  </Target>
+
+
+  <!--********************************************************************-->
+  <!-- Task CollectFilesFromReference -->
+  <!--********************************************************************-->
+  <PropertyGroup>
+    <!--Targets get execute before this Target-->
+    <OnBeforeCollectFilesFromReference Condition="'$(OnBeforeCollectFilesFromReference)'==''">
+    </OnBeforeCollectFilesFromReference>
+    <!--Targets get execute after this Target-->
+    <OnAfterCollectFilesFromReference Condition="'$(OnAfterCollectFilesFromReference)'==''">
+    </OnAfterCollectFilesFromReference>
+
+    <CollectFilesFromReferenceDependsOn Condition="'$(CollectFilesFromReferenceDependsOn)'==''">
+      $(OnBeforeCollectFilesFromReference);
+      ResolveAssemblyReferences;      
+    </CollectFilesFromReferenceDependsOn>
+  </PropertyGroup>
+  <Target Name="CollectFilesFromReference"
+          DependsOnTargets="$(CollectFilesFromReferenceDependsOn)">
+
+    <!--Get Localized string before display message-->
+    <GetPublishingLocalizedString
+      ID="PublishLocalizedString_GatherSpecificItemsFromProjectNoDetail"
+      ArgumentCount="1"
+      Arguments="ReferenceCopyLocalPaths,ReferenceComWrappersToCopyLocal,ResolvedIsolatedComModules,_DeploymentLooseManifestFile,NativeReferenceFile"
+      LogType="Message" />
+
+    <ItemGroup>
+      <FilesForPackagingFromProject
+        Include="@(ReferenceCopyLocalPaths)">
+        <DestinationRelativePath>bin\%(ReferenceCopyLocalPaths.DestinationSubDirectory)%(FileName)%(Extension)</DestinationRelativePath>
+        <FromTarget>CollectFilesFromReference</FromTarget>
+        <Category>Run</Category>
+      </FilesForPackagingFromProject>
+    </ItemGroup>
+    
+    <ItemGroup>
+      <FilesForPackagingFromProject
+        Include="@(ReferenceComWrappersToCopyLocal); 
+                @(ResolvedIsolatedComModules); 
+                @(_DeploymentLooseManifestFile); 
+                @(NativeReferenceFile)">
+        <DestinationRelativePath>bin\%(FileName)%(Extension)</DestinationRelativePath>
+        <FromTarget>CollectFilesFromReference</FromTarget>
+        <Category>Run</Category>
+      </FilesForPackagingFromProject>
+    </ItemGroup>
+    <CallTarget Targets="$(OnAfterCollectFilesFromReference)" RunEachTargetSeparately="false" />
+  </Target>
+
+  <!--********************************************************************-->
+  <!-- Task CollectFilesFromAllExtraReferenceFiles -->
+  <!--********************************************************************-->
+  <PropertyGroup>
+    <!--Targets get execute before this Target-->
+    <OnBeforeCollectFilesFromAllExtraReferenceFiles Condition="'$(OnBeforeCollectFilesFromAllExtraReferenceFiles)'==''">
+    </OnBeforeCollectFilesFromAllExtraReferenceFiles>
+    <!--Targets get execute after this Target-->
+    <OnAfterCollectFilesFromAllExtraReferenceFiles Condition="'$(OnAfterCollectFilesFromAllExtraReferenceFiles)'==''">
+    </OnAfterCollectFilesFromAllExtraReferenceFiles>
+
+    <CollectFilesFromAllExtraReferenceFilesDependsOn Condition="'$(CollectFilesFromAllExtraReferenceFilesDependsOn)'==''">
+      $(OnBeforeCollectFilesFromAllExtraReferenceFiles);      
+    </CollectFilesFromAllExtraReferenceFilesDependsOn>
+  </PropertyGroup>
+  <Target Name="CollectFilesFromAllExtraReferenceFiles"
+          DependsOnTargets="$(CollectFilesFromAllExtraReferenceFilesDependsOn)">
+
+    <!--Get Localized string before display message-->
+    <GetPublishingLocalizedString
+      ID="PublishLocalizedString_GatherSpecificItemsFromProject"
+      ArgumentCount="1"
+      Arguments="AllExtraReferenceFiles"
+      LogType="Message" />
+    <Message Text="@(AllExtraReferenceFiles->'$(OutDir)%(FileName)%(Extension)')" />
+    <ItemGroup>
+      <FilesForPackagingFromProject  Include="@(AllExtraReferenceFiles->'$(OutDir)%(FileName)%(Extension)')">
+        <DestinationRelativePath>bin\%(FileName)%(Extension)</DestinationRelativePath>
+        <FromTarget>CollectFilesFromAllExtraReferenceFiles</FromTarget>
+        <Category>Run</Category>
+      </FilesForPackagingFromProject>
+    </ItemGroup>
+    <CallTarget Targets="$(OnAfterCollectFilesFromAllExtraReferenceFiles)" RunEachTargetSeparately="false"/>
+  </Target>
+
+
+  <!--********************************************************************-->
+  <!-- Task CollectFilesFrom_SourceItemsToCopyToOutputDirectory -->
+  <!--********************************************************************-->
+  <PropertyGroup>
+    <!--Targets get execute before this Target-->
+    <OnBeforeCollectFilesFrom_SourceItemsToCopyToOutputDirectory Condition="'$(OnBeforeCollectFilesFrom_SourceItemsToCopyToOutputDirectory)'==''">
+    </OnBeforeCollectFilesFrom_SourceItemsToCopyToOutputDirectory>
+    <!--Targets get execute after this Target-->
+    <OnAfterCollectFilesFrom_SourceItemsToCopyToOutputDirectory Condition="'$(OnAfterCollectFilesFrom_SourceItemsToCopyToOutputDirectory)'==''">
+    </OnAfterCollectFilesFrom_SourceItemsToCopyToOutputDirectory>
+
+    <CollectFilesFrom_SourceItemsToCopyToOutputDirectoryDependsOn Condition="'$(CollectFilesFrom_SourceItemsToCopyToOutputDirectoryDependsOn)'==''">
+      $(OnBeforeCollectFilesFrom_SourceItemsToCopyToOutputDirectory);      
+    </CollectFilesFrom_SourceItemsToCopyToOutputDirectoryDependsOn>
+  </PropertyGroup>
+  <Target Name="CollectFilesFrom_SourceItemsToCopyToOutputDirectory"
+          DependsOnTargets="$(CollectFilesFrom_SourceItemsToCopyToOutputDirectoryDependsOn)"
+          Condition="'@(_SourceItemsToCopyToOutputDirectoryAlways)' != '' or '@(_SourceItemsToCopyToOutputDirectory)' != ''">
+
+    <!--Get Localized string before display message-->
+    <GetPublishingLocalizedString
+      ID="PublishLocalizedString_GatherSpecificItemsFromProject"
+      ArgumentCount="1"
+      Arguments="_SourceItemsToCopyToOutputDirectoryAlways,_SourceItemsToCopyToOutputDirectory"
+      LogType="Message" />
+    
+    <ItemGroup>
+      <_TempSourceItemsToCopyToOutputDirectory Include="@(_SourceItemsToCopyToOutputDirectoryAlways); @(_SourceItemsToCopyToOutputDirectory)" />
+    </ItemGroup>
+
+    <Message Text="@(_TempSourceItemsToCopyToOutputDirectory->'bin\%(TargetPath)')" />
+    <ItemGroup>
+      <FilesForPackagingFromProject
+        Include="@(_TempSourceItemsToCopyToOutputDirectory)">
+        <DestinationRelativePath>bin\%(_TempSourceItemsToCopyToOutputDirectory.TargetPath)</DestinationRelativePath>
+        <FromTarget>CollectFilesFrom_SourceItemsToCopyToOutputDirectory</FromTarget>
+        <Category>Run</Category>
+      </FilesForPackagingFromProject>
+    </ItemGroup>
+    <CallTarget Targets="$(OnAfterCollectFilesFrom_SourceItemsToCopyToOutputDirectory)" RunEachTargetSeparately="false" />
+  </Target>
+
+
+  <!--********************************************************************-->
+  <!-- Task CollectFilesFromDocFileItem -->
+  <!--********************************************************************-->
+  <PropertyGroup>
+    <!--Targets get execute before this Target-->
+    <OnBeforeCollectFilesFromDocFileItem Condition="'$(OnBeforeCollectFilesFromDocFileItem)'==''">
+    </OnBeforeCollectFilesFromDocFileItem>
+    <!--Targets get execute after this Target-->
+    <OnAfterCollectFilesFromDocFileItem Condition="'$(OnAfterCollectFilesFromDocFileItem)'==''">
+    </OnAfterCollectFilesFromDocFileItem>
+
+    <CollectFilesFromDocFileItemDependsOn Condition="'$(CollectFilesFromDocFileItemDependsOn)'==''">
+      $(OnBeforeCollectFilesFromDocFileItem);      
+    </CollectFilesFromDocFileItemDependsOn>
+  </PropertyGroup>
+  <Target Name="CollectFilesFromDocFileItem"
+          DependsOnTargets="$(CollectFilesFromDocFileItemDependsOn)"
+          Condition="$(_DocumentationFileProduced)" >
+
+    <!--Get Localized string before display message-->
+    <GetPublishingLocalizedString
+      ID="PublishLocalizedString_GatherSpecificItemsFromProject"
+      ArgumentCount="1"
+      Arguments="DocFileItem"
+      LogType="Message" />
+    <Message Text="@(DocFileItem->'bin\%(FileName)%(Extension)')" />
+    <ItemGroup>
+      <FilesForPackagingFromProject
+        Include="@(DocFileItem)">
+        <DestinationRelativePath>bin\%(FileName)%(Extension)</DestinationRelativePath>
+        <FromTarget>CollectFilesFromDocFileItem</FromTarget>
+        <Category>Run</Category>
+      </FilesForPackagingFromProject>
+    </ItemGroup>
+    <CallTarget Targets="$(OnAfterCollectFilesFromDocFileItem)" RunEachTargetSeparately="false" />
+  </Target>
+
+  <!--********************************************************************-->
+  <!-- Task CollectFilesFrom_WebApplicationSilverlightXapFiles -->
+  <!--********************************************************************-->
+  <PropertyGroup>
+    <!--Targets get execute before this Target-->
+    <OnBeforeCollectFilesFrom_WebApplicationSilverlightXapFiles Condition="'$(OnBeforeCollectFilesFrom_WebApplicationSilverlightXapFiles)'==''">
+    </OnBeforeCollectFilesFrom_WebApplicationSilverlightXapFiles>
+    <!--Targets get execute after this Target-->
+    <OnAfterCollectFilesFrom_WebApplicationSilverlightXapFiles Condition="'$(OnAfterCollectFilesFrom_WebApplicationSilverlightXapFiles)'==''">
+    </OnAfterCollectFilesFrom_WebApplicationSilverlightXapFiles>
+
+    <CollectFilesFrom_WebApplicationSilverlightXapFilesDependsOn Condition="'$(CollectFilesFrom_WebApplicationSilverlightXapFilesDependsOn)'==''">
+      $(OnBeforeCollectFilesFrom_WebApplicationSilverlightXapFiles);
+    </CollectFilesFrom_WebApplicationSilverlightXapFilesDependsOn>
+  </PropertyGroup>
+  <Target Name="CollectFilesFrom_WebApplicationSilverlightXapFiles"
+          DependsOnTargets="$(CollectFilesFrom_WebApplicationSilverlightXapFilesDependsOn)"
+          Condition="'@(_WebApplicationSilverlightXapFiles)'!=''">
+    
+    <FilterByItems PipelineItems="@(_WebApplicationSilverlightXapFiles)"
+                   Filter="@(Content)">
+      <Output TaskParameter="OutFilter" ItemName="_WebApplicationSilverlightXapFilesNotInContent"/>
+    </FilterByItems>
+
+    <!--Get Localized string before display message-->
+    <GetPublishingLocalizedString
+      ID="PublishLocalizedString_GatherSpecificItemsFromProject"
+      ArgumentCount="1"
+      Arguments="_WebApplicationSilverlightXapFilesNotInContent"
+      LogType="Message" />
+    <Message Text="@(_WebApplicationSilverlightXapFilesNotInContent)" />
+    <ItemGroup>
+      <FilesForPackagingFromProject Include="@(_WebApplicationSilverlightXapFilesNotInContent)">
+        <DestinationRelativePath>%(_WebApplicationSilverlightXapFiles.Identity)</DestinationRelativePath>
+        <FromTarget>CollectFilesFrom_WebApplicationSilverlightXapFiles</FromTarget>
+        <Category>Run</Category>
+      </FilesForPackagingFromProject>
+    </ItemGroup>
+    <CallTarget Targets="$(OnAfterCollectFilesFrom_WebApplicationSilverlightXapFiles)" RunEachTargetSeparately="false" />
+  </Target>
+
+  <!--********************************************************************-->
+  <!-- Task CollectFilesFrom_binDeployableAssemblies -->
+  <!--********************************************************************-->
+  <PropertyGroup>
+    <!--Targets get execute before this Target-->
+    <OnBeforeCollectFilesFrom_binDeployableAssemblies Condition="'$(OnBeforeCollectFilesFrom_binDeployableAssemblies)'==''">
+    </OnBeforeCollectFilesFrom_binDeployableAssemblies>
+    <!--Targets get execute after this Target-->
+    <OnAfterCollectFilesFrom_binDeployableAssemblies Condition="'$(OnAfterCollectFilesFrom_binDeployableAssemblies)'==''">
+    </OnAfterCollectFilesFrom_binDeployableAssemblies>
+
+    <CollectFilesFrom_binDeployableAssembliesDependsOn Condition="'$(CollectFilesFrom_binDeployableAssembliesDependsOn)'==''">
+      $(OnBeforeCollectFilesFrom_binDeployableAssemblies);
+      _CopyBinDeployableAssemblies;
+    </CollectFilesFrom_binDeployableAssembliesDependsOn>
+  </PropertyGroup>
+  <Target Name="CollectFilesFrom_binDeployableAssemblies"
+          DependsOnTargets="$(CollectFilesFrom_binDeployableAssembliesDependsOn)">
+    <!--Get Localized string before display message-->
+    <GetPublishingLocalizedString
+      ID="PublishLocalizedString_GatherSpecificItemsFromProject"
+      ArgumentCount="1"
+      Arguments="_binDeployableAssemblies"
+      LogType="Message" />
+    <Message Text="@(_binDeployableAssemblies)" />
+    <ItemGroup>
+      <FilesForPackagingFromProject Include="@(_binDeployableAssemblies)">
+        <DestinationRelativePath>bin\%(RecursiveDir)%(FileName)%(Extension)</DestinationRelativePath>
+        <FromTarget>CollectFilesFrom_binDeployableAssemblies</FromTarget>
+        <Category>Run</Category>
+      </FilesForPackagingFromProject>
+    </ItemGroup>
+    <CallTarget Targets="$(OnAfterCollectFilesFrom_binDeployableAssemblies)" RunEachTargetSeparately="false" />
+  </Target>
+
+</Project>

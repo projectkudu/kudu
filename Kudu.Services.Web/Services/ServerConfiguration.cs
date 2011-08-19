@@ -2,7 +2,7 @@
 using System;
 
 namespace Kudu.Services.Web {
-    public class DefaultServerConfiguration : IServerConfiguration {
+    public class ServerConfiguration : IServerConfiguration {
         public string ApplicationName {
             get {
                 return HttpRuntime.AppDomainAppVirtualPath.Trim('/');

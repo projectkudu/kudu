@@ -8,6 +8,7 @@ using Kudu.Core.SourceControl.Git;
 using Kudu.Core.SourceControl.Hg;
 using Kudu.Services.Authorization;
 using Kudu.Services.Deployment;
+using Kudu.Services.Web.Services;
 using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 using Ninject;
 using Ninject.Web.Mvc;
@@ -56,6 +57,9 @@ namespace Kudu.Services.Web.App_Start {
         /// <param name="kernel">The kernel.</param>
         private static void RegisterServices(IKernel kernel) {
             IEnvironment environment = GetEnvironment();
+            var propertyProvider = new BuildPropertyProvider();
+
+            kernel.Bind<IBuildPropertyProvider>().ToConstant(propertyProvider);
             kernel.Bind<IEnvironment>().ToConstant(environment);
             kernel.Bind<IRepositoryManager>().ToMethod(context => new RepositoryManager(environment.RepositoryPath));
             kernel.Bind<ISiteBuilderFactory>().To<SiteBuilderFactory>();
@@ -67,7 +71,7 @@ namespace Kudu.Services.Web.App_Start {
             kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.RepositoryPath));
             kernel.Bind<IUserValidator>().To<SimpleUserValidator>();
             kernel.Bind<IHgServer>().To<Kudu.Core.SourceControl.Hg.HgServer>().InSingletonScope();
-            kernel.Bind<IServerConfiguration>().To<DefaultServerConfiguration>().InSingletonScope();
+            kernel.Bind<IServerConfiguration>().To<ServerConfiguration>().InSingletonScope();
         }
 
         private static string Root {
