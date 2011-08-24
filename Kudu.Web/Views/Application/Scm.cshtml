@@ -78,19 +78,21 @@
     </div>
 </div>
 
-<link href="@Url.Content("~/Hubs/SourceControl/SourceControl.css")" rel="stylesheet" type="text/css" />
+<link href="@Url.Content("~/Styles/SourceControl.css")" rel="stylesheet" type="text/css" />
+<script src="@Url.Content("~/Scripts/loader.js")" type="text/javascript"></script>
 <script src="@Url.Content("~/Scripts/jquery.cookie.js")" type="text/javascript"></script>
 <script src="@Url.Content("~/Scripts/jquery.render.min.js")" type="text/javascript"></script>
 <script src="@Url.Content("~/Scripts/sammy.js")" type="text/javascript"></script>
 <script src="@Url.Content("~/Scripts/jquery.timeago.js")" type="text/javascript"></script>
 <script src="@Url.Content("~/Scripts/jquery.signalR.min.js")" type="text/javascript"></script>
 <script src="@Url.Content("~/signalr/hubs")" type="text/javascript"></script>
-<script src="@Url.Content("~/Hubs/SourceControl/loader.js")" type="text/javascript"></script>
-<script src="@Url.Content("~/Hubs/SourceControl/SourceControl.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Scripts/SourceControl.js")" type="text/javascript"></script>
 <script type="text/javascript">
-    $(function () {
-        $.connection.sourceControl.appName = '@Model.Name';
-    });
+    (function ($) {
+        $(function () {
+            $.connection.sourceControl.appName = '@Model.Name';
+        });
+    })(jQuery);
 </script>
 <script id="logTemplate" type="text/x-jquery-tmpl"> 
     <li class="${getLogClass(Type)}">

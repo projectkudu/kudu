@@ -43,9 +43,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\SignalR.Server.0.2\lib\net40\SignalR.dll</HintPath>
     </Reference>
-    <Reference Include="SignalR.Ninject">
-      <HintPath>..\packages\SignalR.Ninject.0.2\lib\net40\SignalR.Ninject.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Web" />
@@ -60,7 +57,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="App_Start\NinjectSignalR.cs" />
+    <Compile Include="Ninject\DefaultBindings.cs" />
     <Compile Include="Hubs\Editor\Documents.cs" />
     <Compile Include="Hubs\Editor\Model\File.cs" />
     <Compile Include="Hubs\Editor\Model\Project.cs" />
@@ -70,6 +67,7 @@
     <Compile Include="Hubs\SourceControl\Model\LogEntryViewModel.cs" />
     <Compile Include="Hubs\SourceControl\Model\RepositoryViewModel.cs" />
     <Compile Include="Hubs\SourceControl\SourceControl.cs" />
+    <Compile Include="Infrastructure\ApplicationNameResolver.cs" />
     <Compile Include="Models\Application.cs" />
     <Compile Include="Models\IApplication.cs" />
     <Compile Include="Infrastructure\ISiteConfiguration.cs" />

@@ -1,5 +1,6 @@
 ﻿@using Kudu.Core.SourceControl
 @using Kudu.Web.Models
+@using Kudu.Web.Infrastructure
 
 @model ApplicationViewModel
 
@@ -11,11 +12,11 @@
 <ul id="app-links" class="tab-menu">
     @if (Model.RepositoryType != RepositoryType.None) {
     <li>
-        @Html.ActionLink("Manage Repository", "scm", new { slug = Model.Slug })
+        @Html.ActionLink("Manage Repository", "scm", new { slug = Model.Name.GenerateSlug() })
     </li>
     }
     <li>
-        @Html.ActionLink("Manage Files", "editor", new { slug = Model.Slug })
+        @Html.ActionLink("Manage Files", "editor", new { slug = Model.Name.GenerateSlug() })
     </li>
 </ul>
 
@@ -45,6 +46,6 @@ else {
 </div>
 
 <h2 id="delete-header">Delete Application</h2>
-@using (Html.BeginForm("Delete", "Application", new { slug = Model.Slug })) { 
+@using (Html.BeginForm("Delete", "Application", new { slug = Model.Name.GenerateSlug() })) { 
     <input type="submit" name="name" value="Delete" />
 }

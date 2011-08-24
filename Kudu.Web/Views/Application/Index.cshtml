@@ -1,5 +1,6 @@
 ﻿@using Kudu.Core.SourceControl
 @using Kudu.Web.Models
+@using Kudu.Web.Infrastructure
 
 @model IEnumerable<ApplicationViewModel>
 
@@ -22,7 +23,7 @@
 @foreach (var item in Model) {
     <tr>
         <td>
-            <a href="@Url.Action("Details", new { slug = item.Slug })">@Html.DisplayFor(modelItem => item.Name)</a>
+            <a href="@Url.Action("Details", new { slug = item.Name.GenerateSlug() })">@Html.DisplayFor(modelItem => item.Name)</a>
         </td>
     </tr>
 }

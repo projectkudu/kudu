@@ -1,25 +1,25 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using Kudu.Client.Models;
 using Kudu.Core.SourceControl;
+using Kudu.Web.Infrastructure;
 
 namespace Kudu.Web.Models {
     public class ApplicationViewModel {
         public ApplicationViewModel() {
         }
 
-        public ApplicationViewModel(Application app) {
-            Name = app.Name;
-            SiteUrl = app.SiteUrl;
-            Slug = app.Slug;
-            GitUrl = GetCloneUrl(app, RepositoryType.Git);
-            HgUrl = GetCloneUrl(app, RepositoryType.Mercurial);
+        public ApplicationViewModel(IApplication application) {
+            Name = application.Name;
+            SiteUrl = application.SiteUrl;
+            GitUrl = GetCloneUrl(application, RepositoryType.Git);
+            HgUrl = GetCloneUrl(application, RepositoryType.Mercurial);
         }
 
         [Required]
         public string Name { get; set; }
         public string SiteUrl { get; set; }
         public RepositoryType RepositoryType { get; set; }
-        public string Slug { get; set; }
         public string GitUrl { get; set; }
         public string HgUrl { get; set; }
         public string CloneUrl {
@@ -34,8 +34,8 @@ namespace Kudu.Web.Models {
             }
         }
 
-        private string GetCloneUrl(Application application, RepositoryType type) {
-            string prefix = application.ServiceUrl + application.Slug;
+        private string GetCloneUrl(IApplication application, RepositoryType type) {
+            string prefix = application.ServiceUrl + application.Name.GenerateSlug();
             return prefix + (type == RepositoryType.Git ? ".git" : String.Empty);
         }
     }
