@@ -1,12 +1,12 @@
-using Ninject;
-using SignalR.Infrastructure;
-using SignalR.Ninject;
-using Kudu.Core.SourceControl;
+using System.Web;
+using Kudu.Client.Infrastructure;
 using Kudu.Core.Deployment;
 using Kudu.Core.Editor;
-using Kudu.Client.Infrastructure;
+using Kudu.Core.SourceControl;
+using Ninject;
 using Ninject.Activation;
-using System.Web;
+using SignalR.Infrastructure;
+using SignalR.Ninject;
 
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Client.App_Start.NinjectSignalR), "Start")]
 

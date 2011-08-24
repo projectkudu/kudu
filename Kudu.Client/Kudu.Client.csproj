@@ -61,6 +61,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\NinjectSignalR.cs" />
+    <Compile Include="Hubs\Editor\Documents.cs" />
+    <Compile Include="Hubs\Editor\Model\File.cs" />
+    <Compile Include="Hubs\Editor\Model\Project.cs" />
     <Compile Include="Hubs\SourceControl\Model\ChangeSetDetailViewModel.cs" />
     <Compile Include="Hubs\SourceControl\Model\ChangeSetViewModel.cs" />
     <Compile Include="Hubs\SourceControl\Model\DeployResultViewModel.cs" />
@@ -72,16 +75,6 @@
     <Compile Include="Infrastructure\ISiteConfiguration.cs" />
     <Compile Include="Infrastructure\SiteConfiguration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Hubs\SourceControl\loader.js" />
-    <Content Include="Hubs\SourceControl\SourceControl.css" />
-    <Content Include="Hubs\SourceControl\SourceControl.js" />
-    <Content Include="Scripts\jquery-1.6.2-vsdoc.js" />
-    <Content Include="Scripts\jquery-1.6.2.js" />
-    <Content Include="Scripts\jquery-1.6.2.min.js" />
-    <Content Include="Scripts\jquery.signalR.js" />
-    <Content Include="Scripts\jquery.signalR.min.js" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Kudu.Core\Kudu.Core.csproj">

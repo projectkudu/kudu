@@ -9,10 +9,10 @@ using SignalR.Hubs;
 
 namespace Kudu.Client.Infrastructure {
     public class SiteConfiguration : ISiteConfiguration {
+        // REVIEW: How long should this cache last?
         private static readonly Dictionary<string, ISiteConfiguration> _cache = new Dictionary<string, ISiteConfiguration>();
 
         public SiteConfiguration(IApplication application) {
-
             ServiceUrl = application.ServiceUrl;
             SiteUrl = application.SiteUrl;
             Name = application.Name;
@@ -70,6 +70,5 @@ namespace Kudu.Client.Infrastructure {
             get;
             private set;
         }
-
     }
 }
