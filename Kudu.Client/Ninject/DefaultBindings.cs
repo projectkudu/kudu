@@ -17,23 +17,23 @@ namespace Kudu.Client {
         }
 
         private static IRepository GetRepository(IContext context) {
-            var siteConfiguraiton = context.Kernel.Get<ISiteConfiguration>();
-            return siteConfiguraiton.Repository;
+            var siteConfiguration = context.Kernel.Get<ISiteConfiguration>();
+            return siteConfiguration.Repository;
         }
 
         private static IFileSystem GetFileSystem(IContext context) {
-            var siteConfiguraiton = context.Kernel.Get<ISiteConfiguration>();
-            return siteConfiguraiton.FileSystem;
+            var siteConfiguration = context.Kernel.Get<ISiteConfiguration>();
+            return siteConfiguration.FileSystem;
         }
 
         private static IDeploymentManager GetDeploymentManager(IContext context) {
-            var siteConfiguraiton = context.Kernel.Get<ISiteConfiguration>();
-            return siteConfiguraiton.DeploymentManager;
+            var siteConfiguration = context.Kernel.Get<ISiteConfiguration>();
+            return siteConfiguration.DeploymentManager;
         }
 
         private static IRepositoryManager GetRepositoryManager(IContext context) {
-            var siteConfiguraiton = context.Kernel.Get<ISiteConfiguration>();
-            return siteConfiguraiton.RepositoryManager;
+            var siteConfiguration = context.Kernel.Get<ISiteConfiguration>();
+            return siteConfiguration.RepositoryManager;
         }
 
     }
