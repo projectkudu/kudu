@@ -371,3 +371,7 @@ div#title {
 #app-list {
     width: 100%;
 }
+
+label {
+    display: block;
+}

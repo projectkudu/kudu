@@ -1,14 +1,19 @@
 ﻿#scm #page {
     margin-top: 2%;
+    font-size: 13px;
+    font-family: Trebuchet MS;
 }
 
-#scm #menu #clone-url input {
-    font-size: 12px; 
-    width: 330px;
+#scm #clone-url-label {
+    margin: 10px 0 10px 0;
+    font-weight: bold;
 }
 
-#scm #menu #clone-url {
-    float: right;
+#scm #clone-url input {
+    width: 400px;
+    font-family: Trebuchet MS;
+    font-size: 13px;
+    padding: 7px 7px 8px;
 }
 
 #scm #log {
@@ -75,7 +80,6 @@
 }
 
 #scm #menu #links {
-    float: left;
     width: 50%;
     margin-top: 3px;
 }
@@ -99,12 +103,6 @@
     border-radius: 4px 4px 4px 4px;
     font-weight: bold;
     text-decoration: none;
-}
-
-#scm #menu input[type="text"] {
-    font-family: Trebuchet MS;
-    font-size: 13px;
-    width: 300px;
 }
 
 #scm .icon-loading {
@@ -383,6 +381,7 @@
     margin: 0;
     font-size: 13px;
     font-family: Consolas, Lucida Grande;
+    padding-left: 25px;
 }
 
 #scm #deploy-log pre {

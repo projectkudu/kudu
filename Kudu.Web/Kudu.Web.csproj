@@ -57,12 +57,13 @@
     <Reference Include="Ninject.Web.Mvc">
       <HintPath>..\packages\Ninject.MVC3.2.2.2.0\lib\net40-Full\Ninject.Web.Mvc.dll</HintPath>
     </Reference>
-    <Reference Include="SignalR, Version=0.2.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="SignalR, Version=0.3.1.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\SignalR.Server.0.2\lib\net40\SignalR.dll</HintPath>
+      <HintPath>..\packages\SignalR.Server.0.3.1\lib\net40\SignalR.dll</HintPath>
     </Reference>
-    <Reference Include="SignalR.Ninject, Version=0.2.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\SignalR.Ninject.0.2\lib\net40\SignalR.Ninject.dll</HintPath>
+    <Reference Include="SignalR.Ninject, Version=0.3.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\SignalR.Ninject.0.3.1\lib\net40\SignalR.Ninject.dll</HintPath>
     </Reference>
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Data.Entity" />
@@ -93,6 +94,8 @@
     <Content Include="Scripts\io\directory.js" />
     <Content Include="Scripts\io\file.js" />
     <Content Include="Scripts\io\fileSystem.js" />
+    <Content Include="Scripts\jquery.signalR.js" />
+    <Content Include="Scripts\jquery.signalR.min.js" />
     <Content Include="Scripts\skyde.js" />
     <Content Include="Styles\codemirror.css" />
     <Content Include="Styles\skyde.css" />
@@ -181,8 +184,6 @@
     <Content Include="Scripts\jquery.cookie.js" />
     <Content Include="Scripts\jquery.hotkeys-patched.js" />
     <Content Include="Scripts\jquery.render.min.js" />
-    <Content Include="Scripts\jquery.signalR.js" />
-    <Content Include="Scripts\jquery.signalR.min.js" />
     <Content Include="Scripts\jquery.timeago.js" />
     <Content Include="Scripts\sammy.js" />
     <Content Include="Web.config">

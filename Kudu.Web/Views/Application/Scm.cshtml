@@ -14,25 +14,22 @@
     <div class="display-field">
         <a href="@Model.SiteUrl" target="_blank">@Model.SiteUrl</a>
     </div>
-
+    <div id="clone-url">
+        <label id="clone-url-label" for="url">Repository URL: </label>
+        <input type="text" name="url" id="url" value="@(Model.CloneUrl ?? "None")" readonly="readonly" @(Model.CloneUrl == null ? "disabled=\"disabled\"" : "") />
+    </div>
     <div id="page">
         <div id="new-commit">
         </div>
         <div id="error">
         </div>
         <div id="menu" class="gray-gradient">
-            <span id="repository-type">@Model.RepositoryType</span>
             <div id="links">
                 <a href="#/">Commits</a>
                 <a href="#/working" class="icon icon-working-dir" id="show-working">Working directory</a>
                 <input type="checkbox" id="filter-changes" checked="checked" />
                 <span>Show deployments only</span>
             </div>
-            <div id="clone-url">
-                <label for="url">Repository URL: </label>
-                <input type="text" name="url" id="url" value="@(Model.CloneUrl ?? "None")" readonly="readonly" @(Model.CloneUrl == null ? "disabled=\"disabled\"" : "") />
-            </div>
-            <div class="clear"></div>
         </div>
         <div id="status-container">
             <div id="status">
