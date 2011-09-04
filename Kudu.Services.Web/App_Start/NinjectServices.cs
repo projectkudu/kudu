@@ -1,3 +1,4 @@
+using System.Configuration;
 using System.IO;
 using System.Web;
 using Kudu.Core;
@@ -76,7 +77,11 @@ namespace Kudu.Services.Web.App_Start {
 
         private static string Root {
             get {
-                return Path.GetFullPath(Path.Combine(HttpRuntime.AppDomainAppPath, "..", "apps"));
+                string path = ConfigurationManager.AppSettings["app"];
+                if (System.String.IsNullOrEmpty(path)) {
+                    path = Path.Combine("..", "apps");
+                }
+                return Path.GetFullPath(Path.Combine(HttpRuntime.AppDomainAppPath, path));
             }
         }
 
