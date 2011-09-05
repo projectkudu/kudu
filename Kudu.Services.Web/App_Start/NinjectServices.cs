@@ -4,6 +4,7 @@ using System.Web;
 using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Editor;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.SourceControl.Hg;
@@ -92,7 +93,28 @@ namespace Kudu.Services.Web.App_Start {
             string deployPath = Path.Combine(root, DeploymentTargetPath);
             string deployCachePath = Path.Combine(root, DeploymentCachePath);
 
+            InitializeEnvVars(root);
+
             return new Environment(site, root, repositoryPath, deployPath, deployCachePath);
+        }
+
+        private static void InitializeEnvVars(string root) {
+            string systemFoldersPath = Path.Combine(root, "..", "_system");
+
+            // Setup some temp variables
+            var tempPath = Path.Combine(systemFoldersPath, "TEMP");
+            FileSystemHelpers.EnsureDirectory(tempPath);
+
+            System.Environment.SetEnvironmentVariable("TEMP", tempPath);
+            System.Environment.SetEnvironmentVariable("TMP", tempPath);
+
+            string localAppData = Path.Combine(systemFoldersPath, "LocalAppData");
+            FileSystemHelpers.EnsureDirectory(localAppData);
+            System.Environment.SetEnvironmentVariable("LocalAppData", localAppData);
+
+            string appData = Path.Combine(systemFoldersPath, "AppData");
+            FileSystemHelpers.EnsureDirectory(appData);
+            System.Environment.SetEnvironmentVariable("AppData", appData);
         }
 
         private static void SubscribeForDeploymentEvents(IDeploymentManager deploymentManager) {
