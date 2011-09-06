@@ -87,34 +87,25 @@ namespace Kudu.Services.Web.App_Start {
         }
 
         private static IEnvironment GetEnvironment() {
+            InitializeEnvVars(Root);
+
             string site = HttpRuntime.AppDomainAppVirtualPath.Trim('/');
             string root = Path.Combine(Root, site);
             string repositoryPath = Path.Combine(root, RepositoryPath);
             string deployPath = Path.Combine(root, DeploymentTargetPath);
             string deployCachePath = Path.Combine(root, DeploymentCachePath);
 
-            InitializeEnvVars(root);
-
             return new Environment(site, root, repositoryPath, deployPath, deployCachePath);
         }
 
         private static void InitializeEnvVars(string root) {
-            string systemFoldersPath = Path.Combine(root, "..", "_system");
+            string tempPath = Path.GetFullPath(Path.Combine(root, "_temp"));
 
             // Setup some temp variables
-            var tempPath = Path.Combine(systemFoldersPath, "TEMP");
             FileSystemHelpers.EnsureDirectory(tempPath);
 
             System.Environment.SetEnvironmentVariable("TEMP", tempPath);
             System.Environment.SetEnvironmentVariable("TMP", tempPath);
-
-            string localAppData = Path.Combine(systemFoldersPath, "LocalAppData");
-            FileSystemHelpers.EnsureDirectory(localAppData);
-            System.Environment.SetEnvironmentVariable("LocalAppData", localAppData);
-
-            string appData = Path.Combine(systemFoldersPath, "AppData");
-            FileSystemHelpers.EnsureDirectory(appData);
-            System.Environment.SetEnvironmentVariable("AppData", appData);
         }
 
         private static void SubscribeForDeploymentEvents(IDeploymentManager deploymentManager) {
