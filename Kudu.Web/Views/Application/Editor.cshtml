@@ -7,7 +7,20 @@
     ViewBag.Title = "Editor";
 }
 
-@section head {
+<div id="skyde">        
+    <ul id="tabs">               
+    </ul>
+    <div id="text-editor">
+        <textarea id="editor"></textarea>
+    </div>
+    <div id="file-browser">
+    </div>
+    <div class="clear">
+    </div> 
+    <p id="status" class="icon icon-save">
+    </p> 
+</div>
+
 <!-- CODE MIRROR INCLUDES -->
 <link rel="stylesheet" href="@Url.Content("~/Styles/codemirror.css")">
 <script src="@Url.Content("~/Scripts/codemirror/codemirror.js")"></script>
@@ -27,21 +40,6 @@
 <script src="@Url.Content("~/Scripts/codemirror/mode/php/php.js")" type="text/javascript"></script>
 <!-- LANGUAGES -->
 <link href="@Url.Content("~/Styles/skyde.css")" rel="stylesheet" type="text/css" />
-}
-
-<div id="skyde">        
-    <ul id="tabs">               
-    </ul>
-    <div id="text-editor">
-        <textarea id="editor"></textarea>
-    </div>
-    <div id="file-browser">
-    </div>
-    <div class="clear">
-    </div> 
-    <p id="status" class="icon icon-save">
-    </p> 
-</div>
 
 <script id="folderTemplate" type="text/x-jquery-tmpl"> 
     <ul class="folder" data-path="${$data.getPath()}">
