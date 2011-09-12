@@ -39,6 +39,8 @@
 #skyde {
     padding-left: 10px;
     margin-left: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 #skyde .files {
@@ -374,7 +376,6 @@
 #skyde ul#tabs {
     float: left;
     width: 70%;
-    clear: both;
     margin: 0;
     padding: 0 0 2px;
     position: relative;
