@@ -28,7 +28,7 @@ namespace Kudu.Services.HgServer {
         }
 
         public ActionResult ProxyRequest() {
-            string hgRoot = HttpRuntime.AppDomainAppVirtualPath + "/" + _configuration.HgServerRoot;
+            string hgRoot = _configuration.ApplicationName + "/" + _configuration.HgServerRoot;
 
             if (!Request.RawUrl.StartsWith(hgRoot, StringComparison.OrdinalIgnoreCase)) {
                 throw new ArgumentException();
