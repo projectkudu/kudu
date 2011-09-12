@@ -30,6 +30,10 @@ namespace Kudu.Services.HgServer {
         public ActionResult ProxyRequest() {
             string hgRoot = _configuration.ApplicationName + "/" + _configuration.HgServerRoot;
 
+            if (!hgRoot.StartsWith("/", StringComparison.OrdinalIgnoreCase)) {
+                hgRoot = "/" + hgRoot;
+            }
+
             if (!Request.RawUrl.StartsWith(hgRoot, StringComparison.OrdinalIgnoreCase)) {
                 throw new ArgumentException();
             }
