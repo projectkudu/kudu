@@ -416,7 +416,7 @@
             }
         };
 
-        $.connection.hub.start(function () {
+        $.connection.hub.start({ transport: "longPolling" }, function () {
             app.run('#/');
         });
     });
