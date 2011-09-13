@@ -15,6 +15,7 @@ using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 using Ninject;
 using Ninject.Web.Mvc;
 using SignalR;
+using XmlSettings;
 
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Start")]
 [assembly: WebActivator.ApplicationShutdownMethodAttribute(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Stop")]
@@ -25,6 +26,7 @@ namespace Kudu.Services.Web.App_Start {
         private const string RepositoryPath = "repository";
         private const string DeploymentTargetPath = "wwwroot";
         private const string DeploymentCachePath = "deployments";
+        private const string DeploySettingsPath = "settings.xml";
 
         /// <summary>
         /// Starts the application
@@ -74,6 +76,9 @@ namespace Kudu.Services.Web.App_Start {
             kernel.Bind<IUserValidator>().To<SimpleUserValidator>();
             kernel.Bind<IHgServer>().To<Kudu.Core.SourceControl.Hg.HgServer>().InSingletonScope();
             kernel.Bind<IServerConfiguration>().To<ServerConfiguration>().InSingletonScope();
+
+            string deploySettingsPath = Path.Combine(environment.DeploymentCachePath, DeploySettingsPath);
+            kernel.Bind<ISettings>().ToMethod(context => new XmlSettings.Settings(deploySettingsPath));
         }
 
         private static string Root {

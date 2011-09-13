@@ -4,7 +4,6 @@ using Kudu.Services.Infrastructure;
 using System;
 
 namespace Kudu.Services.Deployment {
-    [FormattedExceptionFilter]
     public class DeployController : KuduController {
         private readonly IDeploymentManager _deploymentManager;
 

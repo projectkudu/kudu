@@ -50,6 +50,9 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="XmlSettings">
+      <HintPath>..\packages\XmlSettings.0.1\lib\net40\XmlSettings.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Authorization\BasicAuthorizeAttribute.cs" />
@@ -68,6 +71,9 @@
     <Compile Include="Infrastructure\IServerConfiguration.cs" />
     <Compile Include="Infrastructure\RepositoryUtility.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Settings\ConnectionStringsController.cs" />
+    <Compile Include="Settings\AppSettingsController.cs" />
+    <Compile Include="Settings\SettingsController.cs" />
     <Compile Include="SourceControl\ScmController.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -79,6 +85,7 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

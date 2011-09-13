@@ -4,7 +4,6 @@ using Kudu.Core.Editor;
 using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.Documents {
-    [FormattedExceptionFilter]
     public class FilesController : KuduController {
         private readonly IFileSystem _fileSystem;
 

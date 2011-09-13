@@ -5,7 +5,6 @@ using Kudu.Services.Infrastructure;
 using Kudu.Core.SourceControl.Hg;
 
 namespace Kudu.Services.SourceControl {
-    [FormattedExceptionFilter]
     public class ScmController : KuduController {
         private readonly IRepository _repository;
         private readonly IRepositoryManager _repositoryManager;
