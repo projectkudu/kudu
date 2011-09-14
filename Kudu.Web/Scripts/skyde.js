@@ -592,7 +592,7 @@
 
             initilize();
 
-            $.connection.hub.start(function () {
+            $.connection.hub.start({ transport: "longPolling" }, function () {
                 updateFiles().done(collapseFolders);
             });
 
