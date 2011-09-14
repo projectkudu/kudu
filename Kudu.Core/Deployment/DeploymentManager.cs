@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Xml.Linq;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 
@@ -201,7 +202,7 @@ namespace Kudu.Core.Deployment {
                 logger.Log("Copying files to {0}.", _environment.DeploymentTargetPath);
 
                 // Copy to target
-                FileSystemHelpers.SmartCopy(cachePath, _environment.DeploymentTargetPath, file => ApplyTransformation(cachePath, logger, file), skipOldFiles);
+                FileSystemHelpers.SmartCopy(cachePath, _environment.DeploymentTargetPath, file => ApplySettingsTransformation(cachePath, logger, file), skipOldFiles);
 
                 trackingFile.Status = DeployStatus.Success;
                 trackingFile.StatusText = String.Empty;
@@ -232,18 +233,21 @@ namespace Kudu.Core.Deployment {
             }
         }
 
-        private System.IO.FileInfo ApplyTransformation(string cachePath, ILogger logger, System.IO.FileInfo fileInfo) {
+        private System.IO.FileInfo ApplySettingsTransformation(string cachePath, ILogger logger, System.IO.FileInfo fileInfo) {
+            // Only transform configuration files in the root
+            string targetConfig = Path.Combine(cachePath, "web.config");
+
             if (!String.IsNullOrEmpty(fileInfo.Extension) &&
-                fileInfo.Name.Equals("web.config", StringComparison.OrdinalIgnoreCase)) {
+                fileInfo.FullName.Equals(targetConfig, StringComparison.OrdinalIgnoreCase)) {
 
                 string relativePath = fileInfo.FullName.Substring(cachePath.Length).Trim(Path.DirectorySeparatorChar);
                 logger.Log("Applying transform on {0}.", relativePath);
 
                 using (Stream stream = fileInfo.OpenRead()) {
                     using (var reader = new StreamReader(stream)) {
-                        string content = Transform(reader.ReadToEnd());
+                        XDocument document = Transform(reader.ReadToEnd());
                         string tempFile = Path.GetTempFileName();
-                        File.WriteAllText(tempFile, content);
+                        document.Save(tempFile);
                         logger.Log("Generated temporary config transform file ({0}).", tempFile);
                         return new System.IO.FileInfo(tempFile);
                     }
@@ -253,8 +257,85 @@ namespace Kudu.Core.Deployment {
             return fileInfo;
         }
 
-        private static string Transform(string content) {
-            return content;
+        private XDocument Transform(string content) {
+            var configuration = XDocument.Parse(content);
+
+            // Transform the app settings if there's any
+            ProcessAppSettings(configuration);
+
+            ProcessConnectionStrings(configuration);
+
+            return configuration;
+        }
+
+        private void ProcessConnectionStrings(XDocument configuration) {
+            IEnumerable<DeploymentSetting> connectionStrings = _settingsProvider.GetConnectionStrings();
+            if (connectionStrings != null && connectionStrings.Any()) {
+                // Add the connection string settings element if needed
+                XElement connectionStringsElement = GetOrCreateElement(configuration.Root, "connectionStrings");
+
+                var entries = (from e in connectionStringsElement.Elements("add")
+                               let nameAttr = e.Attribute("name")
+                               where nameAttr != null
+                               select new {
+                                   Name = nameAttr.Value,
+                                   Element = e
+                               }).ToDictionary(e => e.Name, e => e.Element, StringComparer.OrdinalIgnoreCase);
+
+                foreach (var connectionString in connectionStrings) {
+                    // HACK: This is a temporary hack
+                    if (connectionString.Key.Equals("All", StringComparison.OrdinalIgnoreCase)) {
+                        foreach (var element in entries.Select(e => e.Value)) {
+                            element.SetAttributeValue("connectionString", connectionString.Value);
+                        }
+                        break;
+                    }
+
+                    XElement connectionStringEntry;
+                    if (!entries.TryGetValue(connectionString.Key, out connectionStringEntry)) {
+                        connectionStringEntry = new XElement("add");
+                    }
+
+                    connectionStringEntry.SetAttributeValue("name", connectionString.Key);
+                    connectionStringEntry.SetAttributeValue("connectionString", connectionString.Value);
+                }
+            }
+        }
+
+        private static XElement GetOrCreateElement(XElement element, string name) {
+            var childElement = element.Element(name);
+            if (childElement == null) {
+                childElement = new XElement(name);
+                childElement.Add(childElement);
+            }
+            return childElement;
+        }
+
+        private void ProcessAppSettings(XDocument configuration) {
+            IEnumerable<DeploymentSetting> appSettings = _settingsProvider.GetAppSettings();
+
+            if (appSettings != null && appSettings.Any()) {
+                XElement appSettingsElement = GetOrCreateElement(configuration.Root, "appSettings");
+
+                var entries = (from e in appSettingsElement.Elements("add")
+                               let keyAttr = e.Attribute("key")
+                               where keyAttr != null
+                               select new {
+                                   Key = keyAttr.Value,
+                                   Element = e
+                               }).ToDictionary(e => e.Key, e => e.Element, StringComparer.OrdinalIgnoreCase);
+
+                foreach (var setting in appSettings) {
+                    XElement appSettingEntry;
+                    if (!entries.TryGetValue(setting.Key, out appSettingEntry)) {
+                        appSettingEntry = new XElement("add");
+                        appSettingsElement.Add(appSettingEntry);
+                    }
+
+                    appSettingEntry.SetAttributeValue("key", setting.Key);
+                    appSettingEntry.SetAttributeValue("value", setting.Value);
+                }
+            }
         }
 
         private void NotifyStatus(string id) {
