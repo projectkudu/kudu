@@ -10,15 +10,18 @@ namespace Kudu.Core.Deployment {
         private readonly IRepositoryManager _repositoryManager;
         private readonly ISiteBuilderFactory _builderFactory;
         private readonly IEnvironment _environment;
-        
+        private readonly IDeploymentSettingsProvider _settingsProvider;
+
         public event Action<DeployResult> StatusChanged;
 
         public DeploymentManager(IRepositoryManager repositoryManager,
                                  ISiteBuilderFactory builderFactory,
-                                 IEnvironment environment) {
+                                 IEnvironment environment,
+                                 IDeploymentSettingsProvider settingsProvider) {
             _repositoryManager = repositoryManager;
             _builderFactory = builderFactory;
             _environment = environment;
+            _settingsProvider = settingsProvider;
         }
 
         public string ActiveDeploymentId {
@@ -198,7 +201,7 @@ namespace Kudu.Core.Deployment {
                 logger.Log("Copying files to {0}.", _environment.DeploymentTargetPath);
 
                 // Copy to target
-                FileSystemHelpers.SmartCopy(cachePath, _environment.DeploymentTargetPath, skipOldFiles);
+                FileSystemHelpers.SmartCopy(cachePath, _environment.DeploymentTargetPath, file => ApplyTransformation(cachePath, logger, file), skipOldFiles);
 
                 trackingFile.Status = DeployStatus.Success;
                 trackingFile.StatusText = String.Empty;
@@ -227,6 +230,31 @@ namespace Kudu.Core.Deployment {
                     NotifyStatus(id);
                 }
             }
+        }
+
+        private System.IO.FileInfo ApplyTransformation(string cachePath, ILogger logger, System.IO.FileInfo fileInfo) {
+            if (!String.IsNullOrEmpty(fileInfo.Extension) &&
+                fileInfo.Name.Equals("web.config", StringComparison.OrdinalIgnoreCase)) {
+
+                string relativePath = fileInfo.FullName.Substring(cachePath.Length).Trim(Path.DirectorySeparatorChar);
+                logger.Log("Applying transform on {0}.", relativePath);
+
+                using (Stream stream = fileInfo.OpenRead()) {
+                    using (var reader = new StreamReader(stream)) {
+                        string content = Transform(reader.ReadToEnd());
+                        string tempFile = Path.GetTempFileName();
+                        File.WriteAllText(tempFile, content);
+                        logger.Log("Generated temporary config transform file ({0}).", tempFile);
+                        return new System.IO.FileInfo(tempFile);
+                    }
+                }
+            }
+
+            return fileInfo;
+        }
+
+        private static string Transform(string content) {
+            return content;
         }
 
         private void NotifyStatus(string id) {

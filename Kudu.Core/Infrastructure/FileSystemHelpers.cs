@@ -6,12 +6,8 @@ using System.Threading;
 
 namespace Kudu.Core.Infrastructure {
     public static class FileSystemHelpers {
-        public static void SmartCopy(string sourcePath, string destinationPath, bool skipOldFiles = true) {
-            SmartCopy(sourcePath,
-                      destinationPath,
-                      new DirectoryInfo(sourcePath),
-                      new DirectoryInfo(destinationPath),
-                      skipOldFiles);
+        public static void SmartCopy(string sourcePath, string destinationPath, Func<FileInfo, FileInfo> transform = null, bool skipOldFiles = true) {
+            SmartCopy(sourcePath, destinationPath, new DirectoryInfo(sourcePath), new DirectoryInfo(destinationPath), transform, skipOldFiles);
         }
 
         public static void DeleteDirectorySafe(string path) {
@@ -85,7 +81,7 @@ namespace Kudu.Core.Infrastructure {
             }
         }
 
-        private static void SmartCopy(string sourcePath, string destinationPath, DirectoryInfo sourceDirectory, DirectoryInfo destinationDirectory, bool skipOldFiles) {
+        private static void SmartCopy(string sourcePath, string destinationPath, DirectoryInfo sourceDirectory, DirectoryInfo destinationDirectory, Func<FileInfo, FileInfo> transform, bool skipOldFiles) {
             // Skip hidden directories and directories that begin with .
             if (sourceDirectory.Attributes.HasFlag(FileAttributes.Hidden) ||
                 sourceDirectory.Name.StartsWith(".")) {
@@ -124,7 +120,13 @@ namespace Kudu.Core.Infrastructure {
 
                 // Otherwise, copy the file
                 string path = GetDestinationPath(sourcePath, destinationPath, sourceFile);
-                sourceFile.CopyTo(path, overwrite: true);
+
+                FileInfo transformed = sourceFile;
+                if (transform != null) {
+                    transformed = transform(sourceFile);
+                }
+
+                transformed.CopyTo(path, overwrite: true);
             }
 
             var sourceDirectoryLookup = GetDirectores(sourceDirectory);
@@ -145,7 +147,7 @@ namespace Kudu.Core.Infrastructure {
                 }
 
                 // Sync all sub directories
-                SmartCopy(sourcePath, destinationPath, sourceSubDirectory, targetSubDirectory, skipOldFiles);
+                SmartCopy(sourcePath, destinationPath, sourceSubDirectory, targetSubDirectory, transform, skipOldFiles);
             }
         }
 

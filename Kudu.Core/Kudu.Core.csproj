@@ -59,11 +59,18 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="XmlSettings">
+      <HintPath>..\packages\XmlSettings.0.1\lib\net40\XmlSettings.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Deployment\BasicBuilder.cs" />
+    <Compile Include="Deployment\DeploymentSetting.cs" />
+    <Compile Include="Deployment\DeploymentSettingsProvider.cs" />
     <Compile Include="Deployment\IBuildPropertyProvider.cs" />
+    <Compile Include="Deployment\IDeploymentSettingsProvider.cs" />
     <Compile Include="Deployment\LogEntryType.cs" />
+    <Compile Include="Deployment\RemoteDeploymentSettingsProvider.cs" />
     <Compile Include="Deployment\SolutionBasedSiteBuilder.cs" />
     <Compile Include="Deployment\SiteBuilderFactory.cs" />
     <Compile Include="Deployment\DeploymentManager.cs" />
