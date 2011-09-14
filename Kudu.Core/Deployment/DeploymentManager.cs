@@ -272,7 +272,12 @@ namespace Kudu.Core.Deployment {
             IEnumerable<DeploymentSetting> connectionStrings = settingsProvider.GetConnectionStrings();
             if (connectionStrings != null && connectionStrings.Any()) {
                 // Add the connection string settings element if needed
-                XElement connectionStringsElement = GetOrCreateElement(configuration.Root, "connectionStrings");
+                XElement connectionStringsElement = GetElement(configuration.Root, "connectionStrings", createIfNotExists: false);
+
+                // Do nothing if there are no connection strings to replace.
+                if (connectionStringsElement == null) {
+                    return;
+                }
 
                 var entries = (from e in connectionStringsElement.Elements("add")
                                let nameAttr = e.Attribute("name")
@@ -302,11 +307,11 @@ namespace Kudu.Core.Deployment {
             }
         }
 
-        private static XElement GetOrCreateElement(XElement element, string name) {
+        private static XElement GetElement(XElement element, string name, bool createIfNotExists = true) {
             var childElement = element.Element(name);
-            if (childElement == null) {
+            if (childElement == null && createIfNotExists) {
                 childElement = new XElement(name);
-                childElement.Add(childElement);
+                element.Add(childElement);
             }
             return childElement;
         }
@@ -315,7 +320,7 @@ namespace Kudu.Core.Deployment {
             IEnumerable<DeploymentSetting> appSettings = settingsProvider.GetAppSettings();
 
             if (appSettings != null && appSettings.Any()) {
-                XElement appSettingsElement = GetOrCreateElement(configuration.Root, "appSettings");
+                XElement appSettingsElement = GetElement(configuration.Root, "appSettings");
 
                 var entries = (from e in appSettingsElement.Elements("add")
                                let keyAttr = e.Attribute("key")

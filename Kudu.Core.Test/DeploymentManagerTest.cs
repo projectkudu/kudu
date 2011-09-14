@@ -21,6 +21,40 @@ namespace Kudu.Core.Test {
 
             Assert.Equal(SettingConfig.Trim(), document.ToString().Trim());
         }
+        
+        [Fact]
+        public void TransformWithConfigurationFileWithNoAppSettingsAndConnectionStringsNodesShouldCreateAppSettingsButNotConnectionStrings() {
+            var mockSettingProvider = new Mock<IDeploymentSettingsManager>();
+            mockSettingProvider.Setup(m => m.GetAppSettings()).Returns(new[] { 
+                   new DeploymentSetting{
+                       Key = "key",
+                       Value = "deployment"
+                   }
+            });
+
+            mockSettingProvider.Setup(m => m.GetConnectionStrings()).Returns(new[] { 
+                   new DeploymentSetting{
+                       Key = "connection",
+                       Value = "deployment-cs"
+                   }
+            });
+
+            var document = DeploymentManager.Transform(mockSettingProvider.Object, @"<configuration>
+    <system.web>
+        <compilation debug=""false"" targetFramework=""4.0"" />
+    </system.web>
+</configuration>
+");
+
+            Assert.Equal(@"<configuration>
+  <system.web>
+    <compilation debug=""false"" targetFramework=""4.0"" />
+  </system.web>
+  <appSettings>
+    <add key=""key"" value=""deployment"" />
+  </appSettings>
+</configuration>", document.ToString().Trim());
+        }
 
         [Fact]
         public void TransformWithExistingAppSettingReplacesSetting() {
