@@ -11,14 +11,14 @@ namespace Kudu.Core.Deployment {
         private readonly IRepositoryManager _repositoryManager;
         private readonly ISiteBuilderFactory _builderFactory;
         private readonly IEnvironment _environment;
-        private readonly IDeploymentSettingsProvider _settingsProvider;
+        private readonly IDeploymentSettingsManager _settingsProvider;
 
         public event Action<DeployResult> StatusChanged;
 
         public DeploymentManager(IRepositoryManager repositoryManager,
                                  ISiteBuilderFactory builderFactory,
                                  IEnvironment environment,
-                                 IDeploymentSettingsProvider settingsProvider) {
+                                 IDeploymentSettingsManager settingsProvider) {
             _repositoryManager = repositoryManager;
             _builderFactory = builderFactory;
             _environment = environment;
@@ -257,7 +257,7 @@ namespace Kudu.Core.Deployment {
             return fileInfo;
         }
 
-        internal static XDocument Transform(IDeploymentSettingsProvider settingsProvider, string content) {
+        internal static XDocument Transform(IDeploymentSettingsManager settingsProvider, string content) {
             var configuration = XDocument.Parse(content);
 
             // Transform the app settings if there's any
@@ -268,7 +268,7 @@ namespace Kudu.Core.Deployment {
             return configuration;
         }
 
-        internal static void ProcessConnectionStrings(IDeploymentSettingsProvider settingsProvider, XDocument configuration) {
+        internal static void ProcessConnectionStrings(IDeploymentSettingsManager settingsProvider, XDocument configuration) {
             IEnumerable<DeploymentSetting> connectionStrings = settingsProvider.GetConnectionStrings();
             if (connectionStrings != null && connectionStrings.Any()) {
                 // Add the connection string settings element if needed
@@ -311,7 +311,7 @@ namespace Kudu.Core.Deployment {
             return childElement;
         }
 
-        internal static void ProcessAppSettings(IDeploymentSettingsProvider settingsProvider, XDocument configuration) {
+        internal static void ProcessAppSettings(IDeploymentSettingsManager settingsProvider, XDocument configuration) {
             IEnumerable<DeploymentSetting> appSettings = settingsProvider.GetAppSettings();
 
             if (appSettings != null && appSettings.Any()) {

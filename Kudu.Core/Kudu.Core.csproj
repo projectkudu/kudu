@@ -66,11 +66,11 @@
   <ItemGroup>
     <Compile Include="Deployment\BasicBuilder.cs" />
     <Compile Include="Deployment\DeploymentSetting.cs" />
-    <Compile Include="Deployment\DeploymentSettingsProvider.cs" />
+    <Compile Include="Deployment\DeploymentSettingsManager.cs" />
     <Compile Include="Deployment\IBuildPropertyProvider.cs" />
-    <Compile Include="Deployment\IDeploymentSettingsProvider.cs" />
+    <Compile Include="Deployment\IDeploymentSettingsManager.cs" />
     <Compile Include="Deployment\LogEntryType.cs" />
-    <Compile Include="Deployment\RemoteDeploymentSettingsProvider.cs" />
+    <Compile Include="Deployment\RemoteDeploymentSettingsManager.cs" />
     <Compile Include="Deployment\SolutionBasedSiteBuilder.cs" />
     <Compile Include="Deployment\SiteBuilderFactory.cs" />
     <Compile Include="Deployment\DeploymentManager.cs" />

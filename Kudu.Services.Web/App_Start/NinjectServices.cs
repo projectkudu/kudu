@@ -72,7 +72,7 @@ namespace Kudu.Services.Web.App_Start {
                                              .InSingletonScope()
                                              .OnActivation(SubscribeForDeploymentEvents);
 
-            kernel.Bind<IDeploymentSettingsProvider>().To<DeploymentSettingsProvider>();
+            kernel.Bind<IDeploymentSettingsManager>().To<DeploymentSettingsManager>();
             kernel.Bind<IFileSystemFactory>().To<FileSystemFactory>();
             kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.RepositoryPath));
             kernel.Bind<IUserValidator>().To<SimpleUserValidator>();

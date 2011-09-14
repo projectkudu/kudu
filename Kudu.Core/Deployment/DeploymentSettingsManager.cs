@@ -3,10 +3,10 @@ using System.Linq;
 using XmlSettings;
 
 namespace Kudu.Core.Deployment {
-    public class DeploymentSettingsProvider : IDeploymentSettingsProvider {
+    public class DeploymentSettingsManager : IDeploymentSettingsManager {
         private readonly ISettings _settings;
 
-        public DeploymentSettingsProvider(ISettings settings) {
+        public DeploymentSettingsManager(ISettings settings) {
             _settings = settings;
         }
 
@@ -29,6 +29,22 @@ namespace Kudu.Core.Deployment {
             }
 
             return null;
+        }
+
+        public void SetConnectionString(string key, string value) {
+            _settings.SetValue("connectionStrings", key, value);
+        }
+
+        public void RemoveConnectionString(string key) {
+            _settings.DeleteValue("connectionStrings", key);
+        }
+
+        public void RemoveAppSetting(string key) {
+            _settings.DeleteValue("appSettings", key);
+        }
+
+        public void SetAppString(string key, string value) {
+            _settings.SetValue("appSettings", key, value);
         }
     }
 }

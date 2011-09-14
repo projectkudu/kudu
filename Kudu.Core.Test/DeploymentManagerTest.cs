@@ -16,7 +16,7 @@ namespace Kudu.Core.Test {
 
         [Fact]
         public void TransformWithNoSettingsDoesNothing() {
-            var mockSettingProvider = new Mock<IDeploymentSettingsProvider>();
+            var mockSettingProvider = new Mock<IDeploymentSettingsManager>();
             var document = DeploymentManager.Transform(mockSettingProvider.Object, SettingConfig);
 
             Assert.Equal(SettingConfig.Trim(), document.ToString().Trim());
@@ -24,7 +24,7 @@ namespace Kudu.Core.Test {
 
         [Fact]
         public void TransformWithExistingAppSettingReplacesSetting() {
-            var mockSettingProvider = new Mock<IDeploymentSettingsProvider>();
+            var mockSettingProvider = new Mock<IDeploymentSettingsManager>();
             mockSettingProvider.Setup(m => m.GetAppSettings()).Returns(new[] { 
                    new DeploymentSetting{
                        Key = "key",
@@ -47,7 +47,7 @@ namespace Kudu.Core.Test {
 
         [Fact]
         public void TransformWithNewAppSettingAddsSetting() {
-            var mockSettingProvider = new Mock<IDeploymentSettingsProvider>();
+            var mockSettingProvider = new Mock<IDeploymentSettingsManager>();
             mockSettingProvider.Setup(m => m.GetAppSettings()).Returns(new[] { 
                    new DeploymentSetting{
                        Key = "kudu",
@@ -71,7 +71,7 @@ namespace Kudu.Core.Test {
 
         [Fact]
         public void TransformWithConnectionStringSettingReplacesConnectionString() {
-            var mockSettingProvider = new Mock<IDeploymentSettingsProvider>();
+            var mockSettingProvider = new Mock<IDeploymentSettingsManager>();
             mockSettingProvider.Setup(m => m.GetConnectionStrings()).Returns(new[] { 
                    new DeploymentSetting{
                        Key = "foo",
@@ -94,7 +94,7 @@ namespace Kudu.Core.Test {
 
         [Fact]
         public void TransformWithAllConnectionStringSettingReplacesAllConnectionStrings() {
-            var mockSettingProvider = new Mock<IDeploymentSettingsProvider>();
+            var mockSettingProvider = new Mock<IDeploymentSettingsManager>();
             mockSettingProvider.Setup(m => m.GetConnectionStrings()).Returns(new[] { 
                    new DeploymentSetting{
                        Key = "All",
