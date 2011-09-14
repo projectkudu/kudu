@@ -245,7 +245,7 @@ namespace Kudu.Core.Deployment {
 
                 using (Stream stream = fileInfo.OpenRead()) {
                     using (var reader = new StreamReader(stream)) {
-                        XDocument document = Transform(reader.ReadToEnd());
+                        XDocument document = Transform(_settingsProvider, reader.ReadToEnd());
                         string tempFile = Path.GetTempFileName();
                         document.Save(tempFile);
                         logger.Log("Generated temporary config transform file ({0}).", tempFile);
@@ -257,19 +257,19 @@ namespace Kudu.Core.Deployment {
             return fileInfo;
         }
 
-        private XDocument Transform(string content) {
+        internal static XDocument Transform(IDeploymentSettingsProvider settingsProvider, string content) {
             var configuration = XDocument.Parse(content);
 
             // Transform the app settings if there's any
-            ProcessAppSettings(configuration);
+            ProcessAppSettings(settingsProvider, configuration);
 
-            ProcessConnectionStrings(configuration);
+            ProcessConnectionStrings(settingsProvider, configuration);
 
             return configuration;
         }
 
-        private void ProcessConnectionStrings(XDocument configuration) {
-            IEnumerable<DeploymentSetting> connectionStrings = _settingsProvider.GetConnectionStrings();
+        internal static void ProcessConnectionStrings(IDeploymentSettingsProvider settingsProvider, XDocument configuration) {
+            IEnumerable<DeploymentSetting> connectionStrings = settingsProvider.GetConnectionStrings();
             if (connectionStrings != null && connectionStrings.Any()) {
                 // Add the connection string settings element if needed
                 XElement connectionStringsElement = GetOrCreateElement(configuration.Root, "connectionStrings");
@@ -311,8 +311,8 @@ namespace Kudu.Core.Deployment {
             return childElement;
         }
 
-        private void ProcessAppSettings(XDocument configuration) {
-            IEnumerable<DeploymentSetting> appSettings = _settingsProvider.GetAppSettings();
+        internal static void ProcessAppSettings(IDeploymentSettingsProvider settingsProvider, XDocument configuration) {
+            IEnumerable<DeploymentSetting> appSettings = settingsProvider.GetAppSettings();
 
             if (appSettings != null && appSettings.Any()) {
                 XElement appSettingsElement = GetOrCreateElement(configuration.Root, "appSettings");
