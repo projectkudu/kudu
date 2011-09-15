@@ -8,6 +8,6 @@ namespace Kudu.Core.Deployment {
         void SetConnectionString(string key, string value);
         void RemoveConnectionString(string key);
         void RemoveAppSetting(string key);
-        void SetAppString(string key, string value);
+        void SetAppSetting(string key, string value);
     }
 }

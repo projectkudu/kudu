@@ -59,8 +59,9 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="XmlSettings">
-      <HintPath>..\packages\XmlSettings.0.1\lib\net40\XmlSettings.dll</HintPath>
+    <Reference Include="XmlSettings, Version=0.1.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\XmlSettings.0.1.1\lib\net40\XmlSettings.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

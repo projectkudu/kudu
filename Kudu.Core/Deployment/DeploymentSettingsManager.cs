@@ -43,7 +43,7 @@ namespace Kudu.Core.Deployment {
             _settings.DeleteValue("appSettings", key);
         }
 
-        public void SetAppString(string key, string value) {
+        public void SetAppSetting(string key, string value) {
             _settings.SetValue("appSettings", key, value);
         }
     }
