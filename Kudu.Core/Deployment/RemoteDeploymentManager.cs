@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net.Http;
 using Kudu.Core.Infrastructure;
 using Newtonsoft.Json;
@@ -24,7 +25,11 @@ namespace Kudu.Core.Deployment {
                 }
             };
 
-            connection.Start();
+            connection.Closed += () => {
+                Debug.WriteLine("SignalR connection to {0} was closed.", serviceUrl);
+            };
+
+            connection.Start().Wait();
         }
 
         public string ActiveDeploymentId {

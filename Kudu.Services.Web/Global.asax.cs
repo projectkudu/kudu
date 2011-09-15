@@ -1,7 +1,7 @@
 ﻿using System.Web.Mvc;
 using System.Web.Routing;
 using Kudu.Services.Deployment;
-using RouteMagic;
+using SignalR.Routing;
 
 namespace Kudu.Services {
     public class MvcApplication : System.Web.HttpApplication {
@@ -39,11 +39,7 @@ namespace Kudu.Services {
                 new { Controller = "Rpc", Action = "ReceivePack" } // Parameter defaults
             );
 
-            routes.MapHttpHandler(
-                "DeploymentStatus",
-                "deploy/status/{*url}",
-               context => new DeploymentStatusHandler()
-            );
+            routes.MapConnection<DeploymentStatusHandler>("DeploymentStatus", "deploy/status/{*operation}");
 
             routes.MapRoute(
                 "Default", // Route name
