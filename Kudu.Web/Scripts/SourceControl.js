@@ -400,6 +400,9 @@
 
         initialize();
 
+
+        var lastResult;
+
         scm.updateDeployStatus = function (result) {
             // Don't force the view to change if it's not visible
             if (!$('#log').is(':visible')) {
@@ -408,11 +411,19 @@
 
             if (loadingRepository === false) {
                 if (!document.getElementById(result.Id)) {
-                    loadRepository();
+                    loadRepository(function () {
+                        if (lastResult) {
+                            updateStatus(lastResult);
+                            lastResult = null;
+                        }
+                    });
                 }
                 else {
                     updateStatus(result);
                 }
+            }
+            else {
+                lastResult = result;
             }
         };
 
