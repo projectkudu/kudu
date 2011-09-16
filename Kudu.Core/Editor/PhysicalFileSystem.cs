@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 
 namespace Kudu.Core.Editor {
-    public class PhysicalFileSystem : IFileSystem {
+    public class PhysicalFileSystem : IEditorFileSystem {
         private readonly string _root;
 
         public PhysicalFileSystem(string root) {

@@ -3,14 +3,14 @@ using System.Linq;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Editor {
-    public class FileSystemFactory : IFileSystemFactory {
+    public class FileSystemFactory : IEditorFileSystemFactory {
         private readonly IEnvironment _environment;
 
         public FileSystemFactory(IEnvironment environment) {
             _environment = environment;
         }
 
-        public IFileSystem CreateFileSystem() {
+        public IEditorFileSystem CreateEditorFileSystem() {
             // TODO: We need to do some caching here.
             var solutions = VsSolution.GetSolutions(_environment.RepositoryPath);
             if (solutions.All(s => !s.Projects.Any(p => p.IsWap))) {

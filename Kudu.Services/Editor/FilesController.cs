@@ -5,10 +5,10 @@ using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.Documents {
     public class FilesController : KuduController {
-        private readonly IFileSystem _fileSystem;
+        private readonly IEditorFileSystem _fileSystem;
 
-        public FilesController(IFileSystemFactory fileSystemFactory) {
-            _fileSystem = fileSystemFactory.CreateFileSystem();
+        public FilesController(IEditorFileSystemFactory fileSystemFactory) {
+            _fileSystem = fileSystemFactory.CreateEditorFileSystem();
         }
 
         [HttpGet]

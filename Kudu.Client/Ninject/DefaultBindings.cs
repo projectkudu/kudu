@@ -10,7 +10,7 @@ namespace Kudu.Client {
     public class DefaultBindings : NinjectModule {
         public override void Load() {
             Bind<ISiteConfiguration>().To<SiteConfiguration>();
-            Bind<IFileSystem>().ToMethod(context => GetFileSystem(context));
+            Bind<IEditorFileSystem>().ToMethod(context => GetFileSystem(context));
             Bind<IRepository>().ToMethod(context => GetRepository(context));
             Bind<IRepositoryManager>().ToMethod(context => GetRepositoryManager(context));
             Bind<IDeploymentManager>().ToMethod(context => GetDeploymentManager(context));
@@ -21,7 +21,7 @@ namespace Kudu.Client {
             return siteConfiguration.Repository;
         }
 
-        private static IFileSystem GetFileSystem(IContext context) {
+        private static IEditorFileSystem GetFileSystem(IContext context) {
             var siteConfiguration = context.Kernel.Get<ISiteConfiguration>();
             return siteConfiguration.FileSystem;
         }

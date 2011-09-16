@@ -8,7 +8,7 @@ namespace Kudu.Client.Infrastructure {
         string ServiceUrl { get; }
         string SiteUrl { get; }
 
-        IFileSystem FileSystem { get; }
+        IEditorFileSystem FileSystem { get; }
         IDeploymentManager DeploymentManager { get; }
         IRepositoryManager RepositoryManager { get; }
         IRepository Repository { get; }

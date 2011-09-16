@@ -4,7 +4,7 @@ using System.Net.Http;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Editor {
-    public class RemoteFileSystem : IFileSystem {
+    public class RemoteFileSystem : IEditorFileSystem {
         private readonly HttpClient _client;
 
         public RemoteFileSystem(string serviceUrl) {

@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
+using System.IO.Abstractions;
 using System.Linq;
 using System.Xml.Linq;
 
 namespace Kudu.Core.Deployment {
     public class XmlLogger : ILogger {
         private readonly string _path;
+        private readonly IFileSystem _fileSystem;
 
-        public XmlLogger(string path) {
+        public XmlLogger(IFileSystem fileSystem, string path) {
+            _fileSystem = fileSystem;
             _path = path;
         }
 
@@ -33,12 +35,12 @@ namespace Kudu.Core.Deployment {
         }
 
         private XDocument GetDocument() {
-            if (!File.Exists(_path)) {
+            if (!_fileSystem.File.Exists(_path)) {
                 return new XDocument(new XElement("entries"));
             }
 
             XDocument document;
-            using (var stream = File.OpenRead(_path)) {
+            using (var stream = _fileSystem.File.OpenRead(_path)) {
                 document = XDocument.Load(stream);
             }
             return document;

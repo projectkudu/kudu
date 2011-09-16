@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.IO.Abstractions;
 using System.Xml.Linq;
 
 namespace Kudu.Core.Deployment {
@@ -19,11 +20,11 @@ namespace Kudu.Core.Deployment {
             };
         }
 
-        public static DeploymentStatusFile Open(string path) {
+        public static DeploymentStatusFile Open(IFileSystem fileSystem, string path) {
             XDocument document;
 
             try {
-                using (var stream = File.OpenRead(path)) {
+                using (var stream = fileSystem.File.OpenRead(path)) {
                     document = XDocument.Load(stream);
                 }
             }
@@ -57,19 +58,23 @@ namespace Kudu.Core.Deployment {
         public DateTime DeploymentStartTime { get; private set; }
         public DateTime? DeploymentEndTime { get; set; }
 
-        public void Save() {
+        public void Save(IFileSystem fileSystem) {
             if (String.IsNullOrEmpty(Id)) {
                 throw new InvalidOperationException();
             }
 
-            new XDocument(new XElement("deployment",
+            var document = new XDocument(new XElement("deployment",
                     new XElement("id", Id),
                     new XElement("status", Status),
                     new XElement("statusText", StatusText),
                     new XElement("percentage", Percentage),
                     new XElement("deploymentStartTime", DeploymentStartTime),
                     new XElement("deploymentEndTime", DeploymentEndTime)
-                )).Save(_path);
+                ));
+
+            using (Stream stream = fileSystem.File.Create(_path)) {
+                document.Save(stream);
+            }
         }
     }
 }

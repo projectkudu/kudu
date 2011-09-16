@@ -1,37 +1,51 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Abstractions;
 using System.Linq;
 using System.Threading;
 
 namespace Kudu.Core.Infrastructure {
-    public static class FileSystemHelpers {
-        public static void SmartCopy(string sourcePath, string destinationPath, Func<FileInfo, FileInfo> transform = null, bool skipOldFiles = true) {
-            SmartCopy(sourcePath, destinationPath, new DirectoryInfo(sourcePath), new DirectoryInfo(destinationPath), transform, skipOldFiles);
+    public static class FileSystemHelpers {        
+        public static void SmartCopy(string sourcePath, string destinationPath, Func<FileInfoBase, FileInfoBase> transform = null, bool skipOldFiles = true) {
+            SmartCopy(sourcePath, 
+                      destinationPath, 
+                      new DirectoryInfoWrapper(new DirectoryInfo(sourcePath)), 
+                      new DirectoryInfoWrapper(new DirectoryInfo(destinationPath)), 
+                      transform, 
+                      skipOldFiles);
         }
 
         public static void DeleteDirectorySafe(string path) {
-            DeleteFileSystemInfo(new DirectoryInfo(path));
+            DeleteFileSystemInfo(new DirectoryInfoWrapper(new DirectoryInfo(path)));
         }
 
         public static string EnsureDirectory(string path) {
-            if (!Directory.Exists(path)) {
-                Directory.CreateDirectory(path);
+            return EnsureDirectory(new FileSystem(), path);
+        }
+
+        internal static string EnsureDirectory(IFileSystem fileSystem, string path) {
+            if (!fileSystem.Directory.Exists(path)) {
+                fileSystem.Directory.CreateDirectory(path);
             }
             return path;
         }
-
+        
         public static void DeleteFileSafe(string path) {
+            DeleteFileSafe(new FileSystem(), path);
+        }
+
+        internal static void DeleteFileSafe(IFileSystem fileSystem, string path) {
             try {
-                if (File.Exists(path)) {
-                    File.Delete(path);
+                if (fileSystem.File.Exists(path)) {
+                    fileSystem.File.Delete(path);
                 }
             }
             catch (UnauthorizedAccessException) { }
             catch (FileNotFoundException) { }
         }
 
-        private static void DeleteFileSystemInfo(FileSystemInfo fileSystemInfo) {
+        private static void DeleteFileSystemInfo(FileSystemInfoBase fileSystemInfo) {
             try {
                 if (fileSystemInfo.Exists) {
                     fileSystemInfo.Attributes = FileAttributes.Normal;
@@ -40,7 +54,7 @@ namespace Kudu.Core.Infrastructure {
             catch {
             }
 
-            var directoryInfo = fileSystemInfo as DirectoryInfo;
+            var directoryInfo = fileSystemInfo as DirectoryInfoBase;
 
             if (directoryInfo != null) {
                 try {
@@ -81,7 +95,7 @@ namespace Kudu.Core.Infrastructure {
             }
         }
 
-        private static void SmartCopy(string sourcePath, string destinationPath, DirectoryInfo sourceDirectory, DirectoryInfo destinationDirectory, Func<FileInfo, FileInfo> transform, bool skipOldFiles) {
+        internal static void SmartCopy(string sourcePath, string destinationPath, DirectoryInfoBase sourceDirectory, DirectoryInfoBase destinationDirectory, Func<FileInfoBase, FileInfoBase> transform, bool skipOldFiles) {
             // Skip hidden directories and directories that begin with .
             if (sourceDirectory.Attributes.HasFlag(FileAttributes.Hidden) ||
                 sourceDirectory.Name.StartsWith(".")) {
@@ -111,7 +125,7 @@ namespace Kudu.Core.Infrastructure {
 
                 // If a file exists in the destination then only copy it again if it's
                 // last write time is greater than the same file in the source (only if it changed)
-                FileInfo targetFile;
+                FileInfoBase targetFile;
                 if (skipOldFiles &&
                     destFilesLookup.TryGetValue(sourceFile.Name, out targetFile) &&
                     sourceFile.LastWriteTimeUtc <= targetFile.LastWriteTimeUtc) {
@@ -121,7 +135,7 @@ namespace Kudu.Core.Infrastructure {
                 // Otherwise, copy the file
                 string path = GetDestinationPath(sourcePath, destinationPath, sourceFile);
 
-                FileInfo transformed = sourceFile;
+                FileInfoBase transformed = sourceFile;
                 if (transform != null) {
                     transformed = transform(sourceFile);
                 }
@@ -140,10 +154,10 @@ namespace Kudu.Core.Infrastructure {
             }
 
             foreach (var sourceSubDirectory in sourceDirectoryLookup.Values) {
-                DirectoryInfo targetSubDirectory;
+                DirectoryInfoBase targetSubDirectory;
                 if (!destDirectoryLookup.TryGetValue(sourceSubDirectory.Name, out targetSubDirectory)) {
                     string path = GetDestinationPath(sourcePath, destinationPath, sourceSubDirectory);
-                    targetSubDirectory = new DirectoryInfo(path);
+                    targetSubDirectory = new DirectoryInfoWrapper(new DirectoryInfo(path));
                 }
 
                 // Sync all sub directories
@@ -151,7 +165,7 @@ namespace Kudu.Core.Infrastructure {
             }
         }
 
-        private static string GetDestinationPath(string sourceRootPath, string destinationRootPath, FileSystemInfo info) {
+        private static string GetDestinationPath(string sourceRootPath, string destinationRootPath, FileSystemInfoBase info) {
             string sourcePath = info.FullName;
             sourcePath = sourcePath.Substring(sourceRootPath.Length)
                                    .Trim(Path.DirectorySeparatorChar);
@@ -159,11 +173,11 @@ namespace Kudu.Core.Infrastructure {
             return Path.Combine(destinationRootPath, sourcePath);
         }
 
-        private static IDictionary<string, FileInfo> GetFiles(DirectoryInfo info) {
+        private static IDictionary<string, FileInfoBase> GetFiles(DirectoryInfoBase info) {
             return info.GetFiles().ToDictionary(f => f.Name, StringComparer.OrdinalIgnoreCase);
         }
 
-        private static IDictionary<string, DirectoryInfo> GetDirectores(DirectoryInfo info) {
+        private static IDictionary<string, DirectoryInfoBase> GetDirectores(DirectoryInfoBase info) {
             return info.GetDirectories().ToDictionary(d => d.Name, StringComparer.OrdinalIgnoreCase);
         }
     }

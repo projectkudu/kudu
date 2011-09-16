@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Abstractions;
 using System.Linq;
 using System.Xml.Linq;
 using Kudu.Core.Infrastructure;
@@ -12,35 +13,38 @@ namespace Kudu.Core.Deployment {
         private readonly ISiteBuilderFactory _builderFactory;
         private readonly IEnvironment _environment;
         private readonly IDeploymentSettingsManager _settingsProvider;
+        private readonly IFileSystem _fileSystem;
 
         public event Action<DeployResult> StatusChanged;
 
         public DeploymentManager(IRepositoryManager repositoryManager,
                                  ISiteBuilderFactory builderFactory,
                                  IEnvironment environment,
-                                 IDeploymentSettingsManager settingsProvider) {
+                                 IDeploymentSettingsManager settingsProvider,
+                                 IFileSystem fileSystem) {
             _repositoryManager = repositoryManager;
             _builderFactory = builderFactory;
             _environment = environment;
             _settingsProvider = settingsProvider;
+            _fileSystem = fileSystem;
         }
 
         public string ActiveDeploymentId {
             get {
                 string path = GetActiveDeploymentFilePath();
-                if (File.Exists(path)) {
-                    return File.ReadAllText(path);
+                if (_fileSystem.File.Exists(path)) {
+                    return _fileSystem.File.ReadAllText(path);
                 }
                 return null;
             }
         }
 
         public IEnumerable<DeployResult> GetResults() {
-            if (!Directory.Exists(_environment.DeploymentCachePath)) {
+            if (!_fileSystem.Directory.Exists(_environment.DeploymentCachePath)) {
                 yield break;
             }
 
-            foreach (var id in Directory.EnumerateDirectories(_environment.DeploymentCachePath)) {
+            foreach (var id in _fileSystem.Directory.GetDirectories(_environment.DeploymentCachePath)) {
                 var result = GetResult(id);
                 if (result != null) {
                     yield return result;
@@ -68,17 +72,17 @@ namespace Kudu.Core.Deployment {
         public IEnumerable<LogEntry> GetLogEntries(string id) {
             string path = GetLogPath(id);
 
-            if (!File.Exists(path)) {
+            if (!_fileSystem.File.Exists(path)) {
                 throw new InvalidOperationException(String.Format("No log found for '{0}'.", id));
             }
 
-            return new XmlLogger(path).GetLogEntries();
+            return new XmlLogger(_fileSystem, path).GetLogEntries();
         }
 
         public void Deploy(string id) {
             string cachePath = GetCachePath(id);
 
-            if (!Directory.Exists(cachePath)) {
+            if (!_fileSystem.Directory.Exists(cachePath)) {
                 throw new InvalidOperationException(String.Format("Unable to deploy '{0}'. No deployments found.", id));
             }
 
@@ -143,7 +147,7 @@ namespace Kudu.Core.Deployment {
                 trackingFile.Id = id;
                 trackingFile.Status = DeployStatus.Building;
                 trackingFile.StatusText = String.Format("Building {0}...", id);
-                trackingFile.Save();
+                trackingFile.Save(_fileSystem);
 
                 NotifyStatus(id);
 
@@ -163,13 +167,13 @@ namespace Kudu.Core.Deployment {
                                trackingFile.Status = DeployStatus.Failed;
                                trackingFile.StatusText = String.Empty;
                                trackingFile.DeploymentEndTime = DateTime.Now;
-                               trackingFile.Save();
+                               trackingFile.Save(_fileSystem);
 
                                NotifyStatus(id);
                            }
                            else {
                                trackingFile.Percentage = 50;
-                               trackingFile.Save();
+                               trackingFile.Save(_fileSystem);
                                NotifyStatus(id);
 
                                DeployToTarget(id);
@@ -196,7 +200,7 @@ namespace Kudu.Core.Deployment {
 
                 trackingFile.Status = DeployStatus.Deploying;
                 trackingFile.StatusText = "Deploying to webroot...";
-                trackingFile.Save();
+                trackingFile.Save(_fileSystem);
                 NotifyStatus(id);
 
                 logger.Log("Copying files to {0}.", _environment.DeploymentTargetPath);
@@ -227,13 +231,13 @@ namespace Kudu.Core.Deployment {
                 if (trackingFile != null) {
                     trackingFile.DeploymentEndTime = DateTime.Now;
                     trackingFile.Percentage = 100;
-                    trackingFile.Save();
+                    trackingFile.Save(_fileSystem);
                     NotifyStatus(id);
                 }
             }
         }
 
-        private System.IO.FileInfo ApplySettingsTransformation(string cachePath, ILogger logger, System.IO.FileInfo fileInfo) {
+        private FileInfoBase ApplySettingsTransformation(string cachePath, ILogger logger, FileInfoBase fileInfo) {
             // Only transform configuration files in the root
             string targetConfig = Path.Combine(cachePath, "web.config");
 
@@ -249,7 +253,7 @@ namespace Kudu.Core.Deployment {
                         string tempFile = Path.GetTempFileName();
                         document.Save(tempFile);
                         logger.Log("Generated temporary config transform file ({0}).", tempFile);
-                        return new System.IO.FileInfo(tempFile);
+                        return _fileSystem.FileInfo.FromFileName(tempFile);
                     }
                 }
             }
@@ -359,7 +363,7 @@ namespace Kudu.Core.Deployment {
         }
 
         private DeploymentStatusFile OpenTrackingFile(string id) {
-            return DeploymentStatusFile.Open(GetTrackingFilePath(id));
+            return DeploymentStatusFile.Open(_fileSystem, GetTrackingFilePath(id));
         }
 
         private DeploymentStatusFile CreateTrackingFile(string id) {
@@ -367,7 +371,7 @@ namespace Kudu.Core.Deployment {
         }
 
         private ILogger GetLogger(string id) {
-            return new XmlLogger(GetLogPath(id));
+            return new XmlLogger(_fileSystem, GetLogPath(id));
         }
 
         private string GetTrackingFilePath(string id) {
@@ -376,7 +380,7 @@ namespace Kudu.Core.Deployment {
 
         private string GetCachePath(string id) {
             string path = Path.Combine(GetRoot(id), "cache");
-            return FileSystemHelpers.EnsureDirectory(path);
+            return FileSystemHelpers.EnsureDirectory(_fileSystem, path);
         }
 
         private string GetLogPath(string id) {
@@ -385,7 +389,7 @@ namespace Kudu.Core.Deployment {
 
         private string GetRoot(string id) {
             string path = Path.Combine(_environment.DeploymentCachePath, id);
-            return FileSystemHelpers.EnsureDirectory(path);
+            return FileSystemHelpers.EnsureDirectory(_fileSystem, path);
         }
 
         private string GetActiveDeploymentFilePath() {

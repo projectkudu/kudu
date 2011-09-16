@@ -45,7 +45,7 @@ namespace Kudu.Client.Infrastructure {
         public string ServiceUrl { get; private set; }
         public string SiteUrl { get; private set; }
 
-        public IFileSystem FileSystem {
+        public IEditorFileSystem FileSystem {
             get;
             private set;
         }

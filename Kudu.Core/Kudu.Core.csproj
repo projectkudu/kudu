@@ -42,8 +42,18 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Mercurial.Net.1.1.1.607\lib\net35-Client\Mercurial.Net.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Net.Http">
-      <HintPath>..\packages\HttpClient.0.3.0\lib\40\Microsoft.Net.Http.dll</HintPath>
+    <Reference Include="Microsoft.Json">
+      <HintPath>..\packages\JsonValue.0.5.0\lib\40\Microsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Net.Http, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\HttpClient.0.5.0\lib\40\Microsoft.Net.Http.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Net.Http.Formatting">
+      <HintPath>..\packages\HttpClient.0.5.0\lib\40\Microsoft.Net.Http.Formatting.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Server.Common">
+      <HintPath>..\packages\JsonValue.0.5.0\lib\40\Microsoft.Server.Common.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.4.0.2\lib\net40\Newtonsoft.Json.dll</HintPath>
@@ -54,6 +64,10 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.IO.Abstractions, Version=1.4.0.12, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\System.IO.Abstractions.1.4.0.12\lib\net35\System.IO.Abstractions.dll</HintPath>
+    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -88,8 +102,8 @@
     <Compile Include="Deployment\WebSiteBuilder.cs" />
     <Compile Include="Deployment\XmlLogger.cs" />
     <Compile Include="Editor\FileSystemFactory.cs" />
-    <Compile Include="Editor\IFileSystem.cs" />
-    <Compile Include="Editor\IFileSystemFactory.cs" />
+    <Compile Include="Editor\IEditorFileSystem.cs" />
+    <Compile Include="Editor\IEditorFileSystemFactory.cs" />
     <Compile Include="Editor\MirrorRepository.cs" />
     <Compile Include="Editor\PhysicalFileSystem.cs" />
     <Compile Include="Editor\RemoteFileSystem.cs" />

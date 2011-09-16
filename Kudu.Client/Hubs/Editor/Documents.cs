@@ -5,9 +5,9 @@ using SignalR.Hubs;
 
 namespace Kudu.Client {
     public class Documents : Hub {
-        private readonly IFileSystem _fileSystem;
+        private readonly IEditorFileSystem _fileSystem;
 
-        public Documents(IFileSystem fileSystem) {
+        public Documents(IEditorFileSystem fileSystem) {
             _fileSystem = fileSystem;
         }
 

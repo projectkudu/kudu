@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 
 namespace Kudu.Core.Editor {
-    public class MirrorRepository : IFileSystem {
-        private readonly IFileSystem _repositoryFileSystem;
-        private readonly IFileSystem _deploymentFileSystem;
+    public class MirrorRepository : IEditorFileSystem {
+        private readonly IEditorFileSystem _repositoryFileSystem;
+        private readonly IEditorFileSystem _deploymentFileSystem;
 
-        public MirrorRepository(IFileSystem repositoryFileSystem, IFileSystem deploymentFileSystem) {
+        public MirrorRepository(IEditorFileSystem repositoryFileSystem, IEditorFileSystem deploymentFileSystem) {
             _repositoryFileSystem = repositoryFileSystem;
             _deploymentFileSystem = deploymentFileSystem;
         }
