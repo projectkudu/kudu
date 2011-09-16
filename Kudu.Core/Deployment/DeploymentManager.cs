@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
-using System.Xml.Linq;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 
@@ -12,7 +11,7 @@ namespace Kudu.Core.Deployment {
         private readonly IRepositoryManager _repositoryManager;
         private readonly ISiteBuilderFactory _builderFactory;
         private readonly IEnvironment _environment;
-        private readonly IDeploymentSettingsManager _settingsProvider;
+        private readonly IDeploymentSettingsManager _settingsManager;
         private readonly IFileSystem _fileSystem;
 
         public event Action<DeployResult> StatusChanged;
@@ -20,12 +19,12 @@ namespace Kudu.Core.Deployment {
         public DeploymentManager(IRepositoryManager repositoryManager,
                                  ISiteBuilderFactory builderFactory,
                                  IEnvironment environment,
-                                 IDeploymentSettingsManager settingsProvider,
+                                 IDeploymentSettingsManager settingsManager,
                                  IFileSystem fileSystem) {
             _repositoryManager = repositoryManager;
             _builderFactory = builderFactory;
             _environment = environment;
-            _settingsProvider = settingsProvider;
+            _settingsManager = settingsManager;
             _fileSystem = fileSystem;
         }
 
@@ -206,7 +205,9 @@ namespace Kudu.Core.Deployment {
                 logger.Log("Copying files to {0}.", _environment.DeploymentTargetPath);
 
                 // Copy to target
-                FileSystemHelpers.SmartCopy(cachePath, _environment.DeploymentTargetPath, file => ApplySettingsTransformation(cachePath, logger, file), skipOldFiles);
+                FileSystemHelpers.SmartCopy(cachePath, _environment.DeploymentTargetPath, skipOldFiles);
+
+                PerformTransformations();
 
                 trackingFile.Status = DeployStatus.Success;
                 trackingFile.StatusText = String.Empty;
@@ -237,114 +238,12 @@ namespace Kudu.Core.Deployment {
             }
         }
 
-        private FileInfoBase ApplySettingsTransformation(string cachePath, ILogger logger, FileInfoBase fileInfo) {
-            // Only transform configuration files in the root
-            string targetConfig = Path.Combine(cachePath, "web.config");
-
-            if (!String.IsNullOrEmpty(fileInfo.Extension) &&
-                fileInfo.FullName.Equals(targetConfig, StringComparison.OrdinalIgnoreCase)) {
-
-                string relativePath = fileInfo.FullName.Substring(cachePath.Length).Trim(Path.DirectorySeparatorChar);
-                logger.Log("Applying transform on {0}.", relativePath);
-
-                using (Stream stream = fileInfo.OpenRead()) {
-                    using (var reader = new StreamReader(stream)) {
-                        XDocument document = Transform(_settingsProvider, reader.ReadToEnd());
-                        string tempFile = Path.GetTempFileName();
-                        document.Save(tempFile);
-                        logger.Log("Generated temporary config transform file ({0}).", tempFile);
-                        return _fileSystem.FileInfo.FromFileName(tempFile);
-                    }
-                }
-            }
-
-            return fileInfo;
-        }
-
-        internal static XDocument Transform(IDeploymentSettingsManager settingsProvider, string content) {
-            var configuration = XDocument.Parse(content);
-
-            // Transform the app settings if there's any
-            ProcessAppSettings(settingsProvider, configuration);
-
-            ProcessConnectionStrings(settingsProvider, configuration);
-
-            return configuration;
-        }
-
-        internal static void ProcessConnectionStrings(IDeploymentSettingsManager settingsProvider, XDocument configuration) {
-            IEnumerable<DeploymentSetting> connectionStrings = settingsProvider.GetConnectionStrings();
-            if (connectionStrings != null && connectionStrings.Any()) {
-                // Add the connection string settings element if needed
-                XElement connectionStringsElement = GetElement(configuration.Root, "connectionStrings", createIfNotExists: false);
-
-                // Do nothing if there are no connection strings to replace.
-                if (connectionStringsElement == null) {
-                    return;
-                }
-
-                var entries = (from e in connectionStringsElement.Elements("add")
-                               let nameAttr = e.Attribute("name")
-                               where nameAttr != null
-                               select new {
-                                   Name = nameAttr.Value,
-                                   Element = e
-                               }).ToDictionary(e => e.Name, e => e.Element, StringComparer.OrdinalIgnoreCase);
-
-                foreach (var connectionString in connectionStrings) {
-                    // HACK: This is a temporary hack
-                    if (connectionString.Key.Equals("All", StringComparison.OrdinalIgnoreCase)) {
-                        foreach (var element in entries.Select(e => e.Value)) {
-                            element.SetAttributeValue("connectionString", connectionString.Value);
-                        }
-                        break;
-                    }
-
-                    XElement connectionStringEntry;
-                    if (!entries.TryGetValue(connectionString.Key, out connectionStringEntry)) {
-                        connectionStringEntry = new XElement("add");
-                    }
-
-                    connectionStringEntry.SetAttributeValue("name", connectionString.Key);
-                    connectionStringEntry.SetAttributeValue("connectionString", connectionString.Value);
-                }
-            }
-        }
-
-        private static XElement GetElement(XElement element, string name, bool createIfNotExists = true) {
-            var childElement = element.Element(name);
-            if (childElement == null && createIfNotExists) {
-                childElement = new XElement(name);
-                element.Add(childElement);
-            }
-            return childElement;
-        }
-
-        internal static void ProcessAppSettings(IDeploymentSettingsManager settingsProvider, XDocument configuration) {
-            IEnumerable<DeploymentSetting> appSettings = settingsProvider.GetAppSettings();
-
-            if (appSettings != null && appSettings.Any()) {
-                XElement appSettingsElement = GetElement(configuration.Root, "appSettings");
-
-                var entries = (from e in appSettingsElement.Elements("add")
-                               let keyAttr = e.Attribute("key")
-                               where keyAttr != null
-                               select new {
-                                   Key = keyAttr.Value,
-                                   Element = e
-                               }).ToDictionary(e => e.Key, e => e.Element, StringComparer.OrdinalIgnoreCase);
-
-                foreach (var setting in appSettings) {
-                    XElement appSettingEntry;
-                    if (!entries.TryGetValue(setting.Key, out appSettingEntry)) {
-                        appSettingEntry = new XElement("add");
-                        appSettingsElement.Add(appSettingEntry);
-                    }
-
-                    appSettingEntry.SetAttributeValue("key", setting.Key);
-                    appSettingEntry.SetAttributeValue("value", setting.Value);
-                }
-            }
+        private void PerformTransformations() {
+            // TODO: We need to only do this if this is an asp.net application we happen to be
+            // deploying.
+            // Perform transformations for this app if it has a web.config at the root
+            var transformer = new AspNetConfigTransformer(_fileSystem, _settingsManager);
+            transformer.PerformTransformations(_environment.DeploymentTargetPath);
         }
 
         private void NotifyStatus(string id) {
