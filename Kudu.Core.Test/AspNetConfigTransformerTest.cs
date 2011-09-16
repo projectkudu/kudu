@@ -38,9 +38,9 @@ namespace Kudu.Core.Test {
             });
 
             mockSettingProvider.Setup(m => m.GetConnectionStrings()).Returns(new[] { 
-                   new DeploymentSetting{
-                       Key = "connection",
-                       Value = "deployment-cs"
+                   new ConnectionStringSetting {
+                       Name = "connection",
+                       ConnectionString = "deployment-cs"
                    }
             });
             var mockFileSystem = new Mock<IFileSystem>();
@@ -115,9 +115,9 @@ namespace Kudu.Core.Test {
         public void TransformWithConnectionStringSettingReplacesConnectionString() {
             var mockSettingProvider = new Mock<IDeploymentSettingsManager>();
             mockSettingProvider.Setup(m => m.GetConnectionStrings()).Returns(new[] { 
-                   new DeploymentSetting{
-                       Key = "foo",
-                       Value = "production"
+                   new ConnectionStringSetting {
+                       Name = "foo",
+                       ConnectionString = "production"
                    }
             });
             var mockFileSystem = new Mock<IFileSystem>();
@@ -139,9 +139,9 @@ namespace Kudu.Core.Test {
         public void TransformWithAllConnectionStringSettingReplacesAllConnectionStrings() {
             var mockSettingProvider = new Mock<IDeploymentSettingsManager>();
             mockSettingProvider.Setup(m => m.GetConnectionStrings()).Returns(new[] { 
-                   new DeploymentSetting{
-                       Key = "All",
-                       Value = "production"
+                   new ConnectionStringSetting {
+                       Name = "All",
+                       ConnectionString = "production"
                    }
             });
             var mockFileSystem = new Mock<IFileSystem>();
@@ -187,9 +187,9 @@ namespace Kudu.Core.Test {
             });
 
             mockSettingProvider.Setup(m => m.GetConnectionStrings()).Returns(new[] { 
-                   new DeploymentSetting{
-                       Key = "foo",
-                       Value = "deployment-cs"
+                   new ConnectionStringSetting {
+                       Name = "foo",
+                       ConnectionString = "deployment-cs"
                    }
             });
             var mockFileSystem = new Mock<IFileSystem>();

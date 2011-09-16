@@ -15,8 +15,8 @@ namespace Kudu.Core.Deployment {
             return _client.GetJson<IEnumerable<DeploymentSetting>>("appSettings");
         }
 
-        public IEnumerable<DeploymentSetting> GetConnectionStrings() {
-            return _client.GetJson<IEnumerable<DeploymentSetting>>("connectionStrings");
+        public IEnumerable<ConnectionStringSetting> GetConnectionStrings() {
+            return _client.GetJson<IEnumerable<ConnectionStringSetting>>("connectionStrings");
         }
 
         public void SetConnectionString(string key, string value) {

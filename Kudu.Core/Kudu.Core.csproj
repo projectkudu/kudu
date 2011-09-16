@@ -81,6 +81,7 @@
   <ItemGroup>
     <Compile Include="Deployment\AspNetConfigTransformer.cs" />
     <Compile Include="Deployment\BasicBuilder.cs" />
+    <Compile Include="Deployment\ConnectionStringSetting.cs" />
     <Compile Include="Deployment\DeploymentSetting.cs" />
     <Compile Include="Deployment\DeploymentSettingsManager.cs" />
     <Compile Include="Deployment\IBuildPropertyProvider.cs" />

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using XmlSettings;
 
@@ -11,21 +12,24 @@ namespace Kudu.Core.Deployment {
         }
 
         public IEnumerable<DeploymentSetting> GetAppSettings() {
-            return GetSettings("appSettings");
+            return GetSettings("appSettings", pair => new DeploymentSetting {
+                Key = pair.Key,
+                Value = pair.Value
+            });
         }
 
-        public IEnumerable<DeploymentSetting> GetConnectionStrings() {
-            return GetSettings("connectionStrings");
+        public IEnumerable<ConnectionStringSetting> GetConnectionStrings() {
+            return GetSettings("connectionStrings", pair => new ConnectionStringSetting {
+                Name = pair.Key,
+                ConnectionString = pair.Value
+            });
         }
 
-        private IEnumerable<DeploymentSetting> GetSettings(string sectionName) {
+        private IEnumerable<T> GetSettings<T>(string sectionName, Func<KeyValuePair<string, string>, T> selector) {
             var section = _settings.GetValues(sectionName);
 
             if (section != null) {
-                return section.Select(pair => new DeploymentSetting {
-                    Key = pair.Key,
-                    Value = pair.Value
-                });
+                return section.Select(selector);
             }
 
             return null;

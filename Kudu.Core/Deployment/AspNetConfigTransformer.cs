@@ -55,7 +55,7 @@ namespace Kudu.Core.Deployment {
         }
 
         private void ProcessConnectionStrings(XDocument configuration) {
-            IEnumerable<DeploymentSetting> connectionStrings = _settingsManager.GetConnectionStrings();
+            IEnumerable<ConnectionStringSetting> connectionStrings = _settingsManager.GetConnectionStrings();
             if (connectionStrings != null && connectionStrings.Any()) {
                 // Add the connection string settings element if needed
                 XElement connectionStringsElement = GetElement(configuration.Root, "connectionStrings", createIfNotExists: false);
@@ -69,20 +69,23 @@ namespace Kudu.Core.Deployment {
                 
                 foreach (var connectionString in connectionStrings) {
                     // HACK: This is a temporary hack
-                    if (connectionString.Key.Equals("All", StringComparison.OrdinalIgnoreCase)) {
+                    if (connectionString.Name.Equals("All", StringComparison.OrdinalIgnoreCase)) {
                         foreach (var element in connectionStringEntries.Select(e => e.Value)) {
-                            element.SetAttributeValue("connectionString", connectionString.Value);
+                            element.SetAttributeValue("connectionString", connectionString.ConnectionString);
                         }
                         break;
                     }
 
                     XElement connectionStringEntry;
-                    if (!connectionStringEntries.TryGetValue(connectionString.Key, out connectionStringEntry)) {
+                    if (!connectionStringEntries.TryGetValue(connectionString.Name, out connectionStringEntry)) {
                         connectionStringEntry = new XElement("add");
                     }
 
-                    connectionStringEntry.SetAttributeValue("name", connectionString.Key);
-                    connectionStringEntry.SetAttributeValue("connectionString", connectionString.Value);
+                    connectionStringEntry.SetAttributeValue("name", connectionString.Name);
+                    connectionStringEntry.SetAttributeValue("connectionString", connectionString.ConnectionString);
+                    if (!String.IsNullOrEmpty(connectionString.ProviderName)) {
+                        connectionStringEntry.SetAttributeValue("providerName", connectionString.ProviderName);
+                    }
                 }
             }
         }
