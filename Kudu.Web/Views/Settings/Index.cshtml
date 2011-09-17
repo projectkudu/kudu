@@ -50,9 +50,6 @@ else {
     </p>
 }
 
-@Html.ValidationSummary()
-
-
 <h3>New App Setting</h3>
 @using (Html.BeginForm("new-app-setting", "settings", new { ViewBag.slug })) {
     <fieldset>        
@@ -89,7 +86,7 @@ else {
         </div>
 
         <div class="editor-label">
-            @Html.Label("ConnectionString")
+            @Html.Label("ConnectionString", "Connection String")
         </div>
         <div class="editor-field">
             @Html.TextBox("ConnectionString")
