@@ -4,18 +4,25 @@
     ViewBag.Title = "Index";
 }
 
-<h3>Applicaiton Settings</h3>
+<h3>Application Settings</h3>
 
 @if (Model.AppSettings.Any()) {
 <table>
     <tr>
         <th>Key</th>
         <th>Value</th>
+        <th></th>
     </tr>
-    @foreach (var settings in Model.AppSettings) {
+    @foreach (var setting in Model.AppSettings) {
         <tr>
-            <td>@settings.Key</td>
-            <td>@settings.Value</td>
+            <td>@setting.Key</td>
+            <td>@setting.Value</td>
+            <td>
+                @using (Html.BeginForm("delete-app-setting", "settings", new { ViewBag.slug })) {
+                    @Html.Hidden("Key", setting.Key)
+                    <input type="submit" value="Delete" />
+                }
+            </td>
         </tr>
     }
     
@@ -34,11 +41,18 @@ else {
     <tr>
         <th>Name</th>
         <th>Connection String</th>
+        <th></th>
     </tr>
     @foreach (var setting in Model.ConnectionStrings) {
         <tr>
             <td>@setting.Name</td>
             <td>@setting.ConnectionString</td>
+            <td>
+                @using (Html.BeginForm("delete-connection-string", "settings", new { ViewBag.slug })) {
+                    @Html.Hidden("Name", setting.Name)
+                    <input type="submit" value="Delete" />
+                }
+            </td>
         </tr>
     }
     
@@ -46,11 +60,11 @@ else {
 }
 else { 
     <p>
-        No connection string configured
+        No connection strings configured
     </p>
 }
 
-<h3>New App Setting</h3>
+<h3>New Application Setting</h3>
 @using (Html.BeginForm("new-app-setting", "settings", new { ViewBag.slug })) {
     <fieldset>        
         <div class="editor-label">

@@ -77,19 +77,27 @@ namespace Kudu.Web.Controllers {
 
             return View("index", model);
         }
-        //
-        // POST: /Settings/Delete/5
+        
+        [HttpPost]
+        [ActionName("delete-connection-string")]
+        public ActionResult DeleteConnectionString(string slug, string name) {
+            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
+            var settingsManager = new RemoteDeploymentSettingsManager(application.ServiceUrl);
+
+            settingsManager.RemoveConnectionString(name);
+
+            return RedirectToAction("Index", new { slug });
+        }
 
         [HttpPost]
-        public ActionResult Delete(int id, FormCollection collection) {
-            try {
-                // TODO: Add delete logic here
+        [ActionName("delete-app-setting")]
+        public ActionResult DeleteApplicationSetting(string slug, string key) {
+            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
+            var settingsManager = new RemoteDeploymentSettingsManager(application.ServiceUrl);
 
-                return RedirectToAction("Index");
-            }
-            catch {
-                return View();
-            }
+            settingsManager.RemoveAppSetting(key);
+
+            return RedirectToAction("Index", new { slug });
         }
 
         private SettingsViewModel GetSettingsViewModel(string slug) {
