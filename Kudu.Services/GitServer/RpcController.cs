@@ -22,6 +22,7 @@
 
 namespace Kudu.Services.GitServer {
     using System;
+    using System.Diagnostics;
     using System.IO;
     using System.IO.Compression;
     using System.Threading;
@@ -30,7 +31,6 @@ namespace Kudu.Services.GitServer {
     using Kudu.Core.Deployment;
     using Kudu.Core.SourceControl.Git;
     using Kudu.Services.Authorization;
-    using System.Diagnostics;
 
     // Handles project/git-upload-pack and project/git-receive-pack
     [SessionState(SessionStateBehavior.Disabled)]
