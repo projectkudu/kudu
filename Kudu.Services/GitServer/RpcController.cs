@@ -70,10 +70,15 @@ namespace Kudu.Services.GitServer {
         }
 
         private Stream GetInputStream() {
+            // This method was left off of HttpContextBase but is more efficient since it
+            // doesn't make ASP.NET read the entire input stream up front.
+            Stream inputStream = System.Web.HttpContext.Current.Request.GetBufferlessInputStream();
+
             if (Request.Headers["Content-Encoding"] == "gzip") {
-                return new GZipStream(Request.InputStream, CompressionMode.Decompress);
+                return new GZipStream(inputStream, CompressionMode.Decompress);
             }
-            return Request.InputStream;
+
+            return inputStream;
         }
 
         private void ExecuteRpc(string rpc, Action action) {
