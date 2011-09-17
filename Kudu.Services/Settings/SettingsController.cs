@@ -2,6 +2,7 @@
 using System.Web.Mvc;
 using Kudu.Services.Infrastructure;
 using XmlSettings;
+using System.Linq;
 
 namespace Kudu.Services.Settings {
     public abstract class SettingsController : KuduController {
@@ -13,8 +14,9 @@ namespace Kudu.Services.Settings {
             _settings = settings;
         }
 
-        public IList<KeyValuePair<string, string>> Index() {
-            return _settings.GetValues(_section);
+        public IEnumerable<KeyValuePair<string, string>> Index() {
+            return _settings.GetValues(_section) ?? 
+                   Enumerable.Empty<KeyValuePair<string, string>>();
         }
 
         [HttpPost]

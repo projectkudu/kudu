@@ -1,0 +1,94 @@
+﻿@model Kudu.Web.Models.SettingsViewModel
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<h3>Applicaiton Settings</h3>
+
+@if (Model.AppSettings.Any()) {
+<table>
+    <tr>
+        <th>Key</th>
+        <th>Value</th>
+    </tr>
+    @foreach (var settings in Model.AppSettings) {
+        <tr>
+            <td>@settings.Key</td>
+            <td>@settings.Value</td>
+        </tr>
+    }
+    
+</table>
+}
+
+<h3>ConnectionStrings</h3>
+
+@if (Model.ConnectionStrings.Any()) {
+<table>
+    <tr>
+        <th>Name</th>
+        <th>ConnectionString</th>
+    </tr>
+    @foreach (var setting in Model.ConnectionStrings) {
+        <tr>
+            <td>@setting.Name</td>
+            <td>@setting.ConnectionString</td>
+        </tr>
+    }
+    
+</table>
+}
+
+@using (Html.BeginForm("new-app-setting", "settings", new { ViewBag.slug })) {
+    @Html.ValidationSummary()
+    <fieldset>
+        <legend>New Setting</legend>
+
+        <div class="editor-label">
+            @Html.Label("Key")
+        </div>
+        <div class="editor-field">
+            @Html.TextBox("Key")
+            @Html.ValidationMessage("Key", "*")
+        </div>
+
+        <div class="editor-label">
+            @Html.Label("Value")
+        </div>
+        <div class="editor-field">
+            @Html.TextBox("Value")
+            @Html.ValidationMessage("Value", "*")
+        </div>
+        <p>
+            <input type="submit" value="Create" />
+        </p>
+    </fieldset>
+}
+
+
+@using (Html.BeginForm("new-connection-string", "settings", new { ViewBag.slug })) {
+    @Html.ValidationSummary()
+    <fieldset>
+        <legend>New ConnectionString</legend>
+
+        <div class="editor-label">
+            @Html.Label("Name")
+        </div>
+        <div class="editor-field">
+            @Html.TextBox("Name")
+            @Html.ValidationMessage("Name", "*")
+        </div>
+
+        <div class="editor-label">
+            @Html.Label("ConnectionString")
+        </div>
+        <div class="editor-field">
+            @Html.TextBox("ConnectionString")
+            @Html.ValidationMessage("ConnectionString", "*")
+        </div>
+        <p>
+            <input type="submit" value="Create" />
+        </p>
+    </fieldset>
+}

@@ -18,6 +18,9 @@
     <li>
         @Html.ActionLink("Manage Files", "editor", new { slug = Model.Name.GenerateSlug() })
     </li>
+    <li>
+        @Html.ActionLink("Settings", "index", "settings", new { slug = Model.Name.GenerateSlug() }, null)
+    </li>
 </ul>
 
 @if (Model.RepositoryType == RepositoryType.None) {

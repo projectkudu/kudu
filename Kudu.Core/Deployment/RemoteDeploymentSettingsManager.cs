@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using Kudu.Core.Infrastructure;
 
@@ -16,11 +17,15 @@ namespace Kudu.Core.Deployment {
         }
 
         public IEnumerable<ConnectionStringSetting> GetConnectionStrings() {
-            return _client.GetJson<IEnumerable<ConnectionStringSetting>>("connectionStrings");
+            return from pair in _client.GetJson<IEnumerable<KeyValuePair<string, string>>>("connectionStrings")
+                   select new ConnectionStringSetting {
+                       Name = pair.Key,
+                       ConnectionString = pair.Value
+                   };
         }
 
-        public void SetConnectionString(string key, string value) {
-            SetValue("connectionStrings", key, value);
+        public void SetConnectionString(string name, string connectionString) {
+            SetValue("connectionStrings", name, connectionString);
         }
 
         public void RemoveConnectionString(string key) {

@@ -56,36 +56,39 @@ namespace Kudu.Core.Deployment {
 
         private void ProcessConnectionStrings(XDocument configuration) {
             IEnumerable<ConnectionStringSetting> connectionStrings = _settingsManager.GetConnectionStrings();
-            if (connectionStrings != null && connectionStrings.Any()) {
-                // Add the connection string settings element if needed
-                XElement connectionStringsElement = GetElement(configuration.Root, "connectionStrings", createIfNotExists: false);
+            if (!connectionStrings.Any()) {
+                return;
+            }
 
-                // Do nothing if there are no connection strings to replace.
-                if (connectionStringsElement == null) {
-                    return;
+            // Add the connection string settings element if needed
+            XElement connectionStringsElement = GetElement(configuration.Root, "connectionStrings", createIfNotExists: false);
+
+            // Do nothing if there are no connection strings to replace.
+            if (connectionStringsElement == null) {
+                return;
+            }
+
+            IDictionary<string, XElement> connectionStringEntries = GetDictionary(connectionStringsElement, "name");
+
+            foreach (var connectionString in connectionStrings) {
+                // HACK: This is a temporary hack
+                if (connectionString.Name.Equals("All", StringComparison.OrdinalIgnoreCase)) {
+                    foreach (var element in connectionStringEntries.Select(e => e.Value)) {
+                        element.SetAttributeValue("connectionString", connectionString.ConnectionString);
+                    }
+                    break;
                 }
 
-                IDictionary<string, XElement> connectionStringEntries = GetDictionary(connectionStringsElement, "name");
-                
-                foreach (var connectionString in connectionStrings) {
-                    // HACK: This is a temporary hack
-                    if (connectionString.Name.Equals("All", StringComparison.OrdinalIgnoreCase)) {
-                        foreach (var element in connectionStringEntries.Select(e => e.Value)) {
-                            element.SetAttributeValue("connectionString", connectionString.ConnectionString);
-                        }
-                        break;
-                    }
+                XElement connectionStringEntry;
+                if (!connectionStringEntries.TryGetValue(connectionString.Name, out connectionStringEntry)) {
+                    // Only replace connectionstrings, don't add new ones
+                    continue;
+                }
 
-                    XElement connectionStringEntry;
-                    if (!connectionStringEntries.TryGetValue(connectionString.Name, out connectionStringEntry)) {
-                        connectionStringEntry = new XElement("add");
-                    }
-
-                    connectionStringEntry.SetAttributeValue("name", connectionString.Name);
-                    connectionStringEntry.SetAttributeValue("connectionString", connectionString.ConnectionString);
-                    if (!String.IsNullOrEmpty(connectionString.ProviderName)) {
-                        connectionStringEntry.SetAttributeValue("providerName", connectionString.ProviderName);
-                    }
+                connectionStringEntry.SetAttributeValue("name", connectionString.Name);
+                connectionStringEntry.SetAttributeValue("connectionString", connectionString.ConnectionString);
+                if (!String.IsNullOrEmpty(connectionString.ProviderName)) {
+                    connectionStringEntry.SetAttributeValue("providerName", connectionString.ProviderName);
                 }
             }
         }
@@ -93,31 +96,33 @@ namespace Kudu.Core.Deployment {
         private void ProcessAppSettings(XDocument configuration) {
             IEnumerable<DeploymentSetting> appSettings = _settingsManager.GetAppSettings();
 
-            if (appSettings != null && appSettings.Any()) {
-                XElement appSettingsElement = GetElement(configuration.Root, "appSettings");
-                IDictionary<string, XElement> appSettingsEntries = GetDictionary(appSettingsElement, "key");
+            if (!appSettings.Any()) {
+                return;
+            }
 
-                foreach (var setting in appSettings) {
-                    XElement appSettingEntry;
-                    if (!appSettingsEntries.TryGetValue(setting.Key, out appSettingEntry)) {
-                        appSettingEntry = new XElement("add");
-                        appSettingsElement.Add(appSettingEntry);
-                    }
+            XElement appSettingsElement = GetElement(configuration.Root, "appSettings");
+            IDictionary<string, XElement> appSettingsEntries = GetDictionary(appSettingsElement, "key");
 
-                    appSettingEntry.SetAttributeValue("key", setting.Key);
-                    appSettingEntry.SetAttributeValue("value", setting.Value);
+            foreach (var setting in appSettings) {
+                XElement appSettingEntry;
+                if (!appSettingsEntries.TryGetValue(setting.Key, out appSettingEntry)) {
+                    appSettingEntry = new XElement("add");
+                    appSettingsElement.Add(appSettingEntry);
                 }
+
+                appSettingEntry.SetAttributeValue("key", setting.Key);
+                appSettingEntry.SetAttributeValue("value", setting.Value);
             }
         }
 
         private IDictionary<string, XElement> GetDictionary(XElement element, string attributeName) {
             var elements = from e in element.Elements()
-                        let keyAttr = e.Attribute(attributeName)
-                        where keyAttr != null
-                        select new {
-                            Key = keyAttr.Value,
-                            Element = e
-                        };
+                           let keyAttr = e.Attribute(attributeName)
+                           where keyAttr != null
+                           select new {
+                               Key = keyAttr.Value,
+                               Element = e
+                           };
 
             return elements.ToDictionary(e => e.Key, e => e.Element, StringComparer.OrdinalIgnoreCase);
         }

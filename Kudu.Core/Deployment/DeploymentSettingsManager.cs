@@ -32,7 +32,7 @@ namespace Kudu.Core.Deployment {
                 return section.Select(selector);
             }
 
-            return null;
+            return Enumerable.Empty<T>();
         }
 
         public void SetConnectionString(string key, string value) {
