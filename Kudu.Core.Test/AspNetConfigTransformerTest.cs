@@ -134,31 +134,7 @@ namespace Kudu.Core.Test {
   </connectionStrings>
 </configuration>", document.ToString().Trim());
         }
-
-        [Fact]
-        public void TransformWithAllConnectionStringSettingReplacesAllConnectionStrings() {
-            var mockSettingProvider = new Mock<IDeploymentSettingsManager>();
-            mockSettingProvider.Setup(m => m.GetConnectionStrings()).Returns(new[] { 
-                   new ConnectionStringSetting {
-                       Name = "All",
-                       ConnectionString = "production"
-                   }
-            });
-            var mockFileSystem = new Mock<IFileSystem>();
-            var transformer = new AspNetConfigTransformer(mockFileSystem.Object, mockSettingProvider.Object);
-            var document = transformer.Transform(SettingConfig);
-
-            Assert.Equal(@"<configuration>
-  <appSettings>
-    <add key=""key"" value=""val"" />
-  </appSettings>
-  <connectionStrings>
-    <add name=""foo"" connectionString=""production"" providerName=""provider"" />
-    <add name=""bar"" connectionString=""production"" providerName=""provider"" />
-  </connectionStrings>
-</configuration>", document.ToString().Trim());
-        }
-
+ 
         [Fact]
         public void PerformTransformationsDoesNothingIfWebConfigDoesNotExist() {
             var mockSettingProvider = new Mock<IDeploymentSettingsManager>();

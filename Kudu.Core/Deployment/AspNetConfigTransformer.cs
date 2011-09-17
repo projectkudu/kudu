@@ -70,15 +70,7 @@ namespace Kudu.Core.Deployment {
 
             IDictionary<string, XElement> connectionStringEntries = GetDictionary(connectionStringsElement, "name");
 
-            foreach (var connectionString in connectionStrings) {
-                // HACK: This is a temporary hack
-                if (connectionString.Name.Equals("All", StringComparison.OrdinalIgnoreCase)) {
-                    foreach (var element in connectionStringEntries.Select(e => e.Value)) {
-                        element.SetAttributeValue("connectionString", connectionString.ConnectionString);
-                    }
-                    break;
-                }
-
+            foreach (var connectionString in connectionStrings) {                
                 XElement connectionStringEntry;
                 if (!connectionStringEntries.TryGetValue(connectionString.Name, out connectionStringEntry)) {
                     // Only replace connectionstrings, don't add new ones
