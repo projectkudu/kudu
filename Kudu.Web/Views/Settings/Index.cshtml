@@ -21,14 +21,19 @@
     
 </table>
 }
+else { 
+    <p>
+        No app settings configured
+    </p>
+}
 
-<h3>ConnectionStrings</h3>
+<h3>Connection Strings</h3>
 
 @if (Model.ConnectionStrings.Any()) {
 <table>
     <tr>
         <th>Name</th>
-        <th>ConnectionString</th>
+        <th>Connection String</th>
     </tr>
     @foreach (var setting in Model.ConnectionStrings) {
         <tr>
@@ -39,12 +44,18 @@
     
 </table>
 }
+else { 
+    <p>
+        No connection string configured
+    </p>
+}
 
+@Html.ValidationSummary()
+
+
+<h3>New App Setting</h3>
 @using (Html.BeginForm("new-app-setting", "settings", new { ViewBag.slug })) {
-    @Html.ValidationSummary()
-    <fieldset>
-        <legend>New Setting</legend>
-
+    <fieldset>        
         <div class="editor-label">
             @Html.Label("Key")
         </div>
@@ -61,17 +72,14 @@
             @Html.ValidationMessage("Value", "*")
         </div>
         <p>
-            <input type="submit" value="Create" />
+            <input type="submit" value="Add" />
         </p>
     </fieldset>
 }
 
-
+<h3>New Connection String</h3>
 @using (Html.BeginForm("new-connection-string", "settings", new { ViewBag.slug })) {
-    @Html.ValidationSummary()
-    <fieldset>
-        <legend>New ConnectionString</legend>
-
+    <fieldset>        
         <div class="editor-label">
             @Html.Label("Name")
         </div>
@@ -88,7 +96,7 @@
             @Html.ValidationMessage("ConnectionString", "*")
         </div>
         <p>
-            <input type="submit" value="Create" />
+            <input type="submit" value="Add" />
         </p>
     </fieldset>
 }
