@@ -157,16 +157,7 @@ namespace Kudu.Core.Deployment {
                        .ContinueWith(t => {
                            if (t.IsFaulted) {
                                // We need to read the exception so the process doesn't go down
-                               Exception exception = t.Exception;
-
-                               logger.Log("Deployment failed.", LogEntryType.Error);
-
-                               // failed to deploy
-                               trackingFile.Percentage = 100;
-                               trackingFile.Status = DeployStatus.Failed;
-                               trackingFile.StatusText = String.Empty;
-                               trackingFile.DeploymentEndTime = DateTime.Now;
-                               trackingFile.Save(_fileSystem);
+                               NotifyError(logger, trackingFile, t.Exception);
 
                                NotifyStatus(id);
                            }
@@ -181,11 +172,23 @@ namespace Kudu.Core.Deployment {
             }
             catch (Exception e) {
                 if (logger != null) {
-                    logger.Log("Deployment failed.", LogEntryType.Error);
+                    NotifyError(logger, trackingFile, e);
                     logger.Log(e);
+
                     NotifyStatus(id);
                 }
             }
+        }
+
+        private void NotifyError(ILogger logger, DeploymentStatusFile trackingFile, Exception exception) {
+            logger.Log("Deployment failed.", LogEntryType.Error);
+
+            // Failed to deploy
+            trackingFile.Percentage = 100;
+            trackingFile.Status = DeployStatus.Failed;
+            trackingFile.StatusText = String.Empty;
+            trackingFile.DeploymentEndTime = DateTime.Now;
+            trackingFile.Save(_fileSystem);
         }
 
         private void DeployToTarget(string id, bool skipOldFiles = true) {

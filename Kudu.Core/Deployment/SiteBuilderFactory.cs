@@ -34,6 +34,10 @@ namespace Kudu.Core.Deployment {
             // For now just pick the first one we find.
             VsSolutionProject project = solution.Projects.Where(p => p.IsWap || p.IsWebSite).FirstOrDefault();
 
+            if (project == null) {
+                throw new InvalidOperationException("Unable to find a target project to build. No web projects found.");
+            }
+
             if (project.IsWap) {
                 return new WapBuilder(_propertyProvider, _environment.RepositoryPath, solution.Path, project.AbsolutePath);
             }

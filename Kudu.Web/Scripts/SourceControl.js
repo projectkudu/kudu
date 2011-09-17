@@ -148,6 +148,7 @@
                 oldItem.find('.deploy').show();
                 oldItem.find('.status').show();
 
+                newItem.find('.failed').show();
                 newItem.find('.loading').hide();
             }
         }
