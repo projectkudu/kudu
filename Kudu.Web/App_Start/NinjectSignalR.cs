@@ -36,6 +36,9 @@ namespace Kudu.Client.App_Start {
         private static void RegisterServices(IKernel kernel) {
             kernel.Bind<HttpContextBase>().ToMethod(_ => new HttpContextWrapper(HttpContext.Current));
             kernel.Bind<IApplication>().ToMethod(context => GetApplication(context));
+            kernel.Bind<IUserInformation>().ToMethod(_ => new UserInformation {
+                UserName = "Test <foo@test.com>"
+            });
         }
 
         private static IApplication GetApplication(IContext context) {

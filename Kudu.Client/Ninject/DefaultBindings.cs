@@ -14,7 +14,6 @@ namespace Kudu.Client {
             Bind<IRepository>().ToMethod(context => GetRepository(context));
             Bind<IRepositoryManager>().ToMethod(context => GetRepositoryManager(context));
             Bind<IDeploymentManager>().ToMethod(context => GetDeploymentManager(context));
-            Bind<IUserInformation>().To<UserInformation>();
         }
 
         private static IRepository GetRepository(IContext context) {
