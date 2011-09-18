@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Kudu.Client.Infrastructure;
+using Kudu.Client.Model;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
-using Kudu.Client.Model;
 using SignalR.Hubs;
 
 namespace Kudu.Client {
@@ -10,13 +11,16 @@ namespace Kudu.Client {
         private readonly IRepository _repository;
         private readonly IRepositoryManager _repositoryManager;
         private readonly IDeploymentManager _deploymentManager;
+        private readonly IUserInformation _userInformation;
 
         public SourceControl(IRepository repository,
                              IRepositoryManager repositoryManager,
-                             IDeploymentManager deploymentManager) {
+                             IDeploymentManager deploymentManager,
+                             IUserInformation userInformation) {
             _repository = repository;
             _repositoryManager = repositoryManager;
             _deploymentManager = deploymentManager;
+            _userInformation = userInformation;
         }
 
         public ChangeSetDetailViewModel Show(string id) {
@@ -24,7 +28,7 @@ namespace Kudu.Client {
         }
 
         public ChangeSetViewModel Commit(string message) {
-            var changeSet = _repository.Commit("Test <foo@test.com>", message);
+            var changeSet = _repository.Commit(_userInformation.UserName, message);
             if (changeSet != null) {
                 // Deploy after comitting
                 _deploymentManager.Build(changeSet.Id);

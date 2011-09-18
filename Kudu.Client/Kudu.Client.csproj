@@ -59,6 +59,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Infrastructure\IUserInformation.cs" />
     <Compile Include="Ninject\DefaultBindings.cs" />
     <Compile Include="Hubs\Editor\Documents.cs" />
     <Compile Include="Hubs\Editor\Model\File.cs" />
@@ -74,6 +75,7 @@
     <Compile Include="Models\IApplication.cs" />
     <Compile Include="Infrastructure\ISiteConfiguration.cs" />
     <Compile Include="Infrastructure\SiteConfiguration.cs" />
+    <Compile Include="Infrastructure\UserInformation.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
