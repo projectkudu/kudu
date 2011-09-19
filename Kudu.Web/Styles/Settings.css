@@ -1,3 +1,11 @@
 ﻿input[name="ConnectionString"] {
     width: 600px;
 }
+
+#connection-strings {
+     width: 80%;
+}
+
+#app-settings {
+    width: 80%;
+}

@@ -9,7 +9,7 @@
 <h3>Application Settings</h3>
 
 @if (Model.AppSettings.Any()) {
-<table>
+<table id="app-settings">
     <tr>
         <th>Key</th>
         <th>Value</th>
@@ -19,7 +19,7 @@
         <tr>
             <td>@setting.Key</td>
             <td>@setting.Value</td>
-            <td>
+            <td class="actions">
                 @using (Html.BeginForm("delete-app-setting", "settings", new { ViewBag.slug })) {
                     @Html.Hidden("Key", setting.Key)
                     <input type="submit" value="Delete" />
@@ -39,7 +39,7 @@ else {
 <h3>Connection Strings</h3>
 
 @if (Model.ConnectionStrings.Any()) {
-<table>
+<table id="connection-strings">
     <tr>
         <th>Name</th>
         <th>Connection String</th>
@@ -49,7 +49,7 @@ else {
         <tr>
             <td>@setting.Name</td>
             <td>@setting.ConnectionString</td>
-            <td>
+            <td class="actions">
                 @using (Html.BeginForm("delete-connection-string", "settings", new { ViewBag.slug })) {
                     @Html.Hidden("Name", setting.Name)
                     <input type="submit" value="Delete" />
