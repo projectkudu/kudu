@@ -108,6 +108,7 @@
     <Content Include="Scripts\jquery.signalR.min.js" />
     <Content Include="Scripts\skyde.js" />
     <Content Include="Styles\codemirror.css" />
+    <Content Include="Styles\Settings.css" />
     <Content Include="Styles\skyde.css" />
     <Content Include="Scripts\loader.js" />
     <Content Include="Styles\SourceControl.css" />
