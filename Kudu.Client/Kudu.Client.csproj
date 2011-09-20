@@ -40,9 +40,9 @@
     <Reference Include="Ninject">
       <HintPath>..\packages\Ninject.2.2.1.4\lib\net40-Full\Ninject.dll</HintPath>
     </Reference>
-    <Reference Include="SignalR, Version=0.3.2.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="SignalR, Version=0.3.3.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\SignalR.Server.0.3.2\lib\net40\SignalR.dll</HintPath>
+      <HintPath>..\packages\SignalR.Server.0.3.3\lib\net40\SignalR.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

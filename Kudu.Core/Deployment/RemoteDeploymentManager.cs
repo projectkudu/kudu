@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Http;
 using Kudu.Core.Infrastructure;
 using Newtonsoft.Json;
@@ -9,27 +10,47 @@ using SignalR.Client;
 namespace Kudu.Core.Deployment {
     public class RemoteDeploymentManager : IDeploymentManager {
         private readonly HttpClient _client;
+        private readonly Connection _connection;
 
         public event Action<DeployResult> StatusChanged;
+        
 
         public RemoteDeploymentManager(string serviceUrl) {
             serviceUrl = UrlUtility.EnsureTrailingSlash(serviceUrl);
             _client = HttpClientHelper.Create(serviceUrl);
 
             // Raise the event when data comes in
-            var connection = new Connection(serviceUrl + "status");
-            connection.Received += data => {
+            _connection = new Connection(serviceUrl + "status");
+            _connection.Received += data => {
                 if (StatusChanged != null) {
                     var result = JsonConvert.DeserializeObject<DeployResult>(data);
                     StatusChanged(result);
                 }
             };
 
-            connection.Closed += () => {
+            _connection.Error += exception => {
+                // If we get a 404 back stop listening for changes
+                WebException webException = exception as WebException;
+                if (webException != null) {
+                    var webResponse = (HttpWebResponse)webException.Response;
+                    if (webResponse != null && 
+                        webResponse.StatusCode == HttpStatusCode.NotFound) {
+                        _connection.Stop();
+                    }
+                }
+            };
+
+            _connection.Closed += () => {
                 Debug.WriteLine("SignalR connection to {0} was closed.", serviceUrl);
             };
 
-            connection.Start().Wait();
+            _connection.Start().Wait();
+        }
+
+        public bool IsActive {
+            get {
+                return _connection.IsActive;
+            }
         }
 
         public string ActiveDeploymentId {

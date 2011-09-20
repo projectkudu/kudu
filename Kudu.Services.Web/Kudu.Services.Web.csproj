@@ -52,9 +52,9 @@
     <Reference Include="Ninject.Web.Mvc, Version=2.2.0.0, Culture=neutral, PublicKeyToken=c7192dc5380945e7, processorArchitecture=MSIL">
       <HintPath>..\packages\Ninject.MVC3.2.2.2.0\lib\net40-Full\Ninject.Web.Mvc.dll</HintPath>
     </Reference>
-    <Reference Include="SignalR, Version=0.3.2.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="SignalR, Version=0.3.3.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\SignalR.Server.0.3.2\lib\net40\SignalR.dll</HintPath>
+      <HintPath>..\packages\SignalR.Server.0.3.3\lib\net40\SignalR.dll</HintPath>
     </Reference>
     <Reference Include="System.IO.Abstractions, Version=1.4.0.12, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>

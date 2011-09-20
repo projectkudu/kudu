@@ -1,28 +1,32 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
 using Kudu.Client.Model;
 using Kudu.Client.Models;
 using Kudu.Core.Deployment;
 using Kudu.Core.Editor;
 using Kudu.Core.SourceControl;
-using SignalR;
 using SignalR.Hubs;
 
 namespace Kudu.Client.Infrastructure {
     public class SiteConfiguration : ISiteConfiguration {
-        // REVIEW: How long should this cache last?
-        private static readonly Dictionary<string, ISiteConfiguration> _cache = new Dictionary<string, ISiteConfiguration>();
+        private static readonly ConcurrentDictionary<string, SiteConfiguration> _cache = new ConcurrentDictionary<string, SiteConfiguration>();
 
         public SiteConfiguration(IApplication application) {
             ServiceUrl = application.ServiceUrl;
             SiteUrl = application.SiteUrl;
             Name = application.Name;
 
-            ISiteConfiguration config;
+            SiteConfiguration config;
             if (_cache.TryGetValue(Name, out config)) {
                 Repository = config.Repository;
                 FileSystem = config.FileSystem;
-                DeploymentManager = config.DeploymentManager;
                 RepositoryManager = config.RepositoryManager;
+
+                if (config.DeploymentManager.IsActive) {
+                    DeploymentManager = config.DeploymentManager;
+                }
+                else {
+                    DeploymentManager = new RemoteDeploymentManager(ServiceUrl + "deploy");
+                }
             }
             else {
                 Repository = new RemoteRepository(ServiceUrl + "scm");
@@ -50,11 +54,6 @@ namespace Kudu.Client.Infrastructure {
             private set;
         }
 
-        public IDeploymentManager DeploymentManager {
-            get;
-            private set;
-        }
-
         public IRepositoryManager RepositoryManager {
             get;
             private set;
@@ -63,6 +62,17 @@ namespace Kudu.Client.Infrastructure {
         public IRepository Repository {
             get;
             private set;
+        }
+
+        IDeploymentManager ISiteConfiguration.DeploymentManager {
+            get {
+                return DeploymentManager;
+            }
+        }
+
+        private RemoteDeploymentManager DeploymentManager {
+            get;
+            set;
         }
     }
 }
