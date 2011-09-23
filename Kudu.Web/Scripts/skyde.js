@@ -650,9 +650,7 @@
                 console.log('Adjusting ide height to ' + adjusted + 'px');
             }
 
-            $('#skyde').css('height', adjusted + 'px');
-            $('#file-browser').css('height', adjusted + 'px');
-            $('.CodeMirror').css('height', adjusted + 'px');
+            $('#code-surface').css('height', adjusted + 'px');
         }
 
         adjustHeight();

@@ -1,8 +1,8 @@
 .CodeMirror {
   overflow: auto;
-  height: 300px;
   line-height: 1em;
   font-family: monospace;
+  height: 100%;
 }
 
 .CodeMirror-gutter {

@@ -1,8 +1,13 @@
 ﻿#skyde {
     font-family: Trebuchet MS;
     font-size: 13px;
-    height: 450px;
+    min-height: 450px;
     color: #000;
+}
+
+#code-surface:after {
+    clear: both;
+    content: "";
 }
 
 #skyde a {
@@ -82,7 +87,6 @@
 #skyde .CodeMirror {
     border: 1px solid #ccc;
     width: 100%;
-    height: inherit;
     font-family: Consolas, Monospace;
     font-size: 10pt;
     line-height: 12pt;
@@ -290,22 +294,17 @@
 #skyde #text-editor {
     float: left;
     width: 70%;
-    height: inherit;
     margin-right: 1%;
-}
-
-#skyde #editor {
-    width: 100%;
-    height: inherit;
+    height: 100%;
 }
 
 #skyde #file-browser {
     float: left;
     width: 25%;
-    height: inherit;
     border: 1px solid #ccc;
     overflow: auto;
     white-space: nowrap;
+    height: 100%;
 }
 
 #skyde #connect {
@@ -375,13 +374,10 @@
 
 
 #skyde ul#tabs {
-    float: left;
     width: 70%;
     margin: 0;
     padding: 0 0 2px;
-    position: relative;
-    margin-bottom: 1px;
-    min-height: 20px;
+    height: 20px;
 }
 
 #skyde ul#tabs li {
@@ -429,4 +425,24 @@
     border: 1px solid #ccc;
     background: #f5f5ee;
     border-bottom: 1px solid #f5f5ee;
+}
+
+#skyde .output {
+    display:block;
+    color: #c0c0c0;
+    border: 1px solid #666;
+    margin: 20px 0px;
+    padding: 5px 15px 5px 25px;
+    background: #202020 url(../images/output.png) 3px 5px no-repeat;
+    overflow: auto;
+    font: 1em 'andale mono', 'lucida console', monospace; 
+    line-height: 1.462em;
+    
+     /*CSS3 properties*/
+    border-radius: 4px;
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    box-shadow: 2px 2px 5px #888;
+    -webkit-box-shadow: 2px 2px 5px #888;
+    -moz-box-shadow: 2px 2px 5px #888;
 }
