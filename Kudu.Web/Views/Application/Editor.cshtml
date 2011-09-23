@@ -19,8 +19,23 @@
     </div>
     <p id="status" class="icon icon-save">
     </p>        
+    
+    <div id="console">
+        <div class="header">
+            <a href="#" id="show-console" class="icon-notext icon-minimize">&nbsp;</a>
+        </div>
+        <div class="output">
+            <form action="#" method="post" id="new-command">
+            <span class="prompt">$</span> <input type="text" id="console-command" value="" autocomplete="false" />
+            </form>
+            <div class="clear"></div>
+            <div class="messages">
+                <ul class="buffer">
+                </ul>
+            </div>
+        </div>
+    </div>
 </div>
-
 
 <!-- CODE MIRROR INCLUDES -->
 <link rel="stylesheet" href="@Url.Content("~/Styles/codemirror.css")">

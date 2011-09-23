@@ -108,6 +108,10 @@
     background-image: url('../../../images/cshtml.png');
 }
 
+#skyde .icon-minimize {
+    background-image: url('../../../images/minimize.png');
+}
+
 #skyde .icon-cshtml-add {
     background-image: url('../../../images/cshtml-add.png');
 }
@@ -404,13 +408,11 @@
     margin-left: 1px;
 }
 
-#skyde ul#tabs li:hover a.delete,
-#skyde ul#tabs li.active a.delete {
+#skyde ul#tabs li:hover a.delete, #skyde ul#tabs li.active a.delete {
     visibility: visible;
 }
 
-#skyde ul#tabs li.active,
-#skyde ul#tabs li:hover {
+#skyde ul#tabs li.active, #skyde ul#tabs li:hover {
     border: 1px solid #ccc;
     background: #f5f5ee;
     border-bottom: 1px solid #f5f5ee;
@@ -427,22 +429,65 @@
     border-bottom: 1px solid #f5f5ee;
 }
 
-#skyde .output {
-    display:block;
+#skyde #console .output {
+    height: 80%;
+    display: block;
     color: #c0c0c0;
     border: 1px solid #666;
-    margin: 20px 0px;
     padding: 5px 15px 5px 25px;
     background: #202020 url(../images/output.png) 3px 5px no-repeat;
-    overflow: auto;
-    font: 1em 'andale mono', 'lucida console', monospace; 
-    line-height: 1.462em;
-    
-     /*CSS3 properties*/
+    line-height: 1.462em; /*CSS3 properties*/
     border-radius: 4px;
     -moz-border-radius: 4px;
     -webkit-border-radius: 4px;
     box-shadow: 2px 2px 5px #888;
     -webkit-box-shadow: 2px 2px 5px #888;
     -moz-box-shadow: 2px 2px 5px #888;
+}
+
+#skyde #console {
+    height: 300px;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    font: 1.2em 'andale mono' , 'lucida console' , monospace;
+}
+
+#skyde #console .output input[type="text"] {
+    border: 0;
+    outline:none;
+    background-color: #202020;
+    color: #c0c0c0;
+    width: 80%;
+    font: 1.2em 'andale mono' , 'lucida console' , monospace;
+    float: left;
+}
+
+#skyde #console .header {
+    height: 15px;
+    padding: 7px;
+    border: none;
+    border-bottom: 1px solid #ccc;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f5f5f5', endColorstr='#ebebeb');
+    background: -webkit-gradient(linear, left top, left bottom, from(#f5f5f5), to(#ebebeb));
+    background: -moz-linear-gradient(top,  #f5f5f5,  #ebebeb);
+}
+
+#skyde #console .output .buffer {
+    padding: 6px;
+    margin: 6px;
+    list-style-type: none;
+    overflow: auto;
+}
+
+#skyde #console .output .messages {
+    overflow: auto;
+    height: 85%;
+}
+
+#skyde #console .prompt {
+    color: Yellow;
+    float: left;
+    margin-top: 6px;
 }

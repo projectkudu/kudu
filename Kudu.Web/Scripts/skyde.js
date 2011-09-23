@@ -599,6 +599,36 @@
             $(window.document).click(function () {
                 $('.menu-contents').hide();
             });
+
+            var cs = $('#console');
+            var consoleWindow = cs.find('.output');
+            var cmd = $('#console-command');
+
+            $('#show-console').toggle(function () {
+                consoleWindow.hide();
+            },
+                function () {
+                    consoleWindow.show();
+                });
+
+            $('#new-command').submit(function () {
+                var text = cmd.val();
+                if (text == 'cls') {
+                    $(consoleWindow).find('.buffer').html('');
+                }
+                else {
+                    $(consoleWindow).find('.buffer').prepend('<li>' + text + '</li>');
+                }
+                cmd.val('');
+                return false;
+            });
+
+            consoleWindow.click(function () {
+                cmd.focus();
+            });
+
+            // TODO: Move this to the bottom of the screen like firebug
+
         }
     };
 
