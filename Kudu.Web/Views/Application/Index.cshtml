@@ -8,11 +8,10 @@
     ViewBag.Title = "Applications";
 }
 
-<h2>Applications</h2>
+<h2>
+    Applications | <a href="@Url.Action("create")"><img src="/content/glyphs/add---blue.png" height="24px" /></a>
+</h2>
 
-<p>
-    @Html.ActionLink("Create Application", "Create")
-</p>
 <table id="app-list">
     <tr>
         <th>

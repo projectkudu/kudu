@@ -86,6 +86,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="App_Data\ASPNETDB.MDF" />
+    <Content Include="App_Data\aspnetdb_log.ldf">
+      <DependentUpon>ASPNETDB.MDF</DependentUpon>
+    </Content>
     <Content Include="Global.asax" />
     <Content Include="msbuild\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.Build.Tasks.Dll" />
     <Content Include="msbuild\Microsoft\VisualStudio\v10.0\Web\Microsoft.Web.Publishing.Tasks.Dll" />
@@ -102,6 +106,7 @@
   <ItemGroup>
     <Compile Include="App_Start\NinjectServices.cs" />
     <Compile Include="Services\BuildPropertyProvider.cs" />
+    <Compile Include="Services\FormsAuthUserValidator.cs" />
     <Compile Include="Services\ServerConfiguration.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>

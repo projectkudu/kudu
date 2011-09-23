@@ -1,0 +1,29 @@
+﻿fieldset { 
+    float: left;
+    border: 1px solid #ddd; 
+    padding: 30px 40px 20px 40px; 
+    margin: 75px 0 0 0;
+    width: 715px;
+    background: #fff;
+}
+label {	
+    font-size: 20px;
+    color: #666; 
+    font-family: 'Yanone Kaffeesatz', Helvetica;
+}
+ 
+
+.details { 
+    float: left;
+    width: 230px; 
+}
+ 
+.message { 
+    float: right;
+    width: 405px;
+}
+ 
+textarea {		
+    width: 390px; 
+    height: 175px; 		 		
+}
