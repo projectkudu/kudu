@@ -8,22 +8,26 @@
     ViewBag.Title = "Applications";
 }
 
-<h2>
-    Applications | <a href="@Url.Action("create")"><img src="/content/glyphs/add---blue.png" height="24px" /></a>
-</h2>
-
-<table id="app-list">
-    <tr>
-        <th>
-            Name
-        </th>
-    </tr>
-
+<div class="column span-24 bmargin-24">
 @foreach (var item in Model) {
-    <tr>
-        <td>
-            <a href="@Url.Action("Details", new { slug = item.Name.GenerateSlug() })">@Html.DisplayFor(modelItem => item.Name)</a>
-        </td>
-    </tr>
+    <div class="column span-2 colborder">
+        <a class="groovy-title" href="@Url.Action("Details", new { slug = item.Name.GenerateSlug() })">@Html.DisplayFor(modelItem => item.Name)</a>
+    </div>
+    <div class="column span-13 tpad-12">
+        <a href="@Url.Action("scm", new { slug = item.Name.GenerateSlug() })">
+            <img src="/content/glyphs/file---check.png" height=24 alt="Repository" title="Repository"/>
+        </a> &nbsp; 
+        <a href="@Url.Action("editor", new { slug = item.Name.GenerateSlug() })">
+            <img src="/content/glyphs/file---edit.png" height=24 alt="Editor" title="Editor"/>
+        </a> &nbsp;  
+        <a href="@Url.Action("index", "settings", new { slug = item.Name.GenerateSlug() }, null)">
+            <img src="/content/glyphs/setting.png" height=24 alt="Settings" title="Settings"/>
+        </a>
+    </div>
+    <div class="clear"></div>
 }
-</table>
+</div>
+<hr />
+<div class="column span-22 right">
+    <a href="@Url.Action("create")"><img src="/content/glyphs/add---blue.png" height="24px" title="Add Project"/></a>
+</div>

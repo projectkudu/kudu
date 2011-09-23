@@ -6,12 +6,11 @@ header
     background-color:#212330;
     height:144px;
 }
-header h1
+#title a
 {
     color:#ACFF80;
 	text-shadow: 0px 2px 3px #727d72;
 	font-family: 'Lucida Grande', helvetica, arial, sans-serif;
-	font-size:3.2em;
 	font-weight:bold;
 	
 }

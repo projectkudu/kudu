@@ -9,8 +9,7 @@
 }
 <link rel="Stylesheet" href="/content/stylesheets/forms.css" media="screen" />
 <link rel="Stylesheet" href="/content/stylesheets/plugins/buttons/screen.css" media="screen" />
-<section id="model-options">
-
+<div id="model-options" class="column span-24 ">
     <div class="column span-3 groovy-title colborder">
         @Model.Name
     </div>
@@ -28,31 +27,23 @@
     @if (Model.RepositoryType == RepositoryType.None) {
         <p class="notice">@Model.Name does not have a source control repository configured. You can push to one of the URLs below to create the repository.</p>
     }
-</section>
-<fieldset>
-@if (Model.RepositoryType == RepositoryType.None) {
-    <label>Git URL</label>
-    <p>
-        @Model.GitUrl
-    </p>
-    <label>Mercurial URL</label>
-    <p>
-        @Model.HgUrl
-    </p>
-} else {
+</div>
+<div class="column span-24 tmargin-36">
+    <fieldset>
+
     <label>@Model.RepositoryType URL</label>
     <p>
         @Model.CloneUrl
     </p>
-}
-<label>Application URL</label>
-<p>
-    <a href="@Model.SiteUrl" target="_blank">@Model.SiteUrl</a>
-</p>
+    <label>Application URL</label>
+    <p>
+        <a href="@Model.SiteUrl" target="_blank">@Model.SiteUrl</a>
+    </p>
 
-@using (Html.BeginForm("Delete", "Application", new { slug = Model.Name.GenerateSlug() })) { 
-   <button type="submit" class="button negative">
-    <img src="/content/stylesheets/plugins/buttons/icons/cross.png" alt=""/> Delete
-  </button>
-}
-</fieldset>
+    @using (Html.BeginForm("Delete", "Application", new { slug = Model.Name.GenerateSlug() })) { 
+       <button type="submit" class="button negative">
+        <img src="/content/stylesheets/plugins/buttons/icons/cross.png" alt=""/> Delete
+      </button>
+    }
+    </fieldset>
+</div>
