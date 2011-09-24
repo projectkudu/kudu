@@ -617,6 +617,13 @@
                     consoleWindow.show();
                 });
 
+            function escapeHTMLEncode(str) {
+                var div = document.createElement('div');
+                var text = document.createTextNode(str);
+                div.appendChild(text);
+                return div.innerHTML;
+            }
+
             $('#new-command').submit(function () {
                 var command = cmd.val();
                 var buffer = $(consoleWindow).find('.buffer');
@@ -624,15 +631,17 @@
                     buffer.html('');
                 }
                 else if (command) {
+                    var callback = function (result) {
+                        var lines = escapeHTMLEncode(result).split('\n');
+                        $.each(lines, function () {
+                            buffer.append('<li>' + this.replace(/\s/g, '&nbsp;') + '</li>');
+                        });
+                        buffer.append('<li></li>');
+                    };
+
                     commandLine.run(command)
-                               .done(function (lines) {
-                                   $.each(lines, function () {
-                                       buffer.prepend('<li>' + this + '</li>');
-                                   });
-                               })
-                               .fail(function (e) {
-                                   buffer.prepend('<li>' + e + '</li>');
-                               });
+                               .done(callback)
+                               .fail(callback);
 
                     commandStack.push(command);
                 }

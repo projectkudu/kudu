@@ -34,7 +34,7 @@ namespace Kudu.Core.Commands {
                 return match;
             }
 
-            throw new InvalidOperationException(String.Format("Unsupported command '{0}'", commandName));
+            throw new InvalidOperationException(String.Format("Unknown command '{0}'", commandName));
         }
     }
 }

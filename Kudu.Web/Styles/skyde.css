@@ -451,7 +451,7 @@
     left: 0;
     top: 0;
     width: 100%;
-    font: 1.2em 'andale mono' , 'lucida console' , monospace;
+    font: 1.2em 'Consolas' , 'Monaco' , monospace;
 }
 
 #skyde #console .output input[type="text"] {
@@ -460,7 +460,7 @@
     background-color: #202020;
     color: #c0c0c0;
     width: 80%;
-    font: 1.2em 'andale mono' , 'lucida console' , monospace;
+    font: 1.2em 'Consolas' , 'Monaco' , monospace;
     float: left;
 }
 

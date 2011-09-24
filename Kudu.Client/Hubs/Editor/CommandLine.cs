@@ -11,9 +11,8 @@ namespace Kudu.Client.Hubs.Editor {
             _executor = executor;
         }
 
-        public IEnumerable<string> Run(string command) {
-            string output = _executor.ExecuteCommand(command);
-            return output.Replace(Environment.NewLine, "\n").Split('\n');
+        public string Run(string command) {
+            return _executor.ExecuteCommand(command);
         }
     }
 }
