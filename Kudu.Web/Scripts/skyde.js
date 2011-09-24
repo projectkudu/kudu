@@ -665,7 +665,7 @@
 
             currentHeight = height;
 
-            if (window.console) {
+            if (window.console && window.console.log) {
                 console.log('Screen height is ' + height);
             }
 
@@ -676,7 +676,7 @@
             }
 
 
-            if (window.console) {
+            if (window.console && window.console.log) {
                 console.log('Adjusting ide height to ' + adjusted + 'px');
             }
 
