@@ -606,16 +606,18 @@
 
 
             var cs = $('#console');
-            var consoleWindow = cs.find('.output');
             var cmd = $('#console-command');
+            var consoleWindow = cs.find('.output');
+            var buffer = consoleWindow.find('.buffer');
+            var messages = consoleWindow.find('.messages');
             var commandStack = [];
 
             $('#show-console').toggle(function () {
                 consoleWindow.hide();
             },
-                function () {
-                    consoleWindow.show();
-                });
+            function () {
+                consoleWindow.show();
+            });
 
             function escapeHTMLEncode(str) {
                 var div = document.createElement('div');
@@ -626,8 +628,6 @@
 
             $('#new-command').submit(function () {
                 var command = cmd.val();
-                var buffer = consoleWindow.find('.buffer');
-                var messages = consoleWindow.find('.messages');
                 if (command == 'cls') {
                     buffer.html('');
                 }
