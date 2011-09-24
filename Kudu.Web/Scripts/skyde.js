@@ -626,7 +626,8 @@
 
             $('#new-command').submit(function () {
                 var command = cmd.val();
-                var buffer = $(consoleWindow).find('.buffer');
+                var buffer = consoleWindow.find('.buffer');
+                var messages = consoleWindow.find('.messages');
                 if (command == 'cls') {
                     buffer.html('');
                 }
@@ -637,6 +638,8 @@
                             buffer.append('<li>' + this.replace(/\s/g, '&nbsp;') + '</li>');
                         });
                         buffer.append('<li></li>');
+
+                        messages.scrollTop(buffer[0].scrollHeight);
                     };
 
                     commandLine.run(command)
