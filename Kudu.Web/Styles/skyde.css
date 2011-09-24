@@ -482,6 +482,14 @@
     overflow: auto;
 }
 
+#skyde #console .output .buffer li .command {
+    margin-left: 5px;
+}
+
+#skyde #console .output .buffer li .prompt {
+    margin-top: 0;
+}
+
 #skyde #console .output .messages {
     overflow: auto;
     height: 85%;

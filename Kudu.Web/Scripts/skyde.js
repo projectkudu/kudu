@@ -606,6 +606,9 @@
 
             $('#new-command').submit(function () {
                 var command = cmd.val();
+                buffer.append('<li><span class="prompt">$</span><span class="command">' + command + '</span><li>');
+                messages.scrollTop(buffer[0].scrollHeight);
+
                 if (command == 'cls') {
                     buffer.html('');
                 }
@@ -616,7 +619,7 @@
                             buffer.append('<li>' + this.replace(/\s/g, '&nbsp;') + '</li>');
                         });
 
-                        buffer.append('<li></li>');
+                        buffer.append('<li>&nbsp;</li>');
 
                         messages.scrollTop(buffer[0].scrollHeight);
                     };
