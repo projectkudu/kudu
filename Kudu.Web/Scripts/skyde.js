@@ -605,8 +605,13 @@
             }
 
             $('#new-command').submit(function () {
+                if (executingCommand) {
+                    // REVIEW: Should we queue commands like a real console?
+                    return false;
+                }
+
                 var command = cmd.val();
-                buffer.append('<li><span class="prompt">$</span><span class="command">' + command + '</span><li>');
+                buffer.append('<li><span class="prompt">$</span><span class="command">' + command + '</span><span class="icon icon-prompt-loading"></span><li>');
                 messages.scrollTop(buffer[0].scrollHeight);
 
                 if (command == 'cls') {
@@ -630,6 +635,7 @@
                                .fail(callback)
                                .always(function () {
                                    executingCommand = false;
+                                   buffer.find('.icon-prompt-loading').hide();
                                });
 
                     commandStack.push(command);
@@ -638,6 +644,7 @@
                 return false;
             });
 
+            // TODO: Fix bug with jquery hot keys plugin that stops this from working
             cmd.keypress(function () {
                 return !executingCommand;
             });

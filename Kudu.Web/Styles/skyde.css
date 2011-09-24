@@ -239,6 +239,10 @@
     background-image: url('../../../images/loading.gif');
 }
 
+#skyde .icon-prompt-loading {
+    background-image: url('../../../images/prompt-loading.gif');
+}
+
 #skyde .icon-connecting {
     background-image: url('../../../images/connecting.gif');
 }
@@ -484,6 +488,7 @@
 
 #skyde #console .output .buffer li .command {
     margin-left: 5px;
+    margin-right: 5px;
 }
 
 #skyde #console .output .buffer li .prompt {
