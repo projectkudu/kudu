@@ -611,26 +611,27 @@
                 }
 
                 var command = cmd.val();
-                buffer.append('<li><span class="prompt">$</span><span class="command">' + command + '</span><span class="icon icon-prompt-loading"></span><li>');
-                messages.scrollTop(buffer[0].scrollHeight);
-
                 if (command == 'cls') {
                     buffer.html('');
                 }
-                else if (command) {
-                    var callback = function (result) {
-                        var lines = escapeHTMLEncode(result).split('\n');
-                        $.each(lines, function () {
-                            buffer.append('<li>' + this.replace(/\s/g, '&nbsp;') + '</li>');
-                        });
+                else {
+                    buffer.append('<li><span class="prompt">$</span><span class="command">' + command + '</span><span class="icon icon-prompt-loading"></span><li>');
+                    messages.scrollTop(buffer[0].scrollHeight);
 
-                        buffer.append('<li>&nbsp;</li>');
+                    if (command) {                        
+                        var callback = function (result) {
+                            var lines = escapeHTMLEncode(result).split('\n');
+                            $.each(lines, function () {
+                                buffer.append('<li>' + this.replace(/\s/g, '&nbsp;') + '</li>');
+                            });
 
-                        messages.scrollTop(buffer[0].scrollHeight);
-                    };
+                            buffer.append('<li>&nbsp;</li>');
 
-                    executingCommand = true;
-                    commandLine.run(command)
+                            messages.scrollTop(buffer[0].scrollHeight);
+                        };
+
+                        executingCommand = true;
+                        commandLine.run(command)
                                .done(callback)
                                .fail(callback)
                                .always(function () {
@@ -638,8 +639,10 @@
                                    buffer.find('.icon-prompt-loading').hide();
                                });
 
-                    commandStack.push(command);
+                        commandStack.push(command);
+                    } 
                 }
+
                 cmd.val('');
                 return false;
             });
@@ -647,10 +650,6 @@
             // TODO: Fix bug with jquery hot keys plugin that stops this from working
             cmd.keypress(function () {
                 return !executingCommand;
-            });
-
-            consoleWindow.click(function () {
-                cmd.focus();
             });
 
             // TODO: Move this to the bottom of the screen like firebug
