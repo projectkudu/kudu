@@ -640,7 +640,10 @@
                                });
 
                         commandStack.push(command);
-                    } 
+                    }
+                    else {
+                        buffer.find('.icon-prompt-loading').hide();
+                    }
                 }
 
                 cmd.val('');
