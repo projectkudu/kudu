@@ -59,6 +59,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Hubs\Editor\CommandLine.cs" />
     <Compile Include="Infrastructure\IUserInformation.cs" />
     <Compile Include="Ninject\DefaultBindings.cs" />
     <Compile Include="Hubs\Editor\Documents.cs" />

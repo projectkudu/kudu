@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using Kudu.Client.Model;
 using Kudu.Client.Models;
+using Kudu.Core.Commands;
 using Kudu.Core.Deployment;
 using Kudu.Core.Editor;
 using Kudu.Core.SourceControl;
@@ -20,6 +21,7 @@ namespace Kudu.Client.Infrastructure {
                 Repository = config.Repository;
                 FileSystem = config.FileSystem;
                 RepositoryManager = config.RepositoryManager;
+                CommandExecutor = config.CommandExecutor;
 
                 if (config.DeploymentManager.IsActive) {
                     DeploymentManager = config.DeploymentManager;
@@ -33,7 +35,7 @@ namespace Kudu.Client.Infrastructure {
                 FileSystem = new RemoteFileSystem(ServiceUrl + "files");
                 DeploymentManager = new RemoteDeploymentManager(ServiceUrl + "deploy");
                 RepositoryManager = new RemoteRepositoryManager(ServiceUrl + "scm");
-
+                CommandExecutor = new RemoteCommandExecutor(ServiceUrl + "command");
                 DeploymentManager.StatusChanged += OnDeploymentStatusChanged;
 
                 _cache[Name] = this;
@@ -73,6 +75,11 @@ namespace Kudu.Client.Infrastructure {
         private RemoteDeploymentManager DeploymentManager {
             get;
             set;
+        }
+
+        public ICommandExecutor CommandExecutor {
+            get;
+            private set;
         }
     }
 }

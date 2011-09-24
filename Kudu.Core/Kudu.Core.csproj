@@ -78,6 +78,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\CommandExecutor.cs" />
+    <Compile Include="Commands\RemoteCommandExecutor.cs" />
     <Compile Include="Deployment\AspNetConfigTransformer.cs" />
     <Compile Include="Deployment\BasicBuilder.cs" />
     <Compile Include="Deployment\ConnectionStringSetting.cs" />
@@ -110,6 +112,7 @@
     <Compile Include="Editor\RemoteFileSystem.cs" />
     <Compile Include="Editor\SolutionFileSystem.cs" />
     <Compile Include="Environment.cs" />
+    <Compile Include="Commands\ICommandExecutor.cs" />
     <Compile Include="IEnvironment.cs" />
     <Compile Include="Infrastructure\FileSystemHelpers.cs" />
     <Compile Include="Infrastructure\HttpClientExtensions.cs" />

@@ -3,6 +3,7 @@ using System.IO;
 using System.IO.Abstractions;
 using System.Web;
 using Kudu.Core;
+using Kudu.Core.Commands;
 using Kudu.Core.Deployment;
 using Kudu.Core.Editor;
 using Kudu.Core.Infrastructure;
@@ -80,6 +81,7 @@ namespace Kudu.Services.Web.App_Start {
             kernel.Bind<IHgServer>().To<Kudu.Core.SourceControl.Hg.HgServer>().InSingletonScope();
             kernel.Bind<IServerConfiguration>().To<ServerConfiguration>().InSingletonScope();
             kernel.Bind<IFileSystem>().To<FileSystem>();
+            kernel.Bind<ICommandExecutor>().To<CommandExecutor>().InSingletonScope();
         }
 
         private static string Root {

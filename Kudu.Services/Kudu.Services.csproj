@@ -59,6 +59,7 @@
   <ItemGroup>
     <Compile Include="Authorization\BasicAuthorizeAttribute.cs" />
     <Compile Include="Authorization\IUserValidator.cs" />
+    <Compile Include="Commands\CommandController.cs" />
     <Compile Include="Deployment\DeployController.cs" />
     <Compile Include="Deployment\DeploymentStatusHandler.cs" />
     <Compile Include="Editor\FilesController.cs" />

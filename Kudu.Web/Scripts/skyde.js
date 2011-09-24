@@ -600,9 +600,15 @@
                 $('.menu-contents').hide();
             });
 
+            var commandLine = $.connection.commandLine;
+            commandLine.appName = documents.appName;
+
+
+
             var cs = $('#console');
             var consoleWindow = cs.find('.output');
             var cmd = $('#console-command');
+            var commandStack = [];
 
             $('#show-console').toggle(function () {
                 consoleWindow.hide();
@@ -612,12 +618,23 @@
                 });
 
             $('#new-command').submit(function () {
-                var text = cmd.val();
-                if (text == 'cls') {
-                    $(consoleWindow).find('.buffer').html('');
+                var command = cmd.val();
+                var buffer = $(consoleWindow).find('.buffer');
+                if (command == 'cls') {
+                    buffer.html('');
                 }
-                else {
-                    $(consoleWindow).find('.buffer').prepend('<li>' + text + '</li>');
+                else if (command) {
+                    commandLine.run(command)
+                               .done(function (lines) {
+                                   $.each(lines, function () {
+                                       buffer.prepend('<li>' + this + '</li>');
+                                   });
+                               })
+                               .fail(function (e) {
+                                   buffer.prepend('<li>' + e + '</li>');
+                               });
+
+                    commandStack.push(command);
                 }
                 cmd.val('');
                 return false;

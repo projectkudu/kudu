@@ -1,4 +1,5 @@
 ﻿using Kudu.Client.Infrastructure;
+using Kudu.Core.Commands;
 using Kudu.Core.Deployment;
 using Kudu.Core.Editor;
 using Kudu.Core.SourceControl;
@@ -14,6 +15,12 @@ namespace Kudu.Client {
             Bind<IRepository>().ToMethod(context => GetRepository(context));
             Bind<IRepositoryManager>().ToMethod(context => GetRepositoryManager(context));
             Bind<IDeploymentManager>().ToMethod(context => GetDeploymentManager(context));
+            Bind<ICommandExecutor>().ToMethod(context => GetCommandExecutor(context));
+        }
+
+        private ICommandExecutor GetCommandExecutor(IContext context) {
+            var siteConfiguration = context.Kernel.Get<ISiteConfiguration>();
+            return siteConfiguration.CommandExecutor;
         }
 
         private static IRepository GetRepository(IContext context) {
