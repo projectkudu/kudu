@@ -630,10 +630,6 @@
                 return false;
             });
 
-            cmd.keyup(function (e) {
-                alert('');
-            });
-
             consoleWindow.click(function () {
                 cmd.focus();
             });
