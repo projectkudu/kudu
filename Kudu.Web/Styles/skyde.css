@@ -290,9 +290,13 @@
     padding-left: 36px;
 }
 
-#skyde #status {
-    margin-top: 5px;
+#skyde #status {    
     display: none;
+}
+
+#skyde .outer-status {
+    margin-top: 7px;
+    height: 30px;
 }
 
 #skyde #text-editor {
