@@ -81,7 +81,7 @@ namespace Kudu.Services.Web.App_Start {
             kernel.Bind<IHgServer>().To<Kudu.Core.SourceControl.Hg.HgServer>().InSingletonScope();
             kernel.Bind<IServerConfiguration>().To<ServerConfiguration>().InSingletonScope();
             kernel.Bind<IFileSystem>().To<FileSystem>();
-            kernel.Bind<ICommandExecutor>().To<CommandExecutor>().InSingletonScope();
+            kernel.Bind<ICommandExecutor>().ToMethod(context => new CommandExecutor(environment.RepositoryPath)).InSingletonScope();
         }
 
         private static string Root {
