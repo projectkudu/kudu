@@ -588,6 +588,7 @@
             var buffer = consoleWindow.find('.buffer');
             var messages = consoleWindow.find('.messages');
             var commandStack = [];
+            var executingCommand = false;
 
             $('#show-console').toggle(function () {
                 consoleWindow.hide();
@@ -620,14 +621,22 @@
                         messages.scrollTop(buffer[0].scrollHeight);
                     };
 
+                    executingCommand = true;
                     commandLine.run(command)
                                .done(callback)
-                               .fail(callback);
+                               .fail(callback)
+                               .always(function () {
+                                   executingCommand = false;
+                               });
 
                     commandStack.push(command);
                 }
                 cmd.val('');
                 return false;
+            });
+
+            cmd.keypress(function () {
+                return !executingCommand;
             });
 
             consoleWindow.click(function () {
