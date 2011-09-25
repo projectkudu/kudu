@@ -618,14 +618,16 @@
                     buffer.append('<li><span class="prompt">$</span><span class="command">' + command + '</span><span class="icon icon-prompt-loading"></span><li>');
                     messages.scrollTop(buffer[0].scrollHeight);
 
-                    if (command) {                        
+                    if (command) {
                         var callback = function (result) {
                             var lines = escapeHTMLEncode(result).split('\n');
                             $.each(lines, function () {
-                                buffer.append('<li>' + this.replace(/\s/g, '&nbsp;') + '</li>');
+                                var line = this.replace(/\s/g, '&nbsp;');
+                                if (!line) {
+                                    line = '&nbsp;';
+                                }
+                                buffer.append('<li>' + line + '</li>');
                             });
-
-                            buffer.append('<li>&nbsp;</li>');
 
                             messages.scrollTop(buffer[0].scrollHeight);
                         };
