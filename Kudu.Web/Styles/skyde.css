@@ -503,5 +503,19 @@
 #skyde #console .prompt {
     color: Yellow;
     float: left;
-    margin-top: 3px;
+}
+
+#skyde #console #new-command { 
+    height: 30px;
+}
+
+#skyde #console #new-command .prompt { 
+    margin: 0;
+    margin-top: 4px;
+    padding: 0;
+}
+
+#skyde #console #new-command input {
+    padding: 5px;
+    margin: 0;
 }
