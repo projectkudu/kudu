@@ -1,4 +1,5 @@
-﻿using System.IO.Abstractions;
+﻿using System.Collections.Generic;
+using System.IO.Abstractions;
 using Kudu.Core.Commands;
 using Moq;
 using Xunit;
@@ -10,7 +11,7 @@ namespace Kudu.Core.Test {
             var fs = new Mock<IFileSystem>();
             var directory = new Mock<DirectoryBase>();
             directory.Setup(m => m.Exists(@"\\foo")).Returns(true);
-            directory.Setup(m => m.Exists(@"\\foo\bar")).Returns(true);            
+            directory.Setup(m => m.Exists(@"\\foo\bar")).Returns(true);
             fs.Setup(m => m.Directory).Returns(directory.Object);
             var commandRunner = new MockCommandExecutor(fs.Object, @"\\foo\bar\baz");
 
@@ -37,23 +38,30 @@ namespace Kudu.Core.Test {
         }
 
         private class MockCommandExecutor : CommandExecutor {
-            bool[] drives = new bool[26];
-            int used = 0;
+            private Dictionary<string, string> _mapping = new Dictionary<string, string>();
+            private bool[] _drives = new bool[26];
+            private int _used;
 
             public MockCommandExecutor(IFileSystem fileSystem, string workingDirectory)
                 : base(fileSystem, workingDirectory) {
             }
 
-            protected override bool MapPath(string path, out char driveLetter) {
-                if (used >= drives.Length) {
-                    driveLetter = '\0';
+            protected override bool MapPath(string path, out string driveName) {
+                if (_used >= _drives.Length) {
+                    driveName = null;
                     return false;
                 }
 
-                drives[used] = true;
-                driveLetter = (char)(used + 'A');
-                used++;
+                _drives[_used] = true;
+                driveName = (char)(_used + 'A') + @":\";
+                _used++;
+
+                _mapping[path] = driveName;
                 return true;
+            }
+
+            protected override bool TryGetMappedPath(string path, out string driveName) {
+                return _mapping.TryGetValue(path, out driveName);
             }
         }
     }

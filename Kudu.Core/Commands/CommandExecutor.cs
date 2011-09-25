@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
+using System.Text;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Commands {
@@ -11,8 +11,8 @@ namespace Kudu.Core.Commands {
         private const string DriveLetters = "fghijklmnopqrstuvwxyz";
 
         private readonly string _workingDirectory;
-        private readonly ConcurrentDictionary<string, char> _mappedPaths = new ConcurrentDictionary<string, char>(StringComparer.OrdinalIgnoreCase);
         private readonly IFileSystem _fileSystem;
+        private IDictionary<string, string> _mappedDrives;
 
         public CommandExecutor(IFileSystem fileSystem, string workingDirectory) {
             _fileSystem = fileSystem;
@@ -32,6 +32,10 @@ namespace Kudu.Core.Commands {
                 return path;
             }
 
+            // We don't have to do this everytime, we can cache th results
+            // for a little bit
+            _mappedDrives = GetMappedNetworkDrives();
+
             // Skip \\ and split the path into segments
             var pathSegments = path.Substring(2).Split(Path.DirectorySeparatorChar);
 
@@ -42,9 +46,9 @@ namespace Kudu.Core.Commands {
                 string subPath = @"\\" + prefix;
 
                 // If \\foo\bar exists check if it's mapped already
-                char mappedDrive;
-                if (_mappedPaths.TryGetValue(subPath, out mappedDrive)) {
-                    return GetMappedPath(pathSegments, index, mappedDrive);
+                string driveName;
+                if (TryGetMappedPath(subPath, out driveName)) {
+                    return GetMappedPath(pathSegments, index, driveName);
                 }
 
                 // if it is then return mapped + baz\repository
@@ -53,27 +57,28 @@ namespace Kudu.Core.Commands {
                 }
 
                 // if it's not mapped then attempt to map it
-                if (MapPath(subPath, out mappedDrive)) {
-                    _mappedPaths.TryAdd(subPath, mappedDrive);
-                    return GetMappedPath(pathSegments, index, mappedDrive);
+                if (MapPath(subPath, out driveName)) {
+                    return GetMappedPath(pathSegments, index, driveName);
                 }
             }
 
             throw new InvalidOperationException(String.Format("Unable to map '{0}' to a drive.", path));
         }
 
-        private static string GetMappedPath(IEnumerable<string> pathSegments, int index, char mappedDrive) {
-            return Path.Combine(mappedDrive + @":\", pathSegments.Skip(index + 1).Aggregate(Path.Combine));
+        private static string GetMappedPath(IEnumerable<string> pathSegments, int index, string driveName) {
+            return Path.Combine(driveName, pathSegments.Skip(index + 1).Aggregate(Path.Combine));
         }
 
-        protected virtual bool MapPath(string path, out char driveLetter) {
+        protected virtual bool MapPath(string path, out string driveName) {
             var cmd = new Executable("cmd", GetWindowsFolder());
-            driveLetter = '\0';
+            driveName = null;
 
             foreach (var letter in DriveLetters) {
                 try {
+                    // There's probably an API for this as well but this is easy to do
+                    // Not as easy to parse out the results of net use
                     cmd.Execute("/c net use {0}: {1}", letter, path);
-                    driveLetter = letter;
+                    driveName = letter + @":\";
                     return true;
                 }
                 catch {
@@ -82,6 +87,34 @@ namespace Kudu.Core.Commands {
             }
 
             return false;
+        }
+
+        protected virtual bool TryGetMappedPath(string path, out string driveName) {
+            return _mappedDrives.TryGetValue(path, out driveName);
+        }
+
+        private static IDictionary<string, string> GetMappedNetworkDrives() {
+            var mapping = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            // Loop over all mapped drives and get the see if there's already a unc path mapped
+            foreach (var drive in DriveInfo.GetDrives()) {
+                if (drive.DriveType != DriveType.Network || !drive.IsReady) {
+                    continue;
+                }
+
+                var uncPathBuilder = new StringBuilder(255);
+                int len = uncPathBuilder.Capacity;
+
+                // Get the unc path
+                NativeMethods.WNetGetConnection(drive.Name.Replace(@"\", ""), uncPathBuilder, ref len);
+
+                string uncPath = uncPathBuilder.ToString();
+
+                // Map the unc path to the drive name
+                mapping[uncPath] = drive.Name;
+            }
+
+            return mapping;
         }
 
         private static string GetWindowsFolder() {
