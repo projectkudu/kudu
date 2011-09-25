@@ -15,6 +15,7 @@ using Kudu.Services.Deployment;
 using Kudu.Services.Web.Services;
 using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 using Ninject;
+using Ninject.Activation;
 using Ninject.Web.Mvc;
 using SignalR;
 using XmlSettings;
@@ -81,7 +82,7 @@ namespace Kudu.Services.Web.App_Start {
             kernel.Bind<IHgServer>().To<Kudu.Core.SourceControl.Hg.HgServer>().InSingletonScope();
             kernel.Bind<IServerConfiguration>().To<ServerConfiguration>().InSingletonScope();
             kernel.Bind<IFileSystem>().To<FileSystem>();
-            kernel.Bind<ICommandExecutor>().ToMethod(context => new CommandExecutor(environment.RepositoryPath)).InSingletonScope();
+            kernel.Bind<ICommandExecutor>().ToMethod(context => GetComandExecutor(environment, context)).InSingletonScope();
         }
 
         private static string Root {
@@ -92,6 +93,11 @@ namespace Kudu.Services.Web.App_Start {
                 }
                 return Path.GetFullPath(Path.Combine(HttpRuntime.AppDomainAppPath, path));
             }
+        }
+
+        private static CommandExecutor GetComandExecutor(IEnvironment environment, IContext context) {
+            return new CommandExecutor(context.Kernel.Get<IFileSystem>(),
+                                       environment.RepositoryPath);
         }
 
         private static string GetSettingsPath(IEnvironment environment) {

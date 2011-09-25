@@ -1,80 +1,91 @@
 ﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.IO;
+using System.IO.Abstractions;
+using System.Linq;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Commands {
     public class CommandExecutor : ICommandExecutor {
-        private readonly string _workingDirectory;
+        private const string DriveLetters = "fghijklmnopqrstuvwxyz";
 
-        public CommandExecutor(string workingDirectory) {
+        private readonly string _workingDirectory;
+        private readonly ConcurrentDictionary<string, char> _mappedPaths = new ConcurrentDictionary<string, char>(StringComparer.OrdinalIgnoreCase);
+        private readonly IFileSystem _fileSystem;
+
+        public CommandExecutor(IFileSystem fileSystem, string workingDirectory) {
+            _fileSystem = fileSystem;
             _workingDirectory = workingDirectory;
         }
 
         public string ExecuteCommand(string command) {
-            // REVIEW: Should we leave it mapped for performance reasons?
-            using (var folder = new Folder(_workingDirectory)) {                
-                var executable = new Executable("cmd", folder.Path);
-                return executable.Execute("/c " + command);
-            }
+            string path = GetMappedPath(_workingDirectory);
+            var executable = new Executable("cmd", path);
+            return executable.Execute("/c " + command);
         }
 
-        private class Folder : IDisposable {
-            private const string DriveLetters = "fghijklmnopqrstuvwxyz";
+        public string GetMappedPath(string path) {
+            var uri = new Uri(path);
+            if (!uri.IsUnc) {
+                // Not a UNC then do nothing
+                return path;
+            }
 
-            private readonly Executable _executable;
-            private char? _driveLetter;
+            // Skip \\ and split the path into segments
+            var pathSegments = path.Substring(2).Split(Path.DirectorySeparatorChar);
 
-            public Folder(string path) {
-                Path = path;
+            // Start with the first segment and try to find the shortest prefix that exists
+            string prefix = String.Empty;
+            for (int index = 0; index < pathSegments.Length; index++) {
+                prefix = Path.Combine(prefix, pathSegments[index]);
+                string subPath = @"\\" + prefix;
 
-                // If the working directory is a share then we map that folder
-                // to a drive temporarily so we don't need to change the registry
-                // as described here (http://support.microsoft.com/kb/156276).
-                // If this isn't a share then we don't attempt to do anything
-                var uri = new Uri(path);
-                if (uri.IsUnc) {
-                    // Use windir as the working directory
-                    _executable = new Executable("cmd", GetWindowsFolder());
+                // If \\foo\bar exists check if it's mapped already
+                char mappedDrive;
+                if (_mappedPaths.TryGetValue(subPath, out mappedDrive)) {
+                    return GetMappedPath(pathSegments, index, mappedDrive);
+                }
 
-                    // Get the share name
-                    string share = path;
+                // if it is then return mapped + baz\repository
+                if (!_fileSystem.Directory.Exists(subPath)) {
+                    continue;
+                }
 
-                    // Map the drive
-                    MapShareToDrive(share);
-
-                    // Replace \\sharename with the mapped drive
-                    Path = Path.Replace(share, _driveLetter + @":\");
+                // if it's not mapped then attempt to map it
+                if (MapPath(subPath, out mappedDrive)) {
+                    _mappedPaths.TryAdd(subPath, mappedDrive);
+                    return GetMappedPath(pathSegments, index, mappedDrive);
                 }
             }
 
-            public string Path {
-                get;
-                private set;
-            }
+            throw new InvalidOperationException(String.Format("Unable to map '{0}' to a drive.", path));
+        }
 
-            public void Dispose() {
-                if (_driveLetter != null) {
-                    _executable.Execute("/c net use {0}: /delete", _driveLetter);
+        private static string GetMappedPath(IEnumerable<string> pathSegments, int index, char mappedDrive) {
+            return Path.Combine(mappedDrive + @":\", pathSegments.Skip(index + 1).Aggregate(Path.Combine));
+        }
+
+        protected virtual bool MapPath(string path, out char driveLetter) {
+            var cmd = new Executable("cmd", GetWindowsFolder());
+            driveLetter = '\0';
+
+            foreach (var letter in DriveLetters) {
+                try {
+                    cmd.Execute("/c net use {0}: {1}", letter, path);
+                    driveLetter = letter;
+                    return true;
+                }
+                catch {
+
                 }
             }
 
-            private void MapShareToDrive(string share) {
-                foreach (var driveLetter in DriveLetters) {
-                    try {
-                        _executable.Execute("/c net use {0}: {1}", driveLetter, share);
-                        _driveLetter = driveLetter;
-                        return;
-                    }
-                    catch {
+            return false;
+        }
 
-                    }
-                }
-
-                throw new InvalidOperationException(String.Format("Unable to map {0} to a drive", share));
-            }
-
-            private static string GetWindowsFolder() {
-                return System.Environment.GetFolderPath(System.Environment.SpecialFolder.Windows);
-            }
+        private static string GetWindowsFolder() {
+            return System.Environment.GetFolderPath(System.Environment.SpecialFolder.Windows);
         }
     }
 }

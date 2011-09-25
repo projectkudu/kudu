@@ -57,6 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AspNetConfigTransformerTest.cs" />
+    <Compile Include="CommandExecutorTest.cs" />
     <Compile Include="FileSystemHelpersTest.cs" />
     <Compile Include="GitRepositoryRepositoryTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
