@@ -87,7 +87,7 @@
 #skyde .CodeMirror {
     border: 1px solid #ccc;
     width: 100%;
-    font-family: Consolas, Monospace;
+    font-family: 'Consolas' , 'Monaco' , monospace;
     font-size: 10pt;
     line-height: 12pt;
 }
@@ -457,7 +457,7 @@
     height: 350px;   
     width: 97%;
     margin-top: 5%;
-    font: 1.1em 'Consolas' , 'Monaco' , monospace;
+    font: 11pt 'Consolas' , 'Monaco' , monospace;
 }
 
 #skyde #console .output input[type="text"] {
@@ -466,7 +466,7 @@
     background-color: #202020;
     color: #c0c0c0;
     width: 80%;
-    font: 1.1em 'Consolas' , 'Monaco' , monospace;
+    font: 11pt 'Consolas' , 'Monaco' , monospace;
     float: left;
 }
 
