@@ -20,6 +20,7 @@ namespace Kudu.Core.Infrastructure {
                       String.IsNullOrEmpty(previousPath) ? null : new DirectoryInfoWrapper(new DirectoryInfo(previousPath)),
                       new DirectoryInfoWrapper(new DirectoryInfo(sourcePath)),
                       new DirectoryInfoWrapper(new DirectoryInfo(destinationPath)),
+                      path => new DirectoryInfoWrapper(new DirectoryInfo(path)),
                       skipOldFiles);
         }
 
@@ -102,7 +103,13 @@ namespace Kudu.Core.Infrastructure {
             }
         }
 
-        internal static void SmartCopy(string sourcePath, string destinationPath, DirectoryInfoBase previousDirectory, DirectoryInfoBase sourceDirectory, DirectoryInfoBase destinationDirectory, bool skipOldFiles) {
+        internal static void SmartCopy(string sourcePath,
+                                       string destinationPath,
+                                       DirectoryInfoBase previousDirectory,
+                                       DirectoryInfoBase sourceDirectory,
+                                       DirectoryInfoBase destinationDirectory,
+                                       Func<string, DirectoryInfoBase> createDirectoryInfo,
+                                       bool skipOldFiles) {
             // Skip hidden directories and directories that begin with .
             if (sourceDirectory.Attributes.HasFlag(FileAttributes.Hidden) ||
                 sourceDirectory.Name.StartsWith(".")) {
@@ -123,7 +130,7 @@ namespace Kudu.Core.Infrastructure {
                 // 2. We have a previous directory and the file exists there
                 if (!sourceFilesLookup.ContainsKey(destFile.Name) &&
                     ((previousFilesLookup == null) ||
-                    (previousFilesLookup != null && 
+                    (previousFilesLookup != null &&
                     previousFilesLookup.ContainsKey(destFile.Name)))) {
                     destFile.Delete();
                 }
@@ -160,7 +167,7 @@ namespace Kudu.Core.Infrastructure {
                 // 2. We have a previous directory and the file exists there
                 if (!sourceDirectoryLookup.ContainsKey(destSubDirectory.Name) &&
                     ((previousDirectoryLookup == null) ||
-                    (previousDirectoryLookup != null && 
+                    (previousDirectoryLookup != null &&
                     previousDirectoryLookup.ContainsKey(destSubDirectory.Name)))) {
                     destSubDirectory.Delete(recursive: true);
                 }
@@ -170,7 +177,7 @@ namespace Kudu.Core.Infrastructure {
                 DirectoryInfoBase targetSubDirectory;
                 if (!destDirectoryLookup.TryGetValue(sourceSubDirectory.Name, out targetSubDirectory)) {
                     string path = GetDestinationPath(sourcePath, destinationPath, sourceSubDirectory);
-                    targetSubDirectory = new DirectoryInfoWrapper(new DirectoryInfo(path));
+                    targetSubDirectory = createDirectoryInfo(path);
                 }
 
                 DirectoryInfoBase previousSubDirectory = null;
@@ -180,7 +187,7 @@ namespace Kudu.Core.Infrastructure {
                 }
 
                 // Sync all sub directories
-                SmartCopy(sourcePath, destinationPath, previousSubDirectory, sourceSubDirectory, targetSubDirectory, skipOldFiles);
+                SmartCopy(sourcePath, destinationPath, previousSubDirectory, sourceSubDirectory, targetSubDirectory, createDirectoryInfo, skipOldFiles);
             }
         }
 
