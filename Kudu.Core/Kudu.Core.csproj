@@ -127,6 +127,9 @@
     <Compile Include="Infrastructure\UrlUtility.cs" />
     <Compile Include="Infrastructure\VsSolution.cs" />
     <Compile Include="Infrastructure\VsSolutionProject.cs" />
+    <Compile Include="nji\Program.cs" />
+    <Compile Include="nji\SimpleJson.cs" />
+    <Compile Include="nji\Tar.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SourceControl\Branch.cs" />
     <Compile Include="SourceControl\ChangeSet.cs" />

@@ -212,6 +212,8 @@ namespace Kudu.Core.Deployment {
 
                 PerformTransformations();
 
+                DownloadNodePackages();
+
                 trackingFile.Status = DeployStatus.Success;
                 trackingFile.StatusText = String.Empty;
 
@@ -247,6 +249,14 @@ namespace Kudu.Core.Deployment {
             // Perform transformations for this app if it has a web.config at the root
             var transformer = new AspNetConfigTransformer(_fileSystem, _settingsManager);
             transformer.PerformTransformations(_environment.DeploymentTargetPath);
+        }
+
+        // Temporary dirty code to install node packages. Switch to real NPM when available
+        private void DownloadNodePackages() {
+            var p = new nji.Program();
+            p.ModulesDir = Path.Combine(_environment.DeploymentTargetPath, "node_modules");
+            p.TempDir = Path.Combine(p.ModulesDir, ".tmp");
+            p.InstallDependencies(_environment.DeploymentTargetPath);
         }
 
         private void NotifyStatus(string id) {
