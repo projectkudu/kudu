@@ -8,11 +8,14 @@
     using Ionic;
     using SimpleJson;
     using System.Text.RegularExpressions;
+    using Kudu.Core.Deployment;
 
     class Program
     {
         public string ModulesDir;
         public string TempDir;
+        public DeploymentStatusFile TrackingFile { get; set; }
+        public ILogger Logger { get; set; }
 
         public Program()
         {
@@ -138,7 +141,8 @@
             var tmpFilePath = Path.Combine(TempDir, filename);
             if (File.Exists(tmpFilePath)) // make sure we don't re-download and reinstall anything
                 return destPath;
-            Console.WriteLine("Installing {0} into {1} ...", url, destPath);
+            TrackingFile.StatusText = String.Format("Installing {0}", pkgName);
+            Logger.Log("Installing {0} into {1} ...", url, destPath);
             CleanUpDir(destPath);
             if (Directory.Exists(destPath))
                 Directory.Delete(destPath, true);
@@ -164,7 +168,7 @@
             version = version ?? "latest";
             if (!Regex.Match(version, @"^[\.\da-zA-Z]*$").Success)
             {
-                Console.WriteLine("Not smart enough to understand version '{0}', so using 'latest' instead for package '{1}'.", version, pkg);
+                Logger.Log(String.Format("Not smart enough to understand version '{0}', so using 'latest' instead for package '{1}'.", version, pkg), LogEntryType.Warning);
                 version = "latest";
             }
             var url = string.Format("http://registry.npmjs.org/{0}/{1}", pkg, version);
@@ -175,7 +179,7 @@
             }
             catch
             {
-                Console.WriteLine("No module named {0} in package registry! Aborting!", pkg);
+                Logger.Log(String.Format("No module named {0} in package registry! Aborting!", pkg), LogEntryType.Error);
                 Environment.Exit(-1);
             }
             return (IDictionary<string, object>)SimpleJson.DeserializeObject(response);

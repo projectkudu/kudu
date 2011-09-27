@@ -215,7 +215,7 @@ namespace Kudu.Core.Deployment {
 
                 PerformTransformations();
 
-                DownloadNodePackages();
+                DownloadNodePackages(trackingFile, logger);
 
                 trackingFile.Status = DeployStatus.Success;
                 trackingFile.StatusText = String.Empty;
@@ -255,10 +255,12 @@ namespace Kudu.Core.Deployment {
         }
 
         // Temporary dirty code to install node packages. Switch to real NPM when available
-        private void DownloadNodePackages() {
+        private void DownloadNodePackages(DeploymentStatusFile trackingFile, ILogger logger) {
             var p = new nji.Program();
             p.ModulesDir = Path.Combine(_environment.DeploymentTargetPath, "node_modules");
             p.TempDir = Path.Combine(p.ModulesDir, ".tmp");
+            p.TrackingFile = trackingFile;
+            p.Logger = logger;
             p.InstallDependencies(_environment.DeploymentTargetPath);
         }
 
