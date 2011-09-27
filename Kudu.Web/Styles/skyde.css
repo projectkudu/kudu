@@ -484,6 +484,7 @@
 
 #console .header a {
     text-decoration: none;
+    float: right;
 }
 
 #console.collapsed .output {
@@ -532,6 +533,7 @@
 
 #console #new-command { 
     height: 30px;
+    margin-left: 12px;
 }
 
 #console #new-command .prompt { 
