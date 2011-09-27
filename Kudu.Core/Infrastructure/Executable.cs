@@ -21,6 +21,8 @@ namespace Kudu.Core.Infrastructure {
             IAsyncResult outputReader = reader.BeginInvoke(process.StandardOutput, null, null);
             IAsyncResult errorReader = reader.BeginInvoke(process.StandardError, null, null);
 
+            process.StandardInput.Close();
+
             process.WaitForExit();
 
             string output = reader.EndInvoke(outputReader);
