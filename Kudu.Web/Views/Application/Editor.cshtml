@@ -6,7 +6,6 @@
 @{
     ViewBag.Title = "Editor";
 }
-
 <div id="skyde">        
     <ul id="tabs">               
     </ul>
@@ -22,11 +21,12 @@
         </div>
     </div>
     
-    <div id="console">
+    <div id="console-ghost"></div>
+    <div id="console" class="collapsed">
         <div class="header">
             <a href="#" id="show-console" class="icon-notext icon-minimize">&nbsp;</a>
         </div>
-        <div class="output">                        
+        <div class="output">
             <div class="messages">
                 <ul class="buffer">
                 </ul>

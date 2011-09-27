@@ -583,18 +583,22 @@
 
 
             var cs = $('#console');
+            var csGhost = $('#console-ghost');
             var cmd = $('#console-command');
             var consoleWindow = cs.find('.output');
             var buffer = consoleWindow.find('.buffer');
             var messages = consoleWindow.find('.messages');
+            var toolBarHeight = $('#console .header').outerHeight();
             var commandStack = [];
             var executingCommand = false;
 
             $('#show-console').toggle(function () {
-                consoleWindow.hide();
+                cs.toggleClass('collapsed');
+                $(window).resize();
             },
             function () {
-                consoleWindow.show();
+                cs.toggleClass('collapsed');
+                $(window).resize();
             });
 
             function escapeHTMLEncode(str) {
@@ -656,9 +660,6 @@
             cmd.keypress(function () {
                 return !executingCommand;
             });
-
-            // TODO: Move this to the bottom of the screen like firebug
-
         }
     };
 
@@ -721,6 +722,37 @@
                 adjustHeight();
             }, 500);
         }
+
+
+        // Move this to the bottom of the screen like firebug
+        // ensure the ghost has always the same size as the container
+        // and the container is always positionned correctly
+        var cs = $('#console');
+        var csGhost = $('#console-ghost');
+
+        csGhost.appendTo(document.body);
+        cs.appendTo(document.body);
+
+        var syncResize = function () {
+            var _window = $(window);
+            var containerHeight = cs.outerHeight();
+            var containerWidth = cs.outerWidth();
+            csGhost.height(containerHeight);
+            var messagesHeight = 0;
+
+            var windowHeight = _window.height();
+            var scrollTop = _window.scrollTop();
+
+            cs.offset({ top: windowHeight - containerHeight + scrollTop + messagesHeight, left: 0 });
+            cs.width('100%');
+        };
+
+        // ensure the size/position is correct whenver the container or the browser is resized
+        cs.resize(syncResize);
+        $(window).resize(syncResize);
+        $(window).resize();
+
+
     });
 
 })(window, jQuery);
