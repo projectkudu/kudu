@@ -12,7 +12,11 @@ namespace Kudu.Client.Hubs.Editor {
         }
 
         public string Run(string command) {
-            return _executor.ExecuteCommand(command);
+            string output = _executor.ExecuteCommand(command);
+            if (output != null) {
+                return output.TrimEnd();
+            }
+            return output;
         }
     }
 }

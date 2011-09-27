@@ -626,7 +626,7 @@
                         var callback = function (result) {
                             var lines = escapeHTMLEncode(result).split('\n');
                             $.each(lines, function () {
-                                var line = this.replace(/\s/g, '&nbsp;');
+                                var line = $.trim(this).replace(/\s/g, '&nbsp;');
                                 if (!line) {
                                     line = '&nbsp;';
                                 }

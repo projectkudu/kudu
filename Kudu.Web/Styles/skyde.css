@@ -443,7 +443,7 @@
     color: #c0c0c0;
     border: 1px solid #666;
     padding: 5px 15px 5px 25px;
-    background: #202020 url(../images/output.png) 3px 5px no-repeat;
+    background: #202020 3px 5px no-repeat;
     line-height: 1.462em; /*CSS3 properties*/
     border-radius: 4px;
     -moz-border-radius: 4px;
