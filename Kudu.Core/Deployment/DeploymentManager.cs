@@ -207,8 +207,11 @@ namespace Kudu.Core.Deployment {
 
                 logger.Log("Copying files to {0}.", _environment.DeploymentTargetPath);
 
+                string deploymentId = ActiveDeploymentId;
+                string activeDeploymentPath = String.IsNullOrEmpty(deploymentId) ? null : GetCachePath(deploymentId);
+
                 // Copy to target
-                FileSystemHelpers.SmartCopy(cachePath, _environment.DeploymentTargetPath, skipOldFiles);
+                FileSystemHelpers.SmartCopy(activeDeploymentPath, cachePath, _environment.DeploymentTargetPath, skipOldFiles);
 
                 PerformTransformations();
 
