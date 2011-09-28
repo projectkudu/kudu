@@ -14,5 +14,9 @@ namespace Kudu.Client.Hubs.Editor {
         public void Run(string command) {
             _executor.ExecuteCommand(command);
         }
+
+        public void Cancel() {
+            _executor.CancelCommand();
+        }
     }
 }

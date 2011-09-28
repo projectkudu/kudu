@@ -33,5 +33,10 @@ namespace Kudu.Core.Deployment {
                 { "command", command }
             })).EnsureSuccessful();
         }
+
+        public void CancelCommand() {
+            _client.Post("cancel", new FormUrlEncodedContent(new Dictionary<string, string> { }))
+                   .EnsureSuccessful();
+        }
     }
 }

@@ -14,6 +14,7 @@ namespace Kudu.Core.Commands {
         private readonly string _workingDirectory;
         private readonly IFileSystem _fileSystem;
         private IDictionary<string, string> _mappedDrives;
+        private Process _executingProcess;
 
         public CommandExecutor(IFileSystem fileSystem, string workingDirectory) {
             _fileSystem = fileSystem;
@@ -25,39 +26,43 @@ namespace Kudu.Core.Commands {
         public void ExecuteCommand(string command) {
             string path = GetMappedPath(_workingDirectory);
 
-            var process = new Process();
-            process.StartInfo.FileName = "cmd";
-            process.StartInfo.WorkingDirectory = path;
-            process.StartInfo.Arguments = "/c " + command;
-            process.StartInfo.CreateNoWindow = true;
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.RedirectStandardInput = true;
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.RedirectStandardError = true;
-            process.StartInfo.StandardOutputEncoding = Encoding.UTF8;
-            process.StartInfo.StandardErrorEncoding = Encoding.UTF8;
-            process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            process.StartInfo.ErrorDialog = false;
+            _executingProcess = new Process();
+            _executingProcess.StartInfo.FileName = "cmd";
+            _executingProcess.StartInfo.WorkingDirectory = path;
+            _executingProcess.StartInfo.Arguments = "/c " + command;
+            _executingProcess.StartInfo.CreateNoWindow = true;
+            _executingProcess.StartInfo.UseShellExecute = false;
+            _executingProcess.StartInfo.RedirectStandardInput = true;
+            _executingProcess.StartInfo.RedirectStandardOutput = true;
+            _executingProcess.StartInfo.RedirectStandardError = true;
+            _executingProcess.StartInfo.StandardOutputEncoding = Encoding.UTF8;
+            _executingProcess.StartInfo.StandardErrorEncoding = Encoding.UTF8;
+            _executingProcess.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            _executingProcess.StartInfo.ErrorDialog = false;
 
-            process.Exited += (sender, e) => {
+            _executingProcess.Exited += (sender, e) => {
+                if (_executingProcess == null) {
+                    return;
+                }
+
                 if (CommandEvent != null) {
                     CommandEvent(new CommandEvent(CommandEventType.Complete));
                 }
             };
 
-            process.EnableRaisingEvents = true;
-            process.Start();
+            _executingProcess.EnableRaisingEvents = true;
+            _executingProcess.Start();
 
-            process.BeginErrorReadLine();
-            process.BeginOutputReadLine();
+            _executingProcess.BeginErrorReadLine();
+            _executingProcess.BeginOutputReadLine();
 
-            process.OutputDataReceived += (sender, e) => {
+            _executingProcess.OutputDataReceived += (sender, e) => {                
                 if (CommandEvent != null) {
                     CommandEvent(new CommandEvent(CommandEventType.Output, e.Data));
                 }
             };
 
-            process.ErrorDataReceived += (sender, e) => {
+            _executingProcess.ErrorDataReceived += (sender, e) => {
                 if (String.IsNullOrEmpty(e.Data)) {
                     return;
                 }
@@ -66,6 +71,19 @@ namespace Kudu.Core.Commands {
                     CommandEvent(new CommandEvent(CommandEventType.Error, e.Data));
                 }
             };
+        }
+
+        public void CancelCommand() {
+            try {
+                if (_executingProcess != null) {
+                    _executingProcess.CancelErrorRead();
+                    _executingProcess.CancelOutputRead();
+                    _executingProcess.Kill();
+                }
+            }
+            catch {
+                // Swallow the exception, we don't care the if process can't be killed
+            }
         }
 
         public string GetMappedPath(string path) {

@@ -598,10 +598,20 @@
                 return div.innerHTML;
             }
 
+            cmd.bind('keydown', 'ctrl+c', function (evt) {
+                if (executingCommand) {
+                    commandLine.cancel();
+                    evt.stopPropagation();
+                    evt.preventDefault();
+                    return false;
+                }
+                return true;
+            });
+
             commandLine.done = function () {
                 messages.scrollTop(buffer[0].scrollHeight);
-                executingCommand = false;
                 buffer.find('.icon-prompt-loading').hide();
+                executingCommand = false;
             };
 
             commandLine.onData = function (result) {
