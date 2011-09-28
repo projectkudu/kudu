@@ -391,8 +391,13 @@
     padding-left: 25px;
 }
 
-#scm #deploy-log pre {
-    overflow: auto;
+#scm #deploy-log pre {   
+    white-space: pre-wrap;
+    white-space: -moz-pre-wrap !important;
+    white-space: -pre-wrap;
+    white-space: -o-pre-wrap;
+    word-wrap: break-word;
+    width: 99%;
 }
 
 #scm #deploy-log li {
