@@ -191,7 +191,7 @@
 }
 
 #scm .commit-detail p {
-    margin-top: 0;
+    margin: 10px;
 }
 
 #scm .commit-summary {
@@ -314,8 +314,15 @@
 }
 
 #scm .author {
+    margin-left: 10px;
+}
+
+#scm .author-pic {
     float: left;
-    margin-left: 5px;
+}
+
+#scm .author-info {
+    margin-left: 45px;
 }
 
 #scm .binary-text {

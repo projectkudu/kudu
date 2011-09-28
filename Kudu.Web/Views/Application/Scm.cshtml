@@ -137,14 +137,17 @@
     <div class="commit-detail gray-gradient">
         <p class="details">${ChangeSet.Id}</p>
         <p>{{html ChangeSet.Message}}<p>
-        {{if ChangeSet.EmailHash}}
-        <img src="http://www.gravatar.com/avatar/${ChangeSet.EmailHash}?s=32&d=mm" class="gravatar" />
-        {{/if}}
-        <div class="author">
-            ${ChangeSet.AuthorName} <span class="details">(author)</span>
-            <div class="timeago" title="${ChangeSet.Date}"></div>
+        <div class="author">            
+            {{if ChangeSet.EmailHash}}
+            <div class="author-pic">
+                <img src="http://www.gravatar.com/avatar/${ChangeSet.EmailHash}?s=32&d=mm" class="gravatar" />
+            </div>
+            {{/if}}
+            <div class="author-info">
+                ${ChangeSet.AuthorName} <span class="details">(author)</span>
+                <div class="timeago" title="${ChangeSet.Date}"></div>
+            </div>
         </div>
-        <div class="clear" />
     </div>
     {{tmpl "#diff-view"}}
 </script>
