@@ -40,30 +40,25 @@ namespace Kudu.Core.Commands {
             _executingProcess.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             _executingProcess.StartInfo.ErrorDialog = false;
 
-            _executingProcess.Exited += (sender, e) => {
-                if (_executingProcess == null) {
-                    return;
-                }
-
+            _executingProcess.Exited += (sender, e) => {                
                 if (CommandEvent != null) {
                     CommandEvent(new CommandEvent(CommandEventType.Complete));
                 }
             };
 
-            _executingProcess.EnableRaisingEvents = true;
-            _executingProcess.Start();
 
-            _executingProcess.BeginErrorReadLine();
-            _executingProcess.BeginOutputReadLine();
+            _executingProcess.OutputDataReceived += (sender, e) => {
+                if (e.Data == null) {
+                    return;
+                }
 
-            _executingProcess.OutputDataReceived += (sender, e) => {                
                 if (CommandEvent != null) {
                     CommandEvent(new CommandEvent(CommandEventType.Output, e.Data));
                 }
             };
 
             _executingProcess.ErrorDataReceived += (sender, e) => {
-                if (String.IsNullOrEmpty(e.Data)) {
+                if (e.Data == null) {
                     return;
                 }
 
@@ -71,6 +66,13 @@ namespace Kudu.Core.Commands {
                     CommandEvent(new CommandEvent(CommandEventType.Error, e.Data));
                 }
             };
+
+            _executingProcess.EnableRaisingEvents = true;
+            _executingProcess.Start();
+            _executingProcess.BeginErrorReadLine();
+            _executingProcess.BeginOutputReadLine();
+
+            _executingProcess.StandardInput.Close();
         }
 
         public void CancelCommand() {
