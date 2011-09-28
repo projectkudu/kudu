@@ -164,19 +164,7 @@
                 evt.preventDefault();
                 return false;
             });
-
-            $(document).bind('keyup', 'ctrl+tab', function (evt) {
-                documentTabs.nextTab();
-                var active = documentTabs.getActive();
-                if (active && active.getFile() != getActiveDocument()) {
-                    openDocument(active.getFile().getPath());
-                }
-
-                evt.stopPropagation();
-                evt.preventDefault();
-                return false;
-            });
-
+            
             function openDocument(path, suppressLoading) {
                 // If document is active save the content locally
                 var activeDocument = getActiveDocument();
@@ -580,8 +568,6 @@
             var commandLine = $.connection.commandLine;
             commandLine.appName = documents.appName;
 
-
-
             var cs = $('#console');
             var csGhost = $('#console-ghost');
             var cmd = $('#console-command');
@@ -660,9 +646,9 @@
                 return false;
             });
 
-            // TODO: Fix bug with jquery hot keys plugin that stops this from working
-            cmd.keypress(function () {
-                return !executingCommand;
+            // Focus the text box on click
+            consoleWindow.click(function () {
+                cmd.focus();
             });
         }
     };
@@ -704,11 +690,7 @@
                 console.log('Screen height is ' + height);
             }
 
-            var adjusted = height - 150;
-
-            if (adjusted < minHeight) {
-                return;
-            }
+            var adjusted = Math.max(height - 150, minHeight);
 
 
             if (window.console && window.console.log) {
@@ -755,8 +737,6 @@
         cs.resize(syncResize);
         $(window).resize(syncResize);
         $(window).resize();
-
-
     });
 
 })(window, jQuery);
