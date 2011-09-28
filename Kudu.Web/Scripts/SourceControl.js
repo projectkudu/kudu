@@ -131,6 +131,8 @@
 
             // Update the deployment status
             var status = newItem.find('.deploy-status');
+            var statusText = newItem.find('.status-text');
+            statusText.html(result.StatusText ? '(' + result.StatusText + ')' : '');
             status.html(result.Status);
             status.show();
 

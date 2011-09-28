@@ -14,8 +14,8 @@
     {
         public string ModulesDir;
         public string TempDir;
-        public DeploymentStatusFile TrackingFile { get; set; }
         public ILogger Logger { get; set; }
+        public Action<string> UpdateStatusText { get; set; }
 
         public Program()
         {
@@ -141,7 +141,7 @@
             var tmpFilePath = Path.Combine(TempDir, filename);
             if (File.Exists(tmpFilePath)) // make sure we don't re-download and reinstall anything
                 return destPath;
-            TrackingFile.StatusText = String.Format("Installing {0}", pkgName);
+            UpdateStatusText(String.Format("Installing {0}", pkgName));
             Logger.Log("Installing {0} into {1} ...", url, destPath);
             CleanUpDir(destPath);
             if (Directory.Exists(destPath))

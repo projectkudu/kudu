@@ -71,6 +71,10 @@
     display: none;
 }
 
+#scm #log .status-text {
+    display: inline;
+}
+
 #scm #menu {
     margin-bottom: 15px;
     border: 1px solid #ccc;

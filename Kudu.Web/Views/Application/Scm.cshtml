@@ -114,7 +114,8 @@
         <td class="timeago" title="${Date}"></td>
         <td>            
             {{if deploymentInfo }}
-                <span class="deploy-status">${deploymentInfo.Status}</status>
+                <div class="deploy-status">${deploymentInfo.Status}</div>
+                <div class="status-text">${deploymentInfo.StatusText}</div>
             {{else}}
                 -
             {{/if}}
