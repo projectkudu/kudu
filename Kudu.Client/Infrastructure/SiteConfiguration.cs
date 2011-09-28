@@ -6,6 +6,7 @@ using Kudu.Core.Deployment;
 using Kudu.Core.Editor;
 using Kudu.Core.SourceControl;
 using SignalR.Hubs;
+using Kudu.Client.Hubs.Editor;
 
 namespace Kudu.Client.Infrastructure {
     public class SiteConfiguration : ISiteConfiguration {
@@ -21,13 +22,16 @@ namespace Kudu.Client.Infrastructure {
                 Repository = config.Repository;
                 FileSystem = config.FileSystem;
                 RepositoryManager = config.RepositoryManager;
-                CommandExecutor = config.CommandExecutor;
 
                 if (config.DeploymentManager.IsActive) {
                     DeploymentManager = config.DeploymentManager;
+                    CommandExecutor = config.CommandExecutor;
                 }
                 else {
                     DeploymentManager = new RemoteDeploymentManager(ServiceUrl + "deploy");
+                    DeploymentManager.StatusChanged += OnDeploymentStatusChanged;
+                    CommandExecutor = new RemoteCommandExecutor(ServiceUrl + "command");
+                    CommandExecutor.CommandEvent += OnCommandEvent;
                 }
             }
             else {
@@ -36,8 +40,10 @@ namespace Kudu.Client.Infrastructure {
                 DeploymentManager = new RemoteDeploymentManager(ServiceUrl + "deploy");
                 RepositoryManager = new RemoteRepositoryManager(ServiceUrl + "scm");
                 CommandExecutor = new RemoteCommandExecutor(ServiceUrl + "command");
-                DeploymentManager.StatusChanged += OnDeploymentStatusChanged;
 
+                CommandExecutor.CommandEvent += OnCommandEvent;
+                DeploymentManager.StatusChanged += OnDeploymentStatusChanged;
+                
                 _cache[Name] = this;
             }
         }
@@ -45,6 +51,16 @@ namespace Kudu.Client.Infrastructure {
         private void OnDeploymentStatusChanged(DeployResult result) {
             var clients = Hub.GetClients<SourceControl>();
             clients.updateDeployStatus(new DeployResultViewModel(result));
+        }
+
+        private void OnCommandEvent(CommandEvent commandEvent) {
+            var clients = Hub.GetClients<CommandLine>();
+            if (commandEvent.EventType == CommandEventType.Complete) {
+                clients.done();
+            }
+            else {
+                clients.onData(commandEvent.Data);
+            }
         }
 
         public string Name { get; private set; }

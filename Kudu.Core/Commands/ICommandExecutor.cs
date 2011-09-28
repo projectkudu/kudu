@@ -1,5 +1,9 @@
-﻿namespace Kudu.Core.Commands {
+﻿using System;
+
+namespace Kudu.Core.Commands {
     public interface ICommandExecutor {
-        string ExecuteCommand(string command);
+        void ExecuteCommand(string command);
+
+        event Action<CommandEvent> CommandEvent;
     }
 }

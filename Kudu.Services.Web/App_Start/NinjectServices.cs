@@ -82,7 +82,9 @@ namespace Kudu.Services.Web.App_Start {
             kernel.Bind<IHgServer>().To<Kudu.Core.SourceControl.Hg.HgServer>().InSingletonScope();
             kernel.Bind<IServerConfiguration>().To<ServerConfiguration>().InSingletonScope();
             kernel.Bind<IFileSystem>().To<FileSystem>();
-            kernel.Bind<ICommandExecutor>().ToMethod(context => GetComandExecutor(environment, context)).InSingletonScope();
+            kernel.Bind<ICommandExecutor>().ToMethod(context => GetComandExecutor(environment, context))
+                                           .InSingletonScope()
+                                           .OnActivation(SubscribeForCommandEvents);
         }
 
         private static string Root {
@@ -126,9 +128,16 @@ namespace Kudu.Services.Web.App_Start {
             System.Environment.SetEnvironmentVariable("TMP", tempPath);
         }
 
+        private static void SubscribeForCommandEvents(ICommandExecutor commandExecutor) {
+            IConnection connection = Connection.GetConnection<CommandStatusHandler>();
+            commandExecutor.CommandEvent += commandEvent => {
+                connection.Broadcast(commandEvent);
+            };
+        }
+
         private static void SubscribeForDeploymentEvents(IDeploymentManager deploymentManager) {
+            IConnection connection = Connection.GetConnection<DeploymentStatusHandler>();
             deploymentManager.StatusChanged += status => {
-                IConnection connection = Connection.GetConnection<DeploymentStatusHandler>();
                 connection.Broadcast(status);
             };
         }

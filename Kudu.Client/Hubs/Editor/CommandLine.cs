@@ -11,12 +11,8 @@ namespace Kudu.Client.Hubs.Editor {
             _executor = executor;
         }
 
-        public string Run(string command) {
-            string output = _executor.ExecuteCommand(command);
-            if (output != null) {
-                return output.TrimEnd();
-            }
-            return output;
+        public void Run(string command) {
+            _executor.ExecuteCommand(command);
         }
     }
 }

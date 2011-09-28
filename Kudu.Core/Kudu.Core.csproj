@@ -78,6 +78,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\CommandEvent.cs" />
+    <Compile Include="Commands\CommandEventType.cs" />
     <Compile Include="Commands\CommandExecutor.cs" />
     <Compile Include="Commands\RemoteCommandExecutor.cs" />
     <Compile Include="Deployment\AspNetConfigTransformer.cs" />

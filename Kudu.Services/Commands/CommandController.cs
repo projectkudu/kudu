@@ -4,13 +4,15 @@ using Kudu.Core.Commands;
 namespace Kudu.Services.Commands {
     public class CommandController : Controller {
         private readonly ICommandExecutor _executor;
+        private static object _exeLock = new object();
+
         public CommandController(ICommandExecutor executor) {
             _executor = executor;
         }
 
         [HttpPost]
-        public string Run(string command) {
-            return _executor.ExecuteCommand(command);
+        public void Run(string command) {
+            _executor.ExecuteCommand(command);
         }
     }
 }

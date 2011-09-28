@@ -40,6 +40,7 @@ namespace Kudu.Services {
             );
 
             routes.MapConnection<DeploymentStatusHandler>("DeploymentStatus", "deploy/status/{*operation}");
+            routes.MapConnection<CommandStatusHandler>("CommandStatus", "command/status/{*operation}");
 
             routes.MapRoute(
                 "Default", // Route name

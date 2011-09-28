@@ -164,7 +164,7 @@
                 evt.preventDefault();
                 return false;
             });
-            
+
             function openDocument(path, suppressLoading) {
                 // If document is active save the content locally
                 var activeDocument = getActiveDocument();
@@ -598,6 +598,25 @@
                 return div.innerHTML;
             }
 
+            commandLine.done = function () {
+                messages.scrollTop(buffer[0].scrollHeight);
+                executingCommand = false;
+                buffer.find('.icon-prompt-loading').hide();
+            };
+
+            commandLine.onData = function (result) {
+                var lines = escapeHTMLEncode(result).split('\n');
+                $.each(lines, function () {
+                    var line = this.replace(/\s/g, '&nbsp;');
+                    if (!line) {
+                        line = '&nbsp;';
+                    }
+                    buffer.append('<li>' + line + '</li>');
+                });
+
+                messages.scrollTop(buffer[0].scrollHeight);
+            };
+
             $('#new-command').submit(function () {
                 if (executingCommand) {
                     // REVIEW: Should we queue commands like a real console?
@@ -613,27 +632,9 @@
                     messages.scrollTop(buffer[0].scrollHeight);
 
                     if (command) {
-                        var callback = function (result) {
-                            var lines = escapeHTMLEncode(result).split('\n');
-                            $.each(lines, function () {
-                                var line = this.replace(/\s/g, '&nbsp;');
-                                if (!line) {
-                                    line = '&nbsp;';
-                                }
-                                buffer.append('<li>' + line + '</li>');
-                            });
-
-                            messages.scrollTop(buffer[0].scrollHeight);
-                        };
-
                         executingCommand = true;
                         commandLine.run(command)
-                               .done(callback)
-                               .fail(callback)
-                               .always(function () {
-                                   executingCommand = false;
-                                   buffer.find('.icon-prompt-loading').hide();
-                               });
+                                   .fail(onError);
 
                         commandStack.push(command);
                     }

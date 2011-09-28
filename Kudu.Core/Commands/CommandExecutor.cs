@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
@@ -19,10 +20,52 @@ namespace Kudu.Core.Commands {
             _workingDirectory = workingDirectory;
         }
 
-        public string ExecuteCommand(string command) {
+        public event Action<CommandEvent> CommandEvent;
+
+        public void ExecuteCommand(string command) {
             string path = GetMappedPath(_workingDirectory);
-            var executable = new Executable("cmd", path);
-            return executable.Execute("/c " + command);
+
+            var process = new Process();
+            process.StartInfo.FileName = "cmd";
+            process.StartInfo.WorkingDirectory = path;
+            process.StartInfo.Arguments = "/c " + command;
+            process.StartInfo.CreateNoWindow = true;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.RedirectStandardInput = true;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.RedirectStandardError = true;
+            process.StartInfo.StandardOutputEncoding = Encoding.UTF8;
+            process.StartInfo.StandardErrorEncoding = Encoding.UTF8;
+            process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            process.StartInfo.ErrorDialog = false;
+
+            process.Exited += (sender, e) => {
+                if (CommandEvent != null) {
+                    CommandEvent(new CommandEvent(CommandEventType.Complete));
+                }
+            };
+
+            process.EnableRaisingEvents = true;
+            process.Start();
+
+            process.BeginErrorReadLine();
+            process.BeginOutputReadLine();
+
+            process.OutputDataReceived += (sender, e) => {
+                if (CommandEvent != null) {
+                    CommandEvent(new CommandEvent(CommandEventType.Output, e.Data));
+                }
+            };
+
+            process.ErrorDataReceived += (sender, e) => {
+                if (String.IsNullOrEmpty(e.Data)) {
+                    return;
+                }
+
+                if (CommandEvent != null) {
+                    CommandEvent(new CommandEvent(CommandEventType.Error, e.Data));
+                }
+            };
         }
 
         public string GetMappedPath(string path) {
