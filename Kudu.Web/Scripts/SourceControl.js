@@ -164,6 +164,10 @@
         }
 
         function initialize() {
+            $('#url').click(function () {
+                $(this)[0].select();
+            });
+
             $('#filter-changes').click(function () {
                 processChanges();
             });
