@@ -98,7 +98,8 @@
   <ItemGroup>
     <Content Include="Content\Site.css" />
     <Content Include="Global.asax" />
-    <Content Include="images\minimize.png" />
+    <Content Include="images\collapse.png" />
+    <Content Include="images\expand.png" />
     <Content Include="images\prompt-loading.gif" />
     <Content Include="Scripts\io\directory.js" />
     <Content Include="Scripts\io\file.js" />
