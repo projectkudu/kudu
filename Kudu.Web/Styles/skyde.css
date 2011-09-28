@@ -108,8 +108,12 @@
     background-image: url('../../../images/cshtml.png');
 }
 
-#console .icon-minimize {
-    background-image: url('../../../images/minimize.png');
+#console .icon-collapse {
+    background-image: url('../../../images/collapse.png');
+}
+
+#console .icon-expand {
+    background-image: url('../../../images/expand.png');
 }
 
 #skyde .icon-cshtml-add {
@@ -550,4 +554,8 @@
 #console-ghost {
     width:100%;
     display:block;
+}
+
+#show-console {
+    background-position: center top;
 }

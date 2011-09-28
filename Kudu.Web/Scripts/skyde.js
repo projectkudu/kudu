@@ -594,10 +594,14 @@
 
             $('#show-console').toggle(function () {
                 cs.toggleClass('collapsed');
+                $(this).removeClass('icon-expand');
+                $(this).addClass('icon-collapse');
                 $(window).resize();
             },
             function () {
                 cs.toggleClass('collapsed');
+                $(this).removeClass('icon-collapse');
+                $(this).addClass('icon-expand');
                 $(window).resize();
             });
 
