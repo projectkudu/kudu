@@ -3,6 +3,12 @@ Copyright 2011 Outcurve Foundation
 
 Kudu includes works distributed under the licenses listed below. The full text for most of the licenses listed below can be found in the LICENSE.txt file accompanying each work. The original copyright notices have been preserved within the respective files and or packages. Please refer to the specific files and/or packages for more detailed information about the authors, copyright notices, and licenses.
 
+Ajax Minifier
+-----
+Website:    http://ajaxmin.codeplex.com/
+Copyright:  Copyright (c) 2010 Microsoft Corporation
+License:    Apache 2.0
+
 ASP.NET MVC
 -----
 Website:      http://aspnet.codeplex.com/wikipage?title=MVC&referringTitle=Home
@@ -11,16 +17,34 @@ License:      MICROSOFT ASP.NET MODEL VIEW CONTROLLER 3 EULA
               http://go.microsoft.com/fwlink/?LinkID=207621
 
 CodeMirror
-----------
+-----
 Website:      http://codemirror.net/
 Copyright:    Copyright (C) 2011 by Marijn Haverbeke
 License:      MIT
 
+Elmah
+-----
+Website:      http://code.google.com/p/elmah/
+Copyright:    Copyright (c) 2004-9 Atif Aziz. All rights reserved
+License:      Apache 2.0
+
+Entity Framework
+-----
+Website:    http://msdn.microsoft.com/en-us/data/ef
+Copyright:  Copyright (c) Microsoft Corporation.  All rights reserved.
+License:    http://go.microsoft.com/fwlink/?LinkId=224682 
+
 git-dot-aspx
-----------
+-----
 Website:      https://github.com/JeremySkinner/git-dot-aspx
 Copyright:    Copyright 2010 Jeremy Skinner (http://www.jeremyskinner.co.uk)
 License:      Apache 2.0
+
+HttpClient
+-----
+Website:    http://wcf.codeplex.com/
+Copyright:  Copyright (c) 2010 Microsoft Corporation
+License:    http://wcf.codeplex.com/license 
 
 jQuery
 -----
@@ -32,6 +56,12 @@ jQuery Cookie
 -----
 Website:      http://plugins.jquery.com/project/Cookie
 Copyright:    Copyright (c) 2006 Klaus Hartl (stilbuero.de)
+License:      MIT
+
+jQuery Templates
+-----
+Website:      https://github.com/jquery/jquery-tmpl
+Copyright:    Copyright 2010, John Resig
 License:      MIT
 
 jQuery timeago
@@ -47,28 +77,34 @@ Copyright:    Copyright (c) 2010 lib/jquery.ui/AUTHORS.txt (http://jqueryui.com/
 License:      MIT
 
 Json.NET
-----------
+-----
 Website:      http://json.codeplex.com/
 Copyright:    Copyright (c) 2007 James Newton-King
 License:      MIT
 
 libgit2
-----------
+-----
 Website:      https://github.com/libgit2/libgit2
 Copyright:    Copyright (C) 2007-2009, The Git Development Community and the GitSharp Team
 License:      GPL2 with linking exemption
 
 libgit2sharp
-----------
+-----
 Website:      https://github.com/libgit2/libgit2sharp
 Copyright:    Copyright (c) 2011 LibGit2Sharp contributors
 License:      MIT
 
 Mercurial.Net
-----------
+-----
 Website:      http://mercurialnet.codeplex.com/
 Copyright:    Copyright (c) 2010-2011, Lasse V. Karlsen
 License:      BSD
+
+Microsoft Web Infrastructure
+-----
+Website:    http://www.asp.net/
+Copyright:  Copyright (c) Microsoft Corporation.  All rights reserved.
+License:    http://www.microsoft.com/web/webpi/eula/aspnetmvc3update-eula.htm
 
 Moq
 -----
@@ -77,7 +113,7 @@ Copyright:    Copyright (c) 2007. Clarius Consulting, Manas Technology Solutions
 License:      New BSD
 
 Ninject
-----------
+-----
 Website:      http://code.google.com/p/ninject/
 Copyright:    Copyright (c) 2007-2010 Enkari, Ltd and contributors
 License:      Apache 2.0
@@ -88,14 +124,38 @@ Website:      http://nuget.codeplex.com
 Copyright:    Copyright 2010-2011 Outercurve Foundation
 License:      Apache Software Foundation License 2.0
 
+RouteMagic
+-----
+Website:      http://routemagic.codeplex.com/
+Copyright:    Copyright (c) 2011 Phil Haack
+License:      MS-PL
+
 Sammy
 -----
 Website:      http://sammyjs.org/
 Copyright:    Copyright (c) 2008 Aaron Quint, Quirkey NYC, LLC
 License:      Custom - https://github.com/quirkey/sammy/blob/master/LICENSE
 
+SignalR
+-----
+Website:      https://github.com/SignalR/SignalR
+Copyright:    Copyright (c) 2011 David Fowler & Damian Edwards
+License:      MIT
+
+SQL Server Compact
+-----
+Website:    http://www.microsoft.com 
+Copyright:  Copyright (c) Microsoft Corporation.  All rights reserved.
+License:    http://www.microsoft.com/web/webpi/eula/SQLCE_EULA_ENU.rtf
+
+WebActivator
+-----
+Website:      https://bitbucket.org/davidebbo/webactivator
+Copyright:    Copyright (c) 2010 David Ebbo
+License:      MS-PL
+
 xUnit
-----------
+-----
 Website:      http://xunit.codeplex.com/
 Copyright:    Copyright 2010-2011 Microsoft Corporation
 License:      Ms-Pl
