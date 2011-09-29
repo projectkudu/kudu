@@ -623,7 +623,6 @@
                 return div.innerHTML;
             }
 
-
             function throttle(fn, delay) {
                 var canInvoke = true;
                 var invokeDelay = function () {
@@ -681,6 +680,13 @@
                 if (command && cmd.val() !== command) {
                     cmd.val(command);
                 }
+                evt.stopPropagation();
+                evt.preventDefault();
+                return false;
+            }, 150));
+
+            $(document).bind('keydown', 'ctrl+k', throttle(function (evt) {
+                $('#show-console').trigger('click');
                 evt.stopPropagation();
                 evt.preventDefault();
                 return false;
