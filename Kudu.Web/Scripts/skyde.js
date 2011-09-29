@@ -579,25 +579,22 @@
 
             // TODO: Refactor into something more general that tabs can use
             var commandStack = (function () {
-                var length = 0;
                 var at = 0;
-                var stack = {};
-                var commandLookup = {};
+                var stack = [];
                 return {
                     next: function () {
-                        at = (at + 1) % length;
+                        if (at < stack.length) {
+                            at++;
+                        }
                     },
                     prev: function () {
-                        at--;
-                        if (at < 0) {
-                            at = length - 1;
+                        if (at > 0) {
+                            at--;
                         }
                     },
                     add: function (command) {
-                        stack[length] = command;
-                        commandLookup[command] = length;
-                        at = length;
-                        length++;
+                        stack.push(command);
+                        at = stack.length;
                     },
                     getValue: function () {
                         return stack[at];
@@ -626,11 +623,35 @@
                 return div.innerHTML;
             }
 
+
+            function throttle(fn, delay) {
+                var canInvoke = true;
+                var invokeDelay = function () {
+                    canInvoke = true;
+                };
+
+                return function () {
+                    if (canInvoke) {
+                        fn.apply(this, arguments);
+                        canInvoke = false;
+                        setTimeout(invokeDelay, delay);
+                    }
+                };
+            }
+
+            cmd.bind('keydown', 'esc', function (evt) {
+                $(this).val('');
+                // Clear the console
+                evt.stopPropagation();
+                evt.preventDefault();
+                return false;
+            });
+
             cmd.bind('keydown', 'tab', function (evt) {
                 // Capture tab 
                 evt.stopPropagation();
                 evt.preventDefault();
-                return false; 
+                return false;
             });
 
             cmd.bind('keydown', 'ctrl+c', function (evt) {
@@ -643,27 +664,35 @@
                 return true;
             });
 
-            cmd.bind('keydown', 'up', function (evt) {
+            cmd.bind('keydown', 'up', throttle(function (evt) {
                 commandStack.prev();
-                cmd.val(commandStack.getValue());
+                var command = commandStack.getValue();
+                if (command && cmd.val() !== command) {
+                    cmd.val(command);
+                }
                 evt.stopPropagation();
                 evt.preventDefault();
                 return false;
-            });
+            }, 150));
 
-            cmd.bind('keydown', 'down', function (evt) {
+            cmd.bind('keydown', 'down', throttle(function (evt) {
                 commandStack.next();
-                cmd.val(commandStack.getValue());
+                var command = commandStack.getValue();
+                if (command && cmd.val() !== command) {
+                    cmd.val(command);
+                }
                 evt.stopPropagation();
                 evt.preventDefault();
                 return false;
-            });
+            }, 150));
 
-            commandLine.done = function () {
+            var onConsoleCommandComplete = function () {
                 messages.scrollTop(buffer[0].scrollHeight);
                 buffer.find('.icon-prompt-loading').hide();
                 executingCommand = false;
             };
+
+            commandLine.done = onConsoleCommandComplete;
 
             commandLine.onData = function (result) {
                 var lines = escapeHTMLEncode(result).split('\n');
@@ -695,7 +724,10 @@
                     if (command) {
                         executingCommand = true;
                         commandLine.run(command)
-                                   .fail(onError);
+                                   .fail(function (e) {
+                                       onConsoleCommandComplete();
+                                       onError(e);
+                                   });
 
                         commandStack.add(command);
                     }
