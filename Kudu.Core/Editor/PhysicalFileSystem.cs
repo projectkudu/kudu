@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Editor {
     public class PhysicalFileSystem : IEditorFileSystem {
@@ -35,6 +37,7 @@ namespace Kudu.Core.Editor {
             }
 
             foreach (var subDirectory in directory.EnumerateDirectories()) {
+                yield return MakeRelative(subDirectory.FullName + Path.DirectorySeparatorChar);
                 foreach (var file in GetFiles(subDirectory)) {
                     yield return file;
                 }
@@ -42,7 +45,14 @@ namespace Kudu.Core.Editor {
         }
 
         public void WriteAllText(string path, string text) {
-            File.WriteAllText(GetFullPath(path), text);
+            if (path.EndsWith("/", StringComparison.OrdinalIgnoreCase)) {
+                // If the path ends with slash then we're creatng a directory
+                // TODO: Consider adding a new method for this.
+                FileSystemHelpers.EnsureDirectory(GetFullPath(path));
+            }
+            else {
+                File.WriteAllText(GetFullPath(path), text);
+            }
         }
 
         public void Delete(string path) {
