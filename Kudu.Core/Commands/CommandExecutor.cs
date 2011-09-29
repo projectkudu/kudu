@@ -46,7 +46,6 @@ namespace Kudu.Core.Commands {
                 }
             };
 
-
             _executingProcess.OutputDataReceived += (sender, e) => {
                 if (e.Data == null) {
                     return;

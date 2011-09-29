@@ -575,8 +575,35 @@
             var buffer = consoleWindow.find('.buffer');
             var messages = consoleWindow.find('.messages');
             var toolBarHeight = $('#console .header').outerHeight();
-            var commandStack = [];
             var executingCommand = false;
+
+            // TODO: Refactor into something more general that tabs can use
+            var commandStack = (function () {
+                var length = 0;
+                var at = 0;
+                var stack = {};
+                var commandLookup = {};
+                return {
+                    next: function () {
+                        at = (at + 1) % length;
+                    },
+                    prev: function () {
+                        at--;
+                        if (at < 0) {
+                            at = length - 1;
+                        }
+                    },
+                    add: function (command) {
+                        stack[length] = command;
+                        commandLookup[command] = length;
+                        at = length;
+                        length++;
+                    },
+                    getValue: function () {
+                        return stack[at];
+                    }
+                };
+            })();
 
             $('#show-console').toggle(function () {
                 cs.toggleClass('collapsed');
@@ -606,6 +633,22 @@
                     return false;
                 }
                 return true;
+            });
+
+            cmd.bind('keydown', 'up', function (evt) {
+                commandStack.prev();
+                cmd.val(commandStack.getValue());
+                evt.stopPropagation();
+                evt.preventDefault();
+                return false;
+            });
+
+            cmd.bind('keydown', 'down', function (evt) {
+                commandStack.next();
+                cmd.val(commandStack.getValue());
+                evt.stopPropagation();
+                evt.preventDefault();
+                return false;
             });
 
             commandLine.done = function () {
@@ -646,7 +689,7 @@
                         commandLine.run(command)
                                    .fail(onError);
 
-                        commandStack.push(command);
+                        commandStack.add(command);
                     }
                     else {
                         buffer.find('.icon-prompt-loading').hide();
