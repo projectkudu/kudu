@@ -685,12 +685,16 @@
                 return false;
             }, 150));
 
-            $(document).bind('keydown', 'ctrl+k', throttle(function (evt) {
+            var triggerConsole = throttle(function () {
                 $('#show-console').trigger('click');
+            }, 150);
+
+            $(document).bind('keydown', 'ctrl+k', function (evt) {
+                triggerConsole();
                 evt.stopPropagation();
                 evt.preventDefault();
                 return false;
-            }, 150));
+            });
 
             var onConsoleCommandComplete = function () {
                 messages.scrollTop(buffer[0].scrollHeight);
