@@ -626,6 +626,13 @@
                 return div.innerHTML;
             }
 
+            cmd.bind('keydown', 'tab', function (evt) {
+                // Capture tab 
+                evt.stopPropagation();
+                evt.preventDefault();
+                return false; 
+            });
+
             cmd.bind('keydown', 'ctrl+c', function (evt) {
                 if (executingCommand) {
                     commandLine.cancel();
