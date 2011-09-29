@@ -324,6 +324,11 @@
             function initilize() {
                 var browser = $('#file-browser');
 
+                browser.delegate('.icon-project', 'click', function () {
+                    updateFiles();
+                    return false;
+                });
+
                 browser.delegate('.open', 'click', function () {
                     var path = $(this).closest('.file').attr('data-path');
                     openDocument(path);
