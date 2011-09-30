@@ -158,8 +158,10 @@
                 return '';
             }
 
+            var throttledSave = throttle(saveDocument, 100);
+
             $(document).bind('keydown', 'ctrl+s', function (evt) {
-                saveDocument();
+                throttledSave();
                 evt.stopPropagation();
                 evt.preventDefault();
                 return false;
