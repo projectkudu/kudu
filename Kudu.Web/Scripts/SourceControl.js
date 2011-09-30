@@ -208,7 +208,6 @@
             scm.full = false;
 
             scm.getRepositoryInfo()
-           .fail(onError)
            .done(function (info) {
                scm.branches = info.Branches;
                scm.deployments = info.Deployments;
