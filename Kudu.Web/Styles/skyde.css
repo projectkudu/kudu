@@ -93,131 +93,131 @@
 }
 
 #skyde .icon-cs {
-    background-image: url('../../../images/cs.png');
+    background-image: url('../images/cs.png');
 }
 
 #skyde .icon-cs-add {
-    background-image: url('../../../images/cs-add.png');
+    background-image: url('../images/cs-add.png');
 }
 
 #skyde .icon-cs-edit {
-    background-image: url('../../../images/cs-edit.png');
+    background-image: url('../images/cs-edit.png');
 }
 
 #skyde .icon-cshtml {
-    background-image: url('../../../images/cshtml.png');
+    background-image: url('../images/cshtml.png');
 }
 
 #console .icon-collapse {
-    background-image: url('../../../images/collapse.png');
+    background-image: url('../images/collapse.png');
 }
 
 #console .icon-expand {
-    background-image: url('../../../images/expand.png');
+    background-image: url('../images/expand.png');
 }
 
 #skyde .icon-cshtml-add {
-    background-image: url('../../../images/cshtml-add.png');
+    background-image: url('../images/cshtml-add.png');
 }
 
 #skyde .icon-cshtml-edit {
-    background-image: url('../../../images/cshtml-edit.png');
+    background-image: url('../images/cshtml-edit.png');
 }
 
 #skyde .icon-aspx {
-    background-image: url('../../../images/aspx.png');
+    background-image: url('../images/aspx.png');
 }
 
 #skyde .icon-aspx-add {
-    background-image: url('../../../images/aspx-add.png');
+    background-image: url('../images/aspx-add.png');
 }
 
 #skyde .icon-aspx-edit {
-    background-image: url('../../../images/aspx-edit.png');
+    background-image: url('../images/aspx-edit.png');
 }
 
 #skyde .icon-ascx {
-    background-image: url('../../../images/ascx.png');
+    background-image: url('../images/ascx.png');
 }
 
 #skyde .icon-ascx-add {
-    background-image: url('../../../images/ascx-add.png');
+    background-image: url('../images/ascx-add.png');
 }
 
 #skyde .icon-ascx-edit {
-    background-image: url('../../../images/ascx-edit.png');
+    background-image: url('../images/ascx-edit.png');
 }
 
 #skyde .icon-config {
-    background-image: url('../../../images/config.png');
+    background-image: url('../images/config.png');
 }
 
 #skyde .icon-config-add {
-    background-image: url('../../../images/config-add.png');
+    background-image: url('../images/config-add.png');
 }
 
 #skyde .icon-config-edit {
-    background-image: url('../../../images/config-edit.png');
+    background-image: url('../images/config-edit.png');
 }
 
 #skyde .icon-tt {
-    background-image: url('../../../images/tt.png');
+    background-image: url('../images/tt.png');
 }
 
 #skyde .icon-css {
-    background-image: url('../../../images/css.png');
+    background-image: url('../images/css.png');
 }
 
 #skyde .icon-css-add {
-    background-image: url('../../../images/css-add.png');
+    background-image: url('../images/css-add.png');
 }
 
 #skyde .icon-css-edit {
-    background-image: url('../../../images/css-edit.png');
+    background-image: url('../images/css-edit.png');
 }
 
 #skyde .icon-js {
-    background-image: url('../../../images/js.png');
+    background-image: url('../images/js.png');
 }
 
 #skyde .icon-js-add {
-    background-image: url('../../../images/js-add.png');
+    background-image: url('../images/js-add.png');
 }
 
 #skyde .icon-js-edit {
-    background-image: url('../../../images/js-edit.png');
+    background-image: url('../images/js-edit.png');
 }
 
 #skyde .icon-dll {
-    background-image: url('../../../images/dll.png');
+    background-image: url('../images/dll.png');
 }
 
 #skyde .icon-php {
-    background-image: url('../../../images/php.png');
+    background-image: url('../images/php.png');
 }
 
 #skyde .icon-php-add {
-    background-image: url('../../../images/php-add.png');
+    background-image: url('../images/php-add.png');
 }
 
 #skyde .icon-php-edit {
-    background-image: url('../../../images/php-edit.png');
+    background-image: url('../images/php-edit.png');
 }
 
 #skyde .icon-master {
-    background-image: url('../../../images/master.png');
+    background-image: url('../images/master.png');
 }
 
 #skyde .icon-default {
-    background-image: url('../../../images/page_white.png');
+    background-image: url('../images/page_white.png');
 }
 
 #skyde .icon-default-add {
-    background-image: url('../../../images/page_white_add.png');
+    background-image: url('../images/page_white_add.png');
 }
 
 #skyde .icon-default-edit {
-    background-image: url('../../../images/page_white_edit.png');
+    background-image: url('../images/page_white_edit.png');
 }
 
 .icon {
@@ -235,66 +235,66 @@
 }
 
 #skyde .icon-project {
-    background-image: url('../../../images/solution.png');
+    background-image: url('../images/solution.png');
     float: left;
 }
 
 #skyde .icon-loading {
-    background-image: url('../../../images/loading.gif');
+    background-image: url('../images/loading.gif');
 }
 
 .icon-prompt-loading {
-    background-image: url('../../../images/prompt-loading.gif');
+    background-image: url('../images/prompt-loading.gif');
 }
 
 #skyde .icon-connecting {
-    background-image: url('../../../images/connecting.gif');
+    background-image: url('../images/connecting.gif');
 }
 
 #skyde .icon-connect {
-    background-image: url('../../../images/connect.png');
+    background-image: url('../images/connect.png');
 }
 
 #skyde .icon-disconnect {
-    background-image: url('../../../images/disconnect.png');
+    background-image: url('../images/disconnect.png');
 }
 
 #skyde .icon-save {
-    background-image: url('../../../images/saveall.png');
+    background-image: url('../images/saveall.png');
 }
 
 #skyde .icon-close {
-    background-image: url('../../../images/close.png');
+    background-image: url('../images/close.png');
 }
 
 #skyde .icon-refresh {
-    background-image: url('../../../images/refresh.png');
+    background-image: url('../images/refresh.png');
 }
 
 #skyde .icon-new-file {
-    background-image: url('../../../images/addfile.png');
+    background-image: url('../images/addfile.png');
 }
 
 #skyde .icon-new-folder {
-    background-image: url('../../../images/new-folder.png');
+    background-image: url('../images/new-folder.png');
 }
 
 #skyde .icon-sync {
-    background-image: url('../../../images/sync.png');
+    background-image: url('../images/sync.png');
 }
 
 #skyde .icon-menu {
-    background-image: url('../../../images/application_side_list.png');
+    background-image: url('../images/application_side_list.png');
 }
 
 #skyde .icon-folder {
-    background-image: url('../../../images/folder-expanded.png');
+    background-image: url('../images/folder-expanded.png');
     padding-left: 36px;
     float: left;
 }
 
 #skyde .icon-folder.folder-collapsed {
-    background-image: url('../../../images/folder-collapsed.png');
+    background-image: url('../images/folder-collapsed.png');
     padding-left: 36px;
 }
 

@@ -110,7 +110,7 @@
 }
 
 #scm .icon-loading {
-    background-image: url('../../../images/loading.gif');
+    background-image: url('../images/loading.gif');
 }
 
 #scm .icon {
@@ -128,51 +128,51 @@
 }
 
 #scm .icon-close {
-    background-image: url('../../../images/close.png');
+    background-image: url('../images/close.png');
 }
 
 #scm .icon-binary-file {
-    background-image: url('../../../images/page_white_gear.png');
+    background-image: url('../images/page_white_gear.png');
 }
 
 #scm .icon-file {
-    background-image: url('../../../images/page_white.png');
+    background-image: url('../images/page_white.png');
 }
 
 #scm .icon-file-added {
-    background-image: url('../../../images/page_white_add.png');
+    background-image: url('../images/page_white_add.png');
 }
 
 #scm .icon-file-deleted {
-    background-image: url('../../../images/page_white_delete.png');
+    background-image: url('../images/page_white_delete.png');
 }
 
 #scm .icon-file-modified {
-    background-image: url('../../../images/page_white_edit.png');
+    background-image: url('../images/page_white_edit.png');
 }
 
 #scm .icon-working-dir {
-    background-image: url('../../../images/folder_table.png');
+    background-image: url('../images/folder_table.png');
 }
 
 #scm .icon-tick {
-    background-image: url('../../../images/tick.png');
+    background-image: url('../images/tick.png');
 }
 
 #scm .icon-error {
-    background-image: url('../../../images/error.png');
+    background-image: url('../images/error.png');
 }
 
 #scm .icon-log-message {
-    list-style-image: url('../../../images/tick.png');
+    list-style-image: url('../images/tick.png');
 }
 
 #scm .icon-log-error {
-    list-style-image: url('../../../images/error.png');
+    list-style-image: url('../images/error.png');
 }
 
 #scm .icon-log-warning {
-    list-style-image: url('../../../images/warning.png');
+    list-style-image: url('../images/warning.png');
 }
 
 
