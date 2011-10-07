@@ -25,6 +25,8 @@ using XmlSettings;
 
 namespace Kudu.Services.Web.App_Start {
     public static class NinjectServices {
+        private static CommandExecutor _devExecutor;
+        private static CommandExecutor _liveExecutor;
 
         private const string RepositoryPath = "repository";
         private const string DeploymentTargetPath = "wwwroot";
@@ -66,25 +68,42 @@ namespace Kudu.Services.Web.App_Start {
             IEnvironment environment = GetEnvironment();
             var propertyProvider = new BuildPropertyProvider();
 
-            kernel.Bind<ISettings>().ToMethod(context => new XmlSettings.Settings(GetSettingsPath(environment)));
+            // General
             kernel.Bind<IBuildPropertyProvider>().ToConstant(propertyProvider);
             kernel.Bind<IEnvironment>().ToConstant(environment);
-            kernel.Bind<IRepositoryManager>().ToMethod(context => new RepositoryManager(environment.RepositoryPath));
+            kernel.Bind<IUserValidator>().To<SimpleUserValidator>().InSingletonScope();
+            kernel.Bind<IServerConfiguration>().To<ServerConfiguration>().InSingletonScope();
+            kernel.Bind<IFileSystem>().To<FileSystem>().InSingletonScope();
+
+            // Deployment
+            kernel.Bind<IRepositoryManager>().ToMethod(context => new RepositoryManager(environment.DeploymentRepositoryPath));
             kernel.Bind<ISiteBuilderFactory>().To<SiteBuilderFactory>();
             kernel.Bind<IDeploymentManager>().To<DeploymentManager>()
                                              .InSingletonScope()
                                              .OnActivation(SubscribeForDeploymentEvents);
 
+            // Settings
+            kernel.Bind<ISettings>().ToMethod(context => new XmlSettings.Settings(GetSettingsPath(environment)));
             kernel.Bind<IDeploymentSettingsManager>().To<DeploymentSettingsManager>();
-            kernel.Bind<IEditorFileSystemFactory>().To<FileSystemFactory>();
-            kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.RepositoryPath));
-            kernel.Bind<IUserValidator>().To<SimpleUserValidator>();
-            kernel.Bind<IHgServer>().To<Kudu.Core.SourceControl.Hg.HgServer>().InSingletonScope();
-            kernel.Bind<IServerConfiguration>().To<ServerConfiguration>().InSingletonScope();
-            kernel.Bind<IFileSystem>().To<FileSystem>();
+
+            // Git server
+            kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath))
+                                     .InSingletonScope();
+
+            // Hg Server
+            kernel.Bind<IHgServer>().To<Kudu.Core.SourceControl.Hg.HgServer>()
+                                    .InSingletonScope();
+
+            // Editor
+            kernel.Bind<IEditorFileSystem>().ToMethod(context => GetEditorFileSystem(environment, context))
+                                            .InRequestScope();
+
+            // Command line
             kernel.Bind<ICommandExecutor>().ToMethod(context => GetComandExecutor(environment, context))
-                                           .InSingletonScope()
-                                           .OnActivation(SubscribeForCommandEvents);
+                                           .InRequestScope();
+
+            // Source control
+            kernel.Bind<IRepository>().ToMethod(context => GetSourceControlRepository(environment));
         }
 
         private static string Root {
@@ -97,9 +116,51 @@ namespace Kudu.Services.Web.App_Start {
             }
         }
 
+        private static string DevelopmentPath {
+            get {
+                string path = ConfigurationManager.AppSettings["dev"];
+                if (System.String.IsNullOrEmpty(path)) {
+                    return null;
+                }
+                return path;
+            }
+        }
+
+        private static IRepository GetSourceControlRepository(IEnvironment environment) {
+            EnsureDevelopmentRepository(environment);
+
+            return new RepositoryManager(environment.RepositoryPath).GetRepository();
+        }
+
+        private static IEditorFileSystem GetEditorFileSystem(IEnvironment environment, IContext context) {
+            if (IsDevSiteRequest(context)) {
+                EnsureDevelopmentRepository(environment);
+                return new PhysicalFileSystem(environment.RepositoryPath);
+            }
+
+            return new PhysicalFileSystem(environment.DeploymentTargetPath);
+        }
+
         private static CommandExecutor GetComandExecutor(IEnvironment environment, IContext context) {
-            return new CommandExecutor(context.Kernel.Get<IFileSystem>(),
-                                       environment.RepositoryPath);
+            var fileSystem = context.Kernel.Get<IFileSystem>();
+
+            if (IsDevSiteRequest(context)) {
+                EnsureDevelopmentRepository(environment);
+
+                if (_devExecutor == null) {
+                    _devExecutor = new CommandExecutor(fileSystem, environment.RepositoryPath);
+                    SubscribeForCommandEvents<DevCommandStatusHandler>(_devExecutor);
+                }
+
+                return _devExecutor;
+            }
+
+            if (_liveExecutor == null) {
+                _liveExecutor = new CommandExecutor(fileSystem, environment.DeploymentTargetPath);
+                SubscribeForCommandEvents<LiveCommandStatusHandler>(_liveExecutor);
+            }
+
+            return _liveExecutor;
         }
 
         private static string GetSettingsPath(IEnvironment environment) {
@@ -111,11 +172,16 @@ namespace Kudu.Services.Web.App_Start {
 
             string site = HttpRuntime.AppDomainAppVirtualPath.Trim('/');
             string root = Path.Combine(Root, site);
-            string repositoryPath = Path.Combine(root, RepositoryPath);
+            string deploymentRepositoryPath = Path.Combine(root, RepositoryPath);
             string deployPath = Path.Combine(root, DeploymentTargetPath);
             string deployCachePath = Path.Combine(root, DeploymentCachePath);
 
-            return new Environment(site, root, repositoryPath, deployPath, deployCachePath);
+            return new Environment(site,
+                                   root,
+                                   deploymentRepositoryPath,
+                                   () => DevelopmentPath,
+                                   deployPath,
+                                   deployCachePath);
         }
 
         private static void InitializeEnvVars(string root) {
@@ -128,8 +194,21 @@ namespace Kudu.Services.Web.App_Start {
             System.Environment.SetEnvironmentVariable("TMP", tempPath);
         }
 
-        private static void SubscribeForCommandEvents(ICommandExecutor commandExecutor) {
-            IConnection connection = Connection.GetConnection<CommandStatusHandler>();
+        private static bool IsDevSiteRequest(IContext context) {
+            var httpContext = context.Kernel.Get<HttpContextBase>();
+            string live = (string)httpContext.Request.RequestContext.RouteData.Values["live"];
+
+            return System.String.IsNullOrEmpty(live);
+        }
+
+        private static void EnsureDevelopmentRepository(IEnvironment environment) {
+            if (System.String.IsNullOrEmpty(environment.RepositoryPath)) {
+                throw new System.InvalidOperationException("Developer mode not enabled for this site");
+            }
+        }
+
+        private static void SubscribeForCommandEvents<T>(ICommandExecutor commandExecutor) where T : PersistentConnection {
+            IConnection connection = Connection.GetConnection<T>();
             commandExecutor.CommandEvent += commandEvent => {
                 connection.Broadcast(commandEvent);
             };

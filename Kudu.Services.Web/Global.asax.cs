@@ -15,8 +15,9 @@ namespace Kudu.Services {
             var configuration = (IServerConfiguration)KernelContainer.Kernel.GetService(typeof(IServerConfiguration));
             var factory = GetFactory();
 
-            routes.MapConnection<Deployment.DeploymentStatusHandler>("DeploymentStatus", "deploy/status/{*operation}");
-            routes.MapConnection<Deployment.CommandStatusHandler>("CommandStatus", "command/status/{*operation}");
+            routes.MapConnection<DeploymentStatusHandler>("DeploymentStatus", "deploy/status/{*operation}");
+            routes.MapConnection<LiveCommandStatusHandler>("LiveCommandStatus", "live/command/status/{*operation}");
+            routes.MapConnection<DevCommandStatusHandler>("DevCommandStatus", "dev/command/status/{*operation}");
 
             routes.Add(new ServiceRoute(configuration.HgServerRoot, factory, typeof(HgServer.ProxyController)));
             routes.Add(new ServiceRoute(configuration.GitServerRoot + "/info/refs", factory, typeof(GitServer.InfoRefsController)));
@@ -27,6 +28,51 @@ namespace Kudu.Services {
             routes.Add(new ServiceRoute("scm", factory, typeof(SourceControl.ScmController)));
             routes.Add(new ServiceRoute("appsettings", factory, typeof(Settings.AppSettingsController)));
             routes.Add(new ServiceRoute("connectionstrings", factory, typeof(Settings.ConnectionStringsController)));
+
+            /*routes.MapRoute(
+                "LiveCommandLine",
+                "live/command/{action}/{id}",
+                new { controller = "Command", action = "Index", id = UrlParameter.Optional, live = "live" }
+            );
+
+            routes.MapRoute(
+                "DevCommandLine",
+                "dev/command/{action}/{id}",
+                new { controller = "Command", action = "Index", id = UrlParameter.Optional }
+            );
+
+            routes.MapRoute(
+                "LiveFiles",
+                "live/files/{action}/{id}",
+                new { controller = "Files", action = "Index", id = UrlParameter.Optional, live = "live" }
+            );
+
+            routes.MapRoute(
+                "DevFiles",
+                "dev/files/{action}/{id}",
+                new { controller = "Files", action = "Index", id = UrlParameter.Optional }
+            );
+
+            routes.MapRoute(
+                "Error",
+                "error",
+                new { controller = "Error", action = "Index" });
+
+            routes.MapRoute(
+                "CreateScm",
+                "scm/create",
+                new { controller = "DeploymentScm", action = "create" });
+
+            routes.MapRoute(
+                "DeleteScm",
+                "scm/delete",
+                new { controller = "DeploymentScm", action = "delete" });
+
+            routes.MapRoute(
+                "ScmKind",
+                "scm/kind",
+                new { controller = "DeploymentScm", action = "kind" });
+            */
         }
 
         protected void Application_Start() {

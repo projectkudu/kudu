@@ -14,6 +14,9 @@
     <li>
         @Html.ActionLink("Manage Repository", "scm", new { slug = Model.Name.GenerateSlug() })
     </li>
+    <li>
+        @Html.ActionLink("Manage Deployments", "deployments", new { slug = Model.Name.GenerateSlug() })
+    </li>
     }
     <li>
         @Html.ActionLink("Manage Files", "editor", new { slug = Model.Name.GenerateSlug() })

@@ -1,0 +1,98 @@
+﻿@using Kudu.Core.SourceControl
+@using Kudu.Web.Models
+
+@model ApplicationViewModel
+           
+@{
+    ViewBag.Title = "Deployments";
+}
+
+<div id="scm">    
+    <h3>Application URL</h3>
+    <p>
+        <a href="@Model.SiteUrl" target="_blank">@Model.SiteUrl</a>
+    </p>
+
+    <h3>Repository URL</h3>
+    <div id="clone-url">
+        <input type="text" name="url" id="url" value="@(Model.CloneUrl ?? "None")" readonly="readonly" @(Model.CloneUrl == null ? "disabled=\"disabled\"" : "") />
+    </div>
+
+    <div id="page">
+        <div id="new-commit">
+        </div>
+        <div id="error">
+        </div>
+        <div id="menu" class="gray-gradient">
+            <div id="links">
+                <a href="#/">Deployments</a>
+            </div>
+        </div>
+        <div id="status-container">
+            <div id="status">
+            </div>
+        </div> 
+        <table id="log">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Status</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="deployments">
+            </tbody>
+        </table>
+        <div id="infinite-status">
+        </div>
+ 
+        <ul id="deploy-log"> 
+        </ul>
+
+        <div id="footer" />
+    </div>
+</div>
+
+<link href="@Url.Content("~/Styles/SourceControl.css")" rel="stylesheet" type="text/css" />
+<script src="@Url.Content("~/Scripts/jquery-1.6.3.min.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Scripts/loader.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Scripts/jquery.cookie.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Scripts/jquery.render.min.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Scripts/sammy.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Scripts/jquery.timeago.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Scripts/jquery.signalR.min.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/signalr/hubs")" type="text/javascript"></script>
+<script src="@Url.Content("~/Scripts/Deployments.js")" type="text/javascript"></script>
+<script type="text/javascript">
+    (function ($) {
+        $(function () {
+            $.connection.deployment.appName = '@Model.Name';
+        });
+    })(jQuery);
+</script>
+<script id="logTemplate" type="text/x-jquery-tmpl"> 
+    <li class="${getLogClass(Type)}">
+        <strong>${LogTime}</strong> 
+        <pre class="message">${Message}</pre>
+    </li>
+</script>
+
+<script id="deployment" type="text/x-jquery-tmpl"> 
+    <tr class="deployment" id="${Id}">
+        <td>${Id}</td>
+        <td>
+            <div class="deploy-status">${Status}</div>
+            <div class="status-text">${StatusText}</div>
+        </td>
+        <td class="actions">            
+            <a href="#/view-log/${Id}" class="view-log">view log</a>
+            <a href="#" class="update deploy${showDeploy ? "" : " hide"}" data-id="${Id}">deploy</a>
+        </td>
+        <td>
+            <span class="loading icon-notext icon-loading${showLoading ? "" : " hide"}">&nbsp;</span>
+            <span class="status icon-notext icon-tick${Active ? "" : " hide"}">&nbsp;</span>
+            <span class="failed icon-notext icon-error${failed ? "" : " hide"}">&nbsp;</span>
+        </td>
+    </tr>
+</script>

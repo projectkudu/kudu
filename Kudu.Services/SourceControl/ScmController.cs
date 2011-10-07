@@ -3,38 +3,16 @@ using System.Net;
 using System.ServiceModel;
 using System.ServiceModel.Web;
 using Kudu.Core.SourceControl;
-using Kudu.Core.SourceControl.Hg;
 using Microsoft.ApplicationServer.Http.Dispatcher;
+using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.SourceControl {
     [ServiceContract]
     public class ScmController {
         private readonly IRepository _repository;
-        private readonly IRepositoryManager _repositoryManager;
-        private readonly IHgServer _server;
 
-        public ScmController(IRepositoryManager repositoryManager,
-                             IHgServer server) {
-            _repositoryManager = repositoryManager;
-            _repository = repositoryManager.GetRepository() ?? NullRepository.Instance;
-            _server = server;
-        }
-
-        [WebInvoke]
-        public void Create(SimpleJson.JsonObject input) {
-            _repositoryManager.CreateRepository((RepositoryType)(long)input["type"]);
-        }
-
-        [WebInvoke]
-        public void Delete() {
-            // Stop the server (will no-op if nothing is running)
-            _server.Stop();
-            _repositoryManager.Delete();
-        }
-
-        [WebGet(UriTemplate = "kind")]
-        public RepositoryType GetRepositoryType() {
-            return _repositoryManager.GetRepositoryType();
+        public ScmController(IRepository repository) {
+            _repository = repository;
         }
 
         [WebGet(UriTemplate = "id")]

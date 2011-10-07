@@ -239,6 +239,7 @@ namespace Kudu.Core.Deployment {
             finally {
                 if (trackingFile != null) {
                     trackingFile.DeploymentEndTime = DateTime.Now;
+                    trackingFile.StatusText = String.Empty;
                     trackingFile.Percentage = 100;
                     trackingFile.Save(_fileSystem);
                     NotifyStatus(id);

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using Kudu.Client.Hubs.Editor;
 using Kudu.Client.Model;
 using Kudu.Client.Models;
 using Kudu.Core.Commands;
@@ -6,7 +7,6 @@ using Kudu.Core.Deployment;
 using Kudu.Core.Editor;
 using Kudu.Core.SourceControl;
 using SignalR.Hubs;
-using Kudu.Client.Hubs.Editor;
 
 namespace Kudu.Client.Infrastructure {
     public class SiteConfiguration : ISiteConfiguration {
@@ -22,39 +22,61 @@ namespace Kudu.Client.Infrastructure {
                 Repository = config.Repository;
                 FileSystem = config.FileSystem;
                 RepositoryManager = config.RepositoryManager;
+                DevFileSystem = config.DevFileSystem;
+
 
                 if (config.DeploymentManager.IsActive) {
                     DeploymentManager = config.DeploymentManager;
                     CommandExecutor = config.CommandExecutor;
+                    DevCommandExecutor = config.DevCommandExecutor;
                 }
                 else {
                     DeploymentManager = new RemoteDeploymentManager(ServiceUrl + "deploy");
                     DeploymentManager.StatusChanged += OnDeploymentStatusChanged;
-                    CommandExecutor = new RemoteCommandExecutor(ServiceUrl + "command");
-                    CommandExecutor.CommandEvent += OnCommandEvent;
+
+                    CommandExecutor = new RemoteCommandExecutor(ServiceUrl + "live/command");
+                    DevCommandExecutor = new RemoteCommandExecutor(ServiceUrl + "dev/command");
+                    DevCommandExecutor.CommandEvent += commandEvent => {
+                        OnCommandEvent<CommandLine>(commandEvent);
+                    };
+
+                    CommandExecutor.CommandEvent += commandEvent => {
+                        OnCommandEvent<CommandLine>(commandEvent);
+                    };
                 }
             }
             else {
                 Repository = new RemoteRepository(ServiceUrl + "scm");
-                FileSystem = new RemoteFileSystem(ServiceUrl + "files");
                 DeploymentManager = new RemoteDeploymentManager(ServiceUrl + "deploy");
                 RepositoryManager = new RemoteRepositoryManager(ServiceUrl + "scm");
-                CommandExecutor = new RemoteCommandExecutor(ServiceUrl + "command");
 
-                CommandExecutor.CommandEvent += OnCommandEvent;
-                DeploymentManager.StatusChanged += OnDeploymentStatusChanged;
+                FileSystem = new RemoteFileSystem(ServiceUrl + "live/files");
+                CommandExecutor = new RemoteCommandExecutor(ServiceUrl + "live/command");
+
+                DevFileSystem = new RemoteFileSystem(ServiceUrl + "dev/files");
+                DevCommandExecutor = new RemoteCommandExecutor(ServiceUrl + "dev/command");
+
+                DevCommandExecutor.CommandEvent += commandEvent => {
+                    OnCommandEvent<CommandLine>(commandEvent);
+                };
                 
+                CommandExecutor.CommandEvent += commandEvent => {
+                    OnCommandEvent<CommandLine>(commandEvent);
+                };
+
+                DeploymentManager.StatusChanged += OnDeploymentStatusChanged;
+
                 _cache[Name] = this;
             }
         }
 
         private void OnDeploymentStatusChanged(DeployResult result) {
-            var clients = Hub.GetClients<SourceControl>();
+            var clients = Hub.GetClients<Deployment>();
             clients.updateDeployStatus(new DeployResultViewModel(result));
         }
 
-        private void OnCommandEvent(CommandEvent commandEvent) {
-            var clients = Hub.GetClients<CommandLine>();
+        private void OnCommandEvent<T>(CommandEvent commandEvent) where T : Hub {
+            var clients = Hub.GetClients<T>();
             if (commandEvent.EventType == CommandEventType.Complete) {
                 clients.done();
             }
@@ -66,6 +88,11 @@ namespace Kudu.Client.Infrastructure {
         public string Name { get; private set; }
         public string ServiceUrl { get; private set; }
         public string SiteUrl { get; private set; }
+
+        public IEditorFileSystem DevFileSystem {
+            get;
+            private set;
+        }
 
         public IEditorFileSystem FileSystem {
             get;
@@ -94,6 +121,11 @@ namespace Kudu.Client.Infrastructure {
         }
 
         public ICommandExecutor CommandExecutor {
+            get;
+            private set;
+        }
+
+        public ICommandExecutor DevCommandExecutor {
             get;
             private set;
         }

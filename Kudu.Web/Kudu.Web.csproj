@@ -101,6 +101,7 @@
     <Content Include="images\collapse.png" />
     <Content Include="images\expand.png" />
     <Content Include="images\prompt-loading.gif" />
+    <Content Include="Scripts\Deployments.js" />
     <Content Include="Scripts\io\directory.js" />
     <Content Include="Scripts\io\file.js" />
     <Content Include="Scripts\io\fileSystem.js" />
@@ -265,6 +266,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\Settings\Index.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\Application\Deployments.cshtml" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" />

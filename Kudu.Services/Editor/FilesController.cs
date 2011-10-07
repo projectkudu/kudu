@@ -9,8 +9,8 @@ namespace Kudu.Services.Documents {
     public class FilesController {
         private readonly IEditorFileSystem _fileSystem;
 
-        public FilesController(IEditorFileSystemFactory fileSystemFactory) {
-            _fileSystem = fileSystemFactory.CreateEditorFileSystem();
+        public FilesController(IEditorFileSystem fileSystem) {
+            _fileSystem = fileSystem;
         }
 
         [WebGet(UriTemplate = "")]

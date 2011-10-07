@@ -10,9 +10,11 @@ namespace Kudu.Client.Infrastructure {
         string SiteUrl { get; }
 
         IEditorFileSystem FileSystem { get; }
+        IEditorFileSystem DevFileSystem { get; }
         IDeploymentManager DeploymentManager { get; }
         IRepositoryManager RepositoryManager { get; }
         IRepository Repository { get; }
         ICommandExecutor CommandExecutor { get; }
+        ICommandExecutor DevCommandExecutor { get; }
     }
 }

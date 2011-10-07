@@ -112,6 +112,19 @@ namespace Kudu.Web.Controllers {
             return HttpNotFound();
         }
 
+        [ActionName("deployments")]
+        public ActionResult ViewDeployments(string slug) {
+            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
+            if (application != null) {
+                var appViewModel = new ApplicationViewModel(application);
+                appViewModel.RepositoryType = GetRepositoryManager(application).GetRepositoryType();
+
+                return View(appViewModel);
+            }
+
+            return HttpNotFound();
+        }
+
         [ActionName("editor")]
         public ActionResult EditFiles(string slug) {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);

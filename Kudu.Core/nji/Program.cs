@@ -180,7 +180,7 @@
             catch
             {
                 Logger.Log(String.Format("No module named {0} in package registry! Aborting!", pkg), LogEntryType.Error);
-                Environment.Exit(-1);
+                throw;
             }
             return (IDictionary<string, object>)SimpleJson.DeserializeObject(response);
         }

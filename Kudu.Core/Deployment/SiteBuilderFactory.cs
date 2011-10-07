@@ -14,11 +14,11 @@ namespace Kudu.Core.Deployment {
 
         public ISiteBuilder CreateBuilder() {
             // Get all solutions in the current repository path
-            var solutions = VsSolution.GetSolutions(_environment.RepositoryPath).ToList();
+            var solutions = VsSolution.GetSolutions(_environment.DeploymentRepositoryPath).ToList();
 
             if (!solutions.Any()) {
                 // If there's none then use the basic builder (the site is xcopy deployable)
-                return new BasicBuilder(_environment.RepositoryPath);
+                return new BasicBuilder(_environment.DeploymentRepositoryPath);
             }
 
             // More than one solution is ambiguous
@@ -39,10 +39,10 @@ namespace Kudu.Core.Deployment {
             }
 
             if (project.IsWap) {
-                return new WapBuilder(_propertyProvider, _environment.RepositoryPath, solution.Path, project.AbsolutePath);
+                return new WapBuilder(_propertyProvider, _environment.DeploymentRepositoryPath, solution.Path, project.AbsolutePath);
             }
 
-            return new WebSiteBuilder(_propertyProvider, _environment.RepositoryPath, solution.Path, project.AbsolutePath);
+            return new WebSiteBuilder(_propertyProvider, _environment.DeploymentRepositoryPath, solution.Path, project.AbsolutePath);
         }
     }
 }

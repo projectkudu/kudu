@@ -1,23 +1,43 @@
 ﻿using Kudu.Core.Infrastructure;
+using System;
 
 namespace Kudu.Core {
     public class Environment : IEnvironment {
-        private readonly string _repositoryPath;
         private readonly string _deployPath;
         private readonly string _deployCachePath;
+        private readonly string _deploymentRepositoryPath;
+        private readonly Func<string> _repositoryPathResolver;
 
-        public Environment(string appName, string applicationRootPath, string repositoryPath, string deployPath, string deployCachePath) {
+        public Environment(string appName,
+                           string applicationRootPath,
+                           string deploymentRepositoryPath,
+                           Func<string> repositoryPathResolver,
+                           string deployPath,
+                           string deployCachePath) {
             AppName = appName;
             ApplicationRootPath = applicationRootPath;
-            _repositoryPath = repositoryPath;
+            _deploymentRepositoryPath = deploymentRepositoryPath;
+            _repositoryPathResolver = repositoryPathResolver;
             _deployPath = deployPath;
             _deployCachePath = deployCachePath;
         }
 
+        public string DeploymentRepositoryPath {
+            get {
+                FileSystemHelpers.EnsureDirectory(_deploymentRepositoryPath);
+                return _deploymentRepositoryPath;
+            }
+        }
+
         public string RepositoryPath {
             get {
-                FileSystemHelpers.EnsureDirectory(_repositoryPath);
-                return _repositoryPath;
+                string path = _repositoryPathResolver();
+                if (String.IsNullOrEmpty(path)) {
+                    return null;
+                }
+
+                FileSystemHelpers.EnsureDirectory(path);
+                return path;
             }
         }
 

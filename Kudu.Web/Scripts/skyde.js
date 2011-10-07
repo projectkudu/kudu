@@ -742,8 +742,8 @@
                         executingCommand = true;
                         commandLine.run(command)
                                    .fail(function (e) {
+                                       commandLine.onData(e);
                                        onConsoleCommandComplete();
-                                       onError(e);
                                    });
 
                         commandStack.add(command);
