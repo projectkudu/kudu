@@ -434,22 +434,7 @@
 
                     if (!directory._isRoot()) {
                         var folderContents = $(this).siblings('.folder-contents');
-
-                        var lazyFiles = folderContents.children('.lazy-files');
-                        var lazyFolders = folderContents.children('.lazy-folders');
-
-                        if (lazyFolders.length && lazyFiles.length) {
-                            var innerFiles = $('#fileTemplate').render(directory.getFiles());
-                            var innerFolders = $('#lazyFolderTemplate').render(directory.getDirectories());
-
-                            lazyFiles.html(innerFiles);
-                            lazyFolders.html(innerFolders);
-
-                            lazyFolders.removeClass('lazy-folders');
-                            lazyFiles.removeClass('lazy-files');
-
-                            classifyFiles(folderContents);
-                        }
+                        ensureFolderContents($(this));
 
                         folderContents.toggle();
                         $(this).toggleClass('folder-collapsed');
@@ -529,6 +514,29 @@
                 refreshTabs();
             }
 
+            function ensureFolderContents(folder) {
+                var path = folder.closest('.folder').attr('data-path');
+                var directory = fileSystem.getDirectory(path);
+
+                var folderContents = folder.siblings('.folder-contents');
+
+                var lazyFiles = folderContents.children('.lazy-files');
+                var lazyFolders = folderContents.children('.lazy-folders');
+
+                if (lazyFolders.length && lazyFiles.length) {
+                    var innerFiles = $('#fileTemplate').render(directory.getFiles());
+                    var innerFolders = $('#lazyFolderTemplate').render(directory.getDirectories());
+
+                    lazyFiles.html(innerFiles);
+                    lazyFolders.html(innerFolders);
+
+                    lazyFolders.removeClass('lazy-folders');
+                    lazyFiles.removeClass('lazy-files');
+
+                    classifyFiles(folderContents);
+                }
+            }
+
             function classifyFiles(element) {
                 // Setup images for file types
                 $.each(element.find('.open'), function () {
@@ -572,6 +580,11 @@
                     if (folderCollapsedState[path] || directory.isEmpty()) {
                         $(this).addClass('folder-collapsed');
                         $(this).siblings('.folder-contents').hide();
+                    }
+                    else {
+                        $(this).removeClass('folder-collapsed');
+                        ensureFolderContents($(this));
+                        $(this).siblings('.folder-contents').show();
                     }
                 });
 
