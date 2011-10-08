@@ -17,11 +17,7 @@ namespace Kudu.Core.Deployment {
         }
 
         public IEnumerable<ConnectionStringSetting> GetConnectionStrings() {
-            return from pair in _client.GetJson<IEnumerable<KeyValuePair<string, string>>>("connectionStrings")
-                   select new ConnectionStringSetting {
-                       Name = pair.Key,
-                       ConnectionString = pair.Value
-                   };
+            return _client.GetJson<IEnumerable<ConnectionStringSetting>>("connectionStrings");
         }
 
         public void SetConnectionString(string name, string connectionString) {

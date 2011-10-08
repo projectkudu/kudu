@@ -297,8 +297,8 @@
                              refresh(project);
                              loader.hide(token);
                          })
-                         .fail(function (e) {
-                             onError(e);
+                         .fail(onError).
+                         always(function () {
                              loader.hide(token);
                          });
             }
@@ -572,6 +572,8 @@
                 $('.menu-contents').hide();
             });
 
+
+            // Command Window 
             var commandLine = $.connection.commandLine;
             commandLine.appName = documents.appName;
 
@@ -761,6 +763,8 @@
             consoleWindow.click(function () {
                 cmd.focus();
             });
+
+            // End Command Window
         }
     };
 

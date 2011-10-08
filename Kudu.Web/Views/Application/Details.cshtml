@@ -12,14 +12,11 @@
 <ul id="app-links" class="tab-menu">
     @if (Model.RepositoryType != RepositoryType.None) {
     <li>
-        @Html.ActionLink("Manage Repository", "scm", new { slug = Model.Name.GenerateSlug() })
-    </li>
-    <li>
-        @Html.ActionLink("Manage Deployments", "deployments", new { slug = Model.Name.GenerateSlug() })
+        @Html.ActionLink("Deployments", "deployments", new { slug = Model.Name.GenerateSlug() })
     </li>
     }
     <li>
-        @Html.ActionLink("Manage Files", "editor", new { slug = Model.Name.GenerateSlug() })
+        @Html.ActionLink("Develop", "editor", new { slug = Model.Name.GenerateSlug() })
     </li>
     <li>
         @Html.ActionLink("Settings", "index", "settings", new { slug = Model.Name.GenerateSlug() }, null)

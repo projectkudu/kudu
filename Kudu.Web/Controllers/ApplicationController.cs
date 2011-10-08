@@ -129,8 +129,9 @@ namespace Kudu.Web.Controllers {
         public ActionResult EditFiles(string slug) {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             if (application != null) {
-                ViewBag.AppName = application.Name;
-                return View(new ApplicationViewModel(application));
+                var appViewModel = new ApplicationViewModel(application);
+                appViewModel.RepositoryType = GetRepositoryManager(application).GetRepositoryType();
+                return View(appViewModel);
             }
 
             return HttpNotFound();
