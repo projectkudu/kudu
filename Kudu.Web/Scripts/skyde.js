@@ -433,8 +433,27 @@
                     var directory = fileSystem.getDirectory(path);
 
                     if (!directory._isRoot()) {
+                        var folderContents = $(this).siblings('.folder-contents');
+
+                        var lazyFiles = folderContents.children('.lazy-files');
+                        var lazyFolders = folderContents.children('.lazy-folders');
+
+                        if (lazyFolders.length && lazyFiles.length) {
+                            var innerFiles = $('#fileTemplate').render(directory.getFiles());
+                            var innerFolders = $('#lazyFolderTemplate').render(directory.getDirectories());
+
+                            lazyFiles.html(innerFiles);
+                            lazyFolders.html(innerFolders);
+
+                            lazyFolders.removeClass('lazy-folders');
+                            lazyFiles.removeClass('lazy-files');
+
+                            classifyFiles(folderContents);
+                        }
+
+                        folderContents.toggle();
                         $(this).toggleClass('folder-collapsed');
-                        $(this).siblings('.folder-contents').toggle();
+
                         $('.menu-contents').hide();
                     }
                     return false;
@@ -510,6 +529,18 @@
                 refreshTabs();
             }
 
+            function classifyFiles(element) {
+                // Setup images for file types
+                $.each(element.find('.open'), function () {
+                    var path = $(this).closest('.file').attr('data-path');
+                    var file = fileSystem.getFile(path);
+                    var extension = file.getExtension();
+                    var iconMapping = iconMap[extension] || 'default';
+
+                    $(this).addClass('icon-' + iconMapping).addClass('icon');
+                });
+            }
+
             function refresh(project) {
                 var oldFiles = fileSystem.getFiles();
 
@@ -531,14 +562,7 @@
                 browser.html($('#folderTemplate').render(root));
 
                 // Setup images for file types
-                $.each(browser.find('.open'), function () {
-                    var path = $(this).closest('.file').attr('data-path');
-                    var file = fileSystem.getFile(path);
-                    var extension = file.getExtension();
-                    var iconMapping = iconMap[extension] || 'default';
-
-                    $(this).addClass('icon-' + iconMapping).addClass('icon');
-                });
+                classifyFiles(browser);
 
                 // Preserve folder collapsed state
                 $.each(browser.find('.icon-folder'), function () {

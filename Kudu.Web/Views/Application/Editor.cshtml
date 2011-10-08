@@ -74,9 +74,9 @@
                 </ul>
                 </li>
             </ul>
-            <div class="clear" />              
+            <div class="clear" />
             <div class="folder-contents">
-                {{tmpl(getDirectories()) "#folderTemplate"}}
+                {{tmpl(getDirectories()) "#lazyFolderTemplate"}}
                 <ul class="files">
                     {{tmpl(getFiles()) "#fileTemplate"}}
                 </ul>
@@ -84,6 +84,34 @@
         </li>            
     </ul>
 </script>
+
+<script id="lazyFolderTemplate" type="text/x-jquery-tmpl"> 
+    <ul class="folder folder-collapsed" data-path="${$data.getPath()}">
+        <li>
+            <a href="#" class="icon icon-folder folder-collapsed">${$data.getName()}</a>
+            <ul class="menu">
+                <li><a href="#" class="menu-launcher icon-notext icon-menu">&nbsp;</a>
+                <ul class="menu-contents">
+                {{if !$data.isReadOnly()}}
+                    <li><a href="#" class="new-file icon icon-new-file">New File</a></li>
+                    <li><a href="#" class="new-folder icon icon-new-folder">New Folder</a></li>
+                {{/if}}
+                </ul>
+                </li>
+            </ul>
+            <div class="clear" />
+            <div class="folder-contents" style="display:none">
+                <div class="lazy-folders">
+                    
+                </div>
+                <ul class="files lazy-files">
+                    
+                </ul>
+            </div>
+        </li>            
+    </ul>
+</script>
+
 <script id="fileTemplate" type="text/x-jquery-tmpl"> 
     <li class="file" data-path="${$data.getPath()}">
         <a href="#" class="open" id="${$data.getElementId()}">${$data.getName()}</a>
