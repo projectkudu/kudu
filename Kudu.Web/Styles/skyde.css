@@ -13,6 +13,7 @@
 #skyde a {
     text-decoration: none;
     color: Blue;
+    outline: none;
 }
 
 #skyde a:visited {
