@@ -101,6 +101,9 @@
     <Content Include="images\collapse.png" />
     <Content Include="images\expand.png" />
     <Content Include="images\prompt-loading.gif" />
+    <Content Include="Scripts\codemirror\mode\markdown\markdown.css" />
+    <Content Include="Scripts\codemirror\mode\markdown\markdown.js" />
+    <Content Include="Scripts\codemirror\mode\yaml\yaml.js" />
     <Content Include="Scripts\Deployments.js" />
     <Content Include="Scripts\io\directory.js" />
     <Content Include="Scripts\io\file.js" />
@@ -112,6 +115,7 @@
     <Content Include="Scripts\jquery.signalR.min.js" />
     <Content Include="Scripts\skyde.js" />
     <Content Include="Styles\codemirror.css" />
+    <Content Include="Styles\default-settings.css" />
     <Content Include="Styles\Settings.css" />
     <Content Include="Styles\skyde.css" />
     <Content Include="Scripts\loader.js" />
@@ -183,8 +187,6 @@
     <Content Include="Scripts\codemirror\mode\css\css.js" />
     <Content Include="Scripts\codemirror\mode\diff\diff.css" />
     <Content Include="Scripts\codemirror\mode\diff\diff.js" />
-    <Content Include="Scripts\codemirror\mode\haskell\haskell.css" />
-    <Content Include="Scripts\codemirror\mode\haskell\haskell.js" />
     <Content Include="Scripts\codemirror\mode\htmlmixed\htmlmixed.js" />
     <Content Include="Scripts\codemirror\mode\javascript\javascript.css" />
     <Content Include="Scripts\codemirror\mode\javascript\javascript.js" />

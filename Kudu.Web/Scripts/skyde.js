@@ -133,6 +133,10 @@
                     return 'javascript';
                 }
 
+                if (extension == '.markdown' || extension == '.md') {
+                    return 'markdown';
+                }
+
                 if (extension == '.html' ||
                     extension == '.htm' ||
                     extension == '.aspx' ||
