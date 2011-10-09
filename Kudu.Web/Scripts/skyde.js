@@ -129,7 +129,7 @@
                 if (extension == '.css') {
                     return 'css';
                 }
-                if (extension == '.js') {
+                if (extension == '.js' || extension == '.json') {
                     return 'javascript';
                 }
 
