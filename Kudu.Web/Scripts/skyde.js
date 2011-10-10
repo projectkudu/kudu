@@ -656,7 +656,6 @@
                 cs.toggleClass('collapsed');
                 $(this).removeClass('icon-expand');
                 $(this).addClass('icon-collapse');
-                cmd.focus();
                 $(window).resize();
             },
             function () {
