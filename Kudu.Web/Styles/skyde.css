@@ -393,8 +393,8 @@
 #skyde ul#tabs {
     width: 70%;
     margin: 0;
-    padding: 0 0 2px;
-    height: 20px;
+    padding: 0;
+    height: 22px;
 }
 
 #skyde ul#tabs li {
@@ -439,7 +439,7 @@
 #skyde ul#tabs li.active:hover {
     border: 1px solid #ccc;
     background: #f5f5ee;
-    border-bottom: 1px solid #f5f5ee;
+    border-bottom: 1px solid #fff;
 }
 
 #console .output {
