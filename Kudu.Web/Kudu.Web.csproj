@@ -98,6 +98,8 @@
   <ItemGroup>
     <Content Include="Content\Site.css" />
     <Content Include="Global.asax" />
+    <Content Include="images\book_previous.png" />
+    <Content Include="images\terminal.png" />
     <Content Include="images\collapse.png" />
     <Content Include="images\expand.png" />
     <Content Include="images\prompt-loading.gif" />
@@ -170,7 +172,6 @@
     <Content Include="images\php-add.png" />
     <Content Include="images\php-edit.png" />
     <Content Include="images\php.png" />
-    <Content Include="images\project.png" />
     <Content Include="images\refresh.png" />
     <Content Include="images\run.png" />
     <Content Include="images\saveall.png" />

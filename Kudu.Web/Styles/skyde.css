@@ -93,6 +93,10 @@
     line-height: 12pt;
 }
 
+#skyde .icon-history {
+    background-image: url('../images/book_previous.png');
+}
+
 #skyde .icon-cs {
     background-image: url('../images/cs.png');
 }
