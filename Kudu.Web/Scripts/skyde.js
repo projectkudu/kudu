@@ -515,17 +515,26 @@
                 });
 
                 $('#active-view').change(function () {
-                    if ($(this).val() == 'dev') {
-                        documents.mode = 'dev';
-                        commandLine.mode = 'dev';
-                    }
-                    else {
-                        documents.mode = '';
-                        commandLine.mode = '';
-                    }
-
-                    updateFiles().done(collapseFolders);
+                    updateActiveView();
                 });
+            }
+
+            function updateActiveView() {
+                if ($('#active-view').val() == 'dev') {
+                    documents.mode = 'dev';
+                    commandLine.mode = 'dev';
+
+                    $('.dev-mode').show();
+                }
+                else {
+                    documents.mode = '';
+                    commandLine.mode = '';
+
+                    $('.dev-mode').hide();
+
+                }
+
+                updateFiles().done(collapseFolders);
             }
 
             function closeTab(path) {
@@ -628,7 +637,7 @@
             initilize();
 
             $.connection.hub.start({ transport: "longPolling" }, function () {
-                updateFiles().done(collapseFolders);
+                updateActiveView();
             });
 
             $(window.document).click(function () {

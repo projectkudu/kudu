@@ -332,6 +332,10 @@
     margin-right: 30px;
 }
 
+#skyde .dev-mode {
+    display: none;
+}
+
 #skyde #commit {
     display: none;
 }
