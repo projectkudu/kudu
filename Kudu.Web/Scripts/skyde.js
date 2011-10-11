@@ -336,7 +336,7 @@
                 });
 
                 browser.delegate('.open', 'click', function () {
-                    var path = $(this).closest('.file').attr('data-path');
+                    var path = $(this).closest('.file').data('path');
                     openDocument(path);
 
                     $('.menu-contents').hide();
@@ -344,7 +344,7 @@
                 });
 
                 browser.delegate('.delete', 'click', function () {
-                    var path = $(this).closest('.file').attr('data-path');
+                    var path = $(this).closest('.file').data('path');
                     var file = fileSystem.getFile(path);
 
                     if (confirm('Are you sure you want to delete "' + file.getName() + '"')) {
@@ -367,7 +367,7 @@
                 });
 
                 browser.delegate('.new-file', 'click', function () {
-                    var path = $(this).closest('.folder').attr('data-path');
+                    var path = $(this).closest('.folder').data('path');
                     var directory = fileSystem.getDirectory(path);
                     var relativePath = directory.getRelativePath();
                     var name = getNewDocument(relativePath);
@@ -409,7 +409,7 @@
                 });
 
                 browser.delegate('.new-folder', 'click', function () {
-                    var path = $(this).closest('.folder').attr('data-path');
+                    var path = $(this).closest('.folder').data('path');
                     var directory = fileSystem.getDirectory(path);
                     var relativePath = directory.getRelativePath();
                     var name = prompt('Enter folder name', 'New Folder');
@@ -433,7 +433,7 @@
                 });
 
                 browser.delegate('.icon-folder', 'click', function () {
-                    var path = $(this).closest('.folder').attr('data-path');
+                    var path = $(this).closest('.folder').data('path');
                     var directory = fileSystem.getDirectory(path);
 
                     if (!directory._isRoot()) {
@@ -461,7 +461,7 @@
                 var tabs = $('#tabs');
 
                 tabs.delegate('.open', 'click', function () {
-                    var path = $(this).closest('.file').attr('data-path');
+                    var path = $(this).closest('.file').data('path');
                     var file = getActiveDocument();
                     if (file.getPath() != path) {
                         openDocument(path);
@@ -471,7 +471,7 @@
                 });
 
                 tabs.delegate('.delete', 'click', function () {
-                    var path = $(this).closest('.file').attr('data-path');
+                    var path = $(this).closest('.file').data('path');
 
                     var document = documentTabs.get(path);
                     if (document.getFile().isDirty() === true) {
@@ -519,7 +519,7 @@
             }
 
             function ensureFolderContents(folder) {
-                var path = folder.closest('.folder').attr('data-path');
+                var path = folder.closest('.folder').data('path');
                 var directory = fileSystem.getDirectory(path);
 
                 var folderContents = folder.siblings('.folder-contents');
@@ -544,7 +544,7 @@
             function classifyFiles(element) {
                 // Setup images for file types
                 $.each(element.find('.open'), function () {
-                    var path = $(this).closest('.file').attr('data-path');
+                    var path = $(this).closest('.file').data('path');
                     var file = fileSystem.getFile(path);
                     var extension = file.getExtension();
                     var iconMapping = iconMap[extension] || 'default';
@@ -565,7 +565,7 @@
                 // Store the state of each of the folders so we preserve them after the bind
                 var folderCollapsedState = {};
                 $.each(browser.find('.icon-folder'), function () {
-                    var path = $(this).closest('.folder').attr('data-path');
+                    var path = $(this).closest('.folder').data('path');
                     folderCollapsedState[path] = $(this).hasClass('folder-collapsed');
                 });
 
@@ -578,7 +578,7 @@
 
                 // Preserve folder collapsed state
                 $.each(browser.find('.icon-folder'), function () {
-                    var path = $(this).closest('.folder').attr('data-path');
+                    var path = $(this).closest('.folder').data('path');
                     var directory = fileSystem.getDirectory(path);
 
                     if (folderCollapsedState[path] || directory.isEmpty()) {

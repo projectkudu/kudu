@@ -109,12 +109,8 @@
     background-image: url('../images/cshtml.png');
 }
 
-#console .icon-collapse {
-    background-image: url('../images/collapse.png');
-}
-
-#console .icon-expand {
-    background-image: url('../images/expand.png');
+#skyde .icon-working-dir {
+    background-image: url('../images/folder_table.png');
 }
 
 #skyde .icon-cshtml-add {
@@ -280,8 +276,8 @@
     background-image: url('../images/new-folder.png');
 }
 
-#skyde .icon-sync {
-    background-image: url('../images/sync.png');
+#skyde .icon-build {
+    background-image: url('../images/build.png');
 }
 
 #skyde .icon-menu {
@@ -392,7 +388,7 @@
 
 #skyde ul#tabs {
     width: 70%;
-    margin: 0;
+    margin: 5px 0 0;
     padding: 0;
     height: 22px;
 }
@@ -406,6 +402,16 @@
     border-radius: 4px 4px 0px 0px;
     -moz-border-radius: 4px 4px 0px 0px;
     -webkit-border-radius: 4px 4px 0px 0px;
+}
+
+#skyde ul#toolbar {
+    padding-left: 0;
+    margin-left: 0;
+}
+
+#skyde ul#toolbar li {
+    display: inline;
+    margin-right: 10px;
 }
 
 #skyde ul#tabs a {
@@ -456,6 +462,14 @@
     box-shadow: 2px 2px 5px #888;
     -webkit-box-shadow: 2px 2px 5px #888;
     -moz-box-shadow: 2px 2px 5px #888;
+}
+
+#console .icon-collapse {
+    background-image: url('../images/collapse.png');
+}
+
+#console .icon-expand {
+    background-image: url('../images/expand.png');
 }
 
 #console {

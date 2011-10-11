@@ -7,6 +7,21 @@
     ViewBag.Title = "Editor";
 }
 <div id="skyde">
+    <ul id="toolbar">
+        <li>
+            <a href="#" class="icon icon-working-dir" id="show-working">Commit Changes</a>
+        </li>
+        <li>
+            <a href="#" class="icon icon-log" id="show-commits">Commit History</a>
+        </li>
+        <li>
+            <a href="#" class="icon icon-save" id="save-all">Save All</a>
+        </li>
+        <li>
+            <a href="#" class="icon icon-build" id="build">Build</a>
+        </li>
+    </ul>
+
     <ul id="tabs">
     </ul>
     <div id="code-surface">
@@ -67,7 +82,7 @@
 <script id="folderTemplate" type="text/x-jquery-tmpl"> 
     <ul class="folder" data-path="${$data.getPath()}">
         <li>
-            <a href="#" class="icon ${$data._isRoot() ? 'icon-project' : 'icon-folder'}">${$data._isRoot() ? '@Model.Name' : $data.getName()}</a>
+            <a href="#" class="icon icon-project">@Model.Name</a>
             <ul class="menu">
                 <li><a href="#" class="menu-launcher icon-notext icon-menu">&nbsp;</a>
                 <ul class="menu-contents">
