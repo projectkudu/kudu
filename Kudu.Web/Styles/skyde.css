@@ -472,6 +472,10 @@
     background-image: url('../images/expand.png');
 }
 
+#console .icon-terminal {
+    background-image: url('../images/terminal.png');
+}
+
 #console {
     height: 350px;
     width: 97%;    
@@ -504,6 +508,11 @@
 #console .header a {
     text-decoration: none;
     float: right;
+}
+
+#console .header span {
+    float: left;
+    background-position: center top;
 }
 
 #console.collapsed .output {
