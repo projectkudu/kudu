@@ -509,6 +509,23 @@
                     saveDocument();
                     return false;
                 });
+
+                $('#show-working').click(function () {
+                    return false;
+                });
+
+                $('#active-view').change(function () {
+                    if ($(this).val() == 'dev') {
+                        documents.mode = 'dev';
+                        commandLine.mode = 'dev';
+                    }
+                    else {
+                        documents.mode = '';
+                        commandLine.mode = '';
+                    }
+
+                    updateFiles().done(collapseFolders);
+                });
             }
 
             function closeTab(path) {

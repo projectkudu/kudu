@@ -2,21 +2,30 @@
 using System.Collections.Generic;
 using Kudu.Core.Commands;
 using SignalR.Hubs;
+using Kudu.Client.Infrastructure;
 
 namespace Kudu.Client.Hubs.Editor {
     public class CommandLine : Hub {
-        private readonly ICommandExecutor _executor;
+        private readonly ISiteConfiguration _siteConfiguration;
 
-        public CommandLine(ICommandExecutor executor) {
-            _executor = executor;
+        public CommandLine(ISiteConfiguration siteConfiguration) {
+            _siteConfiguration = siteConfiguration;
         }
 
         public void Run(string command) {
-            _executor.ExecuteCommand(command);
+            GetActiveExecutor().ExecuteCommand(command);
         }
 
         public void Cancel() {
-            _executor.CancelCommand();
+            GetActiveExecutor().CancelCommand();
+        }
+
+        private ICommandExecutor GetActiveExecutor() {
+            string mode = Caller.mode;
+            if (String.IsNullOrEmpty(mode)) {
+                return _siteConfiguration.CommandExecutor;
+            }
+            return _siteConfiguration.DevCommandExecutor;
         }
     }
 }

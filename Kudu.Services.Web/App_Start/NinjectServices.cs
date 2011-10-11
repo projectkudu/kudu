@@ -179,7 +179,7 @@ namespace Kudu.Services.Web.App_Start {
             return new Environment(site,
                                    root,
                                    deploymentRepositoryPath,
-                                   () => DevelopmentPath,
+                                   () => deploymentRepositoryPath,
                                    deployPath,
                                    deployCachePath);
         }

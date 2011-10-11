@@ -1,20 +1,22 @@
 ﻿using System.Linq;
+using Kudu.Client.Infrastructure;
 using Kudu.Client.Model;
-using Kudu.Core.Editor;
 using SignalR.Hubs;
+using Kudu.Core.Editor;
+using System;
 
 namespace Kudu.Client {
     public class Documents : Hub {
-        private readonly IEditorFileSystem _fileSystem;
+        private readonly ISiteConfiguration _siteConfiguration;
 
-        public Documents(IEditorFileSystem fileSystem) {
-            _fileSystem = fileSystem;
+        public Documents(ISiteConfiguration siteConfiguration) {
+            _siteConfiguration = siteConfiguration;
         }
 
         public Project GetStatus() {
             return new Project {
                 Name = "Project",
-                Files = from path in _fileSystem.GetFiles()
+                Files = from path in GetActiveFileSystem().GetFiles()
                         select new File {
                             Path = path
                         }
@@ -22,15 +24,23 @@ namespace Kudu.Client {
         }
 
         public string OpenFile(string path) {
-            return _fileSystem.ReadAllText(path);
+            return GetActiveFileSystem().ReadAllText(path);
         }
 
         public void SaveFile(File file) {
-            _fileSystem.WriteAllText(file.Path, file.Content);
+            GetActiveFileSystem().WriteAllText(file.Path, file.Content);
         }
 
         public void DeleteFile(string path) {
-            _fileSystem.Delete(path);
+            GetActiveFileSystem().Delete(path);
+        }
+
+        private IEditorFileSystem GetActiveFileSystem() {
+            string mode = Caller.mode;
+            if (String.IsNullOrEmpty(mode)) {
+                return _siteConfiguration.FileSystem;
+            }
+            return _siteConfiguration.DevFileSystem;
         }
     }
 }
