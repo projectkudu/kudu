@@ -504,6 +504,11 @@
 
                     return false;
                 });
+
+                $('#save').click(function () {
+                    saveDocument();
+                    return false;
+                });
             }
 
             function closeTab(path) {
@@ -643,8 +648,7 @@
                         }
                     },
                     add: function (command) {
-                        stack.push(command);
-                        at = stack.length;
+                        at = stack.push(command);
                     },
                     getValue: function () {
                         return stack[at];
