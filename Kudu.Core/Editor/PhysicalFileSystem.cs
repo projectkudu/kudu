@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using Kudu.Core.Infrastructure;
@@ -36,9 +37,13 @@ namespace Kudu.Core.Editor {
             }
 
             foreach (var subDirectory in directory.EnumerateDirectories()) {
-                yield return MakeRelative(subDirectory.FullName + Path.DirectorySeparatorChar);
-                foreach (var file in GetFiles(subDirectory)) {
-                    yield return file;
+                var files = GetFiles(subDirectory);
+
+                if (files.Any()) {
+                    yield return MakeRelative(subDirectory.FullName + Path.DirectorySeparatorChar);
+                    foreach (var file in files) {
+                        yield return file;
+                    }
                 }
             }
         }
