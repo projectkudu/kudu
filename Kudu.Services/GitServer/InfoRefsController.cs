@@ -22,17 +22,18 @@
 
 namespace Kudu.Services.GitServer {
     using System;
-    using System.Web.Mvc;
-    using System.Web.SessionState;
+    using System.IO;
+    using System.Net.Http;
+    using System.Net.Http.Headers;
+    using System.ServiceModel;
+    using System.ServiceModel.Web;
     using Kudu.Core.SourceControl;
     using Kudu.Core.SourceControl.Git;
-    using Kudu.Services.Authorization;
     using Kudu.Services.Infrastructure;
 
-    // Handles /project/info/refs
-    [SessionState(SessionStateBehavior.Disabled)]
-    [BasicAuthorize]
-    public class InfoRefsController : Controller {
+    // Handles /{project}/info/refs
+    [ServiceContract]
+    public class InfoRefsController {
         private readonly IGitServer _gitServer;
         private readonly IRepositoryManager _repositoryManager;
 
@@ -41,7 +42,8 @@ namespace Kudu.Services.GitServer {
             _repositoryManager = repositoryManager;
         }
 
-        public ActionResult Execute(string service) {
+        [WebGet(UriTemplate = "?service={service}")]
+        public HttpResponseMessage Execute(string service) {
             service = GetServiceType(service);
             bool isUsingSmartProtocol = service != null;
 
@@ -50,32 +52,39 @@ namespace Kudu.Services.GitServer {
                 return SmartInfoRefs(service);
             }
 
-            throw new Exception("Dumb protocol not supported");
+            throw new Exception("Dumb protocol not supported"); // REVIEW: Consider throw 501 Not Implemented
         }
 
-        private ActionResult SmartInfoRefs(string service) {
-            Response.ContentType = "application/x-git-{0}-advertisement".With(service);
-            Response.WriteNoCache();
+        private HttpResponseMessage SmartInfoRefs(string service) {
+            var memoryStream = new MemoryStream();
 
-            // Explicitly set the charset to empty string 
-            // We do this as certain git clients (jgit) require it to be empty.
-            // If we don't set it, then it defaults to utf-8, which breaks jgit's logic for detecting smart http
-            Response.Charset = "";
-
-            Response.PktWrite("# service=git-{0}\n", service);
-            Response.PktFlush();
+            memoryStream.PktWrite("# service=git-{0}\n", service);
+            memoryStream.PktFlush();
 
             if (service == "upload-pack") {
                 EnsureGitRepository();
-                _gitServer.AdvertiseUploadPack(Response.OutputStream);
+                _gitServer.AdvertiseUploadPack(memoryStream);
             }
 
             else if (service == "receive-pack") {
                 EnsureGitRepository();
-                _gitServer.AdvertiseReceivePack(Response.OutputStream);
+                _gitServer.AdvertiseReceivePack(memoryStream);
             }
 
-            return new EmptyResult();
+            memoryStream.Flush();
+            memoryStream.Position = 0;
+
+            var content = new StreamContent(memoryStream);
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/x-git-{0}-advertisement".With(service));
+            // Explicitly set the charset to empty string
+            // We do this as certain git clients (jgit) require it to be empty.
+            // If we don't set it, then it defaults to utf-8, which breaks jgit's logic for detecting smart http
+            content.Headers.ContentType.CharSet = "";
+
+            var responseMessage = new HttpResponseMessage();
+            responseMessage.Content = content;
+            responseMessage.WriteNoCache();
+            return responseMessage;
         }
 
         protected string GetServiceType(string service) {

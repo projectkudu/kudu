@@ -16,7 +16,7 @@ using Kudu.Services.Web.Services;
 using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 using Ninject;
 using Ninject.Activation;
-using Ninject.Web.Mvc;
+using Ninject.Extensions.Wcf;
 using SignalR;
 using XmlSettings;
 
@@ -25,7 +25,7 @@ using XmlSettings;
 
 namespace Kudu.Services.Web.App_Start {
     public static class NinjectServices {
-        private static readonly Bootstrapper bootstrapper = new Bootstrapper();
+
         private const string RepositoryPath = "repository";
         private const string DeploymentTargetPath = "wwwroot";
         private const string DeploymentCachePath = "deployments";
@@ -36,15 +36,13 @@ namespace Kudu.Services.Web.App_Start {
         /// </summary>
         public static void Start() {
             DynamicModuleUtility.RegisterModule(typeof(OnePerRequestModule));
-            DynamicModuleUtility.RegisterModule(typeof(HttpApplicationInitializationModule));
-            bootstrapper.Initialize(CreateKernel);
+            CreateKernel();
         }
 
         /// <summary>
         /// Stops the application.
         /// </summary>
         public static void Stop() {
-            bootstrapper.ShutDown();
         }
 
         /// <summary>
@@ -55,6 +53,8 @@ namespace Kudu.Services.Web.App_Start {
             var kernel = new StandardKernel();
 
             RegisterServices(kernel);
+
+            KernelContainer.Kernel = kernel;
             return kernel;
         }
 

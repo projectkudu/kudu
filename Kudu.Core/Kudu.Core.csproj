@@ -52,9 +52,6 @@
     <Reference Include="Microsoft.Net.Http.Formatting">
       <HintPath>..\packages\HttpClient.0.5.0\lib\40\Microsoft.Net.Http.Formatting.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Server.Common">
-      <HintPath>..\packages\JsonValue.0.5.0\lib\40\Microsoft.Server.Common.dll</HintPath>
-    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.4.0.2\lib\net40\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -129,6 +126,7 @@
     <Compile Include="Infrastructure\UrlUtility.cs" />
     <Compile Include="Infrastructure\VsSolution.cs" />
     <Compile Include="Infrastructure\VsSolutionProject.cs" />
+    <Compile Include="Infrastructure\SimpleJsonMediaTypeFormatter.cs" />
     <Compile Include="nji\Program.cs" />
     <Compile Include="nji\SimpleJson.cs" />
     <Compile Include="nji\Tar.cs" />

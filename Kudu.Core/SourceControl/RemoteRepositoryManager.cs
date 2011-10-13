@@ -7,14 +7,13 @@ namespace Kudu.Core.SourceControl {
     public class RemoteRepositoryManager : IRepositoryManager {
         private readonly HttpClient _client;
 
-        public RemoteRepositoryManager(string serviceUrl) {            
+        public RemoteRepositoryManager(string serviceUrl) {
             _client = HttpClientHelper.Create(serviceUrl);
         }
 
         public void CreateRepository(RepositoryType type) {
-            _client.Post("create", new FormUrlEncodedContent(new Dictionary<string, string> {
-                { "type", ((int)type).ToString() }
-            })).EnsureSuccessful();
+            _client.Post("create", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, object>("type", type)))
+                   .EnsureSuccessful();
         }
 
         public RepositoryType GetRepositoryType() {

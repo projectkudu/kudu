@@ -1,20 +1,21 @@
-﻿using System.Web.Mvc;
+﻿using System.ServiceModel;
+using System.ServiceModel.Web;
 using Kudu.Core.Commands;
 
 namespace Kudu.Services.Commands {
-    public class CommandController : Controller {
+    [ServiceContract]
+    public class CommandController {
         private readonly ICommandExecutor _executor;
-        
         public CommandController(ICommandExecutor executor) {
             _executor = executor;
         }
 
-        [HttpPost]
-        public void Run(string command) {
-            _executor.ExecuteCommand(command);
+        [WebInvoke]
+        public void Run(SimpleJson.JsonObject input) {
+            _executor.ExecuteCommand((string)input["command"]);
         }
 
-        [HttpPost]
+        [WebInvoke]
         public void Cancel() {
             _executor.CancelCommand();
         }

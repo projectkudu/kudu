@@ -1,34 +1,39 @@
-﻿using System;
-using System.Web.Mvc;
+﻿using System.Collections.Generic;
+using System.Net.Http;
+using System.ServiceModel;
+using System.ServiceModel.Web;
 using Kudu.Core.Editor;
-using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.Documents {
-    public class FilesController : KuduController {
+    [ServiceContract]
+    public class FilesController {
         private readonly IEditorFileSystem _fileSystem;
 
         public FilesController(IEditorFileSystemFactory fileSystemFactory) {
             _fileSystem = fileSystemFactory.CreateEditorFileSystem();
         }
 
-        [HttpGet]
-        [ActionName("index")]
-        public ActionResult GetFiles(string path) {
-            if (String.IsNullOrEmpty(path)) {
-                return Json(_fileSystem.GetFiles(), JsonRequestBehavior.AllowGet);
-            }
-            return Content(_fileSystem.ReadAllText(path));
+        [WebGet(UriTemplate = "")]
+        public IEnumerable<string> GetFiles() {
+            return _fileSystem.GetFiles();
         }
 
-        [HttpPost]
-        [ValidateInput(false)]
-        public void Save(string path, string content) {
-            _fileSystem.WriteAllText(path, content);
+        [WebGet(UriTemplate = "?path={path}")]
+        public HttpResponseMessage GetFile(string path) {
+            var content = new StringContent(_fileSystem.ReadAllText(path), System.Text.Encoding.UTF8);
+            var response = new HttpResponseMessage();
+            response.Content = content;
+            return response;
         }
 
-        [HttpPost]
-        public void Delete(string path) {
-            _fileSystem.Delete(path);
+        [WebInvoke]
+        public void Save(SimpleJson.JsonObject input) {
+            _fileSystem.WriteAllText((string)input["path"], (string)input["content"]);
+        }
+
+        [WebInvoke]
+        public void Delete(SimpleJson.JsonObject input) {
+            _fileSystem.Delete((string)input["path"]);
         }
     }
 }

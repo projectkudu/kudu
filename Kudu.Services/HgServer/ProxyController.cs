@@ -1,23 +1,24 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Net;
+using System.Net.Http;
+using System.ServiceModel;
+using System.ServiceModel.Web;
 using System.Threading;
-using System.Web;
-using System.Web.Mvc;
 using Kudu.Core.Deployment;
+using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Hg;
 using Kudu.Services.Infrastructure;
-using Kudu.Core.SourceControl;
 
 namespace Kudu.Services.HgServer {
-    public class ProxyController : Controller {
+    [ServiceContract]
+    public class ProxyController {
         private readonly IHgServer _hgServer;
         private readonly IServerConfiguration _configuration;
         private readonly IDeploymentManager _deploymentManager;
         private readonly IRepositoryManager _repositoryManager;
 
-        public ProxyController(IHgServer hgServer, 
+        public ProxyController(IHgServer hgServer,
                                IServerConfiguration configuration,
                                IDeploymentManager deploymentManager,
                                IRepositoryManager repositoryManager) {
@@ -27,18 +28,28 @@ namespace Kudu.Services.HgServer {
             _repositoryManager = repositoryManager;
         }
 
-        public ActionResult ProxyRequest() {
+        [WebInvoke(UriTemplate="")]
+        public HttpResponseMessage PostProxy(HttpRequestMessage request) {
+            return ProxyRequest(request);
+        }
+
+        [WebGet(UriTemplate = "")]
+        public HttpResponseMessage GetProxy(HttpRequestMessage request) {
+            return ProxyRequest(request);
+        }
+
+        private HttpResponseMessage ProxyRequest(HttpRequestMessage request) {
             string hgRoot = _configuration.ApplicationName + "/" + _configuration.HgServerRoot;
 
             if (!hgRoot.StartsWith("/", StringComparison.OrdinalIgnoreCase)) {
                 hgRoot = "/" + hgRoot;
             }
 
-            if (!Request.RawUrl.StartsWith(hgRoot, StringComparison.OrdinalIgnoreCase)) {
+            if (!request.RequestUri.PathAndQuery.StartsWith(hgRoot, StringComparison.OrdinalIgnoreCase)) {
                 throw new ArgumentException();
             }
 
-            string pathToProxy = Request.RawUrl.Substring(hgRoot.Length);
+            string pathToProxy = request.RequestUri.PathAndQuery.Substring(hgRoot.Length);
 
             if (!_hgServer.IsRunning) {
                 EnsureHgRepository();
@@ -47,56 +58,25 @@ namespace Kudu.Services.HgServer {
 
             var uri = new Uri(_hgServer.Url + pathToProxy);
 
-            var proxyRequest = (HttpWebRequest)WebRequest.Create(uri);
-
-            proxyRequest.Method = Request.HttpMethod;
-
-            foreach (string headerName in Request.Headers) {
-                string headerValue = Request.Headers[headerName];
-
-                if (headerName == "Accept") {
-                    proxyRequest.Accept = headerValue;
-                }
-                else if (headerName == "Host") {
-                    proxyRequest.Host = headerValue;
-                }
-                else if (headerName == "User-Agent") {
-                    proxyRequest.UserAgent = headerValue;
-                }
-                else if (headerName == "Content-Length") {
-                    proxyRequest.ContentLength = long.Parse(headerValue);
-                }
-                else if (headerName == "Content-Type") {
-                    proxyRequest.ContentType = headerValue;
-                }
-                else if (headerName == "Connection") {
-                    // This blows up with "Keep-Alive and Close may not be set using this property"
-                    //proxyRequest.Connection = headerValue;
-                }
-                else {
-                    proxyRequest.Headers[headerName] = headerValue;
-                }
+            HttpClient client = new HttpClient();
+            client.DefaultRequestHeaders.Clear();
+            foreach (KeyValuePair<string, IEnumerable<string>> header in request.Headers) {
+                client.DefaultRequestHeaders.Add(header.Key, header.Value);
             }
 
-            if (Request.ContentLength > 0) {
-                Request.InputStream.CopyTo(proxyRequest.GetRequestStream());
+            HttpResponseMessage proxyResponse;
+            switch (request.Method.Method.ToUpperInvariant()) {
+                case "GET":
+                    proxyResponse = client.Get(uri);
+                    break;
+                case "POST":
+                    proxyResponse = client.Post(uri, request.Content);
+                    break;
+                default:
+                    return new HttpResponseMessage(System.Net.HttpStatusCode.MethodNotAllowed);
             }
 
-            using (var proxyResponse = (HttpWebResponse)proxyRequest.GetResponse()) {
-
-                foreach (string headerName in proxyResponse.Headers) {
-                    string headerValue = proxyResponse.Headers[headerName];
-                    Response.AddHeader(headerName, headerValue);
-                }
-
-                using (Stream proxyResponseStream = proxyResponse.GetResponseStream()) {
-                    proxyResponseStream.CopyTo(Response.OutputStream);
-                }
-            }
-
-            // After we run the unbundle command we can start the deployment
-            string cmd = Request["cmd"];
-            if (String.Equals(cmd, "unbundle", StringComparison.OrdinalIgnoreCase)) {
+            if (request.RequestUri.Query.Contains("cmd=unbundle")) {
                 ThreadPool.QueueUserWorkItem(_ => {
                     try {
                         _deploymentManager.Deploy();
@@ -108,7 +88,7 @@ namespace Kudu.Services.HgServer {
                 });
             }
 
-            return new EmptyResult();
+            return proxyResponse;
         }
 
         private void EnsureHgRepository() {

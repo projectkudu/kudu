@@ -49,30 +49,26 @@ namespace Kudu.Core.SourceControl {
         }
 
         public void AddFile(string path) {
-            _client.Post("add", new FormUrlEncodedContent(new Dictionary<string, string> {
-                { "path", path }
-            })).EnsureSuccessful();
+            _client.Post("add", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, object>("path", path)))
+                   .EnsureSuccessful();
         }
 
         public void RevertFile(string path) {
-            _client.Post("remove", new FormUrlEncodedContent(new Dictionary<string, string> {
-                { "path", path }
-            })).EnsureSuccessful();
+            _client.Post("remove", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, object>("path", path)))
+                   .EnsureSuccessful();
         }
 
         public ChangeSet Commit(string authorName, string message) {
-            string json = _client.Post("commit", new FormUrlEncodedContent(new Dictionary<string, string> {
-                { "name", authorName },
-                { "message", message }
-            })).EnsureSuccessful().Content.ReadAsString();
+            string json = _client.Post("commit", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, object>("name", authorName), new KeyValuePair<string, object>("message", message)))
+                                 .EnsureSuccessful()
+                                 .Content.ReadAsString();
 
             return JsonConvert.DeserializeObject<ChangeSet>(json);
         }
 
         public void Update(string id) {
-            _client.Post("update", new FormUrlEncodedContent(new Dictionary<string, string> {
-                { "id", id }
-            })).EnsureSuccessful();
-        }        
+            _client.Post("update", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, object>("id", id)))
+                   .EnsureSuccessful();
+        }
     }
 }

@@ -1,47 +1,45 @@
-﻿using System.Web.Mvc;
+﻿using System.Collections.Generic;
+using System.ServiceModel;
+using System.ServiceModel.Web;
 using Kudu.Core.Deployment;
-using Kudu.Services.Infrastructure;
-using System;
 
 namespace Kudu.Services.Deployment {
-    public class DeployController : KuduController {
+    [ServiceContract]
+    public class DeployController {
         private readonly IDeploymentManager _deploymentManager;
 
         public DeployController(IDeploymentManager deploymentManager) {
             _deploymentManager = deploymentManager;
         }
 
-        [HttpGet]
-        [ActionName("id")]
+        [WebGet(UriTemplate = "id")]
         public string GetActiveDeploymentId() {
             return _deploymentManager.ActiveDeploymentId;
         }
 
-        [HttpPost]
-        [ActionName("index")]
-        public void Deploy(string id) {
-            _deploymentManager.Deploy(id);
+        [WebInvoke(UriTemplate = "")]
+        public void Deploy(SimpleJson.JsonObject input) {
+            _deploymentManager.Deploy((string)input["id"]);
         }
 
-        [HttpPost]
-        [ActionName("new")]
-        public void CreateBuild(string id) {
-            _deploymentManager.Build(id);
+        [WebInvoke(UriTemplate = "new")]
+        public void CreateBuild(SimpleJson.JsonObject input) {
+            _deploymentManager.Build((string)input["id"]);
         }
 
-        [HttpGet]
-        [ActionName("log")]
-        public ActionResult GetResults(string id) {
-            if (String.IsNullOrEmpty(id)) {
-                return Json(_deploymentManager.GetResults(), JsonRequestBehavior.AllowGet);
-            }
-            return Json(_deploymentManager.GetLogEntries(id), JsonRequestBehavior.AllowGet);
+        [WebGet(UriTemplate = "log")]
+        public IEnumerable<DeployResult> GetDeployResults() {
+            return _deploymentManager.GetResults();
         }
 
-        [HttpGet]
-        [ActionName("details")]
-        public ActionResult GetResult(string id) {
-            return Json(_deploymentManager.GetResult(id), JsonRequestBehavior.AllowGet);
+        [WebGet(UriTemplate = "log?id={id}")]
+        public IEnumerable<LogEntry> GetLogEntry(string id) {
+            return _deploymentManager.GetLogEntries(id);
+        }
+
+        [WebGet(UriTemplate = "details?id={id}")]
+        public DeployResult GetResult(string id) {
+            return _deploymentManager.GetResult(id);
         }
     }
 }

@@ -29,14 +29,12 @@ namespace Kudu.Core.Deployment {
         public event Action<CommandEvent> CommandEvent;
 
         public void ExecuteCommand(string command) {
-            _client.Post("run", new FormUrlEncodedContent(new Dictionary<string, string> {
-                { "command", command }
-            })).EnsureSuccessful();
+            _client.Post("run", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, object>("command", command)))
+                   .EnsureSuccessful();
         }
 
         public void CancelCommand() {
-            _client.Post("cancel", new FormUrlEncodedContent(new Dictionary<string, string> { }))
-                   .EnsureSuccessful();
+            _client.Post("cancel", new StringContent(String.Empty)).EnsureSuccessful();
         }
     }
 }

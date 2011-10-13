@@ -22,30 +22,35 @@
 
 namespace Kudu.Services.GitServer {
     using System;
-    using System.ComponentModel;
-    using System.Web;
-    using System.Web.Mvc;
-    using System.Web.Routing;
+    using System.IO;
+    using System.Net.Http;
+    using System.Net.Http.Headers;
+    using System.Text;
 
-    public static class Helpers {        
+    public static class Helpers {
         public static string With(this string format, params string[] args) {
             return String.Format(format, args);
         }
 
-        public static void WriteNoCache(this HttpResponseBase response) {
-            response.AddHeader("Expires", "Fri, 01 Jan 1980 00:00:00 GMT");
-            response.AddHeader("Pragma", "no-cache");
-            response.AddHeader("Cache-Control", "no-cache, max-age=0, must-revalidate");
+        public static void WriteNoCache(this HttpResponseMessage response) {
+            response.Content.Headers.Expires = new DateTimeOffset(1980, 1, 1, 0, 0, 0, TimeSpan.Zero);
+            response.Headers.Pragma.Add(new NameValueHeaderValue("no-cache"));
+            response.Headers.CacheControl = new CacheControlHeaderValue() {
+                NoCache = true,
+                MaxAge = TimeSpan.Zero,
+                MustRevalidate = true
+            };
         }
 
-        public static void PktWrite(this HttpResponseBase response, string input, params object[] args) {
+        public static void PktWrite(this Stream response, string input, params object[] args) {
             input = String.Format(input, args);
             var toWrite = (input.Length + 4).ToString("x").PadLeft(4, '0') + input;
-            response.Write(toWrite);
+            response.Write(Encoding.UTF8.GetBytes(toWrite), 0, Encoding.UTF8.GetByteCount(toWrite));
         }
 
-        public static void PktFlush(this HttpResponseBase response) {
-            response.Write("0000");
+        public static void PktFlush(this Stream response) {
+            var toWrite = "0000";
+            response.Write(Encoding.UTF8.GetBytes(toWrite), 0, Encoding.UTF8.GetByteCount(toWrite));
         }
     }
 }

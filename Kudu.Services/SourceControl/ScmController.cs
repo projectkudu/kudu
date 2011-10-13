@@ -1,11 +1,14 @@
 ﻿using System.Collections.Generic;
-using System.Web.Mvc;
+using System.Net;
+using System.ServiceModel;
+using System.ServiceModel.Web;
 using Kudu.Core.SourceControl;
-using Kudu.Services.Infrastructure;
 using Kudu.Core.SourceControl.Hg;
+using Microsoft.ApplicationServer.Http.Dispatcher;
 
 namespace Kudu.Services.SourceControl {
-    public class ScmController : KuduController {
+    [ServiceContract]
+    public class ScmController {
         private readonly IRepository _repository;
         private readonly IRepositoryManager _repositoryManager;
         private readonly IHgServer _server;
@@ -17,43 +20,39 @@ namespace Kudu.Services.SourceControl {
             _server = server;
         }
 
-        [HttpPost]
-        public void Create(RepositoryType type) {
-            _repositoryManager.CreateRepository(type);
+        [WebInvoke]
+        public void Create(SimpleJson.JsonObject input) {
+            _repositoryManager.CreateRepository((RepositoryType)(long)input["type"]);
         }
 
-        [HttpPost]
+        [WebInvoke]
         public void Delete() {
             // Stop the server (will no-op if nothing is running)
             _server.Stop();
             _repositoryManager.Delete();
         }
 
-        [HttpGet]
-        [ActionName("kind")]
+        [WebGet(UriTemplate = "kind")]
         public RepositoryType GetRepositoryType() {
             return _repositoryManager.GetRepositoryType();
         }
 
-        [HttpGet]
-        [ActionName("id")]
+        [WebGet(UriTemplate = "id")]
         public string GetCurrentId() {
             return _repository.CurrentId;
         }
 
-        [HttpGet]
-        [ActionName("branches")]
+        [WebGet(UriTemplate = "branches")]
         public IEnumerable<Branch> GetBranches() {
             return _repository.GetBranches();
         }
 
-        [ActionName("status")]
+        [WebGet(UriTemplate = "status")]
         public IEnumerable<FileStatus> GetStatus() {
             return _repository.GetStatus();
         }
 
-        [HttpGet]
-        [ActionName("log")]
+        [WebGet(UriTemplate = "log?index={index}&limit={limit}")]
         public IEnumerable<ChangeSet> GetChanges(int? index, int? limit) {
             IEnumerable<ChangeSet> changeSets = null;
             if (index == null && limit == null) {
@@ -66,44 +65,39 @@ namespace Kudu.Services.SourceControl {
             return changeSets;
         }
 
-        [HttpGet]
-        [ActionName("details")]
-        public ActionResult GetDetails(string id) {
+        [WebGet(UriTemplate = "details/{*id}")]
+        public ChangeSetDetail GetDetails(string id) {
             try {
-                return Json(_repository.GetDetails(id), JsonRequestBehavior.AllowGet);
+                return _repository.GetDetails(id);
             }
             catch {
-                return HttpNotFound();
+                throw new HttpResponseException(HttpStatusCode.NotFound);
             }
         }
 
-        [HttpGet]
-        [ActionName("working")]
+        [WebGet(UriTemplate = "working")]
         public ChangeSetDetail GetWorkingChanges() {
             return _repository.GetWorkingChanges();
         }
 
-        [HttpPost]
-        [ActionName("add")]
-        public void AddFile(string path) {
-            _repository.AddFile(path);
+        [WebInvoke(UriTemplate = "add")]
+        public void AddFile(SimpleJson.JsonObject input) {
+            _repository.AddFile((string)input["path"]);
         }
 
-        [HttpPost]
-        [ActionName("remove")]
-        public void RemoveFile(string path) {
-            _repository.RevertFile(path);
+        [WebInvoke(UriTemplate = "remove")]
+        public void RemoveFile(SimpleJson.JsonObject input) {
+            _repository.RevertFile((string)input["path"]);
         }
 
-        [HttpPost]
-        [ValidateInput(false)]
-        public ChangeSet Commit(string name, string message) {
-            return _repository.Commit(name, message);
+        [WebInvoke]
+        public ChangeSet Commit(SimpleJson.JsonObject input) {
+            return _repository.Commit((string)input["name"], (string)input["message"]);
         }
 
-        [HttpPost]
-        public void Update(string id) {
-            _repository.Update(id);
+        [WebInvoke]
+        public void Update(SimpleJson.JsonObject input) {
+            _repository.Update((string)input["id"]);
         }
     }
 }

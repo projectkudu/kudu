@@ -25,38 +25,41 @@ namespace Kudu.Services.GitServer {
     using System.Diagnostics;
     using System.IO;
     using System.IO.Compression;
+    using System.Net.Http;
+    using System.Net.Http.Headers;
+    using System.ServiceModel;
+    using System.ServiceModel.Web;
     using System.Threading;
-    using System.Web.Mvc;
-    using System.Web.SessionState;
     using Kudu.Core.Deployment;
     using Kudu.Core.SourceControl.Git;
-    using Kudu.Services.Authorization;
 
-    // Handles project/git-upload-pack and project/git-receive-pack
-    [SessionState(SessionStateBehavior.Disabled)]
-    [BasicAuthorize]
-    public class RpcController : Controller {
+    // Handles {project}/git-upload-pack and {project}/git-receive-pack
+    [ServiceContract]
+    public class RpcController {
         private readonly IDeploymentManager _deploymentManager;
         private readonly IGitServer _gitServer;
 
-        public RpcController(IGitServer gitServer,
-                             IDeploymentManager deploymentManager) {
+        public RpcController(IGitServer gitServer, IDeploymentManager deploymentManager) {
             _gitServer = gitServer;
             _deploymentManager = deploymentManager;
         }
 
-        [HttpPost]
-        public void UploadPack() {
-            ExecuteRpc("upload-pack", () => {
-                _gitServer.Upload(GetInputStream(), Response.OutputStream);
-            });
+        [WebInvoke(UriTemplate = "git-upload-pack")]
+        public HttpResponseMessage UploadPack(HttpRequestMessage request) {
+            var memoryStream = new MemoryStream();
+            _gitServer.Upload(GetInputStream(request), memoryStream);
+            memoryStream.Flush();
+            memoryStream.Position = 0;
+
+            return CreateResponse(memoryStream, "application/x-git-{0}-result".With("upload-pack"));
         }
 
-        [HttpPost]
-        public void ReceivePack() {
-            ExecuteRpc("receive-pack", () => {
-                _gitServer.Receive(GetInputStream(), Response.OutputStream);
-            });
+        [WebInvoke(UriTemplate = "git-receive-pack")]
+        public HttpResponseMessage ReceivePack(HttpRequestMessage request) {
+            var memoryStream = new MemoryStream();
+            _gitServer.Receive(GetInputStream(request), memoryStream);
+            memoryStream.Flush();
+            memoryStream.Position = 0;
 
             ThreadPool.QueueUserWorkItem(_ => {
                 try {
@@ -67,25 +70,27 @@ namespace Kudu.Services.GitServer {
                     Debug.WriteLine(ex.Message);
                 }
             });
+
+            return CreateResponse(memoryStream, "application/x-git-{0}-result".With("receive-pack"));
         }
 
-        private Stream GetInputStream() {
-            // This method was left off of HttpContextBase but is more efficient since it
-            // doesn't make ASP.NET read the entire input stream up front.
-            Stream inputStream = System.Web.HttpContext.Current.Request.GetBufferlessInputStream();
-
-            if (Request.Headers["Content-Encoding"] == "gzip") {
-                return new GZipStream(inputStream, CompressionMode.Decompress);
+        private Stream GetInputStream(HttpRequestMessage request) {
+            if (request.Content.Headers.ContentEncoding.Contains("gzip")) {
+                return new GZipStream(request.Content.ContentReadStream, CompressionMode.Decompress);
             }
 
-            return inputStream;
+            return request.Content.ContentReadStream;
         }
 
-        private void ExecuteRpc(string rpc, Action action) {
-            Response.ContentType = "application/x-git-{0}-result".With(rpc);
-            Response.WriteNoCache();
+        private static HttpResponseMessage CreateResponse(MemoryStream stream, string mediaType) {
+            var content = new StreamContent(stream);
+            content.Headers.ContentType = new MediaTypeHeaderValue(mediaType);
+            // REVIEW: Why is it that we do not write an empty Content-Type here, like for InfoRefsController?
 
-            action();
+            var response = new HttpResponseMessage();
+            response.Content = content;
+            response.WriteNoCache();
+            return response;
         }
     }
 }

@@ -41,16 +41,13 @@ namespace Kudu.Core.Deployment {
         }
 
         private void SetValue(string section, string key, string value) {
-            _client.Post(section + "/set", new FormUrlEncodedContent(new Dictionary<string, string> {
-                { "key", key },
-                { "value", value }
-            })).EnsureSuccessful();
+            _client.Post(section + "/set", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, object>("key", key), new KeyValuePair<string, object>("value", value)))
+                   .EnsureSuccessful();
         }
 
         private void DeleteValue(string section, string key) {
-            _client.Post(section + "/remove", new FormUrlEncodedContent(new Dictionary<string, string> {
-                { "key", key }
-            })).EnsureSuccessful();
+            _client.Post(section + "/remove", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, object>("key", key)))
+                   .EnsureSuccessful();
         }
     }
 }

@@ -74,9 +74,8 @@ namespace Kudu.Core.Deployment {
         }
 
         public void Deploy(string id) {
-            _client.Post(String.Empty, new FormUrlEncodedContent(new Dictionary<string, string> {
-                { "id", id }
-            })).EnsureSuccessful();
+            _client.Post(String.Empty, HttpClientHelper.CreateJsonContent(new KeyValuePair<string, object>("id", id)))
+                   .EnsureSuccessful();
         }
 
         public void Deploy() {
@@ -84,9 +83,8 @@ namespace Kudu.Core.Deployment {
         }
 
         public void Build(string id) {
-            _client.Post("new", new FormUrlEncodedContent(new Dictionary<string, string> {
-                { "id", id }
-            })).EnsureSuccessful();
+            _client.Post("new", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, object>("id", id)))
+                   .EnsureSuccessful();
         }
     }
 }

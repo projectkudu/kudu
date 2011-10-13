@@ -1,59 +1,73 @@
-﻿using System.Web.Mvc;
+﻿using System;
+using System.Net.Http;
+using System.ServiceModel;
+using System.ServiceModel.Activation;
 using System.Web.Routing;
-using Kudu.Services.Deployment;
+using Microsoft.ApplicationServer.Http.Activation;
+using Microsoft.ApplicationServer.Http.Dispatcher;
+using Ninject.Extensions.Wcf;
 using SignalR.Routing;
 
 namespace Kudu.Services {
     public class MvcApplication : System.Web.HttpApplication {
-        public static void RegisterGlobalFilters(GlobalFilterCollection filters) {
-            filters.Add(new FormattedExceptionFilterAttribute());
-            filters.Add(new HandleErrorAttribute());
-        }
 
         public static void RegisterRoutes(RouteCollection routes) {
-            var configuration = DependencyResolver.Current.GetService<IServerConfiguration>();
+            var configuration = (IServerConfiguration)KernelContainer.Kernel.GetService(typeof(IServerConfiguration));
+            var factory = GetFactory();
 
-            routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
+            routes.MapConnection<Deployment.DeploymentStatusHandler>("DeploymentStatus", "deploy/status/{*operation}");
+            routes.MapConnection<Deployment.CommandStatusHandler>("CommandStatus", "command/status/{*operation}");
 
-            routes.MapRoute(
-                "proxy", // Route name
-                configuration.HgServerRoot + "/{*url}", // URL with parameters
-                new { controller = "Proxy", action = "ProxyRequest" } // Parameter defaults
-            );
-
-            routes.MapRoute(
-                "InfoRefs", // Route name
-                configuration.GitServerRoot + "/info/refs", // URL with parameters
-                new { Controller = "InfoRefs", Action = "Execute" } // Parameter defaults
-            );
-
-            routes.MapRoute(
-                "UploadPack", // Route name
-                configuration.GitServerRoot + "/git-upload-pack", // URL with parameters
-                new { Controller = "Rpc", Action = "UploadPack" } // Parameter defaults
-            );
-
-            routes.MapRoute(
-                "ReceivePack", // Route name
-                configuration.GitServerRoot + "/git-receive-pack", // URL with parameters
-                new { Controller = "Rpc", Action = "ReceivePack" } // Parameter defaults
-            );
-
-            routes.MapConnection<DeploymentStatusHandler>("DeploymentStatus", "deploy/status/{*operation}");
-            routes.MapConnection<CommandStatusHandler>("CommandStatus", "command/status/{*operation}");
-
-            routes.MapRoute(
-                "Default", // Route name
-                "{controller}/{action}/{id}", // URL with parameters
-                new { action = "Index", id = UrlParameter.Optional } // Parameter defaults
-            );
+            routes.Add(new ServiceRoute(configuration.HgServerRoot, factory, typeof(HgServer.ProxyController)));
+            routes.Add(new ServiceRoute(configuration.GitServerRoot + "/info/refs", factory, typeof(GitServer.InfoRefsController)));
+            routes.Add(new ServiceRoute(configuration.GitServerRoot, factory, typeof(GitServer.RpcController)));
+            routes.Add(new ServiceRoute("deploy", factory, typeof(Deployment.DeployController)));
+            routes.Add(new ServiceRoute("files", factory, typeof(Documents.FilesController)));
+            routes.Add(new ServiceRoute("command", factory, typeof(Commands.CommandController)));
+            routes.Add(new ServiceRoute("scm", factory, typeof(SourceControl.ScmController)));
+            routes.Add(new ServiceRoute("appsettings", factory, typeof(Settings.AppSettingsController)));
+            routes.Add(new ServiceRoute("connectionstrings", factory, typeof(Settings.ConnectionStringsController)));
         }
 
         protected void Application_Start() {
-            AreaRegistration.RegisterAllAreas();
-
-            RegisterGlobalFilters(GlobalFilters.Filters);
             RegisterRoutes(RouteTable.Routes);
+        }
+
+        private static HttpServiceHostFactory GetFactory() {
+            var factory = new HttpServiceHostFactory();
+
+            // REVIEW: Set to max to accomodate large file uploads in initial scm setup.
+            factory.Configuration.MaxBufferSize = Int32.MaxValue;
+            factory.Configuration.MaxReceivedMessageSize = Int32.MaxValue;
+
+            // Ensure that only our formatters are used
+            factory.Configuration.Formatters.Clear();
+            factory.Configuration.Formatters.Add(new Kudu.Core.Infrastructure.SimpleJsonMediaTypeFormatter());
+
+            // Set IoC methods
+            factory.Configuration.CreateInstance = CreateInstance;
+            factory.Configuration.ReleaseInstance = ReleaseInstance;
+
+            // Add the authorization handler on specific services method.
+            var existingRequestHandlerFactory = factory.Configuration.RequestHandlers;
+            factory.Configuration.RequestHandlers = (c, e, od) => {
+                if (existingRequestHandlerFactory != null)
+                    existingRequestHandlerFactory(c, e, od);
+
+                if (e.Contract.ContractType == typeof(GitServer.InfoRefsController) || e.Contract.ContractType == typeof(GitServer.RpcController)) {
+                    c.Insert(0, (HttpOperationHandler)KernelContainer.Kernel.GetService(typeof(Authorization.BasicAuthorizeHandler)));
+                }
+            };
+
+            return factory;
+        }
+
+        private static object CreateInstance(Type type, InstanceContext context, HttpRequestMessage request) {
+            return KernelContainer.Kernel.GetService(type);
+        }
+
+        private static void ReleaseInstance(InstanceContext context, object o) {
+            KernelContainer.Kernel.Release(o);
         }
     }
 }
