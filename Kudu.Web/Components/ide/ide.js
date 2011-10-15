@@ -58,22 +58,25 @@
         $(fileExplorer).bind('fileExplorer.fileClicked', function (e, file) {
             var path = file.getPath();
             tabManager.setActive(path);
-
-            openDocument(file);
         });
 
         $(fileExplorer).bind('fileExplorer.beforeFileDeleted', function (e) {
-
+            // TODO: Prompt for confirmation
+            e.preventDefault();
         });
 
         $(fileExplorer).bind('fileExplorer.afterFileDeleted', function (e, file) {
             tabManager.remove(file.getPath());
         });
 
-        $(tabManager).bind('tabManager.beforeActiveTabChanged', function (e, activeTab) {
-            if (activeTab) {
-                activeTab.file.setBuffer(editor.getContent());
+        $(tabManager).bind('tabManager.beforeActiveTabChanged', function (e, tab) {
+            if (tab) {
+                tab.file.setBuffer(editor.getContent());
             }
+        });
+
+        $(tabManager).bind('tabManager.afterActiveTabChanged', function (e, tab) {
+            openDocument(tab.file);
         });
 
         $(tabManager).bind('tabManager.tabClicked', function (e, tab) {
@@ -82,6 +85,7 @@
 
         $(tabManager).bind('tabManager.beforeTabClosed', function (e) {
             if (e.tab.file.isDirty()) {
+                // TODO: Prompt for confirmation
                 e.preventDefault();
             }
         });
@@ -109,7 +113,7 @@
             var tab = tabManager.getActive();
 
             if (tab) {
-                if (!tab.file.isDirty()) {                    
+                if (!tab.file.isDirty()) {
                     tab.file.setDirty(true);
                 }
             }
