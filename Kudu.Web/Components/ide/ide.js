@@ -79,10 +79,6 @@
             openDocument(tab.file);
         });
 
-        $(tabManager).bind('tabManager.tabClicked', function (e, tab) {
-            openDocument(tab.file);
-        });
-
         $(tabManager).bind('tabManager.beforeTabClosed', function (e) {
             if (e.tab.file.isDirty()) {
                 // TODO: Prompt for confirmation
