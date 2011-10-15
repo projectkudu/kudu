@@ -36,9 +36,12 @@
             var path = $(this).closest('.tab').data('path');
             var tab = tabsLookup[path];
 
-            $(that).trigger('beforeTabClosed', [tab]);
+            var event = $.Event('tabManager.beforeTabClosed', { tab: tab });
+            $(that).trigger(event);
 
-            removeTab(path);
+            if (!event.isDefaultPrevented()) {
+                removeTab(path);
+            }
 
             ev.preventDefault();
             return false;
@@ -50,7 +53,7 @@
 
             var tab = tabsLookup[path];
 
-            $(that).trigger('tabClicked', [tab]);
+            $(that).trigger('tabManager.tabClicked', [tab]);
 
             ev.preventDefault();
             return false;
@@ -61,18 +64,20 @@
             if (!tab) {
                 var file = fs.getFile(path);
                 tab = {
-                    file: file
+                    file: file,
+                    _dirty: function (e, value) {
+                        $tab = $('#tab-' + file.getElementId());
+                        if (value === true) {
+                            $tab.find('.dirty').show();
+                        }
+                        else {
+                            $tab.find('.dirty').hide();
+                        }
+                    }
                 };
 
-                $(file).bind('file.dirty', function (e, value) {
-                    $tab = $('#tab-' + file.getElementId());
-                    if (value === true) {
-                        $tab.find('.dirty').show();
-                    }
-                    else {
-                        $tab.find('.dirty').hide();
-                    }
-                });
+                // Bind to the file's dirty event
+                $(file).bind('file.dirty', tab._dirty);
 
                 tabs.push(tab);
                 tab.index = tabs.length - 1;
@@ -81,6 +86,9 @@
         }
 
         function setActiveTab(path) {
+            var prevTab = getActiveTab();
+            $(that).trigger('tabManager.beforeActiveTabChanged', [prevTab]);
+
             addTabItem(path);
 
             var tab = tabsLookup[path];
@@ -90,6 +98,8 @@
             }
 
             renderTabs();
+
+            $(that).trigger('tabManager.afterActiveTabChanged', [tab]);
         }
 
         function removeTabItem(tab) {
@@ -109,13 +119,16 @@
                 return;
             }
 
+            // Remove the handler
+            $(tab.file).unbind('file.dirty', tab._dirty);
+
             removeTabItem(tab);
 
             delete tabsLookup[path];
 
             renderTabs();
 
-            $(that).trigger('afterTabClosed', [tab]);
+            $(that).trigger('tabManager.afterTabClosed', [tab]);
         }
 
         function getActiveTab() {

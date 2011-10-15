@@ -66,7 +66,7 @@
             var path = $(this).closest('.file').data('path');
             var file = fs.getFile(path);
 
-            $(that).trigger('fileClicked', [file]);
+            $(that).trigger('fileExplorer.fileClicked', [file]);
 
             ev.preventDefault();
             return false;
@@ -76,16 +76,14 @@
             var path = $(this).closest('.file').data('path');
             var file = fs.getFile(path);
 
-            var event = $.Event('beforeFileDeleted', { file: file });
+            var event = $.Event('fileExplorer.beforeFileDeleted', { file: file });
             $(that).trigger(event);
 
-            if (event.isDefaultPrevented()) {
-                return;
+            if (!event.isDefaultPrevented()) {
+                fs.removeFile(path);
+
+                $(that).trigger('fileExplorer.afterFileDeleted', [file]);
             }
-
-            fs.removeFile(path);
-
-            $(that).trigger('afterFileDeleted', [file]);
 
             ev.preventDefault();
             return false;

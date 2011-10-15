@@ -25,26 +25,19 @@
 
         function openDocument(file) {
             var path = file.getRelativePath();
-            documents.openFile(path)
+
+            if (file.getBuffer() !== null) {
+                editor.setContent(path, file.getBuffer());
+            }
+            else {
+                documents.openFile(path)
                      .done(function (content) {
                          editor.setContent(path, content);
                      });
-        }
-
-        function checkDirty(file) {
-            if (file.isDirty()) {
-                if (confirm('Do you want to save?')) {
-                    file.setDirty(false);
-                }
-                else {
-                    return false;
-                }
             }
-            return true;
         }
 
         // Create components
-
         fileExplorer = $fileExplorer.fileExplorer({
             templates: templates,
             fileSystem: fs
@@ -59,31 +52,38 @@
             fileSystem: fs
         });
 
-        $(fileExplorer).bind('fileClicked', function (e, file) {
+        $(fileExplorer).bind('fileExplorer.fileClicked', function (e, file) {
             var path = file.getPath();
             tabManager.setActive(path);
 
             openDocument(file);
         });
 
-        $(fileExplorer).bind('beforeFileDeleted', function (e) {
-            var file = e.file;
-            e.preventDefault();
+        $(fileExplorer).bind('fileExplorer.beforeFileDeleted', function (e) {
+
         });
 
-        $(fileExplorer).bind('afterFileDeleted', function (e, file) {
+        $(fileExplorer).bind('fileExplorer.afterFileDeleted', function (e, file) {
             tabManager.remove(file.getPath());
         });
 
-        $(tabManager).bind('tabClicked', function (e, tab) {
+        $(tabManager).bind('tabManager.beforeActiveTabChanged', function (e, activeTab) {
+            if (activeTab) {
+                activeTab.file.setBuffer(editor.getContent());
+            }
+        });
+
+        $(tabManager).bind('tabManager.tabClicked', function (e, tab) {
             openDocument(tab.file);
         });
 
-        $(tabManager).bind('beforeTabClosed', function (e, tab) {
-            checkDirty(tab.file);
+        $(tabManager).bind('tabManager.beforeTabClosed', function (e) {
+            if (e.tab.file.isDirty()) {
+                e.preventDefault();
+            }
         });
 
-        $(tabManager).bind('afterTabClosed', function (e, tab) {
+        $(tabManager).bind('tabManager.afterTabClosed', function (e, tab) {
             if (tab.active) {
                 // If the closed tab was active, get the new active tab
                 // and set the editor's content to the new active tab
@@ -97,9 +97,12 @@
                     editor.clear();
                 }
             }
+
+            // Set the buffer the null since the file has been closed
+            tab.file.setBuffer(null);
         });
 
-        $(editor).bind('contentChanged', function (e) {
+        $(editor).bind('editor.contentChanged', function (e) {
             var tab = tabManager.getActive();
 
             if (tab) {

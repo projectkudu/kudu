@@ -41,7 +41,7 @@
             readOnly: true,
             onChange: function (e) {
                 if (updatingEditor === false) {
-                    $(that).trigger('contentChanged');
+                    $(that).trigger('editor.contentChanged');
                 }
             }
         });
