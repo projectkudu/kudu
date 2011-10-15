@@ -1,0 +1,55 @@
+.tabManager {
+    margin: 1% 0 0;
+    padding: 0;
+    height: 22px;
+}
+
+.tabManager .tab {
+    cursor: pointer;
+}
+
+.tabManager a {
+    outline: none;
+    text-decoration: none;
+}
+
+.tabManager a.delete {
+    visibility: hidden;
+}
+
+.tabManager li {
+    display: inline;
+    list-style: none outside none;
+    padding: 4px 8px;
+    border: 1px solid #fff;
+    border-bottom: none;
+    border-radius: 4px 4px 0px 0px;
+    -moz-border-radius: 4px 4px 0px 0px;
+    -webkit-border-radius: 4px 4px 0px 0px;
+}
+
+.tabManager li .dirty {
+    margin-left: 1px;
+    display: none;
+}
+
+.tabManager li:hover a.delete, .tabManager li.active a.delete {
+    visibility: visible;
+}
+
+.tabManager li.active, .tabManager li:hover {
+    border: 1px solid #ccc;
+    background: #f5f5ee;
+    border-bottom: 1px solid #f5f5ee;
+}
+
+.tabManager li:hover {
+    border-color: #d6d6d6;
+    background: #fefefe;
+}
+
+.tabManager li.active:hover {
+    border: 1px solid #ccc;
+    background: #f5f5ee;
+    border-bottom: 1px solid #fff;
+}

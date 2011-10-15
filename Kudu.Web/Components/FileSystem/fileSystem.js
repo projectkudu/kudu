@@ -1,7 +1,4 @@
-﻿// Global File system is a hashtable from virtual path to file
-// REVIEW: Should we should generalize that directories are actually files?
-/// <reference path="../jquery-1.5.2.js" />
-
+﻿
 FileSystem = function () {
     this.fileCache = {};
     this.directoryCache = {};
@@ -9,6 +6,7 @@ FileSystem = function () {
     this.directoryCache['/'] = new Directory('/', this);
     this.rootName = null;
     this.readonly = null;
+    this._refreshing = false;
 };
 
 FileSystem.prototype = {
@@ -28,6 +26,7 @@ FileSystem.prototype = {
         this.rootName = name;
     },
     create: function (files) {
+        this._refreshing = true;
         this.clear();
 
         var that = this;
@@ -35,6 +34,8 @@ FileSystem.prototype = {
         $.each(files, function (index, item) {
             that.addItem(item.Path);
         });
+
+        this._refreshing = false;
     },
     _prependSlash: function (path) {
         // prepend / if its not already there
@@ -79,7 +80,8 @@ FileSystem.prototype = {
             this.fileCache[path] = file;
             this._ensureParents(file.getDirectory());
 
-            file.getDirectory().addFile(file);
+            var directory = file.getDirectory();
+            directory.addFile(file);
         }
     },
     getFile: function (path) {
@@ -130,7 +132,8 @@ FileSystem.prototype = {
             this.directoryCache[path] = directory;
             this._ensureParents(directory);
 
-            directory.getParent().addDirectory(directory);
+            var parentDirectory = directory.getParent();
+            parentDirectory.addDirectory(directory);
         }
     },
     removeDirectory: function (path) {
@@ -138,7 +141,7 @@ FileSystem.prototype = {
         var directory = this.getDirectory(path);
         if (directory) {
             directory.getParent().removeDirectory(directory);
-            delete this.fileCache[path];
+            delete this.fileCache[path];            
         }
     },
     clear: function () {
@@ -157,6 +160,7 @@ File = function (path, fileSystem) {
 
 File.prototype = {
     _initialize: function (path, fileSystem) {
+        var that = this;
         this.path = path;
         this.pathParts = this.path.split('/');
         this.name = null;
@@ -175,6 +179,8 @@ File.prototype = {
 
         this.setDirty = function (value) {
             dirty = value;
+
+            $(that).trigger('file.dirty', [value]);
         }
 
         this.isDirty = function () {
@@ -188,7 +194,7 @@ File.prototype = {
         return this.path.substr(1);
     },
     getElementId: function () {
-        return this.getRelativePath().replace(/\./g, '-').replace(/\//g, '-');
+        return 'file-' + this.getRelativePath().replace(/\./g, '-').replace(/\//g, '-');
     },
     getPath: function () {
         return this.path;
@@ -264,6 +270,9 @@ Directory.prototype = {
     getRelativePath: function () {
         return this.path.substr(1);
     },
+    getElementId: function () {
+        return 'directory-' + this.getRelativePath().replace(/\./g, '-').replace(/\//g, '-');
+    },
     getName: function () {
         if (!this.name) {
             if (this._isRoot()) {
@@ -292,7 +301,10 @@ Directory.prototype = {
                 this._contents[file.getPath()] = true;
             }
         }
-        this.files.sort(this._comparer);
+
+        if (this.fileSystem._refreshing == false) {
+            this.files.sort(this._comparer);
+        }
     },
     _ensureDirectories: function () {
         var directoryMap = {};
@@ -312,7 +324,10 @@ Directory.prototype = {
         for (var path in directoryMap) {
             this.directories.push(directoryMap[path]);
         }
-        this.directories.sort(this._comparer);
+
+        if (this.fileSystem._refreshing == false) {
+            this.directories.sort(this._comparer);
+        }
     },
     _processDirectory: function (directory, directoryMap) {
         if (directory.equals(this) || directoryMap[directory.getPath()]) {
@@ -346,18 +361,31 @@ Directory.prototype = {
     removeDirectory: function (directory) {
         this._removeElement(this.directories, directory);
         delete this._contents[directory.getPath()];
+
+        if (this.fileSystem._refreshing === false) {
+            $(this.fileSystem).trigger('fileSystem.removeDirectory', [directory]);
+        }
     },
     removeFile: function (file) {
         this._removeElement(this.files, file);
         delete this._contents[file.getPath()];
+
+        if (this.fileSystem._refreshing === false) {
+            $(this.fileSystem).trigger('fileSystem.removeFile', [file]);
+        }
     },
     addFile: function (file) {
         var path = file.getPath();
         if (!this._contents[path]) {
             // Show the files as sorted
             this.files.push(file);
-            this.files.sort(this._comparer);
             this._contents[path] = true;
+
+            if (this.fileSystem._refreshing == false) {
+                this.files.sort(this._comparer);
+                var index = $.inArray(file, file.directory.files);
+                $(this.fileSystem).trigger('fileSystem.addFile', [file, index]);
+            }
         }
     },
     _comparer: function (aItem, bItem) {
@@ -374,9 +402,15 @@ Directory.prototype = {
     addDirectory: function (directory) {
         var path = directory.getPath();
         if (!this._contents[path]) {
-            this.directories.push(directory);
-            this.directories.sort(this._comparer);
+            this.directories.push(directory);            
             this._contents[path] = true;
+
+            if (this.fileSystem._refreshing == false) {
+                this.directories.sort(this._comparer);
+
+                var index = $.inArray(directory, directory.parent.directories);
+                $(this.fileSystem).trigger('fileSystem.addDirectory', [directory, index]);
+            }            
         }
 
     },
@@ -423,6 +457,5 @@ Directory.prototype = {
         this.files = [];
         this.directories = [];
         this._contents = {};
-
     }
 };

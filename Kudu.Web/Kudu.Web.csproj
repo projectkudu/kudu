@@ -96,6 +96,20 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Components\Editor\editor.js" />
+    <Content Include="Components\FileExplorer\fileExplorer.js" />
+    <Content Include="Components\FileExplorer\fileExplorer.css" />
+    <Content Include="Components\FileExplorer\fileExplorer.htm" />
+    <Content Include="Components\FileExplorer\templates.htm" />
+    <Content Include="Components\FileSystem\fileSystem.js" />
+    <Content Include="Components\ide\ide.js" />
+    <Content Include="Components\Shared\icons.js" />
+    <Content Include="Components\Shared\icons.css" />
+    <Content Include="Components\TabManager\tabManager.css" />
+    <Content Include="Components\TabManager\tabManager.htm" />
+    <Content Include="Components\TabManager\tabManager.js" />
+    <Content Include="Components\TabManager\templates.htm" />
+    <Content Include="Components\test.htm" />
     <Content Include="Content\Site.css" />
     <Content Include="Global.asax" />
     <Content Include="images\book_previous.png" />
@@ -107,14 +121,14 @@
     <Content Include="Scripts\codemirror\mode\markdown\markdown.js" />
     <Content Include="Scripts\codemirror\mode\yaml\yaml.js" />
     <Content Include="Scripts\Deployments.js" />
-    <Content Include="Scripts\io\directory.js" />
-    <Content Include="Scripts\io\file.js" />
     <Content Include="Scripts\io\fileSystem.js" />
     <Content Include="Scripts\jquery-1.6.3-vsdoc.js" />
     <Content Include="Scripts\jquery-1.6.3.js" />
     <Content Include="Scripts\jquery-1.6.3.min.js" />
+    <Content Include="Scripts\jquery.render.min.js" />
     <Content Include="Scripts\jquery.signalR.js" />
     <Content Include="Scripts\jquery.signalR.min.js" />
+    <Content Include="Scripts\knockout-1.3.0beta.js" />
     <Content Include="Scripts\skyde.js" />
     <Content Include="Styles\codemirror.css" />
     <Content Include="Styles\default-settings.css" />
@@ -198,7 +212,6 @@
     <Content Include="Scripts\codemirror\mode\xml\xml.js" />
     <Content Include="Scripts\jquery.cookie.js" />
     <Content Include="Scripts\jquery.hotkeys-patched.js" />
-    <Content Include="Scripts\jquery.render.min.js" />
     <Content Include="Scripts\jquery.timeago.js" />
     <Content Include="Scripts\sammy.js" />
     <Content Include="Web.config">
@@ -266,6 +279,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+    <Folder Include="Components\CommandBar\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\Settings\Index.cshtml" />
@@ -282,7 +296,7 @@
         <WebProjectProperties>
           <UseIIS>False</UseIIS>
           <AutoAssignPort>True</AutoAssignPort>
-          <DevelopmentServerPort>13079</DevelopmentServerPort>
+          <DevelopmentServerPort>54606</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>
           <IISUrl>http://localhost:23327/</IISUrl>
           <NTLMAuthentication>False</NTLMAuthentication>

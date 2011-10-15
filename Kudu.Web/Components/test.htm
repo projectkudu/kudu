@@ -1,0 +1,103 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <link href="../Styles/default-settings.css" rel="stylesheet" type="text/css" />
+    <link href="../Styles/codemirror.css" rel="stylesheet" type="text/css" />
+    <link href="FileExplorer/fileExplorer.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="TabManager/tabManager.css" />
+    <link href="Shared/icons.css" rel="stylesheet" type="text/css" />
+    <style type="text/css">
+        #edit-area {
+            height: 400px;
+            width: 60%;
+            float: left;
+            border: 1px solid #ccc;
+        }
+        #files {
+            float: left;
+            margin-left: 10px;
+        }
+    </style>
+    <script src="../Scripts/codemirror/codemirror.js" type="text/javascript"></script>
+    <script src="../Scripts/jquery-1.6.3.min.js" type="text/javascript"></script>
+    <script src="Shared/icons.js" type="text/javascript"></script>
+    <script src="../Scripts/jquery.render.min.js" type="text/javascript"></script>
+    <script src="FileSystem/fileSystem.js" type="text/javascript"></script>
+    <script src="FileExplorer/fileExplorer.js" type="text/javascript"></script>
+    <script type="text/javascript" src="TabManager/tabManager.js"></script>
+    <script src="Editor/editor.js" type="text/javascript"></script>
+    <script src="../Scripts/jquery.signalR.js" type="text/javascript"></script>
+    <script src="../signalR/hubs" type="text/javascript"></script>
+    <script src="ide/ide.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        $(function () {
+            $.ide({
+                appName: 'myapp',
+                tabManager: $('#tabs'),
+                editor: $('#editor'),
+                fileExplorer: $('#files')
+            });
+        });
+    </script>
+</head>
+<body>
+    <ul id="tabs">
+    </ul>
+    <div>
+        <div id="edit-area">
+            <textarea id="editor"></textarea>
+        </div>
+        <div id="files">
+        </div>
+    </div>
+    <script id="tabManager_tabTemplate" type="text/x-jquery-tmpl"> 
+    <li class="tab${active ? " active" : ""}" data-path="${file.getPath()}" id="tab-${file.getElementId()}">
+        <a href="#" class="open icon icon-${icon}" title="${file.getPath()}">${file.getName()}</a>
+        <span class="dirty">*</span>
+        <a href="#" class="delete icon-notext icon-close">&nbsp;</a>
+    </li>
+    </script>
+
+    <script id="fileExplorer_folderTemplate" type="text/x-jquery-tmpl"> 
+    <ul class="folder" data-path="${$data.getPath()}" id="${$data.getElementId()}">
+        <li>
+            <a href="#" class="icon icon-project">Project</a>
+            <div class="folder-contents">
+                <div class="folders">
+                    {{tmpl(getDirectories()) "#fileExplorer_deferredFolderTemplate"}}
+                </div>
+                <ul class="files">
+                    {{tmpl(getFiles()) "#fileExplorer_fileTemplate"}}
+                </ul>
+            </div>
+        </li>
+    </ul>
+    </script>
+
+    <script id="fileExplorer_deferredFolderTemplate" type="text/x-jquery-tmpl"> 
+    <ul class="folder folder-collapsed" data-path="${$data.getPath()}" id="${$data.getElementId()}">
+        <li>
+            <div class="selection">
+                <a href="#" class="icon icon-folder folder-collapsed"></a>
+                <span class="folder-name">${$data.getName()}</span>
+            </div>
+            <div class="folder-contents" style="display:none">
+                <div class="folders deferred-folders">
+                </div>
+                <ul class="files">
+                    {{tmpl(getFiles()) "#fileExplorer_fileTemplate"}}
+                </ul>
+            </div>
+        </li>            
+    </ul>
+    </script>
+
+    <script id="fileExplorer_fileTemplate" type="text/x-jquery-tmpl"> 
+    <li class="file selection" data-path="${$data.getPath()}" id="${$data.getElementId()}">
+        <a href="#" class="open icon">${$data.getName()}</a>
+        <a href="#" class="delete icon-notext icon-close">&nbsp;</a>
+    </li>
+    </script>
+</body>
+</html>

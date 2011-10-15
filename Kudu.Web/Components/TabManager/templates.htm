@@ -1,0 +1,7 @@
+﻿<script id="tabManager_tabTemplate" type="text/x-jquery-tmpl"> 
+    <li class="tab${active ? " active" : ""}" data-path="${file.getPath()}" id="tab-${file.getElementId()}">
+        <a href="#" class="open icon icon-${icon}" title="${file.getPath()}">${file.getName()}</a>
+        <span class="dirty">*</span>
+        <a href="#" class="delete icon-notext icon-close">&nbsp;</a>
+    </li>
+</script>

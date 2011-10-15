@@ -1,0 +1,57 @@
+﻿.fileExplorer ul {
+    list-style-type: none;
+    margin-bottom: 0;
+    margin-left: 5px;
+    padding-left: 5px;
+}
+
+.fileExplorer li {
+    list-style-type: none;
+}
+
+.fileExplorer a {
+    outline: none;
+    text-decoration: none;
+}
+
+.fileExplorer .folder-name {
+    cursor: default;
+}
+
+.fileExplorer .selection {
+    
+}
+
+.fileExplorer .folder, .fileExplorer .files {
+    padding-left: 10px;
+    margin-left: 10px;
+}
+
+.fileExplorer .delete {
+    margin-left: 3px;
+}
+
+.fileExplorer .icon-new-folder {
+    background-image: url('../../images/new-folder.png');
+}
+
+.fileExplorer .icon-new-file {
+    background-image: url('../../images/addfile.png');
+}
+
+.fileExplorer .icon-project {
+    background-image: url('../../images/solution.png');
+}
+
+.fileExplorer .icon-folder {
+    background-image: url('../../images/folder-expanded.png');
+    padding-left: 36px;
+}
+
+.fileExplorer .icon-folder.folder-collapsed {
+    background-image: url('../../images/folder-collapsed.png');
+    padding-left: 36px;
+}
+
+.fileExplorer .folder-contents {
+}

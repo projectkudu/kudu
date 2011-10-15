@@ -510,10 +510,6 @@
                     return false;
                 });
 
-                $('#show-working').click(function () {
-                    return false;
-                });
-
                 $('#active-view').change(function () {
                     updateActiveView();
                 });
