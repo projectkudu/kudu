@@ -30,6 +30,10 @@
             });
         }
 
+        function getTabElement(file) {
+            return $('#tab-' + file.getElementId());
+        }
+
         $this.addClass('tabManager');
 
         $this.delegate('.delete', 'click', function (ev) {
@@ -66,7 +70,7 @@
                 tab = {
                     file: file,
                     _dirty: function (e, value) {
-                        $tab = $('#tab-' + file.getElementId());
+                        $tab = getTabElement(file);
                         if (value === true) {
                             $tab.find('.dirty').show();
                         }

@@ -30,9 +30,12 @@
                 editor.setContent(path, file.getBuffer());
             }
             else {
+                // Get the file content from the server
                 documents.openFile(path)
                      .done(function (content) {
                          editor.setContent(path, content);
+
+                         file.setBuffer(content);
                      });
             }
         }
@@ -106,7 +109,7 @@
             var tab = tabManager.getActive();
 
             if (tab) {
-                if (!tab.file.isDirty()) {
+                if (!tab.file.isDirty()) {                    
                     tab.file.setDirty(true);
                 }
             }
@@ -120,7 +123,6 @@
                      fileExplorer.refresh();
                  });
         });
-
     };
 
 })(jQuery);

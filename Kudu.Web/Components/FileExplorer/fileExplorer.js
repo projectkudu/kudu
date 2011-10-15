@@ -23,6 +23,14 @@
             });
         }
 
+        function getFileNode(file) {
+            return $('#' + file.getElementId());
+        }
+
+        function getFolderNode(directory) {
+            return $('#' + directory.getElementId());
+        }
+
         // Add the file explorer class so we can apply the appropriate styles
         $this.addClass('fileExplorer');
 
@@ -90,12 +98,11 @@
         });
 
         $(fs).bind('fileSystem.removeFile', function (e, file) {
-            // Remove files from the tree on delete
-            $('#' + file.getElementId()).remove();
+            getFileNode(file).remove();
         });
 
         $(fs).bind('fileSystem.removeDirectory', function (e, directory) {
-            $('#' + directory.getElementId()).remove();
+            getFolderNode(directory).remove();
         });
 
         $(fs).bind('fileSystem.addFile', function (e, file, index) {
@@ -149,7 +156,9 @@
         }
 
         var that = {
-            refresh: renderExplorer
+            refresh: renderExplorer,
+            getFileNode: getFileNode,
+            getFolderNode: getFolderNode
         };
 
         return that;
