@@ -29,11 +29,18 @@
                     fileSystem: fs
                 });
 
+                var tm2 = $('#baz3').tabManager({
+                    templates: templates,
+                    fileSystem: fs
+                });
+
                 tm.add('/app.js');
                 tm.add('/b.js');
                 tm.add('/foo.txt');
-                // tm.add('bazz.aspx');
                 tm.setActive('/app.js');
+
+                tm2.add('/b.js');
+                tm2.add('/node_modules/express/foo.js');
             });
 
         });
@@ -41,6 +48,8 @@
 </head>
 <body>
     <ul id="baz">
+    </ul>
+    <ul id="baz3">
     </ul>
 </body>
 </html>

@@ -31,7 +31,7 @@
         }
 
         function getTabElement(file) {
-            return $('#tab-' + file.getElementId());
+            return $this.find('.tab-' + file.getElementId());
         }
 
         $this.addClass('tabManager');
