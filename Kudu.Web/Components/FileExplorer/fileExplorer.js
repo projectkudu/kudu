@@ -214,25 +214,27 @@
                 }
             },
             nextSelection: function () {
-                if ($activeSelection.hasClass('file')) {
-                    var next = $activeSelection.next();
-                    if (next.length) {
-                        setSelection(next);
-                    }
+                // TODO: Efficiency?
+                var selections = $this.find('.selection').not(':hidden');
+                var index = $.inArray($activeSelection[0], selections);
+
+                if (index + 1 < selections.length) {
+                    setSelection(selections.eq(index + 1));
                 }
             },
             prevSelection: function () {
-                if ($activeSelection.hasClass('file')) {
-                    var prev = $activeSelection.prev();
-                    if (prev.length) {
-                        setSelection(prev);
-                    }
+                // TODO: Efficiency?
+                var selections = $this.find('.selection').not(':hidden');
+                var index = $.inArray($activeSelection[0], selections);
+
+                if ((index - 1) >= 0) {
+                    setSelection(selections.eq(index - 1));
                 }
             },
             hasFocus: function () {
                 return hasFocus;
             },
-            setFocus : setFocus
+            setFocus: setFocus
         };
 
         return that;
