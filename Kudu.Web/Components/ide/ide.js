@@ -106,7 +106,13 @@
             }
         });
 
-        $(document).bind('keydown', 'del', function () {
+        $(document).bind('keydown', 'ctrl+s', function (ev) {
+
+            ev.preventDefault();
+            return false;
+        });
+
+        $(document).bind('keydown', 'del', function (ev) {
             var item = fileExplorer.getSelectedItem();
 
             // TODO: Prompt here
@@ -117,6 +123,9 @@
                 else {
                     fs.removeDirectory(item.directory.getPath());
                 }
+
+                ev.preventDefault();
+                return false;
             }
         });
 

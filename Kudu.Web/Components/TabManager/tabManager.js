@@ -36,6 +36,10 @@
 
         $this.addClass('tabManager');
 
+        $(fs).bind('fileSystem.removeFile', function (e, file) {
+            removeTab(file.getPath());
+        });
+
         $this.delegate('.delete', 'click', function (ev) {
             var path = $(this).closest('.tab').data('path');
             var tab = tabsLookup[path];
