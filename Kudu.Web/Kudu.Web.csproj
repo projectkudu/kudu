@@ -128,7 +128,6 @@
     <Content Include="Scripts\jquery.render.min.js" />
     <Content Include="Scripts\jquery.signalR.js" />
     <Content Include="Scripts\jquery.signalR.min.js" />
-    <Content Include="Scripts\knockout-1.3.0beta.js" />
     <Content Include="Scripts\skyde.js" />
     <Content Include="Styles\codemirror.css" />
     <Content Include="Styles\default-settings.css" />
