@@ -1,40 +1,39 @@
 ﻿<script id="fileExplorer_folderTemplate" type="text/x-jquery-tmpl"> 
-    <ul class="folder" data-path="${$data.getPath()}">
-        <li>
-            <a href="#" class="icon icon-project">Project</a>
-            <div class="folder-contents">
-                <div class="folders">
-                    {{tmpl(getDirectories()) "#fileExplorer_deferredFolderTemplate"}}
-                </div>
-                <ul class="files">
-                    {{tmpl(getFiles()) "#fileExplorer_fileTemplate"}}
-                </ul>
+<ul class="folder node ${$data.getElementId()}" data-path="${$data.getPath()}">
+    <li>
+        <span href="#" class="icon icon-project selection folder-node">Project</span>
+        <div class="folder-contents">
+            <div class="folders">
+                {{tmpl(getDirectories()) "#fileExplorer_deferredFolderTemplate"}}
             </div>
-        </li>
-    </ul>
+            <ul class="files">
+                {{tmpl(getFiles()) "#fileExplorer_fileTemplate"}}
+            </ul>
+        </div>
+    </li>
+</ul>
 </script>
 
 <script id="fileExplorer_deferredFolderTemplate" type="text/x-jquery-tmpl"> 
-    <ul class="folder folder-collapsed" data-path="${$data.getPath()}">
-        <li>
-            <div class="selection">
-                <a href="#" class="icon icon-folder folder-collapsed"></a>
-                <span class="folder-name">${$data.getName()}</span>
+<ul class="folder folder-collapsed node ${$data.getElementId()}" data-path="${$data.getPath()}">
+    <li>
+        <span class="selection folder-node">
+            <span href="#" class="icon icon-folder folder-collapsed"></span>
+            <span class="folder-name">${$data.getName()}</span>
+        </span>
+        <div class="folder-contents" style="display:none">
+            <div class="folders deferred-folders">
             </div>
-            <div class="folder-contents" style="display:none">
-                <div class="folders deferred-folders">
-                </div>
-                <ul class="files">
-                    {{tmpl(getFiles()) "#fileExplorer_fileTemplate"}}
-                </ul>
-            </div>
-        </li>            
-    </ul>
+            <ul class="files">
+                {{tmpl(getFiles()) "#fileExplorer_fileTemplate"}}
+            </ul>
+        </div>
+    </li>            
+</ul>
 </script>
 
 <script id="fileExplorer_fileTemplate" type="text/x-jquery-tmpl"> 
-    <li class="file selection" data-path="${$data.getPath()}">
-        <a href="#" class="open icon" id="${$data.getElementId()}">${$data.getName()}</a>
-        <a href="#" class="delete icon-notext icon-close">&nbsp;</a>
-    </li>
+<li class="file node ${$data.getElementId()}" data-path="${$data.getPath()}">
+    <label href="#" class="open icon selection file-node">${$data.getName()}</label>
+</li>
 </script>

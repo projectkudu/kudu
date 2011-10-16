@@ -16,6 +16,12 @@
                     setTimeout(invokeDelay, delay);
                 }
             };
+        },
+        htmlEncode: function (value) {
+            var div = document.createElement('div');
+            var text = document.createTextNode(value);
+            div.appendChild(text);
+            return div.innerHTML;
         }
     };
 

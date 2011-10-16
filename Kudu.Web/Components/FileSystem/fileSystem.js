@@ -271,7 +271,8 @@ Directory.prototype = {
         return this.path.substr(1);
     },
     getElementId: function () {
-        return 'directory-' + this.getRelativePath().replace(/\./g, '-').replace(/\//g, '-');
+        var id = 'directory-' + this.getRelativePath().replace(/\./g, '-').replace(/\//g, '-');
+        return id.substr(0, id.length - 1);
     },
     getName: function () {
         if (!this.name) {
@@ -402,7 +403,7 @@ Directory.prototype = {
     addDirectory: function (directory) {
         var path = directory.getPath();
         if (!this._contents[path]) {
-            this.directories.push(directory);            
+            this.directories.push(directory);
             this._contents[path] = true;
 
             if (this.fileSystem._refreshing == false) {
@@ -410,7 +411,7 @@ Directory.prototype = {
 
                 var index = $.inArray(directory, directory.parent.directories);
                 $(this.fileSystem).trigger('fileSystem.addDirectory', [directory, index]);
-            }            
+            }
         }
 
     },

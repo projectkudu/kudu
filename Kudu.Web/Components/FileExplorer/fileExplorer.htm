@@ -6,9 +6,11 @@
     <link href="../Shared/icons.css" rel="stylesheet" type="text/css" />
     <script src="../../Scripts/jquery-1.6.3.min.js" type="text/javascript"></script>
     <script src="../Shared/icons.js" type="text/javascript"></script>
+    <script src="../Shared/utils.js" type="text/javascript"></script>
     <script src="../../Scripts/jquery.signalR.js" type="text/javascript"></script>
     <script src="../../Scripts/jquery.render.min.js" type="text/javascript"></script>
     <script src="../FileSystem/fileSystem.js" type="text/javascript"></script>
+    <script src="../../Scripts/jquery.hotkeys-patched.js" type="text/javascript"></script>
     <script src="fileExplorer.js" type="text/javascript"></script>
     <script type="text/javascript">
         $(function () {
@@ -28,19 +30,15 @@
 
                 $('#foo').fileExplorer({
                     templates: templates,
-                    fileSystem: fs,
-                    fileOpened: function (file) {
-                        alert('open => ' + file.getPath())
-                    },
-                    fileDeleted: function (file) {
-                        alert('delete => ' + file.getPath());
-                    }
-                });
+                    fileSystem: fs
+                })
+                .refresh();
 
                 $('#bar').fileExplorer({
                     templates: templates,
                     fileSystem: fs
-                });
+                })
+                .refresh();
 
             });
 

@@ -40,14 +40,14 @@
             if (!file) {
                 return null;
             }
-            return $('#' + file.getElementId());
+            return $this.find('.' + file.getElementId());
         }
 
         function getFolderNode(directory) {
             if (!directory) {
                 return null;
             }
-            return $('#' + directory.getElementId());
+            return $this.find('.' + directory.getElementId());
         }
 
         function setSelection(path) {
@@ -68,11 +68,6 @@
         $this.delegate('.selection', 'click', function (ev) {
             var path = $(this).closest('.node').data('path');
             setSelection(path);
-
-            setFocus(true);
-
-            ev.preventDefault();
-            return false;
         });
 
         $this.delegate('.icon-folder', 'click', function (ev) {
@@ -80,9 +75,6 @@
             var path = $folder.data('path');
 
             fileExplorer.node(path).toggle();
-
-            ev.preventDefault();
-            return false;
         });
 
         $this.delegate('.open', 'dblclick', function (ev) {
@@ -90,20 +82,18 @@
             var file = fs.getFile(path);
 
             $(fileExplorer).trigger('fileExplorer.fileOpened', [file]);
-
-            setFocus(true);
-
-            ev.preventDefault();
-            return false;
         });
 
 
-        $('body').click(function (evt) {
-            var target = evt.target;
+        $('body').click(function (ev) {
+            var target = ev.target;
 
             var explorer = $(target).closest('.fileExplorer');
             if (explorer.length && explorer[0] === $this[0]) {
                 setFocus(true);
+
+                ev.preventDefault();
+                return false;
             }
             else {
                 setFocus(false);
@@ -124,7 +114,7 @@
 
         $(fs).bind('fileSystem.addFile', function (e, file, index) {
             var directory = file.getDirectory();
-            var $directory = $('#' + directory.getElementId());
+            var $directory = getFolderNode(directory);
 
             var fileContent = $.render(templates.file, file);
 
@@ -145,7 +135,7 @@
 
         $(fs).bind('fileSystem.addDirectory', function (e, directory, index) {
             var parentDirectory = directory.getParent();
-            var $parentDirectoryDirectory = $('#' + parentDirectory.getElementId());
+            var $parentDirectoryDirectory = getFolderNode(parentDirectory);
 
             var directoryContent = $.render(templates.deferredFolder, directory);
             var $directories = $parentDirectoryDirectory.find('.folder-contents')
@@ -318,6 +308,10 @@
             }
 
             this.expand = function () {
+                if (directory && directory._isRoot()) {
+                    return;
+                }
+
                 if (that.isCollapsed()) {
                     // Ensure children are populated
                     populateChildren();
@@ -327,6 +321,10 @@
             }
 
             this.collapse = function () {
+                if (directory && directory._isRoot()) {
+                    return;
+                }
+
                 if (!that.isCollapsed()) {
                     getFolderContents().hide();
                     getFolderToggle().addClass('folder-collapsed');
