@@ -11,7 +11,8 @@
             templates = options.templates,
             $this = $(this),
             activeNode = null,
-            hasFocus = false;
+            hasFocus = false,
+            nodeCache = {};
 
         // Classifiy files
         function classifyFiles($container) {
@@ -28,7 +29,7 @@
         function setFocus(value) {
             hasFocus = value;
 
-            $(that).trigger('fileExplorer.focusChanged', [value]);
+            $(fileExplorer).trigger('fileExplorer.focusChanged', [value]);
 
             if (activeNode) {
                 activeNode.setFocus(value);
@@ -55,7 +56,7 @@
                 activeNode.deselect();
             }
 
-            activeNode = new node(path);
+            activeNode = fileExplorer.node(path);
             activeNode.select();
             activeNode.setFocus(true);
         }
@@ -77,29 +78,8 @@
         $this.delegate('.icon-folder', 'click', function (ev) {
             var $folder = $(this).closest('.folder');
             var path = $folder.data('path');
-            var directory = fs.getDirectory(path);
 
-            // Get the folder contents
-            var folderContents = $folder.find('.folder-contents').first();
-            folderContents.toggle();
-
-            // On folder click we load the content from the sub folders
-            // lazily so that we don't kill the dom for a large number of files
-            var deferredFolders = folderContents.children('.deferred-folders');
-
-            if (deferredFolders.length) {
-                // Load the subdirectories
-                var innerFolders = $.render(templates.deferredFolder, directory.getDirectories());
-
-                deferredFolders.html(innerFolders);
-
-                deferredFolders.removeClass('deferred-folders');
-
-                // Re-classify the files
-                classifyFiles($this);
-            }
-
-            $(this).toggleClass('folder-collapsed');
+            fileExplorer.node(path).toggle();
 
             ev.preventDefault();
             return false;
@@ -109,7 +89,7 @@
             var path = $(this).closest('.file').data('path');
             var file = fs.getFile(path);
 
-            $(that).trigger('fileExplorer.fileOpened', [file]);
+            $(fileExplorer).trigger('fileExplorer.fileOpened', [file]);
 
             setFocus(true);
 
@@ -132,10 +112,14 @@
 
         $(fs).bind('fileSystem.removeFile', function (e, file) {
             getFileNode(file).remove();
+
+            delete nodeCache[file.getPath()];
         });
 
         $(fs).bind('fileSystem.removeDirectory', function (e, directory) {
             getFolderNode(directory).remove();
+
+            delete nodeCache[directory.getPath()];
         });
 
         $(fs).bind('fileSystem.addFile', function (e, file, index) {
@@ -190,11 +174,11 @@
 
         var throttled = {
             nextSelection: $.utils.throttle(function () {
-                that.nextSelection();
+                fileExplorer.nextSelection();
             }, 50),
 
             prevSelection: $.utils.throttle(function () {
-                that.prevSelection();
+                fileExplorer.prevSelection();
             }, 50)
         };
 
@@ -217,7 +201,7 @@
         $(document).bind('keydown', 'return', $.utils.throttle(function (ev) {
             if (hasFocus) {
                 if (activeNode && activeNode.isFile()) {
-                    $(that).trigger('fileExplorer.fileOpened', [activeNode.item()]);
+                    $(fileExplorer).trigger('fileExplorer.fileOpened', [activeNode.item()]);
                 }
                 ev.preventDefault();
                 return true;
@@ -249,7 +233,7 @@
                     if (expandParent) {
                         var path = activeNode.parentNode().path;
                         if (path) {
-                            that.select(path);
+                            fileExplorer.select(path);
                         }
                     }
                 }
@@ -262,6 +246,10 @@
         function node(path) {
             var file = fs.getFile(path);
             var directory = fs.getDirectory(path);
+
+            if (!file && !directory) {
+                throw "Invalid node";
+            }
 
             var that = this;
 
@@ -278,6 +266,40 @@
                 }
 
                 return $folder.find('.icon-folder').first();
+            }
+
+            function getFolderContents() {
+                var $folder = getFolderNode(directory);
+                if (!$folder) {
+                    return false;
+                }
+
+                return $folder.find('.folder-contents').first();
+            }
+
+            function populateChildren() {
+                if (!directory) {
+                    return;
+                }
+
+                // Get the folder contents
+                var folderContents = getFolderContents();
+
+                // On folder click we load the content from the sub folders
+                // lazily so that we don't kill the dom for a large number of files
+                var deferredFolders = folderContents.children('.deferred-folders');
+
+                if (deferredFolders.length) {
+                    // Load the subdirectories
+                    var innerFolders = $.render(templates.deferredFolder, directory.getDirectories());
+
+                    deferredFolders.html(innerFolders);
+
+                    deferredFolders.removeClass('deferred-folders');
+
+                    // Re-classify the files
+                    classifyFiles(that.element());
+                }
             }
 
             this.parentItem = function () {
@@ -297,13 +319,26 @@
 
             this.expand = function () {
                 if (that.isCollapsed()) {
-                    getFolderToggle().trigger('click');
+                    // Ensure children are populated
+                    populateChildren();
+                    getFolderContents().show();
+                    getFolderToggle().removeClass('folder-collapsed');
                 }
             }
 
             this.collapse = function () {
                 if (!that.isCollapsed()) {
-                    getFolderToggle().trigger('click');
+                    getFolderContents().hide();
+                    getFolderToggle().addClass('folder-collapsed');
+                }
+            }
+
+            this.toggle = function () {
+                if (that.isCollapsed()) {
+                    that.expand();
+                }
+                else {
+                    that.collapse();
                 }
             }
 
@@ -343,15 +378,16 @@
             this.selection = getSelection;
 
             this.parentNode = function () {
-                return new node(that.parentItem().getPath());
+                return fileExplorer.node(that.parentItem().getPath());
             }
         }
 
-        var that = {
+        var fileExplorer = {
             refresh: renderExplorer,
-            getFileNode: getFileNode,
-            getFolderNode: getFolderNode,
-            getSelectedItem: function () {
+            node: function (path) {
+                return nodeCache[path] || (nodeCache[path] = new node(path));
+            },
+            selectedItem: function () {
                 return activeNode;
             },
             clearSelection: function () {
@@ -398,7 +434,7 @@
             }
         };
 
-        return that;
+        return fileExplorer;
     };
 
 })(jQuery);
