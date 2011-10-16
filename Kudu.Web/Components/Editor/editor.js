@@ -46,32 +46,39 @@
             }
         });
 
+        function performEditorUpdate(fn) {
+            updatingEditor = true;
+            fn.apply(this, arguments);
+            updatingEditor = false;
+        }
+
         that = {
             setContent: function (path, content) {
                 var file = fs.getFile(path);
                 var mode = modes[file.getExtension()] || 'text/plain';
-                updatingEditor = true;
 
-                editor.setOption('mode', mode);
-                editor.setOption('readOnly', false);
-                editor.setValue(content);
-
-                updatingEditor = false;
+                performEditorUpdate(function () {
+                    editor.setOption('mode', mode);
+                    editor.setOption('readOnly', false);
+                    editor.setValue(content);
+                });
 
                 file.setBuffer(content);
             },
 
             clear: function () {
-                updatingEditor = true;
-
-                editor.setValue('');
-                editor.setOption('readOnly', true);
-
-                updatingEditor = false;
+                performEditorUpdate(function () {
+                    editor.setValue('');
+                    editor.setOption('readOnly', true);
+                });
             },
 
             getContent: function () {
                 return editor.getValue();
+            },
+
+            focus: function () {
+                editor.focus();
             }
         };
 

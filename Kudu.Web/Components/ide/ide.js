@@ -28,12 +28,16 @@
 
             if (file.getBuffer() !== null) {
                 editor.setContent(path, file.getBuffer());
+                editor.focus();
+                fileExplorer.setFocus(false);
             }
             else {
                 // Get the file content from the server
                 documents.openFile(path)
                      .done(function (content) {
                          editor.setContent(path, content);
+                         editor.focus();
+                         fileExplorer.setFocus(false);
 
                          file.setBuffer(content);
                      });
@@ -120,7 +124,7 @@
                     if (item.file) {
                         fs.removeFile(item.file.getPath());
                     }
-                    else {
+                    else if(item.directory) {
                         fs.removeDirectory(item.directory.getPath());
                     }
 
@@ -156,7 +160,7 @@
             }
         });
 
-        $(document).bind('keydown', 'return', function (ev) {
+        $(document).bind('keydown', 'return', $.utils.throttle(function (ev) {
             if (fileExplorer.hasFocus()) {
                 var item = fileExplorer.getSelectedItem();
                 if (item && item.file) {
@@ -165,7 +169,7 @@
                     return true;
                 }
             }
-        });
+        }, 50));
 
         $.connection.hub.start(function () {
             documents.getStatus()

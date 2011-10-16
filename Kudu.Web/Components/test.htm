@@ -9,7 +9,7 @@
     <link href="Shared/icons.css" rel="stylesheet" type="text/css" />
     <style type="text/css">
         #edit-area {
-            height: 400px;
+            height: 100%;
             width: 60%;
             float: left;
             border: 1px solid #ccc;
@@ -17,6 +17,14 @@
         #files {
             float: left;
             margin-left: 10px;
+            height: 100%;
+            border: 1px solid #ccc;
+            width: 25%;
+            overflow: auto;
+        }
+       
+        #ide {
+            height: 500px;
         }
     </style>
     <script src="../Scripts/codemirror/codemirror.js" type="text/javascript"></script>
@@ -46,7 +54,7 @@
 <body>
     <ul id="tabs">
     </ul>
-    <div>
+    <div id="ide">
         <div id="edit-area">
             <textarea id="editor"></textarea>
         </div>

@@ -231,7 +231,8 @@
             },
             hasFocus: function () {
                 return hasFocus;
-            }
+            },
+            setFocus : setFocus
         };
 
         return that;
