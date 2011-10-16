@@ -149,7 +149,7 @@
         }
 
         var console = {
-            append: function (content) {
+            log: function (content) {
                 var lines = $.utils.htmlEncode(content).split('\n');
                 $.each(lines, function () {
                     var line = this.replace(/\s/g, '&nbsp;');

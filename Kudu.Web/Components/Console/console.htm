@@ -38,13 +38,13 @@
                     console.completeCommand();
                 }
                 else {
-                    console.append('Running fake command "' + command + '"');
+                    console.log('Running fake command "' + command + '"');
                     var processing = setInterval(function () {
-                        console.append('Processing...');
+                        console.log('Processing...');
                     }, 200);
 
                     setTimeout(function () {
-                        console.append('Done');
+                        console.log('Done');
                         clearInterval(processing);
                         console.completeCommand();
                     }, 1000);
