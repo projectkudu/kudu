@@ -234,7 +234,6 @@
         $(document).bind('keydown', 'left', $.utils.throttle(function (ev) {
             if (hasFocus) {
                 if (that.collapseActiveNode() === false) {
-
                     // If we couldn't collapse the node then select the parent
                     var item = that.getSelectedItem();
                     if (item) {
@@ -284,7 +283,6 @@
                 }
             },
             nextSelection: function () {
-                // TODO: Efficiency?
                 var selections = $this.find('.selection').not(':hidden');
                 var index = $.inArray($activeSelection[0], selections);
 
@@ -293,7 +291,6 @@
                 }
             },
             prevSelection: function () {
-                // TODO: Efficiency?
                 var selections = $this.find('.selection').not(':hidden');
                 var index = $.inArray($activeSelection[0], selections);
 
