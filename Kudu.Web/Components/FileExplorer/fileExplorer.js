@@ -9,7 +9,8 @@
         // Get the file system from the options
         var fs = options.fileSystem,
             templates = options.templates,
-            $this = $(this);
+            $this = $(this),
+            $activeSelection = null;
 
         // Classifiy files
         function classifyFiles($container) {
@@ -36,6 +37,15 @@
 
         // Setup event handlers
         $this.delegate('.selection', 'click', function (ev) {
+            if ($activeSelection) {
+                $activeSelection.removeClass('selected');
+            }
+
+            $(this).addClass('selected');
+
+            $activeSelection = $(this);
+
+            ev.preventDefault();
             return false;
         });
 
@@ -70,28 +80,11 @@
             return false;
         });
 
-        $this.delegate('.open', 'click', function (ev) {
+        $this.delegate('.open', 'dblclick', function (ev) {
             var path = $(this).closest('.file').data('path');
             var file = fs.getFile(path);
 
             $(that).trigger('fileExplorer.fileClicked', [file]);
-
-            ev.preventDefault();
-            return false;
-        });
-
-        $this.delegate('.delete', 'click', function (ev) {
-            var path = $(this).closest('.file').data('path');
-            var file = fs.getFile(path);
-
-            var event = $.Event('fileExplorer.beforeFileDeleted', { file: file });
-            $(that).trigger(event);
-
-            if (!event.isDefaultPrevented()) {
-                fs.removeFile(path);
-
-                $(that).trigger('fileExplorer.afterFileDeleted', [file]);
-            }
 
             ev.preventDefault();
             return false;
@@ -158,7 +151,20 @@
         var that = {
             refresh: renderExplorer,
             getFileNode: getFileNode,
-            getFolderNode: getFolderNode
+            getFolderNode: getFolderNode,
+            getSelectedItem: function () {
+                if ($activeSelection.hasClass('file')) {
+                    var filePath = $activeSelection.data('path');
+                    return {
+                        file: fs.getFile(filePath)
+                    };
+                }
+
+                var folderPath = $activeSelection.closest('.folder').data('path');
+                return {
+                    directory: fs.getDirectory(folderPath)
+                };
+            }
         };
 
         return that;

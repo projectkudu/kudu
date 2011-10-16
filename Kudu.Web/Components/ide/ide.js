@@ -60,15 +60,6 @@
             tabManager.setActive(path);
         });
 
-        $(fileExplorer).bind('fileExplorer.beforeFileDeleted', function (e) {
-            // TODO: Prompt for confirmation
-            e.preventDefault();
-        });
-
-        $(fileExplorer).bind('fileExplorer.afterFileDeleted', function (e, file) {
-            tabManager.remove(file.getPath());
-        });
-
         $(tabManager).bind('tabManager.beforeActiveTabChanged', function (e, tab) {
             if (tab) {
                 tab.file.setBuffer(editor.getContent());
@@ -111,6 +102,20 @@
             if (tab) {
                 if (!tab.file.isDirty()) {
                     tab.file.setDirty(true);
+                }
+            }
+        });
+
+        $(document).bind('keydown', 'del', function () {
+            var item = fileExplorer.getSelectedItem();
+
+            // TODO: Prompt here
+            if (item) {
+                if (item.file) {
+                    fs.removeFile(item.file.getPath());
+                }
+                else {
+                    fs.removeDirectory(item.directory.getPath());
                 }
             }
         });

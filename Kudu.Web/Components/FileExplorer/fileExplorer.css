@@ -14,12 +14,21 @@
     text-decoration: none;
 }
 
-.fileExplorer .folder-name {
+.fileExplorer .selection {
     cursor: default;
+    padding: 1px;
 }
 
-.fileExplorer .selection {
-    
+.fileExplorer .icon-project.selection {
+    padding-left: 20px;
+}
+
+.fileExplorer .selection.selected {
+    background-color: #2287d9; 
+    color: White;
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
 }
 
 .fileExplorer .folder, .fileExplorer .files {
