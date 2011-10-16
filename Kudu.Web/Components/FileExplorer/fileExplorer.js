@@ -307,6 +307,10 @@
                 }
             },
             expandActiveNode: function () {
+                if (!$activeSelection) {
+                    return false;
+                }
+
                 if (!$activeSelection.hasClass('file')) {
                     var $folderToggle = $activeSelection.find('.icon-folder').first();
                     if ($folderToggle.hasClass('folder-collapsed')) {
@@ -317,6 +321,10 @@
                 return false;
             },
             collapseActiveNode: function () {
+                if (!$activeSelection) {
+                    return false;
+                }
+
                 if (!$activeSelection.hasClass('file')) {
                     var $folderToggle = $activeSelection.find('.icon-folder').first();
                     if (!$folderToggle.hasClass('folder-collapsed')) {
