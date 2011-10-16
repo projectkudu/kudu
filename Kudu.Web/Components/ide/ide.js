@@ -113,19 +113,57 @@
         });
 
         $(document).bind('keydown', 'del', function (ev) {
-            var item = fileExplorer.getSelectedItem();
+            if (fileExplorer.hasFocus()) {
+                var item = fileExplorer.getSelectedItem();
+                // TODO: Prompt here
+                if (item) {
+                    if (item.file) {
+                        fs.removeFile(item.file.getPath());
+                    }
+                    else {
+                        fs.removeDirectory(item.directory.getPath());
+                    }
 
-            // TODO: Prompt here
-            if (item) {
-                if (item.file) {
-                    fs.removeFile(item.file.getPath());
+                    ev.preventDefault();
+                    return false;
                 }
-                else {
-                    fs.removeDirectory(item.directory.getPath());
-                }
+            }
+        });
 
+        var throttled = {
+            nextSelection: $.utils.throttle(function () {
+                fileExplorer.nextSelection();
+            }, 50),
+
+            prevSelection: $.utils.throttle(function () {
+                fileExplorer.prevSelection();
+            }, 50)
+        };
+
+        $(document).bind('keydown', 'down', function (ev) {
+            if (fileExplorer.hasFocus()) {
+                throttled.nextSelection();
                 ev.preventDefault();
-                return false;
+                return true;
+            }
+        });
+
+        $(document).bind('keydown', 'up', function (ev) {
+            if (fileExplorer.hasFocus()) {
+                throttled.prevSelection();
+                ev.preventDefault();
+                return true;
+            }
+        });
+
+        $(document).bind('keydown', 'return', function (ev) {
+            if (fileExplorer.hasFocus()) {
+                var item = fileExplorer.getSelectedItem();
+                if (item && item.file) {
+                    $(fileExplorer).trigger('fileExplorer.fileClicked', [item.file]);
+                    ev.preventDefault();
+                    return true;
+                }
             }
         });
 

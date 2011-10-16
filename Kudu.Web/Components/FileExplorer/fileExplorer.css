@@ -25,10 +25,15 @@
 
 .fileExplorer .selection.selected {
     background-color: #2287d9; 
-    color: White;
+    color: #fff;
     -webkit-border-radius: 3px;
     -moz-border-radius: 3px;
     border-radius: 3px;
+}
+
+.fileExplorer .selection.selected.no-focus {
+    background-color: #d7d7d7;
+    color: #000;
 }
 
 .fileExplorer .folder, .fileExplorer .files {

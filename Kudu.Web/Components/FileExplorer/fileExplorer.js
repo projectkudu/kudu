@@ -10,7 +10,8 @@
         var fs = options.fileSystem,
             templates = options.templates,
             $this = $(this),
-            $activeSelection = null;
+            $activeSelection = null,
+            hasFocus = false;
 
         // Classifiy files
         function classifyFiles($container) {
@@ -24,6 +25,21 @@
             });
         }
 
+        function setFocus(value) {
+            hasFocus = value;
+
+            $(that).trigger('fileExplorer.focusChanged', [value]);
+
+            if ($activeSelection) {
+                if (!value) {
+                    $activeSelection.addClass('no-focus');
+                }
+                else {
+                    $activeSelection.removeClass('no-focus');
+                }
+            }
+        }
+
         function getFileNode(file) {
             return $('#' + file.getElementId());
         }
@@ -32,18 +48,25 @@
             return $('#' + directory.getElementId());
         }
 
+        function setSelection($elem) {
+            if ($activeSelection) {
+                $activeSelection.removeClass('selected');
+                $activeSelection.removeClass('no-focus');
+            }
+
+            $elem.addClass('selected');
+
+            $activeSelection = $elem;
+        }
+
         // Add the file explorer class so we can apply the appropriate styles
         $this.addClass('fileExplorer');
 
         // Setup event handlers
         $this.delegate('.selection', 'click', function (ev) {
-            if ($activeSelection) {
-                $activeSelection.removeClass('selected');
-            }
+            setSelection($(this));
 
-            $(this).addClass('selected');
-
-            $activeSelection = $(this);
+            setFocus(true);
 
             ev.preventDefault();
             return false;
@@ -86,8 +109,23 @@
 
             $(that).trigger('fileExplorer.fileClicked', [file]);
 
+            setFocus(true);
+
             ev.preventDefault();
             return false;
+        });
+
+
+        $('body').click(function (evt) {
+            var target = evt.target;
+
+            var explorer = $(target).closest('.fileExplorer');
+            if (explorer.length) {
+                setFocus(true);
+            }
+            else {
+                setFocus(false);
+            }
         });
 
         $(fs).bind('fileSystem.removeFile', function (e, file) {
@@ -153,6 +191,10 @@
             getFileNode: getFileNode,
             getFolderNode: getFolderNode,
             getSelectedItem: function () {
+                if (!$activeSelection) {
+                    return null;
+                }
+
                 if ($activeSelection.hasClass('file')) {
                     var filePath = $activeSelection.data('path');
                     return {
@@ -170,6 +212,25 @@
                     $activeSelection.removeClass('selected');
                     $activeSelection = null;
                 }
+            },
+            nextSelection: function () {
+                if ($activeSelection.hasClass('file')) {
+                    var next = $activeSelection.next();
+                    if (next.length) {
+                        setSelection(next);
+                    }
+                }
+            },
+            prevSelection: function () {
+                if ($activeSelection.hasClass('file')) {
+                    var prev = $activeSelection.prev();
+                    if (prev.length) {
+                        setSelection(prev);
+                    }
+                }
+            },
+            hasFocus: function () {
+                return hasFocus;
             }
         };
 
