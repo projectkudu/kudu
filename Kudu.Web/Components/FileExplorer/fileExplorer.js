@@ -90,7 +90,7 @@
         });
 
 
-        $('body').click(function (ev) {
+        $(document).click(function (ev) {
             var target = ev.target;
 
             var explorer = $(target).closest('.fileExplorer');
