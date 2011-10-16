@@ -195,6 +195,8 @@
                      fileExplorer.refresh();
                  });
         });
+
+        $.fe = fileExplorer;
     };
 
 })(jQuery);

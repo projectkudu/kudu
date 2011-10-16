@@ -250,7 +250,20 @@
             hasFocus: function () {
                 return hasFocus;
             },
-            setFocus: setFocus
+            setFocus: setFocus,
+            select: function (path) {
+                var file = fs.getFile(path);
+                if (file) {
+                    setSelection(getFileNode(file));
+                }
+                else {
+                    var directory = fs.getDirectory(path);
+                    if (directory) {
+                        var folder = getFolderNode(directory);
+                        setSelection(folder.find('.selection').first());
+                    }
+                }
+            }
         };
 
         return that;
