@@ -46,11 +46,11 @@
     margin: 6px 6px 6px 0;    
 }
 
-#console .messages ul.buffer li .command {
+.console .messages ul.buffer li .command {
     margin-left: 5px;
     margin-right: 5px;
 }
 
-#console .messages ul.buffer li .prompt {
+.console .messages ul.buffer li .prompt {
     margin-top: 0;
 }

@@ -1,8 +1,13 @@
 (function ($) {
     $.fn.console = function (options) {
+        var config = {
+            prompt: '$'
+        };
+
+        $.extend(config, options);
         // Get the file system from the options
         var $this = $(this),
-            prompt = options.prompt || '$',
+            prompt = config.prompt,
             console = null,
             executingCommand = false; // REVIEW: We could allow command queuing.
 
@@ -59,22 +64,30 @@
             $buffer.append('<li><span class="prompt">' + prompt + '</span><span class="command">' + command + '</span><span class="icon icon-prompt-loading"></span><li>');
         }
 
-        $cmd.bind('keydown', 'esc', function (ev) {
-            $(this).val('');
-            ev.stopPropagation();
-            ev.preventDefault();
-            return false;
+        $this.click(function () {
+            console.focus();
         });
+
+        $cmd.bind('keydown', 'esc', $.utils.throttle(function (ev) {
+            if (ev.target === $cmd[0]) {
+                $(this).val('');
+                ev.stopPropagation();
+                ev.preventDefault();
+                return false;
+            }
+        }, 50));
 
         $cmd.bind('keydown', 'tab', function (ev) {
-            // Capture tab 
-            ev.stopPropagation();
-            ev.preventDefault();
-            return false;
+            if (ev.target === $cmd[0]) {
+                // Capture tab 
+                ev.stopPropagation();
+                ev.preventDefault();
+                return false;
+            }
         });
 
-        $cmd.bind('keydown', 'ctrl+c', function (ev) {
-            if (executingCommand) {
+        $cmd.bind('keydown', 'ctrl+c', $.utils.throttle(function (ev) {
+            if (ev.target === $cmd[0] && executingCommand === true) {
                 $(console).trigger('console.cancelCommand');
                 console.completeCommand();
 
@@ -82,33 +95,36 @@
                 ev.preventDefault();
                 return false;
             }
-            return true;
-        });
+        }, 50));
 
         $cmd.bind('keydown', 'up', $.utils.throttle(function (ev) {
-            commandStack.prev();
-            var command = commandStack.getValue();
-            if (command && $cmd.val() !== command) {
-                $cmd.val(command);
+            if (ev.target === $cmd[0]) {
+                commandStack.prev();
+                var command = commandStack.getValue();
+                if (command && $cmd.val() !== command) {
+                    $cmd.val(command);
+                }
+                ev.stopPropagation();
+                ev.preventDefault();
+                return false;
             }
-            ev.stopPropagation();
-            ev.preventDefault();
-            return false;
         }, 50));
 
         $cmd.bind('keydown', 'down', $.utils.throttle(function (ev) {
-            commandStack.next();
-            var command = commandStack.getValue();
-            if (command && $cmd.val() !== command) {
-                $cmd.val(command);
+            if (ev.target === $cmd[0]) {
+                commandStack.next();
+                var command = commandStack.getValue();
+                if (command && $cmd.val() !== command) {
+                    $cmd.val(command);
+                }
+                ev.stopPropagation();
+                ev.preventDefault();
+                return false;
             }
-            ev.stopPropagation();
-            ev.preventDefault();
-            return false;
         }, 50));
 
         $cmd.bind('keydown', 'return', $.utils.throttle(function (ev) {
-            if (executingCommand === true) {
+            if (ev.target !== $cmd[0] || executingCommand === true) {
                 ev.preventDefault();
                 return false;
             }
@@ -120,6 +136,7 @@
                 executingCommand = true;
                 $(console).trigger('console.runCommand', [command]);
                 $cmd.val('');
+                console.focus();
             }
 
             ev.preventDefault();
@@ -144,7 +161,7 @@
             },
             completeCommand: function () {
                 executingCommand = false;
-                $this.find('.icon-prompt-loading').remove();
+                $buffer.find('.icon-prompt-loading').remove();
             },
             focus: function () {
                 $cmd.focus();
