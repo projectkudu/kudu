@@ -283,6 +283,10 @@
                 }
             },
             nextSelection: function () {
+                if (!$activeSelection) {
+                    return;
+                }
+
                 var selections = $this.find('.selection').not(':hidden');
                 var index = $.inArray($activeSelection[0], selections);
 
@@ -291,6 +295,10 @@
                 }
             },
             prevSelection: function () {
+                if (!$activeSelection) {
+                    return;
+                }
+
                 var selections = $this.find('.selection').not(':hidden');
                 var index = $.inArray($activeSelection[0], selections);
 
