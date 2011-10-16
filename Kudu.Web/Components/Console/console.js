@@ -4,7 +4,7 @@
         var $this = $(this),
             prompt = options.prompt || '$',
             console = null,
-            pendingCommand = false; // REVIEW: We could allow command queuing.
+            executingCommand = false; // REVIEW: We could allow command queuing.
 
         $this.addClass('console');
 
@@ -26,16 +26,89 @@
         $cmd.appendTo($container);
         $container.appendTo($this);
 
+
+        var commandStack = (function () {
+            var at = 0;
+            var stack = [];
+            return {
+                next: function () {
+                    if (at < stack.length) {
+                        at++;
+                    }
+                },
+                prev: function () {
+                    if (at > 0) {
+                        at--;
+                    }
+                },
+                add: function (command) {
+                    at = stack.push(command);
+                },
+                getValue: function () {
+                    return stack[at];
+                }
+            };
+        })();
+
         function appendLine(value) {
             $buffer.append('<li>' + value + '</li>');
         }
 
         function appendCommand(command) {
+            commandStack.add(command);
             $buffer.append('<li><span class="prompt">' + prompt + '</span><span class="command">' + command + '</span><span class="icon icon-prompt-loading"></span><li>');
         }
 
+        $cmd.bind('keydown', 'esc', function (ev) {
+            $(this).val('');
+            ev.stopPropagation();
+            ev.preventDefault();
+            return false;
+        });
+
+        $cmd.bind('keydown', 'tab', function (ev) {
+            // Capture tab 
+            ev.stopPropagation();
+            ev.preventDefault();
+            return false;
+        });
+
+        $cmd.bind('keydown', 'ctrl+c', function (ev) {
+            if (executingCommand) {
+                $(console).trigger('console.cancelCommand');
+                console.completeCommand();
+
+                ev.stopPropagation();
+                ev.preventDefault();
+                return false;
+            }
+            return true;
+        });
+
+        $cmd.bind('keydown', 'up', $.utils.throttle(function (ev) {
+            commandStack.prev();
+            var command = commandStack.getValue();
+            if (command && $cmd.val() !== command) {
+                $cmd.val(command);
+            }
+            ev.stopPropagation();
+            ev.preventDefault();
+            return false;
+        }, 50));
+
+        $cmd.bind('keydown', 'down', $.utils.throttle(function (ev) {
+            commandStack.next();
+            var command = commandStack.getValue();
+            if (command && $cmd.val() !== command) {
+                $cmd.val(command);
+            }
+            ev.stopPropagation();
+            ev.preventDefault();
+            return false;
+        }, 50));
+
         $cmd.bind('keydown', 'return', $.utils.throttle(function (ev) {
-            if (pendingCommand === true) {
+            if (executingCommand === true) {
                 ev.preventDefault();
                 return false;
             }
@@ -44,7 +117,7 @@
 
             if (command) {
                 appendCommand(command);
-                pendingCommand = true;
+                executingCommand = true;
                 $(console).trigger('console.runCommand', [command]);
                 $cmd.val('');
             }
@@ -61,7 +134,7 @@
                     if (!line) {
                         line = '&nbsp;';
                     }
-                    $buffer.append('<li>' + line + '</li>');
+                    appendLine(line);
                 });
 
                 $messages.scrollTop($buffer[0].scrollHeight);
@@ -70,8 +143,11 @@
                 $buffer.html('');
             },
             completeCommand: function () {
-                pendingCommand = false;
+                executingCommand = false;
                 $this.find('.icon-prompt-loading').remove();
+            },
+            focus: function () {
+                $cmd.focus();
             }
         };
 

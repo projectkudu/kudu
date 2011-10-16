@@ -26,9 +26,10 @@
                     console.completeCommand();
                 }
                 else {
+                    console.append('Running fake command "' + command + '"');
                     var processing = setInterval(function () {
                         console.append('Processing...');
-                    }, 100);
+                    }, 200);
 
                     setTimeout(function () {
                         console.append('Done');
