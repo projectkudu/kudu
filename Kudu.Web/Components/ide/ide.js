@@ -59,7 +59,7 @@
             fileSystem: fs
         });
 
-        $(fileExplorer).bind('fileExplorer.fileClicked', function (e, file) {
+        $(fileExplorer).bind('fileExplorer.fileOpened', function (e, file) {
             var path = file.getPath();
             tabManager.setActive(path);
         });
@@ -76,7 +76,7 @@
 
         $(tabManager).bind('tabManager.beforeTabClosed', function (e) {
             if (e.tab.file.isDirty()) {
-                // TODO: Prompt for confirmation
+                $.dialogs.prompt("Do you want to save the changes to '" + e.tab.file.getPath() + "'", ['yes', 'no', 'cancel'])
                 e.preventDefault();
             }
         });
@@ -132,60 +132,7 @@
                     return false;
                 }
             }
-        });
-
-        var throttled = {
-            nextSelection: $.utils.throttle(function () {
-                fileExplorer.nextSelection();
-            }, 50),
-
-            prevSelection: $.utils.throttle(function () {
-                fileExplorer.prevSelection();
-            }, 50)
-        };
-
-        $(document).bind('keydown', 'down', function (ev) {
-            if (fileExplorer.hasFocus()) {
-                throttled.nextSelection();
-                ev.preventDefault();
-                return true;
-            }
-        });
-
-        $(document).bind('keydown', 'up', function (ev) {
-            if (fileExplorer.hasFocus()) {
-                throttled.prevSelection();
-                ev.preventDefault();
-                return true;
-            }
-        });
-
-        $(document).bind('keydown', 'return', $.utils.throttle(function (ev) {
-            if (fileExplorer.hasFocus()) {
-                var item = fileExplorer.getSelectedItem();
-                if (item && item.file) {
-                    $(fileExplorer).trigger('fileExplorer.fileClicked', [item.file]);
-                }
-                ev.preventDefault();
-                return true;
-            }
-        }, 50));
-
-        $(document).bind('keydown', 'right', $.utils.throttle(function (ev) {
-            if (fileExplorer.hasFocus()) {
-                fileExplorer.expandActiveNode();
-                ev.preventDefault();
-                return true;
-            }
-        }, 50));
-
-        $(document).bind('keydown', 'left', $.utils.throttle(function (ev) {
-            if (fileExplorer.hasFocus()) {
-                fileExplorer.collapseActiveNode();
-                ev.preventDefault();
-                return true;
-            }
-        }, 50));
+        });        
 
         $.connection.hub.start(function () {
             documents.getStatus()

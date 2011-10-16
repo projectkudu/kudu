@@ -96,6 +96,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Components\Dialogs\dialogs.js" />
     <Content Include="Components\Editor\editor.js" />
     <Content Include="Components\FileExplorer\fileExplorer.js" />
     <Content Include="Components\FileExplorer\fileExplorer.css" />

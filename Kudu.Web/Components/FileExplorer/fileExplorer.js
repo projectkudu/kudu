@@ -107,7 +107,7 @@
             var path = $(this).closest('.file').data('path');
             var file = fs.getFile(path);
 
-            $(that).trigger('fileExplorer.fileClicked', [file]);
+            $(that).trigger('fileExplorer.fileOpened', [file]);
 
             setFocus(true);
 
@@ -185,6 +185,59 @@
             // Classify the files
             classifyFiles($this);
         }
+
+        var throttled = {
+            nextSelection: $.utils.throttle(function () {
+                that.nextSelection();
+            }, 50),
+
+            prevSelection: $.utils.throttle(function () {
+                that.prevSelection();
+            }, 50)
+        };
+
+        $(document).bind('keydown', 'down', function (ev) {
+            if (that.hasFocus()) {
+                throttled.nextSelection();
+                ev.preventDefault();
+                return true;
+            }
+        });
+
+        $(document).bind('keydown', 'up', function (ev) {
+            if (that.hasFocus()) {
+                throttled.prevSelection();
+                ev.preventDefault();
+                return true;
+            }
+        });
+
+        $(document).bind('keydown', 'return', $.utils.throttle(function (ev) {
+            if (that.hasFocus()) {
+                var item = that.getSelectedItem();
+                if (item && item.file) {
+                    $(that).trigger('fileExplorer.fileOpened', [item.file]);
+                }
+                ev.preventDefault();
+                return true;
+            }
+        }, 50));
+
+        $(document).bind('keydown', 'right', $.utils.throttle(function (ev) {
+            if (that.hasFocus()) {
+                that.expandActiveNode();
+                ev.preventDefault();
+                return true;
+            }
+        }, 50));
+
+        $(document).bind('keydown', 'left', $.utils.throttle(function (ev) {
+            if (that.hasFocus()) {
+                that.collapseActiveNode();
+                ev.preventDefault();
+                return true;
+            }
+        }, 50));
 
         var that = {
             refresh: renderExplorer,
