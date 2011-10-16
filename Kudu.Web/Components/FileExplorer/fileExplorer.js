@@ -385,7 +385,7 @@
             node: function (path) {
                 return nodeCache[path] || (nodeCache[path] = new node(path));
             },
-            selectedItem: function () {
+            selectedNode: function () {
                 return activeNode;
             },
             clearSelection: function () {

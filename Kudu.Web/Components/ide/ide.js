@@ -116,14 +116,14 @@
 
         $(document).bind('keydown', 'del', function (ev) {
             if (fileExplorer.hasFocus()) {
-                var item = fileExplorer.getSelectedItem();
+                var selectedNode = fileExplorer.selectedNode();
                 // TODO: Prompt here
-                if (item) {
-                    if (item.file) {
-                        fs.removeFile(item.file.getPath());
+                if (selectedNode) {
+                    if (selectedNode.isFile()) {
+                        fs.removeFile(selectedNode.path);
                     }
-                    else if (item.directory) {
-                        fs.removeDirectory(item.directory.getPath());
+                    else {
+                        fs.removeDirectory(selectedNode.path);
                     }
 
                     ev.preventDefault();
