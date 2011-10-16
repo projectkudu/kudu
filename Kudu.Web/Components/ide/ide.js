@@ -124,7 +124,7 @@
                     if (item.file) {
                         fs.removeFile(item.file.getPath());
                     }
-                    else if(item.directory) {
+                    else if (item.directory) {
                         fs.removeDirectory(item.directory.getPath());
                     }
 
@@ -165,9 +165,25 @@
                 var item = fileExplorer.getSelectedItem();
                 if (item && item.file) {
                     $(fileExplorer).trigger('fileExplorer.fileClicked', [item.file]);
-                    ev.preventDefault();
-                    return true;
                 }
+                ev.preventDefault();
+                return true;
+            }
+        }, 50));
+
+        $(document).bind('keydown', 'right', $.utils.throttle(function (ev) {
+            if (fileExplorer.hasFocus()) {
+                fileExplorer.expandActiveNode();
+                ev.preventDefault();
+                return true;
+            }
+        }, 50));
+
+        $(document).bind('keydown', 'left', $.utils.throttle(function (ev) {
+            if (fileExplorer.hasFocus()) {
+                fileExplorer.collapseActiveNode();
+                ev.preventDefault();
+                return true;
             }
         }, 50));
 

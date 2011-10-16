@@ -231,6 +231,22 @@
                     setSelection(selections.eq(index - 1));
                 }
             },
+            expandActiveNode: function () {
+                if (!$activeSelection.hasClass('file')) {
+                    var $folderToggle = $activeSelection.find('.icon-folder').first();
+                    if ($folderToggle.hasClass('folder-collapsed')) {
+                        $folderToggle.trigger('click');
+                    }
+                }
+            },
+            collapseActiveNode: function () {
+                if (!$activeSelection.hasClass('file')) {
+                    var $folderToggle = $activeSelection.find('.icon-folder').first();
+                    if (!$folderToggle.hasClass('folder-collapsed')) {
+                        $folderToggle.trigger('click');
+                    }
+                }
+            },
             hasFocus: function () {
                 return hasFocus;
             },
