@@ -56,9 +56,14 @@
                 activeNode.deselect();
             }
 
-            activeNode = fileExplorer.node(path);
-            activeNode.select();
-            activeNode.setFocus(true);
+            if (path) {
+                activeNode = fileExplorer.node(path);
+                activeNode.select();
+                activeNode.setFocus(true);
+            }
+            else {
+                activeNode = null;
+            }
         }
 
         // Add the file explorer class so we can apply the appropriate styles
@@ -100,16 +105,22 @@
             }
         });
 
-        $(fs).bind('fileSystem.removeFile', function (e, file) {
-            getFileNode(file).remove();
+        function removeNode(node) {
+            node.element().remove();
 
-            delete nodeCache[file.getPath()];
+            if (node === activeNode) {
+                setSelection(null);
+            }
+
+            delete nodeCache[node.path];
+        }
+
+        $(fs).bind('fileSystem.removeFile', function (e, file) {
+            removeNode(fileExplorer.nodeFor(file));
         });
 
         $(fs).bind('fileSystem.removeDirectory', function (e, directory) {
-            getFolderNode(directory).remove();
-
-            delete nodeCache[directory.getPath()];
+            removeNode(fileExplorer.nodeFor(directory));            
         });
 
         $(fs).bind('fileSystem.addFile', function (e, file, index) {
