@@ -11,8 +11,6 @@
             editor = null,
             fileExplorer = null;
 
-        $.fs = fs;
-
         var documents = $.connection.documents;
         documents.appName = options.appName;
 
@@ -132,7 +130,7 @@
                     return false;
                 }
             }
-        });        
+        });
 
         $.connection.hub.start(function () {
             documents.getStatus()
@@ -143,6 +141,8 @@
                  });
         });
 
+
+        $.fs = fs;
         $.fe = fileExplorer;
     };
 
