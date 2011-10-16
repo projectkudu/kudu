@@ -120,7 +120,7 @@
         });
 
         $(fs).bind('fileSystem.removeDirectory', function (e, directory) {
-            removeNode(fileExplorer.nodeFor(directory));            
+            removeNode(fileExplorer.nodeFor(directory));
         });
 
         $(fs).bind('fileSystem.addFile', function (e, file, index) {
@@ -402,6 +402,12 @@
             }
         }
 
+        function getSelectionPaths() {
+            return $this.find('.selection').not(':hidden').map(function (i, e) {
+                return $(e).closest('.node').data('path');
+            })
+        }
+
         var fileExplorer = {
             refresh: renderExplorer,
             node: function (path) {
@@ -424,13 +430,11 @@
                     return;
                 }
 
-                var selections = $this.find('.selection').not(':hidden');
-                var index = $.inArray(activeNode.selection()[0], selections);
+                var paths = getSelectionPaths();
+                var index = $.inArray(activeNode.path, paths);
 
-                if (index + 1 < selections.length) {
-                    var elem = selections.eq(index + 1);
-                    var path = elem.closest('.node').data('path');
-                    setSelection(path);
+                if (index + 1 < paths.length) {
+                    setSelection(paths[index + 1]);
                 }
             },
             prevSelection: function () {
@@ -438,13 +442,11 @@
                     return;
                 }
 
-                var selections = $this.find('.selection').not(':hidden');
-                var index = $.inArray(activeNode.selection()[0], selections);
+                var paths = getSelectionPaths();
+                var index = $.inArray(activeNode.path, paths);
 
                 if ((index - 1) >= 0) {
-                    var elem = selections.eq(index - 1);
-                    var path = elem.closest('.node').data('path');
-                    setSelection(path);
+                    setSelection(paths[index - 1]);
                 }
             },
             hasFocus: function () {
