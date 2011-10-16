@@ -136,12 +136,17 @@
                 executingCommand = true;
                 $(console).trigger('console.runCommand', [command]);
                 $cmd.val('');
+                scrollBuffer();
                 console.focus();
             }
 
             ev.preventDefault();
             return false;
         }, 50));
+
+        function scrollBuffer() {
+            $messages.scrollTop($buffer[0].scrollHeight);
+        }
 
         var console = {
             append: function (content) {
@@ -154,7 +159,7 @@
                     appendLine(line);
                 });
 
-                $messages.scrollTop($buffer[0].scrollHeight);
+                scrollBuffer();
             },
             clear: function () {
                 $buffer.html('');
