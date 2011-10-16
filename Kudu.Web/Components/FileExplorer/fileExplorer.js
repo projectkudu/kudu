@@ -113,42 +113,13 @@
         });
 
         $(fs).bind('fileSystem.addFile', function (e, file, index) {
-            var directory = file.getDirectory();
-            var $directory = getFolderNode(directory);
-
-            var fileContent = $.render(templates.file, file);
-
-            var $files = $directory.find('.folder-contents')
-                                   .first()
-                                   .children('.files');
-
-            var fileAt = $files.children()[index];
-            if (fileAt) {
-                $(fileAt).before($(fileContent));
-            }
-            else {
-                $files.append(fileContent);
-            }
-
-            classifyFiles($directory);
+            var node = fileExplorer.nodeFor(file);
+            node.parentNode().addFile(file, index);
         });
 
         $(fs).bind('fileSystem.addDirectory', function (e, directory, index) {
-            var parentDirectory = directory.getParent();
-            var $parentDirectoryDirectory = getFolderNode(parentDirectory);
-
-            var directoryContent = $.render(templates.deferredFolder, directory);
-            var $directories = $parentDirectoryDirectory.find('.folder-contents')
-                                                        .first()
-                                                        .children('.folders');
-
-            var directoryAt = $directories.children()[index];
-            if (directoryAt) {
-                $(directoryAt).before($(directoryContent));
-            }
-            else {
-                $directories.append(directoryContent);
-            }
+            var node = fileExplorer.nodeFor(directory);
+            node.parentNode().addFolder(directory, index);
         });
 
         function renderExplorer() {
@@ -160,6 +131,14 @@
 
             // Classify the files
             classifyFiles($this);
+        }
+
+        function renderFile(file) {
+            return $.render(templates.file, file);
+        }
+
+        function renderFolder(directory) {
+            return $.render(templates.deferredFolder, directory);
         }
 
         var throttled = {
@@ -373,6 +352,38 @@
                 }
             }
 
+            function addItem(content, index, containerType, itemType) {
+                var $itemsContainer = getFolderContents().children(containerType);
+                var $items = $itemsContainer.children(itemType);
+                var $item = $items.eq(index);
+                if ($item.length) {
+                    $item.before($(content));
+                }
+                else {
+                    $itemsContainer.append(content);
+                }
+            }
+
+            this.addFolder = function (directory, index) {
+                if (!directory) {
+                    return;
+                }
+
+                var folderContent = renderFolder(directory);
+                addItem(folderContent, index, '.folders', '.folder');
+            }
+
+            this.addFile = function (file, index) {
+                if (!directory) {
+                    return;
+                }
+
+                var fileContent = renderFile(file);
+                addItem(fileContent, index, '.files', '.file');
+                var $filesContainer = getFolderContents().children('.files');
+                classifyFiles($filesContainer);
+            }
+
             this.selection = getSelection;
 
             this.parentNode = function () {
@@ -384,6 +395,9 @@
             refresh: renderExplorer,
             node: function (path) {
                 return nodeCache[path] || (nodeCache[path] = new node(path));
+            },
+            nodeFor: function (item) {
+                return this.node(item.getPath());
             },
             selectedNode: function () {
                 return activeNode;
