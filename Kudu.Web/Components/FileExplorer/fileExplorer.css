@@ -23,6 +23,10 @@
     padding-left: 20px;
 }
 
+.fileExplorer .open.selection {
+    padding-left: 20px;
+}
+
 .fileExplorer .selection.selected {
     background-color: #2287d9; 
     color: #fff;
@@ -65,7 +69,4 @@
 .fileExplorer .icon-folder.folder-collapsed {
     background-image: url('../../images/folder-collapsed.png');
     padding-left: 36px;
-}
-
-.fileExplorer .folder-contents {
 }

@@ -73,7 +73,7 @@
     <script id="fileExplorer_folderTemplate" type="text/x-jquery-tmpl"> 
     <ul class="folder" data-path="${$data.getPath()}" id="${$data.getElementId()}">
         <li>
-            <span href="#" class="icon icon-project selection">Project</span>
+            <span href="#" class="icon icon-project selection folder-node">Project</span>
             <div class="folder-contents">
                 <div class="folders">
                     {{tmpl(getDirectories()) "#fileExplorer_deferredFolderTemplate"}}
@@ -89,10 +89,10 @@
     <script id="fileExplorer_deferredFolderTemplate" type="text/x-jquery-tmpl"> 
     <ul class="folder folder-collapsed" data-path="${$data.getPath()}" id="${$data.getElementId()}">
         <li>
-            <div class="selection">
+            <span class="selection folder-node">
                 <span href="#" class="icon icon-folder folder-collapsed"></span>
                 <span class="folder-name">${$data.getName()}</span>
-            </div>
+            </span>
             <div class="folder-contents" style="display:none">
                 <div class="folders deferred-folders">
                 </div>
@@ -105,8 +105,8 @@
     </script>
 
     <script id="fileExplorer_fileTemplate" type="text/x-jquery-tmpl"> 
-    <li class="file selection" data-path="${$data.getPath()}" id="${$data.getElementId()}">
-        <label href="#" class="open icon">${$data.getName()}</label>
+    <li class="file" data-path="${$data.getPath()}" id="${$data.getElementId()}">
+        <label href="#" class="open icon selection file-node">${$data.getName()}</label>
     </li>
     </script>
 </body>

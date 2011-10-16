@@ -264,7 +264,7 @@
                     return null;
                 }
 
-                if ($activeSelection.hasClass('file')) {
+                if ($activeSelection.hasClass('file-node')) {
                     var filePath = $activeSelection.data('path');
                     return {
                         file: fs.getFile(filePath)
@@ -311,7 +311,7 @@
                     return false;
                 }
 
-                if (!$activeSelection.hasClass('file')) {
+                if (!$activeSelection.hasClass('file-node')) {
                     var $folderToggle = $activeSelection.find('.icon-folder').first();
                     if ($folderToggle.hasClass('folder-collapsed')) {
                         $folderToggle.trigger('click');
@@ -325,7 +325,7 @@
                     return false;
                 }
 
-                if (!$activeSelection.hasClass('file')) {
+                if (!$activeSelection.hasClass('file-node')) {
                     var $folderToggle = $activeSelection.find('.icon-folder').first();
                     if (!$folderToggle.hasClass('folder-collapsed')) {
                         $folderToggle.trigger('click');
