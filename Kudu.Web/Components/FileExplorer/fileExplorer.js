@@ -164,6 +164,12 @@
                 return {
                     directory: fs.getDirectory(folderPath)
                 };
+            },
+            clearSelection: function () {
+                if ($activeSelection) {
+                    $activeSelection.removeClass('selected');
+                    $activeSelection = null;
+                }
             }
         };
 
