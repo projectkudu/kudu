@@ -120,7 +120,7 @@
             var target = evt.target;
 
             var explorer = $(target).closest('.fileExplorer');
-            if (explorer.length) {
+            if (explorer.length && explorer[0] === $this[0]) {
                 setFocus(true);
             }
             else {
@@ -265,7 +265,7 @@
                 }
 
                 if ($activeSelection.hasClass('file-node')) {
-                    var filePath = $activeSelection.data('path');
+                    var filePath = $activeSelection.parent().data('path');
                     return {
                         file: fs.getFile(filePath)
                     };
