@@ -10,7 +10,7 @@
         var fs = options.fileSystem,
             templates = options.templates,
             $this = $(this),
-            $activeSelection = null,
+            activeNode = null,
             hasFocus = false;
 
         // Classifiy files
@@ -30,33 +30,34 @@
 
             $(that).trigger('fileExplorer.focusChanged', [value]);
 
-            if ($activeSelection) {
-                if (!value) {
-                    $activeSelection.addClass('no-focus');
-                }
-                else {
-                    $activeSelection.removeClass('no-focus');
-                }
+            if (activeNode) {
+                activeNode.setFocus(value);
             }
         }
 
         function getFileNode(file) {
+            if (!file) {
+                return null;
+            }
             return $('#' + file.getElementId());
         }
 
         function getFolderNode(directory) {
+            if (!directory) {
+                return null;
+            }
             return $('#' + directory.getElementId());
         }
 
-        function setSelection($elem) {
-            if ($activeSelection) {
-                $activeSelection.removeClass('selected');
-                $activeSelection.removeClass('no-focus');
+        function setSelection(path) {
+            if (activeNode) {
+                activeNode.setFocus(false);
+                activeNode.deselect();
             }
 
-            $elem.addClass('selected');
-
-            $activeSelection = $elem;
+            activeNode = new node(path);
+            activeNode.select();
+            activeNode.setFocus(true);
         }
 
         // Add the file explorer class so we can apply the appropriate styles
@@ -64,7 +65,8 @@
 
         // Setup event handlers
         $this.delegate('.selection', 'click', function (ev) {
-            setSelection($(this));
+            var path = $(this).closest('.node').data('path');
+            setSelection(path);
 
             setFocus(true);
 
@@ -214,9 +216,8 @@
 
         $(document).bind('keydown', 'return', $.utils.throttle(function (ev) {
             if (hasFocus) {
-                var item = that.getSelectedItem();
-                if (item && item.file) {
-                    $(that).trigger('fileExplorer.fileOpened', [item.file]);
+                if (activeNode && activeNode.isFile()) {
+                    $(that).trigger('fileExplorer.fileOpened', [activeNode.item()]);
                 }
                 ev.preventDefault();
                 return true;
@@ -225,7 +226,9 @@
 
         $(document).bind('keydown', 'right', $.utils.throttle(function (ev) {
             if (hasFocus) {
-                that.expandActiveNode();
+                if (activeNode) {
+                    activeNode.expand();
+                }
                 ev.preventDefault();
                 return true;
             }
@@ -233,18 +236,18 @@
 
         $(document).bind('keydown', 'left', $.utils.throttle(function (ev) {
             if (hasFocus) {
-                if (that.collapseActiveNode() === false) {
-                    // If we couldn't collapse the node then select the parent
-                    var item = that.getSelectedItem();
-                    if (item) {
-                        var path = null;
-                        if (item.directory) {
-                            path = item.directory.getParent().getPath();
-                        }
-                        else if (item.file) {
-                            path = item.file.getDirectory().getPath();
-                        }
+                if (activeNode) {
 
+                    var expandParent = true;
+                    if (activeNode.isFolder()) {
+                        if (!activeNode.isCollapsed()) {
+                            activeNode.collapse();
+                            expandParent = false;
+                        }
+                    }
+
+                    if (expandParent) {
+                        var path = activeNode.parentNode().path;
                         if (path) {
                             that.select(path);
                         }
@@ -255,101 +258,143 @@
             }
         }, 50));
 
+
+        function node(path) {
+            var file = fs.getFile(path);
+            var directory = fs.getDirectory(path);
+
+            var that = this;
+
+            this.path = path;
+
+            function getSelection() {
+                return that.element().find('.selection').first();
+            }
+
+            function getFolderToggle() {
+                var $folder = getFolderNode(directory);
+                if (!$folder) {
+                    return false;
+                }
+
+                return $folder.find('.icon-folder').first();
+            }
+
+            this.parentItem = function () {
+                if (directory) {
+                    return directory.getParent();
+                }
+                return file.getDirectory();
+            }
+
+            this.isFile = function () {
+                return file;
+            }
+
+            this.isFolder = function () {
+                return directory;
+            }
+
+            this.expand = function () {
+                if (that.isCollapsed()) {
+                    getFolderToggle().trigger('click');
+                }
+            }
+
+            this.collapse = function () {
+                if (!that.isCollapsed()) {
+                    getFolderToggle().trigger('click');
+                }
+            }
+
+            this.element = function () {
+                return getFileNode(file) || getFolderNode(directory);
+            }
+
+            this.item = function () {
+                return file || directory;
+            }
+
+            this.select = function () {
+                that.selection().addClass('selected');
+            }
+
+            this.deselect = function () {
+                that.selection().removeClass('selected');
+            }
+
+            this.isCollapsed = function () {
+                var $folderToggle = getFolderToggle();
+                if (!$folderToggle) {
+                    return false;
+                }
+                return $folderToggle.hasClass('folder-collapsed');
+            }
+
+            this.setFocus = function (value) {
+                if (value === true) {
+                    that.selection().removeClass('no-focus');
+                }
+                else {
+                    that.selection().addClass('no-focus');
+                }
+            }
+
+            this.selection = getSelection;
+
+            this.parentNode = function () {
+                return new node(that.parentItem().getPath());
+            }
+        }
+
         var that = {
             refresh: renderExplorer,
             getFileNode: getFileNode,
             getFolderNode: getFolderNode,
             getSelectedItem: function () {
-                if (!$activeSelection) {
-                    return null;
-                }
-
-                if ($activeSelection.hasClass('file-node')) {
-                    var filePath = $activeSelection.parent().data('path');
-                    return {
-                        file: fs.getFile(filePath)
-                    };
-                }
-
-                var folderPath = $activeSelection.closest('.folder').data('path');
-                return {
-                    directory: fs.getDirectory(folderPath)
-                };
+                return activeNode;
             },
             clearSelection: function () {
-                if ($activeSelection) {
-                    $activeSelection.removeClass('selected');
-                    $activeSelection = null;
+                if (activeNode) {
+                    activeNode.deselect();
+                    activeNode = null;
                 }
             },
             nextSelection: function () {
-                if (!$activeSelection) {
+                if (!activeNode) {
                     return;
                 }
 
                 var selections = $this.find('.selection').not(':hidden');
-                var index = $.inArray($activeSelection[0], selections);
+                var index = $.inArray(activeNode.selection()[0], selections);
 
                 if (index + 1 < selections.length) {
-                    setSelection(selections.eq(index + 1));
+                    var elem = selections.eq(index + 1);
+                    var path = elem.closest('.node').data('path');
+                    setSelection(path);
                 }
             },
             prevSelection: function () {
-                if (!$activeSelection) {
+                if (!activeNode) {
                     return;
                 }
 
                 var selections = $this.find('.selection').not(':hidden');
-                var index = $.inArray($activeSelection[0], selections);
+                var index = $.inArray(activeNode.selection()[0], selections);
 
                 if ((index - 1) >= 0) {
-                    setSelection(selections.eq(index - 1));
+                    var elem = selections.eq(index - 1);
+                    var path = elem.closest('.node').data('path');
+                    setSelection(path);
                 }
-            },
-            expandActiveNode: function () {
-                if (!$activeSelection) {
-                    return false;
-                }
-
-                if (!$activeSelection.hasClass('file-node')) {
-                    var $folderToggle = $activeSelection.find('.icon-folder').first();
-                    if ($folderToggle.hasClass('folder-collapsed')) {
-                        $folderToggle.trigger('click');
-                        return true;
-                    }
-                }
-                return false;
-            },
-            collapseActiveNode: function () {
-                if (!$activeSelection) {
-                    return false;
-                }
-
-                if (!$activeSelection.hasClass('file-node')) {
-                    var $folderToggle = $activeSelection.find('.icon-folder').first();
-                    if (!$folderToggle.hasClass('folder-collapsed')) {
-                        $folderToggle.trigger('click');
-                        return true;
-                    }
-                }
-                return false;
             },
             hasFocus: function () {
                 return hasFocus;
             },
             setFocus: setFocus,
             select: function (path) {
-                var file = fs.getFile(path);
-                if (file) {
-                    setSelection(getFileNode(file));
-                }
-                else {
-                    var directory = fs.getDirectory(path);
-                    if (directory) {
-                        var folder = getFolderNode(directory);
-                        setSelection(folder.find('.selection').first());
-                    }
-                }
+                setSelection(path);
+                return activeNode;
             }
         };
 
