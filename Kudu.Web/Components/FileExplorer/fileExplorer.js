@@ -40,14 +40,17 @@
             if (!file) {
                 return null;
             }
-            return $this.find('.' + file.getElementId());
+
+            return $this.find('[data-path="' + file.getPath() + '"]')
+                        .filter('.file');
         }
 
         function getFolderNode(directory) {
             if (!directory) {
                 return null;
             }
-            return $this.find('.' + directory.getElementId());
+            return $this.find('[data-path="' + directory.getPath() + '"]')
+                        .filter('.folder');
         }
 
         function setSelection(path) {
@@ -232,7 +235,7 @@
             }
 
             var that = this;
-            
+
             function getSelection() {
                 return that.element().find('.selection').first();
             }

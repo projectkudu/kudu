@@ -31,7 +31,8 @@
         }
 
         function getTabElement(file) {
-            return $this.find('.tab-' + file.getElementId());
+            return $this.find('[data-path="' + file.getPath() + '"]')
+                        .filter('.tab');
         }
 
         $this.addClass('tabManager');

@@ -57,23 +57,6 @@
             fileSystem: fs
         });
 
-        $('.new-file').click(function (ev) {
-            var node = fileExplorer.selectedNode() || fileExplorer.node('/');
-
-            if (node.isFile()) {
-                node = node.parentNode();
-            }
-
-            var path = node.path.substr(1) + 'New File';
-            fs.addFile(path);
-
-            fileExplorer.select(path);
-            node.expand();
-
-            ev.preventDefault();
-            return false;
-        });
-
         $(fileExplorer).bind('fileExplorer.fileOpened', function (e, file) {
             var path = file.getPath();
             tabManager.setActive(path);
@@ -161,6 +144,34 @@
 
         $.fs = fs;
         $.fe = fileExplorer;
+
+        var globalActions = {
+            'new-file': function () {
+                var node = fileExplorer.selectedNode() || fileExplorer.node('/');
+
+                if (node.isFile()) {
+                    node = node.parentNode();
+                }
+
+                var path = node.path.substr(1) + 'New File';
+                fs.addFile(path);
+
+                fileExplorer.select(path);
+                node.expand();
+            }
+        };
+
+        $('body').delegate('[data-action]', 'click', function (ev) {
+            var action = $(this).data('action');
+
+            var a = globalActions[action];
+
+            if (a) {
+                a();
+                ev.preventDefault();
+                return false;
+            }
+        });
     };
 
 })(jQuery);

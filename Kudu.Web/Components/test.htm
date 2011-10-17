@@ -84,7 +84,7 @@
 <body>
     <ul id="actions">
         <li>
-            <a href="#" class="icon icon-file-added new-file">New File</a> 
+            <a href="#" class="icon icon-file-added" data-action="new-file">New File</a> 
         </li>
     </ul>
     <ul id="tabs">
@@ -97,14 +97,14 @@
         </div>
     </div>
     <script id="tabManager_tabTemplate" type="text/x-jquery-tmpl"> 
-    <li class="tab tab-${file.getElementId()}${active ? " active" : ""}" data-path="${file.getPath()}">
+    <li class="tab${active ? " active" : ""}" data-path="${file.getPath()}">
         <a href="#" class="open icon icon-${icon}" title="${file.getPath()}">${file.getName()}</a>
         <span class="dirty">*</span>
         <a href="#" class="delete icon-notext icon-close">&nbsp;</a>
     </li>
     </script>
     <script id="fileExplorer_folderTemplate" type="text/x-jquery-tmpl"> 
-    <ul class="folder node ${$data.getElementId()}" data-path="${$data.getPath()}">
+    <ul class="folder node" data-path="${$data.getPath()}">
         <li>
             <span href="#" class="icon icon-project selection folder-node">Project</span>
             <div class="folder-contents">
@@ -119,7 +119,7 @@
     </ul>
     </script>
     <script id="fileExplorer_deferredFolderTemplate" type="text/x-jquery-tmpl"> 
-    <ul class="folder folder-collapsed node ${$data.getElementId()}" data-path="${$data.getPath()}">
+    <ul class="folder folder-collapsed node" data-path="${$data.getPath()}">
         <li>
             <span class="selection folder-node">
                 <span href="#" class="icon icon-folder folder-collapsed"></span>
@@ -136,7 +136,7 @@
     </ul>
     </script>
     <script id="fileExplorer_fileTemplate" type="text/x-jquery-tmpl"> 
-    <li class="file node ${$data.getElementId()}" data-path="${$data.getPath()}">
+    <li class="file node" data-path="${$data.getPath()}">
         <label href="#" class="open icon selection file-node">${$data.getName()}</label>
     </li>
     </script>

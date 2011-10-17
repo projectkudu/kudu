@@ -98,7 +98,7 @@
                 {{else}}
                 <span class="icon icon-expand-down"></span>
                 {{/if}}
-                <span class="icon ${$.utils.diffFileClass(file)}">${fileName}{{if file.Binary}}<span class="binary-text">(Binary file not shown)</span>{{/if}}</span>
+                <span class="icon ${$.utils.diffFileClass(file)}">${fileName}{{if file.Binary}}<span class="binary-text">(Binary file diff not shown)</span>{{/if}}</span>
             </div>
             {{tmpl(file) "#diffViewer_file"}}
         </div>

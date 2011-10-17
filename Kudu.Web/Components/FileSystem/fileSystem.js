@@ -192,10 +192,7 @@ File.prototype = {
     },
     getRelativePath: function () {
         return this.path.substr(1);
-    },
-    getElementId: function () {
-        return 'file-' + $.utils.getSafeId(this.getRelativePath());
-    },
+    },    
     getPath: function () {
         return this.path;
     },
@@ -269,11 +266,7 @@ Directory.prototype = {
     },
     getRelativePath: function () {
         return this.path.substr(1);
-    },
-    getElementId: function () {
-        var id = 'directory-' + $.utils.getSafeId(this.getRelativePath());
-        return id.substr(0, id.length - 1);
-    },
+    },    
     getName: function () {
         if (!this.name) {
             if (this._isRoot()) {
