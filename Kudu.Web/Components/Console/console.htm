@@ -26,10 +26,19 @@
         $(function () {
             var console = $('#console').console();
 
-            var c2 = $('#console2').console({ prompt: '»' });
+            var jsConsole = $('#console2').console();
 
-            $(c2).bind('console.runCommand', function (e, command) { 
-                
+            $(jsConsole).bind('console.runCommand', function (e, command) {
+                try {
+                    var result = eval(command);
+                    jsConsole.log(result ? result : 'undefined');
+                }
+                catch (ex) {
+                    jsConsole.log(ex);
+                }
+                finally {
+                    jsConsole.completeCommand();
+                }
             });
 
             $(console).bind('console.runCommand', function (e, command) {
