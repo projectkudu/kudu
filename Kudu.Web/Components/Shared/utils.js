@@ -22,6 +22,9 @@
             var text = document.createTextNode(value);
             div.appendChild(text);
             return div.innerHTML;
+        },
+        getSafeId: function (value) {
+            return value.replace(/[^A-Za-z]/g, '-')
         }
     };
 

@@ -141,7 +141,7 @@ FileSystem.prototype = {
         var directory = this.getDirectory(path);
         if (directory) {
             directory.getParent().removeDirectory(directory);
-            delete this.fileCache[path];            
+            delete this.fileCache[path];
         }
     },
     clear: function () {
@@ -194,7 +194,7 @@ File.prototype = {
         return this.path.substr(1);
     },
     getElementId: function () {
-        return 'file-' + this.getRelativePath().replace(/\./g, '-').replace(/\//g, '-');
+        return 'file-' + $.utils.getSafeId(this.getRelativePath());
     },
     getPath: function () {
         return this.path;
@@ -271,7 +271,7 @@ Directory.prototype = {
         return this.path.substr(1);
     },
     getElementId: function () {
-        var id = 'directory-' + this.getRelativePath().replace(/\./g, '-').replace(/\//g, '-');
+        var id = 'directory-' + $.utils.getSafeId(this.getRelativePath());
         return id.substr(0, id.length - 1);
     },
     getName: function () {

@@ -59,7 +59,7 @@
             if (path) {
                 activeNode = fileExplorer.node(path);
                 activeNode.select();
-                activeNode.setFocus(true);
+                setFocus(true);
             }
             else {
                 activeNode = null;
@@ -232,9 +232,7 @@
             }
 
             var that = this;
-
-            this.path = path;
-
+            
             function getSelection() {
                 return that.element().find('.selection').first();
             }
@@ -400,6 +398,8 @@
             this.parentNode = function () {
                 return fileExplorer.node(that.parentItem().getPath());
             }
+
+            this.path = that.item().getPath();
         }
 
         function getSelectionPaths() {
