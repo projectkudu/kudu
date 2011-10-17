@@ -24,9 +24,14 @@
         $this.delegate('.toggle', 'click', function (ev) {
             var $source = $(this).parent().next('.source');
             if ($source.is(':hidden')) {
+                $(this).removeClass('icon-expand-down');
+                $(this).addClass('icon-collapse-up');
+
                 $source.slideDown();
             }
             else {
+                $(this).addClass('icon-expand-down');
+                $(this).removeClass('icon-collapse-up');
                 $source.slideUp();
             }
 

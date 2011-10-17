@@ -22,8 +22,18 @@
                 templates: templates
             });
 
+            var lines = ['Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec eu nisi nec turpis porta',
+                         'vulputate. Etiam in lacus sit amet est aliquet auctor vitae at lacus. Proin metus ligula,',
+                         'cursus quis cursus sed, sollicitudin at quam. Mauris elit est, faucibus id tempor eget,',
+                         'pulvinar sit amet nunc. Etiam erat eros, consequat ut mollis at, molestie et dolor. Aenean',
+                         'dignissim volutpat metus quis iaculis. Vestibulum ultrices dolor et lectus luctus in varius',
+                         'lorem molestie. Quisque sed orci orci, vel ornare ipsum. Integer lacinia erat at',
+                         'purus sollicitudin vitae sagittis odio tempor. Suspendisse rutrum, odio vitae facilisis',
+                         'dignissim, justo ipsum pulvinar libero, eu venenatis eros tortor a nunc.'];
+
 
             var diff = {
+                readonly: true,
                 Files: {
                     'app.js': {
                         Deletions: 0,
@@ -43,6 +53,20 @@
                             LeftLine: null,
                             RightLine: 1
                         }]
+                    },
+                    'bar.js': {
+                        Deletions: 0,
+                        Insertions: 2,
+                        Binary: false,
+                        Status: 1,
+                        DiffLines: $.map(lines, function (line, index) {
+                            return {
+                                Type: 1,
+                                Text: line,
+                                LeftLine: index + 1,
+                                RightLine: null
+                            }
+                        })
                     },
                     'a/foo.js': {
                         Deletions: 0,
@@ -65,17 +89,21 @@
     <script id="diffViewer_files" type="text/x-jquery-tmpl">
     {{each(fileName, file) Files}}
         <div class="file" data-path="${fileName}">
-            <div class="header">                
-                <span class="icon ${file.Binary ? "icon-binary" : "icon-default"}">${fileName}</span>
+            <div class="header">
+                {{if !readonly}}
+                <input type="checkbox" name="" />
+                {{/if}}
+                {{if !file.Binary}}
+                <a href="#" class="toggle icon icon-expand-down"></a>
+                {{/if}}
+                <span class="icon ${file.Binary ? "icon-binary" : "icon-default"}">${fileName}{{if file.Binary}}<span class="binary-text">(Binary file not shown)</span>{{/if}}</span>
             </div>
             {{tmpl(file) "#diffViewer_file"}}
         </div>
     {{/each}}
     </script>
     <script id="diffViewer_file" type="text/x-jquery-tmpl">
-    {{if Binary}}
-    <div class="binary-text">Binary file not shown</div>
-    {{else}}
+    {{if !Binary}}
     <div class="source">
         <table width="100%" cellpadding="0" cellspacing="0">
             {{each(i, line) DiffLines}}

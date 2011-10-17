@@ -12,12 +12,12 @@
     line-height: 20px;
 }
 
-.icon-collapse {
-    background-image: url('../../images/collapse.png');
+.icon-collapse-up {
+    background-image: url('../../images/bullet_arrow_up.png');
 }
 
-.icon-expand {
-    background-image: url('../../images/expand.png');
+.icon-expand-down {
+    background-image: url('../../images/bullet_arrow_down.png');
 }
 
 .icon-cs {

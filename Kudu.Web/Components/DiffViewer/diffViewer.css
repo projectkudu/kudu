@@ -3,7 +3,6 @@
 
 .diffViewer .file {
     border: 1px solid #ccc;
-    margin-bottom: 1%;
 }
 
 .diffViewer .file .header {
@@ -25,9 +24,11 @@
 
 .diffViewer .file .toggle {
     padding-left: 15px;
+    margin-right: 5px;
 }
 
-.diffViewer .source {    
+.diffViewer .source {
+    display: none;  
     overflow: auto;
 }
 
@@ -47,7 +48,8 @@
 }
 
 .diffViewer .binary-text {
-    padding: 5px;
+    font-weight: normal;
+    margin-left: 5px;
 }
 
 .diffViewer pre {
