@@ -99,3 +99,15 @@
 .icon-menu {
     background-image: url('../../images/application_side_list.png');
 }
+
+.icon-file-added {
+    background-image: url('../../images/page_white_add.png');
+}
+
+.icon-file-deleted {
+    background-image: url('../../images/page_white_delete.png');
+}
+
+.icon-file-modified {
+    background-image: url('../../images/page_white_edit.png');
+}

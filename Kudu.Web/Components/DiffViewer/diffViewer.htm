@@ -19,7 +19,8 @@
             };
 
             var diffViewer = $('#viewer').diffViewer({
-                templates: templates
+                templates: templates,
+                readonly: false
             });
 
             var lines = ['Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec eu nisi nec turpis porta',
@@ -33,13 +34,12 @@
 
 
             var diff = {
-                readonly: true,
                 Files: {
                     'app.js': {
                         Deletions: 0,
                         Insertions: 1,
                         Binary: false,
-                        Status: 1,
+                        Status: 3,
                         DiffLines: [
                         {
                             Type: 1,
@@ -72,7 +72,7 @@
                         Deletions: 0,
                         Insertions: 1,
                         Binary: true,
-                        Status: 1,
+                        Status: 2,
                         DiffLines: []
                     }
                 }
@@ -91,12 +91,10 @@
         <div class="file" data-path="${fileName}">
             <div class="header">
                 {{if !readonly}}
-                <input type="checkbox" name="" />
-                {{/if}}
-                {{if !file.Binary}}
+                <input type="checkbox" class="include" checked="checked" />
+                {{/if}} 
                 <a href="#" class="toggle icon icon-expand-down"></a>
-                {{/if}}
-                <span class="icon ${file.Binary ? "icon-binary" : "icon-default"}">${fileName}{{if file.Binary}}<span class="binary-text">(Binary file not shown)</span>{{/if}}</span>
+                <span class="icon ${$.utils.diffFileClass(file)}">${fileName}{{if file.Binary}}<span class="binary-text">(Binary file not shown)</span>{{/if}}</span>
             </div>
             {{tmpl(file) "#diffViewer_file"}}
         </div>
