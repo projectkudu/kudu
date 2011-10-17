@@ -92,8 +92,12 @@
             <div class="header">
                 {{if !readonly}}
                 <input type="checkbox" class="include" checked="checked" />
-                {{/if}} 
+                {{/if}}
+                {{if !file.Binary}}
                 <a href="#" class="toggle icon icon-expand-down"></a>
+                {{else}}
+                <span class="icon icon-expand-down"></span>
+                {{/if}}
                 <span class="icon ${$.utils.diffFileClass(file)}">${fileName}{{if file.Binary}}<span class="binary-text">(Binary file not shown)</span>{{/if}}</span>
             </div>
             {{tmpl(file) "#diffViewer_file"}}
