@@ -66,6 +66,17 @@
             refresh: function (diff) {
                 diff.readonly = readonly;
                 $this.html($.render(templates.diff, diff));
+            },
+            selectedFiles: function () {
+                if (readonly) {
+                    return [];
+                }
+                return $this.find('.include')
+                            .filter(':checked')
+                            .closest('.file')
+                            .map(function (index, e) {
+                                return $(e).data('path');
+                            });
             }
         };
 
