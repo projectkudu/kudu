@@ -100,6 +100,9 @@
     <Content Include="Components\Console\console.htm" />
     <Content Include="Components\Console\console.js" />
     <Content Include="Components\Dialogs\dialogs.js" />
+    <Content Include="Components\DiffViewer\diffViewer.css" />
+    <Content Include="Components\DiffViewer\diffViewer.htm" />
+    <Content Include="Components\DiffViewer\diffViewer.js" />
     <Content Include="Components\Editor\editor.js" />
     <Content Include="Components\FileExplorer\fileExplorer.js" />
     <Content Include="Components\FileExplorer\fileExplorer.css" />

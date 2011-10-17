@@ -1,0 +1,37 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <link href="commandBar.css" rel="stylesheet" type="text/css" />
+    <script src="../../Scripts/jquery-1.6.3.min.js" type="text/javascript"></script>
+    <script src="../../Scripts/jquery.render.min.js" type="text/javascript"></script>
+    <script src="../Shared/utils.js" type="text/javascript"></script>
+    <script src="../Shared/icons.js" type="text/javascript"></script>
+    <script src="../../Scripts/jquery.hotkeys-patched.js" type="text/javascript"></script>
+    <script src="commandbar.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        $(function () {
+            $('#commands').commandBar();
+        });
+    </script>
+</head>
+<body>
+    <div id="commands">
+        <div class="ghost">
+        </div>
+        <ul class="tabs">
+            <li>
+                <a href="#">Console</a>
+            </li>
+            <li>
+                <a href="#">Commit</a>
+            </li>
+            <li>
+                <a href="#">History</a>
+            </li>
+        </ul>
+        <div class="active">
+        </div>
+    </div>
+</body>
+</html>

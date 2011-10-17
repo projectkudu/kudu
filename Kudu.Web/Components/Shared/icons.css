@@ -12,6 +12,14 @@
     line-height: 20px;
 }
 
+.icon-collapse {
+    background-image: url('../../images/collapse.png');
+}
+
+.icon-expand {
+    background-image: url('../../images/expand.png');
+}
+
 .icon-cs {
     background-image: url('../../images/cs.png');
 }
@@ -58,6 +66,10 @@
 
 .icon-default {
     background-image: url('../../images/page_white.png');
+}
+
+.icon-binary {
+    background-image: url('../../images/page_white_gear.png');
 }
 
 .icon-loading {

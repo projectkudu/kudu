@@ -1,0 +1,58 @@
+.diffViewer {
+}
+
+.diffViewer .file {
+    border: 1px solid #ccc;
+    margin-bottom: 1%;
+}
+
+.diffViewer .file .header {
+    font-weight: bold;
+    padding: 5px;
+    border-bottom: 1px solid #ccc;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f5f5f5', endColorstr='#ebebeb');
+    background: -webkit-gradient(linear, left top, left bottom, from(#f5f5f5), to(#ebebeb));
+    background: -moz-linear-gradient(top,  #f5f5f5,  #ebebeb);
+}
+
+.diffViewer .file .diff-add {
+    background-color: #DDFFDD;
+}
+
+.diffViewer .file .diff-remove {
+    background-color: #FFDDDD;
+}
+
+.diffViewer .file .toggle {
+    padding-left: 15px;
+}
+
+.diffViewer .source {    
+    overflow: auto;
+}
+
+.diffViewer .source .line {
+    width: 100%;
+    padding: 0;
+    border: none;
+}
+
+.diffViewer .source .line-number {
+    font-family: Consolas;
+    font-size: 12px;
+    padding: 0 0.5em;
+    background-color: #ECECEC;
+    border-right: 1px solid #DDDDDD;
+    color: #aaa;
+}
+
+.diffViewer .binary-text {
+    padding: 5px;
+}
+
+.diffViewer pre {
+    padding: 0;
+    margin: 0;
+    font-size: 13px;
+    font-family: Consolas, Lucida Grande;
+}

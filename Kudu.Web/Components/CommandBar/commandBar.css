@@ -1,0 +1,25 @@
+.commandBar {
+}
+
+.commandBar .ghost {
+    width: 100%;
+    display: none;
+}
+
+.commandBar .tabs {    
+    border: 1px solid #ccc;
+    background-color: blue;
+    width: 100%;
+}
+
+.commandBar .tabs li {
+    display: inline;
+    list-style: none outside none;
+    /*padding: 4px 8px;*/
+    border: 1px solid #fff;
+    border-bottom: none;
+    border-radius: 4px 4px 0px 0px;
+    -moz-border-radius: 4px 4px 0px 0px;
+    -webkit-border-radius: 4px 4px 0px 0px;
+    margin: 0 5px 0 0;
+}
