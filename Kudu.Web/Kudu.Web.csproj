@@ -96,6 +96,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Components\CommandBar\commandBar.css" />
+    <Content Include="Components\CommandBar\commandBar.htm" />
+    <Content Include="Components\CommandBar\commandbar.js" />
     <Content Include="Components\Console\console.css" />
     <Content Include="Components\Console\console.htm" />
     <Content Include="Components\Console\console.js" />
@@ -288,7 +291,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
-    <Folder Include="Components\CommandBar\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\Settings\Index.cshtml" />

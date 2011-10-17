@@ -19,7 +19,7 @@
         // var csGhost = $('#console-ghost');
 
         $this.appendTo(document.body);
-        // cs.appendTo(document.body);
+        $ghost.appendTo(document.body);
 
         var syncResize = function () {
             var $window = $(window);
