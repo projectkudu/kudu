@@ -113,6 +113,8 @@
     <Content Include="Components\FileExplorer\templates.htm" />
     <Content Include="Components\FileSystem\fileSystem.js" />
     <Content Include="Components\ide\ide.js" />
+    <Content Include="Components\Loader\loader.htm" />
+    <Content Include="Components\Loader\loader.js" />
     <Content Include="Components\Shared\utils.js" />
     <Content Include="Components\Shared\icons.js" />
     <Content Include="Components\Shared\icons.css" />
