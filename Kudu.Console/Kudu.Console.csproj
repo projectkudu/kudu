@@ -54,6 +54,9 @@
       <Name>Kudu.Core</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\Build\Kudu.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" />
