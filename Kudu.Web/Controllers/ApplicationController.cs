@@ -5,6 +5,7 @@ using System.Web.Mvc;
 using Kudu.Core.SourceControl;
 using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
+using System.IO;
 
 namespace Kudu.Web.Controllers {
     public class ApplicationController : Controller {
@@ -130,7 +131,17 @@ namespace Kudu.Web.Controllers {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             if (application != null) {
                 var appViewModel = new ApplicationViewModel(application);
-                appViewModel.RepositoryType = GetRepositoryManager(application).GetRepositoryType();
+                var repositoryManager = GetRepositoryManager(application);
+                appViewModel.RepositoryType = repositoryManager.GetRepositoryType();
+
+                string repositoryPath = PathHelper.GetRepositoryPath(application.Name);
+
+                if (appViewModel.RepositoryType != RepositoryType.None &&
+                    _siteManager.TryCreateDeveloperSite(application.Name) &&
+                    Directory.EnumerateFiles(repositoryPath).Any()) {
+                    repositoryManager.CloneRepository(repositoryPath, appViewModel.RepositoryType);
+                }
+
                 return View(appViewModel);
             }
 

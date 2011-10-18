@@ -16,10 +16,12 @@
         </li>
     </ul>
 
+    @if (Model.RepositoryType != RepositoryType.None) {
     <select id="active-view">
-        <option value="live">Live</option>
         <option value="dev">Developer</option>
+        <option value="live">Live</option>        
     </select>
+    }
 
     <ul id="tabs">
     </ul>
@@ -33,12 +35,12 @@
     <div class="outer-status">
         <div id="status" class="icon icon-save">
         </div>
-    </div>
-    <a href="#" id="show-console" class="icon-notext icon-expand">&nbsp;</a>
+    </div>    
 
     <div id="console-ghost"></div>
     <div id="console" class="collapsed">
         <div class="header">
+            <a href="#" id="show-console" class="icon-notext icon-expand">&nbsp;</a>
         </div>
         <div class="output">
             <div class="messages">
@@ -52,19 +54,6 @@
             </form>
         </div>
     </div>
-
-    
-    @*<div id="working">
-        <div id="commit-area">
-            <form action="#/commit" method="post">
-                <label for="message">Enter commit message:</label>
-                <textarea id="commit-message" name="message"></textarea>
-                <input type="submit" id="commit" name="commit" value="Commit changes" />
-            </form>
-        </div>
-        <div id="diff">
-        </div>
-    </div>*@
 </div>
 
 <!-- CODE MIRROR INCLUDES -->

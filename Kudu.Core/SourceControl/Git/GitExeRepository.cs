@@ -94,6 +94,10 @@ namespace Kudu.Core.SourceControl.Git {
             return ParseCommit(newCommit.AsReader());
         }
 
+        internal void Clone(string source) {
+            _gitExe.Execute(@"clone ""{0}"" .", source);
+        }
+
         public void Update(string id) {
             _gitExe.Execute("checkout {0} --force", id);
         }

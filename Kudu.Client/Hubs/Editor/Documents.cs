@@ -15,7 +15,7 @@ namespace Kudu.Client {
 
         public Project GetStatus() {
             return new Project {
-                Name = "Project",
+                Name = Caller.appName,
                 Files = from path in GetActiveFileSystem().GetFiles()
                         select new File {
                             Path = path

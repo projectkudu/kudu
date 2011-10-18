@@ -59,6 +59,11 @@ namespace Kudu.Services {
                 new { controller = "Error", action = "Index" });
 
             routes.MapRoute(
+                "CloneScm",
+                "scm/clone",
+                new { controller = "Clone", action = "clone" });
+
+            routes.MapRoute(
                 "CreateScm",
                 "scm/create",
                 new { controller = "DeploymentScm", action = "create" });

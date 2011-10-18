@@ -250,6 +250,7 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Infrastructure\ISiteManager.cs" />
+    <Compile Include="Infrastructure\PathHelper.cs" />
     <Compile Include="Infrastructure\SiteManager.cs" />
     <Compile Include="Infrastructure\SlugGenerator.cs" />
     <Compile Include="Models\Application.cs" />

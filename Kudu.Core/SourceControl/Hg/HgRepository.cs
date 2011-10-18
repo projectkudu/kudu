@@ -124,6 +124,10 @@ namespace Kudu.Core.SourceControl.Hg {
             return GetChangeSet(id);
         }
 
+        internal void Clone(string source) {
+            _repository.Clone(source);
+        }
+
         public void Update(string id) {
             _repository.Update(id);
         }

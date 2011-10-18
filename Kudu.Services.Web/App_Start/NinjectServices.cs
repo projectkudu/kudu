@@ -1,4 +1,3 @@
-using System.Configuration;
 using System.IO;
 using System.IO.Abstractions;
 using System.Web;
@@ -12,6 +11,7 @@ using Kudu.Core.SourceControl.Git;
 using Kudu.Core.SourceControl.Hg;
 using Kudu.Services.Authorization;
 using Kudu.Services.Deployment;
+using Kudu.Services.SourceControl;
 using Kudu.Services.Web.Services;
 using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 using Ninject;
@@ -104,32 +104,18 @@ namespace Kudu.Services.Web.App_Start {
 
             // Source control
             kernel.Bind<IRepository>().ToMethod(context => GetSourceControlRepository(environment));
+            kernel.Bind<IRepositoryManager>().ToMethod(context => GetDevelopmentRepositoryManager(environment))
+                                             .WhenInjectedInto<CloneController>();
         }
 
-        private static string Root {
-            get {
-                string path = ConfigurationManager.AppSettings["app"];
-                if (System.String.IsNullOrEmpty(path)) {
-                    path = Path.Combine("..", "apps");
-                }
-                return Path.GetFullPath(Path.Combine(HttpRuntime.AppDomainAppPath, path));
-            }
-        }
-
-        private static string DevelopmentPath {
-            get {
-                string path = ConfigurationManager.AppSettings["dev"];
-                if (System.String.IsNullOrEmpty(path)) {
-                    return null;
-                }
-                return path;
-            }
-        }
-
-        private static IRepository GetSourceControlRepository(IEnvironment environment) {
+        private static IRepositoryManager GetDevelopmentRepositoryManager(IEnvironment environment) {
             EnsureDevelopmentRepository(environment);
 
-            return new RepositoryManager(environment.RepositoryPath).GetRepository();
+            return new RepositoryManager(environment.RepositoryPath);
+        }
+
+        private static IRepository GetSourceControlRepository(IEnvironment environment) {            
+            return GetDevelopmentRepositoryManager(environment).GetRepository();
         }
 
         private static IEditorFileSystem GetEditorFileSystem(IEnvironment environment, IContext context) {
@@ -168,10 +154,11 @@ namespace Kudu.Services.Web.App_Start {
         }
 
         private static IEnvironment GetEnvironment() {
-            InitializeEnvVars(Root);
+            string targetRoot = PathResolver.ResolveRootPath();
+            InitializeEnvVars(targetRoot);
 
             string site = HttpRuntime.AppDomainAppVirtualPath.Trim('/');
-            string root = Path.Combine(Root, site);
+            string root = Path.Combine(targetRoot, site);
             string deploymentRepositoryPath = Path.Combine(root, RepositoryPath);
             string deployPath = Path.Combine(root, DeploymentTargetPath);
             string deployCachePath = Path.Combine(root, DeploymentCachePath);
@@ -179,7 +166,7 @@ namespace Kudu.Services.Web.App_Start {
             return new Environment(site,
                                    root,
                                    deploymentRepositoryPath,
-                                   () => deploymentRepositoryPath,
+                                   () => Path.Combine(PathResolver.ResolveDevelopmentPath(), site, DeploymentTargetPath),
                                    deployPath,
                                    deployCachePath);
         }

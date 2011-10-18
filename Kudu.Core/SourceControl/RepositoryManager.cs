@@ -33,6 +33,17 @@ namespace Kudu.Core.SourceControl {
                     throw new InvalidOperationException("Unsupported repository type.");
             }
         }
+        
+        public void CloneRepository(string source, RepositoryType type) {
+            switch (type) {
+                case RepositoryType.Git:
+                    new GitExeRepository(_path).Clone(source);
+                    break;
+                case RepositoryType.Mercurial:
+                    new HgRepository(_path).Clone(source);
+                    break;
+            }
+        }
 
         public IRepository GetRepository() {
             RepositoryType type = GetRepositoryType();

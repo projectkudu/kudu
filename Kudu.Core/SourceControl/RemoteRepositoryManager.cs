@@ -25,6 +25,13 @@ namespace Kudu.Core.SourceControl {
                    .EnsureSuccessful();
         }
 
+        public void CloneRepository(string source, RepositoryType type) {
+            _client.Post("clone", new FormUrlEncodedContent(new Dictionary<string, string> {
+                { "source", source },
+                { "type", ((int)type).ToString() }
+            })).EnsureSuccessful();
+        }
+
         public IRepository GetRepository() {
             return new RemoteRepository(_client.BaseAddress.OriginalString);
         }
