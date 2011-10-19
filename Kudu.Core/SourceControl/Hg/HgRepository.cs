@@ -151,8 +151,8 @@ namespace Kudu.Core.SourceControl.Hg {
             }
         }
 
-        public void Push(string source) {
-            _repository.Push(source);
+        public void Push() {
+            _repository.Push();
         }
 
         private ChangeSetDetail PopulateDetails(string id, ChangeSetDetail detail) {

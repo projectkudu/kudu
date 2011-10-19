@@ -84,5 +84,9 @@ namespace Kudu.Client {
         public void Deploy(string id) {
             _deploymentManager.Deploy(id);
         }
+
+        public void Push() {
+            _repository.Push();
+        }
     }
 }

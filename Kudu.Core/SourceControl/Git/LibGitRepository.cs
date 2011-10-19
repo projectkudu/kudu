@@ -106,7 +106,7 @@ namespace Kudu.Core.SourceControl.Git {
                    select new Branch(branch.Tip.Id.Sha, branch.Name, branch.IsCurrentRepositoryHead);
         }
 
-        public void Push(string source) {
+        public void Push() {
             throw new NotImplementedException();
         }
 

@@ -510,6 +510,16 @@
                     return false;
                 });
 
+                $('#deploy').click(function () {
+                    var token = loader.show('Deploying to live site...');
+                    scm.push()
+                        .fail(onError)
+                        .always(function () {
+                            loader.hide(token);
+                        });
+                    return false;
+                });
+
                 $('#active-view').change(function () {
                     updateActiveView();
                 });
@@ -662,8 +672,10 @@
 
 
             // Command Window 
-            var commandLine = $.connection.commandLine;
+            var commandLine = $.connection.commandLine,
+                scm = $.connection.sourceControl;
             commandLine.appName = documents.appName;
+            scm.appName = documents.appName;
 
             var cs = $('#console');
             var csGhost = $('#console-ghost');

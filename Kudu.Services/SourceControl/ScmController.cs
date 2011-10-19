@@ -79,8 +79,8 @@ namespace Kudu.Services.SourceControl {
         }
 
         [HttpPost]
-        public void Push(string source) {
-            _repository.Push(source);
+        public void Push() {
+            _repository.Push();
         }
     }
 }

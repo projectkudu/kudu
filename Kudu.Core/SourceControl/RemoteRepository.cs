@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using Kudu.Core.Infrastructure;
 using Newtonsoft.Json;
@@ -20,7 +21,7 @@ namespace Kudu.Core.SourceControl {
         }
 
         public void Initialize() {
-            _client.Post("init", new StringContent(null))
+            _client.Post("init", new StringContent(String.Empty))
                    .EnsureSuccessStatusCode();
         }
 
@@ -66,9 +67,9 @@ namespace Kudu.Core.SourceControl {
             return JsonConvert.DeserializeObject<ChangeSet>(json);
         }
 
-        public void Push(string source) {
-            _client.Post("push", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, object>("source", source)))
-                   .EnsureSuccessful();
+        public void Push() {
+            _client.Post("push", new StringContent(String.Empty))
+                   .EnsureSuccessStatusCode();
         }
 
         public void Update(string id) {

@@ -98,6 +98,11 @@ namespace Kudu.Core.SourceControl.Git {
             _gitExe.Execute(@"clone ""{0}"" .", source);
         }
 
+
+        public void Push() {
+            _gitExe.Execute(@"push origin master");
+        }
+
         public void Update(string id) {
             _gitExe.Execute("checkout {0} --force", id);
         }
