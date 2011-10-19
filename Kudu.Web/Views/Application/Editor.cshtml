@@ -7,6 +7,8 @@
     ViewBag.Title = "Editor";
 }
 <div id="skyde">
+    <div id="notification" class="notification icon icon-loading">
+    </div>
     <ul id="toolbar">
         <li>
             <a href="#" class="icon icon-save" id="save">Save</a>
@@ -35,15 +37,12 @@
         </div>
         <div id="file-browser">
         </div>
-    </div>
-    <div class="outer-status">
-        <div id="status" class="icon icon-save">
-        </div>
     </div>    
 
     <div id="console-ghost"></div>
     <div id="console" class="collapsed">
         <div class="header">
+            <div id="status" class="icon icon-save"></div>
             <a href="#" id="show-console" class="icon-notext icon-expand">&nbsp;</a>
         </div>
         <div class="output">
@@ -225,6 +224,7 @@
             @if (ViewData.ContainsKey("Clone")) {
             <text>$.connection.documents.cloneUrl = '@Url.Action("clone", new { slug = Model.Name })';</text>
             }
+            $.connection.documents.setDefaultProjectUrl = '@Url.Action("default-project", new { slug = Model.Name })';
         });
 
     })(jQuery);

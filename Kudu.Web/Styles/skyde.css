@@ -253,7 +253,7 @@
     float: left;
 }
 
-#skyde .icon-loading {
+.icon-loading {
     background-image: url('../images/loading.gif');
 }
 
@@ -312,8 +312,10 @@
     padding-left: 36px;
 }
 
-#skyde #status {    
+#console #status {    
     display: none;
+    font-family: Trebuchet MS;
+    font-size: 13px;
 }
 
 #skyde .outer-status {
@@ -370,6 +372,17 @@
 
 #skyde .clear {
     clear: both;
+}
+
+#skyde .notification {
+    display: none;
+    background-color: #E6EFC2;
+    background-position: 5px 50%;
+    border: 1px solid #C6D880;
+    font-size: 15px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    padding: 10px 10px 10px 30px;
 }
 
 #skyde .hide {
@@ -495,6 +508,10 @@
     -moz-box-shadow: 2px 2px 5px #888;
 }
 
+#console #console-status {
+    background-position: 0 50%;
+}
+
 #console .icon-collapse {
     background-image: url('../images/collapse.png');
 }
@@ -612,4 +629,5 @@
 
 #show-console {
     background-position: center top;
+    float: right;
 }

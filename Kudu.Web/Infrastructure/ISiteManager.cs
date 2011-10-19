@@ -5,5 +5,6 @@ namespace Kudu.Web.Infrastructure {
         Site CreateSite(string applicationName);
         void DeleteSite(string applicationName);
         bool TryCreateDeveloperSite(string applicationName, out string siteUrl);
+        void SetDeveloperSiteWebRoot(string applicationName, string projectPath);
     }
 }

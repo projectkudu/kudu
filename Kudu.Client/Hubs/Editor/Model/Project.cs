@@ -11,6 +11,11 @@ namespace Kudu.Client.Model {
         public string Name { get; set; }
 
         /// <summary>
+        /// Default project
+        /// </summary>
+        public string DefaultProject { get; set; }
+
+        /// <summary>
         /// Files in the project
         /// </summary>
         public IEnumerable<File> Files { get; set; }

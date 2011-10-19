@@ -1,9 +1,9 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Kudu.Client.Infrastructure;
 using Kudu.Client.Model;
 using SignalR.Hubs;
 using Kudu.Core.Editor;
-using System;
 
 namespace Kudu.Client {
     public class Documents : Hub {
@@ -14,9 +14,11 @@ namespace Kudu.Client {
         }
 
         public Project GetStatus() {
+            var files = GetActiveFileSystem().GetFiles().ToList();
             return new Project {
                 Name = Caller.appName,
-                Files = from path in GetActiveFileSystem().GetFiles()
+                DefaultProject = Caller.defaultProject ?? files.FirstOrDefault(path => System.IO.Path.GetExtension(path).EndsWith("proj", StringComparison.OrdinalIgnoreCase)),
+                Files = from path in files
                         select new File {
                             Path = path
                         }

@@ -115,6 +115,20 @@ namespace Kudu.Web.Infrastructure {
 
             iis.CommitChanges();
         }
+
+        public void SetDeveloperSiteWebRoot(string applicationName, string projectPath) {
+            var iis = new IIS.ServerManager();
+            string siteName = GetDevSite(applicationName);
+
+            IIS.Site site = iis.Sites[siteName];
+            if (site != null) {
+                string devSitePath = PathHelper.GetDeveloperApplicationPath(applicationName);
+                string path = Path.Combine(devSitePath, "wwwroot", Path.GetDirectoryName(projectPath));
+                site.Applications[0].VirtualDirectories[0].PhysicalPath = path;
+
+                iis.CommitChanges();
+            }
+        }
         
         private void DeleteSite(IIS.ServerManager iis, string siteName) {
             var site = iis.Sites[siteName];
@@ -126,12 +140,12 @@ namespace Kudu.Web.Infrastructure {
             }
         }
 
-        private string GetDevSite(string siteName) {
-            return "kudu_dev_" + siteName;
+        private string GetDevSite(string applicationName) {
+            return "kudu_dev_" + applicationName;
         }
 
-        private string GetLiveSite(string siteName) {
-            return "kudu_" + siteName;
+        private string GetLiveSite(string applicationName) {
+            return "kudu_" + applicationName;
         }
 
         private static void DeleteSafe(string physicalPath) {
@@ -140,6 +154,6 @@ namespace Kudu.Web.Infrastructure {
             }
 
             FileSystemHelpers.DeleteDirectorySafe(physicalPath);
-        }
+        }        
     }
 }

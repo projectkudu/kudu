@@ -163,9 +163,17 @@
             }
 
             var throttledSave = throttle(saveDocument, 100);
+            var throttledBuild = throttle(build, 100);
 
             $(document).bind('keydown', 'ctrl+s', function (evt) {
                 throttledSave();
+                evt.stopPropagation();
+                evt.preventDefault();
+                return false;
+            });
+
+            $(document).bind('keydown', 'ctrl+shift+b', function (evt) {
+                throttledBuild();
                 evt.stopPropagation();
                 evt.preventDefault();
                 return false;
@@ -510,12 +518,20 @@
                     return false;
                 });
 
+                $('#build').click(function () {
+                    build();
+                    return false;
+                });
+
                 $('#deploy').click(function () {
-                    var token = loader.show('Deploying to live site...');
+                    var $notification = $('#notification');
+                    $notification.html('Deploying changes to live site...');
+                    $notification.slideDown();
+
                     scm.push()
                         .fail(onError)
                         .always(function () {
-                            loader.hide(token);
+                            $notification.slideUp();
                         });
                     return false;
                 });
@@ -525,17 +541,25 @@
                 });
             }
 
+            function build() {
+                var command = '%WINDIR%\\Microsoft.NET\\Framework\\v4.0.30319\\MSBuild.exe';
+                executeCommand(command, 'Building');
+            }
+
             function updateActiveView() {
                 var $activeView = $('#active-view');
                 if (documents.cloneUrl) {
-                    var token = loader.show('Creating developer site...');
+                    var $notification = $('#notification');
+                    $notification.html('Creating developer site...');
+                    $notification.slideDown();
+
                     $.post(documents.cloneUrl, {})
                      .done(function () {
                          documents.cloneUrl = null;
                          $activeView.val('dev');
                          $activeView.removeClass('hide');
+                         $notification.slideUp();
 
-                         loader.hide(token);
                          updateActiveView();
                      })
                      .fail(function (xhr, type, ex) {
@@ -559,6 +583,7 @@
                     $('.dev-mode').hide();
 
                 }
+                commandLine.defaultProject = null;
 
                 updateFiles().done(collapseFolders);
             }
@@ -616,6 +641,16 @@
                 fileSystem.create(project.Files);
                 fileSystem.setReadOnly(project.IsReadOnly);
                 fileSystem.setRootName(project.Name || '~/');
+
+                if (project.DefaultProject) {
+                    $.post(documents.setDefaultProjectUrl, { projectPath: project.DefaultProject })
+                     .done(function () {
+                         documents.defaultProject = project.DefaultProject;
+                     })
+                     .fail(function (xhr, status, e) {
+                         onError(e);
+                     });
+                }
 
                 var browser = $('#file-browser');
 
@@ -714,12 +749,16 @@
                 cs.toggleClass('collapsed');
                 $(this).removeClass('icon-expand');
                 $(this).addClass('icon-collapse');
+
                 $(window).resize();
             },
             function () {
                 cs.toggleClass('collapsed');
                 $(this).removeClass('icon-collapse');
                 $(this).addClass('icon-expand');
+
+                messages.scrollTop(buffer[0].scrollHeight);
+
                 $(window).resize();
             });
 
@@ -824,13 +863,11 @@
                 messages.scrollTop(buffer[0].scrollHeight);
             };
 
-            $('#new-command').submit(function () {
+            function executeCommand(command, status) {
                 if (executingCommand) {
-                    // REVIEW: Should we queue commands like a real console?
-                    return false;
+                    return;
                 }
 
-                var command = cmd.val();
                 if (command == 'cls') {
                     buffer.html('');
                 }
@@ -852,7 +889,15 @@
                         buffer.find('.icon-prompt-loading').hide();
                     }
                 }
+            }
 
+            $('#new-command').submit(function () {
+                var command = cmd.val();
+                if (executingCommand) {
+                    // REVIEW: Should we queue commands like a real console?
+                    return false;
+                }
+                executeCommand(command);
                 cmd.val('');
                 return false;
             });

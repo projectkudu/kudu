@@ -155,6 +155,19 @@ namespace Kudu.Web.Controllers {
         }
 
         [HttpPost]
+        [ActionName("default-project")]
+        public ActionResult SetWebRoot(string slug, string projectPath) {
+            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
+            if (application == null) {
+                return HttpNotFound();
+            }
+
+            _siteManager.SetDeveloperSiteWebRoot(application.Name, projectPath);
+
+            return new EmptyResult();
+        }
+
+        [HttpPost]
         [ActionName("clone")]
         public ActionResult CreateDeveloperSite(string slug) {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
