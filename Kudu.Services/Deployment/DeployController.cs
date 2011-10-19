@@ -16,13 +16,13 @@ namespace Kudu.Services.Deployment {
         public string GetActiveDeploymentId() {
             return _deploymentManager.ActiveDeploymentId;
         }
-
-        [WebInvoke(UriTemplate = "")]
-        public void Deploy(SimpleJson.JsonObject input) {
-            _deploymentManager.Deploy((string)input["id"]);
+        
+        [WebInvoke(UriTemplate = "create")]
+        public void Deploy() {
+            _deploymentManager.Deploy();
         }
-
-        [WebInvoke(UriTemplate = "new")]
+        
+        [WebInvoke(UriTemplate = "build")]
         public void CreateBuild(SimpleJson.JsonObject input) {
             _deploymentManager.Build((string)input["id"]);
         }

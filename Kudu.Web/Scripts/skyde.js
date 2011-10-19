@@ -529,8 +529,15 @@
                     $notification.slideDown();
 
                     scm.push()
-                        .fail(onError)
-                        .always(function () {
+                        .done(function () {
+                            deployment.deploy(null)
+                                      .fail(onError)
+                                      .always(function () {
+                                          $notification.slideUp();
+                                      });
+                        })
+                        .fail(function (e) {
+                            onError(e);
                             $notification.slideUp();
                         });
                     return false;
@@ -708,7 +715,9 @@
 
             // Command Window 
             var commandLine = $.connection.commandLine,
-                scm = $.connection.sourceControl;
+                scm = $.connection.sourceControl,
+                deployment = $.connection.deployment;
+            deployment.appName = documents.appName;
             commandLine.appName = documents.appName;
             scm.appName = documents.appName;
 

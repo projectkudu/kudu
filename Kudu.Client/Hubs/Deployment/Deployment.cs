@@ -3,6 +3,7 @@ using System.Linq;
 using Kudu.Client.Model;
 using Kudu.Core.Deployment;
 using SignalR.Hubs;
+using System;
 
 namespace Kudu.Client {
     public class Deployment : Hub {
@@ -26,7 +27,12 @@ namespace Kudu.Client {
         }
 
         public void Deploy(string id) {
-            _deploymentManager.Deploy(id);
+            if (String.IsNullOrEmpty(id)) {
+                _deploymentManager.Deploy();                
+            }
+            else {
+                _deploymentManager.Deploy(id);
+            }
         }
     }
 }
