@@ -8,16 +8,7 @@
 }
 
 <div id="scm">    
-    <h3>Application URL</h3>
-    <p>
-        <a href="@Model.SiteUrl" target="_blank">@Model.SiteUrl</a>
-    </p>
-
-    <h3>Repository URL</h3>
-    <div id="clone-url">
-        <input type="text" name="url" id="url" value="@(Model.CloneUrl ?? "None")" readonly="readonly" @(Model.CloneUrl == null ? "disabled=\"disabled\"" : "") />
-    </div>
-
+    <h3 class="groovy-title">@Model.Name</h3>
     <div id="page">
         <div id="new-commit">
         </div>

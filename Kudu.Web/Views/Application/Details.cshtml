@@ -7,48 +7,43 @@
 @{
     ViewBag.Title = Model.Name;
 }
-<h2>@Model.Name</h2>
-
-<ul id="app-links" class="tab-menu">
-    @if (Model.RepositoryType != RepositoryType.None) {
-    <li>
-        @Html.ActionLink("Manage Repository", "scm", new { slug = Model.Name.GenerateSlug() })
-    </li>
+<link rel="Stylesheet" href="/content/stylesheets/forms.css" media="screen" />
+<link rel="Stylesheet" href="/content/stylesheets/plugins/buttons/screen.css" media="screen" />
+<div id="model-options" class="column span-24 ">
+    <div class="column span-3 groovy-title colborder">
+        @Model.Name
+    </div>
+    <div class="column span-13 tpad-12">
+        <a href="@Url.Action("scm", new { slug = Model.Name.GenerateSlug() })">
+            <img src="/content/glyphs/file---check.png" height=24 alt="Repository" title="Repository"/>
+        </a> &nbsp; 
+        <a href="@Url.Action("editor", new { slug = Model.Name.GenerateSlug() })">
+            <img src="/content/glyphs/file---edit.png" height=24 alt="Editor" title="Editor"/>
+        </a> &nbsp;  
+        <a href="@Url.Action("index", "settings", new { slug = Model.Name.GenerateSlug() },null)">
+            <img src="/content/glyphs/setting.png" height=24 alt="Settings" title="Settings"/>
+        </a>
+    </div>
+    @if (Model.RepositoryType == RepositoryType.None) {
+        <p class="notice">@Model.Name does not have a source control repository configured. You can push to one of the URLs below to create the repository.</p>
     }
-    <li>
-        @Html.ActionLink("Manage Files", "editor", new { slug = Model.Name.GenerateSlug() })
-    </li>
-    <li>
-        @Html.ActionLink("Settings", "index", "settings", new { slug = Model.Name.GenerateSlug() }, null)
-    </li>
-</ul>
-
-@if (Model.RepositoryType == RepositoryType.None) {
-    <p class="notice">@Model.Name does not have a source control repository configured. You can push to one of the URLs below to create the repository.</p>
-}
-
-@if (Model.RepositoryType == RepositoryType.None) {
-    <div class="display-label">Git URL</div>
-    <div class="display-field">
-        @Model.GitUrl
-    </div>
-    <div class="display-label">Mercurial URL</div>
-    <div class="display-field">
-        @Model.HgUrl
-    </div>
-}
-else {
-    <div class="display-label">@Model.RepositoryType URL</div>
-    <div class="display-field">
-        @Model.CloneUrl
-    </div>
-}
-<div class="display-label">Application URL</div>
-<div class="display-field">
-    <a href="@Model.SiteUrl" target="_blank">@Model.SiteUrl</a>
 </div>
+<div class="column span-24 tmargin-36">
+    <fieldset>
 
-<h2 id="delete-header">Delete Application</h2>
-@using (Html.BeginForm("Delete", "Application", new { slug = Model.Name.GenerateSlug() })) { 
-    <input type="submit" name="name" value="Delete" />
-}
+    <label>@Model.RepositoryType URL</label>
+    <p>
+        @Model.CloneUrl
+    </p>
+    <label>Application URL</label>
+    <p>
+        <a href="@Model.SiteUrl" target="_blank">@Model.SiteUrl</a>
+    </p>
+
+    @using (Html.BeginForm("Delete", "Application", new { slug = Model.Name.GenerateSlug() })) { 
+       <button type="submit" class="button negative">
+        <img src="/content/stylesheets/plugins/buttons/icons/cross.png" alt=""/> Delete
+      </button>
+    }
+    </fieldset>
+</div>

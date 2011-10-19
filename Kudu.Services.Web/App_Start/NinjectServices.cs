@@ -78,7 +78,7 @@ namespace Kudu.Services.Web.App_Start {
             kernel.Bind<IDeploymentSettingsManager>().To<DeploymentSettingsManager>();
             kernel.Bind<IEditorFileSystemFactory>().To<FileSystemFactory>();
             kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.RepositoryPath));
-            kernel.Bind<IUserValidator>().To<SimpleUserValidator>();
+            kernel.Bind<IUserValidator>().To<FormsAuthUserValidator>();
             kernel.Bind<IHgServer>().To<Kudu.Core.SourceControl.Hg.HgServer>().InSingletonScope();
             kernel.Bind<IServerConfiguration>().To<ServerConfiguration>().InSingletonScope();
             kernel.Bind<IFileSystem>().To<FileSystem>();

@@ -8,8 +8,6 @@
 
 @using (Html.BeginForm()) {
     @Html.ValidationSummary()
-    <fieldset>
-        <legend>Application</legend>
 
         <div class="editor-label">
             @Html.LabelFor(model => model.Name)
@@ -29,5 +27,4 @@
         <p>
             <input type="submit" value="Create" />
         </p>
-    </fieldset>
 }

@@ -99,7 +99,7 @@ namespace Kudu {
                 Console.WriteLine(actionName + " is not supported");
             }
             catch (Exception e) {
-                Console.WriteLine("Someting went wrong: {0}", e);
+                Console.WriteLine("Something went wrong: {0}", e);
             }
         }
     }
