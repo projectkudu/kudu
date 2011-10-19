@@ -13,15 +13,19 @@
         </li>
         <li>
             <a href="#" class="icon icon-build dev-mode" id="build">Build</a>
+        </li>        
+        <li>            
+            <a href="@Model.DeveloperSiteUrl" target="_blank" class="icon icon-run dev-mode" id="run">Run</a>
+        </li>
+        <li>
+            <a href="#" class="icon icon-live dev-mode" id="deploy">Go Live</a>
         </li>
     </ul>
 
-    @if (Model.RepositoryType != RepositoryType.None) {
-    <select id="active-view">
+    <select id="active-view"@if(Model.RepositoryType == RepositoryType.None) {<text> class="hide"</text>}>
         <option value="dev">Developer</option>
-        <option value="live">Live</option>        
+        <option value="live"@if(Model.RepositoryType == RepositoryType.None) {<text> selected="selected"</text>}>Live</option>
     </select>
-    }
 
     <ul id="tabs">
     </ul>
@@ -218,10 +222,14 @@
     (function ($) {
         $(function () {
             $.connection.documents.appName = '@Model.Name';
+            @if (ViewData.ContainsKey("Clone")) {
+            <text>$.connection.documents.cloneUrl = '@Url.Action("clone", new { slug = Model.Name })';</text>
+            }
         });
+
     })(jQuery);
 </script>
 <script src="@Url.Content("~/Scripts/jquery.render.min.js")" type="text/javascript"></script>
 <script src="@Url.Content("~/Scripts/io/fileSystem.js")" type="text/javascript"></script>
 <script src="@Url.Content("~/Scripts/loader.js")" type="text/javascript"></script>
-<script src="@Url.Content("~/Scripts/skyde.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Scripts/skyde.js")" type="text/javascript"></script>            

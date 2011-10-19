@@ -68,6 +68,10 @@ namespace Kudu.Core.SourceControl.Git {
             return _exeRepository.Commit(authorName, message);
         }
 
+        public void Push(string source) {
+            _exeRepository.Push(source);
+        }
+
         public void Update(string id) {
             _exeRepository.Update(id);
         }

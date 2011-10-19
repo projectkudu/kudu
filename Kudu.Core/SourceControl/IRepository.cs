@@ -15,5 +15,6 @@ namespace Kudu.Core.SourceControl {
         void RevertFile(string path);
         ChangeSet Commit(string authorName, string message);
         void Update(string id);
+        void Push(string source);
     }
 }

@@ -16,6 +16,11 @@
     outline: none;
 }
 
+#skyde #preview-url {
+    display: block;
+    margin-bottom: 10px;
+}
+
 #skyde a:visited {
     color: Blue;
 }
@@ -95,6 +100,14 @@
 
 #skyde .icon-history {
     background-image: url('../images/book_previous.png');
+}
+
+#skyde .icon-live {
+    background-image: url('../images/world_go.png');
+}
+
+#skyde .icon-run {
+    background-image: url('../images/run.png');
 }
 
 #skyde .icon-cs {
@@ -359,6 +372,10 @@
     clear: both;
 }
 
+#skyde .hide {
+    display: none !important;
+}
+
 #skyde #file-browser .menu li {
     float: left;
     list-style: none;
@@ -420,6 +437,7 @@
     padding-left: 0;
     margin-left: 0;
     display: inline;
+    margin-bottom: 10px;
 }
 
 #skyde ul#toolbar li {

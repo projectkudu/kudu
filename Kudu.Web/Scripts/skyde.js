@@ -516,7 +516,27 @@
             }
 
             function updateActiveView() {
-                if ($('#active-view').val() == 'dev') {
+                var $activeView = $('#active-view');
+                if (documents.cloneUrl) {
+                    var token = loader.show('Creating developer site...');
+                    $.post(documents.cloneUrl, {})
+                     .done(function () {
+                         documents.cloneUrl = null;
+                         $activeView.val('dev');
+                         $activeView.removeClass('hide');
+
+                         loader.hide(token);
+                         updateActiveView();
+                     })
+                     .fail(function (xhr, type, ex) {
+                         loader.hide(token);
+                         onError(ex);
+                     });
+                    return;
+                }
+
+
+                if ($activeView.val() == 'dev') {
                     documents.mode = 'dev';
                     commandLine.mode = 'dev';
 

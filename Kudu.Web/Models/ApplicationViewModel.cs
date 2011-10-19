@@ -12,6 +12,7 @@ namespace Kudu.Web.Models {
         public ApplicationViewModel(IApplication application) {
             Name = application.Name;
             SiteUrl = application.SiteUrl;
+            DeveloperSiteUrl = application.DeveloperSiteUrl;
             GitUrl = GetCloneUrl(application, RepositoryType.Git);
             HgUrl = GetCloneUrl(application, RepositoryType.Mercurial);
         }
@@ -19,6 +20,7 @@ namespace Kudu.Web.Models {
         [Required]
         public string Name { get; set; }
         public string SiteUrl { get; set; }
+        public string DeveloperSiteUrl { get; set; }
         public RepositoryType RepositoryType { get; set; }
         public string GitUrl { get; set; }
         public string HgUrl { get; set; }

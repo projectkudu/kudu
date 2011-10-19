@@ -114,7 +114,7 @@ namespace Kudu.Services.Web.App_Start {
             return new RepositoryManager(environment.RepositoryPath);
         }
 
-        private static IRepository GetSourceControlRepository(IEnvironment environment) {            
+        private static IRepository GetSourceControlRepository(IEnvironment environment) {
             return GetDevelopmentRepositoryManager(environment).GetRepository();
         }
 
@@ -166,7 +166,13 @@ namespace Kudu.Services.Web.App_Start {
             return new Environment(site,
                                    root,
                                    deploymentRepositoryPath,
-                                   () => Path.Combine(PathResolver.ResolveDevelopmentPath(), site, DeploymentTargetPath),
+                                   () => {
+                                       string path = PathResolver.ResolveDevelopmentPath();
+                                       if (System.String.IsNullOrEmpty(path)) {
+                                           return null;
+                                       }
+                                       return Path.Combine(path, site, DeploymentTargetPath);
+                                   },
                                    deployPath,
                                    deployCachePath);
         }

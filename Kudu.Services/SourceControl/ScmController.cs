@@ -77,5 +77,10 @@ namespace Kudu.Services.SourceControl {
         public void Update(SimpleJson.JsonObject input) {
             _repository.Update((string)input["id"]);
         }
+
+        [HttpPost]
+        public void Push(string source) {
+            _repository.Push(source);
+        }
     }
 }

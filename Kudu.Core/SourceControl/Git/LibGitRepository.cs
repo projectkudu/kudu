@@ -106,6 +106,10 @@ namespace Kudu.Core.SourceControl.Git {
                    select new Branch(branch.Tip.Id.Sha, branch.Name, branch.IsCurrentRepositoryHead);
         }
 
+        public void Push(string source) {
+            throw new NotImplementedException();
+        }
+
         private static ChangeSet CreateChangeSet(Commit commit) {
             return new ChangeSet(commit.Id.Sha,
                                  commit.Author.Name,

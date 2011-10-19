@@ -6,12 +6,12 @@ using Kudu.Web.Models;
 using IIS = Microsoft.Web.Administration;
 
 namespace Kudu.Web.Infrastructure {
-    public class SiteManager : ISiteManager {        
-        public Site CreateSite(string siteName) {
+    public class SiteManager : ISiteManager {
+        public Site CreateSite(string applicationName) {
             var iis = new IIS.ServerManager();
 
             var kuduAppPool = EnsureAppPool(iis);
-            string liveSiteName = "kudu_" + siteName;
+            string liveSiteName = GetLiveSite(applicationName);
 
             try {
                 // Create the services site
@@ -19,11 +19,11 @@ namespace Kudu.Web.Infrastructure {
 
                 // Get the port of the site
                 int servicePort = serviceSite.Bindings[0].EndPoint.Port;
-                var serviceApp = serviceSite.Applications.Add("/" + siteName, PathHelper.ServiceSitePath);
+                var serviceApp = serviceSite.Applications.Add("/" + applicationName, PathHelper.ServiceSitePath);
                 serviceApp.ApplicationPoolName = kuduAppPool.Name;
 
                 // Get the path to the website
-                string siteRoot = Path.Combine(PathHelper.GetApplicationPath(siteName), "wwwroot");
+                string siteRoot = Path.Combine(PathHelper.GetApplicationPath(applicationName), "wwwroot");
                 int sitePort = GetRandomPort();
                 var site = iis.Sites.Add(liveSiteName, siteRoot, sitePort);
                 site.ApplicationDefaults.ApplicationPoolName = kuduAppPool.Name;
@@ -31,22 +31,21 @@ namespace Kudu.Web.Infrastructure {
                 iis.CommitChanges();
 
                 return new Site {
-                    ServiceAppName = siteName,
                     SiteName = liveSiteName,
-                    ServiceUrl = String.Format("http://localhost:{0}/{1}/", servicePort, siteName),
+                    ServiceUrl = String.Format("http://localhost:{0}/{1}/", servicePort, applicationName),
                     SiteUrl = String.Format("http://localhost:{0}/", sitePort),
                 };
             }
             catch {
-                DeleteSite(liveSiteName, siteName);
+                DeleteSite(applicationName);
                 throw;
             }
         }
 
-        public bool TryCreateDeveloperSite(string siteName) {
+        public bool TryCreateDeveloperSite(string siteName, out string siteUrl) {
             var iis = new IIS.ServerManager();
 
-            string devSiteName = "kudu_dev_" + siteName;
+            string devSiteName = GetDevSite(siteName);
 
             IIS.Site site = iis.Sites[devSiteName];
             if (site == null) {
@@ -61,9 +60,11 @@ namespace Kudu.Web.Infrastructure {
                 site.ApplicationDefaults.ApplicationPoolName = kuduAppPool.Name;
 
                 iis.CommitChanges();
+                siteUrl = String.Format("http://localhost:{0}/", sitePort);
                 return true;
             }
 
+            siteUrl = null;
             return false;
         }
 
@@ -96,27 +97,41 @@ namespace Kudu.Web.Infrastructure {
             return new Random((int)DateTime.Now.Ticks).Next(1025, 65535);
         }
 
-        public void DeleteSite(string siteName, string applicationName) {
+        public void DeleteSite(string applicationName) {
             var iis = new IIS.ServerManager();
+
+            DeleteSite(iis, GetLiveSite(applicationName));
+            DeleteSite(iis, GetDevSite(applicationName));
+            // Delete the services application
+            var servicesSite = iis.Sites["kudu_services"];
+            if (servicesSite != null) {
+                var app = servicesSite.Applications["/" + applicationName];
+                if (app != null) {
+                    string appPath = PathHelper.GetApplicationPath(applicationName);
+                    DeleteSafe(appPath);
+                    servicesSite.Applications.Remove(app);
+                }
+            }
+
+            iis.CommitChanges();
+        }
+        
+        private void DeleteSite(IIS.ServerManager iis, string siteName) {
             var site = iis.Sites[siteName];
             if (site != null) {
                 site.Stop();
                 string physicalPath = site.Applications[0].VirtualDirectories[0].PhysicalPath;
                 DeleteSafe(physicalPath);
                 iis.Sites.Remove(site);
-
-                // Delete the services application
-                var servicesSite = iis.Sites["kudu_services"];
-                if (servicesSite != null) {
-                    var app = servicesSite.Applications["/" + applicationName];
-                    if (app != null) {
-                        string appPath = PathHelper.GetApplicationPath(applicationName);
-                        DeleteSafe(appPath);
-                        servicesSite.Applications.Remove(app);
-                    }
-                }
             }
-            iis.CommitChanges();
+        }
+
+        private string GetDevSite(string siteName) {
+            return "kudu_dev_" + siteName;
+        }
+
+        private string GetLiveSite(string siteName) {
+            return "kudu_" + siteName;
         }
 
         private static void DeleteSafe(string physicalPath) {

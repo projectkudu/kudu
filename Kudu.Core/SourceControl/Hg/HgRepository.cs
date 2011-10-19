@@ -151,6 +151,10 @@ namespace Kudu.Core.SourceControl.Hg {
             }
         }
 
+        public void Push(string source) {
+            _repository.Push(source);
+        }
+
         private ChangeSetDetail PopulateDetails(string id, ChangeSetDetail detail) {
             var summaryCommand = new DiffCommand {
                 SummaryOnly = true

@@ -6,6 +6,7 @@ using Kudu.Core.SourceControl;
 using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
 using System.IO;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Web.Controllers {
     public class ApplicationController : Controller {
@@ -89,7 +90,7 @@ namespace Kudu.Web.Controllers {
                 }
                 catch (Exception ex) {
                     if (site != null) {
-                        _siteManager.DeleteSite(site.SiteName, site.ServiceAppName);
+                        _siteManager.DeleteSite(slug);
                     }
 
                     ModelState.AddModelError("__FORM", ex.Message);
@@ -129,23 +130,74 @@ namespace Kudu.Web.Controllers {
         [ActionName("editor")]
         public ActionResult EditFiles(string slug) {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
-            if (application != null) {
-                var appViewModel = new ApplicationViewModel(application);
-                var repositoryManager = GetRepositoryManager(application);
-                appViewModel.RepositoryType = repositoryManager.GetRepositoryType();
-
-                string repositoryPath = PathHelper.GetRepositoryPath(application.Name);
-
-                if (appViewModel.RepositoryType != RepositoryType.None &&
-                    _siteManager.TryCreateDeveloperSite(application.Name) &&
-                    Directory.EnumerateFiles(repositoryPath).Any()) {
-                    repositoryManager.CloneRepository(repositoryPath, appViewModel.RepositoryType);
-                }
-
-                return View(appViewModel);
+            if (application == null) {
+                return HttpNotFound();
             }
 
-            return HttpNotFound();
+            var appViewModel = new ApplicationViewModel(application);
+            var repositoryManager = GetRepositoryManager(application);
+            RepositoryType repositoryType = repositoryManager.GetRepositoryType();
+
+            if (application.DeveloperSiteUrl == null) {
+                if (repositoryType != RepositoryType.None) {
+                    // Set this flag so we know that we're in the state where we can
+                    // create the developer site.
+                    ViewBag.Clone = true;
+                }
+
+                appViewModel.RepositoryType = RepositoryType.None;
+            }
+            else {
+                appViewModel.RepositoryType = repositoryType;
+            }
+
+            return View(appViewModel);
+        }
+
+        [HttpPost]
+        [ActionName("clone")]
+        public ActionResult CreateDeveloperSite(string slug) {
+            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
+            if (application == null) {
+                return HttpNotFound();
+            }
+
+            IRepositoryManager repositoryManager = GetRepositoryManager(application);
+            RepositoryType repositoryType = repositoryManager.GetRepositoryType();
+            var state = (DeveloperSiteState)application.DeveloperSiteState;
+
+            if (application.DeveloperSiteUrl != null || 
+                state == DeveloperSiteState.Creating || 
+                repositoryType == RepositoryType.None) {
+                return new EmptyResult();
+            }
+
+            try {
+                application.DeveloperSiteState = (int)DeveloperSiteState.Creating;
+                db.SaveChanges();
+
+                // Get the deployment repository path
+                string repositoryPath = PathHelper.GetDeploymentRepositoryPath(application.Name);
+
+                FileSystemHelpers.EnsureDirectory(PathHelper.GetDeveloperApplicationPath(application.Name));
+
+                // Clone the repository to the developer site
+                repositoryManager.CloneRepository(repositoryPath, repositoryType);
+
+                string developerSiteUrl;
+                if (_siteManager.TryCreateDeveloperSite(slug, out developerSiteUrl)) {
+                    application.DeveloperSiteUrl = developerSiteUrl;
+                    db.SaveChanges();
+                }
+            }
+            catch {
+                application.DeveloperSiteUrl = null;
+                application.DeveloperSiteState = (int)DeveloperSiteState.None;
+                db.SaveChanges();
+                throw;
+            }
+
+            return new EmptyResult();
         }
 
         //
@@ -162,7 +214,7 @@ namespace Kudu.Web.Controllers {
                 catch {
                 }
 
-                _siteManager.DeleteSite(application.SiteName, application.ServiceAppName);
+                _siteManager.DeleteSite(slug);
 
                 db.Applications.Remove(application);
                 db.SaveChanges();

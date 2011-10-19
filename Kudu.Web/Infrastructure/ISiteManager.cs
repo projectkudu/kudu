@@ -2,8 +2,8 @@
 
 namespace Kudu.Web.Infrastructure {
     public interface ISiteManager {
-        Site CreateSite(string siteName);
-        void DeleteSite(string siteName, string applicationName);
-        bool TryCreateDeveloperSite(string siteName);
+        Site CreateSite(string applicationName);
+        void DeleteSite(string applicationName);
+        bool TryCreateDeveloperSite(string applicationName, out string siteUrl);
     }
 }

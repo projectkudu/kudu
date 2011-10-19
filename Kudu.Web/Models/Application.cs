@@ -11,6 +11,8 @@ namespace Kudu.Web.Models {
         public string ServiceAppName { get; set; }
         public string ServiceUrl { get; set; }
         public string SiteUrl { get; set; }
+        public string DeveloperSiteUrl { get; set; }
+        public int DeveloperSiteState { get; set; }
         public Guid UniqueId { get; set; }
         public DateTime Created { get; set; }
     }

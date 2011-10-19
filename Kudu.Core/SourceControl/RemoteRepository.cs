@@ -66,6 +66,11 @@ namespace Kudu.Core.SourceControl {
             return JsonConvert.DeserializeObject<ChangeSet>(json);
         }
 
+        public void Push(string source) {
+            _client.Post("push", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, object>("source", source)))
+                   .EnsureSuccessful();
+        }
+
         public void Update(string id) {
             _client.Post("update", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, object>("id", id)))
                    .EnsureSuccessful();

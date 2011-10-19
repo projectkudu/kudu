@@ -15,7 +15,7 @@ namespace Kudu.Web.Infrastructure {
             return Path.Combine(RootPath, "dev", applicationName);
         }
 
-        internal static string GetRepositoryPath(string applicationName) {
+        internal static string GetDeploymentRepositoryPath(string applicationName) {
             return Path.Combine(GetApplicationPath(applicationName), "repository");
         }
     }

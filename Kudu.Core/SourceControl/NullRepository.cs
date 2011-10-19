@@ -61,5 +61,8 @@ namespace Kudu.Core.SourceControl {
         public void Update(string id) {
             
         }
+
+        public void Push(string source) {
+        }
     }
 }

@@ -132,6 +132,7 @@
     <Content Include="images\collapse.png" />
     <Content Include="images\expand.png" />
     <Content Include="images\prompt-loading.gif" />
+    <Content Include="images\world_go.png" />
     <Content Include="Scripts\codemirror\mode\markdown\markdown.css" />
     <Content Include="Scripts\codemirror\mode\markdown\markdown.js" />
     <Content Include="Scripts\codemirror\mode\yaml\yaml.js" />
@@ -257,6 +258,7 @@
     <Compile Include="Infrastructure\SlugGenerator.cs" />
     <Compile Include="Models\Application.cs" />
     <Compile Include="Models\ApplicationViewModel.cs" />
+    <Compile Include="Models\DeveloperSiteState.cs" />
     <Compile Include="Models\KuduContext.cs" />
     <Compile Include="Models\SettingsViewModel.cs" />
     <Compile Include="Models\Site.cs" />
@@ -310,7 +312,7 @@
         <WebProjectProperties>
           <UseIIS>False</UseIIS>
           <AutoAssignPort>True</AutoAssignPort>
-          <DevelopmentServerPort>54606</DevelopmentServerPort>
+          <DevelopmentServerPort>50195</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>
           <IISUrl>http://localhost:23327/</IISUrl>
           <NTLMAuthentication>False</NTLMAuthentication>
