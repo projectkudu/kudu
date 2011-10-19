@@ -55,9 +55,7 @@ namespace Kudu.Core.Deployment {
 
         public string ActiveDeploymentId {
             get {
-                return _client.Get("id").EnsureSuccessful()
-                              .Content
-                              .ReadAsString();
+                return _client.GetJson<string>("id");
             }
         }
 
