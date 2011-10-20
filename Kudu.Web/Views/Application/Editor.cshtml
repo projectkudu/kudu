@@ -220,7 +220,7 @@
 <script type="text/javascript">
     (function ($) {
         $(function () {
-            $.connection.documents.appName = '@Model.Name';
+            $.connection.documents.applicationName = '@Model.Name';
             @if (ViewData.ContainsKey("Clone")) {
             <text>$.connection.documents.cloneUrl = '@Url.Action("clone", new { slug = Model.Name })';</text>
             }
