@@ -81,6 +81,7 @@
             fileExplorer: $('#files'),
             activeView : $('#active-view'),
             launcher : $('#run'),
+            projectList : $('#projects'),
             mode: @mode,
             createDevelopmentSite : @createDevelopmentSite.ToString().ToLower(),
             siteManager: @Html.Raw(siteManagerInit)
@@ -108,11 +109,10 @@
         <li>
             <a href="#" class="icon icon-live dev-mode" data-action="go-live">Go Live</a>
         </li>
+        <li class="project-selection dev-mode">
+            Projects: <select id="projects"></select>   
+        </li>
     </ul>
-    
-    
-    <select id="projects">
-    </select>
 
     <select id="active-view"@if (Model.RepositoryType == RepositoryType.None) {<text> class="hide"</text>}>
         <option value="1">Developer</option>

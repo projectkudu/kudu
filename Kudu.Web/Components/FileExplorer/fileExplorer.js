@@ -67,6 +67,8 @@
             else {
                 activeNode = null;
             }
+
+            $(fileExplorer).trigger('fileExplorer.selectedNodeChanged', [activeNode]);
         }
 
         // Add the file explorer class so we can apply the appropriate styles

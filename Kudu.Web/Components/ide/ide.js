@@ -16,7 +16,8 @@
             createDevelopmentSite = options.createDevelopmentSite,
             siteManager = options.siteManager,
             $activeView = options.activeView,
-            $launcher = options.launcher;
+            $launcher = options.launcher,
+            $projectList = options.projectList;
 
         devenv.applicationName = options.applicationName;
 
@@ -84,6 +85,19 @@
                             if (project.Projects.length === 0) {
                                 // Hide build actions if there's no projects
                                 $('[data-action="build"]').hide();
+                                $('.project-selection').hide();
+                            }
+                            else {
+                                $projectList.html('');
+                                $.each(project.Projects, function () {
+                                    var file = fs.getFile(this);
+                                    var $option = $('<option/>').attr('value', file.getRelativePath())
+                                                                .html(file.getName());
+                                    $projectList.append($option);
+                                });
+
+                                siteManager.setWebRoot(project.Projects[0]);
+                                $('.project-selection').show();
                             }
                         }
                     });
@@ -226,6 +240,11 @@
             core.setMode(mode);
         });
 
+        $projectList.change(function () {
+            var projectPath = $(this).val();
+            siteManager.setWebRoot(projectPath);
+        });
+
         $.connection.hub.start(function () {
             if (createDevelopmentSite === true) {
                 siteManager.createDevelopmentSite()
@@ -293,7 +312,12 @@
                           });
                       });
             },
-            'refresh-project': core.refreshProject
+            'refresh-project': core.refreshProject,
+            'go-live': function () {
+
+            },
+            'build': function () { 
+            }
         };
 
         $('body').delegate('[data-action]', 'click', function (ev) {
