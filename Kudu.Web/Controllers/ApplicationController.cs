@@ -195,7 +195,8 @@ namespace Kudu.Web.Controllers {
                 FileSystemHelpers.EnsureDirectory(PathHelper.GetDeveloperApplicationPath(application.Name));
 
                 // Clone the repository to the developer site
-                repositoryManager.CloneRepository(repositoryPath, repositoryType);
+                var devRepositoryManager = new RemoteRepositoryManager(application.ServiceUrl + "dev/scm");
+                devRepositoryManager.CloneRepository(repositoryPath, repositoryType);
 
                 string developerSiteUrl;
                 if (_siteManager.TryCreateDeveloperSite(slug, out developerSiteUrl)) {
@@ -252,7 +253,7 @@ namespace Kudu.Web.Controllers {
         }
 
         private static IRepositoryManager GetRepositoryManager(Application application) {
-            return new RemoteRepositoryManager(application.ServiceUrl + "scm");
+            return new RemoteRepositoryManager(application.ServiceUrl + "live/scm");
         }
     }
 }

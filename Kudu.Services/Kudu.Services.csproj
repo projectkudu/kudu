@@ -98,8 +98,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Settings\ConnectionStringsController.cs" />
     <Compile Include="Settings\AppSettingsController.cs" />
-    <Compile Include="SourceControl\CloneController.cs" />
     <Compile Include="SourceControl\DeploymentScmController.cs" />
+    <Compile Include="SourceControl\DevelopmentScmService.cs" />
     <Compile Include="SourceControl\ScmController.cs" />
   </ItemGroup>
   <ItemGroup>

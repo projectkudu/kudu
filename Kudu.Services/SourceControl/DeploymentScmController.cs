@@ -1,10 +1,11 @@
-﻿using System.Web.Mvc;
+﻿using System.ServiceModel;
+using System.ServiceModel.Web;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Hg;
-using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.SourceControl {
-    public class DeploymentScmController : KuduController {
+    [ServiceContract]
+    public class DeploymentScmController {
         private readonly IRepositoryManager _repositoryManager;
         private readonly IHgServer _server;
 
@@ -14,20 +15,19 @@ namespace Kudu.Services.SourceControl {
             _server = server;
         }
 
-        [HttpPost]
-        public void Create(RepositoryType type) {
-            _repositoryManager.CreateRepository(type);
+        [WebInvoke]
+        public void Create(SimpleJson.JsonObject input) {
+            _repositoryManager.CreateRepository((RepositoryType)(long)input["type"]);
         }
 
-        [HttpPost]
+        [WebInvoke]
         public void Delete() {
             // Stop the server (will no-op if nothing is running)
             _server.Stop();
             _repositoryManager.Delete();
         }
 
-        [HttpGet]
-        [ActionName("kind")]
+        [WebGet(UriTemplate = "kind")]
         public RepositoryType GetRepositoryType() {
             return _repositoryManager.GetRepositoryType();
         }

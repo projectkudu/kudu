@@ -54,7 +54,7 @@ namespace Kudu.Services.Web.App_Start {
         private static IKernel CreateKernel() {
             var kernel = new StandardKernel();
 
-            RegisterServices(kernel);
+            RegisterServices(kernel);            
 
             KernelContainer.Kernel = kernel;
             return kernel;
@@ -69,6 +69,7 @@ namespace Kudu.Services.Web.App_Start {
             var propertyProvider = new BuildPropertyProvider();
 
             // General
+            kernel.Bind<HttpContextBase>().ToMethod(context => new HttpContextWrapper(HttpContext.Current));
             kernel.Bind<IBuildPropertyProvider>().ToConstant(propertyProvider);
             kernel.Bind<IEnvironment>().ToConstant(environment);
             kernel.Bind<IUserValidator>().To<SimpleUserValidator>().InSingletonScope();
@@ -104,8 +105,10 @@ namespace Kudu.Services.Web.App_Start {
 
             // Source control
             kernel.Bind<IRepository>().ToMethod(context => GetSourceControlRepository(environment));
-            kernel.Bind<IRepositoryManager>().ToMethod(context => GetDevelopmentRepositoryManager(environment))
-                                             .WhenInjectedInto<CloneController>();
+             kernel.Bind<IRepositoryManager>().ToMethod(context => GetDevelopmentRepositoryManager(environment))
+                                             .WhenInjectedInto<DevelopmentScmService>();
+
+            
         }
 
         private static IRepositoryManager GetDevelopmentRepositoryManager(IEnvironment environment) {
@@ -189,9 +192,7 @@ namespace Kudu.Services.Web.App_Start {
 
         private static bool IsDevSiteRequest(IContext context) {
             var httpContext = context.Kernel.Get<HttpContextBase>();
-            string live = (string)httpContext.Request.RequestContext.RouteData.Values["live"];
-
-            return System.String.IsNullOrEmpty(live);
+            return !httpContext.Request.RequestContext.RouteData.Values.ContainsKey("live");
         }
 
         private static void EnsureDevelopmentRepository(IEnvironment environment) {

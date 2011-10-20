@@ -21,7 +21,6 @@ namespace Kudu.Client.Infrastructure {
             if (_cache.TryGetValue(Name, out config)) {
                 Repository = config.Repository;
                 FileSystem = config.FileSystem;
-                RepositoryManager = config.RepositoryManager;
                 DevFileSystem = config.DevFileSystem;
 
 
@@ -48,7 +47,6 @@ namespace Kudu.Client.Infrastructure {
             else {
                 Repository = new RemoteRepository(ServiceUrl + "scm");
                 DeploymentManager = new RemoteDeploymentManager(ServiceUrl + "deploy");
-                RepositoryManager = new RemoteRepositoryManager(ServiceUrl + "scm");
 
                 FileSystem = new RemoteFileSystem(ServiceUrl + "live/files");
                 CommandExecutor = new RemoteCommandExecutor(ServiceUrl + "live/command");
@@ -98,12 +96,7 @@ namespace Kudu.Client.Infrastructure {
             get;
             private set;
         }
-
-        public IRepositoryManager RepositoryManager {
-            get;
-            private set;
-        }
-
+        
         public IRepository Repository {
             get;
             private set;

@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.ServiceModel;
 using System.ServiceModel.Activation;
 using System.Web.Routing;
+using Kudu.Services.Deployment;
 using Microsoft.ApplicationServer.Http.Activation;
 using Microsoft.ApplicationServer.Http.Dispatcher;
 using Ninject.Extensions.Wcf;
@@ -19,65 +20,39 @@ namespace Kudu.Services {
             routes.MapConnection<LiveCommandStatusHandler>("LiveCommandStatus", "live/command/status/{*operation}");
             routes.MapConnection<DevCommandStatusHandler>("DevCommandStatus", "dev/command/status/{*operation}");
 
-            routes.Add(new ServiceRoute(configuration.HgServerRoot, factory, typeof(HgServer.ProxyController)));
-            routes.Add(new ServiceRoute(configuration.GitServerRoot + "/info/refs", factory, typeof(GitServer.InfoRefsController)));
-            routes.Add(new ServiceRoute(configuration.GitServerRoot, factory, typeof(GitServer.RpcController)));
-            routes.Add(new ServiceRoute("deploy", factory, typeof(Deployment.DeployController)));
-            routes.Add(new ServiceRoute("files", factory, typeof(Documents.FilesController)));
-            routes.Add(new ServiceRoute("command", factory, typeof(Commands.CommandController)));
-            routes.Add(new ServiceRoute("scm", factory, typeof(SourceControl.ScmController)));
-            routes.Add(new ServiceRoute("appsettings", factory, typeof(Settings.AppSettingsController)));
-            routes.Add(new ServiceRoute("connectionstrings", factory, typeof(Settings.ConnectionStringsController)));
+            // Source control servers
+            MapServiceRoute<HgServer.ProxyController>(configuration.HgServerRoot, factory);
+            MapServiceRoute<GitServer.InfoRefsController>(configuration.GitServerRoot + "/info/refs", factory);
+            MapServiceRoute<GitServer.RpcController>(configuration.GitServerRoot, factory);
 
-            /*routes.MapRoute(
-                "LiveCommandLine",
-                "live/command/{action}/{id}",
-                new { controller = "Command", action = "Index", id = UrlParameter.Optional, live = "live" }
-            );
 
-            routes.MapRoute(
-                "DevCommandLine",
-                "dev/command/{action}/{id}",
-                new { controller = "Command", action = "Index", id = UrlParameter.Optional }
-            );
+            // Source control interaction
+            MapServiceRoute<SourceControl.ScmController>("scm", factory);
+            MapServiceRoute<SourceControl.DeploymentScmController>("live/scm", factory);
+            MapServiceRoute<SourceControl.DevelopmentScmService>("dev/scm", factory);
 
-            routes.MapRoute(
-                "LiveFiles",
-                "live/files/{action}/{id}",
-                new { controller = "Files", action = "Index", id = UrlParameter.Optional, live = "live" }
-            );
+            // Deployment
+            MapServiceRoute<Deployment.DeployController>("deploy", factory);
 
-            routes.MapRoute(
-                "DevFiles",
-                "dev/files/{action}/{id}",
-                new { controller = "Files", action = "Index", id = UrlParameter.Optional }
-            );
+            // Files            
+            MapServiceRoute<Documents.FilesController>("dev/files", factory);
+            var liveFilesRoute = MapServiceRoute<Documents.FilesController>("live/files", factory);
+            liveFilesRoute.Defaults = new RouteValueDictionary(new { live = true });
 
-            routes.MapRoute(
-                "Error",
-                "error",
-                new { controller = "Error", action = "Index" });
+            // Commands
+            MapServiceRoute<Commands.CommandController>("dev/command", factory);
+            var liveCommandRoute = MapServiceRoute<Commands.CommandController>("live/command", factory);
+            liveCommandRoute.Defaults = new RouteValueDictionary(new { live = true });
 
-            routes.MapRoute(
-                "CloneScm",
-                "scm/clone",
-                new { controller = "Clone", action = "clone" });
+            // Settings
+            MapServiceRoute<Settings.AppSettingsController>("appsettings", factory);
+            MapServiceRoute<Settings.ConnectionStringsController>("connectionstrings", factory);
+        }
 
-            routes.MapRoute(
-                "CreateScm",
-                "scm/create",
-                new { controller = "DeploymentScm", action = "create" });
-
-            routes.MapRoute(
-                "DeleteScm",
-                "scm/delete",
-                new { controller = "DeploymentScm", action = "delete" });
-
-            routes.MapRoute(
-                "ScmKind",
-                "scm/kind",
-                new { controller = "DeploymentScm", action = "kind" });
-            */
+        private static ServiceRoute MapServiceRoute<T>(string url, HttpServiceHostFactory factory) {
+            var route = new ServiceRoute(url, factory, typeof(T));
+            RouteTable.Routes.Add(route);
+            return route;
         }
 
         protected void Application_Start() {
@@ -90,6 +65,7 @@ namespace Kudu.Services {
             // REVIEW: Set to max to accomodate large file uploads in initial scm setup.
             factory.Configuration.MaxBufferSize = Int32.MaxValue;
             factory.Configuration.MaxReceivedMessageSize = Int32.MaxValue;
+            factory.Configuration.EnableHelpPage = true;
 
             // Ensure that only our formatters are used
             factory.Configuration.Formatters.Clear();

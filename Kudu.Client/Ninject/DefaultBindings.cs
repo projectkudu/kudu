@@ -12,7 +12,6 @@ namespace Kudu.Client {
         public override void Load() {
             Bind<ISiteConfiguration>().To<SiteConfiguration>();
             Bind<IRepository>().ToMethod(context => GetRepository(context));
-            Bind<IRepositoryManager>().ToMethod(context => GetRepositoryManager(context));
             Bind<IDeploymentManager>().ToMethod(context => GetDeploymentManager(context));
         }
 
@@ -24,11 +23,6 @@ namespace Kudu.Client {
         private static IDeploymentManager GetDeploymentManager(IContext context) {
             var siteConfiguration = context.Kernel.Get<ISiteConfiguration>();
             return siteConfiguration.DeploymentManager;
-        }
-
-        private static IRepositoryManager GetRepositoryManager(IContext context) {
-            var siteConfiguration = context.Kernel.Get<ISiteConfiguration>();
-            return siteConfiguration.RepositoryManager;
         }
 
     }

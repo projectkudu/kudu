@@ -72,7 +72,7 @@ namespace Kudu.Core.Deployment {
         }
 
         public void Deploy(string id) {
-            _client.Post(String.Empty, HttpClientHelper.CreateJsonContent(new KeyValuePair<string, object>("id", id)))
+            _client.Post("restore", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, object>("id", id)))
                    .EnsureSuccessful();
         }
 
@@ -81,7 +81,7 @@ namespace Kudu.Core.Deployment {
         }
 
         public void Build(string id) {
-            _client.Post("new", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, object>("id", id)))
+            _client.Post("build", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, object>("id", id)))
                    .EnsureSuccessful();
         }
     }

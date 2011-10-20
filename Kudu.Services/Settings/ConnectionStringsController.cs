@@ -1,15 +1,13 @@
 ﻿using System.Collections.Generic;
-using Kudu.Core.Deployment;
-using Kudu.Services.Infrastructure;
-using System.Linq;
 using System.ServiceModel;
 using System.ServiceModel.Web;
+using Kudu.Core.Deployment;
 
 namespace Kudu.Services.Settings {
     [ServiceContract]
     public class ConnectionStringsController {
         private readonly IDeploymentSettingsManager _settingsManager;
-        public ConnectionStringsController(IDeploymentSettingsManager _settingsManager) {
+        public ConnectionStringsController(IDeploymentSettingsManager settingsManager) {
             _settingsManager = settingsManager;
         }
         

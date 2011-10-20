@@ -26,10 +26,9 @@ namespace Kudu.Core.SourceControl {
         }
 
         public void CloneRepository(string source, RepositoryType type) {
-            _client.Post("clone", new FormUrlEncodedContent(new Dictionary<string, string> {
-                { "source", source },
-                { "type", ((int)type).ToString() }
-            })).EnsureSuccessful();
+            _client.Post("clone", 
+                         HttpClientHelper.CreateJsonContent(new KeyValuePair<string, object>("source", source),
+                                                            new KeyValuePair<string, object>("type", type))).EnsureSuccessful();
         }
 
         public IRepository GetRepository() {

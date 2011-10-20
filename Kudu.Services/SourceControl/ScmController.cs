@@ -78,7 +78,7 @@ namespace Kudu.Services.SourceControl {
             _repository.Update((string)input["id"]);
         }
 
-        [HttpPost]
+        [WebInvoke]
         public void Push() {
             _repository.Push();
         }
