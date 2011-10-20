@@ -16,7 +16,20 @@ namespace Kudu.Client.Hubs {
 
         private IEditorFileSystem FileSystem {
             get {
+                if (CurrentMode == Mode.Development) {
+                    return _configuration.DevFileSystem;
+                }
                 return _configuration.FileSystem;
+            }
+        }
+
+        private Mode CurrentMode {
+            get {
+                var mode = (Mode?)Caller.mode;
+                if (mode == null) {
+                    return Mode.Live;
+                }
+                return mode.Value;
             }
         }
 
@@ -49,6 +62,11 @@ namespace Kudu.Client.Hubs {
 
         public void SaveFile(ProjectFile file) {
             FileSystem.WriteAllText(file.Path, file.Content);
+        }
+
+        private enum Mode {
+            Live,
+            Development
         }
     }
 }

@@ -12,7 +12,11 @@
             fileExplorer = null,
             currentHeight = null,
             devenv = $.connection.developmentEnvironment,
-            minHeight = 400;
+            minHeight = 450,
+            createDevelopmentSite = options.createDevelopmentSite,
+            siteManager = options.siteManager,
+            $activeView = options.activeView,
+            $launcher = options.launcher;
 
         devenv.applicationName = options.applicationName;
 
@@ -21,6 +25,11 @@
             file: $('#fileExplorer_fileTemplate'),
             deferredFolder: $('#fileExplorer_deferredFolderTemplate'),
             tab: $('#tabManager_tabTemplate')
+        };
+
+        var modes = {
+            live: 0,
+            developer: 1
         };
 
         var core = {
@@ -45,12 +54,39 @@
                 }
             },
             refreshProject: function () {
-                devenv.getProject()
+                return devenv.getProject()
                  .done(function (project) {
                      fs.create(project.Files);
 
                      fileExplorer.refresh();
                  });
+            },
+            setMode: function (mode) {
+                var $devMode = $('.dev-mode');
+
+                // Set the new mode
+                devenv.mode = mode;
+                $activeView.val(mode.toString());
+
+                // TODO: Check for dirty documents here and ask if we want to save them
+                tabManager.closeAll();
+
+                editor.clear();
+
+                core.refreshProject()
+                    .done(function (project) {
+                        if (mode == 0) {
+                            $devMode.hide();
+                        }
+                        else {
+                            $devMode.show();
+
+                            if (project.Projects.length === 0) {
+                                // Hide build actions if there's no projects
+                                $('[data-action="build"]').hide();
+                            }
+                        }
+                    });
             }
         };
 
@@ -185,8 +221,26 @@
             }
         });
 
+        $activeView.change(function () {
+            var mode = parseInt($(this).val());
+            core.setMode(mode);
+        });
+
         $.connection.hub.start(function () {
-            core.refreshProject();
+            if (createDevelopmentSite === true) {
+                siteManager.createDevelopmentSite()
+                           .done(function (url) {
+                               $launcher.attr('href', url);
+                               $activeView.addClass('hide');
+
+                               createDevelopmentSite = false;
+
+                               core.setMode(modes.developer);
+                           });
+            }
+            else {
+                core.setMode(options.mode || modes.live);
+            }
         });
 
         // Adjust the ide height

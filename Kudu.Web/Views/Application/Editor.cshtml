@@ -222,9 +222,9 @@
         $(function () {
             $.connection.documents.applicationName = '@Model.Name';
             @if (ViewData.ContainsKey("Clone")) {
-            <text>$.connection.documents.cloneUrl = '@Url.Action("clone", new { slug = Model.Name })';</text>
+            <text>$.connection.documents.cloneUrl = '@Url.Action("create-dev-site", new { slug = Model.Name })';</text>
             }
-            $.connection.documents.setDefaultProjectUrl = '@Url.Action("default-project", new { slug = Model.Name })';
+            $.connection.documents.setDefaultProjectUrl = '@Url.Action("set-webroot", new { slug = Model.Name })';
         });
 
     })(jQuery);

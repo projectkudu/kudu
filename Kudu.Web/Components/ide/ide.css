@@ -28,10 +28,11 @@ body {
 }
 
 #tabs {
-    width: 60%;
+    width: 70%;
 }
 
 #actions {
+    display: inline;
     margin-bottom: 20px;
     padding-left: 5px;
 }
@@ -49,4 +50,19 @@ body {
 
 .dev-mode {
     display: none;
+}
+
+#active-view {
+    display: none;
+    display: inline;
+    float: right;
+    font-family: Trebuchet MS;
+    font-size: 13px;
+    margin-right: 4%;
+}
+
+#projects {
+    display: none;
+    float: right;
+    margin-right: 7%;
 }
