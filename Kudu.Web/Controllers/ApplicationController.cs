@@ -202,6 +202,8 @@ namespace Kudu.Web.Controllers {
                 if (_siteManager.TryCreateDeveloperSite(slug, out developerSiteUrl)) {
                     application.DeveloperSiteUrl = developerSiteUrl;
                     db.SaveChanges();
+
+                    return Json(developerSiteUrl);
                 }
             }
             catch {

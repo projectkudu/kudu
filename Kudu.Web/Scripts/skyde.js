@@ -560,8 +560,10 @@
                     $notification.html('Creating developer site...');
                     $notification.slideDown();
 
-                    $.post(documents.cloneUrl, {})
-                     .done(function () {
+                    $.post(documents.cloneUrl, {}, 'json')
+                     .done(function (url) {
+                         $('#run').attr('href', url);
+
                          documents.cloneUrl = null;
                          $activeView.val('dev');
                          $activeView.removeClass('hide');
