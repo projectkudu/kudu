@@ -6,7 +6,7 @@ namespace Kudu.Client.Infrastructure {
         public static string ResolveName(HttpContextBase httpContext) {
             var serializer = new JavaScriptSerializer();
             var request = serializer.Deserialize<HubRequest>(httpContext.Request["data"]);
-            return request.State.AppName;
+            return request.State.ApplicationName;
         }
 
         private class HubRequest {
@@ -14,7 +14,7 @@ namespace Kudu.Client.Infrastructure {
         }
 
         private class ClientState {
-            public string AppName { get; set; }
+            public string ApplicationName { get; set; }
         }
     }
 }

@@ -11,8 +11,8 @@
             editor = null,
             fileExplorer = null;
 
-        var documents = $.connection.documents;
-        documents.appName = options.appName;
+        var devenv = $.connection.developmentEnvironment;
+        devenv.applicationName = options.applicationName;
 
         var templates = {
             folder: $('#fileExplorer_folderTemplate'),
@@ -31,8 +31,8 @@
             }
             else {
                 // Get the file content from the server
-                documents.openFile(path)
-                     .done(function (content) {
+                devenv.openFile(path)
+                      .done(function (content) {
                          editor.setContent(path, content);
                          editor.focus();
                          fileExplorer.setFocus(false);
@@ -133,7 +133,7 @@
         });
 
         $.connection.hub.start(function () {
-            documents.getStatus()
+            devenv.getProject()
                  .done(function (project) {
                      fs.create(project.Files);
 

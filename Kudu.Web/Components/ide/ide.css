@@ -1,0 +1,42 @@
+body {
+    font-family: Trebuchet MS;
+    font-size: 13px;
+}
+
+#edit-area {
+    height: 100%;
+    width: 70%;
+    float: left;
+    border: 1px solid #ccc;
+}
+
+.CodeMirror {
+    font: 10pt Consolas;
+}
+
+#files {
+    float: left;
+    margin-left: 10px;
+    height: 100%;
+    border: 1px solid #ccc;
+    width: 25%;
+    overflow: auto;
+}
+
+#ide {
+    height: 500px;
+}
+
+#tabs {
+    width: 60%;
+}
+
+#actions {
+    margin-bottom: 20px;
+    padding-left: 5px;
+}
+
+#actions li {
+    display: inline;
+    list-style-type: none;
+}

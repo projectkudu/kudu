@@ -60,11 +60,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Hubs\Deployment\Deployment.cs" />
+    <Compile Include="Hubs\DevelopmentEnvironment.cs" />
     <Compile Include="Hubs\Editor\CommandLine.cs" />
     <Compile Include="Infrastructure\IUserInformation.cs" />
     <Compile Include="Ninject\DefaultBindings.cs" />
     <Compile Include="Hubs\Editor\Documents.cs" />
-    <Compile Include="Hubs\Editor\Model\File.cs" />
+    <Compile Include="Hubs\Editor\Model\ProjectFile.cs" />
     <Compile Include="Hubs\Editor\Model\Project.cs" />
     <Compile Include="Hubs\SourceControl\Model\ChangeSetDetailViewModel.cs" />
     <Compile Include="Hubs\SourceControl\Model\ChangeSetViewModel.cs" />

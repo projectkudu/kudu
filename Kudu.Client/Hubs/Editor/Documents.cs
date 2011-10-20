@@ -19,7 +19,7 @@ namespace Kudu.Client {
                 Name = Caller.appName,
                 DefaultProject = Caller.defaultProject ?? files.FirstOrDefault(path => System.IO.Path.GetExtension(path).EndsWith("proj", StringComparison.OrdinalIgnoreCase)),
                 Files = from path in files
-                        select new File {
+                        select new ProjectFile {
                             Path = path
                         }
             };
@@ -29,7 +29,7 @@ namespace Kudu.Client {
             return GetActiveFileSystem().ReadAllText(path);
         }
 
-        public void SaveFile(File file) {
+        public void SaveFile(ProjectFile file) {
             GetActiveFileSystem().WriteAllText(file.Path, file.Content);
         }
 
