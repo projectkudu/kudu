@@ -11,8 +11,10 @@
 
         $this.addClass('notificationBar');
 
-        $this.click(function () {
-            $this.slideUp('slow');
+        $this.click(function (ev) {
+            if (ev.target == $this[0]) {
+                $this.slideUp('slow');
+            }
         });
 
         that = {
@@ -20,7 +22,7 @@
                 token++;
                 $this.data('token', token);
                 $this.html(value);
-                $this.show();
+                $this.slideDown();
                 return token;
             },
             hide: function () {

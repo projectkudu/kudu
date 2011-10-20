@@ -18,6 +18,7 @@
             notificationBar = null,
             statusBar = null,
             currentHeight = null,
+            siteUrl = options.siteUrl,
             devenv = $.connection.developmentEnvironment,
             minHeight = 450,
             createDevelopmentSite = options.createDevelopmentSite,
@@ -117,7 +118,16 @@
             },
             goLive: function () {
                 // TODO: Check for pending changes in the repository
-                devenv.goLive();
+                var token = notificationBar.show('Deploying your changes to the live repository');
+                var loadingToken = statusBar.show('Deploying...');
+                devenv.goLive()
+                      .done(function () {
+                          notificationBar.hide(token);
+                          statusBar.hide(loadingToken);
+
+                          var link = '<a href="' + siteUrl + '" target="_blank">' + siteUrl + '</a>';
+                          notificationBar.show('Your changes are live ' + link);
+                      });
             },
             saveActiveDocument: function () {
                 var tab = tabManager.getActive();
@@ -278,6 +288,7 @@
         $.connection.hub.start(function () {
             if (createDevelopmentSite === true) {
                 var token = notificationBar.show('Creating development site...');
+                var loadingToken = statusBar.show('Cloning repository...');
 
                 siteManager.createDevelopmentSite()
                            .done(function (url) {
@@ -285,6 +296,7 @@
                                $activeView.addClass('hide');
 
                                notificationBar.hide(token);
+                               statusBar.hide(loadingToken);
 
                                createDevelopmentSite = false;
 

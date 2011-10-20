@@ -15,3 +15,7 @@
     opacity: .9;
     display: none;
 }
+
+.notificationBar a {
+    color: #fff;
+}

@@ -719,9 +719,9 @@
             var commandLine = $.connection.commandLine,
                 scm = $.connection.sourceControl,
                 deployment = $.connection.deployment;
-            deployment.appName = documents.appName;
-            commandLine.appName = documents.appName;
-            scm.appName = documents.appName;
+            deployment.applicationName = documents.applicationName;
+            commandLine.applicationName = documents.applicationName;
+            scm.applicationName = documents.applicationName;
 
             var cs = $('#console');
             var csGhost = $('#console-ghost');
