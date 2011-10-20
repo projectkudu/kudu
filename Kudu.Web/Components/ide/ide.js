@@ -101,6 +101,10 @@
                             }
                         }
                     });
+            },
+            goLive: function () {
+                // TODO: Check for pending changes in the repository
+                devenv.goLive();
             }
         };
 
@@ -314,9 +318,10 @@
             },
             'refresh-project': core.refreshProject,
             'go-live': function () {
-
+                core.goLive();
             },
-            'build': function () { 
+            'build': function () {
+
             }
         };
 

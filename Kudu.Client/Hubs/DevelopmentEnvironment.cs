@@ -10,6 +10,9 @@ using SignalR.Hubs;
 namespace Kudu.Client.Hubs {
     public class DevelopmentEnvironment : Hub {
         private readonly ISiteConfiguration _configuration;
+        private static readonly string[] _supportedExtensions = new[] { ".csproj", ".vbproj" };
+        private const string WapGuid = "349C5851-65DF-11DA-9384-00065B846F21";
+
         public DevelopmentEnvironment(ISiteConfiguration configuration) {
             _configuration = configuration;
         }
@@ -33,11 +36,18 @@ namespace Kudu.Client.Hubs {
             }
         }
 
-        public Project GetProject() {
+        public Project GetProject() {            
             var files = FileSystem.GetFiles().ToList();
-            var projects = from path in files
-                           where Path.GetExtension(path).EndsWith("proj", StringComparison.OrdinalIgnoreCase)
-                           select path;
+            var projects = (from path in files
+                            where _supportedExtensions.Contains(Path.GetExtension(path),
+                                                                StringComparer.OrdinalIgnoreCase)
+                            select path).ToList();
+
+            // TODO: Make the information from the file system richer, so we don't have to make so many requests
+            projects.RemoveAll(path => {
+                string content = FileSystem.ReadAllText(path).ToUpper();
+                return !content.Contains(WapGuid);
+            });
 
             return new Project {
                 Name = Caller.applicationName,
@@ -62,6 +72,14 @@ namespace Kudu.Client.Hubs {
 
         public void SaveFile(ProjectFile file) {
             FileSystem.WriteAllText(file.Path, file.Content);
+        }
+
+        public void GoLive() {
+            // Push then deploy
+
+            // TODO: If there's nothing being pushed then don't bother deploying
+            _configuration.Repository.Push();
+            _configuration.DeploymentManager.Deploy();
         }
 
         private enum Mode {
