@@ -9,9 +9,11 @@
             $editor = options.editor,
             tabManager = null,
             editor = null,
-            fileExplorer = null;
+            fileExplorer = null,
+            currentHeight = null,
+            devenv = $.connection.developmentEnvironment,
+            minHeight = 400;
 
-        var devenv = $.connection.developmentEnvironment;
         devenv.applicationName = options.applicationName;
 
         var templates = {
@@ -21,17 +23,18 @@
             tab: $('#tabManager_tabTemplate')
         };
 
-        function openDocument(file) {
-            var path = file.getRelativePath();
+        var core = {
+            openDocument: function (file) {
+                var path = file.getRelativePath();
 
-            if (file.getBuffer() !== null) {
-                editor.setContent(path, file.getBuffer());
-                editor.focus();
-                fileExplorer.setFocus(false);
-            }
-            else {
-                // Get the file content from the server
-                devenv.openFile(path)
+                if (file.getBuffer() !== null) {
+                    editor.setContent(path, file.getBuffer());
+                    editor.focus();
+                    fileExplorer.setFocus(false);
+                }
+                else {
+                    // Get the file content from the server
+                    devenv.openFile(path)
                       .done(function (content) {
                           editor.setContent(path, content);
                           editor.focus();
@@ -39,16 +42,45 @@
 
                           file.setBuffer(content);
                       });
-            }
-        }
-
-        function refreshProject() {
-            devenv.getProject()
+                }
+            },
+            refreshProject: function () {
+                devenv.getProject()
                  .done(function (project) {
                      fs.create(project.Files);
 
                      fileExplorer.refresh();
                  });
+            }
+        };
+
+        function isiPad() {
+            return navigator.userAgent.match(/iPad/i) != null
+        }
+
+        function resolveHeight() {
+            if (isiPad()) {
+                if (window.innerWidth == 320) {
+                    return window.innerWidth;
+                }
+                else {
+                    return window.innerHeight;
+                }
+            }
+
+            return window.innerHeight || (screen.height - 150);
+        }
+
+        function adjustHeight() {
+            var height = resolveHeight();
+
+            if (currentHeight == height) {
+                return;
+            }
+
+            currentHeight = height;
+            var adjusted = Math.max(height - 150, minHeight);
+            $editor.parent().parent().css('height', adjusted + 'px');
         }
 
         // Create components
@@ -78,7 +110,7 @@
         });
 
         $(tabManager).bind('tabManager.afterActiveTabChanged', function (e, tab) {
-            openDocument(tab.file);
+            core.openDocument(tab.file);
         });
 
         $(tabManager).bind('tabManager.beforeTabClosed', function (e) {
@@ -95,7 +127,7 @@
                 var newActiveTab = tabManager.getActive();
                 if (newActiveTab) {
                     // Get document content
-                    openDocument(newActiveTab.file);
+                    core.openDocument(newActiveTab.file);
                 }
                 else {
                     // Clear the editor
@@ -154,8 +186,18 @@
         });
 
         $.connection.hub.start(function () {
-            refreshProject();
+            core.refreshProject();
         });
+
+        // Adjust the ide height
+        adjustHeight();
+
+        if (isiPad()) {
+            // Detect screen layout changes
+            setInterval(function () {
+                adjustHeight();
+            }, 500);
+        }
 
 
         $.fs = fs;
@@ -197,7 +239,7 @@
                           });
                       });
             },
-            'refresh-project': refreshProject
+            'refresh-project': core.refreshProject
         };
 
         $('body').delegate('[data-action]', 'click', function (ev) {
