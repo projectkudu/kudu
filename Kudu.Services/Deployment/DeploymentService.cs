@@ -5,10 +5,10 @@ using Kudu.Core.Deployment;
 
 namespace Kudu.Services.Deployment {
     [ServiceContract]
-    public class DeployController {
+    public class DeploymentService {
         private readonly IDeploymentManager _deploymentManager;
 
-        public DeployController(IDeploymentManager deploymentManager) {
+        public DeploymentService(IDeploymentManager deploymentManager) {
             _deploymentManager = deploymentManager;
         }
 

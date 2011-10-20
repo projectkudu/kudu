@@ -33,11 +33,11 @@ namespace Kudu.Services.GitServer {
 
     // Handles /{project}/info/refs
     [ServiceContract]
-    public class InfoRefsController {
+    public class InfoRefsService {
         private readonly IGitServer _gitServer;
         private readonly IRepositoryManager _repositoryManager;
 
-        public InfoRefsController(IGitServer gitServer, IRepositoryManager repositoryManager) {
+        public InfoRefsService(IGitServer gitServer, IRepositoryManager repositoryManager) {
             _gitServer = gitServer;
             _repositoryManager = repositoryManager;
         }

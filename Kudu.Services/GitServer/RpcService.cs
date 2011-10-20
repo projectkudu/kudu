@@ -35,11 +35,11 @@ namespace Kudu.Services.GitServer {
 
     // Handles {project}/git-upload-pack and {project}/git-receive-pack
     [ServiceContract]
-    public class RpcController {
+    public class RpcService {
         private readonly IDeploymentManager _deploymentManager;
         private readonly IGitServer _gitServer;
 
-        public RpcController(IGitServer gitServer, IDeploymentManager deploymentManager) {
+        public RpcService(IGitServer gitServer, IDeploymentManager deploymentManager) {
             _gitServer = gitServer;
             _deploymentManager = deploymentManager;
         }

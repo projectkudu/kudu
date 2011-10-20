@@ -4,10 +4,10 @@ using Kudu.Core.SourceControl;
 
 namespace Kudu.Services.SourceControl {
     [ServiceContract]
-    public class DevelopmentScmService {
+    public class CloneService {
         private readonly IRepositoryManager _repositoryManager;
 
-        public DevelopmentScmService(IRepositoryManager repositoryManager) {
+        public CloneService(IRepositoryManager repositoryManager) {
             _repositoryManager = repositoryManager;
         }
 

@@ -7,9 +7,9 @@ using System.ServiceModel.Web;
 
 namespace Kudu.Services.Settings {
     [ServiceContract]
-    public class AppSettingsController {
+    public class AppSettingsService {
         private readonly IDeploymentSettingsManager _settingsManager;
-        public AppSettingsController(IDeploymentSettingsManager settingsManager) {
+        public AppSettingsService(IDeploymentSettingsManager settingsManager) {
             _settingsManager = settingsManager;
         }
         

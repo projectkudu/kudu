@@ -12,13 +12,13 @@ using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.HgServer {
     [ServiceContract]
-    public class ProxyController {
+    public class ProxyService {
         private readonly IHgServer _hgServer;
         private readonly IServerConfiguration _configuration;
         private readonly IDeploymentManager _deploymentManager;
         private readonly IRepositoryManager _repositoryManager;
 
-        public ProxyController(IHgServer hgServer,
+        public ProxyService(IHgServer hgServer,
                                IServerConfiguration configuration,
                                IDeploymentManager deploymentManager,
                                IRepositoryManager repositoryManager) {

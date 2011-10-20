@@ -4,9 +4,9 @@ using Kudu.Core.Commands;
 
 namespace Kudu.Services.Commands {
     [ServiceContract]
-    public class CommandController {
+    public class CommandService {
         private readonly ICommandExecutor _executor;
-        public CommandController(ICommandExecutor executor) {
+        public CommandService(ICommandExecutor executor) {
             _executor = executor;
         }
 

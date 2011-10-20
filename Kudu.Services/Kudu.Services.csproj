@@ -84,23 +84,23 @@
   <ItemGroup>
     <Compile Include="Authorization\BasicAuthorizeHandler.cs" />
     <Compile Include="Authorization\IUserValidator.cs" />
-    <Compile Include="Commands\CommandController.cs" />
+    <Compile Include="Commands\CommandService.cs" />
     <Compile Include="Commands\CommandStatusHandler.cs" />
-    <Compile Include="Deployment\DeployController.cs" />
+    <Compile Include="Deployment\DeploymentService.cs" />
     <Compile Include="Deployment\DeploymentStatusHandler.cs" />
-    <Compile Include="Editor\FilesController.cs" />
+    <Compile Include="Editor\FilesService.cs" />
     <Compile Include="GitServer\Helpers.cs" />
-    <Compile Include="GitServer\InfoRefsController.cs" />
-    <Compile Include="GitServer\RpcController.cs" />
-    <Compile Include="HgServer\ProxyController.cs" />
+    <Compile Include="GitServer\InfoRefsService.cs" />
+    <Compile Include="GitServer\RpcService.cs" />
+    <Compile Include="HgServer\ProxyService.cs" />
     <Compile Include="Infrastructure\IServerConfiguration.cs" />
     <Compile Include="Infrastructure\RepositoryUtility.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Settings\ConnectionStringsController.cs" />
-    <Compile Include="Settings\AppSettingsController.cs" />
-    <Compile Include="SourceControl\DeploymentScmController.cs" />
-    <Compile Include="SourceControl\DevelopmentScmService.cs" />
-    <Compile Include="SourceControl\ScmController.cs" />
+    <Compile Include="Settings\ConnectionStringsService.cs" />
+    <Compile Include="Settings\AppSettingsService.cs" />
+    <Compile Include="SourceControl\DeploymentSourceControlService.cs" />
+    <Compile Include="SourceControl\CloneService.cs" />
+    <Compile Include="SourceControl\SourceControlService.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Kudu.Core\Kudu.Core.csproj">

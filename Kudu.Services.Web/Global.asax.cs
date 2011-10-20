@@ -3,7 +3,13 @@ using System.Net.Http;
 using System.ServiceModel;
 using System.ServiceModel.Activation;
 using System.Web.Routing;
+using Kudu.Services.Commands;
 using Kudu.Services.Deployment;
+using Kudu.Services.Documents;
+using Kudu.Services.GitServer;
+using Kudu.Services.HgServer;
+using Kudu.Services.Settings;
+using Kudu.Services.SourceControl;
 using Microsoft.ApplicationServer.Http.Activation;
 using Microsoft.ApplicationServer.Http.Dispatcher;
 using Ninject.Extensions.Wcf;
@@ -21,32 +27,32 @@ namespace Kudu.Services {
             routes.MapConnection<DevCommandStatusHandler>("DevCommandStatus", "dev/command/status/{*operation}");
 
             // Source control servers
-            MapServiceRoute<HgServer.ProxyController>(configuration.HgServerRoot, factory);
-            MapServiceRoute<GitServer.InfoRefsController>(configuration.GitServerRoot + "/info/refs", factory);
-            MapServiceRoute<GitServer.RpcController>(configuration.GitServerRoot, factory);
+            MapServiceRoute<ProxyService>(configuration.HgServerRoot, factory);
+            MapServiceRoute<InfoRefsService>(configuration.GitServerRoot + "/info/refs", factory);
+            MapServiceRoute<RpcService>(configuration.GitServerRoot, factory);
 
 
             // Source control interaction
-            MapServiceRoute<SourceControl.ScmController>("scm", factory);
-            MapServiceRoute<SourceControl.DeploymentScmController>("live/scm", factory);
-            MapServiceRoute<SourceControl.DevelopmentScmService>("dev/scm", factory);
+            MapServiceRoute<SourceControlService>("scm", factory);
+            MapServiceRoute<DeploymentSourceControlService>("live/scm", factory);
+            MapServiceRoute<CloneService>("dev/scm", factory);
 
             // Deployment
-            MapServiceRoute<Deployment.DeployController>("deploy", factory);
+            MapServiceRoute<DeploymentService>("deploy", factory);
 
             // Files            
-            MapServiceRoute<Documents.FilesController>("dev/files", factory);
-            var liveFilesRoute = MapServiceRoute<Documents.FilesController>("live/files", factory);
+            MapServiceRoute<FilesService>("dev/files", factory);
+            var liveFilesRoute = MapServiceRoute<FilesService>("live/files", factory);
             liveFilesRoute.Defaults = new RouteValueDictionary(new { live = true });
 
             // Commands
-            MapServiceRoute<Commands.CommandController>("dev/command", factory);
-            var liveCommandRoute = MapServiceRoute<Commands.CommandController>("live/command", factory);
+            MapServiceRoute<CommandService>("dev/command", factory);
+            var liveCommandRoute = MapServiceRoute<CommandService>("live/command", factory);
             liveCommandRoute.Defaults = new RouteValueDictionary(new { live = true });
 
             // Settings
-            MapServiceRoute<Settings.AppSettingsController>("appsettings", factory);
-            MapServiceRoute<Settings.ConnectionStringsController>("connectionstrings", factory);
+            MapServiceRoute<AppSettingsService>("appsettings", factory);
+            MapServiceRoute<ConnectionStringsService>("connectionstrings", factory);
         }
 
         private static ServiceRoute MapServiceRoute<T>(string url, HttpServiceHostFactory factory) {
@@ -81,7 +87,7 @@ namespace Kudu.Services {
                 if (existingRequestHandlerFactory != null)
                     existingRequestHandlerFactory(c, e, od);
 
-                if (e.Contract.ContractType == typeof(GitServer.InfoRefsController) || e.Contract.ContractType == typeof(GitServer.RpcController)) {
+                if (e.Contract.ContractType == typeof(GitServer.InfoRefsService) || e.Contract.ContractType == typeof(GitServer.RpcService)) {
                     c.Insert(0, (HttpOperationHandler)KernelContainer.Kernel.GetService(typeof(Authorization.BasicAuthorizeHandler)));
                 }
             };

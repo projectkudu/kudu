@@ -8,10 +8,10 @@ using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.SourceControl {
     [ServiceContract]
-    public class ScmController {
+    public class SourceControlService {
         private readonly IRepository _repository;
 
-        public ScmController(IRepository repository) {
+        public SourceControlService(IRepository repository) {
             _repository = repository;
         }
 

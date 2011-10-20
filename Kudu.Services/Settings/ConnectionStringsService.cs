@@ -5,9 +5,9 @@ using Kudu.Core.Deployment;
 
 namespace Kudu.Services.Settings {
     [ServiceContract]
-    public class ConnectionStringsController {
+    public class ConnectionStringsService {
         private readonly IDeploymentSettingsManager _settingsManager;
-        public ConnectionStringsController(IDeploymentSettingsManager settingsManager) {
+        public ConnectionStringsService(IDeploymentSettingsManager settingsManager) {
             _settingsManager = settingsManager;
         }
         

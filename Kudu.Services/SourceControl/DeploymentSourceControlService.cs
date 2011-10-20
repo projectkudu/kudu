@@ -5,11 +5,11 @@ using Kudu.Core.SourceControl.Hg;
 
 namespace Kudu.Services.SourceControl {
     [ServiceContract]
-    public class DeploymentScmController {
+    public class DeploymentSourceControlService {
         private readonly IRepositoryManager _repositoryManager;
         private readonly IHgServer _server;
 
-        public DeploymentScmController(IRepositoryManager repositoryManager,
+        public DeploymentSourceControlService(IRepositoryManager repositoryManager,
                                        IHgServer server) {
             _repositoryManager = repositoryManager;
             _server = server;

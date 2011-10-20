@@ -6,10 +6,10 @@ using Kudu.Core.Editor;
 
 namespace Kudu.Services.Documents {
     [ServiceContract]
-    public class FilesController {
+    public class FilesService {
         private readonly IEditorFileSystem _fileSystem;
 
-        public FilesController(IEditorFileSystem fileSystem) {
+        public FilesService(IEditorFileSystem fileSystem) {
             _fileSystem = fileSystem;
         }
 
