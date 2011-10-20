@@ -7,17 +7,21 @@
             $fileExplorer = options.fileExplorer,
             $tabManager = options.tabManager,
             $editor = options.editor,
+            $activeView = options.activeView,
+            $launcher = options.launcher,
+            $projectList = options.projectList,
+            $notificationBar = options.notificationBar,
+            $statusBar = options.statusBar,
             tabManager = null,
             editor = null,
             fileExplorer = null,
+            notificationBar = null,
+            statusBar = null,
             currentHeight = null,
             devenv = $.connection.developmentEnvironment,
             minHeight = 450,
             createDevelopmentSite = options.createDevelopmentSite,
-            siteManager = options.siteManager,
-            $activeView = options.activeView,
-            $launcher = options.launcher,
-            $projectList = options.projectList;
+            siteManager = options.siteManager;
 
         devenv.applicationName = options.applicationName;
 
@@ -43,6 +47,8 @@
                     fileExplorer.setFocus(false);
                 }
                 else {
+                    var token = statusBar.show('Opening ' + path + '...');
+
                     // Get the file content from the server
                     devenv.openFile(path)
                       .done(function (content) {
@@ -51,15 +57,22 @@
                           fileExplorer.setFocus(false);
 
                           file.setBuffer(content);
+                      })
+                      .always(function () {
+                          statusBar.hide(token);
                       });
                 }
             },
             refreshProject: function () {
+                var token = statusBar.show('Loading project...');
                 return devenv.getProject()
                  .done(function (project) {
                      fs.create(project.Files);
 
                      fileExplorer.refresh();
+                 })
+                 .always(function () {
+                     statusBar.hide(token);
                  });
             },
             setMode: function (mode) {
@@ -105,6 +118,25 @@
             goLive: function () {
                 // TODO: Check for pending changes in the repository
                 devenv.goLive();
+            },
+            saveActiveDocument: function () {
+                var tab = tabManager.getActive();
+                if (tab) {
+                    var path = tab.file.getRelativePath();
+                    var content = editor.getContent();
+
+                    var token = statusBar.show('Saving ' + path + '...');
+                    devenv.saveFile({
+                        path: path,
+                        content: content
+                    })
+                    .done(function () {
+                        tab.file.setDirty(false);
+                    })
+                    .always(function () {
+                        statusBar.hide(token);
+                    });
+                }
             }
         };
 
@@ -138,6 +170,10 @@
         }
 
         // Create components
+        statusBar = $statusBar.loader();
+
+        notificationBar = $notificationBar.notificationBar();
+
         fileExplorer = $fileExplorer.fileExplorer({
             templates: templates,
             fileSystem: fs
@@ -203,17 +239,7 @@
             }
         });
 
-        var performSave = $.utils.throttle(function () {
-            var tab = tabManager.getActive();
-            if (tab) {
-                var path = tab.file.getRelativePath();
-                var content = editor.getContent();
-                devenv.saveFile({ path: path, content: content })
-                      .done(function () {
-                          tab.file.setDirty(false);
-                      });
-            }
-        });
+        var performSave = $.utils.throttle(core.saveActiveDocument, 50);
 
         $(document).bind('keydown', 'ctrl+s', function (ev) {
             performSave();
@@ -251,10 +277,14 @@
 
         $.connection.hub.start(function () {
             if (createDevelopmentSite === true) {
+                var token = notificationBar.show('Creating development site...');
+
                 siteManager.createDevelopmentSite()
                            .done(function (url) {
                                $launcher.attr('href', url);
                                $activeView.addClass('hide');
+
+                               notificationBar.hide(token);
 
                                createDevelopmentSite = false;
 

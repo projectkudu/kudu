@@ -208,8 +208,8 @@ namespace Kudu.Web.Controllers {
             RepositoryType repositoryType = repositoryManager.GetRepositoryType();
             var state = (DeveloperSiteState)application.DeveloperSiteState;
 
-            if (application.DeveloperSiteUrl != null ||
-                state == DeveloperSiteState.Creating ||
+            // Do nothing if the site is still being created
+            if (state != DeveloperSiteState.None ||
                 repositoryType == RepositoryType.None) {
                 return new EmptyResult();
             }

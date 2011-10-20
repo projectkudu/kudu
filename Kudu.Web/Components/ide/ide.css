@@ -10,10 +10,6 @@ body {
     border: 1px solid #ccc;
 }
 
-.CodeMirror {
-    font: 10pt Consolas;
-}
-
 #files {
     float: left;
     margin-left: 10px;
@@ -48,10 +44,6 @@ body {
     outline: none;
 }
 
-.dev-mode {
-    display: none;
-}
-
 #active-view {
     display: none;
     display: inline;
@@ -59,4 +51,17 @@ body {
     font-family: Trebuchet MS;
     font-size: 13px;
     margin-right: 4%;
+}
+
+#status-container {
+    margin-top: 7px;
+    height: 30px;
+}
+
+.dev-mode {
+    display: none;
+}
+
+.CodeMirror {
+    font: 10pt Consolas;
 }
