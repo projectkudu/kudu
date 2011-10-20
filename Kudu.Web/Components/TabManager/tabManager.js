@@ -172,7 +172,23 @@
                     moveToFront(tabs[0]);
                 }
             },
-            refresh: renderTabs
+            refresh: renderTabs,
+            getTabFiles: function () {
+                return $.map(tabs, function (tab) { return tab.file; });
+            },
+            closeAll: function () {
+                for (var key in tabsLookup) {
+                    delete tabsLookup[key];
+                }
+
+                for (var i = 0; i < tabs.length; ++i) {
+                    $(that).trigger('tabManager.afterTabClosed', [tabs[i]]);
+                }
+
+                tabs.length = 0;
+
+                renderTabs();
+            }
         };
 
         return that;

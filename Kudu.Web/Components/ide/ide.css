@@ -39,4 +39,14 @@ body {
 #actions li {
     display: inline;
     list-style-type: none;
+    margin-right: 10px;
+}
+
+#actions li a {
+    text-decoration: none;
+    outline: none;
+}
+
+.dev-mode {
+    display: none;
 }

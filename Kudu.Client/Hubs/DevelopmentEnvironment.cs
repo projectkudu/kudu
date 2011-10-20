@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Kudu.Client.Infrastructure;
@@ -37,6 +38,17 @@ namespace Kudu.Client.Hubs {
 
         public string OpenFile(string path) {
             return FileSystem.ReadAllText(path);
+        }
+
+        public void SaveAllFiles(IEnumerable<ProjectFile> files) {
+            IEditorFileSystem fileSystem = FileSystem;
+            foreach (var file in files) {
+                fileSystem.WriteAllText(file.Path, file.Content);
+            }
+        }
+
+        public void SaveFile(ProjectFile file) {
+            FileSystem.WriteAllText(file.Path, file.Content);
         }
     }
 }

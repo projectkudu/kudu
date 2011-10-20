@@ -25,7 +25,7 @@
             '.aspx': 'htmlmixed',
             '.ascx': 'htmlmixed',
             '.master': 'htmlmixed',
-            '.cshtml': 'cshtml',
+            '.cshtml': 'razor',
             '.php': 'php',
             '.xml': 'xml',
             '.config': 'xml',

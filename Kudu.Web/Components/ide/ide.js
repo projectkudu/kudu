@@ -33,13 +33,22 @@
                 // Get the file content from the server
                 devenv.openFile(path)
                       .done(function (content) {
-                         editor.setContent(path, content);
-                         editor.focus();
-                         fileExplorer.setFocus(false);
+                          editor.setContent(path, content);
+                          editor.focus();
+                          fileExplorer.setFocus(false);
 
-                         file.setBuffer(content);
-                     });
+                          file.setBuffer(content);
+                      });
             }
+        }
+
+        function refreshProject() {
+            devenv.getProject()
+                 .done(function (project) {
+                     fs.create(project.Files);
+
+                     fileExplorer.refresh();
+                 });
         }
 
         // Create components
@@ -108,8 +117,20 @@
             }
         });
 
-        $(document).bind('keydown', 'ctrl+s', function (ev) {
+        var performSave = $.utils.throttle(function () {
+            var tab = tabManager.getActive();
+            if (tab) {
+                var path = tab.file.getRelativePath();
+                var content = editor.getContent();
+                devenv.saveFile({ path: path, content: content })
+                      .done(function () {
+                          tab.file.setDirty(false);
+                      });
+            }
+        });
 
+        $(document).bind('keydown', 'ctrl+s', function (ev) {
+            performSave();
             ev.preventDefault();
             return false;
         });
@@ -133,12 +154,7 @@
         });
 
         $.connection.hub.start(function () {
-            devenv.getProject()
-                 .done(function (project) {
-                     fs.create(project.Files);
-
-                     fileExplorer.refresh();
-                 });
+            refreshProject();
         });
 
 
@@ -158,7 +174,30 @@
 
                 fileExplorer.select(path);
                 node.expand();
-            }
+            },
+
+            'save-all': function () {
+                var files = tabManager.getTabFiles();
+
+                if (files.length === 0) {
+                    return;
+                }
+
+                var transformed = $.map(files, function (file) {
+                    return {
+                        path: file.getRelativePath(),
+                        content: file.getBuffer()
+                    };
+                });
+
+                devenv.saveAllFiles(transformed)
+                      .done(function () {
+                          $.each(files, function () {
+                              this.setDirty(false);
+                          });
+                      });
+            },
+            'refresh-project': refreshProject
         };
 
         $('body').delegate('[data-action]', 'click', function (ev) {

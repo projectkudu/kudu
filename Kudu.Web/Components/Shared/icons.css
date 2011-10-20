@@ -111,3 +111,11 @@
 .icon-file-modified {
     background-image: url('../../images/page_white_edit.png');
 }
+
+.icon-live {
+    background-image: url('../../images/world_go.png');
+}
+
+.icon-run {
+    background-image: url('../../images/run.png');
+}
