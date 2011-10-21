@@ -6,6 +6,7 @@
         $header = $('<div/>').addClass('header'),
         $ghost = $('<div/>').addClass('ghost')
                             .addClass('commandBar'),
+        $resizeHandle = $('<div/>').addClass('resize'),
         $tabs = $('<ul />').addClass('tabs'),
         $body = $('<div/>').addClass('body'),
         $toggle = $('<a/>').addClass('toggle')
@@ -20,16 +21,35 @@
         $.extend(config, options);
 
         $this.addClass('commandBar');
+        $resizeHandle.addClass('ui-resizable-handle');
+        $resizeHandle.addClass('ui-resizable-n');
 
         // Move this to the bottom of the screen like firebug
         // ensure the ghost has always the same size as the container
         // and the container is always positioned correctly        
         $toggle.appendTo($header);
         $tabs.appendTo($header);
+        $resizeHandle.appendTo($this);
         $header.appendTo($this);
         $body.appendTo($this);
         $ghost.appendTo(document.body);
         $this.appendTo(document.body);
+
+        var minHeight = 200;
+
+        $this.resizable({
+            minHeight: 350,
+            handles: { n: '.resize' },
+            grid: 31, // mitigates the number of calls to syncResize()
+            start: function () {
+
+            },
+            resize: function (ev) {
+            },
+            stop: function () {
+
+            }
+        });
 
         function setActiveSection(section) {
             $this.find('.active').removeClass('active');
@@ -93,8 +113,8 @@
 
         // Ensure the size/position is correct whenver the container or the browser is resized
         $this.resize(syncResize);
-        $(window).resize(syncResize);
-        $(window).resize();
+        $window.resize(syncResize);
+        $window.resize();
 
         that = {
             show: function () {

@@ -352,6 +352,10 @@
             }, 500);
         }
 
+        $(window).resize(function () {
+            adjustHeight();
+        });
+
 
         $.fs = fs;
         $.fe = fileExplorer;

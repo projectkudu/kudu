@@ -11,12 +11,20 @@
 }
 
 .commandBar.collapsed {
-    height: 29px;
+    height: 31px !important;
 }
 
 .commandBar.ghost {
     width: 100%;
     display: block;
+}
+
+.commandBar .resize {
+    width:100%;
+    display:block;
+    height:5px;
+    background-color:transparent;
+    cursor:n-resize;
 }
 
 .commandBar .header {
