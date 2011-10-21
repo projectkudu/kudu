@@ -15,7 +15,7 @@
                            .html('&nbsp'),
         $window = $(window),
         that = null,
-        sections = {};
+        sections = options.sections;
 
         $.extend(config, options);
 
@@ -37,6 +37,23 @@
 
             $(that).trigger('commandBar.sectionChanged', [section]);
         }
+
+        function addSection(name, $container) {
+            var $header = $('<li />').addClass('tab')
+                                         .attr('data-section', name)
+                                         .html(name);
+
+            $header.appendTo($tabs);
+            $container.height('100%');
+            $container.appendTo($body);
+            $container.attr('data-section', name)
+                          .addClass('section');
+        }
+
+        $.each(sections, function (key, value) {
+            addSection(key, value);
+            setActiveSection(key);
+        });
 
 
         $this.delegate('.tab', 'click', function () {
@@ -87,19 +104,7 @@
         $(window).resize();
 
         that = {
-            addSection: function (name, $container) {
-                var $header = $('<li />').addClass('tab')
-                                         .attr('data-section', name)
-                                         .html(name);
 
-                $header.appendTo($tabs);
-                $container.height('100%');
-                $container.appendTo($body);
-                $container.attr('data-section', name)
-                          .addClass('section');
-
-                setActiveSection(name);
-            }
         };
 
         return that;

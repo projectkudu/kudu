@@ -12,6 +12,9 @@
             $projectList = options.projectList,
             $notificationBar = options.notificationBar,
             $statusBar = options.statusBar,
+            $console = $('<div/>'),
+            commandWindow = null,
+            commandBar = null,
             tabManager = null,
             editor = null,
             fileExplorer = null,
@@ -181,6 +184,14 @@
         }
 
         // Create components
+        commandWindow = $console.console();
+
+        commandBar = $.commandBar({
+            sections: {
+                'Console': $console
+            }
+        });
+
         statusBar = $statusBar.loader();
 
         notificationBar = $notificationBar.notificationBar();

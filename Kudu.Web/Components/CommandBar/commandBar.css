@@ -55,7 +55,8 @@
     padding: 5px;
     margin-right: 5px;
     cursor: pointer;
-    min-width: 100px;
+    color: #808080;
+    font-weight: bold;
 }
 
 .commandBar .header .tabs li:hover {
@@ -66,6 +67,7 @@
 .commandBar .header .tabs li.active, .commandBar .header .tabs li:hover.active {
     background-color: #fff;
     border: 1px solid #ccc;
+    color: #000;
 }
 
 .commandBar .header .tabs .tab a {
