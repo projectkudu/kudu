@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using Kudu.Client.Hubs;
 using Kudu.Client.Hubs.Editor;
 using Kudu.Client.Model;
 using Kudu.Client.Models;
@@ -54,12 +55,16 @@ namespace Kudu.Client.Infrastructure {
                 DevFileSystem = new RemoteFileSystem(ServiceUrl + "dev/files");
                 DevCommandExecutor = new RemoteCommandExecutor(ServiceUrl + "dev/command");
 
+                var clients = Hub.GetClients<DevelopmentEnvironment>();
+
                 DevCommandExecutor.CommandEvent += commandEvent => {
                     OnCommandEvent<CommandLine>(commandEvent);
+                    OnNewCommandEvent(clients, commandEvent);
                 };
-                
+
                 CommandExecutor.CommandEvent += commandEvent => {
                     OnCommandEvent<CommandLine>(commandEvent);
+                    OnNewCommandEvent(clients, commandEvent);
                 };
 
                 DeploymentManager.StatusChanged += OnDeploymentStatusChanged;
@@ -73,6 +78,16 @@ namespace Kudu.Client.Infrastructure {
             clients.updateDeployStatus(new DeployResultViewModel(result));
         }
 
+        private void OnNewCommandEvent(dynamic clients, CommandEvent commandEvent) {
+            if (commandEvent.EventType == CommandEventType.Complete) {
+                clients.commandComplete();
+            }
+            else {
+                clients.processCommand(commandEvent.Data);
+            }
+        }
+
+        // TODO: Remove when full transition to new UI is done
         private void OnCommandEvent<T>(CommandEvent commandEvent) where T : Hub {
             var clients = Hub.GetClients<T>();
             if (commandEvent.EventType == CommandEventType.Complete) {
@@ -96,7 +111,7 @@ namespace Kudu.Client.Infrastructure {
             get;
             private set;
         }
-        
+
         public IRepository Repository {
             get;
             private set;

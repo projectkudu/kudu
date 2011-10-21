@@ -12,7 +12,7 @@
             $projectList = options.projectList,
             $notificationBar = options.notificationBar,
             $statusBar = options.statusBar,
-            $console = $('<div/>'),
+            $console = $('<div/>').addClass('commandWindow'),
             commandWindow = null,
             commandBar = null,
             tabManager = null,
@@ -151,6 +151,9 @@
                         statusBar.hide(token);
                     });
                 }
+            },
+            executeCommand: function (command) {
+                devenv.executeCommand(command);
             }
         };
 
@@ -208,6 +211,25 @@
 
         editor = $editor.editor({
             fileSystem: fs
+        });
+
+
+        devenv.commandComplete = function () {
+            commandWindow.completeCommand();
+        };
+
+        devenv.processCommand = function (data) {
+            commandWindow.log(data);
+        };
+
+        $(commandWindow).bind('console.runCommand', function (e, command) {
+            if (command == 'cls') {
+                commandWindow.clear();
+                commandWindow.completeCommand();
+            }
+            else {
+                core.executeCommand(command);
+            }
         });
 
         $(fileExplorer).bind('fileExplorer.fileOpened', function (e, file) {

@@ -65,3 +65,7 @@ body {
 .CodeMirror {
     font: 10pt Consolas;
 }
+
+.commandWindow {
+    font: 11pt Consolas;
+}

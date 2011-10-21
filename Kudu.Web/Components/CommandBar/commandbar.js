@@ -56,13 +56,24 @@
         });
 
 
-        $this.delegate('.tab', 'click', function () {
+        $this.delegate('.tab', 'click', function (ev) {
             var section = $(this).data('section');
             setActiveSection(section);
+
+            ev.preventDefault();
+            return false;
         });
 
         $toggle.click(function () {
             that.toggle();
+        });
+
+        var throttledToggle = $.utils.throttle(function () { that.toggle(); }, 50);
+
+        $(document).bind('keydown', 'ctrl+k', function (ev) {
+            throttledToggle();
+            ev.preventDefault();
+            return false;
         });
 
         var syncResize = function () {
@@ -114,7 +125,10 @@
                     that.hide();
                 }
             },
-            setActiveSection: setActiveSection
+            select: setActiveSection,
+            selected: function () {
+                return $this.find('.active').data('section');
+            }
         };
 
         return that;

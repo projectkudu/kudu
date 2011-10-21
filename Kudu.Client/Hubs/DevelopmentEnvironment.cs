@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Kudu.Client.Infrastructure;
 using Kudu.Client.Model;
+using Kudu.Core.Commands;
 using Kudu.Core.Editor;
 using SignalR.Hubs;
 
@@ -23,6 +24,15 @@ namespace Kudu.Client.Hubs {
                     return _configuration.DevFileSystem;
                 }
                 return _configuration.FileSystem;
+            }
+        }
+
+        private ICommandExecutor CommandExecutor {
+            get {
+                if (CurrentMode == Mode.Development) {
+                    return _configuration.DevCommandExecutor;
+                }
+                return _configuration.CommandExecutor;
             }
         }
 
@@ -80,6 +90,10 @@ namespace Kudu.Client.Hubs {
             // TODO: If there's nothing being pushed then don't bother deploying
             _configuration.Repository.Push();
             _configuration.DeploymentManager.Deploy();
+        }
+
+        public void ExecuteCommand(string command) {
+            CommandExecutor.ExecuteCommand(command);
         }
 
         private enum Mode {
