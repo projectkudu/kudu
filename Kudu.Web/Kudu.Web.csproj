@@ -99,6 +99,9 @@
     <Content Include="Components\CommandBar\commandBar.css" />
     <Content Include="Components\CommandBar\commandBar.htm" />
     <Content Include="Components\CommandBar\commandbar.js" />
+    <Content Include="Components\CommitViewer\commitViewer.htm" />
+    <Content Include="Components\CommitViewer\commitViewer.js" />
+    <Content Include="Components\CommitViewer\commitViewer.css" />
     <Content Include="Components\Console\console.css" />
     <Content Include="Components\Console\console.htm" />
     <Content Include="Components\Console\console.js" />
@@ -106,6 +109,7 @@
     <Content Include="Components\DiffViewer\diffViewer.css" />
     <Content Include="Components\DiffViewer\diffViewer.htm" />
     <Content Include="Components\DiffViewer\diffViewer.js" />
+    <Content Include="Components\DiffViewer\templates.htm" />
     <Content Include="Components\Editor\editor.js" />
     <Content Include="Components\FileExplorer\fileExplorer.js" />
     <Content Include="Components\FileExplorer\fileExplorer.css" />

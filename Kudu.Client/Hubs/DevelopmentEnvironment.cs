@@ -7,6 +7,7 @@ using Kudu.Client.Model;
 using Kudu.Core.Commands;
 using Kudu.Core.Editor;
 using SignalR.Hubs;
+using Kudu.Core.SourceControl;
 
 namespace Kudu.Client.Hubs {
     public class DevelopmentEnvironment : Hub {
@@ -16,6 +17,12 @@ namespace Kudu.Client.Hubs {
 
         public DevelopmentEnvironment(ISiteConfiguration configuration) {
             _configuration = configuration;
+        }
+
+        private IRepository Repository {
+            get {
+                return _configuration.Repository;
+            }
         }
 
         private IEditorFileSystem FileSystem {
@@ -86,6 +93,14 @@ namespace Kudu.Client.Hubs {
 
         public void DeleteFile(string path) {
             FileSystem.Delete(path);
+        }
+
+        public ChangeSetDetailViewModel GetWorking() {
+            ChangeSetDetail workingChanges = Repository.GetWorkingChanges();
+            if (workingChanges != null) {
+                return new ChangeSetDetailViewModel(workingChanges);
+            }
+            return null;
         }
 
         public void GoLive() {

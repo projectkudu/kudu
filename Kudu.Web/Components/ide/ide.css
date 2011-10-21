@@ -69,3 +69,7 @@ body {
 .commandWindow {
     font: 11pt Consolas;
 }
+
+.working {
+    background-color: #fff;
+}

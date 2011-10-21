@@ -27,7 +27,7 @@
     cursor:n-resize;
 }
 
-.commandBar .header {
+.commandBar > .header {
     height: 15px;
     padding: 7px 7px 7px 2px;
     border: 1px solid #ccc;
@@ -36,14 +36,14 @@
     background: -moz-linear-gradient(top,  #f5f5f5,  #ebebeb);
 }
 
-.commandBar .toggle {
+.commandBar > .header .toggle {
     background-position: 0 20%;
     float: right;
     outline: none;
     text-decoration: none;
 }
 
-.commandBar .header .tabs {
+.commandBar > .header .tabs {
     display: none;
     padding: 5px;
     margin: 0;
@@ -52,7 +52,7 @@
     font-size: 90%;
 }
 
-.commandBar .header .tabs li {
+.commandBar > .header .tabs li {
     display: inline;
     list-style: none outside none; /*padding: 4px 8px;*/
     border: 1px solid #ebebeb;
@@ -60,7 +60,7 @@
     border-radius: 4px 4px 0px 0px;
     -moz-border-radius: 4px 4px 0px 0px;
     -webkit-border-radius: 4px 4px 0px 0px;
-    padding: 5px;
+    padding: 4px;
     margin-right: 5px;
     cursor: pointer;
     color: #808080;
@@ -85,10 +85,12 @@
 
 .commandBar .body {
     margin: 0;
+    overflow: auto;
 }
 
 .commandBar.collapsed .body {
     display: none;
+    overflow: auto;
 }
 
 .commandBar .body > div {

@@ -22,9 +22,12 @@
     background-color: #FFDDDD;
 }
 
-.diffViewer .file .toggle {
+.diffViewer .file .header .toggle {
     padding-left: 15px;
     margin-right: 5px;
+    float: none;
+    text-decoration: none;
+    outline: none;
 }
 
 .diffViewer .source {

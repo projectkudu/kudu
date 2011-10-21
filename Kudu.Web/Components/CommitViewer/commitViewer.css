@@ -1,0 +1,17 @@
+﻿.commitViewer {
+    height: 100%;
+}
+
+.commitViewer .message {
+    width: 97%;
+    margin: 1%;
+    height: 125px;
+    border: 1px solid #ccc;
+    padding: 5px;
+    margin-bottom: 10px;
+}
+
+.commitViewer .diffViewer {
+    margin: 1%;
+    border: 1px solid #ccc;
+}

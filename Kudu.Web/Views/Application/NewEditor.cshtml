@@ -27,6 +27,7 @@
 
     var fileExplorerTemplate = Server.MapPath("~/Components/FileExplorer/templates.htm");
     var tabManagerTemplate = Server.MapPath("~/Components/TabManager/templates.htm");
+    var diffViewerTemplate = Server.MapPath("~/Components/DiffViewer/templates.htm");
 }
 <!DOCTYPE html>
 <html>
@@ -45,6 +46,10 @@
 <link href="@Url.Content("~/Components/Shared/icons.css")" rel="stylesheet" type="text/css" />
 <script src="@Url.Content("~/Components/Shared/icons.js")" type="text/javascript"></script>
 <script src="@Url.Content("~/Components/Shared/utils.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Components/DiffViewer/diffViewer.js")" type="text/javascript"></script>
+<link href="@Url.Content("~/Components/DiffViewer/diffViewer.css")" rel="stylesheet" type="text/css" />
+<script src="@Url.Content("~/Components/CommitViewer/commitViewer.js")" type="text/javascript"></script>
+<link href="@Url.Content("~/Components/CommitViewer/commitViewer.css")" rel="stylesheet" type="text/css" />
 <link href="@Url.Content("~/Components/NotificationBar/notificationbar.css")" rel="stylesheet" type="text/css" />
 <script src="@Url.Content("~/Components/NotificationBar/notificationbar.js")" type="text/javascript"></script>
 <script src="@Url.Content("~/Components/SiteManager/siteManager.js")" type="text/javascript"></script>
@@ -68,6 +73,7 @@
 <!-- Templates -->
 @Html.Raw(File.ReadAllText(fileExplorerTemplate))
 @Html.Raw(File.ReadAllText(tabManagerTemplate))
+@Html.Raw(File.ReadAllText(diffViewerTemplate))
 
 @foreach (var file in cssFiles) {
     string url = String.Format("~/Components/Editor/codemirror/mode/{0}/{1}", file.Directory.Name, file.Name);

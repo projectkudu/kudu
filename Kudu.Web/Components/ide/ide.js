@@ -13,6 +13,8 @@
             $notificationBar = options.notificationBar,
             $statusBar = options.statusBar,
             $console = $('<div/>').addClass('commandWindow'),
+            $commitViewer = $('<div/>').addClass('working'),
+            commitViewer = null,
             commandWindow = null,
             commandBar = null,
             tabManager = null,
@@ -33,7 +35,8 @@
             folder: $('#fileExplorer_folderTemplate'),
             file: $('#fileExplorer_fileTemplate'),
             deferredFolder: $('#fileExplorer_deferredFolderTemplate'),
-            tab: $('#tabManager_tabTemplate')
+            tab: $('#tabManager_tabTemplate'),
+            diff: $('#diffViewer_files')
         };
 
         var modes = {
@@ -167,6 +170,14 @@
                              .always(function () {
                                  statusBar.hide(token);
                              });
+            },
+            updateWorkingChanges: function () {
+                devenv.getWorking()
+                      .done(function (working) {
+                          if (working) {
+                              commitViewer.refresh(working);
+                          }
+                      });
             }
         };
 
@@ -200,13 +211,20 @@
         }
 
         // Create components
+        commitViewer = $commitViewer.commitViewer({
+            templates: templates
+        });
+
         commandWindow = $console.console();
 
         commandBar = $.commandBar({
             sections: {
-                'Console': $console
+                'Console': $console,
+                'Working': $commitViewer
             }
         });
+
+        commandBar.select('Console');
 
         statusBar = $statusBar.loader();
 
@@ -234,6 +252,12 @@
         devenv.processCommand = function (data) {
             commandWindow.log(data);
         };
+
+        $(commandBar).bind('commandBar.sectionChanged', function (e, section) {
+            if (section == 'Working') {
+                core.updateWorkingChanges();
+            }
+        });
 
         $(commandWindow).bind('console.runCommand', function (e, command) {
             if (command == 'cls') {

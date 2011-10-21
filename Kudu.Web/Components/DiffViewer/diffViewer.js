@@ -50,12 +50,12 @@
                 $(this).removeClass('icon-expand-down');
                 $(this).addClass('icon-collapse-up');
 
-                $source.slideDown();
+                $source.show();
             }
             else {
                 $(this).addClass('icon-expand-down');
                 $(this).removeClass('icon-collapse-up');
-                $source.slideUp();
+                $source.hide();
             }
 
             ev.preventDefault();
