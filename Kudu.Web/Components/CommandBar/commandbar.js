@@ -61,26 +61,8 @@
             setActiveSection(section);
         });
 
-        $toggle.toggle(
-        function () {
-            $this.toggleClass('collapsed');
-            $(this).removeClass('icon-expand-bar');
-            $(this).addClass('icon-collapse-bar');
-            $tabs.show();
-
-            $window.resize();
-
-            $(that).trigger('commandBar.collapsed');
-        },
-        function () {
-            $this.toggleClass('collapsed');
-            $(this).removeClass('icon-collapse-bar');
-            $(this).addClass('icon-expand-bar');
-            $tabs.hide();
-
-            $window.resize();
-
-            $(that).trigger('commandBar.expanded');
+        $toggle.click(function () {
+            that.toggle();
         });
 
         var syncResize = function () {
@@ -104,7 +86,35 @@
         $(window).resize();
 
         that = {
+            show: function () {
+                $this.toggleClass('collapsed');
+                $toggle.removeClass('icon-expand-bar');
+                $toggle.addClass('icon-collapse-bar');
+                $tabs.show();
 
+                $window.resize();
+
+                $(that).trigger('commandBar.expanded');
+            },
+            hide: function () {
+                $this.toggleClass('collapsed');
+                $toggle.removeClass('icon-collapse-bar');
+                $toggle.addClass('icon-expand-bar');
+                $tabs.hide();
+
+                $window.resize();
+
+                $(that).trigger('commandBar.collapsed');
+            },
+            toggle: function () {
+                if ($this.hasClass('collapsed')) {
+                    that.show();
+                }
+                else {
+                    that.hide();
+                }
+            },
+            setActiveSection: setActiveSection
         };
 
         return that;
