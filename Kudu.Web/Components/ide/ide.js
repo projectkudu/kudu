@@ -122,11 +122,12 @@
                 var loadingToken = statusBar.show('Deploying...');
                 devenv.goLive()
                       .done(function () {
-                          notificationBar.hide(token);
                           statusBar.hide(loadingToken);
 
-                          var link = '<a href="' + siteUrl + '" target="_blank">' + siteUrl + '</a>';
-                          notificationBar.show('Your changes are live ' + link);
+                          notificationBar.hide(token).done(function () {
+                              var link = '<a href="' + siteUrl + '" target="_blank">' + siteUrl + '</a>';
+                              notificationBar.show('Your changes are live ' + link);
+                          });
                       });
             },
             saveActiveDocument: function () {

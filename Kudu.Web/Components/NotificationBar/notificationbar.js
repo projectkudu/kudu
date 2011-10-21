@@ -26,11 +26,14 @@
                 return token;
             },
             hide: function () {
+                var d = $.Deferred();
                 window.setTimeout(function () {
                     if ($this.data('token') == token) {
-                        $this.slideUp('slow');
+                        $this.slideUp('slow', function () { d.resolveWith(that); });
                     }
                 }, 100);
+
+                return d;
             }
         };
 

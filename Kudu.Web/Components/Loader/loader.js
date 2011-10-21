@@ -18,11 +18,14 @@
                 return token;
             },
             hide: function () {
+                var d = $.Deferred();
                 window.setTimeout(function () {
                     if ($this.data('token') == token) {
-                        $this.fadeOut('slow');
+                        $this.fadeOut('slow', function () { d.resolveWith(that); });
                     }
                 }, 100);
+
+                return d;
             }
         };
 
