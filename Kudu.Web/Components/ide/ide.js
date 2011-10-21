@@ -123,44 +123,50 @@
                 // TODO: Check for pending changes in the repository
                 var token = notificationBar.show('Deploying your changes to the live repository');
                 var loadingToken = statusBar.show('Deploying...');
-                devenv.goLive()
-                      .done(function () {
-                          statusBar.hide(loadingToken);
+                return devenv.goLive()
+                             .done(function () {
+                                 statusBar.hide(loadingToken);
 
-                          notificationBar.hide(token).done(function () {
-                              var link = '<a href="' + siteUrl + '" target="_blank">' + siteUrl + '</a>';
-                              notificationBar.show('Your changes are live ' + link);
-                          });
-                      });
+                                 notificationBar.hide(token).done(function () {
+                                     var link = '<a href="' + siteUrl + '" target="_blank">' + siteUrl + '</a>';
+                                     notificationBar.show('Your changes are live ' + link);
+                                 });
+                             });
             },
-            saveActiveDocument: function () {
-                var tab = tabManager.getActive();
-                if (tab) {
-                    var path = tab.file.getRelativePath();
-                    var content = editor.getContent();
+            saveDocument: function (file) {
+                var path = file.getRelativePath();
+                var content = editor.getContent();
 
-                    var token = statusBar.show('Saving ' + path + '...');
-                    devenv.saveFile({
-                        path: path,
-                        content: content
-                    })
+                var token = statusBar.show('Saving ' + path + '...');
+                return devenv.saveFile({
+                    path: path,
+                    content: content
+                })
                     .done(function () {
-                        tab.file.setDirty(false);
+                        file.setDirty(false);
                     })
                     .always(function () {
                         statusBar.hide(token);
                     });
-                }
             },
             executeCommand: function (command) {
-                devenv.executeCommand(command);
+                return devenv.executeCommand(command);
             },
             build: function () {
-                devenv.build()
+                return devenv.build()
                       .done(function () {
                           commandBar.select('Console');
                           commandBar.show();
                       });
+            },
+            deleteDocument: function (file) {
+                var path = file.getRelativePath();
+
+                var token = statusBar.show('Deleting ' + path + '...');
+                return devenv.deleteFile(path)
+                             .always(function () {
+                                 statusBar.hide(token);
+                             });
             }
         };
 
@@ -256,8 +262,14 @@
 
         $(tabManager).bind('tabManager.beforeTabClosed', function (e) {
             if (e.tab.file.isDirty()) {
-                $.dialogs.prompt("Do you want to save the changes to '" + e.tab.file.getPath() + "'", ['yes', 'no', 'cancel'])
                 e.preventDefault();
+
+                // Make this non blocking
+                var path = e.tab.file.getRelativePath();
+                if ($.dialogs.show("Do you want to save the changes to " + path)) {
+                    core.saveDocument(e.tab.file);
+                    tabManager.remove(e.tab.file.getPath());
+                }
             }
         });
 
@@ -290,7 +302,12 @@
             }
         });
 
-        var performSave = $.utils.throttle(core.saveActiveDocument, 50);
+        var performSave = $.utils.throttle(function () {
+            var tab = tabManager.getActive();
+            if (tab) {
+                core.saveDocument(tab.file);
+            }
+        }, 50);
 
         $(document).bind('keydown', 'ctrl+s', function (ev) {
             performSave();
@@ -298,23 +315,29 @@
             return false;
         });
 
-        $(document).bind('keydown', 'del', function (ev) {
+        $(document).bind('keydown', 'del', $.utils.throttle(function (ev) {
             if (fileExplorer.hasFocus()) {
                 var selectedNode = fileExplorer.selectedNode();
                 // TODO: Prompt here
                 if (selectedNode) {
-                    if (selectedNode.isFile()) {
-                        fs.removeFile(selectedNode.path);
-                    }
-                    else {
-                        fs.removeDirectory(selectedNode.path);
+                    var path = selectedNode.item().getRelativePath();
+                    if ($.dialogs.show('Are you sure you want to delete ' + path + '?')) {
+                        if (selectedNode.isFile()) {
+                            core.deleteDocument(selectedNode.item())
+                                .done(function () {
+                                    fs.removeFile(selectedNode.path);
+                                });
+                        }
+                        else {
+                            fs.removeDirectory(selectedNode.path);
+                        }
                     }
 
                     ev.preventDefault();
                     return false;
                 }
             }
-        });
+        }, 50));
 
         $activeView.change(function () {
             var mode = parseInt($(this).val());

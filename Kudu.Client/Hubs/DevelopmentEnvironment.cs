@@ -84,6 +84,10 @@ namespace Kudu.Client.Hubs {
             FileSystem.WriteAllText(file.Path, file.Content);
         }
 
+        public void DeleteFile(string path) {
+            FileSystem.Delete(path);
+        }
+
         public void GoLive() {
             // Push then deploy
 

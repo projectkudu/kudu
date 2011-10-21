@@ -3,8 +3,8 @@
     "use strict"
 
     $.dialogs = {
-        prompt: function () {
-            
+        show: function (value) {
+            return confirm(value);
         }
     };
 
