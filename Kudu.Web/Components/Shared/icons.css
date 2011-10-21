@@ -20,6 +20,14 @@
     background-image: url('../../images/bullet_arrow_down.png');
 }
 
+.icon-expand-bar {
+    background-image: url('../../images/expand.png');
+}
+
+.icon-collapse-bar {
+    background-image: url('../../images/collapse.png');
+}
+
 .icon-cs {
     background-image: url('../../images/cs.png');
 }
