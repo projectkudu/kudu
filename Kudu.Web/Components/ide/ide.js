@@ -175,20 +175,15 @@
             },
             // Source control method
             updateWorkingChanges: function () {
-                if (refreshingWorkingDirectory === false) {
-                    return;
-                }
-
-                devenv.getWorking()
-                      .done(function (working) {
-                          if (working) {
-                              commitViewer.refresh(working);
-                          }
-                          else {
-                              commitViewer.clear();
-                          }
-                          refreshingWorkingDirectory = false;
-                      });
+                return devenv.getWorking()
+                             .done(function (working) {
+                                 if (working) {
+                                     commitViewer.refresh(working);
+                                 }
+                                 else {
+                                     commitViewer.clear();
+                                 }
+                             });
             },
             commitWorkingChanges: function (message) {
                 // TODO: Pass selected files
@@ -284,7 +279,12 @@
 
         $(commandBar).bind('commandBar.sectionChanged', function (e, section) {
             if (section == 'Working Directory') {
-                core.updateWorkingChanges();
+                if (refreshingWorkingDirectory === true) {
+                    core.updateWorkingChanges()
+                        .done(function () {
+                            refreshingWorkingDirectory = false;
+                        });
+                }
             }
         });
 
