@@ -127,3 +127,11 @@
 .icon-run {
     background-image: url('../../images/run.png');
 }
+
+.icon-working {
+    background-image: url('../../images/folder_table.png');
+}
+
+.icon-console {
+    background-image: url('../../images/terminal.png');
+}

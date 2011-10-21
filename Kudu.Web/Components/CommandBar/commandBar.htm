@@ -24,8 +24,8 @@
             c2.log('Js console');
             var commandBar = $.commandBar({
                 sections: {
-                    'Console': $c1,
-                    'Javascript Console': $c2
+                    'Console': { container: $c1 },
+                    'Javascript Console': { container: $c2 }
                 }
             });
         });

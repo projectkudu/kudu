@@ -55,10 +55,17 @@
             $(that).trigger('commandBar.sectionChanged', [section]);
         }
 
-        function addSection(name, $container) {
+        function addSection(name, section) {
             var $header = $('<li />').addClass('tab')
                                          .attr('data-section', name)
                                          .html(name);
+
+            $container = section.container;
+
+            if (section.icon) {
+                $header.addClass('icon');
+                $header.addClass(section.icon);
+            }
 
             $header.appendTo($tabs);
             $container.height('100%');

@@ -260,8 +260,8 @@
 
         commandBar = $.commandBar({
             sections: {
-                'Console': $console,
-                'Working Directory': $commitViewer
+                'Console': { container: $console, icon: 'icon-console' },
+                'Working Directory': { container: $commitViewer, icon: 'icon-working' }
             }
         });
 
