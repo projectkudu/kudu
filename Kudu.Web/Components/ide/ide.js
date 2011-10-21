@@ -125,10 +125,21 @@
                     });
             },
             goLive: function () {
-                // TODO: Check for pending changes in the repository
-                var token = notificationBar.show('Deploying your changes to the live site');
-                var loadingToken = statusBar.show('Deploying...');
-                return devenv.goLive()
+                var d = $.Deferred();
+                var working = devenv.getWorking()
+                      .done(function (working) {
+                          if (working) {
+                              alert('You have some pending changes');
+                              commandBar.select('Working Directory');
+                              commandBar.show();
+                              d.rejectWith(core);
+                              return;
+                          }
+
+                          // TODO: Check for pending changes in the repository
+                          var token = notificationBar.show('Deploying your changes to the live site');
+                          var loadingToken = statusBar.show('Deploying...');
+                          return devenv.goLive()
                              .done(function () {
                                  statusBar.hide(loadingToken);
 
@@ -136,7 +147,12 @@
                                      var link = '<a href="' + siteUrl + '" target="_blank">' + siteUrl + '</a>';
                                      notificationBar.show('Your changes are live ' + link);
                                  });
+
+                                 d.resolveWith(core);
                              });
+                      });
+
+                return d;
             },
             saveDocument: function (file) {
                 var path = file.getRelativePath();
@@ -147,9 +163,9 @@
                     path: path,
                     content: content
                 })
-                    .done(function () {
-                        file.setDirty(false);
-                    })
+                        .done(function () {
+                            file.setDirty(false);
+                        })
                     .always(function () {
                         statusBar.hide(token);
                     });

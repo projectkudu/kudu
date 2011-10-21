@@ -133,6 +133,7 @@
     <Content Include="Components\TabManager\templates.htm" />
     <Content Include="Content\Site.css" />
     <Content Include="Global.asax" />
+    <Content Include="images\arrow_refresh.png" />
     <Content Include="images\book_previous.png" />
     <Content Include="images\bullet_arrow_down.png" />
     <Content Include="images\bullet_arrow_up.png" />
