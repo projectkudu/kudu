@@ -324,12 +324,11 @@
 
         $(commitViewer).bind('commitViewer.openFile', function (e, path) {
             var file = fs.getFile(path);
-            core.openDocument(file);
+            tabManager.setActive(file.getPath());
         });
 
         $(fileExplorer).bind('fileExplorer.fileOpened', function (e, file) {
-            var path = file.getPath();
-            tabManager.setActive(path);
+            tabManager.setActive(file.getPath());
         });
 
         $(tabManager).bind('tabManager.beforeActiveTabChanged', function (e, tab) {

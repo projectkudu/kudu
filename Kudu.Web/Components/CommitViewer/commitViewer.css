@@ -11,9 +11,7 @@
 }
 
 .commitViewer .diffViewer {
-    margin: 1%;
-    min-height: 150px;
-    border: 1px solid #ccc;
+    margin: 1%;    
 }
 
 .commitViewer .refresh {
