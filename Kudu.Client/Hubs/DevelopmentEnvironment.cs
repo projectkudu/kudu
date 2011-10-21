@@ -96,6 +96,11 @@ namespace Kudu.Client.Hubs {
             CommandExecutor.ExecuteCommand(command);
         }
 
+        public void Build() {
+            // TODO: Pass in the solution file
+            CommandExecutor.ExecuteCommand(@"%WINDIR%\Microsoft.NET\Framework\v4.0.30319\msbuild.exe");
+        }
+
         private enum Mode {
             Live,
             Development

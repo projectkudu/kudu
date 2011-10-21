@@ -35,14 +35,11 @@
         $ghost.appendTo(document.body);
         $this.appendTo(document.body);
 
-        var minHeight = 200;
-
         $this.resizable({
             minHeight: 350,
             handles: { n: '.resize' },
-            grid: 31, // mitigates the number of calls to syncResize()
+            grid: 31,
             start: function () {
-
             },
             resize: function (ev) {
             },

@@ -154,6 +154,13 @@
             },
             executeCommand: function (command) {
                 devenv.executeCommand(command);
+            },
+            build: function () {
+                devenv.build()
+                      .done(function () {
+                          commandBar.select('Console');
+                          commandBar.show();
+                      });
             }
         };
 
@@ -401,7 +408,7 @@
                 core.goLive();
             },
             'build': function () {
-
+                core.build();
             }
         };
 
