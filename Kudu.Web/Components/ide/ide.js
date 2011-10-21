@@ -23,6 +23,7 @@
             notificationBar = null,
             statusBar = null,
             currentHeight = null,
+            refreshingWorkingDirectory = true,
             siteUrl = options.siteUrl,
             devenv = $.connection.developmentEnvironment,
             minHeight = 450,
@@ -96,10 +97,11 @@
 
                 core.refreshProject()
                     .done(function (project) {
-                        if (mode == 0) {
+                        if (mode === modes.live) {
                             $devMode.hide();
                         }
                         else {
+                            refreshingWorkingDirectory = true;
                             $devMode.show();
 
                             if (project.Projects.length === 0) {
@@ -171,13 +173,41 @@
                                  statusBar.hide(token);
                              });
             },
+            // Source control method
             updateWorkingChanges: function () {
+                if (refreshingWorkingDirectory === false) {
+                    return;
+                }
+
                 devenv.getWorking()
                       .done(function (working) {
                           if (working) {
                               commitViewer.refresh(working);
                           }
+                          else {
+                              commitViewer.clear();
+                          }
+                          refreshingWorkingDirectory = false;
                       });
+            },
+            commitWorkingChanges: function (message) {
+                // TODO: Pass selected files
+                devenv.commit(message)
+                .done(function (changeSet) {
+                    if (changeSet) {
+                        var token = notificationBar.show('Successfully commited ' + changeSet.ShortId);
+                        commitViewer.clear();
+                        window.setTimeout(function () {
+                            notificationBar.hide(token);
+                        }, 3000);
+                    }
+                    else {
+                        var token = notificationBar.show('No pending changes');
+                        window.setTimeout(function () {
+                            notificationBar.hide(token);
+                        }, 1000);
+                    }
+                });
             }
         };
 
@@ -220,7 +250,7 @@
         commandBar = $.commandBar({
             sections: {
                 'Console': $console,
-                'Working': $commitViewer
+                'Working Directory': $commitViewer
             }
         });
 
@@ -244,7 +274,6 @@
             fileSystem: fs
         });
 
-
         devenv.commandComplete = function () {
             commandWindow.completeCommand();
         };
@@ -254,7 +283,7 @@
         };
 
         $(commandBar).bind('commandBar.sectionChanged', function (e, section) {
-            if (section == 'Working') {
+            if (section == 'Working Directory') {
                 core.updateWorkingChanges();
             }
         });
@@ -267,6 +296,19 @@
             else {
                 core.executeCommand(command);
             }
+        });
+
+        $(commitViewer).bind('commitViewer.commit', function (e, message) {
+            core.commitWorkingChanges(message);
+        });
+
+        $(commitViewer).bind('commitViewer.refresh', function (e, message) {
+            core.updateWorkingChanges();
+        });
+
+        $(commitViewer).bind('commitViewer.openFile', function (e, path) {
+            var file = fs.getFile(path);
+            core.openDocument(file);
         });
 
         $(fileExplorer).bind('fileExplorer.fileOpened', function (e, file) {

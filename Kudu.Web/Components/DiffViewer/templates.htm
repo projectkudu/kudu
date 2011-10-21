@@ -10,7 +10,7 @@
             {{else}}
             <span class="icon icon-expand-down">&nbsp</span>
             {{/if}}
-            <span class="icon ${$.utils.diffFileClass(file)}">${fileName}{{if file.Binary}}<span class="binary-text">(Binary file diff not shown)</span>{{/if}}</span>
+            <a href="#" class="open icon ${$.utils.diffFileClass(file)}">${fileName}{{if file.Binary}}<span class="binary-text">(Binary file diff not shown)</span>{{/if}}</a>
         </div>
         {{tmpl(file) "#diffViewer_file"}}
     </div>

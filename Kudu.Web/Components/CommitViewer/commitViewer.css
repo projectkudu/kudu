@@ -4,14 +4,29 @@
 
 .commitViewer .message {
     width: 97%;
-    margin: 1%;
+    margin: 1% 1% 0;
     height: 125px;
     border: 1px solid #ccc;
     padding: 5px;
-    margin-bottom: 10px;
 }
 
 .commitViewer .diffViewer {
     margin: 1%;
+    min-height: 150px;
     border: 1px solid #ccc;
+}
+
+.commitViewer .refresh {
+    margin: 1%;
+    outline: none;
+    text-decoration: none;
+}
+
+.commitViewer .buttons {
+    margin: 1%;
+    text-align: right;
+}
+
+.commitViewer .buttons input {
+    padding: 5px;
 }

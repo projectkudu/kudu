@@ -22,6 +22,11 @@
     background-color: #FFDDDD;
 }
 
+.diffViewer .file .header .open {
+    text-decoration: none;
+    outline: none;
+}
+
 .diffViewer .file .header .toggle {
     padding-left: 15px;
     margin-right: 5px;

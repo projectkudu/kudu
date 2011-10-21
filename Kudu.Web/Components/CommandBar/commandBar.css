@@ -86,6 +86,7 @@
 .commandBar .body {
     margin: 0;
     overflow: auto;
+    background-color: #fff;
 }
 
 .commandBar.collapsed .body {

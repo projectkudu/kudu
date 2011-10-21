@@ -62,6 +62,14 @@
             return false;
         });
 
+        $this.delegate('.open', 'click', function (ev) {
+            var path = $(this).closest('.file').data('path');
+            $(that).trigger('diffViewer.openFile', [path]);
+
+            ev.preventDefault();
+            return false;
+        });
+
         that = {
             refresh: function (diff) {
                 diff.readonly = readonly;

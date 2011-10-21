@@ -12,10 +12,13 @@ using Kudu.Core.SourceControl;
 namespace Kudu.Client.Hubs {
     public class DevelopmentEnvironment : Hub {
         private readonly ISiteConfiguration _configuration;
+        private readonly IUserInformation _userInformation;
         private static readonly string[] _supportedExtensions = new[] { ".csproj", ".vbproj" };
         private const string WapGuid = "349C5851-65DF-11DA-9384-00065B846F21";
 
-        public DevelopmentEnvironment(ISiteConfiguration configuration) {
+        public DevelopmentEnvironment(IUserInformation userInformation,
+                                      ISiteConfiguration configuration) {
+            _userInformation = userInformation;
             _configuration = configuration;
         }
 
@@ -53,7 +56,7 @@ namespace Kudu.Client.Hubs {
             }
         }
 
-        public Project GetProject() {            
+        public Project GetProject() {
             var files = FileSystem.GetFiles().ToList();
             var projects = (from path in files
                             where _supportedExtensions.Contains(Path.GetExtension(path),
@@ -99,6 +102,14 @@ namespace Kudu.Client.Hubs {
             ChangeSetDetail workingChanges = Repository.GetWorkingChanges();
             if (workingChanges != null) {
                 return new ChangeSetDetailViewModel(workingChanges);
+            }
+            return null;
+        }
+
+        public ChangeSetViewModel Commit(string message) {
+            var changeSet = Repository.Commit(_userInformation.UserName, message);
+            if (changeSet != null) {
+                return new ChangeSetViewModel(changeSet);
             }
             return null;
         }

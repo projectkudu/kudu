@@ -83,15 +83,23 @@ namespace Kudu.Core.SourceControl.Git {
         public ChangeSet Commit(string authorName, string message) {
             // Add all unstaged files
             _gitExe.Execute("add -A");
-            string output = _gitExe.Execute("commit -m\"{0}\" --author=\"{1}\"", message, authorName);
+            try {
+                string output = _gitExe.Execute("commit -m\"{0}\" --author=\"{1}\"", message, authorName);
 
-            // No pending changes
-            if (output.Contains("working directory clean")) {
-                return null;
+                // No pending changes
+                if (output.Contains("working directory clean")) {
+                    return null;
+                }
+
+                string newCommit = _gitExe.Execute("show HEAD");
+                return ParseCommit(newCommit.AsReader());
             }
-
-            string newCommit = _gitExe.Execute("show HEAD");
-            return ParseCommit(newCommit.AsReader());
+            catch(Exception e) {
+                if (e.Message.Contains("nothing to commit")) {
+                    return null;
+                }
+                throw;
+            }
         }
 
         internal void Clone(string source) {
