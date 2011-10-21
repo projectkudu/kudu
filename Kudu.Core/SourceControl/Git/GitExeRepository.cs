@@ -142,7 +142,7 @@ namespace Kudu.Core.SourceControl.Git {
                 return MakeNewFileDiff(statuses);
             }
 
-            string diff = _gitExe.Execute("diff --no-ext-diff -p --numstat --shortstat --staged");
+            string diff = _gitExe.Execute("diff --no-ext-diff -p --numstat --shortstat head");
             var detail = ParseShow(diff.AsReader(), includeChangeSet: false);
 
             foreach (var fileStatus in statuses) {

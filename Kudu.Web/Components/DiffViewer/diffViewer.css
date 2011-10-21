@@ -27,9 +27,11 @@
     outline: none;
 }
 
+.diffViewer .file .header a.icon {
+    float: none;
+}
+
 .diffViewer .file .header a.icon-notext {
-    padding-left: 15px;
-    margin-right: 5px;
     float: none;
     text-decoration: none;
     outline: none;

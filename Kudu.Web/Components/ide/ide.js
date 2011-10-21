@@ -230,6 +230,7 @@
                       .done(function () {
                           devenv.openFile(path)
                                 .done(function (content) {
+                                    path = '/' + path;
                                     var tab = tabManager.get(path);
 
                                     if (!file) {
