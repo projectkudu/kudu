@@ -38,9 +38,22 @@
             readonly: false
         });
 
-        // Forward the event
+        // Forward the events from the diffViewer
         $(diffViewer).bind('diffViewer.openFile', function (e, path) {
             $(that).trigger('commitViewer.openFile', [path]);
+        });
+
+        $(diffViewer).bind('diffViewer.beforeRevertFile', function (e) {
+            var event = $.Event('commitViewer.beforeRevertFile', { path: e.path });
+            $(that).trigger(event);
+
+            if (event.isDefaultPrevented()) {
+                e.preventDefault();
+            }
+        });
+
+        $(diffViewer).bind('diffViewer.afterRevertFile', function (e, path) {
+            $(that).trigger('commitViewer.afterRevertFile', [path]);
         });
 
         $refreshLink.click(function (ev) {

@@ -70,6 +70,21 @@
             return false;
         });
 
+        $this.delegate('.revert', 'click', function (ev) {
+            var $file = $(this).closest('.file');
+            var path = $file.data('path');
+
+            var event = $.Event('diffViewer.beforeRevertFile', { path: path });
+            $(that).trigger(event);
+
+            if (!event.isDefaultPrevented()) {
+                that.revertFile(path);
+            }
+
+            ev.preventDefault();
+            return false;
+        });
+
         that = {
             refresh: function (diff) {
                 diff.readonly = readonly;
@@ -85,6 +100,11 @@
                             .map(function (index, e) {
                                 return $(e).data('path');
                             });
+            },
+            revertFile: function (path) {
+                $this.find('[data-path="' + path + '"]').remove();
+
+                $(that).trigger('diffViewer.afterRevertFile');
             }
         };
 

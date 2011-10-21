@@ -131,9 +131,7 @@ namespace Kudu.Core.SourceControl.Git {
         }
 
         public ChangeSetDetail GetWorkingChanges() {
-            // Add everything so we can see a diff of the current changes
-            _gitExe.Execute("add -A");
-
+            // Add everything so we can see a diff of the current changes            
             var statuses = GetStatus().ToList();
 
             if (!statuses.Any()) {

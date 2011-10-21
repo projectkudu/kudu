@@ -6,11 +6,14 @@
             <input type="checkbox" class="include" checked="checked" />
             {{/if}}
             {{if !file.Binary}}
-            <a href="#" class="toggle icon icon-expand-down">&nbsp</a>
+            <a href="#" class="toggle icon-notext icon-expand-down">&nbsp</a>
             {{else}}
-            <span class="icon icon-expand-down">&nbsp</span>
+            <span class="icon-notext icon-expand-down">&nbsp</span>
             {{/if}}
             <a href="#" class="open icon ${$.utils.diffFileClass(file)}">${fileName}{{if file.Binary}}<span class="binary-text">(Binary file diff not shown)</span>{{/if}}</a>
+            {{if !readonly}}
+            <a href="#" class="revert icon-notext icon-close">&nbsp</a>
+            {{/if}}
         </div>
         {{tmpl(file) "#diffViewer_file"}}
     </div>

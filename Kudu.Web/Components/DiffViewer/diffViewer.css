@@ -27,7 +27,7 @@
     outline: none;
 }
 
-.diffViewer .file .header .toggle {
+.diffViewer .file .header a.icon-notext {
     padding-left: 15px;
     margin-right: 5px;
     float: none;

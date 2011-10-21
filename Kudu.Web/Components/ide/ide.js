@@ -185,6 +185,9 @@
 
                 var token = statusBar.show('Deleting ' + path + '...');
                 return devenv.deleteFile(path)
+                             .done(function () {
+                                 fs.removeFile(path);
+                             })
                              .always(function () {
                                  statusBar.hide(token);
                              });
@@ -219,6 +222,29 @@
                         }, 1000);
                     }
                 });
+            },
+            revertFile: function (path) {
+                var file = fs.getFile(path);
+                var path = file ? file.getRelativePath() : path;
+                devenv.revertFile(path)
+                      .done(function () {
+                          devenv.openFile(path)
+                                .done(function (content) {
+                                    var tab = tabManager.get(path);
+
+                                    if (!file) {
+                                        fs.addFile(path);
+                                    }
+
+                                    if (tab) {
+                                        editor.setContent(path, content);
+                                    }
+
+                                    file.setBuffer(content);
+                                })
+                                .fail(function (e) {
+                                });
+                      });
             }
         };
 
@@ -327,6 +353,19 @@
             tabManager.setActive(file.getPath());
         });
 
+        $(commitViewer).bind('commitViewer.beforeRevertFile', function (e) {
+            if ($.dialogs.show('Are you sure you want to revert ' + e.path)) {
+                core.revertFile(e.path);
+            }
+            else {
+                e.preventDefault();
+            }
+        });
+
+        $(commitViewer).bind('commitViewer.afterRevertFile', function (e, path) {
+
+        });
+
         $(fileExplorer).bind('fileExplorer.fileOpened', function (e, file) {
             tabManager.setActive(file.getPath());
         });
@@ -404,10 +443,7 @@
                     var path = selectedNode.item().getRelativePath();
                     if ($.dialogs.show('Are you sure you want to delete ' + path + '?')) {
                         if (selectedNode.isFile()) {
-                            core.deleteDocument(selectedNode.item())
-                                .done(function () {
-                                    fs.removeFile(selectedNode.path);
-                                });
+                            core.deleteDocument(selectedNode.item());
                         }
                         else {
                             fs.removeDirectory(selectedNode.path);

@@ -114,6 +114,10 @@ namespace Kudu.Client.Hubs {
             return null;
         }
 
+        public void RevertFile(string path) {
+            Repository.RevertFile(path);
+        }
+
         public void GoLive() {
             // Push then deploy
 
