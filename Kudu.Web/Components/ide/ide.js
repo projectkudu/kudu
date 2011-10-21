@@ -126,7 +126,7 @@
             },
             goLive: function () {
                 // TODO: Check for pending changes in the repository
-                var token = notificationBar.show('Deploying your changes to the live repository');
+                var token = notificationBar.show('Deploying your changes to the live site');
                 var loadingToken = statusBar.show('Deploying...');
                 return devenv.goLive()
                              .done(function () {

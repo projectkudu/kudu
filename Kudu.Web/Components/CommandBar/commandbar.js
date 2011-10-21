@@ -115,7 +115,7 @@
 
         that = {
             show: function () {
-                $this.toggleClass('collapsed');
+                $this.removeClass('collapsed');
                 $toggle.removeClass('icon-expand-bar');
                 $toggle.addClass('icon-collapse-bar');
                 $tabs.show();
@@ -125,7 +125,7 @@
                 $(that).trigger('commandBar.expanded');
             },
             hide: function () {
-                $this.toggleClass('collapsed');
+                $this.addClass('collapsed');
                 $toggle.removeClass('icon-collapse-bar');
                 $toggle.addClass('icon-expand-bar');
                 $tabs.hide();
