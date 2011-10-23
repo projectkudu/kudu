@@ -1,9 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using Kudu.SignalR.Model;
 using Kudu.Core.Deployment;
+using Kudu.SignalR.ViewModels;
 using SignalR.Hubs;
-using System;
 
 namespace Kudu.SignalR.Hubs {
     public class Deployment : Hub {

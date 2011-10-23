@@ -63,12 +63,12 @@
     <Compile Include="Infrastructure\UserInformation.cs" />
     <Compile Include="Models\Application.cs" />
     <Compile Include="Models\IApplication.cs" />
-    <Compile Include="Model\ChangeSetDetailViewModel.cs" />
-    <Compile Include="Model\ChangeSetViewModel.cs" />
-    <Compile Include="Model\DeployResultViewModel.cs" />
-    <Compile Include="Model\LogEntryViewModel.cs" />
-    <Compile Include="Model\ProjectFile.cs" />
-    <Compile Include="Model\ProjectViewModel.cs" />
+    <Compile Include="ViewModels\ChangeSetDetailViewModel.cs" />
+    <Compile Include="ViewModels\ChangeSetViewModel.cs" />
+    <Compile Include="ViewModels\DeployResultViewModel.cs" />
+    <Compile Include="ViewModels\LogEntryViewModel.cs" />
+    <Compile Include="ViewModels\ProjectFile.cs" />
+    <Compile Include="ViewModels\ProjectViewModel.cs" />
     <Compile Include="Ninject\DefaultBindings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

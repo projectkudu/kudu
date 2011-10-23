@@ -2,7 +2,7 @@
 using System.Linq;
 using Kudu.Core.Editor;
 
-namespace Kudu.SignalR.Model {
+namespace Kudu.SignalR.ViewModels {
     public class ProjectViewModel {        
         public ProjectViewModel(string name, Project project) {
             Name = name;

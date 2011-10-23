@@ -1,7 +1,7 @@
 ﻿using System;
 using Kudu.Core.Deployment;
 
-namespace Kudu.SignalR.Model {
+namespace Kudu.SignalR.ViewModels {
     public class DeployResultViewModel {
         public DeployResultViewModel(DeployResult result) {
             Id = result.Id;

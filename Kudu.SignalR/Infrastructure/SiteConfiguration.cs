@@ -8,8 +8,8 @@ using Kudu.Core.Deployment;
 using Kudu.Core.Editor;
 using Kudu.Core.SourceControl;
 using Kudu.SignalR.Hubs;
-using Kudu.SignalR.Model;
 using Kudu.SignalR.Models;
+using Kudu.SignalR.ViewModels;
 using SignalR.Hubs;
 
 namespace Kudu.SignalR.Infrastructure {

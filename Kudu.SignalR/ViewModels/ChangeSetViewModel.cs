@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Kudu.Core.SourceControl;
 
-namespace Kudu.SignalR.Model {
+namespace Kudu.SignalR.ViewModels {
     public class ChangeSetViewModel {
         public string Id { get; set; }
         public string ShortId { get; set; }

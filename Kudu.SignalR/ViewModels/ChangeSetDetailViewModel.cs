@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Kudu.Core.SourceControl;
 
-namespace Kudu.SignalR.Model {
+namespace Kudu.SignalR.ViewModels {
     public class ChangeSetDetailViewModel {
         public ChangeSetDetailViewModel(ChangeSetDetail detail) {
             if (detail.ChangeSet != null) {
