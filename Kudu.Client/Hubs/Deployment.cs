@@ -5,7 +5,7 @@ using Kudu.Core.Deployment;
 using SignalR.Hubs;
 using System;
 
-namespace Kudu.Client {
+namespace Kudu.Client.Hubs {
     public class Deployment : Hub {
         private readonly IDeploymentManager _deploymentManager;
 

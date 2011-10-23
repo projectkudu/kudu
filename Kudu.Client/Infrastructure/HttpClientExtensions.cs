@@ -2,7 +2,7 @@
 using System.Net.Http;
 using Newtonsoft.Json;
 
-namespace Kudu.Core.Infrastructure {
+namespace Kudu.Client.Infrastructure {
     public static class HttpClientExtensions {
         public static T GetJson<T>(this HttpClient client, string url) {
             HttpResponseMessage response = client.Get(url);

@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using Kudu.Client.Infrastructure;
 using Kudu.Core.Commands;
-using Kudu.Core.Infrastructure;
 using Newtonsoft.Json;
 using SignalR.Client;
 
-namespace Kudu.Core.Deployment {
+namespace Kudu.Client.Deployment {
     public class RemoteCommandExecutor : ICommandExecutor {
         private readonly HttpClient _client;
         private readonly Connection _connection;

@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using Kudu.Core.Infrastructure;
+using Kudu.Client.Infrastructure;
+using Kudu.Core.Editor;
 
-namespace Kudu.Core.Editor {
+namespace Kudu.Client.Editor {
     public class RemoteFileSystem : IEditorFileSystem {
         private readonly HttpClient _client;
 

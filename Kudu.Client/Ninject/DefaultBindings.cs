@@ -1,7 +1,5 @@
 ﻿using Kudu.Client.Infrastructure;
-using Kudu.Core.Commands;
 using Kudu.Core.Deployment;
-using Kudu.Core.Editor;
 using Kudu.Core.SourceControl;
 using Ninject;
 using Ninject.Activation;

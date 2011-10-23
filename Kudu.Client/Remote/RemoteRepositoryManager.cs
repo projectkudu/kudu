@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using Kudu.Core.Infrastructure;
+using Kudu.Client.Infrastructure;
+using Kudu.Core.SourceControl;
 
-namespace Kudu.Core.SourceControl {
+namespace Kudu.Client.SourceControl {
     public class RemoteRepositoryManager : IRepositoryManager {
         private readonly HttpClient _client;
 

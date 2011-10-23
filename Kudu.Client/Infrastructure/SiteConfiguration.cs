@@ -1,8 +1,10 @@
 ﻿using System.Collections.Concurrent;
+using Kudu.Client.Deployment;
+using Kudu.Client.Editor;
 using Kudu.Client.Hubs;
-using Kudu.Client.Hubs.Editor;
 using Kudu.Client.Model;
 using Kudu.Client.Models;
+using Kudu.Client.SourceControl;
 using Kudu.Core.Commands;
 using Kudu.Core.Deployment;
 using Kudu.Core.Editor;
@@ -12,6 +14,8 @@ using SignalR.Hubs;
 namespace Kudu.Client.Infrastructure {
     public class SiteConfiguration : ISiteConfiguration {
         private static readonly ConcurrentDictionary<string, SiteConfiguration> _cache = new ConcurrentDictionary<string, SiteConfiguration>();
+        private static dynamic devenvClients = Hub.GetClients<DevelopmentEnvironment>();
+
 
         public SiteConfiguration(IApplication application) {
             ServiceUrl = application.ServiceUrl;
@@ -24,57 +28,45 @@ namespace Kudu.Client.Infrastructure {
                 FileSystem = config.FileSystem;
                 DevFileSystem = config.DevFileSystem;
 
-
+                
                 if (config.DeploymentManager.IsActive) {
                     DeploymentManager = config.DeploymentManager;
                     CommandExecutor = config.CommandExecutor;
                     DevCommandExecutor = config.DevCommandExecutor;
                 }
                 else {
-                    DeploymentManager = new RemoteDeploymentManager(ServiceUrl + "deploy");
-                    DeploymentManager.StatusChanged += OnDeploymentStatusChanged;
-
-                    CommandExecutor = new RemoteCommandExecutor(ServiceUrl + "live/command");
-                    DevCommandExecutor = new RemoteCommandExecutor(ServiceUrl + "dev/command");
-                    DevCommandExecutor.CommandEvent += commandEvent => {
-                        OnCommandEvent<CommandLine>(commandEvent);
-                    };
-
-                    CommandExecutor.CommandEvent += commandEvent => {
-                        OnCommandEvent<CommandLine>(commandEvent);
-                    };
+                    SubscribeToEvents();
                 }
             }
             else {
-                Repository = new RemoteRepository(ServiceUrl + "scm");
-                DeploymentManager = new RemoteDeploymentManager(ServiceUrl + "deploy");
-
-                FileSystem = new RemoteFileSystem(ServiceUrl + "live/files");
-                CommandExecutor = new RemoteCommandExecutor(ServiceUrl + "live/command");
-
+                Repository = new RemoteRepository(ServiceUrl + "scm"); 
+                FileSystem = new RemoteFileSystem(ServiceUrl + "live/files");                
                 DevFileSystem = new RemoteFileSystem(ServiceUrl + "dev/files");
-                DevCommandExecutor = new RemoteCommandExecutor(ServiceUrl + "dev/command");
-
-                var clients = Hub.GetClients<DevelopmentEnvironment>();
-
-                DevCommandExecutor.CommandEvent += commandEvent => {
-                    OnCommandEvent<CommandLine>(commandEvent);
-                    OnNewCommandEvent(clients, commandEvent);
-                };
-
-                CommandExecutor.CommandEvent += commandEvent => {
-                    OnCommandEvent<CommandLine>(commandEvent);
-                    OnNewCommandEvent(clients, commandEvent);
-                };
-
-                DeploymentManager.StatusChanged += OnDeploymentStatusChanged;
+                
+                SubscribeToEvents();
 
                 _cache[Name] = this;
             }
         }
 
+        private void SubscribeToEvents() {
+            DeploymentManager = new RemoteDeploymentManager(ServiceUrl + "deploy");
+            DeploymentManager.StatusChanged += OnDeploymentStatusChanged;
+
+            
+            DevCommandExecutor = new RemoteCommandExecutor(ServiceUrl + "dev/command");
+            DevCommandExecutor.CommandEvent += commandEvent => {
+                OnNewCommandEvent(devenvClients, commandEvent);
+            };
+
+            CommandExecutor = new RemoteCommandExecutor(ServiceUrl + "live/command");
+            CommandExecutor.CommandEvent += commandEvent => {
+                OnNewCommandEvent(devenvClients, commandEvent);
+            };
+        }
+
         private void OnDeploymentStatusChanged(DeployResult result) {
-            var clients = Hub.GetClients<Deployment>();
+            var clients = Hub.GetClients<Kudu.Client.Hubs.Deployment>();
             clients.updateDeployStatus(new DeployResultViewModel(result));
         }
 

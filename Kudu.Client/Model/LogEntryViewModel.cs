@@ -1,4 +1,5 @@
-﻿using Kudu.Core.Deployment;
+﻿using Kudu.Client.Deployment;
+using Kudu.Core.Deployment;
 
 namespace Kudu.Client.Model {
     public class LogEntryViewModel {

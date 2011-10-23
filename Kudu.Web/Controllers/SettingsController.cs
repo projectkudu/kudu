@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Web.Mvc;
-using Kudu.Core.Deployment;
+using Kudu.Client.Deployment;
 using Kudu.Web.Models;
 
 namespace Kudu.Web.Controllers {

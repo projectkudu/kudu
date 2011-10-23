@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
-using Kudu.Core.Infrastructure;
+using Kudu.Client.Infrastructure;
+using Kudu.Core.Deployment;
 using Newtonsoft.Json;
 using SignalR.Client;
 
-namespace Kudu.Core.Deployment {
+namespace Kudu.Client.Deployment {
     public class RemoteDeploymentManager : IDeploymentManager {
         private readonly HttpClient _client;
         private readonly Connection _connection;

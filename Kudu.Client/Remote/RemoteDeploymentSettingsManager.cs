@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
-using Kudu.Core.Infrastructure;
+using Kudu.Client.Infrastructure;
+using Kudu.Core.Deployment;
 
-namespace Kudu.Core.Deployment {
+namespace Kudu.Client.Deployment {
     public class RemoteDeploymentSettingsManager : IDeploymentSettingsManager {
         private readonly HttpClient _client;
 

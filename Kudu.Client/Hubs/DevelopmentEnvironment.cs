@@ -4,10 +4,12 @@ using System.IO;
 using System.Linq;
 using Kudu.Client.Infrastructure;
 using Kudu.Client.Model;
+using Kudu.Client.Editor;
+using SignalR.Hubs;
+using Kudu.Client.SourceControl;
+using Kudu.Core.SourceControl;
 using Kudu.Core.Commands;
 using Kudu.Core.Editor;
-using SignalR.Hubs;
-using Kudu.Core.SourceControl;
 
 namespace Kudu.Client.Hubs {
     public class DevelopmentEnvironment : Hub {

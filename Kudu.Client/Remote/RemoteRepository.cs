@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using Kudu.Core.Infrastructure;
+using Kudu.Client.Infrastructure;
+using Kudu.Core.SourceControl;
 using Newtonsoft.Json;
 
-namespace Kudu.Core.SourceControl {
+namespace Kudu.Client.SourceControl {
     public class RemoteRepository : IRepository {
         private readonly HttpClient _client;
 

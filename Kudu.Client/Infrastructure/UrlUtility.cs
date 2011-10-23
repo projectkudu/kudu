@@ -1,4 +1,4 @@
-﻿namespace Kudu.Core.Infrastructure {
+﻿namespace Kudu.Client.Infrastructure {
     internal static class UrlUtility {
         internal static string EnsureTrailingSlash(string url) {
             if (url.EndsWith("/")) {

@@ -45,19 +45,17 @@
     <Reference Include="Microsoft.Json">
       <HintPath>..\packages\JsonValue.0.5.0\lib\40\Microsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Net.Http, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="Microsoft.Net.Http">
       <HintPath>..\packages\HttpClient.0.5.0\lib\40\Microsoft.Net.Http.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Net.Http.Formatting">
       <HintPath>..\packages\HttpClient.0.5.0\lib\40\Microsoft.Net.Http.Formatting.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=4.0.3.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Newtonsoft.Json.4.0.3\lib\net40\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Microsoft.Server.Common">
+      <HintPath>..\packages\JsonValue.0.5.0\lib\40\Microsoft.Server.Common.dll</HintPath>
     </Reference>
-    <Reference Include="SignalR.Client, Version=0.3.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\SignalR.Client.0.3.3\lib\net40\SignalR.Client.dll</HintPath>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\packages\Newtonsoft.Json.4.0.3\lib\net40\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -79,7 +77,6 @@
     <Compile Include="Commands\CommandEvent.cs" />
     <Compile Include="Commands\CommandEventType.cs" />
     <Compile Include="Commands\CommandExecutor.cs" />
-    <Compile Include="Commands\RemoteCommandExecutor.cs" />
     <Compile Include="Deployment\AspNetConfigTransformer.cs" />
     <Compile Include="Deployment\BasicBuilder.cs" />
     <Compile Include="Deployment\ConnectionStringSetting.cs" />
@@ -88,7 +85,6 @@
     <Compile Include="Deployment\IBuildPropertyProvider.cs" />
     <Compile Include="Deployment\IDeploymentSettingsManager.cs" />
     <Compile Include="Deployment\LogEntryType.cs" />
-    <Compile Include="Deployment\RemoteDeploymentSettingsManager.cs" />
     <Compile Include="Deployment\SolutionBasedSiteBuilder.cs" />
     <Compile Include="Deployment\SiteBuilderFactory.cs" />
     <Compile Include="Deployment\DeploymentManager.cs" />
@@ -101,7 +97,6 @@
     <Compile Include="Deployment\ILogger.cs" />
     <Compile Include="Deployment\LogEntry.cs" />
     <Compile Include="Deployment\WapBuilder.cs" />
-    <Compile Include="Deployment\RemoteDeploymentManager.cs" />
     <Compile Include="Deployment\WebSiteBuilder.cs" />
     <Compile Include="Deployment\XmlLogger.cs" />
     <Compile Include="Editor\FileSystemFactory.cs" />
@@ -109,25 +104,21 @@
     <Compile Include="Editor\IEditorFileSystemFactory.cs" />
     <Compile Include="Editor\MirrorRepository.cs" />
     <Compile Include="Editor\PhysicalFileSystem.cs" />
-    <Compile Include="Editor\RemoteFileSystem.cs" />
     <Compile Include="Editor\SolutionFileSystem.cs" />
     <Compile Include="Environment.cs" />
     <Compile Include="Commands\ICommandExecutor.cs" />
     <Compile Include="IEnvironment.cs" />
     <Compile Include="Infrastructure\FileSystemHelpers.cs" />
-    <Compile Include="Infrastructure\HttpClientExtensions.cs" />
-    <Compile Include="Infrastructure\HttpClientHelper.cs" />
     <Compile Include="Deployment\LoggerExtensions.cs" />
     <Compile Include="Infrastructure\NativeMethods.cs" />
     <Compile Include="Infrastructure\ParserHelpers.cs" />
     <Compile Include="Infrastructure\ReflectionUtility.cs" />
+    <Compile Include="Infrastructure\SimpleJsonMediaTypeFormatter.cs" />
     <Compile Include="Infrastructure\StringReader.cs" />
     <Compile Include="Infrastructure\Executable.cs" />
     <Compile Include="Infrastructure\IStringReader.cs" />
-    <Compile Include="Infrastructure\UrlUtility.cs" />
     <Compile Include="Infrastructure\VsSolution.cs" />
     <Compile Include="Infrastructure\VsSolutionProject.cs" />
-    <Compile Include="Infrastructure\SimpleJsonMediaTypeFormatter.cs" />
     <Compile Include="nji\Program.cs" />
     <Compile Include="nji\SimpleJson.cs" />
     <Compile Include="nji\Tar.cs" />
@@ -152,8 +143,6 @@
     <Compile Include="SourceControl\IRepositoryManager.cs" />
     <Compile Include="SourceControl\LineDiff.cs" />
     <Compile Include="SourceControl\NullRepository.cs" />
-    <Compile Include="SourceControl\RemoteRepository.cs" />
-    <Compile Include="SourceControl\RemoteRepositoryManager.cs" />
     <Compile Include="SourceControl\RepositoryManager.cs" />
     <Compile Include="SourceControl\RepositoryType.cs" />
   </ItemGroup>

@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Formatting;
 using System.Net.Http.Headers;
+using Kudu.Core.Infrastructure;
 
-namespace Kudu.Core.Infrastructure {
+namespace Kudu.Client.Infrastructure {
     internal static class HttpClientHelper {
         public static HttpClient Create(string url) {
             // The URL needs to end with a slash for HttpClient to do the right thing with relative paths
