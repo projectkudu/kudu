@@ -67,7 +67,7 @@
                 $(this)[0].select();
             });
 
-            $('#changes').delegate('.update', 'click', function () {
+            $('#deployments').delegate('.update', 'click', function () {
                 var newId = $(this).attr('data-id');
                 var branch = $(this).attr('data-branch');
 

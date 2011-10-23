@@ -27,12 +27,7 @@ namespace Kudu.SignalR.Hubs {
         }
 
         public void Deploy(string id) {
-            if (String.IsNullOrEmpty(id)) {
-                _deploymentManager.Deploy();                
-            }
-            else {
-                _deploymentManager.Deploy(id);
-            }
+            _deploymentManager.Deploy(id);
         }
     }
 }
