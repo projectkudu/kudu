@@ -38,7 +38,7 @@
             var closeTabIconSize = $close.outerWidth();
 
             // The width of the dirty icon
-            var dirtySize = $dirty.outerWidth();
+            var dirtySize = $dirty.outerWidth() + 5;
 
             // Calculate the with for parts of the tab that are not showing text
             var nonTextArea = closeTabIconSize + dirtySize;

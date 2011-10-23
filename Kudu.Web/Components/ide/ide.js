@@ -383,8 +383,6 @@
 
         $(tabManager).bind('tabManager.beforeTabClosed', function (e) {
             if (e.tab.file.isDirty()) {
-                e.preventDefault();
-
                 // Make this non blocking
                 var path = e.tab.file.getRelativePath();
                 if ($.dialogs.show("Do you want to save the changes to " + path)) {

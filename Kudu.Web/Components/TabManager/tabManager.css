@@ -18,12 +18,12 @@
     float: right;
 }
 
-.tabManager .tab span {
+.tabManager .tab .text {
     float: left;
-    white-space: nowrap;  
-    overflow: hidden;  
-    text-overflow: ellipsis;  
-    -o-text-overflow: ellipsis;  
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    -o-text-overflow: ellipsis;
     -ms-text-overflow: ellipsis;
 }
 
@@ -44,6 +44,7 @@
 .tabManager li .dirty {
     margin-left: 1px;
     display: none;
+    float: left;
 }
 
 .tabManager li:hover a.close, .tabManager li.active a.close {
