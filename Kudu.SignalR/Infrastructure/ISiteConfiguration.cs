@@ -3,7 +3,7 @@ using Kudu.Core.Deployment;
 using Kudu.Core.Editor;
 using Kudu.Core.SourceControl;
 
-namespace Kudu.Client.Infrastructure {
+namespace Kudu.SignalR.Infrastructure {
     public interface ISiteConfiguration {
         string Name { get; }
         string ServiceUrl { get; }

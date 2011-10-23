@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using Kudu.Client.Models;
 using Kudu.Core.SourceControl;
+using Kudu.SignalR.Models;
 using Kudu.Web.Infrastructure;
 
 namespace Kudu.Web.Models {

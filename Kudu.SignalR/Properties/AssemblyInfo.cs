@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Kudu.Console")]
+[assembly: AssemblyTitle("Kudu.SignalR")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Microsoft")]
-[assembly: AssemblyProduct("Kudu.Console")]
+[assembly: AssemblyProduct("Kudu.SignalR")]
 [assembly: AssemblyCopyright("Copyright © Microsoft 2011")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("ad71adcb-1cf5-4f7d-b3f8-fd08c00097b0")]
+[assembly: Guid("1cf1fc56-cb42-4ded-b948-454c01ad8384")]
 
 // Version information for an assembly consists of the following four values:
 //

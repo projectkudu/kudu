@@ -1,11 +1,11 @@
-﻿using Kudu.Client.Infrastructure;
-using Kudu.Core.Deployment;
+﻿using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
+using Kudu.SignalR.Infrastructure;
 using Ninject;
 using Ninject.Activation;
 using Ninject.Modules;
 
-namespace Kudu.Client {
+namespace Kudu.SignalR {
     public class DefaultBindings : NinjectModule {
         public override void Load() {
             Bind<ISiteConfiguration>().To<SiteConfiguration>();

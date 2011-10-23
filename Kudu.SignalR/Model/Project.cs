@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Kudu.Client.Model {
+namespace Kudu.SignalR.Model {
     /// <summary>
     /// Represents a project
     /// </summary>

@@ -1,15 +1,16 @@
 using System.Web;
-using Kudu.Client.Infrastructure;
-using Kudu.Client.Models;
+using Kudu.SignalR;
+using Kudu.SignalR.Infrastructure;
+using Kudu.SignalR.Models;
 using Kudu.Web.Models;
 using Ninject;
 using Ninject.Activation;
 using SignalR.Infrastructure;
 using SignalR.Ninject;
 
-[assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Client.App_Start.NinjectSignalR), "Start")]
+[assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Web.App_Start.NinjectSignalR), "Start")]
 
-namespace Kudu.Client.App_Start {
+namespace Kudu.Web.App_Start {
     public static class NinjectSignalR {
         /// <summary>
         /// Starts the application

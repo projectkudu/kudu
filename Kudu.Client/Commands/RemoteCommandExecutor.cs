@@ -6,7 +6,7 @@ using Kudu.Core.Commands;
 using Newtonsoft.Json;
 using SignalR.Client;
 
-namespace Kudu.Client.Deployment {
+namespace Kudu.Client.Commands {
     public class RemoteCommandExecutor : ICommandExecutor {
         private readonly HttpClient _client;
         private readonly Connection _connection;

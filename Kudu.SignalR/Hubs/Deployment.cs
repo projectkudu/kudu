@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Kudu.Client.Model;
+using Kudu.SignalR.Model;
 using Kudu.Core.Deployment;
 using SignalR.Hubs;
 using System;
 
-namespace Kudu.Client.Hubs {
+namespace Kudu.SignalR.Hubs {
     public class Deployment : Hub {
         private readonly IDeploymentManager _deploymentManager;
 

@@ -1,7 +1,7 @@
 ﻿using System.Web;
 using System.Web.Script.Serialization;
 
-namespace Kudu.Client.Infrastructure {
+namespace Kudu.SignalR.Infrastructure {
     public static class ApplicationNameResolver {
         public static string ResolveName(HttpContextBase httpContext) {
             var serializer = new JavaScriptSerializer();

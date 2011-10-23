@@ -2,16 +2,14 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Kudu.Client.Infrastructure;
-using Kudu.Client.Model;
-using Kudu.Client.Editor;
-using SignalR.Hubs;
-using Kudu.Client.SourceControl;
-using Kudu.Core.SourceControl;
 using Kudu.Core.Commands;
 using Kudu.Core.Editor;
+using Kudu.Core.SourceControl;
+using Kudu.SignalR.Infrastructure;
+using Kudu.SignalR.Model;
+using SignalR.Hubs;
 
-namespace Kudu.Client.Hubs {
+namespace Kudu.SignalR.Hubs {
     public class DevelopmentEnvironment : Hub {
         private readonly ISiteConfiguration _configuration;
         private readonly IUserInformation _userInformation;

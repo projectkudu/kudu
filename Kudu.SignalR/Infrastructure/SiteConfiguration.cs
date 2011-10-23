@@ -1,17 +1,18 @@
 ﻿using System.Collections.Concurrent;
+using Kudu.Client.Commands;
 using Kudu.Client.Deployment;
 using Kudu.Client.Editor;
-using Kudu.Client.Hubs;
-using Kudu.Client.Model;
-using Kudu.Client.Models;
 using Kudu.Client.SourceControl;
 using Kudu.Core.Commands;
 using Kudu.Core.Deployment;
 using Kudu.Core.Editor;
 using Kudu.Core.SourceControl;
+using Kudu.SignalR.Hubs;
+using Kudu.SignalR.Model;
+using Kudu.SignalR.Models;
 using SignalR.Hubs;
 
-namespace Kudu.Client.Infrastructure {
+namespace Kudu.SignalR.Infrastructure {
     public class SiteConfiguration : ISiteConfiguration {
         private static readonly ConcurrentDictionary<string, SiteConfiguration> _cache = new ConcurrentDictionary<string, SiteConfiguration>();
         private static dynamic devenvClients = Hub.GetClients<DevelopmentEnvironment>();
@@ -66,7 +67,7 @@ namespace Kudu.Client.Infrastructure {
         }
 
         private void OnDeploymentStatusChanged(DeployResult result) {
-            var clients = Hub.GetClients<Kudu.Client.Hubs.Deployment>();
+            var clients = Hub.GetClients<Kudu.SignalR.Hubs.Deployment>();
             clients.updateDeployStatus(new DeployResultViewModel(result));
         }
 

@@ -1,7 +1,7 @@
 ﻿using Kudu.Client.Deployment;
 using Kudu.Core.Deployment;
 
-namespace Kudu.Client.Model {
+namespace Kudu.SignalR.Model {
     public class LogEntryViewModel {
         public LogEntryViewModel(LogEntry entry) {
             LogTime = entry.LogTime.ToString();

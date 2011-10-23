@@ -1,6 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using Kudu.Client.Models;
+using Kudu.SignalR.Models;
 
 namespace Kudu.Web.Models {
     public class Application : IApplication {

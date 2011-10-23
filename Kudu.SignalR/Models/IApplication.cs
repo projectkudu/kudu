@@ -1,4 +1,4 @@
-﻿namespace Kudu.Client.Models {
+﻿namespace Kudu.SignalR.Models {
     public interface IApplication {
         string Name { get; }
         string ServiceUrl { get; }
