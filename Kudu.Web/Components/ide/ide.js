@@ -502,6 +502,7 @@
 
         $(window).resize(function () {
             adjustHeight();
+            tabManager.refresh();
         });
 
 

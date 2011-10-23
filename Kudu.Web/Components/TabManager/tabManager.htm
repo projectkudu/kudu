@@ -34,9 +34,9 @@
                     fileSystem: fs
                 });
 
-                tm.add('/app.js');
-                tm.add('/b.js');
-                tm.add('/foo.txt');
+                $.each(files, function () {
+                    tm.add('/' + this);
+                });
                 tm.setActive('/app.js');
 
                 tm2.add('/b.js');
@@ -47,7 +47,7 @@
     </script>
 </head>
 <body>
-    <ul id="baz">
+    <ul id="baz" style="width:300px">
     </ul>
     <ul id="baz3">
     </ul>

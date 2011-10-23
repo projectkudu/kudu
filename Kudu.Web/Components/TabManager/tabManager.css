@@ -1,11 +1,11 @@
 .tabManager {
     margin: 1% 0 0;
     padding: 0;
-    height: 22px;
+    height: 30px;
 }
 
 .tabManager .tab {
-    cursor: pointer;
+    cursor: default;
 }
 
 .tabManager a {
@@ -13,15 +13,28 @@
     text-decoration: none;
 }
 
-.tabManager a.delete {
+.tabManager a.close {
     visibility: hidden;
+    float: right;
+}
+
+.tabManager .tab span {
+    float: left;
+    white-space: nowrap;  
+    overflow: hidden;  
+    text-overflow: ellipsis;  
+    -o-text-overflow: ellipsis;  
+    -ms-text-overflow: ellipsis;
 }
 
 .tabManager li {
-    display: inline;
+    height: 20px;
+    float: left;
+    width: 100px;
+    white-space: nowrap;
     list-style: none outside none;
     padding: 4px 8px;
-    border: 1px solid #fff;
+    border: 1px solid #d6d6d6;
     border-bottom: none;
     border-radius: 4px 4px 0px 0px;
     -moz-border-radius: 4px 4px 0px 0px;
@@ -33,7 +46,7 @@
     display: none;
 }
 
-.tabManager li:hover a.delete, .tabManager li.active a.delete {
+.tabManager li:hover a.close, .tabManager li.active a.close {
     visibility: visible;
 }
 
