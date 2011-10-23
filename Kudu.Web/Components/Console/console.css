@@ -37,6 +37,7 @@
 .console .messages {
     overflow: auto;
     height: 85%;
+    word-wrap: break-word;
 }
 
 .console .messages ul.buffer {
