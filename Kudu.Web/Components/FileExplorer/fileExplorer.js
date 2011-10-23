@@ -68,6 +68,32 @@
                 activeNode = null;
             }
 
+            if (activeNode) {
+                // Get the element bounds
+                var min = $this.offset().top;
+                var max = min + $this.outerHeight();
+
+                // Get the selection element bounds
+                var $e = activeNode.selection();
+                var top = $e.offset().top;
+                var height = $e.outerHeight();
+                var bottom = top + height;
+
+                var threshold = height / 2;
+                var topDiff = top - min;
+                var bottomDiff = max - bottom;
+
+                // Scroll if the element is out of range
+                if (topDiff < 0) {
+                    var target = $this.scrollTop() + topDiff - threshold;
+                    $this.scrollTop(target);
+                }
+                else if (bottomDiff < threshold) {
+                    var target = $this.scrollTop() + Math.abs(bottomDiff) + height;
+                    $this.scrollTop(target);
+                }
+            }
+
             $(fileExplorer).trigger('fileExplorer.selectedNodeChanged', [activeNode]);
         }
 
