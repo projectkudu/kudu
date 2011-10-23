@@ -7,20 +7,20 @@ using Kudu.Core.Editor;
 namespace Kudu.Services.Documents {
     [ServiceContract]
     public class FilesService {
-        private readonly IEditorFileSystem _fileSystem;
+        private readonly IProjectSystem _projectSystem;
 
-        public FilesService(IEditorFileSystem fileSystem) {
-            _fileSystem = fileSystem;
+        public FilesService(IProjectSystem projectSystem) {
+            _projectSystem = projectSystem;
         }
 
         [WebGet(UriTemplate = "")]
-        public IEnumerable<string> GetFiles() {
-            return _fileSystem.GetFiles();
+        public Project GetProject() {
+            return _projectSystem.GetProject();
         }
 
         [WebGet(UriTemplate = "?path={path}")]
         public HttpResponseMessage GetFile(string path) {
-            var content = new StringContent(_fileSystem.ReadAllText(path), System.Text.Encoding.UTF8);
+            var content = new StringContent(_projectSystem.ReadAllText(path), System.Text.Encoding.UTF8);
             var response = new HttpResponseMessage();
             response.Content = content;
             return response;
@@ -28,12 +28,12 @@ namespace Kudu.Services.Documents {
 
         [WebInvoke]
         public void Save(SimpleJson.JsonObject input) {
-            _fileSystem.WriteAllText((string)input["path"], (string)input["content"]);
+            _projectSystem.WriteAllText((string)input["path"], (string)input["content"]);
         }
 
         [WebInvoke]
         public void Delete(SimpleJson.JsonObject input) {
-            _fileSystem.Delete((string)input["path"]);
+            _projectSystem.Delete((string)input["path"]);
         }
     }
 }

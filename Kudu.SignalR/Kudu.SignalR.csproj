@@ -67,8 +67,8 @@
     <Compile Include="Model\ChangeSetViewModel.cs" />
     <Compile Include="Model\DeployResultViewModel.cs" />
     <Compile Include="Model\LogEntryViewModel.cs" />
-    <Compile Include="Model\Project.cs" />
     <Compile Include="Model\ProjectFile.cs" />
+    <Compile Include="Model\ProjectViewModel.cs" />
     <Compile Include="Ninject\DefaultBindings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -1,14 +1,15 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Editor {
-    public class PhysicalFileSystem : IEditorFileSystem {
+    // TODO: Make testable using IFileSystem
+    public class ProjectSystem : IProjectSystem {
         private readonly string _root;
 
-        public PhysicalFileSystem(string root) {
+        public ProjectSystem(string root) {
             _root = root;
         }
 
@@ -21,7 +22,20 @@ namespace Kudu.Core.Editor {
             return File.ReadAllText(GetFullPath(path));
         }
 
-        public virtual IEnumerable<string> GetFiles() {
+        public Project GetProject() {
+            var solutions = VsSolution.GetSolutions(_root);
+
+            return new Project {
+                ProjectFiles = from s in solutions
+                               from p in s.Projects
+                               where p.IsWap || p.IsWebSite
+                               select MakeRelative(p.AbsolutePath),
+                Files = GetFiles(),
+                SolutionFiles = solutions.Select(s => MakeRelative(s.Path))
+            };
+        }
+
+        private IEnumerable<string> GetFiles() {
             var directory = new DirectoryInfo(_root);
             return GetFiles(directory);
         }

@@ -54,7 +54,7 @@ namespace Kudu.Services.Web.App_Start {
         private static IKernel CreateKernel() {
             var kernel = new StandardKernel();
 
-            RegisterServices(kernel);            
+            RegisterServices(kernel);
 
             KernelContainer.Kernel = kernel;
             return kernel;
@@ -96,7 +96,7 @@ namespace Kudu.Services.Web.App_Start {
                                     .InSingletonScope();
 
             // Editor
-            kernel.Bind<IEditorFileSystem>().ToMethod(context => GetEditorFileSystem(environment, context))
+            kernel.Bind<IProjectSystem>().ToMethod(context => GetEditorProjectSystem(environment, context))
                                             .InRequestScope();
 
             // Command line
@@ -105,10 +105,8 @@ namespace Kudu.Services.Web.App_Start {
 
             // Source control
             kernel.Bind<IRepository>().ToMethod(context => GetSourceControlRepository(environment));
-             kernel.Bind<IRepositoryManager>().ToMethod(context => GetDevelopmentRepositoryManager(environment))
-                                             .WhenInjectedInto<CloneService>();
-
-            
+            kernel.Bind<IRepositoryManager>().ToMethod(context => GetDevelopmentRepositoryManager(environment))
+                                            .WhenInjectedInto<CloneService>();
         }
 
         private static IRepositoryManager GetDevelopmentRepositoryManager(IEnvironment environment) {
@@ -121,13 +119,13 @@ namespace Kudu.Services.Web.App_Start {
             return GetDevelopmentRepositoryManager(environment).GetRepository();
         }
 
-        private static IEditorFileSystem GetEditorFileSystem(IEnvironment environment, IContext context) {
+        private static IProjectSystem GetEditorProjectSystem(IEnvironment environment, IContext context) {
             if (IsDevSiteRequest(context)) {
                 EnsureDevelopmentRepository(environment);
-                return new PhysicalFileSystem(environment.RepositoryPath);
+                return new ProjectSystem(environment.RepositoryPath);
             }
 
-            return new PhysicalFileSystem(environment.DeploymentTargetPath);
+            return new ProjectSystem(environment.DeploymentTargetPath);
         }
 
         private static CommandExecutor GetComandExecutor(IEnvironment environment, IContext context) {

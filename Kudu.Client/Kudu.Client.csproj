@@ -77,7 +77,7 @@
     <Compile Include="Commands\RemoteCommandExecutor.cs" />
     <Compile Include="Deployment\RemoteDeploymentManager.cs" />
     <Compile Include="Deployment\RemoteDeploymentSettingsManager.cs" />
-    <Compile Include="Editor\RemoteFileSystem.cs" />
+    <Compile Include="Editor\RemoteProjectSystem.cs" />
     <Compile Include="SourceControl\RemoteRepository.cs" />
     <Compile Include="SourceControl\RemoteRepositoryManager.cs" />
   </ItemGroup>

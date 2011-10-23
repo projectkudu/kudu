@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 
 namespace Kudu.Core.Editor {
-    public interface IEditorFileSystem {
+    public interface IProjectSystem {
         string ReadAllText(string path);
-        IEnumerable<string> GetFiles();
+        Project GetProject();
         void WriteAllText(string path, string content);
         void Delete(string path);
     }

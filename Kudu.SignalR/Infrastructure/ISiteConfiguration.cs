@@ -9,8 +9,8 @@ namespace Kudu.SignalR.Infrastructure {
         string ServiceUrl { get; }
         string SiteUrl { get; }
 
-        IEditorFileSystem FileSystem { get; }
-        IEditorFileSystem DevFileSystem { get; }
+        IProjectSystem ProjectSystem { get; }
+        IProjectSystem DevProjectSystem { get; }
         IDeploymentManager DeploymentManager { get; }
         IRepository Repository { get; }
         ICommandExecutor CommandExecutor { get; }

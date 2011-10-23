@@ -5,10 +5,10 @@ using Kudu.Client.Infrastructure;
 using Kudu.Core.Editor;
 
 namespace Kudu.Client.Editor {
-    public class RemoteFileSystem : IEditorFileSystem {
+    public class RemoteProjectSystem : IProjectSystem {
         private readonly HttpClient _client;
 
-        public RemoteFileSystem(string serviceUrl) {
+        public RemoteProjectSystem(string serviceUrl) {
             _client = HttpClientHelper.Create(serviceUrl);
         }
 
@@ -21,8 +21,8 @@ namespace Kudu.Client.Editor {
                           .ReadAsString();
         }
 
-        public IEnumerable<string> GetFiles() {
-            return _client.GetJson<string[]>(String.Empty);
+        public Project GetProject() {
+            return _client.GetJson<Project>(String.Empty);
         }
 
         public void WriteAllText(string path, string content) {

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.Collections.Generic;
 using Kudu.Core.Commands;
 using Kudu.Core.Editor;
 using Kudu.Core.SourceControl;
@@ -13,8 +10,6 @@ namespace Kudu.SignalR.Hubs {
     public class DevelopmentEnvironment : Hub {
         private readonly ISiteConfiguration _configuration;
         private readonly IUserInformation _userInformation;
-        private static readonly string[] _supportedExtensions = new[] { ".csproj", ".vbproj" };
-        private const string WapGuid = "349C5851-65DF-11DA-9384-00065B846F21";
 
         public DevelopmentEnvironment(IUserInformation userInformation,
                                       ISiteConfiguration configuration) {
@@ -28,12 +23,12 @@ namespace Kudu.SignalR.Hubs {
             }
         }
 
-        private IEditorFileSystem FileSystem {
+        private IProjectSystem ProjectSystem {
             get {
                 if (CurrentMode == Mode.Development) {
-                    return _configuration.DevFileSystem;
+                    return _configuration.DevProjectSystem;
                 }
-                return _configuration.FileSystem;
+                return _configuration.ProjectSystem;
             }
         }
 
@@ -56,46 +51,30 @@ namespace Kudu.SignalR.Hubs {
             }
         }
 
-        public Project GetProject() {
-            var files = FileSystem.GetFiles().ToList();
-            var projects = (from path in files
-                            where _supportedExtensions.Contains(Path.GetExtension(path),
-                                                                StringComparer.OrdinalIgnoreCase)
-                            select path).ToList();
-
-            // TODO: Make the information from the file system richer, so we don't have to make so many requests
-            projects.RemoveAll(path => {
-                string content = FileSystem.ReadAllText(path).ToUpper();
-                return !content.Contains(WapGuid);
-            });
-
-            return new Project {
-                Name = Caller.applicationName,
-                Projects = projects,
-                Files = from path in files
-                        select new ProjectFile {
-                            Path = path
-                        }
-            };
+        public ProjectViewModel GetProject() {
+            string name = Caller.applicationName;
+            var projectViewModel = new ProjectViewModel(name, ProjectSystem.GetProject());
+            Caller.defaultSolution = projectViewModel.DefaultSolution;
+            return projectViewModel;
         }
 
         public string OpenFile(string path) {
-            return FileSystem.ReadAllText(path);
+            return ProjectSystem.ReadAllText(path);
         }
 
         public void SaveAllFiles(IEnumerable<ProjectFile> files) {
-            IEditorFileSystem fileSystem = FileSystem;
+            IProjectSystem fileSystem = ProjectSystem;
             foreach (var file in files) {
                 fileSystem.WriteAllText(file.Path, file.Content);
             }
         }
 
         public void SaveFile(ProjectFile file) {
-            FileSystem.WriteAllText(file.Path, file.Content);
+            ProjectSystem.WriteAllText(file.Path, file.Content);
         }
 
         public void DeleteFile(string path) {
-            FileSystem.Delete(path);
+            ProjectSystem.Delete(path);
         }
 
         public ChangeSetDetailViewModel GetWorking() {
@@ -131,8 +110,8 @@ namespace Kudu.SignalR.Hubs {
         }
 
         public void Build() {
-            // TODO: Pass in the solution file
-            CommandExecutor.ExecuteCommand(@"%WINDIR%\Microsoft.NET\Framework\v4.0.30319\msbuild.exe");
+            string solutionFile = Caller.defaultSolution;
+            CommandExecutor.ExecuteCommand(@"%WINDIR%\Microsoft.NET\Framework\v4.0.30319\msbuild.exe " + solutionFile);
         }
 
         private enum Mode {

@@ -99,12 +99,9 @@
     <Compile Include="Deployment\WapBuilder.cs" />
     <Compile Include="Deployment\WebSiteBuilder.cs" />
     <Compile Include="Deployment\XmlLogger.cs" />
-    <Compile Include="Editor\FileSystemFactory.cs" />
-    <Compile Include="Editor\IEditorFileSystem.cs" />
-    <Compile Include="Editor\IEditorFileSystemFactory.cs" />
-    <Compile Include="Editor\MirrorRepository.cs" />
-    <Compile Include="Editor\PhysicalFileSystem.cs" />
-    <Compile Include="Editor\SolutionFileSystem.cs" />
+    <Compile Include="Editor\IProjectSystem.cs" />
+    <Compile Include="Editor\ProjectSystem.cs" />
+    <Compile Include="Editor\Project.cs" />
     <Compile Include="Environment.cs" />
     <Compile Include="Commands\ICommandExecutor.cs" />
     <Compile Include="IEnvironment.cs" />

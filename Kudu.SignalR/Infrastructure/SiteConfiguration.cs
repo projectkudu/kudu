@@ -26,8 +26,8 @@ namespace Kudu.SignalR.Infrastructure {
             SiteConfiguration config;
             if (_cache.TryGetValue(Name, out config)) {
                 Repository = config.Repository;
-                FileSystem = config.FileSystem;
-                DevFileSystem = config.DevFileSystem;
+                ProjectSystem = config.ProjectSystem;
+                DevProjectSystem = config.DevProjectSystem;
 
                 
                 if (config.DeploymentManager.IsActive) {
@@ -41,8 +41,8 @@ namespace Kudu.SignalR.Infrastructure {
             }
             else {
                 Repository = new RemoteRepository(ServiceUrl + "scm"); 
-                FileSystem = new RemoteFileSystem(ServiceUrl + "live/files");                
-                DevFileSystem = new RemoteFileSystem(ServiceUrl + "dev/files");
+                ProjectSystem = new RemoteProjectSystem(ServiceUrl + "live/files");                
+                DevProjectSystem = new RemoteProjectSystem(ServiceUrl + "dev/files");
                 
                 SubscribeToEvents();
 
@@ -80,27 +80,16 @@ namespace Kudu.SignalR.Infrastructure {
             }
         }
 
-        // TODO: Remove when full transition to new UI is done
-        private void OnCommandEvent<T>(CommandEvent commandEvent) where T : Hub {
-            var clients = Hub.GetClients<T>();
-            if (commandEvent.EventType == CommandEventType.Complete) {
-                clients.done();
-            }
-            else {
-                clients.onData(commandEvent.Data);
-            }
-        }
-
         public string Name { get; private set; }
         public string ServiceUrl { get; private set; }
         public string SiteUrl { get; private set; }
 
-        public IEditorFileSystem DevFileSystem {
+        public IProjectSystem DevProjectSystem {
             get;
             private set;
         }
 
-        public IEditorFileSystem FileSystem {
+        public IProjectSystem ProjectSystem {
             get;
             private set;
         }
