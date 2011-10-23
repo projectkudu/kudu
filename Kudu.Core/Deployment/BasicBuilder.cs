@@ -5,7 +5,7 @@ using Kudu.Core.Infrastructure;
 namespace Kudu.Core.Deployment {
     public class BasicBuilder : ISiteBuilder {
         private readonly string _sourcePath;
-        
+
         public BasicBuilder(string sourcePath) {
             _sourcePath = sourcePath;
         }
@@ -20,7 +20,7 @@ namespace Kudu.Core.Deployment {
 
                 logger.Log("Done.");
             }
-            catch(Exception ex) {
+            catch (Exception ex) {
                 logger.Log("Copying files failed.");
                 logger.Log(ex);
                 tcs.SetException(ex);

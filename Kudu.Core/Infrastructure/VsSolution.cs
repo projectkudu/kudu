@@ -47,7 +47,7 @@ namespace Kudu.Core.Infrastructure {
             foreach (var project in projectsArray) {
                 projects.Add(new VsSolutionProject(solutionPath, project));
             }
-            
+
             Path = solutionPath;
             Projects = projects;
         }

@@ -126,7 +126,7 @@ namespace Kudu.Web.Controllers {
 
             return HttpNotFound();
         }
-        
+
         [ActionName("editor")]
         public ActionResult Editor(string slug) {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);

@@ -10,7 +10,7 @@ namespace Kudu.Services.Settings {
         public ConnectionStringsService(IDeploymentSettingsManager settingsManager) {
             _settingsManager = settingsManager;
         }
-        
+
         [WebGet(UriTemplate = "")]
         public IEnumerable<ConnectionStringSetting> Index() {
             return _settingsManager.GetConnectionStrings();

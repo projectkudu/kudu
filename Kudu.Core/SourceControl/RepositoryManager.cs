@@ -12,10 +12,10 @@ namespace Kudu.Core.SourceControl {
         public RepositoryManager(string path) {
             _path = path;
         }
-        
+
         public void CreateRepository(RepositoryType type) {
             RepositoryType currentType = GetRepositoryType();
-            
+
             if (currentType != RepositoryType.None) {
                 throw new InvalidOperationException("Repository already exists. Delete it before creating a new one.");
             }
@@ -33,7 +33,7 @@ namespace Kudu.Core.SourceControl {
                     throw new InvalidOperationException("Unsupported repository type.");
             }
         }
-        
+
         public void CloneRepository(string source, RepositoryType type) {
             switch (type) {
                 case RepositoryType.Git:

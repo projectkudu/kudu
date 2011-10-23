@@ -4,7 +4,6 @@ using System.ServiceModel;
 using System.ServiceModel.Web;
 using Kudu.Core.SourceControl;
 using Microsoft.ApplicationServer.Http.Dispatcher;
-using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.SourceControl {
     [ServiceContract]

@@ -14,7 +14,7 @@ namespace Kudu.Client.Deployment {
         private readonly Connection _connection;
 
         public event Action<DeployResult> StatusChanged;
-        
+
 
         public RemoteDeploymentManager(string serviceUrl) {
             serviceUrl = UrlUtility.EnsureTrailingSlash(serviceUrl);
@@ -34,7 +34,7 @@ namespace Kudu.Client.Deployment {
                 WebException webException = exception as WebException;
                 if (webException != null) {
                     var webResponse = (HttpWebResponse)webException.Response;
-                    if (webResponse != null && 
+                    if (webResponse != null &&
                         webResponse.StatusCode == HttpStatusCode.NotFound) {
                         _connection.Stop();
                     }

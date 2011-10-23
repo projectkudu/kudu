@@ -77,7 +77,7 @@ namespace Kudu.Web.Controllers {
 
             return View("index", model);
         }
-        
+
         [HttpPost]
         [ActionName("delete-connection-string")]
         public ActionResult DeleteConnectionString(string slug, string name) {

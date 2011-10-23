@@ -1,6 +1,6 @@
-﻿using System.Web.Mvc;
+﻿using System.Data.Entity;
+using System.Web.Mvc;
 using System.Web.Routing;
-using System.Data.Entity;
 using Kudu.Web.Models;
 
 namespace Kudu.Web {
@@ -9,7 +9,7 @@ namespace Kudu.Web {
             filters.Add(new HandleErrorAttribute());
         }
 
-        public static void RegisterRoutes(RouteCollection routes) {            
+        public static void RegisterRoutes(RouteCollection routes) {
             routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
 
             routes.MapRoute(

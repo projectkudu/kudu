@@ -134,7 +134,7 @@ namespace Kudu.Core.Test {
   </connectionStrings>
 </configuration>", document.ToString().Trim());
         }
- 
+
         [Fact]
         public void PerformTransformationsDoesNothingIfWebConfigDoesNotExist() {
             var mockSettingProvider = new Mock<IDeploymentSettingsManager>();

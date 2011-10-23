@@ -40,7 +40,7 @@ namespace Kudu.Core.Commands {
             _executingProcess.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             _executingProcess.StartInfo.ErrorDialog = false;
 
-            _executingProcess.Exited += (sender, e) => {                
+            _executingProcess.Exited += (sender, e) => {
                 if (CommandEvent != null) {
                     CommandEvent(new CommandEvent(CommandEventType.Complete));
                 }

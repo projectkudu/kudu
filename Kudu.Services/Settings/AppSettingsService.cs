@@ -1,9 +1,7 @@
 ﻿using System.Collections.Generic;
-using Kudu.Services.Infrastructure;
-using Kudu.Core.Deployment;
-using System.Linq;
 using System.ServiceModel;
 using System.ServiceModel.Web;
+using Kudu.Core.Deployment;
 
 namespace Kudu.Services.Settings {
     [ServiceContract]
@@ -12,7 +10,7 @@ namespace Kudu.Services.Settings {
         public AppSettingsService(IDeploymentSettingsManager settingsManager) {
             _settingsManager = settingsManager;
         }
-        
+
         [WebGet(UriTemplate = "")]
         public IEnumerable<DeploymentSetting> Index() {
             return _settingsManager.GetAppSettings();

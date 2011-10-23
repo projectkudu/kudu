@@ -16,7 +16,7 @@ namespace Kudu.Services.Deployment {
         public string GetActiveDeploymentId() {
             return _deploymentManager.ActiveDeploymentId;
         }
-        
+
         [WebInvoke(UriTemplate = "")]
         public void Deploy() {
             _deploymentManager.Deploy();
@@ -26,7 +26,7 @@ namespace Kudu.Services.Deployment {
         public void Restore(SimpleJson.JsonObject input) {
             _deploymentManager.Deploy((string)input["id"]);
         }
-        
+
         [WebInvoke(UriTemplate = "build")]
         public void Build(SimpleJson.JsonObject input) {
             _deploymentManager.Build((string)input["id"]);

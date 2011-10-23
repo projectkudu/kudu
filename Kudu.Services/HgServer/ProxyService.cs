@@ -28,7 +28,7 @@ namespace Kudu.Services.HgServer {
             _repositoryManager = repositoryManager;
         }
 
-        [WebInvoke(UriTemplate="")]
+        [WebInvoke(UriTemplate = "")]
         public HttpResponseMessage PostProxy(HttpRequestMessage request) {
             return ProxyRequest(request);
         }

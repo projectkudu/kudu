@@ -1,5 +1,5 @@
-﻿using Kudu.Core.Infrastructure;
-using System;
+﻿using System;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core {
     public class Environment : IEnvironment {

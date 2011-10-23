@@ -1,6 +1,6 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using System.Text.RegularExpressions;
-using System;
 
 namespace Kudu.Web.Infrastructure {
     public static class SlugGenerator {

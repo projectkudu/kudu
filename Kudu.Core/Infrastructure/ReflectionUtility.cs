@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace Kudu.Core.Infrastructure {
     internal static class ReflectionUtility {
-        public static PropertyInfo GetInternalProperty(Type typeName, string propertyName) {            
+        public static PropertyInfo GetInternalProperty(Type typeName, string propertyName) {
             return typeName.GetProperty(propertyName, BindingFlags.NonPublic | BindingFlags.Instance);
         }
 

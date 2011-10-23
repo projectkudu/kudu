@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using Kudu.Core.Infrastructure;
-namespace Kudu.Core {
+﻿namespace Kudu.Core {
     public interface IEnvironment {
         string RepositoryPath { get; }
         string DeploymentRepositoryPath { get; }

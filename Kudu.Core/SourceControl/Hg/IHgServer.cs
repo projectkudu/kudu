@@ -1,5 +1,4 @@
-﻿using System;
-
+﻿
 namespace Kudu.Core.SourceControl.Hg {
     public interface IHgServer {
         string Url { get; }

@@ -1,5 +1,4 @@
-﻿using Kudu.Client.Deployment;
-using Kudu.Core.Deployment;
+﻿using Kudu.Core.Deployment;
 
 namespace Kudu.SignalR.ViewModels {
     public class LogEntryViewModel {

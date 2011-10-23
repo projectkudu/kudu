@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 namespace Kudu.Core.Deployment {
     public class WapBuilder : SolutionBasedSiteBuilder {
         private readonly string _projectPath;
-        
+
         public WapBuilder(IBuildPropertyProvider propertyProvider, string sourcePath, string solutionPath, string projectPath)
             : base(propertyProvider, sourcePath, solutionPath) {
             _projectPath = projectPath;

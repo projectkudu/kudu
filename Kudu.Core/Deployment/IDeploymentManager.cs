@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Kudu.Core.Deployment {
     public interface IDeploymentManager {

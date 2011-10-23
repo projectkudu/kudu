@@ -19,7 +19,7 @@ namespace Kudu.Core.SourceControl {
         }
 
         public void Initialize() {
-            
+
         }
 
         public IEnumerable<Branch> GetBranches() {
@@ -47,11 +47,11 @@ namespace Kudu.Core.SourceControl {
         }
 
         public void AddFile(string path) {
-            
+
         }
 
         public void RevertFile(string path) {
-            
+
         }
 
         public ChangeSet Commit(string authorName, string message) {
@@ -59,7 +59,7 @@ namespace Kudu.Core.SourceControl {
         }
 
         public void Update(string id) {
-            
+
         }
 
         public void Push() {

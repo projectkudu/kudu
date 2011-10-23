@@ -1,9 +1,9 @@
-﻿using Kudu.Core.SourceControl.Git;
-using Xunit;
-using System;
+﻿using System;
 using System.Linq;
-using Kudu.Core.SourceControl;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.SourceControl;
+using Kudu.Core.SourceControl.Git;
+using Xunit;
 
 namespace Kudu.Core.Test {
     public class GitRepositoryRepositoryTest {

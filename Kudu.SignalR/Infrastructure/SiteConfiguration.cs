@@ -29,7 +29,7 @@ namespace Kudu.SignalR.Infrastructure {
                 ProjectSystem = config.ProjectSystem;
                 DevProjectSystem = config.DevProjectSystem;
 
-                
+
                 if (config.DeploymentManager.IsActive) {
                     DeploymentManager = config.DeploymentManager;
                     CommandExecutor = config.CommandExecutor;
@@ -40,10 +40,10 @@ namespace Kudu.SignalR.Infrastructure {
                 }
             }
             else {
-                Repository = new RemoteRepository(ServiceUrl + "scm"); 
-                ProjectSystem = new RemoteProjectSystem(ServiceUrl + "live/files");                
+                Repository = new RemoteRepository(ServiceUrl + "scm");
+                ProjectSystem = new RemoteProjectSystem(ServiceUrl + "live/files");
                 DevProjectSystem = new RemoteProjectSystem(ServiceUrl + "dev/files");
-                
+
                 SubscribeToEvents();
 
                 _cache[Name] = this;
@@ -54,7 +54,7 @@ namespace Kudu.SignalR.Infrastructure {
             DeploymentManager = new RemoteDeploymentManager(ServiceUrl + "deploy");
             DeploymentManager.StatusChanged += OnDeploymentStatusChanged;
 
-            
+
             DevCommandExecutor = new RemoteCommandExecutor(ServiceUrl + "dev/command");
             DevCommandExecutor.CommandEvent += commandEvent => {
                 OnNewCommandEvent(devenvClients, commandEvent);

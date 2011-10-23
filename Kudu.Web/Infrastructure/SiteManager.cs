@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Web;
 using Kudu.Core.Infrastructure;
 using Kudu.Web.Models;
 using IIS = Microsoft.Web.Administration;
@@ -129,7 +128,7 @@ namespace Kudu.Web.Infrastructure {
                 iis.CommitChanges();
             }
         }
-        
+
         private void DeleteSite(IIS.ServerManager iis, string siteName) {
             var site = iis.Sites[siteName];
             if (site != null) {
@@ -154,6 +153,6 @@ namespace Kudu.Web.Infrastructure {
             }
 
             FileSystemHelpers.DeleteDirectorySafe(physicalPath);
-        }        
+        }
     }
 }

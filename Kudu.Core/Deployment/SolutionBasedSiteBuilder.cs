@@ -9,7 +9,7 @@ namespace Kudu.Core.Deployment {
     public abstract class SolutionBasedSiteBuilder : ISiteBuilder {
         private readonly Executable _msbuildExe;
         private readonly IBuildPropertyProvider _propertyProvider;
-        
+
         public string SolutionDir {
             get {
                 return Path.GetDirectoryName(SolutionPath);

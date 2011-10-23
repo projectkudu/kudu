@@ -1,5 +1,5 @@
-﻿using System.Web;
-using System;
+﻿using System;
+using System.Web;
 
 namespace Kudu.Services.Web {
     public class ServerConfiguration : IServerConfiguration {

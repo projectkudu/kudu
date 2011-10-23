@@ -94,7 +94,7 @@ namespace Kudu.Core.SourceControl.Git {
                 string newCommit = _gitExe.Execute("show HEAD");
                 return ParseCommit(newCommit.AsReader());
             }
-            catch(Exception e) {
+            catch (Exception e) {
                 if (e.Message.Contains("nothing to commit")) {
                     return null;
                 }
