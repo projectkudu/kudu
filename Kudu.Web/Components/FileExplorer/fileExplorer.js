@@ -186,11 +186,11 @@
         var throttled = {
             nextSelection: $.utils.throttle(function () {
                 fileExplorer.nextSelection();
-            }, 50),
+            }, 25),
 
             prevSelection: $.utils.throttle(function () {
                 fileExplorer.prevSelection();
-            }, 50)
+            }, 25)
         };
 
         $(document).bind('keydown', 'down', function (ev) {
