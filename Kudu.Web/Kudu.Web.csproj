@@ -116,8 +116,8 @@
     <Content Include="Components\FileExplorer\fileExplorer.htm" />
     <Content Include="Components\FileExplorer\templates.htm" />
     <Content Include="Components\FileSystem\fileSystem.js" />
-    <Content Include="Components\ide\ide.css" />
-    <Content Include="Components\ide\ide.js" />
+    <Content Include="Components\IDE\ide.css" />
+    <Content Include="Components\IDE\ide.js" />
     <Content Include="Components\Loader\loader.htm" />
     <Content Include="Components\Loader\loader.js" />
     <Content Include="Components\NotificationBar\notificationbar.js" />
@@ -155,15 +155,11 @@
     <Content Include="Scripts\jquery.signalR.min.js" />
     <Content Include="Components\Editor\codemirror\codemirror.css" />
     <Content Include="Components\Editor\codemirror\default-settings.css" />
-    <Content Include="Styles\codemirror.css" />
-    <Content Include="Styles\default-settings.css" />
     <Content Include="Styles\Settings.css" />
-    <Content Include="Styles\skyde.css" />
     <Content Include="Scripts\loader.js" />
     <Content Include="Styles\SourceControl.css" />
     <Content Include="Scripts\SourceControl.js" />
     <Content Include="images\addfile.png" />
-    <Content Include="images\addview.png" />
     <Content Include="images\application_side_list.png" />
     <Content Include="images\asax-edit.png" />
     <Content Include="images\asax.png" />
@@ -178,8 +174,6 @@
     <Content Include="images\config-add.png" />
     <Content Include="images\config-edit.png" />
     <Content Include="images\config.png" />
-    <Content Include="images\connect.png" />
-    <Content Include="images\connecting.gif" />
     <Content Include="images\cs-add.png" />
     <Content Include="images\cs-edit.png" />
     <Content Include="images\cs.png" />
@@ -189,7 +183,6 @@
     <Content Include="images\css-add.png" />
     <Content Include="images\css-edit.png" />
     <Content Include="images\css.png" />
-    <Content Include="images\disconnect.png" />
     <Content Include="images\dll.png" />
     <Content Include="images\error.png" />
     <Content Include="images\folder-collapsed.png" />
@@ -214,9 +207,7 @@
     <Content Include="images\refresh.png" />
     <Content Include="images\run.png" />
     <Content Include="images\saveall.png" />
-    <Content Include="images\scaffold.png" />
     <Content Include="images\solution.png" />
-    <Content Include="images\sync.png" />
     <Content Include="images\tick.png" />
     <Content Include="images\tt.png" />
     <Content Include="images\warning.png" />
@@ -326,7 +317,7 @@
     <Content Include="Views\Application\Deployments.cshtml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Views\Application\NewEditor.cshtml" />
+    <Content Include="Views\Application\Editor.cshtml" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" />

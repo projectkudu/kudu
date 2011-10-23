@@ -108,6 +108,10 @@
     background-image: url('../../images/application_side_list.png');
 }
 
+.icon-new-file {
+    background-image: url('../../images/addfile.png');
+}
+
 .icon-file-added {
     background-image: url('../../images/page_white_add.png');
 }
