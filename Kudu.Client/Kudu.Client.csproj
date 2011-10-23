@@ -90,7 +90,6 @@
     <Compile Include="Model\ChangeSetViewModel.cs" />
     <Compile Include="Model\DeployResultViewModel.cs" />
     <Compile Include="Model\LogEntryViewModel.cs" />
-    <Compile Include="Model\RepositoryViewModel.cs" />
     <Compile Include="Infrastructure\ApplicationNameResolver.cs" />
     <Compile Include="Models\Application.cs" />
     <Compile Include="Models\IApplication.cs" />

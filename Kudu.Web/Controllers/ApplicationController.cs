@@ -126,36 +126,9 @@ namespace Kudu.Web.Controllers {
 
             return HttpNotFound();
         }
-
+        
         [ActionName("editor")]
-        public ActionResult EditFiles(string slug) {
-            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
-            if (application == null) {
-                return HttpNotFound();
-            }
-
-            var appViewModel = new ApplicationViewModel(application);
-            var repositoryManager = GetRepositoryManager(application);
-            RepositoryType repositoryType = repositoryManager.GetRepositoryType();
-
-            if (application.DeveloperSiteUrl == null) {
-                if (repositoryType != RepositoryType.None) {
-                    // Set this flag so we know that we're in the state where we can
-                    // create the developer site.
-                    ViewBag.Clone = true;
-                }
-
-                appViewModel.RepositoryType = RepositoryType.None;
-            }
-            else {
-                appViewModel.RepositoryType = repositoryType;
-            }
-
-            return View(appViewModel);
-        }
-
-        [ActionName("neweditor")]
-        public ActionResult NewEditor(string slug) {
+        public ActionResult Editor(string slug) {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             if (application == null) {
                 return HttpNotFound();

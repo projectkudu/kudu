@@ -16,10 +16,7 @@
     </li>
     }
     <li>
-        @Html.ActionLink("Develop (old)", "editor", new { slug = Model.Name.GenerateSlug() })
-    </li>
-    <li>
-        @Html.ActionLink("Develop (new)", "neweditor", new { slug = Model.Name.GenerateSlug() }, new { target = "_blank" })
+        @Html.ActionLink("Develop", "editor", new { slug = Model.Name.GenerateSlug() }, new { target = "_blank" })
     </li>
     <li>
         @Html.ActionLink("Settings", "index", "settings", new { slug = Model.Name.GenerateSlug() }, null)

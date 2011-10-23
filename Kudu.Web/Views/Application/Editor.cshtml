@@ -4,232 +4,152 @@
 @model ApplicationViewModel
            
 @{
+    Layout = null;
     ViewBag.Title = "Editor";
+
+    // Set the mode based on if we have the dev site at all
+    var mode = Model.DeveloperSiteUrl == null ? 0 : 1;
+    
+    // Determine if we can create the site
+    bool createDevelopmentSite = ViewData.ContainsKey("Clone");
+
+    // Get the url
+    string createDevelopmentSiteUrl = Url.Action("create-dev-site", new { slug = Model.Name });
+    string webRootUrl = Url.Action("set-webroot", new { slug = Model.Name });
+    
+    // Create the javascript expression
+    string siteManagerInit = String.Format("$.siteManager({{ createDevelopmentSiteUrl: '{0}', setWebRootUrl: '{1}' }})", createDevelopmentSiteUrl, webRootUrl);
+    
+    // Code mirror modes
+    var modeDirectory = new DirectoryInfo(Server.MapPath("~/Components/Editor/codemirror/mode"));
+    var jsFiles = modeDirectory.GetFiles("*.js", SearchOption.AllDirectories);
+    var cssFiles = modeDirectory.GetFiles("*.css", SearchOption.AllDirectories);
+
+    var fileExplorerTemplate = Server.MapPath("~/Components/FileExplorer/templates.htm");
+    var tabManagerTemplate = Server.MapPath("~/Components/TabManager/templates.htm");
+    var diffViewerTemplate = Server.MapPath("~/Components/DiffViewer/templates.htm");
 }
-<div id="skyde">
-    <div id="notification" class="notification icon icon-loading">
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+
+<script src="@Url.Content("~/Scripts/jquery-1.6.3.min.js")" type="text/javascript"></script>
+<link href="@Url.Content("~/Styles/ui-lightness/jquery-ui-1.8.16.custom.css")" rel="stylesheet" type="text/css" />
+<script src="@Url.Content("~/Scripts/jquery-ui-1.8.16.custom.min.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Scripts/jquery.render.min.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Scripts/jquery.hotkeys-patched.js")" type="text/javascript"></script>
+<link href="@Url.Content("~/Components/Editor/codemirror/default-settings.css")" rel="stylesheet" type="text/css" />
+<link href="@Url.Content("~/Components/Editor/codemirror/codemirror.css")" rel="stylesheet" type="text/css" />
+<script src="@Url.Content("~/Components/Editor/codemirror/codemirror.js")" type="text/javascript"></script>
+<link href="@Url.Content("~/Components/Shared/base.css")" rel="stylesheet" type="text/css" />
+<link href="@Url.Content("~/Components/Shared/icons.css")" rel="stylesheet" type="text/css" />
+<script src="@Url.Content("~/Components/Shared/icons.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Components/Shared/utils.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Components/DiffViewer/diffViewer.js")" type="text/javascript"></script>
+<link href="@Url.Content("~/Components/DiffViewer/diffViewer.css")" rel="stylesheet" type="text/css" />
+<script src="@Url.Content("~/Components/CommitViewer/commitViewer.js")" type="text/javascript"></script>
+<link href="@Url.Content("~/Components/CommitViewer/commitViewer.css")" rel="stylesheet" type="text/css" />
+<link href="@Url.Content("~/Components/NotificationBar/notificationbar.css")" rel="stylesheet" type="text/css" />
+<script src="@Url.Content("~/Components/NotificationBar/notificationbar.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Components/SiteManager/siteManager.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Components/FileSystem/fileSystem.js")" type="text/javascript"></script>
+<link href="@Url.Content("~/Components/TabManager/tabManager.css")" rel="stylesheet" type="text/css" />
+<script src="@Url.Content("~/Components/TabManager/tabManager.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Components/Loader/loader.js")" type="text/javascript"></script>
+<link href="@Url.Content("~/Components/FileExplorer/fileExplorer.css")" rel="stylesheet" type="text/css" />
+<script src="@Url.Content("~/Components/FileExplorer/fileExplorer.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Components/Editor/editor.js")" type="text/javascript"></script>
+<link href="@Url.Content("~/Components/Console/console.css")" rel="stylesheet" type="text/css" />
+<script src="@Url.Content("~/Components/Console/console.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Components/Dialogs/dialogs.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Components/CommandBar/commandbar.js")" type="text/javascript"></script>
+<link href="@Url.Content("~/Components/CommandBar/commandBar.css")" rel="stylesheet" type="text/css" />
+<link href="@Url.Content("~/Components/ide/ide.css")" rel="stylesheet" type="text/css" />
+<script src="@Url.Content("~/Components/ide/ide.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Scripts/jquery.signalR.min.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/signalR/hubs")" type="text/javascript"></script>
+
+<!-- Templates -->
+@Html.Raw(File.ReadAllText(fileExplorerTemplate))
+@Html.Raw(File.ReadAllText(tabManagerTemplate))
+@Html.Raw(File.ReadAllText(diffViewerTemplate))
+
+@foreach (var file in cssFiles) {
+    string url = String.Format("~/Components/Editor/codemirror/mode/{0}/{1}", file.Directory.Name, file.Name);
+<link rel="stylesheet" href="@Url.Content(url)" type="text/css" />
+}
+@foreach (var file in jsFiles) {
+    string url = String.Format("~/Components/Editor/codemirror/mode/{0}/{1}", file.Directory.Name, file.Name);
+<script src="@Url.Content(url)" type="text/javascript"></script>
+}
+
+<script type="text/javascript">
+    $(function () {
+        $.ide({
+            applicationName: '@Model.Name',
+            tabManager: $('#tabs'),
+            editor: $('#editor'),
+            fileExplorer: $('#files'),
+            activeView : $('#active-view'),
+            launcher : $('#run'),
+            projectList : $('#projects'),
+            notificationBar : $('#notification-bar'),
+            statusBar : $('#status'),
+            mode: @mode,
+            createDevelopmentSite : @createDevelopmentSite.ToString().ToLower(),
+            siteManager: @Html.Raw(siteManagerInit),
+            siteUrl: '@Model.SiteUrl'
+        });
+    });
+    </script>
+</head>
+<body>
+    <div id="notification-bar">
     </div>
-    <ul id="toolbar">
+    <ul id="actions">
         <li>
-            <a href="#" class="icon icon-save" id="save">Save</a>
+            <a href="#" class="icon icon-file-added" data-action="new-file">New File</a> 
         </li>
         <li>
-            <a href="#" class="icon icon-build dev-mode" id="build">Build</a>
-        </li>        
+            <a href="#" class="icon icon-save" data-action="save-all">Save All</a>
+        </li>
+        <li>
+            <a href="#" class="icon icon-refresh" data-action="refresh-project">Refresh</a>
+        </li>
+        <li>
+            <a href="#" class="icon icon-build dev-mode" data-action="build">Build</a>
+        </li>
         <li>            
             <a href="@Model.DeveloperSiteUrl" target="_blank" class="icon icon-run dev-mode" id="run">Run</a>
         </li>
         <li>
-            <a href="#" class="icon icon-live dev-mode" id="deploy">Go Live</a>
+            <a href="#" class="icon icon-live dev-mode" data-action="go-live">Go Live</a>
+        </li>
+        <li class="project-selection dev-mode">
+            Projects: <select id="projects"></select>   
         </li>
     </ul>
 
-    <select id="active-view"@if(Model.RepositoryType == RepositoryType.None) {<text> class="hide"</text>}>
-        <option value="dev">Developer</option>
-        <option value="live"@if(Model.RepositoryType == RepositoryType.None) {<text> selected="selected"</text>}>Live</option>
+    <select id="active-view"@if (Model.RepositoryType == RepositoryType.None) {<text> class="hide"</text>}>
+        <option value="1">Developer</option>
+        <option value="0"@if (Model.RepositoryType == RepositoryType.None) {<text> selected="selected"</text>}>Live</option>
     </select>
 
     <ul id="tabs">
     </ul>
-    <div id="code-surface">
-        <div id="text-editor">
+    <div class="clear"></div>
+    <div id="ide">
+        <div id="edit-area">
             <textarea id="editor"></textarea>
         </div>
-        <div id="file-browser">
-        </div>
-    </div>    
-
-    <div id="console-ghost"></div>
-    <div id="console" class="collapsed">
-        <div class="header">
-            <div id="status" class="icon icon-save"></div>
-            <a href="#" id="show-console" class="icon-notext icon-expand">&nbsp;</a>
-        </div>
-        <div class="output">
-            <div class="messages">
-                <ul class="buffer">
-                </ul>
-            </div>
-            <form action="#" method="post" id="new-command">
-                <span class="prompt">$</span> 
-                <input type="text" id="console-command" value="" autocomplete="off" />
-                <div class="clear"></div>
-            </form>
+        <div id="files">
         </div>
     </div>
-</div>
-
-<!-- CODE MIRROR INCLUDES -->
-<link rel="stylesheet" href="@Url.Content("~/Styles/codemirror.css")">
-<link rel="stylesheet" href="@Url.Content("~/Styles/default-settings.css")">
-<script src="@Url.Content("~/Scripts/codemirror/codemirror.js")"></script>
-<!-- CODE MIRROR INCLUDES -->
-<!-- LANGUAGES -->
-<link href="@Url.Content("~/Scripts/codemirror/mode/clike/clike.css")" rel="stylesheet" type="text/css" />
-<script src="@Url.Content("~/Scripts/codemirror/mode/clike/clike.js")" type="text/javascript"></script>
-<script src="@Url.Content("~/Scripts/codemirror/mode/htmlmixed/htmlmixed.js")" type="text/javascript"></script>
-<link href="@Url.Content("~/Scripts/codemirror/mode/css/css.css")" rel="stylesheet" type="text/css" />
-<script src="@Url.Content("~/Scripts/codemirror/mode/css/css.js")" type="text/javascript"></script>
-<link href="@Url.Content("~/Scripts/codemirror/mode/javascript/javascript.css")" rel="stylesheet" type="text/css" />
-<script src="@Url.Content("~/Scripts/codemirror/mode/javascript/javascript.js")" type="text/javascript"></script>
-<script src="@Url.Content("~/Scripts/codemirror/mode/xml/xml.js")" type="text/javascript"></script>
-<link href="@Url.Content("~/Scripts/codemirror/mode/xml/xml.css")" rel="stylesheet" type="text/css" />
-<link href="@Url.Content("~/Scripts/codemirror/mode/razor/razor.css")" rel="stylesheet" type="text/css" />
-<script src="@Url.Content("~/Scripts/codemirror/mode/razor/razor.js")" type="text/javascript"></script>
-<script src="@Url.Content("~/Scripts/codemirror/mode/php/php.js")" type="text/javascript"></script>
-<link href="@Url.Content("~/Scripts/codemirror/mode/markdown/markdown.css")" rel="stylesheet" type="text/css" />
-<script src="@Url.Content("~/Scripts/codemirror/mode/markdown/markdown.js")" type="text/javascript"></script>
-<script src="@Url.Content("~/Scripts/codemirror/mode/yaml/yaml.js")" type="text/javascript"></script>
-<!-- LANGUAGES -->
-<link href="@Url.Content("~/Styles/skyde.css")" rel="stylesheet" type="text/css" />
-
-<script id="folderTemplate" type="text/x-jquery-tmpl"> 
-    <ul class="folder" data-path="${$data.getPath()}">
-        <li>
-            <a href="#" class="icon icon-project">@Model.Name</a>
-            <ul class="menu">
-                <li><a href="#" class="menu-launcher icon-notext icon-menu">&nbsp;</a>
-                <ul class="menu-contents">
-                {{if !$data.isReadOnly()}}
-                    <li><a href="#" class="new-file icon icon-new-file">New File</a></li>
-                    <li><a href="#" class="new-folder icon icon-new-folder">New Folder</a></li>
-                {{/if}}
-                </ul>
-                </li>
-            </ul>
-            <div class="clear" />
-            <div class="folder-contents">
-                {{tmpl(getDirectories()) "#lazyFolderTemplate"}}
-                <ul class="files">
-                    {{tmpl(getFiles()) "#fileTemplate"}}
-                </ul>
-            </div>
-        </li>            
-    </ul>
-</script>
-
-<script id="lazyFolderTemplate" type="text/x-jquery-tmpl"> 
-    <ul class="folder folder-collapsed" data-path="${$data.getPath()}">
-        <li>
-            <a href="#" class="icon icon-folder folder-collapsed">${$data.getName()}</a>
-            <ul class="menu">
-                <li><a href="#" class="menu-launcher icon-notext icon-menu">&nbsp;</a>
-                <ul class="menu-contents">
-                {{if !$data.isReadOnly()}}
-                    <li><a href="#" class="new-file icon icon-new-file">New File</a></li>
-                    <li><a href="#" class="new-folder icon icon-new-folder">New Folder</a></li>
-                {{/if}}
-                </ul>
-                </li>
-            </ul>
-            <div class="clear" />
-            <div class="folder-contents" style="display:none">
-                <div class="lazy-folders">
-                    
-                </div>
-                <ul class="files lazy-files">
-                    
-                </ul>
-            </div>
-        </li>            
-    </ul>
-</script>
-
-<script id="fileTemplate" type="text/x-jquery-tmpl"> 
-    <li class="file" data-path="${$data.getPath()}">
-        <a href="#" class="open" id="${$data.getElementId()}">${$data.getName()}</a>
-        {{if !$data.isReadOnly()}}
-        <a href="#" class="delete icon-notext icon-close">&nbsp;</a>
-        {{/if}}
-    </li>
-</script>
-
-<script id="tabTemplate" type="text/x-jquery-tmpl"> 
-    <li class="file${active ? " active" : ""}" data-path="${file.getPath()}">
-        <a href="#" class="tab open icon icon-${css}">${file.getName()}</a>
-        {{if file.isDirty()}}<span class="dirty">*</span>{{/if}}
-        <a href="#" class="delete icon-notext icon-close">&nbsp;</a>
-    </li>
-</script>
-
-<script id="changeset-detail" type="text/x-jquery-tmpl">
-    <div class="commit-detail gray-gradient">
-        <p class="details">${ChangeSet.Id}</p>
-        <p>{{html ChangeSet.Message}}<p>
-        <div class="author">            
-            {{if ChangeSet.EmailHash}}
-            <div class="author-pic">
-                <img src="http://www.gravatar.com/avatar/${ChangeSet.EmailHash}?s=32&d=mm" class="gravatar" />
-            </div>
-            {{/if}}
-            <div class="author-info">
-                ${ChangeSet.AuthorName} <span class="details">(author)</span>
-                <div class="timeago" title="${ChangeSet.Date}"></div>
-            </div>
+    <div class="clear"></div>
+    <div id="status-container">
+        <div id="status" class="icon icon-save">
         </div>
     </div>
-    {{tmpl "#diff-view"}}
-</script>
-
-<script id="diff-view" type="text/x-jquery-tmpl">
-    <div class="commit-summary">
-        Showing ${FilesChanged} changed files with ${Insertions} additions and ${Deletions} deletions.
-    </div>
-    <ul class="commit-file-summary">
-        {{each(fileName, file) Files}}
-            <li class="file icon ${getFileClass(file)}" data-path="${fileName}">
-                <a href="#">${fileName}</a> {{if file.Binary}}<span class="details">(binary)</span>{{/if}}
-                <a href="#/working" class="icon-notext icon-close revert">&nbsp;</a>
-            </li>
-        {{/each}}
-    </ul>
-    {{each(fileName, file) Files}}
-        <div id="${getDiffId(fileName)}" class="diff">
-            <div class="diff-header gray-gradient">
-                <span class="icon ${file.Binary ? "icon-binary-file" : "icon-file"}">${fileName}</span>
-            </div>
-            {{tmpl(file) "#file-view"}}
-        </div>
-    {{/each}}
-</script>
-
-<script id="file-view" type="text/x-jquery-tmpl">
-    {{if Binary}}
-    <div class="binary-text">Binary file not shown</div>
-    {{else}}
-    <div class="diff-source">
-        <table width="100%" cellpadding="0" cellspacing="0">
-            {{each(i, line) DiffLines}}
-                <tr>
-                    <td class="line-number details">${line.LeftLine ? line.LeftLine : "&nbsp;"}</td>
-                    <td class="line-number details">${line.RightLine ? line.RightLine : "&nbsp;"}</td>
-                    <td class="line${getDiffClass(line.Type)}">
-                        <pre>${line.Text}</pre>
-                    </td>
-                </tr>
-            {{/each}}
-        </table>
-    </div>
-    {{/if}}
-</script>
-
-<script src="@Url.Content("~/Scripts/jquery-1.6.3.min.js")" type="text/javascript"></script>
-<script src="@Url.Content("~/Scripts/jquery.hotkeys-patched.js")" type="text/javascript"></script>
-<script src="@Url.Content("~/Scripts/jquery.signalR.min.js")" type="text/javascript"></script>
-<script src="@Url.Content("~/SignalR/hubs")" type="text/javascript"></script>
-<script type="text/javascript">
-    (function ($) {
-        $(function () {
-            $.connection.documents.applicationName = '@Model.Name';
-            @if (ViewData.ContainsKey("Clone")) {
-            <text>$.connection.documents.cloneUrl = '@Url.Action("create-dev-site", new { slug = Model.Name })';</text>
-            }
-            $.connection.documents.setDefaultProjectUrl = '@Url.Action("set-webroot", new { slug = Model.Name })';
-        });
-
-    })(jQuery);
-</script>
-<script src="@Url.Content("~/Scripts/jquery.render.min.js")" type="text/javascript"></script>
-<script src="@Url.Content("~/Scripts/io/fileSystem.js")" type="text/javascript"></script>
-<script src="@Url.Content("~/Scripts/loader.js")" type="text/javascript"></script>
-<script src="@Url.Content("~/Scripts/skyde.js")" type="text/javascript"></script>            
+</body>
+</html>
