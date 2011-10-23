@@ -26,8 +26,6 @@
                 $dirty = $tabs.find('.dirty'),
                 $close = $tabs.find('.close');
 
-            // Percentage of the tab that will take up text (file name)
-            var textPercentage = 6;
             // Margin and padding for each tab
             var tabExtra = $tabs.outerWidth() - $tabs.width();
             // Calculate the total with we have to work with
@@ -54,18 +52,10 @@
             // Make sure we're never over the maximum
             tabWidth = Math.min(maximumTabWidth, tabWidth);
 
-            // Find the maximum percentage of visible text
-            while (textPercentage > 0) {
-                var textWidth = (textPercentage * tabWidth) / 10;
-                var remaining = tabWidth - textWidth - tabExtra;
-                // If the remaining space is enough for non-text part of the tab then we're ok
-                if (remaining > nonTextArea) {
-                    break;
-                }
-                // Otherwise reduce the % width
-                textPercentage--;
-            }
-
+            // Find the maximum percentage of visible text            
+            var remaining = Math.max(0, tabWidth - tabExtra - nonTextArea);
+            var textPercentage = Math.floor((remaining * 100) / tabWidth);
+            
             if (tabWidth < minTabSize) {
                 // We're too small to hide the text area
                 $text.hide();
@@ -80,7 +70,7 @@
                 }
 
                 $(this).width(tabWidth);
-                $(this).find('.text').width(textPercentage + '0%');
+                $(this).find('.text').width(textPercentage + '%');
             });
         }
 
