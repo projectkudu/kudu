@@ -8,7 +8,7 @@
     </PropertyGroup>
     
     <ItemGroup>
-        <TestProjects Include="$(ProjectRoot)\Kudu*Test\bin\**\Kudu*Test.dll" />
+        <TestProjects Include="$(ProjectRoot)\Kudu.Core.Test\bin\Debug\Kudu.Core.Test.dll" />
     </ItemGroup>
     
     <UsingTask AssemblyFile="$(XunitPath)xunit.runner.msbuild.dll"
