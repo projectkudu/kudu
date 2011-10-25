@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="RunAll" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <Configuration Condition="$(Configuration) == ''">Debug</Configuration>
+        <ProjectRoot>$(MSBuildProjectDirectory)\..</ProjectRoot>
+        <ToolsPath>$(ProjectRoot)\tools\</ToolsPath>
+        <XunitPath>$(ToolsPath)xunit\</XunitPath>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <TestProjects Include="$(ProjectRoot)\Kudu*Test\bin\**\Kudu*Test.dll" />
+    </ItemGroup>
+    
+    <UsingTask AssemblyFile="$(XunitPath)xunit.runner.msbuild.dll"
+               TaskName="Xunit.Runner.MSBuild.xunit" />
+    
+    <Target Name="RunAll" DependsOnTargets="Build; RunTests" />
+    
+    <Target Name="RunTests">
+        <xunit Assembly="%(TestProjects.FullPath)" />
+    </Target>
+    
+    <Target Name="Build">
+        <MSBuild Projects="$(ProjectRoot)\kudu.sln" 
+                 Targets="Build" 
+                 Properties="Configuration=$(Configuration);
+                             MSBuildExtensionsPath32=$(ProjectRoot)\Kudu.Services.Web\msbuild" />
+    </Target>
+</Project>
