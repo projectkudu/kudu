@@ -53,9 +53,8 @@
 //
 
 using System;
-using System.IO;
-using System.Reflection;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 
 
@@ -87,7 +86,8 @@ namespace Ionic
             /// </summary>
             public TarCompression Compression
             {
-                get; set;
+                get;
+                set;
             }
 
             /// <summary>
@@ -109,7 +109,8 @@ namespace Ionic
             /// </example>
             public TextWriter StatusWriter
             {
-                get; set;
+                get;
+                set;
             }
 
             /// <summary>
@@ -117,7 +118,8 @@ namespace Ionic
             /// </summary>
             public bool FollowSymLinks
             {
-                get; set;
+                get;
+                set;
             }
 
             /// <summary>
@@ -125,7 +127,8 @@ namespace Ionic
             /// </summary>
             public bool Overwrite
             {
-                get; set;
+                get;
+                set;
             }
 
             /// <summary>
@@ -135,7 +138,8 @@ namespace Ionic
             /// </summary>
             public bool DoNotSetTime
             {
-                get; set;
+                get;
+                set;
             }
         }
 
@@ -198,7 +202,7 @@ namespace Ionic
             {
                 get
                 {
-                    switch(@Type)
+                    switch (@Type)
                     {
                         case TarEntryType.File_Old:
                         case TarEntryType.File:
@@ -267,29 +271,29 @@ namespace Ionic
         /// <summary>
         ///  This class is intended for internal use only, by the Tar library.
         /// </summary>
-        [StructLayout(LayoutKind.Sequential, Size=512)]
+        [StructLayout(LayoutKind.Sequential, Size = 512)]
         internal struct HeaderBlock
         {
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 100)]
-            public byte[]   name;    // name of file. A directory is indicated by a trailing slash (/) in its name.
+            public byte[] name;    // name of file. A directory is indicated by a trailing slash (/) in its name.
 
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
-            public byte[]   mode;    // file mode
+            public byte[] mode;    // file mode
 
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
-            public byte[]   uid;     // owner user ID
+            public byte[] uid;     // owner user ID
 
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
-            public byte[]   gid;     // owner group ID
+            public byte[] gid;     // owner group ID
 
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 12)]
-            public byte[]   size;    // length of file in bytes, encoded as octal digits in ASCII
+            public byte[] size;    // length of file in bytes, encoded as octal digits in ASCII
 
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 12)]
-            public byte[]   mtime;   // modify time of file
+            public byte[] mtime;   // modify time of file
 
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
-            public byte[]   chksum;  // checksum for header (use all blanks for chksum itself, when calculating)
+            public byte[] chksum;  // checksum for header (use all blanks for chksum itself, when calculating)
 
             // The checksum is calculated by taking the sum of the
             // unsigned byte values of the header block with the eight
@@ -299,59 +303,59 @@ namespace Ionic
             // It is stored as a six digit octal number with leading
             // zeroes followed by a null and then a space.
 
-            public byte     typeflag; // type of file
+            public byte typeflag; // type of file
 
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 100)]
-            public byte[]   linkname; // name of linked file (only if typeflag = '2')
+            public byte[] linkname; // name of linked file (only if typeflag = '2')
 
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 6)]
-            public byte[]   magic;    // USTAR indicator
+            public byte[] magic;    // USTAR indicator
 
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
-            public byte[]   version;  // USTAR version
+            public byte[] version;  // USTAR version
 
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-            public byte[]   uname;    // owner user name
+            public byte[] uname;    // owner user name
 
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-            public byte[]   gname;    // owner group name
+            public byte[] gname;    // owner group name
 
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
-            public byte[]   devmajor; // device major number
+            public byte[] devmajor; // device major number
 
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
-            public byte[]   devminor; // device minor number
+            public byte[] devminor; // device minor number
 
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 155)]
-            public byte[]   prefix;   // prefix for file name
+            public byte[] prefix;   // prefix for file name
 
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 12)]
-            public byte[]   pad;     // ignored
+            public byte[] pad;     // ignored
 
             public static HeaderBlock CreateHeaderBlock()
             {
                 HeaderBlock hb = new HeaderBlock
                     {
-                        name     = new byte[100],
-                        mode     = new byte[8],
-                        uid      = new byte[8],   // owner user ID
-                        gid      = new byte[8],   // owner group ID
-                        size     = new byte[12],  // length of file in bytes, encoded in octal
-                        mtime    = new byte[12],  // modify time of file
-                        chksum   = new byte[8],   // checksum for header
+                        name = new byte[100],
+                        mode = new byte[8],
+                        uid = new byte[8],   // owner user ID
+                        gid = new byte[8],   // owner group ID
+                        size = new byte[12],  // length of file in bytes, encoded in octal
+                        mtime = new byte[12],  // modify time of file
+                        chksum = new byte[8],   // checksum for header
                         linkname = new byte[100], // name of linked file
-                        magic    = new byte[6],   // USTAR indicator
-                        version  = new byte[2],   // USTAR version
-                        uname    = new byte[32],  // owner user name
-                        gname    = new byte[32],  // owner group name
+                        magic = new byte[6],   // USTAR indicator
+                        version = new byte[2],   // USTAR version
+                        uname = new byte[32],  // owner user name
+                        gname = new byte[32],  // owner group name
                         devmajor = new byte[8],   // device major number
                         devminor = new byte[8],   // device minor number
-                        prefix   = new byte[155], // prefix for file name
-                        pad      = new byte[12],  // ignored
+                        prefix = new byte[155], // prefix for file name
+                        pad = new byte[12],  // ignored
                     };
 
-                Array.Copy(System.Text.Encoding.ASCII.GetBytes("ustar "), 0, hb.magic, 0, 6 );
-                hb.version[0]=hb.version[1]=(byte) TarEntryType.File;
+                Array.Copy(System.Text.Encoding.ASCII.GetBytes("ustar "), 0, hb.magic, 0, 6);
+                hb.version[0] = hb.version[1] = (byte)TarEntryType.File;
 
                 return hb;
             }
@@ -389,12 +393,12 @@ namespace Ionic
 
                 // special case
                 bool allZeros = true;
-                Array.ForEach(this.chksum, (x) => {if (x!=0) allZeros= false; });
+                Array.ForEach(this.chksum, (x) => { if (x != 0) allZeros = false; });
                 if (allZeros) return 256;
 
                 // validation 6 and 7 have to be 0 and 0x20, in some order.
-                if (!(((this.chksum[6]==0) && (this.chksum[7]==0x20)) ||
-                    ((this.chksum[7]==0) && (this.chksum[6]==0x20))))
+                if (!(((this.chksum[6] == 0) && (this.chksum[7] == 0x20)) ||
+                    ((this.chksum[7] == 0) && (this.chksum[6] == 0x20))))
                     return -1;
 
                 string v = System.Text.Encoding.ASCII.GetString(this.chksum, 0, 6).Trim();
@@ -406,27 +410,27 @@ namespace Ionic
             public int SetChksum()
             {
                 // first set the checksum to all ASCII _space_ (dec 32)
-                var a = System.Text.Encoding.ASCII.GetBytes(new String(' ',8));
+                var a = System.Text.Encoding.ASCII.GetBytes(new String(' ', 8));
                 Array.Copy(a, 0, this.chksum, 0, a.Length);  // always 8
 
                 // then sum all the bytes
                 int rawSize = 512;
-                IntPtr buffer = Marshal.AllocHGlobal( rawSize );
-                Marshal.StructureToPtr( this, buffer, false );
-                byte[] block = new byte[ rawSize ];
-                Marshal.Copy( buffer, block, 0, rawSize );
-                Marshal.FreeHGlobal( buffer );
+                IntPtr buffer = Marshal.AllocHGlobal(rawSize);
+                Marshal.StructureToPtr(this, buffer, false);
+                byte[] block = new byte[rawSize];
+                Marshal.Copy(buffer, block, 0, rawSize);
+                Marshal.FreeHGlobal(buffer);
 
                 // format as octal
-                int sum= 0;
-                Array.ForEach(block, (x) => sum+=x );
+                int sum = 0;
+                Array.ForEach(block, (x) => sum += x);
                 string s = "000000" + Convert.ToString(sum, 8);
 
                 // put that into the checksum block
-                a = System.Text.Encoding.ASCII.GetBytes(s.Substring(s.Length-6));
+                a = System.Text.Encoding.ASCII.GetBytes(s.Substring(s.Length - 6));
                 Array.Copy(a, 0, this.chksum, 0, a.Length);  // always 6
-                this.chksum[6]=0;
-                this.chksum[7]=0x20;
+                this.chksum[6] = 0;
+                this.chksum[7] = 0x20;
 
                 return sum;
             }
@@ -436,7 +440,7 @@ namespace Ionic
             {
                 string ssz = String.Format("          {0} ", Convert.ToString(sz, 8));
                 // get last 12 chars
-                var a = System.Text.Encoding.ASCII.GetBytes(ssz.Substring(ssz.Length-12));
+                var a = System.Text.Encoding.ASCII.GetBytes(ssz.Substring(ssz.Length - 12));
                 Array.Copy(a, 0, this.size, 0, a.Length);  // always 12
             }
 
@@ -462,15 +466,15 @@ namespace Ionic
                 else
                 {
                     var a = System.Text.Encoding.ASCII.GetBytes(itemName);
-                    Array.Copy(a, a.Length-100, this.name, 0, 100);
-                    Array.Copy(a, 0, this.prefix, 0, a.Length-100);
+                    Array.Copy(a, a.Length - 100, this.name, 0, 100);
+                    Array.Copy(a, 0, this.prefix, 0, a.Length - 100);
                 }
 
                 // insert the modified time for the file or directory, also
                 DateTime dt = File.GetLastWriteTimeUtc(itemName);
                 int time_t = TimeConverter.DateTime2TimeT(dt);
                 string mtime = "     " + Convert.ToString(time_t, 8) + " ";
-                var a1 = System.Text.Encoding.ASCII.GetBytes(mtime.Substring(mtime.Length-12));
+                var a1 = System.Text.Encoding.ASCII.GetBytes(mtime.Substring(mtime.Length - 12));
                 Array.Copy(a1, 0, this.mtime, 0, a1.Length); // always 12
             }
 
@@ -487,7 +491,7 @@ namespace Ionic
                 string m = GetMagic();
                 if (m != null && m.Equals("ustar"))
                 {
-                    n = (this.prefix[0]==0)
+                    n = (this.prefix[0] == 0)
                         ? System.Text.Encoding.ASCII.GetString(this.name).TrimNull()
                         : System.Text.Encoding.ASCII.GetString(this.prefix).TrimNull() + System.Text.Encoding.ASCII.GetString(this.name).TrimNull();
                 }
@@ -501,7 +505,7 @@ namespace Ionic
 
             private string GetMagic()
             {
-                string m = (this.magic[0]==0) ? null : System.Text.Encoding.ASCII.GetString(this.magic).Trim();
+                string m = (this.magic[0] == 0) ? null : System.Text.Encoding.ASCII.GetString(this.magic).Trim();
                 return m;
             }
 
@@ -509,7 +513,7 @@ namespace Ionic
 
         private Options TarOptions { get; set; }
 
-        private Tar () {}
+        private Tar() { }
 
         /// <summary>
         ///   Extract the named tar archive to the current directory
@@ -620,7 +624,7 @@ namespace Ionic
         }
 
 
-        [DllImport("kernel32.dll", EntryPoint="CreateSymbolicLinkW", CharSet=CharSet.Unicode)]
+        [DllImport("kernel32.dll", EntryPoint = "CreateSymbolicLinkW", CharSet = CharSet.Unicode)]
         private static extern int CreateSymbolicLink(string symlinkFileName,
                                                      string targetFileName, int flags);
 
@@ -632,11 +636,11 @@ namespace Ionic
             int n = 0;
             int blocksToMunch = 0;
             int remainingBytes = 0;
-            Stream output= null;
+            Stream output = null;
             DateTime mtime = DateTime.Now;
             string name = null;
             TarEntry entry = null;
-            var deferredDirTimestamp= new Dictionary<String,DateTime>();
+            var deferredDirTimestamp = new Dictionary<String, DateTime>();
 
             if (!File.Exists(archive))
                 throw new InvalidOperationException("The specified file does not exist.");
@@ -647,7 +651,7 @@ namespace Ionic
                 {
                     if (blocksToMunch > 0)
                     {
-                        if (output!=null)
+                        if (output != null)
                         {
                             int bytesToWrite = (block.Length < remainingBytes)
                                 ? block.Length
@@ -663,7 +667,7 @@ namespace Ionic
 
                         if (blocksToMunch == 0)
                         {
-                            if (output!= null)
+                            if (output != null)
                             {
                                 if (output is MemoryStream)
                                 {
@@ -692,25 +696,25 @@ namespace Ionic
                         throw new Exception("header checksum is invalid.");
 
                     // if this is the first entry, or if the prior entry is not a GnuLongName
-                    if (entry==null || entry.Type!=TarEntryType.GnuLongName)
+                    if (entry == null || entry.Type != TarEntryType.GnuLongName)
                         name = hb.GetName();
 
-                    if (name== null || name.Length == 0) break; // EOF
+                    if (name == null || name.Length == 0) break; // EOF
                     mtime = hb.GetMtime();
                     remainingBytes = hb.GetSize();
 
-                    if (hb.typeflag==0) hb.typeflag=(byte)'0'; // coerce old-style GNU type to posix tar type
+                    if (hb.typeflag == 0) hb.typeflag = (byte)'0'; // coerce old-style GNU type to posix tar type
 
-                    entry = new TarEntry() {Name = name, Mtime = mtime, Size = remainingBytes, @Type = (TarEntryType)hb.typeflag } ;
+                    entry = new TarEntry() { Name = name, Mtime = mtime, Size = remainingBytes, @Type = (TarEntryType)hb.typeflag };
 
-                    if (entry.Type!=TarEntryType.GnuLongName)
+                    if (entry.Type != TarEntryType.GnuLongName)
                         entryList.Add(entry);
 
                     blocksToMunch = (remainingBytes > 0)
-                        ? ((remainingBytes - 1) / 512) +1
+                        ? ((remainingBytes - 1) / 512) + 1
                         : 0;
 
-                    if (entry.Type==TarEntryType.GnuLongName)
+                    if (entry.Type == TarEntryType.GnuLongName)
                     {
                         if (name != "././@LongLink")
                         {
@@ -764,7 +768,7 @@ namespace Ionic
 
                             case TarEntryType.SymbolicLink:
                                 break;
-                                // can support other types here - links, etc
+                            // can support other types here - links, etc
 
 
                             default:
@@ -907,14 +911,15 @@ namespace Ionic
             finally
             {
                 if (fcount < 1)
-                    try { File.Delete(outputFile); } catch { }
+                    try { File.Delete(outputFile); }
+                    catch { }
             }
         }
 
 
         private Stream _internal_GetOutputArchiveStream(string filename)
         {
-            switch(TarOptions.Compression)
+            switch (TarOptions.Compression)
             {
                 case TarCompression.None:
                     return File.Open(filename, FileMode.Create, FileAccess.ReadWrite);
@@ -946,7 +951,7 @@ namespace Ionic
             // add the block for the dir, right here.
             HeaderBlock hb = HeaderBlock.CreateHeaderBlock();
             hb.InsertName(dirName);
-            hb.typeflag = 5 + (byte)'0' ;
+            hb.typeflag = 5 + (byte)'0';
             hb.SetSize(0); // some impls use agg size of all files contained
             hb.SetChksum();
             byte[] block = serializer.RawSerialize(hb);
@@ -1021,7 +1026,7 @@ namespace Ionic
 
             using (FileStream fs = File.Open(fileName, FileMode.Open, FileAccess.Read))
             {
-                int n= 0;
+                int n = 0;
                 Array.Clear(block, 0, block.Length);
                 while ((n = fs.Read(block, 0, block.Length)) > 0)
                 {
@@ -1038,7 +1043,7 @@ namespace Ionic
             get
             {
                 if (_s == null)
-                    _s= new RawSerializer<HeaderBlock>();
+                    _s = new RawSerializer<HeaderBlock>();
                 return _s;
             }
         }
@@ -1061,7 +1066,7 @@ namespace Ionic
 
 
         // member variables
-        private Stream   _outfs = null;
+        private Stream _outfs = null;
         //private System.Text.Encoding _ascii = System.Text.Encoding.ASCII;
     }
 
@@ -1074,18 +1079,18 @@ namespace Ionic
     {
         public static string TrimNull(this string t)
         {
-            return t.Trim( new char[] { (char)0x20, (char)0x00 } );
+            return t.Trim(new char[] { (char)0x20, (char)0x00 });
         }
         public static string TrimSlash(this string t)
         {
-            return t.TrimEnd( new char[] { (char)'/' } );
+            return t.TrimEnd(new char[] { (char)'/' });
         }
 
         public static string TrimVolume(this string t)
         {
-            if (t.Length > 3 && t[1]==':' && t[2]=='/')
+            if (t.Length > 3 && t[1] == ':' && t[2] == '/')
                 return t.Substring(3);
-            if (t.Length > 2 && t[0]=='/' && t[1]=='/')
+            if (t.Length > 2 && t[0] == '/' && t[1] == '/')
                 return t.Substring(2);
             return t;
         }
@@ -1099,12 +1104,12 @@ namespace Ionic
     /// </summary>
     internal static class TimeConverter
     {
-        private static System.DateTime _unixEpoch = new System.DateTime(1970,1,1, 0,0,0, DateTimeKind.Utc);
-        private static System.DateTime _win32Epoch = new System.DateTime(1601,1,1, 0,0,0, DateTimeKind.Utc);
+        private static System.DateTime _unixEpoch = new System.DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        private static System.DateTime _win32Epoch = new System.DateTime(1601, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         public static Int32 DateTime2TimeT(System.DateTime datetime)
         {
-            System.TimeSpan delta =  datetime - _unixEpoch;
+            System.TimeSpan delta = datetime - _unixEpoch;
             return (System.Int32)(delta.TotalSeconds);
         }
 
@@ -1116,13 +1121,13 @@ namespace Ionic
 
         public static Int64 DateTime2Win32Ticks(System.DateTime datetime)
         {
-            System.TimeSpan delta =  datetime - _win32Epoch;
-            return (Int64) (delta.TotalSeconds * 10000000L);
+            System.TimeSpan delta = datetime - _win32Epoch;
+            return (Int64)(delta.TotalSeconds * 10000000L);
         }
 
         public static DateTime Win32Ticks2DateTime(Int64 ticks)
         {
-            return _win32Epoch.AddSeconds(ticks/10000000);
+            return _win32Epoch.AddSeconds(ticks / 10000000);
         }
     }
 
@@ -1133,32 +1138,32 @@ namespace Ionic
     /// </summary>
     internal class RawSerializer<T>
     {
-        public T RawDeserialize( byte[] rawData )
+        public T RawDeserialize(byte[] rawData)
         {
-            return RawDeserialize( rawData , 0 );
+            return RawDeserialize(rawData, 0);
         }
 
-        public T RawDeserialize( byte[] rawData , int position )
+        public T RawDeserialize(byte[] rawData, int position)
         {
-            int rawsize = Marshal.SizeOf( typeof(T) );
-            if( rawsize > rawData.Length )
+            int rawsize = Marshal.SizeOf(typeof(T));
+            if (rawsize > rawData.Length)
                 return default(T);
 
-            IntPtr buffer = Marshal.AllocHGlobal( rawsize );
-            Marshal.Copy( rawData, position, buffer, rawsize );
-            T obj = (T) Marshal.PtrToStructure( buffer, typeof(T) );
-            Marshal.FreeHGlobal( buffer );
+            IntPtr buffer = Marshal.AllocHGlobal(rawsize);
+            Marshal.Copy(rawData, position, buffer, rawsize);
+            T obj = (T)Marshal.PtrToStructure(buffer, typeof(T));
+            Marshal.FreeHGlobal(buffer);
             return obj;
         }
 
-        public byte[] RawSerialize( T item )
+        public byte[] RawSerialize(T item)
         {
-            int rawSize = Marshal.SizeOf( typeof(T) );
-            IntPtr buffer = Marshal.AllocHGlobal( rawSize );
-            Marshal.StructureToPtr( item, buffer, false );
-            byte[] rawData = new byte[ rawSize ];
-            Marshal.Copy( buffer, rawData, 0, rawSize );
-            Marshal.FreeHGlobal( buffer );
+            int rawSize = Marshal.SizeOf(typeof(T));
+            IntPtr buffer = Marshal.AllocHGlobal(rawSize);
+            Marshal.StructureToPtr(item, buffer, false);
+            byte[] rawData = new byte[rawSize];
+            Marshal.Copy(buffer, rawData, 0, rawSize);
+            Marshal.FreeHGlobal(buffer);
             return rawData;
         }
     }
@@ -1167,7 +1172,7 @@ namespace Ionic
     // (modify-syntax-entry ?# "w" csharp-mode-syntax-table)
 
 
-    #if EXE
+#if EXE
 
     public class TarApp
     {
@@ -1387,7 +1392,7 @@ namespace Ionic
     }
 
 
-    #endif
+#endif
 
 
 }

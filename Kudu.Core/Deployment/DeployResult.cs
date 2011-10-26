@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace Kudu.Core.Deployment {
+namespace Kudu.Core.Deployment
+{
     [DebuggerDisplay("{Id} {Status}")]
-    public class DeployResult {
+    public class DeployResult
+    {
         public string Id { get; set; }
         public DeployStatus Status { get; set; }
         public string StatusText { get; set; }

@@ -1,13 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Kudu.Core.SourceControl {
-    public class ChangeSetDetail {
+namespace Kudu.Core.SourceControl
+{
+    public class ChangeSetDetail
+    {
         public ChangeSetDetail()
-            : this(null) {
+            : this(null)
+        {
         }
 
-        public ChangeSetDetail(ChangeSet changeSet) {
+        public ChangeSetDetail(ChangeSet changeSet)
+        {
             ChangeSet = changeSet;
             Files = new Dictionary<string, FileInfo>(StringComparer.OrdinalIgnoreCase);
         }

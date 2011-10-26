@@ -2,9 +2,12 @@
 using System.Linq;
 using Kudu.Core.Editor;
 
-namespace Kudu.SignalR.ViewModels {
-    public class ProjectViewModel {
-        public ProjectViewModel(string name, Project project) {
+namespace Kudu.SignalR.ViewModels
+{
+    public class ProjectViewModel
+    {
+        public ProjectViewModel(string name, Project project)
+        {
             Name = name;
             Projects = project.ProjectFiles;
             Files = project.Files.Select(path => new ProjectFile { Path = path });
@@ -14,8 +17,10 @@ namespace Kudu.SignalR.ViewModels {
 
         public string Name { get; set; }
 
-        public string DefaultSolution {
-            get {
+        public string DefaultSolution
+        {
+            get
+            {
                 return Solutions.FirstOrDefault();
             }
         }

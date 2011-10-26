@@ -2,8 +2,10 @@
 using System.ComponentModel.DataAnnotations;
 using Kudu.SignalR.Models;
 
-namespace Kudu.Web.Models {
-    public class Application : IApplication {
+namespace Kudu.Web.Models
+{
+    public class Application : IApplication
+    {
         [Key]
         public string Name { get; set; }
         public string Slug { get; set; }

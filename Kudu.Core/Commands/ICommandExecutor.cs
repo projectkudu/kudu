@@ -1,7 +1,9 @@
 ﻿using System;
 
-namespace Kudu.Core.Commands {
-    public interface ICommandExecutor {
+namespace Kudu.Core.Commands
+{
+    public interface ICommandExecutor
+    {
         void ExecuteCommand(string command);
         void CancelCommand();
 

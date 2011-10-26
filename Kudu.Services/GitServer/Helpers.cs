@@ -20,35 +20,42 @@
 
 #endregion
 
-namespace Kudu.Services.GitServer {
+namespace Kudu.Services.GitServer
+{
     using System;
     using System.IO;
     using System.Net.Http;
     using System.Net.Http.Headers;
     using System.Text;
 
-    public static class Helpers {
-        public static string With(this string format, params string[] args) {
+    public static class Helpers
+    {
+        public static string With(this string format, params string[] args)
+        {
             return String.Format(format, args);
         }
 
-        public static void WriteNoCache(this HttpResponseMessage response) {
+        public static void WriteNoCache(this HttpResponseMessage response)
+        {
             response.Content.Headers.Expires = new DateTimeOffset(1980, 1, 1, 0, 0, 0, TimeSpan.Zero);
             response.Headers.Pragma.Add(new NameValueHeaderValue("no-cache"));
-            response.Headers.CacheControl = new CacheControlHeaderValue() {
+            response.Headers.CacheControl = new CacheControlHeaderValue()
+            {
                 NoCache = true,
                 MaxAge = TimeSpan.Zero,
                 MustRevalidate = true
             };
         }
 
-        public static void PktWrite(this Stream response, string input, params object[] args) {
+        public static void PktWrite(this Stream response, string input, params object[] args)
+        {
             input = String.Format(input, args);
             var toWrite = (input.Length + 4).ToString("x").PadLeft(4, '0') + input;
             response.Write(Encoding.UTF8.GetBytes(toWrite), 0, Encoding.UTF8.GetByteCount(toWrite));
         }
 
-        public static void PktFlush(this Stream response) {
+        public static void PktFlush(this Stream response)
+        {
             var toWrite = "0000";
             response.Write(Encoding.UTF8.GetBytes(toWrite), 0, Encoding.UTF8.GetByteCount(toWrite));
         }

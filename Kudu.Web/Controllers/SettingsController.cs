@@ -4,14 +4,18 @@ using System.Web.Mvc;
 using Kudu.Client.Deployment;
 using Kudu.Web.Models;
 
-namespace Kudu.Web.Controllers {
-    public class SettingsController : Controller {
+namespace Kudu.Web.Controllers
+{
+    public class SettingsController : Controller
+    {
         private readonly KuduContext db = new KuduContext();
 
-        public ActionResult Index(string slug) {
+        public ActionResult Index(string slug)
+        {
             SettingsViewModel model = GetSettingsViewModel(slug);
 
-            if (model != null) {
+            if (model != null)
+            {
                 return View(model);
             }
 
@@ -20,16 +24,21 @@ namespace Kudu.Web.Controllers {
 
         [HttpPost]
         [ActionName("new-app-setting")]
-        public ActionResult CreateAppSetting(string slug, string key, string value) {
-            try {
-                if (String.IsNullOrEmpty(key)) {
+        public ActionResult CreateAppSetting(string slug, string key, string value)
+        {
+            try
+            {
+                if (String.IsNullOrEmpty(key))
+                {
                     ModelState.AddModelError("Key", "key is required");
                 }
-                if (String.IsNullOrEmpty(value)) {
+                if (String.IsNullOrEmpty(value))
+                {
                     ModelState.AddModelError("Value", "value is required");
                 }
 
-                if (ModelState.IsValid) {
+                if (ModelState.IsValid)
+                {
                     Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
                     var settingsManager = new RemoteDeploymentSettingsManager(application.ServiceUrl);
 
@@ -38,7 +47,8 @@ namespace Kudu.Web.Controllers {
                     return RedirectToAction("Index", new { slug });
                 }
             }
-            catch {
+            catch
+            {
             }
 
             SettingsViewModel model = GetSettingsViewModel(slug);
@@ -50,16 +60,21 @@ namespace Kudu.Web.Controllers {
 
         [HttpPost]
         [ActionName("new-connection-string")]
-        public ActionResult CreateConnectionString(string slug, string name, string connectionString) {
-            try {
-                if (String.IsNullOrEmpty(name)) {
+        public ActionResult CreateConnectionString(string slug, string name, string connectionString)
+        {
+            try
+            {
+                if (String.IsNullOrEmpty(name))
+                {
                     ModelState.AddModelError("Name", "name is required");
                 }
-                if (String.IsNullOrEmpty(connectionString)) {
+                if (String.IsNullOrEmpty(connectionString))
+                {
                     ModelState.AddModelError("ConnectionString", "connection string is required");
                 }
 
-                if (ModelState.IsValid) {
+                if (ModelState.IsValid)
+                {
                     Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
                     var settingsManager = new RemoteDeploymentSettingsManager(application.ServiceUrl);
 
@@ -68,7 +83,8 @@ namespace Kudu.Web.Controllers {
                     return RedirectToAction("Index", new { slug });
                 }
             }
-            catch {
+            catch
+            {
             }
 
             SettingsViewModel model = GetSettingsViewModel(slug);
@@ -80,7 +96,8 @@ namespace Kudu.Web.Controllers {
 
         [HttpPost]
         [ActionName("delete-connection-string")]
-        public ActionResult DeleteConnectionString(string slug, string name) {
+        public ActionResult DeleteConnectionString(string slug, string name)
+        {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             var settingsManager = new RemoteDeploymentSettingsManager(application.ServiceUrl);
 
@@ -91,7 +108,8 @@ namespace Kudu.Web.Controllers {
 
         [HttpPost]
         [ActionName("delete-app-setting")]
-        public ActionResult DeleteApplicationSetting(string slug, string key) {
+        public ActionResult DeleteApplicationSetting(string slug, string key)
+        {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             var settingsManager = new RemoteDeploymentSettingsManager(application.ServiceUrl);
 
@@ -100,21 +118,25 @@ namespace Kudu.Web.Controllers {
             return RedirectToAction("Index", new { slug });
         }
 
-        private SettingsViewModel GetSettingsViewModel(string slug) {
+        private SettingsViewModel GetSettingsViewModel(string slug)
+        {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
-            if (application != null) {
+            if (application != null)
+            {
                 return GetSettingsViewModel(application);
             }
 
             return null;
         }
 
-        private SettingsViewModel GetSettingsViewModel(Application application) {
+        private SettingsViewModel GetSettingsViewModel(Application application)
+        {
             var settingsManager = new RemoteDeploymentSettingsManager(application.ServiceUrl);
 
             ViewBag.slug = application.Slug;
 
-            return new SettingsViewModel {
+            return new SettingsViewModel
+            {
                 AppSettings = settingsManager.GetAppSettings().ToList(),
                 ConnectionStrings = settingsManager.GetConnectionStrings().ToList()
             };

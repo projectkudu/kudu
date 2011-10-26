@@ -41,9 +41,9 @@ namespace SimpleJson
 {
     #region JsonArray
 
-   /// <summary>
-   /// Represents the json array.
-   /// </summary>
+    /// <summary>
+    /// Represents the json array.
+    /// </summary>
 #if SIMPLE_JSON_OBJARRAYINTERNAL
     internal
 #else
@@ -76,9 +76,9 @@ namespace SimpleJson
 
     #region JsonObject
 
-   /// <summary>
-   /// Represents the json object.
-   /// </summary>
+    /// <summary>
+    /// Represents the json object.
+    /// </summary>
 #if SIMPLE_JSON_OBJARRAYINTERNAL
     internal
 #else

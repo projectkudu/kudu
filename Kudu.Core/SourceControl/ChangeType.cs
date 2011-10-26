@@ -1,5 +1,7 @@
-﻿namespace Kudu.Core.SourceControl {
-    public enum ChangeType {
+﻿namespace Kudu.Core.SourceControl
+{
+    public enum ChangeType
+    {
         None,
         Added,
         Deleted,

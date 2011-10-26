@@ -3,26 +3,32 @@ using System.ServiceModel;
 using System.ServiceModel.Web;
 using Kudu.Core.Deployment;
 
-namespace Kudu.Services.Settings {
+namespace Kudu.Services.Settings
+{
     [ServiceContract]
-    public class ConnectionStringsService {
+    public class ConnectionStringsService
+    {
         private readonly IDeploymentSettingsManager _settingsManager;
-        public ConnectionStringsService(IDeploymentSettingsManager settingsManager) {
+        public ConnectionStringsService(IDeploymentSettingsManager settingsManager)
+        {
             _settingsManager = settingsManager;
         }
 
         [WebGet(UriTemplate = "")]
-        public IEnumerable<ConnectionStringSetting> Index() {
+        public IEnumerable<ConnectionStringSetting> Index()
+        {
             return _settingsManager.GetConnectionStrings();
         }
 
         [WebInvoke]
-        public void Set(SimpleJson.JsonObject input) {
+        public void Set(SimpleJson.JsonObject input)
+        {
             _settingsManager.SetConnectionString((string)input["key"], (string)input["value"]);
         }
 
         [WebInvoke]
-        public void Remove(SimpleJson.JsonObject input) {
+        public void Remove(SimpleJson.JsonObject input)
+        {
             _settingsManager.RemoveConnectionString((string)input["key"]);
         }
     }

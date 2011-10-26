@@ -3,32 +3,41 @@ using System.IO;
 using System.IO.Abstractions;
 using System.Xml.Linq;
 
-namespace Kudu.Core.Deployment {
+namespace Kudu.Core.Deployment
+{
     /// <summary>
     /// An xml file that keeps track of deployment status
     /// </summary>
-    public class DeploymentStatusFile {
+    public class DeploymentStatusFile
+    {
         private readonly string _path;
 
-        private DeploymentStatusFile(string path) {
+        private DeploymentStatusFile(string path)
+        {
             _path = path;
         }
 
-        public static DeploymentStatusFile Create(string path) {
-            return new DeploymentStatusFile(path) {
+        public static DeploymentStatusFile Create(string path)
+        {
+            return new DeploymentStatusFile(path)
+            {
                 DeploymentStartTime = DateTime.Now
             };
         }
 
-        public static DeploymentStatusFile Open(IFileSystem fileSystem, string path) {
+        public static DeploymentStatusFile Open(IFileSystem fileSystem, string path)
+        {
             XDocument document;
 
-            try {
-                using (var stream = fileSystem.File.OpenRead(path)) {
+            try
+            {
+                using (var stream = fileSystem.File.OpenRead(path))
+                {
                     document = XDocument.Load(stream);
                 }
             }
-            catch {
+            catch
+            {
                 return null;
             }
 
@@ -41,7 +50,8 @@ namespace Kudu.Core.Deployment {
             string deploymentEndTime = document.Root.Element("deploymentEndTime").Value;
             string deploymentStartTime = document.Root.Element("deploymentStartTime").Value;
 
-            return new DeploymentStatusFile(path) {
+            return new DeploymentStatusFile(path)
+            {
                 Id = document.Root.Element("id").Value,
                 Status = status,
                 StatusText = document.Root.Element("statusText").Value,
@@ -58,8 +68,10 @@ namespace Kudu.Core.Deployment {
         public DateTime DeploymentStartTime { get; private set; }
         public DateTime? DeploymentEndTime { get; set; }
 
-        public void Save(IFileSystem fileSystem) {
-            if (String.IsNullOrEmpty(Id)) {
+        public void Save(IFileSystem fileSystem)
+        {
+            if (String.IsNullOrEmpty(Id))
+            {
                 throw new InvalidOperationException();
             }
 
@@ -72,7 +84,8 @@ namespace Kudu.Core.Deployment {
                     new XElement("deploymentEndTime", DeploymentEndTime)
                 ));
 
-            using (Stream stream = fileSystem.File.Create(_path)) {
+            using (Stream stream = fileSystem.File.Create(_path))
+            {
                 document.Save(stream);
             }
         }

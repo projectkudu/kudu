@@ -15,10 +15,13 @@ using Microsoft.ApplicationServer.Http.Dispatcher;
 using Ninject.Extensions.Wcf;
 using SignalR.Routing;
 
-namespace Kudu.Services {
-    public class MvcApplication : System.Web.HttpApplication {
+namespace Kudu.Services
+{
+    public class MvcApplication : System.Web.HttpApplication
+    {
 
-        public static void RegisterRoutes(RouteCollection routes) {
+        public static void RegisterRoutes(RouteCollection routes)
+        {
             var configuration = (IServerConfiguration)KernelContainer.Kernel.GetService(typeof(IServerConfiguration));
             var factory = GetFactory();
 
@@ -55,17 +58,20 @@ namespace Kudu.Services {
             MapServiceRoute<ConnectionStringsService>("connectionstrings", factory);
         }
 
-        private static ServiceRoute MapServiceRoute<T>(string url, HttpServiceHostFactory factory) {
+        private static ServiceRoute MapServiceRoute<T>(string url, HttpServiceHostFactory factory)
+        {
             var route = new ServiceRoute(url, factory, typeof(T));
             RouteTable.Routes.Add(route);
             return route;
         }
 
-        protected void Application_Start() {
+        protected void Application_Start()
+        {
             RegisterRoutes(RouteTable.Routes);
         }
 
-        private static HttpServiceHostFactory GetFactory() {
+        private static HttpServiceHostFactory GetFactory()
+        {
             var factory = new HttpServiceHostFactory();
 
             // REVIEW: Set to max to accomodate large file uploads in initial scm setup.
@@ -83,11 +89,13 @@ namespace Kudu.Services {
 
             // Add the authorization handler on specific services method.
             var existingRequestHandlerFactory = factory.Configuration.RequestHandlers;
-            factory.Configuration.RequestHandlers = (c, e, od) => {
+            factory.Configuration.RequestHandlers = (c, e, od) =>
+            {
                 if (existingRequestHandlerFactory != null)
                     existingRequestHandlerFactory(c, e, od);
 
-                if (e.Contract.ContractType == typeof(GitServer.InfoRefsService) || e.Contract.ContractType == typeof(GitServer.RpcService)) {
+                if (e.Contract.ContractType == typeof(GitServer.InfoRefsService) || e.Contract.ContractType == typeof(GitServer.RpcService))
+                {
                     c.Insert(0, (HttpOperationHandler)KernelContainer.Kernel.GetService(typeof(Authorization.BasicAuthorizeHandler)));
                 }
             };
@@ -95,11 +103,13 @@ namespace Kudu.Services {
             return factory;
         }
 
-        private static object CreateInstance(Type type, InstanceContext context, HttpRequestMessage request) {
+        private static object CreateInstance(Type type, InstanceContext context, HttpRequestMessage request)
+        {
             return KernelContainer.Kernel.GetService(type);
         }
 
-        private static void ReleaseInstance(InstanceContext context, object o) {
+        private static void ReleaseInstance(InstanceContext context, object o)
+        {
             KernelContainer.Kernel.Release(o);
         }
     }

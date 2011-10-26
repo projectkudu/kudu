@@ -5,24 +5,30 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.SourceControl.Hg;
 
-namespace Kudu.Core.SourceControl {
-    public class RepositoryManager : IRepositoryManager {
+namespace Kudu.Core.SourceControl
+{
+    public class RepositoryManager : IRepositoryManager
+    {
         private readonly string _path;
 
-        public RepositoryManager(string path) {
+        public RepositoryManager(string path)
+        {
             _path = path;
         }
 
-        public void CreateRepository(RepositoryType type) {
+        public void CreateRepository(RepositoryType type)
+        {
             RepositoryType currentType = GetRepositoryType();
 
-            if (currentType != RepositoryType.None) {
+            if (currentType != RepositoryType.None)
+            {
                 throw new InvalidOperationException("Repository already exists. Delete it before creating a new one.");
             }
 
             Directory.CreateDirectory(_path);
 
-            switch (type) {
+            switch (type)
+            {
                 case RepositoryType.Git:
                     new GitExeRepository(_path).Initialize();
                     break;
@@ -34,8 +40,10 @@ namespace Kudu.Core.SourceControl {
             }
         }
 
-        public void CloneRepository(string source, RepositoryType type) {
-            switch (type) {
+        public void CloneRepository(string source, RepositoryType type)
+        {
+            switch (type)
+            {
                 case RepositoryType.Git:
                     new GitExeRepository(_path).Clone(source);
                     break;
@@ -45,10 +53,12 @@ namespace Kudu.Core.SourceControl {
             }
         }
 
-        public IRepository GetRepository() {
+        public IRepository GetRepository()
+        {
             RepositoryType type = GetRepositoryType();
 
-            switch (type) {
+            switch (type)
+            {
                 case RepositoryType.Git:
                     return new GitExeRepository(_path);
                 case RepositoryType.Mercurial:
@@ -58,21 +68,27 @@ namespace Kudu.Core.SourceControl {
             return null;
         }
 
-        public void Delete() {
-            if (Directory.Exists(_path)) {
+        public void Delete()
+        {
+            if (Directory.Exists(_path))
+            {
                 FileSystemHelpers.DeleteDirectorySafe(_path);
             }
         }
 
-        public RepositoryType GetRepositoryType() {
-            if (!Directory.Exists(_path)) {
+        public RepositoryType GetRepositoryType()
+        {
+            if (!Directory.Exists(_path))
+            {
                 return RepositoryType.None;
             }
 
-            if (Directory.EnumerateDirectories(_path, ".hg").Any()) {
+            if (Directory.EnumerateDirectories(_path, ".hg").Any())
+            {
                 return RepositoryType.Mercurial;
             }
-            else if (Directory.EnumerateDirectories(_path, ".git").Any()) {
+            else if (Directory.EnumerateDirectories(_path, ".git").Any())
+            {
                 return RepositoryType.Git;
             }
             return RepositoryType.None;

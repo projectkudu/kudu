@@ -4,10 +4,13 @@ using Kudu.Core.Commands;
 using Moq;
 using Xunit;
 
-namespace Kudu.Core.Test {
-    public class CommandExecutorTest {
+namespace Kudu.Core.Test
+{
+    public class CommandExecutorTest
+    {
         [Fact]
-        public void GetMappedPathReplacesShortestPrefixThatExistsWithDrive() {
+        public void GetMappedPathReplacesShortestPrefixThatExistsWithDrive()
+        {
             var fs = new Mock<IFileSystem>();
             var directory = new Mock<DirectoryBase>();
             directory.Setup(m => m.Exists(@"\\foo")).Returns(true);
@@ -21,7 +24,8 @@ namespace Kudu.Core.Test {
         }
 
         [Fact]
-        public void GetMappedPathUsesMappedDriveIfPrefixIsTheSame() {
+        public void GetMappedPathUsesMappedDriveIfPrefixIsTheSame()
+        {
             var fs = new Mock<IFileSystem>();
             var directory = new Mock<DirectoryBase>();
             directory.Setup(m => m.Exists(@"\\foo\bar")).Returns(true);
@@ -37,17 +41,21 @@ namespace Kudu.Core.Test {
             Assert.Equal(@"A:\b\d\f", path3);
         }
 
-        private class MockCommandExecutor : CommandExecutor {
+        private class MockCommandExecutor : CommandExecutor
+        {
             private Dictionary<string, string> _mapping = new Dictionary<string, string>();
             private bool[] _drives = new bool[26];
             private int _used;
 
             public MockCommandExecutor(IFileSystem fileSystem, string workingDirectory)
-                : base(fileSystem, workingDirectory) {
+                : base(fileSystem, workingDirectory)
+            {
             }
 
-            protected override bool MapPath(string path, out string driveName) {
-                if (_used >= _drives.Length) {
+            protected override bool MapPath(string path, out string driveName)
+            {
+                if (_used >= _drives.Length)
+                {
                     driveName = null;
                     return false;
                 }
@@ -60,7 +68,8 @@ namespace Kudu.Core.Test {
                 return true;
             }
 
-            protected override bool TryGetMappedPath(string path, out string driveName) {
+            protected override bool TryGetMappedPath(string path, out string driveName)
+            {
                 return _mapping.TryGetValue(path, out driveName);
             }
         }

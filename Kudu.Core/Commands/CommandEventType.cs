@@ -1,5 +1,7 @@
-﻿namespace Kudu.Core.Commands {
-    public enum CommandEventType {
+﻿namespace Kudu.Core.Commands
+{
+    public enum CommandEventType
+    {
         Input,
         Output,
         Error,

@@ -3,22 +3,27 @@ using System.ServiceModel;
 using System.ServiceModel.Web;
 using Kudu.Core.Editor;
 
-namespace Kudu.Services.Documents {
+namespace Kudu.Services.Documents
+{
     [ServiceContract]
-    public class FilesService {
+    public class FilesService
+    {
         private readonly IProjectSystem _projectSystem;
 
-        public FilesService(IProjectSystem projectSystem) {
+        public FilesService(IProjectSystem projectSystem)
+        {
             _projectSystem = projectSystem;
         }
 
         [WebGet(UriTemplate = "")]
-        public Project GetProject() {
+        public Project GetProject()
+        {
             return _projectSystem.GetProject();
         }
 
         [WebGet(UriTemplate = "?path={path}")]
-        public HttpResponseMessage GetFile(string path) {
+        public HttpResponseMessage GetFile(string path)
+        {
             var content = new StringContent(_projectSystem.ReadAllText(path), System.Text.Encoding.UTF8);
             var response = new HttpResponseMessage();
             response.Content = content;
@@ -26,12 +31,14 @@ namespace Kudu.Services.Documents {
         }
 
         [WebInvoke]
-        public void Save(SimpleJson.JsonObject input) {
+        public void Save(SimpleJson.JsonObject input)
+        {
             _projectSystem.WriteAllText((string)input["path"], (string)input["content"]);
         }
 
         [WebInvoke]
-        public void Delete(SimpleJson.JsonObject input) {
+        public void Delete(SimpleJson.JsonObject input)
+        {
             _projectSystem.Delete((string)input["path"]);
         }
     }

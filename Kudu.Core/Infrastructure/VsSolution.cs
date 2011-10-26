@@ -4,8 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 
-namespace Kudu.Core.Infrastructure {
-    public class VsSolution {
+namespace Kudu.Core.Infrastructure
+{
+    public class VsSolution
+    {
         // internal class SolutionParser
         // Name: Microsoft.Build.Construction.SolutionParser
         // Assembly: Microsoft.Build, Version=4.0.0.0
@@ -16,10 +18,12 @@ namespace Kudu.Core.Infrastructure {
         private static readonly MethodInfo _parseSolutionMethod;
         private static readonly PropertyInfo _projectsProperty;
 
-        static VsSolution() {
+        static VsSolution()
+        {
             _solutionParser = Type.GetType(SolutionParserTypeName, throwOnError: false, ignoreCase: false);
 
-            if (_solutionParser != null) {
+            if (_solutionParser != null)
+            {
                 _solutionReaderProperty = ReflectionUtility.GetInternalProperty(_solutionParser, "SolutionReader");
                 _projectsProperty = ReflectionUtility.GetInternalProperty(_solutionParser, "Projects");
                 _parseSolutionMethod = ReflectionUtility.GetInternalMethod(_solutionParser, "ParseSolution");
@@ -29,14 +33,17 @@ namespace Kudu.Core.Infrastructure {
         public string Path { get; set; }
         public IEnumerable<VsSolutionProject> Projects { get; private set; }
 
-        public VsSolution(string solutionPath) {
-            if (_solutionParser == null) {
+        public VsSolution(string solutionPath)
+        {
+            if (_solutionParser == null)
+            {
                 throw new InvalidOperationException("Can not find type 'Microsoft.Build.Construction.SolutionParser' are you missing a assembly reference to 'Microsoft.Build.dll'?");
             }
 
             var solutionParser = GetSolutionParserInstance();
 
-            using (var streamReader = new StreamReader(solutionPath)) {
+            using (var streamReader = new StreamReader(solutionPath))
+            {
                 _solutionReaderProperty.SetValue(solutionParser, streamReader);
                 _parseSolutionMethod.Invoke(solutionParser, null);
             }
@@ -44,7 +51,8 @@ namespace Kudu.Core.Infrastructure {
             var projects = new List<VsSolutionProject>();
             var projectsArray = _projectsProperty.GetValue<object[]>(solutionParser);
 
-            foreach (var project in projectsArray) {
+            foreach (var project in projectsArray)
+            {
                 projects.Add(new VsSolutionProject(solutionPath, project));
             }
 
@@ -52,7 +60,8 @@ namespace Kudu.Core.Infrastructure {
             Projects = projects;
         }
 
-        private static object GetSolutionParserInstance() {
+        private static object GetSolutionParserInstance()
+        {
             // Get the constructor for Solution parser
             var ctor = _solutionParser.GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic).First();
 
@@ -60,7 +69,8 @@ namespace Kudu.Core.Infrastructure {
             return ctor.Invoke(null);
         }
 
-        public static IEnumerable<VsSolution> GetSolutions(string path) {
+        public static IEnumerable<VsSolution> GetSolutions(string path)
+        {
             return from solutionFile in Directory.EnumerateFiles(path, "*.sln", SearchOption.AllDirectories)
                    select new VsSolution(solutionFile);
         }

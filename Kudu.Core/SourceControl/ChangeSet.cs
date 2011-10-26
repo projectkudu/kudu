@@ -1,8 +1,11 @@
 ﻿using System;
 
-namespace Kudu.Core.SourceControl {
-    public class ChangeSet {
-        public ChangeSet(string id, string authorName, string authorEmail, string message, DateTimeOffset timestamp) {
+namespace Kudu.Core.SourceControl
+{
+    public class ChangeSet
+    {
+        public ChangeSet(string id, string authorName, string authorEmail, string message, DateTimeOffset timestamp)
+        {
             Id = id;
             AuthorName = authorName;
             AuthorEmail = authorEmail;
@@ -10,32 +13,38 @@ namespace Kudu.Core.SourceControl {
             Timestamp = timestamp;
         }
 
-        public string Id {
+        public string Id
+        {
             get;
             private set;
         }
 
-        public string AuthorName {
+        public string AuthorName
+        {
             get;
             private set;
         }
 
-        public string AuthorEmail {
+        public string AuthorEmail
+        {
             get;
             private set;
         }
 
-        public string Message {
+        public string Message
+        {
             get;
             private set;
         }
 
-        public DateTimeOffset Timestamp {
+        public DateTimeOffset Timestamp
+        {
             get;
             private set;
         }
 
-        public override string ToString() {
+        public override string ToString()
+        {
             return String.Format("{0} {1} {2} {3}", Id, Timestamp, AuthorName, Message);
         }
     }

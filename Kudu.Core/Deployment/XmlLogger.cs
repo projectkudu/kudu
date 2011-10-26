@@ -4,17 +4,21 @@ using System.IO.Abstractions;
 using System.Linq;
 using System.Xml.Linq;
 
-namespace Kudu.Core.Deployment {
-    public class XmlLogger : ILogger {
+namespace Kudu.Core.Deployment
+{
+    public class XmlLogger : ILogger
+    {
         private readonly string _path;
         private readonly IFileSystem _fileSystem;
 
-        public XmlLogger(IFileSystem fileSystem, string path) {
+        public XmlLogger(IFileSystem fileSystem, string path)
+        {
             _fileSystem = fileSystem;
             _path = path;
         }
 
-        public void Log(string value, LogEntryType type) {
+        public void Log(string value, LogEntryType type)
+        {
             XDocument document = GetDocument();
 
             document.Root.Add(new XElement("entry",
@@ -25,7 +29,8 @@ namespace Kudu.Core.Deployment {
             document.Save(_path);
         }
 
-        public IEnumerable<LogEntry> GetLogEntries() {
+        public IEnumerable<LogEntry> GetLogEntries()
+        {
             XDocument document = GetDocument();
 
             return from e in document.Root.Elements("entry")
@@ -34,13 +39,16 @@ namespace Kudu.Core.Deployment {
                    select new LogEntry(time, e.Value, type);
         }
 
-        private XDocument GetDocument() {
-            if (!_fileSystem.File.Exists(_path)) {
+        private XDocument GetDocument()
+        {
+            if (!_fileSystem.File.Exists(_path))
+            {
                 return new XDocument(new XElement("entries"));
             }
 
             XDocument document;
-            using (var stream = _fileSystem.File.OpenRead(_path)) {
+            using (var stream = _fileSystem.File.OpenRead(_path))
+            {
                 document = XDocument.Load(stream);
             }
             return document;

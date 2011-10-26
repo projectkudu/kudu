@@ -1,8 +1,10 @@
 ﻿using System;
 using Kudu.Core.Infrastructure;
 
-namespace Kudu.Core {
-    public class Environment : IEnvironment {
+namespace Kudu.Core
+{
+    public class Environment : IEnvironment
+    {
         private readonly string _deployPath;
         private readonly string _deployCachePath;
         private readonly string _deploymentRepositoryPath;
@@ -13,7 +15,8 @@ namespace Kudu.Core {
                            string deploymentRepositoryPath,
                            Func<string> repositoryPathResolver,
                            string deployPath,
-                           string deployCachePath) {
+                           string deployCachePath)
+        {
             AppName = appName;
             ApplicationRootPath = applicationRootPath;
             _deploymentRepositoryPath = deploymentRepositoryPath;
@@ -22,17 +25,22 @@ namespace Kudu.Core {
             _deployCachePath = deployCachePath;
         }
 
-        public string DeploymentRepositoryPath {
-            get {
+        public string DeploymentRepositoryPath
+        {
+            get
+            {
                 FileSystemHelpers.EnsureDirectory(_deploymentRepositoryPath);
                 return _deploymentRepositoryPath;
             }
         }
 
-        public string RepositoryPath {
-            get {
+        public string RepositoryPath
+        {
+            get
+            {
                 string path = _repositoryPathResolver();
-                if (String.IsNullOrEmpty(path)) {
+                if (String.IsNullOrEmpty(path))
+                {
                     return null;
                 }
 
@@ -41,26 +49,32 @@ namespace Kudu.Core {
             }
         }
 
-        public string DeploymentTargetPath {
-            get {
+        public string DeploymentTargetPath
+        {
+            get
+            {
                 FileSystemHelpers.EnsureDirectory(_deployPath);
                 return _deployPath;
             }
         }
 
-        public string DeploymentCachePath {
-            get {
+        public string DeploymentCachePath
+        {
+            get
+            {
                 FileSystemHelpers.EnsureDirectory(_deployCachePath);
                 return _deployCachePath;
             }
         }
 
-        public string ApplicationRootPath {
+        public string ApplicationRootPath
+        {
             get;
             private set;
         }
 
-        public string AppName {
+        public string AppName
+        {
             get;
             private set;
         }

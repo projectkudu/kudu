@@ -3,25 +3,31 @@ using System.Net.Http;
 using System.Text;
 using Microsoft.ApplicationServer.Http.Dispatcher;
 
-namespace Kudu.Services.Authorization {
-    public class BasicAuthorizeHandler : HttpOperationHandler<HttpRequestMessage, HttpRequestMessage> {
+namespace Kudu.Services.Authorization
+{
+    public class BasicAuthorizeHandler : HttpOperationHandler<HttpRequestMessage, HttpRequestMessage>
+    {
         private IUserValidator validator;
 
         public BasicAuthorizeHandler(IUserValidator validator)
-            : base("authorizedClient") {
+            : base("authorizedClient")
+        {
             this.validator = validator;
         }
 
-        protected override HttpRequestMessage OnHandle(HttpRequestMessage input) {
+        protected override HttpRequestMessage OnHandle(HttpRequestMessage input)
+        {
             var authorizationHeader = input.Headers.Authorization;
 
-            if (authorizationHeader != null) {
+            if (authorizationHeader != null)
+            {
                 byte[] encodedDataAsBytes = Convert.FromBase64String(authorizationHeader.Parameter);
                 string value = Encoding.ASCII.GetString(encodedDataAsBytes);
                 string username = value.Substring(0, value.IndexOf(':'));
                 string password = value.Substring(value.IndexOf(':') + 1);
 
-                if (validator.Validate(username, password)) {
+                if (validator.Validate(username, password))
+                {
                     return input;
                 }
             }

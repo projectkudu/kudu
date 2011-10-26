@@ -5,10 +5,10 @@
     using System.IO;
     using System.Linq;
     using System.Net;
-    using Ionic;
-    using SimpleJson;
     using System.Text.RegularExpressions;
+    using Ionic;
     using Kudu.Core.Deployment;
+    using SimpleJson;
 
     class Program
     {

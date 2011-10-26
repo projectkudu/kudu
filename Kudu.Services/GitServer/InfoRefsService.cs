@@ -20,7 +20,8 @@
 
 #endregion
 
-namespace Kudu.Services.GitServer {
+namespace Kudu.Services.GitServer
+{
     using System;
     using System.IO;
     using System.Net.Http;
@@ -33,40 +34,47 @@ namespace Kudu.Services.GitServer {
 
     // Handles /{project}/info/refs
     [ServiceContract]
-    public class InfoRefsService {
+    public class InfoRefsService
+    {
         private readonly IGitServer _gitServer;
         private readonly IRepositoryManager _repositoryManager;
 
-        public InfoRefsService(IGitServer gitServer, IRepositoryManager repositoryManager) {
+        public InfoRefsService(IGitServer gitServer, IRepositoryManager repositoryManager)
+        {
             _gitServer = gitServer;
             _repositoryManager = repositoryManager;
         }
 
         [WebGet(UriTemplate = "?service={service}")]
-        public HttpResponseMessage Execute(string service) {
+        public HttpResponseMessage Execute(string service)
+        {
             service = GetServiceType(service);
             bool isUsingSmartProtocol = service != null;
 
             // Service has been specified - we're working with the smart protocol
-            if (isUsingSmartProtocol) {
+            if (isUsingSmartProtocol)
+            {
                 return SmartInfoRefs(service);
             }
 
             throw new Exception("Dumb protocol not supported"); // REVIEW: Consider throw 501 Not Implemented
         }
 
-        private HttpResponseMessage SmartInfoRefs(string service) {
+        private HttpResponseMessage SmartInfoRefs(string service)
+        {
             var memoryStream = new MemoryStream();
 
             memoryStream.PktWrite("# service=git-{0}\n", service);
             memoryStream.PktFlush();
 
-            if (service == "upload-pack") {
+            if (service == "upload-pack")
+            {
                 EnsureGitRepository();
                 _gitServer.AdvertiseUploadPack(memoryStream);
             }
 
-            else if (service == "receive-pack") {
+            else if (service == "receive-pack")
+            {
                 EnsureGitRepository();
                 _gitServer.AdvertiseReceivePack(memoryStream);
             }
@@ -87,15 +95,18 @@ namespace Kudu.Services.GitServer {
             return responseMessage;
         }
 
-        protected string GetServiceType(string service) {
-            if (String.IsNullOrWhiteSpace(service)) {
+        protected string GetServiceType(string service)
+        {
+            if (String.IsNullOrWhiteSpace(service))
+            {
                 return null;
             }
 
             return service.Replace("git-", "");
         }
 
-        private void EnsureGitRepository() {
+        private void EnsureGitRepository()
+        {
             // Ensure the git repository is set up before accepting the push
             RepositoryUtility.EnsureRepository(_repositoryManager, RepositoryType.Git);
         }

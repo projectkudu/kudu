@@ -5,20 +5,25 @@ using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Xunit;
 
-namespace Kudu.Core.Test {
-    public class GitRepositoryRepositoryTest {
+namespace Kudu.Core.Test
+{
+    public class GitRepositoryRepositoryTest
+    {
         [Fact]
-        public void IsDiffHeaderReturnsTrueForValidDiffHeaders() {
+        public void IsDiffHeaderReturnsTrueForValidDiffHeaders()
+        {
             Assert.True(GitExeRepository.IsDiffHeader("diff --git"));
         }
 
         [Fact]
-        public void ConvertStatusUnknownStatusThrows() {
+        public void ConvertStatusUnknownStatusThrows()
+        {
             Assert.Throws<InvalidOperationException>(() => GitExeRepository.ConvertStatus("AG"));
         }
 
         [Fact]
-        public void ConvertStatusKnownStatuses() {
+        public void ConvertStatusKnownStatuses()
+        {
             ChangeType add = GitExeRepository.ConvertStatus("A");
             ChangeType addModified = GitExeRepository.ConvertStatus("AM");
             ChangeType addDeleted = GitExeRepository.ConvertStatus("AD");
@@ -37,7 +42,8 @@ namespace Kudu.Core.Test {
         }
 
         [Fact]
-        public void ParseStatus() {
+        public void ParseStatus()
+        {
             var statusText = @"M  a
 A  a.txt2
 D  b
@@ -77,7 +83,8 @@ A  New File With Spaces.txt
         }
 
         [Fact]
-        public void PopulateStatusHandlesFilesWithSpaces() {
+        public void PopulateStatusHandlesFilesWithSpaces()
+        {
             string status = @"
 A	New File
 ";
@@ -89,7 +96,8 @@ A	New File
         }
 
         [Fact]
-        public void ParseCommitParsesCommit() {
+        public void ParseCommitParsesCommit()
+        {
             string commitText = @"commit 307d8fe354ff30609decef49f91195e2e9719398
 Author: David Fowler <davidfowl@gmail.com>
 Date:   Thu Jul 7 19:05:40 2011 -0700
@@ -105,7 +113,8 @@ Date:   Thu Jul 7 19:05:40 2011 -0700
         }
 
         [Fact]
-        public void ParseCommitWithMultipleCommitsParsesOneCommit() {
+        public void ParseCommitWithMultipleCommitsParsesOneCommit()
+        {
             string commitText = @"commit d35697645e2472f5e327c0ec4b9f3489e806c276
 Author: John Doe
 Date:   Thu Jul 7 19:23:07 2011 -0700
@@ -129,7 +138,8 @@ Date:   Thu Jul 7 19:05:40 2011 -0700
         }
 
         [Fact]
-        public void Parse() {
+        public void Parse()
+        {
             string summaryText = @"
 1	1	NGitHub.nuspec
 1	1	src/NGitHub/IRepositoryService.cs
@@ -154,7 +164,8 @@ Date:   Thu Jul 7 19:05:40 2011 -0700
         }
 
         [Fact]
-        public void ParseDiffChunkHandlesFilesWithSpacesInName() {
+        public void ParseDiffChunkHandlesFilesWithSpacesInName()
+        {
             string diff = @"diff --git a/New File b/New File
 new file mode 100644
 index 0000000..261a6bf
@@ -172,7 +183,8 @@ index 0000000..261a6bf
         }
 
         [Fact]
-        public void ParseDiffFileName() {
+        public void ParseDiffFileName()
+        {
             string singleCharFileName = GitExeRepository.ParseFileName("git --diff a/a b/a");
             string evenNumberFileName = GitExeRepository.ParseFileName("git --diff a/aa b/aa");
             string moreAmbiguous = GitExeRepository.ParseFileName("git --diff a/ b  b/ b ");
@@ -189,14 +201,17 @@ index 0000000..261a6bf
             Assert.Equal(" b ", moreAmbiguous);
         }
 
-        private void AssertFile(ChangeSetDetail detail, string path, int? insertions = null, int? deletions = null, bool binary = false) {
+        private void AssertFile(ChangeSetDetail detail, string path, int? insertions = null, int? deletions = null, bool binary = false)
+        {
             FileInfo fi;
             Assert.True(detail.Files.TryGetValue(path, out fi));
             Assert.Equal(binary, fi.Binary);
-            if (insertions != null) {
+            if (insertions != null)
+            {
                 Assert.Equal(insertions, fi.Insertions);
             }
-            if (deletions != null) {
+            if (deletions != null)
+            {
                 Assert.Equal(deletions, fi.Deletions);
             }
         }

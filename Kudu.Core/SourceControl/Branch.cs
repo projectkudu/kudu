@@ -1,6 +1,9 @@
-﻿namespace Kudu.Core.SourceControl {
-    public class Branch {
-        public Branch(string id, string name, bool active) {
+﻿namespace Kudu.Core.SourceControl
+{
+    public class Branch
+    {
+        public Branch(string id, string name, bool active)
+        {
             Id = id;
             Name = name;
             Active = active;

@@ -23,8 +23,10 @@ using XmlSettings;
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Start")]
 [assembly: WebActivator.ApplicationShutdownMethodAttribute(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Stop")]
 
-namespace Kudu.Services.Web.App_Start {
-    public static class NinjectServices {
+namespace Kudu.Services.Web.App_Start
+{
+    public static class NinjectServices
+    {
         private static CommandExecutor _devExecutor;
         private static CommandExecutor _liveExecutor;
 
@@ -36,7 +38,8 @@ namespace Kudu.Services.Web.App_Start {
         /// <summary>
         /// Starts the application
         /// </summary>
-        public static void Start() {
+        public static void Start()
+        {
             DynamicModuleUtility.RegisterModule(typeof(OnePerRequestModule));
             CreateKernel();
         }
@@ -44,14 +47,16 @@ namespace Kudu.Services.Web.App_Start {
         /// <summary>
         /// Stops the application.
         /// </summary>
-        public static void Stop() {
+        public static void Stop()
+        {
         }
 
         /// <summary>
         /// Creates the kernel that will manage your application.
         /// </summary>
         /// <returns>The created kernel.</returns>
-        private static IKernel CreateKernel() {
+        private static IKernel CreateKernel()
+        {
             var kernel = new StandardKernel();
 
             RegisterServices(kernel);
@@ -64,7 +69,8 @@ namespace Kudu.Services.Web.App_Start {
         /// Load your modules or register your services here!
         /// </summary>
         /// <param name="kernel">The kernel.</param>
-        private static void RegisterServices(IKernel kernel) {
+        private static void RegisterServices(IKernel kernel)
+        {
             IEnvironment environment = GetEnvironment();
             var propertyProvider = new BuildPropertyProvider();
 
@@ -109,18 +115,22 @@ namespace Kudu.Services.Web.App_Start {
                                             .WhenInjectedInto<CloneService>();
         }
 
-        private static IRepositoryManager GetDevelopmentRepositoryManager(IEnvironment environment) {
+        private static IRepositoryManager GetDevelopmentRepositoryManager(IEnvironment environment)
+        {
             EnsureDevelopmentRepository(environment);
 
             return new RepositoryManager(environment.RepositoryPath);
         }
 
-        private static IRepository GetSourceControlRepository(IEnvironment environment) {
+        private static IRepository GetSourceControlRepository(IEnvironment environment)
+        {
             return GetDevelopmentRepositoryManager(environment).GetRepository();
         }
 
-        private static IProjectSystem GetEditorProjectSystem(IEnvironment environment, IContext context) {
-            if (IsDevSiteRequest(context)) {
+        private static IProjectSystem GetEditorProjectSystem(IEnvironment environment, IContext context)
+        {
+            if (IsDevSiteRequest(context))
+            {
                 EnsureDevelopmentRepository(environment);
                 return new ProjectSystem(environment.RepositoryPath);
             }
@@ -128,13 +138,16 @@ namespace Kudu.Services.Web.App_Start {
             return new ProjectSystem(environment.DeploymentTargetPath);
         }
 
-        private static CommandExecutor GetComandExecutor(IEnvironment environment, IContext context) {
+        private static CommandExecutor GetComandExecutor(IEnvironment environment, IContext context)
+        {
             var fileSystem = context.Kernel.Get<IFileSystem>();
 
-            if (IsDevSiteRequest(context)) {
+            if (IsDevSiteRequest(context))
+            {
                 EnsureDevelopmentRepository(environment);
 
-                if (_devExecutor == null) {
+                if (_devExecutor == null)
+                {
                     _devExecutor = new CommandExecutor(fileSystem, environment.RepositoryPath);
                     SubscribeForCommandEvents<DevCommandStatusHandler>(_devExecutor);
                 }
@@ -142,7 +155,8 @@ namespace Kudu.Services.Web.App_Start {
                 return _devExecutor;
             }
 
-            if (_liveExecutor == null) {
+            if (_liveExecutor == null)
+            {
                 _liveExecutor = new CommandExecutor(fileSystem, environment.DeploymentTargetPath);
                 SubscribeForCommandEvents<LiveCommandStatusHandler>(_liveExecutor);
             }
@@ -150,11 +164,13 @@ namespace Kudu.Services.Web.App_Start {
             return _liveExecutor;
         }
 
-        private static string GetSettingsPath(IEnvironment environment) {
+        private static string GetSettingsPath(IEnvironment environment)
+        {
             return Path.Combine(environment.DeploymentCachePath, DeploySettingsPath);
         }
 
-        private static IEnvironment GetEnvironment() {
+        private static IEnvironment GetEnvironment()
+        {
             string targetRoot = PathResolver.ResolveRootPath();
             InitializeEnvVars(targetRoot);
 
@@ -167,9 +183,11 @@ namespace Kudu.Services.Web.App_Start {
             return new Environment(site,
                                    root,
                                    deploymentRepositoryPath,
-                                   () => {
+                                   () =>
+                                   {
                                        string path = PathResolver.ResolveDevelopmentPath();
-                                       if (System.String.IsNullOrEmpty(path)) {
+                                       if (System.String.IsNullOrEmpty(path))
+                                       {
                                            return null;
                                        }
                                        return Path.Combine(path, site, DeploymentTargetPath);
@@ -178,7 +196,8 @@ namespace Kudu.Services.Web.App_Start {
                                    deployCachePath);
         }
 
-        private static void InitializeEnvVars(string root) {
+        private static void InitializeEnvVars(string root)
+        {
             string tempPath = Path.GetFullPath(Path.Combine(root, "_temp"));
 
             // Setup some temp variables
@@ -188,27 +207,34 @@ namespace Kudu.Services.Web.App_Start {
             System.Environment.SetEnvironmentVariable("TMP", tempPath);
         }
 
-        private static bool IsDevSiteRequest(IContext context) {
+        private static bool IsDevSiteRequest(IContext context)
+        {
             var httpContext = context.Kernel.Get<HttpContextBase>();
             return !httpContext.Request.RequestContext.RouteData.Values.ContainsKey("live");
         }
 
-        private static void EnsureDevelopmentRepository(IEnvironment environment) {
-            if (System.String.IsNullOrEmpty(environment.RepositoryPath)) {
+        private static void EnsureDevelopmentRepository(IEnvironment environment)
+        {
+            if (System.String.IsNullOrEmpty(environment.RepositoryPath))
+            {
                 throw new System.InvalidOperationException("Developer mode not enabled for this site");
             }
         }
 
-        private static void SubscribeForCommandEvents<T>(ICommandExecutor commandExecutor) where T : PersistentConnection {
+        private static void SubscribeForCommandEvents<T>(ICommandExecutor commandExecutor) where T : PersistentConnection
+        {
             IConnection connection = Connection.GetConnection<T>();
-            commandExecutor.CommandEvent += commandEvent => {
+            commandExecutor.CommandEvent += commandEvent =>
+            {
                 connection.Broadcast(commandEvent);
             };
         }
 
-        private static void SubscribeForDeploymentEvents(IDeploymentManager deploymentManager) {
+        private static void SubscribeForDeploymentEvents(IDeploymentManager deploymentManager)
+        {
             IConnection connection = Connection.GetConnection<DeploymentStatusHandler>();
-            deploymentManager.StatusChanged += status => {
+            deploymentManager.StatusChanged += status =>
+            {
                 connection.Broadcast(status);
             };
         }

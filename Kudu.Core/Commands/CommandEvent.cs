@@ -1,13 +1,18 @@
-﻿namespace Kudu.Core.Commands {
-    public class CommandEvent {
-        public CommandEvent() {
+﻿namespace Kudu.Core.Commands
+{
+    public class CommandEvent
+    {
+        public CommandEvent()
+        {
         }
 
         public CommandEvent(CommandEventType eventType)
-            : this(eventType, null) {
+            : this(eventType, null)
+        {
         }
 
-        public CommandEvent(CommandEventType eventType, string data) {
+        public CommandEvent(CommandEventType eventType, string data)
+        {
             EventType = eventType;
             Data = data;
         }

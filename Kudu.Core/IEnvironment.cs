@@ -1,5 +1,7 @@
-﻿namespace Kudu.Core {
-    public interface IEnvironment {
+﻿namespace Kudu.Core
+{
+    public interface IEnvironment
+    {
         string RepositoryPath { get; }
         string DeploymentRepositoryPath { get; }
         string DeploymentTargetPath { get; }

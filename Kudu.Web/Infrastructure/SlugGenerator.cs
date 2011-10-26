@@ -2,10 +2,14 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Kudu.Web.Infrastructure {
-    public static class SlugGenerator {
-        public static string GenerateSlug(this string value) {
-            if (String.IsNullOrEmpty(value)) {
+namespace Kudu.Web.Infrastructure
+{
+    public static class SlugGenerator
+    {
+        public static string GenerateSlug(this string value)
+        {
+            if (String.IsNullOrEmpty(value))
+            {
                 return value;
             }
 
@@ -19,7 +23,8 @@ namespace Kudu.Web.Infrastructure {
             return str;
         }
 
-        private static string RemoveAccent(string value) {
+        private static string RemoveAccent(string value)
+        {
             byte[] bytes = Encoding.GetEncoding("Cyrillic").GetBytes(value);
             return Encoding.ASCII.GetString(bytes);
         }

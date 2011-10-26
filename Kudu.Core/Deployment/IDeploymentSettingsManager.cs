@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 
-namespace Kudu.Core.Deployment {
-    public interface IDeploymentSettingsManager {
+namespace Kudu.Core.Deployment
+{
+    public interface IDeploymentSettingsManager
+    {
         IEnumerable<DeploymentSetting> GetAppSettings();
         IEnumerable<ConnectionStringSetting> GetConnectionStrings();
         void SetConnectionString(string key, string value);

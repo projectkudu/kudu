@@ -7,10 +7,13 @@ using Kudu.Core.Infrastructure;
 using Moq;
 using Xunit;
 
-namespace Kudu.Core.Test {
-    public class FileSystemHelpersTest {
+namespace Kudu.Core.Test
+{
+    public class FileSystemHelpersTest
+    {
         [Fact]
-        public void EnsureDirectoryCreatesDirectoryIfNotExists() {
+        public void EnsureDirectoryCreatesDirectoryIfNotExists()
+        {
             var fileSystem = new Mock<IFileSystem>();
             var directory = new Mock<DirectoryBase>();
             fileSystem.Setup(m => m.Directory).Returns(directory.Object);
@@ -23,7 +26,8 @@ namespace Kudu.Core.Test {
         }
 
         [Fact]
-        public void EnsureDirectoryDoesNotCreateDirectoryIfNotExists() {
+        public void EnsureDirectoryDoesNotCreateDirectoryIfNotExists()
+        {
             var fileSystem = new Mock<IFileSystem>();
             var directory = new Mock<DirectoryBase>();
             fileSystem.Setup(m => m.Directory).Returns(directory.Object);
@@ -36,7 +40,8 @@ namespace Kudu.Core.Test {
         }
 
         [Fact]
-        public void SmartCopyCopiesFilesFromSourceToDestination() {
+        public void SmartCopyCopiesFilesFromSourceToDestination()
+        {
             DirectoryInfoBase previousDirectory = null;
             DirectoryWrapper sourceDirectory = GetDirectory(@"a:\test\", filePaths: new[] { @"a.txt", "b.txt", ".bar" });
             DirectoryWrapper destinationDirectory = GetDirectory(@"b:\foo\", exists: false);
@@ -55,7 +60,8 @@ namespace Kudu.Core.Test {
         }
 
         [Fact]
-        public void SmartCopyDeletesFilesThatDontExistInSourceIfNoPrevious() {
+        public void SmartCopyDeletesFilesThatDontExistInSourceIfNoPrevious()
+        {
             DirectoryInfoBase previousDirectory = null;
             DirectoryWrapper sourceDirectory = GetDirectory(@"a:\test\", filePaths: new[] { @"a.txt", "b.txt" });
             DirectoryWrapper destinationDirectory = GetDirectory(@"b:\foo\", filePaths: new[] { "c.txt" });
@@ -73,7 +79,8 @@ namespace Kudu.Core.Test {
         }
 
         [Fact]
-        public void SmartCopyOnlyDeletesFilesThatDontExistInSourceIfAlsoInPrevious() {
+        public void SmartCopyOnlyDeletesFilesThatDontExistInSourceIfAlsoInPrevious()
+        {
             DirectoryWrapper previousDirectory = GetDirectory(@"c:\test\", filePaths: new[] { "c.txt" });
             DirectoryWrapper sourceDirectory = GetDirectory(@"a:\test\", filePaths: new[] { @"a.txt", "b.txt" });
             DirectoryWrapper destinationDirectory = GetDirectory(@"b:\foo\", filePaths: new[] { "c.txt", "generated.log" });
@@ -92,7 +99,8 @@ namespace Kudu.Core.Test {
         }
 
         [Fact]
-        public void SmartCopyOnlyCopiesFileIfNewerAndSkipOldFilesChecked() {
+        public void SmartCopyOnlyCopiesFileIfNewerAndSkipOldFilesChecked()
+        {
             DirectoryWrapper previousDirectory = GetDirectory(@"c:\previous\", filePaths: new[] { "a.txt" });
             DirectoryWrapper sourceDirectory = GetDirectory(@"a:\source\", filePaths: new[] { @"a.txt" });
             DirectoryWrapper destinationDirectory = GetDirectory(@"b:\target\", filePaths: new[] { "a.txt" });
@@ -112,7 +120,8 @@ namespace Kudu.Core.Test {
         }
 
         [Fact]
-        public void SmartCopyCopiesSubDirectoriesAndFiles() {
+        public void SmartCopyCopiesSubDirectoriesAndFiles()
+        {
             DirectoryInfoBase previousDirectory = null;
 
             DirectoryWrapper sourceSub = GetDirectory(@"a:\source\sub1", filePaths: new[] { "b.js" });
@@ -127,7 +136,8 @@ namespace Kudu.Core.Test {
                                          previousDirectory,
                                          sourceDirectory.Directory,
                                          destinationDirectory.Directory,
-                                         path => {
+                                         path =>
+                                         {
                                              var newDir = GetDirectory(path, exists: false);
                                              string shortName = GetShortName(destinationDirectory.Directory.FullName, path);
                                              destinationDirectory.Directories[shortName] = newDir;
@@ -142,7 +152,8 @@ namespace Kudu.Core.Test {
         }
 
         [Fact]
-        public void SmartCopyDeletesSubDirectoryIfNoPreviousAndDirectoryDoesnotExistInSource() {
+        public void SmartCopyDeletesSubDirectoryIfNoPreviousAndDirectoryDoesnotExistInSource()
+        {
             DirectoryInfoBase previousDirectory = null;
 
             DirectoryWrapper sourceDirectory = GetDirectory(@"a:\source\", filePaths: new[] { "b.txt" });
@@ -163,7 +174,8 @@ namespace Kudu.Core.Test {
         }
 
         [Fact]
-        public void SmartCopyOnlyDeletesSubDirectoryIfExistsInPrevious() {
+        public void SmartCopyOnlyDeletesSubDirectoryIfExistsInPrevious()
+        {
             DirectoryWrapper previousSub = GetDirectory(@"a:\previous\sub", filePaths: new[] { "b.txt" });
             DirectoryWrapper previousDirectory = GetDirectory(@"a:\previous\", directories: new[] { previousSub });
 
@@ -189,11 +201,13 @@ namespace Kudu.Core.Test {
                                                       IEnumerable<string> filePaths = null,
                                                       IEnumerable<DirectoryWrapper> directories = null,
                                                       bool hidden = false,
-                                                      bool exists = true) {
+                                                      bool exists = true)
+        {
             filePaths = filePaths ?? Enumerable.Empty<string>();
             directories = directories ?? Enumerable.Empty<DirectoryWrapper>();
 
-            var files = filePaths.Select(path => {
+            var files = filePaths.Select(path =>
+            {
                 var mock = new Mock<FileInfoBase>();
                 bool fileExists = true;
                 mock.Setup(m => m.Exists).Returns(() => fileExists);
@@ -213,24 +227,30 @@ namespace Kudu.Core.Test {
             mockDir.Setup(m => m.GetDirectories()).Returns(directoryMapping.Values.Select(d => d.Directory).ToArray());
             mockDir.Setup(m => m.Exists).Returns(exists);
 
-            if (hidden) {
+            if (hidden)
+            {
                 mockDir.Setup(m => m.Attributes).Returns(FileAttributes.Hidden);
             }
 
-            return new DirectoryWrapper {
+            return new DirectoryWrapper
+            {
                 MockDirectory = mockDir,
                 Files = files,
                 Directories = directoryMapping
             };
         }
 
-        private static string GetShortName(string prefix, string path) {
+        private static string GetShortName(string prefix, string path)
+        {
             return path.Substring(prefix.Length).Trim(Path.DirectorySeparatorChar);
         }
 
-        private class DirectoryWrapper {
-            public DirectoryInfoBase Directory {
-                get {
+        private class DirectoryWrapper
+        {
+            public DirectoryInfoBase Directory
+            {
+                get
+                {
                     return MockDirectory.Object;
                 }
             }
@@ -239,44 +259,54 @@ namespace Kudu.Core.Test {
             public IDictionary<string, Mock<FileInfoBase>> Files { get; set; }
             public IDictionary<string, DirectoryWrapper> Directories { get; set; }
 
-            public void VerifyCopied(string path, string toPath) {
+            public void VerifyCopied(string path, string toPath)
+            {
                 Assert.True(Files.ContainsKey(path));
                 Files[path].Verify(m => m.CopyTo(toPath, true), Times.Once());
             }
 
-            public void VerifyNotCopied(string path, string toPath = null) {
+            public void VerifyNotCopied(string path, string toPath = null)
+            {
                 Assert.True(Files.ContainsKey(path));
-                if (String.IsNullOrEmpty(toPath)) {
+                if (String.IsNullOrEmpty(toPath))
+                {
                     Files[path].Verify(m => m.CopyTo(It.IsAny<string>(), true), Times.Never());
                 }
-                else {
+                else
+                {
                     Files[path].Verify(m => m.CopyTo(toPath, true), Times.Never());
                 }
             }
 
-            public void VerifyDeleted() {
+            public void VerifyDeleted()
+            {
                 MockDirectory.Verify(m => m.Delete(true), Times.Once());
             }
 
-            public void VerifyDeleted(string path) {
+            public void VerifyDeleted(string path)
+            {
                 Assert.True(Files.ContainsKey(path));
                 Files[path].Verify(m => m.Delete(), Times.Once());
             }
 
-            public void VerifyNotDeleted() {
+            public void VerifyNotDeleted()
+            {
                 MockDirectory.Verify(m => m.Delete(true), Times.Never());
             }
 
-            public void VerifyNotDeleted(string path) {
+            public void VerifyNotDeleted(string path)
+            {
                 Assert.True(Files.ContainsKey(path));
                 Files[path].Verify(m => m.Delete(), Times.Never());
             }
 
-            public void VerifyCreated() {
+            public void VerifyCreated()
+            {
                 MockDirectory.Verify(m => m.Create(), Times.Once());
             }
 
-            public void VerifyCreated(string path) {
+            public void VerifyCreated(string path)
+            {
                 Assert.True(Directories.ContainsKey(path));
                 Directories[path].VerifyCreated();
             }

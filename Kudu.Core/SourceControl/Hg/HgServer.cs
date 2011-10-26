@@ -5,8 +5,10 @@ using System.Threading;
 using Kudu.Core.Infrastructure;
 using Mercurial;
 
-namespace Kudu.Core.SourceControl.Hg {
-    public class HgServer : IHgServer {
+namespace Kudu.Core.SourceControl.Hg
+{
+    public class HgServer : IHgServer
+    {
         private readonly Lazy<Server> _server;
 
         private const string HgConfigurationFile = "hgweb.config";
@@ -17,36 +19,46 @@ allow_push = *
 [paths]
 {0} = {1}
 ";
-        public HgServer(IEnvironment environment) {
+        public HgServer(IEnvironment environment)
+        {
             _server = new Lazy<Server>(() => GetServer(environment));
         }
 
-        public bool IsRunning {
-            get {
+        public bool IsRunning
+        {
+            get
+            {
                 return _server.IsValueCreated && _server.Value.IsRunning;
             }
         }
 
-        public string Url {
-            get {
-                if (!_server.IsValueCreated) {
+        public string Url
+        {
+            get
+            {
+                if (!_server.IsValueCreated)
+                {
                     return null;
                 }
                 return _server.Value.Url;
             }
         }
 
-        public void Start() {
+        public void Start()
+        {
             _server.Value.Start();
         }
 
-        public void Stop() {
-            if (_server.IsValueCreated) {
+        public void Stop()
+        {
+            if (_server.IsValueCreated)
+            {
                 _server.Value.Stop();
             }
         }
 
-        private static Server GetServer(IEnvironment environment) {
+        private static Server GetServer(IEnvironment environment)
+        {
             string configFile = EnsureConfiguration(environment);
             string pidFilePath = Path.Combine(environment.ApplicationRootPath, "serverpid");
 
@@ -55,7 +67,8 @@ allow_push = *
             return new Server(hgExe, environment.AppName, configFile, pidFilePath);
         }
 
-        private static string EnsureConfiguration(IEnvironment environment) {
+        private static string EnsureConfiguration(IEnvironment environment)
+        {
             string configFile = Path.Combine(environment.ApplicationRootPath, HgConfigurationFile);
             string configFileContents = String.Format(HgConfiguration, environment.AppName, environment.RepositoryPath);
 
@@ -63,13 +76,15 @@ allow_push = *
             return configFile;
         }
 
-        private class Server {
+        private class Server
+        {
             private readonly Executable _hgExe;
             private readonly string _appName;
             private readonly string _configFile;
             private readonly string _pidFile;
 
-            internal Server(Executable hgExe, string appName, string configFile, string pidFile) {
+            internal Server(Executable hgExe, string appName, string configFile, string pidFile)
+            {
                 _hgExe = hgExe;
                 _appName = appName;
                 _configFile = configFile;
@@ -78,9 +93,12 @@ allow_push = *
 
             private int Port { get; set; }
 
-            public string Url {
-                get {
-                    if (Port > 0) {
+            public string Url
+            {
+                get
+                {
+                    if (Port > 0)
+                    {
                         return String.Format("http://localhost:{0}/{1}", Port, _appName);
                     }
                     return null;
@@ -89,13 +107,17 @@ allow_push = *
 
             public bool IsRunning { get; private set; }
 
-            public void Start() {
-                if (IsRunning) {
+            public void Start()
+            {
+                if (IsRunning)
+                {
                     return;
                 }
 
-                while (true) {
-                    try {
+                while (true)
+                {
+                    try
+                    {
                         // Get a random port
                         Port = GetRandomPort();
 
@@ -106,41 +128,52 @@ allow_push = *
                         IsRunning = true;
                         break;
                     }
-                    catch {
+                    catch
+                    {
                         // Try again
                         Thread.Sleep(500);
                     }
                 }
             }
 
-            public void Stop() {
-                if (!IsRunning) {
+            public void Stop()
+            {
+                if (!IsRunning)
+                {
                     return;
                 }
 
                 // Read the pid file and kill the process
                 int? processId = GetServerProcessId();
-                if (processId != null) {
-                    try {
+                if (processId != null)
+                {
+                    try
+                    {
                         var process = Process.GetProcessById(processId.Value);
                         process.Kill();
                     }
-                    catch (ArgumentException) {
+                    catch (ArgumentException)
+                    {
                     }
                 }
             }
 
-            private int? GetServerProcessId() {
-                try {
+            private int? GetServerProcessId()
+            {
+                try
+                {
                     // Check if the pid file exists
-                    if (File.Exists(_pidFile)) {
+                    if (File.Exists(_pidFile))
+                    {
                         int processId;
-                        if (Int32.TryParse(File.ReadAllText(_pidFile), out processId)) {
+                        if (Int32.TryParse(File.ReadAllText(_pidFile), out processId))
+                        {
                             return processId;
                         }
                     }
                 }
-                catch (Exception ex) {
+                catch (Exception ex)
+                {
                     Debug.WriteLine("Failed to get server process id.");
                     Debug.WriteLine(ex.Message);
                 }
@@ -148,7 +181,8 @@ allow_push = *
                 return null;
             }
 
-            private int GetRandomPort() {
+            private int GetRandomPort()
+            {
                 // TODO: Ensure the port is unused
                 return new Random((int)DateTime.Now.Ticks).Next(1025, 65535);
             }

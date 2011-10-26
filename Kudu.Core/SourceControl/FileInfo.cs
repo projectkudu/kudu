@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Kudu.Core.SourceControl {
-    public class FileInfo {
-        public FileInfo() {
+namespace Kudu.Core.SourceControl
+{
+    public class FileInfo
+    {
+        public FileInfo()
+        {
             DiffLines = new List<LineDiff>();
         }
 
@@ -13,7 +16,8 @@ namespace Kudu.Core.SourceControl {
         public ChangeType Status { get; set; }
         public IList<LineDiff> DiffLines { get; private set; }
 
-        public override string ToString() {
+        public override string ToString()
+        {
             return String.Format("{0} {1} (+), {1} (-)", Status, Insertions, Deletions);
         }
     }

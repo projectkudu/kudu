@@ -1,6 +1,9 @@
-﻿namespace Kudu.Core.SourceControl {
-    public class LineDiff {
-        public LineDiff(ChangeType type, string text) {
+﻿namespace Kudu.Core.SourceControl
+{
+    public class LineDiff
+    {
+        public LineDiff(ChangeType type, string text)
+        {
             Type = type;
             Text = text;
         }

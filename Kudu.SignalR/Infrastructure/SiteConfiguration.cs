@@ -12,34 +12,41 @@ using Kudu.SignalR.Models;
 using Kudu.SignalR.ViewModels;
 using SignalR.Hubs;
 
-namespace Kudu.SignalR.Infrastructure {
-    public class SiteConfiguration : ISiteConfiguration {
+namespace Kudu.SignalR.Infrastructure
+{
+    public class SiteConfiguration : ISiteConfiguration
+    {
         private static readonly ConcurrentDictionary<string, SiteConfiguration> _cache = new ConcurrentDictionary<string, SiteConfiguration>();
         private static dynamic devenvClients = Hub.GetClients<DevelopmentEnvironment>();
 
 
-        public SiteConfiguration(IApplication application) {
+        public SiteConfiguration(IApplication application)
+        {
             ServiceUrl = application.ServiceUrl;
             SiteUrl = application.SiteUrl;
             Name = application.Name;
 
             SiteConfiguration config;
-            if (_cache.TryGetValue(Name, out config)) {
+            if (_cache.TryGetValue(Name, out config))
+            {
                 Repository = config.Repository;
                 ProjectSystem = config.ProjectSystem;
                 DevProjectSystem = config.DevProjectSystem;
 
 
-                if (config.DeploymentManager.IsActive) {
+                if (config.DeploymentManager.IsActive)
+                {
                     DeploymentManager = config.DeploymentManager;
                     CommandExecutor = config.CommandExecutor;
                     DevCommandExecutor = config.DevCommandExecutor;
                 }
-                else {
+                else
+                {
                     SubscribeToEvents();
                 }
             }
-            else {
+            else
+            {
                 Repository = new RemoteRepository(ServiceUrl + "scm");
                 ProjectSystem = new RemoteProjectSystem(ServiceUrl + "live/files");
                 DevProjectSystem = new RemoteProjectSystem(ServiceUrl + "dev/files");
@@ -50,32 +57,39 @@ namespace Kudu.SignalR.Infrastructure {
             }
         }
 
-        private void SubscribeToEvents() {
+        private void SubscribeToEvents()
+        {
             DeploymentManager = new RemoteDeploymentManager(ServiceUrl + "deploy");
             DeploymentManager.StatusChanged += OnDeploymentStatusChanged;
 
 
             DevCommandExecutor = new RemoteCommandExecutor(ServiceUrl + "dev/command");
-            DevCommandExecutor.CommandEvent += commandEvent => {
+            DevCommandExecutor.CommandEvent += commandEvent =>
+            {
                 OnNewCommandEvent(devenvClients, commandEvent);
             };
 
             CommandExecutor = new RemoteCommandExecutor(ServiceUrl + "live/command");
-            CommandExecutor.CommandEvent += commandEvent => {
+            CommandExecutor.CommandEvent += commandEvent =>
+            {
                 OnNewCommandEvent(devenvClients, commandEvent);
             };
         }
 
-        private void OnDeploymentStatusChanged(DeployResult result) {
+        private void OnDeploymentStatusChanged(DeployResult result)
+        {
             var clients = Hub.GetClients<Kudu.SignalR.Hubs.Deployment>();
             clients.updateDeployStatus(new DeployResultViewModel(result));
         }
 
-        private void OnNewCommandEvent(dynamic clients, CommandEvent commandEvent) {
-            if (commandEvent.EventType == CommandEventType.Complete) {
+        private void OnNewCommandEvent(dynamic clients, CommandEvent commandEvent)
+        {
+            if (commandEvent.EventType == CommandEventType.Complete)
+            {
                 clients.commandComplete();
             }
-            else {
+            else
+            {
                 clients.processCommand(commandEvent.Data);
             }
         }
@@ -84,38 +98,46 @@ namespace Kudu.SignalR.Infrastructure {
         public string ServiceUrl { get; private set; }
         public string SiteUrl { get; private set; }
 
-        public IProjectSystem DevProjectSystem {
+        public IProjectSystem DevProjectSystem
+        {
             get;
             private set;
         }
 
-        public IProjectSystem ProjectSystem {
+        public IProjectSystem ProjectSystem
+        {
             get;
             private set;
         }
 
-        public IRepository Repository {
+        public IRepository Repository
+        {
             get;
             private set;
         }
 
-        IDeploymentManager ISiteConfiguration.DeploymentManager {
-            get {
+        IDeploymentManager ISiteConfiguration.DeploymentManager
+        {
+            get
+            {
                 return DeploymentManager;
             }
         }
 
-        private RemoteDeploymentManager DeploymentManager {
+        private RemoteDeploymentManager DeploymentManager
+        {
             get;
             set;
         }
 
-        public ICommandExecutor CommandExecutor {
+        public ICommandExecutor CommandExecutor
+        {
             get;
             private set;
         }
 
-        public ICommandExecutor DevCommandExecutor {
+        public ICommandExecutor DevCommandExecutor
+        {
             get;
             private set;
         }

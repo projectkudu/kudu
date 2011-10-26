@@ -10,9 +10,11 @@ using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Hg;
 using Kudu.Services.Infrastructure;
 
-namespace Kudu.Services.HgServer {
+namespace Kudu.Services.HgServer
+{
     [ServiceContract]
-    public class ProxyService {
+    public class ProxyService
+    {
         private readonly IHgServer _hgServer;
         private readonly IServerConfiguration _configuration;
         private readonly IDeploymentManager _deploymentManager;
@@ -21,7 +23,8 @@ namespace Kudu.Services.HgServer {
         public ProxyService(IHgServer hgServer,
                                IServerConfiguration configuration,
                                IDeploymentManager deploymentManager,
-                               IRepositoryManager repositoryManager) {
+                               IRepositoryManager repositoryManager)
+        {
             _hgServer = hgServer;
             _configuration = configuration;
             _deploymentManager = deploymentManager;
@@ -29,29 +32,35 @@ namespace Kudu.Services.HgServer {
         }
 
         [WebInvoke(UriTemplate = "")]
-        public HttpResponseMessage PostProxy(HttpRequestMessage request) {
+        public HttpResponseMessage PostProxy(HttpRequestMessage request)
+        {
             return ProxyRequest(request);
         }
 
         [WebGet(UriTemplate = "")]
-        public HttpResponseMessage GetProxy(HttpRequestMessage request) {
+        public HttpResponseMessage GetProxy(HttpRequestMessage request)
+        {
             return ProxyRequest(request);
         }
 
-        private HttpResponseMessage ProxyRequest(HttpRequestMessage request) {
+        private HttpResponseMessage ProxyRequest(HttpRequestMessage request)
+        {
             string hgRoot = _configuration.ApplicationName + "/" + _configuration.HgServerRoot;
 
-            if (!hgRoot.StartsWith("/", StringComparison.OrdinalIgnoreCase)) {
+            if (!hgRoot.StartsWith("/", StringComparison.OrdinalIgnoreCase))
+            {
                 hgRoot = "/" + hgRoot;
             }
 
-            if (!request.RequestUri.PathAndQuery.StartsWith(hgRoot, StringComparison.OrdinalIgnoreCase)) {
+            if (!request.RequestUri.PathAndQuery.StartsWith(hgRoot, StringComparison.OrdinalIgnoreCase))
+            {
                 throw new ArgumentException();
             }
 
             string pathToProxy = request.RequestUri.PathAndQuery.Substring(hgRoot.Length);
 
-            if (!_hgServer.IsRunning) {
+            if (!_hgServer.IsRunning)
+            {
                 EnsureHgRepository();
                 _hgServer.Start();
             }
@@ -60,12 +69,14 @@ namespace Kudu.Services.HgServer {
 
             HttpClient client = new HttpClient();
             client.DefaultRequestHeaders.Clear();
-            foreach (KeyValuePair<string, IEnumerable<string>> header in request.Headers) {
+            foreach (KeyValuePair<string, IEnumerable<string>> header in request.Headers)
+            {
                 client.DefaultRequestHeaders.Add(header.Key, header.Value);
             }
 
             HttpResponseMessage proxyResponse;
-            switch (request.Method.Method.ToUpperInvariant()) {
+            switch (request.Method.Method.ToUpperInvariant())
+            {
                 case "GET":
                     proxyResponse = client.Get(uri);
                     break;
@@ -76,12 +87,16 @@ namespace Kudu.Services.HgServer {
                     return new HttpResponseMessage(System.Net.HttpStatusCode.MethodNotAllowed);
             }
 
-            if (request.RequestUri.Query.Contains("cmd=unbundle")) {
-                ThreadPool.QueueUserWorkItem(_ => {
-                    try {
+            if (request.RequestUri.Query.Contains("cmd=unbundle"))
+            {
+                ThreadPool.QueueUserWorkItem(_ =>
+                {
+                    try
+                    {
                         _deploymentManager.Deploy();
                     }
-                    catch (Exception ex) {
+                    catch (Exception ex)
+                    {
                         Debug.WriteLine("Error deploying");
                         Debug.WriteLine(ex.Message);
                     }
@@ -91,7 +106,8 @@ namespace Kudu.Services.HgServer {
             return proxyResponse;
         }
 
-        private void EnsureHgRepository() {
+        private void EnsureHgRepository()
+        {
             RepositoryUtility.EnsureRepository(_repositoryManager, RepositoryType.Mercurial);
         }
     }

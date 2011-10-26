@@ -5,8 +5,10 @@ using Kudu.Core.Deployment;
 using Moq;
 using Xunit;
 
-namespace Kudu.Core.Test {
-    public class AspNetConfigTransformerTest {
+namespace Kudu.Core.Test
+{
+    public class AspNetConfigTransformerTest
+    {
         private const string SettingConfig = @"<configuration>
   <appSettings>
     <add key=""key"" value=""val"" />
@@ -18,7 +20,8 @@ namespace Kudu.Core.Test {
 </configuration>";
 
         [Fact]
-        public void TransformWithNoSettingsDoesNothing() {
+        public void TransformWithNoSettingsDoesNothing()
+        {
             var mockSettingProvider = new Mock<IDeploymentSettingsManager>();
             var mockFileSystem = new Mock<IFileSystem>();
             var transformer = new AspNetConfigTransformer(mockFileSystem.Object, mockSettingProvider.Object);
@@ -28,7 +31,8 @@ namespace Kudu.Core.Test {
         }
 
         [Fact]
-        public void TransformWithConfigurationFileWithNoAppSettingsAndConnectionStringsNodesShouldCreateAppSettingsButNotConnectionStrings() {
+        public void TransformWithConfigurationFileWithNoAppSettingsAndConnectionStringsNodesShouldCreateAppSettingsButNotConnectionStrings()
+        {
             var mockSettingProvider = new Mock<IDeploymentSettingsManager>();
             mockSettingProvider.Setup(m => m.GetAppSettings()).Returns(new[] { 
                    new DeploymentSetting{
@@ -63,7 +67,8 @@ namespace Kudu.Core.Test {
         }
 
         [Fact]
-        public void TransformWithExistingAppSettingReplacesSetting() {
+        public void TransformWithExistingAppSettingReplacesSetting()
+        {
             var mockSettingProvider = new Mock<IDeploymentSettingsManager>();
             mockSettingProvider.Setup(m => m.GetAppSettings()).Returns(new[] { 
                    new DeploymentSetting{
@@ -87,7 +92,8 @@ namespace Kudu.Core.Test {
         }
 
         [Fact]
-        public void TransformWithNewAppSettingAddsSetting() {
+        public void TransformWithNewAppSettingAddsSetting()
+        {
             var mockSettingProvider = new Mock<IDeploymentSettingsManager>();
             mockSettingProvider.Setup(m => m.GetAppSettings()).Returns(new[] { 
                    new DeploymentSetting{
@@ -112,7 +118,8 @@ namespace Kudu.Core.Test {
         }
 
         [Fact]
-        public void TransformWithConnectionStringSettingReplacesConnectionString() {
+        public void TransformWithConnectionStringSettingReplacesConnectionString()
+        {
             var mockSettingProvider = new Mock<IDeploymentSettingsManager>();
             mockSettingProvider.Setup(m => m.GetConnectionStrings()).Returns(new[] { 
                    new ConnectionStringSetting {
@@ -136,7 +143,8 @@ namespace Kudu.Core.Test {
         }
 
         [Fact]
-        public void PerformTransformationsDoesNothingIfWebConfigDoesNotExist() {
+        public void PerformTransformationsDoesNothingIfWebConfigDoesNotExist()
+        {
             var mockSettingProvider = new Mock<IDeploymentSettingsManager>();
             var mockFileSystem = new Mock<IFileSystem>();
             var transformer = new AspNetConfigTransformer(mockFileSystem.Object, mockSettingProvider.Object);
@@ -153,7 +161,8 @@ namespace Kudu.Core.Test {
         }
 
         [Fact]
-        public void PerformTransformationsTransformsConfigFileIfExists() {
+        public void PerformTransformationsTransformsConfigFileIfExists()
+        {
             var mockSettingProvider = new Mock<IDeploymentSettingsManager>();
             mockSettingProvider.Setup(m => m.GetAppSettings()).Returns(new[] { 
                    new DeploymentSetting{
@@ -199,7 +208,8 @@ namespace Kudu.Core.Test {
 </configuration>", content);
         }
 
-        private Stream GetStream(string content) {
+        private Stream GetStream(string content)
+        {
             return new MemoryStream(Encoding.Default.GetBytes(content));
         }
     }

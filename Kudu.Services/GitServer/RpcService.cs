@@ -20,7 +20,8 @@
 
 #endregion
 
-namespace Kudu.Services.GitServer {
+namespace Kudu.Services.GitServer
+{
     using System;
     using System.Diagnostics;
     using System.IO;
@@ -35,17 +36,20 @@ namespace Kudu.Services.GitServer {
 
     // Handles {project}/git-upload-pack and {project}/git-receive-pack
     [ServiceContract]
-    public class RpcService {
+    public class RpcService
+    {
         private readonly IDeploymentManager _deploymentManager;
         private readonly IGitServer _gitServer;
 
-        public RpcService(IGitServer gitServer, IDeploymentManager deploymentManager) {
+        public RpcService(IGitServer gitServer, IDeploymentManager deploymentManager)
+        {
             _gitServer = gitServer;
             _deploymentManager = deploymentManager;
         }
 
         [WebInvoke(UriTemplate = "git-upload-pack")]
-        public HttpResponseMessage UploadPack(HttpRequestMessage request) {
+        public HttpResponseMessage UploadPack(HttpRequestMessage request)
+        {
             var memoryStream = new MemoryStream();
             _gitServer.Upload(GetInputStream(request), memoryStream);
             memoryStream.Flush();
@@ -55,17 +59,21 @@ namespace Kudu.Services.GitServer {
         }
 
         [WebInvoke(UriTemplate = "git-receive-pack")]
-        public HttpResponseMessage ReceivePack(HttpRequestMessage request) {
+        public HttpResponseMessage ReceivePack(HttpRequestMessage request)
+        {
             var memoryStream = new MemoryStream();
             _gitServer.Receive(GetInputStream(request), memoryStream);
             memoryStream.Flush();
             memoryStream.Position = 0;
 
-            ThreadPool.QueueUserWorkItem(_ => {
-                try {
+            ThreadPool.QueueUserWorkItem(_ =>
+            {
+                try
+                {
                     _deploymentManager.Deploy();
                 }
-                catch (Exception ex) {
+                catch (Exception ex)
+                {
                     Debug.WriteLine("Error deploying");
                     Debug.WriteLine(ex.Message);
                 }
@@ -74,15 +82,18 @@ namespace Kudu.Services.GitServer {
             return CreateResponse(memoryStream, "application/x-git-{0}-result".With("receive-pack"));
         }
 
-        private Stream GetInputStream(HttpRequestMessage request) {
-            if (request.Content.Headers.ContentEncoding.Contains("gzip")) {
+        private Stream GetInputStream(HttpRequestMessage request)
+        {
+            if (request.Content.Headers.ContentEncoding.Contains("gzip"))
+            {
                 return new GZipStream(request.Content.ContentReadStream, CompressionMode.Decompress);
             }
 
             return request.Content.ContentReadStream;
         }
 
-        private static HttpResponseMessage CreateResponse(MemoryStream stream, string mediaType) {
+        private static HttpResponseMessage CreateResponse(MemoryStream stream, string mediaType)
+        {
             var content = new StreamContent(stream);
             content.Headers.ContentType = new MediaTypeHeaderValue(mediaType);
             // REVIEW: Why is it that we do not write an empty Content-Type here, like for InfoRefsController?

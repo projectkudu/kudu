@@ -4,15 +4,19 @@ using Kudu.Core.Infrastructure;
 using Kudu.Web.Models;
 using IIS = Microsoft.Web.Administration;
 
-namespace Kudu.Web.Infrastructure {
-    public class SiteManager : ISiteManager {
-        public Site CreateSite(string applicationName) {
+namespace Kudu.Web.Infrastructure
+{
+    public class SiteManager : ISiteManager
+    {
+        public Site CreateSite(string applicationName)
+        {
             var iis = new IIS.ServerManager();
 
             var kuduAppPool = EnsureAppPool(iis);
             string liveSiteName = GetLiveSite(applicationName);
 
-            try {
+            try
+            {
                 // Create the services site
                 var serviceSite = GetServiceSite(iis, kuduAppPool);
 
@@ -29,25 +33,29 @@ namespace Kudu.Web.Infrastructure {
 
                 iis.CommitChanges();
 
-                return new Site {
+                return new Site
+                {
                     SiteName = liveSiteName,
                     ServiceUrl = String.Format("http://localhost:{0}/{1}/", servicePort, applicationName),
                     SiteUrl = String.Format("http://localhost:{0}/", sitePort),
                 };
             }
-            catch {
+            catch
+            {
                 DeleteSite(applicationName);
                 throw;
             }
         }
 
-        public bool TryCreateDeveloperSite(string siteName, out string siteUrl) {
+        public bool TryCreateDeveloperSite(string siteName, out string siteUrl)
+        {
             var iis = new IIS.ServerManager();
 
             string devSiteName = GetDevSite(siteName);
 
             IIS.Site site = iis.Sites[devSiteName];
-            if (site == null) {
+            if (site == null)
+            {
                 var kuduAppPool = EnsureAppPool(iis);
 
                 // Get the path to the website
@@ -67,9 +75,11 @@ namespace Kudu.Web.Infrastructure {
             return false;
         }
 
-        private static IIS.ApplicationPool EnsureAppPool(IIS.ServerManager iis) {
+        private static IIS.ApplicationPool EnsureAppPool(IIS.ServerManager iis)
+        {
             var kuduAppPool = iis.ApplicationPools["kudu"];
-            if (kuduAppPool == null) {
+            if (kuduAppPool == null)
+            {
                 iis.ApplicationPools.Add("kudu");
                 iis.CommitChanges();
                 kuduAppPool = iis.ApplicationPools["kudu"];
@@ -82,30 +92,36 @@ namespace Kudu.Web.Infrastructure {
             return kuduAppPool;
         }
 
-        private IIS.Site GetServiceSite(IIS.ServerManager iis, IIS.ApplicationPool appPool) {
+        private IIS.Site GetServiceSite(IIS.ServerManager iis, IIS.ApplicationPool appPool)
+        {
             var site = iis.Sites["kudu_services"];
-            if (site == null) {
+            if (site == null)
+            {
                 site = iis.Sites.Add("kudu_services", PathHelper.ServiceSitePath, GetRandomPort());
                 site.ApplicationDefaults.ApplicationPoolName = appPool.Name;
             }
             return site;
         }
 
-        private int GetRandomPort() {
+        private int GetRandomPort()
+        {
             // TODO: Ensure the port is unused
             return new Random((int)DateTime.Now.Ticks).Next(1025, 65535);
         }
 
-        public void DeleteSite(string applicationName) {
+        public void DeleteSite(string applicationName)
+        {
             var iis = new IIS.ServerManager();
 
             DeleteSite(iis, GetLiveSite(applicationName));
             DeleteSite(iis, GetDevSite(applicationName));
             // Delete the services application
             var servicesSite = iis.Sites["kudu_services"];
-            if (servicesSite != null) {
+            if (servicesSite != null)
+            {
                 var app = servicesSite.Applications["/" + applicationName];
-                if (app != null) {
+                if (app != null)
+                {
                     string appPath = PathHelper.GetApplicationPath(applicationName);
                     DeleteSafe(appPath);
                     servicesSite.Applications.Remove(app);
@@ -115,12 +131,14 @@ namespace Kudu.Web.Infrastructure {
             iis.CommitChanges();
         }
 
-        public void SetDeveloperSiteWebRoot(string applicationName, string projectPath) {
+        public void SetDeveloperSiteWebRoot(string applicationName, string projectPath)
+        {
             var iis = new IIS.ServerManager();
             string siteName = GetDevSite(applicationName);
 
             IIS.Site site = iis.Sites[siteName];
-            if (site != null) {
+            if (site != null)
+            {
                 string devSitePath = PathHelper.GetDeveloperApplicationPath(applicationName);
                 string path = Path.Combine(devSitePath, "wwwroot", Path.GetDirectoryName(projectPath));
                 site.Applications[0].VirtualDirectories[0].PhysicalPath = path;
@@ -129,9 +147,11 @@ namespace Kudu.Web.Infrastructure {
             }
         }
 
-        private void DeleteSite(IIS.ServerManager iis, string siteName) {
+        private void DeleteSite(IIS.ServerManager iis, string siteName)
+        {
             var site = iis.Sites[siteName];
-            if (site != null) {
+            if (site != null)
+            {
                 site.Stop();
                 string physicalPath = site.Applications[0].VirtualDirectories[0].PhysicalPath;
                 DeleteSafe(physicalPath);
@@ -139,16 +159,20 @@ namespace Kudu.Web.Infrastructure {
             }
         }
 
-        private string GetDevSite(string applicationName) {
+        private string GetDevSite(string applicationName)
+        {
             return "kudu_dev_" + applicationName;
         }
 
-        private string GetLiveSite(string applicationName) {
+        private string GetLiveSite(string applicationName)
+        {
             return "kudu_" + applicationName;
         }
 
-        private static void DeleteSafe(string physicalPath) {
-            if (!Directory.Exists(physicalPath)) {
+        private static void DeleteSafe(string physicalPath)
+        {
+            if (!Directory.Exists(physicalPath))
+            {
                 return;
             }
 

@@ -1,9 +1,12 @@
 ﻿using System;
 using Kudu.Core.Deployment;
 
-namespace Kudu.SignalR.ViewModels {
-    public class DeployResultViewModel {
-        public DeployResultViewModel(DeployResult result) {
+namespace Kudu.SignalR.ViewModels
+{
+    public class DeployResultViewModel
+    {
+        public DeployResultViewModel(DeployResult result)
+        {
             Id = result.Id;
             Status = result.Status.ToString();
             StatusText = result.StatusText;

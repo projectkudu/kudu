@@ -5,16 +5,20 @@ using System.IO.Abstractions;
 using System.Linq;
 using System.Threading;
 
-namespace Kudu.Core.Infrastructure {
-    public static class FileSystemHelpers {
-        public static void SmartCopy(string sourcePath, string destinationPath, bool skipOldFiles = true) {
+namespace Kudu.Core.Infrastructure
+{
+    public static class FileSystemHelpers
+    {
+        public static void SmartCopy(string sourcePath, string destinationPath, bool skipOldFiles = true)
+        {
             SmartCopy(null /* previous path */,
                       sourcePath,
                       destinationPath,
                       skipOldFiles);
         }
 
-        public static void SmartCopy(string previousPath, string sourcePath, string destinationPath, bool skipOldFiles = true) {
+        public static void SmartCopy(string previousPath, string sourcePath, string destinationPath, bool skipOldFiles = true)
+        {
             SmartCopy(sourcePath,
                       destinationPath,
                       String.IsNullOrEmpty(previousPath) ? null : new DirectoryInfoWrapper(new DirectoryInfo(previousPath)),
@@ -24,28 +28,36 @@ namespace Kudu.Core.Infrastructure {
                       skipOldFiles);
         }
 
-        public static void DeleteDirectorySafe(string path) {
+        public static void DeleteDirectorySafe(string path)
+        {
             DeleteFileSystemInfo(new DirectoryInfoWrapper(new DirectoryInfo(path)));
         }
 
-        public static string EnsureDirectory(string path) {
+        public static string EnsureDirectory(string path)
+        {
             return EnsureDirectory(new FileSystem(), path);
         }
 
-        internal static string EnsureDirectory(IFileSystem fileSystem, string path) {
-            if (!fileSystem.Directory.Exists(path)) {
+        internal static string EnsureDirectory(IFileSystem fileSystem, string path)
+        {
+            if (!fileSystem.Directory.Exists(path))
+            {
                 fileSystem.Directory.CreateDirectory(path);
             }
             return path;
         }
 
-        public static void DeleteFileSafe(string path) {
+        public static void DeleteFileSafe(string path)
+        {
             DeleteFileSafe(new FileSystem(), path);
         }
 
-        internal static void DeleteFileSafe(IFileSystem fileSystem, string path) {
-            try {
-                if (fileSystem.File.Exists(path)) {
+        internal static void DeleteFileSafe(IFileSystem fileSystem, string path)
+        {
+            try
+            {
+                if (fileSystem.File.Exists(path))
+                {
                     fileSystem.File.Delete(path);
                 }
             }
@@ -53,49 +65,66 @@ namespace Kudu.Core.Infrastructure {
             catch (FileNotFoundException) { }
         }
 
-        private static void DeleteFileSystemInfo(FileSystemInfoBase fileSystemInfo) {
-            try {
-                if (fileSystemInfo.Exists) {
+        private static void DeleteFileSystemInfo(FileSystemInfoBase fileSystemInfo)
+        {
+            try
+            {
+                if (fileSystemInfo.Exists)
+                {
                     fileSystemInfo.Attributes = FileAttributes.Normal;
                 }
             }
-            catch {
+            catch
+            {
             }
 
             var directoryInfo = fileSystemInfo as DirectoryInfoBase;
 
-            if (directoryInfo != null) {
-                try {
-                    if (directoryInfo.Exists) {
-                        foreach (var dirInfo in directoryInfo.GetFileSystemInfos()) {
+            if (directoryInfo != null)
+            {
+                try
+                {
+                    if (directoryInfo.Exists)
+                    {
+                        foreach (var dirInfo in directoryInfo.GetFileSystemInfos())
+                        {
                             DeleteFileSystemInfo(dirInfo);
                         }
                     }
                 }
-                catch {
+                catch
+                {
                 }
             }
 
             DoSafeAction(fileSystemInfo.Delete);
         }
 
-        private static void DoSafeAction(Action action) {
-            try {
+        private static void DoSafeAction(Action action)
+        {
+            try
+            {
                 Attempt(action);
             }
-            catch {
+            catch
+            {
             }
         }
 
-        private static void Attempt(Action action, int retries = 3, int delayBeforeRetry = 250) {
-            while (retries > 0) {
-                try {
+        private static void Attempt(Action action, int retries = 3, int delayBeforeRetry = 250)
+        {
+            while (retries > 0)
+            {
+                try
+                {
                     action();
                     break;
                 }
-                catch {
+                catch
+                {
                     retries--;
-                    if (retries == 0) {
+                    if (retries == 0)
+                    {
                         throw;
                     }
                 }
@@ -109,14 +138,17 @@ namespace Kudu.Core.Infrastructure {
                                        DirectoryInfoBase sourceDirectory,
                                        DirectoryInfoBase destinationDirectory,
                                        Func<string, DirectoryInfoBase> createDirectoryInfo,
-                                       bool skipOldFiles) {
+                                       bool skipOldFiles)
+        {
             // Skip hidden directories and directories that begin with .
             if (sourceDirectory.Attributes.HasFlag(FileAttributes.Hidden) ||
-                sourceDirectory.Name.StartsWith(".")) {
+                sourceDirectory.Name.StartsWith("."))
+            {
                 return;
             }
 
-            if (!destinationDirectory.Exists) {
+            if (!destinationDirectory.Exists)
+            {
                 destinationDirectory.Create();
             }
 
@@ -124,21 +156,25 @@ namespace Kudu.Core.Infrastructure {
             var destFilesLookup = GetFiles(destinationDirectory);
             var sourceFilesLookup = GetFiles(sourceDirectory);
 
-            foreach (var destFile in destFilesLookup.Values) {
+            foreach (var destFile in destFilesLookup.Values)
+            {
                 // If the file doesn't exist in the source, only delete if:
                 // 1. We have no previous directory
                 // 2. We have a previous directory and the file exists there
                 if (!sourceFilesLookup.ContainsKey(destFile.Name) &&
                     ((previousFilesLookup == null) ||
                     (previousFilesLookup != null &&
-                    previousFilesLookup.ContainsKey(destFile.Name)))) {
+                    previousFilesLookup.ContainsKey(destFile.Name))))
+                {
                     destFile.Delete();
                 }
             }
 
-            foreach (var sourceFile in sourceFilesLookup.Values) {
+            foreach (var sourceFile in sourceFilesLookup.Values)
+            {
                 // Skip files that start with .
-                if (sourceFile.Name.StartsWith(".")) {
+                if (sourceFile.Name.StartsWith("."))
+                {
                     continue;
                 }
 
@@ -147,7 +183,8 @@ namespace Kudu.Core.Infrastructure {
                 FileInfoBase targetFile;
                 if (skipOldFiles &&
                     destFilesLookup.TryGetValue(sourceFile.Name, out targetFile) &&
-                    sourceFile.LastWriteTimeUtc <= targetFile.LastWriteTimeUtc) {
+                    sourceFile.LastWriteTimeUtc <= targetFile.LastWriteTimeUtc)
+                {
                     continue;
                 }
 
@@ -161,27 +198,32 @@ namespace Kudu.Core.Infrastructure {
             var sourceDirectoryLookup = GetDirectores(sourceDirectory);
             var destDirectoryLookup = GetDirectores(destinationDirectory);
 
-            foreach (var destSubDirectory in destDirectoryLookup.Values) {
+            foreach (var destSubDirectory in destDirectoryLookup.Values)
+            {
                 // If the directory doesn't exist in the source, only delete if:
                 // 1. We have no previous directory
                 // 2. We have a previous directory and the file exists there
                 if (!sourceDirectoryLookup.ContainsKey(destSubDirectory.Name) &&
                     ((previousDirectoryLookup == null) ||
                     (previousDirectoryLookup != null &&
-                    previousDirectoryLookup.ContainsKey(destSubDirectory.Name)))) {
+                    previousDirectoryLookup.ContainsKey(destSubDirectory.Name))))
+                {
                     destSubDirectory.Delete(recursive: true);
                 }
             }
 
-            foreach (var sourceSubDirectory in sourceDirectoryLookup.Values) {
+            foreach (var sourceSubDirectory in sourceDirectoryLookup.Values)
+            {
                 DirectoryInfoBase targetSubDirectory;
-                if (!destDirectoryLookup.TryGetValue(sourceSubDirectory.Name, out targetSubDirectory)) {
+                if (!destDirectoryLookup.TryGetValue(sourceSubDirectory.Name, out targetSubDirectory))
+                {
                     string path = GetDestinationPath(sourcePath, destinationPath, sourceSubDirectory);
                     targetSubDirectory = createDirectoryInfo(path);
                 }
 
                 DirectoryInfoBase previousSubDirectory = null;
-                if (previousDirectoryLookup != null) {
+                if (previousDirectoryLookup != null)
+                {
                     // Try to get the sub folder from the previous directory
                     previousDirectoryLookup.TryGetValue(sourceSubDirectory.Name, out previousSubDirectory);
                 }
@@ -191,7 +233,8 @@ namespace Kudu.Core.Infrastructure {
             }
         }
 
-        private static string GetDestinationPath(string sourceRootPath, string destinationRootPath, FileSystemInfoBase info) {
+        private static string GetDestinationPath(string sourceRootPath, string destinationRootPath, FileSystemInfoBase info)
+        {
             string sourcePath = info.FullName;
             sourcePath = sourcePath.Substring(sourceRootPath.Length)
                                    .Trim(Path.DirectorySeparatorChar);
@@ -199,15 +242,19 @@ namespace Kudu.Core.Infrastructure {
             return Path.Combine(destinationRootPath, sourcePath);
         }
 
-        private static IDictionary<string, FileInfoBase> GetFiles(DirectoryInfoBase info) {
-            if (info == null) {
+        private static IDictionary<string, FileInfoBase> GetFiles(DirectoryInfoBase info)
+        {
+            if (info == null)
+            {
                 return null;
             }
             return info.GetFiles().ToDictionary(f => f.Name, StringComparer.OrdinalIgnoreCase);
         }
 
-        private static IDictionary<string, DirectoryInfoBase> GetDirectores(DirectoryInfoBase info) {
-            if (info == null) {
+        private static IDictionary<string, DirectoryInfoBase> GetDirectores(DirectoryInfoBase info)
+        {
+            if (info == null)
+            {
                 return null;
             }
             return info.GetDirectories().ToDictionary(d => d.Name, StringComparer.OrdinalIgnoreCase);
