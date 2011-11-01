@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Json;
 using System.ServiceModel;
 using System.ServiceModel.Web;
 using Kudu.Core.Deployment;
@@ -28,13 +29,13 @@ namespace Kudu.Services.Deployment
         }
 
         [WebInvoke(UriTemplate = "restore")]
-        public void Restore(SimpleJson.JsonObject input)
+        public void Restore(JsonObject input)
         {
             _deploymentManager.Deploy((string)input["id"]);
         }
 
         [WebInvoke(UriTemplate = "build")]
-        public void Build(SimpleJson.JsonObject input)
+        public void Build(JsonObject input)
         {
             _deploymentManager.Build((string)input["id"]);
         }

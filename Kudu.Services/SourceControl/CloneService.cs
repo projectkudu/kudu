@@ -1,4 +1,6 @@
-﻿using System.ServiceModel;
+﻿using System;
+using System.Json;
+using System.ServiceModel;
 using System.ServiceModel.Web;
 using Kudu.Core.SourceControl;
 
@@ -15,9 +17,9 @@ namespace Kudu.Services.SourceControl
         }
 
         [WebInvoke]
-        public void Clone(SimpleJson.JsonObject input)
+        public void Clone(JsonObject input)
         {
-            _repositoryManager.CloneRepository((string)input["source"], (RepositoryType)(long)input["type"]);
+            _repositoryManager.CloneRepository((string)input["source"], (RepositoryType)Enum.Parse(typeof(RepositoryType), (string)input["type"]));
         }
     }
 }

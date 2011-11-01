@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Json;
 using System.ServiceModel;
 using System.ServiceModel.Web;
 using Kudu.Core.Deployment;
@@ -21,13 +22,13 @@ namespace Kudu.Services.Settings
         }
 
         [WebInvoke]
-        public void Set(SimpleJson.JsonObject input)
+        public void Set(JsonObject input)
         {
             _settingsManager.SetAppSetting((string)input["key"], (string)input["value"]);
         }
 
         [WebInvoke]
-        public void Remove(SimpleJson.JsonObject input)
+        public void Remove(JsonObject input)
         {
             _settingsManager.RemoveAppSetting((string)input["key"]);
         }

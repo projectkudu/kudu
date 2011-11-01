@@ -35,7 +35,7 @@ namespace Kudu.Client.Commands
 
         public void ExecuteCommand(string command)
         {
-            _client.Post("run", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, object>("command", command)))
+            _client.Post("run", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("command", command)))
                    .EnsureSuccessful();
         }
 
