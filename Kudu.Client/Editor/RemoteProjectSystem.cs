@@ -32,13 +32,13 @@ namespace Kudu.Client.Editor
 
         public void WriteAllText(string path, string content)
         {
-            _client.Post("save", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, object>("path", path), new KeyValuePair<string, object>("content", content)))
+            _client.Post("save", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("path", path), new KeyValuePair<string, string>("content", content)))
                    .EnsureSuccessful();
         }
 
         public void Delete(string path)
         {
-            _client.Post("delete", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, object>("path", path)))
+            _client.Post("delete", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("path", path)))
                    .EnsureSuccessful();
         }
     }

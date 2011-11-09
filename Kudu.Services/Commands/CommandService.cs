@@ -1,4 +1,5 @@
-﻿using System.ServiceModel;
+﻿using System.Json;
+using System.ServiceModel;
 using System.ServiceModel.Web;
 using Kudu.Core.Commands;
 
@@ -14,7 +15,7 @@ namespace Kudu.Services.Commands
         }
 
         [WebInvoke]
-        public void Run(SimpleJson.JsonObject input)
+        public void Run(JsonObject input)
         {
             _executor.ExecuteCommand((string)input["command"]);
         }
