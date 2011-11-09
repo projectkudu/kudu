@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Json;
 using System.Net.Http;
 using System.Net.Http.Formatting;
 using System.Net.Http.Headers;
@@ -25,14 +26,14 @@ namespace Kudu.Client.Infrastructure
             return client;
         }
 
-        public static HttpContent CreateJsonContent(params KeyValuePair<string, object>[] items)
+        public static HttpContent CreateJsonContent(params KeyValuePair<string, string>[] items)
         {
-            var jsonObject = new SimpleJson.JsonObject();
-            foreach (KeyValuePair<string, object> kv in items)
+            var jsonObject = new JsonObject();
+            foreach (KeyValuePair<string, string> kv in items)
             {
-                jsonObject.Add(kv);
+                jsonObject.Add(kv.Key, kv.Value);
             }
-            return new ObjectContent(typeof(SimpleJson.JsonObject), jsonObject, "application/json", SimpleJsonFormatter);
+            return new ObjectContent(typeof(JsonObject), jsonObject, "application/json", SimpleJsonFormatter);
         }
 
         private static IEnumerable<MediaTypeFormatter> SimpleJsonFormatter = new MediaTypeFormatter[] { new SimpleJsonMediaTypeFormatter() };

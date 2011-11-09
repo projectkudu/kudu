@@ -1,4 +1,6 @@
-﻿using System.ServiceModel;
+﻿using System;
+using System.Json;
+using System.ServiceModel;
 using System.ServiceModel.Web;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Hg;
@@ -19,9 +21,9 @@ namespace Kudu.Services.SourceControl
         }
 
         [WebInvoke]
-        public void Create(SimpleJson.JsonObject input)
+        public void Create(JsonObject input)
         {
-            _repositoryManager.CreateRepository((RepositoryType)(long)input["type"]);
+            _repositoryManager.CreateRepository((RepositoryType)Enum.Parse(typeof(RepositoryType), (string)input["type"]));
         }
 
         [WebInvoke]

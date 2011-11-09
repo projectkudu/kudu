@@ -47,13 +47,13 @@ namespace Kudu.Client.Deployment
 
         private void SetValue(string section, string key, string value)
         {
-            _client.Post(section + "/set", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, object>("key", key), new KeyValuePair<string, object>("value", value)))
+            _client.Post(section + "/set", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("key", key), new KeyValuePair<string, string>("value", value)))
                    .EnsureSuccessful();
         }
 
         private void DeleteValue(string section, string key)
         {
-            _client.Post(section + "/remove", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, object>("key", key)))
+            _client.Post(section + "/remove", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("key", key)))
                    .EnsureSuccessful();
         }
     }

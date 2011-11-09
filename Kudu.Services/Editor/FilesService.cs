@@ -1,4 +1,5 @@
-﻿using System.Net.Http;
+﻿using System.Json;
+using System.Net.Http;
 using System.ServiceModel;
 using System.ServiceModel.Web;
 using Kudu.Core.Editor;
@@ -31,13 +32,13 @@ namespace Kudu.Services.Documents
         }
 
         [WebInvoke]
-        public void Save(SimpleJson.JsonObject input)
+        public void Save(JsonObject input)
         {
             _projectSystem.WriteAllText((string)input["path"], (string)input["content"]);
         }
 
         [WebInvoke]
-        public void Delete(SimpleJson.JsonObject input)
+        public void Delete(JsonObject input)
         {
             _projectSystem.Delete((string)input["path"]);
         }

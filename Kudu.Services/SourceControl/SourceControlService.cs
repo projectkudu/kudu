@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Json;
 using System.Net;
 using System.ServiceModel;
 using System.ServiceModel.Web;
@@ -71,25 +72,25 @@ namespace Kudu.Services.SourceControl
         }
 
         [WebInvoke(UriTemplate = "add")]
-        public void AddFile(SimpleJson.JsonObject input)
+        public void AddFile(JsonObject input)
         {
             _repository.AddFile((string)input["path"]);
         }
 
         [WebInvoke(UriTemplate = "remove")]
-        public void RemoveFile(SimpleJson.JsonObject input)
+        public void RemoveFile(JsonObject input)
         {
             _repository.RevertFile((string)input["path"]);
         }
 
         [WebInvoke]
-        public ChangeSet Commit(SimpleJson.JsonObject input)
+        public ChangeSet Commit(JsonObject input)
         {
             return _repository.Commit((string)input["name"], (string)input["message"]);
         }
 
         [WebInvoke]
-        public void Update(SimpleJson.JsonObject input)
+        public void Update(JsonObject input)
         {
             _repository.Update((string)input["id"]);
         }
