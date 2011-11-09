@@ -9,7 +9,8 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <dependencies>
-        <dependency id="Kudu.Core" version="0.5" />
+        <dependency id="Kudu.Client" />
+        <dependency id="Kudu.Contracts" />
     </dependencies>
   </metadata>
 </package>

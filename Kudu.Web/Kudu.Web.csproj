@@ -286,6 +286,10 @@
       <Project>{222E740B-EF14-4976-A9DC-C12CF57A46A2}</Project>
       <Name>Kudu.Client</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Kudu.Contracts\Kudu.Contracts.csproj">
+      <Project>{EC0ED988-2C60-4F31-A434-645E048BFD95}</Project>
+      <Name>Kudu.Contracts</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Kudu.Core\Kudu.Core.csproj">
       <Project>{5320177C-725A-44BD-8FA6-F88D9725B46C}</Project>
       <Name>Kudu.Core</Name>
