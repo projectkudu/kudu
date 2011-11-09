@@ -1,5 +1,5 @@
 ﻿using System.IO;
-using System.Web;
+using System.Web.Hosting;
 
 namespace Kudu.Services.Web
 {
@@ -7,13 +7,13 @@ namespace Kudu.Services.Web
     {
         public static string ResolveRootPath()
         {
-            string path = Path.Combine(HttpRuntime.AppDomainAppPath, "..", "apps", "live");
+            string path = HostingEnvironment.MapPath("/_app");
             return Path.GetFullPath(path);
         }
 
         public static string ResolveDevelopmentPath()
         {
-            string path = Path.Combine(HttpRuntime.AppDomainAppPath, "..", "apps", "dev");
+            string path = HostingEnvironment.MapPath("/_devapp");
             if (!Directory.Exists(path))
             {
                 return null;

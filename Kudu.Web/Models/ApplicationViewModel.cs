@@ -45,8 +45,7 @@ namespace Kudu.Web.Models
 
         private string GetCloneUrl(IApplication application, RepositoryType type)
         {
-            string prefix = application.ServiceUrl + application.Name.GenerateSlug();
-            return prefix + (type == RepositoryType.Git ? ".git" : String.Empty);
+            return application.ServiceUrl + (type == RepositoryType.Git ? "git" : "hg");
         }
     }
 }

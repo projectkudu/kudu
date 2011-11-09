@@ -224,15 +224,13 @@ namespace Kudu.Web.Controllers
                 application.DeveloperSiteState = (int)DeveloperSiteState.Creating;
                 db.SaveChanges();
 
-                FileSystemHelpers.EnsureDirectory(destRepositoryPath);
-
-                // Clone the repository to the developer site
-                var devRepositoryManager = new RemoteRepositoryManager(application.ServiceUrl + "dev/scm");
-                devRepositoryManager.CloneRepository(sourceRepositoryPath, repositoryType);
-
                 string developerSiteUrl;
                 if (_siteManager.TryCreateDeveloperSite(slug, out developerSiteUrl))
                 {
+                    // Clone the repository to the developer site
+                    var devRepositoryManager = new RemoteRepositoryManager(application.ServiceUrl + "dev/scm");
+                    devRepositoryManager.CloneRepository(sourceRepositoryPath, repositoryType);
+
                     application.DeveloperSiteUrl = developerSiteUrl;
                     db.SaveChanges();
 
