@@ -93,6 +93,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\Common\Kudu.nuspec">
+      <Link>Properties\Kudu.nuspec</Link>
+    </None>
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
