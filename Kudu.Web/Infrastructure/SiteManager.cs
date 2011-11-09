@@ -3,6 +3,7 @@ using System.IO;
 using Kudu.Core.Infrastructure;
 using Kudu.Web.Models;
 using IIS = Microsoft.Web.Administration;
+using System.Threading;
 
 namespace Kudu.Web.Infrastructure
 {
@@ -25,6 +26,9 @@ namespace Kudu.Web.Infrastructure
                 string siteRoot = PathHelper.GetApplicationPath(applicationName);
                 string webRoot = Path.Combine(siteRoot, "wwwroot");
                 int sitePort = CreateSite(iis, siteName, webRoot);
+
+                // Commit the changes to iis
+                iis.CommitChanges();
 
                 // Map a path called app to the site root under the service site
                 MapServiceSitePath(iis, applicationName, "_app", siteRoot);
@@ -55,15 +59,16 @@ namespace Kudu.Web.Infrastructure
                 // Get the path to the dev site
                 string siteRoot = PathHelper.GetDeveloperApplicationPath(applicationName);
                 string webRoot = Path.Combine(siteRoot, "wwwroot");
-                int sitePort = CreateSite(iis, devSiteName, siteRoot);
-
-                // Map a path called app to the site root under the service site
-                MapServiceSitePath(iis, applicationName, "_devapp", siteRoot);
+                int sitePort = CreateSite(iis, devSiteName, webRoot);
 
                 // Ensure the directory is created
-                FileSystemHelpers.EnsureDirectory(siteRoot);
+                FileSystemHelpers.EnsureDirectory(webRoot);
 
                 iis.CommitChanges();
+
+                // Map a path called app to the site root under the service site
+                MapServiceSitePath(iis, applicationName, "_devapp", siteRoot, restartSite: true);
+
                 siteUrl = String.Format("http://localhost:{0}/", sitePort);
                 return true;
             }
@@ -100,7 +105,7 @@ namespace Kudu.Web.Infrastructure
             }
         }
 
-        private static void MapServiceSitePath(IIS.ServerManager iis, string applicationName, string path, string siteRoot)
+        private static void MapServiceSitePath(IIS.ServerManager iis, string applicationName, string path, string siteRoot, bool restartSite = false)
         {
             string serviceSiteName = GetServiceSite(applicationName);
 
@@ -111,10 +116,30 @@ namespace Kudu.Web.Infrastructure
                 throw new InvalidOperationException("Could not retrieve service site");
             }
 
+
             // Map the path to the live site in the service site
             site.Applications.Add("/" + path, siteRoot);
 
             iis.CommitChanges();
+
+            if (restartSite)
+            {
+                site.Stop();
+                Thread.Sleep(500);
+                site.Start();
+            }
+        }
+
+        private static IIS.ObjectState GetState(IIS.Site site)
+        {
+            try
+            {
+                return site.State;
+            }
+            catch
+            {
+                return IIS.ObjectState.Unknown;
+            }
         }
 
         private static IIS.ApplicationPool EnsureKuduAppPool(IIS.ServerManager iis)
@@ -156,7 +181,7 @@ namespace Kudu.Web.Infrastructure
             var site = iis.Sites[siteName];
             if (site != null)
             {
-                site.Stop();                
+                site.Stop();
                 if (deletePhysicalFiles)
                 {
                     string physicalPath = site.Applications[0].VirtualDirectories[0].PhysicalPath;

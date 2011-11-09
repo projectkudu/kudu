@@ -14,7 +14,6 @@
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\kudu\</SolutionDir>
     <RestorePackages>true</RestorePackages>
-    <BuildPackage>true</BuildPackage>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -38,9 +37,6 @@
       <Private>True</Private>
       <HintPath>..\packages\Microsoft.Web.Infrastructure.1.0.0.0\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
     </Reference>
-    <Reference Include="Ninject">
-      <HintPath>..\packages\Ninject.2.2.1.4\lib\net40-Full\Ninject.dll</HintPath>
-    </Reference>
     <Reference Include="SignalR, Version=0.3.5.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\SignalR.Server.0.3.5\lib\net40\SignalR.dll</HintPath>
@@ -61,7 +57,7 @@
     </Compile>
     <Compile Include="Hubs\Deployment.cs" />
     <Compile Include="Hubs\DevelopmentEnvironment.cs" />
-    <Compile Include="Infrastructure\ApplicationNameResolver.cs" />
+    <Compile Include="Infrastructure\ClientStateResolver.cs" />
     <Compile Include="Infrastructure\ISiteConfiguration.cs" />
     <Compile Include="Infrastructure\IUserInformation.cs" />
     <Compile Include="Infrastructure\SiteConfiguration.cs" />
@@ -74,7 +70,7 @@
     <Compile Include="ViewModels\LogEntryViewModel.cs" />
     <Compile Include="ViewModels\ProjectFile.cs" />
     <Compile Include="ViewModels\ProjectViewModel.cs" />
-    <Compile Include="Ninject\DefaultBindings.cs" />
+    <Compile Include="DI\KuduDefaultBindings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

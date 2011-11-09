@@ -21,6 +21,9 @@ namespace Kudu.Web.App_Start
         {
             IKernel kernel = CreateKernel();
             DependencyResolver.SetResolver(new NinjectDependencyResolver(kernel));
+
+            // Initialize kudu's bindings
+            KuduDefaultBindings.Initialize();
         }
 
         /// <summary>
@@ -29,7 +32,7 @@ namespace Kudu.Web.App_Start
         /// <returns>The created kernel.</returns>
         private static IKernel CreateKernel()
         {
-            var kernel = new StandardKernel(new DefaultBindings());
+            var kernel = new StandardKernel();
             RegisterServices(kernel);
             return kernel;
         }
@@ -51,7 +54,9 @@ namespace Kudu.Web.App_Start
         private static IApplication GetApplication(IContext context)
         {
             var httpContext = context.Kernel.Get<HttpContextBase>();
-            string applicationName = ApplicationNameResolver.ResolveName(httpContext);
+            var state = ClientStateResolver.GetState(httpContext);
+            var applicationName = (string)state["applicationName"];
+
             using (var db = new KuduContext())
             {
                 return db.Applications.Find(applicationName);

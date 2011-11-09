@@ -239,7 +239,6 @@ namespace Kudu.Web.Controllers
             }
             catch
             {
-                FileSystemHelpers.DeleteDirectorySafe(destRepositoryPath);
                 application.DeveloperSiteUrl = null;
                 application.DeveloperSiteState = (int)DeveloperSiteState.None;
                 db.SaveChanges();
