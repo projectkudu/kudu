@@ -17,4 +17,5 @@ _ReSharper.*/
 packages/*
 App_Data/
 /apps
+/artifacts
 msbuild.log

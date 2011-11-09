@@ -5,6 +5,7 @@
         <ProjectRoot>$(MSBuildProjectDirectory)\..</ProjectRoot>
         <ToolsPath>$(ProjectRoot)\tools\</ToolsPath>
         <XunitPath>$(ToolsPath)xunit\</XunitPath>
+        <ArtifactsPath>$(ProjectRoot)\artifacts\$(Configuration)</ArtifactsPath>
     </PropertyGroup>
     
     <ItemGroup>
@@ -16,14 +17,19 @@
     
     <Target Name="RunAll" DependsOnTargets="Build; RunTests" />
     
+    <Target Name="CreateOutputPath">
+        <MakeDir Directories="$(ArtifactsPath)" Condition="!Exists('$(ArtifactsPath)')" />
+    </Target>
+    
     <Target Name="RunTests">
         <xunit Assembly="%(TestProjects.FullPath)" />
     </Target>
     
-    <Target Name="Build">
+    <Target Name="Build" DependsOnTargets="CreateOutputPath">
         <MSBuild Projects="$(ProjectRoot)\kudu.sln" 
                  Targets="Build" 
-                 Properties="Configuration=$(Configuration);
+                 Properties="PackageOutputDir=$(ArtifactsPath);
+                             Configuration=$(Configuration);
                              MSBuildExtensionsPath32=$(ProjectRoot)\Kudu.Services.Web\msbuild" />
     </Target>
 </Project>
