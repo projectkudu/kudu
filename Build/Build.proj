@@ -6,6 +6,8 @@
         <ToolsPath>$(ProjectRoot)\tools\</ToolsPath>
         <XunitPath>$(ToolsPath)xunit\</XunitPath>
         <ArtifactsPath>$(ProjectRoot)\artifacts\$(Configuration)</ArtifactsPath>
+        <ServiceSiteTargetPath>$(ArtifactsPath)\KuduService</ServiceSiteTargetPath>
+        <ServiceSiteProject>$(ProjectRoot)\Kudu.Services.Web\Kudu.Services.Web.csproj</ServiceSiteProject>
     </PropertyGroup>
     
     <ItemGroup>
@@ -15,12 +17,16 @@
     <UsingTask AssemblyFile="$(XunitPath)xunit.runner.msbuild.dll"
                TaskName="Xunit.Runner.MSBuild.xunit" />
     
-    <Target Name="RunAll" DependsOnTargets="Build; RunTests" />
+    <Target Name="RunAll" DependsOnTargets="Build; RunTests; BuildKuduServiceSite" />
     
     <Target Name="CreateOutputPath">
         <MakeDir Directories="$(ArtifactsPath)" Condition="!Exists('$(ArtifactsPath)')" />
     </Target>
-    
+
+    <Target Name="BuildKuduServiceSite">
+        <MSBuild Projects="$(ServiceSiteProject)" Targets="pipelinePreDeployCopyAllFilesToOneFolder" Properties="_PackageTempDir=$(ServiceSiteTargetPath);AutoParameterizationWebConfigConnectionStrings=false;SolutionDir=$(ProjectRoot)\"/>
+    </Target>
+  
     <Target Name="RunTests">
         <xunit Assembly="%(TestProjects.FullPath)" />
     </Target>

@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension">
+
+  <!-- Common definitions -->
+  <?ifndef KuduProductVersion?>
+  <?define KuduProductVersion = "0.0.0.0"?>
+  <?endif?>
+  <?define ArtifactsDir = "..\artifacts\$(var.Configuration)"?>
+  <?define KuduServiceDir = "$(var.ArtifactsDir)\KuduService"?>
+  <?define KuduServiceBinDir = "$(var.KuduServiceDir)\bin"?>
+  <?define KuduServiceMsBuildDir = "$(var.KuduServiceDir)\msbuild\Microsoft\VisualStudio\v10.0"?>
+
+  <Product Id="82fa4608-ca6f-4d5e-9fa1-906987106ab9"
+           Name="Kudu.Setup"
+           Language="1033"
+           Version="$(var.KuduProductVersion)"
+           Manufacturer="Microsoft Corporation"
+           UpgradeCode="20454678-7e74-4e0e-8ab0-2e8f9f7e3c5f">
+
+    <Package InstallerVersion="200"
+             Compressed="yes"
+             Description="Kudu services" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Kudu Service was detected in the machine, this installation will abort." />
+
+    <Media Id="1" Cabinet="KuduService.cab" EmbedCab="yes" />
+
+    <!-- Prerequisite check -->
+    <PropertyRef Id="NETFRAMEWORK40FULL" />
+    <Condition Message="This application requires .NET Framework v4.0. Please install the .NET Framework v4.0 then run this installer again.">NETFRAMEWORK40FULL OR REMOVE</Condition>
+    
+    <!-- Directory structure -->
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="WINDOWSDRIVE">
+        <Directory Id="KUDU_BASE_DIR" Name="KuduService">
+          <Directory Id="KUDU_WWWROOT" Name="wwwroot">
+            <Directory Id="KUDU_SERVICE_BIN" Name="Bin" />
+            <Directory Id="KUDU_SERVICE_MSBUILD" Name="msbuild">
+              <Directory Id ="KUDU_SERVICE_MSBUILD_MS" Name="Microsoft">
+                <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS" Name="VisualStudio">
+                  <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS_10" Name="v10.0">
+                    <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS_10_WEB" Name="Web"/>
+                    <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS_10_WEBAPPS" Name="WebApplications"/>
+                  </Directory>
+                </Directory>
+              </Directory>
+            </Directory>
+          </Directory>
+        </Directory>
+      </Directory>
+    </Directory>
+
+
+    <!-- Product files -->
+    <DirectoryRef Id="KUDU_WWWROOT">
+
+      <!-- Registry Key entry -->
+      <Component Id="RegistryComponent" Guid="{3B4B2C90-2DDD-44E9-AC66-DFD45D0644C5}">
+        <RegistryKey Root="HKLM" Key="SOFTWARE\Microsoft\Kudu" Action="createAndRemoveOnUninstall">
+          <RegistryValue Name="Version" Value="$(var.KuduProductVersion)" Type="string" />
+        </RegistryKey>
+      </Component>
+
+      <Component Id="GlobalAsaxComponent" Guid="{9120F0CD-A9BC-4B94-8D1C-2D591D1EF98A}">
+        <File Id="GlobalAsaxFile" Source="$(var.KuduServiceDir)\Global.asax" />
+      </Component>
+      
+      <Component Id="WebConfigComponent" Guid="{457A4FB5-F65C-4431-AB8A-A87F960ADDCC}">
+        <File Id="WebConfigFile" Source="$(var.KuduServiceDir)\Web.config" />
+      </Component>
+      
+    </DirectoryRef>
+
+    <DirectoryRef Id="KUDU_SERVICE_BIN">
+      
+      <Component Id="KuduLibraries" Guid="{61A18C06-83A8-41CA-AA38-F9F665DE10C3}">
+        <?foreach lib in Kudu.Contracts.dll;Kudu.Core.dll;Kudu.Services.dll;Kudu.Services.Web.dll?>
+        <File Id="$(var.lib)" Source="$(var.KuduServiceBinDir)\$(var.lib)" />
+        <?endforeach?>
+      </Component>
+
+      <Component Id="ElmahLibraries" Guid="{C13BE342-75FF-40CF-AFD3-669F8182CF83}">
+        <?foreach lib in Elmah.dll?>
+        <File Id="$(var.lib)" Source="$(var.KuduServiceBinDir)\$(var.lib)" />
+        <?endforeach?>
+      </Component>
+      
+      <Component Id="NewtonSoftJsonLibraries" Guid="{11210292-AF01-42CB-BAA6-6619CCA6E682}">
+        <?foreach lib in Newtonsoft.Json.dll?>
+        <File Id="$(var.lib)" Source="$(var.KuduServiceBinDir)\$(var.lib)" />
+        <?endforeach?>
+      </Component>
+      
+      <Component Id="NinjectLibraries" Guid="{1337933F-2537-4C76-8FEF-FBADD5816448}">
+        <?foreach lib in Ninject.dll;Ninject.Extensions.Wcf.dll?>
+        <File Id="$(var.lib)" Source="$(var.KuduServiceBinDir)\$(var.lib)" />
+        <?endforeach?>
+      </Component>
+      
+      <Component Id="SignalRLibraries" Guid="{05B0AC56-6BD2-4F46-B80B-ADC05F4996FF}">
+        <?foreach lib in SignalR.dll?>
+        <File Id="$(var.lib)" Source="$(var.KuduServiceBinDir)\$(var.lib)" />
+        <?endforeach?>
+      </Component>
+
+      <Component Id="SourceControlGitLibraries" Guid="{0496B795-B6E6-4394-934E-A1016AD594F3}">
+        <?foreach lib in LibGit2Sharp.dll?>
+        <File Id="$(var.lib)" Source="$(var.KuduServiceBinDir)\$(var.lib)" />
+        <?endforeach?>
+      </Component>
+
+      <Component Id="SourceControlHgLibraries" Guid="{F2706686-C1DD-4168-996D-B27D02B636D8}">
+        <?foreach lib in Mercurial.Net.dll?>
+        <File Id="$(var.lib)" Source="$(var.KuduServiceBinDir)\$(var.lib)" />
+        <?endforeach?>
+      </Component>
+
+      <Component Id="WebApiLibraries" Guid="{64BD205C-7377-4BFE-BA9B-855824112E0F}">
+        <?foreach lib in Microsoft.ApplicationServer.Http.dll;Microsoft.Json.dll;Microsoft.Net.Http.dll;Microsoft.Net.Http.Formatting.dll;Microsoft.Runtime.Serialization.Internal.dll;Microsoft.ServiceModel.Internal.dll?>
+        <File Id="$(var.lib)" Source="$(var.KuduServiceBinDir)\$(var.lib)" />
+        <?endforeach?>
+      </Component>
+      
+      <Component Id="MiscellaneousLibraries" Guid="{4F476863-1DE8-4699-9691-5A7BDEC0BE47}">
+        <?foreach lib in Microsoft.Server.Common.dll;Microsoft.Web.Infrastructure.dll;System.IO.Abstractions.dll;WebActivator.dll;XmlSettings.dll?>
+        <File Id="$(var.lib)" Source="$(var.KuduServiceBinDir)\$(var.lib)" />
+        <?endforeach?>
+      </Component>
+      
+    </DirectoryRef>
+
+    <DirectoryRef Id="KUDU_SERVICE_MSBUILD_MS_VS_10_WEB">
+      <Component Id="MsBuildComponentWeb" Guid="{0DE02D81-BAFE-4939-B903-D454B4D3603D}">
+        <?foreach file in Microsoft.Web.Publishing.AllFilesInProjectFolder.targets;Microsoft.Web.Publishing.AllFilesInTheProject.targets;Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets;Microsoft.Web.Publishing.targets;Microsoft.Web.Publishing.Tasks.Dll?>
+        <File Id="$(var.file)" Source="$(var.KuduServiceMsBuildDir)\Web\$(var.file)" />
+        <?endforeach?>
+      </Component>
+    </DirectoryRef>
+
+    <DirectoryRef Id="KUDU_SERVICE_MSBUILD_MS_VS_10_WEBAPPS">
+      <Component Id="MsBuildComponentWebApps" Guid="{D9A90644-3F50-420E-9FC7-0EF987C2D29A}">
+        <?foreach file in Microsoft.WebApplication.Build.Tasks.Dll;Microsoft.WebApplication.targets?>
+        <File Id="$(var.file)" Source="$(var.KuduServiceMsBuildDir)\WebApplications\$(var.file)" />
+        <?endforeach?>
+      </Component>
+    </DirectoryRef>
+
+    <CustomAction Id="SetWindowsDriveDefault" Property="WINDOWSDRIVE" Value="[WindowsVolume]" />
+    
+    <InstallExecuteSequence>
+      <Custom Action="SetWindowsDriveDefault" After="CostInitialize" />
+    </InstallExecuteSequence>
+    
+    <InstallUISequence>
+      <Custom Action="SetWindowsDriveDefault" After="CostInitialize" />
+    </InstallUISequence>
+
+    <Feature Id="RequiredComponents" Level="1">
+      <ComponentRef Id="RegistryComponent" />
+      <ComponentRef Id="GlobalAsaxComponent" />
+      <ComponentRef Id="WebConfigComponent" />
+      <ComponentRef Id="KuduLibraries" />
+      <ComponentRef Id="ElmahLibraries" />
+      <ComponentRef Id="NewtonSoftJsonLibraries" />
+      <ComponentRef Id="NinjectLibraries" />
+      <ComponentRef Id="SignalRLibraries" />
+      <ComponentRef Id="SourceControlGitLibraries" />
+      <ComponentRef Id="SourceControlHgLibraries" />
+      <ComponentRef Id="WebApiLibraries" />
+      <ComponentRef Id="MiscellaneousLibraries" />
+      <ComponentRef Id="MsBuildComponentWeb" />
+      <ComponentRef Id="MsBuildComponentWebApps" />
+    </Feature>
+
+  </Product>
+</Wix>
