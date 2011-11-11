@@ -1,18 +1,34 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using Kudu.Client.Infrastructure;
 using Kudu.Core.Deployment;
 
 namespace Kudu.Client.Deployment
 {
-    public class RemoteDeploymentSettingsManager : IDeploymentSettingsManager
+    public class RemoteDeploymentSettingsManager : IDeploymentSettingsManager, IKuduClientCredentials
     {
         private readonly HttpClient _client;
+        private ICredentials _credentials;
 
         public RemoteDeploymentSettingsManager(string serviceUrl)
         {
             serviceUrl = UrlUtility.EnsureTrailingSlash(serviceUrl);
             _client = HttpClientHelper.Create(serviceUrl);
+        }
+
+        public ICredentials Credentials
+        {
+            get
+            {
+                return this._credentials;
+            }
+            set
+            {
+                this._credentials = value;
+                this._client.SetClientCredentials(this._credentials);
+            }
         }
 
         public IEnumerable<DeploymentSetting> GetAppSettings()

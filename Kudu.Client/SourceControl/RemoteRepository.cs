@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using Kudu.Client.Infrastructure;
 using Kudu.Core.SourceControl;
@@ -7,13 +8,27 @@ using Newtonsoft.Json;
 
 namespace Kudu.Client.SourceControl
 {
-    public class RemoteRepository : IRepository
+    public class RemoteRepository : IRepository, IKuduClientCredentials
     {
         private readonly HttpClient _client;
+        private ICredentials _credentials;
 
         public RemoteRepository(string serviceUrl)
         {
             _client = HttpClientHelper.Create(serviceUrl);
+        }
+
+        public ICredentials Credentials
+        {
+            get
+            {
+                return this._credentials;
+            }
+            set
+            {
+                this._credentials = value;
+                this._client.SetClientCredentials(this._credentials);
+            }
         }
 
         public string CurrentId

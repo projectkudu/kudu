@@ -10,10 +10,11 @@ using SignalR.Client;
 
 namespace Kudu.Client.Deployment
 {
-    public class RemoteDeploymentManager : IDeploymentManager
+    public class RemoteDeploymentManager : IDeploymentManager, IKuduClientCredentials
     {
         private readonly HttpClient _client;
         private readonly Connection _connection;
+        private ICredentials _credentials;
 
         public event Action<DeployResult> StatusChanged;
 
@@ -55,6 +56,19 @@ namespace Kudu.Client.Deployment
             };
 
             _connection.Start().Wait();
+        }
+
+        public ICredentials Credentials
+        {
+            get
+            {
+                return this._credentials;
+            }
+            set
+            {
+                this._credentials = value;
+                this._client.SetClientCredentials(this._credentials);
+            }
         }
 
         public bool IsActive

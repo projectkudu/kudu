@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using Kudu.Client.Infrastructure;
 using Kudu.Core.Editor;
 
 namespace Kudu.Client.Editor
 {
-    public class RemoteProjectSystem : IProjectSystem
+    public class RemoteProjectSystem : IProjectSystem, IKuduClientCredentials
     {
         private readonly HttpClient _client;
+        private ICredentials _credentials;
 
         public RemoteProjectSystem(string serviceUrl)
         {
@@ -23,6 +25,19 @@ namespace Kudu.Client.Editor
                           .EnsureSuccessful()
                           .Content
                           .ReadAsString();
+        }
+
+        public ICredentials Credentials
+        {
+            get
+            {
+                return this._credentials;
+            }
+            set
+            {
+                this._credentials = value;
+                this._client.SetClientCredentials(this._credentials);
+            }
         }
 
         public Project GetProject()

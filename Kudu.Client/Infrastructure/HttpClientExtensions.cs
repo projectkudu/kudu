@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Net;
 using System.Net.Http;
 using Newtonsoft.Json;
+using System.Net.Http.Headers;
+using System.Text;
 
 namespace Kudu.Client.Infrastructure
 {
@@ -24,6 +27,13 @@ namespace Kudu.Client.Infrastructure
             }
 
             return response;
+        }
+
+        public static void SetClientCredentials(this HttpClient client, ICredentials credentials)
+        {
+            NetworkCredential networkCred = credentials.GetCredential(client.BaseAddress, "Basic");
+            string credParameter = Convert.ToBase64String(Encoding.ASCII.GetBytes(networkCred.UserName + ":" + networkCred.Password));
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credParameter);
         }
     }
 }

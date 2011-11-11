@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using Kudu.Client.Infrastructure;
 using Kudu.Core.Commands;
@@ -8,10 +9,11 @@ using SignalR.Client;
 
 namespace Kudu.Client.Commands
 {
-    public class RemoteCommandExecutor : ICommandExecutor
+    public class RemoteCommandExecutor : ICommandExecutor, IKuduClientCredentials
     {
         private readonly HttpClient _client;
         private readonly Connection _connection;
+        private ICredentials _credentials;
 
         public RemoteCommandExecutor(string serviceUrl)
         {
@@ -29,6 +31,19 @@ namespace Kudu.Client.Commands
             };
 
             _connection.Start();
+        }
+
+        public ICredentials Credentials
+        {
+            get
+            {
+                return this._credentials;
+            }
+            set
+            {
+                this._credentials = value;
+                this._client.SetClientCredentials(this._credentials);
+            }
         }
 
         public event Action<CommandEvent> CommandEvent;
