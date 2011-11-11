@@ -4,6 +4,7 @@ using System.Json;
 using System.Net.Http;
 using System.Net.Http.Formatting;
 using System.Net.Http.Headers;
+using System.Text;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Client.Infrastructure

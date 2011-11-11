@@ -1,18 +1,14 @@
 ﻿using System.Collections.Generic;
-using System.Net.Http;
 using Kudu.Client.Infrastructure;
 using Kudu.Core.Deployment;
 
 namespace Kudu.Client.Deployment
 {
-    public class RemoteDeploymentSettingsManager : IDeploymentSettingsManager
+    public class RemoteDeploymentSettingsManager : KuduRemoteClientBase, IDeploymentSettingsManager
     {
-        private readonly HttpClient _client;
-
         public RemoteDeploymentSettingsManager(string serviceUrl)
+            :base(serviceUrl)
         {
-            serviceUrl = UrlUtility.EnsureTrailingSlash(serviceUrl);
-            _client = HttpClientHelper.Create(serviceUrl);
         }
 
         public IEnumerable<DeploymentSetting> GetAppSettings()
