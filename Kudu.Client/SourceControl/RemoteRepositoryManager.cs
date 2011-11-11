@@ -1,33 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Net.Http;
 using Kudu.Client.Infrastructure;
 using Kudu.Core.SourceControl;
 
 namespace Kudu.Client.SourceControl
 {
-    public class RemoteRepositoryManager : IRepositoryManager, IKuduClientCredentials
+    public class RemoteRepositoryManager : KuduRemoteClientBase, IRepositoryManager
     {
-        private readonly HttpClient _client;
-        private ICredentials _credentials;
-
         public RemoteRepositoryManager(string serviceUrl)
+            :base(serviceUrl)
         {
-            _client = HttpClientHelper.Create(serviceUrl);
-        }
-
-        public ICredentials Credentials
-        {
-            get
-            {
-                return this._credentials;
-            }
-            set
-            {
-                this._credentials = value;
-                this._client.SetClientCredentials(this._credentials);
-            }
         }
 
         public void CreateRepository(RepositoryType type)

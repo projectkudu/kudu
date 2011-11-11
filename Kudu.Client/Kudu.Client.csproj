@@ -79,7 +79,7 @@
     </Compile>
     <Compile Include="Infrastructure\HttpClientExtensions.cs" />
     <Compile Include="Infrastructure\HttpClientHelper.cs" />
-    <Compile Include="Infrastructure\IKuduClientCredentials.cs" />
+    <Compile Include="Infrastructure\KuduRemoteClientBase.cs" />
     <Compile Include="Infrastructure\UrlUtility.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Commands\RemoteCommandExecutor.cs" />

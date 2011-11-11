@@ -10,20 +10,15 @@ using SignalR.Client;
 
 namespace Kudu.Client.Deployment
 {
-    public class RemoteDeploymentManager : IDeploymentManager, IKuduClientCredentials
+    public class RemoteDeploymentManager : KuduRemoteClientBase, IDeploymentManager
     {
-        private readonly HttpClient _client;
         private readonly Connection _connection;
-        private ICredentials _credentials;
 
         public event Action<DeployResult> StatusChanged;
 
-
         public RemoteDeploymentManager(string serviceUrl)
+            : base(serviceUrl)
         {
-            serviceUrl = UrlUtility.EnsureTrailingSlash(serviceUrl);
-            _client = HttpClientHelper.Create(serviceUrl);
-
             // Raise the event when data comes in
             _connection = new Connection(serviceUrl + "status");
             _connection.Received += data =>
@@ -56,19 +51,6 @@ namespace Kudu.Client.Deployment
             };
 
             _connection.Start().Wait();
-        }
-
-        public ICredentials Credentials
-        {
-            get
-            {
-                return this._credentials;
-            }
-            set
-            {
-                this._credentials = value;
-                this._client.SetClientCredentials(this._credentials);
-            }
         }
 
         public bool IsActive
