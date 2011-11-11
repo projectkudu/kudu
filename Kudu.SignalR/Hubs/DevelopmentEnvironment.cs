@@ -3,6 +3,7 @@ using Kudu.Core.Commands;
 using Kudu.Core.Editor;
 using Kudu.Core.SourceControl;
 using Kudu.SignalR.Infrastructure;
+using Kudu.SignalR.Models;
 using Kudu.SignalR.ViewModels;
 using SignalR.Hubs;
 

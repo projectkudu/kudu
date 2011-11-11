@@ -59,9 +59,9 @@
     <Compile Include="Hubs\DevelopmentEnvironment.cs" />
     <Compile Include="Infrastructure\ClientStateResolver.cs" />
     <Compile Include="Infrastructure\ISiteConfiguration.cs" />
-    <Compile Include="Infrastructure\IUserInformation.cs" />
+    <Compile Include="Models\IUserInformation.cs" />
     <Compile Include="Infrastructure\SiteConfiguration.cs" />
-    <Compile Include="Infrastructure\UserInformation.cs" />
+    <Compile Include="Models\UserInformation.cs" />
     <Compile Include="Models\Application.cs" />
     <Compile Include="Models\IApplication.cs" />
     <Compile Include="ViewModels\ChangeSetDetailViewModel.cs" />

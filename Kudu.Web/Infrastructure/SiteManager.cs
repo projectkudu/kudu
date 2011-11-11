@@ -3,13 +3,15 @@ using System.IO;
 using Kudu.Core.Infrastructure;
 using Kudu.Web.Models;
 using IIS = Microsoft.Web.Administration;
-using System.Threading;
 
 namespace Kudu.Web.Infrastructure
 {
     public class SiteManager : ISiteManager
     {
         private const string KuduAppPoolName = "kudu";
+        private const string WebRoot = "wwwroot";
+        private const string MappedLiveSite = "_app";
+        private const string MappedDevSite = "_devapp";
 
         public Site CreateSite(string applicationName)
         {
@@ -24,14 +26,14 @@ namespace Kudu.Web.Infrastructure
                 // Create the main site
                 string siteName = GetLiveSite(applicationName);
                 string siteRoot = PathHelper.GetApplicationPath(applicationName);
-                string webRoot = Path.Combine(siteRoot, "wwwroot");
+                string webRoot = Path.Combine(siteRoot, WebRoot);
                 int sitePort = CreateSite(iis, siteName, webRoot);
+
+                // Map a path called app to the site root under the service site
+                MapServiceSitePath(iis, applicationName, MappedLiveSite, siteRoot);
 
                 // Commit the changes to iis
                 iis.CommitChanges();
-
-                // Map a path called app to the site root under the service site
-                MapServiceSitePath(iis, applicationName, "_app", siteRoot);
 
                 return new Site
                 {
@@ -58,16 +60,17 @@ namespace Kudu.Web.Infrastructure
             {
                 // Get the path to the dev site
                 string siteRoot = PathHelper.GetDeveloperApplicationPath(applicationName);
-                string webRoot = Path.Combine(siteRoot, "wwwroot");
+                string webRoot = Path.Combine(siteRoot, WebRoot);
                 int sitePort = CreateSite(iis, devSiteName, webRoot);
 
                 // Ensure the directory is created
                 FileSystemHelpers.EnsureDirectory(webRoot);
 
-                iis.CommitChanges();
 
                 // Map a path called app to the site root under the service site
-                MapServiceSitePath(iis, applicationName, "_devapp", siteRoot, restartSite: true);
+                MapServiceSitePath(iis, applicationName, MappedDevSite, siteRoot);
+
+                iis.CommitChanges();
 
                 siteUrl = String.Format("http://localhost:{0}/", sitePort);
                 return true;
@@ -98,14 +101,14 @@ namespace Kudu.Web.Infrastructure
             if (site != null)
             {
                 string devSitePath = PathHelper.GetDeveloperApplicationPath(applicationName);
-                string path = Path.Combine(devSitePath, "wwwroot", Path.GetDirectoryName(projectPath));
-                site.Applications[0].VirtualDirectories[0].PhysicalPath = path;
+                string webRoot = Path.Combine(devSitePath, WebRoot, Path.GetDirectoryName(projectPath));
+                site.Applications[0].VirtualDirectories[0].PhysicalPath = webRoot;
 
                 iis.CommitChanges();
             }
         }
 
-        private static void MapServiceSitePath(IIS.ServerManager iis, string applicationName, string path, string siteRoot, bool restartSite = false)
+        private static void MapServiceSitePath(IIS.ServerManager iis, string applicationName, string path, string siteRoot)
         {
             string serviceSiteName = GetServiceSite(applicationName);
 
@@ -119,27 +122,6 @@ namespace Kudu.Web.Infrastructure
 
             // Map the path to the live site in the service site
             site.Applications.Add("/" + path, siteRoot);
-
-            iis.CommitChanges();
-
-            if (restartSite)
-            {
-                site.Stop();
-                Thread.Sleep(500);
-                site.Start();
-            }
-        }
-
-        private static IIS.ObjectState GetState(IIS.Site site)
-        {
-            try
-            {
-                return site.State;
-            }
-            catch
-            {
-                return IIS.ObjectState.Unknown;
-            }
         }
 
         private static IIS.ApplicationPool EnsureKuduAppPool(IIS.ServerManager iis)

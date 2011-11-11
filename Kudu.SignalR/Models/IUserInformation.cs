@@ -1,4 +1,4 @@
-﻿namespace Kudu.SignalR.Infrastructure
+﻿namespace Kudu.SignalR.Models
 {
     public interface IUserInformation
     {
