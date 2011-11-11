@@ -8,16 +8,13 @@ using SignalR.Client;
 
 namespace Kudu.Client.Commands
 {
-    public class RemoteCommandExecutor : ICommandExecutor
+    public class RemoteCommandExecutor : KuduRemoteClientBase, ICommandExecutor
     {
-        private readonly HttpClient _client;
         private readonly Connection _connection;
 
         public RemoteCommandExecutor(string serviceUrl)
+            : base(serviceUrl)
         {
-            serviceUrl = UrlUtility.EnsureTrailingSlash(serviceUrl);
-            _client = HttpClientHelper.Create(serviceUrl);
-
             _connection = new Connection(serviceUrl + "status");
             _connection.Received += data =>
             {

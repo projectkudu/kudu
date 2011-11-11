@@ -6,13 +6,11 @@ using Kudu.Core.SourceControl;
 
 namespace Kudu.Client.SourceControl
 {
-    public class RemoteRepositoryManager : IRepositoryManager
+    public class RemoteRepositoryManager : KuduRemoteClientBase, IRepositoryManager
     {
-        private readonly HttpClient _client;
-
         public RemoteRepositoryManager(string serviceUrl)
+            :base(serviceUrl)
         {
-            _client = HttpClientHelper.Create(serviceUrl);
         }
 
         public void CreateRepository(RepositoryType type)

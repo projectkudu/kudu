@@ -50,7 +50,7 @@ namespace Kudu.Web.Controllers
 
         public ActionResult Create()
         {
-            PopulateRepositoyTypes();
+            PopulateRepositoryTypes();
             return View();
         }
 
@@ -112,7 +112,7 @@ namespace Kudu.Web.Controllers
                 }
             }
 
-            PopulateRepositoyTypes();
+            PopulateRepositoryTypes();
             return View(appViewModel);
         }
 
@@ -283,7 +283,7 @@ namespace Kudu.Web.Controllers
             base.Dispose(disposing);
         }
 
-        private void PopulateRepositoyTypes()
+        private void PopulateRepositoryTypes()
         {
             ViewBag.RepositoryType = Enum.GetNames(typeof(RepositoryType))
                                          .Select((name, value) => new SelectListItem
