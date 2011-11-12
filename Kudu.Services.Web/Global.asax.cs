@@ -15,6 +15,7 @@ using Kudu.Services.SourceControl;
 using Microsoft.ApplicationServer.Http.Activation;
 using Ninject;
 using Ninject.Extensions.Wcf;
+using SignalR;
 using SignalR.Routing;
 
 namespace Kudu.Services
@@ -69,6 +70,8 @@ namespace Kudu.Services
 
         protected void Application_Start()
         {
+            Signaler.Instance.DefaultTimeout = TimeSpan.FromSeconds(15);
+
             RegisterRoutes(RouteTable.Routes);
         }
 
