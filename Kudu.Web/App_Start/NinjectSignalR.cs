@@ -1,7 +1,9 @@
 using System.Web;
+using Kudu.Client.Infrastructure;
 using Kudu.SignalR;
 using Kudu.SignalR.Infrastructure;
 using Kudu.SignalR.Models;
+using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
 using Ninject;
 using Ninject.Activation;
@@ -45,6 +47,7 @@ namespace Kudu.Web.App_Start
         {
             kernel.Bind<HttpContextBase>().ToMethod(_ => new HttpContextWrapper(HttpContext.Current));
             kernel.Bind<IApplication>().ToMethod(context => GetApplication(context));
+            kernel.Bind<ICredentialProvider>().ToConstant(new BasicAuthCredentialProvider("admin", "kudu"));
             kernel.Bind<IUserInformation>().ToMethod(_ => new UserInformation
             {
                 UserName = "Test <foo@test.com>"

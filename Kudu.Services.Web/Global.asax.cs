@@ -3,6 +3,8 @@ using System.Net.Http;
 using System.ServiceModel;
 using System.ServiceModel.Activation;
 using System.Web.Routing;
+using Kudu.Core.Infrastructure;
+using Kudu.Services.Authorization;
 using Kudu.Services.Commands;
 using Kudu.Services.Deployment;
 using Kudu.Services.Documents;
@@ -11,7 +13,7 @@ using Kudu.Services.HgServer;
 using Kudu.Services.Settings;
 using Kudu.Services.SourceControl;
 using Microsoft.ApplicationServer.Http.Activation;
-using Microsoft.ApplicationServer.Http.Dispatcher;
+using Ninject;
 using Ninject.Extensions.Wcf;
 using SignalR.Routing;
 
@@ -22,7 +24,7 @@ namespace Kudu.Services
 
         public static void RegisterRoutes(RouteCollection routes)
         {
-            var configuration = (IServerConfiguration)KernelContainer.Kernel.GetService(typeof(IServerConfiguration));
+            var configuration = KernelContainer.Kernel.Get<IServerConfiguration>();
             var factory = GetFactory();
 
             routes.MapConnection<DeploymentStatusHandler>("DeploymentStatus", "deploy/status/{*operation}");
@@ -81,7 +83,7 @@ namespace Kudu.Services
 
             // Ensure that only our formatters are used
             factory.Configuration.Formatters.Clear();
-            factory.Configuration.Formatters.Add(new Kudu.Core.Infrastructure.SimpleJsonMediaTypeFormatter());
+            factory.Configuration.Formatters.Add(new SimpleJsonMediaTypeFormatter());
 
             // Set IoC methods
             factory.Configuration.CreateInstance = CreateInstance;
@@ -92,12 +94,11 @@ namespace Kudu.Services
             factory.Configuration.RequestHandlers = (c, e, od) =>
             {
                 if (existingRequestHandlerFactory != null)
-                    existingRequestHandlerFactory(c, e, od);
-
-                if (e.Contract.ContractType == typeof(GitServer.InfoRefsService) || e.Contract.ContractType == typeof(GitServer.RpcService))
                 {
-                    c.Insert(0, (HttpOperationHandler)KernelContainer.Kernel.GetService(typeof(Authorization.BasicAuthorizeHandler)));
+                    existingRequestHandlerFactory(c, e, od);
                 }
+
+                c.Insert(0, KernelContainer.Kernel.Get<BasicAuthorizeHandler>());
             };
 
             return factory;

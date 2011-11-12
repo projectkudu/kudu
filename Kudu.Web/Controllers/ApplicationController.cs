@@ -2,8 +2,8 @@
 using System.Linq;
 using System.Threading;
 using System.Web.Mvc;
+using Kudu.Client.Infrastructure;
 using Kudu.Client.SourceControl;
-using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
@@ -14,10 +14,12 @@ namespace Kudu.Web.Controllers
     {
         private KuduContext db = new KuduContext();
         private readonly ISiteManager _siteManager;
+        private readonly ICredentialProvider _credentialProvider;
 
-        public ApplicationController(ISiteManager siteManager)
+        public ApplicationController(ISiteManager siteManager, ICredentialProvider credentialProvider)
         {
             _siteManager = siteManager;
+            _credentialProvider = credentialProvider;
         }
 
         //
@@ -229,6 +231,7 @@ namespace Kudu.Web.Controllers
                 {
                     // Clone the repository to the developer site
                     var devRepositoryManager = new RemoteRepositoryManager(application.ServiceUrl + "dev/scm");
+                    devRepositoryManager.Credentials = _credentialProvider.GetCredentials();
                     devRepositoryManager.CloneRepository(sourceRepositoryPath, repositoryType);
 
                     application.DeveloperSiteUrl = developerSiteUrl;
@@ -293,9 +296,11 @@ namespace Kudu.Web.Controllers
                                          });
         }
 
-        private static IRepositoryManager GetRepositoryManager(Application application)
+        private IRepositoryManager GetRepositoryManager(Application application)
         {
-            return new RemoteRepositoryManager(application.ServiceUrl + "live/scm");
+            var repositoryManager = new RemoteRepositoryManager(application.ServiceUrl + "live/scm");
+            repositoryManager.Credentials = _credentialProvider.GetCredentials();
+            return repositoryManager;
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Kudu.Core.Deployment;
+﻿using Kudu.Client.Infrastructure;
+using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
 using Kudu.SignalR.Infrastructure;
 using Kudu.SignalR.Models;
@@ -18,7 +19,8 @@ namespace Kudu.SignalR
         private static ISiteConfiguration GetSiteConfiguration()
         {
             var application = DependencyResolver.Resolve<IApplication>();
-            return new SiteConfiguration(application);
+            var credentialProvider = DependencyResolver.Resolve<ICredentialProvider>();
+            return new SiteConfiguration(application, credentialProvider);
         }
 
         private static IRepository GetRepository()

@@ -2,6 +2,7 @@ using Kudu.Web.Infrastructure;
 using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 using Ninject;
 using Ninject.Web.Mvc;
+using Kudu.Client.Infrastructure;
 
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Web.App_Start.NinjectMvc3Services), "Start")]
 [assembly: WebActivator.ApplicationShutdownMethodAttribute(typeof(Kudu.Web.App_Start.NinjectMvc3Services), "Stop")]
@@ -49,6 +50,7 @@ namespace Kudu.Web.App_Start
         private static void RegisterServices(IKernel kernel)
         {
             kernel.Bind<ISiteManager>().ToConstant(new SiteManager());
+            kernel.Bind<ICredentialProvider>().ToConstant(new BasicAuthCredentialProvider("admin", "kudu"));
         }
     }
 }

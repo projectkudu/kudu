@@ -77,8 +77,10 @@
     <Compile Include="..\Kudu.Core\Infrastructure\SimpleJsonMediaTypeFormatter.cs">
       <Link>Infrastructure\SimpleJsonMediaTypeFormatter.cs</Link>
     </Compile>
+    <Compile Include="Infrastructure\BasicAuthCredentialProvider.cs" />
     <Compile Include="Infrastructure\HttpClientExtensions.cs" />
     <Compile Include="Infrastructure\HttpClientHelper.cs" />
+    <Compile Include="Infrastructure\ICredentialProvider.cs" />
     <Compile Include="Infrastructure\KuduRemoteClientBase.cs" />
     <Compile Include="Infrastructure\UrlUtility.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
