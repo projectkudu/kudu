@@ -229,6 +229,9 @@ namespace Kudu.Web.Controllers
                 string developerSiteUrl;
                 if (_siteManager.TryCreateDeveloperSite(slug, out developerSiteUrl))
                 {
+                    // Wait for the mapping to take effect in the service site
+                    Thread.Sleep(1000);
+
                     // Clone the repository to the developer site
                     var devRepositoryManager = new RemoteRepositoryManager(application.ServiceUrl + "dev/scm");
                     devRepositoryManager.Credentials = _credentialProvider.GetCredentials();
