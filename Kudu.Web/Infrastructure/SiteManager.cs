@@ -86,6 +86,12 @@ namespace Kudu.Web.Infrastructure
             // Don't delete the physical files for the service site
             DeleteSite(iis, GetServiceSite(applicationName), deletePhysicalFiles: false);
 
+            var appPath = PathHelper.GetApplicationPath(applicationName);
+            var devPath = PathHelper.GetDeveloperApplicationPath(applicationName);
+
+            DeleteSafe(appPath);
+            DeleteSafe(devPath);
+
             iis.CommitChanges();
         }
 
