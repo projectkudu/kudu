@@ -7,13 +7,13 @@ namespace Kudu.Services.Web
     {
         public static string ResolveRootPath()
         {
-            string path = HostingEnvironment.MapPath("/_app");
+            string path = HostingEnvironment.MapPath(Constants.MappedLiveSite);
             return Path.GetFullPath(path);
         }
 
         public static string ResolveDevelopmentPath()
         {
-            string path = HostingEnvironment.MapPath("/_devapp");
+            string path = HostingEnvironment.MapPath(Constants.MappedDevSite);
             if (!Directory.Exists(path))
             {
                 return null;

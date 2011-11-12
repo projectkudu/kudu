@@ -30,8 +30,6 @@ namespace Kudu.Services.Web.App_Start
         private static CommandExecutor _devExecutor;
         private static CommandExecutor _liveExecutor;
 
-        private const string RepositoryPath = "repository";
-        private const string DeploymentTargetPath = "wwwroot";
         private const string DeploymentCachePath = "deployments";
         private const string DeploySettingsPath = "settings.xml";
 
@@ -176,8 +174,8 @@ namespace Kudu.Services.Web.App_Start
 
             string site = HttpRuntime.AppDomainAppVirtualPath.Trim('/');
             string root = Path.Combine(targetRoot, site);
-            string deploymentRepositoryPath = Path.Combine(root, RepositoryPath);
-            string deployPath = Path.Combine(root, DeploymentTargetPath);
+            string deploymentRepositoryPath = Path.Combine(root, Constants.RepositoryPath);
+            string deployPath = Path.Combine(root, Constants.WebRoot);
             string deployCachePath = Path.Combine(root, DeploymentCachePath);
 
             return new Environment(site,
@@ -190,7 +188,7 @@ namespace Kudu.Services.Web.App_Start
                                        {
                                            return null;
                                        }
-                                       return Path.Combine(path, site, DeploymentTargetPath);
+                                       return Path.Combine(path, site, Constants.WebRoot);
                                    },
                                    deployPath,
                                    deployCachePath);

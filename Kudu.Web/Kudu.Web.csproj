@@ -261,6 +261,9 @@
     <Content Include="Views\_ViewStart.cshtml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\Common\Constants.cs">
+      <Link>Infrastructure\Constants.cs</Link>
+    </Compile>
     <Compile Include="App_Start\EntityFramework.SqlServerCompact.cs" />
     <Compile Include="App_Start\NinjectMvc3Services.cs" />
     <Compile Include="App_Start\NinjectSignalR.cs" />

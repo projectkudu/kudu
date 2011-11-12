@@ -9,10 +9,7 @@ namespace Kudu.Web.Infrastructure
     public class SiteManager : ISiteManager
     {
         private const string KuduAppPoolName = "kudu";
-        private const string WebRoot = "wwwroot";
-        private const string MappedLiveSite = "_app";
-        private const string MappedDevSite = "_devapp";
-
+        
         public Site CreateSite(string applicationName)
         {
             var iis = new IIS.ServerManager();
@@ -26,11 +23,11 @@ namespace Kudu.Web.Infrastructure
                 // Create the main site
                 string siteName = GetLiveSite(applicationName);
                 string siteRoot = PathHelper.GetApplicationPath(applicationName);
-                string webRoot = Path.Combine(siteRoot, WebRoot);
+                string webRoot = Path.Combine(siteRoot, Constants.WebRoot);
                 int sitePort = CreateSite(iis, siteName, webRoot);
 
                 // Map a path called app to the site root under the service site
-                MapServiceSitePath(iis, applicationName, MappedLiveSite, siteRoot);
+                MapServiceSitePath(iis, applicationName, Constants.MappedLiveSite, siteRoot);
 
                 // Commit the changes to iis
                 iis.CommitChanges();
@@ -60,7 +57,7 @@ namespace Kudu.Web.Infrastructure
             {
                 // Get the path to the dev site
                 string siteRoot = PathHelper.GetDeveloperApplicationPath(applicationName);
-                string webRoot = Path.Combine(siteRoot, WebRoot);
+                string webRoot = Path.Combine(siteRoot, Constants.WebRoot);
                 int sitePort = CreateSite(iis, devSiteName, webRoot);
 
                 // Ensure the directory is created
@@ -68,7 +65,7 @@ namespace Kudu.Web.Infrastructure
 
 
                 // Map a path called app to the site root under the service site
-                MapServiceSitePath(iis, applicationName, MappedDevSite, siteRoot);
+                MapServiceSitePath(iis, applicationName, Constants.MappedDevSite, siteRoot);
 
                 iis.CommitChanges();
 
@@ -101,7 +98,7 @@ namespace Kudu.Web.Infrastructure
             if (site != null)
             {
                 string devSitePath = PathHelper.GetDeveloperApplicationPath(applicationName);
-                string webRoot = Path.Combine(devSitePath, WebRoot, Path.GetDirectoryName(projectPath));
+                string webRoot = Path.Combine(devSitePath, Constants.WebRoot, Path.GetDirectoryName(projectPath));
                 site.Applications[0].VirtualDirectories[0].PhysicalPath = webRoot;
 
                 iis.CommitChanges();
@@ -121,7 +118,7 @@ namespace Kudu.Web.Infrastructure
 
 
             // Map the path to the live site in the service site
-            site.Applications.Add("/" + path, siteRoot);
+            site.Applications.Add(path, siteRoot);
         }
 
         private static IIS.ApplicationPool EnsureKuduAppPool(IIS.ServerManager iis)

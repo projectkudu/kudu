@@ -21,7 +21,7 @@ namespace Kudu.Web.Infrastructure
 
         internal static string GetDeploymentRepositoryPath(string applicationName)
         {
-            return Path.Combine(GetApplicationPath(applicationName), "repository");
+            return Path.Combine(GetApplicationPath(applicationName), Constants.RepositoryPath);
         }
     }
 }
