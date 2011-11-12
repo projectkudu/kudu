@@ -1,18 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net.Http;
 using Kudu.Client.Infrastructure;
 using Kudu.Core.Editor;
 
 namespace Kudu.Client.Editor
 {
-    public class RemoteProjectSystem : IProjectSystem
+    public class RemoteProjectSystem : KuduRemoteClientBase, IProjectSystem
     {
-        private readonly HttpClient _client;
-
         public RemoteProjectSystem(string serviceUrl)
+            :base(serviceUrl)
         {
-            _client = HttpClientHelper.Create(serviceUrl);
         }
 
         public string ReadAllText(string path)

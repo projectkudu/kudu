@@ -7,13 +7,11 @@ using Newtonsoft.Json;
 
 namespace Kudu.Client.SourceControl
 {
-    public class RemoteRepository : IRepository
+    public class RemoteRepository : KuduRemoteClientBase, IRepository
     {
-        private readonly HttpClient _client;
-
         public RemoteRepository(string serviceUrl)
+            :base(serviceUrl)
         {
-            _client = HttpClientHelper.Create(serviceUrl);
         }
 
         public string CurrentId
