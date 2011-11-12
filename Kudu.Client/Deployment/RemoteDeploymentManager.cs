@@ -20,7 +20,7 @@ namespace Kudu.Client.Deployment
             : base(serviceUrl)
         {
             // Raise the event when data comes in
-            _connection = new Connection(serviceUrl + "status");
+            _connection = new Connection(ServiceUrl + "status");
             _connection.Received += data =>
             {
                 if (StatusChanged != null)

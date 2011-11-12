@@ -15,7 +15,7 @@ namespace Kudu.Client.Commands
         public RemoteCommandExecutor(string serviceUrl)
             : base(serviceUrl)
         {
-            _connection = new Connection(serviceUrl + "status");
+            _connection = new Connection(ServiceUrl + "status");
             _connection.Received += data =>
             {
                 if (CommandEvent != null)
