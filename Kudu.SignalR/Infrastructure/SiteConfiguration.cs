@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using Kudu.Client.Commands;
 using Kudu.Client.Deployment;
 using Kudu.Client.Editor;
@@ -78,19 +79,29 @@ namespace Kudu.SignalR.Infrastructure
             deploymentManager.Credentials = credentialProvider.GetCredentials();
             DeploymentManager = deploymentManager;
             DeploymentManager.StatusChanged += OnDeploymentStatusChanged;
-            deploymentManager.Start();
+            
 
             var commandExecutor = new RemoteCommandExecutor(ServiceUrl + "live/command");
             commandExecutor.Credentials = credentialProvider.GetCredentials();
             CommandExecutor = commandExecutor;
             CommandExecutor.CommandEvent += OnCommandEvent;
-            commandExecutor.Start();
 
             var devCommandExecutor = new RemoteCommandExecutor(ServiceUrl + "dev/command");
             devCommandExecutor.Credentials = credentialProvider.GetCredentials();
             DevCommandExecutor = devCommandExecutor;
             DevCommandExecutor.CommandEvent += OnCommandEvent;
-            devCommandExecutor.Start();
+
+            try
+            {
+                // Start the connections
+                deploymentManager.Start();
+                commandExecutor.Start();
+                devCommandExecutor.Start();
+            }
+            catch(Exception ex)
+            {
+                Debug.WriteLine("Failed to subcribe for updates => " + ex.Message);
+            }
         }
 
         private void OnDeploymentStatusChanged(DeployResult result)
