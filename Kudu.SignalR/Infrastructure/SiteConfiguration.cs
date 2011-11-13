@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using Kudu.Client.Commands;
 using Kudu.Client.Deployment;
 using Kudu.Client.Editor;
@@ -26,13 +27,19 @@ namespace Kudu.SignalR.Infrastructure
             SiteUrl = application.SiteUrl;
             Name = application.Name;
 
+            // This is to work around a SignalR bug where the hub is still created
+            // even if IDisconnect isn't implemented
+            if (String.IsNullOrEmpty(ServiceUrl))
+            {
+                return;
+            }
+
             SiteConfiguration config;
-            if (_cache.TryGetValue(Name, out config))
+            if (_cache.TryGetValue(ServiceUrl, out config))
             {
                 Repository = config.Repository;
                 ProjectSystem = config.ProjectSystem;
                 DevProjectSystem = config.DevProjectSystem;
-
 
                 if (config.DeploymentManager.IsActive)
                 {
