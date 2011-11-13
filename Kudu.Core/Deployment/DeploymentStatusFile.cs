@@ -53,6 +53,8 @@ namespace Kudu.Core.Deployment
             return new DeploymentStatusFile(path)
             {
                 Id = document.Root.Element("id").Value,
+                Author = GetOptionalElementValue(document.Root, "author"),
+                Message = GetOptionalElementValue(document.Root, "message"),
                 Status = status,
                 StatusText = document.Root.Element("statusText").Value,
                 Percentage = percentage,
@@ -64,6 +66,8 @@ namespace Kudu.Core.Deployment
         public string Id { get; set; }
         public DeployStatus Status { get; set; }
         public string StatusText { get; set; }
+        public string Author { get; set; }
+        public string Message { get; set; }
         public int Percentage { get; set; }
         public DateTime DeploymentStartTime { get; private set; }
         public DateTime? DeploymentEndTime { get; set; }
@@ -77,6 +81,8 @@ namespace Kudu.Core.Deployment
 
             var document = new XDocument(new XElement("deployment",
                     new XElement("id", Id),
+                    new XElement("author", Author),
+                    new XElement("message", Message),
                     new XElement("status", Status),
                     new XElement("statusText", StatusText),
                     new XElement("percentage", Percentage),
@@ -88,6 +94,20 @@ namespace Kudu.Core.Deployment
             {
                 document.Save(stream);
             }
+        }
+
+        private static string GetOptionalElementValue(XElement element, string localName, string namespaceName = null)
+        {
+            XElement child;
+            if (String.IsNullOrEmpty(namespaceName))
+            {
+                child = element.Element(localName);
+            }
+            else
+            {
+                child = element.Element(XName.Get(localName, namespaceName));
+            }
+            return child != null ? child.Value : null;
         }
     }
 }

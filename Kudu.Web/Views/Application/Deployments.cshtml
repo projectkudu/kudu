@@ -31,6 +31,8 @@
             <thead>
                 <tr>
                     <th>Id</th>
+                    <th>Message</th>
+                    <th>Author</th>
                     <th>Status</th>
                     <th></th>
                     <th></th>
@@ -75,7 +77,9 @@
 
 <script id="deployment" type="text/x-jquery-tmpl"> 
     <tr class="deployment" id="${Id}">
-        <td>${Id}</td>
+        <td>${ShortId}</td>
+        <td>${Message}</td>
+        <td>${Author}</td>
         <td>
             <div class="deploy-status">${Status}</div>
             <div class="status-text">${StatusText}</div>

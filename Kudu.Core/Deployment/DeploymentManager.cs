@@ -73,6 +73,8 @@ namespace Kudu.Core.Deployment
             return new DeployResult
             {
                 Id = file.Id,
+                Author = file.Author,
+                Message = file.Message,
                 DeployStartTime = file.DeploymentStartTime,
                 DeployEndTime = file.DeploymentEndTime,
                 Status = file.Status,
@@ -138,6 +140,14 @@ namespace Kudu.Core.Deployment
                 repository.Update(id);
             }
 
+            // Create the tracking file and store information about the commit
+            DeploymentStatusFile statusFile = CreateTrackingFile(id);
+            statusFile.Id = id;
+            var details = repository.GetDetails(id);
+            statusFile.Message = details.ChangeSet.Message;
+            statusFile.Author = details.ChangeSet.AuthorName;
+            statusFile.Save(_fileSystem);
+
             Build(id);
         }
 
@@ -167,8 +177,7 @@ namespace Kudu.Core.Deployment
                 string cachePath = GetCachePath(id);
 
                 // The initial status
-                trackingFile = CreateTrackingFile(id);
-                trackingFile.Id = id;
+                trackingFile = OpenTrackingFile(id);
                 trackingFile.Status = DeployStatus.Building;
                 trackingFile.StatusText = String.Format("Building {0}...", id);
                 trackingFile.Save(_fileSystem);
