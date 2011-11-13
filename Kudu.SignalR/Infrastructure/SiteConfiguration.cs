@@ -19,7 +19,6 @@ namespace Kudu.SignalR.Infrastructure
     {
         // TODO: We need to expose methods to clean this cache
         private static readonly ConcurrentDictionary<string, SiteConfiguration> _cache = new ConcurrentDictionary<string, SiteConfiguration>();
-        private static dynamic devenvClients = Hub.GetClients<DevelopmentEnvironment>();
 
         public SiteConfiguration(IApplication application, ICredentialProvider credentialProvider)
         {
@@ -72,23 +71,19 @@ namespace Kudu.SignalR.Infrastructure
             deploymentManager.Credentials = credentialProvider.GetCredentials();
             DeploymentManager = deploymentManager;
             DeploymentManager.StatusChanged += OnDeploymentStatusChanged;
-
+            deploymentManager.Start();
 
             var commandExecutor = new RemoteCommandExecutor(ServiceUrl + "live/command");
             commandExecutor.Credentials = credentialProvider.GetCredentials();
             CommandExecutor = commandExecutor;
-            CommandExecutor.CommandEvent += commandEvent =>
-            {
-                OnNewCommandEvent(devenvClients, commandEvent);
-            };
+            CommandExecutor.CommandEvent += OnCommandEvent;
+            commandExecutor.Start();
 
             var devCommandExecutor = new RemoteCommandExecutor(ServiceUrl + "dev/command");
             devCommandExecutor.Credentials = credentialProvider.GetCredentials();
             DevCommandExecutor = devCommandExecutor;
-            DevCommandExecutor.CommandEvent += commandEvent =>
-            {
-                OnNewCommandEvent(devenvClients, commandEvent);
-            };
+            DevCommandExecutor.CommandEvent += OnCommandEvent;
+            devCommandExecutor.Start();
         }
 
         private void OnDeploymentStatusChanged(DeployResult result)
@@ -97,8 +92,9 @@ namespace Kudu.SignalR.Infrastructure
             clients.updateDeployStatus(new DeployResultViewModel(result));
         }
 
-        private void OnNewCommandEvent(dynamic clients, CommandEvent commandEvent)
+        private void OnCommandEvent(CommandEvent commandEvent)
         {
+            dynamic clients = Hub.GetClients<DevelopmentEnvironment>();
             if (commandEvent.EventType == CommandEventType.Complete)
             {
                 clients.commandComplete();

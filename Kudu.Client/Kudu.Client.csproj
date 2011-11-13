@@ -52,9 +52,9 @@
     <Reference Include="Newtonsoft.Json, Version=4.0.3.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.4.0.3\lib\net40\Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="SignalR.Client, Version=0.3.5.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="SignalR.Client, Version=0.3.6.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\SignalR.Client.0.3.5\lib\net40\SignalR.Client.dll</HintPath>
+      <HintPath>..\packages\SignalR.Client.0.3.6\lib\net40\SignalR.Client.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -81,6 +81,7 @@
     <Compile Include="Infrastructure\HttpClientExtensions.cs" />
     <Compile Include="Infrastructure\HttpClientHelper.cs" />
     <Compile Include="Infrastructure\ICredentialProvider.cs" />
+    <Compile Include="Infrastructure\IEventProvider.cs" />
     <Compile Include="Infrastructure\KuduRemoteClientBase.cs" />
     <Compile Include="Infrastructure\UrlUtility.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
