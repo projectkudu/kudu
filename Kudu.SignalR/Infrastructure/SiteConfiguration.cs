@@ -68,7 +68,7 @@ namespace Kudu.SignalR.Infrastructure
 
                 SubscribeToEvents(credentialProvider);
 
-                _cache[Name] = this;
+                _cache[ServiceUrl] = this;
             }
         }
 
