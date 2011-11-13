@@ -24,7 +24,12 @@
     </Target>
 
     <Target Name="BuildKuduServiceSite">
-        <MSBuild Projects="$(ServiceSiteProject)" Targets="pipelinePreDeployCopyAllFilesToOneFolder" Properties="_PackageTempDir=$(ServiceSiteTargetPath);AutoParameterizationWebConfigConnectionStrings=false;SolutionDir=$(ProjectRoot)\"/>
+        <MSBuild Projects="$(ServiceSiteProject)" 
+                 Targets="pipelinePreDeployCopyAllFilesToOneFolder" 
+                 Properties="_PackageTempDir=$(ServiceSiteTargetPath);
+                             AutoParameterizationWebConfigConnectionStrings=false;
+                             SolutionDir=$(ProjectRoot)\;
+                             MSBuildExtensionsPath32=$(ProjectRoot)\Kudu.Services.Web\msbuild"/>
     </Target>
   
     <Target Name="RunTests">
