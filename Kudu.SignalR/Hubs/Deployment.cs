@@ -19,10 +19,12 @@ namespace Kudu.SignalR.Hubs
         {
             string active = _deploymentManager.ActiveDeploymentId;
             Caller.id = active;
-            return _deploymentManager.GetResults().Select(d => new DeployResultViewModel(d)
-            {
-                Active = active == d.Id
-            });
+            return _deploymentManager.GetResults()
+                                     .OrderByDescending(d => d.DeployStartTime)
+                                     .Select(d => new DeployResultViewModel(d)
+                                     {
+                                         Active = active == d.Id
+                                     });
         }
 
         public IEnumerable<LogEntryViewModel> GetDeployLog(string id)
