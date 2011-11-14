@@ -20,16 +20,27 @@
 
     <Package InstallerVersion="200"
              Compressed="yes"
+             InstallScope="perMachine"
              Description="Kudu services" />
 
     <MajorUpgrade DowngradeErrorMessage="A newer version of Kudu Service was detected in the machine, this installation will abort." />
 
-    <Media Id="1" Cabinet="KuduService.cab" EmbedCab="yes" />
+    <Media Id="1"
+           Cabinet="KuduService.cab"
+           CompressionLevel="high"
+           EmbedCab="yes" />
 
     <!-- Prerequisite check -->
     <PropertyRef Id="NETFRAMEWORK40FULL" />
-    <Condition Message="This application requires .NET Framework v4.0. Please install the .NET Framework v4.0 then run this installer again.">NETFRAMEWORK40FULL OR REMOVE</Condition>
     
+    <Condition Message="This application requires .NET Framework v4.0. Please install the .NET Framework v4.0 then run this installer again.">
+      Installed OR NETFRAMEWORK40FULL
+    </Condition>
+    
+    <Condition Message="You need administrator privilege to install this application.">
+      Privileged
+    </Condition>
+
     <!-- Directory structure -->
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="WINDOWSDRIVE">
@@ -50,7 +61,6 @@
         </Directory>
       </Directory>
     </Directory>
-
 
     <!-- Product files -->
     <DirectoryRef Id="KUDU_WWWROOT">
