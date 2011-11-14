@@ -5,5 +5,5 @@
 [assembly: AssemblyCulture("")]
 [assembly: AssemblyConfiguration("")]
 
-[assembly: AssemblyVersion("0.5.*")]
+[assembly: AssemblyVersion("0.6.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
