@@ -46,22 +46,27 @@
       <Directory Id="WINDOWSDRIVE">
         <Directory Id="KUDU_BASE_DIR" Name="KuduService">
           <Directory Id="KUDU_WWWROOT" Name="wwwroot">
+            
             <Directory Id="KUDU_SERVICE_BIN" Name="Bin" />
+            
             <Directory Id="KUDU_SERVICE_MSBUILD" Name="msbuild">
               <Directory Id ="KUDU_SERVICE_MSBUILD_MS" Name="Microsoft">
                 <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS" Name="VisualStudio">
                   <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS_10" Name="v10.0">
+                    
                     <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS_10_WEB" Name="Web"/>
                     <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS_10_WEBAPPS" Name="WebApplications"/>
+                    
                   </Directory>
                 </Directory>
               </Directory>
             </Directory>
+            
           </Directory>
         </Directory>
       </Directory>
     </Directory>
-
+    
     <!-- Product files -->
     <DirectoryRef Id="KUDU_WWWROOT">
 
@@ -72,87 +77,119 @@
         </RegistryKey>
       </Component>
 
-      <Component Id="GlobalAsaxComponent" Guid="{9120F0CD-A9BC-4B94-8D1C-2D591D1EF98A}">
-        <File Id="GlobalAsaxFile" Source="$(var.KuduServiceDir)\Global.asax" />
+      <Component Id="Global.asax" Guid="{9120F0CD-A9BC-4B94-8D1C-2D591D1EF98A}">
+        <File Id="Global.asax" Source="$(var.KuduServiceDir)\Global.asax" />
       </Component>
       
-      <Component Id="WebConfigComponent" Guid="{457A4FB5-F65C-4431-AB8A-A87F960ADDCC}">
-        <File Id="WebConfigFile" Source="$(var.KuduServiceDir)\Web.config" />
+      <Component Id="Web.config" Guid="{457A4FB5-F65C-4431-AB8A-A87F960ADDCC}">
+        <File Id="Web.config" Source="$(var.KuduServiceDir)\Web.config" />
       </Component>
       
     </DirectoryRef>
 
     <DirectoryRef Id="KUDU_SERVICE_BIN">
-      
-      <Component Id="KuduLibraries" Guid="{61A18C06-83A8-41CA-AA38-F9F665DE10C3}">
-        <?foreach lib in Kudu.Contracts.dll;Kudu.Core.dll;Kudu.Services.dll;Kudu.Services.Web.dll?>
-        <File Id="$(var.lib)" Source="$(var.KuduServiceBinDir)\$(var.lib)" />
-        <?endforeach?>
+            
+      <Component Id="Kudu.Contracts.dll" Guid="{61A18C06-83A8-41CA-AA38-F9F665DE10C3}">
+        <File Id="Kudu.Contracts.dll" Source="$(var.KuduServiceBinDir)\Kudu.Contracts.dll" />
+      </Component>
+      <Component Id="Kudu.Core.dll" Guid="{B617864C-C336-46F9-B214-C583C4C8F30C}">
+        <File Id="Kudu.Core.dll" Source="$(var.KuduServiceBinDir)\Kudu.Core.dll" />
+      </Component>
+      <Component Id="Kudu.Services.dll" Guid="{03D8B0B2-4FE2-4CCC-B54A-144430B05514}">
+        <File Id="Kudu.Services.dll" Source="$(var.KuduServiceBinDir)\Kudu.Services.dll" />
+      </Component>
+      <Component Id="Kudu.Services.Web.dll" Guid="{4A3F4105-858A-4972-AE21-805C073F4CD9}">
+        <File Id="Kudu.Services.Web.dll" Source="$(var.KuduServiceBinDir)\Kudu.Services.Web.dll" />
       </Component>
 
-      <Component Id="ElmahLibraries" Guid="{C13BE342-75FF-40CF-AFD3-669F8182CF83}">
-        <?foreach lib in Elmah.dll?>
-        <File Id="$(var.lib)" Source="$(var.KuduServiceBinDir)\$(var.lib)" />
-        <?endforeach?>
+      <Component Id="Elmah.dll" Guid="{C13BE342-75FF-40CF-AFD3-669F8182CF83}">
+        <File Id="Elmah.dll" Source="$(var.KuduServiceBinDir)\Elmah.dll" />
       </Component>
       
-      <Component Id="NewtonSoftJsonLibraries" Guid="{11210292-AF01-42CB-BAA6-6619CCA6E682}">
-        <?foreach lib in Newtonsoft.Json.dll?>
-        <File Id="$(var.lib)" Source="$(var.KuduServiceBinDir)\$(var.lib)" />
-        <?endforeach?>
+      <Component Id="Newtonsoft.Json.dll" Guid="{11210292-AF01-42CB-BAA6-6619CCA6E682}">
+        <File Id="Newtonsoft.Json.dll" Source="$(var.KuduServiceBinDir)\Newtonsoft.Json.dll" />
       </Component>
       
-      <Component Id="NinjectLibraries" Guid="{1337933F-2537-4C76-8FEF-FBADD5816448}">
-        <?foreach lib in Ninject.dll;Ninject.Extensions.Wcf.dll?>
-        <File Id="$(var.lib)" Source="$(var.KuduServiceBinDir)\$(var.lib)" />
-        <?endforeach?>
+      <Component Id="Ninject.dll" Guid="{1337933F-2537-4C76-8FEF-FBADD5816448}">
+        <File Id="Ninject.dll" Source="$(var.KuduServiceBinDir)\Ninject.dll" />
+      </Component>
+      <Component Id="Ninject.Extensions.Wcf.dll" Guid="{40213169-2163-4F4F-B7E2-40C8E4C3DADC}">
+        <File Id="Ninject.Extensions.Wcf.dll" Source="$(var.KuduServiceBinDir)\Ninject.Extensions.Wcf.dll" />
       </Component>
       
-      <Component Id="SignalRLibraries" Guid="{05B0AC56-6BD2-4F46-B80B-ADC05F4996FF}">
-        <?foreach lib in SignalR.dll?>
-        <File Id="$(var.lib)" Source="$(var.KuduServiceBinDir)\$(var.lib)" />
-        <?endforeach?>
+      <Component Id="SignalR.dll" Guid="{05B0AC56-6BD2-4F46-B80B-ADC05F4996FF}">
+        <File Id="SignalR.dll" Source="$(var.KuduServiceBinDir)\SignalR.dll" />
       </Component>
 
-      <Component Id="SourceControlGitLibraries" Guid="{0496B795-B6E6-4394-934E-A1016AD594F3}">
-        <?foreach lib in LibGit2Sharp.dll?>
-        <File Id="$(var.lib)" Source="$(var.KuduServiceBinDir)\$(var.lib)" />
-        <?endforeach?>
+      <Component Id="LibGit2Sharp.dll" Guid="{0496B795-B6E6-4394-934E-A1016AD594F3}">
+        <File Id="LibGit2Sharp.dll" Source="$(var.KuduServiceBinDir)\LibGit2Sharp.dll" />
       </Component>
 
-      <Component Id="SourceControlHgLibraries" Guid="{F2706686-C1DD-4168-996D-B27D02B636D8}">
-        <?foreach lib in Mercurial.Net.dll?>
-        <File Id="$(var.lib)" Source="$(var.KuduServiceBinDir)\$(var.lib)" />
-        <?endforeach?>
+      <Component Id="Mercurial.Net.dll" Guid="{F2706686-C1DD-4168-996D-B27D02B636D8}">
+        <File Id="Mercurial.Net.dll" Source="$(var.KuduServiceBinDir)\Mercurial.Net.dll" />
       </Component>
 
-      <Component Id="WebApiLibraries" Guid="{64BD205C-7377-4BFE-BA9B-855824112E0F}">
-        <?foreach lib in Microsoft.ApplicationServer.Http.dll;Microsoft.Json.dll;Microsoft.Net.Http.dll;Microsoft.Net.Http.Formatting.dll;Microsoft.Runtime.Serialization.Internal.dll;Microsoft.ServiceModel.Internal.dll?>
-        <File Id="$(var.lib)" Source="$(var.KuduServiceBinDir)\$(var.lib)" />
-        <?endforeach?>
+      <Component Id="Microsoft.ApplicationServer.Http.dll" Guid="{64BD205C-7377-4BFE-BA9B-855824112E0F}">
+        <File Id="Microsoft.ApplicationServer.Http.dll" Source="$(var.KuduServiceBinDir)\Microsoft.ApplicationServer.Http.dll" />
+      </Component>
+      <Component Id="Microsoft.Json.dll" Guid="{3E727695-40A8-4A1F-85A4-404791512915}">
+        <File Id="Microsoft.Json.dll" Source="$(var.KuduServiceBinDir)\Microsoft.Json.dll" />
+      </Component>
+      <Component Id="Microsoft.Net.Http.dll" Guid="{79046427-8522-407B-8945-D2939E3D096A}">
+        <File Id="Microsoft.Net.Http.dll" Source="$(var.KuduServiceBinDir)\Microsoft.Net.Http.dll" />
+      </Component>
+      <Component Id="Microsoft.Net.Http.Formatting.dll" Guid="{C6C5008D-10AC-4B16-A8BC-7B720D671951}">
+        <File Id="Microsoft.Net.Http.Formatting.dll" Source="$(var.KuduServiceBinDir)\Microsoft.Net.Http.Formatting.dll" />
+      </Component>
+      <Component Id="Microsoft.Runtime.Serialization.Internal.dll" Guid="{4D860EFC-1EF4-4098-8C72-6F11AEBD3153}">
+        <File Id="Microsoft.Runtime.Serialization.Internal.dll" Source="$(var.KuduServiceBinDir)\Microsoft.Runtime.Serialization.Internal.dll" />
+      </Component>
+      <Component Id="Microsoft.ServiceModel.Internal.dll" Guid="{7E046CF4-5D62-40C2-A706-23DF903D4A9C}">
+        <File Id="Microsoft.ServiceModel.Internal.dll" Source="$(var.KuduServiceBinDir)\Microsoft.ServiceModel.Internal.dll" />
       </Component>
       
-      <Component Id="MiscellaneousLibraries" Guid="{4F476863-1DE8-4699-9691-5A7BDEC0BE47}">
-        <?foreach lib in Microsoft.Server.Common.dll;Microsoft.Web.Infrastructure.dll;System.IO.Abstractions.dll;WebActivator.dll;XmlSettings.dll?>
-        <File Id="$(var.lib)" Source="$(var.KuduServiceBinDir)\$(var.lib)" />
-        <?endforeach?>
+      <Component Id="Microsoft.Server.Common.dll" Guid="{4F476863-1DE8-4699-9691-5A7BDEC0BE47}">
+        <File Id="Microsoft.Server.Common.dll" Source="$(var.KuduServiceBinDir)\Microsoft.Server.Common.dll" />
+      </Component>
+      <Component Id="Microsoft.Web.Infrastructure.dll" Guid="{96A2A444-20B6-48C6-867A-01A7E13AC927}">
+        <File Id="Microsoft.Web.Infrastructure.dll" Source="$(var.KuduServiceBinDir)\Microsoft.Web.Infrastructure.dll" />
+      </Component>
+      <Component Id="System.IO.Abstractions.dll" Guid="{235869F1-F053-4FEE-8CD5-04E197A916ED}">
+        <File Id="System.IO.Abstractions.dll" Source="$(var.KuduServiceBinDir)\System.IO.Abstractions.dll" />
+      </Component>
+      <Component Id="WebActivator.dll" Guid="{0C6F4200-3B48-4BB0-97E7-17543B5AECB3}">
+        <File Id="WebActivator.dll" Source="$(var.KuduServiceBinDir)\WebActivator.dll" />
+      </Component>
+      <Component Id="XmlSettings.dll" Guid="{A0569F8D-226B-4361-A596-7B636DBB3581}">
+        <File Id="XmlSettings.dll" Source="$(var.KuduServiceBinDir)\XmlSettings.dll" />
       </Component>
       
     </DirectoryRef>
 
     <DirectoryRef Id="KUDU_SERVICE_MSBUILD_MS_VS_10_WEB">
-      <Component Id="MsBuildComponentWeb" Guid="{0DE02D81-BAFE-4939-B903-D454B4D3603D}">
-        <?foreach file in Microsoft.Web.Publishing.AllFilesInProjectFolder.targets;Microsoft.Web.Publishing.AllFilesInTheProject.targets;Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets;Microsoft.Web.Publishing.targets;Microsoft.Web.Publishing.Tasks.Dll?>
-        <File Id="$(var.file)" Source="$(var.KuduServiceMsBuildDir)\Web\$(var.file)" />
-        <?endforeach?>
+      <Component Id="Microsoft.Web.Publishing.AllFilesInProjectFolder.targets" Guid="{0DE02D81-BAFE-4939-B903-D454B4D3603D}">
+        <File Id="Microsoft.Web.Publishing.AllFilesInProjectFolder.targets" Source="$(var.KuduServiceMsBuildDir)\Web\Microsoft.Web.Publishing.AllFilesInProjectFolder.targets" />
+      </Component>
+      <Component Id="Microsoft.Web.Publishing.AllFilesInTheProject.targets" Guid="{9A35F0F7-6D04-4173-803E-040270478FB6}">
+        <File Id="Microsoft.Web.Publishing.AllFilesInTheProject.targets" Source="$(var.KuduServiceMsBuildDir)\Web\Microsoft.Web.Publishing.AllFilesInTheProject.targets" />
+      </Component>
+      <Component Id="Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets" Guid="{BA70D756-5EF3-4B27-909A-8CB13E3F8413}">
+        <File Id="Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets" Source="$(var.KuduServiceMsBuildDir)\Web\Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets" />
+      </Component>
+      <Component Id="Microsoft.Web.Publishing.targets" Guid="{4B06DD4C-5DF8-4B04-83D1-83CBBD16A818}">
+        <File Id="Microsoft.Web.Publishing.targets" Source="$(var.KuduServiceMsBuildDir)\Web\Microsoft.Web.Publishing.targets" />
+      </Component>
+      <Component Id="Microsoft.Web.Publishing.Tasks.Dll" Guid="{CFE7A1D6-B7A9-4F97-8C2D-EB19C783E999}">
+        <File Id="Microsoft.Web.Publishing.Tasks.Dll" Source="$(var.KuduServiceMsBuildDir)\Web\Microsoft.Web.Publishing.Tasks.Dll" />
       </Component>
     </DirectoryRef>
 
     <DirectoryRef Id="KUDU_SERVICE_MSBUILD_MS_VS_10_WEBAPPS">
-      <Component Id="MsBuildComponentWebApps" Guid="{D9A90644-3F50-420E-9FC7-0EF987C2D29A}">
-        <?foreach file in Microsoft.WebApplication.Build.Tasks.Dll;Microsoft.WebApplication.targets?>
-        <File Id="$(var.file)" Source="$(var.KuduServiceMsBuildDir)\WebApplications\$(var.file)" />
-        <?endforeach?>
+      <Component Id="Microsoft.WebApplication.Build.Tasks.Dll" Guid="{D9A90644-3F50-420E-9FC7-0EF987C2D29A}">
+        <File Id="Microsoft.WebApplication.Build.Tasks.Dll" Source="$(var.KuduServiceMsBuildDir)\WebApplications\Microsoft.WebApplication.Build.Tasks.Dll" />
+      </Component>
+      <Component Id="Microsoft.WebApplication.targets" Guid="{555CAE90-180E-4345-AAAF-EF13C7DB4134}">
+        <File Id="Microsoft.WebApplication.targets" Source="$(var.KuduServiceMsBuildDir)\WebApplications\Microsoft.WebApplication.targets" />
       </Component>
     </DirectoryRef>
 
@@ -168,19 +205,48 @@
 
     <Feature Id="RequiredComponents" Level="1">
       <ComponentRef Id="RegistryComponent" />
-      <ComponentRef Id="GlobalAsaxComponent" />
-      <ComponentRef Id="WebConfigComponent" />
-      <ComponentRef Id="KuduLibraries" />
-      <ComponentRef Id="ElmahLibraries" />
-      <ComponentRef Id="NewtonSoftJsonLibraries" />
-      <ComponentRef Id="NinjectLibraries" />
-      <ComponentRef Id="SignalRLibraries" />
-      <ComponentRef Id="SourceControlGitLibraries" />
-      <ComponentRef Id="SourceControlHgLibraries" />
-      <ComponentRef Id="WebApiLibraries" />
-      <ComponentRef Id="MiscellaneousLibraries" />
-      <ComponentRef Id="MsBuildComponentWeb" />
-      <ComponentRef Id="MsBuildComponentWebApps" />
+      
+      <ComponentRef Id="Global.asax" />
+      <ComponentRef Id="Web.config" />
+
+      <ComponentRef Id="Kudu.Contracts.dll"/>
+      <ComponentRef Id="Kudu.Core.dll"/>
+      <ComponentRef Id="Kudu.Services.dll"/>
+      <ComponentRef Id="Kudu.Services.Web.dll"/>
+
+      <ComponentRef Id="Elmah.dll" />
+      
+      <ComponentRef Id="Newtonsoft.Json.dll" />
+      
+      <ComponentRef Id="Ninject.dll" />
+      <ComponentRef Id="Ninject.Extensions.Wcf.dll" />
+      
+      <ComponentRef Id="SignalR.dll" />
+      
+      <ComponentRef Id="LibGit2Sharp.dll" />
+      <ComponentRef Id="Mercurial.Net.dll" />
+      
+      <ComponentRef Id="Microsoft.ApplicationServer.Http.dll" />
+      <ComponentRef Id="Microsoft.Json.dll" />
+      <ComponentRef Id="Microsoft.Net.Http.dll" />
+      <ComponentRef Id="Microsoft.Net.Http.Formatting.dll" />
+      <ComponentRef Id="Microsoft.Runtime.Serialization.Internal.dll" />
+      <ComponentRef Id="Microsoft.ServiceModel.Internal.dll" />
+
+      <ComponentRef Id="Microsoft.Server.Common.dll" />
+      <ComponentRef Id="Microsoft.Web.Infrastructure.dll" />
+      <ComponentRef Id="System.IO.Abstractions.dll" />
+      <ComponentRef Id="WebActivator.dll" />
+      <ComponentRef Id="XmlSettings.dll" />
+
+      <ComponentRef Id="Microsoft.Web.Publishing.AllFilesInProjectFolder.targets" />
+      <ComponentRef Id="Microsoft.Web.Publishing.AllFilesInTheProject.targets" />
+      <ComponentRef Id="Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets" />
+      <ComponentRef Id="Microsoft.Web.Publishing.targets" />
+      <ComponentRef Id="Microsoft.Web.Publishing.Tasks.Dll" />
+      
+      <ComponentRef Id="Microsoft.WebApplication.Build.Tasks.Dll" />
+      <ComponentRef Id="Microsoft.WebApplication.targets" />
     </Feature>
 
   </Product>
