@@ -17,7 +17,7 @@ namespace Kudu.Services.Deployment
             _deploymentManager = deploymentManager;
         }
 
-        [Description("Gets the id of the current active deployement.")]
+        [Description("Gets the id of the current active deployment.")]
         [WebGet(UriTemplate = "id")]
         public string GetActiveDeploymentId()
         {
@@ -38,7 +38,7 @@ namespace Kudu.Services.Deployment
             _deploymentManager.Deploy((string)input["id"]);
         }
 
-        [Description("Builds a specific deployement based on its id.")]
+        [Description("Builds a specific deployment based on its id.")]
         [WebInvoke(UriTemplate = "build")]
         public void Build(JsonObject input)
         {
@@ -52,14 +52,14 @@ namespace Kudu.Services.Deployment
             return _deploymentManager.GetResults();
         }
 
-        [Description("Gets the log of a specific deployement based on its id.")]
+        [Description("Gets the log of a specific deployment based on its id.")]
         [WebGet(UriTemplate = "log?id={id}")]
         public IEnumerable<LogEntry> GetLogEntry(string id)
         {
             return _deploymentManager.GetLogEntries(id);
         }
 
-        [Description("Gets the deployement result of a specific deployement based on its id.")]
+        [Description("Gets the deployment result of a specific deployment based on its id.")]
         [WebGet(UriTemplate = "details?id={id}")]
         public DeployResult GetResult(string id)
         {
