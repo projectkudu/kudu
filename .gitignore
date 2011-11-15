@@ -19,3 +19,4 @@ App_Data/
 /apps
 /artifacts
 msbuild.log
+_app/
