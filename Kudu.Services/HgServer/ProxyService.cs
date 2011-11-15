@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Net.Http;
 using System.ServiceModel;
@@ -31,12 +32,14 @@ namespace Kudu.Services.HgServer
             _repositoryManager = repositoryManager;
         }
 
+        [Description("Handles raw Mercurial HTTP service requests using POST.")]
         [WebInvoke(UriTemplate = "")]
         public HttpResponseMessage PostProxy(HttpRequestMessage request)
         {
             return ProxyRequest(request);
         }
 
+        [Description("Handles raw Mercurial HTTP service requests using GET.")]
         [WebGet(UriTemplate = "")]
         public HttpResponseMessage GetProxy(HttpRequestMessage request)
         {

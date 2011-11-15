@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.Json;
 using System.Net;
 using System.ServiceModel;
@@ -18,24 +19,28 @@ namespace Kudu.Services.SourceControl
             _repository = repository;
         }
 
+        [Description("Gets the current repository id")]
         [WebGet(UriTemplate = "id")]
         public string GetCurrentId()
         {
             return _repository.CurrentId;
         }
 
+        [Description("Gets the repository branches.")]
         [WebGet(UriTemplate = "branches")]
         public IEnumerable<Branch> GetBranches()
         {
             return _repository.GetBranches();
         }
 
+        [Description("Gets the repository status")]
         [WebGet(UriTemplate = "status")]
         public IEnumerable<FileStatus> GetStatus()
         {
             return _repository.GetStatus();
         }
 
+        [Description("Gets the changes on this repository within the specified range (optional).")]
         [WebGet(UriTemplate = "log?index={index}&limit={limit}")]
         public IEnumerable<ChangeSet> GetChanges(int? index, int? limit)
         {
@@ -52,6 +57,7 @@ namespace Kudu.Services.SourceControl
             return changeSets;
         }
 
+        [Description("Gets the details of a specific change based on its id.")]
         [WebGet(UriTemplate = "details/{*id}")]
         public ChangeSetDetail GetDetails(string id)
         {
@@ -65,37 +71,43 @@ namespace Kudu.Services.SourceControl
             }
         }
 
+        [Description("Gets the current pending changes.")]
         [WebGet(UriTemplate = "working")]
         public ChangeSetDetail GetWorkingChanges()
         {
             return _repository.GetWorkingChanges();
         }
 
+        [Description("Adds a file to the pending changes.")]
         [WebInvoke(UriTemplate = "add")]
         public void AddFile(JsonObject input)
         {
             _repository.AddFile((string)input["path"]);
         }
 
+        [Description("Reverts a file pending changes.")]
         [WebInvoke(UriTemplate = "remove")]
         public void RemoveFile(JsonObject input)
         {
             _repository.RevertFile((string)input["path"]);
         }
 
-        [WebInvoke]
+        [Description("Commits pending changes.")]
+        [WebInvoke(UriTemplate = "commit")]
         public ChangeSet Commit(JsonObject input)
         {
             return _repository.Commit((string)input["name"], (string)input["message"]);
         }
 
-        [WebInvoke]
+        [Description("Updates the repository to the specified changes.")]
+        [WebInvoke(UriTemplate = "update")]
         public void Update(JsonObject input)
         {
             _repository.Update((string)input["id"]);
         }
 
-        [WebInvoke]
+        [Description("Pushes all commited changes to the remote repository.")]
+        [WebInvoke(UriTemplate = "push")]
         public void Push()
         {
             _repository.Push();

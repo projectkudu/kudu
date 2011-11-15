@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.Json;
 using System.ServiceModel;
 using System.ServiceModel.Web;
@@ -15,19 +16,22 @@ namespace Kudu.Services.Settings
             _settingsManager = settingsManager;
         }
 
+        [Description("Gets the current set of connection strings.")]
         [WebGet(UriTemplate = "")]
         public IEnumerable<ConnectionStringSetting> Index()
         {
             return _settingsManager.GetConnectionStrings();
         }
 
-        [WebInvoke]
+        [Description("Creates or sets a connection string.")]
+        [WebInvoke(UriTemplate = "set")]
         public void Set(JsonObject input)
         {
             _settingsManager.SetConnectionString((string)input["key"], (string)input["value"]);
         }
 
-        [WebInvoke]
+        [Description("Removes a connection string.")]
+        [WebInvoke(UriTemplate = "remove")]
         public void Remove(JsonObject input)
         {
             _settingsManager.RemoveConnectionString((string)input["key"]);

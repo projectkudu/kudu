@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Json;
 using System.ServiceModel;
 using System.ServiceModel.Web;
@@ -16,7 +17,8 @@ namespace Kudu.Services.SourceControl
             _repositoryManager = repositoryManager;
         }
 
-        [WebInvoke]
+        [Description("Creates a clone copy of the source repository.")]
+        [WebInvoke(UriTemplate = "clone")]
         public void Clone(JsonObject input)
         {
             _repositoryManager.CloneRepository((string)input["source"], (RepositoryType)Enum.Parse(typeof(RepositoryType), (string)input["type"]));

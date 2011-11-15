@@ -23,6 +23,7 @@
 namespace Kudu.Services.GitServer
 {
     using System;
+    using System.ComponentModel;
     using System.IO;
     using System.Net.Http;
     using System.Net.Http.Headers;
@@ -45,6 +46,7 @@ namespace Kudu.Services.GitServer
             _repositoryManager = repositoryManager;
         }
 
+        [Description("Handles git commands.")]
         [WebGet(UriTemplate = "?service={service}")]
         public HttpResponseMessage Execute(string service)
         {

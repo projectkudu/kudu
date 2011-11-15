@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Json;
 using System.ServiceModel;
 using System.ServiceModel.Web;
@@ -20,13 +21,15 @@ namespace Kudu.Services.SourceControl
             _server = server;
         }
 
-        [WebInvoke]
+        [Description("Creates a repository of the specified type.")]
+        [WebInvoke(UriTemplate = "create")]
         public void Create(JsonObject input)
         {
             _repositoryManager.CreateRepository((RepositoryType)Enum.Parse(typeof(RepositoryType), (string)input["type"]));
         }
 
-        [WebInvoke]
+        [Description("Deletes a repository.")]
+        [WebInvoke(UriTemplate = "delete")]
         public void Delete()
         {
             // Stop the server (will no-op if nothing is running)
@@ -34,6 +37,7 @@ namespace Kudu.Services.SourceControl
             _repositoryManager.Delete();
         }
 
+        [Description("Gets the repository type.")]
         [WebGet(UriTemplate = "kind")]
         public RepositoryType GetRepositoryType()
         {

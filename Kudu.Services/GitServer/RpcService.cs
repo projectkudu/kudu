@@ -23,6 +23,7 @@
 namespace Kudu.Services.GitServer
 {
     using System;
+    using System.ComponentModel;
     using System.Diagnostics;
     using System.IO;
     using System.IO.Compression;
@@ -47,6 +48,7 @@ namespace Kudu.Services.GitServer
             _deploymentManager = deploymentManager;
         }
 
+        [Description("Handles a 'git pull' command.")]
         [WebInvoke(UriTemplate = "git-upload-pack")]
         public HttpResponseMessage UploadPack(HttpRequestMessage request)
         {
@@ -58,6 +60,7 @@ namespace Kudu.Services.GitServer
             return CreateResponse(memoryStream, "application/x-git-{0}-result".With("upload-pack"));
         }
 
+        [Description("Handles a 'git push' command.")]
         [WebInvoke(UriTemplate = "git-receive-pack")]
         public HttpResponseMessage ReceivePack(HttpRequestMessage request)
         {
