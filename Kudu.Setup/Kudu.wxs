@@ -6,6 +6,9 @@
   <?ifndef KuduProductVersion?>
   <?define KuduProductVersion = "0.0.0.0"?>
   <?endif?>
+  <?ifndef KuduManufacturer?>
+  <?define KuduManufacturer = "Outercurve Foundation"?>
+  <?endif?>
   <?define ArtifactsDir = "..\artifacts\$(var.Configuration)"?>
   <?define KuduServiceDir = "$(var.ArtifactsDir)\KuduService"?>
   <?define KuduServiceBinDir = "$(var.KuduServiceDir)\bin"?>
@@ -15,7 +18,7 @@
            Name="Kudu.Setup"
            Language="1033"
            Version="$(var.KuduProductVersion)"
-           Manufacturer="Microsoft Corporation"
+           Manufacturer="$(var.KuduManufacturer)"
            UpgradeCode="20454678-7e74-4e0e-8ab0-2e8f9f7e3c5f">
 
     <Package InstallerVersion="200"
@@ -32,41 +35,42 @@
 
     <!-- Prerequisite check -->
     <PropertyRef Id="NETFRAMEWORK40FULL" />
-    
     <Condition Message="This application requires .NET Framework v4.0. Please install the .NET Framework v4.0 then run this installer again.">
       Installed OR NETFRAMEWORK40FULL
     </Condition>
-    
+
     <Condition Message="You need administrator privilege to install this application.">
       Privileged
     </Condition>
 
     <!-- Directory structure -->
+    <SetDirectory Id="WINDOWSDRIVE" Value="[WindowsVolume]" />
+
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="WINDOWSDRIVE">
         <Directory Id="KUDU_BASE_DIR" Name="KuduService">
           <Directory Id="KUDU_WWWROOT" Name="wwwroot">
-            
+
             <Directory Id="KUDU_SERVICE_BIN" Name="Bin" />
-            
+
             <Directory Id="KUDU_SERVICE_MSBUILD" Name="msbuild">
               <Directory Id ="KUDU_SERVICE_MSBUILD_MS" Name="Microsoft">
                 <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS" Name="VisualStudio">
                   <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS_10" Name="v10.0">
-                    
+
                     <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS_10_WEB" Name="Web"/>
                     <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS_10_WEBAPPS" Name="WebApplications"/>
-                    
+
                   </Directory>
                 </Directory>
               </Directory>
             </Directory>
-            
+
           </Directory>
         </Directory>
       </Directory>
     </Directory>
-    
+
     <!-- Product files -->
     <DirectoryRef Id="KUDU_WWWROOT">
 
@@ -77,18 +81,22 @@
         </RegistryKey>
       </Component>
 
+      <Component Id="Default.aspx" Guid="{DB6C3D9D-D0DD-42B6-A4C4-EA3D5F8428F4}">
+        <File Id="Default.aspx" Source="$(var.KuduServiceDir)\Default.aspx" />
+      </Component>
+
       <Component Id="Global.asax" Guid="{9120F0CD-A9BC-4B94-8D1C-2D591D1EF98A}">
         <File Id="Global.asax" Source="$(var.KuduServiceDir)\Global.asax" />
       </Component>
-      
+
       <Component Id="Web.config" Guid="{457A4FB5-F65C-4431-AB8A-A87F960ADDCC}">
         <File Id="Web.config" Source="$(var.KuduServiceDir)\Web.config" />
       </Component>
-      
+
     </DirectoryRef>
 
     <DirectoryRef Id="KUDU_SERVICE_BIN">
-            
+
       <Component Id="Kudu.Contracts.dll" Guid="{61A18C06-83A8-41CA-AA38-F9F665DE10C3}">
         <File Id="Kudu.Contracts.dll" Source="$(var.KuduServiceBinDir)\Kudu.Contracts.dll" />
       </Component>
@@ -105,18 +113,18 @@
       <Component Id="Elmah.dll" Guid="{C13BE342-75FF-40CF-AFD3-669F8182CF83}">
         <File Id="Elmah.dll" Source="$(var.KuduServiceBinDir)\Elmah.dll" />
       </Component>
-      
+
       <Component Id="Newtonsoft.Json.dll" Guid="{11210292-AF01-42CB-BAA6-6619CCA6E682}">
         <File Id="Newtonsoft.Json.dll" Source="$(var.KuduServiceBinDir)\Newtonsoft.Json.dll" />
       </Component>
-      
+
       <Component Id="Ninject.dll" Guid="{1337933F-2537-4C76-8FEF-FBADD5816448}">
         <File Id="Ninject.dll" Source="$(var.KuduServiceBinDir)\Ninject.dll" />
       </Component>
       <Component Id="Ninject.Extensions.Wcf.dll" Guid="{40213169-2163-4F4F-B7E2-40C8E4C3DADC}">
         <File Id="Ninject.Extensions.Wcf.dll" Source="$(var.KuduServiceBinDir)\Ninject.Extensions.Wcf.dll" />
       </Component>
-      
+
       <Component Id="SignalR.dll" Guid="{05B0AC56-6BD2-4F46-B80B-ADC05F4996FF}">
         <File Id="SignalR.dll" Source="$(var.KuduServiceBinDir)\SignalR.dll" />
       </Component>
@@ -147,7 +155,7 @@
       <Component Id="Microsoft.ServiceModel.Internal.dll" Guid="{7E046CF4-5D62-40C2-A706-23DF903D4A9C}">
         <File Id="Microsoft.ServiceModel.Internal.dll" Source="$(var.KuduServiceBinDir)\Microsoft.ServiceModel.Internal.dll" />
       </Component>
-      
+
       <Component Id="Microsoft.Server.Common.dll" Guid="{4F476863-1DE8-4699-9691-5A7BDEC0BE47}">
         <File Id="Microsoft.Server.Common.dll" Source="$(var.KuduServiceBinDir)\Microsoft.Server.Common.dll" />
       </Component>
@@ -163,7 +171,7 @@
       <Component Id="XmlSettings.dll" Guid="{A0569F8D-226B-4361-A596-7B636DBB3581}">
         <File Id="XmlSettings.dll" Source="$(var.KuduServiceBinDir)\XmlSettings.dll" />
       </Component>
-      
+
     </DirectoryRef>
 
     <DirectoryRef Id="KUDU_SERVICE_MSBUILD_MS_VS_10_WEB">
@@ -193,19 +201,10 @@
       </Component>
     </DirectoryRef>
 
-    <CustomAction Id="SetWindowsDriveDefault" Property="WINDOWSDRIVE" Value="[WindowsVolume]" />
-    
-    <InstallExecuteSequence>
-      <Custom Action="SetWindowsDriveDefault" After="CostInitialize" />
-    </InstallExecuteSequence>
-    
-    <InstallUISequence>
-      <Custom Action="SetWindowsDriveDefault" After="CostInitialize" />
-    </InstallUISequence>
-
     <Feature Id="RequiredComponents" Level="1">
       <ComponentRef Id="RegistryComponent" />
-      
+
+      <ComponentRef Id="Default.aspx" />
       <ComponentRef Id="Global.asax" />
       <ComponentRef Id="Web.config" />
 
@@ -215,17 +214,17 @@
       <ComponentRef Id="Kudu.Services.Web.dll"/>
 
       <ComponentRef Id="Elmah.dll" />
-      
+
       <ComponentRef Id="Newtonsoft.Json.dll" />
-      
+
       <ComponentRef Id="Ninject.dll" />
       <ComponentRef Id="Ninject.Extensions.Wcf.dll" />
-      
+
       <ComponentRef Id="SignalR.dll" />
-      
+
       <ComponentRef Id="LibGit2Sharp.dll" />
       <ComponentRef Id="Mercurial.Net.dll" />
-      
+
       <ComponentRef Id="Microsoft.ApplicationServer.Http.dll" />
       <ComponentRef Id="Microsoft.Json.dll" />
       <ComponentRef Id="Microsoft.Net.Http.dll" />
@@ -244,7 +243,7 @@
       <ComponentRef Id="Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets" />
       <ComponentRef Id="Microsoft.Web.Publishing.targets" />
       <ComponentRef Id="Microsoft.Web.Publishing.Tasks.Dll" />
-      
+
       <ComponentRef Id="Microsoft.WebApplication.Build.Tasks.Dll" />
       <ComponentRef Id="Microsoft.WebApplication.targets" />
     </Feature>
