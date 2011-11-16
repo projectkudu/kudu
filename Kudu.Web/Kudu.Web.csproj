@@ -40,9 +40,6 @@
       <HintPath>..\packages\EntityFramework.4.2.0.0\lib\net40\EntityFramework.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Microsoft.Web.Administration, Version=7.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\..\..\Windows\System32\inetsrv\Microsoft.Web.Administration.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.Web.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <Private>True</Private>
       <HintPath>..\packages\Microsoft.Web.Infrastructure.1.0.0.0\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
@@ -272,16 +269,12 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="Infrastructure\ISiteManager.cs" />
-    <Compile Include="Infrastructure\PathHelper.cs" />
-    <Compile Include="Infrastructure\SiteManager.cs" />
     <Compile Include="Infrastructure\SlugGenerator.cs" />
     <Compile Include="Models\Application.cs" />
     <Compile Include="Models\ApplicationViewModel.cs" />
     <Compile Include="Models\DeveloperSiteState.cs" />
     <Compile Include="Models\KuduContext.cs" />
     <Compile Include="Models\SettingsViewModel.cs" />
-    <Compile Include="Models\Site.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -300,6 +293,10 @@
     <ProjectReference Include="..\Kudu.SignalR\Kudu.SignalR.csproj">
       <Project>{E9D6C37C-09D5-4E11-A52D-190C3A6C5B10}</Project>
       <Name>Kudu.SignalR</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Kudu.SiteManagement\Kudu.SiteManagement.csproj">
+      <Project>{D5669C1D-3408-4CEE-8C1B-D86D03D27EE2}</Project>
+      <Name>Kudu.SiteManagement</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

@@ -1,8 +1,11 @@
-using Kudu.Web.Infrastructure;
+using System.Configuration;
+using System.IO;
+using System.Web;
+using Kudu.Client.Infrastructure;
+using Kudu.SiteManagement;
 using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 using Ninject;
 using Ninject.Web.Mvc;
-using Kudu.Client.Infrastructure;
 
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Web.App_Start.NinjectMvc3Services), "Start")]
 [assembly: WebActivator.ApplicationShutdownMethodAttribute(typeof(Kudu.Web.App_Start.NinjectMvc3Services), "Stop")]
@@ -49,7 +52,15 @@ namespace Kudu.Web.App_Start
         /// <param name="kernel">The kernel.</param>
         private static void RegisterServices(IKernel kernel)
         {
-            kernel.Bind<ISiteManager>().ToConstant(new SiteManager());
+            string sitePath = HttpRuntime.AppDomainAppPath;
+            string serviceSitePath = ConfigurationManager.AppSettings["serviceSitePath"];
+            string sitesPath = ConfigurationManager.AppSettings["sitesPath"];
+
+            serviceSitePath = Path.Combine(sitePath, serviceSitePath);
+            sitesPath = Path.Combine(sitePath, sitesPath);
+
+            kernel.Bind<IPathResolver>().ToConstant(new DefaultPathResolver(serviceSitePath, sitesPath));
+            kernel.Bind<ISiteManager>().To<SiteManager>();
             kernel.Bind<ICredentialProvider>().ToConstant(new BasicAuthCredentialProvider("admin", "kudu"));
         }
     }

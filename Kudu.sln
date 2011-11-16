@@ -22,6 +22,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.SignalR", "Kudu.Signal
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.Contracts", "Kudu.Contracts\Kudu.Contracts.csproj", "{EC0ED988-2C60-4F31-A434-645E048BFD95}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.SiteManagement", "Kudu.SiteManagement\Kudu.SiteManagement.csproj", "{D5669C1D-3408-4CEE-8C1B-D86D03D27EE2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -112,6 +114,16 @@ Global
 		{EC0ED988-2C60-4F31-A434-645E048BFD95}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{EC0ED988-2C60-4F31-A434-645E048BFD95}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{EC0ED988-2C60-4F31-A434-645E048BFD95}.Release|x86.ActiveCfg = Release|Any CPU
+		{D5669C1D-3408-4CEE-8C1B-D86D03D27EE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D5669C1D-3408-4CEE-8C1B-D86D03D27EE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D5669C1D-3408-4CEE-8C1B-D86D03D27EE2}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{D5669C1D-3408-4CEE-8C1B-D86D03D27EE2}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{D5669C1D-3408-4CEE-8C1B-D86D03D27EE2}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D5669C1D-3408-4CEE-8C1B-D86D03D27EE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D5669C1D-3408-4CEE-8C1B-D86D03D27EE2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D5669C1D-3408-4CEE-8C1B-D86D03D27EE2}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{D5669C1D-3408-4CEE-8C1B-D86D03D27EE2}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{D5669C1D-3408-4CEE-8C1B-D86D03D27EE2}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

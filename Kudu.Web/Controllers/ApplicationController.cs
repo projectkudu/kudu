@@ -1,10 +1,11 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Web.Mvc;
 using Kudu.Client.Infrastructure;
 using Kudu.Client.SourceControl;
 using Kudu.Core.SourceControl;
+using Kudu.SiteManagement;
 using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
 
@@ -15,11 +16,15 @@ namespace Kudu.Web.Controllers
         private KuduContext db = new KuduContext();
         private readonly ISiteManager _siteManager;
         private readonly ICredentialProvider _credentialProvider;
+        private readonly IPathResolver _pathResolver;
 
-        public ApplicationController(ISiteManager siteManager, ICredentialProvider credentialProvider)
+        public ApplicationController(ISiteManager siteManager,
+                                     ICredentialProvider credentialProvider,
+                                     IPathResolver pathResolver)
         {
             _siteManager = siteManager;
             _credentialProvider = credentialProvider;
+            _pathResolver = pathResolver;
         }
 
         //
@@ -82,15 +87,10 @@ namespace Kudu.Web.Controllers
                         Slug = slug,
                         ServiceUrl = site.ServiceUrl,
                         SiteUrl = site.SiteUrl,
-                        ServiceAppName = site.ServiceAppName,
-                        SiteName = site.SiteName,
+                        SiteName = slug,
                         Created = DateTime.Now,
                         UniqueId = Guid.NewGuid()
                     };
-
-                    // Give iis a chance to start the app up
-                    // if we send requests too quickly, we'll end up getting 404s
-                    Thread.Sleep(500);
 
                     if (appViewModel.RepositoryType != RepositoryType.None)
                     {
@@ -192,7 +192,7 @@ namespace Kudu.Web.Controllers
                 return HttpNotFound();
             }
 
-            _siteManager.SetDeveloperSiteWebRoot(application.Name, projectPath);
+            _siteManager.SetDeveloperSiteWebRoot(application.Name, Path.GetDirectoryName(projectPath));
 
             return new EmptyResult();
         }
@@ -218,8 +218,8 @@ namespace Kudu.Web.Controllers
                 return new EmptyResult();
             }
 
-            string sourceRepositoryPath = PathHelper.GetDeploymentRepositoryPath(application.Name);
-            string destRepositoryPath = PathHelper.GetDeveloperApplicationPath(application.Name);
+            string sourceRepositoryPath = Path.Combine(_pathResolver.GetApplicationPath(application.Name), Constants.RepositoryPath);
+            string destRepositoryPath = Path.Combine(_pathResolver.GetDeveloperApplicationPath(application.Name), Constants.WebRoot);
 
             try
             {
@@ -229,9 +229,6 @@ namespace Kudu.Web.Controllers
                 string developerSiteUrl;
                 if (_siteManager.TryCreateDeveloperSite(slug, out developerSiteUrl))
                 {
-                    // Wait for the mapping to take effect in the service site
-                    Thread.Sleep(1000);
-
                     // Clone the repository to the developer site
                     var devRepositoryManager = new RemoteRepositoryManager(application.ServiceUrl + "dev/scm");
                     devRepositoryManager.Credentials = _credentialProvider.GetCredentials();
