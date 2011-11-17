@@ -22,7 +22,7 @@
 <body>
     <form id="MainForm" runat="server">
     <div>
-        <h1>Kudu - Build <% =System.Diagnostics.FileVersionInfo.GetVersionInfo(typeof(Kudu.Services.MvcApplication).Assembly.Location).ProductVersion %></h1>
+        <h1>Kudu - Build <%= typeof(Kudu.Services.MvcApplication).Assembly.GetName().Version %></h1>
     </div>
     <div>
         <h2>API Help</h2>
