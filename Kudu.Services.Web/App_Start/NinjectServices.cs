@@ -109,8 +109,7 @@ namespace Kudu.Services.Web.App_Start
 
             // Source control
             kernel.Bind<IRepository>().ToMethod(context => GetSourceControlRepository(environment));
-            kernel.Bind<IRepositoryManager>().ToMethod(context => GetDevelopmentRepositoryManager(environment))
-                                            .WhenInjectedInto<CloneService>();
+            kernel.Bind<IClonableRepository>().ToMethod(context => (IClonableRepository)GetDevelopmentRepositoryManager(environment));
         }
 
         private static IRepositoryManager GetDevelopmentRepositoryManager(IEnvironment environment)

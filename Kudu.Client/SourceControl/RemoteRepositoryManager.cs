@@ -30,11 +30,10 @@ namespace Kudu.Client.SourceControl
                    .EnsureSuccessful();
         }
 
-        public void CloneRepository(string source, RepositoryType type)
+        public void CloneRepository(RepositoryType type)
         {
             _client.Post("clone",
-                         HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("source", source),
-                                                            new KeyValuePair<string, string>("type", type.ToString()))).EnsureSuccessful();
+                         HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("type", type.ToString()))).EnsureSuccessful();
         }
 
         public IRepository GetRepository()

@@ -16,15 +16,11 @@ namespace Kudu.Web.Controllers
         private KuduContext db = new KuduContext();
         private readonly ISiteManager _siteManager;
         private readonly ICredentialProvider _credentialProvider;
-        private readonly IPathResolver _pathResolver;
 
-        public ApplicationController(ISiteManager siteManager,
-                                     ICredentialProvider credentialProvider,
-                                     IPathResolver pathResolver)
+        public ApplicationController(ISiteManager siteManager, ICredentialProvider credentialProvider)
         {
             _siteManager = siteManager;
             _credentialProvider = credentialProvider;
-            _pathResolver = pathResolver;
         }
 
         //
@@ -218,9 +214,6 @@ namespace Kudu.Web.Controllers
                 return new EmptyResult();
             }
 
-            string sourceRepositoryPath = Path.Combine(_pathResolver.GetApplicationPath(application.Name), Constants.RepositoryPath);
-            string destRepositoryPath = Path.Combine(_pathResolver.GetDeveloperApplicationPath(application.Name), Constants.WebRoot);
-
             try
             {
                 application.DeveloperSiteState = (int)DeveloperSiteState.Creating;
@@ -232,7 +225,7 @@ namespace Kudu.Web.Controllers
                     // Clone the repository to the developer site
                     var devRepositoryManager = new RemoteRepositoryManager(application.ServiceUrl + "dev/scm");
                     devRepositoryManager.Credentials = _credentialProvider.GetCredentials();
-                    devRepositoryManager.CloneRepository(sourceRepositoryPath, repositoryType);
+                    devRepositoryManager.CloneRepository(repositoryType);
 
                     application.DeveloperSiteUrl = developerSiteUrl;
                     db.SaveChanges();

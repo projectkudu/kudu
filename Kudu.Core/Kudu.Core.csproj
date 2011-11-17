@@ -93,7 +93,6 @@
     <Compile Include="Deployment\XmlLogger.cs" />
     <Compile Include="Editor\ProjectSystem.cs" />
     <Compile Include="Environment.cs" />
-    <Compile Include="IEnvironment.cs" />
     <Compile Include="Infrastructure\FileSystemHelpers.cs" />
     <Compile Include="Deployment\LoggerExtensions.cs" />
     <Compile Include="Infrastructure\NativeMethods.cs" />

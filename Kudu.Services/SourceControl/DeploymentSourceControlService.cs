@@ -15,7 +15,7 @@ namespace Kudu.Services.SourceControl
         private readonly IHgServer _server;
 
         public DeploymentSourceControlService(IRepositoryManager repositoryManager,
-                                       IHgServer server)
+                                              IHgServer server)
         {
             _repositoryManager = repositoryManager;
             _server = server;
@@ -25,7 +25,8 @@ namespace Kudu.Services.SourceControl
         [WebInvoke(UriTemplate = "create")]
         public void Create(JsonObject input)
         {
-            _repositoryManager.CreateRepository((RepositoryType)Enum.Parse(typeof(RepositoryType), (string)input["type"]));
+            var type = (RepositoryType)Enum.Parse(typeof(RepositoryType), (string)input["type"]);
+            _repositoryManager.CreateRepository(type);
         }
 
         [Description("Deletes a repository.")]

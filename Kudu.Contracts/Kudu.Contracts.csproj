@@ -55,6 +55,7 @@
     <Compile Include="Deployment\LogEntryType.cs" />
     <Compile Include="Editor\IProjectSystem.cs" />
     <Compile Include="Editor\Project.cs" />
+    <Compile Include="IEnvironment.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Settings\ConnectionStringSetting.cs" />
     <Compile Include="Settings\DeploymentSetting.cs" />
@@ -68,6 +69,7 @@
     <Compile Include="SourceControl\FileStatus.cs" />
     <Compile Include="SourceControl\Git\IGitServer.cs" />
     <Compile Include="SourceControl\Hg\IHgServer.cs" />
+    <Compile Include="SourceControl\IClonableRepository.cs" />
     <Compile Include="SourceControl\IRepository.cs" />
     <Compile Include="SourceControl\IRepositoryManager.cs" />
     <Compile Include="SourceControl\LineDiff.cs" />
