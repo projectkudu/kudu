@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Configuration;
 using System.Net.Http;
 using System.ServiceModel;
 using System.ServiceModel.Activation;
@@ -22,7 +23,6 @@ namespace Kudu.Services
 {
     public class MvcApplication : System.Web.HttpApplication
     {
-
         public static void RegisterRoutes(RouteCollection routes)
         {
             var configuration = KernelContainer.Kernel.Get<IServerConfiguration>();
@@ -101,7 +101,13 @@ namespace Kudu.Services
                     existingRequestHandlerFactory(c, e, od);
                 }
 
-                c.Insert(0, KernelContainer.Kernel.Get<BasicAuthorizeHandler>());
+                // Enable authentication based on the configuration setting
+                string authenticationValue = ConfigurationManager.AppSettings["enableAuthentication"];
+                bool enableAuthentication;
+                if (Boolean.TryParse(authenticationValue, out enableAuthentication) && enableAuthentication)
+                {
+                    c.Insert(0, KernelContainer.Kernel.Get<BasicAuthorizeHandler>());
+                }
             };
 
             return factory;
