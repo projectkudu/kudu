@@ -1,4 +1,5 @@
-﻿using Kudu.Core.Deployment;
+﻿using System;
+using Kudu.Core.Deployment;
 
 namespace Kudu.SignalR.ViewModels
 {
@@ -6,13 +7,13 @@ namespace Kudu.SignalR.ViewModels
     {
         public LogEntryViewModel(LogEntry entry)
         {
-            LogTime = entry.LogTime.ToString();
+            LogTime = entry.LogTime;
             Message = entry.Message;
             Type = entry.Type;
         }
 
         public LogEntryType Type { get; set; }
-        public string LogTime { get; private set; }
+        public DateTime LogTime { get; private set; }
         public string Message { get; private set; }
     }
 }

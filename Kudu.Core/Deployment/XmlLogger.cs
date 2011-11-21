@@ -21,7 +21,7 @@ namespace Kudu.Core.Deployment
         {
             XDocument document = GetDocument();
 
-            document.Root.Add(new XElement("entry",
+            document.Root.Add(new XElement("entry",                                  
                                   new XAttribute("time", DateTime.Now),
                                   new XAttribute("type", (int)type),
                                   value));

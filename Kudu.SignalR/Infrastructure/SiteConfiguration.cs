@@ -107,7 +107,7 @@ namespace Kudu.SignalR.Infrastructure
         private void OnDeploymentStatusChanged(DeployResult result)
         {
             var clients = Hub.GetClients<Kudu.SignalR.Hubs.Deployment>();
-            clients.updateDeployStatus(new DeployResultViewModel(result));
+            clients[Name].updateDeployStatus(new DeployResultViewModel(result));
         }
 
         private void OnCommandEvent(CommandEvent commandEvent)
@@ -115,11 +115,11 @@ namespace Kudu.SignalR.Infrastructure
             dynamic clients = Hub.GetClients<DevelopmentEnvironment>();
             if (commandEvent.EventType == CommandEventType.Complete)
             {
-                clients.commandComplete();
+                clients[Name].commandComplete();
             }
             else
             {
-                clients.processCommand(commandEvent.Data);
+                clients[Name].processCommand(commandEvent.Data);
             }
         }
 

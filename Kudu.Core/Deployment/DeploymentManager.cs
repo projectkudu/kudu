@@ -242,6 +242,7 @@ namespace Kudu.Core.Deployment
                 trackingFile = OpenTrackingFile(id);
                 logger = GetLogger(id);
 
+                trackingFile.Percentage = 50;
                 trackingFile.Status = DeployStatus.Deploying;
                 trackingFile.StatusText = "Deploying to webroot...";
                 trackingFile.Save(_fileSystem);

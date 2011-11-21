@@ -9,6 +9,7 @@ namespace Kudu.Core.Deployment
         public string Id { get; set; }
         public DeployStatus Status { get; set; }
         public string StatusText { get; set; }
+        public string AuthorEmail { get; set; }
         public string Author { get; set; }
         public string Message { get; set; }
         public DateTime DeployStartTime { get; set; }
