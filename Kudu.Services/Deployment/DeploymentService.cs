@@ -24,6 +24,13 @@ namespace Kudu.Services.Deployment
             return _deploymentManager.ActiveDeploymentId;
         }
 
+        [Description("Deletes a deployment.")]
+        [WebInvoke(UriTemplate = "delete")]
+        public void Delete(JsonObject input)
+        {
+            _deploymentManager.Delete((string)input["id"]);
+        }
+
         [Description("Performs a deployment.")]
         [WebInvoke(UriTemplate = "")]
         public void Deploy()

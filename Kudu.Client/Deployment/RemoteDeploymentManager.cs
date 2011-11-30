@@ -51,6 +51,12 @@ namespace Kudu.Client.Deployment
             return _client.GetJson<IEnumerable<LogEntry>>("log?id=" + id);
         }
 
+        public void Delete(string id)
+        {
+            _client.Post("delete", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("id", id)))
+                   .EnsureSuccessful();
+        }
+
         public void Deploy(string id)
         {
             _client.Post("restore", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("id", id)))

@@ -95,6 +95,12 @@ namespace Kudu.Core.Deployment
             return new XmlLogger(_fileSystem, path).GetLogEntries();
         }
 
+        public void Delete(string id)
+        {
+            //TODO Check for exceptions related to Delete.
+            _fileSystem.Directory.Delete(GetRoot((id)), true);
+        }
+
         public void Deploy(string id)
         {
             string cachePath = GetCachePath(id);
