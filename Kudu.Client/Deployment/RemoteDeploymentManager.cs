@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using Kudu.Client.Infrastructure;
@@ -80,7 +81,13 @@ namespace Kudu.Client.Deployment
             }
 
             // REVIEW: Should this return task?
-            _connection.Start().Wait();
+            _connection.Start().ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Debug.WriteLine("KUDU ERROR: " + t.Exception.GetBaseException());
+                }
+            });
         }
 
         public void Stop()
