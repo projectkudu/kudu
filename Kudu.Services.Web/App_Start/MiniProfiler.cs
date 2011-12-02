@@ -24,22 +24,9 @@ namespace Kudu.Services.Web.App_Start
             context.BeginRequest += (sender, e) =>
             {
                 var request = ((HttpApplication)sender).Request;
-                //TODO: By default only local requests are profiled, optionally you can set it up
-                //  so authenticated users are always profiled
-                if (request.IsAuthenticated || request.IsLocal) { MiniProfiler.Start(); }
-            };
 
-
-            // TODO: You can control who sees the profiling information
-            /*
-            context.AuthenticateRequest += (sender, e) =>
-            {
-                if (!CurrentUserIsAllowedToSeeProfiler())
-                {
-                    MvcMiniProfiler.MiniProfiler.Stop(discardResults: true);
-                }
+                MiniProfiler.Start();
             };
-            */
 
             context.EndRequest += (sender, e) =>
             {
