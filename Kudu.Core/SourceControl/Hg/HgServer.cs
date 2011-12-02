@@ -4,6 +4,7 @@ using System.IO;
 using System.Threading;
 using Kudu.Core.Infrastructure;
 using Mercurial;
+using System.Net.NetworkInformation;
 
 namespace Kudu.Core.SourceControl.Hg
 {
@@ -181,10 +182,32 @@ allow_push = *
                 return null;
             }
 
+            //TODO this is duplicated in SiteManager.cs.
             private int GetRandomPort()
             {
-                // TODO: Ensure the port is unused
-                return new Random((int)DateTime.Now.Ticks).Next(1025, 65535);
+                Random rnd = new Random((int)DateTime.Now.Ticks);
+                int randomPort = rnd.Next(1025, 65535);
+                while (!IsAvailable(randomPort))
+                {
+                    randomPort = rnd.Next(1025, 65535);
+                }
+
+                return randomPort;
+            }
+
+            //TODO this is duplicated in SiteManager.cs.
+            private bool IsAvailable(int port)
+            {
+                var tcpConnections = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpConnections();
+                foreach (var connectionInfo in tcpConnections)
+                {
+                    if (connectionInfo.LocalEndPoint.Port == port)
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
             }
         }
     }

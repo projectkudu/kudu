@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading;
 using Kudu.Core.Infrastructure;
 using IIS = Microsoft.Web.Administration;
+using System.Net.NetworkInformation;
 
 namespace Kudu.SiteManagement
 {
@@ -159,10 +160,32 @@ namespace Kudu.SiteManagement
             return kuduAppPool;
         }
 
+        //TODO this is duplicated in HgServer.cs.
         private int GetRandomPort()
         {
-            // TODO: Ensure the port is unused
-            return new Random((int)DateTime.Now.Ticks).Next(1025, 65535);
+            Random rnd = new Random((int) DateTime.Now.Ticks);
+            int randomPort = rnd.Next(1025, 65535);
+            while (!IsAvailable(randomPort))
+            {
+                randomPort = rnd.Next(1025, 65535);
+            }
+
+            return randomPort;
+        }
+
+        //TODO this is duplicated in HgServer.cs.
+        private bool IsAvailable(int port)
+        {
+            var tcpConnections = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpConnections();
+            foreach (var connectionInfo in tcpConnections)
+            {
+                if (connectionInfo.LocalEndPoint.Port == port)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private int CreateSite(IIS.ServerManager iis, string siteName, string siteRoot)
