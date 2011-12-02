@@ -95,6 +95,18 @@ namespace Kudu.Core.Deployment
             return new XmlLogger(_fileSystem, path).GetLogEntries();
         }
 
+        public IEnumerable<LogEntry> GetLogEntryDetails(string id, string dateId)
+        {
+            string path = GetLogPath(id);
+
+            if (!_fileSystem.File.Exists(path))
+            {
+                throw new InvalidOperationException(String.Format("No log found for '{0}'.", id));
+            }
+
+            return new XmlLogger(_fileSystem, path).GetLogEntryDetails(dateId);
+        }
+
         public void Delete(string id)
         {
             //TODO Check for exceptions related to Delete.

@@ -43,10 +43,10 @@ namespace Kudu.Core.Deployment
         {
             var tcs = new TaskCompletionSource<object>();
 
+            ILogger innerLogger = logger.Log("Building solution {0}.", Path.GetFileName(SolutionPath));
+
             try
             {
-                logger.Log("Building solution {0}.", Path.GetFileName(SolutionPath));
-
                 string propertyString = GetPropertyString();
 
                 if (!String.IsNullOrEmpty(propertyString))
@@ -57,12 +57,12 @@ namespace Kudu.Core.Deployment
                 // Build the solution first
                 string log = ExecuteMSBuild(@"""{0}"" /verbosity:m /nologo{1}", SolutionPath, propertyString);
 
-                logger.Log(log);
+                innerLogger.Log(log);
             }
             catch (Exception ex)
             {
-                logger.Log("Building solution failed.", LogEntryType.Error);
-                logger.Log(ex);
+                innerLogger.Log("Building solution failed.", LogEntryType.Error);
+                innerLogger.Log(ex);
                 tcs.TrySetException(ex);
                 return tcs.Task;
             }

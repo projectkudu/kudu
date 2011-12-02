@@ -66,6 +66,13 @@ namespace Kudu.Services.Deployment
             return _deploymentManager.GetLogEntries(id);
         }
 
+        [Description("Gets the specified log entry details.")]
+        [WebGet(UriTemplate = "logDetails?id={id}&entryId={entryId}")]
+        public IEnumerable<LogEntry> GetLogEntryDetails(string id, string entryId)
+        {
+            return _deploymentManager.GetLogEntryDetails(id, entryId);
+        }
+
         [Description("Gets the deployment result of a specific deployment based on its id.")]
         [WebGet(UriTemplate = "details?id={id}")]
         public DeployResult GetResult(string id)

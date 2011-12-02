@@ -20,18 +20,18 @@ namespace Kudu.Core.Deployment
 
             string solutionDir = SolutionDir + @"\";
 
+            var innerLogger = logger.Log("Building web project {0}.", Path.GetFileName(_projectPath));
+
             try
             {
-                logger.Log("Building web project {0}.", Path.GetFileName(_projectPath));
-
                 string log = ExecuteMSBuild(@"""{0}"" /nologo /verbosity:m /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir={1};AutoParameterizationWebConfigConnectionStrings=false;SolutionDir={2};{3}", _projectPath, outputPath, solutionDir, GetPropertyString());
 
-                logger.Log(log);
+                innerLogger.Log(log);
             }
             catch (Exception ex)
             {
-                logger.Log("Building web project failed.", LogEntryType.Error);
-                logger.Log(ex);
+                innerLogger.Log("Building web project failed.", LogEntryType.Error);
+                innerLogger.Log(ex);
                 tcs.TrySetException(ex);
                 return tcs.Task;
             }

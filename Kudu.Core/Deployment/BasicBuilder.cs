@@ -17,18 +17,18 @@ namespace Kudu.Core.Deployment
         {
             var tcs = new TaskCompletionSource<object>();
 
+            var innerLogger = logger.Log("Copying files to {0}.", outputPath);
+
             try
             {
-                logger.Log("Copying files to {0}.", outputPath);
-
                 FileSystemHelpers.SmartCopy(_sourcePath, outputPath);
 
-                logger.Log("Done.");
+                innerLogger.Log("Done.");
             }
             catch (Exception ex)
             {
-                logger.Log("Copying files failed.");
-                logger.Log(ex);
+                innerLogger.Log("Copying files failed.");
+                innerLogger.Log(ex);
                 tcs.SetException(ex);
             }
 

@@ -62,6 +62,12 @@ namespace Kudu.SignalR.Hubs
                    select new LogEntryViewModel(entry);
         }
 
+        public IEnumerable<LogEntryViewModel> GetDeployLogEntryDetails(string id, string entryId)
+        {
+            return from entry in _deploymentManager.GetLogEntryDetails(id, entryId)
+                   select new LogEntryViewModel(entry);
+        }
+
         public void Deploy(string id)
         {
             _deploymentManager.Deploy(id);

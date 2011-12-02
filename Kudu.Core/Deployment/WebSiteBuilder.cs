@@ -18,18 +18,18 @@ namespace Kudu.Core.Deployment
         {
             var tcs = new TaskCompletionSource<object>();
 
+            var innerLogger = logger.Log("Using website project {0}.", _projectPath);
+
             try
             {
-                logger.Log("Using website project {0}.", _projectPath);
-
                 FileSystemHelpers.SmartCopy(_projectPath, outputPath);
 
-                logger.Log("Done.");
+                innerLogger.Log("Done.");
             }
             catch (Exception e)
             {
-                logger.Log("Copying website failed.", LogEntryType.Error);
-                logger.Log(e);
+                innerLogger.Log("Copying website failed.", LogEntryType.Error);
+                innerLogger.Log(e);
                 tcs.TrySetException(e);
                 return tcs.Task;
             }
