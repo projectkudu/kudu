@@ -18,7 +18,9 @@ namespace Kudu.Client.SourceControl
         {
             get
             {
-                return _client.Get("id").EnsureSuccessful()
+                return _client.GetAsync("id")
+                              .Result
+                              .EnsureSuccessful()
                               .Content
                               .ReadAsString();
             }
@@ -26,55 +28,59 @@ namespace Kudu.Client.SourceControl
 
         public void Initialize()
         {
-            _client.Post("init", new StringContent(String.Empty))
+            _client.PostAsync("init", new StringContent(String.Empty))
+                   .Result
                    .EnsureSuccessStatusCode();
         }
 
         public IEnumerable<Branch> GetBranches()
         {
-            return _client.GetJson<IEnumerable<Branch>>("branches");
+            return _client.GetAsyncJson<IEnumerable<Branch>>("branches");
         }
 
         public IEnumerable<FileStatus> GetStatus()
         {
-            return _client.GetJson<IEnumerable<FileStatus>>("status");
+            return _client.GetAsyncJson<IEnumerable<FileStatus>>("status");
         }
 
         public IEnumerable<ChangeSet> GetChanges()
         {
-            return _client.GetJson<IEnumerable<ChangeSet>>("log");
+            return _client.GetAsyncJson<IEnumerable<ChangeSet>>("log");
         }
 
         public IEnumerable<ChangeSet> GetChanges(int index, int limit)
         {
-            return _client.GetJson<IEnumerable<ChangeSet>>("log?index=" + index + "&limit=" + limit);
+            return _client.GetAsyncJson<IEnumerable<ChangeSet>>("log?index=" + index + "&limit=" + limit);
         }
 
         public ChangeSetDetail GetDetails(string id)
         {
-            return _client.GetJson<ChangeSetDetail>("details/" + id);
+            return _client.GetAsyncJson<ChangeSetDetail>("details/" + id);
         }
 
         public ChangeSetDetail GetWorkingChanges()
         {
-            return _client.GetJson<ChangeSetDetail>("working");
+            return _client.GetAsyncJson<ChangeSetDetail>("working");
         }
 
         public void AddFile(string path)
         {
-            _client.Post("add", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("path", path)))
+            _client.PostAsync("add", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("path", path)))
+                   .Result
                    .EnsureSuccessful();
         }
 
         public void RevertFile(string path)
         {
-            _client.Post("remove", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("path", path)))
+            _client.PostAsync("remove", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("path", path)))
+                   .Result
                    .EnsureSuccessful();
         }
 
         public ChangeSet Commit(string authorName, string message)
         {
-            string json = _client.Post("commit", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("name", authorName), new KeyValuePair<string, string>("message", message)))
+            string json = _client.PostAsync("commit", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("name", authorName), new KeyValuePair<string, string>("message", message)))
+                                 .Result
                                  .EnsureSuccessful()
                                  .Content.ReadAsString();
 
@@ -83,13 +89,15 @@ namespace Kudu.Client.SourceControl
 
         public void Push()
         {
-            _client.Post("push", new StringContent(String.Empty))
-                   .EnsureSuccessStatusCode();
+            _client.PostAsync("push", new StringContent(String.Empty))
+                   .Result
+                   .EnsureSuccessful();
         }
 
         public void Update(string id)
         {
-            _client.Post("update", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("id", id)))
+            _client.PostAsync("update", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("id", id)))
+                   .Result
                    .EnsureSuccessful();
         }
     }

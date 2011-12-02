@@ -33,50 +33,55 @@ namespace Kudu.Client.Deployment
         {
             get
             {
-                return _client.GetJson<string>("id");
+                return _client.GetAsyncJson<string>("id");
             }
         }
 
         public IEnumerable<DeployResult> GetResults()
         {
-            return _client.GetJson<IEnumerable<DeployResult>>("log");
+            return _client.GetAsyncJson<IEnumerable<DeployResult>>("log");
         }
 
         public DeployResult GetResult(string id)
         {
-            return _client.GetJson<DeployResult>("details?id=" + id);
+            return _client.GetAsyncJson<DeployResult>("details?id=" + id);
         }
 
         public IEnumerable<LogEntry> GetLogEntries(string id)
         {
-            return _client.GetJson<IEnumerable<LogEntry>>("log?id=" + id);
+            return _client.GetAsyncJson<IEnumerable<LogEntry>>("log?id=" + id);
         }
 
         public IEnumerable<LogEntry> GetLogEntryDetails(string id, string entryId)
         {
-            return _client.GetJson<IEnumerable<LogEntry>>("logDetails?id=" + id + "&entryId=" + entryId);
+            return _client.GetAsyncJson<IEnumerable<LogEntry>>("logDetails?id=" + id + "&entryId=" + entryId);
         }
 
         public void Delete(string id)
         {
-            _client.Post("delete", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("id", id)))
+            _client.PostAsync("delete", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("id", id)))
+                   .Result
                    .EnsureSuccessful();
         }
 
         public void Deploy(string id)
         {
-            _client.Post("restore", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("id", id)))
+            _client.PostAsync("restore", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("id", id)))
+                   .Result
                    .EnsureSuccessful();
         }
 
         public void Deploy()
         {
-            _client.Post(String.Empty, new StringContent(String.Empty)).EnsureSuccessful();
+            _client.PostAsync(String.Empty, new StringContent(String.Empty))
+                   .Result
+                   .EnsureSuccessful();
         }
 
         public void Build(string id)
         {
-            _client.Post("build", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("id", id)))
+            _client.PostAsync("build", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("id", id)))
+                   .Result
                    .EnsureSuccessful();
         }
 

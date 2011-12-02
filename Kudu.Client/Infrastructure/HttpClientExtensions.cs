@@ -9,20 +9,19 @@ namespace Kudu.Client.Infrastructure
 {
     public static class HttpClientExtensions
     {
-        public static T GetJson<T>(this HttpClient client, string url)
+        public static T GetAsyncJson<T>(this HttpClient client, string url)
         {
-            HttpResponseMessage response = client.Get(url);
-            var content = response.EnsureSuccessful().Content.ReadAsString();
-
+            var response = client.GetAsync(url);
+            var content = response.Result.EnsureSuccessful().Content.ReadAsString();
+            
             return JsonConvert.DeserializeObject<T>(content);
         }
 
         public static HttpResponseMessage EnsureSuccessful(this HttpResponseMessage response)
         {
-            var content = response.Content.ReadAsString();
-
             if (!response.IsSuccessStatusCode)
             {
+                var content = response.Content.ReadAsString();
                 throw new InvalidOperationException(content);
             }
 

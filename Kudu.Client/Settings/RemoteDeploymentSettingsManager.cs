@@ -7,18 +7,18 @@ namespace Kudu.Client.Deployment
     public class RemoteDeploymentSettingsManager : KuduRemoteClientBase, IDeploymentSettingsManager
     {
         public RemoteDeploymentSettingsManager(string serviceUrl)
-            :base(serviceUrl)
+            : base(serviceUrl)
         {
         }
 
         public IEnumerable<DeploymentSetting> GetAppSettings()
         {
-            return _client.GetJson<IEnumerable<DeploymentSetting>>("appSettings");
+            return _client.GetAsyncJson<IEnumerable<DeploymentSetting>>("appSettings");
         }
 
         public IEnumerable<ConnectionStringSetting> GetConnectionStrings()
         {
-            return _client.GetJson<IEnumerable<ConnectionStringSetting>>("connectionStrings");
+            return _client.GetAsyncJson<IEnumerable<ConnectionStringSetting>>("connectionStrings");
         }
 
         public void SetConnectionString(string name, string connectionString)
@@ -43,13 +43,15 @@ namespace Kudu.Client.Deployment
 
         private void SetValue(string section, string key, string value)
         {
-            _client.Post(section + "/set", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("key", key), new KeyValuePair<string, string>("value", value)))
+            _client.PostAsync(section + "/set", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("key", key), new KeyValuePair<string, string>("value", value)))
+                   .Result
                    .EnsureSuccessful();
         }
 
         private void DeleteValue(string section, string key)
         {
-            _client.Post(section + "/remove", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("key", key)))
+            _client.PostAsync(section + "/remove", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("key", key)))
+                   .Result
                    .EnsureSuccessful();
         }
     }

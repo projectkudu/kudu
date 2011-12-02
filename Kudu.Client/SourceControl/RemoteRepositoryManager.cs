@@ -15,25 +15,28 @@ namespace Kudu.Client.SourceControl
 
         public void CreateRepository(RepositoryType type)
         {
-            _client.Post("create", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("type", type.ToString())))
+            _client.PostAsync("create", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("type", type.ToString())))
+                   .Result
                    .EnsureSuccessful();
         }
 
         public RepositoryType GetRepositoryType()
         {
-            return _client.GetJson<RepositoryType>("kind");
+            return _client.GetAsyncJson<RepositoryType>("kind");
         }
 
         public void Delete()
         {
-            _client.Post("delete", new StringContent(String.Empty))
+            _client.PostAsync("delete", new StringContent(String.Empty))
+                   .Result
                    .EnsureSuccessful();
         }
 
         public void CloneRepository(RepositoryType type)
         {
-            _client.Post("clone",
-                         HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("type", type.ToString()))).EnsureSuccessful();
+            _client.PostAsync("clone", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("type", type.ToString())))
+                   .Result
+                   .EnsureSuccessful();
         }
 
         public IRepository GetRepository()

@@ -32,13 +32,16 @@ namespace Kudu.Client.Commands
 
         public void ExecuteCommand(string command)
         {
-            _client.Post("run", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("command", command)))
+            _client.PostAsync("run", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("command", command)))
+                   .Result
                    .EnsureSuccessful();
         }
 
         public void CancelCommand()
         {
-            _client.Post("cancel", new StringContent(String.Empty)).EnsureSuccessful();
+            _client.PostAsync("cancel", new StringContent(String.Empty))
+                   .Result
+                   .EnsureSuccessful();
         }
 
         public void Start()
