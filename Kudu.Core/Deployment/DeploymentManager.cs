@@ -266,7 +266,7 @@ namespace Kudu.Core.Deployment
                 trackingFile.Save(_fileSystem);
                 NotifyStatus(id);
 
-                logger.Log("Copying files to {0}.", _environment.DeploymentTargetPath);
+                logger.Log("Copying files to webroot.");
 
                 string deploymentId = ActiveDeploymentId;
                 string activeDeploymentPath = String.IsNullOrEmpty(deploymentId) ? null : GetCachePath(deploymentId);
