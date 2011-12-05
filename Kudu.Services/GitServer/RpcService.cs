@@ -34,6 +34,7 @@ namespace Kudu.Services.GitServer
     using System.Threading;
     using Kudu.Core.Deployment;
     using Kudu.Core.SourceControl.Git;
+    using MvcMiniProfiler;
 
     // Handles {project}/git-upload-pack and {project}/git-receive-pack
     [ServiceContract]
@@ -41,58 +42,75 @@ namespace Kudu.Services.GitServer
     {
         private readonly IDeploymentManager _deploymentManager;
         private readonly IGitServer _gitServer;
+        private readonly MiniProfiler _profiler;
 
         public RpcService(IGitServer gitServer, IDeploymentManager deploymentManager)
         {
             _gitServer = gitServer;
             _deploymentManager = deploymentManager;
+            _profiler = MiniProfiler.Current;
         }
 
         [Description("Handles a 'git pull' command.")]
         [WebInvoke(UriTemplate = "git-upload-pack")]
         public HttpResponseMessage UploadPack(HttpRequestMessage request)
         {
-            var memoryStream = new MemoryStream();
-            _gitServer.Upload(GetInputStream(request), memoryStream);
-            memoryStream.Flush();
-            memoryStream.Position = 0;
+            using (_profiler.Step("RpcService.UploadPack"))
+            {
+                var memoryStream = new MemoryStream();
+                _gitServer.Upload(GetInputStream(request), memoryStream);
+                memoryStream.Flush();
+                memoryStream.Position = 0;
 
-            return CreateResponse(memoryStream, "application/x-git-{0}-result".With("upload-pack"));
+                return CreateResponse(memoryStream, "application/x-git-{0}-result".With("upload-pack"));
+            }
         }
 
         [Description("Handles a 'git push' command.")]
         [WebInvoke(UriTemplate = "git-receive-pack")]
         public HttpResponseMessage ReceivePack(HttpRequestMessage request)
         {
-            var memoryStream = new MemoryStream();
-            _gitServer.Receive(GetInputStream(request), memoryStream);
-            memoryStream.Flush();
-            memoryStream.Position = 0;
-
-            ThreadPool.QueueUserWorkItem(_ =>
+            using (_profiler.Step("RpcService.ReceivePack"))
             {
-                try
+                var memoryStream = new MemoryStream();
+                using (_profiler.Step("RpcService.ReceivePack-Receive"))
                 {
-                    _deploymentManager.Deploy();
+                    _gitServer.Receive(GetInputStream(request), memoryStream);
                 }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine("Error deploying");
-                    Debug.WriteLine(ex.Message);
-                }
-            });
+                memoryStream.Flush();
+                memoryStream.Position = 0;
 
-            return CreateResponse(memoryStream, "application/x-git-{0}-result".With("receive-pack"));
+                ThreadPool.QueueUserWorkItem(_ =>
+                                                 {
+                                                     try
+                                                     {
+                                                         using (_profiler.Step("RpcService.ReceivePack-Deploy"))
+                                                         {
+                                                             _deploymentManager.Deploy();
+                                                         }
+                                                     }
+                                                     catch (Exception ex)
+                                                     {
+                                                         Debug.WriteLine("Error deploying");
+                                                         Debug.WriteLine(ex.Message);
+                                                     }
+                                                 });
+
+                return CreateResponse(memoryStream, "application/x-git-{0}-result".With("receive-pack"));
+            }
         }
 
         private Stream GetInputStream(HttpRequestMessage request)
         {
-            if (request.Content.Headers.ContentEncoding.Contains("gzip"))
+            using (_profiler.Step("RpcService.GetInputStream"))
             {
-                return new GZipStream(request.Content.ContentReadStream, CompressionMode.Decompress);
-            }
+                if (request.Content.Headers.ContentEncoding.Contains("gzip"))
+                {
+                    return new GZipStream(request.Content.ContentReadStream, CompressionMode.Decompress);
+                }
 
-            return request.Content.ContentReadStream;
+                return request.Content.ContentReadStream;
+            }
         }
 
         private static HttpResponseMessage CreateResponse(MemoryStream stream, string mediaType)
