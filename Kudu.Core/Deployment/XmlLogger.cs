@@ -6,11 +6,11 @@ using System.Xml.Linq;
 
 namespace Kudu.Core.Deployment
 {
-    //TODO not thread safe, but not accessed simultaneously.
     public class XmlLogger : ILogger
     {
         private readonly string _path;
         private readonly IFileSystem _fileSystem;
+        private readonly static object LogLock = new object();
 
         public XmlLogger(IFileSystem fileSystem, string path)
         {
@@ -26,16 +26,23 @@ namespace Kudu.Core.Deployment
                                            new XAttribute("type", (int)type),
                                            new XElement("message", value));
 
-            XDocument document = GetDocument();
-            document.Root.Add(xmlLogEntry);
-            document.Save(_path);
+            lock (LogLock)
+            {
+                XDocument document = GetDocument();
+                document.Root.Add(xmlLogEntry);
+                document.Save(_path);
+            }
 
             return new InnerXmlLogger(this, xmlLogEntry);
         }
 
         public IEnumerable<LogEntry> GetLogEntries()
         {
-            XDocument document = GetDocument();
+            XDocument document;
+            lock (LogLock)
+            {
+                document = GetDocument();
+            }
 
             return from e in document.Root.Elements("entry")
                    let time = DateTime.Parse(e.Attribute("time").Value)
@@ -45,7 +52,11 @@ namespace Kudu.Core.Deployment
 
         public IEnumerable<LogEntry> GetLogEntryDetails(string entryId)
         {
-            XDocument document = GetDocument();
+            XDocument document;
+            lock (LogLock)
+            {
+                document = GetDocument();
+            }
 
             return from e in document.Root.Elements("entry").Where(s => s.Attribute("id").Value == entryId).First().Elements("entry")
                    let time = DateTime.Parse(e.Attribute("time").Value)
@@ -88,16 +99,16 @@ namespace Kudu.Core.Deployment
                                                new XAttribute("type", (int)type),
                                                new XElement("message", value));
 
-                var document = _parent.GetDocument();
-
-                var topLevel = document.Root
-                                       .Elements()
-                                       .Where(s => s.Attribute("id").Value == _element.Attribute("id").Value)
-                                       .First();
-
-                topLevel.Add(xmlLogEntry);
-
-                document.Save(_parent._path);
+                lock (LogLock)
+                {
+                    var document = _parent.GetDocument();
+                    var topLevel = document.Root
+                        .Elements()
+                        .Where(s => s.Attribute("id").Value == _element.Attribute("id").Value)
+                        .First();
+                    topLevel.Add(xmlLogEntry);
+                    document.Save(_parent._path);
+                }
 
                 // Support a depthness of 2 for now.
                 return this;
