@@ -141,8 +141,10 @@
             var tmpFilePath = Path.Combine(TempDir, filename);
             if (File.Exists(tmpFilePath)) // make sure we don't re-download and reinstall anything
                 return destPath;
-            UpdateStatusText(String.Format("Installing {0}", pkgName));
-            Logger.Log("Installing {0} into {1} ...", url, destPath);
+            var statusText = String.Format("Installing {0}", pkgName);
+            UpdateStatusText(statusText);
+            var innerLogger = Logger.Log(statusText);
+            innerLogger.Log("Installing {0} into {1} ...", url, destPath);
             CleanUpDir(destPath);
             if (Directory.Exists(destPath))
                 Directory.Delete(destPath, true);
@@ -166,9 +168,10 @@
         private IDictionary<string, object> GetMetaDataForPkg(string pkg, string version)
         {
             version = version ?? "latest";
+            var innerLogger = Logger.Log(String.Format("Finding metadata for {0} {1}", pkg, version));
             if (!Regex.Match(version, @"^[\.\da-zA-Z]*$").Success)
             {
-                Logger.Log(String.Format("Not smart enough to understand version '{0}', so using 'latest' instead for package '{1}'.", version, pkg), LogEntryType.Warning);
+                innerLogger.Log(String.Format("Not smart enough to understand version '{0}', so using 'latest' instead for package '{1}'.", version, pkg), LogEntryType.Warning);
                 version = "latest";
             }
             var url = string.Format("http://registry.npmjs.org/{0}/{1}", pkg, version);
@@ -179,7 +182,7 @@
             }
             catch
             {
-                Logger.Log(String.Format("No module named {0} in package registry! Aborting!", pkg), LogEntryType.Error);
+                innerLogger.Log(String.Format("No module named {0} in package registry! Aborting!", pkg), LogEntryType.Error);
                 throw;
             }
             return (IDictionary<string, object>)SimpleJson.DeserializeObject(response);
