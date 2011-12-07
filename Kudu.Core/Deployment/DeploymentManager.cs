@@ -181,6 +181,7 @@ namespace Kudu.Core.Deployment
             // TODO: Make sure if the if is a valid changeset            
             ILogger logger = null;
             DeploymentStatusFile trackingFile = null;
+            ILogger innerLogger = null;
 
             try
             {
@@ -191,7 +192,7 @@ namespace Kudu.Core.Deployment
 
                 logger = GetLogger(id);
 
-                logger.Log("Preparing deployment for {0}.", id);
+                innerLogger = logger.Log("Preparing deployment for {0}.", id);
 
                 // Put bits in the cache folder
                 string cachePath = GetCachePath(id);
@@ -229,10 +230,10 @@ namespace Kudu.Core.Deployment
             }
             catch (Exception e)
             {
-                if (logger != null)
+                if (innerLogger != null)
                 {
-                    NotifyError(logger, trackingFile, e);
-                    logger.Log(e);
+                    NotifyError(innerLogger, trackingFile, e);
+                    innerLogger.Log(e);
 
                     NotifyStatus(id);
                 }
@@ -255,7 +256,7 @@ namespace Kudu.Core.Deployment
         {
             DeploymentStatusFile trackingFile = null;
             ILogger logger = null;
-
+            ILogger innerLogger = null;
             try
             {
                 string cachePath = GetCachePath(id);
@@ -268,7 +269,7 @@ namespace Kudu.Core.Deployment
                 trackingFile.Save(_fileSystem);
                 NotifyStatus(id);
 
-                logger.Log("Copying files to webroot.");
+                innerLogger = logger.Log("Copying files to webroot.");
 
                 string deploymentId = ActiveDeploymentId;
                 string activeDeploymentPath = String.IsNullOrEmpty(deploymentId) ? null : GetCachePath(deploymentId);
@@ -296,10 +297,10 @@ namespace Kudu.Core.Deployment
                     trackingFile.Status = DeployStatus.Failed;
                 }
 
-                if (logger != null)
+                if (innerLogger != null)
                 {
-                    logger.Log("Deploying to web root failed.", LogEntryType.Error);
-                    logger.Log(e);
+                    innerLogger.Log("Deploying to web root failed.", LogEntryType.Error);
+                    innerLogger.Log(e);
                 }
             }
             finally
