@@ -17,7 +17,8 @@ namespace Kudu.Core.Deployment
         {
             var tcs = new TaskCompletionSource<object>();
 
-            var innerLogger = logger.Log("Copying files to {0}.", outputPath);
+            var innerLogger = logger.Log("Copying files.");
+            innerLogger.Log("Copying files to {0}.", outputPath);
 
             try
             {
