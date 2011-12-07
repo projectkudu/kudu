@@ -54,6 +54,7 @@ namespace Kudu.Core.Deployment
             {
                 Id = document.Root.Element("id").Value,
                 Author = GetOptionalElementValue(document.Root, "author"),
+                AuthorEmail = GetOptionalElementValue(document.Root, "authorEmail"),
                 Message = GetOptionalElementValue(document.Root, "message"),
                 Status = status,
                 StatusText = document.Root.Element("statusText").Value,
@@ -66,6 +67,7 @@ namespace Kudu.Core.Deployment
         public string Id { get; set; }
         public DeployStatus Status { get; set; }
         public string StatusText { get; set; }
+        public string AuthorEmail { get; set; }
         public string Author { get; set; }
         public string Message { get; set; }
         public int Percentage { get; set; }
@@ -82,6 +84,7 @@ namespace Kudu.Core.Deployment
             var document = new XDocument(new XElement("deployment",
                     new XElement("id", Id),
                     new XElement("author", Author),
+                    new XElement("authorEmail", AuthorEmail),
                     new XElement("message", Message),
                     new XElement("status", Status),
                     new XElement("statusText", StatusText),

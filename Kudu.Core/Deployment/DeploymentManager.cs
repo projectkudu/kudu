@@ -74,6 +74,7 @@ namespace Kudu.Core.Deployment
             {
                 Id = file.Id,
                 Author = file.Author,
+                AuthorEmail = file.AuthorEmail,
                 Message = file.Message,
                 DeployStartTime = file.DeploymentStartTime,
                 DeployEndTime = file.DeploymentEndTime,
@@ -164,6 +165,7 @@ namespace Kudu.Core.Deployment
             var details = repository.GetDetails(id);
             statusFile.Message = details.ChangeSet.Message;
             statusFile.Author = details.ChangeSet.AuthorName;
+            statusFile.AuthorEmail = details.ChangeSet.AuthorEmail;
             statusFile.Save(_fileSystem);
 
             Build(id);
