@@ -102,11 +102,17 @@ namespace Kudu.Core.Deployment
                 lock (LogLock)
                 {
                     var document = _parent.GetDocument();
-                    var topLevel = document.Root
+                    var parentLogEntry = document.Root
                         .Elements()
                         .Where(s => s.Attribute("id").Value == _element.Attribute("id").Value)
                         .First();
-                    topLevel.Add(xmlLogEntry);
+                    parentLogEntry.Add(xmlLogEntry);
+                    // adjust log level of the parent log entry
+                    var parentLogEntryType = (LogEntryType) Enum.Parse(typeof (LogEntryType), parentLogEntry.Attribute("type").Value);
+                    if (type > parentLogEntryType)
+                    {
+                        parentLogEntry.Attribute("type").SetValue((int)type);
+                    }
                     document.Save(_parent._path);
                 }
 
