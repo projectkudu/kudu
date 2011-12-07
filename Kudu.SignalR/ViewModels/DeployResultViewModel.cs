@@ -1,5 +1,6 @@
 ﻿using System;
 using Kudu.Core.Deployment;
+using Kudu.SignalR.Infrastructure;
 
 namespace Kudu.SignalR.ViewModels
 {
@@ -11,7 +12,7 @@ namespace Kudu.SignalR.ViewModels
             ShortId = result.Id.Substring(0, 10);
             Message = result.Message;
             Author = result.Author;
-            AuthorEmail = result.AuthorEmail;
+            EmailHash = String.IsNullOrEmpty(result.AuthorEmail) ? null : HelperMethods.Hash(result.AuthorEmail); ;
             Status = result.Status;
             DisplayStatus = result.Status.ToString();
             StatusText = result.StatusText;
@@ -27,7 +28,7 @@ namespace Kudu.SignalR.ViewModels
         public DeployStatus Status { get; set; }
         public string Message { get; set; }
         public string Author { get; set; }
-        public string AuthorEmail { get; set; }
+        public string EmailHash { get; set; }
         public DateTime DeployStartTime { get; set; }
         public DateTime? DeployEndTime { get; set; }
         public bool Current { get; set; }

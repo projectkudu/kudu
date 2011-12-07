@@ -58,6 +58,7 @@
     <Compile Include="Hubs\Deployment.cs" />
     <Compile Include="Hubs\DevelopmentEnvironment.cs" />
     <Compile Include="Infrastructure\ClientStateResolver.cs" />
+    <Compile Include="Infrastructure\HelperMethods.cs" />
     <Compile Include="Infrastructure\ISiteConfiguration.cs" />
     <Compile Include="Models\IUserInformation.cs" />
     <Compile Include="Infrastructure\SiteConfiguration.cs" />

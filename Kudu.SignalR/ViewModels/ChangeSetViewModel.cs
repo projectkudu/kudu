@@ -1,9 +1,7 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
 using Kudu.Core.SourceControl;
+using Kudu.SignalR.Infrastructure;
 
 namespace Kudu.SignalR.ViewModels
 {
@@ -23,7 +21,7 @@ namespace Kudu.SignalR.ViewModels
             Id = changeSet.Id;
             ShortId = changeSet.Id.Substring(0, 12);
             AuthorName = changeSet.AuthorName;
-            EmailHash = String.IsNullOrEmpty(changeSet.AuthorEmail) ? null : Hash(changeSet.AuthorEmail);
+            EmailHash = String.IsNullOrEmpty(changeSet.AuthorEmail) ? null : HelperMethods.Hash(changeSet.AuthorEmail);
             Date = changeSet.Timestamp.ToString("u");
             Message = Process(changeSet.Message);
             // Show first line only
@@ -52,13 +50,6 @@ namespace Kudu.SignalR.ViewModels
                 return value;
             }
             return value.Trim().Replace("\n", "<br/>");
-        }
-
-        private string Hash(string value)
-        {
-            return String.Join(String.Empty, MD5.Create()
-                     .ComputeHash(Encoding.Default.GetBytes(value))
-                     .Select(b => b.ToString("x2")));
         }
     }
 }
