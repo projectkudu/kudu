@@ -46,7 +46,7 @@
             </ul>
         </div>
         <div>
-            <h3>Development site (these are unavailable if no dev site exists.)</h3>
+            <h3>Development site (only available if the dev site exists.)</h3>
             <ul>
                 <li><a href="dev/scm/help">Source Control Management API</a></li>
                 <li><a href="dev/files/help">Files API</a></li>
@@ -59,6 +59,15 @@
                 <li><a href="deploy/help">Deployment API</a></li>
             </ul>
         </div>
+    </div>
+    <div>&nbsp;</div>
+    <div>&nbsp;</div>
+    <div>&nbsp;</div>
+    <div>
+        Live website file server path:
+    </div>
+    <div>
+        <h4><%= HttpContext.Current.Server.MapPath("_app") %></h4>
     </div>
     </form>
 </body>
