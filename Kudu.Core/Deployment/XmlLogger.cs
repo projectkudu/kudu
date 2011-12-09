@@ -64,6 +64,23 @@ namespace Kudu.Core.Deployment
                    select new LogEntry(time, e.Attribute("id").Value, e.Element("message").Value, type);
         }
 
+        public string GetFirstErrorEntryMessage()
+        {
+            XDocument document;
+            lock (LogLock)
+            {
+                document = GetDocument();
+            }
+
+            var firstErrorEntry = document.Root.Elements("entry").First(s => s.Attribute("type").Value == ((int)(LogEntryType.Error)).ToString());
+            if (firstErrorEntry != null)
+            {
+                return firstErrorEntry.Element("message").Value;
+            }
+
+            return "No error found in log.";
+        }
+
         private XDocument GetDocument()
         {
             if (!_fileSystem.File.Exists(_path))
@@ -108,7 +125,7 @@ namespace Kudu.Core.Deployment
                         .First();
                     parentLogEntry.Add(xmlLogEntry);
                     // adjust log level of the parent log entry
-                    var parentLogEntryType = (LogEntryType) Enum.Parse(typeof (LogEntryType), parentLogEntry.Attribute("type").Value);
+                    var parentLogEntryType = (LogEntryType)Enum.Parse(typeof(LogEntryType), parentLogEntry.Attribute("type").Value);
                     if (type > parentLogEntryType)
                     {
                         parentLogEntry.Attribute("type").SetValue((int)type);

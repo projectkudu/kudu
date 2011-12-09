@@ -247,7 +247,7 @@ namespace Kudu.Core.Deployment
             // Failed to deploy
             trackingFile.Percentage = 100;
             trackingFile.Status = DeployStatus.Failed;
-            trackingFile.StatusText = String.Empty;
+            trackingFile.StatusText = trackingFile.Status == DeployStatus.Failed ? logger.GetTopLevelError() : String.Empty;
             trackingFile.DeploymentEndTime = DateTime.Now;
             trackingFile.Save(_fileSystem);
         }
@@ -308,7 +308,7 @@ namespace Kudu.Core.Deployment
                 if (trackingFile != null)
                 {
                     trackingFile.DeploymentEndTime = DateTime.Now;
-                    trackingFile.StatusText = String.Empty;
+                    trackingFile.StatusText = trackingFile.Status == DeployStatus.Failed ? logger.GetTopLevelError() : String.Empty;
                     trackingFile.Percentage = 100;
                     trackingFile.Save(_fileSystem);
                     NotifyStatus(id);

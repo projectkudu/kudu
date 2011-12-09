@@ -17,5 +17,15 @@ namespace Kudu.Core.Deployment
 #endif
             return returnLog;
         }
+
+        public static string GetTopLevelError(this ILogger logger)
+        {
+            if (logger is XmlLogger)
+            {
+                return ((XmlLogger)logger).GetFirstErrorEntryMessage();
+            }
+
+            return "Cannot parse error from this log format. Expand the log to get details of the error.";
+        }
     }
 }
