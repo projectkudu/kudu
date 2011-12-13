@@ -25,7 +25,7 @@ namespace Kudu.Client.Deployment
         {
             get
             {
-                return _connection.IsActive;
+                return _connection != null && _connection.IsActive;
             }
         }
 

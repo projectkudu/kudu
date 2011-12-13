@@ -41,17 +41,9 @@ namespace Kudu.SignalR.Infrastructure
                 Repository = config.Repository;
                 ProjectSystem = config.ProjectSystem;
                 DevProjectSystem = config.DevProjectSystem;
-
-                if (config.DeploymentManager.IsActive)
-                {
-                    DeploymentManager = config.DeploymentManager;
-                    CommandExecutor = config.CommandExecutor;
-                    DevCommandExecutor = config.DevCommandExecutor;
-                }
-                else
-                {
-                    SubscribeToEvents(credentialProvider);
-                }
+                DeploymentManager = config.DeploymentManager;
+                CommandExecutor = config.CommandExecutor;
+                DevCommandExecutor = config.DevCommandExecutor;
             }
             else
             {
@@ -91,17 +83,17 @@ namespace Kudu.SignalR.Infrastructure
             DevCommandExecutor = devCommandExecutor;
             DevCommandExecutor.CommandEvent += OnCommandEvent;
 
-            try
-            {
-                // Start the connections
-                deploymentManager.Start();
-                commandExecutor.Start();
-                devCommandExecutor.Start();
-            }
-            catch(Exception ex)
-            {
-                Debug.WriteLine("Failed to subcribe for updates => " + ex.Message);
-            }
+            //try
+            //{
+            //    // Start the connections
+            //    deploymentManager.Start();
+            //    commandExecutor.Start();
+            //    devCommandExecutor.Start();
+            //}
+            //catch(Exception ex)
+            //{
+            //    Debug.WriteLine("Failed to subcribe for updates => " + ex.Message);
+            //}
         }
 
         private void OnDeploymentStatusChanged(DeployResult result)
