@@ -68,7 +68,7 @@ namespace Kudu.SignalR.Hubs
                    select new LogEntryViewModel(entry);
         }
 
-        public void Delete(string id)
+        public void Remove(string id)
         {
             _deploymentManager.Delete(id);
         }
