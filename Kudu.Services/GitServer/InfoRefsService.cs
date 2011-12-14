@@ -32,6 +32,7 @@ namespace Kudu.Services.GitServer
     using Kudu.Core.SourceControl;
     using Kudu.Core.SourceControl.Git;
     using Kudu.Services.Infrastructure;
+using MvcMiniProfiler;
 
     // Handles /{project}/info/refs
     [ServiceContract]
@@ -39,62 +40,71 @@ namespace Kudu.Services.GitServer
     {
         private readonly IGitServer _gitServer;
         private readonly IRepositoryManager _repositoryManager;
+        private readonly MiniProfiler _profiler;
 
         public InfoRefsService(IGitServer gitServer, IRepositoryManager repositoryManager)
         {
             _gitServer = gitServer;
             _repositoryManager = repositoryManager;
+            _profiler = MiniProfiler.Current;
         }
 
         [Description("Handles git commands.")]
         [WebGet(UriTemplate = "?service={service}")]
         public HttpResponseMessage Execute(string service)
         {
-            service = GetServiceType(service);
-            bool isUsingSmartProtocol = service != null;
-
-            // Service has been specified - we're working with the smart protocol
-            if (isUsingSmartProtocol)
+            using (_profiler.Step("InfoRefsService.Execute"))
             {
-                return SmartInfoRefs(service);
-            }
+                service = GetServiceType(service);
+                bool isUsingSmartProtocol = service != null;
 
-            throw new Exception("Dumb protocol not supported"); // REVIEW: Consider throw 501 Not Implemented
+                // Service has been specified - we're working with the smart protocol
+                if (isUsingSmartProtocol)
+                {
+                    return SmartInfoRefs(service);
+                }
+
+                throw new Exception("Dumb protocol not supported"); // REVIEW: Consider throw 501 Not Implemented
+            }
         }
 
         private HttpResponseMessage SmartInfoRefs(string service)
         {
-            var memoryStream = new MemoryStream();
-
-            memoryStream.PktWrite("# service=git-{0}\n", service);
-            memoryStream.PktFlush();
-
-            if (service == "upload-pack")
+            using (_profiler.Step("InfoRefsService.SmartInfoRefs"))
             {
-                EnsureGitRepository();
-                _gitServer.AdvertiseUploadPack(memoryStream);
+                var memoryStream = new MemoryStream();
+
+                memoryStream.PktWrite("# service=git-{0}\n", service);
+                memoryStream.PktFlush();
+
+                if (service == "upload-pack")
+                {
+                    EnsureGitRepository();
+                    _gitServer.AdvertiseUploadPack(memoryStream);
+                }
+
+                else if (service == "receive-pack")
+                {
+                    EnsureGitRepository();
+                    _gitServer.AdvertiseReceivePack(memoryStream);
+                }
+
+                memoryStream.Flush();
+                memoryStream.Position = 0;
+
+                var content = new StreamContent(memoryStream);
+                content.Headers.ContentType =
+                    new MediaTypeHeaderValue("application/x-git-{0}-advertisement".With(service));
+                // Explicitly set the charset to empty string
+                // We do this as certain git clients (jgit) require it to be empty.
+                // If we don't set it, then it defaults to utf-8, which breaks jgit's logic for detecting smart http
+                content.Headers.ContentType.CharSet = "";
+
+                var responseMessage = new HttpResponseMessage();
+                responseMessage.Content = content;
+                responseMessage.WriteNoCache();
+                return responseMessage;
             }
-
-            else if (service == "receive-pack")
-            {
-                EnsureGitRepository();
-                _gitServer.AdvertiseReceivePack(memoryStream);
-            }
-
-            memoryStream.Flush();
-            memoryStream.Position = 0;
-
-            var content = new StreamContent(memoryStream);
-            content.Headers.ContentType = new MediaTypeHeaderValue("application/x-git-{0}-advertisement".With(service));
-            // Explicitly set the charset to empty string
-            // We do this as certain git clients (jgit) require it to be empty.
-            // If we don't set it, then it defaults to utf-8, which breaks jgit's logic for detecting smart http
-            content.Headers.ContentType.CharSet = "";
-
-            var responseMessage = new HttpResponseMessage();
-            responseMessage.Content = content;
-            responseMessage.WriteNoCache();
-            return responseMessage;
         }
 
         protected string GetServiceType(string service)
