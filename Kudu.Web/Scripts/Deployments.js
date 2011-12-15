@@ -40,10 +40,10 @@
             var status = newItem.find('.deploy-status');
             var statusText = newItem.find('.status-text');
             statusText.html(result.StatusText ? '(' + result.StatusText + ')' : '');
-            status.html(result.Status);
+            status.html(result.DisplayStatus);
             status.show();
 
-            if (result.Status == 'Success') {
+            if (result.DisplayStatus == 'Success') {
                 newItem.find('.loading').hide();
                 newItem.find('.deploy').hide();
                 newItem.find('.status').show();
@@ -52,7 +52,7 @@
 
                 deployment.id = result.Id;
             }
-            else if (result.Status == 'Failed') {
+            else if (result.DisplayStatus == 'Failed') {
                 oldItem.find('.loading').hide();
                 oldItem.find('.deploy').show();
                 oldItem.find('.status').show();
@@ -88,13 +88,13 @@
             deployment.getDeployments()
            .done(function (deployments) {
                $.each(deployments, function () {
-                   this.showDeploy = !this.Active && this.Status == 'Success';
+                   this.showDeploy = !this.Current && this.DisplayStatus == 'Success';
 
                    this.showLoading =
-                                   this.Status !== 'Success' &&
-                                   this.Status !== 'Failed';
+                                   this.DisplayStatus !== 'Success' &&
+                                   this.DisplayStatus !== 'Failed';
 
-                   this.failed = this.Status === 'Failed';
+                   this.failed = this.DisplayStatus === 'Failed';
                });
 
                $('#deployments').append($('#deployment').render(deployments));
