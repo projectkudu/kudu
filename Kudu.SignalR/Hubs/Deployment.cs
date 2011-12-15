@@ -23,7 +23,7 @@ namespace Kudu.SignalR.Hubs
         }
 
         public IEnumerable<DeployResultViewModel> GetDeployments()
-        {            
+        {
             // Get the list of deployments
             var deployments = _deploymentManager.GetResults()
                                                 .OrderByDescending(d => d.DeployStartTime)

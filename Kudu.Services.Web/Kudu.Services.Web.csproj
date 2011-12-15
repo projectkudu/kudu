@@ -121,6 +121,7 @@
     <Content Include="Global.asax" />
     <Content Include="msbuild\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.Build.Tasks.Dll" />
     <Content Include="msbuild\Microsoft\VisualStudio\v10.0\Web\Microsoft.Web.Publishing.Tasks.Dll" />
+    <Content Include="Profile.aspx" />
     <Content Include="Web.config">
       <SubType>Designer</SubType>
     </Content>
