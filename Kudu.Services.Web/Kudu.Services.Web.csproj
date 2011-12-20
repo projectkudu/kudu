@@ -140,6 +140,7 @@
       <Link>Constants.cs</Link>
     </Compile>
     <Compile Include="App_Start\MiniProfiler.cs" />
+    <Compile Include="App_Start\MiniProfilerWrapper.cs" />
     <Compile Include="App_Start\NinjectServices.cs" />
     <Compile Include="App_Start\PathResolver.cs" />
     <Compile Include="Services\BuildPropertyProvider.cs" />

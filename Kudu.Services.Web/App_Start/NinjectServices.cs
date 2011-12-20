@@ -1,17 +1,18 @@
 using System.IO;
 using System.IO.Abstractions;
 using System.Web;
+using Kudu.Contracts;
 using Kudu.Core;
 using Kudu.Core.Commands;
 using Kudu.Core.Deployment;
 using Kudu.Core.Editor;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Performance;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.SourceControl.Hg;
 using Kudu.Services.Authorization;
 using Kudu.Services.Deployment;
-using Kudu.Services.SourceControl;
 using Kudu.Services.Web.Services;
 using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 using Ninject;
@@ -72,6 +73,9 @@ namespace Kudu.Services.Web.App_Start
             IEnvironment environment = GetEnvironment();
             var propertyProvider = new BuildPropertyProvider();
 
+            string profilePath = Path.Combine(environment.ApplicationRootPath, "profiles", "profile.xml");
+            var profiler = new Profiler(profilePath);
+
             // General
             kernel.Bind<HttpContextBase>().ToMethod(context => new HttpContextWrapper(HttpContext.Current));
             kernel.Bind<IBuildPropertyProvider>().ToConstant(propertyProvider);
@@ -79,6 +83,10 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IUserValidator>().To<SimpleUserValidator>().InSingletonScope();
             kernel.Bind<IServerConfiguration>().To<ServerConfiguration>().InSingletonScope();
             kernel.Bind<IFileSystem>().To<FileSystem>().InSingletonScope();
+
+            // TODO: Only enable in debug mode
+            kernel.Bind<IProfiler>().ToConstant(profiler).InSingletonScope();
+            kernel.Bind<IProfilerFactory>().ToMethod(context => new ProfileFactory(() => new Profiler(profilePath))).InSingletonScope();
 
             // Deployment
             kernel.Bind<IRepositoryManager>().ToMethod(context => new RepositoryManager(environment.DeploymentRepositoryPath));
@@ -92,7 +100,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IDeploymentSettingsManager>().To<DeploymentSettingsManager>();
 
             // Git server
-            kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath))
+            kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, context.Kernel.Get<IProfiler>()))
                                      .InSingletonScope();
 
             // Hg Server
@@ -101,7 +109,7 @@ namespace Kudu.Services.Web.App_Start
 
             // Editor
             kernel.Bind<IProjectSystem>().ToMethod(context => GetEditorProjectSystem(environment, context))
-                                            .InRequestScope();
+                                         .InRequestScope();
 
             // Command line
             kernel.Bind<ICommandExecutor>().ToMethod(context => GetComandExecutor(environment, context))
@@ -234,6 +242,21 @@ namespace Kudu.Services.Web.App_Start
             {
                 connection.Broadcast(status);
             };
+        }
+
+        private class ProfileFactory : IProfilerFactory
+        {
+            private readonly System.Func<IProfiler> _factory;
+
+            public ProfileFactory(System.Func<IProfiler> factory)
+            {
+                _factory = factory;
+            }
+
+            public IProfiler CreateProfiler()
+            {
+                return _factory();
+            }
         }
     }
 }

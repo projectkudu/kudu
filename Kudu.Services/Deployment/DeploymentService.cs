@@ -3,8 +3,8 @@ using System.ComponentModel;
 using System.Json;
 using System.ServiceModel;
 using System.ServiceModel.Web;
+using Kudu.Contracts;
 using Kudu.Core.Deployment;
-using MvcMiniProfiler;
 
 namespace Kudu.Services.Deployment
 {
@@ -12,16 +12,12 @@ namespace Kudu.Services.Deployment
     public class DeploymentService
     {
         private readonly IDeploymentManager _deploymentManager;
-        private readonly MiniProfiler _profiler;
+        private readonly IProfiler _profiler;
 
-        public DeploymentService(IDeploymentManager deploymentManager)
+        public DeploymentService(IProfiler profiler, IDeploymentManager deploymentManager)
         {
-            _profiler = MiniProfiler.Current;
-
-            using (_profiler.Step("DeploymentService..ctor"))
-            {
-                _deploymentManager = deploymentManager;
-            }
+            _profiler = profiler;
+            _deploymentManager = deploymentManager;
         }
 
         [Description("Gets the id of the current active deployment.")]
@@ -40,7 +36,7 @@ namespace Kudu.Services.Deployment
         {
             using (_profiler.Step("DeploymentService.Delete"))
             {
-                _deploymentManager.Delete((string) input["id"]);
+                _deploymentManager.Delete((string)input["id"]);
             }
         }
 
@@ -60,7 +56,7 @@ namespace Kudu.Services.Deployment
         {
             using (_profiler.Step("DeploymentService.Restore"))
             {
-                _deploymentManager.Deploy((string) input["id"]);
+                _deploymentManager.Deploy((string)input["id"]);
             }
         }
 
@@ -70,7 +66,7 @@ namespace Kudu.Services.Deployment
         {
             using (_profiler.Step("DeploymentService.Build"))
             {
-                _deploymentManager.Build((string) input["id"]);
+                _deploymentManager.Build((string)input["id"]);
             }
         }
 

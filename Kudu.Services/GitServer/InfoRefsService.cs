@@ -32,7 +32,7 @@ namespace Kudu.Services.GitServer
     using Kudu.Core.SourceControl;
     using Kudu.Core.SourceControl.Git;
     using Kudu.Services.Infrastructure;
-using MvcMiniProfiler;
+    using Kudu.Contracts;
 
     // Handles /{project}/info/refs
     [ServiceContract]
@@ -40,13 +40,13 @@ using MvcMiniProfiler;
     {
         private readonly IGitServer _gitServer;
         private readonly IRepositoryManager _repositoryManager;
-        private readonly MiniProfiler _profiler;
+        private readonly IProfiler _profiler;
 
-        public InfoRefsService(IGitServer gitServer, IRepositoryManager repositoryManager)
+        public InfoRefsService(IProfiler profiler, IGitServer gitServer, IRepositoryManager repositoryManager)
         {
             _gitServer = gitServer;
             _repositoryManager = repositoryManager;
-            _profiler = MiniProfiler.Current;
+            _profiler = profiler;
         }
 
         [Description("Handles git commands.")]

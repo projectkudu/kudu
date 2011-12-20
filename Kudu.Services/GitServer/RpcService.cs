@@ -32,9 +32,9 @@ namespace Kudu.Services.GitServer
     using System.ServiceModel;
     using System.ServiceModel.Web;
     using System.Threading;
+    using Kudu.Contracts;
     using Kudu.Core.Deployment;
     using Kudu.Core.SourceControl.Git;
-    using MvcMiniProfiler;
 
     // Handles {project}/git-upload-pack and {project}/git-receive-pack
     [ServiceContract]
@@ -42,13 +42,13 @@ namespace Kudu.Services.GitServer
     {
         private readonly IDeploymentManager _deploymentManager;
         private readonly IGitServer _gitServer;
-        private readonly MiniProfiler _profiler;
+        private readonly IProfiler _profiler;
 
-        public RpcService(IGitServer gitServer, IDeploymentManager deploymentManager)
+        public RpcService(IProfiler profiler, IGitServer gitServer, IDeploymentManager deploymentManager)
         {
             _gitServer = gitServer;
             _deploymentManager = deploymentManager;
-            _profiler = MiniProfiler.Current;
+            _profiler = profiler;
         }
 
         [Description("Handles a 'git pull' command.")]
@@ -73,21 +73,18 @@ namespace Kudu.Services.GitServer
             using (_profiler.Step("RpcService.ReceivePack"))
             {
                 var memoryStream = new MemoryStream();
-                using (_profiler.Step("RpcService.ReceivePack-Receive"))
-                {
-                    _gitServer.Receive(GetInputStream(request), memoryStream);
-                }
+
+                _gitServer.Receive(GetInputStream(request), memoryStream);
+
                 memoryStream.Flush();
                 memoryStream.Position = 0;
+
 
                 ThreadPool.QueueUserWorkItem(_ =>
                                                  {
                                                      try
                                                      {
-                                                         using (_profiler.Step("RpcService.ReceivePack-Deploy"))
-                                                         {
-                                                             _deploymentManager.Deploy();
-                                                         }
+                                                         _deploymentManager.Deploy();
                                                      }
                                                      catch (Exception ex)
                                                      {

@@ -77,6 +77,11 @@
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="Commands\CommandExecutor.cs" />
+    <Compile Include="Infrastructure\DisposableAction.cs" />
+    <Compile Include="Performance\IProfilerFactory.cs" />
+    <Compile Include="Performance\NullProfiler.cs" />
+    <Compile Include="Performance\Profiler.cs" />
+    <Compile Include="Performance\ProfilerStep.cs" />
     <Compile Include="Settings\AspNetConfigTransformer.cs" />
     <Compile Include="Deployment\BasicBuilder.cs" />
     <Compile Include="Settings\DeploymentSettingsManager.cs" />

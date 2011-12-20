@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
+using Kudu.Contracts;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
+using Kudu.Core.Performance;
 
 namespace Kudu.Core.Deployment
 {
@@ -15,6 +17,7 @@ namespace Kudu.Core.Deployment
         private readonly IEnvironment _environment;
         private readonly IDeploymentSettingsManager _settingsManager;
         private readonly IFileSystem _fileSystem;
+        private readonly IProfilerFactory _profilerFactory;
 
         public event Action<DeployResult> StatusChanged;
 
@@ -22,13 +25,15 @@ namespace Kudu.Core.Deployment
                                  ISiteBuilderFactory builderFactory,
                                  IEnvironment environment,
                                  IDeploymentSettingsManager settingsManager,
-                                 IFileSystem fileSystem)
+                                 IFileSystem fileSystem,
+                                 IProfilerFactory profilerFactory)
         {
             _repositoryManager = repositoryManager;
             _builderFactory = builderFactory;
             _environment = environment;
             _settingsManager = settingsManager;
             _fileSystem = fileSystem;
+            _profilerFactory = profilerFactory;
         }
 
         public string ActiveDeploymentId
@@ -86,45 +91,61 @@ namespace Kudu.Core.Deployment
 
         public IEnumerable<LogEntry> GetLogEntries(string id)
         {
-            string path = GetLogPath(id);
-
-            if (!_fileSystem.File.Exists(path))
+            var profiler = _profilerFactory.CreateProfiler();
+            using (profiler.Step("DeploymentManager.GetLogEntries"))
             {
-                throw new InvalidOperationException(String.Format("No log found for '{0}'.", id));
-            }
+                string path = GetLogPath(id);
 
-            return new XmlLogger(_fileSystem, path).GetLogEntries();
+                if (!_fileSystem.File.Exists(path))
+                {
+                    throw new InvalidOperationException(String.Format("No log found for '{0}'.", id));
+                }
+
+                return new XmlLogger(_fileSystem, path).GetLogEntries().ToList();
+            }
         }
 
         public IEnumerable<LogEntry> GetLogEntryDetails(string id, string dateId)
         {
-            string path = GetLogPath(id);
-
-            if (!_fileSystem.File.Exists(path))
+            var profiler = _profilerFactory.CreateProfiler();
+            using (profiler.Step("DeploymentManager.GetLogEntryDetails"))
             {
-                throw new InvalidOperationException(String.Format("No log found for '{0}'.", id));
-            }
+                string path = GetLogPath(id);
 
-            return new XmlLogger(_fileSystem, path).GetLogEntryDetails(dateId);
+                if (!_fileSystem.File.Exists(path))
+                {
+                    throw new InvalidOperationException(String.Format("No log found for '{0}'.", id));
+                }
+
+                return new XmlLogger(_fileSystem, path).GetLogEntryDetails(dateId).ToList();
+            }
         }
 
         public void Delete(string id)
         {
-            //TODO Check for exceptions related to Delete.
-            _fileSystem.Directory.Delete(GetRoot((id)), true);
+            var profiler = _profilerFactory.CreateProfiler();
+            using (profiler.Step("DeploymentManager.Delete"))
+            {
+                // TODO: Check for exceptions related to Delete.
+                _fileSystem.Directory.Delete(GetRoot((id)), true);
+            }
         }
 
         public void Deploy(string id)
         {
-            string cachePath = GetCachePath(id);
-
-            if (!_fileSystem.Directory.Exists(cachePath))
+            var profiler = _profilerFactory.CreateProfiler();
+            using (profiler.Step("DeploymentManager.Deploy(id)"))
             {
-                throw new InvalidOperationException(String.Format("Unable to deploy '{0}'. No deployments found.", id));
-            }
+                string cachePath = GetCachePath(id);
 
-            // We don't want to skip old files here since we might be going back in time
-            DeployToTarget(id, skipOldFiles: false);
+                if (!_fileSystem.Directory.Exists(cachePath))
+                {
+                    throw new InvalidOperationException(String.Format("Unable to deploy '{0}'. No deployments found.", id));
+                }
+
+                // We don't want to skip old files here since we might be going back in time
+                DeployToTarget(id, profiler, DisposableAction.Noop, skipOldFiles: false);
+            }
         }
 
         public void Deploy()
@@ -136,27 +157,33 @@ namespace Kudu.Core.Deployment
                 return;
             }
 
+            var profiler = _profilerFactory.CreateProfiler();
+            var deployStep = profiler.Step("Deploy");
+
             string id = repository.CurrentId;
 
-            if (String.IsNullOrEmpty(id))
+            using (profiler.Step("Update to specific changeset"))
             {
-                id = repository.GetChanges(0, 1).Single().Id;
-                repository.Update(id);
-            }
+                if (String.IsNullOrEmpty(id))
+                {
+                    id = repository.GetChanges(0, 1).Single().Id;
+                    repository.Update(id);
+                }
 
-            Branch activeBranch = (from b in repository.GetBranches()
-                                   let change = repository.GetDetails(b.Id)
-                                   orderby change.ChangeSet.Timestamp descending
-                                   select b).FirstOrDefault();
+                Branch activeBranch = (from b in repository.GetBranches()
+                                       let change = repository.GetDetails(b.Id)
+                                       orderby change.ChangeSet.Timestamp descending
+                                       select b).FirstOrDefault();
 
-            if (activeBranch != null)
-            {
-                repository.Update(activeBranch.Name);
-                id = activeBranch.Id;
-            }
-            else
-            {
-                repository.Update(id);
+                if (activeBranch != null)
+                {
+                    repository.Update(activeBranch.Name);
+                    id = activeBranch.Id;
+                }
+                else
+                {
+                    repository.Update(id);
+                }
             }
 
             // Create the tracking file and store information about the commit
@@ -168,10 +195,15 @@ namespace Kudu.Core.Deployment
             statusFile.AuthorEmail = details.ChangeSet.AuthorEmail;
             statusFile.Save(_fileSystem);
 
-            Build(id);
+            Build(id, profiler, deployStep);
         }
 
         public void Build(string id)
+        {
+            Build(id, NullProfiler.Instance, DisposableAction.Noop);
+        }
+
+        private void Build(string id, IProfiler profiler, IDisposable deployStep)
         {
             if (String.IsNullOrEmpty(id))
             {
@@ -208,15 +240,22 @@ namespace Kudu.Core.Deployment
                 // Create a deployer
                 ISiteBuilder builder = _builderFactory.CreateBuilder();
 
+                var buildStep = profiler.Step("Building");
+
                 builder.Build(cachePath, logger)
                        .ContinueWith(t =>
                        {
+                           buildStep.Dispose();
+
                            if (t.IsFaulted)
                            {
                                // We need to read the exception so the process doesn't go down
                                NotifyError(logger, trackingFile, t.Exception);
 
                                NotifyStatus(id);
+
+                               // End the deploy step
+                               deployStep.Dispose();
                            }
                            else
                            {
@@ -224,7 +263,7 @@ namespace Kudu.Core.Deployment
                                trackingFile.Save(_fileSystem);
                                NotifyStatus(id);
 
-                               DeployToTarget(id);
+                               DeployToTarget(id, profiler, deployStep: deployStep);
                            }
                        });
             }
@@ -237,6 +276,8 @@ namespace Kudu.Core.Deployment
 
                     NotifyStatus(id);
                 }
+
+                deployStep.Dispose();
             }
         }
 
@@ -252,7 +293,7 @@ namespace Kudu.Core.Deployment
             trackingFile.Save(_fileSystem);
         }
 
-        private void DeployToTarget(string id, bool skipOldFiles = true)
+        private void DeployToTarget(string id, IProfiler profiler, IDisposable deployStep, bool skipOldFiles = true)
         {
             DeploymentStatusFile trackingFile = null;
             ILogger logger = null;
@@ -274,8 +315,11 @@ namespace Kudu.Core.Deployment
                 string deploymentId = ActiveDeploymentId;
                 string activeDeploymentPath = String.IsNullOrEmpty(deploymentId) ? null : GetCachePath(deploymentId);
 
-                // Copy to target
-                FileSystemHelpers.SmartCopy(activeDeploymentPath, cachePath, _environment.DeploymentTargetPath, skipOldFiles);
+                using (profiler.Step("Copying files to webroot"))
+                {
+                    // Copy to target
+                    FileSystemHelpers.SmartCopy(activeDeploymentPath, cachePath, _environment.DeploymentTargetPath, skipOldFiles);
+                }
 
                 PerformTransformations();
 
@@ -313,6 +357,8 @@ namespace Kudu.Core.Deployment
                     trackingFile.Save(_fileSystem);
                     NotifyStatus(id);
                 }
+
+                deployStep.Dispose();
             }
         }
 
