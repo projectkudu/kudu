@@ -1,4 +1,5 @@
 using System;
+using System.Configuration;
 using System.Web;
 using Kudu.Contracts;
 using Microsoft.Web.Infrastructure.DynamicModuleHelper;
@@ -12,13 +13,18 @@ namespace Kudu.Services.Web.App_Start
     {
         private static readonly object _profilerKey = new object();
         private static Func<IProfiler> _profilerFactory;
+        private static Lazy<bool> _enabled = new Lazy<bool>(() =>
+        {
+            string profilerValue = ConfigurationManager.AppSettings["enableProfiler"];
+            bool enableProfiler;
+            return Boolean.TryParse(profilerValue, out enableProfiler) && enableProfiler;
+        });
 
         internal static bool Enabled
         {
             get
             {
-                // TODO: Read from config
-                return true;
+                return _enabled.Value;
             }
         }
 
@@ -77,9 +83,15 @@ namespace Kudu.Services.Web.App_Start
             {
                 var httpContext = ((HttpApplication)sender).Context;
 
+                // Skip favicon.ico
+                if (httpContext.Request.RawUrl.EndsWith("favicon.ico", StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+
                 var profiler = ProfilerServices.CreateRequestProfiler(httpContext);
 
-                httpContext.Items[_stepKey] = profiler.Step(context.Request.RawUrl);
+                httpContext.Items[_stepKey] = profiler.Step(httpContext.Request.RawUrl);
             };
 
             context.EndRequest += (sender, e) =>
