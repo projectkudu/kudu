@@ -32,7 +32,7 @@ namespace Kudu.Services.Web.App_Start
         private static CommandExecutor _liveExecutor;
 
         private const string DeploymentCachePath = "deployments";
-        private const string DeploySettingsPath = "settings.xml";
+        private const string DeploySettingsPath = "settings.xml";       
 
         /// <summary>
         /// Starts the application
@@ -72,10 +72,7 @@ namespace Kudu.Services.Web.App_Start
         {
             IEnvironment environment = GetEnvironment();
             var propertyProvider = new BuildPropertyProvider();
-
-            string profilePath = Path.Combine(environment.ApplicationRootPath, "profiles", "profile.xml");
-            var profiler = new Profiler(profilePath);
-
+            
             // General
             kernel.Bind<HttpContextBase>().ToMethod(context => new HttpContextWrapper(HttpContext.Current));
             kernel.Bind<IBuildPropertyProvider>().ToConstant(propertyProvider);
@@ -84,9 +81,25 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IServerConfiguration>().To<ServerConfiguration>().InSingletonScope();
             kernel.Bind<IFileSystem>().To<FileSystem>().InSingletonScope();
 
-            // TODO: Only enable in debug mode
-            kernel.Bind<IProfiler>().ToConstant(profiler).InSingletonScope();
-            kernel.Bind<IProfilerFactory>().ToMethod(context => new ProfileFactory(() => new Profiler(profilePath))).InSingletonScope();
+            if (ProfilerServices.Enabled)
+            {
+                string profilePath = Path.Combine(environment.ApplicationRootPath, "profiles", "profile.xml");
+                System.Func<IProfiler> createProfilerThunk = () => new Profiler(profilePath);
+
+                // First try to use the current request profiler if any, otherwise create a new one
+                var profilerFactory = new ProfilerFactory(() => ProfilerServices.CurrentRequestProfiler ?? createProfilerThunk());
+
+                // TODO: Only enable in debug mode
+                kernel.Bind<IProfiler>().ToMethod(context => ProfilerServices.CurrentRequestProfiler ?? NullProfiler.Instance);
+                kernel.Bind<IProfilerFactory>().ToConstant(profilerFactory);
+                ProfilerServices.SetProfilerFactory(createProfilerThunk);
+            }
+            else
+            {
+                // Return No-op providers
+                kernel.Bind<IProfiler>().ToConstant(NullProfiler.Instance).InSingletonScope();
+                kernel.Bind<IProfilerFactory>().ToMethod(context => new ProfilerFactory(() => NullProfiler.Instance)).InSingletonScope();
+            }
 
             // Deployment
             kernel.Bind<IRepositoryManager>().ToMethod(context => new RepositoryManager(environment.DeploymentRepositoryPath));
@@ -100,7 +113,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IDeploymentSettingsManager>().To<DeploymentSettingsManager>();
 
             // Git server
-            kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, context.Kernel.Get<IProfiler>()))
+            kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, context.Kernel.Get<IProfilerFactory>()))
                                      .InSingletonScope();
 
             // Hg Server
@@ -244,16 +257,16 @@ namespace Kudu.Services.Web.App_Start
             };
         }
 
-        private class ProfileFactory : IProfilerFactory
+        private class ProfilerFactory : IProfilerFactory
         {
             private readonly System.Func<IProfiler> _factory;
 
-            public ProfileFactory(System.Func<IProfiler> factory)
+            public ProfilerFactory(System.Func<IProfiler> factory)
             {
                 _factory = factory;
             }
 
-            public IProfiler CreateProfiler()
+            public IProfiler GetProfiler()
             {
                 return _factory();
             }

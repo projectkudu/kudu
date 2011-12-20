@@ -5,8 +5,8 @@ using System.IO.Abstractions;
 using System.Linq;
 using Kudu.Contracts;
 using Kudu.Core.Infrastructure;
-using Kudu.Core.SourceControl;
 using Kudu.Core.Performance;
+using Kudu.Core.SourceControl;
 
 namespace Kudu.Core.Deployment
 {
@@ -51,23 +51,17 @@ namespace Kudu.Core.Deployment
 
         public IEnumerable<DeployResult> GetResults()
         {
-            if (!_fileSystem.Directory.Exists(_environment.DeploymentCachePath))
+            var profiler = _profilerFactory.GetProfiler();
+            using (profiler.Step("DeploymentManager.GetResults"))
             {
-                yield break;
-            }
-
-            foreach (var id in _fileSystem.Directory.GetDirectories(_environment.DeploymentCachePath))
-            {
-                var result = GetResult(id);
-                if (result != null)
-                {
-                    yield return result;
-                }
+                return EnumerateResults().ToList();
             }
         }
 
         public DeployResult GetResult(string id)
         {
+            var profiler = _profilerFactory.GetProfiler();
+
             var file = OpenTrackingFile(id);
 
             if (file == null)
@@ -91,7 +85,7 @@ namespace Kudu.Core.Deployment
 
         public IEnumerable<LogEntry> GetLogEntries(string id)
         {
-            var profiler = _profilerFactory.CreateProfiler();
+            var profiler = _profilerFactory.GetProfiler();
             using (profiler.Step("DeploymentManager.GetLogEntries"))
             {
                 string path = GetLogPath(id);
@@ -107,7 +101,7 @@ namespace Kudu.Core.Deployment
 
         public IEnumerable<LogEntry> GetLogEntryDetails(string id, string dateId)
         {
-            var profiler = _profilerFactory.CreateProfiler();
+            var profiler = _profilerFactory.GetProfiler();
             using (profiler.Step("DeploymentManager.GetLogEntryDetails"))
             {
                 string path = GetLogPath(id);
@@ -123,7 +117,7 @@ namespace Kudu.Core.Deployment
 
         public void Delete(string id)
         {
-            var profiler = _profilerFactory.CreateProfiler();
+            var profiler = _profilerFactory.GetProfiler();
             using (profiler.Step("DeploymentManager.Delete"))
             {
                 // TODO: Check for exceptions related to Delete.
@@ -133,7 +127,7 @@ namespace Kudu.Core.Deployment
 
         public void Deploy(string id)
         {
-            var profiler = _profilerFactory.CreateProfiler();
+            var profiler = _profilerFactory.GetProfiler();
             using (profiler.Step("DeploymentManager.Deploy(id)"))
             {
                 string cachePath = GetCachePath(id);
@@ -157,7 +151,7 @@ namespace Kudu.Core.Deployment
                 return;
             }
 
-            var profiler = _profilerFactory.CreateProfiler();
+            var profiler = _profilerFactory.GetProfiler();
             var deployStep = profiler.Step("Deploy");
 
             string id = repository.CurrentId;
@@ -281,6 +275,23 @@ namespace Kudu.Core.Deployment
             }
         }
 
+        private IEnumerable<DeployResult> EnumerateResults()
+        {
+            if (!_fileSystem.Directory.Exists(_environment.DeploymentCachePath))
+            {
+                yield break;
+            }
+
+            foreach (var id in _fileSystem.Directory.GetDirectories(_environment.DeploymentCachePath))
+            {
+                var result = GetResult(id);
+                if (result != null)
+                {
+                    yield return result;
+                }
+            }
+        }
+
         private void NotifyError(ILogger logger, DeploymentStatusFile trackingFile, Exception exception)
         {
             logger.Log("Deployment failed.", LogEntryType.Error);
@@ -323,7 +334,10 @@ namespace Kudu.Core.Deployment
 
                 PerformTransformations();
 
-                DownloadNodePackages(id, trackingFile, logger);
+                using (profiler.Step("Downloading Node packages"))
+                {
+                    DownloadNodePackages(id, trackingFile, logger);
+                }
 
                 trackingFile.Status = DeployStatus.Success;
                 trackingFile.StatusText = String.Empty;

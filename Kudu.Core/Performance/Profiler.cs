@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
@@ -17,6 +18,8 @@ namespace Kudu.Core.Performance
         private readonly string _path;
         private readonly IFileSystem _fileSystem;
 
+        private static readonly ConcurrentDictionary<string, object> _pathLocks = new ConcurrentDictionary<string, object>();
+
         public Profiler(string path)
             : this(new FileSystem(), path)
         {
@@ -27,6 +30,11 @@ namespace Kudu.Core.Performance
         {
             _fileSystem = fileSystem;
             _path = path;
+
+            if (!_pathLocks.ContainsKey(path))
+            {
+                _pathLocks.TryAdd(path, new object());
+            }
         }
 
         public IEnumerable<ProfilerStep> Steps
@@ -39,8 +47,6 @@ namespace Kudu.Core.Performance
 
         public IDisposable Step(string title)
         {
-            XDocument document = GetDocument();
-
             var newStep = new ProfilerStep(title);
             var newStepElement = new XElement("step", new XAttribute("title", title));
 
@@ -49,7 +55,7 @@ namespace Kudu.Core.Performance
                 // Add a new top level step
                 _steps.Add(newStep);
 
-                document.Root.Add(newStepElement);
+                // Set the date on the top level step
                 newStepElement.Add(new XAttribute("date", DateTime.Now));
             }
 
@@ -76,15 +82,26 @@ namespace Kudu.Core.Performance
                 }
                 else
                 {
-                    document.Save(_path);
+                    // Add this element to the list
+                    Save(stepElement);
                 }
 
                 if (_currentSteps.Count > 0)
                 {
                     ProfilerStep parent = _currentSteps.Peek();
                     parent.Children.Add(current);
-                }                
+                }
             });
+        }
+
+        private void Save(XElement stepElement)
+        {
+            lock (_pathLocks[_path])
+            {
+                XDocument document = GetDocument();
+                document.Root.Add(stepElement);
+                document.Save(_path);
+            }
         }
 
         private XDocument GetDocument()

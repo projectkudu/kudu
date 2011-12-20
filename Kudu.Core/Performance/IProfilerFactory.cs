@@ -4,6 +4,6 @@ namespace Kudu.Core.Performance
 {
     public interface IProfilerFactory
     {
-        IProfiler CreateProfiler();
+        IProfiler GetProfiler();
     }
 }
