@@ -14,7 +14,7 @@ namespace Kudu.Core.Performance
 
         public IDisposable Step(string value)
         {
-            return new DisposableAction(() => { });
+            return DisposableAction.Noop;
         }
     }
 }
