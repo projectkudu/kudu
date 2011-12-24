@@ -89,7 +89,6 @@ namespace Kudu.Services.Web.App_Start
                 // First try to use the current request profiler if any, otherwise create a new one
                 var profilerFactory = new ProfilerFactory(() => ProfilerServices.CurrentRequestProfiler ?? createProfilerThunk());
 
-                // TODO: Only enable in debug mode
                 kernel.Bind<IProfiler>().ToMethod(context => ProfilerServices.CurrentRequestProfiler ?? NullProfiler.Instance);
                 kernel.Bind<IProfilerFactory>().ToConstant(profilerFactory);
                 ProfilerServices.SetProfilerFactory(createProfilerThunk);
