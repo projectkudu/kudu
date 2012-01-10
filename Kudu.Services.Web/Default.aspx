@@ -64,7 +64,7 @@
         <div>
             <h3>Profiler data</h3>
             <ul>
-                <li><a href="profiler/help">Profiler API</a></li>
+                <li><a href="profile/help">Profiler API</a></li>
             </ul>
         </div>
         <% } %>
