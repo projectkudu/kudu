@@ -135,11 +135,18 @@ namespace Kudu.Web.Controllers
 
             ViewBag.slug = application.Slug;
 
-            return new SettingsViewModel
+            try
             {
-                AppSettings = settingsManager.GetAppSettings().ToList(),
-                ConnectionStrings = settingsManager.GetConnectionStrings().ToList()
-            };
+                return new SettingsViewModel
+                {
+                    AppSettings = settingsManager.GetAppSettings().ToList(),
+                    ConnectionStrings = settingsManager.GetConnectionStrings().ToList()
+                };
+            }
+            catch (InvalidOperationException)
+            {
+                throw new InvalidOperationException("Settings API not available");
+            }
         }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Configuration;
 using System.Net.Http;
 using System.ServiceModel;
 using System.ServiceModel.Activation;
@@ -13,6 +12,7 @@ using Kudu.Services.GitServer;
 using Kudu.Services.HgServer;
 using Kudu.Services.Settings;
 using Kudu.Services.SourceControl;
+using Kudu.Services.Web;
 using Microsoft.ApplicationServer.Http.Activation;
 using Ninject;
 using Ninject.Extensions.Wcf;
@@ -56,9 +56,12 @@ namespace Kudu.Services
             var liveCommandRoute = MapServiceRoute<CommandService>("live/command", factory);
             liveCommandRoute.Defaults = new RouteValueDictionary(new { live = true });
 
-            // Settings
-            MapServiceRoute<AppSettingsService>("appsettings", factory);
-            MapServiceRoute<ConnectionStringsService>("connectionstrings", factory);
+            if (AppSettings.SettingsEnabled)
+            {
+                // Settings
+                MapServiceRoute<AppSettingsService>("appsettings", factory);
+                MapServiceRoute<ConnectionStringsService>("connectionstrings", factory);
+            }
         }
 
         private static ServiceRoute MapServiceRoute<T>(string url, HttpServiceHostFactory factory)
@@ -102,9 +105,7 @@ namespace Kudu.Services
                 }
 
                 // Enable authentication based on the configuration setting
-                string authenticationValue = ConfigurationManager.AppSettings["enableAuthentication"];
-                bool enableAuthentication;
-                if (Boolean.TryParse(authenticationValue, out enableAuthentication) && enableAuthentication)
+                if (AppSettings.AuthenticationEnabled)
                 {
                     c.Insert(0, KernelContainer.Kernel.Get<BasicAuthorizeHandler>());
                 }

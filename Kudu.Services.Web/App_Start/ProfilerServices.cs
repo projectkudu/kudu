@@ -1,11 +1,10 @@
 using System;
-using System.Configuration;
 using System.Web;
 using Kudu.Contracts;
 using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 
 [assembly: WebActivator.PreApplicationStartMethod(
-    typeof(Kudu.Services.Web.App_Start.ProfilerServices), "PreStart")]
+    typeof(Kudu.Services.Web.App_Start.ProfilerServices), "Initialize")]
 
 namespace Kudu.Services.Web.App_Start
 {
@@ -13,18 +12,12 @@ namespace Kudu.Services.Web.App_Start
     {
         private static readonly object _profilerKey = new object();
         private static Func<IProfiler> _profilerFactory;
-        private static Lazy<bool> _enabled = new Lazy<bool>(() =>
-        {
-            string profilerValue = ConfigurationManager.AppSettings["enableProfiler"];
-            bool enableProfiler;
-            return Boolean.TryParse(profilerValue, out enableProfiler) && enableProfiler;
-        });
 
         internal static bool Enabled
         {
             get
             {
-                return _enabled.Value;
+                return AppSettings.ProfilingEnabled;
             }
         }
 
@@ -53,7 +46,7 @@ namespace Kudu.Services.Web.App_Start
         }
 
         internal static IProfiler CreateRequestProfiler(HttpContext httpContext)
-        {            
+        {
             var profiler = (IProfiler)httpContext.Items[_profilerKey];
             if (profiler == null)
             {
@@ -64,7 +57,7 @@ namespace Kudu.Services.Web.App_Start
             return profiler;
         }
 
-        public static void PreStart()
+        public static void Initialize()
         {
             if (ProfilerServices.Enabled)
             {

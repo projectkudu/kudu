@@ -139,6 +139,7 @@
     <Compile Include="..\Common\Constants.cs">
       <Link>Constants.cs</Link>
     </Compile>
+    <Compile Include="AppSettings.cs" />
     <Compile Include="App_Start\ProfilerServices.cs" />
     <Compile Include="App_Start\NinjectServices.cs" />
     <Compile Include="App_Start\PathResolver.cs" />

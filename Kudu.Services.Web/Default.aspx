@@ -36,6 +36,7 @@
                 <li><a href="live/command/help">Command API</a></li>
             </ul>
         </div>
+        <% if (Kudu.Services.Web.AppSettings.SettingsEnabled) { %>
         <div>
             <h3>Environment variables and connection strings</h3>
             <ul>
@@ -43,6 +44,7 @@
                 <li><a href="connectionstrings/help">ConnectionStrings API</a></li>
             </ul>
         </div>
+        <% } %>
         <div>
             <h3>Development site (only available if the dev site exists.)</h3>
             <ul>
@@ -59,13 +61,11 @@
         </div>
     </div>
     <div>&nbsp;</div>
-    <div>&nbsp;</div>
-    <div>&nbsp;</div>
     <div>
         Live website file server path:
     </div>
     <div>
-        <h4><%= HttpContext.Current.Server.MapPath("_app") %></h4>
+        <h4><%= MapPath("_app") %></h4>
     </div>
     </form>
 </body>

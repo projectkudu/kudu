@@ -338,8 +338,6 @@ namespace Kudu.Core.Deployment
                     FileSystemHelpers.SmartCopy(activeDeploymentPath, cachePath, _environment.DeploymentTargetPath, skipOldFiles);
                 }
 
-                PerformTransformations();
-
                 using (profiler.Step("Downloading Node packages"))
                 {
                     DownloadNodePackages(id, trackingFile, logger);
@@ -380,15 +378,6 @@ namespace Kudu.Core.Deployment
 
                 deployStep.Dispose();
             }
-        }
-
-        private void PerformTransformations()
-        {
-            // TODO: We need to only do this if this is an asp.net application we happen to be
-            // deploying.
-            // Perform transformations for this app if it has a web.config at the root
-            var transformer = new AspNetConfigTransformer(_fileSystem, _settingsManager);
-            transformer.PerformTransformations(_environment.DeploymentTargetPath);
         }
 
         // Temporary dirty code to install node packages. Switch to real NPM when available
