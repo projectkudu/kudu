@@ -98,6 +98,7 @@
     <Compile Include="HgServer\ProxyService.cs" />
     <Compile Include="Infrastructure\IServerConfiguration.cs" />
     <Compile Include="Infrastructure\RepositoryUtility.cs" />
+    <Compile Include="Performance\ProfilingService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Settings\ConnectionStringsService.cs" />
     <Compile Include="Settings\AppSettingsService.cs" />

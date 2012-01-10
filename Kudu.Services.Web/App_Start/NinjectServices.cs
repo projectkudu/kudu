@@ -13,6 +13,7 @@ using Kudu.Core.SourceControl.Git;
 using Kudu.Core.SourceControl.Hg;
 using Kudu.Services.Authorization;
 using Kudu.Services.Deployment;
+using Kudu.Services.Performance;
 using Kudu.Services.Web.Services;
 using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 using Ninject;
@@ -92,6 +93,8 @@ namespace Kudu.Services.Web.App_Start
                 kernel.Bind<IProfiler>().ToMethod(context => ProfilerServices.CurrentRequestProfiler ?? NullProfiler.Instance);
                 kernel.Bind<IProfilerFactory>().ToConstant(profilerFactory);
                 ProfilerServices.SetProfilerFactory(createProfilerThunk);
+
+                kernel.Bind<ProfilingService>().ToMethod(context => new ProfilingService(profilePath));
             }
             else
             {

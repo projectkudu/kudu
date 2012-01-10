@@ -10,6 +10,7 @@ using Kudu.Services.Deployment;
 using Kudu.Services.Documents;
 using Kudu.Services.GitServer;
 using Kudu.Services.HgServer;
+using Kudu.Services.Performance;
 using Kudu.Services.Settings;
 using Kudu.Services.SourceControl;
 using Kudu.Services.Web;
@@ -61,6 +62,11 @@ namespace Kudu.Services
                 // Settings
                 MapServiceRoute<AppSettingsService>("appsettings", factory);
                 MapServiceRoute<ConnectionStringsService>("connectionstrings", factory);
+            }
+
+            if (AppSettings.ProfilingEnabled)
+            {
+                MapServiceRoute<ProfilingService>("profiler", factory);
             }
         }
 

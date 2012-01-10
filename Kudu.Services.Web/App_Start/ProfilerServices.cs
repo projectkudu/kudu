@@ -77,7 +77,8 @@ namespace Kudu.Services.Web.App_Start
                 var httpContext = ((HttpApplication)sender).Context;
 
                 // Skip favicon.ico
-                if (httpContext.Request.RawUrl.EndsWith("favicon.ico", StringComparison.OrdinalIgnoreCase))
+                if (httpContext.Request.RawUrl.EndsWith("favicon.ico", StringComparison.OrdinalIgnoreCase) ||
+                    httpContext.Request.Path.StartsWith("/profiler", StringComparison.OrdinalIgnoreCase))
                 {
                     return;
                 }

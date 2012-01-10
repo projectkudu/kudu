@@ -35,16 +35,7 @@
                 <li><a href="live/files/help">Files API</a></li>
                 <li><a href="live/command/help">Command API</a></li>
             </ul>
-        </div>
-        <% if (Kudu.Services.Web.AppSettings.SettingsEnabled) { %>
-        <div>
-            <h3>Environment variables and connection strings</h3>
-            <ul>
-                <li><a href="appsettings/help">AppSettings API</a></li>
-                <li><a href="connectionstrings/help">ConnectionStrings API</a></li>
-            </ul>
-        </div>
-        <% } %>
+        </div>        
         <div>
             <h3>Development site (only available if the dev site exists.)</h3>
             <ul>
@@ -59,6 +50,25 @@
                 <li><a href="deploy/help">Deployment API</a></li>
             </ul>
         </div>
+        <% if (Kudu.Services.Web.AppSettings.SettingsEnabled) { %>
+        <div>
+            <h3>Environment variables and connection strings</h3>
+            <ul>
+                <li><a href="appsettings/help">AppSettings API</a></li>
+                <li><a href="connectionstrings/help">ConnectionStrings API</a></li>
+            </ul>
+        </div>
+        <% } %>
+
+        <% if (Kudu.Services.Web.AppSettings.ProfilingEnabled) { %>
+        <div>
+            <h3>Profiler data</h3>
+            <ul>
+                <li><a href="profiler/help">Profiler API</a></li>
+            </ul>
+        </div>
+        <% } %>
+
     </div>
     <div>&nbsp;</div>
     <div>
