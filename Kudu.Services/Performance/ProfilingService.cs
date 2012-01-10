@@ -32,5 +32,21 @@ namespace Kudu.Services.Performance
             response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/xml");
             return response;
         }
+
+        [WebGet(UriTemplate = "delete")]
+        public HttpResponseMessage Delete()
+        {
+            var response = new HttpResponseMessage();
+            if (!File.Exists(_profilePath))
+            {
+                // Not profiling information available yet
+                response.StatusCode = HttpStatusCode.NoContent;
+                return response;
+            }
+
+            File.Delete(_profilePath);
+            response.StatusCode = HttpStatusCode.OK;
+            return response;
+        }
     }
 }
