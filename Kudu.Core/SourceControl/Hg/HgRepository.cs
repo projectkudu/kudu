@@ -174,7 +174,7 @@ namespace Kudu.Core.SourceControl.Hg
                     string name = line.Substring(0, match.Index).Trim();
                     int revision = Int32.Parse(match.Groups["rev"].Value);
                     string id = GetChangeSet(revision).Id;
-                    yield return new Branch(id, name, currentId == id);
+                    yield return new HgBranch(id, name, currentId == id);
                 }
             }
         }

@@ -254,7 +254,7 @@ namespace Kudu.Core.SourceControl.Git
             foreach (var branchName in branchNames)
             {
                 string id = _gitExe.Execute("rev-parse {0}", branchName).Trim();
-                yield return new Branch(id, branchName, currentId == id);
+                yield return new GitBranch(id, branchName, currentId == id);
             }
         }
 

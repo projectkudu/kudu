@@ -171,6 +171,12 @@ namespace Kudu.Core.Deployment
 
                 if (activeBranch != null)
                 {
+                    // Only deploy if the active branch is the master branch
+                    if (!activeBranch.IsMaster)
+                    {
+                        return;
+                    }
+
                     repository.Update(activeBranch.Name);
                     id = activeBranch.Id;
                 }

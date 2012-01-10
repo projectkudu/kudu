@@ -1,6 +1,6 @@
 ﻿namespace Kudu.Core.SourceControl
 {
-    public class Branch
+    public abstract class Branch
     {
         public Branch(string id, string name, bool active)
         {
@@ -12,5 +12,6 @@
         public string Id { get; private set; }
         public string Name { get; private set; }
         public bool Active { get; set; }
+        public abstract bool IsMaster { get; }
     }
 }

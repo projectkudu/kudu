@@ -128,7 +128,7 @@ namespace Kudu.Core.SourceControl.Git
             }
             return from branch in Repository.Branches
                    where !branch.IsRemote
-                   select new Branch(branch.Tip.Id.Sha, branch.Name, branch.IsCurrentRepositoryHead);
+                   select new GitBranch(branch.Tip.Id.Sha, branch.Name, branch.IsCurrentRepositoryHead);
         }
 
         public void Push()

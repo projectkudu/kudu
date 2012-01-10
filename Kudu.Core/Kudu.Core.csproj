@@ -113,11 +113,13 @@
     <Compile Include="nji\SimpleJson.cs" />
     <Compile Include="nji\Tar.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SourceControl\Git\GitBranch.cs" />
     <Compile Include="SourceControl\Git\GitExeRepository.cs" />
     <Compile Include="SourceControl\Git\GitExeServer.cs" />
     <Compile Include="SourceControl\Git\GitUtility.cs" />
     <Compile Include="SourceControl\Git\HybridGitRepository.cs" />
     <Compile Include="SourceControl\Git\LibGitRepository.cs" />
+    <Compile Include="SourceControl\Hg\HgBranch.cs" />
     <Compile Include="SourceControl\Hg\HgRepository.cs" />
     <Compile Include="SourceControl\Hg\HgServer.cs" />
     <Compile Include="SourceControl\NullRepository.cs" />
