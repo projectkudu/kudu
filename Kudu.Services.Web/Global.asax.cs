@@ -66,7 +66,7 @@ namespace Kudu.Services
 
             if (AppSettings.ProfilingEnabled)
             {
-                MapServiceRoute<ProfilingService>("profiler", factory);
+                MapServiceRoute<ProfilingService>("profile", factory);
             }
         }
 
