@@ -6,3 +6,4 @@ using System.Runtime.CompilerServices;
 [assembly: AssemblyDescription("Core APIs for Kudu.")]
 [assembly: AssemblyProduct("Kudu.Core")]
 [assembly: InternalsVisibleTo("Kudu.Core.Test")]
+[assembly: InternalsVisibleTo("Kudu.FunctionalTests")]
