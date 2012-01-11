@@ -113,6 +113,7 @@ namespace Kudu.Client.Deployment
                 _connection.Received -= OnReceived;
                 _connection.Error -= OnError;
                 _connection.Stop();
+                _connection = null;
             }
         }
 
