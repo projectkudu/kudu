@@ -1,10 +1,7 @@
 ﻿using System;
-using System.IO;
 using System.Threading;
 using Kudu.Core.Deployment;
-using Kudu.Web.Infrastructure;
 using Xunit;
-using System.Collections.Generic;
 
 namespace Kudu.FunctionalTests.Infrastructure
 {
