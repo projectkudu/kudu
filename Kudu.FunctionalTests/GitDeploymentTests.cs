@@ -71,7 +71,7 @@ namespace Kudu.FunctionalTests
             {
                 // Act
                 appManager.GitDeploy(repositoryName);
-                string response = GetResponseBody(appManager.SiteUrl);                
+                string response = GetResponseBody(appManager.SiteUrl);
                 var results = appManager.DeploymentManager.GetResults().ToList();
 
                 // Assert
@@ -93,7 +93,7 @@ namespace Kudu.FunctionalTests
 
             using (var appManager = ApplicationManager.CreateApplication(appName))
             {
-                // Act                
+                // Act
                 appManager.GitDeploy(repositoryName);
                 Git.Revert(repositoryName);
                 appManager.GitDeploy(repositoryName);
