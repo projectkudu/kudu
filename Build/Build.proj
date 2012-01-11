@@ -36,6 +36,10 @@
         <xunit Assembly="%(TestProjects.FullPath)" />
     </Target>
     
+    <Target Name="RunFunctionalTests">
+        <xunit Assembly="$(ProjectRoot)\Kudu.FunctionalTests\bin\$(Configuration)\Kudu.FunctionalTests.dll" />
+    </Target>
+    
     <Target Name="Build" DependsOnTargets="CreateOutputPath">
         <MSBuild Projects="$(ProjectRoot)\kudu.sln" 
                  Targets="Build" 
