@@ -10,6 +10,7 @@ namespace Kudu.SiteManagement
     public class SiteManager : ISiteManager
     {
         private const string KuduAppPoolName = "kudu";
+        private static Random portNumberGenRnd = new Random((int)DateTime.Now.Ticks);
 
         private readonly IPathResolver _pathResolver;
 
@@ -160,21 +161,20 @@ namespace Kudu.SiteManagement
             return kuduAppPool;
         }
 
-        //TODO this is duplicated in HgServer.cs.
-        private int GetRandomPort()
+        //TODO this is duplicated in HgServer.cs, though out of sync in functionality.
+        private int GetRandomPort(IIS.ServerManager iis)
         {
-            Random rnd = new Random((int) DateTime.Now.Ticks);
-            int randomPort = rnd.Next(1025, 65535);
-            while (!IsAvailable(randomPort))
+            int randomPort = portNumberGenRnd.Next(1025, 65535);
+            while (!IsAvailable(randomPort, iis))
             {
-                randomPort = rnd.Next(1025, 65535);
+                randomPort = portNumberGenRnd.Next(1025, 65535);
             }
 
             return randomPort;
         }
 
-        //TODO this is duplicated in HgServer.cs.
-        private bool IsAvailable(int port)
+        //TODO this is duplicated in HgServer.cs, though out of sync in functionality.
+        private bool IsAvailable(int port, IIS.ServerManager iis)
         {
             var tcpConnections = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpConnections();
             foreach (var connectionInfo in tcpConnections)
@@ -185,6 +185,17 @@ namespace Kudu.SiteManagement
                 }
             }
 
+            foreach (var iisSite in iis.Sites)
+            {
+                foreach (var binding in iisSite.Bindings)
+                {
+                    if (binding.EndPoint != null && binding.EndPoint.Port == port)
+                    {
+                        return false;
+                    }
+                }
+            }
+
             return true;
         }
 
@@ -192,7 +203,7 @@ namespace Kudu.SiteManagement
         {
             EnsureKuduAppPool(iis);
 
-            int sitePort = GetRandomPort();
+            int sitePort = GetRandomPort(iis);
             var site = iis.Sites.Add(siteName, siteRoot, sitePort);
             site.ApplicationDefaults.ApplicationPoolName = KuduAppPoolName;
 
