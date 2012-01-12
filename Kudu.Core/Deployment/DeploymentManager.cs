@@ -227,7 +227,7 @@ namespace Kudu.Core.Deployment
                 innerLogger = logger.Log("Preparing deployment for {0}.", id);
 
                 // Put bits in the cache folder
-                string cachePath = GetCachePath(id);
+                // string cachePath = GetCachePath(id);                
 
                 // The initial status
                 trackingFile = OpenTrackingFile(id);
@@ -242,7 +242,7 @@ namespace Kudu.Core.Deployment
 
                 var buildStep = profiler.Step("Building");
 
-                builder.Build(cachePath, logger)
+                builder.Build(_environment.DeploymentTargetPath, logger)
                        .ContinueWith(t =>
                        {
                            buildStep.Dispose();
@@ -317,26 +317,25 @@ namespace Kudu.Core.Deployment
             ILogger innerLogger = null;
             try
             {
-                string cachePath = GetCachePath(id);
                 trackingFile = OpenTrackingFile(id);
                 logger = GetLogger(id);
 
-                trackingFile.Percentage = 50;
-                trackingFile.Status = DeployStatus.Deploying;
-                trackingFile.StatusText = "Deploying to webroot...";
-                trackingFile.Save(_fileSystem);
-                NotifyStatus(id);
+                //trackingFile.Percentage = 50;
+                //trackingFile.Status = DeployStatus.Deploying;
+                //trackingFile.StatusText = "Deploying to webroot...";
+                //trackingFile.Save(_fileSystem);
+                //NotifyStatus(id);
 
-                innerLogger = logger.Log("Copying files to webroot.");
+                //innerLogger = logger.Log("Copying files to webroot.");
 
-                string deploymentId = ActiveDeploymentId;
-                string activeDeploymentPath = String.IsNullOrEmpty(deploymentId) ? null : GetCachePath(deploymentId);
+                //string deploymentId = ActiveDeploymentId;
+                //string activeDeploymentPath = String.IsNullOrEmpty(deploymentId) ? null : GetCachePath(deploymentId);
 
-                using (profiler.Step("Copying files to webroot"))
-                {
-                    // Copy to target
-                    FileSystemHelpers.SmartCopy(activeDeploymentPath, cachePath, _environment.DeploymentTargetPath, skipOldFiles);
-                }
+                //using (profiler.Step("Copying files to webroot"))
+                //{
+                //    // Copy to target
+                //    FileSystemHelpers.SmartCopy(activeDeploymentPath, cachePath, _environment.DeploymentTargetPath, skipOldFiles);
+                //}
 
                 using (profiler.Step("Downloading Node packages"))
                 {

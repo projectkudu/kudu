@@ -34,6 +34,14 @@ namespace Kudu.FunctionalTests.Infrastructure
             gitExe.Execute("commit -m \"{0}\"", message);
         }
 
+        public static string Clone(string repositoryName, string source)
+        {
+            Executable gitExe = GetGitExe(repositoryName);
+            gitExe.Execute("clone \"{0}\" .", source);
+            
+            return Path.Combine(PathHelper.LocalRepositoriesDir, repositoryName);
+        }
+
         public static string CreateLocalRepository(string repositoryName)
         {
             // Get the path to the repository
@@ -61,6 +69,9 @@ namespace Kudu.FunctionalTests.Infrastructure
         private static Executable GetGitExe(string repositoryName)
         {
             string repositoryPath = Path.Combine(PathHelper.LocalRepositoriesDir, repositoryName);
+
+            FileSystemHelpers.EnsureDirectory(repositoryPath);
+
             return new Executable(ResolveGitPath(), repositoryPath);
         }
 

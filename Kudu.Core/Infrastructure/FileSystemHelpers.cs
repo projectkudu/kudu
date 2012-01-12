@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace Kudu.Core.Infrastructure
 {
-    public static class FileSystemHelpers
+    internal static class FileSystemHelpers
     {
         public static void SmartCopy(string sourcePath, string destinationPath, bool skipOldFiles = true)
         {
@@ -33,7 +33,7 @@ namespace Kudu.Core.Infrastructure
             DeleteFileSystemInfo(new DirectoryInfoWrapper(new DirectoryInfo(path)));
         }
 
-        public static string EnsureDirectory(string path)
+        internal static string EnsureDirectory(string path)
         {
             return EnsureDirectory(new FileSystem(), path);
         }

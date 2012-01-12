@@ -7,19 +7,22 @@ namespace Kudu.Core
     {
         private readonly string _deployPath;
         private readonly string _deployCachePath;
-        private readonly string _deploymentRepositoryPath;
+        private readonly string _stableDeploymentRepositoryPath;
+        private readonly Func<string> _deploymentRepositoryPathResolver;
         private readonly Func<string> _repositoryPathResolver;
 
         public Environment(string appName,
                            string applicationRootPath,
-                           string deploymentRepositoryPath,
+                           string stableDeploymentRepositoryPath,
+                           Func<string> deploymentRepositoryPathResolver,
                            Func<string> repositoryPathResolver,
                            string deployPath,
                            string deployCachePath)
         {
             AppName = appName;
             ApplicationRootPath = applicationRootPath;
-            _deploymentRepositoryPath = deploymentRepositoryPath;
+            _stableDeploymentRepositoryPath = stableDeploymentRepositoryPath;
+            _deploymentRepositoryPathResolver = deploymentRepositoryPathResolver;
             _repositoryPathResolver = repositoryPathResolver;
             _deployPath = deployPath;
             _deployCachePath = deployCachePath;
@@ -29,8 +32,9 @@ namespace Kudu.Core
         {
             get
             {
-                FileSystemHelpers.EnsureDirectory(_deploymentRepositoryPath);
-                return _deploymentRepositoryPath;
+                string path = _deploymentRepositoryPathResolver();
+                FileSystemHelpers.EnsureDirectory(path);
+                return path;
             }
         }
 
@@ -64,6 +68,15 @@ namespace Kudu.Core
             {
                 FileSystemHelpers.EnsureDirectory(_deployCachePath);
                 return _deployCachePath;
+            }
+        }
+
+        public string DeploymentRepositoryTargetPath
+        {
+            get
+            {
+                FileSystemHelpers.EnsureDirectory(_stableDeploymentRepositoryPath);
+                return _stableDeploymentRepositoryPath;
             }
         }
 

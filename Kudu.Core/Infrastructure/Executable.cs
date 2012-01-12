@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -11,10 +12,12 @@ namespace Kudu.Core.Infrastructure
         {
             Path = path;
             WorkingDirectory = workingDirectory;
+            EnvironmentVariables = new Dictionary<string, string>();
         }
 
         public string WorkingDirectory { get; private set; }
         public string Path { get; private set; }
+        public IDictionary<string, string> EnvironmentVariables { get; set; }
 
         public string Execute(string arguments, params object[] args)
         {
@@ -95,6 +98,11 @@ namespace Kudu.Core.Infrastructure
                 ErrorDialog = false,
                 Arguments = String.Format(arguments, args)
             };
+
+            foreach (var pair in EnvironmentVariables)
+            {
+                psi.EnvironmentVariables[pair.Key] = pair.Value;
+            }
 
             return Process.Start(psi);
         }

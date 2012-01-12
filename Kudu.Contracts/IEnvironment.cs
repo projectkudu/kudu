@@ -3,6 +3,7 @@
     public interface IEnvironment
     {
         string RepositoryPath { get; }
+        string DeploymentRepositoryTargetPath { get; }
         string DeploymentRepositoryPath { get; }
         string DeploymentTargetPath { get; }
         string DeploymentCachePath { get; }

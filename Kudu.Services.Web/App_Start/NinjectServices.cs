@@ -6,7 +6,6 @@ using Kudu.Core;
 using Kudu.Core.Commands;
 using Kudu.Core.Deployment;
 using Kudu.Core.Editor;
-using Kudu.Core.Infrastructure;
 using Kudu.Core.Performance;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
@@ -33,7 +32,7 @@ namespace Kudu.Services.Web.App_Start
         private static CommandExecutor _liveExecutor;
 
         private const string DeploymentCachePath = "deployments";
-        private const string DeploySettingsPath = "settings.xml";       
+        private const string DeploySettingsPath = "settings.xml";
 
         /// <summary>
         /// Starts the application
@@ -73,7 +72,7 @@ namespace Kudu.Services.Web.App_Start
         {
             IEnvironment environment = GetEnvironment();
             var propertyProvider = new BuildPropertyProvider();
-            
+
             // General
             kernel.Bind<HttpContextBase>().ToMethod(context => new HttpContextWrapper(HttpContext.Current));
             kernel.Bind<IBuildPropertyProvider>().ToConstant(propertyProvider);
@@ -104,8 +103,12 @@ namespace Kudu.Services.Web.App_Start
             }
 
             // Deployment
-            kernel.Bind<IRepositoryManager>().ToMethod(context => new RepositoryManager(environment.DeploymentRepositoryPath));
-            kernel.Bind<ISiteBuilderFactory>().To<SiteBuilderFactory>();
+            kernel.Bind<IRepositoryManager>().ToMethod(context => new RepositoryManager(environment.DeploymentRepositoryPath))
+                                             .InRequestScope();
+
+            kernel.Bind<ISiteBuilderFactory>().To<SiteBuilderFactory>()
+                                              .InRequestScope();
+
             kernel.Bind<IDeploymentManager>().To<DeploymentManager>()
                                              .InSingletonScope()
                                              .OnActivation(SubscribeForDeploymentEvents);
@@ -116,7 +119,7 @@ namespace Kudu.Services.Web.App_Start
 
             // Git server
             kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, context.Kernel.Get<IProfilerFactory>()))
-                                     .InSingletonScope();
+                                     .InRequestScope();
 
             // Hg Server
             kernel.Bind<IHgServer>().To<Kudu.Core.SourceControl.Hg.HgServer>()
@@ -192,39 +195,47 @@ namespace Kudu.Services.Web.App_Start
         private static IEnvironment GetEnvironment()
         {
             string targetRoot = PathResolver.ResolveRootPath();
-            InitializeEnvVars(targetRoot);
 
             string site = HttpRuntime.AppDomainAppVirtualPath.Trim('/');
             string root = Path.Combine(targetRoot, site);
-            string deploymentRepositoryPath = Path.Combine(root, Constants.RepositoryPath);
             string deployPath = Path.Combine(root, Constants.WebRoot);
             string deployCachePath = Path.Combine(root, DeploymentCachePath);
+            string deploymentRepositoryPath = Path.Combine(root, Constants.RepositoryPath);
+            string tempPath = Path.Combine(Path.GetTempPath(), "kudu", System.Guid.NewGuid().ToString());
 
             return new Environment(site,
                                    root,
                                    deploymentRepositoryPath,
-                                   () =>
-                                   {
-                                       string path = PathResolver.ResolveDevelopmentPath();
-                                       if (System.String.IsNullOrEmpty(path))
-                                       {
-                                           return null;
-                                       }
-                                       return Path.Combine(path, site, Constants.WebRoot);
-                                   },
+                                   () => ResolveDeploymentRepositoryPath(deploymentRepositoryPath, tempPath),
+                                   () => ResolveRepositoryPath(site),
                                    deployPath,
                                    deployCachePath);
         }
 
-        private static void InitializeEnvVars(string root)
+        private static string ResolveDeploymentRepositoryPath(string deploymentRepositoryPath, string tempPath)
+        {            
+            var repositoryManager = new RepositoryManager(deploymentRepositoryPath);
+            RepositoryType type = repositoryManager.GetRepositoryType();
+
+            if (type == RepositoryType.None)
+            {
+                // Return the temp path if there's no repository
+                return tempPath;
+            }
+
+            return deploymentRepositoryPath;
+        }
+
+        private static string ResolveRepositoryPath(string site)
         {
-            string tempPath = Path.GetFullPath(Path.Combine(root, "_temp"));
+            string path = PathResolver.ResolveDevelopmentPath();
 
-            // Setup some temp variables
-            FileSystemHelpers.EnsureDirectory(tempPath);
+            if (System.String.IsNullOrEmpty(path))
+            {
+                return null;
+            }
 
-            System.Environment.SetEnvironmentVariable("TEMP", tempPath);
-            System.Environment.SetEnvironmentVariable("TMP", tempPath);
+            return Path.Combine(path, site, Constants.WebRoot);
         }
 
         private static bool IsDevSiteRequest(IContext context)
