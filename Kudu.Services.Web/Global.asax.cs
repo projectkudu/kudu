@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.ServiceModel;
 using System.ServiceModel.Activation;
 using System.Web.Routing;
+using Elmah;
 using Kudu.Core.Infrastructure;
 using Kudu.Services.Authorization;
 using Kudu.Services.Commands;
@@ -15,6 +16,7 @@ using Kudu.Services.Settings;
 using Kudu.Services.SourceControl;
 using Kudu.Services.Web;
 using Microsoft.ApplicationServer.Http.Activation;
+using Microsoft.ApplicationServer.Http.Dispatcher;
 using Ninject;
 using Ninject.Extensions.Wcf;
 using SignalR;
@@ -101,6 +103,11 @@ namespace Kudu.Services
             factory.Configuration.CreateInstance = CreateInstance;
             factory.Configuration.ReleaseInstance = ReleaseInstance;
 
+            factory.Configuration.ErrorHandlers = (handlers, service, op) =>
+            {
+                handlers.Add(new ElmahErrorHandler());
+            };
+
             // Add the authorization handler on specific services method.
             var existingRequestHandlerFactory = factory.Configuration.RequestHandlers;
             factory.Configuration.RequestHandlers = (c, e, od) =>
@@ -128,6 +135,15 @@ namespace Kudu.Services
         private static void ReleaseInstance(InstanceContext context, object o)
         {
             KernelContainer.Kernel.Release(o);
+        }
+
+        private class ElmahErrorHandler : HttpErrorHandler
+        {
+            protected override bool OnTryProvideResponse(Exception exception, ref HttpResponseMessage message)
+            {
+                ErrorLog.GetDefault(null).Log(new Error(exception));
+                return false;
+            }
         }
     }
 }

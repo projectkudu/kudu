@@ -79,7 +79,7 @@ namespace Kudu.Services.Web.App_Start
                 // Skip favicon.ico
                 if (httpContext.Request.RawUrl.EndsWith("favicon.ico", StringComparison.OrdinalIgnoreCase) ||
                     httpContext.Request.Path.StartsWith("/profile", StringComparison.OrdinalIgnoreCase) ||
-                    httpContext.Request.Path == "/")
+                    httpContext.Request.RawUrl == "/")
                 {
                     return;
                 }
