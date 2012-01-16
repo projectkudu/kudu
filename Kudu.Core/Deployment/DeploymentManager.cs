@@ -120,8 +120,10 @@ namespace Kudu.Core.Deployment
             var profiler = _profilerFactory.GetProfiler();
             using (profiler.Step("DeploymentManager.Delete"))
             {
+                string path = GetRoot(id);
+
                 // TODO: Check for exceptions related to Delete.
-                _fileSystem.Directory.Delete(GetRoot((id)), true);
+                _fileSystem.Directory.Delete(path, true);
             }
         }
 
@@ -138,7 +140,7 @@ namespace Kudu.Core.Deployment
                 }
 
                 // We don't want to skip old files here since we might be going back in time
-                DeployToTarget(id, profiler, DisposableAction.Noop, skipOldFiles: false);
+                RunPostDeployment(id, profiler, DisposableAction.Noop, skipOldFiles: false);
             }
         }
 
@@ -214,6 +216,7 @@ namespace Kudu.Core.Deployment
             ILogger logger = null;
             DeploymentStatusFile trackingFile = null;
             ILogger innerLogger = null;
+            IDisposable buildStep = null;
 
             try
             {
@@ -226,13 +229,10 @@ namespace Kudu.Core.Deployment
 
                 innerLogger = logger.Log("Preparing deployment for {0}.", id);
 
-                // Put bits in the cache folder
-                // string cachePath = GetCachePath(id);                
-
                 // The initial status
                 trackingFile = OpenTrackingFile(id);
                 trackingFile.Status = DeployStatus.Building;
-                trackingFile.StatusText = String.Format("Building {0}...", id);
+                trackingFile.StatusText = String.Format("Building and Deploying {0}...", id);
                 trackingFile.Save(_fileSystem);
 
                 NotifyStatus(id);
@@ -240,7 +240,7 @@ namespace Kudu.Core.Deployment
                 // Create a deployer
                 ISiteBuilder builder = _builderFactory.CreateBuilder();
 
-                var buildStep = profiler.Step("Building");
+                buildStep = profiler.Step("Building");
 
                 builder.Build(_environment.DeploymentTargetPath, logger)
                        .ContinueWith(t =>
@@ -255,7 +255,6 @@ namespace Kudu.Core.Deployment
                                NotifyStatus(id);
 
                                // End the deploy step
-                               deployStep.Dispose();
                            }
                            else
                            {
@@ -263,7 +262,9 @@ namespace Kudu.Core.Deployment
                                trackingFile.Save(_fileSystem);
                                NotifyStatus(id);
 
-                               DeployToTarget(id, profiler, deployStep: deployStep);
+                               RunPostDeployment(id, profiler, deployStep);
+
+                               CopyRepository(id, profiler);
                            }
                        });
             }
@@ -275,6 +276,11 @@ namespace Kudu.Core.Deployment
                     innerLogger.Log(e);
 
                     NotifyStatus(id);
+                }
+
+                if (buildStep != null)
+                {
+                    buildStep.Dispose();
                 }
 
                 deployStep.Dispose();
@@ -310,7 +316,53 @@ namespace Kudu.Core.Deployment
             trackingFile.Save(_fileSystem);
         }
 
-        private void DeployToTarget(string id, IProfiler profiler, IDisposable deployStep, bool skipOldFiles = true)
+        private void CopyRepository(string id, IProfiler profiler)
+        {
+            ILogger logger = null;
+            DeploymentStatusFile trackingFile = null;
+
+            try
+            {
+                logger = GetLogger(id);
+                trackingFile = OpenTrackingFile(id);
+
+                var repositoryManager = new RepositoryManager(_environment.DeploymentRepositoryTargetPath);
+                RepositoryType repositoryType = repositoryManager.GetRepositoryType();
+
+                // The repository has already been copied
+                if (repositoryType != RepositoryType.None)
+                {
+                    return;
+                }
+
+                using (profiler.Step("Copying files to repository"))
+                {
+                    // Copy to target
+                    FileSystemHelpers.Copy(_environment.DeploymentRepositoryPath, _environment.DeploymentRepositoryTargetPath);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                if (logger != null)
+                {
+                    logger.Log(ex);
+                }
+            }
+            finally
+            {
+                if (trackingFile != null)
+                {
+                    trackingFile.Status = DeployStatus.Complete;
+                    trackingFile.StatusText = String.Empty;
+                    trackingFile.Save(_fileSystem);
+                }
+
+                NotifyStatus(id);
+            }
+        }
+
+        private void RunPostDeployment(string id, IProfiler profiler, IDisposable deployStep, bool skipOldFiles = true)
         {
             DeploymentStatusFile trackingFile = null;
             ILogger logger = null;
@@ -319,23 +371,6 @@ namespace Kudu.Core.Deployment
             {
                 trackingFile = OpenTrackingFile(id);
                 logger = GetLogger(id);
-
-                //trackingFile.Percentage = 50;
-                //trackingFile.Status = DeployStatus.Deploying;
-                //trackingFile.StatusText = "Deploying to webroot...";
-                //trackingFile.Save(_fileSystem);
-                //NotifyStatus(id);
-
-                //innerLogger = logger.Log("Copying files to webroot.");
-
-                //string deploymentId = ActiveDeploymentId;
-                //string activeDeploymentPath = String.IsNullOrEmpty(deploymentId) ? null : GetCachePath(deploymentId);
-
-                //using (profiler.Step("Copying files to webroot"))
-                //{
-                //    // Copy to target
-                //    FileSystemHelpers.SmartCopy(activeDeploymentPath, cachePath, _environment.DeploymentTargetPath, skipOldFiles);
-                //}
 
                 using (profiler.Step("Downloading Node packages"))
                 {
@@ -383,7 +418,7 @@ namespace Kudu.Core.Deployment
         private void DownloadNodePackages(string id, DeploymentStatusFile trackingFile, ILogger logger)
         {
             var p = new nji.Program();
-            p.ModulesDir = Path.Combine(_environment.DeploymentTargetPath, "node_modules");
+            p.ModulesDir = Path.Combine(_environment.DeploymentRepositoryTargetPath, "node_modules");
             p.TempDir = Path.Combine(p.ModulesDir, ".tmp");
             p.Logger = logger;
             p.UpdateStatusText = (statusText) =>

@@ -24,7 +24,7 @@ namespace Kudu.FunctionalTests.Infrastructure
                 var deploymentManager = appManager.DeploymentManager;
                 deploymentManager.StatusChanged += status =>
                 {
-                    if (status.Status == DeployStatus.Success || status.Status == DeployStatus.Failed)
+                    if (status.Status == DeployStatus.Complete || status.Status == DeployStatus.Failed)
                     {
                         deployEvent.Set();
                     }
@@ -35,13 +35,10 @@ namespace Kudu.FunctionalTests.Infrastructure
 
                 // Push the repository
                 Git.Push(repositoryName, appManager.GitUrl);
+                
+                Assert.True(deployEvent.WaitOne(waitTimeout), "Waiting for deployment timeout out!");
 
                 // Stop listenting
-                if (!deployEvent.WaitOne(waitTimeout))
-                {
-                    Assert.True(false, "Waiting for deployment timeout out!");
-                }
-
                 deploymentManager.Stop();
             }
             catch

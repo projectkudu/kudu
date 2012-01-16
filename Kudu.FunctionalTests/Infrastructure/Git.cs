@@ -36,7 +36,11 @@ namespace Kudu.FunctionalTests.Infrastructure
 
         public static string Clone(string repositoryName, string source)
         {
+            // Make sure the directory is empty
+            string repositoryPath = Path.Combine(PathHelper.LocalRepositoriesDir, repositoryName);
+            FileSystemHelpers.DeleteDirectorySafe(repositoryPath);
             Executable gitExe = GetGitExe(repositoryName);
+
             gitExe.Execute("clone \"{0}\" .", source);
             
             return Path.Combine(PathHelper.LocalRepositoriesDir, repositoryName);

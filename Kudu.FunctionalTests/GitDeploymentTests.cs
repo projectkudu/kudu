@@ -8,7 +8,7 @@ using Xunit;
 namespace Kudu.FunctionalTests
 {
     public class GitDeploymentTests
-    { 
+    {
         [Fact]
         public void PushSimpleRepoShouldDeploy()
         {
@@ -27,9 +27,9 @@ namespace Kudu.FunctionalTests
 
                 // Assert
                 Assert.Equal(1, results.Count);
-                Assert.Equal(DeployStatus.Success, results[0].Status);
+                Assert.Equal(DeployStatus.Complete, results[0].Status);
                 Assert.True(response.Contains(verificationText));
-                // Assert.True(Utils.DirectoriesEqual(originRepo, appManager.RepositoryPath));
+                Assert.True(Utils.DirectoriesEqual(originRepo, appManager.RepositoryPath));
             }
         }
 
@@ -51,7 +51,7 @@ namespace Kudu.FunctionalTests
 
                 // Assert
                 Assert.Equal(1, results.Count);
-                Assert.Equal(DeployStatus.Success, results[0].Status);
+                Assert.Equal(DeployStatus.Complete, results[0].Status);
                 Assert.True(response.Contains(verificationText));
                 Assert.True(Utils.DirectoriesEqual(originRepo, appManager.RepositoryPath));
             }
@@ -75,7 +75,7 @@ namespace Kudu.FunctionalTests
 
                 // Assert
                 Assert.Equal(1, results.Count);
-                Assert.Equal(DeployStatus.Success, results[0].Status);
+                Assert.Equal(DeployStatus.Complete, results[0].Status);
                 Assert.True(response.Contains(verificationText));
                 Assert.True(Utils.DirectoriesEqual(originRepo, appManager.RepositoryPath));
             }
@@ -101,7 +101,7 @@ namespace Kudu.FunctionalTests
 
                 // Assert
                 Assert.Equal(2, results.Count);
-                Assert.Equal(DeployStatus.Success, results[0].Status);
+                Assert.Equal(DeployStatus.Complete, results[0].Status);
                 Assert.True(response.Contains(verificationText));
                 Assert.True(Utils.DirectoriesEqual(originRepo, appManager.RepositoryPath));
             }
@@ -112,19 +112,19 @@ namespace Kudu.FunctionalTests
         {
             string repositoryName = "Express-Template";
             string cloneUrl = "https://github.com/davidebbo/Express-Template.git";
-
-            Git.Clone(repositoryName, cloneUrl);
+            string originRepo = Git.Clone(repositoryName, cloneUrl);
 
             using (var appManager = ApplicationManager.CreateApplication(repositoryName))
             {
                 // Act
                 appManager.GitDeploy(repositoryName);
-                
+
                 var results = appManager.DeploymentManager.GetResults().ToList();
 
                 // Assert
                 Assert.Equal(1, results.Count);
-                Assert.Equal(DeployStatus.Success, results[0].Status);
+                Assert.Equal(DeployStatus.Complete, results[0].Status);
+                Assert.True(Utils.DirectoriesEqual(originRepo, appManager.RepositoryPath));
             }
         }
 

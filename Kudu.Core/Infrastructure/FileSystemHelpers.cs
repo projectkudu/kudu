@@ -132,6 +132,48 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
+        internal static void Copy(string sourcePath, string destinationPath)
+        {
+            Copy(sourcePath,
+                 destinationPath,
+                 new DirectoryInfoWrapper(new DirectoryInfo(sourcePath)),
+                 new DirectoryInfoWrapper(new DirectoryInfo(destinationPath)),
+                 path => new DirectoryInfoWrapper(new DirectoryInfo(path)));
+        }
+
+        internal static void Copy(string sourcePath,
+                                  string destinationPath,
+                                  DirectoryInfoBase sourceDirectory,
+                                  DirectoryInfoBase destinationDirectory,
+                                  Func<string, DirectoryInfoBase> createDirectoryInfo)
+        {
+            if (!destinationDirectory.Exists)
+            {
+                destinationDirectory.Create();
+            }
+
+            foreach (var sourceFile in sourceDirectory.GetFiles())
+            {
+                string path = GetDestinationPath(sourcePath, destinationPath, sourceFile);
+
+                sourceFile.CopyTo(path, overwrite: true);
+            }
+
+
+            var destDirectoryLookup = GetDirectores(destinationDirectory);
+            foreach (var sourceSubDirectory in sourceDirectory.GetDirectories())
+            {
+                DirectoryInfoBase targetSubDirectory;
+                if (!destDirectoryLookup.TryGetValue(sourceSubDirectory.Name, out targetSubDirectory))
+                {
+                    string path = GetDestinationPath(sourcePath, destinationPath, sourceSubDirectory);
+                    targetSubDirectory = createDirectoryInfo(path);
+                }
+
+                Copy(sourcePath, destinationPath, sourceSubDirectory, targetSubDirectory, createDirectoryInfo);
+            }
+        }
+
         internal static void SmartCopy(string sourcePath,
                                        string destinationPath,
                                        DirectoryInfoBase previousDirectory,

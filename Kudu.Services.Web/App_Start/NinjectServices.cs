@@ -110,7 +110,7 @@ namespace Kudu.Services.Web.App_Start
                                               .InRequestScope();
 
             kernel.Bind<IDeploymentManager>().To<DeploymentManager>()
-                                             .InSingletonScope()
+                                             .InRequestScope()
                                              .OnActivation(SubscribeForDeploymentEvents);
 
             // Settings

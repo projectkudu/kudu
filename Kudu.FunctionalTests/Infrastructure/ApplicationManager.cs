@@ -58,7 +58,7 @@ namespace Kudu.FunctionalTests.Infrastructure
 
         void IDisposable.Dispose()
         {
-            _siteManager.DeleteSite(_appName);
+            siteManager.DeleteSite(_appName);
         }
 
         public static ApplicationManager CreateApplication(string applicationName)

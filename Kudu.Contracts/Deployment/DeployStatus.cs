@@ -6,6 +6,7 @@
         Building,
         Deploying,
         Failed,
-        Success
+        Success,
+        Complete
     }
 }
