@@ -49,7 +49,7 @@ namespace Kudu.Core.Performance
         {
             var newStep = new ProfilerStep(title);
             var newStepElement = new XElement("step", new XAttribute("title", title),
-                                                      new XAttribute("date", DateTime.Now));
+                                                      new XAttribute("date", DateTime.Now.ToString("MM/dd H:mm:ss")));
 
             if (_currentSteps.Count == 0)
             {
