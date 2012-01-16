@@ -48,15 +48,14 @@ namespace Kudu.Core.Performance
         public IDisposable Step(string title)
         {
             var newStep = new ProfilerStep(title);
-            var newStepElement = new XElement("step", new XAttribute("title", title));
+            var newStepElement = new XElement("step", new XAttribute("title", title),
+                                                      new XAttribute("date", DateTime.Now));
 
             if (_currentSteps.Count == 0)
             {
                 // Add a new top level step
                 _steps.Add(newStep);
 
-                // Set the date on the top level step
-                newStepElement.Add(new XAttribute("date", DateTime.Now));
             }
 
             _currentSteps.Push(newStep);
