@@ -255,6 +255,7 @@ namespace Kudu.Core.Deployment
                                NotifyStatus(id);
 
                                // End the deploy step
+                               deployStep.Dispose();
                            }
                            else
                            {
@@ -366,7 +367,7 @@ namespace Kudu.Core.Deployment
         {
             DeploymentStatusFile trackingFile = null;
             ILogger logger = null;
-            ILogger innerLogger = null;
+
             try
             {
                 trackingFile = OpenTrackingFile(id);
@@ -385,31 +386,22 @@ namespace Kudu.Core.Deployment
                 File.WriteAllText(activeFilePath, id);
 
                 logger.Log("Deployment successful.");
-            }
-            catch (Exception e)
-            {
-                if (trackingFile != null)
-                {
-                    trackingFile.Status = DeployStatus.Failed;
-                }
 
-                if (innerLogger != null)
+                trackingFile.DeploymentEndTime = DateTime.Now;
+                trackingFile.StatusText = trackingFile.Status == DeployStatus.Failed ? logger.GetTopLevelError() : String.Empty;
+                trackingFile.Percentage = 100;
+                trackingFile.Save(_fileSystem);
+                NotifyStatus(id);
+            }
+            catch (Exception ex)
+            {
+                if (logger != null && trackingFile != null)
                 {
-                    innerLogger.Log("Deploying to web root failed.", LogEntryType.Error);
-                    innerLogger.Log(e);
+                    NotifyError(logger, trackingFile, ex);
                 }
             }
             finally
             {
-                if (trackingFile != null)
-                {
-                    trackingFile.DeploymentEndTime = DateTime.Now;
-                    trackingFile.StatusText = trackingFile.Status == DeployStatus.Failed ? logger.GetTopLevelError() : String.Empty;
-                    trackingFile.Percentage = 100;
-                    trackingFile.Save(_fileSystem);
-                    NotifyStatus(id);
-                }
-
                 deployStep.Dispose();
             }
         }
