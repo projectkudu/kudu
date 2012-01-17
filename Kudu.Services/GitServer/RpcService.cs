@@ -75,23 +75,22 @@ namespace Kudu.Services.GitServer
                 var memoryStream = new MemoryStream();
 
                 _gitServer.Receive(GetInputStream(request), memoryStream);
+                
+                ThreadPool.QueueUserWorkItem(_ =>
+                {
+                    try
+                    {
+                        _deploymentManager.Deploy();
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine("Error deploying");
+                        Debug.WriteLine(ex.Message);
+                    }
+                });
 
                 memoryStream.Flush();
                 memoryStream.Position = 0;
-
-
-                ThreadPool.QueueUserWorkItem(_ =>
-                                                 {
-                                                     try
-                                                     {
-                                                         _deploymentManager.Deploy();
-                                                     }
-                                                     catch (Exception ex)
-                                                     {
-                                                         Debug.WriteLine("Error deploying");
-                                                         Debug.WriteLine(ex.Message);
-                                                     }
-                                                 });
 
                 return CreateResponse(memoryStream, "application/x-git-{0}-result".With("receive-pack"));
             }
