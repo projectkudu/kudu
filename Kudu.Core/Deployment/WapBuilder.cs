@@ -30,7 +30,7 @@ namespace Kudu.Core.Deployment
                 using (context.Profiler.Step("Running msbuild on project file"))
                 {
                     // Build artifacts into a temp path                    
-                    log = ExecuteMSBuild(@"""{0}"" /nologo /verbosity:m /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir={1};AutoParameterizationWebConfigConnectionStrings=false;SolutionDir={2};{3}", _projectPath, buildTempPath, solutionDir, GetPropertyString());
+                    log = ExecuteMSBuild(innerLogger, @"""{0}"" /nologo /verbosity:m /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""{1}"";AutoParameterizationWebConfigConnectionStrings=false;SolutionDir=""{2}"";{3}", _projectPath, buildTempPath, solutionDir, GetPropertyString());
                 }
 
                 using (context.Profiler.Step("Copying files to output directory"))

@@ -34,8 +34,11 @@ namespace Kudu.Core.Deployment
             return String.Join(";", _propertyProvider.GetProperties().Select(p => p.Key + "=" + p.Value));
         }
 
-        public string ExecuteMSBuild(string arguments, params object[] args)
+        public string ExecuteMSBuild(ILogger logger, string arguments, params object[] args)
         {
+#if DEBUG
+            logger.Log(String.Format(arguments, args));
+#endif
             return _msbuildExe.Execute(arguments, args);
         }
 
@@ -55,7 +58,7 @@ namespace Kudu.Core.Deployment
                 using (context.Profiler.Step("Running msbuild on solution"))
                 {
                     // Build the solution first
-                    string log = ExecuteMSBuild(@"""{0}"" /verbosity:m /nologo{1}", SolutionPath, propertyString);
+                    string log = ExecuteMSBuild(innerLogger, @"""{0}"" /verbosity:m /nologo{1}", SolutionPath, propertyString);
                     innerLogger.Log(log);
                 }
 
