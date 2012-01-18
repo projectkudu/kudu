@@ -22,11 +22,17 @@ namespace Kudu.Core.Deployment
 
             try
             {
-                // Copy to the output path and use the previous manifest if there
-                DeploymentHelpers.CopyWithManifest(_sourcePath, context.OutputPath, context.PreviousMainfest);
+                using (context.Profiler.Step("Copying files to output directory"))
+                {
+                    // Copy to the output path and use the previous manifest if there
+                    DeploymentHelpers.CopyWithManifest(_sourcePath, context.OutputPath, context.PreviousMainfest);
+                }
 
-                // Generate a manifest from those build artifacts
-                context.ManifestWriter.AddFiles(_sourcePath);
+                using (context.Profiler.Step("Building manifest"))
+                {
+                    // Generate a manifest from those build artifacts
+                    context.ManifestWriter.AddFiles(_sourcePath);
+                }
 
                 innerLogger.Log("Done.");
                 tcs.SetResult(null);
