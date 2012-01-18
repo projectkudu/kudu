@@ -39,11 +39,9 @@ namespace Kudu.Core.Deployment
             return _msbuildExe.Execute(arguments, args);
         }
 
-        public Task Build(string outputPath, ILogger logger)
+        public virtual Task Build(DeploymentContext context)
         {
-            var tcs = new TaskCompletionSource<object>();
-
-            ILogger innerLogger = logger.Log("Building solution {0}.", Path.GetFileName(SolutionPath));
+            ILogger innerLogger = context.Logger.Log("Building solution {0}.", Path.GetFileName(SolutionPath));
 
             try
             {
@@ -54,23 +52,27 @@ namespace Kudu.Core.Deployment
                     propertyString = " /p:" + propertyString;
                 }
 
-                // Build the solution first
-                string log = ExecuteMSBuild(@"""{0}"" /verbosity:m /nologo{1}", SolutionPath, propertyString);
+                using (context.Profiler.Step("Running msbuild on solution"))
+                {
+                    // Build the solution first
+                    string log = ExecuteMSBuild(@"""{0}"" /verbosity:m /nologo{1}", SolutionPath, propertyString);
+                    innerLogger.Log(log);
+                }
 
-                innerLogger.Log(log);
+                return BuildProject(context);
             }
             catch (Exception ex)
             {
+                var tcs = new TaskCompletionSource<object>();
                 innerLogger.Log("Building solution failed.", LogEntryType.Error);
                 innerLogger.Log(ex);
-                tcs.TrySetException(ex);
+                tcs.SetException(ex);
+
                 return tcs.Task;
             }
-
-            return BuildProject(outputPath, logger);
         }
 
-        protected abstract Task BuildProject(string outputPath, ILogger logger);
+        protected abstract Task BuildProject(DeploymentContext context);
 
         private string ResolveMSBuildPath()
         {

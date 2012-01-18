@@ -79,14 +79,15 @@ namespace Kudu.Core.Deployment
                 DeployEndTime = file.DeploymentEndTime,
                 Status = file.Status,
                 Percentage = file.Percentage,
-                StatusText = file.StatusText
+                StatusText = file.StatusText,
+                Complete = file.Complete,
             };
         }
 
         public IEnumerable<LogEntry> GetLogEntries(string id)
         {
             var profiler = _profilerFactory.GetProfiler();
-            using (profiler.Step("DeploymentManager.GetLogEntries"))
+            using (profiler.Step("DeploymentManager.GetLogEntries(id)"))
             {
                 string path = GetLogPath(id);
 
@@ -99,10 +100,10 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public IEnumerable<LogEntry> GetLogEntryDetails(string id, string dateId)
+        public IEnumerable<LogEntry> GetLogEntryDetails(string id, string entryId)
         {
             var profiler = _profilerFactory.GetProfiler();
-            using (profiler.Step("DeploymentManager.GetLogEntryDetails"))
+            using (profiler.Step("DeploymentManager.GetLogEntryDetails(id, entryId)"))
             {
                 string path = GetLogPath(id);
 
@@ -111,18 +112,17 @@ namespace Kudu.Core.Deployment
                     throw new InvalidOperationException(String.Format("No log found for '{0}'.", id));
                 }
 
-                return new XmlLogger(_fileSystem, path).GetLogEntryDetails(dateId).ToList();
+                return new XmlLogger(_fileSystem, path).GetLogEntryDetails(entryId).ToList();
             }
         }
 
         public void Delete(string id)
         {
             var profiler = _profilerFactory.GetProfiler();
-            using (profiler.Step("DeploymentManager.Delete"))
+            using (profiler.Step("DeploymentManager.Delete(id)"))
             {
                 string path = GetRoot(id);
 
-                // TODO: Check for exceptions related to Delete.
                 _fileSystem.Directory.Delete(path, true);
             }
         }
@@ -130,23 +130,15 @@ namespace Kudu.Core.Deployment
         public void Deploy(string id)
         {
             var profiler = _profilerFactory.GetProfiler();
-            using (profiler.Step("DeploymentManager.Deploy(id)"))
+            using (var deployStep = profiler.Step("DeploymentManager.Deploy(id)"))
             {
-                string cachePath = GetCachePath(id);
-
-                if (!_fileSystem.Directory.Exists(cachePath))
-                {
-                    throw new InvalidOperationException(String.Format("Unable to deploy '{0}'. No deployments found.", id));
-                }
-
-                // We don't want to skip old files here since we might be going back in time
-                RunPostDeployment(id, profiler, DisposableAction.Noop, skipOldFiles: false);
+                Build(id, profiler, deployStep);
             }
         }
 
         public void Deploy()
         {
-            var repository = _repositoryManager.GetRepository();
+            IRepository repository = _repositoryManager.GetRepository();
 
             if (repository == null)
             {
@@ -200,11 +192,6 @@ namespace Kudu.Core.Deployment
             Build(id, profiler, deployStep);
         }
 
-        public void Build(string id)
-        {
-            Build(id, NullProfiler.Instance, DisposableAction.Noop);
-        }
-
         private void Build(string id, IProfiler profiler, IDisposable deployStep)
         {
             if (String.IsNullOrEmpty(id))
@@ -223,48 +210,59 @@ namespace Kudu.Core.Deployment
                 // Get the logger for this id
                 string logPath = GetLogPath(id);
                 FileSystemHelpers.DeleteFileSafe(logPath);
-                NotifyStatus(id);
+
+                ReportStatus(id);
 
                 logger = GetLogger(id);
-
                 innerLogger = logger.Log("Preparing deployment for {0}.", id);
 
-                // The initial status
                 trackingFile = OpenTrackingFile(id);
                 trackingFile.Status = DeployStatus.Building;
                 trackingFile.StatusText = String.Format("Building and Deploying {0}...", id);
                 trackingFile.Save(_fileSystem);
 
-                NotifyStatus(id);
+                ReportStatus(id);
 
                 // Create a deployer
                 ISiteBuilder builder = _builderFactory.CreateBuilder();
 
                 buildStep = profiler.Step("Building");
 
-                builder.Build(_environment.DeploymentTargetPath, logger)
-                       .ContinueWith(t =>
+                var context = new DeploymentContext
+                {
+                    ManifestWriter = GetDeploymentManifestWriter(id),
+                    PreviousMainfest = GetActiveDeploymentManifestReader(),
+                    Profiler = profiler,
+                    Logger = logger,
+                    OutputPath = _environment.DeploymentTargetPath
+                };
+
+                builder.Build(context)
+                       .ContinueWith(task =>
                        {
+                           // End the build step
                            buildStep.Dispose();
 
-                           if (t.IsFaulted)
+                           if (task.IsFaulted)
                            {
-                               // We need to read the exception so the process doesn't go down
-                               NotifyError(logger, trackingFile, t.Exception);
+                               NotifyError(logger, trackingFile, task.Exception);
 
-                               NotifyStatus(id);
+                               ReportStatus(id);
 
                                // End the deploy step
                                deployStep.Dispose();
                            }
                            else
                            {
+                               // Set the deployment percent to 50% and report status
                                trackingFile.Percentage = 50;
                                trackingFile.Save(_fileSystem);
-                               NotifyStatus(id);
+                               ReportStatus(id);
 
+                               // Run post deployment steps
                                RunPostDeployment(id, profiler, deployStep);
 
+                               // Copy repository (if this is the first push)
                                CopyRepository(id, profiler);
                            }
                        });
@@ -276,7 +274,7 @@ namespace Kudu.Core.Deployment
                     NotifyError(innerLogger, trackingFile, e);
                     innerLogger.Log(e);
 
-                    NotifyStatus(id);
+                    ReportStatus(id);
                 }
 
                 if (buildStep != null)
@@ -305,18 +303,10 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        private void NotifyError(ILogger logger, DeploymentStatusFile trackingFile, Exception exception)
-        {
-            logger.Log("Deployment failed.", LogEntryType.Error);
-
-            // Failed to deploy
-            trackingFile.Percentage = 100;
-            trackingFile.Status = DeployStatus.Failed;
-            trackingFile.StatusText = trackingFile.Status == DeployStatus.Failed ? logger.GetTopLevelError() : String.Empty;
-            trackingFile.DeploymentEndTime = DateTime.Now;
-            trackingFile.Save(_fileSystem);
-        }
-
+        /// <summary>
+        /// Copy the repository from the temp repository path to the repository path.
+        /// Only happens on first deployment.
+        /// </summary>
         private void CopyRepository(string id, IProfiler profiler)
         {
             ILogger logger = null;
@@ -327,21 +317,18 @@ namespace Kudu.Core.Deployment
                 logger = GetLogger(id);
                 trackingFile = OpenTrackingFile(id);
 
-                var repositoryManager = new RepositoryManager(_environment.DeploymentRepositoryTargetPath);
-                RepositoryType repositoryType = repositoryManager.GetRepositoryType();
-
                 // The repository has already been copied
-                if (repositoryType != RepositoryType.None)
+                if (_environment.RepositoryType != RepositoryType.None)
                 {
                     return;
                 }
 
                 using (profiler.Step("Copying files to repository"))
                 {
-                    // Copy to target
-                    FileSystemHelpers.Copy(_environment.DeploymentRepositoryPath, _environment.DeploymentRepositoryTargetPath);
+                    // Copy the repository from the temporary path to the repository target path
+                    FileSystemHelpers.Copy(_environment.DeploymentRepositoryPath,
+                                           _environment.DeploymentRepositoryTargetPath);
                 }
-
             }
             catch (Exception ex)
             {
@@ -354,16 +341,20 @@ namespace Kudu.Core.Deployment
             {
                 if (trackingFile != null)
                 {
-                    trackingFile.Status = DeployStatus.Complete;
-                    trackingFile.StatusText = String.Empty;
+                    trackingFile.Complete = true;
                     trackingFile.Save(_fileSystem);
                 }
 
-                NotifyStatus(id);
+                ReportStatus(id);
             }
         }
 
-        private void RunPostDeployment(string id, IProfiler profiler, IDisposable deployStep, bool skipOldFiles = true)
+        /// <summary>
+        /// Runs post deployment steps. 
+        /// - Runs (NJI) node package installer
+        /// - Marks the active deployment
+        /// </summary>
+        private void RunPostDeployment(string id, IProfiler profiler, IDisposable deployStep)
         {
             DeploymentStatusFile trackingFile = null;
             ILogger logger = null;
@@ -378,20 +369,17 @@ namespace Kudu.Core.Deployment
                     DownloadNodePackages(id, trackingFile, logger);
                 }
 
-                trackingFile.Status = DeployStatus.Success;
-                trackingFile.StatusText = String.Empty;
-
                 // Write the active deployment file
                 string activeFilePath = GetActiveDeploymentFilePath();
                 File.WriteAllText(activeFilePath, id);
 
                 logger.Log("Deployment successful.");
 
+                trackingFile.Status = DeployStatus.Success;
+                trackingFile.StatusText = String.Empty;
                 trackingFile.DeploymentEndTime = DateTime.Now;
-                trackingFile.StatusText = trackingFile.Status == DeployStatus.Failed ? logger.GetTopLevelError() : String.Empty;
                 trackingFile.Percentage = 100;
                 trackingFile.Save(_fileSystem);
-                NotifyStatus(id);
             }
             catch (Exception ex)
             {
@@ -402,8 +390,24 @@ namespace Kudu.Core.Deployment
             }
             finally
             {
+                ReportStatus(id);
+
+                // End the deployment step
                 deployStep.Dispose();
             }
+        }
+
+        private void NotifyError(ILogger logger, DeploymentStatusFile trackingFile, Exception exception)
+        {
+            logger.Log("Deployment failed.", LogEntryType.Error);
+
+            // Failed to deploy
+            trackingFile.Percentage = 100;
+            trackingFile.Complete = true;
+            trackingFile.Status = DeployStatus.Failed;
+            trackingFile.StatusText = trackingFile.Status == DeployStatus.Failed ? logger.GetTopLevelError() : String.Empty;
+            trackingFile.DeploymentEndTime = DateTime.Now;
+            trackingFile.Save(_fileSystem);
         }
 
         // Temporary dirty code to install node packages. Switch to real NPM when available
@@ -417,13 +421,13 @@ namespace Kudu.Core.Deployment
             {
                 trackingFile.StatusText = statusText;
                 trackingFile.Save(_fileSystem);
-                NotifyStatus(id);
+                ReportStatus(id);
             };
 
             p.InstallDependencies(_environment.DeploymentTargetPath);
         }
 
-        private void NotifyStatus(string id)
+        private void ReportStatus(string id)
         {
             var result = GetResult(id);
 
@@ -462,10 +466,26 @@ namespace Kudu.Core.Deployment
             return Path.Combine(GetRoot(id), "status.xml");
         }
 
-        private string GetCachePath(string id)
+        private IDeploymentManifestWriter GetDeploymentManifestWriter(string id)
         {
-            string path = Path.Combine(GetRoot(id), "cache");
-            return FileSystemHelpers.EnsureDirectory(_fileSystem, path);
+            return new DeploymentManifest(GetDeploymentManifestPath(id));
+        }
+
+        private IDeploymentManifestReader GetActiveDeploymentManifestReader()
+        {
+            string id = ActiveDeploymentId;
+
+            if (String.IsNullOrEmpty(id))
+            {
+                return null;
+            }
+
+            return new DeploymentManifest(GetDeploymentManifestPath(id));
+        }
+
+        private string GetDeploymentManifestPath(string id)
+        {
+            return Path.Combine(GetRoot(id), "manifest");
         }
 
         private string GetLogPath(string id)

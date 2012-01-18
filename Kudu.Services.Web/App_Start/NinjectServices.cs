@@ -202,20 +202,21 @@ namespace Kudu.Services.Web.App_Start
             string deployCachePath = Path.Combine(root, DeploymentCachePath);
             string deploymentRepositoryPath = Path.Combine(root, Constants.RepositoryPath);
             string tempPath = Path.Combine(Path.GetTempPath(), "kudu", System.Guid.NewGuid().ToString());
+            string deploymentTempPath = Path.Combine(tempPath, Constants.RepositoryPath);
 
             return new Environment(site,
                                    root,
                                    deploymentRepositoryPath,
-                                   () => ResolveDeploymentRepositoryPath(deploymentRepositoryPath, tempPath),
+                                   tempPath,
+                                   () => ResolveDeploymentRepositoryPath(deploymentRepositoryPath, deploymentTempPath),
                                    () => ResolveRepositoryPath(site),
                                    deployPath,
                                    deployCachePath);
         }
 
         private static string ResolveDeploymentRepositoryPath(string deploymentRepositoryPath, string tempPath)
-        {            
-            var repositoryManager = new RepositoryManager(deploymentRepositoryPath);
-            RepositoryType type = repositoryManager.GetRepositoryType();
+        {
+            RepositoryType type = RepositoryManager.GetRepositoryType(deploymentRepositoryPath);
 
             if (type == RepositoryType.None)
             {

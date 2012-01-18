@@ -27,7 +27,7 @@ namespace Kudu.FunctionalTests
 
                 // Assert
                 Assert.Equal(1, results.Count);
-                Assert.Equal(DeployStatus.Complete, results[0].Status);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
                 Assert.True(response.Contains(verificationText));
                 Assert.True(Utils.DirectoriesEqual(originRepo, appManager.RepositoryPath));
             }
@@ -51,7 +51,7 @@ namespace Kudu.FunctionalTests
 
                 // Assert
                 Assert.Equal(1, results.Count);
-                Assert.Equal(DeployStatus.Complete, results[0].Status);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
                 Assert.True(response.Contains(verificationText));
                 Assert.True(Utils.DirectoriesEqual(originRepo, appManager.RepositoryPath));
             }
@@ -75,7 +75,7 @@ namespace Kudu.FunctionalTests
 
                 // Assert
                 Assert.Equal(1, results.Count);
-                Assert.Equal(DeployStatus.Complete, results[0].Status);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
                 Assert.True(response.Contains(verificationText));
                 Assert.True(Utils.DirectoriesEqual(originRepo, appManager.RepositoryPath));
             }
@@ -101,7 +101,7 @@ namespace Kudu.FunctionalTests
 
                 // Assert
                 Assert.Equal(2, results.Count);
-                Assert.Equal(DeployStatus.Complete, results[0].Status);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
                 Assert.True(response.Contains(verificationText));
                 Assert.True(Utils.DirectoriesEqual(originRepo, appManager.RepositoryPath));
             }
@@ -123,7 +123,7 @@ namespace Kudu.FunctionalTests
 
                 // Assert
                 Assert.Equal(1, results.Count);
-                Assert.Equal(DeployStatus.Complete, results[0].Status);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
                 Assert.True(Utils.DirectoriesEqual(originRepo, appManager.RepositoryPath));
             }
         }

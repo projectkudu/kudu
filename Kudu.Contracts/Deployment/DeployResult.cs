@@ -15,5 +15,6 @@ namespace Kudu.Core.Deployment
         public DateTime DeployStartTime { get; set; }
         public DateTime? DeployEndTime { get; set; }
         public int Percentage { get; set; }
+        public bool Complete { get; set; }
     }
 }

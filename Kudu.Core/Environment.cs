@@ -1,5 +1,6 @@
 ﻿using System;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.SourceControl;
 
 namespace Kudu.Core
 {
@@ -8,12 +9,14 @@ namespace Kudu.Core
         private readonly string _deployPath;
         private readonly string _deployCachePath;
         private readonly string _stableDeploymentRepositoryPath;
+        private readonly string _tempPath;
         private readonly Func<string> _deploymentRepositoryPathResolver;
         private readonly Func<string> _repositoryPathResolver;
 
         public Environment(string appName,
                            string applicationRootPath,
                            string stableDeploymentRepositoryPath,
+                           string tempPath,
                            Func<string> deploymentRepositoryPathResolver,
                            Func<string> repositoryPathResolver,
                            string deployPath,
@@ -22,6 +25,7 @@ namespace Kudu.Core
             AppName = appName;
             ApplicationRootPath = applicationRootPath;
             _stableDeploymentRepositoryPath = stableDeploymentRepositoryPath;
+            _tempPath = tempPath;
             _deploymentRepositoryPathResolver = deploymentRepositoryPathResolver;
             _repositoryPathResolver = repositoryPathResolver;
             _deployPath = deployPath;
@@ -86,10 +90,26 @@ namespace Kudu.Core
             private set;
         }
 
+        public string TempPath
+        {
+            get
+            {
+                return _tempPath;
+            }
+        }
+
         public string AppName
         {
             get;
             private set;
+        }
+
+        public RepositoryType RepositoryType
+        {
+            get
+            {
+                return RepositoryManager.GetRepositoryType(DeploymentRepositoryTargetPath);
+            }
         }
     }
 }

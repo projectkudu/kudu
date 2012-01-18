@@ -80,7 +80,7 @@ namespace Kudu.SignalR.Hubs
 
         public void Rebuild(string id)
         {
-            _deploymentManager.Build(id);
+            _deploymentManager.Deploy(id);
         }
     }
 }

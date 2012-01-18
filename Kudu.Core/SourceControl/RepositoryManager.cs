@@ -78,19 +78,25 @@ namespace Kudu.Core.SourceControl
 
         public RepositoryType GetRepositoryType()
         {
-            if (!Directory.Exists(_path))
+            return GetRepositoryType(_path);
+        }
+
+        public static RepositoryType GetRepositoryType(string path)
+        {
+            if (!Directory.Exists(path))
             {
                 return RepositoryType.None;
             }
 
-            if (Directory.EnumerateDirectories(_path, ".hg").Any())
+            if (Directory.EnumerateDirectories(path, ".hg").Any())
             {
                 return RepositoryType.Mercurial;
             }
-            else if (Directory.EnumerateDirectories(_path, ".git").Any())
+            else if (Directory.EnumerateDirectories(path, ".git").Any())
             {
                 return RepositoryType.Git;
             }
+
             return RepositoryType.None;
         }
     }

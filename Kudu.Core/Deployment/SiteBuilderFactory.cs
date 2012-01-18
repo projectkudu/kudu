@@ -47,7 +47,7 @@ namespace Kudu.Core.Deployment
 
             if (project.IsWap)
             {
-                return new WapBuilder(_propertyProvider, _environment.DeploymentRepositoryPath, solution.Path, project.AbsolutePath);
+                return new WapBuilder(_propertyProvider, _environment.DeploymentRepositoryPath, solution.Path, project.AbsolutePath, _environment.TempPath);
             }
 
             return new WebSiteBuilder(_propertyProvider, _environment.DeploymentRepositoryPath, solution.Path, project.AbsolutePath);

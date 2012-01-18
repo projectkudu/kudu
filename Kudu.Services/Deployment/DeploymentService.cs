@@ -66,7 +66,7 @@ namespace Kudu.Services.Deployment
         {
             using (_profiler.Step("DeploymentService.Build"))
             {
-                _deploymentManager.Build((string)input["id"]);
+                _deploymentManager.Deploy((string)input["id"]);
             }
         }
 

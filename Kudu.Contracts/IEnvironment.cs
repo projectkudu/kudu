@@ -1,4 +1,5 @@
-﻿namespace Kudu.Core
+﻿using Kudu.Core.SourceControl;
+namespace Kudu.Core
 {
     public interface IEnvironment
     {
@@ -8,6 +9,8 @@
         string DeploymentTargetPath { get; }
         string DeploymentCachePath { get; }
         string ApplicationRootPath { get; }
+        string TempPath { get; }
         string AppName { get; }
+        RepositoryType RepositoryType { get; }
     }
 }

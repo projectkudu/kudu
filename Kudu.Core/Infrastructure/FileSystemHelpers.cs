@@ -9,19 +9,11 @@ namespace Kudu.Core.Infrastructure
 {
     internal static class FileSystemHelpers
     {
-        public static void SmartCopy(string sourcePath, string destinationPath, bool skipOldFiles = true)
-        {
-            SmartCopy(null /* previous path */,
-                      sourcePath,
-                      destinationPath,
-                      skipOldFiles);
-        }
-
-        public static void SmartCopy(string previousPath, string sourcePath, string destinationPath, bool skipOldFiles = true)
+        public static void SmartCopy(string sourcePath, string destinationPath, Func<string, bool> existsInPrevious, bool skipOldFiles = true)
         {
             SmartCopy(sourcePath,
                       destinationPath,
-                      String.IsNullOrEmpty(previousPath) ? null : new DirectoryInfoWrapper(new DirectoryInfo(previousPath)),
+                      existsInPrevious,
                       new DirectoryInfoWrapper(new DirectoryInfo(sourcePath)),
                       new DirectoryInfoWrapper(new DirectoryInfo(destinationPath)),
                       path => new DirectoryInfoWrapper(new DirectoryInfo(path)),
@@ -176,7 +168,7 @@ namespace Kudu.Core.Infrastructure
 
         internal static void SmartCopy(string sourcePath,
                                        string destinationPath,
-                                       DirectoryInfoBase previousDirectory,
+                                       Func<string, bool> existsInPrevious,
                                        DirectoryInfoBase sourceDirectory,
                                        DirectoryInfoBase destinationDirectory,
                                        Func<string, DirectoryInfoBase> createDirectoryInfo,
@@ -194,7 +186,7 @@ namespace Kudu.Core.Infrastructure
                 destinationDirectory.Create();
             }
 
-            var previousFilesLookup = GetFiles(previousDirectory);
+            // var previousFilesLookup = GetFiles(previousDirectory);
             var destFilesLookup = GetFiles(destinationDirectory);
             var sourceFilesLookup = GetFiles(sourceDirectory);
 
@@ -204,9 +196,9 @@ namespace Kudu.Core.Infrastructure
                 // 1. We have no previous directory
                 // 2. We have a previous directory and the file exists there
                 if (!sourceFilesLookup.ContainsKey(destFile.Name) &&
-                    ((previousFilesLookup == null) ||
-                    (previousFilesLookup != null &&
-                    previousFilesLookup.ContainsKey(destFile.Name))))
+                    ((existsInPrevious == null) ||
+                    (existsInPrevious != null &&
+                    existsInPrevious(destFile.FullName))))
                 {
                     destFile.Delete();
                 }
@@ -236,7 +228,6 @@ namespace Kudu.Core.Infrastructure
                 sourceFile.CopyTo(path, overwrite: true);
             }
 
-            var previousDirectoryLookup = GetDirectores(previousDirectory);
             var sourceDirectoryLookup = GetDirectores(sourceDirectory);
             var destDirectoryLookup = GetDirectores(destinationDirectory);
 
@@ -246,9 +237,9 @@ namespace Kudu.Core.Infrastructure
                 // 1. We have no previous directory
                 // 2. We have a previous directory and the file exists there
                 if (!sourceDirectoryLookup.ContainsKey(destSubDirectory.Name) &&
-                    ((previousDirectoryLookup == null) ||
-                    (previousDirectoryLookup != null &&
-                    previousDirectoryLookup.ContainsKey(destSubDirectory.Name))))
+                    ((existsInPrevious == null) ||
+                    (existsInPrevious != null &&
+                    existsInPrevious(destSubDirectory.FullName))))
                 {
                     destSubDirectory.Delete(recursive: true);
                 }
@@ -263,15 +254,8 @@ namespace Kudu.Core.Infrastructure
                     targetSubDirectory = createDirectoryInfo(path);
                 }
 
-                DirectoryInfoBase previousSubDirectory = null;
-                if (previousDirectoryLookup != null)
-                {
-                    // Try to get the sub folder from the previous directory
-                    previousDirectoryLookup.TryGetValue(sourceSubDirectory.Name, out previousSubDirectory);
-                }
-
                 // Sync all sub directories
-                SmartCopy(sourcePath, destinationPath, previousSubDirectory, sourceSubDirectory, targetSubDirectory, createDirectoryInfo, skipOldFiles);
+                SmartCopy(sourcePath, destinationPath, existsInPrevious, sourceSubDirectory, targetSubDirectory, createDirectoryInfo, skipOldFiles);
             }
         }
 

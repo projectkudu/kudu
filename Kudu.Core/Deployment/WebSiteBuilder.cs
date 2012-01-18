@@ -14,27 +14,34 @@ namespace Kudu.Core.Deployment
             _projectPath = projectPath;
         }
 
-        protected override Task BuildProject(string outputPath, ILogger logger)
+        protected override Task BuildProject(DeploymentContext context)
         {
             var tcs = new TaskCompletionSource<object>();
-
-            var innerLogger = logger.Log("Using website project {0}.", _projectPath);
+            var innerLogger = context.Logger.Log("Using website project {0}.", _projectPath);
 
             try
             {
-                FileSystemHelpers.SmartCopy(_projectPath, outputPath);
+                using (context.Profiler.Step("Copying files to output directory"))
+                {
+                    // Copy to the output path
+                    DeploymentHelpers.CopyWithManifest(_projectPath, context.OutputPath, context.PreviousMainfest);
+                }
+
+                using (context.Profiler.Step("Building manifest"))
+                {
+                    // Generate the manifest from the project path
+                    context.ManifestWriter.AddFiles(_projectPath);
+                }
 
                 innerLogger.Log("Done.");
+                tcs.SetResult(null);
             }
             catch (Exception e)
             {
                 innerLogger.Log("Copying website failed.", LogEntryType.Error);
                 innerLogger.Log(e);
-                tcs.TrySetException(e);
-                return tcs.Task;
+                tcs.SetException(e);
             }
-
-            tcs.SetResult(null);
 
             return tcs.Task;
         }

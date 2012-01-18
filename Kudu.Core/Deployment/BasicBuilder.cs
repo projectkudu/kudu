@@ -13,18 +13,23 @@ namespace Kudu.Core.Deployment
             _sourcePath = sourcePath;
         }
 
-        public Task Build(string outputPath, ILogger logger)
+        public Task Build(DeploymentContext context)
         {
             var tcs = new TaskCompletionSource<object>();
 
-            var innerLogger = logger.Log("Copying files.");
-            innerLogger.Log("Copying files to {0}.", outputPath);
+            var innerLogger = context.Logger.Log("Copying files.");
+            innerLogger.Log("Copying files to {0}.", context.OutputPath);
 
             try
             {
-                FileSystemHelpers.SmartCopy(_sourcePath, outputPath);
+                // Copy to the output path and use the previous manifest if there
+                DeploymentHelpers.CopyWithManifest(_sourcePath, context.OutputPath, context.PreviousMainfest);
+
+                // Generate a manifest from those build artifacts
+                context.ManifestWriter.AddFiles(_sourcePath);
 
                 innerLogger.Log("Done.");
+                tcs.SetResult(null);
             }
             catch (Exception ex)
             {
@@ -32,8 +37,6 @@ namespace Kudu.Core.Deployment
                 innerLogger.Log(ex);
                 tcs.SetException(ex);
             }
-
-            tcs.SetResult(null);
 
             return tcs.Task;
         }

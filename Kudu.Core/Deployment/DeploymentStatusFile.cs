@@ -50,6 +50,9 @@ namespace Kudu.Core.Deployment
             string deploymentEndTime = document.Root.Element("deploymentEndTime").Value;
             string deploymentStartTime = document.Root.Element("deploymentStartTime").Value;
 
+            bool deploymentComplete;
+            Boolean.TryParse(document.Root.Element("deploymentComplete").Value, out deploymentComplete);
+
             return new DeploymentStatusFile(path)
             {
                 Id = document.Root.Element("id").Value,
@@ -60,7 +63,8 @@ namespace Kudu.Core.Deployment
                 StatusText = document.Root.Element("statusText").Value,
                 Percentage = percentage,
                 DeploymentStartTime = DateTime.Parse(deploymentStartTime),
-                DeploymentEndTime = !String.IsNullOrEmpty(deploymentEndTime) ? DateTime.Parse(deploymentEndTime) : (DateTime?)null
+                DeploymentEndTime = !String.IsNullOrEmpty(deploymentEndTime) ? DateTime.Parse(deploymentEndTime) : (DateTime?)null,
+                Complete = deploymentComplete
             };
         }
 
@@ -73,6 +77,7 @@ namespace Kudu.Core.Deployment
         public int Percentage { get; set; }
         public DateTime DeploymentStartTime { get; private set; }
         public DateTime? DeploymentEndTime { get; set; }
+        public bool Complete { get; set; }
 
         public void Save(IFileSystem fileSystem)
         {
@@ -90,7 +95,8 @@ namespace Kudu.Core.Deployment
                     new XElement("statusText", StatusText),
                     new XElement("percentage", Percentage),
                     new XElement("deploymentStartTime", DeploymentStartTime),
-                    new XElement("deploymentEndTime", DeploymentEndTime)
+                    new XElement("deploymentEndTime", DeploymentEndTime),
+                    new XElement("deploymentComplete", Complete.ToString())
                 ));
 
             using (Stream stream = fileSystem.File.Create(_path))
