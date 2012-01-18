@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.IO;
 using System.Linq;
 using System.Net.Http;
 using Kudu.Core.Deployment;
@@ -123,7 +123,63 @@ namespace Kudu.FunctionalTests
 
                 // Assert
                 Assert.Equal(1, results.Count);
+                Assert.Equal(DeployStatus.Failed, results[0].Status);
+                Assert.True(Utils.DirectoriesEqual(originRepo, appManager.RepositoryPath));
+            }
+        }
+
+        [Fact]
+        public void DeletesToRepositoryArePropagatedForWaps()
+        {
+            string repositoryName = "Mvc3Application";
+            string appName = "DeletesToRepositoryArePropagatedForWaps";
+            string verificationText = "Welcome to ASP.NET MVC!";
+            string originRepo = Git.CreateLocalRepository(repositoryName);
+
+            using (var appManager = ApplicationManager.CreateApplication(appName))
+            {
+                string deletePath = Path.Combine(originRepo, @"Mvc3Application\Scripts");
+
+                // Act
+                appManager.GitDeploy(repositoryName);
+                Directory.Delete(deletePath, recursive: true);
+                Git.Commit(repositoryName, "Deleted all scripts");
+                appManager.GitDeploy(repositoryName);
+                string response = GetResponseBody(appManager.SiteUrl);
+                var results = appManager.DeploymentManager.GetResults().ToList();
+
+                // Assert
+                Assert.Equal(2, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
+                Assert.True(response.Contains(verificationText));
+                Assert.True(Utils.DirectoriesEqual(originRepo, appManager.RepositoryPath));
+            }
+        }
+
+        [Fact]
+        public void DeletesToRepositoryArePropagatedForNonWaps()
+        {
+            string repositoryName = "Bakery2";
+            string appName = "DeletesToRepositoryArePropagatedForNonWaps";
+            string verificationText = "Welcome to Fourth Coffee!";
+            string originRepo = Git.CreateLocalRepository(repositoryName);
+
+            using (var appManager = ApplicationManager.CreateApplication(appName))
+            {
+                string deletePath = Path.Combine(originRepo, @"Styles");
+
+                // Act
+                appManager.GitDeploy(repositoryName);
+                Directory.Delete(deletePath, recursive: true);
+                Git.Commit(repositoryName, "Deleted all styles");
+                appManager.GitDeploy(repositoryName);
+                string response = GetResponseBody(appManager.SiteUrl);
+                var results = appManager.DeploymentManager.GetResults().ToList();
+
+                // Assert
+                Assert.Equal(2, results.Count);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
+                Assert.True(response.Contains(verificationText));
                 Assert.True(Utils.DirectoriesEqual(originRepo, appManager.RepositoryPath));
             }
         }

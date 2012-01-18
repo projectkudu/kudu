@@ -1,15 +1,16 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using Kudu.Core.Infrastructure;
-using Kudu.Core.SourceControl.Git;
 using Kudu.Web.Infrastructure;
 using SystemEnvironment = System.Environment;
 
 
 namespace Kudu.FunctionalTests.Infrastructure
 {
-    public static class Git {
-        
+    public static class Git
+    {
+
         public static void Push(string repositoryName, string url, string branchName = "master")
         {
             Executable gitExe = GetGitExe(repositoryName);
@@ -31,7 +32,23 @@ namespace Kudu.FunctionalTests.Infrastructure
         public static void Commit(string repositoryName, string message)
         {
             Executable gitExe = GetGitExe(repositoryName);
-            gitExe.Execute("commit -m \"{0}\"", message);
+            try
+            {
+                gitExe.Execute("add -A", message);
+                gitExe.Execute("commit -m \"{0}\"", message);
+            }
+            catch (Exception ex)
+            {
+                // Swallow exceptions on comit, since things like changing line endings
+                // show up as an error
+                Debug.WriteLine(ex.Message);
+            }
+        }
+
+        public static void Add(string repositoryName, string path)
+        {
+            Executable gitExe = GetGitExe(repositoryName);
+            gitExe.Execute("add \"{0}\"", path);
         }
 
         public static string Clone(string repositoryName, string source)
@@ -42,7 +59,7 @@ namespace Kudu.FunctionalTests.Infrastructure
             Executable gitExe = GetGitExe(repositoryName);
 
             gitExe.Execute("clone \"{0}\" .", source);
-            
+
             return Path.Combine(PathHelper.LocalRepositoriesDir, repositoryName);
         }
 

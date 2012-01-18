@@ -13,7 +13,7 @@ namespace Kudu.Core.Deployment
             _path = path;
         }
 
-        public IEnumerable<string> GetFiles()
+        public IEnumerable<string> GetPaths()
         {
             if (!File.Exists(_path))
             {
@@ -23,9 +23,9 @@ namespace Kudu.Core.Deployment
             return File.ReadAllLines(_path);
         }
 
-        public void AddPaths(IEnumerable<string> files)
+        public void AddPaths(IEnumerable<string> paths)
         {
-            File.WriteAllLines(_path, files);
+            File.WriteAllLines(_path, paths);
         }
     }
 }

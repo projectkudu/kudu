@@ -7,15 +7,15 @@ namespace Kudu.Core.Deployment
     {
         public static void AddFiles(this IDeploymentManifestWriter writer, string directory)
         {
-            var files = GetFiles(directory);
-            writer.AddPaths(files);
+            var paths = GetPaths(directory);
+            writer.AddPaths(paths);
         }
 
-        private static IEnumerable<string> GetFiles(string directory)
+        private static IEnumerable<string> GetPaths(string directory)
         {
-            foreach (var file in Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories))
+            foreach (var path in Directory.GetFileSystemEntries(directory, "*.*", SearchOption.AllDirectories))
             {
-                yield return file.Substring(directory.Length).TrimStart('\\');
+                yield return path.Substring(directory.Length).TrimStart('\\');
             }
         }
     }

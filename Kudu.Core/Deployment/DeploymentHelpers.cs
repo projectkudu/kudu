@@ -12,19 +12,11 @@ namespace Kudu.Core.Deployment
         {
             if (previousManifest != null)
             {
-                var previousFiles = new HashSet<string>(previousManifest.GetFiles(), StringComparer.OrdinalIgnoreCase);
-                Func<string, bool> existsInPrevious = targetPath =>
-                {
-                    // Trim the start path
-                    string path = targetPath.Substring(destinationPath.Length).TrimStart('\\');
-
-                    // Check if the file is in the list of previous files
-                    return previousFiles.Contains(path);
-                };
+                var previousFiles = new HashSet<string>(previousManifest.GetPaths(), StringComparer.OrdinalIgnoreCase);
 
                 FileSystemHelpers.SmartCopy(sourcePath,
                                             destinationPath,
-                                            existsInPrevious,
+                                            previousFiles.Contains,
                                             new DirectoryInfoWrapper(new DirectoryInfo(sourcePath)),
                                             new DirectoryInfoWrapper(new DirectoryInfo(destinationPath)),
                                             path => new DirectoryInfoWrapper(new DirectoryInfo(path)),

@@ -205,10 +205,13 @@ namespace Kudu.Core.Infrastructure
                 // If the file doesn't exist in the source, only delete if:
                 // 1. We have no previous directory
                 // 2. We have a previous directory and the file exists there
+
+                // Trim the start path
+                string previousPath = destFile.FullName.Substring(destinationPath.Length).TrimStart('\\');
                 if (!sourceFilesLookup.ContainsKey(destFile.Name) &&
                     ((existsInPrevious == null) ||
                     (existsInPrevious != null &&
-                    existsInPrevious(destFile.FullName))))
+                    existsInPrevious(previousPath))))
                 {
                     destFile.Delete();
                 }
@@ -246,10 +249,12 @@ namespace Kudu.Core.Infrastructure
                 // If the directory doesn't exist in the source, only delete if:
                 // 1. We have no previous directory
                 // 2. We have a previous directory and the file exists there
+
+                string previousPath = destSubDirectory.FullName.Substring(destinationPath.Length).TrimStart('\\');
                 if (!sourceDirectoryLookup.ContainsKey(destSubDirectory.Name) &&
                     ((existsInPrevious == null) ||
                     (existsInPrevious != null &&
-                    existsInPrevious(destSubDirectory.FullName))))
+                    existsInPrevious(previousPath))))
                 {
                     destSubDirectory.Delete(recursive: true);
                 }

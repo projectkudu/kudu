@@ -4,6 +4,6 @@ namespace Kudu.Core.Deployment
 {
     public interface IDeploymentManifestReader
     {
-        IEnumerable<string> GetFiles();
+        IEnumerable<string> GetPaths();
     }
 }

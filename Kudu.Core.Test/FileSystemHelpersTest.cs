@@ -42,12 +42,11 @@ namespace Kudu.Core.Test
         [Fact]
         public void SmartCopyCopiesFilesFromSourceToDestination()
         {
-            Func<string, bool> existsInPreviousDirectory = null;
             DirectoryWrapper sourceDirectory = GetDirectory(@"a:\test\", filePaths: new[] { @"a.txt", "b.txt", ".bar" });
             DirectoryWrapper destinationDirectory = GetDirectory(@"b:\foo\", exists: false);
             FileSystemHelpers.SmartCopy(@"a:\test\",
                                         @"b:\foo\",
-                                        existsInPreviousDirectory,
+                                        null,
                                         sourceDirectory.Directory,
                                         destinationDirectory.Directory,
                                         path => GetDirectory(path, exists: false).Directory,
@@ -62,12 +61,11 @@ namespace Kudu.Core.Test
         [Fact]
         public void SmartCopyDeletesFilesThatDontExistInSourceIfNoPrevious()
         {
-            Func<string, bool> existsInPrevious = null;
             DirectoryWrapper sourceDirectory = GetDirectory(@"a:\test\", filePaths: new[] { @"a.txt", "b.txt" });
             DirectoryWrapper destinationDirectory = GetDirectory(@"b:\foo\", filePaths: new[] { "c.txt" });
             FileSystemHelpers.SmartCopy(@"a:\test\",
                                         @"b:\foo\",
-                                         existsInPrevious,
+                                         null,
                                          sourceDirectory.Directory,
                                          destinationDirectory.Directory,
                                          path => GetDirectory(path, exists: false).Directory,
@@ -78,124 +76,128 @@ namespace Kudu.Core.Test
             destinationDirectory.VerifyDeleted("c.txt");
         }
 
-        //[Fact]
-        //public void SmartCopyOnlyDeletesFilesThatDontExistInSourceIfAlsoInPrevious()
-        //{
-        //    Func<string, bool> existsInPrevious = GetDirectory(@"c:\test\", filePaths: new[] { "c.txt" });
-        //    DirectoryWrapper sourceDirectory = GetDirectory(@"a:\test\", filePaths: new[] { @"a.txt", "b.txt" });
-        //    DirectoryWrapper destinationDirectory = GetDirectory(@"b:\foo\", filePaths: new[] { "c.txt", "generated.log" });
-        //    FileSystemHelpers.SmartCopy(@"a:\test\",
-        //                                @"b:\foo\",
-        //                                 existsInPrevious,
-        //                                 sourceDirectory.Directory,
-        //                                 destinationDirectory.Directory,
-        //                                 path => GetDirectory(path, exists: false).Directory,
-        //                                 skipOldFiles: false);
+        [Fact]
+        public void SmartCopyOnlyDeletesFilesThatDontExistInSourceIfAlsoInPrevious()
+        {
+            var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
+                { "c.txt" }
+            };
 
-        //    sourceDirectory.VerifyCopied("a.txt", @"b:\foo\a.txt");
-        //    sourceDirectory.VerifyCopied("b.txt", @"b:\foo\b.txt");
-        //    destinationDirectory.VerifyDeleted("c.txt");
-        //    destinationDirectory.VerifyNotDeleted("generated.log");
-        //}
+            DirectoryWrapper sourceDirectory = GetDirectory(@"a:\test\", filePaths: new[] { @"a.txt", "b.txt" });
+            DirectoryWrapper destinationDirectory = GetDirectory(@"b:\foo\", filePaths: new[] { "c.txt", "generated.log" });
+            FileSystemHelpers.SmartCopy(@"a:\test\",
+                                        @"b:\foo\",
+                                         paths.Contains,
+                                         sourceDirectory.Directory,
+                                         destinationDirectory.Directory,
+                                         path => GetDirectory(path, exists: false).Directory,
+                                         skipOldFiles: false);
 
-        //[Fact]
-        //public void SmartCopyOnlyCopiesFileIfNewerAndSkipOldFilesChecked()
-        //{
-        //    DirectoryWrapper previousDirectory = GetDirectory(@"c:\previous\", filePaths: new[] { "a.txt" });
-        //    DirectoryWrapper sourceDirectory = GetDirectory(@"a:\source\", filePaths: new[] { @"a.txt" });
-        //    DirectoryWrapper destinationDirectory = GetDirectory(@"b:\target\", filePaths: new[] { "a.txt" });
+            sourceDirectory.VerifyCopied("a.txt", @"b:\foo\a.txt");
+            sourceDirectory.VerifyCopied("b.txt", @"b:\foo\b.txt");
+            destinationDirectory.VerifyDeleted("c.txt");
+            destinationDirectory.VerifyNotDeleted("generated.log");
+        }
 
-        //    sourceDirectory.Files["a.txt"].Setup(m => m.LastWriteTimeUtc).Returns(new DateTime(2010, 11, 19));
-        //    destinationDirectory.Files["a.txt"].Setup(m => m.LastWriteTimeUtc).Returns(new DateTime(2011, 11, 19));
+        [Fact]
+        public void SmartCopyOnlyCopiesFileIfNewerAndSkipOldFilesChecked()
+        {
+            var previousPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
+                { "a.txt" }
+            };
 
-        //    FileSystemHelpers.SmartCopy(@"a:\source\",
-        //                                @"b:\target\",
-        //                                 previousDirectory.Directory,
-        //                                 sourceDirectory.Directory,
-        //                                 destinationDirectory.Directory,
-        //                                 path => GetDirectory(path, exists: false).Directory,
-        //                                 skipOldFiles: true);
+            DirectoryWrapper sourceDirectory = GetDirectory(@"a:\source\", filePaths: new[] { @"a.txt" });
+            DirectoryWrapper destinationDirectory = GetDirectory(@"b:\target\", filePaths: new[] { "a.txt" });
 
-        //    sourceDirectory.VerifyNotCopied("a.txt");
-        //}
+            sourceDirectory.Files["a.txt"].Setup(m => m.LastWriteTimeUtc).Returns(new DateTime(2010, 11, 19));
+            destinationDirectory.Files["a.txt"].Setup(m => m.LastWriteTimeUtc).Returns(new DateTime(2011, 11, 19));
 
-        //[Fact]
-        //public void SmartCopyCopiesSubDirectoriesAndFiles()
-        //{
-        //    DirectoryInfoBase previousDirectory = null;
+            FileSystemHelpers.SmartCopy(@"a:\source\",
+                                        @"b:\target\",
+                                         previousPaths.Contains,
+                                         sourceDirectory.Directory,
+                                         destinationDirectory.Directory,
+                                         path => GetDirectory(path, exists: false).Directory,
+                                         skipOldFiles: true);
 
-        //    DirectoryWrapper sourceSub = GetDirectory(@"a:\source\sub1", filePaths: new[] { "b.js" });
-        //    DirectoryWrapper sourceDirectory = GetDirectory(@"a:\source\",
-        //                                                    filePaths: new[] { @"a.txt" },
-        //                                                    directories: new[] { sourceSub });
+            sourceDirectory.VerifyNotCopied("a.txt");
+        }
 
-        //    DirectoryWrapper destinationDirectory = GetDirectory(@"b:\target\", exists: false);
+        [Fact]
+        public void SmartCopyCopiesSubDirectoriesAndFiles()
+        {
+            DirectoryWrapper sourceSub = GetDirectory(@"a:\source\sub1", filePaths: new[] { "b.js" });
+            DirectoryWrapper sourceDirectory = GetDirectory(@"a:\source\",
+                                                            filePaths: new[] { @"a.txt" },
+                                                            directories: new[] { sourceSub });
 
-        //    FileSystemHelpers.SmartCopy(@"a:\source\",
-        //                                @"b:\target\",
-        //                                 previousDirectory,
-        //                                 sourceDirectory.Directory,
-        //                                 destinationDirectory.Directory,
-        //                                 path =>
-        //                                 {
-        //                                     var newDir = GetDirectory(path, exists: false);
-        //                                     string shortName = GetShortName(destinationDirectory.Directory.FullName, path);
-        //                                     destinationDirectory.Directories[shortName] = newDir;
-        //                                     return newDir.Directory;
-        //                                 },
-        //                                 skipOldFiles: false);
+            DirectoryWrapper destinationDirectory = GetDirectory(@"b:\target\", exists: false);
 
-        //    destinationDirectory.VerifyCreated();
-        //    destinationDirectory.VerifyCreated("sub1");
-        //    sourceDirectory.VerifyCopied("a.txt", @"b:\target\a.txt");
-        //    sourceSub.VerifyCopied("b.js", @"b:\target\sub1\b.js");
-        //}
+            FileSystemHelpers.SmartCopy(@"a:\source\",
+                                        @"b:\target\",
+                                         null,
+                                         sourceDirectory.Directory,
+                                         destinationDirectory.Directory,
+                                         path =>
+                                         {
+                                             var newDir = GetDirectory(path, exists: false);
+                                             string shortName = GetShortName(destinationDirectory.Directory.FullName, path);
+                                             destinationDirectory.Directories[shortName] = newDir;
+                                             return newDir.Directory;
+                                         },
+                                         skipOldFiles: false);
 
-        //[Fact]
-        //public void SmartCopyDeletesSubDirectoryIfNoPreviousAndDirectoryDoesnotExistInSource()
-        //{
-        //    DirectoryInfoBase previousDirectory = null;
+            destinationDirectory.VerifyCreated();
+            destinationDirectory.VerifyCreated("sub1");
+            sourceDirectory.VerifyCopied("a.txt", @"b:\target\a.txt");
+            sourceSub.VerifyCopied("b.js", @"b:\target\sub1\b.js");
+        }
 
-        //    DirectoryWrapper sourceDirectory = GetDirectory(@"a:\source\", filePaths: new[] { "b.txt" });
+        [Fact]
+        public void SmartCopyDeletesSubDirectoryIfNoPreviousAndDirectoryDoesnotExistInSource()
+        {
+            DirectoryWrapper sourceDirectory = GetDirectory(@"a:\source\", filePaths: new[] { "b.txt" });
 
-        //    DirectoryWrapper destinationSub = GetDirectory(@"b:\target\sub3", filePaths: new[] { "o.js" });
-        //    DirectoryWrapper destinationDirectory = GetDirectory(@"b:\target\", directories: new[] { destinationSub });
+            DirectoryWrapper destinationSub = GetDirectory(@"b:\target\sub3", filePaths: new[] { "o.js" });
+            DirectoryWrapper destinationDirectory = GetDirectory(@"b:\target\", directories: new[] { destinationSub });
 
-        //    FileSystemHelpers.SmartCopy(@"a:\source\",
-        //                                @"b:\target\",
-        //                                 previousDirectory,
-        //                                 sourceDirectory.Directory,
-        //                                 destinationDirectory.Directory,
-        //                                 path => GetDirectory(path).Directory,
-        //                                 skipOldFiles: false);
+            FileSystemHelpers.SmartCopy(@"a:\source\",
+                                        @"b:\target\",
+                                         null,
+                                         sourceDirectory.Directory,
+                                         destinationDirectory.Directory,
+                                         path => GetDirectory(path).Directory,
+                                         skipOldFiles: false);
 
-        //    destinationSub.VerifyDeleted();
-        //    sourceDirectory.VerifyCopied("b.txt", @"b:\target\b.txt");
-        //}
+            destinationSub.VerifyDeleted();
+            sourceDirectory.VerifyCopied("b.txt", @"b:\target\b.txt");
+        }
 
-        //[Fact]
-        //public void SmartCopyOnlyDeletesSubDirectoryIfExistsInPrevious()
-        //{
-        //    DirectoryWrapper previousSub = GetDirectory(@"a:\previous\sub", filePaths: new[] { "b.txt" });
-        //    DirectoryWrapper previousDirectory = GetDirectory(@"a:\previous\", directories: new[] { previousSub });
+        [Fact]
+        public void SmartCopyOnlyDeletesSubDirectoryIfExistsInPrevious()
+        {
+            var previousPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
+                { @"sub" },
+                { @"sub\b.txt" }
+            };
 
-        //    DirectoryWrapper sourceDirectory = GetDirectory(@"a:\source\");
+            DirectoryWrapper sourceDirectory = GetDirectory(@"a:\source\");
 
-        //    DirectoryWrapper destinationSub1 = GetDirectory(@"b:\target\sub", filePaths: new[] { "b.js" });
-        //    DirectoryWrapper destinationSub2 = GetDirectory(@"b:\target\sub3", filePaths: new[] { "o.js" });
-        //    DirectoryWrapper destinationDirectory = GetDirectory(@"b:\target\", directories: new[] { destinationSub1, destinationSub2 });
+            DirectoryWrapper destinationSub1 = GetDirectory(@"b:\target\sub", filePaths: new[] { "b.js" });
+            DirectoryWrapper destinationSub2 = GetDirectory(@"b:\target\sub3", filePaths: new[] { "o.js" });
+            DirectoryWrapper destinationDirectory = GetDirectory(@"b:\target\", directories: new[] { destinationSub1, destinationSub2 });
 
-        //    FileSystemHelpers.SmartCopy(@"a:\source\",
-        //                                @"b:\target\",
-        //                                 previousDirectory.Directory,
-        //                                 sourceDirectory.Directory,
-        //                                 destinationDirectory.Directory,
-        //                                 path => GetDirectory(path).Directory,
-        //                                 skipOldFiles: false);
+            FileSystemHelpers.SmartCopy(@"a:\source\",
+                                        @"b:\target\",
+                                         previousPaths.Contains,
+                                         sourceDirectory.Directory,
+                                         destinationDirectory.Directory,
+                                         path => GetDirectory(path).Directory,
+                                         skipOldFiles: false);
 
-        //    destinationSub1.VerifyDeleted();
-        //    destinationSub2.VerifyNotDeleted();
-        //}
+            destinationSub1.VerifyDeleted();
+            destinationSub2.VerifyNotDeleted();
+        }
 
         private static DirectoryWrapper GetDirectory(string fullName,
                                                       IEnumerable<string> filePaths = null,
