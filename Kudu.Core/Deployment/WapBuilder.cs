@@ -20,7 +20,7 @@ namespace Kudu.Core.Deployment
         {
             var tcs = new TaskCompletionSource<object>();
             var innerLogger = context.Logger.Log("Building web project {0}.", Path.GetFileName(_projectPath));
-            string solutionDir = SolutionDir + @"\";
+            string solutionDir = SolutionDir + @"\\";
 
             try
             {
