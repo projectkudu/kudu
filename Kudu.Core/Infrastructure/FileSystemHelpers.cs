@@ -124,21 +124,31 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        internal static void Copy(string sourcePath, string destinationPath)
+        internal static void Copy(string sourcePath, string destinationPath, bool skipHidden = true)
         {
             Copy(sourcePath,
                  destinationPath,
                  new DirectoryInfoWrapper(new DirectoryInfo(sourcePath)),
                  new DirectoryInfoWrapper(new DirectoryInfo(destinationPath)),
-                 path => new DirectoryInfoWrapper(new DirectoryInfo(path)));
+                 path => new DirectoryInfoWrapper(new DirectoryInfo(path)),
+                 skipHidden);
         }
 
         internal static void Copy(string sourcePath,
                                   string destinationPath,
                                   DirectoryInfoBase sourceDirectory,
                                   DirectoryInfoBase destinationDirectory,
-                                  Func<string, DirectoryInfoBase> createDirectoryInfo)
+                                  Func<string, DirectoryInfoBase> createDirectoryInfo,
+                                  bool skipHidden)
         {
+            // Skip hidden directories and directories that begin with .
+            if (skipHidden &&
+                (sourceDirectory.Attributes.HasFlag(FileAttributes.Hidden) ||
+                 sourceDirectory.Name.StartsWith(".")))
+            {
+                return;
+            }
+
             if (!destinationDirectory.Exists)
             {
                 destinationDirectory.Create();
@@ -162,7 +172,7 @@ namespace Kudu.Core.Infrastructure
                     targetSubDirectory = createDirectoryInfo(path);
                 }
 
-                Copy(sourcePath, destinationPath, sourceSubDirectory, targetSubDirectory, createDirectoryInfo);
+                Copy(sourcePath, destinationPath, sourceSubDirectory, targetSubDirectory, createDirectoryInfo, skipHidden);
             }
         }
 
