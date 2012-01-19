@@ -137,10 +137,6 @@
         <File Id="Mercurial.Net.dll" Source="$(var.KuduServiceBinDir)\Mercurial.Net.dll" />
       </Component>
       
-      <Component Id="MvcMiniProfiler.dll" Guid="{6A967834-542B-4A88-BDAC-E410D3B8A94F}">
-        <File Id="MvcMiniProfiler.dll" Source="$(var.KuduServiceBinDir)\MvcMiniProfiler.dll" />
-      </Component>
-      
       <Component Id="git2.dll" Guid="{5DAFC5EE-CBD4-4664-9BE1-FD21B37D03BA}">
         <File Id="git2.dll" Source="$(var.KuduServiceBinDir)\git2.dll" />
       </Component>
@@ -233,7 +229,6 @@
       <ComponentRef Id="LibGit2Sharp.dll" />
       <ComponentRef Id="Mercurial.Net.dll" />
       
-      <ComponentRef Id="MvcMiniProfiler.dll" />
       <ComponentRef Id="git2.dll" />
 
       <ComponentRef Id="Microsoft.ApplicationServer.Http.dll" />
