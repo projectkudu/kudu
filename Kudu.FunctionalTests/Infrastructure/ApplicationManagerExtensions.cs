@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading;
-using Kudu.Core.Deployment;
+using Kudu.Client.Deployment;
 using Xunit;
 
 namespace Kudu.FunctionalTests.Infrastructure
@@ -16,12 +16,25 @@ namespace Kudu.FunctionalTests.Infrastructure
 
         public static void GitDeploy(this ApplicationManager appManager, string repositoryName, TimeSpan waitTimeout)
         {
+            appManager.DeploymentManager.WaitForDeployment(() =>
+            {
+                Git.Push(repositoryName, appManager.GitUrl);
+            },
+            waitTimeout);
+        }
+
+        public static void WaitForDeployment(this RemoteDeploymentManager deploymentManager, Action action)
+        {
+            WaitForDeployment(deploymentManager, action, _defaultTimeOut);
+        }
+
+        public static void WaitForDeployment(this RemoteDeploymentManager deploymentManager, Action action, TimeSpan waitTimeout)
+        {
             var deployEvent = new ManualResetEvent(false);
 
             try
             {
-                // Create deployment manager and wait for the deployment to finish                
-                var deploymentManager = appManager.DeploymentManager;
+                // Create deployment manager and wait for the deployment to finish
                 deploymentManager.StatusChanged += status =>
                 {
                     if (status.Complete)
@@ -33,8 +46,8 @@ namespace Kudu.FunctionalTests.Infrastructure
                 // Start listenting for events
                 deploymentManager.Start();
 
-                // Push the repository
-                Git.Push(repositoryName, appManager.GitUrl);
+                // Do something
+                action();
 
                 Assert.True(deployEvent.WaitOne(waitTimeout), "Waiting for deployment timeout out!");
 
@@ -47,6 +60,5 @@ namespace Kudu.FunctionalTests.Infrastructure
                 throw;
             }
         }
-
     }
 }

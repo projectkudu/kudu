@@ -130,10 +130,45 @@ namespace Kudu.Core.Deployment
         public void Deploy(string id)
         {
             var profiler = _profilerFactory.GetProfiler();
-            using (var deployStep = profiler.Step("DeploymentManager.Deploy(id)"))
+            IDisposable deployStep = null;
+
+            try
             {
+                deployStep = profiler.Step("DeploymentManager.Deploy(id)");
+
+                IRepository repository = _repositoryManager.GetRepository();
+
+                if (repository == null)
+                {
+                    return;
+                }
+
+                // Check to see if we have a deployment with this id already
+                string trackingFilePath = GetTrackingFilePath(id);
+
+                if (!_fileSystem.File.Exists(trackingFilePath))
+                {
+                    // If we don't then throw
+                    throw new InvalidOperationException(String.Format("Unable to deploy '{0}'. No deployments found.", id));
+                }
+
+                using (profiler.Step("Updating to specific changeset"))
+                {
+                    // Update to the the specific changeset
+                    repository.Update(id);
+                }
+
+                // Perform the build deployment of this changeset
                 Build(id, profiler, deployStep);
             }
+            catch
+            {
+                if (deployStep != null)
+                {
+                    deployStep.Dispose();
+                }
+            }
+
         }
 
         public void Deploy()
@@ -146,52 +181,66 @@ namespace Kudu.Core.Deployment
             }
 
             var profiler = _profilerFactory.GetProfiler();
-            var deployStep = profiler.Step("Deploy");
+            IDisposable deployStep = null;
 
-            string id = repository.CurrentId;
-
-            using (profiler.Step("Update to specific changeset"))
+            try
             {
-                if (String.IsNullOrEmpty(id))
-                {
-                    id = repository.GetChanges(0, 1).Single().Id;
-                    repository.Update(id);
-                }
+                deployStep = profiler.Step("Deploy");
+                string id = repository.CurrentId;
 
-                Branch activeBranch = (from b in repository.GetBranches()
-                                       let change = repository.GetDetails(b.Id)
-                                       orderby change.ChangeSet.Timestamp descending
-                                       select b).FirstOrDefault();
-
-                if (activeBranch != null)
+                using (profiler.Step("Update to specific changeset"))
                 {
-                    // Only deploy if the active branch is the master branch
-                    if (!activeBranch.IsMaster)
+                    if (String.IsNullOrEmpty(id))
                     {
-                        return;
+                        id = repository.GetChanges(0, 1).Single().Id;
+                        repository.Update(id);
                     }
 
-                    repository.Update(activeBranch.Name);
-                    id = activeBranch.Id;
+                    Branch activeBranch = (from b in repository.GetBranches()
+                                           let change = repository.GetDetails(b.Id)
+                                           orderby change.ChangeSet.Timestamp descending
+                                           select b).FirstOrDefault();
+
+                    if (activeBranch != null)
+                    {
+                        // Only deploy if the active branch is the master branch
+                        if (!activeBranch.IsMaster)
+                        {
+                            return;
+                        }
+
+                        repository.Update(activeBranch.Name);
+                        id = activeBranch.Id;
+                    }
+                    else
+                    {
+                        repository.Update(id);
+                    }
                 }
-                else
+
+                // Create the tracking file and store information about the commit
+                DeploymentStatusFile statusFile = CreateTrackingFile(id);
+                statusFile.Id = id;
+                var details = repository.GetDetails(id);
+                statusFile.Message = details.ChangeSet.Message;
+                statusFile.Author = details.ChangeSet.AuthorName;
+                statusFile.AuthorEmail = details.ChangeSet.AuthorEmail;
+                statusFile.Save(_fileSystem);
+
+                Build(id, profiler, deployStep);
+            }
+            catch
+            {
+                if (deployStep != null)
                 {
-                    repository.Update(id);
+                    deployStep.Dispose();
                 }
             }
-
-            // Create the tracking file and store information about the commit
-            DeploymentStatusFile statusFile = CreateTrackingFile(id);
-            statusFile.Id = id;
-            var details = repository.GetDetails(id);
-            statusFile.Message = details.ChangeSet.Message;
-            statusFile.Author = details.ChangeSet.AuthorName;
-            statusFile.AuthorEmail = details.ChangeSet.AuthorEmail;
-            statusFile.Save(_fileSystem);
-
-            Build(id, profiler, deployStep);
         }
 
+        /// <summary>
+        /// Builds and deploys a particular changeset. Puts all build artifacts in a deployments/{id}
+        /// </summary>
         private void Build(string id, IProfiler profiler, IDisposable deployStep)
         {
             if (String.IsNullOrEmpty(id))
@@ -199,7 +248,7 @@ namespace Kudu.Core.Deployment
                 throw new ArgumentException();
             }
 
-            // TODO: Make sure if the if is a valid changeset            
+            // TODO: Make sure if the if is a valid changeset
             ILogger logger = null;
             DeploymentStatusFile trackingFile = null;
             ILogger innerLogger = null;
@@ -217,6 +266,7 @@ namespace Kudu.Core.Deployment
                 innerLogger = logger.Log("Preparing deployment for {0}.", id);
 
                 trackingFile = OpenTrackingFile(id);
+                trackingFile.Complete = false;
                 trackingFile.Status = DeployStatus.Building;
                 trackingFile.StatusText = String.Format("Building and Deploying {0}...", id);
                 trackingFile.Save(_fileSystem);
@@ -228,13 +278,21 @@ namespace Kudu.Core.Deployment
 
                 buildStep = profiler.Step("Building");
 
+                var progressReporter = new ProgressReporter(statusText =>
+                {
+                    trackingFile.StatusText = statusText;
+                    trackingFile.Save(_fileSystem);
+                    ReportStatus(id);
+                });
+
                 var context = new DeploymentContext
                 {
                     ManifestWriter = GetDeploymentManifestWriter(id),
                     PreviousMainfest = GetActiveDeploymentManifestReader(),
                     Profiler = profiler,
                     Logger = logger,
-                    OutputPath = _environment.DeploymentTargetPath
+                    OutputPath = _environment.DeploymentTargetPath,
+                    ProgressReporter = progressReporter
                 };
 
                 builder.Build(context)
@@ -260,7 +318,7 @@ namespace Kudu.Core.Deployment
                                ReportStatus(id);
 
                                // Run post deployment steps
-                               RunPostDeployment(id, profiler, deployStep);
+                               RunPostDeploymentSteps(id, profiler, deployStep);
 
                                // Copy repository (if this is the first push)
                                CopyRepository(id, profiler);
@@ -351,11 +409,10 @@ namespace Kudu.Core.Deployment
         }
 
         /// <summary>
-        /// Runs post deployment steps. 
-        /// - Runs (NJI) node package installer
+        /// Runs post deployment steps.
         /// - Marks the active deployment
         /// </summary>
-        private void RunPostDeployment(string id, IProfiler profiler, IDisposable deployStep)
+        private void RunPostDeploymentSteps(string id, IProfiler profiler, IDisposable deployStep)
         {
             DeploymentStatusFile trackingFile = null;
             ILogger logger = null;
@@ -364,11 +421,6 @@ namespace Kudu.Core.Deployment
             {
                 trackingFile = OpenTrackingFile(id);
                 logger = GetLogger(id);
-
-                using (profiler.Step("Downloading Node packages"))
-                {
-                    DownloadNodePackages(id, trackingFile, logger);
-                }
 
                 // Write the active deployment file
                 string activeFilePath = GetActiveDeploymentFilePath();
@@ -402,30 +454,16 @@ namespace Kudu.Core.Deployment
         {
             logger.Log("Deployment failed.", LogEntryType.Error);
 
-            // Failed to deploy
-            trackingFile.Percentage = 100;
-            trackingFile.Complete = true;
-            trackingFile.Status = DeployStatus.Failed;
-            trackingFile.StatusText = trackingFile.Status == DeployStatus.Failed ? logger.GetTopLevelError() : String.Empty;
-            trackingFile.DeploymentEndTime = DateTime.Now;
-            trackingFile.Save(_fileSystem);
-        }
-
-        // Temporary dirty code to install node packages. Switch to real NPM when available
-        private void DownloadNodePackages(string id, DeploymentStatusFile trackingFile, ILogger logger)
-        {
-            var p = new nji.Program();
-            p.ModulesDir = Path.Combine(_environment.DeploymentRepositoryTargetPath, "node_modules");
-            p.TempDir = Path.Combine(p.ModulesDir, ".tmp");
-            p.Logger = logger;
-            p.UpdateStatusText = (statusText) =>
+            if (trackingFile != null)
             {
-                trackingFile.StatusText = statusText;
+                // Failed to deploy
+                trackingFile.Percentage = 100;
+                trackingFile.Complete = true;
+                trackingFile.Status = DeployStatus.Failed;
+                trackingFile.StatusText = trackingFile.Status == DeployStatus.Failed ? logger.GetTopLevelError() : String.Empty;
+                trackingFile.DeploymentEndTime = DateTime.Now;
                 trackingFile.Save(_fileSystem);
-                ReportStatus(id);
-            };
-
-            p.InstallDependencies(_environment.DeploymentTargetPath);
+            }
         }
 
         private void ReportStatus(string id)

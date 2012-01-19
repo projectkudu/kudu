@@ -66,6 +66,12 @@ namespace Kudu.Core.Performance
 
             return new DisposableAction(() =>
             {
+                // If there's no steps then do nothing (guard against double dispose)
+                if (_currentSteps.Count == 0)
+                {
+                    return;
+                }
+
                 // Stop the current step
                 _currentSteps.Peek().Stop();
 

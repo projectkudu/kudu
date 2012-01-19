@@ -1,7 +1,9 @@
 ﻿using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using Kudu.Core.Deployment;
+using Kudu.Core.SourceControl.Git;
 using Kudu.FunctionalTests.Infrastructure;
 using Xunit;
 
@@ -123,7 +125,7 @@ namespace Kudu.FunctionalTests
 
                 // Assert
                 Assert.Equal(1, results.Count);
-                Assert.Equal(DeployStatus.Failed, results[0].Status);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
                 Assert.True(Utils.DirectoriesEqual(originRepo, appManager.RepositoryPath));
             }
         }
@@ -184,15 +186,62 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        private string GetResponseBody(string url)
+        [Fact]
+        public void GoingBackInTimeDeploysOldFiles()
         {
-            HttpResponseMessage response = null;
+            string repositoryName = "Bakery2";
+            string appName = "PushSimpleRepoShouldDeploy";
+            string originRepo = Git.CreateLocalRepository(repositoryName);
+            var repository = new GitExeRepository(originRepo);
+            string originalCommitId = repository.CurrentId;
 
-            var client = new HttpClient();
-            response = client.Get(url);
+            using (var appManager = ApplicationManager.CreateApplication(appName))
+            {
+                // Deploy the app
+                appManager.GitDeploy(repositoryName);
 
-            return response.EnsureSuccessStatusCode().Content.ReadAsString();
+                string response = GetResponseBody(appManager.SiteUrl);
+                var results = appManager.DeploymentManager.GetResults().ToList();
+                Assert.Equal(1, results.Count);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
+
+                // Add a file
+                File.WriteAllText(Path.Combine(originRepo, "hello.txt"), "Wow");
+                Git.Commit(repositoryName, "Added hello.txt");
+                string helloUrl = appManager.SiteUrl + "/hello.txt";
+
+                // Deploy those changes
+                appManager.GitDeploy(repositoryName);
+
+                response = GetResponseBody(helloUrl);
+                results = appManager.DeploymentManager.GetResults().ToList();
+                Assert.Equal(2, results.Count);
+                Assert.Equal(DeployStatus.Success, results[1].Status);
+                Assert.Equal("Wow", response);
+
+                appManager.DeploymentManager.WaitForDeployment(() =>
+                {
+                    // Go back to the first deployment
+                    appManager.DeploymentManager.Deploy(originalCommitId);
+                });
+
+                results = appManager.DeploymentManager.GetResults().ToList();
+
+                Assert.Equal(HttpStatusCode.NotFound, GetResponse(helloUrl).StatusCode);
+                Assert.Equal(2, results.Count);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
+            }
         }
 
+        private string GetResponseBody(string url)
+        {
+            return GetResponse(url).EnsureSuccessStatusCode().Content.ReadAsString();
+        }
+
+        private HttpResponseMessage GetResponse(string url)
+        {
+            var client = new HttpClient();
+            return client.Get(url);
+        }
     }
 }
