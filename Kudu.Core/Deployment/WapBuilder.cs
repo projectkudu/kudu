@@ -16,6 +16,11 @@ namespace Kudu.Core.Deployment
             _tempPath = tempPath;
         }
 
+        public override Task Build(DeploymentContext context)
+        {
+            return BuildProject(context);
+        }
+
         protected override Task BuildProject(DeploymentContext context)
         {
             var tcs = new TaskCompletionSource<object>();
