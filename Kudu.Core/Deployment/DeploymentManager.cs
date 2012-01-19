@@ -296,33 +296,29 @@ namespace Kudu.Core.Deployment
                 };
 
                 builder.Build(context)
-                       .ContinueWith(task =>
+                       .Then(() =>
                        {
                            // End the build step
                            buildStep.Dispose();
+                           // Set the deployment percent to 50% and report status
+                           trackingFile.Percentage = 50;
+                           trackingFile.Save(_fileSystem);
+                           ReportStatus(id);
 
-                           if (task.IsFaulted)
-                           {
-                               NotifyError(logger, trackingFile, task.Exception);
+                           // Run post deployment steps
+                           RunPostDeploymentSteps(id, profiler, deployStep);
 
-                               ReportStatus(id);
+                           // Copy repository (if this is the first push)
+                           CopyRepository(id, profiler);
+                       })
+                       .Catch(ex =>
+                       {
+                           NotifyError(logger, trackingFile, ex);
 
-                               // End the deploy step
-                               deployStep.Dispose();
-                           }
-                           else
-                           {
-                               // Set the deployment percent to 50% and report status
-                               trackingFile.Percentage = 50;
-                               trackingFile.Save(_fileSystem);
-                               ReportStatus(id);
+                           ReportStatus(id);
 
-                               // Run post deployment steps
-                               RunPostDeploymentSteps(id, profiler, deployStep);
-
-                               // Copy repository (if this is the first push)
-                               CopyRepository(id, profiler);
-                           }
+                           // End the deploy step
+                           deployStep.Dispose();
                        });
             }
             catch (Exception e)
