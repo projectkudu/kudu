@@ -1,4 +1,7 @@
 ﻿<%@ Page Language="C#" %>
+<%@ Import Namespace="System.IO" %>
+<%@ Import Namespace="Kudu.Services.Web" %>
+<%@ Import Namespace="Kudu.Services" %>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -8,15 +11,66 @@
         body
         {
             color: #646465;
-            background-color: #F0F1F3;
             font-family: Helvetica, sans-serif;
-            font-size: 11px;
+            font-size: 12px;
+            margin-left: 2%;
         }
+        
+        a {
+            color: blue;
+            text-decoration: none;
+        }
+        
+        a:visited {
+            color: blue;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
         h1
         {
             padding-top: 20px;
             font-size: 20px;
         }
+        
+        table {
+            border-collapse: collapse;
+            font-family: Helvetica, sans-serif;
+            font-size: 13px;
+        }
+        
+        table td {
+            padding: 4px;
+        }
+        
+        #footer {
+            text-align: center;
+        }
+        
+        .header {
+            font-size: 15px;
+            font-weight: bold;
+            border-bottom:1px solid #ccc; 
+            width:30%; 
+            margin-top:40px;
+            margin-bottom:5px;
+        }
+        
+        ul li {
+           margin-top: 5px;
+        }
+        
+        .path {
+            font-family: Consolas;
+        }
+        
+        .sha {
+            font-size: 12px;
+            font-weight: normal;
+        }
+        
     </style>
     <head>
 </head>
@@ -24,7 +78,18 @@
 <body>
     <form id="MainForm" runat="server">
     <div>
-        <h1>Kudu - Build <%= typeof(Kudu.Services.MvcApplication).Assembly.GetName().Version %></h1>
+        <% 
+            string commitFile = MapPath("~/commit");
+            string sha = File.Exists(commitFile) ? File.ReadAllText(commitFile).Trim() : null;
+            var version = typeof(MvcApplication).Assembly.GetName().Version;
+            bool devSiteEnabled = PathResolver.ResolveDevelopmentPath() != null;
+        %>
+        
+        <h1>Kudu - Build <%= version %>
+        <% if (sha != null) { %>
+        (<a class="sha" href="https://github.com/projectkudu/kudu/commit/<%= sha %>"><%= sha.Substring(0, 10) %></a>)
+        <% } %>
+        </h1>
     </div>
     <div>
         <h2>API Help</h2>
@@ -33,15 +98,15 @@
             <ul>
                 <li><a href="live/scm/help">Source Control Management API</a></li>
                 <li><a href="live/files/help">Files API</a></li>
-                <li><a href="live/command/help">Command API</a></li>
+                <li><a href="live/command/help">Command Line API</a></li>
             </ul>
-        </div>        
+        </div>
         <div>
-            <h3>Development site (only available if the dev site exists.)</h3>
+            <h3>Development site <%= devSiteEnabled ? "" : "(Not enabled)" %></h3>
             <ul>
                 <li><a href="dev/scm/help">Source Control Management API</a></li>
                 <li><a href="dev/files/help">Files API</a></li>
-                <li><a href="dev/command/help">Command API</a></li>
+                <li><a href="dev/command/help">Command Line API</a></li>
             </ul>
         </div>
         <div>
@@ -50,7 +115,7 @@
                 <li><a href="deploy/help">Deployment API</a></li>
             </ul>
         </div>
-        <% if (Kudu.Services.Web.AppSettings.SettingsEnabled) { %>
+        <% if (AppSettings.SettingsEnabled) { %>
         <div>
             <h3>Environment variables and connection strings</h3>
             <ul>
@@ -60,7 +125,7 @@
         </div>
         <% } %>
 
-        <% if (Kudu.Services.Web.AppSettings.ProfilingEnabled) { %>
+        <% if (AppSettings.ProfilingEnabled) { %>
         <div>
             <h3>Profiler data</h3>
             <ul>
@@ -70,13 +135,20 @@
         <% } %>
 
     </div>
-    <div>&nbsp;</div>
-    <div>
-        Live website file server path:
-    </div>
-    <div>
-        <h4><%= MapPath("_app") %></h4>
-    </div>
+   
+   <div class="header">File Paths</div>
+
+    <table>
+        <tr>
+            <td>Live Site</td>
+            <td class="path"><%= MapPath("_app") %></td>
+        </tr>
+        <tr>
+            <td>Temp</td>
+            <td class="path"> <%= Path.GetTempPath() %></td>
+        </tr>
+    </table>
+
     </form>
 </body>
 </html>
