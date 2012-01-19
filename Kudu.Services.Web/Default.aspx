@@ -104,9 +104,15 @@
         <div>
             <h3>Development site <%= devSiteEnabled ? "" : "(Not enabled)" %></h3>
             <ul>
+                <% if (devSiteEnabled) { %>
                 <li><a href="dev/scm/help">Source Control Management API</a></li>
                 <li><a href="dev/files/help">Files API</a></li>
                 <li><a href="dev/command/help">Command Line API</a></li>
+                <% } else { %>
+                <li>Source Control Management API</li>
+                <li>Files API</li>
+                <li>Command Line API</li>
+                <% } %>
             </ul>
         </div>
         <div>
