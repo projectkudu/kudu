@@ -24,15 +24,20 @@
     </Target>
 
     <Target Name="BuildKuduServiceSite">
+        <ItemGroup>
+            <NativeBinaries Include="$(ProjectRoot)\packages\LibGit2Sharp*\NativeBinaries\x86\*.dll" />
+        </ItemGroup>
         <MSBuild Projects="$(ServiceSiteProject)" 
                  Targets="pipelinePreDeployCopyAllFilesToOneFolder" 
                  Properties="_PackageTempDir=$(ServiceSiteTargetPath);
                              AutoParameterizationWebConfigConnectionStrings=false;
                              SolutionDir=$(ProjectRoot)\;
                              MSBuildExtensionsPath32=$(ProjectRoot)\Kudu.Services.Web\msbuild"/>
+                             
         <Exec Command="&quot;$(MSBuildProgramFiles32)\Git\bin\git.exe&quot; rev-parse HEAD > $(ServiceSiteTargetPath)\commit"
               WorkingDirectory="$(ProjectRoot)" />
               
+        <Copy SourceFiles="@(NativeBinaries)" DestinationFolder="$(ServiceSiteTargetPath)\bin" SkipUnchangedFiles="true" />
     </Target>
   
     <Target Name="RunTests">
