@@ -39,7 +39,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Elmah">
-      <HintPath>..\packages\elmah.corelibrary.1.2\lib\Elmah.dll</HintPath>
+      <HintPath>..\packages\elmah.corelibrary.1.2.1\lib\Elmah.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.ApplicationServer.Http">
       <HintPath>..\packages\WebApi.0.5.0\lib\40-Full\Microsoft.ApplicationServer.Http.dll</HintPath>

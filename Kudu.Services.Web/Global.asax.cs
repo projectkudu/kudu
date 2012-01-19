@@ -96,6 +96,9 @@ namespace Kudu.Services
             factory.Configuration.EnableHelpPage = true;
             factory.Configuration.TransferMode = TransferMode.Streamed;
 
+#if DEBUG
+            factory.Configuration.IncludeExceptionDetail = true;
+#endif
             // Ensure that only our formatters are used
             factory.Configuration.Formatters.Clear();
             factory.Configuration.Formatters.Add(new SimpleJsonMediaTypeFormatter());

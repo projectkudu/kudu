@@ -67,6 +67,7 @@ namespace Kudu.Core.SourceControl.Git
                 Directory.CreateDirectory(WorkingDirectory);
                 // REVIEW: Shold we make the directory hidden like git exe does?
                 Repository.Init(WorkingDirectory);
+
                 _repository = null;
             }
         }
@@ -100,7 +101,7 @@ namespace Kudu.Core.SourceControl.Git
         {
             // REVIEW: Should we loop over all files and stage unstaged ones?
             var signature = new Signature(authorName, authorName, DateTimeOffset.UtcNow);
-            Commit commit = Repository.Commit(signature, signature, message);
+            Commit commit = Repository.Commit(message, signature, signature);
 
             return CreateChangeSet(commit);
         }
@@ -150,6 +151,7 @@ namespace Kudu.Core.SourceControl.Git
             if (_repository != null)
             {
                 _repository.Dispose();
+                _repository = null;
             }
         }
     }
