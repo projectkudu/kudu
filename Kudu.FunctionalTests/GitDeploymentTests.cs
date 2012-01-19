@@ -1,15 +1,17 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl.Git;
 using Kudu.FunctionalTests.Infrastructure;
+using Kudu.Web.Infrastructure;
 using Xunit;
 
 namespace Kudu.FunctionalTests
 {
-    public class GitDeploymentTests
+    public class GitDeploymentTests : IDisposable
     {
         [Fact]
         public void PushSimpleRepoShouldDeploy()
@@ -140,11 +142,13 @@ namespace Kudu.FunctionalTests
 
             using (var appManager = ApplicationManager.CreateApplication(appName))
             {
-                string deletePath = Path.Combine(originRepo, @"Mvc3Application\Scripts");
-
+                string deletePath = Path.Combine(originRepo, @"Mvc3Application\Scripts\jquery-1.5.1.js");
+                string projectPath = Path.Combine(originRepo, @"Mvc3Application\Mvc3Application.csproj");
+                
                 // Act
                 appManager.GitDeploy(repositoryName);
-                Directory.Delete(deletePath, recursive: true);
+                File.Delete(deletePath);
+                File.WriteAllText(projectPath, File.ReadAllText(projectPath).Replace(@"<Content Include=""Scripts\jquery-1.5.1.js"" />", ""));
                 Git.Commit(repositoryName, "Deleted all scripts");
                 appManager.GitDeploy(repositoryName);
                 string response = GetResponseBody(appManager.SiteUrl);
@@ -236,6 +240,12 @@ namespace Kudu.FunctionalTests
         private string GetResponseBody(string url)
         {
             return GetResponse(url).EnsureSuccessStatusCode().Content.ReadAsString();
+        }
+
+        public void Dispose()
+        {
+            Utils.DeleteDirectory(PathHelper.TestsRootPath);
+            Utils.DeleteDirectory(PathHelper.SitesPath);
         }
 
         private HttpResponseMessage GetResponse(string url)

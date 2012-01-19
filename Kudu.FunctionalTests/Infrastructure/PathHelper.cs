@@ -12,6 +12,7 @@ namespace Kudu.Web.Infrastructure
         // Test paths
         internal static readonly string TestsRootPath = Path.Combine(Directory.GetCurrentDirectory(), "Tests");
         internal static readonly string LocalRepositoriesDir = Path.GetFullPath(Path.Combine(TestsRootPath, "TestRepositories"));
+        internal static readonly string TestResultsPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "TestResults"));
         internal static readonly string ZippedRepositoriesDir = Path.Combine(@"..\..\ZippedRepositories");
 
     }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using Kudu.Client.Deployment;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.SiteManagement;
 using Kudu.Web.Infrastructure;
@@ -12,12 +13,14 @@ namespace Kudu.FunctionalTests.Infrastructure
         private readonly ISiteManager _siteManager;
         private readonly Site _site;
         private readonly string _appName;
+        private readonly string _path;
 
-        private ApplicationManager(ISiteManager siteManager, Site site, string appName)
+        private ApplicationManager(ISiteManager siteManager, Site site, string appName, string path)
         {
             _siteManager = siteManager;
             _site = site;
             _appName = appName;
+            _path = path;
         }
 
         public string SiteUrl
@@ -32,7 +35,7 @@ namespace Kudu.FunctionalTests.Infrastructure
             {
                 return Path.Combine(PathHelper.SitesPath, _appName, @"live\repository");
             }
-        }        
+        }
 
         public RemoteDeploymentManager DeploymentManager
         {
@@ -58,7 +61,34 @@ namespace Kudu.FunctionalTests.Infrastructure
 
         void IDisposable.Dispose()
         {
+            CopyLogs();
+
             _siteManager.DeleteSite(_appName);
+        }
+
+        private void CopyLogs()
+        {
+            try
+            {
+                string targetPath = Path.Combine(PathHelper.TestResultsPath, _appName);
+
+                // Clear the old logs
+                FileSystemHelpers.DeleteDirectorySafe(targetPath);
+
+                string[] logPaths = new[] { "profiles", "deployments" };
+
+
+                foreach (var logPath in logPaths)
+                {
+                    string source = Path.Combine(_path, logPath);
+                    string dest = Path.Combine(targetPath, logPath);
+                    FileSystemHelpers.Copy(source, dest);
+                }
+            }
+            catch
+            {
+                // Swallow this exception
+            }
         }
 
         public static ApplicationManager CreateApplication(string applicationName)
@@ -67,7 +97,7 @@ namespace Kudu.FunctionalTests.Infrastructure
             var siteManager = new SiteManager(pathResolver);
             Site site = siteManager.CreateSite(applicationName);
 
-            return new ApplicationManager(siteManager, site, applicationName)
+            return new ApplicationManager(siteManager, site, applicationName, pathResolver.GetApplicationPath(applicationName))
             {
                 SiteUrl = site.SiteUrl,
                 DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "deploy")
