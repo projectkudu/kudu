@@ -21,18 +21,20 @@ namespace Kudu.Core.SourceControl.Git
         {
             get
             {
-                return _libgitRepository.CurrentId;
+                return _exeRepository.CurrentId;
             }
         }
 
         public void Initialize()
         {
-            _exeRepository.Initialize();
+            _libgitRepository.Initialize();
+
+            _exeRepository.InitializePush();
         }
 
         public IEnumerable<Branch> GetBranches()
         {
-            return _libgitRepository.GetBranches();
+            return _exeRepository.GetBranches();
         }
 
         public IEnumerable<FileStatus> GetStatus()

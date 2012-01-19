@@ -30,7 +30,7 @@ namespace Kudu.Core.SourceControl
             switch (type)
             {
                 case RepositoryType.Git:
-                    new GitExeRepository(_path).Initialize();
+                    new HybridGitRepository(_path).Initialize();
                     break;
                 case RepositoryType.Mercurial:
                     new HgRepository(_path).Initialize();

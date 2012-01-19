@@ -37,6 +37,12 @@ namespace Kudu.Core.SourceControl.Git
         public void Initialize()
         {
             _gitExe.Execute("init");
+
+            InitializePush();
+        }
+
+        public void InitializePush()
+        {
             _gitExe.Execute("config core.autocrlf true");
 
             // Allow getting pushes even though we're not bare
