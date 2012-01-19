@@ -9,7 +9,7 @@ namespace Kudu.Core.SourceControl.Git
     /// <summary>
     /// Implementation of a git repository over LibGit2Sharp
     /// </summary>
-    public class LibGitRepository : IRepository
+    public class LibGitRepository : IRepository, IDisposable
     {
         private const string GitDir = ".git";
 
@@ -143,6 +143,14 @@ namespace Kudu.Core.SourceControl.Git
                                  commit.Author.Email,
                                  commit.Message,
                                  commit.Author.When);
+        }
+
+        public void Dispose()
+        {
+            if (_repository != null)
+            {
+                _repository.Dispose();
+            }
         }
     }
 }

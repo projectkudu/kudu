@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System;
 
 namespace Kudu.Core.SourceControl.Git
 {
@@ -6,7 +7,7 @@ namespace Kudu.Core.SourceControl.Git
     /// The goal of this repository is to implement a full repository using as much as
     /// libgit2sharp as possible unti it works for all scenarios.
     /// </summary>
-    public class HybridGitRepository : IRepository
+    public class HybridGitRepository : IRepository, IDisposable
     {
         private readonly GitExeRepository _exeRepository;
         private readonly LibGitRepository _libgitRepository;
@@ -93,6 +94,14 @@ namespace Kudu.Core.SourceControl.Git
         public void Update(string id)
         {
             _exeRepository.Update(id);
+        }
+
+        public void Dispose()
+        {
+            if (_libgitRepository != null)
+            {
+                _libgitRepository.Dispose();
+            }
         }
     }
 }
