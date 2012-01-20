@@ -1,17 +1,15 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl.Git;
 using Kudu.FunctionalTests.Infrastructure;
-using Kudu.Web.Infrastructure;
 using Xunit;
 
 namespace Kudu.FunctionalTests
 {
-    public class GitDeploymentTests : IDisposable
+    public class GitDeploymentTests
     {
         [Fact]
         public void PushSimpleRepoShouldDeploy()
@@ -22,19 +20,17 @@ namespace Kudu.FunctionalTests
             string verificationText = "Welcome to Fourth Coffee!";
             string originRepo = Git.CreateLocalRepository(repositoryName);
 
-            using (var appManager = ApplicationManager.CreateApplication(appName))
-            {
-                // Act
-                appManager.GitDeploy(repositoryName);
-                string response = GetResponseBody(appManager.SiteUrl);
-                var results = appManager.DeploymentManager.GetResults().ToList();
+            var appManager = ApplicationManager.CreateApplication(appName);
 
-                // Assert
-                Assert.Equal(1, results.Count);
-                Assert.Equal(DeployStatus.Success, results[0].Status);
-                Assert.True(response.Contains(verificationText));
-                Assert.True(Utils.DirectoriesEqual(originRepo, appManager.RepositoryPath));
-            }
+            // Act
+            appManager.GitDeploy(repositoryName);
+            string response = GetResponseBody(appManager.SiteUrl);
+            var results = appManager.DeploymentManager.GetResults().ToList();
+
+            // Assert
+            Assert.Equal(1, results.Count);
+            Assert.Equal(DeployStatus.Success, results[0].Status);
+            Assert.True(response.Contains(verificationText));
         }
 
         [Fact]
@@ -46,19 +42,17 @@ namespace Kudu.FunctionalTests
             string verificationText = "Welcome to ASP.NET MVC! - Change1";
             string originRepo = Git.CreateLocalRepository(repositoryName);
 
-            using (var appManager = ApplicationManager.CreateApplication(appName))
-            {
-                // Act
-                appManager.GitDeploy(repositoryName);
-                string response = GetResponseBody(appManager.SiteUrl);
-                var results = appManager.DeploymentManager.GetResults().ToList();
+            var appManager = ApplicationManager.CreateApplication(appName);
 
-                // Assert
-                Assert.Equal(1, results.Count);
-                Assert.Equal(DeployStatus.Success, results[0].Status);
-                Assert.True(response.Contains(verificationText));
-                Assert.True(Utils.DirectoriesEqual(originRepo, appManager.RepositoryPath));
-            }
+            // Act
+            appManager.GitDeploy(repositoryName);
+            string response = GetResponseBody(appManager.SiteUrl);
+            var results = appManager.DeploymentManager.GetResults().ToList();
+
+            // Assert
+            Assert.Equal(1, results.Count);
+            Assert.Equal(DeployStatus.Success, results[0].Status);
+            Assert.True(response.Contains(verificationText));
         }
 
         [Fact(Skip = "Issue #11")]
@@ -70,19 +64,17 @@ namespace Kudu.FunctionalTests
             string verificationText = "Kudu Deployment Testing: Mvc3Application_NoSolution";
             string originRepo = Git.CreateLocalRepository(repositoryName);
 
-            using (var appManager = ApplicationManager.CreateApplication(appName))
-            {
-                // Act
-                appManager.GitDeploy(repositoryName);
-                string response = GetResponseBody(appManager.SiteUrl);
-                var results = appManager.DeploymentManager.GetResults().ToList();
+            var appManager = ApplicationManager.CreateApplication(appName);
 
-                // Assert
-                Assert.Equal(1, results.Count);
-                Assert.Equal(DeployStatus.Success, results[0].Status);
-                Assert.True(response.Contains(verificationText));
-                Assert.True(Utils.DirectoriesEqual(originRepo, appManager.RepositoryPath));
-            }
+            // Act
+            appManager.GitDeploy(repositoryName);
+            string response = GetResponseBody(appManager.SiteUrl);
+            var results = appManager.DeploymentManager.GetResults().ToList();
+
+            // Assert
+            Assert.Equal(1, results.Count);
+            Assert.Equal(DeployStatus.Success, results[0].Status);
+            Assert.True(response.Contains(verificationText));
         }
 
         [Fact]
@@ -94,21 +86,18 @@ namespace Kudu.FunctionalTests
             string verificationText = "Welcome to ASP.NET MVC!";
             string originRepo = Git.CreateLocalRepository(repositoryName);
 
-            using (var appManager = ApplicationManager.CreateApplication(appName))
-            {
-                // Act
-                appManager.GitDeploy(repositoryName);
-                Git.Revert(repositoryName);
-                appManager.GitDeploy(repositoryName);
-                string response = GetResponseBody(appManager.SiteUrl);
-                var results = appManager.DeploymentManager.GetResults().ToList();
+            var appManager = ApplicationManager.CreateApplication(appName);
+            // Act
+            appManager.GitDeploy(repositoryName);
+            Git.Revert(repositoryName);
+            appManager.GitDeploy(repositoryName);
+            string response = GetResponseBody(appManager.SiteUrl);
+            var results = appManager.DeploymentManager.GetResults().ToList();
 
-                // Assert
-                Assert.Equal(2, results.Count);
-                Assert.Equal(DeployStatus.Success, results[0].Status);
-                Assert.True(response.Contains(verificationText));
-                Assert.True(Utils.DirectoriesEqual(originRepo, appManager.RepositoryPath));
-            }
+            // Assert
+            Assert.Equal(2, results.Count);
+            Assert.Equal(DeployStatus.Success, results[0].Status);
+            Assert.True(response.Contains(verificationText));
         }
 
         [Fact]
@@ -118,18 +107,16 @@ namespace Kudu.FunctionalTests
             string cloneUrl = "https://github.com/davidebbo/Express-Template.git";
             string originRepo = Git.Clone(repositoryName, cloneUrl);
 
-            using (var appManager = ApplicationManager.CreateApplication(repositoryName))
-            {
-                // Act
-                appManager.GitDeploy(repositoryName);
+            var appManager = ApplicationManager.CreateApplication(repositoryName);
 
-                var results = appManager.DeploymentManager.GetResults().ToList();
+            // Act
+            appManager.GitDeploy(repositoryName);
 
-                // Assert
-                Assert.Equal(1, results.Count);
-                Assert.Equal(DeployStatus.Success, results[0].Status);
-                Assert.True(Utils.DirectoriesEqual(originRepo, appManager.RepositoryPath));
-            }
+            var results = appManager.DeploymentManager.GetResults().ToList();
+
+            // Assert
+            Assert.Equal(1, results.Count);
+            Assert.Equal(DeployStatus.Success, results[0].Status);
         }
 
         [Fact]
@@ -140,26 +127,24 @@ namespace Kudu.FunctionalTests
             string verificationText = "Welcome to ASP.NET MVC!";
             string originRepo = Git.CreateLocalRepository(repositoryName);
 
-            using (var appManager = ApplicationManager.CreateApplication(appName))
-            {
-                string deletePath = Path.Combine(originRepo, @"Mvc3Application\Scripts\jquery-1.5.1.js");
-                string projectPath = Path.Combine(originRepo, @"Mvc3Application\Mvc3Application.csproj");
-                
-                // Act
-                appManager.GitDeploy(repositoryName);
-                File.Delete(deletePath);
-                File.WriteAllText(projectPath, File.ReadAllText(projectPath).Replace(@"<Content Include=""Scripts\jquery-1.5.1.js"" />", ""));
-                Git.Commit(repositoryName, "Deleted all scripts");
-                appManager.GitDeploy(repositoryName);
-                string response = GetResponseBody(appManager.SiteUrl);
-                var results = appManager.DeploymentManager.GetResults().ToList();
+            var appManager = ApplicationManager.CreateApplication(appName);
 
-                // Assert
-                Assert.Equal(2, results.Count);
-                Assert.Equal(DeployStatus.Success, results[0].Status);
-                Assert.True(response.Contains(verificationText));
-                Assert.True(Utils.DirectoriesEqual(originRepo, appManager.RepositoryPath));
-            }
+            string deletePath = Path.Combine(originRepo, @"Mvc3Application\Scripts\jquery-1.5.1.js");
+            string projectPath = Path.Combine(originRepo, @"Mvc3Application\Mvc3Application.csproj");
+
+            // Act
+            appManager.GitDeploy(repositoryName);
+            File.Delete(deletePath);
+            File.WriteAllText(projectPath, File.ReadAllText(projectPath).Replace(@"<Content Include=""Scripts\jquery-1.5.1.js"" />", ""));
+            Git.Commit(repositoryName, "Deleted all scripts");
+            appManager.GitDeploy(repositoryName);
+            string response = GetResponseBody(appManager.SiteUrl);
+            var results = appManager.DeploymentManager.GetResults().ToList();
+
+            // Assert
+            Assert.Equal(2, results.Count);
+            Assert.Equal(DeployStatus.Success, results[0].Status);
+            Assert.True(response.Contains(verificationText));
         }
 
         [Fact]
@@ -170,24 +155,22 @@ namespace Kudu.FunctionalTests
             string verificationText = "Welcome to Fourth Coffee!";
             string originRepo = Git.CreateLocalRepository(repositoryName);
 
-            using (var appManager = ApplicationManager.CreateApplication(appName))
-            {
-                string deletePath = Path.Combine(originRepo, @"Styles");
+            var appManager = ApplicationManager.CreateApplication(appName);
 
-                // Act
-                appManager.GitDeploy(repositoryName);
-                Directory.Delete(deletePath, recursive: true);
-                Git.Commit(repositoryName, "Deleted all styles");
-                appManager.GitDeploy(repositoryName);
-                string response = GetResponseBody(appManager.SiteUrl);
-                var results = appManager.DeploymentManager.GetResults().ToList();
+            string deletePath = Path.Combine(originRepo, @"Styles");
 
-                // Assert
-                Assert.Equal(2, results.Count);
-                Assert.Equal(DeployStatus.Success, results[0].Status);
-                Assert.True(response.Contains(verificationText));
-                Assert.True(Utils.DirectoriesEqual(originRepo, appManager.RepositoryPath));
-            }
+            // Act
+            appManager.GitDeploy(repositoryName);
+            Directory.Delete(deletePath, recursive: true);
+            Git.Commit(repositoryName, "Deleted all styles");
+            appManager.GitDeploy(repositoryName);
+            string response = GetResponseBody(appManager.SiteUrl);
+            var results = appManager.DeploymentManager.GetResults().ToList();
+
+            // Assert
+            Assert.Equal(2, results.Count);
+            Assert.Equal(DeployStatus.Success, results[0].Status);
+            Assert.True(response.Contains(verificationText));
         }
 
         [Fact]
@@ -199,53 +182,45 @@ namespace Kudu.FunctionalTests
             var repository = new GitExeRepository(originRepo);
             string originalCommitId = repository.CurrentId;
 
-            using (var appManager = ApplicationManager.CreateApplication(appName))
+            var appManager = ApplicationManager.CreateApplication(appName);
+
+            // Deploy the app
+            appManager.GitDeploy(repositoryName);
+
+            string response = GetResponseBody(appManager.SiteUrl);
+            var results = appManager.DeploymentManager.GetResults().ToList();
+            Assert.Equal(1, results.Count);
+            Assert.Equal(DeployStatus.Success, results[0].Status);
+
+            // Add a file
+            File.WriteAllText(Path.Combine(originRepo, "hello.txt"), "Wow");
+            Git.Commit(repositoryName, "Added hello.txt");
+            string helloUrl = appManager.SiteUrl + "/hello.txt";
+
+            // Deploy those changes
+            appManager.GitDeploy(repositoryName);
+
+            response = GetResponseBody(helloUrl);
+            results = appManager.DeploymentManager.GetResults().ToList();
+            Assert.Equal(2, results.Count);
+            Assert.Equal(DeployStatus.Success, results[1].Status);
+            Assert.Equal("Wow", response);
+
+            appManager.DeploymentManager.WaitForDeployment(() =>
             {
-                // Deploy the app
-                appManager.GitDeploy(repositoryName);
+                // Go back to the first deployment
+                appManager.DeploymentManager.Deploy(originalCommitId);
+            });
 
-                string response = GetResponseBody(appManager.SiteUrl);
-                var results = appManager.DeploymentManager.GetResults().ToList();
-                Assert.Equal(1, results.Count);
-                Assert.Equal(DeployStatus.Success, results[0].Status);
+            results = appManager.DeploymentManager.GetResults().ToList();
 
-                // Add a file
-                File.WriteAllText(Path.Combine(originRepo, "hello.txt"), "Wow");
-                Git.Commit(repositoryName, "Added hello.txt");
-                string helloUrl = appManager.SiteUrl + "/hello.txt";
-
-                // Deploy those changes
-                appManager.GitDeploy(repositoryName);
-
-                response = GetResponseBody(helloUrl);
-                results = appManager.DeploymentManager.GetResults().ToList();
-                Assert.Equal(2, results.Count);
-                Assert.Equal(DeployStatus.Success, results[1].Status);
-                Assert.Equal("Wow", response);
-
-                appManager.DeploymentManager.WaitForDeployment(() =>
-                {
-                    // Go back to the first deployment
-                    appManager.DeploymentManager.Deploy(originalCommitId);
-                });
-
-                results = appManager.DeploymentManager.GetResults().ToList();
-
-                Assert.Equal(HttpStatusCode.NotFound, GetResponse(helloUrl).StatusCode);
-                Assert.Equal(2, results.Count);
-                Assert.Equal(DeployStatus.Success, results[0].Status);
-            }
+            Assert.Equal(HttpStatusCode.NotFound, GetResponse(helloUrl).StatusCode);
+            Assert.Equal(2, results.Count);
         }
 
         private string GetResponseBody(string url)
         {
             return GetResponse(url).EnsureSuccessStatusCode().Content.ReadAsString();
-        }
-
-        public void Dispose()
-        {
-            Utils.DeleteDirectory(PathHelper.TestsRootPath);
-            Utils.DeleteDirectory(PathHelper.SitesPath);
         }
 
         private HttpResponseMessage GetResponse(string url)

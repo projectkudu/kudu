@@ -16,26 +16,7 @@ namespace Kudu.FunctionalTests.Infrastructure
                 }
             }
         }
-
-        public static void DeleteDirectory(string targetDir)
-        {
-            string[] files = Directory.GetFiles(targetDir);
-            string[] dirs = Directory.GetDirectories(targetDir);
-
-            foreach (string file in files)
-            {
-                File.SetAttributes(file, FileAttributes.Normal);
-                File.Delete(file);
-            }
-
-            foreach (string dir in dirs)
-            {
-                DeleteDirectory(dir);
-            }
-
-            Directory.Delete(targetDir, false);
-        }
-
+        
         public static bool DirectoriesEqual(string path1, string path2)
         {
             string[] files1 = Directory.GetFiles(path1);
