@@ -1,11 +1,9 @@
 ﻿using System;
-using System.IO;
+using System.Diagnostics;
 using Kudu.Client.Deployment;
-using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.SiteManagement;
 using Kudu.Web.Infrastructure;
-using System.Diagnostics;
 
 namespace Kudu.FunctionalTests.Infrastructure
 {
@@ -14,14 +12,12 @@ namespace Kudu.FunctionalTests.Infrastructure
         private readonly ISiteManager _siteManager;
         private readonly Site _site;
         private readonly string _appName;
-        private readonly string _path;
-
-        private ApplicationManager(ISiteManager siteManager, Site site, string appName, string path)
+        
+        private ApplicationManager(ISiteManager siteManager, Site site, string appName)
         {
             _siteManager = siteManager;
             _site = site;
             _appName = appName;
-            _path = path;
         }
 
         public string SiteUrl
@@ -89,7 +85,7 @@ namespace Kudu.FunctionalTests.Infrastructure
 
             Site site = siteManager.CreateSite(applicationName);
 
-            return new ApplicationManager(siteManager, site, applicationName, pathResolver.GetLiveSitePath(applicationName))
+            return new ApplicationManager(siteManager, site, applicationName)
             {
                 SiteUrl = site.SiteUrl,
                 DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "deploy")
