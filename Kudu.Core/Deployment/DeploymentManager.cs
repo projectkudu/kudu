@@ -382,7 +382,7 @@ namespace Kudu.Core.Deployment
                     // Copy the repository from the temporary path to the repository target path
                     FileSystemHelpers.Copy(_environment.DeploymentRepositoryPath,
                                            _environment.DeploymentRepositoryTargetPath,
-                                           skipHidden: false);
+                                           skipScmFolder: false);
                 }
             }
             catch (Exception ex)

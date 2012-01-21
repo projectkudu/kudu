@@ -52,6 +52,27 @@ namespace Kudu.FunctionalTests.Infrastructure
             }
         }
 
+        private void Delete()
+        {
+            _siteManager.DeleteSite(_appName);
+        }
+
+        public static void Run(string applicationName, Action<ApplicationManager> action)
+        {
+            var appManager = CreateApplication(applicationName);
+            try
+            {
+                action(appManager);
+
+                appManager.Delete();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                throw;
+            }
+        }
+
         public static ApplicationManager CreateApplication(string applicationName)
         {
             var pathResolver = new DefaultPathResolver(PathHelper.ServiceSitePath, PathHelper.SitesPath);
@@ -68,7 +89,7 @@ namespace Kudu.FunctionalTests.Infrastructure
 
             Site site = siteManager.CreateSite(applicationName);
 
-            return new ApplicationManager(siteManager, site, applicationName, pathResolver.GetApplicationPath(applicationName))
+            return new ApplicationManager(siteManager, site, applicationName, pathResolver.GetLiveSitePath(applicationName))
             {
                 SiteUrl = site.SiteUrl,
                 DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "deploy")

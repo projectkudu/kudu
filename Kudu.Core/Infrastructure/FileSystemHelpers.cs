@@ -124,14 +124,14 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        internal static void Copy(string sourcePath, string destinationPath, bool skipHidden = true)
+        internal static void Copy(string sourcePath, string destinationPath, bool skipScmFolder = true)
         {
             Copy(sourcePath,
                  destinationPath,
                  new DirectoryInfoWrapper(new DirectoryInfo(sourcePath)),
                  new DirectoryInfoWrapper(new DirectoryInfo(destinationPath)),
                  path => new DirectoryInfoWrapper(new DirectoryInfo(path)),
-                 skipHidden);
+                 skipScmFolder);
         }
 
         internal static void Copy(string sourcePath,
@@ -139,12 +139,10 @@ namespace Kudu.Core.Infrastructure
                                   DirectoryInfoBase sourceDirectory,
                                   DirectoryInfoBase destinationDirectory,
                                   Func<string, DirectoryInfoBase> createDirectoryInfo,
-                                  bool skipHidden)
+                                  bool skipScmFolder)
         {
             // Skip hidden directories and directories that begin with .
-            if (skipHidden &&
-                (sourceDirectory.Attributes.HasFlag(FileAttributes.Hidden) ||
-                 sourceDirectory.Name.StartsWith(".")))
+            if (skipScmFolder && IsSourceControlFolder(sourceDirectory))
             {
                 return;
             }
@@ -172,10 +170,10 @@ namespace Kudu.Core.Infrastructure
                     targetSubDirectory = createDirectoryInfo(path);
                 }
 
-                Copy(sourcePath, destinationPath, sourceSubDirectory, targetSubDirectory, createDirectoryInfo, skipHidden);
+                Copy(sourcePath, destinationPath, sourceSubDirectory, targetSubDirectory, createDirectoryInfo, skipScmFolder);
             }
         }
-
+        
         internal static void SmartCopy(string sourcePath,
                                        string destinationPath,
                                        Func<string, bool> existsInPrevious,
@@ -184,9 +182,8 @@ namespace Kudu.Core.Infrastructure
                                        Func<string, DirectoryInfoBase> createDirectoryInfo,
                                        bool skipOldFiles)
         {
-            // Skip hidden directories and directories that begin with .
-            if (sourceDirectory.Attributes.HasFlag(FileAttributes.Hidden) ||
-                sourceDirectory.Name.StartsWith("."))
+            // Skip source control folder
+            if (IsSourceControlFolder(sourceDirectory))
             {
                 return;
             }
@@ -272,6 +269,12 @@ namespace Kudu.Core.Infrastructure
                 // Sync all sub directories
                 SmartCopy(sourcePath, destinationPath, existsInPrevious, sourceSubDirectory, targetSubDirectory, createDirectoryInfo, skipOldFiles);
             }
+        }
+
+        private static bool IsSourceControlFolder(DirectoryInfoBase directoryInfo)
+        {
+            // TODO: Add hg later
+            return directoryInfo.Name.StartsWith(".git", StringComparison.OrdinalIgnoreCase);
         }
 
         private static string GetDestinationPath(string sourceRootPath, string destinationRootPath, FileSystemInfoBase info)

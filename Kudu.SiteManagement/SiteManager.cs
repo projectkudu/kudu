@@ -31,7 +31,7 @@ namespace Kudu.SiteManagement
 
                 // Create the main site
                 string siteName = GetLiveSite(applicationName);
-                string siteRoot = _pathResolver.GetApplicationPath(applicationName);
+                string siteRoot = _pathResolver.GetLiveSitePath(applicationName);
                 string webRoot = Path.Combine(siteRoot, Constants.WebRoot);
                 int sitePort = CreateSite(iis, siteName, webRoot);
 
@@ -100,11 +100,13 @@ namespace Kudu.SiteManagement
             // Don't delete the physical files for the service site
             DeleteSite(iis, GetServiceSite(applicationName), deletePhysicalFiles: false);
 
-            var appPath = _pathResolver.GetApplicationPath(applicationName);
+            string appPath = _pathResolver.GetApplicationPath(applicationName);
+            var sitePath = _pathResolver.GetLiveSitePath(applicationName);
             var devPath = _pathResolver.GetDeveloperApplicationPath(applicationName);
 
-            DeleteSafe(appPath);
+            DeleteSafe(sitePath);
             DeleteSafe(devPath);
+            DeleteSafe(appPath);
 
             iis.CommitChanges();
         }

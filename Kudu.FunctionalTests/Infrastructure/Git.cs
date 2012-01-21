@@ -71,6 +71,11 @@ namespace Kudu.FunctionalTests.Infrastructure
             // Unzip it
             Utils.Unzip(zippedPath, PathHelper.LocalRepositoriesDir);
 
+            return GetRepositoryPath(repositoryName);
+        }
+
+        public static string GetRepositoryPath(string repositoryName)
+        {
             return Path.Combine(PathHelper.LocalRepositoriesDir, repositoryName);
         }
 
