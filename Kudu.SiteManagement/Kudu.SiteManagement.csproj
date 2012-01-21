@@ -58,8 +58,10 @@
       <Link>FileSystemHelpers.cs</Link>
     </Compile>
     <Compile Include="DefaultPathResolver.cs" />
+    <Compile Include="IISExtensions.cs" />
     <Compile Include="IPathResolver.cs" />
     <Compile Include="ISiteManager.cs" />
+    <Compile Include="PollingWait.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Site.cs" />
     <Compile Include="SiteManager.cs" />

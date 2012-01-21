@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.SourceControl.Git;
 using Kudu.Web.Infrastructure;
 using SystemEnvironment = System.Environment;
 
@@ -51,19 +52,19 @@ namespace Kudu.FunctionalTests.Infrastructure
             gitExe.Execute("add \"{0}\"", path);
         }
 
-        public static string Clone(string repositoryName, string source)
+        public static TestRepository Clone(string repositoryName, string source)
         {
             // Make sure the directory is empty
-            string repositoryPath = Path.Combine(PathHelper.LocalRepositoriesDir, repositoryName);
+            string repositoryPath = GetRepositoryPath(repositoryName);
             FileSystemHelpers.DeleteDirectorySafe(repositoryPath);
             Executable gitExe = GetGitExe(repositoryName);
 
             gitExe.Execute("clone \"{0}\" .", source);
 
-            return Path.Combine(PathHelper.LocalRepositoriesDir, repositoryName);
+            return new TestRepository(repositoryName);
         }
 
-        public static string CreateLocalRepository(string repositoryName)
+        public static TestRepository CreateLocalRepository(string repositoryName)
         {
             // Get the path to the repository
             string zippedPath = Path.Combine(PathHelper.ZippedRepositoriesDir, repositoryName + ".zip");
@@ -71,7 +72,7 @@ namespace Kudu.FunctionalTests.Infrastructure
             // Unzip it
             Utils.Unzip(zippedPath, PathHelper.LocalRepositoriesDir);
 
-            return GetRepositoryPath(repositoryName);
+            return new TestRepository(repositoryName);
         }
 
         public static string GetRepositoryPath(string repositoryName)
@@ -94,12 +95,45 @@ namespace Kudu.FunctionalTests.Infrastructure
 
         private static Executable GetGitExe(string repositoryName)
         {
-            string repositoryPath = Path.Combine(PathHelper.LocalRepositoriesDir, repositoryName);
+            string repositoryPath = GetRepositoryPath(repositoryName);
 
             FileSystemHelpers.EnsureDirectory(repositoryPath);
 
             return new Executable(ResolveGitPath(), repositoryPath);
         }
 
+        public class TestRepository : IDisposable
+        {
+            private readonly string _physicalPath;
+            private readonly GitExeRepository _repository;
+
+            public TestRepository(string repositoryName)
+            {
+                _physicalPath = GetRepositoryPath(repositoryName);
+                _repository = new GitExeRepository(_physicalPath);
+            }
+
+
+            public string CurrentId
+            {
+                get
+                {
+                    return _repository.CurrentId;
+                }
+            }
+
+            public string PhysicalPath
+            {
+                get
+                {
+                    return _physicalPath;
+                }
+            }
+
+            public void Dispose()
+            {
+                FileSystemHelpers.DeleteDirectorySafe(PhysicalPath);
+            }
+        }
     }
 }

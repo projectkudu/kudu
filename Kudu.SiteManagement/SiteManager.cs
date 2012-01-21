@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
+using System.Net.NetworkInformation;
 using System.Threading;
 using Kudu.Core.Infrastructure;
 using IIS = Microsoft.Web.Administration;
-using System.Net.NetworkInformation;
 
 namespace Kudu.SiteManagement
 {
@@ -75,13 +75,11 @@ namespace Kudu.SiteManagement
                 // Ensure the directory is created
                 FileSystemHelpers.EnsureDirectory(webRoot);
 
-
                 // Map a path called app to the site root under the service site
                 MapServiceSitePath(iis, applicationName, Constants.MappedDevSite, siteRoot);
 
                 iis.CommitChanges();
 
-                Thread.Sleep(1000);
 
                 siteUrl = String.Format("http://localhost:{0}/", sitePort);
                 return true;
@@ -95,20 +93,32 @@ namespace Kudu.SiteManagement
         {
             var iis = new IIS.ServerManager();
 
+            var kuduPool = EnsureKuduAppPool(iis);
+
             DeleteSite(iis, GetLiveSite(applicationName));
             DeleteSite(iis, GetDevSite(applicationName));
             // Don't delete the physical files for the service site
             DeleteSite(iis, GetServiceSite(applicationName), deletePhysicalFiles: false);
 
+            iis.CommitChanges();
+
             string appPath = _pathResolver.GetApplicationPath(applicationName);
             var sitePath = _pathResolver.GetLiveSitePath(applicationName);
             var devPath = _pathResolver.GetDeveloperApplicationPath(applicationName);
 
-            DeleteSafe(sitePath);
-            DeleteSafe(devPath);
-            DeleteSafe(appPath);
+            try
+            {
+                kuduPool.StopAndWait();
 
-            iis.CommitChanges();
+                DeleteSafe(sitePath);
+                DeleteSafe(devPath);
+                DeleteSafe(appPath);
+            }
+            finally
+            {
+                kuduPool.StartAndWait();
+            }
+
         }
 
         public void SetDeveloperSiteWebRoot(string applicationName, string siteRoot)
@@ -158,6 +168,7 @@ namespace Kudu.SiteManagement
                 kuduAppPool.ManagedPipelineMode = IIS.ManagedPipelineMode.Integrated;
                 kuduAppPool.ManagedRuntimeVersion = "v4.0";
                 kuduAppPool.AutoStart = true;
+                kuduAppPool.WaitForState(IIS.ObjectState.Started);
             }
 
             return kuduAppPool;
@@ -217,7 +228,7 @@ namespace Kudu.SiteManagement
             var site = iis.Sites[siteName];
             if (site != null)
             {
-                site.Stop();
+                site.StopAndWait();
                 if (deletePhysicalFiles)
                 {
                     string physicalPath = site.Applications[0].VirtualDirectories[0].PhysicalPath;
