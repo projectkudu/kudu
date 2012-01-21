@@ -6,7 +6,7 @@
         <ToolsPath>$(ProjectRoot)\tools\</ToolsPath>
         <XunitPath>$(ToolsPath)xunit\</XunitPath>
         <ArtifactsPath>$(ProjectRoot)\artifacts\$(Configuration)</ArtifactsPath>
-        <ServiceSiteTargetPath>$(ArtifactsPath)\KuduService</ServiceSiteTargetPath>
+        <ServiceSiteTargetPath Condition="$(ServiceSiteTargetPath) == ''">$(ArtifactsPath)\KuduService</ServiceSiteTargetPath>
         <ServiceSiteProject>$(ProjectRoot)\Kudu.Services.Web\Kudu.Services.Web.csproj</ServiceSiteProject>
     </PropertyGroup>
     
