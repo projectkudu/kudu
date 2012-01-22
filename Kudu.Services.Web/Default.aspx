@@ -2,6 +2,11 @@
 <%@ Import Namespace="System.IO" %>
 <%@ Import Namespace="Kudu.Services.Web" %>
 <%@ Import Namespace="Kudu.Services" %>
+<%@ Import Namespace="System.Web.Hosting" %>
+
+<% 
+    var showUpdateLink = HostingEnvironment.VirtualPathProvider.FileExists("~/Update.aspx");
+%>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -66,7 +71,12 @@
             font-family: Consolas;
         }
         
-        .sha {
+        #sha {
+            font-size: 12px;
+            font-weight: normal;
+        }
+        
+        #update-link {
             font-size: 12px;
             font-weight: normal;
         }
@@ -76,7 +86,6 @@
 </head>
 </head>
 <body>
-    <form id="MainForm" runat="server">
     <div>
         <% 
             string commitFile = MapPath("~/commit");
@@ -87,7 +96,10 @@
         
         <h1>Kudu - Build <%= version %>
         <% if (sha != null) { %>
-        (<a class="sha" href="https://github.com/projectkudu/kudu/commit/<%= sha %>"><%= sha.Substring(0, 10) %></a>)
+        (<a id="sha" href="https://github.com/projectkudu/kudu/commit/<%= sha %>"><%= sha.Substring(0, 10) %></a>)
+        <% } %>
+        <% if (showUpdateLink) { %>
+        <a id="update-link" href="Update.aspx">Update to latest</a>
         <% } %>
         </h1>
     </div>
@@ -154,7 +166,5 @@
             <td class="path"> <%= Path.GetTempPath() %></td>
         </tr>
     </table>
-
-    </form>
 </body>
 </html>
