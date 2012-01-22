@@ -99,7 +99,7 @@
         (<a id="sha" href="https://github.com/projectkudu/kudu/commit/<%= sha %>"><%= sha.Substring(0, 10) %></a>)
         <% } %>
         <% if (showUpdateLink) { %>
-        <a id="update-link" href="Update.aspx">Update to latest</a>
+        <a id="update-link" href="Update.aspx">Update</a>
         <% } %>
         </h1>
     </div>
