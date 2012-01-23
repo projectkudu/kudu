@@ -59,14 +59,16 @@ namespace Kudu.FunctionalTests.Infrastructure
                 action();
 
                 Assert.True(deployEvent.WaitOne(waitTimeout), "Waiting for deployment timeout out!");
-
-                // Stop listenting
-                deploymentManager.Stop();
             }
             catch
             {
                 deployEvent.Set();
                 throw;
+            }
+            finally
+            {
+                // Stop listenting
+                deploymentManager.Stop();
             }
         }
 
