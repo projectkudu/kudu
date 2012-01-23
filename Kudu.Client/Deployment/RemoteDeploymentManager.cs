@@ -47,6 +47,11 @@ namespace Kudu.Client.Deployment
             return _client.GetAsyncJson<DeployResult>("details?id=" + id);
         }
 
+        public IEnumerable<string> GetManifest(string id)
+        {
+            return _client.GetAsyncJson<IEnumerable<string>>("manifest?id=" + id);
+        }
+
         public IEnumerable<LogEntry> GetLogEntries(string id)
         {
             return _client.GetAsyncJson<IEnumerable<LogEntry>>("log?id=" + id);

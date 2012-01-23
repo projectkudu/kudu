@@ -109,5 +109,13 @@ namespace Kudu.Services.Deployment
                 return _deploymentManager.GetResult(id);
             }
         }
+
+        [Description("Gets the deployed files for a deployment based on its id.")]
+        [WebGet(UriTemplate = "manifest?id={id}")]
+        public IEnumerable<string> GetManifest(string id)
+        {
+            return _deploymentManager.GetManifest(id);
+        }
+
     }
 }

@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -18,7 +20,7 @@ namespace Kudu.FunctionalTests
             string appName = "PushSimpleRepoShouldDeploy";
             string verificationText = "Welcome to Fourth Coffee!";
 
-            using (Git.CreateLocalRepository(repositoryName))
+            using (var repo = Git.CreateLocalRepository(repositoryName))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -26,8 +28,10 @@ namespace Kudu.FunctionalTests
                     appManager.GitDeploy(repositoryName);
                     string response = GetResponseBody(appManager.SiteUrl);
                     var results = appManager.DeploymentManager.GetResults().ToList();
+                    var deployedFiles = new HashSet<string>(appManager.DeploymentManager.GetManifest(repo.CurrentId), StringComparer.OrdinalIgnoreCase);
 
                     // Assert
+                    Assert.True(deployedFiles.Contains("Default.cshtml"));
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
                     Assert.True(response.Contains(verificationText));

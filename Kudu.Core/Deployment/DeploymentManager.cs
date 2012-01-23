@@ -84,6 +84,22 @@ namespace Kudu.Core.Deployment
             };
         }
 
+        public IEnumerable<string> GetManifest(string id)
+        {
+            var profiler = _profilerFactory.GetProfiler();
+            using (profiler.Step("DeploymentManager.GetManifest(id)"))
+            {
+                string path = GetDeploymentManifestPath(id);
+
+                if (!_fileSystem.File.Exists(path))
+                {
+                    throw new InvalidOperationException(String.Format("No manifest found for '{0}'.", id));
+                }
+
+                return new DeploymentManifest(path).GetPaths();
+            }
+        }
+
         public IEnumerable<LogEntry> GetLogEntries(string id)
         {
             var profiler = _profilerFactory.GetProfiler();
@@ -111,7 +127,7 @@ namespace Kudu.Core.Deployment
                 {
                     throw new InvalidOperationException(String.Format("No log found for '{0}'.", id));
                 }
-
+                
                 return new XmlLogger(_fileSystem, path).GetLogEntryDetails(entryId).ToList();
             }
         }
@@ -170,7 +186,7 @@ namespace Kudu.Core.Deployment
             }
 
         }
-
+        
         public void Deploy()
         {
             IRepository repository = _repositoryManager.GetRepository();
