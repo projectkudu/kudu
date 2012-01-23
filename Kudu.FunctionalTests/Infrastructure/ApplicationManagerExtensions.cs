@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using Kudu.Client.Deployment;
 using Xunit;
 
@@ -8,6 +10,7 @@ namespace Kudu.FunctionalTests.Infrastructure
     public static class ApplicationManagerExtensions
     {
         private static readonly TimeSpan _defaultTimeOut = TimeSpan.FromMinutes(2);
+        private static bool _errorCallbackInitialized;
 
         public static void GitDeploy(this ApplicationManager appManager, string repositoryName)
         {
@@ -31,6 +34,12 @@ namespace Kudu.FunctionalTests.Infrastructure
         public static void WaitForDeployment(this RemoteDeploymentManager deploymentManager, Action action, TimeSpan waitTimeout)
         {
             var deployEvent = new ManualResetEvent(false);
+
+            if (!_errorCallbackInitialized)
+            {
+                _errorCallbackInitialized = true;
+                TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+            }
 
             try
             {
@@ -59,6 +68,12 @@ namespace Kudu.FunctionalTests.Infrastructure
                 deployEvent.Set();
                 throw;
             }
+        }
+
+        private static void OnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
+        {
+            Debug.WriteLine(e.Exception.GetBaseException().ToString());
+            e.SetObserved();
         }
     }
 }
