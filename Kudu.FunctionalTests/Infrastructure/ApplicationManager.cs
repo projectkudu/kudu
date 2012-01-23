@@ -26,6 +26,12 @@ namespace Kudu.FunctionalTests.Infrastructure
             private set;
         }
 
+        public string ServiceUrl
+        {
+            get;
+            private set;
+        }
+
         public RemoteDeploymentManager DeploymentManager
         {
             get;
@@ -88,6 +94,7 @@ namespace Kudu.FunctionalTests.Infrastructure
             return new ApplicationManager(siteManager, site, applicationName)
             {
                 SiteUrl = site.SiteUrl,
+                ServiceUrl = site.ServiceUrl,
                 DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "deploy")
             };
         }

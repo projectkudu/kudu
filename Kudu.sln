@@ -26,6 +26,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.SiteManagement", "Kudu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.FunctionalTests", "Kudu.FunctionalTests\Kudu.FunctionalTests.csproj", "{AB93801E-467D-4450-8951-60AE5A51CF4F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.Performance", "Kudu.Performance\Kudu.Performance.csproj", "{E08D0497-2553-4DF0-9FE4-4D6F75CB80C4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -136,6 +138,16 @@ Global
 		{AB93801E-467D-4450-8951-60AE5A51CF4F}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{AB93801E-467D-4450-8951-60AE5A51CF4F}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{AB93801E-467D-4450-8951-60AE5A51CF4F}.Release|x86.ActiveCfg = Release|Any CPU
+		{E08D0497-2553-4DF0-9FE4-4D6F75CB80C4}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{E08D0497-2553-4DF0-9FE4-4D6F75CB80C4}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{E08D0497-2553-4DF0-9FE4-4D6F75CB80C4}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{E08D0497-2553-4DF0-9FE4-4D6F75CB80C4}.Debug|x86.ActiveCfg = Debug|x86
+		{E08D0497-2553-4DF0-9FE4-4D6F75CB80C4}.Debug|x86.Build.0 = Debug|x86
+		{E08D0497-2553-4DF0-9FE4-4D6F75CB80C4}.Release|Any CPU.ActiveCfg = Release|x86
+		{E08D0497-2553-4DF0-9FE4-4D6F75CB80C4}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{E08D0497-2553-4DF0-9FE4-4D6F75CB80C4}.Release|Mixed Platforms.Build.0 = Release|x86
+		{E08D0497-2553-4DF0-9FE4-4D6F75CB80C4}.Release|x86.ActiveCfg = Release|x86
+		{E08D0497-2553-4DF0-9FE4-4D6F75CB80C4}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -143,5 +155,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{4ED64AAA-8F69-4FEE-9004-9060A9CB8111} = {FA1EA7CE-E6A4-4E55-AD76-6B43572A9092}
 		{AB93801E-467D-4450-8951-60AE5A51CF4F} = {FA1EA7CE-E6A4-4E55-AD76-6B43572A9092}
+		{E08D0497-2553-4DF0-9FE4-4D6F75CB80C4} = {FA1EA7CE-E6A4-4E55-AD76-6B43572A9092}
 	EndGlobalSection
 EndGlobal
