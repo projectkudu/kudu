@@ -22,7 +22,8 @@ namespace Kudu.Client.SourceControl
                               .Result
                               .EnsureSuccessful()
                               .Content
-                              .ReadAsString();
+                              .ReadAsStringAsync()
+                              .Result;
             }
         }
 
@@ -82,7 +83,8 @@ namespace Kudu.Client.SourceControl
             string json = _client.PostAsync("commit", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("name", authorName), new KeyValuePair<string, string>("message", message)))
                                  .Result
                                  .EnsureSuccessful()
-                                 .Content.ReadAsString();
+                                 .Content.ReadAsStringAsync()
+                                 .Result;
 
             return JsonConvert.DeserializeObject<ChangeSet>(json);
         }

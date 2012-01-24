@@ -268,13 +268,13 @@ namespace Kudu.FunctionalTests
 
         private string GetResponseBody(string url)
         {
-            return GetResponse(url).EnsureSuccessStatusCode().Content.ReadAsString();
+            return GetResponse(url).EnsureSuccessStatusCode().Content.ReadAsStringAsync().Result;
         }
 
         private HttpResponseMessage GetResponse(string url)
         {
             var client = new HttpClient();
-            return client.Get(url);
+            return client.GetAsync(url).Result;
         }
     }
 }

@@ -44,7 +44,7 @@ namespace Kudu.Performance
 
                     Log("Collecting server profile...");
                     var client = new HttpClient();
-                    serverProfile = client.Get(appManager.ServiceUrl + "profile").Content.ReadAsString();
+                    serverProfile = client.GetAsync(appManager.ServiceUrl + "profile").Result.Content.ReadAsStringAsync().Result;
                 });
 
                 Log("Collecting repository stats");

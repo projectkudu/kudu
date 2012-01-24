@@ -102,10 +102,10 @@ namespace Kudu.Services.GitServer
             {
                 if (request.Content.Headers.ContentEncoding.Contains("gzip"))
                 {
-                    return new GZipStream(request.Content.ContentReadStream, CompressionMode.Decompress);
+                    return new GZipStream(request.Content.ReadAsStreamAsync().Result, CompressionMode.Decompress);
                 }
 
-                return request.Content.ContentReadStream;
+                return request.Content.ReadAsStreamAsync().Result;
             }
         }
 

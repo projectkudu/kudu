@@ -12,7 +12,7 @@ namespace Kudu.Client.Infrastructure
         public static T GetAsyncJson<T>(this HttpClient client, string url)
         {
             var response = client.GetAsync(url);
-            var content = response.Result.EnsureSuccessful().Content.ReadAsString();
+            var content = response.Result.EnsureSuccessful().Content.ReadAsStringAsync().Result;
             
             return JsonConvert.DeserializeObject<T>(content);
         }
@@ -21,7 +21,7 @@ namespace Kudu.Client.Infrastructure
         {
             if (!response.IsSuccessStatusCode)
             {
-                var content = response.Content.ReadAsString();
+                var content = response.Content.ReadAsStringAsync().Result;
                 throw new InvalidOperationException(content);
             }
 

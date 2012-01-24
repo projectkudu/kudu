@@ -81,10 +81,10 @@ namespace Kudu.Services.HgServer
             switch (request.Method.Method.ToUpperInvariant())
             {
                 case "GET":
-                    proxyResponse = client.Get(uri);
+                    proxyResponse = client.GetAsync(uri).Result;
                     break;
                 case "POST":
-                    proxyResponse = client.Post(uri, request.Content);
+                    proxyResponse = client.PostAsync(uri, request.Content).Result;
                     break;
                 default:
                     return new HttpResponseMessage(System.Net.HttpStatusCode.MethodNotAllowed);

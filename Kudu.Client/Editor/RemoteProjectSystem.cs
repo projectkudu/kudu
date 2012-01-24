@@ -20,7 +20,8 @@ namespace Kudu.Client.Editor
                           .Result
                           .EnsureSuccessful()
                           .Content
-                          .ReadAsString();
+                          .ReadAsStringAsync()
+                          .Result;
         }
 
         public Project GetProject()
