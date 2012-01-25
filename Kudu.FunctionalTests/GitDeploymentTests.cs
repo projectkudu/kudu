@@ -244,6 +244,30 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public void ProjectWithoutSolution()
+        {
+            string repositoryName = "ProjectWithNoSolution";
+            string appName = "ProjectWithNoSolution";
+            string cloneUrl = "https://github.com/KuduApps/ProjectWithNoSolution.git";
+
+            using (Git.Clone(repositoryName, cloneUrl))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    appManager.GitDeploy(repositoryName);
+                    string response = GetResponseBody(appManager.SiteUrl);
+                    var results = appManager.DeploymentManager.GetResults().ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    Assert.True(response.Contains("Project without solution"));
+                });
+            }
+        }
+
+        [Fact]
         public void HiddenFilesAndFoldersAreDeployed()
         {
             string repositoryName = "HiddenFoldersAndFiles";

@@ -1,17 +1,11 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
-using Kudu.Core.Infrastructure;
-using SystemEnvironment = System.Environment;
 
 namespace Kudu.Core.Deployment
 {
-    public abstract class SolutionBasedSiteBuilder : ISiteBuilder
+    public abstract class SolutionBasedSiteBuilder : MsBuildSiteBuilder
     {
-        private readonly Executable _msbuildExe;
-        private readonly IBuildPropertyProvider _propertyProvider;
-
         public string SolutionDir
         {
             get
@@ -23,26 +17,12 @@ namespace Kudu.Core.Deployment
         public string SolutionPath { get; private set; }
 
         public SolutionBasedSiteBuilder(IBuildPropertyProvider propertyProvider, string repositoryPath, string solutionPath)
+            : base(propertyProvider, repositoryPath)
         {
-            _propertyProvider = propertyProvider;
             SolutionPath = solutionPath;
-            _msbuildExe = new Executable(ResolveMSBuildPath(), repositoryPath);
         }
-
-        protected string GetPropertyString()
-        {
-            return String.Join(";", _propertyProvider.GetProperties().Select(p => p.Key + "=" + p.Value));
-        }
-
-        public string ExecuteMSBuild(ILogger logger, string arguments, params object[] args)
-        {
-#if DEBUG
-            logger.Log(String.Format(arguments, args));
-#endif
-            return _msbuildExe.Execute(arguments, args);
-        }
-
-        public virtual Task Build(DeploymentContext context)
+        
+        public override Task Build(DeploymentContext context)
         {
             ILogger innerLogger = context.Logger.Log("Building solution {0}.", Path.GetFileName(SolutionPath));
 
@@ -76,11 +56,5 @@ namespace Kudu.Core.Deployment
         }
 
         protected abstract Task BuildProject(DeploymentContext context);
-
-        private string ResolveMSBuildPath()
-        {
-            string windir = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.Windows);
-            return Path.Combine(windir, @"Microsoft.NET", "Framework", "v4.0.30319", "MSBuild.exe");
-        }
     }
 }

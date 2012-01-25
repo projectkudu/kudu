@@ -87,9 +87,11 @@
     <Compile Include="Deployment\IDeploymentManifestWriter.cs" />
     <Compile Include="Deployment\IProgressReporter.cs" />
     <Compile Include="Deployment\ManifestWriterExtensions.cs" />
+    <Compile Include="Deployment\MsBuildSiteBuilder.cs" />
     <Compile Include="Deployment\ProgressReporter.cs" />
     <Compile Include="Infrastructure\DisposableAction.cs" />
     <Compile Include="Infrastructure\TaskExtensions.cs" />
+    <Compile Include="Infrastructure\VsHelper.cs" />
     <Compile Include="Performance\IProfilerFactory.cs" />
     <Compile Include="Performance\NullProfiler.cs" />
     <Compile Include="Performance\Profiler.cs" />

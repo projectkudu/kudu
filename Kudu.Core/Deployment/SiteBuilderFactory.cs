@@ -18,10 +18,22 @@ namespace Kudu.Core.Deployment
         public ISiteBuilder CreateBuilder()
         {
             // Get all solutions in the current repository path
-            var solutions = VsSolution.GetSolutions(_environment.DeploymentRepositoryPath).ToList();
+            var solutions = VsHelper.GetSolutions(_environment.DeploymentRepositoryPath).ToList();
 
             if (!solutions.Any())
             {
+                // Check for loose projects
+                var projects = VsHelper.GetDeployableProjects(_environment.DeploymentRepositoryPath);
+                if (projects.Count > 1)
+                {
+                    // Can't determine which project to build
+                    throw new InvalidOperationException("Unable to determine which project file to build.");
+                }
+                else if (projects.Count == 1)
+                {
+                    return new WapBuilder(_propertyProvider, _environment.DeploymentRepositoryPath, projects[0], _environment.TempPath);
+                }
+
                 // If there's none then use the basic builder (the site is xcopy deployable)
                 return new BasicBuilder(_environment.DeploymentRepositoryPath);
             }
@@ -47,7 +59,7 @@ namespace Kudu.Core.Deployment
 
             if (project.IsWap)
             {
-                return new WapBuilder(_propertyProvider, _environment.DeploymentRepositoryPath, solution.Path, project.AbsolutePath, _environment.TempPath);
+                return new WapBuilder(_propertyProvider, _environment.DeploymentRepositoryPath, project.AbsolutePath, _environment.TempPath, solution.Path);
             }
 
             return new WebSiteBuilder(_propertyProvider, _environment.DeploymentRepositoryPath, solution.Path, project.AbsolutePath);

@@ -4,29 +4,30 @@ using System.Threading.Tasks;
 
 namespace Kudu.Core.Deployment
 {
-    public class WapBuilder : SolutionBasedSiteBuilder
+    public class WapBuilder : MsBuildSiteBuilder
     {
         private readonly string _projectPath;
         private readonly string _tempPath;
+        private readonly string _solutionPath;
 
-        public WapBuilder(IBuildPropertyProvider propertyProvider, string sourcePath, string solutionPath, string projectPath, string tempPath)
-            : base(propertyProvider, sourcePath, solutionPath)
+        public WapBuilder(IBuildPropertyProvider propertyProvider, string sourcePath, string projectPath, string tempPath)
+            : this(propertyProvider, sourcePath, projectPath, tempPath, null)
+        {
+        }
+
+        public WapBuilder(IBuildPropertyProvider propertyProvider, string sourcePath, string projectPath, string tempPath, string solutionPath)
+            : base(propertyProvider, sourcePath)
         {
             _projectPath = projectPath;
             _tempPath = tempPath;
+            _solutionPath = solutionPath;
         }
 
         public override Task Build(DeploymentContext context)
         {
-            return BuildProject(context);
-        }
-
-        protected override Task BuildProject(DeploymentContext context)
-        {
             var tcs = new TaskCompletionSource<object>();
             var innerLogger = context.Logger.Log("Building web project {0}.", Path.GetFileName(_projectPath));
-            string solutionDir = SolutionDir + @"\\";
-
+            
             try
             {
                 string buildTempPath = Path.Combine(_tempPath, "builds", Guid.NewGuid().ToString());
@@ -34,8 +35,7 @@ namespace Kudu.Core.Deployment
 
                 using (context.Profiler.Step("Running msbuild on project file"))
                 {
-                    // Build artifacts into a temp path                    
-                    log = ExecuteMSBuild(innerLogger, @"""{0}"" /nologo /verbosity:m /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""{1}"";AutoParameterizationWebConfigConnectionStrings=false;SolutionDir=""{2}"";{3}", _projectPath, buildTempPath, solutionDir, GetPropertyString());
+                    log = BuildProject(innerLogger, buildTempPath);
                 }
 
                 using (context.Profiler.Step("Copying files to output directory"))
@@ -62,6 +62,22 @@ namespace Kudu.Core.Deployment
             }
 
             return tcs.Task;
+        }
+
+        private string BuildProject(ILogger innerLogger, string buildTempPath)
+        {
+            string command = @"""{0}"" /nologo /verbosity:m /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""{1}"";AutoParameterizationWebConfigConnectionStrings=false;";
+            if (String.IsNullOrEmpty(_solutionPath))
+            {
+                command += "{2}";
+                return ExecuteMSBuild(innerLogger, command, _projectPath, buildTempPath, GetPropertyString());
+            }
+
+            string solutionDir = _solutionPath + @"\\";
+            command += @"SolutionDir=""{2}"";{3}";
+
+            // Build artifacts into a temp path                    
+            return ExecuteMSBuild(innerLogger, command, _projectPath, buildTempPath, solutionDir, GetPropertyString());
         }
     }
 }

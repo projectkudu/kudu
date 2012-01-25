@@ -68,11 +68,5 @@ namespace Kudu.Core.Infrastructure
             // Create an instance of the solution parser
             return ctor.Invoke(null);
         }
-
-        public static IEnumerable<VsSolution> GetSolutions(string path)
-        {
-            return from solutionFile in Directory.EnumerateFiles(path, "*.sln", SearchOption.AllDirectories)
-                   select new VsSolution(solutionFile);
-        }
     }
 }

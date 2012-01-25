@@ -29,7 +29,7 @@ namespace Kudu.Core.Editor
 
         public Project GetProject()
         {
-            var solutions = VsSolution.GetSolutions(_root);
+            var solutions = VsHelper.GetSolutions(_root);
 
             return new Project
             {
