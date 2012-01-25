@@ -51,9 +51,7 @@
     <Target Name="Build" DependsOnTargets="CreateOutputPath">
         <MSBuild Projects="$(ProjectRoot)\kudu.sln" 
                  Targets="Build" 
-                 Properties="BuildPackage=true;
-                             PackageOutputDir=$(ArtifactsPath);
-                             Configuration=$(Configuration);
+                 Properties="Configuration=$(Configuration);
                              MSBuildExtensionsPath32=$(ProjectRoot)\Kudu.Services.Web\msbuild" />
     </Target>
 </Project>
