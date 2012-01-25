@@ -114,7 +114,6 @@
     <Compile Include="Infrastructure\NativeMethods.cs" />
     <Compile Include="Infrastructure\ParserHelpers.cs" />
     <Compile Include="Infrastructure\ReflectionUtility.cs" />
-    <Compile Include="Infrastructure\SimpleJsonMediaTypeFormatter.cs" />
     <Compile Include="Infrastructure\StringReader.cs" />
     <Compile Include="Infrastructure\Executable.cs" />
     <Compile Include="Infrastructure\IStringReader.cs" />

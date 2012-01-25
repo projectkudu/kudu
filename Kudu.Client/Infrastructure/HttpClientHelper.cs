@@ -4,7 +4,6 @@ using System.Json;
 using System.Net.Http;
 using System.Net.Http.Formatting;
 using System.Net.Http.Headers;
-using Kudu.Core.Infrastructure;
 
 namespace Kudu.Client.Infrastructure
 {
@@ -33,9 +32,7 @@ namespace Kudu.Client.Infrastructure
             {
                 jsonObject.Add(kv.Key, kv.Value);
             }
-            return new ObjectContent(typeof(JsonObject), jsonObject, "application/json", SimpleJsonFormatter);
+            return new ObjectContent(typeof(JsonObject), jsonObject, "application/json");
         }
-
-        private static IEnumerable<MediaTypeFormatter> SimpleJsonFormatter = new MediaTypeFormatter[] { new SimpleJsonMediaTypeFormatter() };
     }
 }
