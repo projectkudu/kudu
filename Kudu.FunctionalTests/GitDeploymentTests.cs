@@ -142,28 +142,27 @@ namespace Kudu.FunctionalTests
         {
             string repositoryName = "Mvc3Application";
             string appName = "DeletesToRepositoryArePropagatedForWaps";
-            string verificationText = "Welcome to ASP.NET MVC!";
 
             using (var repo = Git.CreateLocalRepository(repositoryName))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
-                    string deletePath = Path.Combine(repo.PhysicalPath, @"Mvc3Application\Scripts\jquery-1.5.1.js");
+                    string deletePath = Path.Combine(repo.PhysicalPath, @"Mvc3Application\Controllers\AccountController.cs");
                     string projectPath = Path.Combine(repo.PhysicalPath, @"Mvc3Application\Mvc3Application.csproj");
 
                     // Act
                     appManager.GitDeploy(repositoryName);
                     File.Delete(deletePath);
-                    File.WriteAllText(projectPath, File.ReadAllText(projectPath).Replace(@"<Content Include=""Scripts\jquery-1.5.1.js"" />", ""));
-                    Git.Commit(repositoryName, "Deleted all scripts");
+                    File.WriteAllText(projectPath, File.ReadAllText(projectPath).Replace(@"<Compile Include=""Controllers\AccountController.cs"" />", ""));
+                    Git.Commit(repositoryName, "Deleted the filez");
                     appManager.GitDeploy(repositoryName);
-                    string response = GetResponseBody(appManager.SiteUrl);
+                    var response = GetResponse(appManager.SiteUrl + "Account/LogOn");
                     var results = appManager.DeploymentManager.GetResults().ToList();
 
                     // Assert
                     Assert.Equal(2, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Assert.True(response.Contains(verificationText));
+                    Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
                 });
             }
         }
