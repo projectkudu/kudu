@@ -147,9 +147,11 @@
       <Component Id="Microsoft.Json.dll" Guid="{3E727695-40A8-4A1F-85A4-404791512915}">
         <File Id="Microsoft.Json.dll" Source="$(var.KuduServiceBinDir)\Microsoft.Json.dll" />
       </Component>
-      <Component Id="Microsoft.Net.Http.dll" Guid="{79046427-8522-407B-8945-D2939E3D096A}">
-        <File Id="Microsoft.Net.Http.dll" Source="$(var.KuduServiceBinDir)\Microsoft.Net.Http.dll" />
+      
+      <Component Id="System.Net.Http.dll" Guid="{3D963AD3-1BA2-4508-AFAE-9635600B7D27}">
+        <File Id="System.Net.Http.dll" Source="$(var.KuduServiceBinDir)\System.Net.Http.dll" />
       </Component>
+      
       <Component Id="Microsoft.Net.Http.Formatting.dll" Guid="{C6C5008D-10AC-4B16-A8BC-7B720D671951}">
         <File Id="Microsoft.Net.Http.Formatting.dll" Source="$(var.KuduServiceBinDir)\Microsoft.Net.Http.Formatting.dll" />
       </Component>
@@ -233,7 +235,7 @@
 
       <ComponentRef Id="Microsoft.ApplicationServer.Http.dll" />
       <ComponentRef Id="Microsoft.Json.dll" />
-      <ComponentRef Id="Microsoft.Net.Http.dll" />
+      <ComponentRef Id="System.Net.Http.dll" />
       <ComponentRef Id="Microsoft.Net.Http.Formatting.dll" />
       <ComponentRef Id="Microsoft.Runtime.Serialization.Internal.dll" />
       <ComponentRef Id="Microsoft.ServiceModel.Internal.dll" />
