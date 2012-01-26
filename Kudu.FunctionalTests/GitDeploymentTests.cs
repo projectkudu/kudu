@@ -63,7 +63,6 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        [Fact(Skip = "Issue #11")]
         public void PushRepoWithProjectAndNoSolutionShouldDeploy()
         {
             // Arrange
@@ -152,16 +151,24 @@ namespace Kudu.FunctionalTests
 
                     // Act
                     appManager.GitDeploy(repositoryName);
+                    var results = appManager.DeploymentManager.GetResults().ToList();
+                    var response = GetResponse(appManager.SiteUrl + "Account/LogOn");
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
                     File.Delete(deletePath);
                     File.WriteAllText(projectPath, File.ReadAllText(projectPath).Replace(@"<Compile Include=""Controllers\AccountController.cs"" />", ""));
                     Git.Commit(repositoryName, "Deleted the filez");
                     appManager.GitDeploy(repositoryName);
-                    var response = GetResponse(appManager.SiteUrl + "Account/LogOn");
-                    var results = appManager.DeploymentManager.GetResults().ToList();
+                    response = GetResponse(appManager.SiteUrl + "Account/LogOn");
+                    results = appManager.DeploymentManager.GetResults().ToList();
 
                     // Assert
                     Assert.Equal(2, results.Count);
-                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    Assert.Equal(DeployStatus.Success, results[1].Status);
                     Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
                 });
             }
@@ -171,8 +178,7 @@ namespace Kudu.FunctionalTests
         public void DeletesToRepositoryArePropagatedForNonWaps()
         {
             string repositoryName = "Bakery2";
-            string appName = "DeletesToRepositoryArePropagatedForNonWaps";
-            string verificationText = "Welcome to Fourth Coffee!";
+            string appName = "DeletesToRepositoryArePropagatedForNonWaps";           
             using (var repo = Git.CreateLocalRepository(repositoryName))
             {
                 ApplicationManager.Run(appName, appManager =>
@@ -181,16 +187,26 @@ namespace Kudu.FunctionalTests
 
                     // Act
                     appManager.GitDeploy(repositoryName);
+
+                    // Assert
+                    HttpResponseMessage response = GetResponse(appManager.SiteUrl + "Styles/Site.css");
+                    var results = appManager.DeploymentManager.GetResults().ToList();
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+
                     Directory.Delete(deletePath, recursive: true);
                     Git.Commit(repositoryName, "Deleted all styles");
+
                     appManager.GitDeploy(repositoryName);
-                    string response = GetResponseBody(appManager.SiteUrl);
-                    var results = appManager.DeploymentManager.GetResults().ToList();
+                    response = GetResponse(appManager.SiteUrl + "Styles/Site.css");
+                    results = appManager.DeploymentManager.GetResults().ToList();
 
                     // Assert
                     Assert.Equal(2, results.Count);
-                    Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Assert.True(response.Contains(verificationText));
+                    Assert.Equal(DeployStatus.Success, results[1].Status);
+                    Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
                 });
             }
         }
