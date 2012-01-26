@@ -271,10 +271,15 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        private static bool IsSourceControlFolder(DirectoryInfoBase directoryInfo)
+        internal static bool IsSourceControlFolder(string path)
         {
             // TODO: Add hg later
-            return directoryInfo.Name.StartsWith(".git", StringComparison.OrdinalIgnoreCase);
+            return path.StartsWith(".git", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsSourceControlFolder(DirectoryInfoBase directoryInfo)
+        {
+            return IsSourceControlFolder(directoryInfo.Name);
         }
 
         private static string GetDestinationPath(string sourceRootPath, string destinationRootPath, FileSystemInfoBase info)

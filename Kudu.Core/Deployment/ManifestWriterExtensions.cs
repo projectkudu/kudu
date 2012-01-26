@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment
 {
@@ -15,7 +16,11 @@ namespace Kudu.Core.Deployment
         {
             foreach (var path in Directory.GetFileSystemEntries(directory, "*.*", SearchOption.AllDirectories))
             {
-                yield return path.Substring(directory.Length).TrimStart('\\');
+                string relativePath = path.Substring(directory.Length).TrimStart('\\');
+                if (!FileSystemHelpers.IsSourceControlFolder(relativePath))
+                {
+                    yield return relativePath;
+                }
             }
         }
     }
