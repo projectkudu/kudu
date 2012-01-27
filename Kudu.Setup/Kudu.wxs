@@ -93,6 +93,10 @@
         <File Id="Web.config" Source="$(var.KuduServiceDir)\Web.config" />
       </Component>
 
+      <Component Id="commit" Guid="{DCC5FEC1-0431-492E-9960-DC43A91D6002}">
+        <File Id="commit" Source="$(var.KuduServiceDir)\commit" />
+      </Component>
+
     </DirectoryRef>
 
     <DirectoryRef Id="KUDU_SERVICE_BIN">
@@ -213,6 +217,7 @@
       <ComponentRef Id="Default.aspx" />
       <ComponentRef Id="Global.asax" />
       <ComponentRef Id="Web.config" />
+      <ComponentRef Id="commit" />
 
       <ComponentRef Id="Kudu.Contracts.dll"/>
       <ComponentRef Id="Kudu.Core.dll"/>
