@@ -24,6 +24,9 @@ namespace Kudu.Core.Deployment
             }
             else
             {
+                // On first deployment, delete the destination path before copying
+                FileSystemHelpers.DeleteDirectorySafe(destinationPath);
+
                 // If there's no manifest then there's nothing to copy
                 FileSystemHelpers.Copy(sourcePath, destinationPath);
             }

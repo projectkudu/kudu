@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using Kudu.Client.Deployment;
+using Kudu.Client.Editor;
 using Kudu.Core.SourceControl;
 using Kudu.SiteManagement;
 using Kudu.Web.Infrastructure;
@@ -12,7 +13,7 @@ namespace Kudu.FunctionalTests.Infrastructure
         private readonly ISiteManager _siteManager;
         private readonly Site _site;
         private readonly string _appName;
-        
+
         private ApplicationManager(ISiteManager siteManager, Site site, string appName)
         {
             _siteManager = siteManager;
@@ -33,6 +34,12 @@ namespace Kudu.FunctionalTests.Infrastructure
         }
 
         public RemoteDeploymentManager DeploymentManager
+        {
+            get;
+            private set;
+        }
+
+        public RemoteProjectSystem ProjectSystem
         {
             get;
             private set;
@@ -95,7 +102,8 @@ namespace Kudu.FunctionalTests.Infrastructure
             {
                 SiteUrl = site.SiteUrl,
                 ServiceUrl = site.ServiceUrl,
-                DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "deploy")
+                DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "deploy"),
+                ProjectSystem = new RemoteProjectSystem(site.ServiceUrl + "live/files")
             };
         }
 

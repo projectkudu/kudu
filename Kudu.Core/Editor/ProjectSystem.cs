@@ -33,12 +33,12 @@ namespace Kudu.Core.Editor
 
             return new Project
             {
-                ProjectFiles = from s in solutions
-                               from p in s.Projects
-                               where p.IsWap || p.IsWebSite
-                               select MakeRelative(p.AbsolutePath),
-                Files = GetFiles(),
-                SolutionFiles = solutions.Select(s => MakeRelative(s.Path))
+                ProjectFiles = (from s in solutions
+                                from p in s.Projects
+                                where p.IsWap || p.IsWebSite
+                                select MakeRelative(p.AbsolutePath)).ToList(),
+                Files = GetFiles().ToList(),
+                SolutionFiles = solutions.Select(s => MakeRelative(s.Path)).ToList()
             };
         }
 

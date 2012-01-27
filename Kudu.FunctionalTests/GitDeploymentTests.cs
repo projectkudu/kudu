@@ -26,7 +26,6 @@ namespace Kudu.FunctionalTests
                 {
                     // Act
                     appManager.GitDeploy(repositoryName);
-                    string response = GetResponseBody(appManager.SiteUrl);
                     var results = appManager.DeploymentManager.GetResults().ToList();
                     var deployedFiles = new HashSet<string>(appManager.DeploymentManager.GetManifest(repo.CurrentId), StringComparer.OrdinalIgnoreCase);
 
@@ -34,7 +33,7 @@ namespace Kudu.FunctionalTests
                     Assert.True(deployedFiles.Contains("Default.cshtml"));
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Assert.True(response.Contains(verificationText));
+                    Verify(appManager.SiteUrl, verificationText);
                 });
             }
         }
@@ -52,13 +51,12 @@ namespace Kudu.FunctionalTests
                 {
                     // Act
                     appManager.GitDeploy(repositoryName);
-                    string response = GetResponseBody(appManager.SiteUrl);
                     var results = appManager.DeploymentManager.GetResults().ToList();
 
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Assert.True(response.Contains(verificationText));
+                    Verify(appManager.SiteUrl, verificationText);
                 });
             }
         }
@@ -76,13 +74,12 @@ namespace Kudu.FunctionalTests
                 {
                     // Act
                     appManager.GitDeploy(repositoryName);
-                    string response = GetResponseBody(appManager.SiteUrl);
                     var results = appManager.DeploymentManager.GetResults().ToList();
 
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Assert.True(response.Contains(verificationText));
+                    Verify(appManager.SiteUrl, verificationText);
                 });
             }
         }
@@ -103,13 +100,12 @@ namespace Kudu.FunctionalTests
                     appManager.GitDeploy(repositoryName);
                     Git.Revert(repositoryName);
                     appManager.GitDeploy(repositoryName);
-                    string response = GetResponseBody(appManager.SiteUrl);
                     var results = appManager.DeploymentManager.GetResults().ToList();
 
                     // Assert
                     Assert.Equal(2, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Assert.True(response.Contains(verificationText));
+                    Verify(appManager.SiteUrl, verificationText);
                 });
             }
         }
@@ -152,24 +148,22 @@ namespace Kudu.FunctionalTests
                     // Act
                     appManager.GitDeploy(repositoryName);
                     var results = appManager.DeploymentManager.GetResults().ToList();
-                    var response = GetResponse(appManager.SiteUrl + "Account/LogOn");
 
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                    Verify(appManager.SiteUrl + "Account/LogOn", statusCode: HttpStatusCode.OK);
 
                     File.Delete(deletePath);
                     File.WriteAllText(projectPath, File.ReadAllText(projectPath).Replace(@"<Compile Include=""Controllers\AccountController.cs"" />", ""));
                     Git.Commit(repositoryName, "Deleted the filez");
                     appManager.GitDeploy(repositoryName);
-                    response = GetResponse(appManager.SiteUrl + "Account/LogOn");
                     results = appManager.DeploymentManager.GetResults().ToList();
 
                     // Assert
                     Assert.Equal(2, results.Count);
                     Assert.Equal(DeployStatus.Success, results[1].Status);
-                    Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+                    Verify(appManager.SiteUrl + "Account/LogOn", statusCode: HttpStatusCode.NotFound);
                 });
             }
         }
@@ -178,7 +172,7 @@ namespace Kudu.FunctionalTests
         public void DeletesToRepositoryArePropagatedForNonWaps()
         {
             string repositoryName = "Bakery2";
-            string appName = "DeletesToRepositoryArePropagatedForNonWaps";           
+            string appName = "DeletesToRepositoryArePropagatedForNonWaps";
             using (var repo = Git.CreateLocalRepository(repositoryName))
             {
                 ApplicationManager.Run(appName, appManager =>
@@ -189,24 +183,49 @@ namespace Kudu.FunctionalTests
                     appManager.GitDeploy(repositoryName);
 
                     // Assert
-                    HttpResponseMessage response = GetResponse(appManager.SiteUrl + "Styles/Site.css");
                     var results = appManager.DeploymentManager.GetResults().ToList();
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                    Verify(appManager.SiteUrl + "Styles/Site.css", statusCode: HttpStatusCode.OK);
 
 
                     Directory.Delete(deletePath, recursive: true);
                     Git.Commit(repositoryName, "Deleted all styles");
 
                     appManager.GitDeploy(repositoryName);
-                    response = GetResponse(appManager.SiteUrl + "Styles/Site.css");
                     results = appManager.DeploymentManager.GetResults().ToList();
 
                     // Assert
                     Assert.Equal(2, results.Count);
                     Assert.Equal(DeployStatus.Success, results[1].Status);
-                    Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+                    Verify(appManager.SiteUrl + "Styles/Site.css", statusCode: HttpStatusCode.NotFound);
+                });
+            }
+        }
+
+        [Fact]
+        public void FirstPushDeletesPriorContent()
+        {
+            string repositoryName = "Bakery2";
+            string appName = "FirstPushDeletesPriorContent";
+            using (Git.CreateLocalRepository(repositoryName))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    appManager.ProjectSystem.WriteAllText("foo.txt", "This is a test file");
+                    string url = appManager.SiteUrl + "/foo.txt";
+
+                    Verify(url, "This is a test file");
+
+                    // Act
+                    appManager.GitDeploy(repositoryName);
+
+                    // Assert
+                    var results = appManager.DeploymentManager.GetResults().ToList();
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    Verify(appManager.SiteUrl);
+                    Verify(url, statusCode: HttpStatusCode.NotFound);
                 });
             }
         }
@@ -225,10 +244,9 @@ namespace Kudu.FunctionalTests
                     // Deploy the app
                     appManager.GitDeploy(repositoryName);
 
-                    string response = GetResponseBody(appManager.SiteUrl);
                     var results = appManager.DeploymentManager.GetResults().ToList();
                     Assert.Equal(1, results.Count);
-                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    Verify(appManager.SiteUrl);
 
                     // Add a file
                     File.WriteAllText(Path.Combine(repo.PhysicalPath, "hello.txt"), "Wow");
@@ -238,11 +256,10 @@ namespace Kudu.FunctionalTests
                     // Deploy those changes
                     appManager.GitDeploy(repositoryName);
 
-                    response = GetResponseBody(helloUrl);
                     results = appManager.DeploymentManager.GetResults().ToList();
                     Assert.Equal(2, results.Count);
                     Assert.Equal(DeployStatus.Success, results[1].Status);
-                    Assert.Equal("Wow", response);
+                    Verify(helloUrl, "Wow");
 
                     appManager.DeploymentManager.WaitForDeployment(() =>
                     {
@@ -251,8 +268,7 @@ namespace Kudu.FunctionalTests
                     });
 
                     results = appManager.DeploymentManager.GetResults().ToList();
-
-                    Assert.Equal(HttpStatusCode.NotFound, GetResponse(helloUrl).StatusCode);
+                    Verify(helloUrl, statusCode: HttpStatusCode.NotFound);
                     Assert.Equal(2, results.Count);
                 });
             }
@@ -271,13 +287,12 @@ namespace Kudu.FunctionalTests
                 {
                     // Act
                     appManager.GitDeploy(repositoryName);
-                    string response = GetResponseBody(appManager.SiteUrl);
                     var results = appManager.DeploymentManager.GetResults().ToList();
 
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Assert.True(response.Contains("Project without solution"));
+                    Verify(appManager.SiteUrl, "Project without solution");
                 });
             }
         }
@@ -294,26 +309,26 @@ namespace Kudu.FunctionalTests
                 {
                     // Act
                     appManager.GitDeploy(repositoryName);
-                    string response = GetResponseBody(appManager.SiteUrl);
                     var results = appManager.DeploymentManager.GetResults().ToList();
 
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Assert.True(response.Contains("Hello World"));
+                    Verify(appManager.SiteUrl, "Hello World");
                 });
             }
         }
 
-        private string GetResponseBody(string url)
-        {
-            return GetResponse(url).EnsureSuccessStatusCode().Content.ReadAsStringAsync().Result;
-        }
-
-        private HttpResponseMessage GetResponse(string url)
+        public void Verify(string url, string content = null, HttpStatusCode statusCode = HttpStatusCode.OK)
         {
             var client = new HttpClient();
-            return client.GetAsync(url).Result;
+            var response = client.GetAsync(url).Result;
+            Assert.Equal(statusCode, response.StatusCode);
+            if (content != null)
+            {
+                var responseBody = response.Content.ReadAsStringAsync().Result;
+                Assert.True(responseBody.Contains(content));
+            }
         }
     }
 }

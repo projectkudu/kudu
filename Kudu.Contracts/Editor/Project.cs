@@ -4,8 +4,8 @@ namespace Kudu.Core.Editor
 {
     public class Project
     {
-        public IEnumerable<string> SolutionFiles { get; set; }
-        public IEnumerable<string> ProjectFiles { get; set; }
-        public IEnumerable<string> Files { get; set; }
+        public List<string> SolutionFiles { get; set; }
+        public List<string> ProjectFiles { get; set; }
+        public List<string> Files { get; set; }
     }
 }
