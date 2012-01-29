@@ -11,6 +11,6 @@
         <ItemGroup>
             <NativeBinaries Include="$(KuduRoot)\packages\LibGit2Sharp*\NativeBinaries\x86\*.dll" />
         </ItemGroup>
-        <Copy SourceFiles="@(NativeBinaries)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
+        <Copy SourceFiles="@(NativeBinaries)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" ContinueOnError="true" />
     </Target>
 </Project>
