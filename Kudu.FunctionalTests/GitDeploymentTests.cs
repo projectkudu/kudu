@@ -319,6 +319,62 @@ namespace Kudu.FunctionalTests
             }
         }
 
+        [Fact]
+        public void SpecificDeploymentConfiguration()
+        {
+            VerifyDeploymentConfiguration("SpecificDeploymentConfiguration", 
+                                          "WebApplication1", 
+                                          "This is the application I want deployed");
+        }
+
+        [Fact]
+        public void SpecificDeploymentConfigurationForProjectFile()
+        {
+            VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForProjectFile", 
+                                          "WebApplication1/WebApplication1.csproj", 
+                                          "This is the application I want deployed");
+        }
+
+        [Fact]
+        public void SpecificDeploymentConfigurationForWebsite()
+        {
+            VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForWebsite",
+                                          "WebSite1",
+                                          "This is a website!");
+        }
+
+        [Fact]
+        public void SpecificDeploymentConfigurationForWebsiteWithSlash()
+        {
+            VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForWebsiteWithSlash",
+                                          "/WebSite1",
+                                          "This is a website!");
+        }
+
+        private void VerifyDeploymentConfiguration(string name, string targetProject, string expectedText)
+        {
+            string cloneUrl = "https://github.com/KuduApps/SpecificDeploymentConfiguration.git";
+            using (var repo = Git.Clone(name, cloneUrl))
+            {
+                ApplicationManager.Run(name, appManager =>
+                {
+                    string deploymentFile = Path.Combine(repo.PhysicalPath, @".deployment");
+                    File.WriteAllText(deploymentFile, String.Format(@"[config]
+project = {0}", targetProject));
+                    Git.Commit(name, "Updated configuration");
+
+                    // Act
+                    appManager.GitDeploy(name);
+                    var results = appManager.DeploymentManager.GetResults().ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    Verify(appManager.SiteUrl, expectedText);
+                });
+            }
+        }
+
         public void Verify(string url, string content = null, HttpStatusCode statusCode = HttpStatusCode.OK)
         {
             var client = new HttpClient();

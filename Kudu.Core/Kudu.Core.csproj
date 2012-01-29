@@ -80,8 +80,9 @@
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="Commands\CommandExecutor.cs" />
+    <Compile Include="Deployment\DeploymentConfiguration.cs" />
     <Compile Include="Deployment\DeploymentContext.cs" />
-    <Compile Include="Deployment\DeploymentHelpers.cs" />
+    <Compile Include="Deployment\DeploymentHelper.cs" />
     <Compile Include="Deployment\DeploymentManifest.cs" />
     <Compile Include="Deployment\IDeploymentManifestReader.cs" />
     <Compile Include="Deployment\IDeploymentManifestWriter.cs" />

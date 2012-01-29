@@ -28,7 +28,7 @@ namespace Kudu.Core.Deployment
                 using (context.Profiler.Step("Copying files to output directory"))
                 {
                     // Copy to the output path and use the previous manifest if there
-                    DeploymentHelpers.CopyWithManifest(_sourcePath, context.OutputPath, context.PreviousMainfest);
+                    DeploymentHelper.CopyWithManifest(_sourcePath, context.OutputPath, context.PreviousMainfest);
                 }
 
                 using (context.Profiler.Step("Downloading node packages"))

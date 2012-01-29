@@ -1,30 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Xml.Linq;
 using System.IO;
+using System.Linq;
+using System.Xml.Linq;
 
 namespace Kudu.Core.Infrastructure
 {
     internal static class VsHelper
     {
         private static readonly Guid _wapGuid = new Guid("349c5851-65df-11da-9384-00065b846f21");
-        private static readonly string[] _projectFileExtensions = new[] { ".csproj", ".vbproj" };
-
+        
         public static IList<VsSolution> GetSolutions(string path)
         {
             return (from solutionFile in Directory.GetFiles(path, "*.sln", SearchOption.AllDirectories)
                     select new VsSolution(solutionFile)).ToList();
         }
-
-        public static IList<string> GetDeployableProjects(string path)
-        {
-            return (from projectFile in Directory.GetFiles(path, "*.*", SearchOption.AllDirectories)
-                    where _projectFileExtensions.Any(extension => projectFile.EndsWith(extension, StringComparison.OrdinalIgnoreCase)) && IsWap(projectFile)
-                    select projectFile).ToList();
-        }
-
+        
         public static bool IsWap(string projectPath)
         {
             return IsWap(GetProjectTypeGuids(projectPath));

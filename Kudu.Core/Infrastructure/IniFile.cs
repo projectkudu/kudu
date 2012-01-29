@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using IniLookup = System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<string, string>>;
 
 namespace Kudu.Core.Infrastructure
@@ -18,6 +17,11 @@ namespace Kudu.Core.Infrastructure
 
         public string GetSectionValue(string section, string key)
         {
+            if (!File.Exists(_path))
+            {
+                return null;
+            }
+
             ParseIniFile();
 
             Dictionary<string, string> valueLookup;

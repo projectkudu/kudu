@@ -24,7 +24,7 @@ namespace Kudu.Core.Deployment
                 using (context.Profiler.Step("Copying files to output directory"))
                 {
                     // Copy to the output path
-                    DeploymentHelpers.CopyWithManifest(_projectPath, context.OutputPath, context.PreviousMainfest);
+                    DeploymentHelper.CopyWithManifest(_projectPath, context.OutputPath, context.PreviousMainfest);
                 }
 
                 using (context.Profiler.Step("Building manifest"))
