@@ -58,6 +58,12 @@ namespace Kudu.Client.SourceControl
         {
             return _client.GetAsyncJson<ChangeSetDetail>("details/" + id);
         }
+        
+        public ChangeSet GetChangeSet(string id)
+        {
+            // Not used by client apis as yet
+            throw new NotImplementedException();
+        }
 
         public ChangeSetDetail GetWorkingChanges()
         {
@@ -101,6 +107,6 @@ namespace Kudu.Client.SourceControl
             _client.PostAsync("update", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("id", id)))
                    .Result
                    .EnsureSuccessful();
-        }
+        }        
     }
 }

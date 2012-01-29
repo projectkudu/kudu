@@ -234,14 +234,17 @@ namespace Kudu.Core.Deployment
                     }
                 }
 
-                // Create the tracking file and store information about the commit
-                DeploymentStatusFile statusFile = CreateTrackingFile(id);
-                statusFile.Id = id;
-                var details = repository.GetDetails(id);
-                statusFile.Message = details.ChangeSet.Message;
-                statusFile.Author = details.ChangeSet.AuthorName;
-                statusFile.AuthorEmail = details.ChangeSet.AuthorEmail;
-                statusFile.Save(_fileSystem);
+                using (profiler.Step("Collecting changeset information"))
+                {
+                    // Create the tracking file and store information about the commit
+                    DeploymentStatusFile statusFile = CreateTrackingFile(id);
+                    statusFile.Id = id;
+                    var changeSet = repository.GetChangeSet(id);
+                    statusFile.Message = changeSet.Message;
+                    statusFile.Author = changeSet.AuthorName;
+                    statusFile.AuthorEmail = changeSet.AuthorEmail;
+                    statusFile.Save(_fileSystem);
+                }
 
                 Build(id, profiler, deployStep);
             }

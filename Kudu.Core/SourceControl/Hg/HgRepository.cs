@@ -238,6 +238,11 @@ namespace Kudu.Core.SourceControl.Hg
             }
         }
 
+        public ChangeSet GetChangeSet(string id)
+        {
+            return GetChangeSet((RevSpec)id);
+        }
+
         private ChangeSet GetChangeSet(RevSpec id)
         {
             var log = _repository.Log(id);

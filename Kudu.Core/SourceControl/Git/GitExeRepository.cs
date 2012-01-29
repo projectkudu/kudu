@@ -60,6 +60,13 @@ namespace Kudu.Core.SourceControl.Git
             return Log();
         }
 
+        public ChangeSet GetChangeSet(string id)
+        {
+            string showCommit = _gitExe.Execute("show {0} -m --name-status", id);
+            var commitReader = showCommit.AsReader();
+            return ParseCommit(commitReader);
+        }
+
         public IEnumerable<ChangeSet> GetChanges(int index, int limit)
         {
             return Log("log --all --skip {0} -n {1}", index, limit);
@@ -714,6 +721,6 @@ namespace Kudu.Core.SourceControl.Git
                 reader.Skip("@@");
                 return range;
             }
-        }
+        }        
     }
 }

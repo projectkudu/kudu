@@ -11,6 +11,7 @@ namespace Kudu.Core.SourceControl
         IEnumerable<FileStatus> GetStatus();
         IEnumerable<ChangeSet> GetChanges();
         IEnumerable<ChangeSet> GetChanges(int index, int limit);
+        ChangeSet GetChangeSet(string id);
         ChangeSetDetail GetDetails(string id);
         ChangeSetDetail GetWorkingChanges();
         void AddFile(string path);

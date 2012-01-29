@@ -82,5 +82,11 @@ namespace Kudu.Core.SourceControl
         public void Push()
         {
         }
+
+
+        public ChangeSet GetChangeSet(string id)
+        {
+            return null;
+        }
     }
 }

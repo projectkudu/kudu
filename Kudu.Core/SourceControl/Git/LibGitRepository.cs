@@ -106,6 +106,11 @@ namespace Kudu.Core.SourceControl.Git
             return CreateChangeSet(commit);
         }
 
+        public ChangeSet GetChangeSet(string id)
+        {
+            throw new NotImplementedException();
+        }
+
         public void AddFile(string path)
         {
             Repository.Index.Stage(path);
@@ -153,6 +158,6 @@ namespace Kudu.Core.SourceControl.Git
                 _repository.Dispose();
                 _repository = null;
             }
-        }
+        }        
     }
 }

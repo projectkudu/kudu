@@ -61,6 +61,11 @@ namespace Kudu.Core.SourceControl.Git
             return _exeRepository.GetChanges(index, limit);
         }
 
+        public ChangeSet GetChangeSet(string id)
+        {
+            return _exeRepository.GetChangeSet(id);
+        }
+
         public ChangeSetDetail GetDetails(string id)
         {
             return _exeRepository.GetDetails(id);
@@ -102,6 +107,6 @@ namespace Kudu.Core.SourceControl.Git
             {
                 _libgitRepository.Dispose();
             }
-        }
+        }        
     }
 }
