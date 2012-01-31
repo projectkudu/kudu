@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
 using System.Xml.Linq;
@@ -66,35 +67,42 @@ namespace Kudu.Core.Performance
 
             return new DisposableAction(() =>
             {
-                // If there's no steps then do nothing (guard against double dispose)
-                if (_currentSteps.Count == 0)
+                try
                 {
-                    return;
+                    // If there's no steps then do nothing (guard against double dispose)
+                    if (_currentSteps.Count == 0)
+                    {
+                        return;
+                    }
+
+                    // Stop the current step
+                    _currentSteps.Peek().Stop();
+
+                    ProfilerStep current = _currentSteps.Pop();
+                    XElement stepElement = _elements.Pop();
+
+                    stepElement.Add(new XAttribute("elapsed", current.ElapsedMilliseconds));
+
+                    if (_elements.Count > 0)
+                    {
+                        XElement parent = _elements.Peek();
+                        parent.Add(stepElement);
+                    }
+                    else
+                    {
+                        // Add this element to the list
+                        Save(stepElement);
+                    }
+
+                    if (_currentSteps.Count > 0)
+                    {
+                        ProfilerStep parent = _currentSteps.Peek();
+                        parent.Children.Add(current);
+                    }
                 }
-
-                // Stop the current step
-                _currentSteps.Peek().Stop();
-
-                ProfilerStep current = _currentSteps.Pop();
-                XElement stepElement = _elements.Pop();
-
-                stepElement.Add(new XAttribute("elapsed", current.ElapsedMilliseconds));
-
-                if (_elements.Count > 0)
+                catch (Exception ex)
                 {
-                    XElement parent = _elements.Peek();
-                    parent.Add(stepElement);
-                }
-                else
-                {
-                    // Add this element to the list
-                    Save(stepElement);
-                }
-
-                if (_currentSteps.Count > 0)
-                {
-                    ProfilerStep parent = _currentSteps.Peek();
-                    parent.Children.Add(current);
+                    Trace.TraceError(ex.Message);
                 }
             });
         }
@@ -117,13 +125,24 @@ namespace Kudu.Core.Performance
                 return new XDocument(new XElement("profile"));
             }
 
-            XDocument document;
-            using (var stream = _fileSystem.File.OpenRead(_path))
+            try
             {
-                document = XDocument.Load(stream);
-            }
+                XDocument document;
+                using (var stream = _fileSystem.File.OpenRead(_path))
+                {
+                    document = XDocument.Load(stream);
+                }
 
-            return document;
+                return document;
+            }
+            catch
+            {
+                // If the profile gets corrupted then delete it
+                FileSystemHelpers.DeleteFileSafe(_path);
+
+                // Return a new document
+                return new XDocument(new XElement("profile"));
+            }
         }
     }
 }
