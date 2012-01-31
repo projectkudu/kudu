@@ -82,6 +82,11 @@ namespace Kudu.Core.SourceControl.Git
             throw new NotImplementedException();
         }
 
+        public void Update()
+        {
+            throw new NotImplementedException();
+        }
+
         public IEnumerable<ChangeSet> GetChanges()
         {
             return Repository.Commits.Select(CreateChangeSet);

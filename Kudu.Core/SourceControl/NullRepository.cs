@@ -88,5 +88,11 @@ namespace Kudu.Core.SourceControl
         {
             return null;
         }
+
+
+        public void Update()
+        {
+            
+        }
     }
 }

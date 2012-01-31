@@ -101,12 +101,18 @@ namespace Kudu.Core.SourceControl.Git
             _exeRepository.Update(id);
         }
 
+        public void Update()
+        {
+            _exeRepository.Update();
+        }
+
         public void Dispose()
         {
             if (_libgitRepository != null)
             {
                 _libgitRepository.Dispose();
             }
-        }        
+        }
+
     }
 }

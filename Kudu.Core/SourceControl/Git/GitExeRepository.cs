@@ -154,6 +154,11 @@ namespace Kudu.Core.SourceControl.Git
             _gitExe.Execute("checkout {0} --force", id);
         }
 
+        public void Update()
+        {
+            Update("master");
+        }
+
         public ChangeSetDetail GetDetails(string id)
         {
             string show = _gitExe.Execute("show {0} -m -p --numstat --shortstat", id);
@@ -721,6 +726,6 @@ namespace Kudu.Core.SourceControl.Git
                 reader.Skip("@@");
                 return range;
             }
-        }        
+        }
     }
 }

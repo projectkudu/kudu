@@ -106,6 +106,13 @@ namespace Kudu.Services.SourceControl
             _repository.Update((string)input["id"]);
         }
 
+        [Description("Updates the repository to the default changeset.")]
+        [WebInvoke(UriTemplate = "update")]
+        public void Update()
+        {
+            _repository.Update();
+        }
+
         [Description("Pushes all commited changes to the remote repository.")]
         [WebInvoke(UriTemplate = "push")]
         public void Push()

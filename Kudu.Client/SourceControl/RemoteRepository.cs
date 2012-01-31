@@ -107,6 +107,13 @@ namespace Kudu.Client.SourceControl
             _client.PostAsync("update", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("id", id)))
                    .Result
                    .EnsureSuccessful();
-        }        
+        }
+
+        public void Update()
+        {
+            _client.PostAsync("update", new StringContent(String.Empty))
+                   .Result
+                   .EnsureSuccessful();
+        }
     }
 }

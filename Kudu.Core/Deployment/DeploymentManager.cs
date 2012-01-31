@@ -127,7 +127,7 @@ namespace Kudu.Core.Deployment
                 {
                     throw new InvalidOperationException(String.Format("No log found for '{0}'.", id));
                 }
-                
+
                 return new XmlLogger(_fileSystem, path).GetLogEntryDetails(entryId).ToList();
             }
         }
@@ -186,7 +186,7 @@ namespace Kudu.Core.Deployment
             }
 
         }
-        
+
         public void Deploy()
         {
             IRepository repository = _repositoryManager.GetRepository();
@@ -202,35 +202,19 @@ namespace Kudu.Core.Deployment
             try
             {
                 deployStep = profiler.Step("Deploy");
-                string id = repository.CurrentId;
 
+                // Store the current head
+                string id = repository.CurrentId;
+ 
                 using (profiler.Step("Update to specific changeset"))
                 {
-                    if (String.IsNullOrEmpty(id))
-                    {
-                        id = repository.GetChanges(0, 1).Single().Id;
-                        repository.Update(id);
-                    }
+                    // Update to the default branch
+                    repository.Update();
 
-                    Branch activeBranch = (from b in repository.GetBranches()
-                                           let change = repository.GetDetails(b.Id)
-                                           orderby change.ChangeSet.Timestamp descending
-                                           select b).FirstOrDefault();
-
-                    if (activeBranch != null)
+                    // The default branch wasn't pushed then noop
+                    if (id != repository.CurrentId)
                     {
-                        // Only deploy if the active branch is the master branch
-                        if (!activeBranch.IsMaster)
-                        {
-                            return;
-                        }
-
-                        repository.Update(activeBranch.Name);
-                        id = activeBranch.Id;
-                    }
-                    else
-                    {
-                        repository.Update(id);
+                        return;
                     }
                 }
 

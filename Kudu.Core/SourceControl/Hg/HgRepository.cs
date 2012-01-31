@@ -157,6 +157,11 @@ namespace Kudu.Core.SourceControl.Hg
             _repository.Update(id);
         }
 
+        public void Update()
+        {
+            Update("default");
+        }
+
         public IEnumerable<Branch> GetBranches()
         {
             // Need to work around a bug in Mercurial.net where it fails to parse the output of 
