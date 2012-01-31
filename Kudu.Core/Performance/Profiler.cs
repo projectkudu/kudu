@@ -90,8 +90,12 @@ namespace Kudu.Core.Performance
                     }
                     else
                     {
-                        // Add this element to the list
-                        Save(stepElement);
+                        // Only record things slower than 25ms
+                        if (current.ElapsedMilliseconds >= 25)
+                        {
+                            // Add this element to the list
+                            Save(stepElement);
+                        }
                     }
 
                     if (_currentSteps.Count > 0)
