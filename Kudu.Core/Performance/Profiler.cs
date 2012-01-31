@@ -19,6 +19,8 @@ namespace Kudu.Core.Performance
         private readonly string _path;
         private readonly IFileSystem _fileSystem;
 
+        private const string ProfileRoot = "profile";
+
         private static readonly ConcurrentDictionary<string, object> _pathLocks = new ConcurrentDictionary<string, object>();
 
         public Profiler(string path)
@@ -126,7 +128,7 @@ namespace Kudu.Core.Performance
             if (!_fileSystem.File.Exists(_path))
             {
                 _fileSystem.Directory.CreateDirectory(Path.GetDirectoryName(_path));
-                return new XDocument(new XElement("profile"));
+                return CreateProfileDocument();
             }
 
             try
@@ -145,8 +147,13 @@ namespace Kudu.Core.Performance
                 FileSystemHelpers.DeleteFileSafe(_path);
 
                 // Return a new document
-                return new XDocument(new XElement("profile"));
+                return CreateProfileDocument();
             }
+        }
+
+        private static XDocument CreateProfileDocument()
+        {
+            return new XDocument(new XElement(ProfileRoot));
         }
     }
 }
