@@ -30,8 +30,17 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        public string Path { get; set; }
-        public IEnumerable<VsSolutionProject> Projects { get; private set; }
+        private IEnumerable<VsSolutionProject> _projects;
+
+        public string Path { get; private set; }
+        public IEnumerable<VsSolutionProject> Projects
+        {
+            get
+            {
+                EnsureProjects();
+                return _projects;
+            }
+        }
 
         public VsSolution(string solutionPath)
         {
@@ -40,9 +49,19 @@ namespace Kudu.Core.Infrastructure
                 throw new InvalidOperationException("Can not find type 'Microsoft.Build.Construction.SolutionParser' are you missing a assembly reference to 'Microsoft.Build.dll'?");
             }
 
+            Path = solutionPath;
+        }
+
+        private void EnsureProjects()
+        {
+            if (_projects != null)
+            {
+                return;
+            }
+
             var solutionParser = GetSolutionParserInstance();
 
-            using (var streamReader = new StreamReader(solutionPath))
+            using (var streamReader = new StreamReader(Path))
             {
                 _solutionReaderProperty.SetValue(solutionParser, streamReader);
                 _parseSolutionMethod.Invoke(solutionParser, null);
@@ -53,11 +72,10 @@ namespace Kudu.Core.Infrastructure
 
             foreach (var project in projectsArray)
             {
-                projects.Add(new VsSolutionProject(solutionPath, project));
+                projects.Add(new VsSolutionProject(Path, project));
             }
 
-            Path = solutionPath;
-            Projects = projects;
+            _projects = projects;
         }
 
         private static object GetSolutionParserInstance()

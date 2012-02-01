@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Xml.Linq;
 
 namespace Kudu.Core.Infrastructure
 {
@@ -30,33 +29,96 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        public IEnumerable<Guid> ProjectTypeGuids { get; set; }
-        public string ProjectName { get; private set; }
-        public string AbsolutePath { get; private set; }
-        public bool IsWebSite { get; private set; }
-        public bool IsWap { get; set; }
+        private readonly string _solutionPath;
+        private readonly object _projectInstance;
+
+        private bool _isWap;
+        private bool _isWebSite;
+        private IEnumerable<Guid> _projectTypeGuids;
+        private string _projectName;
+        private string _absolutePath;
+
+        private bool _initialized;
+
+        public IEnumerable<Guid> ProjectTypeGuids
+        {
+            get
+            {
+                EnsureProperties();
+                return _projectTypeGuids;
+            }
+        }
+        
+        public string ProjectName
+        {
+            get
+            {
+                EnsureProperties();
+                return _projectName;
+            }
+        }
+
+        public string AbsolutePath
+        {
+            get
+            {
+                EnsureProperties();
+                return _absolutePath;
+            }
+        }
+
+        public bool IsWebSite
+        {
+            get
+            {
+                EnsureProperties();
+                return _isWebSite;
+            }
+        }
+
+        public bool IsWap
+        {
+            get
+            {
+                EnsureProperties();
+                return _isWap;
+            }
+        }
 
         public VsSolutionProject(string solutionPath, object project)
         {
-            ProjectName = _projectNameProperty.GetValue<string>(project);
-            var relativePath = _relativePathProperty.GetValue<string>(project);
-            var projectType = _projectTypeProperty.GetValue<SolutionProjectType>(project);
+            _solutionPath = solutionPath;
+            _projectInstance = project;
+        }
 
-            AbsolutePath = Path.Combine(Path.GetDirectoryName(solutionPath), relativePath);
-            IsWebSite = projectType == SolutionProjectType.WebProject;
+        private void EnsureProperties()
+        {
+            if (_initialized)
+            {
+                return;
+            }
 
-            if (projectType == SolutionProjectType.KnownToBeMSBuildFormat)
+            _projectName = _projectNameProperty.GetValue<string>(_projectInstance);
+            var relativePath = _relativePathProperty.GetValue<string>(_projectInstance);
+            var projectType = _projectTypeProperty.GetValue<SolutionProjectType>(_projectInstance);
+
+            _absolutePath = Path.Combine(Path.GetDirectoryName(_solutionPath), relativePath);
+            _isWebSite = projectType == SolutionProjectType.WebProject;
+
+            if (projectType == SolutionProjectType.KnownToBeMSBuildFormat && File.Exists(_absolutePath))
             {
                 // If the project is an msbuild project then extra the project type guids
-                ProjectTypeGuids = VsHelper.GetProjectTypeGuids(AbsolutePath);
+                _projectTypeGuids = VsHelper.GetProjectTypeGuids(_absolutePath);
 
                 // Check if it's a wap
-                IsWap = VsHelper.IsWap(ProjectTypeGuids);
+                _isWap = VsHelper.IsWap(_projectTypeGuids);
             }
             else
             {
-                ProjectTypeGuids = Enumerable.Empty<Guid>();
+                _projectTypeGuids = Enumerable.Empty<Guid>();
             }
+
+            _initialized = true;
         }
 
         // Microsoft.Build.Construction.SolutionProjectType
