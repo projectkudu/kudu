@@ -204,8 +204,9 @@ namespace Kudu.Core.Deployment
                 deployStep = profiler.Step("Deploy");
 
                 // Store the current head
-                string id = repository.CurrentId;
- 
+                ChangeSet lastChange = repository.GetChanges(0, 1).Single();
+                string id = lastChange.Id;
+
                 using (profiler.Step("Update to specific changeset"))
                 {
                     // Update to the default branch
@@ -223,10 +224,9 @@ namespace Kudu.Core.Deployment
                     // Create the tracking file and store information about the commit
                     DeploymentStatusFile statusFile = CreateTrackingFile(id);
                     statusFile.Id = id;
-                    var changeSet = repository.GetChangeSet(id);
-                    statusFile.Message = changeSet.Message;
-                    statusFile.Author = changeSet.AuthorName;
-                    statusFile.AuthorEmail = changeSet.AuthorEmail;
+                    statusFile.Message = lastChange.Message;
+                    statusFile.Author = lastChange.AuthorName;
+                    statusFile.AuthorEmail = lastChange.AuthorEmail;
                     statusFile.Save(_fileSystem);
                 }
 
