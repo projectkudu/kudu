@@ -9,7 +9,7 @@ namespace Kudu.FunctionalTests.Infrastructure
 {
     public static class ApplicationManagerExtensions
     {
-        private static readonly TimeSpan _defaultTimeOut = TimeSpan.FromMinutes(2);
+        private static readonly TimeSpan _defaultTimeOut = TimeSpan.FromMinutes(3);
         private static bool _errorCallbackInitialized;
 
         public static void GitDeploy(this ApplicationManager appManager, string repositoryName)

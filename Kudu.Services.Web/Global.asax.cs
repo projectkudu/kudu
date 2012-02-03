@@ -35,7 +35,10 @@ namespace Kudu.Services
             routes.MapConnection<DevCommandStatusHandler>("DevCommandStatus", "dev/command/status/{*operation}");
 
             // Source control servers
-            MapServiceRoute<ProxyService>(configuration.HgServerRoot, factory);
+            // Mercurial
+            // MapServiceRoute<ProxyService>(configuration.HgServerRoot, factory);
+
+            // Git
             MapServiceRoute<InfoRefsService>(configuration.GitServerRoot + "/info/refs", factory);
             MapServiceRoute<RpcService>(configuration.GitServerRoot, factory);
 
