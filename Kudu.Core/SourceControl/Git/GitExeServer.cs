@@ -141,7 +141,6 @@ namespace Kudu.Core.SourceControl.Git
                 File.WriteAllText(PostReceiveHookPath, @"#!/bin/sh
 read i
 echo $i > pushinfo
-echo ""Queued for deployment.""
 ");
             }
         }
