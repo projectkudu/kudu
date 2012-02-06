@@ -33,6 +33,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="CsvHelper">
+      <HintPath>..\packages\CsvHelper.1.1.2\lib\net20\CsvHelper.dll</HintPath>
+    </Reference>
     <Reference Include="Ionic.Zip">
       <HintPath>..\packages\DotNetZip.1.9.1.8\lib\net20\Ionic.Zip.dll</HintPath>
     </Reference>
@@ -54,6 +57,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data.Entity" />
     <Reference Include="System.Net.Http">
@@ -73,8 +77,13 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\xunit.1.9.0.1566\lib\xunit.dll</HintPath>
     </Reference>
+    <Reference Include="xunit.extensions">
+      <HintPath>..\packages\xunit.extensions.1.9.0.1566\lib\xunit.extensions.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GitRepositoryManagementTests.cs" />
+    <Compile Include="Infrastructure\GitTestConfig.cs" />
     <Compile Include="Infrastructure\ApplicationManager.cs" />
     <Compile Include="Infrastructure\ApplicationManagerExtensions.cs" />
     <Compile Include="Infrastructure\Git.cs" />
@@ -86,10 +95,11 @@
     <Compile Include="GitDeploymentTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="GitDeploymentTests.csv" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
-    <None Include="ZippedRepositories\Bakery2.zip" />
+    <None Include="ZippedRepositories\Bakery10.zip" />
     <None Include="ZippedRepositories\Mvc3Application.zip" />
     <None Include="ZippedRepositories\Mvc3Application_NoSolution.zip" />
   </ItemGroup>

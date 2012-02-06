@@ -4,12 +4,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Client.Deployment;
 using Xunit;
+using System.Net.Http;
+using System.Net;
+using System.Configuration;
 
 namespace Kudu.FunctionalTests.Infrastructure
 {
     public static class ApplicationManagerExtensions
     {
-        private static readonly TimeSpan _defaultTimeOut = TimeSpan.FromMinutes(2);
+        private static readonly TimeSpan _defaultTimeOut = TimeSpan.FromMinutes(4);
         private static bool _errorCallbackInitialized;
 
         public static void GitDeploy(this ApplicationManager appManager, string repositoryName)
@@ -21,6 +24,8 @@ namespace Kudu.FunctionalTests.Infrastructure
         {
             appManager.DeploymentManager.WaitForDeployment(() =>
             {
+
+                WaitForRepositorySite(appManager);
                 Git.Push(repositoryName, appManager.GitUrl);
             },
             waitTimeout);
@@ -69,6 +74,40 @@ namespace Kudu.FunctionalTests.Infrastructure
             {
                 // Stop listenting
                 deploymentManager.Stop();
+            }
+        }
+
+        private static void WaitForRepositorySite(ApplicationManager appManager, int retries = 3, int delayBeforeRetry = 250)
+        {
+            HttpClientHandler handler = new HttpClientHandler();
+            if (!String.IsNullOrEmpty(ConfigurationManager.AppSettings["antares.basedomain"]))
+            {
+                string userName = ConfigurationManager.AppSettings["antares.username"];
+                handler.UseDefaultCredentials = false;
+                handler.Credentials = new NetworkCredential(userName, userName);
+            }
+
+            HttpClient client = new HttpClient(handler);
+
+            while (retries > 0)
+            {
+                try
+                {
+                    var response = client.GetAsync(appManager.ServiceUrl).Result;
+                    if (response.StatusCode == HttpStatusCode.OK)
+                    {
+                        break;
+                    }
+                }
+                catch
+                {
+                    if (retries == 0)
+                    {
+                        throw;
+                    }
+                }
+                retries--;
+                Thread.Sleep(delayBeforeRetry);
             }
         }
 
