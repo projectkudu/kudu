@@ -320,18 +320,40 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public void DeployingNonMasterBranchNoOps()
+        {
+            string repositoryName = "DeployingNonMasterBranchNoOps";
+            string appName = "DeployingNonMasterBranchNoOps";
+            string cloneUrl = "https://github.com/KuduApps/RepoWithMultipleBranches.git";
+            using (Git.Clone(repositoryName, cloneUrl))
+            {
+                Git.CheckOut(repositoryName, "test");
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    appManager.GitDeploy(repositoryName, "test");
+                    var results = appManager.DeploymentManager.GetResults().ToList();
+
+                    // Assert
+                    Assert.Equal(0, results.Count);
+                    Verify(appManager.SiteUrl, "The web site is under construction");
+                });
+            }
+        }
+
+        [Fact]
         public void SpecificDeploymentConfiguration()
         {
-            VerifyDeploymentConfiguration("SpecificDeploymentConfiguration", 
-                                          "WebApplication1", 
+            VerifyDeploymentConfiguration("SpecificDeploymentConfiguration",
+                                          "WebApplication1",
                                           "This is the application I want deployed");
         }
 
         [Fact]
         public void SpecificDeploymentConfigurationForProjectFile()
         {
-            VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForProjectFile", 
-                                          "WebApplication1/WebApplication1.csproj", 
+            VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForProjectFile",
+                                          "WebApplication1/WebApplication1.csproj",
                                           "This is the application I want deployed");
         }
 

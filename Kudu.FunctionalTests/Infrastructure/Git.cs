@@ -30,6 +30,12 @@ namespace Kudu.FunctionalTests.Infrastructure
             gitExe.Execute("reset --hard \"{0}\"", commit);
         }
 
+        public static void CheckOut(string repositoryName, string branchName)
+        {
+            Executable gitExe = GetGitExe(repositoryName);
+            gitExe.Execute("checkout -b {0} -t origin/{0}", branchName);
+        }
+
         public static void Commit(string repositoryName, string message)
         {
             Executable gitExe = GetGitExe(repositoryName);

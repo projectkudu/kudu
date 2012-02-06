@@ -13,16 +13,16 @@ namespace Kudu.FunctionalTests.Infrastructure
         private static readonly TimeSpan _defaultTimeOut = TimeSpan.FromMinutes(5);
         private static int _errorCallbackInitialized;
 
-        public static void GitDeploy(this ApplicationManager appManager, string repositoryName)
+        public static void GitDeploy(this ApplicationManager appManager, string repositoryName, string branchName = "master")
         {
-            GitDeploy(appManager, repositoryName, _defaultTimeOut);
+            GitDeploy(appManager, repositoryName, branchName, _defaultTimeOut);
         }
 
-        public static void GitDeploy(this ApplicationManager appManager, string repositoryName, TimeSpan waitTimeout)
+        public static void GitDeploy(this ApplicationManager appManager, string repositoryName, string branchName, TimeSpan waitTimeout)
         {
             appManager.DeploymentManager.WaitForDeployment(() =>
             {
-                Git.Push(repositoryName, appManager.GitUrl);
+                Git.Push(repositoryName, appManager.GitUrl, branchName);
             },
             waitTimeout);
         }
