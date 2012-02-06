@@ -119,7 +119,8 @@ namespace Kudu.Services.Web.App_Start
                                             .InRequestScope();
 
             kernel.Bind<IDeploymentManager>().To<DeploymentManager>()
-                                             .InRequestScope();
+                                             .InRequestScope()
+                                             .OnActivation(SubscribeForDeploymentEvents);
 
             // Git server
             kernel.Bind<IDeploymentManagerFactory>().ToMethod(context => GetDeploymentManagerFactory(environment, propertyProvider, context.Kernel.Get<IProfilerFactory>()));
