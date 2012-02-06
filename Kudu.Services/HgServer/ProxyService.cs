@@ -9,7 +9,6 @@ using System.Threading;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Hg;
-using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.HgServer
 {
@@ -19,17 +18,17 @@ namespace Kudu.Services.HgServer
         private readonly IHgServer _hgServer;
         private readonly IServerConfiguration _configuration;
         private readonly IDeploymentManager _deploymentManager;
-        private readonly IRepositoryManager _repositoryManager;
+        private readonly IServerRepository _severRepository;
 
         public ProxyService(IHgServer hgServer,
-                               IServerConfiguration configuration,
-                               IDeploymentManager deploymentManager,
-                               IRepositoryManager repositoryManager)
+                            IServerConfiguration configuration,
+                            IDeploymentManager deploymentManager,
+                            IServerRepository severRepository)
         {
             _hgServer = hgServer;
             _configuration = configuration;
             _deploymentManager = deploymentManager;
-            _repositoryManager = repositoryManager;
+            _severRepository = severRepository;
         }
 
         [Description("Handles raw Mercurial HTTP service requests using POST.")]
@@ -64,7 +63,7 @@ namespace Kudu.Services.HgServer
 
             if (!_hgServer.IsRunning)
             {
-                EnsureHgRepository();
+                _severRepository.Initialize();
                 _hgServer.Start();
             }
 
@@ -107,11 +106,6 @@ namespace Kudu.Services.HgServer
             }
 
             return proxyResponse;
-        }
-
-        private void EnsureHgRepository()
-        {
-            RepositoryUtility.EnsureRepository(_repositoryManager, RepositoryType.Mercurial);
         }
     }
 }

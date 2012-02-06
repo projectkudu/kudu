@@ -14,7 +14,7 @@ namespace Kudu.FunctionalTests
     public class GitDeploymentTests
     {       
         static GitTestConfig gitTestConfig = new GitTestConfig(PathHelper.GitDeploymentTestsFile);
-
+    
         [Theory]
         [PropertyData("GetTestData")]
         public void PushAndDeployApps(string name, string repoName,
@@ -51,7 +51,6 @@ namespace Kudu.FunctionalTests
             {
                 return gitTestConfig.GetTests();
             }
-
         }
 
         public void Verify(string url, string content = null, HttpStatusCode statusCode = HttpStatusCode.OK)
@@ -77,6 +76,5 @@ namespace Kudu.FunctionalTests
 
             return guid;
         }
-
     }
 }

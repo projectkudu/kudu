@@ -51,6 +51,7 @@
     <Compile Include="Deployment\DeployResult.cs" />
     <Compile Include="Deployment\DeployStatus.cs" />
     <Compile Include="Deployment\IDeploymentManager.cs" />
+    <Compile Include="Deployment\IDeploymentManagerFactory.cs" />
     <Compile Include="Deployment\LogEntry.cs" />
     <Compile Include="Deployment\LogEntryType.cs" />
     <Compile Include="Editor\IProjectSystem.cs" />
@@ -73,7 +74,9 @@
     <Compile Include="SourceControl\IClonableRepository.cs" />
     <Compile Include="SourceControl\IRepository.cs" />
     <Compile Include="SourceControl\IRepositoryManager.cs" />
+    <Compile Include="SourceControl\IServerRepository.cs" />
     <Compile Include="SourceControl\LineDiff.cs" />
+    <Compile Include="SourceControl\PushInfo.cs" />
     <Compile Include="SourceControl\RepositoryType.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

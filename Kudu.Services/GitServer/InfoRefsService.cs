@@ -29,23 +29,19 @@ namespace Kudu.Services.GitServer
     using System.Net.Http.Headers;
     using System.ServiceModel;
     using System.ServiceModel.Web;
-    using Kudu.Core.SourceControl;
-    using Kudu.Core.SourceControl.Git;
-    using Kudu.Services.Infrastructure;
     using Kudu.Contracts;
+    using Kudu.Core.SourceControl.Git;
 
     // Handles /{project}/info/refs
     [ServiceContract]
     public class InfoRefsService
     {
         private readonly IGitServer _gitServer;
-        private readonly IRepositoryManager _repositoryManager;
         private readonly IProfiler _profiler;
 
-        public InfoRefsService(IProfiler profiler, IGitServer gitServer, IRepositoryManager repositoryManager)
+        public InfoRefsService(IProfiler profiler, IGitServer gitServer)
         {
             _gitServer = gitServer;
-            _repositoryManager = repositoryManager;
             _profiler = profiler;
         }
 
@@ -79,13 +75,13 @@ namespace Kudu.Services.GitServer
 
                 if (service == "upload-pack")
                 {
-                    EnsureGitRepository();
+                    _gitServer.Initialize();
                     _gitServer.AdvertiseUploadPack(memoryStream);
                 }
 
                 else if (service == "receive-pack")
                 {
-                    EnsureGitRepository();
+                    _gitServer.Initialize();
                     _gitServer.AdvertiseReceivePack(memoryStream);
                 }
 
@@ -115,12 +111,6 @@ namespace Kudu.Services.GitServer
             }
 
             return service.Replace("git-", "");
-        }
-
-        private void EnsureGitRepository()
-        {
-            // Ensure the git repository is set up before accepting the push
-            RepositoryUtility.EnsureRepository(_repositoryManager, RepositoryType.Git);
         }
     }
 }

@@ -102,28 +102,35 @@ namespace Kudu.Services.Web.App_Start
                 kernel.Bind<IProfilerFactory>().ToMethod(context => new ProfilerFactory(() => NullProfiler.Instance)).InSingletonScope();
             }
 
-            // Deployment
+            // Repository Management
             kernel.Bind<IRepositoryManager>().ToMethod(context => new RepositoryManager(environment.DeploymentRepositoryPath))
                                              .InRequestScope();
 
+
+            // Deployment Service
+            kernel.Bind<ISettings>().ToMethod(context => new XmlSettings.Settings(GetSettingsPath(environment)));
+
+            kernel.Bind<IDeploymentSettingsManager>().To<DeploymentSettingsManager>();
+
             kernel.Bind<ISiteBuilderFactory>().To<SiteBuilderFactory>()
-                                              .InRequestScope();
+                                             .InRequestScope();
+
+            kernel.Bind<IServerRepository>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, context.Kernel.Get<IProfilerFactory>()))
+                                            .InRequestScope();
 
             kernel.Bind<IDeploymentManager>().To<DeploymentManager>()
                                              .InRequestScope()
                                              .OnActivation(SubscribeForDeploymentEvents);
 
-            // Settings
-            kernel.Bind<ISettings>().ToMethod(context => new XmlSettings.Settings(GetSettingsPath(environment)));
-            kernel.Bind<IDeploymentSettingsManager>().To<DeploymentSettingsManager>();
-
             // Git server
+            kernel.Bind<IDeploymentManagerFactory>().ToMethod(context => GetDeploymentManagerFactory(environment, propertyProvider, context.Kernel.Get<IProfilerFactory>()));
+
             kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, context.Kernel.Get<IProfilerFactory>()))
                                      .InRequestScope();
 
             // Hg Server
             kernel.Bind<IHgServer>().To<Kudu.Core.SourceControl.Hg.HgServer>()
-                                    .InSingletonScope();
+                                   .InSingletonScope();
 
             // Editor
             kernel.Bind<IProjectSystem>().ToMethod(context => GetEditorProjectSystem(environment, context))
@@ -136,6 +143,32 @@ namespace Kudu.Services.Web.App_Start
             // Source control
             kernel.Bind<IRepository>().ToMethod(context => GetSourceControlRepository(environment));
             kernel.Bind<IClonableRepository>().ToMethod(context => (IClonableRepository)GetDevelopmentRepositoryManager(environment));
+        }
+
+        private static IDeploymentManagerFactory GetDeploymentManagerFactory(IEnvironment environment,
+                                                                             IBuildPropertyProvider propertyProvider,
+                                                                             IProfilerFactory profilerFactory)
+        {
+            return new DeploymentManagerFactory(() =>
+            {
+                var serverRepository = new GitExeServer(environment.DeploymentRepositoryPath, profilerFactory);
+                var settingsPath = GetSettingsPath(environment);
+                var settings = new XmlSettings.Settings(settingsPath);
+                var settingsManager = new DeploymentSettingsManager(settings);
+                var fileSystem = new FileSystem();
+                var siteBuilderFactory = new SiteBuilderFactory(propertyProvider, environment);
+
+                var deploymentManager = new DeploymentManager(serverRepository,
+                                                              siteBuilderFactory,
+                                                              environment,
+                                                              settingsManager,
+                                                              fileSystem,
+                                                              profilerFactory);
+
+                SubscribeForDeploymentEvents(deploymentManager);
+
+                return deploymentManager;
+            });
         }
 
         private static IRepositoryManager GetDevelopmentRepositoryManager(IEnvironment environment)
@@ -281,6 +314,20 @@ namespace Kudu.Services.Web.App_Start
             }
 
             public IProfiler GetProfiler()
+            {
+                return _factory();
+            }
+        }
+
+        private class DeploymentManagerFactory : IDeploymentManagerFactory
+        {
+            private readonly System.Func<IDeploymentManager> _factory;
+            public DeploymentManagerFactory(System.Func<IDeploymentManager> factory)
+            {
+                _factory = factory;
+            }
+
+            public IDeploymentManager CreateDeploymentManager()
             {
                 return _factory();
             }

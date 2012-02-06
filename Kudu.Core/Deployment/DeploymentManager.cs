@@ -12,7 +12,7 @@ namespace Kudu.Core.Deployment
 {
     public class DeploymentManager : IDeploymentManager
     {
-        private readonly IRepositoryManager _repositoryManager;
+        private readonly IServerRepository _serverRepository;
         private readonly ISiteBuilderFactory _builderFactory;
         private readonly IEnvironment _environment;
         private readonly IDeploymentSettingsManager _settingsManager;
@@ -21,14 +21,14 @@ namespace Kudu.Core.Deployment
 
         public event Action<DeployResult> StatusChanged;
 
-        public DeploymentManager(IRepositoryManager repositoryManager,
+        public DeploymentManager(IServerRepository serverRepository,
                                  ISiteBuilderFactory builderFactory,
                                  IEnvironment environment,
                                  IDeploymentSettingsManager settingsManager,
                                  IFileSystem fileSystem,
                                  IProfilerFactory profilerFactory)
         {
-            _repositoryManager = repositoryManager;
+            _serverRepository = serverRepository;
             _builderFactory = builderFactory;
             _environment = environment;
             _settingsManager = settingsManager;
@@ -152,13 +152,6 @@ namespace Kudu.Core.Deployment
             {
                 deployStep = profiler.Step("DeploymentManager.Deploy(id)");
 
-                IRepository repository = _repositoryManager.GetRepository();
-
-                if (repository == null)
-                {
-                    return;
-                }
-
                 // Check to see if we have a deployment with this id already
                 string trackingFilePath = GetTrackingFilePath(id);
 
@@ -171,7 +164,7 @@ namespace Kudu.Core.Deployment
                 using (profiler.Step("Updating to specific changeset"))
                 {
                     // Update to the the specific changeset
-                    repository.Update(id);
+                    _serverRepository.Update(id);
                 }
 
                 // Perform the build deployment of this changeset
@@ -189,33 +182,35 @@ namespace Kudu.Core.Deployment
 
         public void Deploy()
         {
-            IRepository repository = _repositoryManager.GetRepository();
-
-            if (repository == null)
-            {
-                return;
-            }
-
             var profiler = _profilerFactory.GetProfiler();
             IDisposable deployStep = null;
 
             try
             {
                 deployStep = profiler.Step("Deploy");
+                PushInfo pushInfo = _serverRepository.GetPushInfo();
 
-                // Store the current head
-                string id = repository.CurrentId;
- 
+                // Something went wrong here since we weren't able to 
+                if (pushInfo == null || !pushInfo.Branch.IsMaster)
+                {
+                    ReportCompleted();
+                    return;
+                }
+
                 using (profiler.Step("Update to specific changeset"))
                 {
                     // Update to the default branch
-                    repository.Update();
+                    _serverRepository.Update();
+                }
 
-                    // The default branch wasn't pushed then noop
-                    if (id != repository.CurrentId)
-                    {
-                        return;
-                    }
+                // Get the pointer to the default branch
+                string id = _serverRepository.CurrentId;
+
+                // If nothing changed then do nothing
+                if (id.Equals(ActiveDeploymentId, StringComparison.OrdinalIgnoreCase))
+                {
+                    ReportCompleted();
+                    return;
                 }
 
                 using (profiler.Step("Collecting changeset information"))
@@ -223,7 +218,7 @@ namespace Kudu.Core.Deployment
                     // Create the tracking file and store information about the commit
                     DeploymentStatusFile statusFile = CreateTrackingFile(id);
                     statusFile.Id = id;
-                    var changeSet = repository.GetChangeSet(id);
+                    ChangeSet changeSet = _serverRepository.GetChangeSet(id);
                     statusFile.Message = changeSet.Message;
                     statusFile.Author = changeSet.AuthorName;
                     statusFile.AuthorEmail = changeSet.AuthorEmail;
@@ -238,6 +233,8 @@ namespace Kudu.Core.Deployment
                 {
                     deployStep.Dispose();
                 }
+
+                ReportCompleted();
             }
         }
 
@@ -481,6 +478,17 @@ namespace Kudu.Core.Deployment
             if (StatusChanged != null)
             {
                 StatusChanged(result);
+            }
+        }
+
+        private void ReportCompleted()
+        {
+            if (StatusChanged != null)
+            {
+                StatusChanged(new DeployResult
+                {
+                    Complete = true
+                });
             }
         }
 

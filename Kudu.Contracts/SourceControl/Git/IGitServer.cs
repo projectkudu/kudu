@@ -2,7 +2,7 @@
 
 namespace Kudu.Core.SourceControl.Git
 {
-    public interface IGitServer
+    public interface IGitServer : IServerRepository
     {
         void AdvertiseUploadPack(Stream output);
         void AdvertiseReceivePack(Stream output);

@@ -40,14 +40,14 @@ namespace Kudu.Services.GitServer
     [ServiceContract]
     public class RpcService
     {
-        private readonly IDeploymentManager _deploymentManager;
+        private readonly IDeploymentManagerFactory _deploymentManagerFactory;
         private readonly IGitServer _gitServer;
         private readonly IProfiler _profiler;
 
-        public RpcService(IProfiler profiler, IGitServer gitServer, IDeploymentManager deploymentManager)
+        public RpcService(IProfiler profiler, IGitServer gitServer, IDeploymentManagerFactory deploymentManagerFactory)
         {
             _gitServer = gitServer;
-            _deploymentManager = deploymentManager;
+            _deploymentManagerFactory = deploymentManagerFactory;
             _profiler = profiler;
         }
 
@@ -76,11 +76,13 @@ namespace Kudu.Services.GitServer
 
                 _gitServer.Receive(GetInputStream(request), memoryStream);
                 
+                // TODO: Find a cleaner way to do this
                 ThreadPool.QueueUserWorkItem(_ =>
                 {
                     try
                     {
-                        _deploymentManager.Deploy();
+                        IDeploymentManager deploymentManager = _deploymentManagerFactory.CreateDeploymentManager();
+                        deploymentManager.Deploy();
                     }
                     catch (Exception ex)
                     {

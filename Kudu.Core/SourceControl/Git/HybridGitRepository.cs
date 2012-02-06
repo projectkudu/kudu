@@ -28,9 +28,7 @@ namespace Kudu.Core.SourceControl.Git
 
         public void Initialize()
         {
-            _libgitRepository.Initialize();
-
-            _exeRepository.InitializePush();
+            _exeRepository.Initialize();
         }
 
         public IEnumerable<Branch> GetBranches()

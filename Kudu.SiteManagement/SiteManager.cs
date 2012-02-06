@@ -33,6 +33,21 @@ namespace Kudu.SiteManagement
                 string siteName = GetLiveSite(applicationName);
                 string siteRoot = _pathResolver.GetLiveSitePath(applicationName);
                 string webRoot = Path.Combine(siteRoot, Constants.WebRoot);
+
+                FileSystemHelpers.EnsureDirectory(webRoot);
+                File.WriteAllText(Path.Combine(webRoot, "index.html"), @"<html> 
+<head>
+<title>The web site is under construction</title>
+<style type=""text/css"">
+ BODY { color: #444444; background-color: #E5F2FF; font-family: verdana; margin: 0px; text-align: center; margin-top: 100px; }
+ H1 { font-size: 16pt; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<h1>The web site is under construction</h1><br/>
+</body> 
+</html>");
+
                 int sitePort = CreateSite(iis, siteName, webRoot);
 
                 // Map a path called app to the site root under the service site
