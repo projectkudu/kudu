@@ -158,11 +158,11 @@ namespace Kudu.Services.Web.App_Start
                 var siteBuilderFactory = new SiteBuilderFactory(propertyProvider, environment);
 
                 var deploymentManager = new DeploymentManager(serverRepository,
-                                             siteBuilderFactory,
-                                             environment,
-                                             settingsManager,
-                                             fileSystem,
-                                             profilerFactory);
+                                                              siteBuilderFactory,
+                                                              environment,
+                                                              settingsManager,
+                                                              fileSystem,
+                                                              profilerFactory);
 
                 SubscribeForDeploymentEvents(deploymentManager);
 
