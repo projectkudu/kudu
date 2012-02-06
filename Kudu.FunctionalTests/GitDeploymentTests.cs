@@ -61,6 +61,30 @@ namespace Kudu.FunctionalTests
             }
         }
 
+        [Fact]
+        public void ProjectWithPackageRestore()
+        {
+            // Arrange
+            string repositoryName = "ProjectWithPackageRestore";
+            string cloneUrl = "https://github.com/KuduApps/Mvc3WithRestore.git";
+            string verificationText = "Welcome to ASP.NET MVC!";
+
+            using (Git.Clone(repositoryName, cloneUrl))
+            {
+                ApplicationManager.Run(repositoryName, appManager =>
+                {
+                    // Act
+                    appManager.GitDeploy(repositoryName);
+                    var results = appManager.DeploymentManager.GetResults().ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    Verify(appManager.SiteUrl, verificationText);
+                });
+            }
+        }
+
         public void PushRepoWithProjectAndNoSolutionShouldDeploy()
         {
             // Arrange

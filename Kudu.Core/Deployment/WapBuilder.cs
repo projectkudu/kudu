@@ -46,7 +46,7 @@ namespace Kudu.Core.Deployment
 
                 using (context.Profiler.Step("Building manifest"))
                 {
-                    // Generate a manifest from those build artifacts                
+                    // Generate a manifest from those build artifacts
                     context.ManifestWriter.AddFiles(buildTempPath);
                 }
 
@@ -73,10 +73,10 @@ namespace Kudu.Core.Deployment
                 return ExecuteMSBuild(innerLogger, command, _projectPath, buildTempPath, GetPropertyString());
             }
 
-            string solutionDir = _solutionPath + @"\\";
+            string solutionDir = Path.GetDirectoryName(_solutionPath) + @"\\";
             command += @"SolutionDir=""{2}"";{3}";
 
-            // Build artifacts into a temp path                    
+            // Build artifacts into a temp path
             return ExecuteMSBuild(innerLogger, command, _projectPath, buildTempPath, solutionDir, GetPropertyString());
         }
     }
