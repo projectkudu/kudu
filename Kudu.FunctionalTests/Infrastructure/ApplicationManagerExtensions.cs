@@ -3,14 +3,15 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Client.Deployment;
+using Kudu.Core.Deployment;
 using Xunit;
 
 namespace Kudu.FunctionalTests.Infrastructure
 {
     public static class ApplicationManagerExtensions
     {
-        private static readonly TimeSpan _defaultTimeOut = TimeSpan.FromMinutes(3);
-        private static bool _errorCallbackInitialized;
+        private static readonly TimeSpan _defaultTimeOut = TimeSpan.FromMinutes(5);
+        private static int _errorCallbackInitialized;
 
         public static void GitDeploy(this ApplicationManager appManager, string repositoryName)
         {
@@ -35,22 +36,30 @@ namespace Kudu.FunctionalTests.Infrastructure
         {
             var deployEvent = new ManualResetEvent(false);
 
-            if (!_errorCallbackInitialized)
+            Action<DeployResult> handler = null;
+
+            handler = status =>
             {
-                _errorCallbackInitialized = true;
+                if (status.Complete)
+                {
+                    if (Interlocked.Exchange(ref handler, null) != null)
+                    {
+                        deploymentManager.Stop();
+                        deploymentManager.StatusChanged -= handler;
+                        deployEvent.Set();
+                    }
+                }
+            };
+
+            if (Interlocked.Exchange(ref _errorCallbackInitialized, 1) == 0)
+            {
                 TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
             }
 
             try
             {
                 // Create deployment manager and wait for the deployment to finish
-                deploymentManager.StatusChanged += status =>
-                {
-                    if (status.Complete)
-                    {
-                        deployEvent.Set();
-                    }
-                };
+                deploymentManager.StatusChanged += handler;
 
                 // Start listenting for events
                 deploymentManager.Start();
@@ -67,8 +76,12 @@ namespace Kudu.FunctionalTests.Infrastructure
             }
             finally
             {
-                // Stop listenting
-                deploymentManager.Stop();
+                if (Interlocked.Exchange(ref handler, null) != null)
+                {
+                    deploymentManager.StatusChanged -= handler;
+                    // Stop listenting
+                    deploymentManager.Stop();
+                }
             }
         }
 
