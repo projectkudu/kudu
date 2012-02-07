@@ -42,12 +42,13 @@ namespace Kudu.FunctionalTests.Infrastructure
             {
                 if (status.Complete)
                 {
-                    if (Interlocked.Exchange(ref handler, null) != null)
+                    if (handler != null)
                     {
                         deploymentManager.Stop();
                         deploymentManager.StatusChanged -= handler;
-                        deployEvent.Set();
                     }
+
+                    deployEvent.Set();
                 }
             };
 
@@ -76,7 +77,7 @@ namespace Kudu.FunctionalTests.Infrastructure
             }
             finally
             {
-                if (Interlocked.Exchange(ref handler, null) != null)
+                if (handler != null)
                 {
                     deploymentManager.StatusChanged -= handler;
                     // Stop listenting

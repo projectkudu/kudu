@@ -74,28 +74,34 @@ namespace Kudu.Services.GitServer
             {
                 var memoryStream = new MemoryStream();
 
-                _gitServer.Receive(GetInputStream(request), memoryStream);
-                
-                // TODO: Find a cleaner way to do this
-                ThreadPool.QueueUserWorkItem(_ =>
+                // Only if we've completed the receive pack should we start a deployment
+                if (_gitServer.Receive(GetInputStream(request), memoryStream))
                 {
-                    try
-                    {
-                        IDeploymentManager deploymentManager = _deploymentManagerFactory.CreateDeploymentManager();
-                        deploymentManager.Deploy();
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine("Error deploying");
-                        Debug.WriteLine(ex.Message);
-                    }
-                });
+                    Deploy();
+                }
 
                 memoryStream.Flush();
                 memoryStream.Position = 0;
 
                 return CreateResponse(memoryStream, "application/x-git-{0}-result".With("receive-pack"));
             }
+        }
+
+        private void Deploy()
+        {
+            ThreadPool.QueueUserWorkItem(_ =>
+            {
+                try
+                {
+                    IDeploymentManager deploymentManager = _deploymentManagerFactory.CreateDeploymentManager();
+                    deploymentManager.Deploy();
+                }
+                catch (Exception ex)
+                {
+                    // TODO: Add better logging
+                    Debug.WriteLine(ex.Message);
+                }
+            });
         }
 
         private Stream GetInputStream(HttpRequestMessage request)

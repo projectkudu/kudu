@@ -241,23 +241,10 @@ namespace Kudu.Services.Web.App_Start
                                    root,
                                    deploymentRepositoryPath,
                                    tempPath,
-                                   () => ResolveDeploymentRepositoryPath(deploymentRepositoryPath, deploymentTempPath),
+                                   () => deploymentRepositoryPath,
                                    () => ResolveRepositoryPath(site),
                                    deployPath,
                                    deployCachePath);
-        }
-
-        private static string ResolveDeploymentRepositoryPath(string deploymentRepositoryPath, string tempPath)
-        {
-            RepositoryType type = RepositoryManager.GetRepositoryType(deploymentRepositoryPath);
-
-            if (type == RepositoryType.None)
-            {
-                // Return the temp path if there's no repository
-                return tempPath;
-            }
-
-            return deploymentRepositoryPath;
         }
 
         private static string ResolveRepositoryPath(string site)

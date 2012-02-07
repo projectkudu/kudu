@@ -236,10 +236,9 @@ namespace Kudu.FunctionalTests
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
-                    appManager.ProjectSystem.WriteAllText("foo.txt", "This is a test file");
-                    string url = appManager.SiteUrl + "/foo.txt";
+                    string url = appManager.SiteUrl + "/index.html";
 
-                    Verify(url, "This is a test file");
+                    Verify(url, "The web site is under construction");
 
                     // Act
                     appManager.GitDeploy(repositoryName);

@@ -6,7 +6,7 @@ namespace Kudu.Core.SourceControl.Git
     {
         void AdvertiseUploadPack(Stream output);
         void AdvertiseReceivePack(Stream output);
-        void Receive(Stream inputStream, Stream outputStream);
+        bool Receive(Stream inputStream, Stream outputStream);
         void Upload(Stream inputStream, Stream outputStream);
     }
 }
