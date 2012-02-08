@@ -2,12 +2,12 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.Web.Infrastructure;
 using Xunit;
 using Xunit.Extensions;
-using System.Net.Http;
 
 namespace Kudu.FunctionalTests
 {
@@ -19,11 +19,9 @@ namespace Kudu.FunctionalTests
         [PropertyData("GetTestData")]
         public void PushAndDeployApps(string name, string repoName,
                                       string repoUrl, string repoCloneUrl,
-                                      string verificationText, HttpStatusCode expectedResponseCode,
-                                      bool skip)
+                                      string defaultBranchName, string verificationText, 
+                                      HttpStatusCode expectedResponseCode, bool skip)
         {
-            Debug.WriteLineIf(skip, string.Format("Test skipped: {0}\n", name));
-
             if (!skip)
             {
                 string randomTestName = GetRandomWebSiteName(repoName);
@@ -32,7 +30,7 @@ namespace Kudu.FunctionalTests
                     ApplicationManager.Run(randomTestName, appManager =>
                     {
                         // Act
-                        appManager.GitDeploy(randomTestName);
+                        appManager.GitDeploy(randomTestName, defaultBranchName);
                         var results = appManager.DeploymentManager.GetResults().ToList();
 
                         // Assert
@@ -42,6 +40,10 @@ namespace Kudu.FunctionalTests
                     });
                 }
                 Debug.Write(string.Format("Test completed: {0}\n", name));
+            }
+            else
+            {
+                Debug.Write(string.Format("Test skipped: {0}\n", name));
             }
         }
 

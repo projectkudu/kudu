@@ -194,6 +194,7 @@ namespace Kudu.Core.Deployment
                 if (pushInfo == null || !pushInfo.Branch.IsMaster)
                 {
                     ReportCompleted();
+                    deployStep.Dispose();
                     return;
                 }
 
@@ -210,6 +211,7 @@ namespace Kudu.Core.Deployment
                 if (id.Equals(ActiveDeploymentId, StringComparison.OrdinalIgnoreCase))
                 {
                     ReportCompleted();
+                    deployStep.Dispose();
                     return;
                 }
 

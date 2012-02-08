@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Client.Deployment;
 using Kudu.Core.Deployment;
 using Xunit;
-using System.Net.Http;
-using System.Net;
-using System.Configuration;
 
 namespace Kudu.FunctionalTests.Infrastructure
 {
@@ -16,18 +15,17 @@ namespace Kudu.FunctionalTests.Infrastructure
         private static readonly TimeSpan _defaultTimeOut = TimeSpan.FromMinutes(5);
         private static int _errorCallbackInitialized;
 
-        public static void GitDeploy(this ApplicationManager appManager, string repositoryName, string branchName = "master")
+        public static void GitDeploy(this ApplicationManager appManager, string repositoryName, string localBranchName = "master", string remoteBranchName = "master")
         {
-            GitDeploy(appManager, repositoryName, branchName, _defaultTimeOut);
+            GitDeploy(appManager, repositoryName, localBranchName, remoteBranchName, _defaultTimeOut);
         }
 
-        public static void GitDeploy(this ApplicationManager appManager, string repositoryName, string branchName, TimeSpan waitTimeout)
+        public static void GitDeploy(this ApplicationManager appManager, string repositoryName, string localBranchName, string remoteBranchName, TimeSpan waitTimeout)
         {
             appManager.DeploymentManager.WaitForDeployment(() =>
             {
-
                 WaitForRepositorySite(appManager);
-                Git.Push(repositoryName, appManager.GitUrl, branchName);
+                Git.Push(repositoryName, appManager.GitUrl, localBranchName, remoteBranchName);
             },
             waitTimeout);
         }
@@ -47,12 +45,13 @@ namespace Kudu.FunctionalTests.Infrastructure
             {
                 if (status.Complete)
                 {
-                    if (Interlocked.Exchange(ref handler, null) != null)
+                    if (handler != null)
                     {
                         deploymentManager.Stop();
                         deploymentManager.StatusChanged -= handler;
-                        deployEvent.Set();
                     }
+
+                    deployEvent.Set();
                 }
             };
 
@@ -81,7 +80,7 @@ namespace Kudu.FunctionalTests.Infrastructure
             }
             finally
             {
-                if (Interlocked.Exchange(ref handler, null) != null)
+                if (handler != null)
                 {
                     deploymentManager.StatusChanged -= handler;
                     // Stop listenting
@@ -91,16 +90,8 @@ namespace Kudu.FunctionalTests.Infrastructure
         }
 
         private static void WaitForRepositorySite(ApplicationManager appManager, int retries = 3, int delayBeforeRetry = 250)
-        {
-            HttpClientHandler handler = new HttpClientHandler();
-            if (!String.IsNullOrEmpty(ConfigurationManager.AppSettings["antares.basedomain"]))
-            {
-                string userName = ConfigurationManager.AppSettings["antares.username"];
-                handler.UseDefaultCredentials = false;
-                handler.Credentials = new NetworkCredential(userName, userName);
-            }
-
-            HttpClient client = new HttpClient(handler);
+        {            
+            var client = new HttpClient();
 
             while (retries > 0)
             {

@@ -96,31 +96,10 @@ namespace Kudu.Core.Infrastructure
         {
             try
             {
-                Attempt(action);
+                OperationManager.Attempt(action);
             }
             catch
             {
-            }
-        }
-
-        private static void Attempt(Action action, int retries = 3, int delayBeforeRetry = 250)
-        {
-            while (retries > 0)
-            {
-                try
-                {
-                    action();
-                    break;
-                }
-                catch
-                {
-                    retries--;
-                    if (retries == 0)
-                    {
-                        throw;
-                    }
-                }
-                Thread.Sleep(delayBeforeRetry);
             }
         }
 

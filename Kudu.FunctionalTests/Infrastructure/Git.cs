@@ -12,12 +12,19 @@ namespace Kudu.FunctionalTests.Infrastructure
     public static class Git
     {
 
-        public static void Push(string repositoryName, string url, string branchName = "master")
+        public static void Push(string repositoryName, string url, string localBranchName = "master", string remoteBranchName = "master")
         {
             Executable gitExe = GetGitExe(repositoryName);
-            gitExe.Execute("push {0} {1}", url, branchName);
+            if (localBranchName.Equals("master"))
+            {
+                gitExe.Execute("push {0} {1}", url, remoteBranchName);
+            }
+            else
+            {
+                gitExe.Execute("push {0} {1}:{2}", url, localBranchName, remoteBranchName);
+            }
         }
-
+        
         public static void Revert(string repositoryName, string commit = "HEAD")
         {
             Executable gitExe = GetGitExe(repositoryName);

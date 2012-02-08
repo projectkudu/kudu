@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using Kudu.Contracts;
 using Kudu.Core.Infrastructure;
@@ -12,8 +11,7 @@ namespace Kudu.Core.SourceControl.Git
         private readonly Executable _gitExe;
         private readonly IProfilerFactory _profilerFactory;
         private readonly GitExeRepository _repository;
-        private readonly Action _initialize;
-
+        
         public GitExeServer(string path, IProfilerFactory profilerFactory)
             : this(GitUtility.ResolveGitPath(), path, profilerFactory)
         {
@@ -24,7 +22,6 @@ namespace Kudu.Core.SourceControl.Git
             _gitExe = new Executable(pathToGitExe, path);
             _profilerFactory = profilerFactory;
             _repository = new GitExeRepository(path);
-            _initialize = () => new LibGitRepository(path).Initialize();
         }
 
         private string PostReceiveHookPath
@@ -32,6 +29,14 @@ namespace Kudu.Core.SourceControl.Git
             get
             {
                 return Path.Combine(_gitExe.WorkingDirectory, ".git", "hooks", "post-receive");
+            }
+        }
+
+        private string PushInfoPath
+        {
+            get
+            {
+                return Path.Combine(_gitExe.WorkingDirectory, ".git", "pushinfo");
             }
         }
 
@@ -61,13 +66,19 @@ namespace Kudu.Core.SourceControl.Git
             }
         }
 
-        public void Receive(Stream inputStream, Stream outputStream)
+        public bool Receive(Stream inputStream, Stream outputStream)
         {
             IProfiler profiler = _profilerFactory.GetProfiler();
             using (profiler.Step("GitExeServer.Receive"))
             {
+                // Remove the push info path
+                FileSystemHelpers.DeleteFileSafe(PushInfoPath);
+
                 ServiceRpc("receive-pack", inputStream, outputStream);
             }
+
+            // If out file was written to disk then the push is complete
+            return File.Exists(PushInfoPath);
         }
 
         public void Upload(Stream inputStream, Stream outputStream)
@@ -91,7 +102,7 @@ namespace Kudu.Core.SourceControl.Git
 
         public PushInfo GetPushInfo()
         {
-            string path = Path.Combine(_gitExe.WorkingDirectory, ".git", "pushinfo");
+            string path = PushInfoPath;
 
             if (!File.Exists(path))
             {
@@ -130,8 +141,7 @@ namespace Kudu.Core.SourceControl.Git
                     return;
                 }
 
-                // Initialize using LibGit2Sharp
-                _initialize();
+                _repository.Initialize();
 
                 // Allow getting pushes even though we're not bare
                 _gitExe.Execute("config receive.denyCurrentBranch ignore");
