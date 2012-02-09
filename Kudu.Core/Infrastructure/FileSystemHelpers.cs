@@ -25,6 +25,11 @@ namespace Kudu.Core.Infrastructure
             DeleteFileSystemInfo(new DirectoryInfoWrapper(new DirectoryInfo(path)));
         }
 
+        public static void DeleteDirectoryContentsSafe(string path)
+        {
+            DeleteDirectoryContentsSafe(new DirectoryInfoWrapper(new DirectoryInfo(path)));
+        }
+
         internal static string EnsureDirectory(string path)
         {
             return EnsureDirectory(new FileSystem(), path);
@@ -74,22 +79,27 @@ namespace Kudu.Core.Infrastructure
 
             if (directoryInfo != null)
             {
-                try
-                {
-                    if (directoryInfo.Exists)
-                    {
-                        foreach (var dirInfo in directoryInfo.GetFileSystemInfos())
-                        {
-                            DeleteFileSystemInfo(dirInfo);
-                        }
-                    }
-                }
-                catch
-                {
-                }
+                DeleteDirectoryContentsSafe(directoryInfo);
             }
 
             DoSafeAction(fileSystemInfo.Delete);
+        }
+
+        private static void DeleteDirectoryContentsSafe(DirectoryInfoBase directoryInfo)
+        {
+            try
+            {
+                if (directoryInfo.Exists)
+                {
+                    foreach (var fsi in directoryInfo.GetFileSystemInfos())
+                    {
+                        DeleteFileSystemInfo(fsi);
+                    }
+                }
+            }
+            catch
+            {
+            }
         }
 
         private static void DoSafeAction(Action action)
@@ -152,7 +162,7 @@ namespace Kudu.Core.Infrastructure
                 Copy(sourcePath, destinationPath, sourceSubDirectory, targetSubDirectory, createDirectoryInfo, skipScmFolder);
             }
         }
-        
+
         internal static void SmartCopy(string sourcePath,
                                        string destinationPath,
                                        Func<string, bool> existsInPrevious,
