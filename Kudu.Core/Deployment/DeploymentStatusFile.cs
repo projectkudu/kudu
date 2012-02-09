@@ -47,11 +47,16 @@ namespace Kudu.Core.Deployment
             DeployStatus status;
             Enum.TryParse(document.Root.Element("status").Value, out status);
 
-            string deploymentEndTime = document.Root.Element("deploymentEndTime").Value;
-            string deploymentStartTime = document.Root.Element("deploymentStartTime").Value;
+            string deploymentEndTime = GetOptionalElementValue(document.Root, "deploymentEndTime");
+            string deploymentStartTime = GetOptionalElementValue(document.Root, "deploymentStartTime");
 
-            bool deploymentComplete;
-            Boolean.TryParse(document.Root.Element("deploymentComplete").Value, out deploymentComplete);
+            bool deploymentComplete = false;
+            string deploymentCompleteValue = GetOptionalElementValue(document.Root, "deploymentComplete");
+
+            if (!String.IsNullOrEmpty(deploymentCompleteValue))
+            {
+                Boolean.TryParse(deploymentCompleteValue, out deploymentComplete);
+            }
 
             return new DeploymentStatusFile(path)
             {
