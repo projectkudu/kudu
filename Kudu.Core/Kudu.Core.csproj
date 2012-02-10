@@ -93,7 +93,6 @@
     <Compile Include="Infrastructure\DisposableAction.cs" />
     <Compile Include="Infrastructure\IniFile.cs" />
     <Compile Include="Infrastructure\OperationManager.cs" />
-    <Compile Include="Infrastructure\TaskExtensions.cs" />
     <Compile Include="Infrastructure\VsHelper.cs" />
     <Compile Include="Performance\IProfilerFactory.cs" />
     <Compile Include="Performance\NullProfiler.cs" />

@@ -57,6 +57,7 @@
     <Compile Include="Editor\IProjectSystem.cs" />
     <Compile Include="Editor\Project.cs" />
     <Compile Include="IEnvironment.cs" />
+    <Compile Include="Infrastructure\TaskExtensions.cs" />
     <Compile Include="Performance\IProfiler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Settings\ConnectionStringSetting.cs" />

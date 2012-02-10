@@ -26,7 +26,7 @@ namespace Kudu.FunctionalTests
                 {
                     // Act
                     appManager.GitDeploy(repositoryName);
-                    var results = appManager.DeploymentManager.GetResults().ToList();
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                     var deployedFiles = new HashSet<string>(appManager.DeploymentManager.GetManifest(repo.CurrentId), StringComparer.OrdinalIgnoreCase);
 
                     // Assert
@@ -75,7 +75,7 @@ namespace Kudu.FunctionalTests
                 {
                     // Act
                     appManager.GitDeploy(repositoryName);
-                    var results = appManager.DeploymentManager.GetResults().ToList();
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
                     Assert.Equal(1, results.Count);
@@ -126,7 +126,7 @@ namespace Kudu.FunctionalTests
 
                     // Act
                     appManager.GitDeploy(repositoryName);
-                    var results = appManager.DeploymentManager.GetResults().ToList();
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
                     Assert.Equal(1, results.Count);
@@ -137,7 +137,7 @@ namespace Kudu.FunctionalTests
                     File.WriteAllText(projectPath, File.ReadAllText(projectPath).Replace(@"<Compile Include=""Controllers\AccountController.cs"" />", ""));
                     Git.Commit(repositoryName, "Deleted the filez");
                     appManager.GitDeploy(repositoryName);
-                    results = appManager.DeploymentManager.GetResults().ToList();
+                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
                     Assert.Equal(2, results.Count);
@@ -287,7 +287,7 @@ namespace Kudu.FunctionalTests
                     appManager.GitDeploy(repositoryName);
 
                     // Assert
-                    var results = appManager.DeploymentManager.GetResults().ToList();
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
                     Verify(appManager.SiteUrl);
@@ -332,7 +332,7 @@ namespace Kudu.FunctionalTests
                     // Deploy the app
                     appManager.GitDeploy(repositoryName);
 
-                    var results = appManager.DeploymentManager.GetResults().ToList();
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                     Assert.Equal(1, results.Count);
                     Verify(appManager.SiteUrl);
 
@@ -344,7 +344,7 @@ namespace Kudu.FunctionalTests
                     // Deploy those changes
                     appManager.GitDeploy(repositoryName);
 
-                    results = appManager.DeploymentManager.GetResults().ToList();
+                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                     Assert.Equal(2, results.Count);
                     Assert.Equal(DeployStatus.Success, results[1].Status);
                     Verify(helloUrl, "Wow");
@@ -355,7 +355,7 @@ namespace Kudu.FunctionalTests
                         appManager.DeploymentManager.Deploy(originalCommitId);
                     });
 
-                    results = appManager.DeploymentManager.GetResults().ToList();
+                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                     Verify(helloUrl, statusCode: HttpStatusCode.NotFound);
                     Assert.Equal(2, results.Count);
                 });
@@ -408,7 +408,7 @@ project = {0}", targetProject));
 
                     // Act
                     appManager.GitDeploy(name);
-                    var results = appManager.DeploymentManager.GetResults().ToList();
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
                     Assert.Equal(1, results.Count);
