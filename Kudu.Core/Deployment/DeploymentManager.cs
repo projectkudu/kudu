@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
 using Kudu.Contracts;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Performance;
 using Kudu.Core.SourceControl;
@@ -60,28 +61,7 @@ namespace Kudu.Core.Deployment
 
         public DeployResult GetResult(string id)
         {
-            var profiler = _profilerFactory.GetProfiler();
-
-            var file = OpenTrackingFile(id);
-
-            if (file == null)
-            {
-                return null;
-            }
-
-            return new DeployResult
-            {
-                Id = file.Id,
-                Author = file.Author,
-                AuthorEmail = file.AuthorEmail,
-                Message = file.Message,
-                DeployStartTime = file.DeploymentStartTime,
-                DeployEndTime = file.DeploymentEndTime,
-                Status = file.Status,
-                Percentage = file.Percentage,
-                StatusText = file.StatusText,
-                Complete = file.Complete,
-            };
+            return GetResult(id, ActiveDeploymentId);
         }
 
         public IEnumerable<string> GetManifest(string id)
@@ -241,6 +221,36 @@ namespace Kudu.Core.Deployment
         }
 
         /// <summary>
+        /// Get result with ActiveDeploymentId
+        /// </summary>
+        private DeployResult GetResult(string id, string activeDeploymentId)
+        {
+            var profiler = _profilerFactory.GetProfiler();
+
+            var file = OpenTrackingFile(id);
+
+            if (file == null)
+            {
+                return null;
+            }
+
+            return new DeployResult
+            {
+                Id = file.Id,
+                Author = file.Author,
+                AuthorEmail = file.AuthorEmail,
+                Message = file.Message,
+                DeployStartTime = file.DeploymentStartTime,
+                DeployEndTime = file.DeploymentEndTime,
+                Status = file.Status,
+                Percentage = file.Percentage,
+                StatusText = file.StatusText,
+                Complete = file.Complete,
+                Current = file.Id == activeDeploymentId,
+            };
+        }
+
+        /// <summary>
         /// Builds and deploys a particular changeset. Puts all build artifacts in a deployments/{id}
         /// </summary>
         private void Build(string id, IProfiler profiler, IDisposable deployStep)
@@ -349,9 +359,10 @@ namespace Kudu.Core.Deployment
                 yield break;
             }
 
+            string activeDeploymentId = ActiveDeploymentId;
             foreach (var id in _fileSystem.Directory.GetDirectories(_environment.DeploymentCachePath))
             {
-                var result = GetResult(id);
+                var result = GetResult(id, activeDeploymentId);
                 if (result != null)
                 {
                     yield return result;

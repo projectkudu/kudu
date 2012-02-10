@@ -26,7 +26,7 @@ namespace Kudu.Client.Editor
 
         public Project GetProject()
         {
-            return _client.GetAsyncJson<Project>(String.Empty);
+            return _client.GetJson<Project>(String.Empty);
         }
 
         public void WriteAllText(string path, string content)

@@ -19,6 +19,7 @@ namespace Kudu.SignalR.ViewModels
             DeployEndTime = result.DeployEndTime;
             DeployStartTime = result.DeployStartTime;
             Percentage = result.Percentage;
+            Current = result.Current;
         }
 
         public string Id { get; set; }
