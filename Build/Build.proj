@@ -45,7 +45,7 @@
     </Target>
     
     <Target Name="RunFunctionalTests">
-        <xunit Assembly="$(ProjectRoot)\Kudu.FunctionalTests\bin\$(Configuration)\Kudu.FunctionalTests.dll" />
+        <xunit Assembly="$(ProjectRoot)\Kudu.FunctionalTests\bin\$(Configuration)\Kudu.FunctionalTests.dll"  Xml="..\artifacts\test.xunit.results.xml" Verbose="true" />
     </Target>
     
     <Target Name="Build" DependsOnTargets="CreateOutputPath">
