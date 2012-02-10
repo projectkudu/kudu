@@ -13,12 +13,12 @@ namespace Kudu.Client.Deployment
 
         public IEnumerable<DeploymentSetting> GetAppSettings()
         {
-            return _client.GetAsyncJson<IEnumerable<DeploymentSetting>>("appSettings");
+            return _client.GetJson<IEnumerable<DeploymentSetting>>("appSettings");
         }
 
         public IEnumerable<ConnectionStringSetting> GetConnectionStrings()
         {
-            return _client.GetAsyncJson<IEnumerable<ConnectionStringSetting>>("connectionStrings");
+            return _client.GetJson<IEnumerable<ConnectionStringSetting>>("connectionStrings");
         }
 
         public void SetConnectionString(string name, string connectionString)

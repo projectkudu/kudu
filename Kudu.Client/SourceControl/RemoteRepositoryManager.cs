@@ -22,7 +22,7 @@ namespace Kudu.Client.SourceControl
 
         public RepositoryType GetRepositoryType()
         {
-            return _client.GetAsyncJson<RepositoryType>("kind");
+            return _client.GetJson<RepositoryType>("kind");
         }
 
         public void Delete()
