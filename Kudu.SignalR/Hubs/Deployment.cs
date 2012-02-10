@@ -45,14 +45,9 @@ namespace Kudu.SignalR.Hubs
 
         private IEnumerable<DeployResultViewModel> GetTopFive(IEnumerable<DeployResult> results)
         {
-            string active = _deploymentManager.ActiveDeploymentId;
-
             return (from d in results
                     where d.Status != DeployStatus.Failed
-                    select new DeployResultViewModel(d)
-                    {
-                        Current = d.Id == active
-                    })
+                    select new DeployResultViewModel(d))
                     .Take(5);
         }
 
