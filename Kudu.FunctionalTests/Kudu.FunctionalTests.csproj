@@ -90,6 +90,8 @@
     <Compile Include="Infrastructure\PathHelper.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Infrastructure\TestRepository.cs" />
+    <Compile Include="Infrastructure\TestRepositoryExtensions.cs" />
     <Compile Include="Infrastructure\Utils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="GitDeploymentTests.cs" />
