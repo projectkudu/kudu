@@ -63,6 +63,7 @@ namespace Kudu.Performance
             Console.WriteLine("===============Deployment===============", applicationName);
             Console.WriteLine("Time to push : {0:0.000}s", sw.Elapsed.TotalSeconds);
             var profilePath = Path.Combine("profiles", applicationName + ".profile.xml");
+            Directory.CreateDirectory(Path.GetDirectoryName(profilePath));
             File.WriteAllText(profilePath, serverProfile);
             Console.WriteLine("Server profile for is saved to {0}", Path.GetFullPath(profilePath));
             Console.WriteLine();

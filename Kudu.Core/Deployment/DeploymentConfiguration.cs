@@ -6,7 +6,7 @@ namespace Kudu.Core.Deployment
 {
     public class DeploymentConfiguration
     {
-        private const string DeployConfigFile = ".deployment";
+        internal const string DeployConfigFile = ".deployment";
         private readonly IniFile _iniFile;
         private readonly string _path;
 

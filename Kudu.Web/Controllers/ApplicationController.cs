@@ -281,12 +281,7 @@ namespace Kudu.Web.Controllers
 
         private void PopulateRepositoryTypes()
         {
-            ViewBag.RepositoryType = Enum.GetNames(typeof(RepositoryType))
-                                         .Select((name, value) => new SelectListItem
-                                         {
-                                             Text = name,
-                                             Value = value.ToString()
-                                         });
+            ViewBag.RepositoryType = new[] { new SelectListItem { Text = "None" } };
         }
 
         private IRepositoryManager GetRepositoryManager(Application application)

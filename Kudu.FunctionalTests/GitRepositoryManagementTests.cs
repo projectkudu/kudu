@@ -26,7 +26,7 @@ namespace Kudu.FunctionalTests
                 {
                     // Act
                     appManager.GitDeploy(repo.PhysicalPath);
-                    var results = appManager.DeploymentManager.GetResults().ToList();
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                     var deployedFiles = new HashSet<string>(appManager.DeploymentManager.GetManifest(repo.CurrentId), StringComparer.OrdinalIgnoreCase);
 
                     // Assert
@@ -75,7 +75,9 @@ namespace Kudu.FunctionalTests
                 {
                     // Act
                     appManager.GitDeploy(repo.PhysicalPath);
-                    var results = appManager.DeploymentManager.GetResults().ToList();
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                    appManager.GitDeploy(repositoryName);
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
                     Assert.Equal(1, results.Count);
@@ -126,7 +128,9 @@ namespace Kudu.FunctionalTests
 
                     // Act
                     appManager.GitDeploy(repo.PhysicalPath);
-                    var results = appManager.DeploymentManager.GetResults().ToList();
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                    appManager.GitDeploy(repositoryName);
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
                     Assert.Equal(1, results.Count);
@@ -137,12 +141,99 @@ namespace Kudu.FunctionalTests
                     File.WriteAllText(projectPath, File.ReadAllText(projectPath).Replace(@"<Compile Include=""Controllers\AccountController.cs"" />", ""));
                     Git.Commit(repo.PhysicalPath, "Deleted the filez");
                     appManager.GitDeploy(repo.PhysicalPath);
-                    results = appManager.DeploymentManager.GetResults().ToList();
+                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
                     Assert.Equal(2, results.Count);
                     Assert.Equal(DeployStatus.Success, results[1].Status);
                     Verify(appManager.SiteUrl + "Account/LogOn", statusCode: HttpStatusCode.NotFound);
+                });
+            }
+        }
+
+        [Fact]
+        public void PushShouldOverwriteModifiedFilesInRepo()
+        {
+            // Arrange
+            string repositoryName = "Mvc3Application";
+            string appName = "PushShouldOverwriteModifiedFilesInRepo";
+            string verificationText = "Welcome to ASP.NET MVC!";
+
+            using (var repo = Git.CreateLocalRepository(repositoryName))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    appManager.GitDeploy(repositoryName);
+
+                    Verify(appManager.SiteUrl, verificationText);
+
+                    appManager.ProjectSystem.WriteAllText("Views/Home/Index.cshtml", "Hello world!");
+
+                    Verify(appManager.SiteUrl, "Hello world!");
+
+                    // Make an unrelated change (newline to the end of web.config)
+                    repo.AppendFile(@"Mvc3Application\Web.config", "\n");
+
+                    Git.Commit(repositoryName, "This is a test");
+
+                    appManager.GitDeploy(repositoryName);
+
+                    var results = appManager.DeploymentManager.GetResults().ToList();
+
+                    // Assert
+                    Assert.Equal(2, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    Verify(appManager.SiteUrl, verificationText);
+                });
+            }
+        }
+
+        [Fact]
+        public void GoingBackInTimeShouldOverwriteModifiedFilesInRepo()
+        {
+            // Arrange
+            string repositoryName = "Mvc3Application";
+            string appName = "GoingBackInTimeShouldOverwriteModifiedFilesInRepo";
+            string verificationText = "Welcome to ASP.NET MVC!";
+
+            using (var repo = Git.CreateLocalRepository(repositoryName))
+            {
+                string id = repo.CurrentId;
+
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    appManager.GitDeploy(repositoryName);
+
+                    Verify(appManager.SiteUrl, verificationText);
+
+                    repo.AppendFile(@"Mvc3Application\Views\Home\Index.cshtml", "Say Whattttt!");
+
+                    // Make a small changes and commit them to the local repo
+                    Git.Commit(repositoryName, "This is a small changes"); 
+
+                    // Push those changes
+                    appManager.GitDeploy(repositoryName);
+
+                    // Make a server site change and verify it shows up
+                    appManager.ProjectSystem.WriteAllText("Views/Home/Index.cshtml", "Hello world!");
+
+                    Verify(appManager.SiteUrl, "Hello world!");
+
+                    // Now go back in time
+                    appManager.DeploymentManager.WaitForDeployment(() =>
+                    {
+                        appManager.DeploymentManager.Deploy(id);
+                    });
+
+
+                    var results = appManager.DeploymentManager.GetResults().ToList();
+
+                    // Assert
+                    Assert.Equal(2, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    Verify(appManager.SiteUrl, verificationText);
                 });
             }
         }
@@ -200,13 +291,13 @@ namespace Kudu.FunctionalTests
                     appManager.GitDeploy(repo.PhysicalPath);
 
                     // Assert
-                    var results = appManager.DeploymentManager.GetResults().ToList();
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
                     Verify(appManager.SiteUrl);
                     Verify(url, statusCode: HttpStatusCode.NotFound);
                 });
-            }        
+            }
         }
 
         [Fact]
@@ -294,7 +385,7 @@ namespace Kudu.FunctionalTests
                     // Deploy the app
                     appManager.GitDeploy(repo.PhysicalPath);
 
-                    var results = appManager.DeploymentManager.GetResults().ToList();
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                     Assert.Equal(1, results.Count);
                     Verify(appManager.SiteUrl);
 
@@ -306,7 +397,7 @@ namespace Kudu.FunctionalTests
                     // Deploy those changes
                     appManager.GitDeploy(repo.PhysicalPath);
 
-                    results = appManager.DeploymentManager.GetResults().ToList();
+                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                     Assert.Equal(2, results.Count);
                     Assert.Equal(DeployStatus.Success, results[1].Status);
                     Verify(helloUrl, "Wow");
@@ -317,7 +408,7 @@ namespace Kudu.FunctionalTests
                         appManager.DeploymentManager.Deploy(originalCommitId);
                     });
 
-                    results = appManager.DeploymentManager.GetResults().ToList();
+                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                     Verify(helloUrl, statusCode: HttpStatusCode.NotFound);
                     Assert.Equal(2, results.Count);
                 });
@@ -370,7 +461,7 @@ project = {0}", targetProject));
 
                     // Act
                     appManager.GitDeploy(repo.PhysicalPath);
-                    var results = appManager.DeploymentManager.GetResults().ToList();
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
                     Assert.Equal(1, results.Count);

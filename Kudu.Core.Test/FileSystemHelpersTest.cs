@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
+using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Moq;
 using Xunit;
@@ -42,20 +43,15 @@ namespace Kudu.Core.Test
         [Fact]
         public void SmartCopyCopiesFilesFromSourceToDestination()
         {
-            DirectoryWrapper sourceDirectory = GetDirectory(@"a:\test\", filePaths: new[] { @"a.txt", "b.txt", ".bar" });
+            DirectoryWrapper sourceDirectory = GetDirectory(@"a:\test\", filePaths: new[] { @"a.txt", "b.txt", ".bar", ".deployment" });
             DirectoryWrapper destinationDirectory = GetDirectory(@"b:\foo\", exists: false);
-            FileSystemHelpers.SmartCopy(@"a:\test\",
-                                        @"b:\foo\",
-                                        null,
-                                        sourceDirectory.Directory,
-                                        destinationDirectory.Directory,
-                                        path => GetDirectory(path, exists: false).Directory,
-                                        skipOldFiles: false);
+            DeploymentHelper.SmartCopy(@"a:\test\", @"b:\foo\", null, sourceDirectory.Directory, destinationDirectory.Directory, path => GetDirectory(path, exists: false).Directory);
 
             destinationDirectory.VerifyCreated();
             sourceDirectory.VerifyCopied("a.txt", @"b:\foo\a.txt");
             sourceDirectory.VerifyCopied("b.txt", @"b:\foo\b.txt");
-            sourceDirectory.VerifyNotCopied(".bar", @"b:\foo\.bar");
+            sourceDirectory.VerifyCopied(".bar", @"b:\foo\.bar");
+            sourceDirectory.VerifyNotCopied(".deployment", @"b:\foo\.deployment");
         }
 
         [Fact]
@@ -63,13 +59,7 @@ namespace Kudu.Core.Test
         {
             DirectoryWrapper sourceDirectory = GetDirectory(@"a:\test\", filePaths: new[] { @"a.txt", "b.txt" });
             DirectoryWrapper destinationDirectory = GetDirectory(@"b:\foo\", filePaths: new[] { "c.txt" });
-            FileSystemHelpers.SmartCopy(@"a:\test\",
-                                        @"b:\foo\",
-                                         null,
-                                         sourceDirectory.Directory,
-                                         destinationDirectory.Directory,
-                                         path => GetDirectory(path, exists: false).Directory,
-                                         skipOldFiles: false);
+            DeploymentHelper.SmartCopy(@"a:\test\", @"b:\foo\", null, sourceDirectory.Directory, destinationDirectory.Directory, path => GetDirectory(path, exists: false).Directory);
 
             sourceDirectory.VerifyCopied("a.txt", @"b:\foo\a.txt");
             sourceDirectory.VerifyCopied("b.txt", @"b:\foo\b.txt");
@@ -85,13 +75,7 @@ namespace Kudu.Core.Test
 
             DirectoryWrapper sourceDirectory = GetDirectory(@"a:\test\", filePaths: new[] { @"a.txt", "b.txt" });
             DirectoryWrapper destinationDirectory = GetDirectory(@"b:\foo\", filePaths: new[] { "c.txt", "generated.log" });
-            FileSystemHelpers.SmartCopy(@"a:\test\",
-                                        @"b:\foo\",
-                                         paths.Contains,
-                                         sourceDirectory.Directory,
-                                         destinationDirectory.Directory,
-                                         path => GetDirectory(path, exists: false).Directory,
-                                         skipOldFiles: false);
+            DeploymentHelper.SmartCopy(@"a:\test\", @"b:\foo\", paths.Contains, sourceDirectory.Directory, destinationDirectory.Directory, path => GetDirectory(path, exists: false).Directory);
 
             sourceDirectory.VerifyCopied("a.txt", @"b:\foo\a.txt");
             sourceDirectory.VerifyCopied("b.txt", @"b:\foo\b.txt");
@@ -100,7 +84,7 @@ namespace Kudu.Core.Test
         }
 
         [Fact]
-        public void SmartCopyOnlyCopiesFileIfNewerAndSkipOldFilesChecked()
+        public void SmartCopyAlwaysOverwritesFiles()
         {
             var previousPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
                 { "a.txt" }
@@ -112,15 +96,9 @@ namespace Kudu.Core.Test
             sourceDirectory.Files["a.txt"].Setup(m => m.LastWriteTimeUtc).Returns(new DateTime(2010, 11, 19));
             destinationDirectory.Files["a.txt"].Setup(m => m.LastWriteTimeUtc).Returns(new DateTime(2011, 11, 19));
 
-            FileSystemHelpers.SmartCopy(@"a:\source\",
-                                        @"b:\target\",
-                                         previousPaths.Contains,
-                                         sourceDirectory.Directory,
-                                         destinationDirectory.Directory,
-                                         path => GetDirectory(path, exists: false).Directory,
-                                         skipOldFiles: true);
+            DeploymentHelper.SmartCopy(@"a:\source\", @"b:\target\", previousPaths.Contains, sourceDirectory.Directory, destinationDirectory.Directory, path => GetDirectory(path, exists: false).Directory);
 
-            sourceDirectory.VerifyNotCopied("a.txt");
+            sourceDirectory.VerifyCopied(@"a.txt", @"b:\target\a.txt");
         }
 
         [Fact]
@@ -133,19 +111,13 @@ namespace Kudu.Core.Test
 
             DirectoryWrapper destinationDirectory = GetDirectory(@"b:\target\", exists: false);
 
-            FileSystemHelpers.SmartCopy(@"a:\source\",
-                                        @"b:\target\",
-                                         null,
-                                         sourceDirectory.Directory,
-                                         destinationDirectory.Directory,
-                                         path =>
+            DeploymentHelper.SmartCopy(@"a:\source\", @"b:\target\", null, sourceDirectory.Directory, destinationDirectory.Directory, path =>
                                          {
                                              var newDir = GetDirectory(path, exists: false);
                                              string shortName = GetShortName(destinationDirectory.Directory.FullName, path);
                                              destinationDirectory.Directories[shortName] = newDir;
                                              return newDir.Directory;
-                                         },
-                                         skipOldFiles: false);
+                                         });
 
             destinationDirectory.VerifyCreated();
             destinationDirectory.VerifyCreated("sub1");
@@ -161,13 +133,7 @@ namespace Kudu.Core.Test
             DirectoryWrapper destinationSub = GetDirectory(@"b:\target\sub3", filePaths: new[] { "o.js" });
             DirectoryWrapper destinationDirectory = GetDirectory(@"b:\target\", directories: new[] { destinationSub });
 
-            FileSystemHelpers.SmartCopy(@"a:\source\",
-                                        @"b:\target\",
-                                         null,
-                                         sourceDirectory.Directory,
-                                         destinationDirectory.Directory,
-                                         path => GetDirectory(path).Directory,
-                                         skipOldFiles: false);
+            DeploymentHelper.SmartCopy(@"a:\source\", @"b:\target\", null, sourceDirectory.Directory, destinationDirectory.Directory, path => GetDirectory(path).Directory);
 
             destinationSub.VerifyDeleted();
             sourceDirectory.VerifyCopied("b.txt", @"b:\target\b.txt");
@@ -187,13 +153,7 @@ namespace Kudu.Core.Test
             DirectoryWrapper destinationSub2 = GetDirectory(@"b:\target\sub3", filePaths: new[] { "o.js" });
             DirectoryWrapper destinationDirectory = GetDirectory(@"b:\target\", directories: new[] { destinationSub1, destinationSub2 });
 
-            FileSystemHelpers.SmartCopy(@"a:\source\",
-                                        @"b:\target\",
-                                         previousPaths.Contains,
-                                         sourceDirectory.Directory,
-                                         destinationDirectory.Directory,
-                                         path => GetDirectory(path).Directory,
-                                         skipOldFiles: false);
+            DeploymentHelper.SmartCopy(@"a:\source\", @"b:\target\", previousPaths.Contains, sourceDirectory.Directory, destinationDirectory.Directory, path => GetDirectory(path).Directory);
 
             destinationSub1.VerifyDeleted();
             destinationSub2.VerifyNotDeleted();

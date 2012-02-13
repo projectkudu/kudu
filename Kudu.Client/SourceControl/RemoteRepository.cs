@@ -36,27 +36,27 @@ namespace Kudu.Client.SourceControl
 
         public IEnumerable<Branch> GetBranches()
         {
-            return _client.GetAsyncJson<IEnumerable<Branch>>("branches");
+            return _client.GetJson<IEnumerable<Branch>>("branches");
         }
 
         public IEnumerable<FileStatus> GetStatus()
         {
-            return _client.GetAsyncJson<IEnumerable<FileStatus>>("status");
+            return _client.GetJson<IEnumerable<FileStatus>>("status");
         }
 
         public IEnumerable<ChangeSet> GetChanges()
         {
-            return _client.GetAsyncJson<IEnumerable<ChangeSet>>("log");
+            return _client.GetJson<IEnumerable<ChangeSet>>("log");
         }
 
         public IEnumerable<ChangeSet> GetChanges(int index, int limit)
         {
-            return _client.GetAsyncJson<IEnumerable<ChangeSet>>("log?index=" + index + "&limit=" + limit);
+            return _client.GetJson<IEnumerable<ChangeSet>>("log?index=" + index + "&limit=" + limit);
         }
 
         public ChangeSetDetail GetDetails(string id)
         {
-            return _client.GetAsyncJson<ChangeSetDetail>("details/" + id);
+            return _client.GetJson<ChangeSetDetail>("details/" + id);
         }
         
         public ChangeSet GetChangeSet(string id)
@@ -67,7 +67,7 @@ namespace Kudu.Client.SourceControl
 
         public ChangeSetDetail GetWorkingChanges()
         {
-            return _client.GetAsyncJson<ChangeSetDetail>("working");
+            return _client.GetJson<ChangeSetDetail>("working");
         }
 
         public void AddFile(string path)

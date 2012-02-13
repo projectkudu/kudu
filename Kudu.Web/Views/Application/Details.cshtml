@@ -28,6 +28,11 @@
 }
 
 @if (Model.RepositoryType == RepositoryType.None) {
+    <div class="display-label">Service URL</div>
+    <div class="display-field">
+        <a href="@Model.ServiceUrl" target="_blank">@Model.ServiceUrl</a>
+    </div>
+    
     <div class="display-label">Git URL</div>
     <div class="display-field">
         @Model.GitUrl
@@ -37,7 +42,8 @@
         @Model.HgUrl
     </div>
 }
-else {
+else
+{
     <div class="display-label">@Model.RepositoryType URL</div>
     <div class="display-field">
         @Model.CloneUrl
@@ -49,6 +55,7 @@ else {
 </div>
 
 <h2 id="delete-header">Delete Application</h2>
-@using (Html.BeginForm("Delete", "Application", new { slug = Model.Name.GenerateSlug() })) { 
+@using (Html.BeginForm("Delete", "Application", new { slug = Model.Name.GenerateSlug() }))
+{ 
     <input type="submit" name="name" value="Delete" />
 }
