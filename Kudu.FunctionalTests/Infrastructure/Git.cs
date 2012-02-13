@@ -25,27 +25,27 @@ namespace Kudu.FunctionalTests.Infrastructure
             }
         }
         
-        public static void Revert(string repositoryName, string commit = "HEAD")
+        public static void Revert(string repositoryPath, string commit = "HEAD")
         {
-            Executable gitExe = GetGitExe(repositoryName);
+            Executable gitExe = GetGitExe(repositoryPath);
             gitExe.Execute("revert --no-edit \"{0}\"", commit);
         }
 
-        public static void Reset(string repositoryName, string commit = "HEAD^")
+        public static void Reset(string repositoryPath, string commit = "HEAD^")
         {
-            Executable gitExe = GetGitExe(repositoryName);
+            Executable gitExe = GetGitExe(repositoryPath);
             gitExe.Execute("reset --hard \"{0}\"", commit);
         }
 
-        public static void CheckOut(string repositoryName, string branchName)
+        public static void CheckOut(string repositoryPath, string branchName)
         {
-            Executable gitExe = GetGitExe(repositoryName);
+            Executable gitExe = GetGitExe(repositoryPath);
             gitExe.Execute("checkout -b {0} -t origin/{0}", branchName);
         }
 
-        public static void Commit(string repositoryName, string message)
+        public static void Commit(string repositoryPath, string message)
         {
-            Executable gitExe = GetGitExe(repositoryName);
+            Executable gitExe = GetGitExe(repositoryPath);
             try
             {
                 gitExe.Execute("add -A", message);
@@ -59,22 +59,31 @@ namespace Kudu.FunctionalTests.Infrastructure
             }
         }
 
-        public static void Add(string repositoryName, string path)
+        public static void Add(string repositoryPath, string path)
         {
-            Executable gitExe = GetGitExe(repositoryName);
+            Executable gitExe = GetGitExe(repositoryPath);
             gitExe.Execute("add \"{0}\"", path);
         }
 
-        public static TestRepository Clone(string repositoryName, string source)
+        public static TestRepository Clone(string repositoryName, string source, bool createDirectory = false)
         {
             // Make sure the directory is empty
             string repositoryPath = GetRepositoryPath(repositoryName);
             FileSystemHelpers.DeleteDirectorySafe(repositoryPath);
             Executable gitExe = GetGitExe(repositoryName);
 
-            gitExe.Execute("clone \"{0}\" .", source);
-
-            return new TestRepository(repositoryName);
+            if (createDirectory)
+            {
+                gitExe.Execute("clone \"{0}\"", source);
+                // TODO: need to update this path once issue with clonning is solved
+                return new TestRepository(Path.Combine(repositoryName,"git"));
+            }
+            else
+            {
+                gitExe.Execute("clone \"{0}\" .", source);
+                return new TestRepository(repositoryName);
+            }
+            
         }
 
         public static TestRepository CreateLocalRepository(string repositoryName)
@@ -89,7 +98,7 @@ namespace Kudu.FunctionalTests.Infrastructure
         }
 
         public static string GetRepositoryPath(string repositoryName)
-        {
+        {            
             return Path.Combine(PathHelper.LocalRepositoriesDir, repositoryName);
         }
 
@@ -106,10 +115,12 @@ namespace Kudu.FunctionalTests.Infrastructure
             return path;
         }
 
-        private static Executable GetGitExe(string repositoryName)
+        private static Executable GetGitExe(string repositoryPath)
         {
-            string repositoryPath = GetRepositoryPath(repositoryName);
-
+            if (!Path.IsPathRooted(repositoryPath))
+            {
+                repositoryPath = Path.Combine(PathHelper.LocalRepositoriesDir, repositoryPath);
+            }
             FileSystemHelpers.EnsureDirectory(repositoryPath);
 
             return new Executable(ResolveGitPath(), repositoryPath);
@@ -125,8 +136,7 @@ namespace Kudu.FunctionalTests.Infrastructure
                 _physicalPath = GetRepositoryPath(repositoryName);
                 _repository = new GitExeRepository(_physicalPath);
             }
-
-
+           
             public string CurrentId
             {
                 get

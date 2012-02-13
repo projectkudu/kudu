@@ -25,12 +25,12 @@ namespace Kudu.FunctionalTests
             if (!skip)
             {
                 string randomTestName = GetRandomWebSiteName(repoName);
-                using (Git.Clone(randomTestName, repoCloneUrl))
+                using (var repo = Git.Clone(randomTestName, repoCloneUrl))
                 {
                     ApplicationManager.Run(randomTestName, appManager =>
                     {
                         // Act
-                        appManager.GitDeploy(randomTestName, defaultBranchName);
+                        appManager.GitDeploy(repo.PhysicalPath, defaultBranchName);
                         var results = appManager.DeploymentManager.GetResults().ToList();
 
                         // Assert
