@@ -70,13 +70,7 @@ namespace Kudu.FunctionalTests
 
         private string GetRandomWebSiteName(string webSiteName)
         {
-            string guid = System.Guid.NewGuid().ToString("N");
-            if (webSiteName != null)
-            {
-                return string.Concat(webSiteName, guid);
-            }
-
-            return guid;
+            return webSiteName;
         }
     }
 }
