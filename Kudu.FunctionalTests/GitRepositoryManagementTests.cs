@@ -33,7 +33,7 @@ namespace Kudu.FunctionalTests
                     Assert.True(deployedFiles.Contains("Default.cshtml"));
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Verify(appManager.SiteUrl, verificationText);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText);
                 });
             }
         }
@@ -56,7 +56,7 @@ namespace Kudu.FunctionalTests
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Verify(appManager.SiteUrl, verificationText);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText);
                 });
             }
         }
@@ -80,7 +80,7 @@ namespace Kudu.FunctionalTests
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Verify(appManager.SiteUrl, verificationText);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText);
                 });
             }
         }
@@ -106,7 +106,7 @@ namespace Kudu.FunctionalTests
                     // Assert
                     Assert.Equal(2, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Verify(appManager.SiteUrl, verificationText);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText);
                 });
             }
         }
@@ -131,7 +131,7 @@ namespace Kudu.FunctionalTests
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Verify(appManager.SiteUrl + "Account/LogOn", statusCode: HttpStatusCode.OK);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl + "Account/LogOn", statusCode: HttpStatusCode.OK);
 
                     File.Delete(deletePath);
                     File.WriteAllText(projectPath, File.ReadAllText(projectPath).Replace(@"<Compile Include=""Controllers\AccountController.cs"" />", ""));
@@ -142,7 +142,7 @@ namespace Kudu.FunctionalTests
                     // Assert
                     Assert.Equal(2, results.Count);
                     Assert.Equal(DeployStatus.Success, results[1].Status);
-                    Verify(appManager.SiteUrl + "Account/LogOn", statusCode: HttpStatusCode.NotFound);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl + "Account/LogOn", statusCode: HttpStatusCode.NotFound);
                 });
             }
         }
@@ -162,11 +162,11 @@ namespace Kudu.FunctionalTests
                     // Act
                     appManager.GitDeploy(repositoryName);
 
-                    Verify(appManager.SiteUrl, verificationText);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText);
 
                     appManager.ProjectSystem.WriteAllText("Views/Home/Index.cshtml", "Hello world!");
 
-                    Verify(appManager.SiteUrl, "Hello world!");
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, "Hello world!");
 
                     // Make an unrelated change (newline to the end of web.config)
                     repo.AppendFile(@"Mvc3Application\Web.config", "\n");
@@ -180,7 +180,7 @@ namespace Kudu.FunctionalTests
                     // Assert
                     Assert.Equal(2, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Verify(appManager.SiteUrl, verificationText);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText);
                 });
             }
         }
@@ -202,7 +202,7 @@ namespace Kudu.FunctionalTests
                     // Act
                     appManager.GitDeploy(repositoryName);
 
-                    Verify(appManager.SiteUrl, verificationText);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText);
 
                     repo.AppendFile(@"Mvc3Application\Views\Home\Index.cshtml", "Say Whattttt!");
 
@@ -215,7 +215,7 @@ namespace Kudu.FunctionalTests
                     // Make a server site change and verify it shows up
                     appManager.ProjectSystem.WriteAllText("Views/Home/Index.cshtml", "Hello world!");
 
-                    Verify(appManager.SiteUrl, "Hello world!");
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, "Hello world!");
 
                     // Now go back in time
                     appManager.DeploymentManager.WaitForDeployment(() =>
@@ -229,7 +229,7 @@ namespace Kudu.FunctionalTests
                     // Assert
                     Assert.Equal(2, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Verify(appManager.SiteUrl, verificationText);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText);
                 });
             }
         }
@@ -252,7 +252,7 @@ namespace Kudu.FunctionalTests
                     var results = appManager.DeploymentManager.GetResults().ToList();
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Verify(appManager.SiteUrl + "Styles/Site.css", statusCode: HttpStatusCode.OK);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl + "Styles/Site.css", statusCode: HttpStatusCode.OK);
 
 
                     Directory.Delete(deletePath, recursive: true);
@@ -264,7 +264,7 @@ namespace Kudu.FunctionalTests
                     // Assert
                     Assert.Equal(2, results.Count);
                     Assert.Equal(DeployStatus.Success, results[1].Status);
-                    Verify(appManager.SiteUrl + "Styles/Site.css", statusCode: HttpStatusCode.NotFound);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl + "Styles/Site.css", statusCode: HttpStatusCode.NotFound);
                 });
             }
         }
@@ -281,7 +281,7 @@ namespace Kudu.FunctionalTests
                     appManager.ProjectSystem.WriteAllText("foo.txt", "This is a test file");
                     string url = appManager.SiteUrl + "/foo.txt";
 
-                    Verify(url, "This is a test file");
+                    KuduAssert.VerifyUrl(url, "This is a test file");
 
                     // Act
                     appManager.GitDeploy(repositoryName);
@@ -290,8 +290,8 @@ namespace Kudu.FunctionalTests
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Verify(appManager.SiteUrl);
-                    Verify(url, statusCode: HttpStatusCode.NotFound);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl);
+                    KuduAssert.VerifyUrl(url, statusCode: HttpStatusCode.NotFound);
                 });
             }
         }
@@ -313,7 +313,7 @@ namespace Kudu.FunctionalTests
 
                     // Assert
                     Assert.Equal(0, results.Count);
-                    Verify(appManager.SiteUrl, "The web site is under construction");
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, "The web site is under construction");
                 });
             }
         }
@@ -334,7 +334,7 @@ namespace Kudu.FunctionalTests
 
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                     Assert.Equal(1, results.Count);
-                    Verify(appManager.SiteUrl);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl);
 
                     // Add a file
                     File.WriteAllText(Path.Combine(repo.PhysicalPath, "hello.txt"), "Wow");
@@ -347,7 +347,7 @@ namespace Kudu.FunctionalTests
                     results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                     Assert.Equal(2, results.Count);
                     Assert.Equal(DeployStatus.Success, results[1].Status);
-                    Verify(helloUrl, "Wow");
+                    KuduAssert.VerifyUrl(helloUrl, "Wow");
 
                     appManager.DeploymentManager.WaitForDeployment(() =>
                     {
@@ -356,7 +356,7 @@ namespace Kudu.FunctionalTests
                     });
 
                     results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-                    Verify(helloUrl, statusCode: HttpStatusCode.NotFound);
+                    KuduAssert.VerifyUrl(helloUrl, statusCode: HttpStatusCode.NotFound);
                     Assert.Equal(2, results.Count);
                 });
             }
@@ -413,21 +413,9 @@ project = {0}", targetProject));
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Verify(appManager.SiteUrl, expectedText);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, expectedText);
                 });
             }
-        }
-
-        public void Verify(string url, string content = null, HttpStatusCode statusCode = HttpStatusCode.OK)
-        {
-            var client = new HttpClient();
-            var response = client.GetAsync(url).Result;
-            Assert.Equal(statusCode, response.StatusCode);
-            if (content != null)
-            {
-                var responseBody = response.Content.ReadAsStringAsync().Result;
-                Assert.True(responseBody.Contains(content));
-            }
-        }
+        }        
     }
 }

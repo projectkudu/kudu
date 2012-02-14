@@ -36,7 +36,7 @@ namespace Kudu.FunctionalTests
                         // Assert
                         Assert.Equal(1, results.Count);
                         Assert.Equal(DeployStatus.Success, results[0].Status);
-                        Verify(appManager.SiteUrl, verificationText, expectedResponseCode);
+                        KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText, expectedResponseCode);
                     });
                 }
                 Debug.Write(string.Format("Test completed: {0}\n", name));
@@ -52,19 +52,6 @@ namespace Kudu.FunctionalTests
             get
             {
                 return gitTestConfig.GetTests();
-            }
-        }
-
-        public void Verify(string url, string content = null, HttpStatusCode statusCode = HttpStatusCode.OK)
-        {
-            var client = new HttpClient();
-            var response = client.GetAsync(url).Result;
-            Assert.Equal(statusCode, response.StatusCode);
-
-            if (content != null)
-            {
-                var responseBody = response.Content.ReadAsStringAsync().Result;
-                Assert.True(responseBody.Contains(content));
             }
         }
 
