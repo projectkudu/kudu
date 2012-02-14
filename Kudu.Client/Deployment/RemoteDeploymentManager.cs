@@ -148,11 +148,16 @@ namespace Kudu.Client.Deployment
                 _connection.Error += OnError;
             }
 
-            TryStart();
+            TryStart(retries: 5);
         }
 
-        private void TryStart()
+        private void TryStart(int retries)
         {
+            if (retries <= 0)
+            {
+                return;
+            }
+
             // REVIEW: Should this return task?
             _connection.Start().ContinueWith(t =>
             {
@@ -170,7 +175,7 @@ namespace Kudu.Client.Deployment
                     // Sleep for a second and retry
                     Thread.Sleep(1000);
 
-                    TryStart();
+                    TryStart(retries - 1);
                 }
             });
         }
