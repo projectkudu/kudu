@@ -12,9 +12,9 @@ namespace Kudu.FunctionalTests.Infrastructure
     public static class Git
     {
 
-        public static void Push(string repositoryName, string url, string localBranchName = "master", string remoteBranchName = "master")
+        public static void Push(string repositoryPath, string url, string localBranchName = "master", string remoteBranchName = "master")
         {
-            Executable gitExe = GetGitExe(repositoryName);
+            Executable gitExe = GetGitExe(repositoryPath);
             if (localBranchName.Equals("master"))
             {
                 gitExe.Execute("push {0} {1}", url, remoteBranchName);
@@ -75,15 +75,14 @@ namespace Kudu.FunctionalTests.Infrastructure
             if (createDirectory)
             {
                 gitExe.Execute("clone \"{0}\"", source);
-                // TODO: need to update this path once issue with clonning is solved
+                // TODO: need to update this path once issue with clonning
+                // and sub directory created with "git" name is solved
                 return new TestRepository(Path.Combine(repositoryName,"git"));
             }
-            else
-            {
-                gitExe.Execute("clone \"{0}\" .", source);
-                return new TestRepository(repositoryName);
-            }
             
+            gitExe.Execute("clone \"{0}\" .", source);
+
+            return new TestRepository(repositoryName);                        
         }
 
         public static TestRepository CreateLocalRepository(string repositoryName)
@@ -98,7 +97,7 @@ namespace Kudu.FunctionalTests.Infrastructure
         }
 
         public static string GetRepositoryPath(string repositoryName)
-        {            
+        {
             return Path.Combine(PathHelper.LocalRepositoriesDir, repositoryName);
         }
 
@@ -121,6 +120,7 @@ namespace Kudu.FunctionalTests.Infrastructure
             {
                 repositoryPath = Path.Combine(PathHelper.LocalRepositoriesDir, repositoryPath);
             }
+
             FileSystemHelpers.EnsureDirectory(repositoryPath);
 
             return new Executable(ResolveGitPath(), repositoryPath);

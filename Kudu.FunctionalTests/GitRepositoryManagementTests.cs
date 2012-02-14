@@ -76,9 +76,7 @@ namespace Kudu.FunctionalTests
                     // Act
                     appManager.GitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-                    appManager.GitDeploy(repositoryName);
-                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-
+                    
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
@@ -102,7 +100,7 @@ namespace Kudu.FunctionalTests
                     // Act
                     appManager.GitDeploy(repo.PhysicalPath);
                     Git.Revert(repo.PhysicalPath);
-                    appManager.GitDeploy(repositoryName);
+                    appManager.GitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResults().ToList();
 
                     // Assert
@@ -129,9 +127,7 @@ namespace Kudu.FunctionalTests
                     // Act
                     appManager.GitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-                    appManager.GitDeploy(repositoryName);
-                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-
+                    
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
@@ -164,7 +160,7 @@ namespace Kudu.FunctionalTests
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Act
-                    appManager.GitDeploy(repositoryName);
+                    appManager.GitDeploy(repo.PhysicalPath);
 
                     Verify(appManager.SiteUrl, verificationText);
 
@@ -175,9 +171,9 @@ namespace Kudu.FunctionalTests
                     // Make an unrelated change (newline to the end of web.config)
                     repo.AppendFile(@"Mvc3Application\Web.config", "\n");
 
-                    Git.Commit(repositoryName, "This is a test");
+                    Git.Commit(repo.PhysicalPath, "This is a test");
 
-                    appManager.GitDeploy(repositoryName);
+                    appManager.GitDeploy(repo.PhysicalPath);
 
                     var results = appManager.DeploymentManager.GetResults().ToList();
 
@@ -360,7 +356,7 @@ namespace Kudu.FunctionalTests
                     Git.Commit(repo.PhysicalPath, "Added hello.txt");
                     string helloUrl = appManager.SiteUrl + "/hello.txt";
 
-                    appManager.GitDeploy(repo.PhysicalPath, "git");
+                    appManager.GitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResults().ToList();                    
                                 
                     // Assert
