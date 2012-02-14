@@ -145,7 +145,10 @@ namespace Kudu.Client.Deployment
                 _connection = new Connection(ServiceUrl + "status");
                 _connection.Credentials = Credentials;
                 _connection.Received += OnReceived;
-                _connection.Error += OnError;
+                _connection.Error += (e) =>
+                {
+                    Debug.WriteLine("Error: " + e.Message);
+                };
             }
 
             TryStart(retries: 5);
@@ -158,6 +161,13 @@ namespace Kudu.Client.Deployment
                 return;
             }
 
+            if (_connection.MessageId == null)
+            {
+                // We never want to miss messages if we're just connecting
+                // This is for tests
+                _connection.MessageId = 0;
+            }
+
             // REVIEW: Should this return task?
             _connection.Start().ContinueWith(t =>
             {
@@ -165,17 +175,16 @@ namespace Kudu.Client.Deployment
                 {
                     Debug.WriteLine("KUDU ERROR: " + t.Exception.GetBaseException());
 
-
-                    if (_connection.MessageId == null)
-                    {
-                        // Get all messages
-                        _connection.MessageId = 0;
-                    }
+                    Stop();
 
                     // Sleep for a second and retry
                     Thread.Sleep(1000);
 
                     TryStart(retries - 1);
+                }
+                else
+                {
+                    Debug.WriteLine("Success!");
                 }
             });
         }
@@ -194,26 +203,6 @@ namespace Kudu.Client.Deployment
             {
                 var result = JsonConvert.DeserializeObject<DeployResult>(data);
                 StatusChanged(result);
-            }
-        }
-
-        private void OnError(Exception exception)
-        {
-            // If we get a 404 back stop listening for changes
-            var webException = exception as WebException;
-            if (webException != null)
-            {
-                var webResponse = (HttpWebResponse)webException.Response;
-                if (webResponse != null &&
-                    webResponse.StatusCode == HttpStatusCode.NotFound)
-                {
-                    Stop();
-                }
-            }
-
-            if (_connection.MessageId == null)
-            {
-                _connection.MessageId = 0;
             }
         }
     }
