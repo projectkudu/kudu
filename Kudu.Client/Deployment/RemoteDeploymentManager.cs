@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Client.Infrastructure;
 using Kudu.Core.Deployment;
@@ -147,12 +148,29 @@ namespace Kudu.Client.Deployment
                 _connection.Error += OnError;
             }
 
+            TryStart();
+        }
+
+        private void TryStart()
+        {
             // REVIEW: Should this return task?
             _connection.Start().ContinueWith(t =>
             {
                 if (t.IsFaulted)
                 {
                     Debug.WriteLine("KUDU ERROR: " + t.Exception.GetBaseException());
+
+
+                    if (_connection.MessageId == null)
+                    {
+                        // Get all messages
+                        _connection.MessageId = 0;
+                    }
+
+                    // Sleep for a second and retry
+                    Thread.Sleep(1000);
+
+                    TryStart();
                 }
             });
         }
@@ -186,6 +204,11 @@ namespace Kudu.Client.Deployment
                 {
                     Stop();
                 }
+            }
+
+            if (_connection.MessageId == null)
+            {
+                _connection.MessageId = 0;
             }
         }
     }
