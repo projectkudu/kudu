@@ -91,7 +91,7 @@ namespace Kudu.FunctionalTests.Infrastructure
             {
                 siteManager.DeleteSite(applicationName);
             }
-            catch (System.ServiceModel.EndpointNotFoundException ex)
+            catch (System.ServiceModel.EndpointNotFoundException)
             {
                 
             }
