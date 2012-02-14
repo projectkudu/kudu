@@ -335,7 +335,7 @@ namespace Kudu.FunctionalTests
 
                     // Assert
                     Assert.Equal(1, results.Count);
-                    Verify(appManager.SiteUrl, "Test branch");
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, "Test branch");
                 });
             }
         }
@@ -361,7 +361,7 @@ namespace Kudu.FunctionalTests
                                 
                     // Assert
                     Assert.Equal(1, results.Count);
-                    Verify(helloUrl, "Wow");
+                    KuduAssert.VerifyUrl(helloUrl, "Wow");
                 }            
             });            
         }
