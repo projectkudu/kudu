@@ -8,6 +8,7 @@ namespace Kudu.FunctionalTests
 {
     public class GitStabilityTests
     {
+        [Fact]
         public void NSimpleDeployments()
         {
             string repositoryName = "HelloKudu";
