@@ -83,10 +83,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GitRepositoryManagementTests.cs" />
+    <Compile Include="GitStabilityTests.cs" />
     <Compile Include="Infrastructure\GitTestConfig.cs" />
     <Compile Include="Infrastructure\ApplicationManager.cs" />
     <Compile Include="Infrastructure\ApplicationManagerExtensions.cs" />
     <Compile Include="Infrastructure\Git.cs" />
+    <Compile Include="Infrastructure\KuduAssert.cs" />
     <Compile Include="Infrastructure\PathHelper.cs">
       <SubType>Code</SubType>
     </Compile>
