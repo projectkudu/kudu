@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Json;
+using System.Net.Http;
 using System.ServiceModel;
 using System.ServiceModel.Web;
 using Kudu.Contracts;
@@ -50,19 +52,9 @@ namespace Kudu.Services.Deployment
             }
         }
 
-        [Description("Restore a previously successful deployment based on its id.")]
-        [WebInvoke(UriTemplate = "restore")]
-        public void Restore(JsonObject input)
-        {
-            using (_profiler.Step("DeploymentService.Restore"))
-            {
-                _deploymentManager.Deploy((string)input["id"]);
-            }
-        }
-
-        [Description("Builds a specific deployment based on its id.")]
-        [WebInvoke(UriTemplate = "build")]
-        public void Build(JsonObject input)
+        [Description("Deploys a specific deployment based on its id.")]
+        [WebInvoke(UriTemplate = "redeploy")]
+        public void Redeploy(JsonObject input)
         {
             using (_profiler.Step("DeploymentService.Build"))
             {
@@ -72,26 +64,35 @@ namespace Kudu.Services.Deployment
 
         [Description("Gets the deployment results of all deployments.")]
         [WebGet(UriTemplate = "log")]
-        public IEnumerable<DeployResult> GetDeployResults()
+        public IEnumerable<DeployResult> GetDeployResults(HttpRequestMessage request)
         {
             using (_profiler.Step("DeploymentService.GetDeployResults"))
             {
-                return _deploymentManager.GetResults();
+                foreach (var result in _deploymentManager.GetResults())
+                {
+                    result.Url = new Uri(request.RequestUri, "details/" + result.Id);
+                    result.LogUrl = new Uri(request.RequestUri, "log/" + result.Id);
+                    yield return result;
+                }
             }
         }
 
         [Description("Gets the log of a specific deployment based on its id.")]
-        [WebGet(UriTemplate = "log?id={id}")]
-        public IEnumerable<LogEntry> GetLogEntry(string id)
+        [WebGet(UriTemplate = "log/{id}")]
+        public IEnumerable<LogEntry> GetLogEntry(HttpRequestMessage request, string id)
         {
             using (_profiler.Step("DeploymentService.GetLogEntry"))
             {
-                return _deploymentManager.GetLogEntries(id);
+                foreach (var entry in _deploymentManager.GetLogEntries(id))
+                {
+                    entry.DetailsUrl = new Uri(request.RequestUri, id + "/" + entry.EntryId);
+                    yield return entry;
+                }
             }
         }
 
         [Description("Gets the specified log entry details.")]
-        [WebGet(UriTemplate = "logDetails?id={id}&entryId={entryId}")]
+        [WebGet(UriTemplate = "log/{id}/{entryId}")]
         public IEnumerable<LogEntry> GetLogEntryDetails(string id, string entryId)
         {
             using (_profiler.Step("DeploymentService.GetLogEntryDetails"))
@@ -101,7 +102,7 @@ namespace Kudu.Services.Deployment
         }
 
         [Description("Gets the deployment result of a specific deployment based on its id.")]
-        [WebGet(UriTemplate = "details?id={id}")]
+        [WebGet(UriTemplate = "details/{id}")]
         public DeployResult GetResult(string id)
         {
             using (_profiler.Step("DeploymentService.GetResult"))
@@ -111,11 +112,10 @@ namespace Kudu.Services.Deployment
         }
 
         [Description("Gets the deployed files for a deployment based on its id.")]
-        [WebGet(UriTemplate = "manifest?id={id}")]
+        [WebGet(UriTemplate = "manifest/{id}")]
         public IEnumerable<string> GetManifest(string id)
         {
             return _deploymentManager.GetManifest(id);
         }
-
     }
 }

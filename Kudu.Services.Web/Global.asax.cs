@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Http;
+using System.Net.Http.Formatting;
 using System.ServiceModel;
 using System.ServiceModel.Activation;
 using System.Web.Routing;
@@ -92,6 +93,10 @@ namespace Kudu.Services
             factory.Configuration.MaxReceivedMessageSize = Int32.MaxValue;
             factory.Configuration.EnableHelpPage = true;
             factory.Configuration.TransferMode = TransferMode.Streamed;
+
+            factory.Configuration.Formatters.Clear();
+            factory.Configuration.Formatters.Add(new JsonValueMediaTypeFormatter());
+            factory.Configuration.Formatters.Add(new JsonMediaTypeFormatter());
 
 #if DEBUG
             factory.Configuration.IncludeExceptionDetail = true;
