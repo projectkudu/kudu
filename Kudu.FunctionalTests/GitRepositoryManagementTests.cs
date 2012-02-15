@@ -352,7 +352,7 @@ namespace Kudu.FunctionalTests
                 using (var repo = Git.Clone(repositoryName, appManager.GitUrl, true))
                 {  
                     // Add a file
-                    File.WriteAllText(Path.Combine(repo.PhysicalPath, "hello.txt"), "Wow");
+                    repo.WriteFile("hello.txt", "Wow");
                     Git.Commit(repo.PhysicalPath, "Added hello.txt");
                     string helloUrl = appManager.SiteUrl + "/hello.txt";
 
