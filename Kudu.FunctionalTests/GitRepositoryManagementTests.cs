@@ -25,7 +25,7 @@ namespace Kudu.FunctionalTests
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Act
-                    appManager.GitDeploy(repositoryName);
+                    appManager.GitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                     var deployedFiles = new HashSet<string>(appManager.DeploymentManager.GetManifest(repo.CurrentId), StringComparer.OrdinalIgnoreCase);
 
@@ -45,12 +45,12 @@ namespace Kudu.FunctionalTests
             string repositoryName = "Mvc3Application";
             string appName = "PushRepoWithMultipleProjectsShouldDeploy";
             string verificationText = "Welcome to ASP.NET MVC! - Change1";
-            using (Git.CreateLocalRepository(repositoryName))
+            using (var repo = Git.CreateLocalRepository(repositoryName))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Act
-                    appManager.GitDeploy(repositoryName);
+                    appManager.GitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResults().ToList();
 
                     // Assert
@@ -69,14 +69,14 @@ namespace Kudu.FunctionalTests
             string appName = "PushRepoWithProjectAndNoSolutionShouldDeploy";
             string verificationText = "Kudu Deployment Testing: Mvc3Application_NoSolution";
 
-            using (Git.CreateLocalRepository(repositoryName))
+            using (var repo = Git.CreateLocalRepository(repositoryName))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Act
-                    appManager.GitDeploy(repositoryName);
+                    appManager.GitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-
+                    
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
@@ -93,14 +93,14 @@ namespace Kudu.FunctionalTests
             string appName = "PushAppChangesShouldTriggerBuild";
             string verificationText = "Welcome to ASP.NET MVC!";
 
-            using (Git.CreateLocalRepository(repositoryName))
+            using (var repo = Git.CreateLocalRepository(repositoryName))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Act
-                    appManager.GitDeploy(repositoryName);
-                    Git.Revert(repositoryName);
-                    appManager.GitDeploy(repositoryName);
+                    appManager.GitDeploy(repo.PhysicalPath);
+                    Git.Revert(repo.PhysicalPath);
+                    appManager.GitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResults().ToList();
 
                     // Assert
@@ -125,9 +125,9 @@ namespace Kudu.FunctionalTests
                     string projectPath = Path.Combine(repo.PhysicalPath, @"Mvc3Application\Mvc3Application.csproj");
 
                     // Act
-                    appManager.GitDeploy(repositoryName);
+                    appManager.GitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-
+                    
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
@@ -135,8 +135,8 @@ namespace Kudu.FunctionalTests
 
                     File.Delete(deletePath);
                     File.WriteAllText(projectPath, File.ReadAllText(projectPath).Replace(@"<Compile Include=""Controllers\AccountController.cs"" />", ""));
-                    Git.Commit(repositoryName, "Deleted the filez");
-                    appManager.GitDeploy(repositoryName);
+                    Git.Commit(repo.PhysicalPath, "Deleted the filez");
+                    appManager.GitDeploy(repo.PhysicalPath);
                     results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
@@ -160,7 +160,7 @@ namespace Kudu.FunctionalTests
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Act
-                    appManager.GitDeploy(repositoryName);
+                    appManager.GitDeploy(repo.PhysicalPath);
 
                     KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText);
 
@@ -171,9 +171,9 @@ namespace Kudu.FunctionalTests
                     // Make an unrelated change (newline to the end of web.config)
                     repo.AppendFile(@"Mvc3Application\Web.config", "\n");
 
-                    Git.Commit(repositoryName, "This is a test");
+                    Git.Commit(repo.PhysicalPath, "This is a test");
 
-                    appManager.GitDeploy(repositoryName);
+                    appManager.GitDeploy(repo.PhysicalPath);
 
                     var results = appManager.DeploymentManager.GetResults().ToList();
 
@@ -246,7 +246,7 @@ namespace Kudu.FunctionalTests
                     string deletePath = Path.Combine(repo.PhysicalPath, @"Styles");
 
                     // Act
-                    appManager.GitDeploy(repositoryName);
+                    appManager.GitDeploy(repo.PhysicalPath);
 
                     // Assert
                     var results = appManager.DeploymentManager.GetResults().ToList();
@@ -256,9 +256,9 @@ namespace Kudu.FunctionalTests
 
 
                     Directory.Delete(deletePath, recursive: true);
-                    Git.Commit(repositoryName, "Deleted all styles");
+                    Git.Commit(repo.PhysicalPath, "Deleted all styles");
 
-                    appManager.GitDeploy(repositoryName);
+                    appManager.GitDeploy(repo.PhysicalPath);
                     results = appManager.DeploymentManager.GetResults().ToList();
 
                     // Assert
@@ -274,7 +274,7 @@ namespace Kudu.FunctionalTests
         {
             string repositoryName = "Bakery10";
             string appName = "FirstPushDeletesPriorContent";
-            using (Git.CreateLocalRepository(repositoryName))
+            using (var repo = Git.CreateLocalRepository(repositoryName))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -284,7 +284,7 @@ namespace Kudu.FunctionalTests
                     KuduAssert.VerifyUrl(url, "This is a test file");
 
                     // Act
-                    appManager.GitDeploy(repositoryName);
+                    appManager.GitDeploy(repo.PhysicalPath);
 
                     // Assert
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
@@ -297,18 +297,18 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void DeployingNonMasterBranchNoOps()
+        public void PushingToNonMasterBranchNoOps()
         {
-            string repositoryName = "DeployingNonMasterBranchNoOps";
-            string appName = "DeployingNonMasterBranchNoOps";
+            string repositoryName = "PushingToNonMasterBranchNoOps";
+            string appName = "PushingToNonMasterBranchNoOps";
             string cloneUrl = "https://github.com/KuduApps/RepoWithMultipleBranches.git";
-            using (Git.Clone(repositoryName, cloneUrl))
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
             {
-                Git.CheckOut(repositoryName, "test");
+                Git.CheckOut(repo.PhysicalPath, "test");
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Act
-                    appManager.GitDeploy(repositoryName, "test", "test");
+                    appManager.GitDeploy(repo.PhysicalPath, "test", "test");
                     var results = appManager.DeploymentManager.GetResults().ToList();
 
                     // Assert
@@ -317,6 +317,55 @@ namespace Kudu.FunctionalTests
                 });
             }
         }
+
+        [Fact]
+        public void PushingNonMasterBranchToMasterBranchShouldDeploy()
+        {
+            string repositoryName = "PushingNonMasterBranchToMasterBranchShouldDeploy";
+            string appName = "PushingNonMasterBranchToMasterBranchShouldDeploy";
+            string cloneUrl = "https://github.com/KuduApps/RepoWithMultipleBranches.git";
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            {
+                Git.CheckOut(repo.PhysicalPath, "test");
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    appManager.GitDeploy(repo.PhysicalPath, "test", "master");
+                    var results = appManager.DeploymentManager.GetResults().ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, "Test branch");
+                });
+            }
+        }
+
+        [Fact]
+        public void CloneFromEmptyRepoAndPushShouldDeploy()
+        {
+            string repositoryName = "CloneFromEmptyRepoAndPushShouldDeploy";
+            string appName = "CloneFromEmptyRepoAndPushShouldDeploy";
+            
+            ApplicationManager.Run(appName, appManager =>
+            {
+                // Act
+                using (var repo = Git.Clone(repositoryName, appManager.GitUrl, true))
+                {  
+                    // Add a file
+                    File.WriteAllText(Path.Combine(repo.PhysicalPath, "hello.txt"), "Wow");
+                    Git.Commit(repo.PhysicalPath, "Added hello.txt");
+                    string helloUrl = appManager.SiteUrl + "/hello.txt";
+
+                    appManager.GitDeploy(repo.PhysicalPath);
+                    var results = appManager.DeploymentManager.GetResults().ToList();                    
+                                
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    KuduAssert.VerifyUrl(helloUrl, "Wow");
+                }            
+            });            
+        }
+            
 
         [Fact]
         public void GoingBackInTimeDeploysOldFiles()
@@ -330,7 +379,7 @@ namespace Kudu.FunctionalTests
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Deploy the app
-                    appManager.GitDeploy(repositoryName);
+                    appManager.GitDeploy(repo.PhysicalPath);
 
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                     Assert.Equal(1, results.Count);
@@ -338,11 +387,11 @@ namespace Kudu.FunctionalTests
 
                     // Add a file
                     File.WriteAllText(Path.Combine(repo.PhysicalPath, "hello.txt"), "Wow");
-                    Git.Commit(repositoryName, "Added hello.txt");
+                    Git.Commit(repo.PhysicalPath, "Added hello.txt");
                     string helloUrl = appManager.SiteUrl + "/hello.txt";
 
                     // Deploy those changes
-                    appManager.GitDeploy(repositoryName);
+                    appManager.GitDeploy(repo.PhysicalPath);
 
                     results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                     Assert.Equal(2, results.Count);
@@ -407,7 +456,7 @@ project = {0}", targetProject));
                     Git.Commit(name, "Updated configuration");
 
                     // Act
-                    appManager.GitDeploy(name);
+                    appManager.GitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
