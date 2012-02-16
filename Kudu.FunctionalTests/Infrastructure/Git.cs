@@ -17,11 +17,13 @@ namespace Kudu.FunctionalTests.Infrastructure
             Executable gitExe = GetGitExe(repositoryPath);
             if (localBranchName.Equals("master"))
             {
-                gitExe.Execute("push {0} {1}", url, remoteBranchName);
+                // Dump out the error stream (git curl verbose)
+                Debug.WriteLine(gitExe.Execute("push {0} {1}", url, remoteBranchName).Item2);
             }
             else
             {
-                gitExe.Execute("push {0} {1}:{2}", url, localBranchName, remoteBranchName);
+                // Dump out the error stream (git curl verbose)
+                Debug.WriteLine(gitExe.Execute("push {0} {1}:{2}", url, localBranchName, remoteBranchName).Item2);
             }
         }
         
@@ -123,7 +125,9 @@ namespace Kudu.FunctionalTests.Infrastructure
 
             FileSystemHelpers.EnsureDirectory(repositoryPath);
 
-            return new Executable(ResolveGitPath(), repositoryPath);
+            var exe = new Executable(ResolveGitPath(), repositoryPath);
+            exe.EnvironmentVariables["GIT_CURL_VERBOSE"] = "1";
+            return exe;
         }
     }
 }
