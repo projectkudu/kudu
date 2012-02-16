@@ -19,7 +19,7 @@ namespace Kudu.Core.Infrastructure
         public string Path { get; private set; }
         public IDictionary<string, string> EnvironmentVariables { get; set; }
 
-        public string Execute(string arguments, params object[] args)
+        public Tuple<string, string> Execute(string arguments, params object[] args)
         {
             var process = CreateProcess(arguments, args);
 
@@ -44,7 +44,7 @@ namespace Kudu.Core.Infrastructure
                 throw new Exception(text);
             }
 
-            return output;
+            return Tuple.Create(output, error);
         }
 
         public void Execute(Stream input, Stream output, string arguments, params object[] args)

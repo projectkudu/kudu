@@ -30,7 +30,7 @@ namespace Kudu.Core.SourceControl.Git
         {
             get
             {
-                return _gitExe.Execute("rev-parse HEAD").Trim();
+                return _gitExe.Execute("rev-parse HEAD").Item1.Trim();
             }
         }
 
@@ -43,7 +43,7 @@ namespace Kudu.Core.SourceControl.Git
 
         public IEnumerable<FileStatus> GetStatus()
         {
-            string status = _gitExe.Execute("status --porcelain");
+            string status = _gitExe.Execute("status --porcelain").Item1;
             return ParseStatus(status.AsReader());
         }
 
@@ -54,7 +54,7 @@ namespace Kudu.Core.SourceControl.Git
 
         public ChangeSet GetChangeSet(string id)
         {
-            string showCommit = _gitExe.Execute("show {0} -m --name-status", id);
+            string showCommit = _gitExe.Execute("show {0} -m --name-status", id).Item1;
             var commitReader = showCommit.AsReader();
             return ParseCommit(commitReader);
         }
@@ -109,7 +109,7 @@ namespace Kudu.Core.SourceControl.Git
             _gitExe.Execute("add -A");
             try
             {
-                string output = _gitExe.Execute("commit -m\"{0}\" --author=\"{1}\"", message, authorName);
+                string output = _gitExe.Execute("commit -m\"{0}\" --author=\"{1}\"", message, authorName).Item1;
 
                 // No pending changes
                 if (output.Contains("working directory clean"))
@@ -117,7 +117,7 @@ namespace Kudu.Core.SourceControl.Git
                     return null;
                 }
 
-                string newCommit = _gitExe.Execute("show HEAD");
+                string newCommit = _gitExe.Execute("show HEAD").Item1;
                 return ParseCommit(newCommit.AsReader());
             }
             catch (Exception e)
@@ -153,10 +153,10 @@ namespace Kudu.Core.SourceControl.Git
 
         public ChangeSetDetail GetDetails(string id)
         {
-            string show = _gitExe.Execute("show {0} -m -p --numstat --shortstat", id);
+            string show = _gitExe.Execute("show {0} -m -p --numstat --shortstat", id).Item1;
             var detail = ParseShow(show.AsReader());
 
-            string showStatus = _gitExe.Execute("show {0} -m --name-status --format=\"%H\"", id);
+            string showStatus = _gitExe.Execute("show {0} -m --name-status --format=\"%H\"", id).Item1;
             var statusReader = showStatus.AsReader();
 
             // Skip the commit details
@@ -182,7 +182,7 @@ namespace Kudu.Core.SourceControl.Git
                 return MakeNewFileDiff(statuses);
             }
 
-            string diff = _gitExe.Execute("diff --no-ext-diff -p --numstat --shortstat head");
+            string diff = _gitExe.Execute("diff --no-ext-diff -p --numstat --shortstat head").Item1;
             var detail = ParseShow(diff.AsReader(), includeChangeSet: false);
 
             foreach (var fileStatus in statuses)
@@ -242,7 +242,7 @@ namespace Kudu.Core.SourceControl.Git
                 yield break;
             }
 
-            string branches = _gitExe.Execute("branch");
+            string branches = _gitExe.Execute("branch").Item1;
             var reader = branches.AsReader();
             string currentId = CurrentId;
 
@@ -263,7 +263,7 @@ namespace Kudu.Core.SourceControl.Git
 
             foreach (var branchName in branchNames)
             {
-                string id = _gitExe.Execute("rev-parse {0}", branchName).Trim();
+                string id = _gitExe.Execute("rev-parse {0}", branchName).Item1.Trim();
                 yield return new GitBranch(id, branchName, currentId == id);
             }
         }
@@ -271,7 +271,7 @@ namespace Kudu.Core.SourceControl.Git
         private bool IsEmpty()
         {
             // REVIEW: Is this reliable
-            return String.IsNullOrWhiteSpace(_gitExe.Execute("branch"));
+            return String.IsNullOrWhiteSpace(_gitExe.Execute("branch").Item1);
         }
 
         private IEnumerable<ChangeSet> Log(string command = "log --all", params object[] args)
@@ -281,7 +281,7 @@ namespace Kudu.Core.SourceControl.Git
                 return Enumerable.Empty<ChangeSet>();
             }
 
-            string log = _gitExe.Execute(command, args);
+            string log = _gitExe.Execute(command, args).Item1;
             return ParseCommits(log.AsReader());
         }
 

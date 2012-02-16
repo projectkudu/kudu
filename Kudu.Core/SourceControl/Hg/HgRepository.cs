@@ -166,7 +166,7 @@ namespace Kudu.Core.SourceControl.Hg
         {
             // Need to work around a bug in Mercurial.net where it fails to parse the output of 
             // the branches command (http://mercurialnet.codeplex.com/workitem/14)
-            var branchReader = _hgExe.Execute("branches").AsReader();
+            var branchReader = _hgExe.Execute("branches").Item1.AsReader();
             string currentId = CurrentId;
 
             while (!branchReader.Done)

@@ -28,7 +28,7 @@ namespace Kudu.Core.Deployment
 #if DEBUG
             logger.Log(String.Format(arguments, args));
 #endif
-            return _msbuildExe.Execute(arguments, args);
+            return _msbuildExe.Execute(arguments, args).Item1;
         }
 
         public abstract Task Build(DeploymentContext context);
