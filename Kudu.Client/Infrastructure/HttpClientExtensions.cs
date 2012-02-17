@@ -70,7 +70,7 @@ namespace Kudu.Client.Infrastructure
 
         public static Task PostAsync(this HttpClient client, string url, KeyValuePair<string, string> param)
         {
-            return client.PostAsync("restore", HttpClientHelper.CreateJsonContent(param)).Then(result =>
+            return client.PostAsync(url, HttpClientHelper.CreateJsonContent(param)).Then(result =>
             {
                 return result.Content.ReadAsStringAsync().Then(content =>
                 {
