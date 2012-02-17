@@ -62,6 +62,30 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public void WarningsAsErrors()
+        {
+            // Arrange
+            string repositoryName = "WarningsAsErrors";
+            string appName = "WarningsAsErrors";
+            string cloneUrl = "https://github.com/KuduApps/WarningsAsErrors.git";
+
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    appManager.GitDeploy(repo.PhysicalPath);
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Failed, results[0].Status);
+                    KuduAssert.VerifyMsBuildOutput("Warning as Error: The variable 'x' is declared but never used", appManager, results);
+                });
+            }
+        }
+
+        [Fact]
         public void PushRepoWithProjectAndNoSolutionShouldDeploy()
         {
             // Arrange
@@ -76,7 +100,7 @@ namespace Kudu.FunctionalTests
                     // Act
                     appManager.GitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-                    
+
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
@@ -127,7 +151,7 @@ namespace Kudu.FunctionalTests
                     // Act
                     appManager.GitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-                    
+
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
@@ -207,7 +231,7 @@ namespace Kudu.FunctionalTests
                     repo.AppendFile(@"Mvc3Application\Views\Home\Index.cshtml", "Say Whattttt!");
 
                     // Make a small changes and commit them to the local repo
-                    Git.Commit(repositoryName, "This is a small changes"); 
+                    Git.Commit(repositoryName, "This is a small changes");
 
                     // Push those changes
                     appManager.GitDeploy(repositoryName);
@@ -345,27 +369,27 @@ namespace Kudu.FunctionalTests
         {
             string repositoryName = "CloneFromEmptyRepoAndPushShouldDeploy";
             string appName = "CloneFromEmptyRepoAndPushShouldDeploy";
-            
+
             ApplicationManager.Run(appName, appManager =>
             {
                 // Act
                 using (var repo = Git.Clone(repositoryName, appManager.GitUrl, true))
-                {  
+                {
                     // Add a file
                     repo.WriteFile("hello.txt", "Wow");
                     Git.Commit(repo.PhysicalPath, "Added hello.txt");
                     string helloUrl = appManager.SiteUrl + "/hello.txt";
 
                     appManager.GitDeploy(repo.PhysicalPath);
-                    var results = appManager.DeploymentManager.GetResults().ToList();                    
-                                
+                    var results = appManager.DeploymentManager.GetResults().ToList();
+
                     // Assert
                     Assert.Equal(1, results.Count);
                     KuduAssert.VerifyUrl(helloUrl, "Wow");
-                }            
-            });            
+                }
+            });
         }
-            
+
 
         [Fact]
         public void GoingBackInTimeDeploysOldFiles()
@@ -465,6 +489,6 @@ project = {0}", targetProject));
                     KuduAssert.VerifyUrl(appManager.SiteUrl, expectedText);
                 });
             }
-        }        
+        }
     }
 }
