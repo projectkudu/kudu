@@ -21,13 +21,13 @@ namespace Kudu.FunctionalTests.Infrastructure
             }
         }
 
-        internal static void VerifyMsBuildOutput(string expectedMatch, ApplicationManager appManager, List<DeployResult> results)
+        public static void VerifyLogOutput(ApplicationManager appManager, string id, params string[] expectedMatches)
         {
-            var entries = appManager.DeploymentManager.GetLogEntriesAsync(results[0].Id).Result.ToList();
+            var entries = appManager.DeploymentManager.GetLogEntriesAsync(id).Result.ToList();
             Assert.Equal(3, entries.Count);
-            var details = appManager.DeploymentManager.GetLogEntryDetailsAsync(results[0].Id, entries[1].EntryId).Result.ToList();
-            Assert.Equal(4, details.Count);
-            Assert.True(details[2].Message.Contains(expectedMatch));
+            var allDetails = entries.SelectMany(e => appManager.DeploymentManager.GetLogEntryDetails(id, e.EntryId)).ToList();
+            var allEntries = entries.Concat(allDetails).ToList();
+            Assert.True(expectedMatches.All(match => allDetails.Any(e => e.Message.Contains(match))));
         }
     }
 }
