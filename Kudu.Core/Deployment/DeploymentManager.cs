@@ -286,7 +286,7 @@ namespace Kudu.Core.Deployment
                 ReportStatus(id);
 
                 // Create a deployer
-                ISiteBuilder builder = _builderFactory.CreateBuilder();
+                ISiteBuilder builder = _builderFactory.CreateBuilder(innerLogger);
 
                 buildStep = profiler.Step("Building");
 

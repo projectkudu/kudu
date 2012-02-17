@@ -108,6 +108,30 @@ namespace Kudu.FunctionalTests
                 });
             }
         }
+        
+        [Fact]
+        public void PushRepositoryWithNoDeployableProjectsTreatsAsWebsite()
+        {
+            // Arrange
+            string repositoryName = "PushRepositoryWithNoDeployableProjectsTreatsAsWebsite";
+            string appName = "PushRepositoryWithNoDeployableProjectsTreatsAsWebsite";
+            string cloneUrl = "https://github.com/KuduApps/NoDeployableProjects.git";
+
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    appManager.GitDeploy(repo.PhysicalPath);
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, "no deployable projects. Deploying files instead");
+                });
+            }
+        }
 
         [Fact]
         public void PushAppChangesShouldTriggerBuild()

@@ -16,7 +16,7 @@ namespace Kudu.Core.Deployment
             _environment = environment;
         }
 
-        public ISiteBuilder CreateBuilder()
+        public ISiteBuilder CreateBuilder(ILogger logger)
         {
             string repositoryRoot = _environment.DeploymentRepositoryPath;
 
@@ -59,7 +59,9 @@ namespace Kudu.Core.Deployment
 
             if (project == null)
             {
-                throw new InvalidOperationException("Unable to find a target project to build. No web projects found.");
+                logger.Log("Found solution {0} with no deployable projects. Deploying files instead.", solution.Path);
+
+                return new BasicBuilder(repositoryRoot);
             }
 
             if (project.IsWap)

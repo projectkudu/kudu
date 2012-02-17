@@ -2,6 +2,6 @@
 {
     public interface ISiteBuilderFactory
     {
-        ISiteBuilder CreateBuilder();
+        ISiteBuilder CreateBuilder(ILogger logger);
     }
 }
