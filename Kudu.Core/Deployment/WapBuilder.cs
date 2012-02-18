@@ -66,7 +66,7 @@ namespace Kudu.Core.Deployment
 
         private string BuildProject(ILogger innerLogger, string buildTempPath)
         {
-            string command = @"""{0}"" /nologo /verbosity:m /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""{1}"";AutoParameterizationWebConfigConnectionStrings=false;";
+            string command = @"""{0}"" /nologo /verbosity:m /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""{1}"";AutoParameterizationWebConfigConnectionStrings=false;Configuration=Release;";
             if (String.IsNullOrEmpty(_solutionPath))
             {
                 command += "{2}";

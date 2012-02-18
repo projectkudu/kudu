@@ -134,6 +134,30 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public void WapBuildsReleaseMode()
+        {
+            // Arrange
+            string repositoryName = "WapBuildsReleaseMode";
+            string appName = "WapBuildsReleaseMode";
+            string cloneUrl = "https://github.com/KuduApps/ConditionalCompilation.git";
+
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    appManager.GitDeploy(repo.PhysicalPath);
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, "RELEASE MODE", "Context.IsDebuggingEnabled: False");
+                });
+            }
+        }
+
+        [Fact]
         public void PushAppChangesShouldTriggerBuild()
         {
             // Arrange

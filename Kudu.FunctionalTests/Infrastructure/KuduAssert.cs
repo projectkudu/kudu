@@ -1,14 +1,24 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Net;
 using System.Net.Http;
-using Kudu.Core.Deployment;
 using Xunit;
 
 namespace Kudu.FunctionalTests.Infrastructure
 {
     public static class KuduAssert
     {
+        public static void VerifyUrl(string url, params string[] contents)
+        {
+            var client = new HttpClient();
+            var response = client.GetAsync(url).Result;
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            if (contents.Length > 0)
+            {
+                var responseBody = response.Content.ReadAsStringAsync().Result;
+                Assert.True(contents.All(responseBody.Contains));
+            }
+        }
+
         public static void VerifyUrl(string url, string content = null, HttpStatusCode statusCode = HttpStatusCode.OK)
         {
             var client = new HttpClient();
