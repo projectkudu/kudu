@@ -11,7 +11,6 @@ namespace Kudu.FunctionalTests.Infrastructure
 {
     public static class Git
     {
-
         public static void Push(string repositoryPath, string url, string localBranchName = "master", string remoteBranchName = "master")
         {
             Executable gitExe = GetGitExe(repositoryPath);
@@ -25,6 +24,12 @@ namespace Kudu.FunctionalTests.Infrastructure
                 // Dump out the error stream (git curl verbose)
                 Debug.WriteLine(gitExe.Execute("push {0} {1}:{2}", url, localBranchName, remoteBranchName).Item2);
             }
+        }
+
+        public static void Init(string repositoryPath)
+        {
+            Executable gitExe = GetGitExe(repositoryPath);
+            gitExe.Execute("init");
         }
         
         public static void Revert(string repositoryPath, string commit = "HEAD")
