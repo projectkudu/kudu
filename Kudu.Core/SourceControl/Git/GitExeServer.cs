@@ -11,7 +11,7 @@ namespace Kudu.Core.SourceControl.Git
         private readonly Executable _gitExe;
         private readonly IProfilerFactory _profilerFactory;
         private readonly GitExeRepository _repository;
-        
+
         public GitExeServer(string path, IProfilerFactory profilerFactory)
             : this(GitUtility.ResolveGitPath(), path, profilerFactory)
         {
@@ -21,7 +21,7 @@ namespace Kudu.Core.SourceControl.Git
         {
             _gitExe = new Executable(pathToGitExe, path);
             _profilerFactory = profilerFactory;
-            _repository = new GitExeRepository(path);
+            _repository = new GitExeRepository(path, profilerFactory);
         }
 
         private string PostReceiveHookPath
@@ -53,7 +53,7 @@ namespace Kudu.Core.SourceControl.Git
             IProfiler profiler = _profilerFactory.GetProfiler();
             using (profiler.Step("GitExeServer.AdvertiseReceivePack"))
             {
-                Advertise("receive-pack", output);
+                Advertise(profiler, "receive-pack", output);
             }
         }
 
@@ -62,7 +62,7 @@ namespace Kudu.Core.SourceControl.Git
             IProfiler profiler = _profilerFactory.GetProfiler();
             using (profiler.Step("GitExeServer.AdvertiseUploadPack"))
             {
-                Advertise("upload-pack", output);
+                Advertise(profiler, "upload-pack", output);
             }
         }
 
@@ -74,7 +74,7 @@ namespace Kudu.Core.SourceControl.Git
                 // Remove the push info path
                 FileSystemHelpers.DeleteFileSafe(PushInfoPath);
 
-                ServiceRpc("receive-pack", inputStream, outputStream);
+                ServiceRpc(profiler, "receive-pack", inputStream, outputStream);
             }
 
             // If out file was written to disk then the push is complete
@@ -86,18 +86,18 @@ namespace Kudu.Core.SourceControl.Git
             IProfiler profiler = _profilerFactory.GetProfiler();
             using (profiler.Step("GitExeServer.Upload"))
             {
-                ServiceRpc("upload-pack", inputStream, outputStream);
+                ServiceRpc(profiler, "upload-pack", inputStream, outputStream);
             }
         }
 
-        private void Advertise(string serviceName, Stream output)
+        private void Advertise(IProfiler profiler, string serviceName, Stream output)
         {
-            _gitExe.Execute(null, output, @"{0} --stateless-rpc --advertise-refs ""{1}""", serviceName, _gitExe.WorkingDirectory);
+            _gitExe.Execute(profiler, null, output, @"{0} --stateless-rpc --advertise-refs ""{1}""", serviceName, _gitExe.WorkingDirectory);
         }
 
-        private void ServiceRpc(string serviceName, Stream input, Stream output)
+        private void ServiceRpc(IProfiler profiler, string serviceName, Stream input, Stream output)
         {
-            _gitExe.Execute(input, output, @"{0} --stateless-rpc ""{1}""", serviceName, _gitExe.WorkingDirectory);
+            _gitExe.Execute(profiler, input, output, @"{0} --stateless-rpc ""{1}""", serviceName, _gitExe.WorkingDirectory);
         }
 
         public PushInfo GetPushInfo()
@@ -134,24 +134,23 @@ namespace Kudu.Core.SourceControl.Git
             IProfiler profiler = _profilerFactory.GetProfiler();
             using (profiler.Step("GitExeServer.Initialize"))
             {
-                // If we already have a repository then do nothing
-                RepositoryType repositoryType = RepositoryManager.GetRepositoryType(_gitExe.WorkingDirectory);
-                if (repositoryType == RepositoryType.Git)
-                {
-                    return;
-                }
-
                 _repository.Initialize();
 
-                // Allow getting pushes even though we're not bare
-                _gitExe.Execute("config receive.denyCurrentBranch ignore");
+                using (profiler.Step("Configure git server"))
+                {
+                    // Allow getting pushes even though we're not bare
+                    _gitExe.Execute(profiler, "config receive.denyCurrentBranch ignore");
+                }
 
-                FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(PostReceiveHookPath));
+                using (profiler.Step("Setup post receive hook"))
+                {
+                    FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(PostReceiveHookPath));
 
-                File.WriteAllText(PostReceiveHookPath, @"#!/bin/sh
+                    File.WriteAllText(PostReceiveHookPath, @"#!/bin/sh
 read i
 echo $i > pushinfo
 ");
+                }
             }
         }
 

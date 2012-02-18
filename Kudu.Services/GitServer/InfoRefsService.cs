@@ -85,8 +85,12 @@ namespace Kudu.Services.GitServer
                     _gitServer.AdvertiseReceivePack(memoryStream);
                 }
 
-                memoryStream.Flush();
-                memoryStream.Position = 0;
+                string flushStepTitle = String.Format("Flushing stream. P: {0}, L: {1}", memoryStream.Position, memoryStream.Length);
+                using (_profiler.Step(flushStepTitle))
+                {
+                    memoryStream.Flush();
+                    memoryStream.Position = 0;
+                }
 
                 var content = new StreamContent(memoryStream);
                 content.Headers.ContentType =

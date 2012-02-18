@@ -96,7 +96,9 @@
     <Compile Include="Infrastructure\VsHelper.cs" />
     <Compile Include="Performance\IProfilerFactory.cs" />
     <Compile Include="Performance\NullProfiler.cs" />
+    <Compile Include="Performance\NullProfilerFactory.cs" />
     <Compile Include="Performance\Profiler.cs" />
+    <Compile Include="Performance\ProfilerFactory.cs" />
     <Compile Include="Performance\ProfilerStep.cs" />
     <Compile Include="Deployment\BasicBuilder.cs" />
     <Compile Include="Settings\DeploymentSettingsManager.cs" />

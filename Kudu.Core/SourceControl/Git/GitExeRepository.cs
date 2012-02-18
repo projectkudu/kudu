@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Performance;
 
 namespace Kudu.Core.SourceControl.Git
 {
@@ -14,16 +15,23 @@ namespace Kudu.Core.SourceControl.Git
     public class GitExeRepository : IRepository
     {
         private readonly Executable _gitExe;
+        private readonly IProfilerFactory _profilerFactory;
 
         public GitExeRepository(string path)
-            : this(GitUtility.ResolveGitPath(), path)
+            : this(GitUtility.ResolveGitPath(), path, NullProfilerFactory.Instance)
         {
 
         }
 
-        public GitExeRepository(string pathToGitExe, string path)
+        public GitExeRepository(string path, IProfilerFactory profilerFactory)
+            : this(GitUtility.ResolveGitPath(), path, profilerFactory)
+        {
+        }
+
+        public GitExeRepository(string pathToGitExe, string path, IProfilerFactory profilerFactory)
         {
             _gitExe = new Executable(pathToGitExe, path);
+            _profilerFactory = profilerFactory;
         }
 
         public string CurrentId
@@ -36,9 +44,13 @@ namespace Kudu.Core.SourceControl.Git
 
         public void Initialize()
         {
-            _gitExe.Execute("init");
+            var profiler = _profilerFactory.GetProfiler();
+            using (profiler.Step("GitExeRepository.Initialize"))
+            {
+                _gitExe.Execute(profiler, "init");
 
-            _gitExe.Execute("config core.autocrlf true");
+                _gitExe.Execute(profiler, "config core.autocrlf true");
+            }
         }
 
         public IEnumerable<FileStatus> GetStatus()

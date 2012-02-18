@@ -99,7 +99,7 @@ namespace Kudu.Services.Web.App_Start
             {
                 // Return No-op providers
                 kernel.Bind<IProfiler>().ToConstant(NullProfiler.Instance).InSingletonScope();
-                kernel.Bind<IProfilerFactory>().ToMethod(context => new ProfilerFactory(() => NullProfiler.Instance)).InSingletonScope();
+                kernel.Bind<IProfilerFactory>().ToConstant(NullProfilerFactory.Instance).InSingletonScope();
             }
 
             // Repository Management
@@ -289,21 +289,6 @@ namespace Kudu.Services.Web.App_Start
             {
                 connection.Broadcast(status);
             };
-        }
-
-        private class ProfilerFactory : IProfilerFactory
-        {
-            private readonly System.Func<IProfiler> _factory;
-
-            public ProfilerFactory(System.Func<IProfiler> factory)
-            {
-                _factory = factory;
-            }
-
-            public IProfiler GetProfiler()
-            {
-                return _factory();
-            }
         }
 
         private class DeploymentManagerFactory : IDeploymentManagerFactory

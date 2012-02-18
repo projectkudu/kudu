@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using Kudu.Contracts;
+using Kudu.Core.Performance;
 
 namespace Kudu.Core.Infrastructure
 {
@@ -21,64 +23,84 @@ namespace Kudu.Core.Infrastructure
 
         public Tuple<string, string> Execute(string arguments, params object[] args)
         {
-            var process = CreateProcess(arguments, args);
-
-            Func<StreamReader, string> reader = (StreamReader streamReader) => streamReader.ReadToEnd();
-
-            IAsyncResult outputReader = reader.BeginInvoke(process.StandardOutput, null, null);
-            IAsyncResult errorReader = reader.BeginInvoke(process.StandardError, null, null);
-
-            process.StandardInput.Close();
-
-            process.WaitForExit();
-
-            string output = reader.EndInvoke(outputReader);
-            string error = reader.EndInvoke(errorReader);
-
-            // Sometimes, we get an exit code of 1 even when the command succeeds (e.g. with 'git reset .').
-            // So also make sure there is an error string
-            if (process.ExitCode != 0)
-            {
-                string text = String.IsNullOrEmpty(error) ? output : error;
-
-                throw new Exception(text);
-            }
-
-            return Tuple.Create(output, error);
+            return Execute(NullProfiler.Instance, arguments, args);
         }
 
-        public void Execute(Stream input, Stream output, string arguments, params object[] args)
+        public Tuple<string, string> Execute(IProfiler profiler, string arguments, params object[] args)
         {
-            var process = CreateProcess(arguments, args);
-
-            Func<StreamReader, string> reader = (StreamReader streamReader) => streamReader.ReadToEnd();
-            Action<Stream, Stream, bool> copyStream = (Stream from, Stream to, bool closeAfterCopy) =>
+            using (GetProcessStep(profiler, arguments, args))
             {
-                from.CopyTo(to);
-                if (closeAfterCopy)
+                var process = CreateProcess(arguments, args);
+
+                Func<StreamReader, string> reader = (StreamReader streamReader) => streamReader.ReadToEnd();
+
+                IAsyncResult outputReader = reader.BeginInvoke(process.StandardOutput, null, null);
+                IAsyncResult errorReader = reader.BeginInvoke(process.StandardError, null, null);
+
+                process.StandardInput.Close();
+
+                process.WaitForExit();
+
+                string output = reader.EndInvoke(outputReader);
+                string error = reader.EndInvoke(errorReader);
+
+                // Sometimes, we get an exit code of 1 even when the command succeeds (e.g. with 'git reset .').
+                // So also make sure there is an error string
+                if (process.ExitCode != 0)
                 {
-                    to.Close();
+                    string text = String.IsNullOrEmpty(error) ? output : error;
+
+                    throw new Exception(text);
                 }
-            };
 
-            IAsyncResult errorReader = reader.BeginInvoke(process.StandardError, null, null);
-            if (input != null)
-            {
-                // Copy into the input stream, and close it to tell the exe it can process it
-                copyStream.BeginInvoke(input, process.StandardInput.BaseStream, true, null, null);
+                return Tuple.Create(output, error);
             }
+        }
 
-            // Copy the exe's output into the output stream
-            copyStream.BeginInvoke(process.StandardOutput.BaseStream, output, false, null, null);
-
-            process.WaitForExit();
-
-            string error = reader.EndInvoke(errorReader);
-
-            if (process.ExitCode != 0)
+        public void Execute(IProfiler profiler, Stream input, Stream output, string arguments, params object[] args)
+        {
+            using (GetProcessStep(profiler, arguments, args))
             {
-                throw new Exception(error);
+                var process = CreateProcess(arguments, args);
+
+                Func<StreamReader, string> reader = (StreamReader streamReader) => streamReader.ReadToEnd();
+                Action<Stream, Stream, bool> copyStream = (Stream from, Stream to, bool closeAfterCopy) =>
+                {
+                    from.CopyTo(to);
+                    if (closeAfterCopy)
+                    {
+                        to.Close();
+                    }
+                };
+
+                IAsyncResult errorReader = reader.BeginInvoke(process.StandardError, null, null);
+                if (input != null)
+                {
+                    // Copy into the input stream, and close it to tell the exe it can process it
+                    copyStream.BeginInvoke(input, process.StandardInput.BaseStream, true, null, null);
+                }
+
+                // Copy the exe's output into the output stream
+                copyStream.BeginInvoke(process.StandardOutput.BaseStream, output, false, null, null);
+
+                process.WaitForExit();
+
+                string error = reader.EndInvoke(errorReader);
+
+                if (process.ExitCode != 0)
+                {
+                    throw new Exception(error);
+                }
             }
+        }
+
+        private IDisposable GetProcessStep(IProfiler profiler, string arguments, object[] args)
+        {
+            string formattedArgs = String.Format(arguments, args);
+            string stepTitle = String.Format(@"Executing external process P(""{0}"", ""{1}"")",
+                                             System.IO.Path.GetFileName(Path),
+                                             formattedArgs);
+            return profiler.Step(stepTitle);
         }
 
         private Process CreateProcess(string arguments, object[] args)
