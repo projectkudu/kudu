@@ -84,6 +84,10 @@
       <Component Id="Default.aspx" Guid="{DB6C3D9D-D0DD-42B6-A4C4-EA3D5F8428F4}">
         <File Id="Default.aspx" Source="$(var.KuduServiceDir)\Default.aspx" />
       </Component>
+      
+      <Component Id="Env.aspx" Guid="{352C64CB-76C2-49F1-B7BF-786EECA9CD4C}">
+        <File Id="Env.aspx" Source="$(var.KuduServiceDir)\Env.aspx" />
+      </Component>
 
       <Component Id="Global.asax" Guid="{9120F0CD-A9BC-4B94-8D1C-2D591D1EF98A}">
         <File Id="Global.asax" Source="$(var.KuduServiceDir)\Global.asax" />
@@ -215,6 +219,7 @@
       <ComponentRef Id="RegistryComponent" />
 
       <ComponentRef Id="Default.aspx" />
+      <ComponentRef Id="Env.aspx" />
       <ComponentRef Id="Global.asax" />
       <ComponentRef Id="Web.config" />
       <ComponentRef Id="commit" />
