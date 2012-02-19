@@ -120,6 +120,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Env.aspx" />
     <Content Include="Default.aspx" />
     <Content Include="Global.asax" />
     <Content Include="msbuild\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.Build.Tasks.Dll" />

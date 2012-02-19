@@ -154,7 +154,7 @@
 
     </div>
    
-   <div class="header">File Paths</div>
+   <div class="header">Environment</div>
 
     <table>
         <tr>
@@ -164,6 +164,12 @@
         <tr>
             <td>Temp</td>
             <td class="path"> <%= Path.GetTempPath() %></td>
+        </tr>
+        <tr>
+            <td>
+                Runtime Environment
+            </td>
+            <td><a href="Env.aspx">View</a></td>
         </tr>
     </table>
 </body>
