@@ -38,7 +38,7 @@ namespace Kudu.Core.Deployment
                 using (context.Profiler.Step("Running msbuild on solution"))
                 {
                     // Build the solution first
-                    string log = ExecuteMSBuild(innerLogger, @"""{0}"" /verbosity:m /nologo{1}", SolutionPath, propertyString);
+                    string log = ExecuteMSBuild(context.Profiler, @"""{0}"" /verbosity:m /nologo{1}", SolutionPath, propertyString);
                     innerLogger.Log(log);
                 }
 
