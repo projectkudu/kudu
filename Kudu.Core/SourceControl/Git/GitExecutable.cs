@@ -5,7 +5,7 @@ namespace Kudu.Core.SourceControl.Git
     internal class GitExecutable : Executable
     {
         public GitExecutable(string workingDirectory)
-            : base(GitUtility.ResolveGitPath(), workingDirectory)
+            : base(PathUtility.ResolveGitPath(), workingDirectory)
         {
         }
 

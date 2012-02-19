@@ -13,5 +13,15 @@ namespace Kudu.FunctionalTests.Infrastructure
         {
             File.AppendAllText(Path.Combine(repository.PhysicalPath, path), contents);
         }
+
+        public static void Replace(this TestRepository repository, string path, string oldValue, string newValue)
+        {
+            repository.WriteFile(path, repository.ReadFile(path).Replace(oldValue, newValue));
+        }
+
+        public static string ReadFile(this TestRepository repository, string path)
+        {
+            return File.ReadAllText(Path.Combine(repository.PhysicalPath, path));
+        }
     }
 }

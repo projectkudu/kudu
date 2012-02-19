@@ -2,9 +2,9 @@
 using System.IO;
 using SystemEnvironment = System.Environment;
 
-namespace Kudu.Core.SourceControl.Git
+namespace Kudu.Core.Infrastructure
 {
-    internal static class GitUtility
+    internal static class PathUtility
     {
         internal static string ResolveGitPath()
         {
@@ -17,6 +17,12 @@ namespace Kudu.Core.SourceControl.Git
             }
 
             return path;
+        }
+
+        internal static string ResolveNpmPath()
+        {
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            return Path.Combine(programFiles, "nodejs", "npm.cmd");
         }
     }
 }

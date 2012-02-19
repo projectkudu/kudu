@@ -89,6 +89,7 @@
     <Compile Include="Deployment\IProgressReporter.cs" />
     <Compile Include="Deployment\ManifestWriterExtensions.cs" />
     <Compile Include="Deployment\MsBuildSiteBuilder.cs" />
+    <Compile Include="Deployment\NpmExecutable.cs" />
     <Compile Include="Deployment\ProgressReporter.cs" />
     <Compile Include="Infrastructure\DisposableAction.cs" />
     <Compile Include="Infrastructure\IniFile.cs" />
@@ -125,15 +126,12 @@
     <Compile Include="Infrastructure\IStringReader.cs" />
     <Compile Include="Infrastructure\VsSolution.cs" />
     <Compile Include="Infrastructure\VsSolutionProject.cs" />
-    <Compile Include="nji\Program.cs" />
-    <Compile Include="nji\SimpleJson.cs" />
-    <Compile Include="nji\Tar.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SourceControl\Git\GitBranch.cs" />
     <Compile Include="SourceControl\Git\GitExecutable.cs" />
     <Compile Include="SourceControl\Git\GitExeRepository.cs" />
     <Compile Include="SourceControl\Git\GitExeServer.cs" />
-    <Compile Include="SourceControl\Git\GitUtility.cs" />
+    <Compile Include="Infrastructure\PathUtility.cs" />
     <Compile Include="SourceControl\Git\HybridGitRepository.cs" />
     <Compile Include="SourceControl\Git\LibGitRepository.cs" />
     <Compile Include="SourceControl\Hg\HgBranch.cs" />

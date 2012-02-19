@@ -1,13 +1,12 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
-using nji;
 
 namespace Kudu.Core.Deployment
 {
     public class BasicBuilder : ISiteBuilder
     {
-        private const string NodeModulesPath = "node_modules";
+        private const string PackageJsonFile = "package.json";
 
         private readonly string _sourcePath;
 
@@ -31,11 +30,8 @@ namespace Kudu.Core.Deployment
                     DeploymentHelper.CopyWithManifest(_sourcePath, context.OutputPath, context.PreviousMainfest);
                 }
 
-                using (context.Profiler.Step("Downloading node packages"))
-                {
-                    // Download node packages
-                    DownloadNodePackages(context);
-                }
+                // Download node packages
+                DownloadNodePackages(innerLogger, context);
 
                 using (context.Profiler.Step("Building manifest"))
                 {
@@ -59,15 +55,30 @@ namespace Kudu.Core.Deployment
         /// <summary>
         /// Download node packages as part of the deployment
         /// </summary>
-        private void DownloadNodePackages(DeploymentContext context)
+        private void DownloadNodePackages(ILogger logger, DeploymentContext context)
         {
-            var runner = new Program();
-            runner.ModulesDir = Path.Combine(context.OutputPath, NodeModulesPath);
-            runner.TempDir = Path.Combine(runner.ModulesDir, ".tmp");
-            runner.Logger = context.Logger;
-            runner.UpdateStatusText = context.ProgressReporter.ReportProgress;
+            // Check to see if there's a package.json file
+            string packagePath = Path.Combine(context.OutputPath, PackageJsonFile);
 
-            runner.InstallDependencies(context.OutputPath);
+            if (!File.Exists(packagePath))
+            {
+                // If the package.json file doesn't exist then don't bother to run npm install
+                return;
+            }
+
+            using (context.Profiler.Step("Downloading node packages"))
+            {
+                var npm = new NpmExecutable(context.OutputPath);
+
+                if (!npm.IsAvailable)
+                {
+                    return;
+                }
+
+                // Run install on the output directory
+                string log = npm.Execute(context.Profiler, "install").Item1;
+                logger.Log(log);
+            }
         }
     }
 }

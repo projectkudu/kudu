@@ -290,13 +290,6 @@ namespace Kudu.Core.Deployment
 
                 buildStep = profiler.Step("Building");
 
-                var progressReporter = new ProgressReporter(statusText =>
-                {
-                    trackingFile.StatusText = statusText;
-                    trackingFile.Save(_fileSystem);
-                    ReportStatus(id);
-                });
-
                 var context = new DeploymentContext
                 {
                     ManifestWriter = GetDeploymentManifestWriter(id),
@@ -304,7 +297,6 @@ namespace Kudu.Core.Deployment
                     Profiler = profiler,
                     Logger = logger,
                     OutputPath = _environment.DeploymentTargetPath,
-                    ProgressReporter = progressReporter
                 };
 
                 builder.Build(context)

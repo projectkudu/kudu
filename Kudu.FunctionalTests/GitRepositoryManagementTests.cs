@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
 using Xunit;
@@ -479,6 +478,56 @@ namespace Kudu.FunctionalTests
                     results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                     KuduAssert.VerifyUrl(helloUrl, statusCode: HttpStatusCode.NotFound);
                     Assert.Equal(2, results.Count);
+                });
+            }
+        }
+
+        [Fact]
+        public void NpmSiteInstallsPackages()
+        {
+            string repositoryName = "NpmSiteInstallsPackages";
+            string appName = "NpmSiteInstallsPackages";
+            string cloneUrl = "https://github.com/KuduApps/NpmSite.git";
+
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    appManager.GitDeploy(repo.PhysicalPath);
+                    var results = appManager.DeploymentManager.GetResults().ToList();
+                    var files = appManager.ProjectSystem.GetProject().Files.ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    Assert.True(files.Any(f => f.StartsWith("node_modules/express")));
+                });
+            }
+        }
+
+        [Fact]
+        public void FailedNpmFailsDeployment()
+        {
+            string repositoryName = "NpmSiteInstallsPackages";
+            string appName = "NpmSiteInstallsPackages";
+            string cloneUrl = "https://github.com/KuduApps/NpmSite.git";
+
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Replace the express dependency with something that doesn't exist
+                    repo.Replace("package.json", "express", "MadeUpKuduPackage");
+                    Git.Commit(repo.PhysicalPath, "Added fake package to package.json");
+                    // Act
+                    appManager.GitDeploy(repo.PhysicalPath);
+                    var results = appManager.DeploymentManager.GetResults().ToList();
+                    var files = appManager.ProjectSystem.GetProject().Files.ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Failed, results[0].Status);
                 });
             }
         }

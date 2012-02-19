@@ -17,6 +17,14 @@ namespace Kudu.Core.Infrastructure
             EnvironmentVariables = new Dictionary<string, string>();
         }
 
+        public bool IsAvailable
+        {
+            get
+            {
+                return File.Exists(Path);
+            }
+        }
+
         public string WorkingDirectory { get; private set; }
         public string Path { get; private set; }
         public IDictionary<string, string> EnvironmentVariables { get; set; }
