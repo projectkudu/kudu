@@ -85,13 +85,13 @@ namespace Kudu.Services.GitServer
                     _gitServer.AdvertiseReceivePack(memoryStream);
                 }
 
-                string flushStepTitle = String.Format("Flushing stream. P: {0}, L: {1}", memoryStream.Position, memoryStream.Length);
+                HttpContent content = null;
+                string flushStepTitle = String.Format("Creating content. L: {0}", memoryStream.Length);
                 using (_profiler.Step(flushStepTitle))
                 {
-                    memoryStream.Position = 0;
+                    content = new ByteArrayContent(memoryStream.GetBuffer(), 0, (int)memoryStream.Length);
                 }
 
-                var content = new StreamContent(memoryStream);
                 content.Headers.ContentType =
                     new MediaTypeHeaderValue("application/x-git-{0}-advertisement".With(service));
                 // Explicitly set the charset to empty string
