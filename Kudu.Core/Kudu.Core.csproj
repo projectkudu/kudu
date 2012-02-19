@@ -130,6 +130,7 @@
     <Compile Include="nji\Tar.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SourceControl\Git\GitBranch.cs" />
+    <Compile Include="SourceControl\Git\GitExecutable.cs" />
     <Compile Include="SourceControl\Git\GitExeRepository.cs" />
     <Compile Include="SourceControl\Git\GitExeServer.cs" />
     <Compile Include="SourceControl\Git\GitUtility.cs" />

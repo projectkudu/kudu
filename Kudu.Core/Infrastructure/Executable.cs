@@ -91,6 +91,8 @@ namespace Kudu.Core.Infrastructure
                 {
                     throw new Exception(error);
                 }
+
+                Debug.WriteLine(error);
             }
         }
 

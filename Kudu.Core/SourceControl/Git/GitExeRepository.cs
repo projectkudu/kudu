@@ -14,23 +14,17 @@ namespace Kudu.Core.SourceControl.Git
     /// </summary>
     public class GitExeRepository : IRepository
     {
-        private readonly Executable _gitExe;
+        private readonly GitExecutable _gitExe;
         private readonly IProfilerFactory _profilerFactory;
 
         public GitExeRepository(string path)
-            : this(GitUtility.ResolveGitPath(), path, NullProfilerFactory.Instance)
+            : this(path, NullProfilerFactory.Instance)
         {
-
         }
 
         public GitExeRepository(string path, IProfilerFactory profilerFactory)
-            : this(GitUtility.ResolveGitPath(), path, profilerFactory)
         {
-        }
-
-        public GitExeRepository(string pathToGitExe, string path, IProfilerFactory profilerFactory)
-        {
-            _gitExe = new Executable(pathToGitExe, path);
+            _gitExe = new GitExecutable(path);
             _profilerFactory = profilerFactory;
         }
 
@@ -278,6 +272,11 @@ namespace Kudu.Core.SourceControl.Git
                 string id = _gitExe.Execute("rev-parse {0}", branchName).Item1.Trim();
                 yield return new GitBranch(id, branchName, currentId == id);
             }
+        }
+
+        public void SetTraceLevel(int level)
+        {
+            _gitExe.SetTraceLevel(level);
         }
 
         private bool IsEmpty()
@@ -730,6 +729,6 @@ namespace Kudu.Core.SourceControl.Git
                 reader.Skip("@@");
                 return range;
             }
-        }
+        }        
     }
 }

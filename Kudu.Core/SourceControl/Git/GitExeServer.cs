@@ -8,20 +8,17 @@ namespace Kudu.Core.SourceControl.Git
 {
     public class GitExeServer : IGitServer, IServerRepository
     {
-        private readonly Executable _gitExe;
+        private readonly GitExecutable _gitExe;
         private readonly IProfilerFactory _profilerFactory;
         private readonly GitExeRepository _repository;
-
+        
         public GitExeServer(string path, IProfilerFactory profilerFactory)
-            : this(GitUtility.ResolveGitPath(), path, profilerFactory)
         {
-        }
-
-        public GitExeServer(string pathToGitExe, string path, IProfilerFactory profilerFactory)
-        {
-            _gitExe = new Executable(pathToGitExe, path);
+            _gitExe = new GitExecutable(path);
+            _gitExe.SetTraceLevel(2);
             _profilerFactory = profilerFactory;
             _repository = new GitExeRepository(path, profilerFactory);
+            _repository.SetTraceLevel(2);
         }
 
         private string PostReceiveHookPath

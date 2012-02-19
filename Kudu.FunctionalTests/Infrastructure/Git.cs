@@ -130,8 +130,9 @@ namespace Kudu.FunctionalTests.Infrastructure
 
             FileSystemHelpers.EnsureDirectory(repositoryPath);
 
-            var exe = new Executable(ResolveGitPath(), repositoryPath);
-            exe.EnvironmentVariables["GIT_CURL_VERBOSE"] = "1";
+            var exe = new GitExecutable(repositoryPath);
+            exe.SetTraceLevel(2);
+            exe.SetHttpVerbose(true);
             return exe;
         }
     }
