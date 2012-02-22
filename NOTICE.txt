@@ -3,12 +3,6 @@ Copyright 2011 Outcurve Foundation
 
 Kudu includes works distributed under the licenses listed below. The full text for most of the licenses listed below can be found in the LICENSE.txt file accompanying each work. The original copyright notices have been preserved within the respective files and or packages. Please refer to the specific files and/or packages for more detailed information about the authors, copyright notices, and licenses.
 
-Ajax Minifier
------
-Website:    http://ajaxmin.codeplex.com/
-Copyright:  Copyright (c) 2010 Microsoft Corporation
-License:    Apache 2.0
-
 ASP.NET MVC
 -----
 Website:      http://aspnet.codeplex.com/wikipage?title=MVC&referringTitle=Home
@@ -124,12 +118,6 @@ Website:      http://nuget.codeplex.com
 Copyright:    Copyright 2010-2011 Outercurve Foundation
 License:      Apache Software Foundation License 2.0
 
-RouteMagic
------
-Website:      http://routemagic.codeplex.com/
-Copyright:    Copyright (c) 2011 Phil Haack
-License:      MS-PL
-
 Sammy
 -----
 Website:      http://sammyjs.org/
@@ -158,4 +146,10 @@ xUnit
 -----
 Website:      http://xunit.codeplex.com/
 Copyright:    Copyright 2010-2011 Microsoft Corporation
+License:      Ms-Pl
+
+System.IO.Abstractions
+-----
+Website:      http://systemioabstractions.codeplex.com/
+Copyright:    Copyright Tatham Oddie
 License:      Ms-Pl
