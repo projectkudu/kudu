@@ -158,17 +158,19 @@
 
     <table>
         <tr>
-            <td>Live Site</td>
+            <td><strong>Live Site</strong></td>
             <td class="path"><%= MapPath("_app") %></td>
         </tr>
         <tr>
-            <td>Temp</td>
+            <td><strong>Temp</strong></td>
             <td class="path"> <%= Path.GetTempPath() %></td>
         </tr>
         <tr>
-            <td>
-                Runtime Environment
-            </td>
+            <td><strong>Errors</strong></td>
+            <td><a href="<%= ResolveClientUrl("~/elmah.axd") %>">View</a></td>
+        </tr>
+        <tr>
+            <td><strong>Runtime Environment</strong></td>
             <td><a href="Env.aspx">View</a></td>
         </tr>
     </table>
