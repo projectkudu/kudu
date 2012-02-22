@@ -61,7 +61,7 @@ namespace Kudu.Core.Deployment
             {
                 logger.Log("Found solution {0} with no deployable projects. Deploying files instead.", solution.Path);
 
-                return new BasicBuilder(repositoryRoot);
+                return new BasicBuilder(repositoryRoot, _environment.TempPath);
             }
 
             if (project.IsWap)
@@ -144,7 +144,7 @@ namespace Kudu.Core.Deployment
             }
 
             // If there's none then use the basic builder (the site is xcopy deployable)
-            return new BasicBuilder(repositoryRoot);
+            return new BasicBuilder(repositoryRoot, _environment.TempPath);
         }
 
         private string NormalizePath(string path)

@@ -10,10 +10,12 @@ namespace Kudu.Core.Deployment
         private const string PackageJsonFile = "package.json";
 
         private readonly string _sourcePath;
+        private readonly string _tempPath;
 
-        public BasicBuilder(string sourcePath)
+        public BasicBuilder(string sourcePath, string tempPath)
         {
             _sourcePath = sourcePath;
+            _tempPath = tempPath;
         }
 
         public Task Build(DeploymentContext context)
@@ -71,8 +73,12 @@ namespace Kudu.Core.Deployment
             {
                 var npm = new NpmExecutable(context.OutputPath);
 
-                // Use the http proxy since https is failing for some reason
-                npm.Execute("config set registry \"http://registry.npmjs.org/\"");
+
+                if (!npm.IsAvailable)
+                {
+                    logger.Log("NPM not installed or couldn't be located. Skipping package installation.");
+                    return;
+                }
 
                 // Set the npm proxy settings based on the default settings
                 var proxy = WebRequest.DefaultWebProxy;
@@ -89,10 +95,13 @@ namespace Kudu.Core.Deployment
                     npm.EnvironmentVariables["HTTPS_PROXY"] = httpsProxyUrl.ToString();
                 }
 
-                if (!npm.IsAvailable)
-                {
-                    return;
-                }
+                // Use the temp path as the user profile path in case we don't have the right
+                // permission set. This normally happens under IIS as a restricted user (ApplicationPoolIdentity).
+                string npmUserProfile = Path.Combine(_tempPath, "npm");
+                npm.EnvironmentVariables["USERPROFILE"] = npmUserProfile;
+
+                // Use the http proxy since https is failing for some reason
+                npm.Execute("config set registry \"http://registry.npmjs.org/\"");
 
                 // Run install on the output directory
                 string log = npm.Execute(context.Profiler, "install").Item1;
