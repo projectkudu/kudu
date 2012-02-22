@@ -59,9 +59,7 @@ namespace Kudu.Services.GitServer
             {
                 var memoryStream = new MemoryStream();
                 _gitServer.Upload(GetInputStream(request), memoryStream);
-                memoryStream.Flush();
-                memoryStream.Position = 0;
-
+                
                 return CreateResponse(memoryStream, "application/x-git-{0}-result".With("upload-pack"));
             }
         }
@@ -79,9 +77,6 @@ namespace Kudu.Services.GitServer
                 {
                     Deploy();
                 }
-
-                memoryStream.Flush();
-                memoryStream.Position = 0;
 
                 return CreateResponse(memoryStream, "application/x-git-{0}-result".With("receive-pack"));
             }
@@ -117,9 +112,15 @@ namespace Kudu.Services.GitServer
             }
         }
 
-        private static HttpResponseMessage CreateResponse(MemoryStream stream, string mediaType)
+        private HttpResponseMessage CreateResponse(MemoryStream stream, string mediaType)
         {
-            var content = new StreamContent(stream);
+            HttpContent content = null;
+            string flushStepTitle = String.Format("Creating content. L: {0}", stream.Length);
+            using (_profiler.Step(flushStepTitle))
+            {
+                content = new ByteArrayContent(stream.GetBuffer(), 0, (int)stream.Length);
+            }
+
             content.Headers.ContentType = new MediaTypeHeaderValue(mediaType);
             // REVIEW: Why is it that we do not write an empty Content-Type here, like for InfoRefsController?
 
