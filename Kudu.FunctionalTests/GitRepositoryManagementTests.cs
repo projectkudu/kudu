@@ -509,8 +509,8 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void FailedNpmFailsDeployment()
         {
-            string repositoryName = "NpmSiteInstallsPackages";
-            string appName = "NpmSiteInstallsPackages";
+            string repositoryName = "FailedNpmFailsDeployment";
+            string appName = "FailedNpmFailsDeployment";
             string cloneUrl = "https://github.com/KuduApps/NpmSite.git";
 
             using (var repo = Git.Clone(repositoryName, cloneUrl))
@@ -528,6 +528,7 @@ namespace Kudu.FunctionalTests
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Failed, results[0].Status);
+                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, "failed to fetch from registry:");
                 });
             }
         }

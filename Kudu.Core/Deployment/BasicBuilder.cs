@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
@@ -99,9 +100,19 @@ namespace Kudu.Core.Deployment
                 // permission set. This normally happens under IIS as a restricted user (ApplicationPoolIdentity).
                 string npmUserProfile = Path.Combine(_tempPath, "npm");
                 npm.EnvironmentVariables["USERPROFILE"] = npmUserProfile;
+                npm.EnvironmentVariables["LocalAppData"] = npmUserProfile;
+                npm.EnvironmentVariables["AppData"] = npmUserProfile;
 
-                // Use the http proxy since https is failing for some reason
-                npm.Execute("config set registry \"http://registry.npmjs.org/\"");
+                try
+                {
+                    // Use the http proxy since https is failing for some reason
+                    npm.Execute("config set registry \"http://registry.npmjs.org/\"");
+                }
+                catch(Exception ex)
+                {
+                    // This fails if it's already set
+                    Debug.WriteLine(ex.Message);
+                }
 
                 // Run install on the output directory
                 string log = npm.Execute(context.Profiler, "install").Item1;
