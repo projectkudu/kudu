@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net.NetworkInformation;
 using System.Threading;
@@ -9,7 +10,6 @@ namespace Kudu.SiteManagement
 {
     public class SiteManager : ISiteManager
     {
-        private const string KuduAppPoolName = "kudu";
         private static Random portNumberGenRnd = new Random((int)DateTime.Now.Ticks);
 
         private readonly IPathResolver _pathResolver;
@@ -27,7 +27,7 @@ namespace Kudu.SiteManagement
             {
                 // Create the service site for this site
                 string serviceSiteName = GetServiceSite(applicationName);
-                int serviceSitePort = CreateSite(iis, serviceSiteName, _pathResolver.ServiceSitePath);
+                int serviceSitePort = CreateSite(iis, applicationName, serviceSiteName, _pathResolver.ServiceSitePath);
 
                 // Create the main site
                 string siteName = GetLiveSite(applicationName);
@@ -48,7 +48,7 @@ namespace Kudu.SiteManagement
 </body> 
 </html>");
 
-                int sitePort = CreateSite(iis, siteName, webRoot);
+                int sitePort = CreateSite(iis, applicationName, siteName, webRoot);
 
                 // Map a path called app to the site root under the service site
                 MapServiceSitePath(iis, applicationName, Constants.MappedLiveSite, siteRoot);
@@ -85,7 +85,7 @@ namespace Kudu.SiteManagement
                 // Get the path to the dev site
                 string siteRoot = _pathResolver.GetDeveloperApplicationPath(applicationName);
                 string webRoot = Path.Combine(siteRoot, Constants.WebRoot);
-                int sitePort = CreateSite(iis, devSiteName, webRoot);
+                int sitePort = CreateSite(iis, applicationName, devSiteName, webRoot);
 
                 // Ensure the directory is created
                 FileSystemHelpers.EnsureDirectory(webRoot);
@@ -108,7 +108,18 @@ namespace Kudu.SiteManagement
         {
             var iis = new IIS.ServerManager();
 
-            var kuduPool = EnsureKuduAppPool(iis);
+            // Get the app pool for this application
+            string appPoolName = GetAppPool(applicationName);
+            IIS.ApplicationPool kuduPool = iis.ApplicationPools[appPoolName];
+
+            // Make sure the acls are gone
+            RemoveAcls(applicationName, appPoolName);
+
+            if (kuduPool == null)
+            {
+                // If there's no app pool then do nothing
+                return;
+            }
 
             DeleteSite(iis, GetLiveSite(applicationName));
             DeleteSite(iis, GetDevSite(applicationName));
@@ -129,11 +140,16 @@ namespace Kudu.SiteManagement
                 DeleteSafe(devPath);
                 DeleteSafe(appPath);
             }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.ToString());
+            }
             finally
             {
-                kuduPool.StartAndWait();
+                // Remove the app pool and commit changes
+                iis.ApplicationPools.Remove(iis.ApplicationPools[appPoolName]);
+                iis.CommitChanges();
             }
-
         }
 
         public void SetDeveloperSiteWebRoot(string applicationName, string siteRoot)
@@ -171,22 +187,85 @@ namespace Kudu.SiteManagement
             site.Applications.Add(path, siteRoot);
         }
 
-        private static IIS.ApplicationPool EnsureKuduAppPool(IIS.ServerManager iis)
+        private IIS.ApplicationPool EnsureAppPool(IIS.ServerManager iis, string appName)
         {
-            var kuduAppPool = iis.ApplicationPools[KuduAppPoolName];
+            string appPoolName = GetAppPool(appName);
+            var kuduAppPool = iis.ApplicationPools[appPoolName];
             if (kuduAppPool == null)
             {
-                iis.ApplicationPools.Add(KuduAppPoolName);
+                iis.ApplicationPools.Add(appPoolName);
                 iis.CommitChanges();
-                kuduAppPool = iis.ApplicationPools[KuduAppPoolName];
+                kuduAppPool = iis.ApplicationPools[appPoolName];
                 kuduAppPool.Enable32BitAppOnWin64 = true;
                 kuduAppPool.ManagedPipelineMode = IIS.ManagedPipelineMode.Integrated;
                 kuduAppPool.ManagedRuntimeVersion = "v4.0";
                 kuduAppPool.AutoStart = true;
                 kuduAppPool.WaitForState(IIS.ObjectState.Started);
+
+                SetupAcls(appName, appPoolName);
             }
 
             return kuduAppPool;
+        }
+
+        private void RemoveAcls(string appName, string appPoolName)
+        {
+            // Setup Acls for this user
+            var icacls = new Executable(@"C:\Windows\System32\icacls.exe", Directory.GetCurrentDirectory());
+
+            string applicationPath = _pathResolver.GetApplicationPath(appName);
+            
+            try
+            {
+                // Give full control to the app folder (we can make it minimal later)
+                icacls.Execute(@"""{0}\*"" /remove ""IIS AppPool\{1}""", applicationPath, appPoolName);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+
+            try
+            {
+                // Give full control to the temp folder
+                string windowsTemp = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp");
+                icacls.Execute(@"""{0}"" /remove ""IIS AppPool\{1}""", windowsTemp, appPoolName);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+        }
+
+        private void SetupAcls(string appName, string appPoolName)
+        {
+            // Setup Acls for this user
+            var icacls = new Executable(@"C:\Windows\System32\icacls.exe", Directory.GetCurrentDirectory());
+
+            // Make sure the application path exists
+            string applicationPath = _pathResolver.GetApplicationPath(appName);
+            Directory.CreateDirectory(applicationPath);
+
+            try
+            {
+                // Give full control to the app folder (we can make it minimal later)
+                icacls.Execute(@"""{0}\*"" /grant ""IIS AppPool\{1}:F"" /C /Q /T", applicationPath, appPoolName);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+
+            try
+            {
+                // Give full control to the temp folder
+                string windowsTemp = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp");
+                icacls.Execute(@"""{0}"" /grant ""IIS AppPool\{1}:F"" /C /Q /T", windowsTemp, appPoolName);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
         }
 
         //TODO this is duplicated in HgServer.cs, though out of sync in functionality.
@@ -227,13 +306,13 @@ namespace Kudu.SiteManagement
             return true;
         }
 
-        private int CreateSite(IIS.ServerManager iis, string siteName, string siteRoot)
+        private int CreateSite(IIS.ServerManager iis, string applicationName, string siteName, string siteRoot)
         {
-            EnsureKuduAppPool(iis);
+            var pool = EnsureAppPool(iis, applicationName);
 
             int sitePort = GetRandomPort(iis);
             var site = iis.Sites.Add(siteName, siteRoot, sitePort);
-            site.ApplicationDefaults.ApplicationPoolName = KuduAppPoolName;
+            site.ApplicationDefaults.ApplicationPoolName = pool.Name;
 
             return sitePort;
         }
@@ -266,6 +345,11 @@ namespace Kudu.SiteManagement
         private static string GetServiceSite(string applicationName)
         {
             return "kudu_service_" + applicationName;
+        }
+
+        private static string GetAppPool(string applicationName)
+        {
+            return applicationName;
         }
 
         private static void DeleteSafe(string physicalPath)

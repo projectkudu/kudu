@@ -54,11 +54,23 @@
     <Compile Include="..\Common\Constants.cs">
       <Link>Constants.cs</Link>
     </Compile>
+    <Compile Include="..\Kudu.Contracts\Performance\IProfiler.cs">
+      <Link>IProfiler.cs</Link>
+    </Compile>
+    <Compile Include="..\Kudu.Core\Infrastructure\DisposableAction.cs">
+      <Link>DisposableAction.cs</Link>
+    </Compile>
+    <Compile Include="..\Kudu.Core\Infrastructure\Executable.cs">
+      <Link>Executable.cs</Link>
+    </Compile>
     <Compile Include="..\Kudu.Core\Infrastructure\FileSystemHelpers.cs">
       <Link>FileSystemHelpers.cs</Link>
     </Compile>
     <Compile Include="..\Kudu.Core\Infrastructure\OperationManager.cs">
       <Link>OperationManager.cs</Link>
+    </Compile>
+    <Compile Include="..\Kudu.Core\Performance\NullProfiler.cs">
+      <Link>NullProfiler.cs</Link>
     </Compile>
     <Compile Include="DefaultPathResolver.cs" />
     <Compile Include="IISExtensions.cs" />
