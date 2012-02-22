@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Kudu.Core.Deployment
@@ -23,7 +24,7 @@ namespace Kudu.Core.Deployment
             innerLogger.Log("Copying files to {0}.", context.OutputPath);
 
             try
-            {                
+            {
                 using (context.Profiler.Step("Copying files to output directory"))
                 {
                     // Copy to the output path and use the previous manifest if there
@@ -69,6 +70,24 @@ namespace Kudu.Core.Deployment
             using (context.Profiler.Step("Downloading node packages"))
             {
                 var npm = new NpmExecutable(context.OutputPath);
+
+                // Use the http proxy since https is failing for some reason
+                npm.Execute("config set registry \"http://registry.npmjs.org/\"");
+
+                // Set the npm proxy settings based on the default settings
+                var proxy = WebRequest.DefaultWebProxy;
+                var httpProxyUrl = proxy.GetProxy(new Uri("http://registry.npmjs.org/"));
+                var httpsProxyUrl = proxy.GetProxy(new Uri("https://registry.npmjs.org/"));
+
+                if (httpProxyUrl != null)
+                {
+                    npm.EnvironmentVariables["HTTP_PROXY"] = httpProxyUrl.ToString();
+                }
+
+                if (httpsProxyUrl != null)
+                {
+                    npm.EnvironmentVariables["HTTPS_PROXY"] = httpsProxyUrl.ToString();
+                }
 
                 if (!npm.IsAvailable)
                 {
