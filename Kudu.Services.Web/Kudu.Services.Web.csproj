@@ -148,6 +148,7 @@
     <Compile Include="App_Start\PathResolver.cs" />
     <Compile Include="Services\BuildPropertyProvider.cs" />
     <Compile Include="Services\ElmahErrorHandler.cs" />
+    <Compile Include="Elmah\KuduErrorLog.cs" />
     <Compile Include="Services\ServerConfiguration.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
