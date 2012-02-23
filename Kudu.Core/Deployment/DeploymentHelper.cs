@@ -100,6 +100,16 @@ namespace Kudu.Core.Deployment
                     continue;
                 }
 
+
+                // if the file exists in the destination then only copy it again if it's
+                // last write time is different than the same file in the source (only if it changed)
+                FileInfoBase targetFile;
+                if (destFilesLookup.TryGetValue(sourceFile.Name, out targetFile) &&
+                    sourceFile.LastWriteTimeUtc == targetFile.LastWriteTimeUtc)
+                {
+                    continue;
+                }
+
                 // Otherwise, copy the file
                 string path = FileSystemHelpers.GetDestinationPath(sourcePath, destinationPath, sourceFile);
 
