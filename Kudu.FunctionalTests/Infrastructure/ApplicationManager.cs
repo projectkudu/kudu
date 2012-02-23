@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
+using System.Net.Http;
 using Kudu.Client.Deployment;
 using Kudu.Client.Editor;
 using Kudu.Core.SourceControl;
@@ -69,16 +71,47 @@ namespace Kudu.FunctionalTests.Infrastructure
         public static void Run(string applicationName, Action<ApplicationManager> action)
         {
             var appManager = CreateApplication(applicationName);
+            var dumpPath = Path.Combine(PathHelper.TestResultsPath, applicationName + ".zip");
             try
             {
                 action(appManager);
+
+                appManager.DownloadDump(dumpPath);
 
                 appManager.Delete();
             }
             catch (Exception ex)
             {
+                appManager.DownloadDump(dumpPath);
+
                 Debug.WriteLine(ex.Message);
                 throw;
+            }
+        }
+
+        private void DownloadDump(string path)
+        {
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(path));
+
+                var client = new HttpClient();
+                var result = client.GetAsync(ServiceUrl + "diag").Result;
+                if (result.IsSuccessStatusCode)
+                {
+                    using (Stream stream = result.Content.ReadAsStreamAsync().Result)
+                    {
+                        using (FileStream fs = File.OpenWrite(path))
+                        {
+                            stream.CopyTo(fs);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Failed to download dump");
+                Debug.WriteLine(ex.GetBaseException().Message);
             }
         }
 
@@ -93,7 +126,7 @@ namespace Kudu.FunctionalTests.Infrastructure
             }
             catch (System.ServiceModel.EndpointNotFoundException)
             {
-                
+
             }
 
             Site site = siteManager.CreateSite(applicationName);
