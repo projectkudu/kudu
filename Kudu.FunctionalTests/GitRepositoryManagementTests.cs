@@ -528,7 +528,7 @@ namespace Kudu.FunctionalTests
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Failed, results[0].Status);
-                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, "failed to fetch from registry:");
+                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, "failed to fetch from registry: MadeUpKuduPackage");
                 });
             }
         }
