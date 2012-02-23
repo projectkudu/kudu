@@ -8,8 +8,8 @@ namespace Kudu.Core.Deployment
     {
         private readonly string _projectPath;
 
-        public WebSiteBuilder(IBuildPropertyProvider propertyProvider, string sourcePath, string solutionPath, string projectPath)
-            : base(propertyProvider, sourcePath, solutionPath)
+        public WebSiteBuilder(IBuildPropertyProvider propertyProvider, string sourcePath, string solutionPath, string projectPath, string tempPath)
+            : base(propertyProvider, sourcePath, solutionPath, tempPath)
         {
             _projectPath = projectPath;
         }

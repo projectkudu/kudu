@@ -24,5 +24,11 @@ namespace Kudu.Core.Infrastructure
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             return Path.Combine(programFiles, "nodejs", "npm.cmd");
         }
+
+        internal static string ResolveMSBuildPath()
+        {
+            string windir = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.Windows);
+            return Path.Combine(windir, @"Microsoft.NET", "Framework", "v4.0.30319", "MSBuild.exe");
+        }
     }
 }

@@ -12,11 +12,13 @@ namespace Kudu.Core.Deployment
     {
         private readonly Executable _msbuildExe;
         private readonly IBuildPropertyProvider _propertyProvider;
+        private readonly string _tempPath;
 
-        public MsBuildSiteBuilder(IBuildPropertyProvider propertyProvider, string workingDirectory)
+        public MsBuildSiteBuilder(IBuildPropertyProvider propertyProvider, string workingDirectory, string tempPath)
         {
             _propertyProvider = propertyProvider;
-            _msbuildExe = new Executable(ResolveMSBuildPath(), workingDirectory);
+            _msbuildExe = new Executable(PathUtility.ResolveMSBuildPath(), workingDirectory);
+            _tempPath = tempPath;
         }
 
         protected string GetPropertyString()
@@ -26,15 +28,12 @@ namespace Kudu.Core.Deployment
 
         public string ExecuteMSBuild(IProfiler profiler, string arguments, params object[] args)
         {
+            // Map the profile folders for msbuild
+            _msbuildExe.MapProfiles(_tempPath);
+
             return _msbuildExe.Execute(profiler, arguments, args).Item1;
         }
 
         public abstract Task Build(DeploymentContext context);
-            
-        private string ResolveMSBuildPath()
-        {
-            string windir = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.Windows);
-            return Path.Combine(windir, @"Microsoft.NET", "Framework", "v4.0.30319", "MSBuild.exe");
-        }
     }
 }

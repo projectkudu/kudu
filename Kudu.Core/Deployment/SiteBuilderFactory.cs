@@ -76,7 +76,8 @@ namespace Kudu.Core.Deployment
             return new WebSiteBuilder(_propertyProvider, 
                                       repositoryRoot, 
                                       solution.Path, 
-                                      project.AbsolutePath);
+                                      project.AbsolutePath,
+                                      _environment.TempPath);
         }
 
         private ISiteBuilder ResolveProject(string repositoryRoot, bool tryWebSiteProject = false, SearchOption searchOption = SearchOption.AllDirectories)
@@ -138,7 +139,8 @@ namespace Kudu.Core.Deployment
                     return new WebSiteBuilder(_propertyProvider, 
                                               repositoryRoot, 
                                               solutionsWithWebsites[0].Solution.Path, 
-                                              targetPath);
+                                              targetPath,
+                                              _environment.TempPath);
                 }
 
             }

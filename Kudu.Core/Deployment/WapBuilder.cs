@@ -17,7 +17,7 @@ namespace Kudu.Core.Deployment
         }
 
         public WapBuilder(IBuildPropertyProvider propertyProvider, string sourcePath, string projectPath, string tempPath, string solutionPath)
-            : base(propertyProvider, sourcePath)
+            : base(propertyProvider, sourcePath, tempPath)
         {
             _projectPath = projectPath;
             _tempPath = tempPath;
