@@ -125,6 +125,10 @@
       <Component Id="Newtonsoft.Json.dll" Guid="{11210292-AF01-42CB-BAA6-6619CCA6E682}">
         <File Id="Newtonsoft.Json.dll" Source="$(var.KuduServiceBinDir)\Newtonsoft.Json.dll" />
       </Component>
+      
+      <Component Id="Ionic.Zip.dll" Guid="{7BB6559B-39A6-4D67-A325-5DD73BECCCC7}">
+        <File Id="Ionic.Zip.dll" Source="$(var.KuduServiceBinDir)\Ionic.Zip.dll" />
+      </Component>
 
       <Component Id="Ninject.dll" Guid="{1337933F-2537-4C76-8FEF-FBADD5816448}">
         <File Id="Ninject.dll" Source="$(var.KuduServiceBinDir)\Ninject.dll" />
@@ -237,6 +241,7 @@
       <ComponentRef Id="Ninject.Extensions.Wcf.dll" />
 
       <ComponentRef Id="SignalR.dll" />
+      <ComponentRef Id="Ionic.Zip.dll" />
 
       <ComponentRef Id="LibGit2Sharp.dll" />
       <ComponentRef Id="Mercurial.Net.dll" />
