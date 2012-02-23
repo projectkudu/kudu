@@ -13,6 +13,7 @@ using Kudu.Core.SourceControl.Hg;
 using Kudu.Services.Authorization;
 using Kudu.Services.Deployment;
 using Kudu.Services.Performance;
+using Kudu.Services.Web.Elmah;
 using Kudu.Services.Web.Services;
 using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 using Ninject;
@@ -32,6 +33,7 @@ namespace Kudu.Services.Web.App_Start
         private static CommandExecutor _liveExecutor;
 
         private const string DeploymentCachePath = "deployments";
+        private const string ProfilerPath = "profiles";
         private const string DeploySettingsPath = "settings.xml";
 
         /// <summary>
@@ -83,7 +85,7 @@ namespace Kudu.Services.Web.App_Start
 
             if (ProfilerServices.Enabled)
             {
-                string profilePath = Path.Combine(environment.ApplicationRootPath, "profiles", "profile.xml");
+                string profilePath = Path.Combine(environment.ApplicationRootPath, ProfilerPath, "profile.xml");
                 System.Func<IProfiler> createProfilerThunk = () => new Profiler(profilePath);
 
                 // First try to use the current request profiler if any, otherwise create a new one
@@ -92,8 +94,6 @@ namespace Kudu.Services.Web.App_Start
                 kernel.Bind<IProfiler>().ToMethod(context => ProfilerServices.CurrentRequestProfiler ?? NullProfiler.Instance);
                 kernel.Bind<IProfilerFactory>().ToConstant(profilerFactory);
                 ProfilerServices.SetProfilerFactory(createProfilerThunk);
-
-                kernel.Bind<ProfilingService>().ToMethod(context => new ProfilingService(profilePath));
             }
             else
             {
@@ -101,6 +101,18 @@ namespace Kudu.Services.Web.App_Start
                 kernel.Bind<IProfiler>().ToConstant(NullProfiler.Instance).InSingletonScope();
                 kernel.Bind<IProfilerFactory>().ToConstant(NullProfilerFactory.Instance).InSingletonScope();
             }
+
+            // Setup the diagnostics service to collect information from the following paths:
+            // 1. The deployments folder
+            // 2. The elmah error log
+            // 3. The profile dump
+            var paths = new[] { 
+                environment.DeploymentCachePath,
+                Path.Combine(environment.ApplicationRootPath, KuduErrorLog.ElmahErrorLogPath),
+                Path.Combine(environment.ApplicationRootPath, ProfilerPath),
+            };
+
+            kernel.Bind<DiagnosticsService>().ToMethod(context => new DiagnosticsService(paths));
 
             // Repository Management
             kernel.Bind<IRepositoryManager>().ToMethod(context => new RepositoryManager(environment.DeploymentRepositoryPath))

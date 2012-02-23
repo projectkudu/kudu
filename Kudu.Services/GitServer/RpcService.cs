@@ -35,6 +35,7 @@ namespace Kudu.Services.GitServer
     using Kudu.Contracts;
     using Kudu.Core.Deployment;
     using Kudu.Core.SourceControl.Git;
+    using Kudu.Services.Infrastructure;
 
     // Handles {project}/git-upload-pack and {project}/git-receive-pack
     [ServiceContract]
@@ -59,7 +60,7 @@ namespace Kudu.Services.GitServer
             {
                 var memoryStream = new MemoryStream();
                 _gitServer.Upload(GetInputStream(request), memoryStream);
-                
+
                 return CreateResponse(memoryStream, "application/x-git-{0}-result".With("upload-pack"));
             }
         }
@@ -118,7 +119,7 @@ namespace Kudu.Services.GitServer
             string flushStepTitle = String.Format("Creating content. L: {0}", stream.Length);
             using (_profiler.Step(flushStepTitle))
             {
-                content = new ByteArrayContent(stream.GetBuffer(), 0, (int)stream.Length);
+                content = stream.AsContent();
             }
 
             content.Headers.ContentType = new MediaTypeHeaderValue(mediaType);

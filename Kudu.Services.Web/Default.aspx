@@ -143,15 +143,6 @@
         </div>
         <% } %>
 
-        <% if (AppSettings.ProfilingEnabled) { %>
-        <div>
-            <h3>Profiler data</h3>
-            <ul>
-                <li><a href="profile/help">Profiler API</a></li>
-            </ul>
-        </div>
-        <% } %>
-
     </div>
    
    <div class="header">Environment</div>
@@ -168,6 +159,10 @@
         <tr>
             <td><strong>Errors</strong></td>
             <td><a href="<%= ResolveClientUrl("~/elmah.axd") %>">View</a></td>
+        </tr>
+        <tr>
+            <td><strong>Diagnostics Dump</strong></td>
+            <td><a href="diag">Download</a></td>
         </tr>
         <tr>
             <td><strong>Runtime Environment</strong></td>

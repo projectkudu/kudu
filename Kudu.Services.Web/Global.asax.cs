@@ -3,18 +3,16 @@ using System.Net.Http;
 using System.ServiceModel;
 using System.ServiceModel.Activation;
 using System.Web.Routing;
-using Kudu.Core.Infrastructure;
 using Kudu.Services.Authorization;
 using Kudu.Services.Commands;
 using Kudu.Services.Deployment;
 using Kudu.Services.Documents;
 using Kudu.Services.GitServer;
-using Kudu.Services.HgServer;
 using Kudu.Services.Performance;
 using Kudu.Services.Settings;
 using Kudu.Services.SourceControl;
 using Kudu.Services.Web;
-using Kudu.Services.Web.Services;
+using Kudu.Services.Web.Elmah;
 using Microsoft.ApplicationServer.Http.Activation;
 using Ninject;
 using Ninject.Extensions.Wcf;
@@ -68,10 +66,7 @@ namespace Kudu.Services
                 MapServiceRoute<ConnectionStringsService>("connectionstrings", factory);
             }
 
-            if (AppSettings.ProfilingEnabled)
-            {
-                MapServiceRoute<ProfilingService>("profile", factory);
-            }
+            MapServiceRoute<DiagnosticsService>("diag", factory);
         }
 
         private static ServiceRoute MapServiceRoute<T>(string url, HttpServiceHostFactory factory)
@@ -100,7 +95,7 @@ namespace Kudu.Services
 
 #if DEBUG
             factory.Configuration.IncludeExceptionDetail = true;
-#endif            
+#endif
             // Set IoC methods
             factory.Configuration.CreateInstance = CreateInstance;
             factory.Configuration.ReleaseInstance = ReleaseInstance;

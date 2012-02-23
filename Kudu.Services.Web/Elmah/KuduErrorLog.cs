@@ -7,6 +7,8 @@ namespace Kudu.Services.Web.Elmah
 {
     public class KuduErrorLog : XmlFileErrorLog
     {
+        internal const string ElmahErrorLogPath = "elmah";
+
         public KuduErrorLog(IDictionary config)
             : base(GetPath())
         {
@@ -15,7 +17,7 @@ namespace Kudu.Services.Web.Elmah
         private static string GetPath()
         {
             string path = HostingEnvironment.MapPath(Constants.MappedLiveSite);
-            return Path.Combine(path, "elmah");
+            return Path.Combine(path, ElmahErrorLogPath);
         }
     }
 }

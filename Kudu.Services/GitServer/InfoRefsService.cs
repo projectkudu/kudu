@@ -31,6 +31,7 @@ namespace Kudu.Services.GitServer
     using System.ServiceModel.Web;
     using Kudu.Contracts;
     using Kudu.Core.SourceControl.Git;
+    using Kudu.Services.Infrastructure;
 
     // Handles /{project}/info/refs
     [ServiceContract]
@@ -89,7 +90,7 @@ namespace Kudu.Services.GitServer
                 string flushStepTitle = String.Format("Creating content. L: {0}", memoryStream.Length);
                 using (_profiler.Step(flushStepTitle))
                 {
-                    content = new ByteArrayContent(memoryStream.GetBuffer(), 0, (int)memoryStream.Length);
+                    content = memoryStream.AsContent();
                 }
 
                 content.Headers.ContentType =

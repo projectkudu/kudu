@@ -33,6 +33,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Ionic.Zip">
+      <HintPath>..\packages\DotNetZip.1.9.1.8\lib\net20\Ionic.Zip.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.ApplicationServer.Http, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\WebApi.0.6.0\lib\40-Full\Microsoft.ApplicationServer.Http.dll</HintPath>
@@ -104,7 +107,8 @@
     <Compile Include="GitServer\RpcService.cs" />
     <Compile Include="HgServer\ProxyService.cs" />
     <Compile Include="Infrastructure\IServerConfiguration.cs" />
-    <Compile Include="Performance\ProfilingService.cs" />
+    <Compile Include="Diagnostics\DiagnosticsService.cs" />
+    <Compile Include="Infrastructure\MemoryStreamExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Settings\ConnectionStringsService.cs" />
     <Compile Include="Settings\AppSettingsService.cs" />
