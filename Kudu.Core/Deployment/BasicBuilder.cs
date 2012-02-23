@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment
 {
@@ -83,32 +84,32 @@ namespace Kudu.Core.Deployment
 
                 // Set the npm proxy settings based on the default settings
                 var proxy = WebRequest.DefaultWebProxy;
-                var httpProxyUrl = proxy.GetProxy(new Uri("http://registry.npmjs.org/"));
-                var httpsProxyUrl = proxy.GetProxy(new Uri("https://registry.npmjs.org/"));
+                var httpUrl = new Uri("http://registry.npmjs.org/");
+                var httpsUrl = new Uri("https://registry.npmjs.org/");
+                var proxyHttpProxyUrl = proxy.GetProxy(httpUrl);
+                var proxyHttpsProxyUrl = proxy.GetProxy(httpsUrl);
 
-                if (httpProxyUrl != null)
+                if (proxyHttpProxyUrl != httpUrl)
                 {
-                    npm.EnvironmentVariables["HTTP_PROXY"] = httpProxyUrl.ToString();
+                    npm.EnvironmentVariables["HTTP_PROXY"] = proxyHttpProxyUrl.ToString();
                 }
 
-                if (httpsProxyUrl != null)
+                if (proxyHttpsProxyUrl != httpsUrl)
                 {
-                    npm.EnvironmentVariables["HTTPS_PROXY"] = httpsProxyUrl.ToString();
+                    npm.EnvironmentVariables["HTTPS_PROXY"] = proxyHttpsProxyUrl.ToString();
                 }
 
-                // Use the temp path as the user profile path in case we don't have the right
-                // permission set. This normally happens under IIS as a restricted user (ApplicationPoolIdentity).
-                string npmUserProfile = Path.Combine(_tempPath, "npm");
-                npm.EnvironmentVariables["USERPROFILE"] = npmUserProfile;
-                npm.EnvironmentVariables["LocalAppData"] = npmUserProfile;
-                npm.EnvironmentVariables["AppData"] = npmUserProfile;
+                // Map the profile folders just in case the host process doesn't have a user profile.
+                // This normally happens under IIS as a restricted user (ApplicationPoolIdentity) with 
+                // LoadUserProfile set to false on the process model.
+                npm.MapProfiles(_tempPath);
 
                 try
                 {
                     // Use the http proxy since https is failing for some reason
                     npm.Execute("config set registry \"http://registry.npmjs.org/\"");
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     // This fails if it's already set
                     Debug.WriteLine(ex.Message);
