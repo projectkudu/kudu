@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using Xunit;
 
 namespace Kudu.FunctionalTests.Infrastructure
@@ -10,6 +11,7 @@ namespace Kudu.FunctionalTests.Infrastructure
         public static void VerifyUrl(string url, params string[] contents)
         {
             var client = new HttpClient();
+            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Kudu-Test", "1.0"));
             var response = client.GetAsync(url).Result;
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             if (contents.Length > 0)
@@ -22,6 +24,7 @@ namespace Kudu.FunctionalTests.Infrastructure
         public static void VerifyUrl(string url, string content = null, HttpStatusCode statusCode = HttpStatusCode.OK)
         {
             var client = new HttpClient();
+            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Kudu-Test", "1.0"));
             var response = client.GetAsync(url).Result;
             Assert.Equal(statusCode, response.StatusCode);
             if (content != null)
