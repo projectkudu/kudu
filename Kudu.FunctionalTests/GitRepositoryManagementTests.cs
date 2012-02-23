@@ -523,12 +523,11 @@ namespace Kudu.FunctionalTests
                     // Act
                     appManager.GitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResults().ToList();
-                    var files = appManager.ProjectSystem.GetProject().Files.ToList();
 
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Failed, results[0].Status);
-                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, "failed to fetch from registry: MadeUpKuduPackage");
+                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, "'MadeUpKuduPackage' is not in the npm registry.");
                 });
             }
         }
