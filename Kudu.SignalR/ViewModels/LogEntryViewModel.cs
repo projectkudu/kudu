@@ -10,7 +10,7 @@ namespace Kudu.SignalR.ViewModels
             LogTime = entry.LogTime;
             Message = entry.Message;
             Type = entry.Type;
-            EntryId = entry.EntryId;
+            EntryId = entry.Id;
         }
 
         public LogEntryType Type { get; set; }

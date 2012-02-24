@@ -128,8 +128,7 @@ namespace Kudu.SignalR.Hubs
             // Push then deploy
 
             // TODO: If there's nothing being pushed then don't bother deploying
-            _configuration.Repository.Push();
-            _configuration.DeploymentManager.Deploy();
+            // _configuration.Repository.Push();
         }
 
         public void ExecuteCommand(string command)

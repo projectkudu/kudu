@@ -1,5 +1,5 @@
-﻿using Kudu.Core.Commands;
-using Kudu.Core.Deployment;
+﻿using Kudu.Client.Deployment;
+using Kudu.Core.Commands;
 using Kudu.Core.Editor;
 using Kudu.Core.SourceControl;
 
@@ -13,7 +13,7 @@ namespace Kudu.SignalR.Infrastructure
 
         IProjectSystem ProjectSystem { get; }
         IProjectSystem DevProjectSystem { get; }
-        IDeploymentManager DeploymentManager { get; }
+        RemoteDeploymentManager DeploymentManager { get; }
         IRepository Repository { get; }
         ICommandExecutor CommandExecutor { get; }
         ICommandExecutor DevCommandExecutor { get; }

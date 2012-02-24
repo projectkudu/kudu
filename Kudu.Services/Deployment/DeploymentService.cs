@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Json;
+using System.IO;
+using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.ServiceModel;
 using System.ServiceModel.Web;
 using Kudu.Contracts;
 using Kudu.Core.Deployment;
+using Kudu.Services.Infrastructure;
+using Microsoft.ApplicationServer.Http.Dispatcher;
 
 namespace Kudu.Services.Deployment
 {
@@ -22,100 +26,120 @@ namespace Kudu.Services.Deployment
             _deploymentManager = deploymentManager;
         }
 
-        [Description("Gets the id of the current active deployment.")]
-        [WebGet(UriTemplate = "id")]
-        public string GetActiveDeploymentId()
-        {
-            using (_profiler.Step("DeploymentService.GetActiveDeploymentId"))
-            {
-                return _deploymentManager.ActiveDeploymentId;
-            }
-        }
-
         [Description("Deletes a deployment.")]
-        [WebInvoke(UriTemplate = "delete")]
-        public void Delete(JsonObject input)
+        [WebInvoke(UriTemplate = "{id}", Method = "DELETE")]
+        public void Delete(string id)
         {
             using (_profiler.Step("DeploymentService.Delete"))
             {
-                _deploymentManager.Delete((string)input["id"]);
+                try
+                {
+                    _deploymentManager.Delete(id);
+                }
+                catch (DirectoryNotFoundException ex)
+                {
+                    var response = new HttpResponseMessage(HttpStatusCode.NotFound);
+                    response.Content = new StringContent(ex.Message);
+                    throw new HttpResponseException(response);
+                }
             }
         }
-
-        [Description("Performs a deployment.")]
-        [WebInvoke(UriTemplate = "")]
-        public void Deploy()
-        {
-            using (_profiler.Step("DeploymentService.Deploy"))
-            {
-                _deploymentManager.Deploy();
-            }
-        }
-
+        
         [Description("Deploys a specific deployment based on its id.")]
-        [WebInvoke(UriTemplate = "redeploy")]
-        public void Redeploy(JsonObject input)
+        [WebInvoke(Method = "PUT", UriTemplate = "{id}")]
+        public void Deploy(string id)
         {
-            using (_profiler.Step("DeploymentService.Build"))
+            using (_profiler.Step("DeploymentService.Deploy(id)"))
             {
-                _deploymentManager.Deploy((string)input["id"]);
+                try
+                {
+                    _deploymentManager.Deploy(id);
+                }
+                catch (FileNotFoundException ex)
+                {
+                    var response = new HttpResponseMessage(HttpStatusCode.NotFound);
+                    response.Content = new StringContent(ex.Message);
+                    throw new HttpResponseException(response);
+                }
             }
         }
 
         [Description("Gets the deployment results of all deployments.")]
-        [WebGet(UriTemplate = "log")]
+        [WebGet(UriTemplate = "")]
         public IEnumerable<DeployResult> GetDeployResults(HttpRequestMessage request)
         {
             using (_profiler.Step("DeploymentService.GetDeployResults"))
             {
                 foreach (var result in _deploymentManager.GetResults())
                 {
-                    result.Url = new Uri(request.RequestUri, "details/" + result.Id);
-                    result.LogUrl = new Uri(request.RequestUri, "log/" + result.Id);
+                    result.Url = UriHelper.MakeRelative(request.RequestUri, result.Id);
+                    result.LogUrl = UriHelper.MakeRelative(request.RequestUri, result.Id + "/log");
                     yield return result;
                 }
             }
         }
 
         [Description("Gets the log of a specific deployment based on its id.")]
-        [WebGet(UriTemplate = "log/{id}")]
+        [WebGet(UriTemplate = "{id}/log")]
         public IEnumerable<LogEntry> GetLogEntry(HttpRequestMessage request, string id)
         {
             using (_profiler.Step("DeploymentService.GetLogEntry"))
             {
-                foreach (var entry in _deploymentManager.GetLogEntries(id))
+                try
                 {
-                    entry.DetailsUrl = new Uri(request.RequestUri, id + "/" + entry.EntryId);
-                    yield return entry;
+                    var deployments = _deploymentManager.GetLogEntries(id).ToList();
+                    foreach (var entry in deployments)
+                    {
+                        entry.DetailsUrl = UriHelper.MakeRelative(request.RequestUri, entry.Id);
+                    }
+
+                    return deployments;
+                }
+                catch (FileNotFoundException ex)
+                {
+                    var response = new HttpResponseMessage(HttpStatusCode.NotFound);
+                    response.Content = new StringContent(ex.Message);
+                    throw new HttpResponseException(response);
                 }
             }
         }
 
         [Description("Gets the specified log entry details.")]
-        [WebGet(UriTemplate = "log/{id}/{entryId}")]
-        public IEnumerable<LogEntry> GetLogEntryDetails(string id, string entryId)
+        [WebGet(UriTemplate = "{id}/log/{logId}")]
+        public IEnumerable<LogEntry> GetLogEntryDetails(string id, string logId)
         {
             using (_profiler.Step("DeploymentService.GetLogEntryDetails"))
             {
-                return _deploymentManager.GetLogEntryDetails(id, entryId);
+                try
+                {
+                    return _deploymentManager.GetLogEntryDetails(id, logId).ToList();
+                }
+                catch (FileNotFoundException ex)
+                {
+                    var response = new HttpResponseMessage(HttpStatusCode.NotFound);
+                    response.Content = new StringContent(ex.Message);
+                    throw new HttpResponseException(response);
+                }
             }
         }
 
         [Description("Gets the deployment result of a specific deployment based on its id.")]
-        [WebGet(UriTemplate = "details/{id}")]
+        [WebGet(UriTemplate = "{id}")]
         public DeployResult GetResult(string id)
         {
             using (_profiler.Step("DeploymentService.GetResult"))
             {
-                return _deploymentManager.GetResult(id);
-            }
-        }
+                DeployResult result = _deploymentManager.GetResult(id);
 
-        [Description("Gets the deployed files for a deployment based on its id.")]
-        [WebGet(UriTemplate = "manifest/{id}")]
-        public IEnumerable<string> GetManifest(string id)
-        {
-            return _deploymentManager.GetManifest(id);
+                if (result == null)
+                {
+                    var response = new HttpResponseMessage(HttpStatusCode.NotFound);
+                    response.Content = new StringContent(String.Format("Deployment '{0}' not found.", id));
+                    throw new HttpResponseException(response);
+                }
+
+                return result;
+            }
         }
     }
 }

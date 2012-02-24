@@ -15,20 +15,9 @@ namespace Kudu.Client.Infrastructure
         public static T GetJson<T>(this HttpClient client, string url)
         {
             var response = client.GetAsync(url);
-            var content = response.Result.EnsureSuccessful().Content.ReadAsStringAsync().Result;
+            var content = response.Result.EnsureSuccessStatusCode().Content.ReadAsStringAsync().Result;
             
             return JsonConvert.DeserializeObject<T>(content);
-        }
-
-        public static HttpResponseMessage EnsureSuccessful(this HttpResponseMessage response)
-        {
-            if (!response.IsSuccessStatusCode)
-            {
-                var content = response.Content.ReadAsStringAsync().Result;
-                throw new InvalidOperationException(content);
-            }
-
-            return response;
         }
 
         public static void SetClientCredentials(this HttpClient client, ICredentials credentials)
@@ -40,45 +29,52 @@ namespace Kudu.Client.Infrastructure
 
         public static Task<T> GetJsonAsync<T>(this HttpClient client, string url)
         {
-            return client.GetAsync(url).Then<HttpResponseMessage, T>(result =>
+            return client.GetAsync(url).Then(result =>
             {
-                return result.Content.ReadAsStringAsync().Then<string, T>(content =>
+                return result.EnsureSuccessStatusCode().Content.ReadAsStringAsync().Then(content =>
                 {
-                    if (!result.IsSuccessStatusCode)
-                    {
-                        throw new InvalidOperationException(content);
-                    }
-
                     return JsonConvert.DeserializeObject<T>(content);
                 });
             });
         }
 
-        public static Task PostAsync(this HttpClient client)
+        public static Task<HttpResponseMessage> PostAsync(this HttpClient client)
         {
             return client.PostAsync(String.Empty, new StringContent(String.Empty)).Then(result =>
             {
-                return result.Content.ReadAsStringAsync().Then(content =>
-                {
-                    if (!result.IsSuccessStatusCode)
-                    {
-                        throw new InvalidOperationException(content);
-                    }
-                });
+                return result.EnsureSuccessStatusCode();
             });
         }
 
-        public static Task PostAsync(this HttpClient client, string url, KeyValuePair<string, string> param)
+        public static Task<HttpResponseMessage> PostAsync(this HttpClient client, string requestUri)
+        {
+            return client.PostAsync(requestUri, new StringContent(String.Empty)).Then(result =>
+            {
+                return result.EnsureSuccessStatusCode();
+            });
+        }
+
+        public static Task<HttpResponseMessage> PutAsync(this HttpClient client, string requestUri)
+        {
+            return client.PutAsync(requestUri, new StringContent(String.Empty)).Then(result =>
+            {
+                return result.EnsureSuccessStatusCode();
+            });
+        }
+
+        public static Task<HttpResponseMessage> DeleteSafeAsync(this HttpClient client, string requestUri)
+        {
+            return client.DeleteAsync(requestUri).Then(result =>
+            {
+                return result.EnsureSuccessStatusCode();
+            });
+        }
+
+        public static Task<HttpResponseMessage> PostAsync(this HttpClient client, string url, KeyValuePair<string, string> param)
         {
             return client.PostAsync(url, HttpClientHelper.CreateJsonContent(param)).Then(result =>
             {
-                return result.Content.ReadAsStringAsync().Then(content =>
-                {
-                    if (!result.IsSuccessStatusCode)
-                    {
-                        throw new InvalidOperationException(content);
-                    }
-                });
+                return result.EnsureSuccessStatusCode();
             });
         }
     }

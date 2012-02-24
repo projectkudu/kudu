@@ -109,6 +109,7 @@
     <Compile Include="Infrastructure\IServerConfiguration.cs" />
     <Compile Include="Diagnostics\DiagnosticsService.cs" />
     <Compile Include="Infrastructure\MemoryStreamExtensions.cs" />
+    <Compile Include="Infrastructure\UriHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Settings\ConnectionStringsService.cs" />
     <Compile Include="Settings\AppSettingsService.cs" />

@@ -135,7 +135,7 @@ namespace Kudu.FunctionalTests.Infrastructure
             {
                 SiteUrl = site.SiteUrl,
                 ServiceUrl = site.ServiceUrl,
-                DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "deploy"),
+                DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "deployments"),
                 ProjectSystem = new RemoteProjectSystem(site.ServiceUrl + "live/files")
             };
         }

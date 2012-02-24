@@ -22,7 +22,7 @@ namespace Kudu.FunctionalTests
                     {
                         // Act
                         appManager.GitDeploy(repositoryName);
-                        var results = appManager.DeploymentManager.GetResults().ToList();
+                        var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                         // Assert
                         Assert.Equal(1, results.Count);

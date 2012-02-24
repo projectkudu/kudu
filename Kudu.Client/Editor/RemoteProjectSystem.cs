@@ -18,7 +18,7 @@ namespace Kudu.Client.Editor
             // REVIEW: this goes through the same client that set the Accept header to application/json, but we receive text/plain
             return _client.GetAsync("?path=" + path)
                           .Result
-                          .EnsureSuccessful()
+                          .EnsureSuccessStatusCode()
                           .Content
                           .ReadAsStringAsync()
                           .Result;
@@ -33,14 +33,14 @@ namespace Kudu.Client.Editor
         {
             _client.PostAsync("save", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("path", path), new KeyValuePair<string, string>("content", content)))
                    .Result
-                   .EnsureSuccessful();
+                   .EnsureSuccessStatusCode();
         }
 
         public void Delete(string path)
         {
             _client.PostAsync("delete", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("path", path)))
                    .Result
-                   .EnsureSuccessful();
+                   .EnsureSuccessStatusCode();
         }
     }
 }

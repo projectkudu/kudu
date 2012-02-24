@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using Kudu.Client.Commands;
 using Kudu.Client.Deployment;
 using Kudu.Client.Editor;
@@ -137,15 +136,7 @@ namespace Kudu.SignalR.Infrastructure
             private set;
         }
 
-        IDeploymentManager ISiteConfiguration.DeploymentManager
-        {
-            get
-            {
-                return DeploymentManager;
-            }
-        }
-
-        private RemoteDeploymentManager DeploymentManager
+        public RemoteDeploymentManager DeploymentManager
         {
             get;
             set;

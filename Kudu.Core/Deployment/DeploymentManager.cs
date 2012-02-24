@@ -37,7 +37,7 @@ namespace Kudu.Core.Deployment
             _profilerFactory = profilerFactory;
         }
 
-        public string ActiveDeploymentId
+        private string ActiveDeploymentId
         {
             get
             {
@@ -64,32 +64,16 @@ namespace Kudu.Core.Deployment
             return GetResult(id, ActiveDeploymentId);
         }
 
-        public IEnumerable<string> GetManifest(string id)
-        {
-            var profiler = _profilerFactory.GetProfiler();
-            using (profiler.Step("DeploymentManager.GetManifest(id)"))
-            {
-                string path = GetDeploymentManifestPath(id);
-
-                if (!_fileSystem.File.Exists(path))
-                {
-                    throw new InvalidOperationException(String.Format("No manifest found for '{0}'.", id));
-                }
-
-                return new DeploymentManifest(path).GetPaths();
-            }
-        }
-
         public IEnumerable<LogEntry> GetLogEntries(string id)
         {
             var profiler = _profilerFactory.GetProfiler();
             using (profiler.Step("DeploymentManager.GetLogEntries(id)"))
             {
-                string path = GetLogPath(id);
+                string path = GetLogPath(id, ensureDirectory: false);
 
                 if (!_fileSystem.File.Exists(path))
                 {
-                    throw new InvalidOperationException(String.Format("No log found for '{0}'.", id));
+                    throw new FileNotFoundException(String.Format("No log found for '{0}'.", id));
                 }
 
                 return new XmlLogger(_fileSystem, path).GetLogEntries().ToList();
@@ -101,11 +85,11 @@ namespace Kudu.Core.Deployment
             var profiler = _profilerFactory.GetProfiler();
             using (profiler.Step("DeploymentManager.GetLogEntryDetails(id, entryId)"))
             {
-                string path = GetLogPath(id);
+                string path = GetLogPath(id, ensureDirectory: false);
 
                 if (!_fileSystem.File.Exists(path))
                 {
-                    throw new InvalidOperationException(String.Format("No log found for '{0}'.", id));
+                    throw new FileNotFoundException(String.Format("No log found for '{0}'.", id));
                 }
 
                 return new XmlLogger(_fileSystem, path).GetLogEntryDetails(entryId).ToList();
@@ -117,7 +101,12 @@ namespace Kudu.Core.Deployment
             var profiler = _profilerFactory.GetProfiler();
             using (profiler.Step("DeploymentManager.Delete(id)"))
             {
-                string path = GetRoot(id);
+                string path = GetRoot(id, ensureDirectory: false);
+
+                if (!_fileSystem.Directory.Exists(path))
+                {
+                    throw new DirectoryNotFoundException(String.Format("Unable to delete '{0}'. No deployment found.", id));
+                }
 
                 _fileSystem.Directory.Delete(path, true);
             }
@@ -133,12 +122,12 @@ namespace Kudu.Core.Deployment
                 deployStep = profiler.Step("DeploymentManager.Deploy(id)");
 
                 // Check to see if we have a deployment with this id already
-                string trackingFilePath = GetTrackingFilePath(id);
+                string trackingFilePath = GetTrackingFilePath(id, ensureDirectory: false);
 
                 if (!_fileSystem.File.Exists(trackingFilePath))
                 {
                     // If we don't then throw
-                    throw new InvalidOperationException(String.Format("Unable to deploy '{0}'. No deployments found.", id));
+                    throw new FileNotFoundException(String.Format("Unable to deploy '{0}'. No deployment found.", id));
                 }
 
                 using (profiler.Step("Updating to specific changeset"))
@@ -156,6 +145,8 @@ namespace Kudu.Core.Deployment
                 {
                     deployStep.Dispose();
                 }
+
+                throw;
             }
 
         }
@@ -512,9 +503,9 @@ namespace Kudu.Core.Deployment
             return new XmlLogger(_fileSystem, GetLogPath(id));
         }
 
-        private string GetTrackingFilePath(string id)
+        private string GetTrackingFilePath(string id, bool ensureDirectory = true)
         {
-            return Path.Combine(GetRoot(id), "status.xml");
+            return Path.Combine(GetRoot(id, ensureDirectory), "status.xml");
         }
 
         private IDeploymentManifestWriter GetDeploymentManifestWriter(string id)
@@ -539,15 +530,21 @@ namespace Kudu.Core.Deployment
             return Path.Combine(GetRoot(id), "manifest");
         }
 
-        private string GetLogPath(string id)
+        private string GetLogPath(string id, bool ensureDirectory = true)
         {
-            return Path.Combine(GetRoot(id), "log.xml");
+            return Path.Combine(GetRoot(id, ensureDirectory), "log.xml");
         }
 
-        private string GetRoot(string id)
+        private string GetRoot(string id, bool ensureDirectory = true)
         {
             string path = Path.Combine(_environment.DeploymentCachePath, id);
-            return FileSystemHelpers.EnsureDirectory(_fileSystem, path);
+
+            if (ensureDirectory)
+            {
+                return FileSystemHelpers.EnsureDirectory(_fileSystem, path);
+            }
+
+            return path;
         }
 
         private string GetActiveDeploymentFilePath()

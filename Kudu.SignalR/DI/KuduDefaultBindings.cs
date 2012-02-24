@@ -13,7 +13,7 @@ namespace Kudu.SignalR
         {
             DependencyResolver.Register(typeof(ISiteConfiguration), GetSiteConfiguration);
             DependencyResolver.Register(typeof(IRepository), GetRepository);
-            DependencyResolver.Register(typeof(IDeploymentManager), GetDeploymentManager);            
+            // DependencyResolver.Register(typeof(IDeploymentManager), GetDeploymentManager);            
         }
 
         private static ISiteConfiguration GetSiteConfiguration()
@@ -29,11 +29,11 @@ namespace Kudu.SignalR
             return siteConfiguration.Repository;
         }
 
-        private static IDeploymentManager GetDeploymentManager()
-        {
-            var siteConfiguration = DependencyResolver.Resolve<ISiteConfiguration>();
-            return siteConfiguration.DeploymentManager;
-        }
+        //private static IDeploymentManager GetDeploymentManager()
+        //{
+        //    var siteConfiguration = DependencyResolver.Resolve<ISiteConfiguration>();
+        //    return siteConfiguration.DeploymentManager;
+        //}
 
     }
 }

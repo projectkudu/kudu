@@ -29,7 +29,7 @@ namespace Kudu.Services
             var configuration = KernelContainer.Kernel.Get<IServerConfiguration>();
             var factory = GetFactory();
 
-            routes.MapConnection<DeploymentStatusHandler>("DeploymentStatus", "deploy/status/{*operation}");
+            routes.MapConnection<DeploymentStatusHandler>("DeploymentStatus", "deployments/status/{*operation}");
             routes.MapConnection<LiveCommandStatusHandler>("LiveCommandStatus", "live/command/status/{*operation}");
             routes.MapConnection<DevCommandStatusHandler>("DevCommandStatus", "dev/command/status/{*operation}");
 
@@ -48,7 +48,7 @@ namespace Kudu.Services
             MapServiceRoute<CloneService>("dev/scm", factory);
 
             // Deployment
-            MapServiceRoute<DeploymentService>("deploy", factory);
+            MapServiceRoute<DeploymentService>("deployments", factory);
 
             // Files            
             MapServiceRoute<FilesService>("dev/files", factory);

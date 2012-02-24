@@ -82,6 +82,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DeploymentManagerTests.cs" />
     <Compile Include="GitRepositoryManagementTests.cs" />
     <Compile Include="GitStabilityTests.cs" />
     <Compile Include="Infrastructure\GitTestConfig.cs" />

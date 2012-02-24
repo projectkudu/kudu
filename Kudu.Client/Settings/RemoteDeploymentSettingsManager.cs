@@ -45,14 +45,14 @@ namespace Kudu.Client.Deployment
         {
             _client.PostAsync(section + "/set", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("key", key), new KeyValuePair<string, string>("value", value)))
                    .Result
-                   .EnsureSuccessful();
+                   .EnsureSuccessStatusCode();
         }
 
         private void DeleteValue(string section, string key)
         {
             _client.PostAsync(section + "/remove", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("key", key)))
                    .Result
-                   .EnsureSuccessful();
+                   .EnsureSuccessStatusCode();
         }
     }
 }

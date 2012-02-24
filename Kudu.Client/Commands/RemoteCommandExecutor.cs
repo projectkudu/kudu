@@ -34,14 +34,14 @@ namespace Kudu.Client.Commands
         {
             _client.PostAsync("run", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("command", command)))
                    .Result
-                   .EnsureSuccessful();
+                   .EnsureSuccessStatusCode();
         }
 
         public void CancelCommand()
         {
             _client.PostAsync("cancel", new StringContent(String.Empty))
                    .Result
-                   .EnsureSuccessful();
+                   .EnsureSuccessStatusCode();
         }
 
         public void Start()

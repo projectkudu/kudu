@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,7 +11,7 @@ using SignalR.Client;
 
 namespace Kudu.Client.Deployment
 {
-    public class RemoteDeploymentManager : KuduRemoteClientBase, IDeploymentManager, IEventProvider
+    public class RemoteDeploymentManager : KuduRemoteClientBase, IEventProvider
     {
         private Connection _connection;
 
@@ -31,110 +30,34 @@ namespace Kudu.Client.Deployment
             }
         }
 
-        public string ActiveDeploymentId
-        {
-            get
-            {
-                return _client.GetJson<string>("id");
-            }
-        }
-
-        public IEnumerable<DeployResult> GetResults()
-        {
-            return _client.GetJson<IEnumerable<DeployResult>>("log");
-        }
-
         public Task<IEnumerable<DeployResult>> GetResultsAsync()
         {
-            return _client.GetJsonAsync<IEnumerable<DeployResult>>("log");
+            return _client.GetJsonAsync<IEnumerable<DeployResult>>(String.Empty);
         }
-
-        public DeployResult GetResult(string id)
-        {
-            return _client.GetJson<DeployResult>("details?id=" + id);
-        }
-
+        
         public Task<DeployResult> GetResultAsync(string id)
         {
-            return _client.GetJsonAsync<DeployResult>("details?id=" + id);
+            return _client.GetJsonAsync<DeployResult>(id);
         }
-
-        public IEnumerable<string> GetManifest(string id)
-        {
-            return _client.GetJson<IEnumerable<string>>("manifest?id=" + id);
-        }
-
-        public Task<IEnumerable<string>> GetManifestAsync(string id)
-        {
-            return _client.GetJsonAsync<IEnumerable<string>>("manifest?id=" + id);
-        }
-
-        public IEnumerable<LogEntry> GetLogEntries(string id)
-        {
-            return _client.GetJson<IEnumerable<LogEntry>>("log?id=" + id);
-        }
-
+        
         public Task<IEnumerable<LogEntry>> GetLogEntriesAsync(string id)
         {
-            return _client.GetJsonAsync<IEnumerable<LogEntry>>("log?id=" + id);
+            return _client.GetJsonAsync<IEnumerable<LogEntry>>(id + "/log");
         }
-
-        public IEnumerable<LogEntry> GetLogEntryDetails(string id, string entryId)
+   
+        public Task<IEnumerable<LogEntry>> GetLogEntryDetailsAsync(string id, string logId)
         {
-            return _client.GetJson<IEnumerable<LogEntry>>("logDetails?id=" + id + "&entryId=" + entryId);
+            return _client.GetJsonAsync<IEnumerable<LogEntry>>(id + "/log/" + logId);
         }
-
-        public Task<IEnumerable<LogEntry>> GetLogEntryDetailsAsync(string id, string entryId)
-        {
-            return _client.GetJsonAsync<IEnumerable<LogEntry>>("logDetails?id=" + id + "&entryId=" + entryId);
-        }
-
-        public void Delete(string id)
-        {
-            _client.PostAsync("delete", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("id", id)))
-                   .Result
-                   .EnsureSuccessful();
-        }
-
+       
         public Task DeleteAsync(string id)
         {
-            return _client.PostAsync("delete", new KeyValuePair<string, string>("id", id));
-        }
-
-        public void Deploy(string id)
-        {
-            _client.PostAsync("restore", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("id", id)))
-                   .Result
-                   .EnsureSuccessful();
+            return _client.DeleteSafeAsync(id);
         }
 
         public Task DeployAsync(string id)
         {
-            return _client.PostAsync("restore", new KeyValuePair<string, string>("id", id));
-        }
-
-        public void Deploy()
-        {
-            _client.PostAsync(String.Empty, new StringContent(String.Empty))
-                   .Result
-                   .EnsureSuccessful();
-        }
-
-        public Task DeployAsync()
-        {
-            return _client.PostAsync();
-        }
-
-        public void Build(string id)
-        {
-            _client.PostAsync("build", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("id", id)))
-                   .Result
-                   .EnsureSuccessful();
-        }
-
-        public Task BuildAsync(string id)
-        {
-            return _client.PostAsync("build", new KeyValuePair<string, string>("id", id));
+            return _client.PutAsync(id);
         }
 
         public void Start()

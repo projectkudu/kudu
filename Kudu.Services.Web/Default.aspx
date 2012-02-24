@@ -130,7 +130,7 @@
         <div>
             <h3>Deployment</h3>
             <ul>
-                <li><a href="deploy/help">Deployment API</a></li>
+                <li><a href="deployments/help">Deployment API</a></li>
             </ul>
         </div>
         <% if (AppSettings.SettingsEnabled) { %>

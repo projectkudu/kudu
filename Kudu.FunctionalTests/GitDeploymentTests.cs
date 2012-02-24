@@ -31,7 +31,7 @@ namespace Kudu.FunctionalTests
                     {
                         // Act
                         appManager.GitDeploy(repo.PhysicalPath, defaultBranchName);
-                        var results = appManager.DeploymentManager.GetResults().ToList();
+                        var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                         // Assert
                         Assert.Equal(1, results.Count);

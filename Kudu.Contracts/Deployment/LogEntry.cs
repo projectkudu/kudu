@@ -10,7 +10,7 @@ namespace Kudu.Core.Deployment
         public DateTime LogTime { get; set; }
 
         [DataMember(Name = "id")]
-        public string EntryId { get; set; }
+        public string Id { get; set; }
 
         [DataMember(Name = "message")]
         public string Message { get; set; }
@@ -25,10 +25,10 @@ namespace Kudu.Core.Deployment
         {
         }
 
-        public LogEntry(DateTime logTime, string entryId, string message, LogEntryType type)
+        public LogEntry(DateTime logTime, string id, string message, LogEntryType type)
         {
             LogTime = logTime;
-            EntryId = entryId;
+            Id = id;
             Message = message;
             Type = type;
         }
