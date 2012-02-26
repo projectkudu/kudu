@@ -22,6 +22,11 @@ namespace Kudu.Client.Infrastructure
 
         public static void SetClientCredentials(this HttpClient client, ICredentials credentials)
         {
+            if (credentials == null)
+            {
+                return;
+            }
+
             NetworkCredential networkCred = credentials.GetCredential(client.BaseAddress, "Basic");
             string credParameter = Convert.ToBase64String(Encoding.ASCII.GetBytes(networkCred.UserName + ":" + networkCred.Password));
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credParameter);
