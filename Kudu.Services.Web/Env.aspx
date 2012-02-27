@@ -9,7 +9,7 @@
         body
         {
             color: #646465;
-            font-family: Helvetica, sans-serif;
+            font-family: 'Segoe UI', "Helvetica Neue", Helvetica, Arial, sans-serif;
             font-size: 12px;
             margin-left: 2%;
         }
