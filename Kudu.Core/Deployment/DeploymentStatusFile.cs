@@ -51,7 +51,7 @@ namespace Kudu.Core.Deployment
             string deploymentReceivedTimeValue = GetOptionalElementValue(document.Root, "deploymentReceivedTime");
             string deploymentEndTimeValue = GetOptionalElementValue(document.Root, "deploymentEndTime");
             string deploymentStartTimeValue = GetOptionalElementValue(document.Root, "deploymentStartTime");
-            string lastSuccessTimeValue = GetOptionalElementValue(document.Root, "lastSuccessTime");
+            string lastSuccessEndTimeValue = GetOptionalElementValue(document.Root, "lastSuccessEndTime");
 
             bool deploymentComplete = false;
             string deploymentCompleteValue = GetOptionalElementValue(document.Root, "deploymentComplete");
@@ -75,7 +75,7 @@ namespace Kudu.Core.Deployment
                 DeploymentStartTime = deploymentStartTime,
                 DeploymentReceivedTime = String.IsNullOrEmpty(deploymentReceivedTimeValue) ? deploymentStartTime : DateTime.Parse(deploymentReceivedTimeValue),
                 DeploymentEndTime = ParseDateTime(deploymentEndTimeValue),
-                LastSuccessTime = ParseDateTime(lastSuccessTimeValue),
+                LastSuccessEndTime = ParseDateTime(lastSuccessEndTimeValue),
                 Complete = deploymentComplete
             };
         }
@@ -90,7 +90,7 @@ namespace Kudu.Core.Deployment
         public DateTime DeploymentReceivedTime { get; set; }
         public DateTime DeploymentStartTime { get; set; }
         public DateTime? DeploymentEndTime { get; set; }
-        public DateTime? LastSuccessTime { get; set; }
+        public DateTime? LastSuccessEndTime { get; set; }
         public bool Complete { get; set; }
 
         public void Save(IFileSystem fileSystem)
@@ -108,7 +108,7 @@ namespace Kudu.Core.Deployment
                     new XElement("status", Status),
                     new XElement("statusText", StatusText),
                     new XElement("percentage", Percentage),
-                    new XElement("lastSuccessTime", LastSuccessTime),
+                    new XElement("lastSuccessEndTime", LastSuccessEndTime),
                     new XElement("deploymentReceivedTime", DeploymentReceivedTime),
                     new XElement("deploymentStartTime", DeploymentStartTime),
                     new XElement("deploymentEndTime", DeploymentEndTime),

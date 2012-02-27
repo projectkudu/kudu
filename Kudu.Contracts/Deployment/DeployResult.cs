@@ -35,8 +35,8 @@ namespace Kudu.Core.Deployment
         [DataMember(Name = "end_time")]
         public DateTime? DeployEndTime { get; set; }
 
-        [DataMember(Name = "last_success_time")]
-        public DateTime? LastSuccessTime { get; set; }
+        [DataMember(Name = "last_success_end_time")]
+        public DateTime? LastSuccessEndTime { get; set; }
 
         [DataMember(Name = "percentage")]
         public int Percentage { get; set; }
