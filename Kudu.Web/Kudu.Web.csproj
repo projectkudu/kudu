@@ -278,6 +278,9 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Infrastructure\SlugGenerator.cs" />
+    <Compile Include="Infrastructure\TaskAsyncActionDescriptor.cs" />
+    <Compile Include="Infrastructure\TaskAsyncController.cs" />
+    <Compile Include="Infrastructure\TaskAsyncControllerDescriptor.cs" />
     <Compile Include="Models\Application.cs" />
     <Compile Include="Models\ApplicationViewModel.cs" />
     <Compile Include="Models\DeveloperSiteState.cs" />
@@ -316,7 +319,7 @@
     <Content Include="Views\Application\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Views\Application\Details.cshtml" />
+    <Content Include="Views\Application\Settings.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\Application\Create.cshtml" />
@@ -331,10 +334,10 @@
     <Content Include="Views\Settings\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Views\Application\Deployments.cshtml" />
+    <Content Include="Views\Application\Editor.cshtml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Views\Application\Editor.cshtml" />
+    <Content Include="Views\Application\Deployments.cshtml" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" />
@@ -345,7 +348,7 @@
         <WebProjectProperties>
           <UseIIS>False</UseIIS>
           <AutoAssignPort>True</AutoAssignPort>
-          <DevelopmentServerPort>50195</DevelopmentServerPort>
+          <DevelopmentServerPort>32654</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>
           <IISUrl>http://localhost:23327/</IISUrl>
           <NTLMAuthentication>False</NTLMAuthentication>

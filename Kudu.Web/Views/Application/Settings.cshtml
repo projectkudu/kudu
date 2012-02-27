@@ -7,9 +7,6 @@
 @{
     ViewBag.Title = Model.Name;
 }
-<div class="page-header">
-  <h1>@Model.Name</h1>
-</div>
 
 <form class="well form-inline">
   <label class="control-label"><strong>GIT URL</strong></label>
@@ -32,16 +29,6 @@
         </div>
     </div>
 </div>
-
-@section scripts {
-    <script type="text/javascript">
-        $(function () {
-            $('#clone-url').click(function () {
-                this.select();
-            });
-        });
-    </script>
-}
 
 @using (Html.BeginForm("Delete", "Application", new { slug = Model.Name.GenerateSlug() }))
 { 

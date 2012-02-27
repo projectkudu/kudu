@@ -1,17 +1,20 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web.Mvc;
+using Kudu.Client.Deployment;
 using Kudu.Client.Infrastructure;
 using Kudu.Client.SourceControl;
 using Kudu.Core.SourceControl;
 using Kudu.SiteManagement;
 using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
+using Mvc.Async;
 
 namespace Kudu.Web.Controllers
 {
-    public class ApplicationController : Controller
+    public class ApplicationController : TaskAsyncController
     {
         private KuduContext db = new KuduContext();
         private readonly ISiteManager _siteManager;
@@ -31,17 +34,18 @@ namespace Kudu.Web.Controllers
             var applications = db.Applications.OrderBy(a => a.Created);
             return View(applications.ToList().Select(a => new ApplicationViewModel(a)));
         }
-
-        //
-        // GET: /Application/Details/5
-
-        public ActionResult Details(string slug)
+ 
+        public ActionResult Settings(string slug)
         {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             if (application != null)
             {
                 var appViewModel = new ApplicationViewModel(application);
                 appViewModel.RepositoryType = GetRepositoryManager(application).GetRepositoryType();
+
+                ViewBag.slug = slug;
+                ViewBag.tab = "settings";
+                ViewBag.appName = appViewModel.Name;
 
                 return View(appViewModel);
             }
@@ -53,7 +57,6 @@ namespace Kudu.Web.Controllers
 
         public ActionResult Create()
         {
-            PopulateRepositoryTypes();
             return View();
         }
 
@@ -97,7 +100,7 @@ namespace Kudu.Web.Controllers
                     db.Applications.Add(app);
                     db.SaveChanges();
 
-                    return RedirectToAction("Details", new { slug = slug });
+                    return RedirectToAction("Settings", new { slug = slug });
                 }
                 catch (Exception ex)
                 {
@@ -110,38 +113,32 @@ namespace Kudu.Web.Controllers
                 }
             }
 
-            PopulateRepositoryTypes();
             return View(appViewModel);
         }
-
-        [ActionName("scm")]
-        public ActionResult ViewSourceControl(string slug)
-        {
-            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
-            if (application != null)
-            {
-                var appViewModel = new ApplicationViewModel(application);
-                appViewModel.RepositoryType = GetRepositoryManager(application).GetRepositoryType();
-
-                return View(appViewModel);
-            }
-
-            return HttpNotFound();
-        }
-
+        
         [ActionName("deployments")]
-        public ActionResult ViewDeployments(string slug)
+        public Task<ActionResult> ViewDeployments(string slug)
         {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             if (application != null)
             {
-                var appViewModel = new ApplicationViewModel(application);
-                appViewModel.RepositoryType = GetRepositoryManager(application).GetRepositoryType();
+                var deploymentManager = new RemoteDeploymentManager(application.ServiceUrl + "/deployments");
 
-                return View(appViewModel);
+                return deploymentManager.GetResultsAsync().ContinueWith(task =>
+                {                    
+                    var appViewModel = new ApplicationViewModel(application);
+                    appViewModel.RepositoryType = GetRepositoryManager(application).GetRepositoryType();
+                    appViewModel.Deployments = task.Result.ToList();
+
+                    ViewBag.slug = slug;
+                    ViewBag.tab = "deployments";
+                    ViewBag.appName = appViewModel.Name;
+
+                    return (ActionResult)View(appViewModel);
+                });
             }
 
-            return HttpNotFound();
+            return Task.Factory.StartNew(() => (ActionResult)HttpNotFound());
         }
 
         [ActionName("editor")]
@@ -277,11 +274,6 @@ namespace Kudu.Web.Controllers
         {
             db.Dispose();
             base.Dispose(disposing);
-        }
-
-        private void PopulateRepositoryTypes()
-        {
-            ViewBag.RepositoryType = new[] { new SelectListItem { Text = "None" } };
         }
 
         private IRepositoryManager GetRepositoryManager(Application application)

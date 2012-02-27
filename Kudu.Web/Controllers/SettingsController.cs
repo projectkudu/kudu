@@ -10,6 +10,13 @@ namespace Kudu.Web.Controllers
     {
         private readonly KuduContext db = new KuduContext();
 
+        protected override void OnActionExecuting(ActionExecutingContext filterContext)
+        {
+            ViewBag.tab = "configuration";
+
+            base.OnActionExecuting(filterContext);
+        }
+
         public ActionResult Index(string slug)
         {
             SettingsViewModel model = GetSettingsViewModel(slug);
@@ -88,6 +95,7 @@ namespace Kudu.Web.Controllers
             }
 
             SettingsViewModel model = GetSettingsViewModel(slug);
+            ViewBag.appName = model.Application.Name;
             ViewBag.Name = name;
             ViewBag.ConnectionString = connectionString;
 
@@ -134,18 +142,24 @@ namespace Kudu.Web.Controllers
             var settingsManager = new RemoteDeploymentSettingsManager(application.ServiceUrl);
 
             ViewBag.slug = application.Slug;
+            ViewBag.appName = application.Name;
 
             try
             {
                 return new SettingsViewModel
-                {
+                {                    
                     AppSettings = settingsManager.GetAppSettings().ToList(),
-                    ConnectionStrings = settingsManager.GetConnectionStrings().ToList()
+                    ConnectionStrings = settingsManager.GetConnectionStrings().ToList(),
+                    Application = new ApplicationViewModel(application)
                 };
             }
-            catch (InvalidOperationException)
+            catch
             {
-                throw new InvalidOperationException("Settings API not available");
+                return new SettingsViewModel
+                {
+                    Application = new ApplicationViewModel(application),
+                    Enabled = false
+                };
             }
         }
     }

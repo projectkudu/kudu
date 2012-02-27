@@ -7,5 +7,7 @@ namespace Kudu.Web.Models
     {
         public IEnumerable<DeploymentSetting> AppSettings { get; set; }
         public IEnumerable<ConnectionStringSetting> ConnectionStrings { get; set; }
+        public ApplicationViewModel Application { get; set; }
+        public bool Enabled { get; set; }
     }
 }

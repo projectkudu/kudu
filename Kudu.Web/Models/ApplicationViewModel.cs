@@ -1,8 +1,8 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
 using Kudu.SignalR.Models;
-using Kudu.Web.Infrastructure;
 
 namespace Kudu.Web.Models
 {
@@ -30,6 +30,8 @@ namespace Kudu.Web.Models
         public RepositoryType RepositoryType { get; set; }
         public string GitUrl { get; set; }
         public string HgUrl { get; set; }
+        public IList<DeployResult> Deployments { get; set; }
+
         public string CloneUrl
         {
             get

@@ -4,23 +4,29 @@
     ViewBag.Title = "Index";
 }
 
-<link href="@Url.Content("~/Styles/Settings.css")" rel="stylesheet" type="text/css" />
+@if (!Model.Enabled) 
+{
+    <div class="alert alert-error">Settings isn't enabled on the kudu service.</div>
+    return;
+}
 
-<h3>Application Settings</h3>
 
-@if (Model.AppSettings.Any()) {
+@if (Model.AppSettings.Any())
+{
 <table id="app-settings">
     <tr>
         <th>Key</th>
         <th>Value</th>
         <th></th>
     </tr>
-    @foreach (var setting in Model.AppSettings) {
+    @foreach (var setting in Model.AppSettings)
+    {
         <tr>
             <td>@setting.Key</td>
             <td>@setting.Value</td>
             <td class="actions">
-                @using (Html.BeginForm("delete-app-setting", "settings", new { ViewBag.slug })) {
+                @using (Html.BeginForm("delete-app-setting", "settings", new { ViewBag.slug }))
+                {
                     @Html.Hidden("Key", setting.Key)
                     <input type="submit" value="Delete" />
                 }
@@ -30,7 +36,8 @@
     
 </table>
 }
-else { 
+else
+{ 
     <p>
         No app settings configured
     </p>
@@ -38,19 +45,22 @@ else {
 
 <h3>Connection Strings</h3>
 
-@if (Model.ConnectionStrings.Any()) {
+@if (Model.ConnectionStrings.Any())
+{
 <table id="connection-strings">
     <tr>
         <th>Name</th>
         <th>Connection String</th>
         <th></th>
     </tr>
-    @foreach (var setting in Model.ConnectionStrings) {
+    @foreach (var setting in Model.ConnectionStrings)
+    {
         <tr>
             <td>@setting.Name</td>
             <td>@setting.ConnectionString</td>
             <td class="actions">
-                @using (Html.BeginForm("delete-connection-string", "settings", new { ViewBag.slug })) {
+                @using (Html.BeginForm("delete-connection-string", "settings", new { ViewBag.slug }))
+                {
                     @Html.Hidden("Name", setting.Name)
                     <input type="submit" value="Delete" />
                 }
@@ -60,14 +70,16 @@ else {
     
 </table>
 }
-else { 
+else
+{ 
     <p>
         No connection strings configured
     </p>
 }
 
 <h3>New Application Setting</h3>
-@using (Html.BeginForm("new-app-setting", "settings", new { ViewBag.slug })) {
+@using (Html.BeginForm("new-app-setting", "settings", new { ViewBag.slug }))
+{
     <fieldset>        
         <div class="editor-label">
             @Html.Label("Key")
@@ -91,7 +103,8 @@ else {
 }
 
 <h3>New Connection String</h3>
-@using (Html.BeginForm("new-connection-string", "settings", new { ViewBag.slug })) {
+@using (Html.BeginForm("new-connection-string", "settings", new { ViewBag.slug }))
+{
     <fieldset>        
         <div class="editor-label">
             @Html.Label("Name")

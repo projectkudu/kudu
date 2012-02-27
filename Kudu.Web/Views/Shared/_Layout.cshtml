@@ -49,6 +49,25 @@
     </div>
 
     <div class="container">
+
+    @if (!String.IsNullOrEmpty(ViewBag.slug))
+    { 
+    <div class="subnav subnav-fixed">
+    <ul class="nav nav-pills">
+          <li @if(ViewBag.tab == "settings") {<text>class="active"</text> }>@Html.ActionLink("Settings", "settings", "application", new { slug = ViewBag.slug }, null)</li>
+          <li @if(ViewBag.tab == "deployments") {<text>class="active"</text> }>@Html.ActionLink("Deployments", "deployments", "application", new { slug = ViewBag.slug }, null)</li>
+          <li @if(ViewBag.tab == "configuration") {<text>class="active"</text> }>@Html.ActionLink("Configuration", "index", "settings", new { slug = ViewBag.slug }, null)</li>
+          <li>@Html.ActionLink("Develop", "editor", "application", new { slug = ViewBag.slug }, new { target = "_blank" })</li>          
+        </ul>
+    </div>
+        
+        
+<div class="page-header">
+  <h1>@ViewBag.appName</h1>
+</div>
+
+    }
+
       @RenderBody()
 
     </div> <!-- /container -->
@@ -58,6 +77,13 @@
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="@Url.Content("~/Scripts/jquery-1.7.min.js")"></script>
     <script src="@Url.Content("~/Scripts/bootstrap.min.js")"></script>
+    <script type="text/javascript">
+        $(function () {
+            $('#clone-url').click(function () {
+                this.select();
+            });
+        });
+    </script>
     @RenderSection("scripts", required: false)
   </body>
 </html>
