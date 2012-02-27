@@ -1,13 +1,13 @@
-﻿using System.IO;
-using System.Web;
+﻿using System.Configuration;
+using System.IO;
 
 namespace Kudu.Web.Infrastructure
 {
     internal static class PathHelper
     {
         // Hard code the path to the services site (makes it easier to debug)
-        internal static readonly string ServiceSitePath = Path.GetFullPath(@"..\..\..\Kudu.Services.Web");
-        internal static readonly string SitesPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "apps"));
+        internal static readonly string ServiceSitePath = ConfigurationManager.AppSettings["serviceSitePath"] ?? Path.GetFullPath(@"..\..\..\Kudu.Services.Web");
+        internal static readonly string SitesPath = ConfigurationManager.AppSettings["sitesPath"] ?? Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "apps"));
 
         // Test paths
         internal static readonly string TestsRootPath = Path.Combine(Directory.GetCurrentDirectory(), "Tests");
