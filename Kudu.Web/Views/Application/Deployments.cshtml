@@ -31,6 +31,12 @@
                 Author
             </th>
             <th>
+                Start Time
+            </th>
+            <th>
+                End Time
+            </th>
+            <th>
                 Status
             </th>
             <th>
@@ -46,13 +52,31 @@
             <td>@d.Id</td>
             <td>@d.Message</td>
             <td>@d.Author</td>
-            <td>@d.Status</td>
+            <td>@d.DeployStartTime</td>
+            <td>@d.DeployEndTime</td>
+            <td>
+                @if (d.Complete)
+                {
+                    if (d.Status == Kudu.Core.Deployment.DeployStatus.Failed) 
+                    {
+                         <span class="label label-important">Failed</span>
+                    }
+                    else
+                    {
+                        <span class="label label-success">Success</span>
+                    }
+                }
+                else
+                {
+                    <span class="label">@d.Status</span>
+                }
+            </td>
             <td>
                 @if (d.Current)
                 {
                     <div class="icon-ok"></div>
                 }
-                else if(d.Complete)
+                else if (d.Complete)
                 {
                     <a class="btn btn-primary" href="@Url.Action("deploy", new { slug = ViewBag.slug, id = d.Id })"><i class="icon-repeat icon-white"></i> Deploy</a>
                 }
