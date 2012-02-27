@@ -8,6 +8,8 @@
         <ArtifactsPath>$(ProjectRoot)\artifacts\$(Configuration)</ArtifactsPath>
         <ServiceSiteTargetPath Condition="$(ServiceSiteTargetPath) == ''">$(ArtifactsPath)\KuduService</ServiceSiteTargetPath>
         <ServiceSiteProject>$(ProjectRoot)\Kudu.Services.Web\Kudu.Services.Web.csproj</ServiceSiteProject>
+        <ClientSiteTargetPath Condition="$(ClientSiteTargetPath) == ''">$(ArtifactsPath)\KuduWeb</ClientSiteTargetPath>
+        <ClientSiteProject>$(ProjectRoot)\Kudu.Web\Kudu.Web.csproj</ClientSiteProject>
     </PropertyGroup>
     
     <ItemGroup>
@@ -17,13 +19,13 @@
     <UsingTask AssemblyFile="$(XunitPath)xunit.runner.msbuild.dll"
                TaskName="Xunit.Runner.MSBuild.xunit" />
     
-    <Target Name="RunAll" DependsOnTargets="Build; RunTests; BuildKuduServiceSite" />
+    <Target Name="RunAll" DependsOnTargets="Build; RunTests; BuildSites" />
     
     <Target Name="CreateOutputPath">
         <MakeDir Directories="$(ArtifactsPath)" Condition="!Exists('$(ArtifactsPath)')" />
     </Target>
 
-    <Target Name="BuildKuduServiceSite">
+    <Target Name="BuildSites">
         <ItemGroup>
             <NativeBinaries Include="$(ProjectRoot)\packages\LibGit2Sharp*\NativeBinaries\x86\*.dll" />
         </ItemGroup>
@@ -38,6 +40,13 @@
               WorkingDirectory="$(ProjectRoot)" />
               
         <Copy SourceFiles="@(NativeBinaries)" DestinationFolder="$(ServiceSiteTargetPath)\bin" SkipUnchangedFiles="true" />
+        
+        <MSBuild Projects="$(ClientSiteProject)" 
+                 Targets="pipelinePreDeployCopyAllFilesToOneFolder" 
+                 Properties="_PackageTempDir=$(ClientSiteTargetPath);
+                             AutoParameterizationWebConfigConnectionStrings=false;
+                             SolutionDir=$(ProjectRoot)\;
+                             MSBuildExtensionsPath32=$(ProjectRoot)\Kudu.Services.Web\msbuild"/>
     </Target>
   
     <Target Name="RunTests">

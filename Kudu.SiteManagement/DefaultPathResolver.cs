@@ -21,6 +21,14 @@ namespace Kudu.SiteManagement
             }
         }
 
+        public string SitesPath
+        {
+            get
+            {
+                return _rootPath;
+            }
+        }
+
         public string GetApplicationPath(string applicationName)
         {
             return Path.Combine(_rootPath, applicationName);

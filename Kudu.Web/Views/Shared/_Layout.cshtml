@@ -42,7 +42,10 @@
           <a class="brand" href="@Url.Content("~/")">Kudu Dashboard</a>
           <div class="nav-collapse">
             <ul class="nav">
-              <li>@Html.ActionLink("Create Application", "Create")</li>
+              <li>@Html.ActionLink("Create Application", "create", "application")</li>
+            </ul>
+            <ul class="nav pull-right">
+              <li>@Html.ActionLink("Admin", "index", "admin")</li>
             </ul>
           </div><!--/.nav-collapse -->
         </div>
@@ -50,24 +53,39 @@
     </div>
 
     <div class="container">
+    @{ bool showWarning = ViewBag.showAdmingWarning != null && ViewBag.showAdmingWarning; }
 
-    @if (!String.IsNullOrEmpty(ViewBag.slug))
+    @if (showWarning) 
+    {
+        <p class="alert alert-error">You are running kudu against a local kudu service and are not an Administrator. Re-run this process as Administrator in order to continue.</p>
+    }
+    else if (!String.IsNullOrEmpty(ViewBag.slug))
     { 
     <div class="subnav subnav-fixed">
     <ul class="nav nav-pills">
-          <li @if(ViewBag.tab == "settings") {<text>class="active"</text> }>@Html.ActionLink("Settings", "settings", "application", new { slug = ViewBag.slug }, null)</li>
-          <li @if(ViewBag.tab == "deployments") {<text>class="active"</text> }>@Html.ActionLink("Deployments", "deployments", "application", new { slug = ViewBag.slug }, null)</li>
-          <li @if(ViewBag.tab == "configuration") {<text>class="active"</text> }>@Html.ActionLink("Configuration", "index", "settings", new { slug = ViewBag.slug }, null)</li>
-          <li>@Html.ActionLink("Develop", "editor", "application", new { slug = ViewBag.slug }, new { target = "_blank" })</li>          
+          <li @if (ViewBag.tab == "settings")
+              {<text>class="active"</text> }>@Html.ActionLink("Settings", "settings", "application", new { slug = ViewBag.slug }, null)</li>
+          <li @if (ViewBag.tab == "deployments")
+              {<text>class="active"</text> }>@Html.ActionLink("Deployments", "deployments", "application", new { slug = ViewBag.slug }, null)</li>
+          <li @if (ViewBag.tab == "configuration")
+              {<text>class="active"</text> }>@Html.ActionLink("Configuration", "index", "settings", new { slug = ViewBag.slug }, null)</li>
+          @*<li>@Html.ActionLink("Develop", "editor", "application", new { slug = ViewBag.slug }, new { target = "_blank" })</li>*@
         </ul>
     </div>
         
     <div class="page-header">
       <h1>@ViewBag.appName</h1>
-    </div>
+    </div>    
     }
-
-      @RenderBody()
+    
+    @if (!showWarning)
+    { 
+        @RenderBody()
+    }
+    else 
+    {
+        RenderBody();
+    }
 
     </div> <!-- /container -->
 

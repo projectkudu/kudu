@@ -1,18 +1,21 @@
 using System.Configuration;
+using System.Data.Entity;
+using System.Data.Entity.Infrastructure;
 using System.IO;
 using System.Web;
 using Kudu.Client.Infrastructure;
 using Kudu.SiteManagement;
+using Kudu.Web.Infrastructure;
 using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 using Ninject;
 using Ninject.Web.Mvc;
 
-[assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Web.App_Start.NinjectMvc3Services), "Start")]
-[assembly: WebActivator.ApplicationShutdownMethodAttribute(typeof(Kudu.Web.App_Start.NinjectMvc3Services), "Stop")]
+[assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Web.App_Start.Startup), "Start")]
+[assembly: WebActivator.ApplicationShutdownMethodAttribute(typeof(Kudu.Web.App_Start.Startup), "Stop")]
 
 namespace Kudu.Web.App_Start
 {
-    public static class NinjectMvc3Services
+    public static class Startup
     {
         private static readonly Bootstrapper bootstrapper = new Bootstrapper();
 
@@ -52,16 +55,27 @@ namespace Kudu.Web.App_Start
         /// <param name="kernel">The kernel.</param>
         private static void RegisterServices(IKernel kernel)
         {
-            string sitePath = HttpRuntime.AppDomainAppPath;
+            string root = HttpRuntime.AppDomainAppPath;
             string serviceSitePath = ConfigurationManager.AppSettings["serviceSitePath"];
             string sitesPath = ConfigurationManager.AppSettings["sitesPath"];
 
-            serviceSitePath = Path.Combine(sitePath, serviceSitePath);
-            sitesPath = Path.Combine(sitePath, sitesPath);
+            serviceSitePath = Path.Combine(root, serviceSitePath);
+            sitesPath = Path.Combine(root, sitesPath);
 
             kernel.Bind<IPathResolver>().ToConstant(new DefaultPathResolver(serviceSitePath, sitesPath));
             kernel.Bind<ISiteManager>().To<SiteManager>();
+            kernel.Bind<KuduEnvironment>().ToConstant(new KuduEnvironment
+            {
+                RunningAgainstLocalKuduService = true,
+                IsAdmin = IdentityHelper.IsAnAdministrator()
+            });
+
+            // TODO: Integrate with membership system
             kernel.Bind<ICredentialProvider>().ToConstant(new BasicAuthCredentialProvider("admin", "kudu"));
+
+            // Sql CE setup
+            Database.DefaultConnectionFactory = new SqlCeConnectionFactory("System.Data.SqlServerCe.4.0");
+            Directory.CreateDirectory(Path.Combine(root, "App_Data"));
         }
     }
 }

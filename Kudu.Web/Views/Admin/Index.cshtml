@@ -1,0 +1,36 @@
+﻿@model Kudu.Web.Models.AdminSettingsViewModel
+@{ 
+    ViewBag.Title = "Administration";
+}
+
+<div class="page-header">
+    <h1>Admin Settings</h1>
+</div>
+
+@Html.ValidationSummary(true)
+
+<div class="well">
+    <div class="control-group">
+        <label class="control-label"><strong>Kudu Service Path</strong></label>
+        <div class="controls">
+        @Model.ServiceSitePath 
+        @if (!Directory.Exists(Model.ServiceSitePath))
+        { 
+            <span class="label label-important">Error</span>
+        }
+        else 
+        {
+            <span class="label label-success">OK</span>  
+        }
+        <p class="help-block">This is the physical path to the kudu web service. This hosts the git server as well as other services required to get data about deployments.</p>
+        </div>
+    </div>
+
+    <div class="control-group">
+        <label class="control-label"><strong>Application Path</strong></label>
+        <div class="controls">
+        @Model.SitesPath
+        <p class="help-block">This is the physical path where sites will be created.</p>
+        </div>
+    </div>
+</div>

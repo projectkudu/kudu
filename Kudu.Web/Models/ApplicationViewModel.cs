@@ -2,7 +2,6 @@
 using System.ComponentModel.DataAnnotations;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
-using Kudu.SignalR.Models;
 
 namespace Kudu.Web.Models
 {
@@ -12,7 +11,7 @@ namespace Kudu.Web.Models
         {
         }
 
-        public ApplicationViewModel(IApplication application)
+        public ApplicationViewModel(Application application)
         {
             Name = application.Name;
             SiteUrl = application.SiteUrl;
@@ -47,7 +46,7 @@ namespace Kudu.Web.Models
             }
         }
 
-        private string GetCloneUrl(IApplication application, RepositoryType type)
+        private string GetCloneUrl(Application application, RepositoryType type)
         {
             return application.ServiceUrl + (type == RepositoryType.Git ? "git" : "hg");
         }

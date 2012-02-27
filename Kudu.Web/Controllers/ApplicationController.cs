@@ -19,11 +19,19 @@ namespace Kudu.Web.Controllers
         private KuduContext db = new KuduContext();
         private readonly ISiteManager _siteManager;
         private readonly ICredentialProvider _credentialProvider;
+        private readonly KuduEnvironment _env;
 
-        public ApplicationController(ISiteManager siteManager, ICredentialProvider credentialProvider)
+        public ApplicationController(ISiteManager siteManager, ICredentialProvider credentialProvider, KuduEnvironment env)
         {
             _siteManager = siteManager;
             _credentialProvider = credentialProvider;
+            _env = env;
+        }
+
+        protected override void OnActionExecuting(ActionExecutingContext filterContext)
+        {
+            ViewBag.showAdmingWarning = !_env.IsAdmin && _env.RunningAgainstLocalKuduService;
+            base.OnActionExecuting(filterContext);
         }
 
         //
