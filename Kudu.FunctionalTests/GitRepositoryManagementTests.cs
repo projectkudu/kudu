@@ -52,6 +52,7 @@ namespace Kudu.FunctionalTests
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
+                    Assert.NotNull(results[0].LastSuccessTime);
                     KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText);
                 });
             }
@@ -76,6 +77,7 @@ namespace Kudu.FunctionalTests
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Failed, results[0].Status);
+                    Assert.Null(results[0].LastSuccessTime);
                     KuduAssert.VerifyLogOutput(appManager, results[0].Id, "Warning as Error: The variable 'x' is declared but never used");
                 });
             }

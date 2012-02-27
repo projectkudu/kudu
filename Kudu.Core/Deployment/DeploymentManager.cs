@@ -238,6 +238,8 @@ namespace Kudu.Core.Deployment
                 StatusText = file.StatusText,
                 Complete = file.Complete,
                 Current = file.Id == activeDeploymentId,
+                DeploymentReceivedTime = file.DeploymentReceivedTime,
+                LastSuccessTime = file.LastSuccessTime
             };
         }
 
@@ -422,6 +424,7 @@ namespace Kudu.Core.Deployment
                 trackingFile.Status = DeployStatus.Success;
                 trackingFile.StatusText = String.Empty;
                 trackingFile.DeploymentEndTime = DateTime.Now;
+                trackingFile.LastSuccessTime = DateTime.Now;
                 trackingFile.Percentage = 100;
                 trackingFile.Save(_fileSystem);
             }
