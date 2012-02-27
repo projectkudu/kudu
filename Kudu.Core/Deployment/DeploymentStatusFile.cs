@@ -80,7 +80,7 @@ namespace Kudu.Core.Deployment
         public string Author { get; set; }
         public string Message { get; set; }
         public int Percentage { get; set; }
-        public DateTime DeploymentStartTime { get; private set; }
+        public DateTime DeploymentStartTime { get; set; }
         public DateTime? DeploymentEndTime { get; set; }
         public bool Complete { get; set; }
 

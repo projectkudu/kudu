@@ -263,13 +263,12 @@ namespace Kudu.Core.Deployment
                 string logPath = GetLogPath(id);
                 FileSystemHelpers.DeleteFileSafe(logPath);
 
-                ReportStatus(id);
-
                 logger = GetLogger(id);
                 innerLogger = logger.Log("Preparing deployment for {0}.", id);
 
                 trackingFile = OpenTrackingFile(id);
                 trackingFile.Complete = false;
+                trackingFile.DeploymentStartTime = DateTime.Now;
                 trackingFile.Status = DeployStatus.Building;
                 trackingFile.StatusText = String.Format("Building and Deploying {0}...", id);
                 trackingFile.Save(_fileSystem);
