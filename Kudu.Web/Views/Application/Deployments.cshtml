@@ -49,7 +49,7 @@
         @foreach (var d in Model.Deployments)
         {
             <tr>
-            <td>@d.Id</td>
+            <td>@d.Id.Substring(0, 10)</td>
             <td>@d.Message</td>
             <td>@d.Author</td>
             <td>@d.DeployStartTime</td>
