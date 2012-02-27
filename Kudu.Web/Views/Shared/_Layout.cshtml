@@ -21,8 +21,6 @@
       <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 
-    @RenderSection("head", required: false)
-
     <!-- Le fav and touch icons -->
     <link rel="shortcut icon" href="images/favicon.ico">
     <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
@@ -59,7 +57,8 @@
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="@Url.Content("~/Scripts/jquery-1.7.min.js")"></script>
-    <script src="@Url.Content("~/Scripts/bootstrap.min.js")"></script>    
+    <script src="@Url.Content("~/Scripts/bootstrap.min.js")"></script>
+    @RenderSection("scripts", required: false)
   </body>
 </html>
 

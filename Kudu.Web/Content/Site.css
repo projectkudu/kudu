@@ -53,3 +53,7 @@ h1 {
 p em {
     font-size: 12pt;
 }
+
+#clone-url {
+    cursor: pointer;
+}

@@ -11,6 +11,11 @@
   <h1>@Model.Name</h1>
 </div>
 
+<form class="well form-inline">
+  <label class="control-label"><strong>GIT URL</strong></label>
+  <input type="input" id="clone-url" name="name" value="@Model.GitUrl" readonly="readonly" />
+</form>
+
 <div class="well">
     <div class="control-group">
         <label class="control-label"><strong>Application URL</strong></label>
@@ -26,23 +31,17 @@
         <p class="help-block">This is the link to the kudu service.</p>
         </div>
     </div>
-    <div class="control-group">
-        <label class="control-label"><strong>Git URL</strong></label>
-        <div class="controls">
-        @Model.GitUrl
-        <p class="help-block">Git remote url.</p>
-        </div>
-    </div>    
 </div>
 
-@if (Model.RepositoryType == RepositoryType.None)
-    {
-<pre>
-git remote add kudu @Model.GitUrl
-git push -u kudu master      
-</pre>
-    }
-
+@section scripts {
+    <script type="text/javascript">
+        $(function () {
+            $('#clone-url').click(function () {
+                this.select();
+            });
+        });
+    </script>
+}
 
 @using (Html.BeginForm("Delete", "Application", new { slug = Model.Name.GenerateSlug() }))
 { 
