@@ -2,10 +2,8 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using Kudu.Core.Deployment;
-using Kudu.FunctionalTests.Infrastructure;
-using Kudu.Web.Infrastructure;
+using Kudu.TestHarness;
 using Xunit;
 using Xunit.Extensions;
 
