@@ -8,23 +8,17 @@
     ViewBag.Title = "Applications";
 }
 
-<h2>Applications</h2>
-
-<p>
-    @Html.ActionLink("Create Application", "Create")
-</p>
-<table id="app-list">
-    <tr>
-        <th>
-            Name
-        </th>
-    </tr>
-
-@foreach (var item in Model) {
-    <tr>
-        <td>
-            <a href="@Url.Action("Details", new { slug = item.Name.GenerateSlug() })">@Html.DisplayFor(modelItem => item.Name)</a>
-        </td>
-    </tr>
-}
-</table>
+<div class="well">
+    <ul class="nav nav-list">
+        <li class="nav-header">Applications</li>
+        @foreach (var item in Model)
+        {    
+            <li>
+                <a href="@Url.Action("Details", new { slug = item.Name.GenerateSlug() })">
+                    <i class="icon-th-list"></i>
+                    @Html.DisplayFor(modelItem => item.Name)
+                </a>
+            </li>
+        }
+    </ul>    
+</div>

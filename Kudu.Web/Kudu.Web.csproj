@@ -129,6 +129,12 @@
     <Content Include="Components\TabManager\tabManager.htm" />
     <Content Include="Components\TabManager\tabManager.js" />
     <Content Include="Components\TabManager\templates.htm" />
+    <Content Include="Content\bootstrap-responsive.css" />
+    <Content Include="Content\bootstrap-responsive.min.css" />
+    <Content Include="Content\bootstrap.css" />
+    <Content Include="Content\bootstrap.min.css" />
+    <Content Include="Content\img\glyphicons-halflings-white.png" />
+    <Content Include="Content\img\glyphicons-halflings.png" />
     <Content Include="Content\Site.css" />
     <Content Include="Global.asax" />
     <Content Include="images\arrow_refresh.png" />
@@ -143,6 +149,8 @@
     <Content Include="Components\Editor\codemirror\mode\markdown\markdown.css" />
     <Content Include="Components\Editor\codemirror\mode\markdown\markdown.js" />
     <Content Include="Components\Editor\codemirror\mode\yaml\yaml.js" />
+    <Content Include="Scripts\bootstrap.js" />
+    <Content Include="Scripts\bootstrap.min.js" />
     <Content Include="Scripts\Deployments.js" />
     <Content Include="Scripts\jquery-1.7-vsdoc.js" />
     <Content Include="Scripts\jquery-1.7.js" />

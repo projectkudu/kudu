@@ -7,55 +7,44 @@
 @{
     ViewBag.Title = Model.Name;
 }
-<h2>@Model.Name</h2>
-
-<ul id="app-links" class="tab-menu">
-    @if (Model.RepositoryType != RepositoryType.None) {
-    <li>
-        @Html.ActionLink("Deployments", "deployments", new { slug = Model.Name.GenerateSlug() })
-    </li>
-    }
-    <li>
-        @Html.ActionLink("Develop", "editor", new { slug = Model.Name.GenerateSlug() }, new { target = "_blank" })
-    </li>
-    <li>
-        @Html.ActionLink("Settings", "index", "settings", new { slug = Model.Name.GenerateSlug() }, null)
-    </li>
-</ul>
-
-@if (Model.RepositoryType == RepositoryType.None) {
-    <p class="notice">@Model.Name does not have a source control repository configured. You can push to one of the URLs below to create the repository.</p>
-}
-
-@if (Model.RepositoryType == RepositoryType.None) {
-    <div class="display-label">Service URL</div>
-    <div class="display-field">
-        <a href="@Model.ServiceUrl" target="_blank">@Model.ServiceUrl</a>
-    </div>
-    
-    <div class="display-label">Git URL</div>
-    <div class="display-field">
-        @Model.GitUrl
-    </div>
-    <div class="display-label">Mercurial URL</div>
-    <div class="display-field">
-        @Model.HgUrl
-    </div>
-}
-else
-{
-    <div class="display-label">@Model.RepositoryType URL</div>
-    <div class="display-field">
-        @Model.CloneUrl
-    </div>
-}
-<div class="display-label">Application URL</div>
-<div class="display-field">
-    <a href="@Model.SiteUrl" target="_blank">@Model.SiteUrl</a>
+<div class="page-header">
+  <h1>@Model.Name</h1>
 </div>
 
-<h2 id="delete-header">Delete Application</h2>
+<div class="well">
+    <div class="control-group">
+        <label class="control-label"><strong>Application URL</strong></label>
+        <div class="controls">
+        <a href="@Model.SiteUrl" target="_blank">@Model.SiteUrl</a>
+        <p class="help-block">This is the link to your website.</p>
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label"><strong>Service URL</strong></label>
+        <div class="controls">
+        <a href="@Model.ServiceUrl" target="_blank">@Model.ServiceUrl</a>
+        <p class="help-block">This is the link to the kudu service.</p>
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label"><strong>Git URL</strong></label>
+        <div class="controls">
+        @Model.GitUrl
+        <p class="help-block">Git remote url.</p>
+        </div>
+    </div>    
+</div>
+
+@if (Model.RepositoryType == RepositoryType.None)
+    {
+<pre>
+git remote add kudu @Model.GitUrl
+git push -u kudu master      
+</pre>
+    }
+
+
 @using (Html.BeginForm("Delete", "Application", new { slug = Model.Name.GenerateSlug() }))
 { 
-    <input type="submit" name="name" value="Delete" />
+    <input type="submit" class="btn-danger btn-large" name="name" value="Delete Application" />
 }

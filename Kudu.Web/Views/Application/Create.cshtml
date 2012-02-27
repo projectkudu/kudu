@@ -4,30 +4,22 @@
     ViewBag.Title = "New Application";
 }
 
-<h2>New Application</h2>
+@Html.ValidationSummary(true)
 
-@using (Html.BeginForm()) {
-    @Html.ValidationSummary()
-    <fieldset>
-        <legend>Application</legend>
-
-        <div class="editor-label">
-            @Html.LabelFor(model => model.Name)
-        </div>
-        <div class="editor-field">
-            @Html.EditorFor(model => model.Name)
-            @Html.ValidationMessageFor(model => model.Name)
-        </div>
-
-        <div class="editor-label">
-            @Html.LabelFor(model => model.RepositoryType, "Repository Type")
-        </div>
-        <div class="editor-field">
-            @Html.DropDownList("RepositoryType")
-            @Html.ValidationMessageFor(model => model.RepositoryType)
-        </div>
-        <p>
-            <input type="submit" value="Create" />
-        </p>
-    </fieldset>
+@using (Html.BeginForm())
+{    
+  <fieldset>
+    <legend>New Application</legend>
+    <div class="control-group">
+      @Html.LabelFor(model => model.Name)
+      <div class="controls">        
+        @Html.EditorFor(model => model.Name)
+        @Html.ValidationMessageFor(model => model.Name)
+        <p class="help-block">Name of the application</p>
+      </div>
+    </div>
+    <p>
+        <input type="submit" value="Create application" class="btn-primary" />
+    </p>
+  </fieldset>
 }
