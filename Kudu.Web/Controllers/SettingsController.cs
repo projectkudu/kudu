@@ -147,10 +147,11 @@ namespace Kudu.Web.Controllers
             try
             {
                 return new SettingsViewModel
-                {                    
+                {
                     AppSettings = settingsManager.GetAppSettings().ToList(),
                     ConnectionStrings = settingsManager.GetConnectionStrings().ToList(),
-                    Application = new ApplicationViewModel(application)
+                    Application = new ApplicationViewModel(application),
+                    Enabled = true
                 };
             }
             catch

@@ -1,7 +1,7 @@
 ﻿@model Kudu.Web.Models.SettingsViewModel
 
 @{
-    ViewBag.Title = "Index";
+    ViewBag.Title = "Configuration Settings";
 }
 
 @if (!Model.Enabled) 
@@ -10,10 +10,27 @@
     return;
 }
 
+@section head 
+{
+    <style>
+        table form {
+            padding: 0;
+            margin: 0;
+        }
+        
+        input {
+            margin-right: 5px;
+        }
+    </style>
+}
+
+<div class="page-header">
+    <h3>Application Settings</h3>
+</div>
 
 @if (Model.AppSettings.Any())
 {
-<table id="app-settings">
+<table id="app-settings" class="table">
     <tr>
         <th>Key</th>
         <th>Value</th>
@@ -28,7 +45,7 @@
                 @using (Html.BeginForm("delete-app-setting", "settings", new { ViewBag.slug }))
                 {
                     @Html.Hidden("Key", setting.Key)
-                    <input type="submit" value="Delete" />
+                    <input type="submit" class="btn-danger" value="Delete" />
                 }
             </td>
         </tr>
@@ -43,11 +60,23 @@ else
     </p>
 }
 
-<h3>Connection Strings</h3>
+
+@using (Html.BeginForm("new-app-setting", "settings", new { ViewBag.slug }, FormMethod.Post, new { @class = "well form-inline" }))
+{    
+    @Html.TextBox("Key", ViewData["Key"], new { placeholder = "name" })
+    @Html.ValidationMessage("Key", "*")   
+    @Html.TextBox("Value", ViewData["Value"], new { placeholder = "value" })
+    @Html.ValidationMessage("Value", "*")
+    <input type="submit" class="btn-primary" value="Add" />
+}
+
+<div class="page-header">
+    <h3>Connection Strings (.NET only)</h3>
+</div>
 
 @if (Model.ConnectionStrings.Any())
 {
-<table id="connection-strings">
+<table id="connection-strings" class="table"> 
     <tr>
         <th>Name</th>
         <th>Connection String</th>
@@ -62,7 +91,7 @@ else
                 @using (Html.BeginForm("delete-connection-string", "settings", new { ViewBag.slug }))
                 {
                     @Html.Hidden("Name", setting.Name)
-                    <input type="submit" value="Delete" />
+                    <input type="submit" class="btn-danger" value="Delete" />
                 }
             </td>
         </tr>
@@ -77,52 +106,11 @@ else
     </p>
 }
 
-<h3>New Application Setting</h3>
-@using (Html.BeginForm("new-app-setting", "settings", new { ViewBag.slug }))
+@using (Html.BeginForm("new-connection-string", "settings", new { ViewBag.slug }, FormMethod.Post, new { @class = "well form-inline" }))
 {
-    <fieldset>        
-        <div class="editor-label">
-            @Html.Label("Key")
-        </div>
-        <div class="editor-field">
-            @Html.TextBox("Key")
-            @Html.ValidationMessage("Key", "*")
-        </div>
-
-        <div class="editor-label">
-            @Html.Label("Value")
-        </div>
-        <div class="editor-field">
-            @Html.TextBox("Value")
-            @Html.ValidationMessage("Value", "*")
-        </div>
-        <p>
-            <input type="submit" value="Add" />
-        </p>
-    </fieldset>
-}
-
-<h3>New Connection String</h3>
-@using (Html.BeginForm("new-connection-string", "settings", new { ViewBag.slug }))
-{
-    <fieldset>        
-        <div class="editor-label">
-            @Html.Label("Name")
-        </div>
-        <div class="editor-field">
-            @Html.TextBox("Name")
-            @Html.ValidationMessage("Name", "*")
-        </div>
-
-        <div class="editor-label">
-            @Html.Label("ConnectionString", "Connection String")
-        </div>
-        <div class="editor-field">
-            @Html.TextBox("ConnectionString")
-            @Html.ValidationMessage("ConnectionString", "*")
-        </div>
-        <p>
-            <input type="submit" value="Add" />
-        </p>
-    </fieldset>
+    @Html.TextBox("Name", ViewData["Name"], new { placeholder = "name" })
+    @Html.ValidationMessage("Name", "*")
+    @Html.TextBox("ConnectionString", ViewData["ConnectionString"], new { placeholder = "connection string" })
+    @Html.ValidationMessage("ConnectionString", "*")
+    <input type="submit" class="btn-primary" value="Add" />    
 }
