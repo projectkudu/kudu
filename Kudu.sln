@@ -28,6 +28,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.FunctionalTests", "Kud
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.Performance", "Kudu.Performance\Kudu.Performance.csproj", "{E08D0497-2553-4DF0-9FE4-4D6F75CB80C4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.TestHarness", "Kudu.TestHarness\Kudu.TestHarness.csproj", "{ACF3450A-8062-48D5-9C9D-8486261F290F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -148,6 +150,16 @@ Global
 		{E08D0497-2553-4DF0-9FE4-4D6F75CB80C4}.Release|Mixed Platforms.Build.0 = Release|x86
 		{E08D0497-2553-4DF0-9FE4-4D6F75CB80C4}.Release|x86.ActiveCfg = Release|x86
 		{E08D0497-2553-4DF0-9FE4-4D6F75CB80C4}.Release|x86.Build.0 = Release|x86
+		{ACF3450A-8062-48D5-9C9D-8486261F290F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ACF3450A-8062-48D5-9C9D-8486261F290F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ACF3450A-8062-48D5-9C9D-8486261F290F}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{ACF3450A-8062-48D5-9C9D-8486261F290F}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{ACF3450A-8062-48D5-9C9D-8486261F290F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{ACF3450A-8062-48D5-9C9D-8486261F290F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ACF3450A-8062-48D5-9C9D-8486261F290F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ACF3450A-8062-48D5-9C9D-8486261F290F}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{ACF3450A-8062-48D5-9C9D-8486261F290F}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{ACF3450A-8062-48D5-9C9D-8486261F290F}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -156,5 +168,6 @@ Global
 		{4ED64AAA-8F69-4FEE-9004-9060A9CB8111} = {FA1EA7CE-E6A4-4E55-AD76-6B43572A9092}
 		{AB93801E-467D-4450-8951-60AE5A51CF4F} = {FA1EA7CE-E6A4-4E55-AD76-6B43572A9092}
 		{E08D0497-2553-4DF0-9FE4-4D6F75CB80C4} = {FA1EA7CE-E6A4-4E55-AD76-6B43572A9092}
+		{ACF3450A-8062-48D5-9C9D-8486261F290F} = {FA1EA7CE-E6A4-4E55-AD76-6B43572A9092}
 	EndGlobalSection
 EndGlobal

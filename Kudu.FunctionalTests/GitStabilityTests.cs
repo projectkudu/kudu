@@ -1,7 +1,6 @@
 ﻿using System.Linq;
-using System.Threading.Tasks;
 using Kudu.Core.Deployment;
-using Kudu.FunctionalTests.Infrastructure;
+using Kudu.TestHarness;
 using Xunit;
 
 namespace Kudu.FunctionalTests
