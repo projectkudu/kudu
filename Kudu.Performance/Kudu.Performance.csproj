@@ -65,9 +65,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Kudu.FunctionalTests\Kudu.FunctionalTests.csproj">
-      <Project>{AB93801E-467D-4450-8951-60AE5A51CF4F}</Project>
-      <Name>Kudu.FunctionalTests</Name>
+    <ProjectReference Include="..\Kudu.TestHarness\Kudu.TestHarness.csproj">
+      <Project>{ACF3450A-8062-48D5-9C9D-8486261F290F}</Project>
+      <Name>Kudu.TestHarness</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using Kudu.FunctionalTests.Infrastructure;
+using Kudu.TestHarness;
 
 namespace Kudu.Performance
 {
