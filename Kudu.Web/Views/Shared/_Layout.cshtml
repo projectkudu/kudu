@@ -66,7 +66,7 @@
           <li @if (ViewBag.tab == "settings")
               {<text>class="active"</text> }>@Html.ActionLink("Settings", "settings", "application", new { slug = ViewBag.slug }, null)</li>
           <li @if (ViewBag.tab == "deployments")
-              {<text>class="active"</text> }>@Html.ActionLink("Deployments", "deployments", "application", new { slug = ViewBag.slug }, null)</li>
+              {<text>class="active"</text> }>@Html.ActionLink("Deployments", "index", "deployments", new { slug = ViewBag.slug }, null)</li>
           <li @if (ViewBag.tab == "configuration")
               {<text>class="active"</text> }>@Html.ActionLink("Configuration", "index", "settings", new { slug = ViewBag.slug }, null)</li>
           @*<li>@Html.ActionLink("Develop", "editor", "application", new { slug = ViewBag.slug }, new { target = "_blank" })</li>*@

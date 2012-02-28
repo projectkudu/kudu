@@ -78,8 +78,11 @@
                 }
                 else if (d.Complete)
                 {
-                    <a class="btn-small btn-primary" href="@Url.Action("deploy", new { slug = ViewBag.slug, id = d.Id })"><i class="icon-repeat icon-white"></i> Deploy</a>
+                    <a class="btn-small btn-primary" href="@Url.Action("deploy", "deployments", new { slug = ViewBag.slug, id = d.Id })"><i class="icon-repeat icon-white"></i> Deploy</a>
                 }
+            </td>
+            <td>
+                <a href="@Url.Action("log", "deployments", new { slug = ViewBag.slug, id = d.Id })">View Log</a>
             </td>
             </tr>
         }

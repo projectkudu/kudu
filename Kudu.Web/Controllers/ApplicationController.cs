@@ -1,9 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Web.Mvc;
-using Kudu.Client.Deployment;
 using Kudu.Client.Infrastructure;
 using Kudu.Client.SourceControl;
 using Kudu.Core.SourceControl;
@@ -122,47 +120,6 @@ namespace Kudu.Web.Controllers
             }
 
             return View(appViewModel);
-        }
-
-        public Task<ActionResult> Deploy(string slug, string id)
-        {
-            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
-            if (application != null)
-            {
-                var deploymentManager = new RemoteDeploymentManager(application.ServiceUrl + "/deployments");
-
-                return deploymentManager.DeployAsync(id).ContinueWith(task =>
-                {
-                    return (ActionResult)RedirectToAction("Deployments", new { slug = slug });
-                });
-            }
-
-            return Task.Factory.StartNew(() => (ActionResult)HttpNotFound());
-        }
-
-        [ActionName("deployments")]
-        public Task<ActionResult> ViewDeployments(string slug)
-        {
-            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
-            if (application != null)
-            {
-                var deploymentManager = new RemoteDeploymentManager(application.ServiceUrl + "/deployments");
-
-                return deploymentManager.GetResultsAsync().ContinueWith(task =>
-                {
-                    var appViewModel = new ApplicationViewModel(application);
-                    appViewModel.RepositoryType = GetRepositoryManager(application).GetRepositoryType();
-                    appViewModel.Deployments = task.Result.ToList();
-
-                    ViewBag.slug = slug;
-                    ViewBag.tab = "deployments";
-                    ViewBag.appName = appViewModel.Name;
-
-                    return (ActionResult)View(appViewModel);
-                });
-            }
-
-            return Task.Factory.StartNew(() => (ActionResult)HttpNotFound());
         }
 
         [ActionName("editor")]
