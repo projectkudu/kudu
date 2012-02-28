@@ -1,0 +1,37 @@
+﻿@using Kudu.Core.SourceControl
+@using Kudu.Core.Deployment
+
+@model IList<LogEntry>
+@{
+    ViewBag.Title = "Deployments";
+
+    bool verbose = ViewBag.verbose != null && ViewBag.verbose;
+}
+
+@if (Model.Count == 0) 
+{
+    <p class="alert alert-info">Nothing to see here.</p>
+    return;
+}
+
+<ul>
+@{ var index = 0; }
+@foreach (var log in Model)
+{
+    <li>
+    @if (verbose)
+    {
+<pre>@log.Message</pre>
+    }
+    else
+    {
+        @log.LogTime <span>@log.Message </span>
+    }
+    @if (!verbose && index == 1)
+    { 
+        <a href="@Url.RouteUrl("DeploymentLogVerbose", new { slug = ViewBag.slug, id = ViewBag.id, logId = log.Id })">Details</a>
+    }
+    </li>
+    index++;
+}
+</ul>

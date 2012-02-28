@@ -238,6 +238,8 @@ namespace Kudu.Core.Deployment
                 StatusText = file.StatusText,
                 Complete = file.Complete,
                 Current = file.Id == activeDeploymentId,
+                DeploymentReceivedTime = file.DeploymentReceivedTime,
+                LastSuccessEndTime = file.LastSuccessEndTime
             };
         }
 
@@ -301,9 +303,6 @@ namespace Kudu.Core.Deployment
 
                            // Run post deployment steps
                            RunPostDeploymentSteps(id, profiler, deployStep);
-
-                           // Copy repository (if this is the first push)
-                           CopyRepository(id, profiler);
                        })
                        .Catch(ex =>
                        {
@@ -353,55 +352,9 @@ namespace Kudu.Core.Deployment
         }
 
         /// <summary>
-        /// Copy the repository from the temp repository path to the repository path.
-        /// Only happens on first deployment.
-        /// </summary>
-        private void CopyRepository(string id, IProfiler profiler)
-        {
-            ILogger logger = null;
-            DeploymentStatusFile trackingFile = null;
-
-            try
-            {
-                logger = GetLogger(id);
-                trackingFile = OpenTrackingFile(id);
-
-                // The repository has already been copied
-                if (_environment.RepositoryType != RepositoryType.None)
-                {
-                    return;
-                }
-
-                using (profiler.Step("Copying files to repository"))
-                {
-                    // Copy the repository from the temporary path to the repository target path
-                    FileSystemHelpers.Copy(_environment.DeploymentRepositoryPath,
-                                           _environment.DeploymentRepositoryTargetPath,
-                                           skipScmFolder: false);
-                }
-            }
-            catch (Exception ex)
-            {
-                if (logger != null)
-                {
-                    logger.Log(ex);
-                }
-            }
-            finally
-            {
-                if (trackingFile != null)
-                {
-                    trackingFile.Complete = true;
-                    trackingFile.Save(_fileSystem);
-                }
-
-                ReportStatus(id);
-            }
-        }
-
-        /// <summary>
         /// Runs post deployment steps.
         /// - Marks the active deployment
+        /// - Sets the complete flag
         /// </summary>
         private void RunPostDeploymentSteps(string id, IProfiler profiler, IDisposable deployStep)
         {
@@ -422,18 +375,23 @@ namespace Kudu.Core.Deployment
                 trackingFile.Status = DeployStatus.Success;
                 trackingFile.StatusText = String.Empty;
                 trackingFile.DeploymentEndTime = DateTime.Now;
+                trackingFile.LastSuccessEndTime = trackingFile.DeploymentEndTime;
                 trackingFile.Percentage = 100;
                 trackingFile.Save(_fileSystem);
             }
             catch (Exception ex)
             {
-                if (logger != null && trackingFile != null)
+                if (logger != null)
                 {
                     NotifyError(logger, trackingFile, ex);
                 }
             }
             finally
             {
+                // Set the deployment as complete
+                trackingFile.Complete = true;
+                trackingFile.Save(_fileSystem);
+
                 ReportStatus(id);
 
                 // End the deployment step

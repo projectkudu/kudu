@@ -16,6 +16,30 @@ namespace Kudu.Web
         {
             routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
 
+            routes.MapRoute("Deployments",
+                            "deployments/{slug}",
+                            new { controller = "Deployments", action = "Index" });
+
+            routes.MapRoute("Deploy",
+                            "deployments/{slug}/deploy/{id}",
+                            new { controller = "Deployments", action = "Deploy" });
+
+            routes.MapRoute("DeploymentLog",
+                            "deployments/{slug}/log/{id}",
+                            new { controller = "Deployments", action = "Log" });
+
+            routes.MapRoute("DeploymentLogVerbose",
+                            "deployments/{slug}/log/{id}/{logId}",
+                            new { controller = "Deployments", action = "Details" });
+
+            routes.MapRoute("Settings",
+                            "settings/{slug}",
+                            new { controller = "Application", action = "Settings" });
+
+            routes.MapRoute("Configuration",
+                            "configuration/{slug}",
+                            new { controller = "Settings", action = "Index" });
+
             routes.MapRoute(
                 "Default", // Route name
                 "{controller}/{action}/{slug}", // URL with parameters

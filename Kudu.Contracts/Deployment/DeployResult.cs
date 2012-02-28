@@ -26,11 +26,17 @@ namespace Kudu.Core.Deployment
         [DataMember(Name = "message")]
         public string Message { get; set; }
 
+        [DataMember(Name = "received_time")]
+        public DateTime DeploymentReceivedTime { get; set; }
+
         [DataMember(Name = "start_time")]
         public DateTime DeployStartTime { get; set; }
 
         [DataMember(Name = "end_time")]
         public DateTime? DeployEndTime { get; set; }
+
+        [DataMember(Name = "last_success_end_time")]
+        public DateTime? LastSuccessEndTime { get; set; }
 
         [DataMember(Name = "percentage")]
         public int Percentage { get; set; }
