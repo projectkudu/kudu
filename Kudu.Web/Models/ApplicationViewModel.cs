@@ -11,7 +11,7 @@ namespace Kudu.Web.Models
         {
         }
 
-        public ApplicationViewModel(Application application)
+        public ApplicationViewModel(IApplication application)
         {
             Name = application.Name;
             SiteUrl = application.SiteUrl;

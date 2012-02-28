@@ -273,6 +273,8 @@
     <Compile Include="Models\Application.cs" />
     <Compile Include="Models\ApplicationViewModel.cs" />
     <Compile Include="Models\DeveloperSiteState.cs" />
+    <Compile Include="Models\IApplication.cs" />
+    <Compile Include="Models\IApplicationService.cs" />
     <Compile Include="Models\KuduContext.cs" />
     <Compile Include="Models\SettingsViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
