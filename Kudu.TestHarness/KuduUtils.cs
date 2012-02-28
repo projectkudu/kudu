@@ -6,7 +6,7 @@ using System.Xml.Linq;
 
 namespace Kudu.TestHarness
 {
-    internal class KuduUtils
+    public class KuduUtils
     {
         public static void DownloadDump (string serviceUrl, string zipfilePath)
         {

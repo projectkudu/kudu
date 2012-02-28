@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace Kudu.TestHarness
 {
-    internal class HttpUtils
+    public class HttpUtils
     {
         public static void WaitForSite(string siteUrl, int retries = 3, int delayBeforeRetry = 250)
         {
