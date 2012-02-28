@@ -2,7 +2,7 @@
 
 namespace Kudu.TestHarness
 {
-    internal class ZipUtils
+    public class ZipUtils
     {
         public static void Unzip(string zipPath, string targetDir)
         {
