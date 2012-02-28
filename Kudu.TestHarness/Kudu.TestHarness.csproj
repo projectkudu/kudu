@@ -33,9 +33,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CsvHelper">
-      <HintPath>..\packages\CsvHelper.1.1.2\lib\net20\CsvHelper.dll</HintPath>
-    </Reference>
     <Reference Include="Ionic.Zip">
       <HintPath>..\packages\DotNetZip.1.9.1.8\lib\net20\Ionic.Zip.dll</HintPath>
     </Reference>
@@ -55,29 +52,22 @@
       <HintPath>..\packages\HttpClient.0.6.0\lib\40\System.Net.Http.dll</HintPath>
     </Reference>
     <Reference Include="System.ServiceModel" />
+    <Reference Include="System.XML" />
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
-    <Reference Include="xunit">
-      <HintPath>..\packages\xunit.1.9.0.1566\lib\xunit.dll</HintPath>
-    </Reference>
-    <Reference Include="xunit.extensions">
-      <HintPath>..\packages\xunit.extensions.1.9.0.1566\lib\xunit.extensions.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ApplicationManager.cs" />
     <Compile Include="ApplicationManagerExtensions.cs" />
+    <Compile Include="HttpUtils.cs" />
+    <Compile Include="KuduUtils.cs" />
+    <Compile Include="DeploymentManagerExtensions.cs" />
     <Compile Include="Git.cs" />
-    <Compile Include="GitTestConfig.cs" />
-    <Compile Include="KuduAssert.cs" />
+    <Compile Include="GitDeploymentResult.cs" />
     <Compile Include="PathHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestRepository.cs" />
     <Compile Include="TestRepositoryExtensions.cs" />
-    <Compile Include="Utils.cs" />
+    <Compile Include="ZipUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -98,10 +88,6 @@
     <ProjectReference Include="..\Kudu.SiteManagement\Kudu.SiteManagement.csproj">
       <Project>{D5669C1D-3408-4CEE-8C1B-D86D03D27EE2}</Project>
       <Name>Kudu.SiteManagement</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Kudu.Web\Kudu.Web.csproj">
-      <Project>{B0265397-6FCD-4C67-8785-3272D8C1AD79}</Project>
-      <Name>Kudu.Web</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using Kudu.Client.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
-using Kudu.Web.Infrastructure;
 using SystemEnvironment = System.Environment;
 
 
@@ -31,7 +31,7 @@ namespace Kudu.TestHarness
             Executable gitExe = GetGitExe(repositoryPath);
             gitExe.Execute("init");
         }
-        
+
         public static void Revert(string repositoryPath, string commit = "HEAD")
         {
             Executable gitExe = GetGitExe(repositoryPath);
@@ -72,24 +72,54 @@ namespace Kudu.TestHarness
             gitExe.Execute("add \"{0}\"", path);
         }
 
-        public static TestRepository Clone(string repositoryName, string source, bool createDirectory = false)
+        public static TestRepository Clone(string repositoryPath, string source, bool createDirectory = false)
         {
+            //Gets full path in case path is relative 
+            repositoryPath = GetRepositoryPath(repositoryPath);
+
             // Make sure the directory is empty
-            string repositoryPath = GetRepositoryPath(repositoryName);
             FileSystemHelpers.DeleteDirectorySafe(repositoryPath);
-            Executable gitExe = GetGitExe(repositoryName);
+            Executable gitExe = GetGitExe(repositoryPath);
 
             if (createDirectory)
             {
                 gitExe.Execute("clone \"{0}\"", source);
                 // TODO: need to update this path once issue with clonning
                 // and sub directory created with "git" name is solved
-                return new TestRepository(Path.Combine(repositoryName,"git"));
+                return new TestRepository(Path.Combine(repositoryPath, "git"));
             }
-            
+
             gitExe.Execute("clone \"{0}\" .", source);
 
-            return new TestRepository(repositoryName);                        
+            return new TestRepository(repositoryPath);
+        }
+
+        public static GitDeploymentResult GitDeploy(string kuduServiceUrl, string localRepoPath, string remoteRepoUrl, string localBranchName, string remoteBranchName, TimeSpan waitTimeout)
+        {
+            var deploymentManager = new RemoteDeploymentManager(kuduServiceUrl);
+
+            return GitDeploy(deploymentManager, kuduServiceUrl, localRepoPath, remoteRepoUrl, localBranchName, remoteBranchName, waitTimeout);
+        }
+
+        public static GitDeploymentResult GitDeploy(RemoteDeploymentManager deploymentManager, string kuduServiceUrl, string localRepoPath, string remoteRepoUrl, string localBranchName, string remoteBranchName, TimeSpan waitTimeout)
+        {
+            Stopwatch sw = null;
+
+            var result = deploymentManager.WaitForDeployment(() =>
+            {
+                HttpUtils.WaitForSite(kuduServiceUrl);
+                sw = Stopwatch.StartNew();
+                Git.Push(localRepoPath, remoteRepoUrl, localBranchName, remoteBranchName);
+                sw.Stop();
+            },
+            waitTimeout);
+
+            return new GitDeploymentResult
+            {
+                PushResponseTime = sw.Elapsed,
+                TotalResponseTime = result.Item1,
+                TimedOut = !result.Item2
+            };
         }
 
         public static TestRepository CreateLocalRepository(string repositoryName)
@@ -98,14 +128,19 @@ namespace Kudu.TestHarness
             string zippedPath = Path.Combine(PathHelper.ZippedRepositoriesDir, repositoryName + ".zip");
 
             // Unzip it
-            Utils.Unzip(zippedPath, PathHelper.LocalRepositoriesDir);
+            ZipUtils.Unzip(zippedPath, PathHelper.LocalRepositoriesDir);
 
             return new TestRepository(repositoryName);
         }
 
-        public static string GetRepositoryPath(string repositoryName)
+        public static string GetRepositoryPath(string repositoryPath)
         {
-            return Path.Combine(PathHelper.LocalRepositoriesDir, repositoryName);
+            if (Path.IsPathRooted(repositoryPath))
+            {
+                return repositoryPath;
+            }
+
+            return Path.Combine(PathHelper.LocalRepositoriesDir, repositoryPath);
         }
 
         private static string ResolveGitPath()

@@ -33,6 +33,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="CsvHelper, Version=1.1.2.40563, Culture=neutral, PublicKeyToken=8c4959082be5c823, processorArchitecture=MSIL">
+      <HintPath>..\packages\CsvHelper.1.1.2\lib\net20\CsvHelper.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Json, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\JsonValue.0.6.0\lib\40\Microsoft.Json.dll</HintPath>
     </Reference>
@@ -76,6 +79,9 @@
     <Compile Include="DeploymentManagerTests.cs" />
     <Compile Include="GitRepositoryManagementTests.cs" />
     <Compile Include="GitStabilityTests.cs" />
+    <Compile Include="GitTestConfig.cs" />
+    <Compile Include="Infrastructure\ApplicationManagerExtensions.cs" />
+    <Compile Include="Infrastructure\KuduAssert.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="GitDeploymentTests.cs" />
   </ItemGroup>
