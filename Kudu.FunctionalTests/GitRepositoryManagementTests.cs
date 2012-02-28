@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using Kudu.Core.Deployment;
+using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
 using Xunit;
 
@@ -23,7 +24,7 @@ namespace Kudu.FunctionalTests
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Act
-                    appManager.GitDeploy(repo.PhysicalPath);                    
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
@@ -46,7 +47,7 @@ namespace Kudu.FunctionalTests
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Act
-                    appManager.GitDeploy(repo.PhysicalPath);
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
@@ -71,7 +72,7 @@ namespace Kudu.FunctionalTests
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Act
-                    appManager.GitDeploy(repo.PhysicalPath);
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
@@ -96,7 +97,7 @@ namespace Kudu.FunctionalTests
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Act
-                    appManager.GitDeploy(repo.PhysicalPath);
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
@@ -120,7 +121,7 @@ namespace Kudu.FunctionalTests
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Act
-                    appManager.GitDeploy(repo.PhysicalPath);
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
@@ -144,7 +145,7 @@ namespace Kudu.FunctionalTests
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Act
-                    appManager.GitDeploy(repo.PhysicalPath);
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
@@ -168,9 +169,9 @@ namespace Kudu.FunctionalTests
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Act
-                    appManager.GitDeploy(repo.PhysicalPath);
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
                     Git.Revert(repo.PhysicalPath);
-                    appManager.GitDeploy(repo.PhysicalPath);
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
@@ -195,7 +196,7 @@ namespace Kudu.FunctionalTests
                     string projectPath = Path.Combine(repo.PhysicalPath, @"Mvc3Application\Mvc3Application.csproj");
 
                     // Act
-                    appManager.GitDeploy(repo.PhysicalPath);
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
@@ -206,7 +207,7 @@ namespace Kudu.FunctionalTests
                     File.Delete(deletePath);
                     File.WriteAllText(projectPath, File.ReadAllText(projectPath).Replace(@"<Compile Include=""Controllers\AccountController.cs"" />", ""));
                     Git.Commit(repo.PhysicalPath, "Deleted the filez");
-                    appManager.GitDeploy(repo.PhysicalPath);
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
                     results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
@@ -230,7 +231,7 @@ namespace Kudu.FunctionalTests
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Act
-                    appManager.GitDeploy(repo.PhysicalPath);
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
 
                     KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText);
 
@@ -243,7 +244,7 @@ namespace Kudu.FunctionalTests
 
                     Git.Commit(repo.PhysicalPath, "This is a test");
 
-                    appManager.GitDeploy(repo.PhysicalPath);
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
 
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
@@ -270,7 +271,7 @@ namespace Kudu.FunctionalTests
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Act
-                    appManager.GitDeploy(repositoryName);
+                    appManager.AssertGitDeploy(repositoryName);
 
                     KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText);
 
@@ -280,7 +281,7 @@ namespace Kudu.FunctionalTests
                     Git.Commit(repositoryName, "This is a small changes");
 
                     // Push those changes
-                    appManager.GitDeploy(repositoryName);
+                    appManager.AssertGitDeploy(repositoryName);
 
                     // Make a server site change and verify it shows up
                     appManager.ProjectSystem.WriteAllText("Views/Home/Index.cshtml", "Hello world!");
@@ -316,7 +317,7 @@ namespace Kudu.FunctionalTests
                     string deletePath = Path.Combine(repo.PhysicalPath, @"Styles");
 
                     // Act
-                    appManager.GitDeploy(repo.PhysicalPath);
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
 
                     // Assert
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
@@ -328,7 +329,7 @@ namespace Kudu.FunctionalTests
                     Directory.Delete(deletePath, recursive: true);
                     Git.Commit(repo.PhysicalPath, "Deleted all styles");
 
-                    appManager.GitDeploy(repo.PhysicalPath);
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
                     results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
@@ -354,7 +355,7 @@ namespace Kudu.FunctionalTests
                     KuduAssert.VerifyUrl(url, "This is a test file");
 
                     // Act
-                    appManager.GitDeploy(repo.PhysicalPath);
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
 
                     // Assert
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
@@ -378,7 +379,7 @@ namespace Kudu.FunctionalTests
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Act
-                    appManager.GitDeploy(repo.PhysicalPath, "test", "test");
+                    appManager.AssertGitDeploy(repo.PhysicalPath, "test", "test");
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
@@ -400,7 +401,7 @@ namespace Kudu.FunctionalTests
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Act
-                    appManager.GitDeploy(repo.PhysicalPath, "test", "master");
+                    appManager.AssertGitDeploy(repo.PhysicalPath, "test", "master");
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
@@ -426,7 +427,7 @@ namespace Kudu.FunctionalTests
                     Git.Commit(repo.PhysicalPath, "Added hello.txt");
                     string helloUrl = appManager.SiteUrl + "/hello.txt";
 
-                    appManager.GitDeploy(repo.PhysicalPath);
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
@@ -449,7 +450,7 @@ namespace Kudu.FunctionalTests
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Deploy the app
-                    appManager.GitDeploy(repo.PhysicalPath);
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
 
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                     Assert.Equal(1, results.Count);
@@ -461,7 +462,7 @@ namespace Kudu.FunctionalTests
                     string helloUrl = appManager.SiteUrl + "/hello.txt";
 
                     // Deploy those changes
-                    appManager.GitDeploy(repo.PhysicalPath);
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
 
                     results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                     Assert.Equal(2, results.Count);
@@ -493,7 +494,7 @@ namespace Kudu.FunctionalTests
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Act
-                    appManager.GitDeploy(repo.PhysicalPath);
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                     var files = appManager.ProjectSystem.GetProject().Files.ToList();
 
@@ -520,7 +521,7 @@ namespace Kudu.FunctionalTests
                     repo.Replace("package.json", "express", "MadeUpKuduPackage");
                     Git.Commit(repo.PhysicalPath, "Added fake package to package.json");
                     // Act
-                    appManager.GitDeploy(repo.PhysicalPath);
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
@@ -576,7 +577,7 @@ project = {0}", targetProject));
                     Git.Commit(name, "Updated configuration");
 
                     // Act
-                    appManager.GitDeploy(repo.PhysicalPath);
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert

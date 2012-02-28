@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using Kudu.Core.Deployment;
+using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
 using Xunit;
 using Xunit.Extensions;
@@ -28,7 +29,7 @@ namespace Kudu.FunctionalTests
                     ApplicationManager.Run(randomTestName, appManager =>
                     {
                         // Act
-                        appManager.GitDeploy(repo.PhysicalPath, defaultBranchName);
+                        appManager.AssertGitDeploy(repo.PhysicalPath, defaultBranchName);
                         var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                         // Assert

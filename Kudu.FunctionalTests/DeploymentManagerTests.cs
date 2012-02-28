@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using System.Net.Http;
 using Kudu.Core.Deployment;
+using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
 using Xunit;
 
@@ -44,7 +45,7 @@ namespace Kudu.FunctionalTests
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
-                    appManager.GitDeploy(repo.PhysicalPath);
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     Assert.Equal(1, results.Count);

@@ -6,7 +6,6 @@ using Kudu.Client.Deployment;
 using Kudu.Client.Editor;
 using Kudu.Core.SourceControl;
 using Kudu.SiteManagement;
-using Kudu.Web.Infrastructure;
 
 namespace Kudu.TestHarness
 {
@@ -76,44 +75,18 @@ namespace Kudu.TestHarness
             {
                 action(appManager);
 
-                appManager.DownloadDump(dumpPath);
+                KuduUtils.DownloadDump(appManager.ServiceUrl, dumpPath);
 
                 appManager.Delete();
             }
             catch (Exception ex)
             {
-                appManager.DownloadDump(dumpPath);
+                KuduUtils.DownloadDump(appManager.ServiceUrl, dumpPath);
 
                 Debug.WriteLine(ex.Message);
                 throw;
             }
-        }
-
-        private void DownloadDump(string path)
-        {
-            try
-            {
-                Directory.CreateDirectory(Path.GetDirectoryName(path));
-
-                var client = new HttpClient();
-                var result = client.GetAsync(ServiceUrl + "diag").Result;
-                if (result.IsSuccessStatusCode)
-                {
-                    using (Stream stream = result.Content.ReadAsStreamAsync().Result)
-                    {
-                        using (FileStream fs = File.OpenWrite(path))
-                        {
-                            stream.CopyTo(fs);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("Failed to download dump");
-                Debug.WriteLine(ex.GetBaseException().Message);
-            }
-        }
+        }       
 
         public static ApplicationManager CreateApplication(string applicationName)
         {
