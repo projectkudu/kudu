@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.Net.Http;
 using Kudu.Client.Deployment;
 using Kudu.Client.Editor;
-using Kudu.Core.SourceControl;
+using Kudu.Client.SourceControl;
 using Kudu.SiteManagement;
 
 namespace Kudu.TestHarness
@@ -15,11 +14,12 @@ namespace Kudu.TestHarness
         private readonly Site _site;
         private readonly string _appName;
 
-        private ApplicationManager(ISiteManager siteManager, Site site, string appName)
+        private ApplicationManager(ISiteManager siteManager, Site site, string appName, string gitUrl)
         {
             _siteManager = siteManager;
             _site = site;
             _appName = appName;
+            GitUrl = gitUrl;
         }
 
         public string SiteUrl
@@ -48,18 +48,8 @@ namespace Kudu.TestHarness
 
         public string GitUrl
         {
-            get
-            {
-                return GetCloneUrl(_site, RepositoryType.Git);
-            }
-        }
-
-        public string HgUrl
-        {
-            get
-            {
-                return GetCloneUrl(_site, RepositoryType.Mercurial);
-            }
+            get;
+            private set;
         }
 
         private void Delete()
@@ -86,7 +76,7 @@ namespace Kudu.TestHarness
                 Debug.WriteLine(ex.Message);
                 throw;
             }
-        }       
+        }
 
         public static ApplicationManager CreateApplication(string applicationName)
         {
@@ -104,18 +94,25 @@ namespace Kudu.TestHarness
 
             Site site = siteManager.CreateSite(applicationName);
 
-            return new ApplicationManager(siteManager, site, applicationName)
+            string gitUrl = null;
+            try
+            {
+                var repositoryManager = new RemoteRepositoryManager(site.ServiceUrl + "live/scm");
+                var repositoryInfo = repositoryManager.GetRepositoryInfo().Result;
+                gitUrl = repositoryInfo.GitUrl.ToString();
+            }
+            catch
+            {
+                gitUrl = site.ServiceUrl + "git";
+            }
+
+            return new ApplicationManager(siteManager, site, applicationName, gitUrl)
             {
                 SiteUrl = site.SiteUrl,
                 ServiceUrl = site.ServiceUrl,
                 DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "deployments"),
                 ProjectSystem = new RemoteProjectSystem(site.ServiceUrl + "live/files")
             };
-        }
-
-        private string GetCloneUrl(Site site, Kudu.Core.SourceControl.RepositoryType type)
-        {
-            return site.ServiceUrl + (type == RepositoryType.Git ? "git" : "hg");
         }
 
         private static SiteManager GetSiteManager(DefaultPathResolver pathResolver)

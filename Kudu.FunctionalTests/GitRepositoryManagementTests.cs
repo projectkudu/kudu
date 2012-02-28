@@ -107,7 +107,7 @@ namespace Kudu.FunctionalTests
                 });
             }
         }
-        
+
         [Fact]
         public void PushRepositoryWithNoDeployableProjectsTreatsAsWebsite()
         {
@@ -420,7 +420,7 @@ namespace Kudu.FunctionalTests
             ApplicationManager.Run(appName, appManager =>
             {
                 // Act
-                using (var repo = Git.Clone(repositoryName, appManager.GitUrl, true))
+                using (var repo = Git.Clone(repositoryName, appManager.GitUrl, createDirectory: true))
                 {
                     // Add a file
                     repo.WriteFile("hello.txt", "Wow");

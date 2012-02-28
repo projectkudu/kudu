@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text.RegularExpressions;
 using Kudu.Client.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
@@ -74,7 +75,7 @@ namespace Kudu.TestHarness
 
         public static TestRepository Clone(string repositoryPath, string source, bool createDirectory = false)
         {
-            //Gets full path in case path is relative 
+            // Gets full path in case path is relative 
             repositoryPath = GetRepositoryPath(repositoryPath);
 
             // Make sure the directory is empty
@@ -83,10 +84,12 @@ namespace Kudu.TestHarness
 
             if (createDirectory)
             {
-                gitExe.Execute("clone \"{0}\"", source);
-                // TODO: need to update this path once issue with clonning
-                // and sub directory created with "git" name is solved
-                return new TestRepository(Path.Combine(repositoryPath, "git"));
+                var result = gitExe.Execute("clone \"{0}\"", source);
+
+                // Cloning into {0}...
+                var m = Regex.Match(result.Item1, @"Cloning\s+into\s+(\w+).*", RegexOptions.IgnoreCase);
+                string folderName = m.Groups[1].Value;
+                return new TestRepository(Path.Combine(repositoryPath, folderName));
             }
 
             gitExe.Execute("clone \"{0}\" .", source);
