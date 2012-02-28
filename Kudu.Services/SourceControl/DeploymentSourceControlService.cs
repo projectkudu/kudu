@@ -1,10 +1,10 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Net.Http;
 using System.ServiceModel;
 using System.ServiceModel.Web;
 using Kudu.Core.SourceControl;
 using Kudu.Services.Infrastructure;
-using System;
 
 namespace Kudu.Services.SourceControl
 {
