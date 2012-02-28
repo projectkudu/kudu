@@ -9,7 +9,7 @@ namespace Kudu.Services.Web
         {
             get
             {
-                return HttpRuntime.AppDomainAppVirtualPath.Trim('/');
+                return Environment.GetEnvironmentVariable("APP_POOL_ID");
             }
         }
 

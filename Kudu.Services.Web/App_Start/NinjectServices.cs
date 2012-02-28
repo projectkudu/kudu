@@ -149,12 +149,12 @@ namespace Kudu.Services.Web.App_Start
                                          .InRequestScope();
 
             // Command line
-            kernel.Bind<ICommandExecutor>().ToMethod(context => GetComandExecutor(environment, context))
-                                           .InRequestScope();
+            //kernel.Bind<ICommandExecutor>().ToMethod(context => GetComandExecutor(environment, context))
+            //                               .InRequestScope();
 
             // Source control
-            kernel.Bind<IRepository>().ToMethod(context => GetSourceControlRepository(environment));
-            kernel.Bind<IClonableRepository>().ToMethod(context => (IClonableRepository)GetDevelopmentRepositoryManager(environment));
+            // kernel.Bind<IRepository>().ToMethod(context => GetSourceControlRepository(environment));
+            //kernel.Bind<IClonableRepository>().ToMethod(context => (IClonableRepository)GetDevelopmentRepositoryManager(environment));
         }
 
         private static IDeploymentManagerFactory GetDeploymentManagerFactory(IEnvironment environment,
@@ -183,54 +183,54 @@ namespace Kudu.Services.Web.App_Start
             });
         }
 
-        private static IRepositoryManager GetDevelopmentRepositoryManager(IEnvironment environment)
-        {
-            EnsureDevelopmentRepository(environment);
+        //private static IRepositoryManager GetDevelopmentRepositoryManager(IEnvironment environment)
+        //{
+        //    EnsureDevelopmentRepository(environment);
 
-            return new RepositoryManager(environment.RepositoryPath);
-        }
+        //    return new RepositoryManager(environment.RepositoryPath);
+        //}
 
-        private static IRepository GetSourceControlRepository(IEnvironment environment)
-        {
-            return GetDevelopmentRepositoryManager(environment).GetRepository();
-        }
+        //private static IRepository GetSourceControlRepository(IEnvironment environment)
+        //{
+        //    return GetDevelopmentRepositoryManager(environment).GetRepository();
+        //}
 
         private static IProjectSystem GetEditorProjectSystem(IEnvironment environment, IContext context)
         {
-            if (IsDevSiteRequest(context))
-            {
-                EnsureDevelopmentRepository(environment);
-                return new ProjectSystem(environment.RepositoryPath);
-            }
+            //if (IsDevSiteRequest(context))
+            //{
+            //    EnsureDevelopmentRepository(environment);
+            //    return new ProjectSystem(environment.RepositoryPath);
+            //}
 
             return new ProjectSystem(environment.DeploymentTargetPath);
         }
 
-        private static CommandExecutor GetComandExecutor(IEnvironment environment, IContext context)
-        {
-            var fileSystem = context.Kernel.Get<IFileSystem>();
+        //private static CommandExecutor GetComandExecutor(IEnvironment environment, IContext context)
+        //{
+        //    var fileSystem = context.Kernel.Get<IFileSystem>();
 
-            if (IsDevSiteRequest(context))
-            {
-                EnsureDevelopmentRepository(environment);
+        //    if (IsDevSiteRequest(context))
+        //    {
+        //        EnsureDevelopmentRepository(environment);
 
-                if (_devExecutor == null)
-                {
-                    _devExecutor = new CommandExecutor(fileSystem, environment.RepositoryPath);
-                    SubscribeForCommandEvents<DevCommandStatusHandler>(_devExecutor);
-                }
+        //        if (_devExecutor == null)
+        //        {
+        //            _devExecutor = new CommandExecutor(fileSystem, environment.RepositoryPath);
+        //            SubscribeForCommandEvents<DevCommandStatusHandler>(_devExecutor);
+        //        }
 
-                return _devExecutor;
-            }
+        //        return _devExecutor;
+        //    }
 
-            if (_liveExecutor == null)
-            {
-                _liveExecutor = new CommandExecutor(fileSystem, environment.DeploymentTargetPath);
-                SubscribeForCommandEvents<LiveCommandStatusHandler>(_liveExecutor);
-            }
+        //    if (_liveExecutor == null)
+        //    {
+        //        _liveExecutor = new CommandExecutor(fileSystem, environment.DeploymentTargetPath);
+        //        SubscribeForCommandEvents<LiveCommandStatusHandler>(_liveExecutor);
+        //    }
 
-            return _liveExecutor;
-        }
+        //    return _liveExecutor;
+        //}
 
         private static string GetSettingsPath(IEnvironment environment)
         {
@@ -270,28 +270,28 @@ namespace Kudu.Services.Web.App_Start
             return Path.Combine(path, site, Constants.WebRoot);
         }
 
-        private static bool IsDevSiteRequest(IContext context)
-        {
-            var httpContext = context.Kernel.Get<HttpContextBase>();
-            return !httpContext.Request.RequestContext.RouteData.Values.ContainsKey("live");
-        }
+        //private static bool IsDevSiteRequest(IContext context)
+        //{
+        //    var httpContext = context.Kernel.Get<HttpContextBase>();
+        //    return !httpContext.Request.RequestContext.RouteData.Values.ContainsKey("live");
+        //}
 
-        private static void EnsureDevelopmentRepository(IEnvironment environment)
-        {
-            if (System.String.IsNullOrEmpty(environment.RepositoryPath))
-            {
-                throw new System.InvalidOperationException("Developer mode not enabled for this site");
-            }
-        }
+        //private static void EnsureDevelopmentRepository(IEnvironment environment)
+        //{
+        //    if (System.String.IsNullOrEmpty(environment.RepositoryPath))
+        //    {
+        //        throw new System.InvalidOperationException("Developer mode not enabled for this site");
+        //    }
+        //}
 
-        private static void SubscribeForCommandEvents<T>(ICommandExecutor commandExecutor) where T : PersistentConnection
-        {
-            IConnection connection = Connection.GetConnection<T>();
-            commandExecutor.CommandEvent += commandEvent =>
-            {
-                connection.Broadcast(commandEvent);
-            };
-        }
+        //private static void SubscribeForCommandEvents<T>(ICommandExecutor commandExecutor) where T : PersistentConnection
+        //{
+        //    IConnection connection = Connection.GetConnection<T>();
+        //    commandExecutor.CommandEvent += commandEvent =>
+        //    {
+        //        connection.Broadcast(commandEvent);
+        //    };
+        //}
 
         private static void SubscribeForDeploymentEvents(IDeploymentManager deploymentManager)
         {

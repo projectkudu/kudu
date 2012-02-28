@@ -7,7 +7,7 @@ using Kudu.Core.SourceControl.Hg;
 
 namespace Kudu.Core.SourceControl
 {
-    public class RepositoryManager : IRepositoryManager, IClonableRepository
+    public class RepositoryManager : IRepositoryManager
     {
         private readonly string _path;
 
@@ -41,34 +41,6 @@ namespace Kudu.Core.SourceControl
                 default:
                     throw new InvalidOperationException("Unsupported repository type.");
             }
-        }
-
-        public void CloneRepository(string source, RepositoryType type)
-        {
-            switch (type)
-            {
-                case RepositoryType.Git:
-                    new GitExeRepository(_path).Clone(source);
-                    break;
-                case RepositoryType.Mercurial:
-                    new HgRepository(_path).Clone(source);
-                    break;
-            }
-        }
-
-        public IRepository GetRepository()
-        {
-            RepositoryType type = GetRepositoryType();
-
-            switch (type)
-            {
-                case RepositoryType.Git:
-                    return new GitExeRepository(_path);
-                case RepositoryType.Mercurial:
-                    return new HgRepository(_path);
-            }
-
-            return null;
         }
 
         public void Delete()

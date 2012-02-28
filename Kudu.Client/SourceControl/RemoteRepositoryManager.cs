@@ -1,47 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Http;
+﻿using System.Threading.Tasks;
 using Kudu.Client.Infrastructure;
 using Kudu.Core.SourceControl;
 
 namespace Kudu.Client.SourceControl
 {
-    public class RemoteRepositoryManager : KuduRemoteClientBase, IRepositoryManager
+    public class RemoteRepositoryManager : KuduRemoteClientBase
     {
         public RemoteRepositoryManager(string serviceUrl)
             :base(serviceUrl)
         {
+
         }
 
-        public void CreateRepository(RepositoryType type)
+        public Task<RepositoryInfo> GetRepositoryInfo()
         {
-            _client.PostAsync("create", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("type", type.ToString())))
-                   .Result
-                   .EnsureSuccessStatusCode();
-        }
-
-        public RepositoryType GetRepositoryType()
-        {
-            return _client.GetJson<RepositoryType>("kind");
-        }
-
-        public void Delete()
-        {
-            _client.PostAsync("delete", new StringContent(String.Empty))
-                   .Result
-                   .EnsureSuccessStatusCode();
-        }
-
-        public void CloneRepository(RepositoryType type)
-        {
-            _client.PostAsync("clone", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("type", type.ToString())))
-                   .Result
-                   .EnsureSuccessStatusCode();
-        }
-
-        public IRepository GetRepository()
-        {
-            return new RemoteRepository(_client.BaseAddress.OriginalString);
+            return _client.GetJsonAsync<RepositoryInfo>("info");
         }
     }
 }

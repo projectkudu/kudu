@@ -17,8 +17,6 @@ namespace Kudu.Web.Models
             SiteUrl = application.SiteUrl;
             ServiceUrl = application.ServiceUrl;
             DeveloperSiteUrl = application.DeveloperSiteUrl;
-            GitUrl = GetCloneUrl(application, RepositoryType.Git);
-            HgUrl = GetCloneUrl(application, RepositoryType.Mercurial);
         }
 
         [Required]
@@ -26,29 +24,38 @@ namespace Kudu.Web.Models
         public string SiteUrl { get; set; }
         public string ServiceUrl { get; set; }
         public string DeveloperSiteUrl { get; set; }
-        public RepositoryType RepositoryType { get; set; }
-        public string GitUrl { get; set; }
-        public string HgUrl { get; set; }
+        public RepositoryInfo RepositoryInfo { get; set; }
+        
+        public string GitUrl
+        {
+            get
+            {
+                if (RepositoryInfo == null)
+                {
+                    return null;
+                }
+                return RepositoryInfo.GitUrl.ToString();
+            }
+        }
+
         public IList<DeployResult> Deployments { get; set; }
 
         public string CloneUrl
         {
             get
             {
-                switch (RepositoryType)
+                if (RepositoryInfo == null)
+                {
+                    return null;
+                }
+
+                switch (RepositoryInfo.Type)
                 {
                     case RepositoryType.Git:
                         return GitUrl;
-                    case RepositoryType.Mercurial:
-                        return HgUrl;
                 }
                 return null;
             }
-        }
-
-        private string GetCloneUrl(Application application, RepositoryType type)
-        {
-            return application.ServiceUrl + (type == RepositoryType.Git ? "git" : "hg");
         }
     }
 }

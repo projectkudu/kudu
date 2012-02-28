@@ -2,9 +2,6 @@
 {
     public interface IRepositoryManager
     {
-        void CreateRepository(RepositoryType type);
-        IRepository GetRepository();
         RepositoryType GetRepositoryType();
-        void Delete();
     }
 }

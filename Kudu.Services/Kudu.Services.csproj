@@ -114,8 +114,6 @@
     <Compile Include="Settings\ConnectionStringsService.cs" />
     <Compile Include="Settings\AppSettingsService.cs" />
     <Compile Include="SourceControl\DeploymentSourceControlService.cs" />
-    <Compile Include="SourceControl\CloneService.cs" />
-    <Compile Include="SourceControl\SourceControlService.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

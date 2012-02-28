@@ -5,7 +5,6 @@ using System.ServiceModel;
 using System.ServiceModel.Activation;
 using System.Web.Routing;
 using Kudu.Services.Authorization;
-using Kudu.Services.Commands;
 using Kudu.Services.Deployment;
 using Kudu.Services.Documents;
 using Kudu.Services.GitServer;
@@ -30,8 +29,8 @@ namespace Kudu.Services
             var factory = GetFactory();
 
             routes.MapConnection<DeploymentStatusHandler>("DeploymentStatus", "deployments/status/{*operation}");
-            routes.MapConnection<LiveCommandStatusHandler>("LiveCommandStatus", "live/command/status/{*operation}");
-            routes.MapConnection<DevCommandStatusHandler>("DevCommandStatus", "dev/command/status/{*operation}");
+            // routes.MapConnection<LiveCommandStatusHandler>("LiveCommandStatus", "live/command/status/{*operation}");
+            // routes.MapConnection<DevCommandStatusHandler>("DevCommandStatus", "dev/command/status/{*operation}");
 
             // Source control servers
             // Mercurial
@@ -43,22 +42,20 @@ namespace Kudu.Services
 
 
             // Source control interaction
-            MapServiceRoute<SourceControlService>("scm", factory);
             MapServiceRoute<DeploymentSourceControlService>("live/scm", factory);
-            MapServiceRoute<CloneService>("dev/scm", factory);
 
             // Deployment
             MapServiceRoute<DeploymentService>("deployments", factory);
 
             // Files            
-            MapServiceRoute<FilesService>("dev/files", factory);
+            // MapServiceRoute<FilesService>("dev/files", factory);
             var liveFilesRoute = MapServiceRoute<FilesService>("live/files", factory);
             liveFilesRoute.Defaults = new RouteValueDictionary(new { live = true });
 
             // Commands
-            MapServiceRoute<CommandService>("dev/command", factory);
-            var liveCommandRoute = MapServiceRoute<CommandService>("live/command", factory);
-            liveCommandRoute.Defaults = new RouteValueDictionary(new { live = true });
+            // MapServiceRoute<CommandService>("dev/command", factory);
+            // var liveCommandRoute = MapServiceRoute<CommandService>("live/command", factory);
+            // liveCommandRoute.Defaults = new RouteValueDictionary(new { live = true });
 
             if (AppSettings.SettingsEnabled)
             {

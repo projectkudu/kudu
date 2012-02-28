@@ -1,10 +1,10 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 using System.Web.Mvc;
 using Kudu.Client.Infrastructure;
-using Kudu.Client.SourceControl;
-using Kudu.Core.SourceControl;
+using Kudu.Contracts.Infrastructure;
 using Kudu.SiteManagement;
 using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
@@ -41,21 +41,26 @@ namespace Kudu.Web.Controllers
             return View(applications.ToList().Select(a => new ApplicationViewModel(a)));
         }
 
-        public ActionResult Settings(string slug)
+        public Task<ActionResult> Settings(string slug)
         {
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             if (application != null)
             {
-                var appViewModel = new ApplicationViewModel(application);
-                appViewModel.RepositoryType = GetRepositoryManager(application).GetRepositoryType();
+                ICredentials credentials = _credentialProvider.GetCredentials();
+                return application.GetRepositoryInfo(credentials).Then(repositoryInfo =>
+                {
+                    var appViewModel = new ApplicationViewModel(application);
+                    appViewModel.RepositoryInfo = repositoryInfo;
 
-                ViewBag.slug = slug;
-                ViewBag.tab = "settings";
-                ViewBag.appName = appViewModel.Name;
+                    ViewBag.slug = slug;
+                    ViewBag.tab = "settings";
+                    ViewBag.appName = appViewModel.Name;
 
-                return View(appViewModel);
+                    return (ActionResult)View(appViewModel);
+                });
             }
-            return HttpNotFound();
+
+            return Task.Factory.StartNew(() => (ActionResult)HttpNotFound());
         }
 
         //
@@ -97,12 +102,6 @@ namespace Kudu.Web.Controllers
                         UniqueId = Guid.NewGuid()
                     };
 
-                    if (appViewModel.RepositoryType != RepositoryType.None)
-                    {
-                        IRepositoryManager repositoryManager = GetRepositoryManager(app);
-                        repositoryManager.CreateRepository(appViewModel.RepositoryType);
-                    }
-
                     db.Applications.Add(app);
                     db.SaveChanges();
 
@@ -122,105 +121,105 @@ namespace Kudu.Web.Controllers
             return View(appViewModel);
         }
 
-        [ActionName("editor")]
-        public ActionResult Editor(string slug)
-        {
-            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
-            if (application == null)
-            {
-                return HttpNotFound();
-            }
+        //[ActionName("editor")]
+        //public ActionResult Editor(string slug)
+        //{
+        //    Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
+        //    if (application == null)
+        //    {
+        //        return HttpNotFound();
+        //    }
 
-            var appViewModel = new ApplicationViewModel(application);
-            var repositoryManager = GetRepositoryManager(application);
-            var siteState = (DeveloperSiteState)application.DeveloperSiteState;
-            RepositoryType repositoryType = repositoryManager.GetRepositoryType();
+        //    var appViewModel = new ApplicationViewModel(application);
+        //    var repositoryManager = GetRepositoryManager(application);
+        //    var siteState = (DeveloperSiteState)application.DeveloperSiteState;
+        //    RepositoryType repositoryType = repositoryManager.GetRepositoryType();
 
-            if (application.DeveloperSiteUrl == null)
-            {
-                if (repositoryType != RepositoryType.None &&
-                    siteState == DeveloperSiteState.None)
-                {
-                    // Set this flag so we know that we're in the state where we can
-                    // create the developer site.
-                    ViewBag.Clone = true;
-                }
+        //    if (application.DeveloperSiteUrl == null)
+        //    {
+        //        if (repositoryType != RepositoryType.None &&
+        //            siteState == DeveloperSiteState.None)
+        //        {
+        //            // Set this flag so we know that we're in the state where we can
+        //            // create the developer site.
+        //            ViewBag.Clone = true;
+        //        }
 
-                appViewModel.RepositoryType = RepositoryType.None;
-            }
-            else
-            {
-                appViewModel.RepositoryType = repositoryType;
-            }
+        //        appViewModel.RepositoryType = RepositoryType.None;
+        //    }
+        //    else
+        //    {
+        //        appViewModel.RepositoryType = repositoryType;
+        //    }
 
-            return View(appViewModel);
-        }
+        //    return View(appViewModel);
+        //}
 
-        [HttpPost]
-        [ActionName("set-webroot")]
-        public ActionResult SetWebRoot(string slug, string projectPath)
-        {
-            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
-            if (application == null)
-            {
-                return HttpNotFound();
-            }
+        //[HttpPost]
+        //[ActionName("set-webroot")]
+        //public ActionResult SetWebRoot(string slug, string projectPath)
+        //{
+        //    Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
+        //    if (application == null)
+        //    {
+        //        return HttpNotFound();
+        //    }
 
-            _siteManager.SetDeveloperSiteWebRoot(application.Name, Path.GetDirectoryName(projectPath));
+        //    _siteManager.SetDeveloperSiteWebRoot(application.Name, Path.GetDirectoryName(projectPath));
 
-            return new EmptyResult();
-        }
+        //    return new EmptyResult();
+        //}
 
-        [HttpPost]
-        [ActionName("create-dev-site")]
-        public ActionResult CreateDeveloperSite(string slug)
-        {
-            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
-            if (application == null)
-            {
-                return HttpNotFound();
-            }
+        //[HttpPost]
+        //[ActionName("create-dev-site")]
+        //public ActionResult CreateDeveloperSite(string slug)
+        //{
+        //    Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
+        //    if (application == null)
+        //    {
+        //        return HttpNotFound();
+        //    }
 
-            IRepositoryManager repositoryManager = GetRepositoryManager(application);
-            RepositoryType repositoryType = repositoryManager.GetRepositoryType();
-            var state = (DeveloperSiteState)application.DeveloperSiteState;
+        //    IRepositoryManager repositoryManager = GetRepositoryManager(application);
+        //    RepositoryType repositoryType = repositoryManager.GetRepositoryType();
+        //    var state = (DeveloperSiteState)application.DeveloperSiteState;
 
-            // Do nothing if the site is still being created
-            if (state != DeveloperSiteState.None ||
-                repositoryType == RepositoryType.None)
-            {
-                return new EmptyResult();
-            }
+        //    // Do nothing if the site is still being created
+        //    if (state != DeveloperSiteState.None ||
+        //        repositoryType == RepositoryType.None)
+        //    {
+        //        return new EmptyResult();
+        //    }
 
-            try
-            {
-                application.DeveloperSiteState = (int)DeveloperSiteState.Creating;
-                db.SaveChanges();
+        //    try
+        //    {
+        //        application.DeveloperSiteState = (int)DeveloperSiteState.Creating;
+        //        db.SaveChanges();
 
-                string developerSiteUrl;
-                if (_siteManager.TryCreateDeveloperSite(slug, out developerSiteUrl))
-                {
-                    // Clone the repository to the developer site
-                    var devRepositoryManager = new RemoteRepositoryManager(application.ServiceUrl + "dev/scm");
-                    devRepositoryManager.Credentials = _credentialProvider.GetCredentials();
-                    devRepositoryManager.CloneRepository(repositoryType);
+        //        string developerSiteUrl;
+        //        if (_siteManager.TryCreateDeveloperSite(slug, out developerSiteUrl))
+        //        {
+        //            // Clone the repository to the developer site
+        //            var devRepositoryManager = new RemoteRepositoryManager(application.ServiceUrl + "dev/scm");
+        //            devRepositoryManager.Credentials = _credentialProvider.GetCredentials();
+        //            devRepositoryManager.CloneRepository(repositoryType);
 
-                    application.DeveloperSiteUrl = developerSiteUrl;
-                    db.SaveChanges();
+        //            application.DeveloperSiteUrl = developerSiteUrl;
+        //            db.SaveChanges();
 
-                    return Json(developerSiteUrl);
-                }
-            }
-            catch
-            {
-                application.DeveloperSiteUrl = null;
-                application.DeveloperSiteState = (int)DeveloperSiteState.None;
-                db.SaveChanges();
-                throw;
-            }
+        //            return Json(developerSiteUrl);
+        //        }
+        //    }
+        //    catch
+        //    {
+        //        application.DeveloperSiteUrl = null;
+        //        application.DeveloperSiteState = (int)DeveloperSiteState.None;
+        //        db.SaveChanges();
+        //        throw;
+        //    }
 
-            return new EmptyResult();
-        }
+        //    return new EmptyResult();
+        //}
 
         //
         // POST: /Application/Delete/5
@@ -231,15 +230,6 @@ namespace Kudu.Web.Controllers
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             if (application != null)
             {
-                try
-                {
-                    IRepositoryManager repositoryManager = GetRepositoryManager(application);
-                    repositoryManager.Delete();
-                }
-                catch
-                {
-                }
-
                 _siteManager.DeleteSite(slug);
 
                 db.Applications.Remove(application);
@@ -255,13 +245,6 @@ namespace Kudu.Web.Controllers
         {
             db.Dispose();
             base.Dispose(disposing);
-        }
-
-        private IRepositoryManager GetRepositoryManager(Application application)
-        {
-            var repositoryManager = new RemoteRepositoryManager(application.ServiceUrl + "live/scm");
-            repositoryManager.Credentials = _credentialProvider.GetCredentials();
-            return repositoryManager;
         }
     }
 }

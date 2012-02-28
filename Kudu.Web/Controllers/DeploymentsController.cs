@@ -1,11 +1,11 @@
 ﻿using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using System.Web.Mvc;
 using Kudu.Client.Deployment;
 using Kudu.Client.Infrastructure;
-using Kudu.Client.SourceControl;
 using Kudu.Contracts.Infrastructure;
-using Kudu.Core.SourceControl;
+using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
 using Mvc.Async;
 
@@ -33,18 +33,23 @@ namespace Kudu.Web.Controllers
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             if (application != null)
             {
-                var deploymentManager = new RemoteDeploymentManager(application.ServiceUrl + "/deployments");
-
+                ICredentials credentials = _credentialProvider.GetCredentials();
+                RemoteDeploymentManager deploymentManager = application.GetDeploymentManager(credentials);
+                
+                // TODO: Do this in parallel
                 return deploymentManager.GetResultsAsync().Then(results =>
                 {
-                    var appViewModel = new ApplicationViewModel(application);
-                    appViewModel.RepositoryType = GetRepositoryManager(application).GetRepositoryType();
-                    appViewModel.Deployments = results.ToList();
+                    return application.GetRepositoryInfo(credentials).Then(repositoryInfo =>
+                    {
+                        var appViewModel = new ApplicationViewModel(application);
+                        appViewModel.RepositoryInfo = repositoryInfo;
+                        appViewModel.Deployments = results.ToList();
 
-                    ViewBag.slug = slug;
-                    ViewBag.appName = appViewModel.Name;
+                        ViewBag.slug = slug;
+                        ViewBag.appName = appViewModel.Name;
 
-                    return (ActionResult)View(appViewModel);
+                        return (ActionResult)View(appViewModel);
+                    });
                 });
             }
 
@@ -56,7 +61,8 @@ namespace Kudu.Web.Controllers
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             if (application != null)
             {
-                var deploymentManager = new RemoteDeploymentManager(application.ServiceUrl + "/deployments");
+                ICredentials credentials = _credentialProvider.GetCredentials();
+                RemoteDeploymentManager deploymentManager = application.GetDeploymentManager(credentials);
 
                 return deploymentManager.DeployAsync(id)
                                         .ContinueWith(task => (ActionResult)RedirectToAction("Index", new { slug = slug }));
@@ -70,7 +76,8 @@ namespace Kudu.Web.Controllers
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             if (application != null)
             {
-                var deploymentManager = new RemoteDeploymentManager(application.ServiceUrl + "/deployments");
+                ICredentials credentials = _credentialProvider.GetCredentials();
+                RemoteDeploymentManager deploymentManager = application.GetDeploymentManager(credentials);
 
                 return deploymentManager.GetLogEntriesAsync(id).Then(entries =>
                 {
@@ -90,7 +97,8 @@ namespace Kudu.Web.Controllers
             Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
             if (application != null)
             {
-                var deploymentManager = new RemoteDeploymentManager(application.ServiceUrl + "/deployments");
+                ICredentials credentials = _credentialProvider.GetCredentials();
+                RemoteDeploymentManager deploymentManager = application.GetDeploymentManager(credentials);
 
                 return deploymentManager.GetLogEntryDetailsAsync(id, logId).Then(entries =>
                 {
@@ -104,13 +112,6 @@ namespace Kudu.Web.Controllers
             }
 
             return Task.Factory.StartNew(() => (ActionResult)HttpNotFound());
-        }
-
-        private IRepositoryManager GetRepositoryManager(Application application)
-        {
-            var repositoryManager = new RemoteRepositoryManager(application.ServiceUrl + "live/scm");
-            repositoryManager.Credentials = _credentialProvider.GetCredentials();
-            return repositoryManager;
         }
     }
 }
