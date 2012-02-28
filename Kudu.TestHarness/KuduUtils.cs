@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.Net;
 using System.Net.Http;
-using System.Threading;
 using System.Xml.Linq;
-using Ionic.Zip;
 
 namespace Kudu.TestHarness
 {
