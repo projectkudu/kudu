@@ -249,13 +249,12 @@ namespace Kudu.Services.Web.App_Start
             string tempPath = Path.Combine(Path.GetTempPath(), "kudu", System.Guid.NewGuid().ToString());
             string deploymentTempPath = Path.Combine(tempPath, Constants.RepositoryPath);
 
-            return new Environment(site,
-                                   root,
-                                   deploymentRepositoryPath,
-                                   tempPath,
-                                   () => deploymentRepositoryPath,
-                                   () => ResolveRepositoryPath(site),
-                                   deployPath,
+            return new Environment(site, 
+                                   root, 
+                                   tempPath, 
+                                   () => deploymentRepositoryPath, 
+                                   () => ResolveRepositoryPath(site), 
+                                   deployPath, 
                                    deployCachePath);
         }
 
