@@ -8,23 +8,20 @@ namespace Kudu.Core
     {
         private readonly string _deployPath;
         private readonly string _deployCachePath;
-        private readonly string _stableDeploymentRepositoryPath;
         private readonly string _tempPath;
         private readonly Func<string> _deploymentRepositoryPathResolver;
         private readonly Func<string> _repositoryPathResolver;
 
-        public Environment(string appName,
-                           string applicationRootPath,
-                           string stableDeploymentRepositoryPath,
-                           string tempPath,
-                           Func<string> deploymentRepositoryPathResolver,
-                           Func<string> repositoryPathResolver,
-                           string deployPath,
+        public Environment(string appName, 
+                           string applicationRootPath, 
+                           string tempPath, 
+                           Func<string> deploymentRepositoryPathResolver, 
+                           Func<string> repositoryPathResolver, 
+                           string deployPath, 
                            string deployCachePath)
         {
             AppName = appName;
             ApplicationRootPath = applicationRootPath;
-            _stableDeploymentRepositoryPath = stableDeploymentRepositoryPath;
             _tempPath = tempPath;
             _deploymentRepositoryPathResolver = deploymentRepositoryPathResolver;
             _repositoryPathResolver = repositoryPathResolver;
@@ -75,15 +72,6 @@ namespace Kudu.Core
             }
         }
 
-        public string DeploymentRepositoryTargetPath
-        {
-            get
-            {
-                FileSystemHelpers.EnsureDirectory(_stableDeploymentRepositoryPath);
-                return _stableDeploymentRepositoryPath;
-            }
-        }
-
         public string ApplicationRootPath
         {
             get;
@@ -102,14 +90,6 @@ namespace Kudu.Core
         {
             get;
             private set;
-        }
-
-        public RepositoryType RepositoryType
-        {
-            get
-            {
-                return RepositoryManager.GetRepositoryType(DeploymentRepositoryTargetPath);
-            }
         }
     }
 }
