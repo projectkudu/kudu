@@ -67,3 +67,17 @@ p em {
     -o-text-overflow: ellipsis;  
     -moz-binding: url('assets/xml/ellipsis.xml#ellipsis');  
 } 
+
+#log {
+    padding-left: 5px;
+    margin-left: 5px;
+}
+
+#log li {
+    list-style-type: none;
+    margin: 5px;
+}
+
+#log li i {
+    margin-right: 5px;
+}

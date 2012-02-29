@@ -14,10 +14,22 @@
     return;
 }
 
-<ul>
+<ul id="log">
 @{ var index = 0; }
 @foreach (var log in Model)
 {
+    string icon = "icon-ok";
+
+    switch (log.Type)
+    {
+        case LogEntryType.Warning:
+            icon = "icon-info-sign";
+            break;
+        case LogEntryType.Error:
+            icon = "icon-remove";
+            break;
+    }
+    
     <li>
     @if (verbose)
     {
@@ -25,6 +37,7 @@
     }
     else
     {
+        <i class="@icon"></i>
         @log.LogTime <span>@log.Message </span>
     }
     @if (!verbose && index == 1)
