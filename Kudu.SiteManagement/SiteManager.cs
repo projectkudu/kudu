@@ -13,10 +13,19 @@ namespace Kudu.SiteManagement
         private static Random portNumberGenRnd = new Random((int)DateTime.Now.Ticks);
 
         private readonly IPathResolver _pathResolver;
+        private readonly bool _traceFailedRequests;
+        private readonly string _logPath;
 
         public SiteManager(IPathResolver pathResolver)
+            : this(pathResolver, traceFailedRequests: false, logPath: null)
         {
+        }
+
+        public SiteManager(IPathResolver pathResolver, bool traceFailedRequests, string logPath)
+        {
+            _logPath = logPath;
             _pathResolver = pathResolver;
+            _traceFailedRequests = traceFailedRequests;
         }
 
         public Site CreateSite(string applicationName)
@@ -214,7 +223,7 @@ namespace Kudu.SiteManagement
             var icacls = new Executable(@"C:\Windows\System32\icacls.exe", Directory.GetCurrentDirectory());
 
             string applicationPath = _pathResolver.GetApplicationPath(appName);
-            
+
             try
             {
                 // Give full control to the app folder (we can make it minimal later)
@@ -313,6 +322,14 @@ namespace Kudu.SiteManagement
             int sitePort = GetRandomPort(iis);
             var site = iis.Sites.Add(siteName, siteRoot, sitePort);
             site.ApplicationDefaults.ApplicationPoolName = pool.Name;
+
+            if (_traceFailedRequests)
+            {
+                site.TraceFailedRequestsLogging.Enabled = true;
+                string path = Path.Combine(_logPath, applicationName, "Logs");
+                Directory.CreateDirectory(path);
+                site.TraceFailedRequestsLogging.Directory = path;
+            }
 
             return sitePort;
         }

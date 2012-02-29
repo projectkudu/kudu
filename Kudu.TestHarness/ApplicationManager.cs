@@ -117,7 +117,7 @@ namespace Kudu.TestHarness
 
         private static SiteManager GetSiteManager(DefaultPathResolver pathResolver)
         {
-            return new SiteManager(pathResolver);
+            return new SiteManager(pathResolver, traceFailedRequests: true, logPath: PathHelper.TestResultsPath);
         }
     }
 }
