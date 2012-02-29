@@ -70,7 +70,7 @@ namespace Kudu.Services.Deployment
         {
             using (_profiler.Step("DeploymentService.GetDeployResults"))
             {
-                return this.GetResults(request).AsQueryable();
+                return GetResults(request).AsQueryable();
             }
         }
 
