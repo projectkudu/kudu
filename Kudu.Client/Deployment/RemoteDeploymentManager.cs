@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Client.Infrastructure;
@@ -30,9 +29,19 @@ namespace Kudu.Client.Deployment
             }
         }
 
-        public Task<IEnumerable<DeployResult>> GetResultsAsync()
+        public Task<IEnumerable<DeployResult>> GetResultsAsync(int maxItems = -1, bool excludeFailed = false)
         {
-            return _client.GetJsonAsync<IEnumerable<DeployResult>>(String.Empty);
+            string url = "?$orderby=DeployStartTime desc";
+            if (maxItems >= 0)
+            {
+                url += String.Format("&$top={0}", maxItems);
+            }
+            if (excludeFailed)
+            {
+                url += String.Format("&$filter=Status ne {0}", (int)DeployStatus.Failed);
+            }
+
+            return _client.GetJsonAsync<IEnumerable<DeployResult>>(url);
         }
         
         public Task<DeployResult> GetResultAsync(string id)
