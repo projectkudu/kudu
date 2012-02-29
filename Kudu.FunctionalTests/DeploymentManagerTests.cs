@@ -56,6 +56,8 @@ namespace Kudu.FunctionalTests
                     Assert.Equal(DeployStatus.Success, result.Status);
                     Assert.NotNull(result.Url);
                     Assert.NotNull(result.LogUrl);
+                    KuduAssert.VerifyUrl(result.Url);
+                    KuduAssert.VerifyUrl(result.LogUrl);
 
                     var resultAgain = appManager.DeploymentManager.GetResultAsync(result.Id).Result;
                     Assert.Equal("Raquel Almeida", resultAgain.Author);
@@ -64,6 +66,8 @@ namespace Kudu.FunctionalTests
                     Assert.Equal(DeployStatus.Success, resultAgain.Status);
                     Assert.NotNull(resultAgain.Url);
                     Assert.NotNull(resultAgain.LogUrl);
+                    KuduAssert.VerifyUrl(resultAgain.Url);
+                    KuduAssert.VerifyUrl(resultAgain.LogUrl);
 
                     // Redeploy
                     appManager.DeploymentManager.DeployAsync(result.Id).Wait();

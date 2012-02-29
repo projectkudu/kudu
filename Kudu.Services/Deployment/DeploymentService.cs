@@ -72,7 +72,8 @@ namespace Kudu.Services.Deployment
             {
                 foreach (var result in _deploymentManager.GetResults())
                 {
-                    SetUrls(request, result);
+                    result.Url = UriHelper.MakeRelative(request.RequestUri, result.Id);
+                    result.LogUrl = UriHelper.MakeRelative(request.RequestUri, result.Id + "/log");
                     yield return result;
                 }
             }
@@ -137,16 +138,11 @@ namespace Kudu.Services.Deployment
                     throw new HttpResponseException(response);
                 }
 
-                SetUrls(request, result);
+                result.Url = request.RequestUri;
+                result.LogUrl = UriHelper.MakeRelative(request.RequestUri, "log");
 
                 return result;
             }
-        }
-
-        private static void SetUrls(HttpRequestMessage request, DeployResult result)
-        {
-            result.Url = UriHelper.MakeRelative(request.RequestUri, result.Id);
-            result.LogUrl = UriHelper.MakeRelative(request.RequestUri, result.Id + "/log");
         }
     }
 }

@@ -18,6 +18,11 @@ namespace Kudu.FunctionalTests.Infrastructure
             return (T)baseEx;
         }
 
+        public static void VerifyUrl(Uri url, params string[] contents)
+        {
+            VerifyUrl(url.ToString(), contents);
+        }
+
         public static void VerifyUrl(string url, params string[] contents)
         {
             var client = new HttpClient();
