@@ -140,7 +140,7 @@ namespace Kudu.Services.Deployment
             }
         }
 
-        public IEnumerable<DeployResult> GetResults(HttpRequestMessage request)
+        private IEnumerable<DeployResult> GetResults(HttpRequestMessage request)
         {
             foreach (var result in _deploymentManager.GetResults())
             {
