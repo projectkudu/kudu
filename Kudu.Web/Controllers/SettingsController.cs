@@ -1,23 +1,16 @@
 ﻿using System;
-using System.Linq;
-using System.Net;
 using System.Web.Mvc;
-using Kudu.Client.Infrastructure;
-using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
 
 namespace Kudu.Web.Controllers
 {
     public class SettingsController : Controller
     {
-        private readonly IApplicationService _applicationService;
-        private readonly ICredentialProvider _credentialProvider;
+        private readonly ISettingsService _service;
 
-        public SettingsController(IApplicationService applicationService,
-                                  ICredentialProvider credentialProvider)
+        public SettingsController(ISettingsService service)
         {
-            _applicationService = applicationService;
-            _credentialProvider = credentialProvider;
+            _service = service;
         }
 
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
@@ -43,13 +36,6 @@ namespace Kudu.Web.Controllers
         [ActionName("new-app-setting")]
         public ActionResult CreateAppSetting(string slug, string key, string value)
         {
-            IApplication application = _applicationService.GetApplication(slug);
-            
-            if (application == null)
-            {
-                return HttpNotFound();
-            }
-
             try
             {
                 if (String.IsNullOrEmpty(key))
@@ -63,10 +49,7 @@ namespace Kudu.Web.Controllers
 
                 if (ModelState.IsValid)
                 {
-                    ICredentials credentials = _credentialProvider.GetCredentials();
-                    var settingsManager = application.GetSettingsManager(credentials);
-
-                    settingsManager.SetAppSetting(key, value);
+                    _service.SetAppSetting(slug, key, value);
 
                     return RedirectToAction("Index", new { slug });
                 }
@@ -86,13 +69,6 @@ namespace Kudu.Web.Controllers
         [ActionName("new-connection-string")]
         public ActionResult CreateConnectionString(string slug, string name, string connectionString)
         {
-            IApplication application = _applicationService.GetApplication(slug);
-
-            if (application == null)
-            {
-                return HttpNotFound();
-            }
-
             try
             {
                 if (String.IsNullOrEmpty(name))
@@ -106,10 +82,7 @@ namespace Kudu.Web.Controllers
 
                 if (ModelState.IsValid)
                 {
-                    ICredentials credentials = _credentialProvider.GetCredentials();
-                    var settingsManager = application.GetSettingsManager(credentials);
-
-                    settingsManager.SetConnectionString(name, connectionString);
+                    _service.SetConnectionString(slug, name, connectionString);
 
                     return RedirectToAction("Index", new { slug });
                 }
@@ -119,7 +92,7 @@ namespace Kudu.Web.Controllers
             }
 
             SettingsViewModel model = GetSettingsViewModel(slug);
-            ViewBag.appName = model.Application.Name;
+            ViewBag.appName = slug;
             ViewBag.Name = name;
             ViewBag.ConnectionString = connectionString;
 
@@ -130,16 +103,7 @@ namespace Kudu.Web.Controllers
         [ActionName("delete-connection-string")]
         public ActionResult DeleteConnectionString(string slug, string name)
         {
-            IApplication application = _applicationService.GetApplication(slug);
-            if (application == null)
-            {
-                return HttpNotFound();
-            }
-
-            ICredentials credentials = _credentialProvider.GetCredentials();
-            var settingsManager = application.GetSettingsManager(credentials);
-
-            settingsManager.RemoveConnectionString(name);
+            _service.RemoveConnectionString(slug, name);
 
             return RedirectToAction("Index", new { slug });
         }
@@ -148,46 +112,24 @@ namespace Kudu.Web.Controllers
         [ActionName("delete-app-setting")]
         public ActionResult DeleteApplicationSetting(string slug, string key)
         {
-            IApplication application = _applicationService.GetApplication(slug);
-            if (application == null)
-            {
-                return HttpNotFound();
-            }
-
-            ICredentials credentials = _credentialProvider.GetCredentials();
-            var settingsManager = application.GetSettingsManager(credentials);
-            settingsManager.RemoveAppSetting(key);
+            _service.RemoveAppSetting(slug, key);
 
             return RedirectToAction("Index", new { slug });
         }
 
-        private SettingsViewModel GetSettingsViewModel(string slug)
+        private SettingsViewModel GetSettingsViewModel(string name)
         {
-            IApplication application = _applicationService.GetApplication(slug);
-
-            if (application != null)
-            {
-                return GetSettingsViewModel(application);
-            }
-
-            return null;
-        }
-
-        private SettingsViewModel GetSettingsViewModel(IApplication application)
-        {
-            ICredentials credentials = _credentialProvider.GetCredentials();
-            var settingsManager = application.GetSettingsManager(credentials);
-
-            ViewBag.slug = application.Name;
-            ViewBag.appName = application.Name;
+            ViewBag.slug = name;
+            ViewBag.appName = name;
 
             try
             {
+                ISettings settings = _service.GetSettings(name);
+
                 return new SettingsViewModel
                 {
-                    AppSettings = settingsManager.GetAppSettings().ToList(),
-                    ConnectionStrings = settingsManager.GetConnectionStrings().ToList(),
-                    Application = new ApplicationViewModel(application),
+                    AppSettings = settings.AppSettings,
+                    ConnectionStrings = settings.ConnectionStrings,
                     Enabled = true
                 };
             }
@@ -195,7 +137,6 @@ namespace Kudu.Web.Controllers
             {
                 return new SettingsViewModel
                 {
-                    Application = new ApplicationViewModel(application),
                     Enabled = false
                 };
             }

@@ -1,13 +1,11 @@
-﻿using System.Collections.Generic;
-using Kudu.Core.Deployment;
+﻿using System.Collections.Specialized;
 
 namespace Kudu.Web.Models
 {
     public class SettingsViewModel
     {
-        public IEnumerable<DeploymentSetting> AppSettings { get; set; }
-        public IEnumerable<ConnectionStringSetting> ConnectionStrings { get; set; }
-        public ApplicationViewModel Application { get; set; }
+        public NameValueCollection AppSettings { get; set; }
+        public NameValueCollection ConnectionStrings { get; set; }
         public bool Enabled { get; set; }
     }
 }

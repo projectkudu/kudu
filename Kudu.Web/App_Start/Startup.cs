@@ -56,6 +56,11 @@ namespace Kudu.Web.App_Start
         /// <param name="kernel">The kernel.</param>
         private static void RegisterServices(IKernel kernel)
         {
+            SetupKuduServices(kernel);
+        }
+
+        private static void SetupKuduServices(IKernel kernel)
+        {
             string root = HttpRuntime.AppDomainAppPath;
             string serviceSitePath = ConfigurationManager.AppSettings["serviceSitePath"];
             string sitesPath = ConfigurationManager.AppSettings["sitesPath"];
@@ -63,18 +68,23 @@ namespace Kudu.Web.App_Start
             serviceSitePath = Path.Combine(root, serviceSitePath);
             sitesPath = Path.Combine(root, sitesPath);
 
-            kernel.Bind<IPathResolver>().ToConstant(new DefaultPathResolver(serviceSitePath, sitesPath));
+            var pathResolver = new DefaultPathResolver(serviceSitePath, sitesPath);
+
+            kernel.Bind<IPathResolver>().ToConstant(pathResolver);
             kernel.Bind<ISiteManager>().To<SiteManager>().InSingletonScope();
             kernel.Bind<KuduEnvironment>().ToConstant(new KuduEnvironment
             {
                 RunningAgainstLocalKuduService = true,
-                IsAdmin = IdentityHelper.IsAnAdministrator()
+                IsAdmin = IdentityHelper.IsAnAdministrator(),
+                ServiceSitePath = pathResolver.ServiceSitePath,
+                SitesPath = pathResolver.SitesPath
             });
 
             // TODO: Integrate with membership system
             kernel.Bind<ICredentialProvider>().ToConstant(new BasicAuthCredentialProvider("admin", "kudu"));
             kernel.Bind<IApplicationService>().To<ApplicationService>().InRequestScope();
             kernel.Bind<KuduContext>().ToSelf().InRequestScope();
+            kernel.Bind<ISettingsService>().To<SettingsService>();
 
             // Sql CE setup
             Database.SetInitializer(new DropCreateDatabaseIfModelChanges<KuduContext>());

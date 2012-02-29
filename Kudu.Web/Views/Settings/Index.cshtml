@@ -28,7 +28,7 @@
     <h3>Application Settings</h3>
 </div>
 
-@if (Model.AppSettings.Any())
+@if (Model.AppSettings.Count > 0)
 {
 <table id="app-settings" class="table">
     <tr>
@@ -36,15 +36,15 @@
         <th>Value</th>
         <th></th>
     </tr>
-    @foreach (var setting in Model.AppSettings)
+    @foreach (string key in Model.AppSettings)
     {
         <tr>
-            <td>@setting.Key</td>
-            <td>@setting.Value</td>
+            <td>@key</td>
+            <td>@Model.AppSettings[key]</td>
             <td class="actions">
                 @using (Html.BeginForm("delete-app-setting", "settings", new { ViewBag.slug }))
                 {
-                    @Html.Hidden("Key", setting.Key)
+                    @Html.Hidden("Key", key)
                     <input type="submit" class="btn-danger" value="Delete" />
                 }
             </td>
@@ -74,7 +74,7 @@ else
     <h3>Connection Strings (.NET only)</h3>
 </div>
 
-@if (Model.ConnectionStrings.Any())
+@if (Model.ConnectionStrings.Count > 0)
 {
 <table id="connection-strings" class="table"> 
     <tr>
@@ -82,15 +82,15 @@ else
         <th>Connection String</th>
         <th></th>
     </tr>
-    @foreach (var setting in Model.ConnectionStrings)
+    @foreach (string name in Model.ConnectionStrings)
     {
         <tr>
-            <td>@setting.Name</td>
-            <td>@setting.ConnectionString</td>
+            <td>@name</td>
+            <td>@Model.ConnectionStrings[name]</td>
             <td class="actions">
                 @using (Html.BeginForm("delete-connection-string", "settings", new { ViewBag.slug }))
                 {
-                    @Html.Hidden("Name", setting.Name)
+                    @Html.Hidden("Name", name)
                     <input type="submit" class="btn-danger" value="Delete" />
                 }
             </td>
