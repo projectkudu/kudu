@@ -14,7 +14,7 @@
         @foreach (var item in Model)
         {    
             <li>
-                <a href="@Url.Action("settings", new { slug = item.Name.GenerateSlug() })">
+                <a href="@Url.RouteUrl("ApplicationDetails", new { slug = item.Name.GenerateSlug() })">
                     <i class="icon-th-list"></i>
                     @Html.DisplayFor(modelItem => item.Name)
                 </a>

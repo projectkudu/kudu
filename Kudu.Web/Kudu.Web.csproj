@@ -302,7 +302,7 @@
     <Content Include="Views\Application\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Views\Application\Settings.cshtml" />
+    <Content Include="Views\Application\Details.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\Application\Create.cshtml" />

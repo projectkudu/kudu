@@ -75,7 +75,7 @@ namespace Kudu.Web.Controllers
             return deploymentManager.DeployAsync(id)
                                     .ContinueWith(task =>
                                     {
-                                        return (ActionResult)RedirectToAction("Index", new { slug = slug });
+                                        return (ActionResult)RedirectToAction("Index", new { slug });
                                     });
         }
 

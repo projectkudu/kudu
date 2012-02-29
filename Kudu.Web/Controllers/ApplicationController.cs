@@ -17,8 +17,8 @@ namespace Kudu.Web.Controllers
         private readonly KuduEnvironment _environment;
         private readonly ICredentialProvider _credentialProvider;
 
-        public ApplicationController(IApplicationService applicationService, 
-                                     ICredentialProvider credentialProvider, 
+        public ApplicationController(IApplicationService applicationService,
+                                     ICredentialProvider credentialProvider,
                                      KuduEnvironment environment)
         {
             _applicationService = applicationService;
@@ -41,29 +41,30 @@ namespace Kudu.Web.Controllers
             return View(applications.Select(a => new ApplicationViewModel(a)));
         }
 
-        public Task<ActionResult> Settings(string slug)
+        public Task<ActionResult> Details(string slug)
         {
             IApplication application = _applicationService.GetApplication(slug);
 
-            if (application != null)
+            if (application == null)
             {
-                ICredentials credentials = _credentialProvider.GetCredentials();
-                return application.GetRepositoryInfo(credentials).Then(repositoryInfo =>
-                {
-                    var appViewModel = new ApplicationViewModel(application);
-                    appViewModel.RepositoryInfo = repositoryInfo;
-
-                    ViewBag.slug = slug;
-                    ViewBag.tab = "settings";
-                    ViewBag.appName = appViewModel.Name;
-
-                    return (ActionResult)View(appViewModel);
-                });
+                return HttpNotFoundAsync();
             }
 
-            return HttpNotFoundAsync();
+            ICredentials credentials = _credentialProvider.GetCredentials();
+            return application.GetRepositoryInfo(credentials).Then(repositoryInfo =>
+            {
+                var appViewModel = new ApplicationViewModel(application);
+                appViewModel.RepositoryInfo = repositoryInfo;
+
+                ViewBag.slug = slug;
+                ViewBag.tab = "settings";
+                ViewBag.appName = appViewModel.Name;
+
+                return (ActionResult)View(appViewModel);
+            });
         }
 
+        [HttpGet]
         public ActionResult Create()
         {
             return View();
@@ -75,10 +76,10 @@ namespace Kudu.Web.Controllers
             string slug = name.GenerateSlug();
 
             try
-            {                
+            {
                 IApplication application = _applicationService.AddApplication(slug);
 
-                return RedirectToAction("Settings", new { slug = slug });
+                return RedirectToAction("Details", new { slug });
             }
             catch (SiteExistsFoundException)
             {

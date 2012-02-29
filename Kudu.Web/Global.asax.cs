@@ -32,9 +32,13 @@ namespace Kudu.Web
                             "deployments/{slug}/log/{id}/{logId}",
                             new { controller = "Deployments", action = "Details" });
 
-            routes.MapRoute("Settings",
-                            "settings/{slug}",
-                            new { controller = "Application", action = "Settings" });
+            routes.MapRoute("ApplicationCreate",
+                            "application/create",
+                            new { controller = "Application", action = "Create" });
+
+            routes.MapRoute("ApplicationDetails",
+                            "application/{slug}",
+                            new { controller = "Application", action = "Details" });
 
             routes.MapRoute("Configuration",
                             "configuration/{slug}",

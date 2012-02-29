@@ -42,10 +42,10 @@
           <a class="brand" href="@Url.Content("~/")">Kudu Dashboard</a>
           <div class="nav-collapse">
             <ul class="nav">
-              <li>@Html.ActionLink("Create Application", "create", "application")</li>
+              <li>@Html.RouteLink("Create Application", "ApplicationCreate")</li>
             </ul>
             <ul class="nav pull-right">
-              <li>@Html.ActionLink("Admin", "index", "admin")</li>
+              <li>@Html.ActionLink("Admin", "index", "admin")</li>               
             </ul>
           </div><!--/.nav-collapse -->
         </div>
@@ -64,11 +64,11 @@
     <div class="subnav subnav-fixed">
     <ul class="nav nav-pills">
           <li @if (ViewBag.tab == "settings")
-              {<text>class="active"</text> }>@Html.ActionLink("Settings", "settings", "application", new { slug = ViewBag.slug }, null)</li>
+              {<text>class="active"</text> }>@Html.RouteLink("Settings", "ApplicationDetails", new { slug = ViewBag.slug }, null)</li>
           <li @if (ViewBag.tab == "deployments")
-              {<text>class="active"</text> }>@Html.ActionLink("Deployments", "index", "deployments", new { slug = ViewBag.slug }, null)</li>
+              {<text>class="active"</text> }>@Html.RouteLink("Deployments", "Deployments", new { slug = ViewBag.slug }, null)</li>
           <li @if (ViewBag.tab == "configuration")
-              {<text>class="active"</text> }>@Html.ActionLink("Configuration", "index", "settings", new { slug = ViewBag.slug }, null)</li>
+              {<text>class="active"</text> }>@Html.RouteLink("Configuration", "Configuration", new { slug = ViewBag.slug }, null)</li>
           @*<li>@Html.ActionLink("Develop", "editor", "application", new { slug = ViewBag.slug }, new { target = "_blank" })</li>*@
         </ul>
     </div>
