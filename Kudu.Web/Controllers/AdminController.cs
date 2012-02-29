@@ -8,19 +8,16 @@ namespace Kudu.Web.Controllers
     public class AdminController : Controller
     {
         private readonly IPathResolver _pathResolver;
-        private readonly KuduEnvironment _env;
-        public AdminController(IPathResolver pathResolver, KuduEnvironment env)
+        private readonly KuduEnvironment _environment;
+
+        public AdminController(IPathResolver pathResolver, KuduEnvironment environment)
         {
             _pathResolver = pathResolver;
-            _env = env;
+            _environment = environment;
         }
-        //
-        // GET: /Admin/
 
         public ActionResult Index()
         {
-            ViewBag.showAdminWarning = !_env.IsAdmin && _env.RunningAgainstLocalKuduService;
-
             var model = new AdminSettingsViewModel
             {
                 ServiceSitePath = _pathResolver.ServiceSitePath,

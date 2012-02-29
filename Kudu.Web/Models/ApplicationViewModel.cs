@@ -16,14 +16,12 @@ namespace Kudu.Web.Models
             Name = application.Name;
             SiteUrl = application.SiteUrl;
             ServiceUrl = application.ServiceUrl;
-            DeveloperSiteUrl = application.DeveloperSiteUrl;
         }
 
         [Required]
         public string Name { get; set; }
         public string SiteUrl { get; set; }
         public string ServiceUrl { get; set; }
-        public string DeveloperSiteUrl { get; set; }
         public RepositoryInfo RepositoryInfo { get; set; }
         
         public string GitUrl

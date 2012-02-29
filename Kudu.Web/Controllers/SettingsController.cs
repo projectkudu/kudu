@@ -1,14 +1,24 @@
 ﻿using System;
 using System.Linq;
+using System.Net;
 using System.Web.Mvc;
-using Kudu.Client.Deployment;
+using Kudu.Client.Infrastructure;
+using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
 
 namespace Kudu.Web.Controllers
 {
     public class SettingsController : Controller
     {
-        private readonly KuduContext db = new KuduContext();
+        private readonly IApplicationService _applicationService;
+        private readonly ICredentialProvider _credentialProvider;
+
+        public SettingsController(IApplicationService applicationService,
+                                  ICredentialProvider credentialProvider)
+        {
+            _applicationService = applicationService;
+            _credentialProvider = credentialProvider;
+        }
 
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
         {
@@ -33,6 +43,13 @@ namespace Kudu.Web.Controllers
         [ActionName("new-app-setting")]
         public ActionResult CreateAppSetting(string slug, string key, string value)
         {
+            IApplication application = _applicationService.GetApplication(slug);
+            
+            if (application == null)
+            {
+                return HttpNotFound();
+            }
+
             try
             {
                 if (String.IsNullOrEmpty(key))
@@ -46,8 +63,8 @@ namespace Kudu.Web.Controllers
 
                 if (ModelState.IsValid)
                 {
-                    Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
-                    var settingsManager = new RemoteDeploymentSettingsManager(application.ServiceUrl);
+                    ICredentials credentials = _credentialProvider.GetCredentials();
+                    var settingsManager = application.GetSettingsManager(credentials);
 
                     settingsManager.SetAppSetting(key, value);
 
@@ -69,6 +86,13 @@ namespace Kudu.Web.Controllers
         [ActionName("new-connection-string")]
         public ActionResult CreateConnectionString(string slug, string name, string connectionString)
         {
+            IApplication application = _applicationService.GetApplication(slug);
+
+            if (application == null)
+            {
+                return HttpNotFound();
+            }
+
             try
             {
                 if (String.IsNullOrEmpty(name))
@@ -82,8 +106,8 @@ namespace Kudu.Web.Controllers
 
                 if (ModelState.IsValid)
                 {
-                    Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
-                    var settingsManager = new RemoteDeploymentSettingsManager(application.ServiceUrl);
+                    ICredentials credentials = _credentialProvider.GetCredentials();
+                    var settingsManager = application.GetSettingsManager(credentials);
 
                     settingsManager.SetConnectionString(name, connectionString);
 
@@ -106,8 +130,14 @@ namespace Kudu.Web.Controllers
         [ActionName("delete-connection-string")]
         public ActionResult DeleteConnectionString(string slug, string name)
         {
-            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
-            var settingsManager = new RemoteDeploymentSettingsManager(application.ServiceUrl);
+            IApplication application = _applicationService.GetApplication(slug);
+            if (application == null)
+            {
+                return HttpNotFound();
+            }
+
+            ICredentials credentials = _credentialProvider.GetCredentials();
+            var settingsManager = application.GetSettingsManager(credentials);
 
             settingsManager.RemoveConnectionString(name);
 
@@ -118,9 +148,14 @@ namespace Kudu.Web.Controllers
         [ActionName("delete-app-setting")]
         public ActionResult DeleteApplicationSetting(string slug, string key)
         {
-            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
-            var settingsManager = new RemoteDeploymentSettingsManager(application.ServiceUrl);
+            IApplication application = _applicationService.GetApplication(slug);
+            if (application == null)
+            {
+                return HttpNotFound();
+            }
 
+            ICredentials credentials = _credentialProvider.GetCredentials();
+            var settingsManager = application.GetSettingsManager(credentials);
             settingsManager.RemoveAppSetting(key);
 
             return RedirectToAction("Index", new { slug });
@@ -128,7 +163,8 @@ namespace Kudu.Web.Controllers
 
         private SettingsViewModel GetSettingsViewModel(string slug)
         {
-            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
+            IApplication application = _applicationService.GetApplication(slug);
+
             if (application != null)
             {
                 return GetSettingsViewModel(application);
@@ -137,11 +173,12 @@ namespace Kudu.Web.Controllers
             return null;
         }
 
-        private SettingsViewModel GetSettingsViewModel(Application application)
+        private SettingsViewModel GetSettingsViewModel(IApplication application)
         {
-            var settingsManager = new RemoteDeploymentSettingsManager(application.ServiceUrl);
+            ICredentials credentials = _credentialProvider.GetCredentials();
+            var settingsManager = application.GetSettingsManager(credentials);
 
-            ViewBag.slug = application.Slug;
+            ViewBag.slug = application.Name;
             ViewBag.appName = application.Name;
 
             try

@@ -53,8 +53,6 @@ namespace Kudu.Web
 
             RegisterGlobalFilters(GlobalFilters.Filters);
             RegisterRoutes(RouteTable.Routes);
-
-            Database.SetInitializer(new DropCreateDatabaseIfModelChanges<KuduContext>());
         }
     }
 }

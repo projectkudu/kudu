@@ -6,6 +6,7 @@ using System.Web;
 using Kudu.Client.Infrastructure;
 using Kudu.SiteManagement;
 using Kudu.Web.Infrastructure;
+using Kudu.Web.Models;
 using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 using Ninject;
 using Ninject.Web.Mvc;
@@ -63,7 +64,7 @@ namespace Kudu.Web.App_Start
             sitesPath = Path.Combine(root, sitesPath);
 
             kernel.Bind<IPathResolver>().ToConstant(new DefaultPathResolver(serviceSitePath, sitesPath));
-            kernel.Bind<ISiteManager>().To<SiteManager>();
+            kernel.Bind<ISiteManager>().To<SiteManager>().InSingletonScope();
             kernel.Bind<KuduEnvironment>().ToConstant(new KuduEnvironment
             {
                 RunningAgainstLocalKuduService = true,
@@ -72,8 +73,11 @@ namespace Kudu.Web.App_Start
 
             // TODO: Integrate with membership system
             kernel.Bind<ICredentialProvider>().ToConstant(new BasicAuthCredentialProvider("admin", "kudu"));
+            kernel.Bind<IApplicationService>().To<ApplicationService>().InRequestScope();
+            kernel.Bind<KuduContext>().ToSelf().InRequestScope();
 
             // Sql CE setup
+            Database.SetInitializer(new DropCreateDatabaseIfModelChanges<KuduContext>());
             Database.DefaultConnectionFactory = new SqlCeConnectionFactory("System.Data.SqlServerCe.4.0");
             Directory.CreateDirectory(Path.Combine(root, "App_Data"));
         }

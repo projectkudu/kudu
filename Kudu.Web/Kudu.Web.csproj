@@ -271,8 +271,8 @@
     <Compile Include="Infrastructure\TaskAsyncControllerDescriptor.cs" />
     <Compile Include="Models\AdminSettingsViewModel.cs" />
     <Compile Include="Models\Application.cs" />
+    <Compile Include="Models\ApplicationService.cs" />
     <Compile Include="Models\ApplicationViewModel.cs" />
-    <Compile Include="Models\DeveloperSiteState.cs" />
     <Compile Include="Models\IApplication.cs" />
     <Compile Include="Models\IApplicationService.cs" />
     <Compile Include="Models\KuduContext.cs" />

@@ -9,102 +9,102 @@ using System.Web.Mvc.Async;
 
 namespace Mvc.Async
 {
-  public class TaskAsyncActionDescriptor : AsyncActionDescriptor
-  {
-    private static readonly ConcurrentDictionary<Type, Func<object, object>> _taskValueExtractors = new ConcurrentDictionary<Type, Func<object, object>>();
-    private readonly string _actionName;
-    private readonly ControllerDescriptor _controllerDescriptor;
-
-    public override string ActionName
+    public class TaskAsyncActionDescriptor : AsyncActionDescriptor
     {
-      get
-      {
-        return this._actionName;
-      }
-    }
+        private static readonly ConcurrentDictionary<Type, Func<object, object>> _taskValueExtractors = new ConcurrentDictionary<Type, Func<object, object>>();
+        private readonly string _actionName;
+        private readonly ControllerDescriptor _controllerDescriptor;
 
-    public override ControllerDescriptor ControllerDescriptor
-    {
-      get
-      {
-        return this._controllerDescriptor;
-      }
-    }
+        public override string ActionName
+        {
+            get
+            {
+                return this._actionName;
+            }
+        }
 
-    public MethodInfo MethodInfo { get; private set; }
+        public override ControllerDescriptor ControllerDescriptor
+        {
+            get
+            {
+                return this._controllerDescriptor;
+            }
+        }
 
-    static TaskAsyncActionDescriptor()
-    {
-    }
+        public MethodInfo MethodInfo { get; private set; }
 
-    public TaskAsyncActionDescriptor(MethodInfo methodInfo, string actionName, ControllerDescriptor controllerDescriptor)
-    {
-      this.MethodInfo = methodInfo;
-      this._actionName = actionName;
-      this._controllerDescriptor = controllerDescriptor;
-    }
+        static TaskAsyncActionDescriptor()
+        {
+        }
 
-    public override IAsyncResult BeginExecute(ControllerContext controllerContext, IDictionary<string, object> parameters, AsyncCallback callback, object state)
-    {
-      Task result = new ReflectedActionDescriptor(this.MethodInfo, this.ActionName, this.ControllerDescriptor).Execute(controllerContext, parameters) as Task;
-      if (result == null)
-      {
-        throw new InvalidOperationException(string.Format("Method {0} should have returned a Task!", (object) this.MethodInfo));
-      }
-      else
-      {
-        if (callback != null)
-          result.ContinueWith((Action<Task>) (_ => callback((IAsyncResult) result)));
-        return (IAsyncResult) result;
-      }
-    }
+        public TaskAsyncActionDescriptor(MethodInfo methodInfo, string actionName, ControllerDescriptor controllerDescriptor)
+        {
+            this.MethodInfo = methodInfo;
+            this._actionName = actionName;
+            this._controllerDescriptor = controllerDescriptor;
+        }
 
-    public override object EndExecute(IAsyncResult asyncResult)
-    {
-      return TaskAsyncActionDescriptor._taskValueExtractors.GetOrAdd(asyncResult.GetType(), new Func<Type, Func<object, object>>(TaskAsyncActionDescriptor.CreateTaskValueExtractor))((object) asyncResult);
-    }
+        public override IAsyncResult BeginExecute(ControllerContext controllerContext, IDictionary<string, object> parameters, AsyncCallback callback, object state)
+        {
+            Task result = new ReflectedActionDescriptor(this.MethodInfo, this.ActionName, this.ControllerDescriptor).Execute(controllerContext, parameters) as Task;
+            if (result == null)
+            {
+                throw new InvalidOperationException(string.Format("Method {0} should have returned a Task!", (object)this.MethodInfo));
+            }
+            else
+            {
+                if (callback != null)
+                    result.ContinueWith((Action<Task>)(_ => callback((IAsyncResult)result)));
+                return (IAsyncResult)result;
+            }
+        }
 
-    public override object Execute(ControllerContext controllerContext, IDictionary<string, object> parameters)
-    {
-      throw new NotImplementedException();
-    }
+        public override object EndExecute(IAsyncResult asyncResult)
+        {
+            return TaskAsyncActionDescriptor._taskValueExtractors.GetOrAdd(asyncResult.GetType(), new Func<Type, Func<object, object>>(TaskAsyncActionDescriptor.CreateTaskValueExtractor))((object)asyncResult);
+        }
 
-    public override object[] GetCustomAttributes(bool inherit)
-    {
-      return this.MethodInfo.GetCustomAttributes(inherit);
-    }
+        public override object Execute(ControllerContext controllerContext, IDictionary<string, object> parameters)
+        {
+            throw new NotImplementedException();
+        }
 
-    public override object[] GetCustomAttributes(Type attributeType, bool inherit)
-    {
-      return this.MethodInfo.GetCustomAttributes(attributeType, inherit);
-    }
+        public override object[] GetCustomAttributes(bool inherit)
+        {
+            return this.MethodInfo.GetCustomAttributes(inherit);
+        }
 
-    public override ParameterDescriptor[] GetParameters()
-    {
-      return (ParameterDescriptor[]) Array.ConvertAll<ParameterInfo, ReflectedParameterDescriptor>(this.MethodInfo.GetParameters(), (Converter<ParameterInfo, ReflectedParameterDescriptor>) (pInfo => new ReflectedParameterDescriptor(pInfo, (ActionDescriptor) this)));
-    }
+        public override object[] GetCustomAttributes(Type attributeType, bool inherit)
+        {
+            return this.MethodInfo.GetCustomAttributes(attributeType, inherit);
+        }
 
-    public override bool IsDefined(Type attributeType, bool inherit)
-    {
-      return this.MethodInfo.IsDefined(attributeType, inherit);
-    }
+        public override ParameterDescriptor[] GetParameters()
+        {
+            return (ParameterDescriptor[])Array.ConvertAll<ParameterInfo, ReflectedParameterDescriptor>(this.MethodInfo.GetParameters(), (Converter<ParameterInfo, ReflectedParameterDescriptor>)(pInfo => new ReflectedParameterDescriptor(pInfo, (ActionDescriptor)this)));
+        }
 
-    private static Func<object, object> CreateTaskValueExtractor(Type taskType)
-    {
-      if (taskType.IsGenericType && taskType.GetGenericTypeDefinition() == typeof (Task<>))
-      {
-        ParameterExpression parameterExpression = Expression.Parameter(typeof (object));
-        return Expression.Lambda<Func<object, object>>((Expression) Expression.Convert((Expression) Expression.Property((Expression) Expression.Convert((Expression) parameterExpression, taskType), "Result"), typeof (object)), new ParameterExpression[1]
+        public override bool IsDefined(Type attributeType, bool inherit)
+        {
+            return this.MethodInfo.IsDefined(attributeType, inherit);
+        }
+
+        private static Func<object, object> CreateTaskValueExtractor(Type taskType)
+        {
+            if (taskType.IsGenericType && taskType.GetGenericTypeDefinition() == typeof(Task<>))
+            {
+                ParameterExpression parameterExpression = Expression.Parameter(typeof(object));
+                return Expression.Lambda<Func<object, object>>((Expression)Expression.Convert((Expression)Expression.Property((Expression)Expression.Convert((Expression)parameterExpression, taskType), "Result"), typeof(object)), new ParameterExpression[1]
         {
           parameterExpression
         }).Compile();
-      }
-      else
-        return (Func<object, object>) (theTask =>
-        {
-          ((Task) theTask).Wait();
-          return (object) null;
-        });
+            }
+            else
+                return (Func<object, object>)(theTask =>
+                {
+                    ((Task)theTask).Wait();
+                    return (object)null;
+                });
+        }
     }
-  }
 }

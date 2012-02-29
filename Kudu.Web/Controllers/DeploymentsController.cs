@@ -13,11 +13,13 @@ namespace Kudu.Web.Controllers
 {
     public class DeploymentsController : TaskAsyncController
     {
-        private readonly KuduContext db = new KuduContext();
+        private readonly IApplicationService _applicationService;
         private readonly ICredentialProvider _credentialProvider;
 
-        public DeploymentsController(ICredentialProvider credentialProvider)
+        public DeploymentsController(IApplicationService applicationService,
+                                     ICredentialProvider credentialProvider)
         {
+            _applicationService = applicationService;
             _credentialProvider = credentialProvider;
         }
 
@@ -30,88 +32,95 @@ namespace Kudu.Web.Controllers
 
         public Task<ActionResult> Index(string slug)
         {
-            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
-            if (application != null)
+            IApplication application = _applicationService.GetApplication(slug);
+
+            if (application == null)
             {
-                ICredentials credentials = _credentialProvider.GetCredentials();
-                RemoteDeploymentManager deploymentManager = application.GetDeploymentManager(credentials);
-                
-                // TODO: Do this in parallel
-                return deploymentManager.GetResultsAsync().Then(results =>
-                {
-                    return application.GetRepositoryInfo(credentials).Then(repositoryInfo =>
-                    {
-                        var appViewModel = new ApplicationViewModel(application);
-                        appViewModel.RepositoryInfo = repositoryInfo;
-                        appViewModel.Deployments = results.ToList();
-
-                        ViewBag.slug = slug;
-                        ViewBag.appName = appViewModel.Name;
-
-                        return (ActionResult)View(appViewModel);
-                    });
-                });
+                return HttpNotFoundAsync();
             }
 
-            return Task.Factory.StartNew(() => (ActionResult)HttpNotFound());
+            ICredentials credentials = _credentialProvider.GetCredentials();
+            RemoteDeploymentManager deploymentManager = application.GetDeploymentManager(credentials);
+
+            // TODO: Do this in parallel
+            return deploymentManager.GetResultsAsync().Then(results =>
+            {
+                return application.GetRepositoryInfo(credentials).Then(repositoryInfo =>
+                {
+                    var appViewModel = new ApplicationViewModel(application);
+                    appViewModel.RepositoryInfo = repositoryInfo;
+                    appViewModel.Deployments = results.ToList();
+
+                    ViewBag.slug = slug;
+                    ViewBag.appName = appViewModel.Name;
+
+                    return (ActionResult)View(appViewModel);
+                });
+            });
+
         }
 
         public Task<ActionResult> Deploy(string slug, string id)
         {
-            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
-            if (application != null)
-            {
-                ICredentials credentials = _credentialProvider.GetCredentials();
-                RemoteDeploymentManager deploymentManager = application.GetDeploymentManager(credentials);
+            IApplication application = _applicationService.GetApplication(slug);
 
-                return deploymentManager.DeployAsync(id)
-                                        .ContinueWith(task => (ActionResult)RedirectToAction("Index", new { slug = slug }));
+            if (application == null)
+            {
+                return HttpNotFoundAsync();
             }
 
-            return Task.Factory.StartNew(() => (ActionResult)HttpNotFound());
+            ICredentials credentials = _credentialProvider.GetCredentials();
+            RemoteDeploymentManager deploymentManager = application.GetDeploymentManager(credentials);
+
+            return deploymentManager.DeployAsync(id)
+                                    .ContinueWith(task =>
+                                    {
+                                        return (ActionResult)RedirectToAction("Index", new { slug = slug });
+                                    });
         }
 
         public Task<ActionResult> Log(string slug, string id)
         {
-            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
-            if (application != null)
+            IApplication application = _applicationService.GetApplication(slug);
+
+            if (application == null)
             {
-                ICredentials credentials = _credentialProvider.GetCredentials();
-                RemoteDeploymentManager deploymentManager = application.GetDeploymentManager(credentials);
-
-                return deploymentManager.GetLogEntriesAsync(id).Then(entries =>
-                {
-                    ViewBag.slug = slug;
-                    ViewBag.appName = application.Name;
-                    ViewBag.id = id;
-
-                    return (ActionResult)View(entries);
-                });
+                return HttpNotFoundAsync();
             }
 
-            return Task.Factory.StartNew(() => (ActionResult)HttpNotFound());
+            ICredentials credentials = _credentialProvider.GetCredentials();
+            RemoteDeploymentManager deploymentManager = application.GetDeploymentManager(credentials);
+
+            return deploymentManager.GetLogEntriesAsync(id).Then(entries =>
+            {
+                ViewBag.slug = slug;
+                ViewBag.appName = application.Name;
+                ViewBag.id = id;
+
+                return (ActionResult)View(entries);
+            });
         }
 
         public Task<ActionResult> Details(string slug, string id, string logId)
         {
-            Application application = db.Applications.SingleOrDefault(a => a.Slug == slug);
-            if (application != null)
+            IApplication application = _applicationService.GetApplication(slug);
+            if (application == null)
             {
-                ICredentials credentials = _credentialProvider.GetCredentials();
-                RemoteDeploymentManager deploymentManager = application.GetDeploymentManager(credentials);
-
-                return deploymentManager.GetLogEntryDetailsAsync(id, logId).Then(entries =>
-                {
-                    ViewBag.slug = slug;
-                    ViewBag.appName = application.Name;
-                    ViewBag.id = id;
-                    ViewBag.verbose = true;
-
-                    return (ActionResult)View("Log", entries);
-                });
+                return HttpNotFoundAsync();
             }
 
-            return Task.Factory.StartNew(() => (ActionResult)HttpNotFound());
+            ICredentials credentials = _credentialProvider.GetCredentials();
+            RemoteDeploymentManager deploymentManager = application.GetDeploymentManager(credentials);
+
+            return deploymentManager.GetLogEntryDetailsAsync(id, logId).Then(entries =>
+            {
+                ViewBag.slug = slug;
+                ViewBag.appName = application.Name;
+                ViewBag.id = id;
+                ViewBag.verbose = true;
+
+                return (ActionResult)View("Log", entries);
+            });
         }
     }
 }
