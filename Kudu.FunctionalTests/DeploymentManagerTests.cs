@@ -54,12 +54,16 @@ namespace Kudu.FunctionalTests
                     Assert.Equal("raquel_soares@msn.com", result.AuthorEmail);
                     Assert.True(result.Current);
                     Assert.Equal(DeployStatus.Success, result.Status);
+                    Assert.NotNull(result.Url);
+                    Assert.NotNull(result.LogUrl);
 
                     var resultAgain = appManager.DeploymentManager.GetResultAsync(result.Id).Result;
                     Assert.Equal("Raquel Almeida", resultAgain.Author);
                     Assert.Equal("raquel_soares@msn.com", resultAgain.AuthorEmail);
                     Assert.True(resultAgain.Current);
                     Assert.Equal(DeployStatus.Success, resultAgain.Status);
+                    Assert.NotNull(resultAgain.Url);
+                    Assert.NotNull(resultAgain.LogUrl);
 
                     // Redeploy
                     appManager.DeploymentManager.DeployAsync(result.Id).Wait();

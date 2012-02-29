@@ -44,7 +44,7 @@ namespace Kudu.Services.Deployment
                 }
             }
         }
-        
+
         [Description("Deploys a specific deployment based on its id.")]
         [WebInvoke(Method = "PUT", UriTemplate = "{id}")]
         public void Deploy(string id)
@@ -72,8 +72,7 @@ namespace Kudu.Services.Deployment
             {
                 foreach (var result in _deploymentManager.GetResults())
                 {
-                    result.Url = UriHelper.MakeRelative(request.RequestUri, result.Id);
-                    result.LogUrl = UriHelper.MakeRelative(request.RequestUri, result.Id + "/log");
+                    SetUrls(request, result);
                     yield return result;
                 }
             }
@@ -125,7 +124,7 @@ namespace Kudu.Services.Deployment
 
         [Description("Gets the deployment result of a specific deployment based on its id.")]
         [WebGet(UriTemplate = "{id}")]
-        public DeployResult GetResult(string id)
+        public DeployResult GetResult(HttpRequestMessage request, string id)
         {
             using (_profiler.Step("DeploymentService.GetResult"))
             {
@@ -138,8 +137,16 @@ namespace Kudu.Services.Deployment
                     throw new HttpResponseException(response);
                 }
 
+                SetUrls(request, result);
+
                 return result;
             }
+        }
+
+        private static void SetUrls(HttpRequestMessage request, DeployResult result)
+        {
+            result.Url = UriHelper.MakeRelative(request.RequestUri, result.Id);
+            result.LogUrl = UriHelper.MakeRelative(request.RequestUri, result.Id + "/log");
         }
     }
 }
