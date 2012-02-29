@@ -34,11 +34,11 @@ namespace Kudu.Web.Controllers
 
         public ViewResult Index()
         {
-            var applications = (from a in _applicationService.GetApplications()
-                                orderby a.Created
-                                select a).ToList();
+            var applications = (from name in _applicationService.GetApplications()
+                                orderby name
+                                select name).ToList();
 
-            return View(applications.Select(a => new ApplicationViewModel(a)));
+            return View(applications);
         }
 
         public Task<ActionResult> Details(string slug)
@@ -77,7 +77,7 @@ namespace Kudu.Web.Controllers
 
             try
             {
-                IApplication application = _applicationService.AddApplication(slug);
+                _applicationService.AddApplication(slug);
 
                 return RedirectToAction("Details", new { slug });
             }

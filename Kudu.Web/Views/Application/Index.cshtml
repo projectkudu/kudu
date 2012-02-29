@@ -2,7 +2,7 @@
 @using Kudu.Web.Models
 @using Kudu.Web.Infrastructure
 
-@model IEnumerable<ApplicationViewModel>
+@model IEnumerable<string>
 
 @{
     ViewBag.Title = "Applications";
@@ -14,9 +14,9 @@
         @foreach (var item in Model)
         {    
             <li>
-                <a href="@Url.RouteUrl("ApplicationDetails", new { slug = item.Name.GenerateSlug() })">
+                <a href="@Url.RouteUrl("ApplicationDetails", new { slug = item })">
                     <i class="icon-th-list"></i>
-                    @Html.DisplayFor(modelItem => item.Name)
+                    @item
                 </a>
             </li>
         }

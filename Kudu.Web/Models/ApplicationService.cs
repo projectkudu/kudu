@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Kudu.Client.Infrastructure;
 using Kudu.SiteManagement;
 
 namespace Kudu.Web.Models
@@ -17,7 +16,7 @@ namespace Kudu.Web.Models
             _siteManager = siteManager;
         }
 
-        public IApplication AddApplication(string name)
+        public void AddApplication(string name)
         {            
             if (_db.Applications.Any(a => a.Name == name))
             {
@@ -25,8 +24,7 @@ namespace Kudu.Web.Models
             }
 
             Site site = null;
-            IApplication app = null;
-
+            
             try
             {
                 site = _siteManager.CreateSite(name);
@@ -35,14 +33,11 @@ namespace Kudu.Web.Models
                 {
                     Name = name,
                     ServiceUrl = site.ServiceUrl,
-                    SiteUrl = site.SiteUrl,
-                    Created = DateTime.Now
+                    SiteUrl = site.SiteUrl
                 };
 
                 _db.Applications.Add(newApp);
                 _db.SaveChanges();
-
-                app = newApp;
             }
             catch
             {
@@ -53,8 +48,6 @@ namespace Kudu.Web.Models
 
                 throw;
             }
-
-            return app;
         }
 
         public bool DeleteApplication(string name)
@@ -73,9 +66,10 @@ namespace Kudu.Web.Models
             return true;
         }
 
-        public IEnumerable<IApplication> GetApplications()
+        public IEnumerable<string> GetApplications()
         {
-            return _db.Applications.ToList();
+            return (from a in _db.Applications
+                    select a.Name).ToList();
         }
 
 
