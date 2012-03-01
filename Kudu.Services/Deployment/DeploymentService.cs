@@ -66,16 +66,11 @@ namespace Kudu.Services.Deployment
 
         [Description("Gets the deployment results of all deployments.")]
         [WebGet(UriTemplate = "")]
-        public IEnumerable<DeployResult> GetDeployResults(HttpRequestMessage request)
+        public IQueryable<DeployResult> GetDeployResults(HttpRequestMessage request)
         {
             using (_profiler.Step("DeploymentService.GetDeployResults"))
             {
-                foreach (var result in _deploymentManager.GetResults())
-                {
-                    result.Url = UriHelper.MakeRelative(request.RequestUri, result.Id);
-                    result.LogUrl = UriHelper.MakeRelative(request.RequestUri, result.Id + "/log");
-                    yield return result;
-                }
+                return GetResults(request).AsQueryable();
             }
         }
 
@@ -142,6 +137,16 @@ namespace Kudu.Services.Deployment
                 result.LogUrl = UriHelper.MakeRelative(request.RequestUri, "log");
 
                 return result;
+            }
+        }
+
+        private IEnumerable<DeployResult> GetResults(HttpRequestMessage request)
+        {
+            foreach (var result in _deploymentManager.GetResults())
+            {
+                result.Url = UriHelper.MakeRelative(request.RequestUri, result.Id);
+                result.LogUrl = UriHelper.MakeRelative(request.RequestUri, result.Id + "/log");
+                yield return result;
             }
         }
     }

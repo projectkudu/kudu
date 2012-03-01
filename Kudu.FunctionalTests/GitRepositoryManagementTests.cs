@@ -533,6 +533,74 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public void GetResultsWithMaxItemsAndExcludeFailed()
+        {
+            // Arrange
+            string repositoryName = "Mvc3Application";
+            string appName = "GetResultsWithMaxItemsAndExcludeFailed";
+
+            using (var repo = Git.CreateLocalRepository(repositoryName))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    string homeControllerPath = Path.Combine(repo.PhysicalPath, @"Mvc3Application\Controllers\HomeController.cs");
+
+                    // Act, Initial Commit
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
+
+                    // Assert
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, "Welcome to ASP.NET MVC! - Change1");
+
+                    // Act, Change 2
+                    File.WriteAllText(homeControllerPath, File.ReadAllText(homeControllerPath).Replace(" - Change1", " - Change2"));
+                    Git.Commit(repo.PhysicalPath, "Change 2!");
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
+
+                    // Assert
+                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                    Assert.Equal(2, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    Assert.Equal(DeployStatus.Success, results[1].Status);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, "Welcome to ASP.NET MVC! - Change2");
+
+                    // Act, Invalid Change build-break change and commit
+                    File.WriteAllText(homeControllerPath, File.ReadAllText(homeControllerPath).Replace("Index()", "Index;"));
+                    Git.Commit(repo.PhysicalPath, "Invalid Change!");
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
+
+                    // Assert
+                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                    Assert.Equal(3, results.Count);
+                    Assert.Equal(DeployStatus.Failed, results[0].Status);
+                    Assert.Equal(DeployStatus.Success, results[1].Status);
+                    Assert.Equal(DeployStatus.Success, results[2].Status);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, "Welcome to ASP.NET MVC! - Change2");
+
+                    // Test maxItems = 2
+                    results = appManager.DeploymentManager.GetResultsAsync(maxItems: 2).Result.ToList();
+                    Assert.Equal(2, results.Count);
+                    Assert.Equal(DeployStatus.Failed, results[0].Status);
+                    Assert.Equal(DeployStatus.Success, results[1].Status);
+
+                    // Test excludeFailed = true
+                    results = appManager.DeploymentManager.GetResultsAsync(excludeFailed: true).Result.ToList();
+                    Assert.Equal(2, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    Assert.Equal(DeployStatus.Success, results[1].Status);
+
+                    // Test maxItems = 1, excludeFailed = true
+                    results = appManager.DeploymentManager.GetResultsAsync(maxItems: 1, excludeFailed: true).Result.ToList();
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    Assert.True(results[0].Current);
+                });
+            }
+        }
+
+        [Fact]
         public void SpecificDeploymentConfiguration()
         {
             VerifyDeploymentConfiguration("SpecificDeploymentConfiguration",
