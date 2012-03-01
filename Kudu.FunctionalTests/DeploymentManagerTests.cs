@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Net;
 using System.Net.Http;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
@@ -56,8 +57,10 @@ namespace Kudu.FunctionalTests
                     Assert.Equal(DeployStatus.Success, result.Status);
                     Assert.NotNull(result.Url);
                     Assert.NotNull(result.LogUrl);
-                    KuduAssert.VerifyUrl(result.Url);
-                    KuduAssert.VerifyUrl(result.LogUrl);
+
+                    NetworkCredential cred = appManager.DeploymentManager.Credentials as NetworkCredential;
+                    KuduAssert.VerifyUrl(result.Url, cred);
+                    KuduAssert.VerifyUrl(result.LogUrl, cred);
 
                     var resultAgain = appManager.DeploymentManager.GetResultAsync(result.Id).Result;
                     Assert.Equal("Raquel Almeida", resultAgain.Author);
@@ -66,8 +69,8 @@ namespace Kudu.FunctionalTests
                     Assert.Equal(DeployStatus.Success, resultAgain.Status);
                     Assert.NotNull(resultAgain.Url);
                     Assert.NotNull(resultAgain.LogUrl);
-                    KuduAssert.VerifyUrl(resultAgain.Url);
-                    KuduAssert.VerifyUrl(resultAgain.LogUrl);
+                    KuduAssert.VerifyUrl(resultAgain.Url, cred);
+                    KuduAssert.VerifyUrl(resultAgain.LogUrl, cred);
 
                     // Redeploy
                     appManager.DeploymentManager.DeployAsync(result.Id).Wait();
