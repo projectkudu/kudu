@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using Kudu.TestHarness;
 using Xunit;
 
@@ -18,15 +19,21 @@ namespace Kudu.FunctionalTests.Infrastructure
             return (T)baseEx;
         }
 
-        public static void VerifyUrl(Uri url, params string[] contents)
+        public static void VerifyUrl(Uri url, NetworkCredential cred, params string[] contents)
         {
-            VerifyUrl(url.ToString(), contents);
+            VerifyUrl(url.ToString(), cred, contents);
         }
 
-        public static void VerifyUrl(string url, params string[] contents)
+        public static void VerifyUrl(string url, NetworkCredential cred, params string[] contents)
         {
             var client = new HttpClient();
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Kudu-Test", "1.0"));
+            if (cred != null)
+            {
+                byte[] credBytes = ASCIIEncoding.ASCII.GetBytes(string.Format("{0}:{1}", cred.UserName, cred.Password));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(credBytes));
+            }
+
             var response = client.GetAsync(url).Result;
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             if (contents.Length > 0)

@@ -86,8 +86,8 @@ namespace Kudu.TestHarness
             {
                 var result = gitExe.Execute("clone \"{0}\"", source);
 
-                // Cloning into {0}...
-                var m = Regex.Match(result.Item1, @"Cloning\s+into\s+(\w+).*", RegexOptions.IgnoreCase);
+                // Cloning into '{0}'...
+                var m = Regex.Match(result.Item1, @"Cloning\s+into\s+\'(\w+)\'.*", RegexOptions.IgnoreCase);
                 string folderName = m.Groups[1].Value;
                 return new TestRepository(Path.Combine(repositoryPath, folderName));
             }
