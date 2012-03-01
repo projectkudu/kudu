@@ -19,12 +19,12 @@ namespace Kudu.FunctionalTests.Infrastructure
             return (T)baseEx;
         }
 
-        public static void VerifyUrl(Uri url, NetworkCredential cred, params string[] contents)
+        public static void VerifyUrl(Uri url, ICredentials cred, params string[] contents)
         {
             VerifyUrl(url.ToString(), cred, contents);
         }
 
-        public static void VerifyUrl(string url, NetworkCredential cred, params string[] contents)
+        public static void VerifyUrl(string url, ICredentials cred, params string[] contents)
         {
             var client = new HttpClient();
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Kudu-Test", "1.0"));

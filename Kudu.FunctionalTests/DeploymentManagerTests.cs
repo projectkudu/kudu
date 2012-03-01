@@ -58,7 +58,7 @@ namespace Kudu.FunctionalTests
                     Assert.NotNull(result.Url);
                     Assert.NotNull(result.LogUrl);
 
-                    NetworkCredential cred = appManager.DeploymentManager.Credentials as NetworkCredential;
+                    ICredentials cred = appManager.DeploymentManager.Credentials;
                     KuduAssert.VerifyUrl(result.Url, cred);
                     KuduAssert.VerifyUrl(result.LogUrl, cred);
 

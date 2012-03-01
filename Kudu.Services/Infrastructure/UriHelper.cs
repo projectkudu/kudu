@@ -6,7 +6,14 @@ namespace Kudu.Services.Infrastructure
     {
         public static Uri MakeRelative(Uri baseUri, string relativeUri)
         {
-            baseUri = new Uri(EnsureTrailingSlash(baseUri.OriginalString));
+            var builder = new UriBuilder(baseUri);
+            // We don't care about the query string
+            builder.Query = null;
+            if (builder.Port == 80)
+            {
+                builder.Port = -1;
+            }
+            baseUri = new Uri(EnsureTrailingSlash(builder.ToString()));
             return new Uri(baseUri, relativeUri);
         }
 
