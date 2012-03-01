@@ -151,7 +151,7 @@ namespace Kudu.FunctionalTests
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    KuduAssert.VerifyUrl(appManager.SiteUrl, "RELEASE MODE", "Context.IsDebuggingEnabled: False");
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, null, "RELEASE MODE", "Context.IsDebuggingEnabled: False");
                 });
             }
         }
