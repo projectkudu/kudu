@@ -49,6 +49,9 @@ namespace Kudu.Client.Infrastructure
                     url = url.Substring(0, url.Length - 1);
                 }
 
+                // Handle query strings
+                url = url.Replace("/?", "?");
+
                 request.RequestUri = new Uri(url);
                 return base.SendAsync(request, cancellationToken);
             }
