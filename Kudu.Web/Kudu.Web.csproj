@@ -250,6 +250,7 @@
     <Compile Include="Controllers\AdminController.cs" />
     <Compile Include="Controllers\ApplicationController.cs" />
     <Compile Include="Controllers\DeploymentsController.cs" />
+    <Compile Include="Models\KuduUser.cs" />
     <Compile Include="Services\IMessengerService.cs" />
     <Compile Include="Services\IWebSecurityService.cs" />
     <Compile Include="Controllers\SettingsController.cs" />
