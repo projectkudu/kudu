@@ -34,16 +34,22 @@ namespace Kudu.Web.Controllers
 
         public ViewResult Index()
         {
-            var applications = (from name in _applicationService.GetApplications()
+            if (!User.Identity.IsAuthenticated)
+            {
+                return View(new string[] { });
+            }
+
+            var applications = (from name in _applicationService.GetApplications(User.Identity.Name)
                                 orderby name
                                 select name).ToList();
 
             return View(applications);
         }
 
+        [Authorize]
         public Task<ActionResult> Details(string slug)
         {
-            IApplication application = _applicationService.GetApplication(slug);
+            IApplication application = _applicationService.GetApplication(User.Identity.Name, slug);
 
             if (application == null)
             {
@@ -53,8 +59,7 @@ namespace Kudu.Web.Controllers
             ICredentials credentials = _credentialProvider.GetCredentials();
             return application.GetRepositoryInfo(credentials).Then(repositoryInfo =>
             {
-                var appViewModel = new ApplicationViewModel(application);
-                appViewModel.RepositoryInfo = repositoryInfo;
+                var appViewModel = new ApplicationViewModel(application, repositoryInfo);
 
                 ViewBag.slug = slug;
                 ViewBag.tab = "settings";
@@ -65,19 +70,21 @@ namespace Kudu.Web.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public ActionResult Create()
         {
             return View();
         }
 
         [HttpPost]
+        [Authorize]
         public ActionResult Create(string name)
         {
             string slug = name.GenerateSlug();
 
             try
             {
-                _applicationService.AddApplication(slug);
+                _applicationService.AddApplication(User.Identity.Name, slug);
 
                 return RedirectToAction("Details", new { slug });
             }
@@ -94,9 +101,10 @@ namespace Kudu.Web.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public ActionResult Delete(string slug)
         {
-            if (_applicationService.DeleteApplication(slug))
+            if (_applicationService.DeleteApplication(User.Identity.Name, slug))
             {
                 return RedirectToAction("Index");
             }

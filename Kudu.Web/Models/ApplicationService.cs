@@ -16,22 +16,23 @@ namespace Kudu.Web.Models
             _siteManager = siteManager;
         }
 
-        public void AddApplication(string name)
-        {            
+        public void AddApplication(string userName, string name)
+        {
             if (_db.Applications.Any(a => a.Name == name))
             {
                 throw new SiteExistsFoundException();
             }
 
             Site site = null;
-            
+
             try
             {
                 site = _siteManager.CreateSite(name);
 
-                var newApp = new Application
+                var newApp = new KuduApplication
                 {
                     Name = name,
+                    Username = userName,
                     ServiceUrl = site.ServiceUrl,
                     SiteUrl = site.SiteUrl
                 };
@@ -50,9 +51,9 @@ namespace Kudu.Web.Models
             }
         }
 
-        public bool DeleteApplication(string name)
-        {            
-            Application application = _db.Applications.SingleOrDefault(a => a.Name == name);
+        public bool DeleteApplication(string userName, string name)
+        {
+            KuduApplication application = _db.Applications.SingleOrDefault(a => a.Name == name);
             if (application == null)
             {
                 return false;
@@ -66,16 +67,17 @@ namespace Kudu.Web.Models
             return true;
         }
 
-        public IEnumerable<string> GetApplications()
+        public IEnumerable<string> GetApplications(string userName)
         {
             return (from a in _db.Applications
+                    where a.Username == userName
                     select a.Name).ToList();
         }
 
 
-        public IApplication GetApplication(string name)
+        public IApplication GetApplication(string userName, string name)
         {
-            return _db.Applications.FirstOrDefault(a => a.Name == name);
+            return _db.Applications.FirstOrDefault(a => a.Name == name && a.Username == userName);
         }
     }
 

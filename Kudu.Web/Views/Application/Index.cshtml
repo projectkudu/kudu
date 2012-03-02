@@ -8,6 +8,15 @@
     ViewBag.Title = "Applications";
 }
 
+@if (!Request.IsAuthenticated)
+{
+<div class="page-header">
+<h1>Kudu</h1>
+</div>
+<text>You need to have an account before you can start. Please @Html.ActionLink("login", "logon", "account") or @Html.ActionLink("register", "register", "account") for a new account.</text>
+}
+else
+{ 
 <div class="well">
     <ul class="nav nav-list">
         <li class="nav-header">Applications</li>
@@ -22,3 +31,4 @@
         }
     </ul>    
 </div>
+}

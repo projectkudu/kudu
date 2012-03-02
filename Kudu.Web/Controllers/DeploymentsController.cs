@@ -11,6 +11,7 @@ using Mvc.Async;
 
 namespace Kudu.Web.Controllers
 {
+    [Authorize]
     public class DeploymentsController : TaskAsyncController
     {
         private readonly IApplicationService _applicationService;
@@ -32,7 +33,7 @@ namespace Kudu.Web.Controllers
 
         public Task<ActionResult> Index(string slug)
         {
-            IApplication application = _applicationService.GetApplication(slug);
+            IApplication application = _applicationService.GetApplication(User.Identity.Name, slug);
 
             if (application == null)
             {
@@ -47,8 +48,7 @@ namespace Kudu.Web.Controllers
             {
                 return application.GetRepositoryInfo(credentials).Then(repositoryInfo =>
                 {
-                    var appViewModel = new ApplicationViewModel(application);
-                    appViewModel.RepositoryInfo = repositoryInfo;
+                    var appViewModel = new ApplicationViewModel(application, repositoryInfo);
                     appViewModel.Deployments = results.ToList();
 
                     ViewBag.slug = slug;
@@ -62,7 +62,7 @@ namespace Kudu.Web.Controllers
 
         public Task<ActionResult> Deploy(string slug, string id)
         {
-            IApplication application = _applicationService.GetApplication(slug);
+            IApplication application = _applicationService.GetApplication(User.Identity.Name, slug);
 
             if (application == null)
             {
@@ -81,7 +81,7 @@ namespace Kudu.Web.Controllers
 
         public Task<ActionResult> Log(string slug, string id)
         {
-            IApplication application = _applicationService.GetApplication(slug);
+            IApplication application = _applicationService.GetApplication(User.Identity.Name, slug);
 
             if (application == null)
             {
@@ -103,7 +103,7 @@ namespace Kudu.Web.Controllers
 
         public Task<ActionResult> Details(string slug, string id, string logId)
         {
-            IApplication application = _applicationService.GetApplication(slug);
+            IApplication application = _applicationService.GetApplication(User.Identity.Name, slug);
             if (application == null)
             {
                 return HttpNotFoundAsync();

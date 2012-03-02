@@ -85,11 +85,6 @@ namespace Kudu.Web.App_Start
             kernel.Bind<IApplicationService>().To<ApplicationService>().InRequestScope();
             kernel.Bind<KuduContext>().ToSelf().InRequestScope();
             kernel.Bind<ISettingsService>().To<SettingsService>();
-
-            // Sql CE setup
-            Database.SetInitializer(new DropCreateDatabaseIfModelChanges<KuduContext>());
-            Database.DefaultConnectionFactory = new SqlCeConnectionFactory("System.Data.SqlServerCe.4.0");
-            Directory.CreateDirectory(Path.Combine(root, "App_Data"));
         }
     }
 }

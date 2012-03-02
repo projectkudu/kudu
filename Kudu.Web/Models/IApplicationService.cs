@@ -4,9 +4,9 @@ namespace Kudu.Web.Models
 {
     public interface IApplicationService
     {
-        void AddApplication(string name);
-        bool DeleteApplication(string name);
-        IEnumerable<string> GetApplications();
-        IApplication GetApplication(string name);
+        void AddApplication(string userName, string name);
+        bool DeleteApplication(string userName, string name);
+        IEnumerable<string> GetApplications(string userName);
+        IApplication GetApplication(string userName, string name);
     }
 }
