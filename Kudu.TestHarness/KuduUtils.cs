@@ -8,7 +8,7 @@ namespace Kudu.TestHarness
 {
     public class KuduUtils
     {
-        public static void DownloadDump (string serviceUrl, string zipfilePath)
+        public static void DownloadDump(string serviceUrl, string zipfilePath)
         {
             try
             {
@@ -35,12 +35,12 @@ namespace Kudu.TestHarness
         }
 
         public static XDocument GetServerProfile(string serviceUrl, string zippedLogsPath, string appName = null)
-        {                        
+        {
             var unzippedLogsPath = Path.Combine(Path.GetDirectoryName(zippedLogsPath), appName);
             var profileLogPath = Path.Combine(unzippedLogsPath, "profiles", "profile.xml");
             XDocument document = null;
 
-            DownloadDump(serviceUrl, zippedLogsPath);                       
+            DownloadDump(serviceUrl, zippedLogsPath);
 
             if (File.Exists(zippedLogsPath))
             {
@@ -53,6 +53,6 @@ namespace Kudu.TestHarness
 
             return document;
         }
-        
+
     }
 }
