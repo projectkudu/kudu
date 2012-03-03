@@ -118,10 +118,6 @@
       <Project>{ACF3450A-8062-48D5-9C9D-8486261F290F}</Project>
       <Name>Kudu.TestHarness</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Kudu.Web\Kudu.Web.csproj">
-      <Project>{B0265397-6FCD-4C67-8785-3272D8C1AD79}</Project>
-      <Name>Kudu.Web</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
