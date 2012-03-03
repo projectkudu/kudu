@@ -171,6 +171,10 @@ namespace Kudu.TestHarness
             var exe = new GitExecutable(repositoryPath);
             exe.SetTraceLevel(2);
             exe.SetHttpVerbose(true);
+
+            // Increase the post buffer size
+            exe.Execute("config http.postBuffer 52428800");
+
             return exe;
         }
     }
