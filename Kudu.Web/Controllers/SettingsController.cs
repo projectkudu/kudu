@@ -4,6 +4,7 @@ using Kudu.Web.Models;
 
 namespace Kudu.Web.Controllers
 {
+    [Authorize]
     public class SettingsController : Controller
     {
         private readonly ISettingsService _service;
@@ -49,7 +50,7 @@ namespace Kudu.Web.Controllers
 
                 if (ModelState.IsValid)
                 {
-                    _service.SetAppSetting(slug, key, value);
+                    _service.SetAppSetting(User.Identity.Name, slug, key, value);
 
                     return RedirectToAction("Index", new { slug });
                 }
@@ -82,7 +83,7 @@ namespace Kudu.Web.Controllers
 
                 if (ModelState.IsValid)
                 {
-                    _service.SetConnectionString(slug, name, connectionString);
+                    _service.SetConnectionString(User.Identity.Name, slug, name, connectionString);
 
                     return RedirectToAction("Index", new { slug });
                 }
@@ -103,7 +104,7 @@ namespace Kudu.Web.Controllers
         [ActionName("delete-connection-string")]
         public ActionResult DeleteConnectionString(string slug, string name)
         {
-            _service.RemoveConnectionString(slug, name);
+            _service.RemoveConnectionString(User.Identity.Name, slug, name);
 
             return RedirectToAction("Index", new { slug });
         }
@@ -112,7 +113,7 @@ namespace Kudu.Web.Controllers
         [ActionName("delete-app-setting")]
         public ActionResult DeleteApplicationSetting(string slug, string key)
         {
-            _service.RemoveAppSetting(slug, key);
+            _service.RemoveAppSetting(User.Identity.Name, slug, key);
 
             return RedirectToAction("Index", new { slug });
         }
@@ -124,7 +125,7 @@ namespace Kudu.Web.Controllers
 
             try
             {
-                ISettings settings = _service.GetSettings(name);
+                ISettings settings = _service.GetSettings(User.Identity.Name, name);
 
                 return new SettingsViewModel
                 {

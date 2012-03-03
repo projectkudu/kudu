@@ -4,6 +4,11 @@ namespace Kudu.Web.Models
 {
     public class KuduContext : DbContext
     {
-        public DbSet<Application> Applications { get; set; }
+        public KuduContext()
+            : base("Kudu")
+        {
+        }
+
+        public DbSet<KuduApplication> Applications { get; set; }
     }
 }

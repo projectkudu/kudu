@@ -11,18 +11,19 @@ namespace Kudu.Web.Models
         {
         }
 
-        public ApplicationViewModel(IApplication application)
+        public ApplicationViewModel(IApplication application, RepositoryInfo repositoryInfo)
         {
             Name = application.Name;
             SiteUrl = application.SiteUrl;
             ServiceUrl = application.ServiceUrl;
+            RepositoryInfo = repositoryInfo;
         }
 
         [Required]
         public string Name { get; set; }
         public string SiteUrl { get; set; }
         public string ServiceUrl { get; set; }
-        public RepositoryInfo RepositoryInfo { get; set; }
+        public RepositoryInfo RepositoryInfo { get; private set; }
         
         public string GitUrl
         {

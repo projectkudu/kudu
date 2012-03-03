@@ -79,7 +79,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<HttpContextBase>().ToMethod(context => new HttpContextWrapper(HttpContext.Current));
             kernel.Bind<IBuildPropertyProvider>().ToConstant(propertyProvider);
             kernel.Bind<IEnvironment>().ToConstant(environment);
-            kernel.Bind<IUserValidator>().To<SimpleUserValidator>().InSingletonScope();
+            kernel.Bind<IUserValidator>().To<MembershipUserValidator>().InRequestScope();
             kernel.Bind<IServerConfiguration>().To<ServerConfiguration>().InSingletonScope();
             kernel.Bind<IFileSystem>().To<FileSystem>().InSingletonScope();
 
