@@ -209,6 +209,7 @@ namespace Kudu.SiteManagement
                 kuduAppPool.ManagedPipelineMode = IIS.ManagedPipelineMode.Integrated;
                 kuduAppPool.ManagedRuntimeVersion = "v4.0";
                 kuduAppPool.AutoStart = true;
+                kuduAppPool.ProcessModel.LoadUserProfile = false;
                 kuduAppPool.WaitForState(IIS.ObjectState.Started);
 
                 SetupAcls(appName, appPoolName);
