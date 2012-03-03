@@ -269,7 +269,6 @@
     <Compile Include="Infrastructure\TaskAsyncActionDescriptor.cs" />
     <Compile Include="Infrastructure\TaskAsyncController.cs" />
     <Compile Include="Infrastructure\TaskAsyncControllerDescriptor.cs" />
-    <Compile Include="Models\AdminSettingsViewModel.cs" />
     <Compile Include="Models\Application.cs" />
     <Compile Include="Models\ApplicationService.cs" />
     <Compile Include="Models\ApplicationViewModel.cs" />
