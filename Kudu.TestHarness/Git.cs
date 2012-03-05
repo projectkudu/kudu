@@ -15,6 +15,10 @@ namespace Kudu.TestHarness
         public static void Push(string repositoryPath, string url, string localBranchName = "master", string remoteBranchName = "master")
         {
             Executable gitExe = GetGitExe(repositoryPath);
+
+            // Increase the post buffer size
+            gitExe.Execute("config http.postBuffer 52428800");
+
             if (localBranchName.Equals("master"))
             {
                 // Dump out the error stream (git curl verbose)
@@ -171,10 +175,7 @@ namespace Kudu.TestHarness
             var exe = new GitExecutable(repositoryPath);
             exe.SetTraceLevel(2);
             exe.SetHttpVerbose(true);
-
-            // Increase the post buffer size
-            exe.Execute("config http.postBuffer 52428800");
-
+            
             return exe;
         }
     }
