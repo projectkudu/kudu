@@ -48,20 +48,21 @@ namespace Kudu.Core.Deployment
             DeployStatus status;
             Enum.TryParse(document.Root.Element("status").Value, out status);
 
-            string receivedTimeValue = GetOptionalElementValue(document.Root, "deploymentReceivedTime");
-            string endTimeValue = GetOptionalElementValue(document.Root, "deploymentEndTime");
-            string startTimeValue = GetOptionalElementValue(document.Root, "deploymentStartTime");
+            string receivedTimeValue = GetOptionalElementValue(document.Root, "receivedTime");
+            string endTimeValue = GetOptionalElementValue(document.Root, "endTime");
+            string startTimeValue = GetOptionalElementValue(document.Root, "startTime");
             string lastSuccessEndTimeValue = GetOptionalElementValue(document.Root, "lastSuccessEndTime");
 
-            bool deploymentComplete = false;
-            string deploymentCompleteValue = GetOptionalElementValue(document.Root, "deploymentComplete");
+            bool complete = false;
+            string completeValue = GetOptionalElementValue(document.Root, "complete");
 
-            if (!String.IsNullOrEmpty(deploymentCompleteValue))
+            if (!String.IsNullOrEmpty(completeValue))
             {
-                Boolean.TryParse(deploymentCompleteValue, out deploymentComplete);
+                Boolean.TryParse(completeValue, out complete);
             }
 
-            var deploymentStartTime = DateTime.Parse(startTimeValue);
+            DateTime startTime;
+            DateTime.TryParse(startTimeValue, out startTime);
 
             return new DeploymentStatusFile(path)
             {
@@ -72,11 +73,11 @@ namespace Kudu.Core.Deployment
                 Status = status,
                 StatusText = document.Root.Element("statusText").Value,
                 Percentage = percentage,
-                StartTime = deploymentStartTime,
-                ReceivedTime = String.IsNullOrEmpty(receivedTimeValue) ? deploymentStartTime : DateTime.Parse(receivedTimeValue),
+                StartTime = startTime,
+                ReceivedTime = String.IsNullOrEmpty(receivedTimeValue) ? startTime : DateTime.Parse(receivedTimeValue),
                 EndTime = ParseDateTime(endTimeValue),
                 LastSuccessEndTime = ParseDateTime(lastSuccessEndTimeValue),
-                Complete = deploymentComplete
+                Complete = complete
             };
         }
 
@@ -109,10 +110,10 @@ namespace Kudu.Core.Deployment
                     new XElement("statusText", StatusText),
                     new XElement("percentage", Percentage),
                     new XElement("lastSuccessEndTime", LastSuccessEndTime),
-                    new XElement("deploymentReceivedTime", ReceivedTime),
-                    new XElement("deploymentStartTime", StartTime),
-                    new XElement("deploymentEndTime", EndTime),
-                    new XElement("deploymentComplete", Complete.ToString())
+                    new XElement("receivedTime", ReceivedTime),
+                    new XElement("startTime", StartTime),
+                    new XElement("endTime", EndTime),
+                    new XElement("complete", Complete.ToString())
                 ));
 
             using (Stream stream = fileSystem.File.Create(_path))
