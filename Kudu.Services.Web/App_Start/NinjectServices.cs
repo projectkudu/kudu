@@ -29,9 +29,6 @@ namespace Kudu.Services.Web.App_Start
 {
     public static class NinjectServices
     {
-        private static CommandExecutor _devExecutor;
-        private static CommandExecutor _liveExecutor;
-
         private const string DeploymentCachePath = "deployments";
         private const string ProfilerPath = "profiles";
         private const string DeploySettingsPath = "settings.xml";
@@ -72,7 +69,8 @@ namespace Kudu.Services.Web.App_Start
         /// <param name="kernel">The kernel.</param>
         private static void RegisterServices(IKernel kernel)
         {
-            IEnvironment environment = GetEnvironment();
+            var serverConfiguration = new ServerConfiguration();
+            IEnvironment environment = GetEnvironment(serverConfiguration);
             var propertyProvider = new BuildPropertyProvider();
 
             // General
@@ -80,7 +78,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IBuildPropertyProvider>().ToConstant(propertyProvider);
             kernel.Bind<IEnvironment>().ToConstant(environment);
             kernel.Bind<IUserValidator>().To<SimpleUserValidator>().InSingletonScope();
-            kernel.Bind<IServerConfiguration>().To<ServerConfiguration>().InSingletonScope();
+            kernel.Bind<IServerConfiguration>().ToConstant(serverConfiguration);
             kernel.Bind<IFileSystem>().To<FileSystem>().InSingletonScope();
 
             if (ProfilerServices.Enabled)
@@ -237,7 +235,7 @@ namespace Kudu.Services.Web.App_Start
             return Path.Combine(environment.DeploymentCachePath, DeploySettingsPath);
         }
 
-        private static IEnvironment GetEnvironment()
+        private static IEnvironment GetEnvironment(ServerConfiguration serverConfiguration)
         {
             string targetRoot = PathResolver.ResolveRootPath();
 
@@ -246,15 +244,15 @@ namespace Kudu.Services.Web.App_Start
             string deployPath = Path.Combine(root, Constants.WebRoot);
             string deployCachePath = Path.Combine(root, DeploymentCachePath);
             string deploymentRepositoryPath = Path.Combine(root, Constants.RepositoryPath);
-            string tempPath = Path.Combine(Path.GetTempPath(), "kudu", System.Guid.NewGuid().ToString());
+            string tempPath = Path.Combine(Path.GetTempPath(), "kudu", serverConfiguration.ApplicationName);
             string deploymentTempPath = Path.Combine(tempPath, Constants.RepositoryPath);
 
-            return new Environment(site, 
-                                   root, 
-                                   tempPath, 
-                                   () => deploymentRepositoryPath, 
-                                   () => ResolveRepositoryPath(site), 
-                                   deployPath, 
+            return new Environment(site,
+                                   root,
+                                   tempPath,
+                                   () => deploymentRepositoryPath,
+                                   () => ResolveRepositoryPath(site),
+                                   deployPath,
                                    deployCachePath);
         }
 

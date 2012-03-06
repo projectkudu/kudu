@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Contracts;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment
 {
@@ -28,7 +31,7 @@ namespace Kudu.Core.Deployment
         {
             var tcs = new TaskCompletionSource<object>();
             var innerLogger = context.Logger.Log("Building web project {0}.", Path.GetFileName(_projectPath));
-            
+
             try
             {
                 string buildTempPath = Path.Combine(_tempPath, "builds", Guid.NewGuid().ToString());
@@ -38,20 +41,26 @@ namespace Kudu.Core.Deployment
                 {
                     log = BuildProject(context.Profiler, buildTempPath);
                 }
-
+                
                 using (context.Profiler.Step("Copying files to output directory"))
                 {
                     // Copy to the output path and use the previous manifest if there
                     DeploymentHelper.CopyWithManifest(buildTempPath, context.OutputPath, context.PreviousMainfest);
                 }
-
+                
                 using (context.Profiler.Step("Building manifest"))
                 {
                     // Generate a manifest from those build artifacts
                     context.ManifestWriter.AddFiles(buildTempPath);
                 }
 
+                // Log the details of the build
                 innerLogger.Log(log);
+
+                // Clean up the build artifacts after copying them
+                CleanBuild(buildTempPath);
+
+                // Mark this as done
                 tcs.SetResult(null);
             }
             catch (Exception ex)
@@ -79,6 +88,23 @@ namespace Kudu.Core.Deployment
 
             // Build artifacts into a temp path
             return ExecuteMSBuild(profiler, command, _projectPath, buildTempPath, solutionDir, GetPropertyString());
+        }
+
+        private void CleanBuild(string buildTempPath)
+        {
+            // Don't block the current thread to clean up the build folder since it could take some time
+            ThreadPool.QueueUserWorkItem(_ =>
+            {
+                try
+                {
+                    FileSystemHelpers.DeleteDirectorySafe(buildTempPath);
+                }
+                catch (Exception ex)
+                {
+                    // TODO: Log this to some place central
+                    Debug.WriteLine(ex.Message);
+                }
+            });
         }
     }
 }
