@@ -231,14 +231,14 @@ namespace Kudu.Core.Deployment
                 Author = file.Author,
                 AuthorEmail = file.AuthorEmail,
                 Message = file.Message,
-                DeployStartTime = file.DeploymentStartTime,
-                DeployEndTime = file.DeploymentEndTime,
+                StartTime = file.StartTime,
+                EndTime = file.EndTime,
                 Status = file.Status,
                 Percentage = file.Percentage,
                 StatusText = file.StatusText,
                 Complete = file.Complete,
                 Current = file.Id == activeDeploymentId,
-                DeploymentReceivedTime = file.DeploymentReceivedTime,
+                ReceivedTime = file.ReceivedTime,
                 LastSuccessEndTime = file.LastSuccessEndTime
             };
         }
@@ -270,7 +270,7 @@ namespace Kudu.Core.Deployment
 
                 trackingFile = OpenTrackingFile(id);
                 trackingFile.Complete = false;
-                trackingFile.DeploymentStartTime = DateTime.Now;
+                trackingFile.StartTime = DateTime.Now;
                 trackingFile.Status = DeployStatus.Building;
                 trackingFile.StatusText = String.Format("Building and Deploying {0}...", id);
                 trackingFile.Save(_fileSystem);
@@ -374,8 +374,8 @@ namespace Kudu.Core.Deployment
 
                 trackingFile.Status = DeployStatus.Success;
                 trackingFile.StatusText = String.Empty;
-                trackingFile.DeploymentEndTime = DateTime.Now;
-                trackingFile.LastSuccessEndTime = trackingFile.DeploymentEndTime;
+                trackingFile.EndTime = DateTime.Now;
+                trackingFile.LastSuccessEndTime = trackingFile.EndTime;
                 trackingFile.Percentage = 100;
                 trackingFile.Save(_fileSystem);
             }
@@ -410,7 +410,7 @@ namespace Kudu.Core.Deployment
                 trackingFile.Complete = true;
                 trackingFile.Status = DeployStatus.Failed;
                 trackingFile.StatusText = trackingFile.Status == DeployStatus.Failed ? logger.GetTopLevelError() : String.Empty;
-                trackingFile.DeploymentEndTime = DateTime.Now;
+                trackingFile.EndTime = DateTime.Now;
                 trackingFile.Save(_fileSystem);
             }
         }

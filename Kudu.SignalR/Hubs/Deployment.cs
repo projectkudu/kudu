@@ -26,7 +26,7 @@ namespace Kudu.SignalR.Hubs
         {
             // Get the list of deployments
             var deployments = _deploymentManager.GetResults()
-                                                .OrderByDescending(d => d.DeployStartTime)
+                                                .OrderByDescending(d => d.StartTime)
                                                 .ToList();
 
             // Only return the failure if it was the last deployment
