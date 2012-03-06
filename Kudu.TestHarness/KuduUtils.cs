@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Xml.Linq;
 
@@ -8,19 +9,24 @@ namespace Kudu.TestHarness
 {
     public class KuduUtils
     {
-        public static void DownloadDump(string serviceUrl, string zipfilePath)
+        public static void DownloadDump(string serviceUrl, string zippedLogsPath, NetworkCredential credentials = null)
         {
             try
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(zipfilePath));
+                Directory.CreateDirectory(Path.GetDirectoryName(zippedLogsPath));
 
-                var client = new HttpClient();
+                var client = new HttpClient(new HttpClientHandler()
+                {
+                    Credentials = credentials
+                });
+
+
                 var result = client.GetAsync(serviceUrl + "diag").Result;
                 if (result.IsSuccessStatusCode)
                 {
                     using (Stream stream = result.Content.ReadAsStreamAsync().Result)
                     {
-                        using (FileStream fs = File.OpenWrite(zipfilePath))
+                        using (FileStream fs = File.OpenWrite(zippedLogsPath))
                         {
                             stream.CopyTo(fs);
                         }
@@ -34,13 +40,15 @@ namespace Kudu.TestHarness
             }
         }
 
-        public static XDocument GetServerProfile(string serviceUrl, string zippedLogsPath, string appName = null)
+
+        public static XDocument GetServerProfile(string serviceUrl, string logsTempPath, string appName, NetworkCredential credentials = null)
         {
-            var unzippedLogsPath = Path.Combine(Path.GetDirectoryName(zippedLogsPath), appName);
+            var zippedLogsPath = Path.Combine(logsTempPath, appName + ".zip");
+            var unzippedLogsPath = Path.Combine(logsTempPath, appName);
             var profileLogPath = Path.Combine(unzippedLogsPath, "profiles", "profile.xml");
             XDocument document = null;
 
-            DownloadDump(serviceUrl, zippedLogsPath);
+            DownloadDump(serviceUrl, zippedLogsPath, credentials);
 
             if (File.Exists(zippedLogsPath))
             {
