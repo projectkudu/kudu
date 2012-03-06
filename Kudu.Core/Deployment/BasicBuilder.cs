@@ -99,11 +99,6 @@ namespace Kudu.Core.Deployment
                     npm.EnvironmentVariables["HTTPS_PROXY"] = proxyHttpsProxyUrl.ToString();
                 }
 
-                // Map the profile folders just in case the host process doesn't have a user profile.
-                // This normally happens under IIS as a restricted user (ApplicationPoolIdentity) with 
-                // LoadUserProfile set to false on the process model.
-                npm.MapProfiles(_tempPath);
-
                 try
                 {
                     // Use the http proxy since https is failing for some reason

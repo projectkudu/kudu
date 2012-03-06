@@ -92,7 +92,6 @@
     <Compile Include="Deployment\NpmExecutable.cs" />
     <Compile Include="Deployment\ProgressReporter.cs" />
     <Compile Include="Infrastructure\DisposableAction.cs" />
-    <Compile Include="Infrastructure\ExecutableExtensions.cs" />
     <Compile Include="Infrastructure\IniFile.cs" />
     <Compile Include="Infrastructure\OperationManager.cs" />
     <Compile Include="Infrastructure\VsHelper.cs" />
