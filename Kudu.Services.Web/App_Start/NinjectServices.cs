@@ -29,11 +29,8 @@ namespace Kudu.Services.Web.App_Start
 {
     public static class NinjectServices
     {
-        private static CommandExecutor _devExecutor;
-        private static CommandExecutor _liveExecutor;
-
         private const string DeploymentCachePath = "deployments";
-        private const string ProfilerPath = "profiles";
+        private const string ProfilerPath = @"LogFiles\Git\profiles";
         private const string DeploySettingsPath = "settings.xml";
 
         /// <summary>

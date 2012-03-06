@@ -7,7 +7,7 @@ namespace Kudu.Services.Web.Elmah
 {
     public class KuduErrorLog : XmlFileErrorLog
     {
-        internal const string ElmahErrorLogPath = "elmah";
+        internal const string ElmahErrorLogPath = @"LogFiles\Git\elmah";
 
         public KuduErrorLog(IDictionary config)
             : base(GetPath())
