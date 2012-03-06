@@ -31,23 +31,23 @@ namespace Kudu.Core.Deployment
         {
             var tcs = new TaskCompletionSource<object>();
             var innerLogger = context.Logger.Log("Building web project {0}.", Path.GetFileName(_projectPath));
+            string buildTempPath = Path.Combine(_tempPath, Guid.NewGuid().ToString());
 
             try
             {
-                string buildTempPath = Path.Combine(_tempPath, "builds", Guid.NewGuid().ToString());
                 string log = null;
 
                 using (context.Profiler.Step("Running msbuild on project file"))
                 {
                     log = BuildProject(context.Profiler, buildTempPath);
                 }
-                
+
                 using (context.Profiler.Step("Copying files to output directory"))
                 {
                     // Copy to the output path and use the previous manifest if there
                     DeploymentHelper.CopyWithManifest(buildTempPath, context.OutputPath, context.PreviousMainfest);
                 }
-                
+
                 using (context.Profiler.Step("Building manifest"))
                 {
                     // Generate a manifest from those build artifacts
@@ -56,9 +56,6 @@ namespace Kudu.Core.Deployment
 
                 // Log the details of the build
                 innerLogger.Log(log);
-
-                // Clean up the build artifacts after copying them
-                CleanBuild(buildTempPath);
 
                 // Mark this as done
                 tcs.SetResult(null);
@@ -69,6 +66,11 @@ namespace Kudu.Core.Deployment
                 innerLogger.Log(ex);
 
                 tcs.SetException(ex);
+            }
+            finally
+            {
+                // Clean up the build artifacts after copying them
+                CleanBuild(buildTempPath);
             }
 
             return tcs.Task;

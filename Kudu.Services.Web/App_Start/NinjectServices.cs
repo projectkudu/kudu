@@ -70,7 +70,7 @@ namespace Kudu.Services.Web.App_Start
         private static void RegisterServices(IKernel kernel)
         {
             var serverConfiguration = new ServerConfiguration();
-            IEnvironment environment = GetEnvironment(serverConfiguration);
+            IEnvironment environment = GetEnvironment();
             var propertyProvider = new BuildPropertyProvider();
 
             // General
@@ -235,7 +235,7 @@ namespace Kudu.Services.Web.App_Start
             return Path.Combine(environment.DeploymentCachePath, DeploySettingsPath);
         }
 
-        private static IEnvironment GetEnvironment(ServerConfiguration serverConfiguration)
+        private static IEnvironment GetEnvironment()
         {
             string targetRoot = PathResolver.ResolveRootPath();
 
@@ -244,7 +244,7 @@ namespace Kudu.Services.Web.App_Start
             string deployPath = Path.Combine(root, Constants.WebRoot);
             string deployCachePath = Path.Combine(root, DeploymentCachePath);
             string deploymentRepositoryPath = Path.Combine(root, Constants.RepositoryPath);
-            string tempPath = Path.Combine(Path.GetTempPath(), "kudu", serverConfiguration.ApplicationName);
+            string tempPath = Path.GetTempPath();
             string deploymentTempPath = Path.Combine(tempPath, Constants.RepositoryPath);
 
             return new Environment(site,
