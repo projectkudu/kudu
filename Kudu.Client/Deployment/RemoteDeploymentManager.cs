@@ -31,7 +31,7 @@ namespace Kudu.Client.Deployment
 
         public Task<IEnumerable<DeployResult>> GetResultsAsync(int? maxItems = null, bool excludeFailed = false)
         {
-            string url = "?$orderby=DeploymentReceivedTime desc";
+            string url = "?$orderby=ReceivedTime desc";
             if (maxItems != null && maxItems >= 0)
             {
                 url += String.Format("&$top={0}", maxItems);

@@ -27,13 +27,13 @@ namespace Kudu.Core.Deployment
         public string Message { get; set; }
 
         [DataMember(Name = "received_time")]
-        public DateTime DeploymentReceivedTime { get; set; }
+        public DateTime ReceivedTime { get; set; }
 
         [DataMember(Name = "start_time")]
-        public DateTime DeployStartTime { get; set; }
+        public DateTime StartTime { get; set; }
 
         [DataMember(Name = "end_time")]
-        public DateTime? DeployEndTime { get; set; }
+        public DateTime? EndTime { get; set; }
 
         [DataMember(Name = "last_success_end_time")]
         public DateTime? LastSuccessEndTime { get; set; }

@@ -16,8 +16,8 @@ namespace Kudu.SignalR.ViewModels
             Status = result.Status;
             DisplayStatus = result.Status.ToString();
             StatusText = result.StatusText;
-            DeployEndTime = result.DeployEndTime;
-            DeployStartTime = result.DeployStartTime;
+            DeployEndTime = result.EndTime;
+            DeployStartTime = result.StartTime;
             Percentage = result.Percentage;
             Current = result.Current;
         }
