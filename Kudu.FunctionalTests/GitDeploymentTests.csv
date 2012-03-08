@@ -1,6 +1,6 @@
 ﻿Name,RepoName,RepoUrl,RepoCloneUrl,DefaultBranchName,VerificationText,ExpectedResponseCode,Skip
 WordPress,WordPress,https://github.com/KuduApps/WordPress,https://github.com/KuduApps/WordPress.git,"master",There doesn't seem to be a <code>wp-config.php</code> file.,500,false
-Express-Template,Express-Template,https://github.com/KuduApps/Express-Template,https://github.com/KuduApps/Express-Template.git,"master",Modify this template to jump-start your Node.JS Express Web Pages application,200,false
+Express-Template,Express-Template,https://github.com/KuduApps/Express-Template,https://github.com/KuduApps/Express-Template.git,"master",Modify this template to jump-start your Node.JS Express Web Pages application,200,true
 OpenCart,OpenCart,https://github.com/KuduApps/OpenCartWeb,https://github.com/KuduApps/OpenCartWeb.git,"master",GNU GENERAL PUBLIC LICENSE,200,false
 PhpBB,PhpBB,https://github.com/KuduApps/PhpBBweb,https://github.com/KuduApps/PhpBBweb.git,"master",Welcome to phpBB3,200,false
 Joomla,Joomla,https://github.com/KuduApps/JoomlaWeb,https://github.com/KuduApps/JoomlaWeb.git,"master",Joomla! 1.7.3 Installation,200,false
