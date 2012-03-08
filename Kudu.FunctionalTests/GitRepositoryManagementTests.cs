@@ -632,7 +632,41 @@ namespace Kudu.FunctionalTests
                                           "This is a website!");
         }
 
-        private void VerifyDeploymentConfiguration(string name, string targetProject, string expectedText)
+        [Fact(Skip = "https://github.com/WindowsAzure/kudu/issues/106")]
+        public void SpecificDeploymentConfigurationForWebsiteNotPartOfSolution()
+        {
+            VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForWebsiteNotPartOfSolution",
+                                          "WebSiteRemovedFromSolution",
+                                          "This web site was removed from solution!");
+        }
+
+        [Fact]
+        public void SpecificDeploymentConfigurationForWebProjectNotPartOfSolution()
+        {
+            VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForWebProjectNotPartOfSolution",
+                                          "MvcApplicationRemovedFromSolution",
+                                          "This web project was removed from solution!");
+        }
+
+        [Fact]
+        public void SpecificDeploymentConfigurationForNonDeployableProjectFile()
+        {
+            VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForNonDeployableProjectFile",
+                                          "MvcApplicationRemovedFromSolution.Tests/MvcApplicationRemovedFromSolution.Tests.csproj",
+                                          "The web site is under construction",
+                                          DeployStatus.Failed);
+        }
+
+        [Fact(Skip = "https://github.com/WindowsAzure/kudu/issues/108")]
+        public void SpecificDeploymentConfigurationForNonDeployableProject()
+        {
+            VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForNonDeployableProject",
+                                          "MvcApplicationRemovedFromSolution.Tests",
+                                          "The web site is under construction",
+                                          DeployStatus.Failed);
+        }
+
+        private void VerifyDeploymentConfiguration(string name, string targetProject, string expectedText, DeployStatus expectedStatus = DeployStatus.Success)
         {
             string cloneUrl = "https://github.com/KuduApps/SpecificDeploymentConfiguration.git";
             using (var repo = Git.Clone(name, cloneUrl))
@@ -650,7 +684,7 @@ project = {0}", targetProject));
 
                     // Assert
                     Assert.Equal(1, results.Count);
-                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    Assert.Equal(expectedStatus, results[0].Status);                    
                     KuduAssert.VerifyUrl(appManager.SiteUrl, expectedText);
                 });
             }
