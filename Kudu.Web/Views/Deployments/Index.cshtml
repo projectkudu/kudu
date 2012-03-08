@@ -78,7 +78,16 @@
                 }
                 else if (d.Complete)
                 {
-                    <a class="btn-small btn-primary" href="@Url.Action("deploy", "deployments", new { slug = ViewBag.slug, id = d.Id })"><i class="icon-repeat icon-white"></i> Deploy</a>
+<div class="btn-group">
+  <a class="btn" href="#">Action</a>
+  <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu">
+    <li><a href="@Url.Action("deploy", "deployments", new { slug = ViewBag.slug, id = d.Id })"><i class="icon-repeat"></i> Deploy</a></li>
+    <li><a href="@Url.Action("deploy", "deployments", new { slug = ViewBag.slug, id = d.Id, clean = true })"><i class="icon-repeat"></i> Deploy (clean)</a></li>
+  </ul>
+</div>
                 }
             </td>
             <td>

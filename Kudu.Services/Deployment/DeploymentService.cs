@@ -1,13 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
+using System.Json;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.ServiceModel;
 using System.ServiceModel.Web;
+using System.Threading.Tasks;
 using Kudu.Contracts;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Core.Deployment;
 using Kudu.Services.Infrastructure;
 using Microsoft.ApplicationServer.Http.Dispatcher;
@@ -47,13 +51,24 @@ namespace Kudu.Services.Deployment
 
         [Description("Deploys a specific deployment based on its id.")]
         [WebInvoke(Method = "PUT", UriTemplate = "{id}")]
-        public void Deploy(string id)
+        public void Deploy(HttpRequestMessage request, string id)
         {
+            // Just block here to read the json payload from the body
+            var result = request.Content.ReadAsAsync<JsonValue>().Result;
+
             using (_profiler.Step("DeploymentService.Deploy(id)"))
             {
                 try
                 {
-                    _deploymentManager.Deploy(id);
+                    bool clean = false;
+
+                    if (result != null)
+                    {
+                        JsonValue cleanValue = result["clean"];
+                        clean = cleanValue != null && cleanValue.ReadAs<bool>();
+                    }
+
+                    _deploymentManager.Deploy(id, clean);
                 }
                 catch (FileNotFoundException ex)
                 {

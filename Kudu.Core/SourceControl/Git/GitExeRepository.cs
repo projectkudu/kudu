@@ -141,6 +141,10 @@ namespace Kudu.Core.SourceControl.Git
             _gitExe.Execute(@"clone ""{0}"" .", source);
         }
 
+        public void Clean()
+        {
+            _gitExe.Execute(@"clean -xdf");
+        }
 
         public void Push()
         {

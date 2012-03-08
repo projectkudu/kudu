@@ -63,6 +63,11 @@ namespace Kudu.Core.SourceControl.Git
             }
         }
 
+        public void Clean()
+        {
+            _repository.Clean();
+        }
+
         public bool Receive(Stream inputStream, Stream outputStream)
         {
             IProfiler profiler = _profilerFactory.GetProfiler();

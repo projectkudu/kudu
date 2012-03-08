@@ -112,7 +112,7 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public void Deploy(string id)
+        public void Deploy(string id, bool clean)
         {
             var profiler = _profilerFactory.GetProfiler();
             IDisposable deployStep = null;
@@ -134,6 +134,11 @@ namespace Kudu.Core.Deployment
                 {
                     // Update to the the specific changeset
                     _serverRepository.Update(id);
+                }
+
+                if (clean)
+                {
+                    _serverRepository.Clean();
                 }
 
                 // Perform the build deployment of this changeset

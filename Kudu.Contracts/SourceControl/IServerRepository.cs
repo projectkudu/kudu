@@ -8,5 +8,6 @@
         ChangeSet GetChangeSet(string id);
         void Update(string id);
         void Update();
+        void Clean();
     }
 }

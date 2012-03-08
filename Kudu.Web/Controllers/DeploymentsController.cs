@@ -60,7 +60,7 @@ namespace Kudu.Web.Controllers
 
         }
 
-        public Task<ActionResult> Deploy(string slug, string id)
+        public Task<ActionResult> Deploy(string slug, string id, bool clean)
         {
             IApplication application = _applicationService.GetApplication(slug);
 
@@ -72,7 +72,7 @@ namespace Kudu.Web.Controllers
             ICredentials credentials = _credentialProvider.GetCredentials();
             RemoteDeploymentManager deploymentManager = application.GetDeploymentManager(credentials);
 
-            return deploymentManager.DeployAsync(id)
+            return deploymentManager.DeployAsync(id, clean)
                                     .ContinueWith(task =>
                                     {
                                         return (ActionResult)RedirectToAction("Index", new { slug });
