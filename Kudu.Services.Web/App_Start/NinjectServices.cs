@@ -112,10 +112,6 @@ namespace Kudu.Services.Web.App_Start
 
             kernel.Bind<DiagnosticsService>().ToMethod(context => new DiagnosticsService(paths));
 
-            // Repository Management
-            kernel.Bind<IRepositoryManager>().ToMethod(context => new RepositoryManager(environment.DeploymentRepositoryPath))
-                                             .InRequestScope();
-
 
             // Deployment Service
             kernel.Bind<ISettings>().ToMethod(context => new XmlSettings.Settings(GetSettingsPath(environment)));

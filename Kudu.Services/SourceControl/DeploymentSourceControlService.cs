@@ -11,12 +11,12 @@ namespace Kudu.Services.SourceControl
     [ServiceContract]
     public class DeploymentSourceControlService
     {
-        private readonly IRepositoryManager _repositoryManager;
+        private readonly IServerRepository _repository;
         private readonly IServerConfiguration _serverConfiguration;
 
-        public DeploymentSourceControlService(IRepositoryManager repositoryManager, IServerConfiguration serverConfiguration)
+        public DeploymentSourceControlService(IServerRepository repository, IServerConfiguration serverConfiguration)
         {
-            _repositoryManager = repositoryManager;
+            _repository = repository;
             _serverConfiguration = serverConfiguration;
         }
 
@@ -27,7 +27,7 @@ namespace Kudu.Services.SourceControl
             var baseUri = new Uri(request.RequestUri.GetComponents(UriComponents.SchemeAndServer, UriFormat.Unescaped));
             return new RepositoryInfo
             {
-                Type = _repositoryManager.GetRepositoryType(),
+                Type = _repository.GetRepositoryType(),
                 GitUrl = UriHelper.MakeRelative(baseUri, _serverConfiguration.GitServerRoot),
             };
         }
@@ -36,7 +36,7 @@ namespace Kudu.Services.SourceControl
         [WebInvoke(UriTemplate = "clean", Method = "POST")]
         public void Clean()
         {
-            _repositoryManager.Clean();
+            _repository.Clean();
         }
 
     }

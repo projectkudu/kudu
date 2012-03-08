@@ -9,5 +9,6 @@
         void Update(string id);
         void Update();
         void Clean();
+        RepositoryType GetRepositoryType();
     }
 }
