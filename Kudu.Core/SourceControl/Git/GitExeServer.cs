@@ -161,6 +161,11 @@ echo $i > pushinfo
             return _repository.GetChangeSet(id);
         }
 
+        public RepositoryType GetRepositoryType()
+        {
+            return RepositoryType.Git;
+        }
+
         public void Update(string id)
         {
             _repository.Update(id);

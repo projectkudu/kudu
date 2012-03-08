@@ -138,7 +138,6 @@
     <Compile Include="SourceControl\Hg\HgRepository.cs" />
     <Compile Include="SourceControl\Hg\HgServer.cs" />
     <Compile Include="SourceControl\NullRepository.cs" />
-    <Compile Include="SourceControl\RepositoryManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
