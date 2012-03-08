@@ -66,26 +66,26 @@ namespace Kudu.Core.Deployment
 
             if (project.IsWap)
             {
-                return new WapBuilder(_propertyProvider, 
-                                      repositoryRoot, 
-                                      project.AbsolutePath, 
-                                      _environment.TempPath, 
+                return new WapBuilder(_propertyProvider,
+                                      repositoryRoot,
+                                      project.AbsolutePath,
+                                      _environment.TempPath,
                                       solution.Path);
             }
 
-            return new WebSiteBuilder(_propertyProvider, 
-                                      repositoryRoot, 
-                                      solution.Path, 
+            return new WebSiteBuilder(_propertyProvider,
+                                      repositoryRoot,
+                                      solution.Path,
                                       project.AbsolutePath,
                                       _environment.TempPath);
         }
 
         private ISiteBuilder ResolveProject(string repositoryRoot, bool tryWebSiteProject = false, SearchOption searchOption = SearchOption.AllDirectories)
         {
-            return ResolveProject(repositoryRoot, repositoryRoot, tryWebSiteProject, searchOption);
+            return ResolveProject(repositoryRoot, repositoryRoot, tryWebSiteProject, searchOption, specificConfiguration: false);
         }
 
-        private ISiteBuilder ResolveProject(string repositoryRoot, string targetPath, bool tryWebSiteProject, SearchOption searchOption = SearchOption.AllDirectories)
+        private ISiteBuilder ResolveProject(string repositoryRoot, string targetPath, bool tryWebSiteProject, SearchOption searchOption = SearchOption.AllDirectories, bool specificConfiguration = true)
         {
             if (DeploymentHelper.IsProject(targetPath))
             {
@@ -104,7 +104,6 @@ namespace Kudu.Core.Deployment
                 return DetermineProject(repositoryRoot, projects[0]);
             }
 
-
             if (tryWebSiteProject)
             {
                 // Website projects need a solution to build so look for one in the repository path
@@ -117,9 +116,9 @@ namespace Kudu.Core.Deployment
                                                                      where p.IsWebSite && NormalizePath(p.AbsolutePath).Equals(NormalizePath(targetPath))
                                                                      select p).ToList()
                                              }
-                                             into websitePair
-                                             where websitePair.MatchingWebsites.Count == 1
-                                             select websitePair).ToList();
+                                                 into websitePair
+                                                 where websitePair.MatchingWebsites.Count == 1
+                                                 select websitePair).ToList();
 
                 // More than one solution is ambiguous
                 if (solutionsWithWebsites.Count > 1)
@@ -129,13 +128,20 @@ namespace Kudu.Core.Deployment
                 else if (solutionsWithWebsites.Count == 1)
                 {
                     // Unambiguously pick the root
-                    return new WebSiteBuilder(_propertyProvider, 
-                                              repositoryRoot, 
-                                              solutionsWithWebsites[0].Solution.Path, 
+                    return new WebSiteBuilder(_propertyProvider,
+                                              repositoryRoot,
+                                              solutionsWithWebsites[0].Solution.Path,
                                               targetPath,
                                               _environment.TempPath);
                 }
+            }
 
+            // This should only ever happen if the user specifies an invalid directory.
+            // The other case where the method is called we always resolve the path so it's a non issue there.
+            if (specificConfiguration && !Directory.Exists(targetPath))
+            {
+                // TODO: Consider reporting errors with the relative path
+                throw new InvalidOperationException(String.Format("The specified path '{0}' doesn't exist.", targetPath));
             }
 
             // If there's none then use the basic builder (the site is xcopy deployable)
