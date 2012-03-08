@@ -632,7 +632,7 @@ namespace Kudu.FunctionalTests
                                           "This is a website!");
         }
 
-        [Fact(Skip = "https://github.com/WindowsAzure/kudu/issues/106")]
+        [Fact]
         public void SpecificDeploymentConfigurationForWebsiteNotPartOfSolution()
         {
             VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForWebsiteNotPartOfSolution",
@@ -657,7 +657,7 @@ namespace Kudu.FunctionalTests
                                           DeployStatus.Failed);
         }
 
-        [Fact(Skip = "https://github.com/WindowsAzure/kudu/issues/108")]
+        [Fact]
         public void SpecificDeploymentConfigurationForNonDeployableProject()
         {
             VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForNonDeployableProject",

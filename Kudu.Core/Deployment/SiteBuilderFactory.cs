@@ -87,17 +87,13 @@ namespace Kudu.Core.Deployment
 
         private ISiteBuilder ResolveProject(string repositoryRoot, string targetPath, bool tryWebSiteProject, SearchOption searchOption = SearchOption.AllDirectories)
         {
-            if (File.Exists(targetPath) &&
-                DeploymentHelper.IsDeployableProject(targetPath))
+            if (DeploymentHelper.IsProject(targetPath))
             {
-                return new WapBuilder(_propertyProvider,
-                                      repositoryRoot,
-                                      targetPath,
-                                      _environment.TempPath);
+                return DetermineProject(repositoryRoot, targetPath);
             }
 
             // Check for loose projects
-            var projects = DeploymentHelper.GetDeployableProjects(targetPath, searchOption);
+            var projects = DeploymentHelper.GetProjects(targetPath, searchOption);
             if (projects.Count > 1)
             {
                 // Can't determine which project to build
@@ -105,10 +101,7 @@ namespace Kudu.Core.Deployment
             }
             else if (projects.Count == 1)
             {
-                return new WapBuilder(_propertyProvider,
-                                      repositoryRoot,
-                                      projects[0],
-                                      _environment.TempPath);
+                return DetermineProject(repositoryRoot, projects[0]);
             }
 
 
@@ -146,7 +139,24 @@ namespace Kudu.Core.Deployment
             }
 
             // If there's none then use the basic builder (the site is xcopy deployable)
-            return new BasicBuilder(repositoryRoot, _environment.TempPath);
+            return new BasicBuilder(targetPath, _environment.TempPath);
+        }
+
+        private ISiteBuilder DetermineProject(string repositoryRoot, string targetPath)
+        {
+            if (!DeploymentHelper.IsDeployableProject(targetPath))
+            {
+                throw new InvalidOperationException(String.Format("'{0}' is not a deployable project.", targetPath));
+            }
+            else if (File.Exists(targetPath))
+            {
+                return new WapBuilder(_propertyProvider,
+                                      repositoryRoot,
+                                      targetPath,
+                                      _environment.TempPath);
+            }
+
+            throw new InvalidOperationException(String.Format("Unable to find target project '{0}'.", targetPath));
         }
 
         private string NormalizePath(string path)
