@@ -26,7 +26,7 @@ namespace Kudu.Core.Deployment
                     return null;
                 }
 
-                return Path.Combine(_path, projectPath.TrimStart('/', '\\'));
+                return Path.GetFullPath(Path.Combine(_path, projectPath.TrimStart('/', '\\')));
             }
         }
     }
