@@ -3,5 +3,6 @@
     public interface IRepositoryManager
     {
         RepositoryType GetRepositoryType();
+        void Clean();
     }
 }

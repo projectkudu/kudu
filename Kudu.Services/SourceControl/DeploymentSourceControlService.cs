@@ -31,5 +31,13 @@ namespace Kudu.Services.SourceControl
                 GitUrl = UriHelper.MakeRelative(baseUri, _serverConfiguration.GitServerRoot),
             };
         }
+
+        [Description("Does a clean of the repository.")]
+        [WebInvoke(UriTemplate = "clean", Method = "POST")]
+        public void Clean()
+        {
+            _repositoryManager.Clean();
+        }
+
     }
 }

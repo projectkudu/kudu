@@ -24,6 +24,9 @@ namespace Kudu.FunctionalTests
                 ex = KuduAssert.ThrowsUnwrapped<HttpRequestException>(() => appManager.DeploymentManager.DeployAsync(id).Wait());
                 Assert.Equal("Response status code does not indicate success: 404 (Not Found).", ex.Message);
 
+                ex = KuduAssert.ThrowsUnwrapped<HttpRequestException>(() => appManager.DeploymentManager.DeployAsync(id, clean: true).Wait());
+                Assert.Equal("Response status code does not indicate success: 404 (Not Found).", ex.Message);
+
                 ex = KuduAssert.ThrowsUnwrapped<HttpRequestException>(() => appManager.DeploymentManager.GetLogEntriesAsync(id).Wait());
                 Assert.Equal("Response status code does not indicate success: 404 (Not Found).", ex.Message);
 
@@ -74,6 +77,9 @@ namespace Kudu.FunctionalTests
 
                     // Redeploy
                     appManager.DeploymentManager.DeployAsync(result.Id).Wait();
+
+                    // Clean deploy
+                    appManager.DeploymentManager.DeployAsync(result.Id, clean: true).Wait();
 
                     var entries = appManager.DeploymentManager.GetLogEntriesAsync(result.Id).Result.ToList();
 

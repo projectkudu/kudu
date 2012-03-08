@@ -12,7 +12,7 @@ namespace Kudu.Core.Deployment
         IEnumerable<LogEntry> GetLogEntries(string id);
         IEnumerable<LogEntry> GetLogEntryDetails(string id, string logId);
         void Delete(string id);
-        void Deploy(string id);
+        void Deploy(string id, bool clean);
         void Deploy();
     }
 }

@@ -70,12 +70,7 @@ namespace Kudu.SignalR.Hubs
 
         public void Deploy(string id)
         {
-            _deploymentManager.Deploy(id);
-        }
-
-        public void Rebuild(string id)
-        {
-            _deploymentManager.Deploy(id);
+            _deploymentManager.Deploy(id, clean: false);
         }
     }
 }
