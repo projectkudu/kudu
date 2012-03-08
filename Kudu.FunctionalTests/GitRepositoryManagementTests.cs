@@ -666,6 +666,15 @@ namespace Kudu.FunctionalTests
                                           DeployStatus.Failed);
         }
 
+        [Fact]
+        public void SpecificDeploymentConfigurationForDirectoryThatDoesNotExist()
+        {
+            VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForDirectoryThatDoesNotExist",
+                                          "IDoNotExist",
+                                          "The web site is under construction",
+                                          DeployStatus.Failed);
+        }
+
         private void VerifyDeploymentConfiguration(string name, string targetProject, string expectedText, DeployStatus expectedStatus = DeployStatus.Success)
         {
             string cloneUrl = "https://github.com/KuduApps/SpecificDeploymentConfiguration.git";
