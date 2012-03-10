@@ -46,6 +46,12 @@ namespace Kudu.Services.Deployment
                     response.Content = new StringContent(ex.Message);
                     throw new HttpResponseException(response);
                 }
+                catch (InvalidOperationException ex)
+                {
+                    var response = new HttpResponseMessage(HttpStatusCode.Conflict);
+                    response.Content = new StringContent(ex.Message);
+                    throw new HttpResponseException(response);
+                }
             }
         }
 

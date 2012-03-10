@@ -89,11 +89,24 @@ namespace Kudu.FunctionalTests
 
                     Assert.Equal(1, nested.Count);
 
-                    appManager.DeploymentManager.DeleteAsync(result.Id).Wait();
+                    // Can't delete the active one
+                    var ex = KuduAssert.ThrowsUnwrapped<HttpRequestException>(() => appManager.DeploymentManager.DeleteAsync(result.Id).Wait());
+                    Assert.Equal("Response status code does not indicate success: 409 (Conflict).", ex.Message);
+
+                    repo.WriteFile("HelloWorld.txt", "This is a test");
+                    Git.Commit(repo.PhysicalPath, "Another commit");
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
+                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                    Assert.Equal(2, results.Count);
+                    string newId = results[1].Id;
+
+                    // Delete one
+                    appManager.DeploymentManager.DeleteAsync(newId).Wait();
 
                     results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
-                    Assert.Equal(0, results.Count);
+                    Assert.Equal(1, results.Count);
+                    Assert.NotEqual(newId, results[0].Id);
                 });
             }
         }

@@ -108,6 +108,11 @@ namespace Kudu.Core.Deployment
                     throw new DirectoryNotFoundException(String.Format("Unable to delete '{0}'. No deployment found.", id));
                 }
 
+                if (IsActive(id))
+                {
+                    throw new InvalidOperationException(String.Format("Unable to delete '{0}'. The deployment is currently active.", id));
+                }
+
                 _fileSystem.Directory.Delete(path, true);
             }
         }
@@ -184,7 +189,7 @@ namespace Kudu.Core.Deployment
                 string id = _serverRepository.CurrentId;
 
                 // If nothing changed then do nothing
-                if (id.Equals(ActiveDeploymentId, StringComparison.OrdinalIgnoreCase))
+                if (IsActive(id))
                 {
                     ReportCompleted();
                     deployStep.Dispose();
@@ -512,6 +517,11 @@ namespace Kudu.Core.Deployment
         private string GetActiveDeploymentFilePath()
         {
             return Path.Combine(_environment.DeploymentCachePath, "active");
+        }
+
+        private bool IsActive(string id)
+        {
+            return id.Equals(ActiveDeploymentId, StringComparison.OrdinalIgnoreCase);
         }
     }
 }
