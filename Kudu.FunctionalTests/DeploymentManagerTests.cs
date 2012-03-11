@@ -75,6 +75,23 @@ namespace Kudu.FunctionalTests
                     KuduAssert.VerifyUrl(resultAgain.Url, cred);
                     KuduAssert.VerifyUrl(resultAgain.LogUrl, cred);
 
+                    repo.WriteFile("HelloWorld.txt", "This is a test");
+                    Git.Commit(repo.PhysicalPath, "Another commit");
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
+                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                    Assert.Equal(2, results.Count);
+                    string oldId = results[1].Id;
+
+                    // Delete one
+                    appManager.DeploymentManager.DeleteAsync(oldId).Wait();
+
+                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    Assert.Equal(1, results.Count);
+                    Assert.NotEqual(oldId, results[0].Id);
+
+                    result = results[0];
+
                     // Redeploy
                     appManager.DeploymentManager.DeployAsync(result.Id).Wait();
 
@@ -91,22 +108,7 @@ namespace Kudu.FunctionalTests
 
                     // Can't delete the active one
                     var ex = KuduAssert.ThrowsUnwrapped<HttpRequestException>(() => appManager.DeploymentManager.DeleteAsync(result.Id).Wait());
-                    Assert.Equal("Response status code does not indicate success: 409 (Conflict).", ex.Message);
-
-                    repo.WriteFile("HelloWorld.txt", "This is a test");
-                    Git.Commit(repo.PhysicalPath, "Another commit");
-                    appManager.AssertGitDeploy(repo.PhysicalPath);
-                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-                    Assert.Equal(2, results.Count);
-                    string newId = results[1].Id;
-
-                    // Delete one
-                    appManager.DeploymentManager.DeleteAsync(newId).Wait();
-
-                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-
-                    Assert.Equal(1, results.Count);
-                    Assert.NotEqual(newId, results[0].Id);
+                    Assert.Equal("Response status code does not indicate success: 409 (Conflict).", ex.Message);                    
                 });
             }
         }

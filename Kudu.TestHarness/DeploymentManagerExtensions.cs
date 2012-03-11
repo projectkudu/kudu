@@ -27,17 +27,10 @@ namespace Kudu.TestHarness
 
             Action<DeployResult> handler = null;
 
-
             handler = status =>
             {
                 if (status.Complete)
                 {
-                    if (handler != null)
-                    {
-                        deploymentManager.Stop();
-                        deploymentManager.StatusChanged -= handler;
-                    }
-
                     deployEvent.Set();
 
                     // Stop measuring elapsed time
@@ -52,17 +45,14 @@ namespace Kudu.TestHarness
 
             try
             {
-                // Create deployment manager and wait for the deployment to finish
-                deploymentManager.StatusChanged += handler;
-
                 // Start measuring elapsed time
                 sw = Stopwatch.StartNew();  
 
-                // Start listenting for events                              
-                deploymentManager.Start();
-
                 // Do something
                 action();
+
+                // Create deployment manager and wait for the deployment to finish
+                deploymentManager.StatusChanged += handler;
 
                 timedOut = deployEvent.WaitOne(waitTimeout);                
             }
@@ -73,12 +63,7 @@ namespace Kudu.TestHarness
             }
             finally
             {
-                if (handler != null)
-                {
-                    deploymentManager.StatusChanged -= handler;
-                    // Stop listenting
-                    deploymentManager.Stop();
-                }
+                deploymentManager.StatusChanged -= handler;
             }
 
             return Tuple.Create(sw.Elapsed, timedOut);
