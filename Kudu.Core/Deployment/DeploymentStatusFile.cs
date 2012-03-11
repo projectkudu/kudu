@@ -32,6 +32,11 @@ namespace Kudu.Core.Deployment
 
             try
             {
+                if (!fileSystem.File.Exists(path))
+                {
+                    return null;
+                }
+
                 using (var stream = fileSystem.File.OpenRead(path))
                 {
                     document = XDocument.Load(stream);

@@ -457,7 +457,7 @@ namespace Kudu.Core.Deployment
 
         private DeploymentStatusFile OpenTrackingFile(string id)
         {
-            return DeploymentStatusFile.Open(_fileSystem, GetTrackingFilePath(id));
+            return DeploymentStatusFile.Open(_fileSystem, GetTrackingFilePath(id, ensureDirectory: false));
         }
 
         private DeploymentStatusFile CreateTrackingFile(string id)
