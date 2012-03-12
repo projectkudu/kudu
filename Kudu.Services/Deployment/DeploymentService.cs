@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Json;
 using System.Linq;
@@ -9,7 +8,6 @@ using System.Net;
 using System.Net.Http;
 using System.ServiceModel;
 using System.ServiceModel.Web;
-using System.Threading.Tasks;
 using Kudu.Contracts;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Core.Deployment;
@@ -23,11 +21,13 @@ namespace Kudu.Services.Deployment
     {
         private readonly IDeploymentManager _deploymentManager;
         private readonly IProfiler _profiler;
+        private readonly IOperationLock _deploymentLock;
 
-        public DeploymentService(IProfiler profiler, IDeploymentManager deploymentManager)
+        public DeploymentService(IProfiler profiler, IDeploymentManager deploymentManager, IOperationLock deploymentLock)
         {
             _profiler = profiler;
             _deploymentManager = deploymentManager;
+            _deploymentLock = deploymentLock;
         }
 
         [Description("Deletes a deployment.")]
@@ -36,22 +36,25 @@ namespace Kudu.Services.Deployment
         {
             using (_profiler.Step("DeploymentService.Delete"))
             {
-                try
+                _deploymentLock.LockHttpOperation(() =>
                 {
-                    _deploymentManager.Delete(id);
-                }
-                catch (DirectoryNotFoundException ex)
-                {
-                    var response = new HttpResponseMessage(HttpStatusCode.NotFound);
-                    response.Content = new StringContent(ex.Message);
-                    throw new HttpResponseException(response);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    var response = new HttpResponseMessage(HttpStatusCode.Conflict);
-                    response.Content = new StringContent(ex.Message);
-                    throw new HttpResponseException(response);
-                }
+                    try
+                    {
+                        _deploymentManager.Delete(id);
+                    }
+                    catch (DirectoryNotFoundException ex)
+                    {
+                        var response = new HttpResponseMessage(HttpStatusCode.NotFound);
+                        response.Content = new StringContent(ex.Message);
+                        throw new HttpResponseException(response);
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        var response = new HttpResponseMessage(HttpStatusCode.Conflict);
+                        response.Content = new StringContent(ex.Message);
+                        throw new HttpResponseException(response);
+                    }
+                });
             }
         }
 
@@ -60,28 +63,30 @@ namespace Kudu.Services.Deployment
         public void Deploy(HttpRequestMessage request, string id)
         {
             // Just block here to read the json payload from the body
-            var result = request.Content.ReadAsAsync<JsonValue>().Result;
-
+            var result = request.Content.ReadAsAsync<JsonValue>().Result;            
             using (_profiler.Step("DeploymentService.Deploy(id)"))
             {
-                try
+                _deploymentLock.LockHttpOperation(() =>
                 {
-                    bool clean = false;
-
-                    if (result != null)
+                    try
                     {
-                        JsonValue cleanValue = result["clean"];
-                        clean = cleanValue != null && cleanValue.ReadAs<bool>();
-                    }
+                        bool clean = false;
 
-                    _deploymentManager.Deploy(id, clean);
-                }
-                catch (FileNotFoundException ex)
-                {
-                    var response = new HttpResponseMessage(HttpStatusCode.NotFound);
-                    response.Content = new StringContent(ex.Message);
-                    throw new HttpResponseException(response);
-                }
+                        if (result != null)
+                        {
+                            JsonValue cleanValue = result["clean"];
+                            clean = cleanValue != null && cleanValue.ReadAs<bool>();
+                        }
+
+                        _deploymentManager.Deploy(id, clean);
+                    }
+                    catch (FileNotFoundException ex)
+                    {
+                        var response = new HttpResponseMessage(HttpStatusCode.NotFound);
+                        response.Content = new StringContent(ex.Message);
+                        throw new HttpResponseException(response);
+                    }
+                });
             }
         }
 

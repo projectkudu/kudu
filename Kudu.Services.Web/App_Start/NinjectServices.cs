@@ -2,10 +2,11 @@ using System.IO;
 using System.IO.Abstractions;
 using System.Web;
 using Kudu.Contracts;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Core;
-using Kudu.Core.Commands;
 using Kudu.Core.Deployment;
 using Kudu.Core.Editor;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.Performance;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
@@ -30,6 +31,7 @@ namespace Kudu.Services.Web.App_Start
     public static class NinjectServices
     {
         private const string DeploymentCachePath = "deployments";
+        private const string DeploymentLockFile = "deployments.lock";
         private const string ProfilerPath = @"LogFiles\Git\profiles";
         private const string DeploySettingsPath = "settings.xml";
 
@@ -72,6 +74,7 @@ namespace Kudu.Services.Web.App_Start
             var serverConfiguration = new ServerConfiguration();
             IEnvironment environment = GetEnvironment();
             var propertyProvider = new BuildPropertyProvider();
+            var lockObj = new LockFile(Path.Combine(environment.DeploymentCachePath, DeploymentLockFile));
 
             // General
             kernel.Bind<HttpContextBase>().ToMethod(context => new HttpContextWrapper(HttpContext.Current));
@@ -80,6 +83,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IUserValidator>().To<SimpleUserValidator>().InSingletonScope();
             kernel.Bind<IServerConfiguration>().ToConstant(serverConfiguration);
             kernel.Bind<IFileSystem>().To<FileSystem>().InSingletonScope();
+            kernel.Bind<IOperationLock>().ToConstant(lockObj);
 
             if (ProfilerServices.Enabled)
             {

@@ -108,6 +108,7 @@
     <Compile Include="HgServer\ProxyService.cs" />
     <Compile Include="Infrastructure\IServerConfiguration.cs" />
     <Compile Include="Diagnostics\DiagnosticsService.cs" />
+    <Compile Include="Infrastructure\LockExtensions.cs" />
     <Compile Include="Infrastructure\MemoryStreamExtensions.cs" />
     <Compile Include="Infrastructure\UriHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

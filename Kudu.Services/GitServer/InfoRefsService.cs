@@ -25,6 +25,7 @@ namespace Kudu.Services.GitServer
     using System;
     using System.ComponentModel;
     using System.IO;
+    using System.Net;
     using System.Net.Http;
     using System.Net.Http.Headers;
     using System.ServiceModel;
@@ -61,7 +62,8 @@ namespace Kudu.Services.GitServer
                     return SmartInfoRefs(service);
                 }
 
-                throw new Exception("Dumb protocol not supported"); // REVIEW: Consider throw 501 Not Implemented
+                // Dumb protocol isn't supported
+                return new HttpResponseMessage(HttpStatusCode.NotImplemented);
             }
         }
 
