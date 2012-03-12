@@ -108,29 +108,19 @@ namespace Kudu.Core.Deployment
             {
                 // Website projects need a solution to build so look for one in the repository path
                 // that has this website in it.
-                var solutionsWithWebsites = (from solution in VsHelper.GetSolutions(repositoryRoot)
-                                             select new
-                                             {
-                                                 Solution = solution,
-                                                 MatchingWebsites = (from p in solution.Projects
-                                                                     where p.IsWebSite && NormalizePath(p.AbsolutePath).Equals(NormalizePath(targetPath))
-                                                                     select p).ToList()
-                                             }
-                                                 into websitePair
-                                                 where websitePair.MatchingWebsites.Count == 1
-                                                 select websitePair).ToList();
+                var solutions = VsHelper.FindContainingSolutions(repositoryRoot, targetPath);
 
                 // More than one solution is ambiguous
-                if (solutionsWithWebsites.Count > 1)
+                if (solutions.Count > 1)
                 {
                     throw new InvalidOperationException("Unable to determine which solution file to build.");
                 }
-                else if (solutionsWithWebsites.Count == 1)
+                else if (solutions.Count == 1)
                 {
                     // Unambiguously pick the root
                     return new WebSiteBuilder(_propertyProvider,
                                               repositoryRoot,
-                                              solutionsWithWebsites[0].Solution.Path,
+                                              solutions[0].Path,
                                               targetPath,
                                               _environment.TempPath);
                 }
@@ -156,18 +146,17 @@ namespace Kudu.Core.Deployment
             }
             else if (File.Exists(targetPath))
             {
+                var solution = VsHelper.FindContainingSolution(repositoryRoot, targetPath);
+                string solutionPath = solution != null ? solution.Path : null;
+
                 return new WapBuilder(_propertyProvider,
                                       repositoryRoot,
                                       targetPath,
-                                      _environment.TempPath);
+                                      _environment.TempPath,
+                                      solutionPath);
             }
 
             throw new InvalidOperationException(String.Format("Unable to find target project '{0}'.", targetPath));
-        }
-
-        private string NormalizePath(string path)
-        {
-            return path.ToUpperInvariant().TrimEnd('\\');
         }
     }
 }

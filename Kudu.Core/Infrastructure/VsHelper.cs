@@ -22,6 +22,40 @@ namespace Kudu.Core.Infrastructure
                     select new VsSolution(solutionFile)).ToList();
         }
 
+        /// <summary>
+        /// Locates the solutin(s) where the specified project is
+        /// </summary>
+        public static IList<VsSolution> FindContainingSolutions(string searchPath, string targetPath)
+        {
+            return (from solution in GetSolutions(searchPath)
+                    select new
+                    {
+                        Solution = solution,
+                        MatchingProjects = (from p in solution.Projects
+                                            where NormalizePath(p.AbsolutePath).Equals(NormalizePath(targetPath))
+                                            select p).ToList()
+                    }
+                    into projectSolutionPair
+                    where projectSolutionPair.MatchingProjects.Count == 1
+                    select projectSolutionPair.Solution).ToList();
+        }
+
+        /// <summary>
+        /// Locates the unambiguous solution matching this project
+        /// </summary>
+        public static VsSolution FindContainingSolution(string searchPath, string targetPath)
+        {
+            var solutions = FindContainingSolutions(searchPath, targetPath);
+
+            // Don't want to use SingleOrDefault since that throws
+            if (solutions.Count == 0 || solutions.Count > 1)
+            {
+                return null;
+            }
+
+            return solutions[0];
+        }
+
         public static bool IsWap(string projectPath)
         {
             return IsWap(GetProjectTypeGuids(projectPath));
@@ -47,6 +81,11 @@ namespace Kudu.Core.Infrastructure
         private static XName GetName(string name)
         {
             return XName.Get(name, "http://schemas.microsoft.com/developer/msbuild/2003");
+        }
+
+        private static string NormalizePath(string path)
+        {
+            return path.ToUpperInvariant().TrimEnd('\\');
         }
     }
 }
