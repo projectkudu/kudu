@@ -28,16 +28,8 @@ namespace Kudu.Core.Infrastructure
         public static IList<VsSolution> FindContainingSolutions(string searchPath, string targetPath)
         {
             return (from solution in GetSolutions(searchPath)
-                    select new
-                    {
-                        Solution = solution,
-                        MatchingProjects = (from p in solution.Projects
-                                            where NormalizePath(p.AbsolutePath).Equals(NormalizePath(targetPath))
-                                            select p).ToList()
-                    }
-                    into projectSolutionPair
-                    where projectSolutionPair.MatchingProjects.Count == 1
-                    select projectSolutionPair.Solution).ToList();
+                    where ExistsInSolution(solution, targetPath)
+                    select solution).ToList();
         }
 
         /// <summary>
@@ -78,6 +70,13 @@ namespace Kudu.Core.Infrastructure
             return guids;
         }
 
+        private static bool ExistsInSolution(VsSolution solution, string targetPath)
+        {
+            return (from p in solution.Projects
+                    where NormalizePath(p.AbsolutePath).Equals(NormalizePath(targetPath))
+                    select p).Any();
+        }
+
         private static XName GetName(string name)
         {
             return XName.Get(name, "http://schemas.microsoft.com/developer/msbuild/2003");
@@ -85,7 +84,7 @@ namespace Kudu.Core.Infrastructure
 
         private static string NormalizePath(string path)
         {
-            return path.ToUpperInvariant().TrimEnd('\\');
+            return Path.GetFullPath(path).ToUpperInvariant();
         }
     }
 }
