@@ -86,11 +86,9 @@
     <Compile Include="Deployment\DeploymentManifest.cs" />
     <Compile Include="Deployment\IDeploymentManifestReader.cs" />
     <Compile Include="Deployment\IDeploymentManifestWriter.cs" />
-    <Compile Include="Deployment\IProgressReporter.cs" />
     <Compile Include="Deployment\ManifestWriterExtensions.cs" />
     <Compile Include="Deployment\MsBuildSiteBuilder.cs" />
     <Compile Include="Deployment\NpmExecutable.cs" />
-    <Compile Include="Deployment\ProgressReporter.cs" />
     <Compile Include="Infrastructure\DisposableAction.cs" />
     <Compile Include="Infrastructure\IniFile.cs" />
     <Compile Include="Infrastructure\LockFile.cs" />
