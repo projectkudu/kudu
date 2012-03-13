@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
@@ -73,7 +74,7 @@ namespace Kudu.Core.Deployment
 
                 if (!_fileSystem.File.Exists(path))
                 {
-                    throw new FileNotFoundException(String.Format("No log found for '{0}'.", id));
+                    throw new FileNotFoundException(String.Format(CultureInfo.CurrentCulture, Resources.Error_NoLogFound, id));
                 }
 
                 return new XmlLogger(_fileSystem, path).GetLogEntries().ToList();
@@ -89,7 +90,7 @@ namespace Kudu.Core.Deployment
 
                 if (!_fileSystem.File.Exists(path))
                 {
-                    throw new FileNotFoundException(String.Format("No log found for '{0}'.", id));
+                    throw new FileNotFoundException(String.Format(CultureInfo.CurrentCulture, Resources.Error_NoLogFound, id));
                 }
 
                 return new XmlLogger(_fileSystem, path).GetLogEntryDetails(entryId).ToList();
@@ -105,12 +106,12 @@ namespace Kudu.Core.Deployment
 
                 if (!_fileSystem.Directory.Exists(path))
                 {
-                    throw new DirectoryNotFoundException(String.Format("Unable to delete '{0}'. No deployment found.", id));
+                    throw new DirectoryNotFoundException(String.Format(CultureInfo.CurrentCulture, Resources.Error_UnableToDeleteNoDeploymentFound, id));
                 }
 
                 if (IsActive(id))
                 {
-                    throw new InvalidOperationException(String.Format("Unable to delete '{0}'. The deployment is currently active.", id));
+                    throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_UnableToDeleteDeploymentActive, id));
                 }
 
                 _fileSystem.Directory.Delete(path, true);
@@ -132,7 +133,7 @@ namespace Kudu.Core.Deployment
                 if (!_fileSystem.File.Exists(trackingFilePath))
                 {
                     // If we don't then throw
-                    throw new FileNotFoundException(String.Format("Unable to deploy '{0}'. No deployment found.", id));
+                    throw new FileNotFoundException(String.Format(CultureInfo.CurrentCulture, Resources.Error_DeployNotFound, id));
                 }
 
                 using (profiler.Step("Updating to specific changeset"))
@@ -158,7 +159,6 @@ namespace Kudu.Core.Deployment
 
                 throw;
             }
-
         }
 
         public void Deploy()
@@ -276,13 +276,13 @@ namespace Kudu.Core.Deployment
                 FileSystemHelpers.DeleteFileSafe(logPath);
 
                 logger = GetLogger(id);
-                innerLogger = logger.Log("Preparing deployment for {0}.", id);
+                innerLogger = logger.Log(Resources.Log_PreparingDeployment, id);
 
                 trackingFile = OpenTrackingFile(id);
                 trackingFile.Complete = false;
                 trackingFile.StartTime = DateTime.Now;
                 trackingFile.Status = DeployStatus.Building;
-                trackingFile.StatusText = String.Format("Building and Deploying {0}...", id);
+                trackingFile.StatusText = String.Format(CultureInfo.CurrentCulture, Resources.Status_BuildingAndDeploying, id);
                 trackingFile.Save(_fileSystem);
 
                 ReportStatus(id);
@@ -380,7 +380,7 @@ namespace Kudu.Core.Deployment
                 string activeFilePath = GetActiveDeploymentFilePath();
                 File.WriteAllText(activeFilePath, id);
 
-                logger.Log("Deployment successful.");
+                logger.Log(Resources.Log_DeploymentSuccessful);
 
                 trackingFile.Status = DeployStatus.Success;
                 trackingFile.StatusText = String.Empty;
@@ -411,7 +411,7 @@ namespace Kudu.Core.Deployment
 
         private void NotifyError(ILogger logger, DeploymentStatusFile trackingFile, Exception exception)
         {
-            logger.Log("Deployment failed.", LogEntryType.Error);
+            logger.Log(Resources.Log_DeploymentFailed, LogEntryType.Error);
 
             if (trackingFile != null)
             {

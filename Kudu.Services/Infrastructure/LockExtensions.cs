@@ -13,7 +13,7 @@ namespace Kudu.Services.Infrastructure
             lockObj.LockOperation(action, () =>
             {
                 var response = new HttpResponseMessage(HttpStatusCode.Conflict);
-                response.Content = new StringContent("There's a deployment already in progress");
+                response.Content = new StringContent(Resources.Error_DeploymentInProgess);
                 throw new HttpResponseException(response);
             });
         }

@@ -30,7 +30,7 @@ namespace Kudu.Core.Deployment
         public override Task Build(DeploymentContext context)
         {
             var tcs = new TaskCompletionSource<object>();
-            var innerLogger = context.Logger.Log("Building web project {0}.", Path.GetFileName(_projectPath));
+            var innerLogger = context.Logger.Log(Resources.Log_BuildingWebProject, Path.GetFileName(_projectPath));
             string buildTempPath = Path.Combine(_tempPath, Guid.NewGuid().ToString());
 
             try
@@ -62,7 +62,7 @@ namespace Kudu.Core.Deployment
             }
             catch (Exception ex)
             {
-                innerLogger.Log("Building web project failed.", LogEntryType.Error);
+                innerLogger.Log(Resources.Log_BuildingWebProjectFailed, LogEntryType.Error);
                 innerLogger.Log(ex);
 
                 tcs.SetException(ex);

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using Kudu.Core.Infrastructure;
@@ -46,7 +48,8 @@ namespace Kudu.Core.Deployment
             // More than one solution is ambiguous
             if (solutions.Count > 1)
             {
-                throw new InvalidOperationException("Unable to determine which solution file to build.");
+                // TODO: Show relative paths in error messages
+                ThrowAmbiguousSolutionsError(solutions);
             }
 
             // We have a solution
@@ -54,12 +57,13 @@ namespace Kudu.Core.Deployment
 
             // We need to determine what project to deploy so get a list of all web projects and
             // figure out with some heuristic, which one to deploy. 
-            // For now just pick the first one we find.
+
+            // TODO: Pick only 1 and throw if there's more than one
             VsSolutionProject project = solution.Projects.Where(p => p.IsWap || p.IsWebSite).FirstOrDefault();
 
             if (project == null)
             {
-                logger.Log("Found solution {0} with no deployable projects. Deploying files instead.", solution.Path);
+                logger.Log(Resources.Log_NoDeployableProjects, solution.Path);
 
                 return new BasicBuilder(repositoryRoot, _environment.TempPath);
             }
@@ -97,7 +101,9 @@ namespace Kudu.Core.Deployment
             if (projects.Count > 1)
             {
                 // Can't determine which project to build
-                throw new InvalidOperationException("Unable to determine which project file to build.");
+                throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,
+                                                                  Resources.Error_AmbiguousProjects,
+                                                                  String.Join(", ", projects)));
             }
             else if (projects.Count == 1)
             {
@@ -113,7 +119,7 @@ namespace Kudu.Core.Deployment
                 // More than one solution is ambiguous
                 if (solutions.Count > 1)
                 {
-                    throw new InvalidOperationException("Unable to determine which solution file to build.");
+                    ThrowAmbiguousSolutionsError(solutions);
                 }
                 else if (solutions.Count == 1)
                 {
@@ -130,8 +136,9 @@ namespace Kudu.Core.Deployment
             // The other case where the method is called we always resolve the path so it's a non issue there.
             if (specificConfiguration && !Directory.Exists(targetPath))
             {
-                // TODO: Consider reporting errors with the relative path
-                throw new InvalidOperationException(String.Format("The specified path '{0}' doesn't exist.", targetPath));
+                throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,
+                                                                  Resources.Error_ProjectDoesNotExist,
+                                                                  targetPath));
             }
 
             // If there's none then use the basic builder (the site is xcopy deployable)
@@ -142,7 +149,9 @@ namespace Kudu.Core.Deployment
         {
             if (!DeploymentHelper.IsDeployableProject(targetPath))
             {
-                throw new InvalidOperationException(String.Format("'{0}' is not a deployable project.", targetPath));
+                throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, 
+                                                                  Resources.Error_ProjectNotDeployable, 
+                                                                  targetPath));
             }
             else if (File.Exists(targetPath))
             {
@@ -156,7 +165,16 @@ namespace Kudu.Core.Deployment
                                       solutionPath);
             }
 
-            throw new InvalidOperationException(String.Format("Unable to find target project '{0}'.", targetPath));
+            throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,
+                                                                  Resources.Error_ProjectDoesNotExist,
+                                                                  targetPath));
+        }
+
+        private static void ThrowAmbiguousSolutionsError(IList<VsSolution> solutions)
+        {
+            throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,
+                                                              Resources.Error_AmbiguousSolutions,
+                                                              String.Join(", ", solutions.Select(s => s.Path))));
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment
 {
@@ -17,7 +16,7 @@ namespace Kudu.Core.Deployment
         protected override Task BuildProject(DeploymentContext context)
         {
             var tcs = new TaskCompletionSource<object>();
-            var innerLogger = context.Logger.Log("Using website project {0}.", _projectPath);
+            var innerLogger = context.Logger.Log(Resources.Log_UsingWebsiteProject, _projectPath);
 
             try
             {
@@ -33,12 +32,11 @@ namespace Kudu.Core.Deployment
                     context.ManifestWriter.AddFiles(_projectPath);
                 }
 
-                innerLogger.Log("Done.");
                 tcs.SetResult(null);
             }
             catch (Exception e)
             {
-                innerLogger.Log("Copying website failed.", LogEntryType.Error);
+                innerLogger.Log(Resources.Log_CopyingWebsiteFailed, LogEntryType.Error);
                 innerLogger.Log(e);
                 tcs.SetException(e);
             }

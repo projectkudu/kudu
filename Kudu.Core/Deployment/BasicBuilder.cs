@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
-using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment
 {
@@ -24,8 +23,8 @@ namespace Kudu.Core.Deployment
         {
             var tcs = new TaskCompletionSource<object>();
 
-            var innerLogger = context.Logger.Log("Copying files.");
-            innerLogger.Log("Copying files to {0}.", context.OutputPath);
+            var innerLogger = context.Logger.Log(Resources.Log_CopyingFiles);
+            innerLogger.Log(Resources.Log_CopyingFilesToDirectory, context.OutputPath);
 
             try
             {
@@ -49,7 +48,7 @@ namespace Kudu.Core.Deployment
             }
             catch (Exception ex)
             {
-                innerLogger.Log("Copying files failed.");
+                innerLogger.Log(Resources.Log_CopyingFilesFailed);
                 innerLogger.Log(ex);
                 tcs.SetException(ex);
             }
@@ -78,7 +77,7 @@ namespace Kudu.Core.Deployment
 
                 if (!npm.IsAvailable)
                 {
-                    logger.Log("NPM not installed or couldn't be located. Skipping package installation.");
+                    logger.Log(Resources.Log_NpmNotInstalled);
                     return;
                 }
 

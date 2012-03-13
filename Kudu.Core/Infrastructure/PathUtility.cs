@@ -13,7 +13,7 @@ namespace Kudu.Core.Infrastructure
 
             if (!File.Exists(path))
             {
-                throw new InvalidOperationException("Unable to locate git.exe");
+                throw new InvalidOperationException(Resources.Error_FailedToLocateGit);
             }
 
             return path;

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Json;
 using System.Linq;
@@ -155,7 +156,9 @@ namespace Kudu.Services.Deployment
                 if (result == null)
                 {
                     var response = new HttpResponseMessage(HttpStatusCode.NotFound);
-                    response.Content = new StringContent(String.Format("Deployment '{0}' not found.", id));
+                    response.Content = new StringContent(String.Format(CultureInfo.CurrentCulture, 
+                                                                       Resources.Error_DeploymentNotFound, 
+                                                                       id));
                     throw new HttpResponseException(response);
                 }
 
