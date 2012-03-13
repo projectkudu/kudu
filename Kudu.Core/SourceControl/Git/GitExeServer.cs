@@ -1,23 +1,23 @@
 ﻿using System.IO;
 using System.Linq;
-using Kudu.Contracts;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
-using Kudu.Core.Performance;
+using Kudu.Core.Tracing;
 
 namespace Kudu.Core.SourceControl.Git
 {
     public class GitExeServer : IGitServer, IServerRepository
     {
         private readonly GitExecutable _gitExe;
-        private readonly IProfilerFactory _profilerFactory;
+        private readonly ITraceFactory _traceFactory;
         private readonly GitExeRepository _repository;
         
-        public GitExeServer(string path, IProfilerFactory profilerFactory)
+        public GitExeServer(string path, ITraceFactory traceFactory)
         {
             _gitExe = new GitExecutable(path);
             _gitExe.SetTraceLevel(2);
-            _profilerFactory = profilerFactory;
-            _repository = new GitExeRepository(path, profilerFactory);
+            _traceFactory = traceFactory;
+            _repository = new GitExeRepository(path, traceFactory);
             _repository.SetTraceLevel(2);
         }
 
@@ -56,19 +56,19 @@ namespace Kudu.Core.SourceControl.Git
 
         public void AdvertiseReceivePack(Stream output)
         {
-            IProfiler profiler = _profilerFactory.GetProfiler();
-            using (profiler.Step("GitExeServer.AdvertiseReceivePack"))
+            ITracer tracer = _traceFactory.GetTracer();
+            using (tracer.Step("GitExeServer.AdvertiseReceivePack"))
             {
-                Advertise(profiler, "receive-pack", output);
+                Advertise(tracer, "receive-pack", output);
             }
         }
 
         public void AdvertiseUploadPack(Stream output)
         {
-            IProfiler profiler = _profilerFactory.GetProfiler();
-            using (profiler.Step("GitExeServer.AdvertiseUploadPack"))
+            ITracer tracer = _traceFactory.GetTracer();
+            using (tracer.Step("GitExeServer.AdvertiseUploadPack"))
             {
-                Advertise(profiler, "upload-pack", output);
+                Advertise(tracer, "upload-pack", output);
             }
         }
 
@@ -79,13 +79,13 @@ namespace Kudu.Core.SourceControl.Git
 
         public bool Receive(Stream inputStream, Stream outputStream)
         {
-            IProfiler profiler = _profilerFactory.GetProfiler();
-            using (profiler.Step("GitExeServer.Receive"))
+            ITracer tracer = _traceFactory.GetTracer();
+            using (tracer.Step("GitExeServer.Receive"))
             {
                 // Remove the push info path
                 FileSystemHelpers.DeleteFileSafe(PushInfoPath);
 
-                ServiceRpc(profiler, "receive-pack", inputStream, outputStream);
+                ServiceRpc(tracer, "receive-pack", inputStream, outputStream);
             }
 
             // If out file was written to disk then the push is complete
@@ -94,21 +94,21 @@ namespace Kudu.Core.SourceControl.Git
 
         public void Upload(Stream inputStream, Stream outputStream)
         {
-            IProfiler profiler = _profilerFactory.GetProfiler();
-            using (profiler.Step("GitExeServer.Upload"))
+            ITracer tracer = _traceFactory.GetTracer();
+            using (tracer.Step("GitExeServer.Upload"))
             {
-                ServiceRpc(profiler, "upload-pack", inputStream, outputStream);
+                ServiceRpc(tracer, "upload-pack", inputStream, outputStream);
             }
         }
 
-        private void Advertise(IProfiler profiler, string serviceName, Stream output)
+        private void Advertise(ITracer tracer, string serviceName, Stream output)
         {
-            _gitExe.Execute(profiler, null, output, @"{0} --stateless-rpc --advertise-refs ""{1}""", serviceName, _gitExe.WorkingDirectory);
+            _gitExe.Execute(tracer, null, output, @"{0} --stateless-rpc --advertise-refs ""{1}""", serviceName, _gitExe.WorkingDirectory);
         }
 
-        private void ServiceRpc(IProfiler profiler, string serviceName, Stream input, Stream output)
+        private void ServiceRpc(ITracer tracer, string serviceName, Stream input, Stream output)
         {
-            _gitExe.Execute(profiler, input, output, @"{0} --stateless-rpc ""{1}""", serviceName, _gitExe.WorkingDirectory);
+            _gitExe.Execute(tracer, input, output, @"{0} --stateless-rpc ""{1}""", serviceName, _gitExe.WorkingDirectory);
         }
 
         public PushInfo GetPushInfo()
@@ -142,8 +142,8 @@ namespace Kudu.Core.SourceControl.Git
 
         public void Initialize()
         {
-            IProfiler profiler = _profilerFactory.GetProfiler();
-            using (profiler.Step("GitExeServer.Initialize"))
+            ITracer tracer = _traceFactory.GetTracer();
+            using (tracer.Step("GitExeServer.Initialize"))
             {
                 if (Exists)
                 {
@@ -153,13 +153,13 @@ namespace Kudu.Core.SourceControl.Git
 
                 _repository.Initialize();
 
-                using (profiler.Step("Configure git server"))
+                using (tracer.Step("Configure git server"))
                 {
                     // Allow getting pushes even though we're not bare
-                    _gitExe.Execute(profiler, "config receive.denyCurrentBranch ignore");
+                    _gitExe.Execute(tracer, "config receive.denyCurrentBranch ignore");
                 }
 
-                using (profiler.Step("Setup post receive hook"))
+                using (tracer.Step("Setup post receive hook"))
                 {
                     FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(PostReceiveHookPath));
 

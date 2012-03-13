@@ -33,25 +33,26 @@ namespace Kudu.Services.GitServer
     using Kudu.Contracts;
     using Kudu.Core.SourceControl.Git;
     using Kudu.Services.Infrastructure;
+    using Kudu.Contracts.Tracing;
 
     // Handles /{project}/info/refs
     [ServiceContract]
     public class InfoRefsService
     {
         private readonly IGitServer _gitServer;
-        private readonly IProfiler _profiler;
+        private readonly ITracer _tracer;
 
-        public InfoRefsService(IProfiler profiler, IGitServer gitServer)
+        public InfoRefsService(ITracer tracer, IGitServer gitServer)
         {
             _gitServer = gitServer;
-            _profiler = profiler;
+            _tracer = tracer;
         }
 
         [Description("Handles git commands.")]
         [WebGet(UriTemplate = "?service={service}")]
         public HttpResponseMessage Execute(string service)
         {
-            using (_profiler.Step("InfoRefsService.Execute"))
+            using (_tracer.Step("InfoRefsService.Execute"))
             {
                 service = GetServiceType(service);
                 bool isUsingSmartProtocol = service != null;
@@ -69,7 +70,7 @@ namespace Kudu.Services.GitServer
 
         private HttpResponseMessage SmartInfoRefs(string service)
         {
-            using (_profiler.Step("InfoRefsService.SmartInfoRefs"))
+            using (_tracer.Step("InfoRefsService.SmartInfoRefs"))
             {
                 var memoryStream = new MemoryStream();
 
@@ -90,7 +91,7 @@ namespace Kudu.Services.GitServer
 
                 HttpContent content = null;
                 string flushStepTitle = String.Format("Creating content. L: {0}", memoryStream.Length);
-                using (_profiler.Step(flushStepTitle))
+                using (_tracer.Step(flushStepTitle))
                 {
                     content = memoryStream.AsContent();
                 }

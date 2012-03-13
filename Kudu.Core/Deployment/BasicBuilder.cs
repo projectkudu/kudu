@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
+using Kudu.Contracts.Tracing;
 
 namespace Kudu.Core.Deployment
 {
@@ -28,7 +28,7 @@ namespace Kudu.Core.Deployment
 
             try
             {
-                using (context.Profiler.Step("Copying files to output directory"))
+                using (context.Tracer.Step("Copying files to output directory"))
                 {
                     // Copy to the output path and use the previous manifest if there
                     DeploymentHelper.CopyWithManifest(_sourcePath, context.OutputPath, context.PreviousMainfest);
@@ -37,7 +37,7 @@ namespace Kudu.Core.Deployment
                 // Download node packages
                 DownloadNodePackages(innerLogger, context);
 
-                using (context.Profiler.Step("Building manifest"))
+                using (context.Tracer.Step("Building manifest"))
                 {
                     // Generate a manifest from those build artifacts
                     context.ManifestWriter.AddFiles(_sourcePath);
@@ -70,7 +70,7 @@ namespace Kudu.Core.Deployment
                 return;
             }
 
-            using (context.Profiler.Step("Downloading node packages"))
+            using (context.Tracer.Step("Downloading node packages"))
             {
                 var npm = new NpmExecutable(context.OutputPath);
 
@@ -106,11 +106,11 @@ namespace Kudu.Core.Deployment
                 catch (Exception ex)
                 {
                     // This fails if it's already set
-                    Debug.WriteLine(ex.Message);
+                    context.Tracer.Trace(ex.Message);
                 }
 
                 // Run install on the output directory
-                string log = npm.Execute(context.Profiler, "install").Item1;
+                string log = npm.Execute(context.Tracer, "install").Item1;
                 logger.Log(log);
             }
         }

@@ -6,7 +6,7 @@ namespace Kudu.Services.Web
     public static class AppSettings
     {
         private const string EnableAuthenticationKey = "enableAuthentication";
-        private const string EnableProfilerKey = "enableProfiler";
+        private const string EnableTraceKey = "enableTrace";
         private const string EnableSettingsKey = "enableSettings";
 
         public static bool AuthenticationEnabled
@@ -17,11 +17,11 @@ namespace Kudu.Services.Web
             }
         }
 
-        public static bool ProfilingEnabled
+        public static bool TraceEnabled
         {
             get
             {
-                return GetValue<bool>(EnableProfilerKey);
+                return GetValue<bool>(EnableTraceKey);
             }
         }
 

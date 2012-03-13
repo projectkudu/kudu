@@ -9,8 +9,8 @@ using System.Net;
 using System.Net.Http;
 using System.ServiceModel;
 using System.ServiceModel.Web;
-using Kudu.Contracts;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
 using Kudu.Services.Infrastructure;
 using Microsoft.ApplicationServer.Http.Dispatcher;
@@ -21,12 +21,12 @@ namespace Kudu.Services.Deployment
     public class DeploymentService
     {
         private readonly IDeploymentManager _deploymentManager;
-        private readonly IProfiler _profiler;
+        private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
 
-        public DeploymentService(IProfiler profiler, IDeploymentManager deploymentManager, IOperationLock deploymentLock)
+        public DeploymentService(ITracer tracer, IDeploymentManager deploymentManager, IOperationLock deploymentLock)
         {
-            _profiler = profiler;
+            _tracer = tracer;
             _deploymentManager = deploymentManager;
             _deploymentLock = deploymentLock;
         }
@@ -35,7 +35,7 @@ namespace Kudu.Services.Deployment
         [WebInvoke(UriTemplate = "{id}", Method = "DELETE")]
         public void Delete(string id)
         {
-            using (_profiler.Step("DeploymentService.Delete"))
+            using (_tracer.Step("DeploymentService.Delete"))
             {
                 _deploymentLock.LockHttpOperation(() =>
                 {
@@ -64,8 +64,8 @@ namespace Kudu.Services.Deployment
         public void Deploy(HttpRequestMessage request, string id)
         {
             // Just block here to read the json payload from the body
-            var result = request.Content.ReadAsAsync<JsonValue>().Result;            
-            using (_profiler.Step("DeploymentService.Deploy(id)"))
+            var result = request.Content.ReadAsAsync<JsonValue>().Result;
+            using (_tracer.Step("DeploymentService.Deploy(id)"))
             {
                 _deploymentLock.LockHttpOperation(() =>
                 {
@@ -95,7 +95,7 @@ namespace Kudu.Services.Deployment
         [WebGet(UriTemplate = "")]
         public IQueryable<DeployResult> GetDeployResults(HttpRequestMessage request)
         {
-            using (_profiler.Step("DeploymentService.GetDeployResults"))
+            using (_tracer.Step("DeploymentService.GetDeployResults"))
             {
                 return GetResults(request).AsQueryable();
             }
@@ -105,7 +105,7 @@ namespace Kudu.Services.Deployment
         [WebGet(UriTemplate = "{id}/log")]
         public IEnumerable<LogEntry> GetLogEntry(HttpRequestMessage request, string id)
         {
-            using (_profiler.Step("DeploymentService.GetLogEntry"))
+            using (_tracer.Step("DeploymentService.GetLogEntry"))
             {
                 try
                 {
@@ -130,7 +130,7 @@ namespace Kudu.Services.Deployment
         [WebGet(UriTemplate = "{id}/log/{logId}")]
         public IEnumerable<LogEntry> GetLogEntryDetails(string id, string logId)
         {
-            using (_profiler.Step("DeploymentService.GetLogEntryDetails"))
+            using (_tracer.Step("DeploymentService.GetLogEntryDetails"))
             {
                 try
                 {
@@ -149,7 +149,7 @@ namespace Kudu.Services.Deployment
         [WebGet(UriTemplate = "{id}")]
         public DeployResult GetResult(HttpRequestMessage request, string id)
         {
-            using (_profiler.Step("DeploymentService.GetResult"))
+            using (_tracer.Step("DeploymentService.GetResult"))
             {
                 DeployResult result = _deploymentManager.GetResult(id);
 

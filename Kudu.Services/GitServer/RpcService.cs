@@ -38,6 +38,7 @@ namespace Kudu.Services.GitServer
     using Kudu.Core.Deployment;
     using Kudu.Core.SourceControl.Git;
     using Kudu.Services.Infrastructure;
+    using Kudu.Contracts.Tracing;
 
     // Handles {project}/git-upload-pack and {project}/git-receive-pack
     [ServiceContract]
@@ -45,14 +46,14 @@ namespace Kudu.Services.GitServer
     {
         private readonly IDeploymentManagerFactory _deploymentManagerFactory;
         private readonly IGitServer _gitServer;
-        private readonly IProfiler _profiler;
+        private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
 
-        public RpcService(IProfiler profiler, IGitServer gitServer, IDeploymentManagerFactory deploymentManagerFactory, IOperationLock deploymentLock)
+        public RpcService(ITracer tracer, IGitServer gitServer, IDeploymentManagerFactory deploymentManagerFactory, IOperationLock deploymentLock)
         {
             _gitServer = gitServer;
             _deploymentManagerFactory = deploymentManagerFactory;
-            _profiler = profiler;
+            _tracer = tracer;
             _deploymentLock = deploymentLock;
         }
 
@@ -60,7 +61,7 @@ namespace Kudu.Services.GitServer
         [WebInvoke(UriTemplate = "git-upload-pack")]
         public HttpResponseMessage UploadPack(HttpRequestMessage request)
         {
-            using (_profiler.Step("RpcService.UploadPack"))
+            using (_tracer.Step("RpcService.UploadPack"))
             {
                 var memoryStream = new MemoryStream();
 
@@ -78,7 +79,7 @@ namespace Kudu.Services.GitServer
         [WebInvoke(UriTemplate = "git-receive-pack")]
         public HttpResponseMessage ReceivePack(HttpRequestMessage request)
         {
-            using (_profiler.Step("RpcService.ReceivePack"))
+            using (_tracer.Step("RpcService.ReceivePack"))
             {
                 bool lockTaken = _deploymentLock.Lock();
 
@@ -126,7 +127,7 @@ namespace Kudu.Services.GitServer
 
         private Stream GetInputStream(HttpRequestMessage request)
         {
-            using (_profiler.Step("RpcService.GetInputStream"))
+            using (_tracer.Step("RpcService.GetInputStream"))
             {
                 if (request.Content.Headers.ContentEncoding.Contains("gzip"))
                 {
@@ -141,7 +142,7 @@ namespace Kudu.Services.GitServer
         {
             HttpContent content = null;
             string flushStepTitle = String.Format("Creating content. L: {0}", stream.Length);
-            using (_profiler.Step(flushStepTitle))
+            using (_tracer.Step(flushStepTitle))
             {
                 content = stream.AsContent();
             }

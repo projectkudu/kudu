@@ -1,7 +1,9 @@
-﻿namespace Kudu.Core.Deployment
+﻿using Kudu.Contracts.Tracing;
+
+namespace Kudu.Core.Deployment
 {
     public interface ISiteBuilderFactory
     {
-        ISiteBuilder CreateBuilder(ILogger logger);
+        ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger);
     }
 }

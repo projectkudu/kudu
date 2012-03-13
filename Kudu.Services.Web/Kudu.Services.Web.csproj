@@ -143,7 +143,8 @@
       <Link>Constants.cs</Link>
     </Compile>
     <Compile Include="AppSettings.cs" />
-    <Compile Include="App_Start\ProfilerServices.cs" />
+    <Compile Include="Tracing\TraceModule.cs" />
+    <Compile Include="Tracing\TraceServices.cs" />
     <Compile Include="App_Start\NinjectServices.cs" />
     <Compile Include="App_Start\PathResolver.cs" />
     <Compile Include="Services\BuildPropertyProvider.cs" />

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Kudu.Contracts.Tracing;
 
 namespace Kudu.Core.Deployment
 {
@@ -20,13 +21,13 @@ namespace Kudu.Core.Deployment
 
             try
             {
-                using (context.Profiler.Step("Copying files to output directory"))
+                using (context.Tracer.Step("Copying files to output directory"))
                 {
                     // Copy to the output path
                     DeploymentHelper.CopyWithManifest(_projectPath, context.OutputPath, context.PreviousMainfest);
                 }
 
-                using (context.Profiler.Step("Building manifest"))
+                using (context.Tracer.Step("Building manifest"))
                 {
                     // Generate the manifest from the project path
                     context.ManifestWriter.AddFiles(_projectPath);
@@ -34,11 +35,13 @@ namespace Kudu.Core.Deployment
 
                 tcs.SetResult(null);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
                 innerLogger.Log(Resources.Log_CopyingWebsiteFailed, LogEntryType.Error);
-                innerLogger.Log(e);
-                tcs.SetException(e);
+                innerLogger.Log(ex);
+                tcs.SetException(ex);
+
+                context.Tracer.TraceError(ex);
             }
 
             return tcs.Task;
