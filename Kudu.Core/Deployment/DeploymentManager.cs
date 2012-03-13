@@ -21,6 +21,11 @@ namespace Kudu.Core.Deployment
         private readonly IFileSystem _fileSystem;
         private readonly IProfilerFactory _profilerFactory;
 
+        private const string StatusFile = "status.xml";
+        private const string LogFile = "log.xml";
+        private const string ManifestFile = "manifest";
+        private const string ActiveDeploymentFile = "active";
+
         public event Action<DeployResult> StatusChanged;
 
         public DeploymentManager(IServerRepository serverRepository,
@@ -128,7 +133,7 @@ namespace Kudu.Core.Deployment
                 deployStep = profiler.Step("DeploymentManager.Deploy(id)");
 
                 // Check to see if we have a deployment with this id already
-                string trackingFilePath = GetTrackingFilePath(id, ensureDirectory: false);
+                string trackingFilePath = GetStatusFilePath(id, ensureDirectory: false);
 
                 if (!_fileSystem.File.Exists(trackingFilePath))
                 {
@@ -198,8 +203,8 @@ namespace Kudu.Core.Deployment
 
                 using (profiler.Step("Collecting changeset information"))
                 {
-                    // Create the tracking file and store information about the commit
-                    DeploymentStatusFile statusFile = CreateTrackingFile(id);
+                    // Create the status file and store information about the commit
+                    DeploymentStatusFile statusFile = CreateStatusFile(id);
                     statusFile.Id = id;
                     ChangeSet changeSet = _serverRepository.GetChangeSet(id);
                     statusFile.Message = changeSet.Message;
@@ -228,7 +233,7 @@ namespace Kudu.Core.Deployment
         {
             var profiler = _profilerFactory.GetProfiler();
 
-            var file = OpenTrackingFile(id);
+            var file = OpenStatusFile(id);
 
             if (file == null)
             {
@@ -244,7 +249,6 @@ namespace Kudu.Core.Deployment
                 StartTime = file.StartTime,
                 EndTime = file.EndTime,
                 Status = file.Status,
-                Percentage = file.Percentage,
                 StatusText = file.StatusText,
                 Complete = file.Complete,
                 Current = file.Id == activeDeploymentId,
@@ -263,27 +267,26 @@ namespace Kudu.Core.Deployment
                 throw new ArgumentException();
             }
 
-            // TODO: Make sure if the if is a valid changeset
             ILogger logger = null;
-            DeploymentStatusFile trackingFile = null;
+            DeploymentStatusFile currentStatus = null;
             ILogger innerLogger = null;
             IDisposable buildStep = null;
 
             try
             {
-                // Get the logger for this id
+                // Remove the old log file for this deployment id
                 string logPath = GetLogPath(id);
                 FileSystemHelpers.DeleteFileSafe(logPath);
 
                 logger = GetLogger(id);
                 innerLogger = logger.Log(Resources.Log_PreparingDeployment, id);
 
-                trackingFile = OpenTrackingFile(id);
-                trackingFile.Complete = false;
-                trackingFile.StartTime = DateTime.Now;
-                trackingFile.Status = DeployStatus.Building;
-                trackingFile.StatusText = String.Format(CultureInfo.CurrentCulture, Resources.Status_BuildingAndDeploying, id);
-                trackingFile.Save(_fileSystem);
+                currentStatus = OpenStatusFile(id);
+                currentStatus.Complete = false;
+                currentStatus.StartTime = DateTime.Now;
+                currentStatus.Status = DeployStatus.Building;
+                currentStatus.StatusText = String.Format(CultureInfo.CurrentCulture, Resources.Status_BuildingAndDeploying, id);
+                currentStatus.Save(_fileSystem);
 
                 ReportStatus(id);
 
@@ -306,17 +309,13 @@ namespace Kudu.Core.Deployment
                        {
                            // End the build step
                            buildStep.Dispose();
-                           // Set the deployment percent to 50% and report status
-                           trackingFile.Percentage = 50;
-                           trackingFile.Save(_fileSystem);
-                           ReportStatus(id);
 
                            // Run post deployment steps
-                           RunPostDeploymentSteps(id, profiler, deployStep);
+                           FinishDeployment(id, profiler, deployStep);
                        })
                        .Catch(ex =>
                        {
-                           NotifyError(logger, trackingFile, ex);
+                           LogError(logger, currentStatus, ex);
 
                            ReportStatus(id);
 
@@ -328,7 +327,7 @@ namespace Kudu.Core.Deployment
             {
                 if (innerLogger != null)
                 {
-                    NotifyError(innerLogger, trackingFile, e);
+                    LogError(innerLogger, currentStatus, e);
                     innerLogger.Log(e);
 
                     ReportStatus(id);
@@ -366,41 +365,39 @@ namespace Kudu.Core.Deployment
         /// - Marks the active deployment
         /// - Sets the complete flag
         /// </summary>
-        private void RunPostDeploymentSteps(string id, IProfiler profiler, IDisposable deployStep)
+        private void FinishDeployment(string id, IProfiler profiler, IDisposable deployStep)
         {
-            DeploymentStatusFile trackingFile = null;
+            DeploymentStatusFile currentStatus = null;
             ILogger logger = null;
 
             try
             {
-                trackingFile = OpenTrackingFile(id);
+                currentStatus = OpenStatusFile(id);
                 logger = GetLogger(id);
 
                 // Write the active deployment file
-                string activeFilePath = GetActiveDeploymentFilePath();
-                File.WriteAllText(activeFilePath, id);
+                MarkActive(id);
 
                 logger.Log(Resources.Log_DeploymentSuccessful);
 
-                trackingFile.Status = DeployStatus.Success;
-                trackingFile.StatusText = String.Empty;
-                trackingFile.EndTime = DateTime.Now;
-                trackingFile.LastSuccessEndTime = trackingFile.EndTime;
-                trackingFile.Percentage = 100;
-                trackingFile.Save(_fileSystem);
+                currentStatus.Status = DeployStatus.Success;
+                currentStatus.StatusText = String.Empty;
+                currentStatus.EndTime = DateTime.Now;
+                currentStatus.LastSuccessEndTime = currentStatus.EndTime;
+                currentStatus.Save(_fileSystem);
             }
             catch (Exception ex)
             {
                 if (logger != null)
                 {
-                    NotifyError(logger, trackingFile, ex);
+                    LogError(logger, currentStatus, ex);
                 }
             }
             finally
             {
                 // Set the deployment as complete
-                trackingFile.Complete = true;
-                trackingFile.Save(_fileSystem);
+                currentStatus.Complete = true;
+                currentStatus.Save(_fileSystem);
 
                 ReportStatus(id);
 
@@ -409,19 +406,17 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        private void NotifyError(ILogger logger, DeploymentStatusFile trackingFile, Exception exception)
+        private void LogError(ILogger logger, DeploymentStatusFile currentStatus, Exception exception)
         {
             logger.Log(Resources.Log_DeploymentFailed, LogEntryType.Error);
 
-            if (trackingFile != null)
+            if (currentStatus != null)
             {
-                // Failed to deploy
-                trackingFile.Percentage = 100;
-                trackingFile.Complete = true;
-                trackingFile.Status = DeployStatus.Failed;
-                trackingFile.StatusText = trackingFile.Status == DeployStatus.Failed ? logger.GetTopLevelError() : String.Empty;
-                trackingFile.EndTime = DateTime.Now;
-                trackingFile.Save(_fileSystem);
+                currentStatus.Complete = true;
+                currentStatus.Status = DeployStatus.Failed;
+                currentStatus.StatusText = logger.GetTopLevelError();
+                currentStatus.EndTime = DateTime.Now;
+                currentStatus.Save(_fileSystem);
             }
         }
 
@@ -429,6 +424,7 @@ namespace Kudu.Core.Deployment
         {
             var result = GetResult(id);
 
+            // There's no status as yet so report as pending
             if (result == null)
             {
                 result = new DeployResult
@@ -455,14 +451,20 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        private DeploymentStatusFile OpenTrackingFile(string id)
+        private void MarkActive(string id)
         {
-            return DeploymentStatusFile.Open(_fileSystem, GetTrackingFilePath(id, ensureDirectory: false));
+            string activeFilePath = GetActiveDeploymentFilePath();
+            File.WriteAllText(activeFilePath, id);
         }
 
-        private DeploymentStatusFile CreateTrackingFile(string id)
+        private DeploymentStatusFile OpenStatusFile(string id)
         {
-            return DeploymentStatusFile.Create(GetTrackingFilePath(id));
+            return DeploymentStatusFile.Open(_fileSystem, GetStatusFilePath(id, ensureDirectory: false));
+        }
+
+        private DeploymentStatusFile CreateStatusFile(string id)
+        {
+            return DeploymentStatusFile.Create(GetStatusFilePath(id));
         }
 
         private ILogger GetLogger(string id)
@@ -470,9 +472,9 @@ namespace Kudu.Core.Deployment
             return new XmlLogger(_fileSystem, GetLogPath(id));
         }
 
-        private string GetTrackingFilePath(string id, bool ensureDirectory = true)
+        private string GetStatusFilePath(string id, bool ensureDirectory = true)
         {
-            return Path.Combine(GetRoot(id, ensureDirectory), "status.xml");
+            return Path.Combine(GetRoot(id, ensureDirectory), StatusFile);
         }
 
         private IDeploymentManifestWriter GetDeploymentManifestWriter(string id)
@@ -494,12 +496,12 @@ namespace Kudu.Core.Deployment
 
         private string GetDeploymentManifestPath(string id)
         {
-            return Path.Combine(GetRoot(id), "manifest");
+            return Path.Combine(GetRoot(id), ManifestFile);
         }
 
         private string GetLogPath(string id, bool ensureDirectory = true)
         {
-            return Path.Combine(GetRoot(id, ensureDirectory), "log.xml");
+            return Path.Combine(GetRoot(id, ensureDirectory), LogFile);
         }
 
         private string GetRoot(string id, bool ensureDirectory = true)
@@ -516,7 +518,7 @@ namespace Kudu.Core.Deployment
 
         private string GetActiveDeploymentFilePath()
         {
-            return Path.Combine(_environment.DeploymentCachePath, "active");
+            return Path.Combine(_environment.DeploymentCachePath, ActiveDeploymentFile);
         }
 
         private bool IsActive(string id)

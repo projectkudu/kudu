@@ -18,7 +18,6 @@ namespace Kudu.SignalR.ViewModels
             StatusText = result.StatusText;
             DeployEndTime = result.EndTime;
             DeployStartTime = result.StartTime;
-            Percentage = result.Percentage;
             Current = result.Current;
         }
 
@@ -33,7 +32,6 @@ namespace Kudu.SignalR.ViewModels
         public DateTime DeployStartTime { get; set; }
         public DateTime? DeployEndTime { get; set; }
         public bool Current { get; set; }
-        public int Percentage { get; set; }
         public string FailureMessage { get; set; }
     }
 }

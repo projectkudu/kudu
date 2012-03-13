@@ -47,9 +47,6 @@ namespace Kudu.Core.Deployment
                 return null;
             }
 
-            int percentage;
-            Int32.TryParse(document.Root.Element("percentage").Value, out percentage);
-
             DeployStatus status;
             Enum.TryParse(document.Root.Element("status").Value, out status);
 
@@ -77,7 +74,6 @@ namespace Kudu.Core.Deployment
                 Message = GetOptionalElementValue(document.Root, "message"),
                 Status = status,
                 StatusText = document.Root.Element("statusText").Value,
-                Percentage = percentage,
                 StartTime = startTime,
                 ReceivedTime = String.IsNullOrEmpty(receivedTimeValue) ? startTime : DateTime.Parse(receivedTimeValue),
                 EndTime = ParseDateTime(endTimeValue),
@@ -92,7 +88,6 @@ namespace Kudu.Core.Deployment
         public string AuthorEmail { get; set; }
         public string Author { get; set; }
         public string Message { get; set; }
-        public int Percentage { get; set; }
         public DateTime ReceivedTime { get; set; }
         public DateTime StartTime { get; set; }
         public DateTime? EndTime { get; set; }
@@ -113,7 +108,6 @@ namespace Kudu.Core.Deployment
                     new XElement("message", Message),
                     new XElement("status", Status),
                     new XElement("statusText", StatusText),
-                    new XElement("percentage", Percentage),
                     new XElement("lastSuccessEndTime", LastSuccessEndTime),
                     new XElement("receivedTime", ReceivedTime),
                     new XElement("startTime", StartTime),
