@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 
 namespace Kudu.Client.Infrastructure
 {
@@ -15,6 +16,14 @@ namespace Kudu.Client.Infrastructure
         }
 
         public string ServiceUrl { get; private set; }
+
+        public HttpRequestHeaders Headers
+        {
+            get
+            {
+                return _client.DefaultRequestHeaders;
+            }
+        }
 
         public ICredentials Credentials
         {
