@@ -3,6 +3,7 @@
     public interface IServerRepository
     {
         string CurrentId { get; }
+        bool Exists { get; }
         PushInfo GetPushInfo();
         void Initialize();
         ChangeSet GetChangeSet(string id);

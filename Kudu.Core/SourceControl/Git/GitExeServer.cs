@@ -45,6 +45,15 @@ namespace Kudu.Core.SourceControl.Git
             }
         }
 
+        public bool Exists
+        {
+            get
+            {
+                return Directory.Exists(_gitExe.WorkingDirectory) && 
+                       Directory.EnumerateFileSystemEntries(_gitExe.WorkingDirectory).Any();
+            }
+        }
+
         public void AdvertiseReceivePack(Stream output)
         {
             IProfiler profiler = _profilerFactory.GetProfiler();
@@ -136,6 +145,12 @@ namespace Kudu.Core.SourceControl.Git
             IProfiler profiler = _profilerFactory.GetProfiler();
             using (profiler.Step("GitExeServer.Initialize"))
             {
+                if (Exists)
+                {
+                    // Repository already exists so do nothing
+                    return;
+                }
+
                 _repository.Initialize();
 
                 using (profiler.Step("Configure git server"))
