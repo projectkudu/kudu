@@ -16,7 +16,7 @@ namespace Kudu.FunctionalTests
         {
             // Arrange
             string repositoryName = "Bakery10";
-            string appName = "PushSimpleRepoShouldDeploy";
+            string appName = KuduUtils.GetRandomWebsiteName("PushSimpleRepo");
             string verificationText = "Welcome to Fourth Coffee!";
 
             using (var repo = Git.CreateLocalRepository(repositoryName))
@@ -40,7 +40,7 @@ namespace Kudu.FunctionalTests
         {
             // Arrange
             string repositoryName = "Mvc3Application";
-            string appName = "PushRepoWithMultipleProjectsShouldDeploy";
+            string appName =  KuduUtils.GetRandomWebsiteName("PushMultiProjects");
             string verificationText = "Welcome to ASP.NET MVC! - Change1";
             using (var repo = Git.CreateLocalRepository(repositoryName))
             {
@@ -64,7 +64,7 @@ namespace Kudu.FunctionalTests
         {
             // Arrange
             string repositoryName = "WarningsAsErrors";
-            string appName = "WarningsAsErrors";
+            string appName = KuduUtils.GetRandomWebsiteName("WarningsAsErrors");
             string cloneUrl = "https://github.com/KuduApps/WarningsAsErrors.git";
 
             using (var repo = Git.Clone(repositoryName, cloneUrl))
@@ -89,7 +89,7 @@ namespace Kudu.FunctionalTests
         {
             // Arrange
             string repositoryName = "Mvc3Application_NoSolution";
-            string appName = "PushRepoWithProjectAndNoSolutionShouldDeploy";
+            string appName = KuduUtils.GetRandomWebsiteName("PushRepoWithProjNoSln");
             string verificationText = "Kudu Deployment Testing: Mvc3Application_NoSolution";
 
             using (var repo = Git.CreateLocalRepository(repositoryName))
@@ -113,7 +113,7 @@ namespace Kudu.FunctionalTests
         {
             // Arrange
             string repositoryName = "PushRepositoryWithNoDeployableProjectsTreatsAsWebsite";
-            string appName = "PushRepositoryWithNoDeployableProjectsTreatsAsWebsite";
+            string appName = KuduUtils.GetRandomWebsiteName("PushNoDeployableProj");
             string cloneUrl = "https://github.com/KuduApps/NoDeployableProjects.git";
 
             using (var repo = Git.Clone(repositoryName, cloneUrl))
@@ -137,7 +137,7 @@ namespace Kudu.FunctionalTests
         {
             // Arrange
             string repositoryName = "WapBuildsReleaseMode";
-            string appName = "WapBuildsReleaseMode";
+            string appName = KuduUtils.GetRandomWebsiteName("WapBuildsRelease");
             string cloneUrl = "https://github.com/KuduApps/ConditionalCompilation.git";
 
             using (var repo = Git.Clone(repositoryName, cloneUrl))
@@ -161,7 +161,7 @@ namespace Kudu.FunctionalTests
         {
             // Arrange
             string repositoryName = "Mvc3Application";
-            string appName = "PushAppChangesShouldTriggerBuild";
+            string appName = KuduUtils.GetRandomWebsiteName("PushAppChanges");
             string verificationText = "Welcome to ASP.NET MVC!";
 
             using (var repo = Git.CreateLocalRepository(repositoryName))
@@ -186,7 +186,7 @@ namespace Kudu.FunctionalTests
         public void DeletesToRepositoryArePropagatedForWaps()
         {
             string repositoryName = "Mvc3Application";
-            string appName = "DeletesToRepositoryArePropagatedForWaps";
+            string appName = KuduUtils.GetRandomWebsiteName("DeletesToRepoForWaps");
 
             using (var repo = Git.CreateLocalRepository(repositoryName))
             {
@@ -223,7 +223,7 @@ namespace Kudu.FunctionalTests
         {
             // Arrange
             string repositoryName = "Mvc3Application";
-            string appName = "PushShouldOverwriteModifiedFilesInRepo";
+            string appName = KuduUtils.GetRandomWebsiteName("PushOverwriteModified");
             string verificationText = "Welcome to ASP.NET MVC!";
 
             using (var repo = Git.CreateLocalRepository(repositoryName))
@@ -261,7 +261,7 @@ namespace Kudu.FunctionalTests
         {
             // Arrange
             string repositoryName = "Mvc3Application";
-            string appName = "GoingBackInTimeShouldOverwriteModifiedFilesInRepo";
+            string appName = KuduUtils.GetRandomWebsiteName("GoBackOverwriteModified");
             string verificationText = "Welcome to ASP.NET MVC!";
 
             using (var repo = Git.CreateLocalRepository(repositoryName))
@@ -309,7 +309,7 @@ namespace Kudu.FunctionalTests
         public void DeletesToRepositoryArePropagatedForNonWaps()
         {
             string repositoryName = "Bakery10";
-            string appName = "DeletesToRepositoryArePropagatedForNonWaps";
+            string appName = KuduUtils.GetRandomWebsiteName("DeleteForNonWaps");
             using (var repo = Git.CreateLocalRepository(repositoryName))
             {
                 ApplicationManager.Run(appName, appManager =>
@@ -344,7 +344,7 @@ namespace Kudu.FunctionalTests
         public void FirstPushDeletesPriorContent()
         {
             string repositoryName = "Bakery10";
-            string appName = "FirstPushDeletesPriorContent";
+            string appName = KuduUtils.GetRandomWebsiteName("FirstPushDelPrior");
             using (var repo = Git.CreateLocalRepository(repositoryName))
             {
                 ApplicationManager.Run(appName, appManager =>
@@ -371,7 +371,7 @@ namespace Kudu.FunctionalTests
         public void PushingToNonMasterBranchNoOps()
         {
             string repositoryName = "PushingToNonMasterBranchNoOps";
-            string appName = "PushingToNonMasterBranchNoOps";
+            string appName = KuduUtils.GetRandomWebsiteName("PushToNonMaster");
             string cloneUrl = "https://github.com/KuduApps/RepoWithMultipleBranches.git";
             using (var repo = Git.Clone(repositoryName, cloneUrl))
             {
@@ -393,7 +393,7 @@ namespace Kudu.FunctionalTests
         public void PushingNonMasterBranchToMasterBranchShouldDeploy()
         {
             string repositoryName = "PushingNonMasterBranchToMasterBranchShouldDeploy";
-            string appName = "PushingNonMasterBranchToMasterBranchShouldDeploy";
+            string appName = KuduUtils.GetRandomWebsiteName("PushNonMasterToMaster");
             string cloneUrl = "https://github.com/KuduApps/RepoWithMultipleBranches.git";
             using (var repo = Git.Clone(repositoryName, cloneUrl))
             {
@@ -415,7 +415,7 @@ namespace Kudu.FunctionalTests
         public void CloneFromEmptyRepoAndPushShouldDeploy()
         {
             string repositoryName = "CloneFromEmptyRepoAndPushShouldDeploy";
-            string appName = "CloneFromEmptyRepoAndPushShouldDeploy";
+            string appName = KuduUtils.GetRandomWebsiteName("CloneEmptyAndPush");
 
             ApplicationManager.Run(appName, appManager =>
             {
@@ -442,7 +442,7 @@ namespace Kudu.FunctionalTests
         public void GoingBackInTimeDeploysOldFiles()
         {
             string repositoryName = "Bakery10";
-            string appName = "GoingBackInTimeDeploysOldFiles";
+            string appName = KuduUtils.GetRandomWebsiteName("GoBackDeployOld");
             using (var repo = Git.CreateLocalRepository(repositoryName))
             {
                 string originalCommitId = repo.CurrentId;
@@ -486,7 +486,7 @@ namespace Kudu.FunctionalTests
         public void NpmSiteInstallsPackages()
         {
             string repositoryName = "NpmSiteInstallsPackages";
-            string appName = "NpmSiteInstallsPackages";
+            string appName = KuduUtils.GetRandomWebsiteName("NpmInstallsPkg");
             string cloneUrl = "https://github.com/KuduApps/NpmSite.git";
 
             using (var repo = Git.Clone(repositoryName, cloneUrl))
@@ -510,7 +510,7 @@ namespace Kudu.FunctionalTests
         public void FailedNpmFailsDeployment()
         {
             string repositoryName = "FailedNpmFailsDeployment";
-            string appName = "FailedNpmFailsDeployment";
+            string appName = KuduUtils.GetRandomWebsiteName("FailedNpm");
             string cloneUrl = "https://github.com/KuduApps/NpmSite.git";
 
             using (var repo = Git.Clone(repositoryName, cloneUrl))
@@ -537,7 +537,7 @@ namespace Kudu.FunctionalTests
         {
             // Arrange
             string repositoryName = "Mvc3Application";
-            string appName = "GetResultsWithMaxItemsAndExcludeFailed";
+            string appName = KuduUtils.GetRandomWebsiteName("RsltMaxItemXcldFailed");
 
             using (var repo = Git.CreateLocalRepository(repositoryName))
             {
@@ -603,7 +603,7 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void SpecificDeploymentConfiguration()
         {
-            VerifyDeploymentConfiguration("SpecificDeploymentConfiguration",
+            VerifyDeploymentConfiguration("SpecificDeployConfig",
                                           "WebApplication1",
                                           "This is the application I want deployed");
         }
@@ -611,7 +611,7 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void SpecificDeploymentConfigurationForProjectFile()
         {
-            VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForProjectFile",
+            VerifyDeploymentConfiguration("DeployConfigForProj",
                                           "WebApplication1/WebApplication1.csproj",
                                           "This is the application I want deployed");
         }
@@ -619,7 +619,7 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void SpecificDeploymentConfigurationForWebsite()
         {
-            VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForWebsite",
+            VerifyDeploymentConfiguration("DeployConfigForWeb",
                                           "WebSite1",
                                           "This is a website!");
         }
@@ -627,7 +627,7 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void SpecificDeploymentConfigurationForWebsiteWithSlash()
         {
-            VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForWebsiteWithSlash",
+            VerifyDeploymentConfiguration("DeployConfigWithSlash",
                                           "/WebSite1",
                                           "This is a website!");
         }
@@ -675,8 +675,9 @@ namespace Kudu.FunctionalTests
                                           DeployStatus.Failed);
         }
 
-        private void VerifyDeploymentConfiguration(string name, string targetProject, string expectedText, DeployStatus expectedStatus = DeployStatus.Success)
+        private void VerifyDeploymentConfiguration(string siteName, string targetProject, string expectedText, DeployStatus expectedStatus = DeployStatus.Success)
         {
+            string name = KuduUtils.GetRandomWebsiteName(siteName);
             string cloneUrl = "https://github.com/KuduApps/SpecificDeploymentConfiguration.git";
             using (var repo = Git.Clone(name, cloneUrl))
             {

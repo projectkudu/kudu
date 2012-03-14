@@ -13,7 +13,7 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void DeploymentApisReturn404IfDeploymentIdDoesntExist()
         {
-            string appName = "DeploymentApisReturn404IfDeploymentIdDoesntExist";
+            string appName = KuduUtils.GetRandomWebsiteName("Rtn404IfDeployIdNotExist");
 
             ApplicationManager.Run(appName, appManager =>
             {
@@ -43,7 +43,7 @@ namespace Kudu.FunctionalTests
         {
             // Arrange
             string repositoryName = "Mvc3Application";
-            string appName = "DeploymentApis";
+            string appName = KuduUtils.GetRandomWebsiteName("DeploymentApis");
 
             using (var repo = Git.CreateLocalRepository(repositoryName))
             {
