@@ -118,10 +118,6 @@
         <File Id="Kudu.Services.Web.dll" Source="$(var.KuduServiceBinDir)\Kudu.Services.Web.dll" />
       </Component>
 
-      <Component Id="Elmah.dll" Guid="{C13BE342-75FF-40CF-AFD3-669F8182CF83}">
-        <File Id="Elmah.dll" Source="$(var.KuduServiceBinDir)\Elmah.dll" />
-      </Component>
-
       <Component Id="Newtonsoft.Json.dll" Guid="{11210292-AF01-42CB-BAA6-6619CCA6E682}">
         <File Id="Newtonsoft.Json.dll" Source="$(var.KuduServiceBinDir)\Newtonsoft.Json.dll" />
       </Component>
@@ -232,8 +228,6 @@
       <ComponentRef Id="Kudu.Core.dll"/>
       <ComponentRef Id="Kudu.Services.dll"/>
       <ComponentRef Id="Kudu.Services.Web.dll"/>
-
-      <ComponentRef Id="Elmah.dll" />
 
       <ComponentRef Id="Newtonsoft.Json.dll" />
 

@@ -1,0 +1,45 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace Kudu.Contracts.Tracing
+{
+    public static class TraceExtensions
+    {
+        private static readonly Dictionary<string, string> _empty = new Dictionary<string, string>();
+
+        public static IDisposable Step(this ITracer tracer, string message)
+        {
+            return tracer.Step(message, _empty);
+        }
+
+        public static void Trace(this ITracer tracer, string message, params object[] args)
+        {
+            tracer.Trace(String.Format(message, args), _empty);
+        }
+
+        public static void TraceError(this ITracer tracer, Exception ex)
+        {
+            tracer.Trace(ex.Message, new Dictionary<string, string>
+            {
+                { "type", "error" },
+                { "stackTrace", ex.StackTrace }
+            });
+        }
+
+        public static void TraceError(this ITracer tracer, string message)
+        {
+            tracer.Trace(message, new Dictionary<string, string>
+            {
+                { "type", "error" }
+            });
+        }
+
+        public static void TraceWarning(this ITracer tracer, string message, params object[] args)
+        {
+            tracer.Trace(String.Format(message, args), new Dictionary<string, string>
+            {
+                { "type", "warning" }
+            });
+        }
+    }
+}

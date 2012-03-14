@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using Kudu.Contracts.Tracing;
 
 namespace Kudu.Core.Deployment
 {
@@ -35,10 +36,10 @@ namespace Kudu.Core.Deployment
                     propertyString = " /p:" + propertyString;
                 }
 
-                using (context.Profiler.Step("Running msbuild on solution"))
+                using (context.Tracer.Step("Running msbuild on solution"))
                 {
                     // Build the solution first
-                    string log = ExecuteMSBuild(context.Profiler, @"""{0}"" /verbosity:m /nologo{1}", SolutionPath, propertyString);
+                    string log = ExecuteMSBuild(context.Tracer, @"""{0}"" /verbosity:m /nologo{1}", SolutionPath, propertyString);
                     innerLogger.Log(log);
                 }
 
@@ -50,6 +51,8 @@ namespace Kudu.Core.Deployment
                 innerLogger.Log(Resources.Log_BuildingSolutionFailed, LogEntryType.Error);
                 innerLogger.Log(ex);
                 tcs.SetException(ex);
+
+                context.Tracer.TraceError(ex);
 
                 return tcs.Task;
             }

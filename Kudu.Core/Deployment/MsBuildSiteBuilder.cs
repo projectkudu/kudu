@@ -1,10 +1,8 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Kudu.Contracts;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
-using SystemEnvironment = System.Environment;
 
 namespace Kudu.Core.Deployment
 {
@@ -26,9 +24,9 @@ namespace Kudu.Core.Deployment
             return String.Join(";", _propertyProvider.GetProperties().Select(p => p.Key + "=" + p.Value));
         }
 
-        public string ExecuteMSBuild(IProfiler profiler, string arguments, params object[] args)
+        public string ExecuteMSBuild(ITracer tracer, string arguments, params object[] args)
         {
-            return _msbuildExe.Execute(profiler, arguments, args).Item1;
+            return _msbuildExe.Execute(tracer, arguments, args).Item1;
         }
 
         public abstract Task Build(DeploymentContext context);

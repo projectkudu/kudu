@@ -38,9 +38,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Elmah">
-      <HintPath>..\packages\elmah.corelibrary.1.2.1\lib\Elmah.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.ApplicationServer.Http, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\WebApi.0.6.0\lib\40-Full\Microsoft.ApplicationServer.Http.dll</HintPath>
@@ -143,12 +140,12 @@
       <Link>Constants.cs</Link>
     </Compile>
     <Compile Include="AppSettings.cs" />
-    <Compile Include="App_Start\ProfilerServices.cs" />
+    <Compile Include="Tracing\TraceModule.cs" />
+    <Compile Include="Tracing\TraceServices.cs" />
     <Compile Include="App_Start\NinjectServices.cs" />
     <Compile Include="App_Start\PathResolver.cs" />
     <Compile Include="Services\BuildPropertyProvider.cs" />
-    <Compile Include="Elmah\ElmahErrorHandler.cs" />
-    <Compile Include="Elmah\KuduErrorLog.cs" />
+    <Compile Include="Tracing\TraceErrorHandler.cs" />
     <Compile Include="Services\ServerConfiguration.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>

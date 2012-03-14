@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using Kudu.Contracts;
-using Kudu.Core.Performance;
+using Kudu.Contracts.Tracing;
+using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Infrastructure
 {
@@ -31,12 +31,12 @@ namespace Kudu.Core.Infrastructure
 
         public Tuple<string, string> Execute(string arguments, params object[] args)
         {
-            return Execute(NullProfiler.Instance, arguments, args);
+            return Execute(NullTracer.Instance, arguments, args);
         }
 
-        public Tuple<string, string> Execute(IProfiler profiler, string arguments, params object[] args)
+        public Tuple<string, string> Execute(ITracer tracer, string arguments, params object[] args)
         {
-            using (GetProcessStep(profiler, arguments, args))
+            using (GetProcessStep(tracer, arguments, args))
             {
                 var process = CreateProcess(arguments, args);
 
@@ -58,6 +58,8 @@ namespace Kudu.Core.Infrastructure
                 {
                     string text = String.IsNullOrEmpty(error) ? output : error;
 
+                    tracer.TraceError(text);
+
                     throw new Exception(text);
                 }
 
@@ -65,9 +67,9 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        public void Execute(IProfiler profiler, Stream input, Stream output, string arguments, params object[] args)
+        public void Execute(ITracer tracer, Stream input, Stream output, string arguments, params object[] args)
         {
-            using (GetProcessStep(profiler, arguments, args))
+            using (GetProcessStep(tracer, arguments, args))
             {
                 var process = CreateProcess(arguments, args);
 
@@ -104,13 +106,14 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        private IDisposable GetProcessStep(IProfiler profiler, string arguments, object[] args)
+        private IDisposable GetProcessStep(ITracer tracer, string arguments, object[] args)
         {
-            string formattedArgs = String.Format(arguments, args);
-            string stepTitle = String.Format(@"Executing external process P(""{0}"", ""{1}"")",
-                                             System.IO.Path.GetFileName(Path),
-                                             formattedArgs);
-            return profiler.Step(stepTitle);
+            return tracer.Step("Executing external process", new Dictionary<string, string>
+            {
+                { "type", "process" },
+                { "path", System.IO.Path.GetFileName(Path) },
+                { "arguments", String.Format(arguments, args) }
+            });
         }
 
         private Process CreateProcess(string arguments, object[] args)

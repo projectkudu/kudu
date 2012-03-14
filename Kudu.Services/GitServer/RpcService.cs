@@ -23,8 +23,8 @@
 namespace Kudu.Services.GitServer
 {
     using System;
+    using System.Collections.Generic;
     using System.ComponentModel;
-    using System.Diagnostics;
     using System.IO;
     using System.IO.Compression;
     using System.Net;
@@ -33,8 +33,8 @@ namespace Kudu.Services.GitServer
     using System.ServiceModel;
     using System.ServiceModel.Web;
     using System.Threading;
-    using Kudu.Contracts;
     using Kudu.Contracts.Infrastructure;
+    using Kudu.Contracts.Tracing;
     using Kudu.Core.Deployment;
     using Kudu.Core.SourceControl.Git;
     using Kudu.Services.Infrastructure;
@@ -45,14 +45,14 @@ namespace Kudu.Services.GitServer
     {
         private readonly IDeploymentManagerFactory _deploymentManagerFactory;
         private readonly IGitServer _gitServer;
-        private readonly IProfiler _profiler;
+        private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
 
-        public RpcService(IProfiler profiler, IGitServer gitServer, IDeploymentManagerFactory deploymentManagerFactory, IOperationLock deploymentLock)
+        public RpcService(ITracer tracer, IGitServer gitServer, IDeploymentManagerFactory deploymentManagerFactory, IOperationLock deploymentLock)
         {
             _gitServer = gitServer;
             _deploymentManagerFactory = deploymentManagerFactory;
-            _profiler = profiler;
+            _tracer = tracer;
             _deploymentLock = deploymentLock;
         }
 
@@ -60,7 +60,7 @@ namespace Kudu.Services.GitServer
         [WebInvoke(UriTemplate = "git-upload-pack")]
         public HttpResponseMessage UploadPack(HttpRequestMessage request)
         {
-            using (_profiler.Step("RpcService.UploadPack"))
+            using (_tracer.Step("RpcService.UploadPack"))
             {
                 var memoryStream = new MemoryStream();
 
@@ -78,7 +78,7 @@ namespace Kudu.Services.GitServer
         [WebInvoke(UriTemplate = "git-receive-pack")]
         public HttpResponseMessage ReceivePack(HttpRequestMessage request)
         {
-            using (_profiler.Step("RpcService.ReceivePack"))
+            using (_tracer.Step("RpcService.ReceivePack"))
             {
                 bool lockTaken = _deploymentLock.Lock();
 
@@ -114,8 +114,7 @@ namespace Kudu.Services.GitServer
                 }
                 catch (Exception ex)
                 {
-                    // TODO: Add better logging
-                    Debug.WriteLine(ex.Message);
+                    _tracer.TraceError(ex);
                 }
                 finally
                 {
@@ -126,7 +125,7 @@ namespace Kudu.Services.GitServer
 
         private Stream GetInputStream(HttpRequestMessage request)
         {
-            using (_profiler.Step("RpcService.GetInputStream"))
+            using (_tracer.Step("RpcService.GetInputStream"))
             {
                 if (request.Content.Headers.ContentEncoding.Contains("gzip"))
                 {
@@ -139,9 +138,13 @@ namespace Kudu.Services.GitServer
 
         private HttpResponseMessage CreateResponse(MemoryStream stream, string mediaType)
         {
+            var attribs = new Dictionary<string, string> { 
+                { "length", stream.Length.ToString() },
+                { "type", "response" }
+            };
+
             HttpContent content = null;
-            string flushStepTitle = String.Format("Creating content. L: {0}", stream.Length);
-            using (_profiler.Step(flushStepTitle))
+            using (_tracer.Step("Response content", attribs))
             {
                 content = stream.AsContent();
             }

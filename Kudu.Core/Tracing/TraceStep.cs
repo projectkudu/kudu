@@ -1,20 +1,20 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Kudu.Core.Performance
+namespace Kudu.Core.Tracing
 {
-    public class ProfilerStep
+    public class TraceStep
     {
         public string Title { get; private set; }
         public long ElapsedMilliseconds { get; private set; }
-        public List<ProfilerStep> Children { get; private set; }
+        public List<TraceStep> Children { get; private set; }
 
         private Stopwatch _stopWatch;
 
-        public ProfilerStep(string title)
+        public TraceStep(string title)
         {
             Title = title;
-            Children = new List<ProfilerStep>();
+            Children = new List<TraceStep>();
         }
 
         public void Start()

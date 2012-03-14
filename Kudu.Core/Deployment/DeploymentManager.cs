@@ -7,8 +7,9 @@ using System.Linq;
 using Kudu.Contracts;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Core.Infrastructure;
-using Kudu.Core.Performance;
+using Kudu.Core.Tracing;
 using Kudu.Core.SourceControl;
+using Kudu.Contracts.Tracing;
 
 namespace Kudu.Core.Deployment
 {
@@ -17,9 +18,8 @@ namespace Kudu.Core.Deployment
         private readonly IServerRepository _serverRepository;
         private readonly ISiteBuilderFactory _builderFactory;
         private readonly IEnvironment _environment;
-        private readonly IDeploymentSettingsManager _settingsManager;
         private readonly IFileSystem _fileSystem;
-        private readonly IProfilerFactory _profilerFactory;
+        private readonly ITraceFactory _traceFactory;
 
         private const string StatusFile = "status.xml";
         private const string LogFile = "log.xml";
@@ -31,16 +31,14 @@ namespace Kudu.Core.Deployment
         public DeploymentManager(IServerRepository serverRepository,
                                  ISiteBuilderFactory builderFactory,
                                  IEnvironment environment,
-                                 IDeploymentSettingsManager settingsManager,
                                  IFileSystem fileSystem,
-                                 IProfilerFactory profilerFactory)
+                                 ITraceFactory traceFactory)
         {
             _serverRepository = serverRepository;
             _builderFactory = builderFactory;
             _environment = environment;
-            _settingsManager = settingsManager;
             _fileSystem = fileSystem;
-            _profilerFactory = profilerFactory;
+            _traceFactory = traceFactory;
         }
 
         private string ActiveDeploymentId
@@ -58,8 +56,8 @@ namespace Kudu.Core.Deployment
 
         public IEnumerable<DeployResult> GetResults()
         {
-            var profiler = _profilerFactory.GetProfiler();
-            using (profiler.Step("DeploymentManager.GetResults"))
+            ITracer tracer = _traceFactory.GetTracer();
+            using (tracer.Step("DeploymentManager.GetResults"))
             {
                 return EnumerateResults().ToList();
             }
@@ -72,8 +70,8 @@ namespace Kudu.Core.Deployment
 
         public IEnumerable<LogEntry> GetLogEntries(string id)
         {
-            var profiler = _profilerFactory.GetProfiler();
-            using (profiler.Step("DeploymentManager.GetLogEntries(id)"))
+            ITracer tracer = _traceFactory.GetTracer();
+            using (tracer.Step("DeploymentManager.GetLogEntries(id)"))
             {
                 string path = GetLogPath(id, ensureDirectory: false);
 
@@ -88,8 +86,8 @@ namespace Kudu.Core.Deployment
 
         public IEnumerable<LogEntry> GetLogEntryDetails(string id, string entryId)
         {
-            var profiler = _profilerFactory.GetProfiler();
-            using (profiler.Step("DeploymentManager.GetLogEntryDetails(id, entryId)"))
+            ITracer tracer = _traceFactory.GetTracer();
+            using (tracer.Step("DeploymentManager.GetLogEntryDetails(id, entryId)"))
             {
                 string path = GetLogPath(id, ensureDirectory: false);
 
@@ -104,8 +102,8 @@ namespace Kudu.Core.Deployment
 
         public void Delete(string id)
         {
-            var profiler = _profilerFactory.GetProfiler();
-            using (profiler.Step("DeploymentManager.Delete(id)"))
+            ITracer tracer = _traceFactory.GetTracer();
+            using (tracer.Step("DeploymentManager.Delete(id)"))
             {
                 string path = GetRoot(id, ensureDirectory: false);
 
@@ -125,12 +123,12 @@ namespace Kudu.Core.Deployment
 
         public void Deploy(string id, bool clean)
         {
-            var profiler = _profilerFactory.GetProfiler();
+            ITracer tracer = _traceFactory.GetTracer();
             IDisposable deployStep = null;
 
             try
             {
-                deployStep = profiler.Step("DeploymentManager.Deploy(id)");
+                deployStep = tracer.Step("DeploymentManager.Deploy(id)");
 
                 // Check to see if we have a deployment with this id already
                 string trackingFilePath = GetStatusFilePath(id, ensureDirectory: false);
@@ -141,7 +139,7 @@ namespace Kudu.Core.Deployment
                     throw new FileNotFoundException(String.Format(CultureInfo.CurrentCulture, Resources.Error_DeployNotFound, id));
                 }
 
-                using (profiler.Step("Updating to specific changeset"))
+                using (tracer.Step("Updating to specific changeset"))
                 {
                     // Update to the the specific changeset
                     _serverRepository.Update(id);
@@ -149,14 +147,17 @@ namespace Kudu.Core.Deployment
 
                 if (clean)
                 {
+                    tracer.Trace("Cleaning git repository");
                     _serverRepository.Clean();
                 }
 
                 // Perform the build deployment of this changeset
-                Build(id, profiler, deployStep);
+                Build(id, tracer, deployStep);
             }
-            catch
+            catch(Exception ex)
             {
+                tracer.TraceError(ex);
+
                 if (deployStep != null)
                 {
                     deployStep.Dispose();
@@ -168,23 +169,32 @@ namespace Kudu.Core.Deployment
 
         public void Deploy()
         {
-            var profiler = _profilerFactory.GetProfiler();
+            var tracer = _traceFactory.GetTracer();
             IDisposable deployStep = null;
 
             try
             {
-                deployStep = profiler.Step("Deploy");
+                deployStep = tracer.Step("Deploy");
                 PushInfo pushInfo = _serverRepository.GetPushInfo();
 
                 // Something went wrong here since we weren't able to 
                 if (pushInfo == null || !pushInfo.Branch.IsMaster)
                 {
+                    if (pushInfo == null)
+                    {
+                        tracer.TraceWarning("Push info was null. Post receive hook didn't execute correctly");
+                    }
+                    else
+                    {
+                        tracer.Trace("Non-master branch deployed {0}", pushInfo.Branch.Name);
+                    }
+
                     ReportCompleted();
                     deployStep.Dispose();
                     return;
                 }
 
-                using (profiler.Step("Update to specific changeset"))
+                using (tracer.Step("Update to specific changeset"))
                 {
                     // Update to the default branch
                     _serverRepository.Update();
@@ -196,12 +206,14 @@ namespace Kudu.Core.Deployment
                 // If nothing changed then do nothing
                 if (IsActive(id))
                 {
+                    tracer.Trace("Deployment '{0}' already active", id);
+
                     ReportCompleted();
                     deployStep.Dispose();
                     return;
                 }
 
-                using (profiler.Step("Collecting changeset information"))
+                using (tracer.Step("Collecting changeset information"))
                 {
                     // Create the status file and store information about the commit
                     DeploymentStatusFile statusFile = CreateStatusFile(id);
@@ -213,10 +225,12 @@ namespace Kudu.Core.Deployment
                     statusFile.Save(_fileSystem);
                 }
 
-                Build(id, profiler, deployStep);
+                Build(id, tracer, deployStep);
             }
-            catch
+            catch(Exception ex)
             {
+                tracer.TraceError(ex);
+
                 if (deployStep != null)
                 {
                     deployStep.Dispose();
@@ -231,8 +245,6 @@ namespace Kudu.Core.Deployment
         /// </summary>
         private DeployResult GetResult(string id, string activeDeploymentId)
         {
-            var profiler = _profilerFactory.GetProfiler();
-
             var file = OpenStatusFile(id);
 
             if (file == null)
@@ -260,7 +272,7 @@ namespace Kudu.Core.Deployment
         /// <summary>
         /// Builds and deploys a particular changeset. Puts all build artifacts in a deployments/{id}
         /// </summary>
-        private void Build(string id, IProfiler profiler, IDisposable deployStep)
+        private void Build(string id, ITracer tracer, IDisposable deployStep)
         {
             if (String.IsNullOrEmpty(id))
             {
@@ -291,15 +303,15 @@ namespace Kudu.Core.Deployment
                 ReportStatus(id);
 
                 // Create a deployer
-                ISiteBuilder builder = _builderFactory.CreateBuilder(innerLogger);
+                ISiteBuilder builder = _builderFactory.CreateBuilder(tracer, innerLogger);
 
-                buildStep = profiler.Step("Building");
+                buildStep = tracer.Step("Building");
 
                 var context = new DeploymentContext
                 {
                     ManifestWriter = GetDeploymentManifestWriter(id),
                     PreviousMainfest = GetActiveDeploymentManifestReader(),
-                    Profiler = profiler,
+                    Tracer = tracer,
                     Logger = logger,
                     OutputPath = _environment.DeploymentTargetPath,
                 };
@@ -311,10 +323,13 @@ namespace Kudu.Core.Deployment
                            buildStep.Dispose();
 
                            // Run post deployment steps
-                           FinishDeployment(id, profiler, deployStep);
+                           FinishDeployment(id, tracer, deployStep);
                        })
                        .Catch(ex =>
                        {
+                           // End the build step
+                           buildStep.Dispose();
+
                            LogError(logger, currentStatus, ex);
 
                            ReportStatus(id);
@@ -323,12 +338,14 @@ namespace Kudu.Core.Deployment
                            deployStep.Dispose();
                        });
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
+                tracer.TraceError(ex);
+
                 if (innerLogger != null)
                 {
-                    LogError(innerLogger, currentStatus, e);
-                    innerLogger.Log(e);
+                    LogError(innerLogger, currentStatus, ex);
+                    innerLogger.Log(ex);
 
                     ReportStatus(id);
                 }
@@ -365,7 +382,7 @@ namespace Kudu.Core.Deployment
         /// - Marks the active deployment
         /// - Sets the complete flag
         /// </summary>
-        private void FinishDeployment(string id, IProfiler profiler, IDisposable deployStep)
+        private void FinishDeployment(string id, ITracer tracer, IDisposable deployStep)
         {
             DeploymentStatusFile currentStatus = null;
             ILogger logger = null;
@@ -392,6 +409,8 @@ namespace Kudu.Core.Deployment
                 {
                     LogError(logger, currentStatus, ex);
                 }
+
+                tracer.TraceError(ex);
             }
             finally
             {

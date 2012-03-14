@@ -21,7 +21,7 @@ namespace Kudu.TestHarness
                 });
 
 
-                var result = client.GetAsync(serviceUrl + "diag").Result;
+                var result = client.GetAsync(serviceUrl + "dump").Result;
                 if (result.IsSuccessStatusCode)
                 {
                     using (Stream stream = result.Content.ReadAsStreamAsync().Result)
@@ -45,7 +45,7 @@ namespace Kudu.TestHarness
         {
             var zippedLogsPath = Path.Combine(logsTempPath, appName + ".zip");
             var unzippedLogsPath = Path.Combine(logsTempPath, appName);
-            var profileLogPath = Path.Combine(unzippedLogsPath, "profiles", "profile.xml");
+            var profileLogPath = Path.Combine(unzippedLogsPath, "trace", "trace.xml");
             XDocument document = null;
 
             DownloadDump(serviceUrl, zippedLogsPath, credentials);

@@ -4,8 +4,9 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
-using Kudu.Core.Performance;
+using Kudu.Core.Tracing;
 
 namespace Kudu.Core.SourceControl.Git
 {
@@ -15,14 +16,14 @@ namespace Kudu.Core.SourceControl.Git
     public class GitExeRepository : IRepository
     {
         private readonly GitExecutable _gitExe;
-        private readonly IProfilerFactory _profilerFactory;
+        private readonly ITraceFactory _profilerFactory;
 
         public GitExeRepository(string path)
-            : this(path, NullProfilerFactory.Instance)
+            : this(path, NullTracerFactory.Instance)
         {
         }
 
-        public GitExeRepository(string path, IProfilerFactory profilerFactory)
+        public GitExeRepository(string path, ITraceFactory profilerFactory)
         {
             _gitExe = new GitExecutable(path);
             _profilerFactory = profilerFactory;
@@ -38,7 +39,7 @@ namespace Kudu.Core.SourceControl.Git
 
         public void Initialize()
         {
-            var profiler = _profilerFactory.GetProfiler();
+            var profiler = _profilerFactory.GetTracer();
             using (profiler.Step("GitExeRepository.Initialize"))
             {
                 _gitExe.Execute(profiler, "init");

@@ -5,31 +5,31 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
 using System.Xml.Linq;
-using Kudu.Contracts;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 
-namespace Kudu.Core.Performance
+namespace Kudu.Core.Tracing
 {
-    public class Profiler : IProfiler
+    public class Tracer : ITracer
     {
-        private readonly Stack<ProfilerStep> _currentSteps = new Stack<ProfilerStep>();
-        private readonly List<ProfilerStep> _steps = new List<ProfilerStep>();
+        private readonly Stack<TraceStep> _currentSteps = new Stack<TraceStep>();
+        private readonly List<TraceStep> _steps = new List<TraceStep>();
         private readonly Stack<XElement> _elements = new Stack<XElement>();
 
         private readonly string _path;
         private readonly IFileSystem _fileSystem;
 
-        private const string ProfileRoot = "profile";
+        private const string TraceRoot = "trace";
 
         private static readonly ConcurrentDictionary<string, object> _pathLocks = new ConcurrentDictionary<string, object>();
 
-        public Profiler(string path)
+        public Tracer(string path)
             : this(new FileSystem(), path)
         {
 
         }
 
-        public Profiler(IFileSystem fileSystem, string path)
+        public Tracer(IFileSystem fileSystem, string path)
         {
             _fileSystem = fileSystem;
             _path = path;
@@ -40,7 +40,7 @@ namespace Kudu.Core.Performance
             }
         }
 
-        public IEnumerable<ProfilerStep> Steps
+        public IEnumerable<TraceStep> Steps
         {
             get
             {
@@ -48,17 +48,21 @@ namespace Kudu.Core.Performance
             }
         }
 
-        public IDisposable Step(string title)
+        public IDisposable Step(string title, IDictionary<string, string> attributes)
         {
-            var newStep = new ProfilerStep(title);
+            var newStep = new TraceStep(title);
             var newStepElement = new XElement("step", new XAttribute("title", title),
                                                       new XAttribute("date", DateTime.Now.ToString("MM/dd H:mm:ss")));
+
+            foreach (var pair in attributes)
+            {
+                newStepElement.Add(new XAttribute(pair.Key, pair.Value));
+            }
 
             if (_currentSteps.Count == 0)
             {
                 // Add a new top level step
                 _steps.Add(newStep);
-
             }
 
             _currentSteps.Push(newStep);
@@ -80,7 +84,7 @@ namespace Kudu.Core.Performance
                     // Stop the current step
                     _currentSteps.Peek().Stop();
 
-                    ProfilerStep current = _currentSteps.Pop();
+                    TraceStep current = _currentSteps.Pop();
                     XElement stepElement = _elements.Pop();
 
                     stepElement.Add(new XAttribute("elapsed", current.ElapsedMilliseconds));
@@ -92,23 +96,19 @@ namespace Kudu.Core.Performance
                     }
                     else
                     {
-                        // Only record things slower than 25ms
-                        if (current.ElapsedMilliseconds >= 25)
-                        {
-                            // Add this element to the list
-                            Save(stepElement);
-                        }
+                        // Add this element to the list
+                        Save(stepElement);
                     }
 
                     if (_currentSteps.Count > 0)
                     {
-                        ProfilerStep parent = _currentSteps.Peek();
+                        TraceStep parent = _currentSteps.Peek();
                         parent.Children.Add(current);
                     }
                 }
                 catch (Exception ex)
                 {
-                    Trace.TraceError(ex.Message);
+                    Debug.WriteLine(ex.Message);
                 }
             });
         }
@@ -123,12 +123,18 @@ namespace Kudu.Core.Performance
             }
         }
 
+        public void Trace(string value, IDictionary<string, string> attributes)
+        {
+            // Add a fake step
+            using (Step(value, attributes)) { }
+        }
+
         private XDocument GetDocument()
         {
             if (!_fileSystem.File.Exists(_path))
             {
                 _fileSystem.Directory.CreateDirectory(Path.GetDirectoryName(_path));
-                return CreateProfileDocument();
+                return CreateDocumentRoot();
             }
 
             try
@@ -147,13 +153,13 @@ namespace Kudu.Core.Performance
                 FileSystemHelpers.DeleteFileSafe(_path);
 
                 // Return a new document
-                return CreateProfileDocument();
+                return CreateDocumentRoot();
             }
         }
 
-        private static XDocument CreateProfileDocument()
+        private static XDocument CreateDocumentRoot()
         {
-            return new XDocument(new XElement(ProfileRoot));
+            return new XDocument(new XElement(TraceRoot));
         }
     }
 }

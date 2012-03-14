@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Kudu.Contracts;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment
@@ -37,18 +36,18 @@ namespace Kudu.Core.Deployment
             {
                 string log = null;
 
-                using (context.Profiler.Step("Running msbuild on project file"))
+                using (context.Tracer.Step("Running msbuild on project file"))
                 {
-                    log = BuildProject(context.Profiler, buildTempPath);
+                    log = BuildProject(context.Tracer, buildTempPath);
                 }
 
-                using (context.Profiler.Step("Copying files to output directory"))
+                using (context.Tracer.Step("Copying files to output directory"))
                 {
                     // Copy to the output path and use the previous manifest if there
                     DeploymentHelper.CopyWithManifest(buildTempPath, context.OutputPath, context.PreviousMainfest);
                 }
 
-                using (context.Profiler.Step("Building manifest"))
+                using (context.Tracer.Step("Building manifest"))
                 {
                     // Generate a manifest from those build artifacts
                     context.ManifestWriter.AddFiles(buildTempPath);
@@ -66,33 +65,35 @@ namespace Kudu.Core.Deployment
                 innerLogger.Log(ex);
 
                 tcs.SetException(ex);
+
+                context.Tracer.TraceError(ex);
             }
             finally
             {
                 // Clean up the build artifacts after copying them
-                CleanBuild(buildTempPath);
+                CleanBuild(context.Tracer, buildTempPath);
             }
 
             return tcs.Task;
         }
 
-        private string BuildProject(IProfiler profiler, string buildTempPath)
+        private string BuildProject(ITracer tracer, string buildTempPath)
         {
             string command = @"""{0}"" /nologo /verbosity:m /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""{1}"";AutoParameterizationWebConfigConnectionStrings=false;Configuration=Release;";
             if (String.IsNullOrEmpty(_solutionPath))
             {
                 command += "{2}";
-                return ExecuteMSBuild(profiler, command, _projectPath, buildTempPath, GetPropertyString());
+                return ExecuteMSBuild(tracer, command, _projectPath, buildTempPath, GetPropertyString());
             }
 
             string solutionDir = Path.GetDirectoryName(_solutionPath) + @"\\";
             command += @"SolutionDir=""{2}"";{3}";
 
             // Build artifacts into a temp path
-            return ExecuteMSBuild(profiler, command, _projectPath, buildTempPath, solutionDir, GetPropertyString());
+            return ExecuteMSBuild(tracer, command, _projectPath, buildTempPath, solutionDir, GetPropertyString());
         }
 
-        private void CleanBuild(string buildTempPath)
+        private void CleanBuild(ITracer tracer, string buildTempPath)
         {
             // Don't block the current thread to clean up the build folder since it could take some time
             ThreadPool.QueueUserWorkItem(_ =>
@@ -103,8 +104,7 @@ namespace Kudu.Core.Deployment
                 }
                 catch (Exception ex)
                 {
-                    // TODO: Log this to some place central
-                    Debug.WriteLine(ex.Message);
+                    tracer.TraceError(ex);
                 }
             });
         }

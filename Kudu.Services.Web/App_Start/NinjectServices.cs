@@ -1,21 +1,22 @@
 using System.IO;
 using System.IO.Abstractions;
 using System.Web;
-using Kudu.Contracts;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Editor;
 using Kudu.Core.Infrastructure;
-using Kudu.Core.Performance;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.SourceControl.Hg;
+using Kudu.Core.Tracing;
 using Kudu.Services.Authorization;
 using Kudu.Services.Deployment;
 using Kudu.Services.Performance;
-using Kudu.Services.Web.Elmah;
+using Kudu.Services.Web.Tracing;
 using Kudu.Services.Web.Services;
+using Kudu.Services.Web.Tracing;
 using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 using Ninject;
 using Ninject.Activation;
@@ -32,8 +33,9 @@ namespace Kudu.Services.Web.App_Start
     {
         private const string DeploymentCachePath = "deployments";
         private const string DeploymentLockFile = "deployments.lock";
-        private const string ProfilerPath = @"LogFiles\Git\profiles";
+        private const string TracePath = @"LogFiles\Git\trace";
         private const string DeploySettingsPath = "settings.xml";
+        private const string TraceFile = "trace.xml";
 
         /// <summary>
         /// Starts the application
@@ -74,35 +76,39 @@ namespace Kudu.Services.Web.App_Start
             var serverConfiguration = new ServerConfiguration();
             IEnvironment environment = GetEnvironment();
             var propertyProvider = new BuildPropertyProvider();
-            var lockObj = new LockFile(Path.Combine(environment.DeploymentCachePath, DeploymentLockFile));
-
+            
             // General
             kernel.Bind<HttpContextBase>().ToMethod(context => new HttpContextWrapper(HttpContext.Current));
             kernel.Bind<IBuildPropertyProvider>().ToConstant(propertyProvider);
             kernel.Bind<IEnvironment>().ToConstant(environment);
             kernel.Bind<IUserValidator>().To<SimpleUserValidator>().InSingletonScope();
             kernel.Bind<IServerConfiguration>().ToConstant(serverConfiguration);
-            kernel.Bind<IFileSystem>().To<FileSystem>().InSingletonScope();
-            kernel.Bind<IOperationLock>().ToConstant(lockObj);
+            kernel.Bind<IFileSystem>().To<FileSystem>().InSingletonScope();            
 
-            if (ProfilerServices.Enabled)
+            if (TraceServices.Enabled)
             {
-                string profilePath = Path.Combine(environment.ApplicationRootPath, ProfilerPath, "profile.xml");
-                System.Func<IProfiler> createProfilerThunk = () => new Profiler(profilePath);
+                string tracePath = Path.Combine(environment.ApplicationRootPath, TracePath, TraceFile);
+                System.Func<ITracer> createTracerThunk = () => new Tracer(tracePath);
 
                 // First try to use the current request profiler if any, otherwise create a new one
-                var profilerFactory = new ProfilerFactory(() => ProfilerServices.CurrentRequestProfiler ?? createProfilerThunk());
+                var traceFactory = new TracerFactory(() => TraceServices.CurrentRequestTracer ?? createTracerThunk());
 
-                kernel.Bind<IProfiler>().ToMethod(context => ProfilerServices.CurrentRequestProfiler ?? NullProfiler.Instance);
-                kernel.Bind<IProfilerFactory>().ToConstant(profilerFactory);
-                ProfilerServices.SetProfilerFactory(createProfilerThunk);
+                kernel.Bind<ITracer>().ToMethod(context => TraceServices.CurrentRequestTracer ?? NullTracer.Instance);
+                kernel.Bind<ITraceFactory>().ToConstant(traceFactory);
+                TraceServices.SetTraceFactory(createTracerThunk);
             }
             else
             {
                 // Return No-op providers
-                kernel.Bind<IProfiler>().ToConstant(NullProfiler.Instance).InSingletonScope();
-                kernel.Bind<IProfilerFactory>().ToConstant(NullProfilerFactory.Instance).InSingletonScope();
+                kernel.Bind<ITracer>().ToConstant(NullTracer.Instance).InSingletonScope();
+                kernel.Bind<ITraceFactory>().ToConstant(NullTracerFactory.Instance).InSingletonScope();
             }
+
+
+            // Setup the deployment lock
+            string lockPath = Path.Combine(environment.DeploymentCachePath, DeploymentLockFile);
+            var lockObj = new LockFile(kernel.Get<ITraceFactory>(), lockPath);
+            kernel.Bind<IOperationLock>().ToConstant(lockObj);
 
             // Setup the diagnostics service to collect information from the following paths:
             // 1. The deployments folder
@@ -110,8 +116,7 @@ namespace Kudu.Services.Web.App_Start
             // 3. The profile dump
             var paths = new[] { 
                 environment.DeploymentCachePath,
-                Path.Combine(environment.ApplicationRootPath, KuduErrorLog.ElmahErrorLogPath),
-                Path.Combine(environment.ApplicationRootPath, ProfilerPath),
+                Path.Combine(environment.ApplicationRootPath, TracePath),
             };
 
             kernel.Bind<DiagnosticsService>().ToMethod(context => new DiagnosticsService(paths));
@@ -125,7 +130,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<ISiteBuilderFactory>().To<SiteBuilderFactory>()
                                              .InRequestScope();
 
-            kernel.Bind<IServerRepository>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, context.Kernel.Get<IProfilerFactory>()))
+            kernel.Bind<IServerRepository>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, context.Kernel.Get<ITraceFactory>()))
                                             .InRequestScope();
 
             kernel.Bind<IDeploymentManager>().To<DeploymentManager>()
@@ -133,9 +138,9 @@ namespace Kudu.Services.Web.App_Start
                                              .OnActivation(SubscribeForDeploymentEvents);
 
             // Git server
-            kernel.Bind<IDeploymentManagerFactory>().ToMethod(context => GetDeploymentManagerFactory(environment, propertyProvider, context.Kernel.Get<IProfilerFactory>()));
+            kernel.Bind<IDeploymentManagerFactory>().ToMethod(context => GetDeploymentManagerFactory(environment, propertyProvider, context.Kernel.Get<ITraceFactory>()));
 
-            kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, context.Kernel.Get<IProfilerFactory>()))
+            kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, context.Kernel.Get<ITraceFactory>()))
                                      .InRequestScope();
 
             // Hg Server
@@ -157,23 +162,19 @@ namespace Kudu.Services.Web.App_Start
 
         private static IDeploymentManagerFactory GetDeploymentManagerFactory(IEnvironment environment,
                                                                              IBuildPropertyProvider propertyProvider,
-                                                                             IProfilerFactory profilerFactory)
+                                                                             ITraceFactory traceFactory)
         {
             return new DeploymentManagerFactory(() =>
             {
-                var serverRepository = new GitExeServer(environment.DeploymentRepositoryPath, profilerFactory);
-                var settingsPath = GetSettingsPath(environment);
-                var settings = new XmlSettings.Settings(settingsPath);
-                var settingsManager = new DeploymentSettingsManager(settings);
+                var serverRepository = new GitExeServer(environment.DeploymentRepositoryPath, traceFactory);
                 var fileSystem = new FileSystem();
                 var siteBuilderFactory = new SiteBuilderFactory(propertyProvider, environment);
 
                 var deploymentManager = new DeploymentManager(serverRepository,
                                                               siteBuilderFactory,
                                                               environment,
-                                                              settingsManager,
                                                               fileSystem,
-                                                              profilerFactory);
+                                                              traceFactory);
 
                 SubscribeForDeploymentEvents(deploymentManager);
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment
@@ -18,7 +19,7 @@ namespace Kudu.Core.Deployment
             _environment = environment;
         }
 
-        public ISiteBuilder CreateBuilder(ILogger logger)
+        public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger)
         {
             string repositoryRoot = _environment.DeploymentRepositoryPath;
 
@@ -29,6 +30,8 @@ namespace Kudu.Core.Deployment
             string targetProjectPath = configuration.ProjectPath;
             if (!String.IsNullOrEmpty(targetProjectPath))
             {
+                tracer.Trace("Found .deployment file in repository");
+
                 // Try to resolve the project
                 return ResolveProject(repositoryRoot,
                                       targetProjectPath,
