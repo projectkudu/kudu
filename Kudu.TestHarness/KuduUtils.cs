@@ -45,7 +45,7 @@ namespace Kudu.TestHarness
         {
             var zippedLogsPath = Path.Combine(logsTempPath, appName + ".zip");
             var unzippedLogsPath = Path.Combine(logsTempPath, appName);
-            var profileLogPath = Path.Combine(unzippedLogsPath, "profiles", "profile.xml");
+            var profileLogPath = Path.Combine(unzippedLogsPath, "trace", "trace.xml");
             XDocument document = null;
 
             DownloadDump(serviceUrl, zippedLogsPath, credentials);
