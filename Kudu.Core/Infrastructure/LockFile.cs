@@ -28,7 +28,7 @@ namespace Kudu.Core.Infrastructure
             {
                 if (Interlocked.Exchange(ref _lockStream, new FileStream(_path, FileMode.Create, FileAccess.Write, FileShare.None)) == null)
                 {
-                    TraceLock("Aquire Lock success");
+                    TraceLock("Aquired Lock");
                     _lockStream.WriteByte(0);
                     return true;
                 }
@@ -54,12 +54,12 @@ namespace Kudu.Core.Infrastructure
                 _lockStream.Close();
                 File.Delete(_path);
 
-                TraceRelease("Lock released");
+                TraceLock("Lock released");
                 return true;
             }
             catch
             {
-                TraceRelease("Lock release failed");
+                TraceLock("Lock release failed");
                 return false;
             }
             finally
@@ -74,15 +74,6 @@ namespace Kudu.Core.Infrastructure
             tracer.Trace(message, new Dictionary<string, string>
             {
                 { "type", "lock" }
-            });
-        }
-
-        private void TraceRelease(string message)
-        {
-            ITracer tracer = _traceFactory.GetTracer();
-            tracer.Trace(message, new Dictionary<string, string>
-            {
-                { "type", "releaseLock" }
             });
         }
     }

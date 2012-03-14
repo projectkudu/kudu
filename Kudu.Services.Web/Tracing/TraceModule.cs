@@ -25,12 +25,20 @@ namespace Kudu.Services.Web.Tracing
                 // Setup the request for the tracer
                 var tracer = TraceServices.CreateRequesTracer(httpContext);
 
-                httpContext.Items[_stepKey] = tracer.Step("Incoming Request", new Dictionary<string, string>
+                var attribs = new Dictionary<string, string>
                 {
                     { "url", httpContext.Request.RawUrl },
                     { "method", httpContext.Request.HttpMethod },
                     { "type", "request" }
-                });
+                };
+                
+                if (httpContext.Request.RawUrl.Contains(".git"))
+                {
+                    // Mark git requests specially
+                    attribs.Add("git", "true");
+                }
+
+                httpContext.Items[_stepKey] = tracer.Step("Incoming Request", attribs);
             };
 
             context.EndRequest += (sender, e) =>
