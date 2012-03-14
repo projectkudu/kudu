@@ -157,12 +157,8 @@
             <td class="path"> <%= Path.GetTempPath() %></td>
         </tr>
         <tr>
-            <td><strong>Errors</strong></td>
-            <td><a href="<%= ResolveClientUrl("~/elmah.axd") %>">View</a></td>
-        </tr>
-        <tr>
             <td><strong>Diagnostics Dump</strong></td>
-            <td><a href="diag">Download</a></td>
+            <td><a href="dump">Download</a></td>
         </tr>
         <tr>
             <td><strong>Runtime Environment</strong></td>

@@ -18,9 +18,8 @@ namespace Kudu.Core.Deployment
         private readonly IServerRepository _serverRepository;
         private readonly ISiteBuilderFactory _builderFactory;
         private readonly IEnvironment _environment;
-        private readonly IDeploymentSettingsManager _settingsManager;
         private readonly IFileSystem _fileSystem;
-        private readonly ITraceFactory _tracerFactory;
+        private readonly ITraceFactory _traceFactory;
 
         private const string StatusFile = "status.xml";
         private const string LogFile = "log.xml";
@@ -32,16 +31,14 @@ namespace Kudu.Core.Deployment
         public DeploymentManager(IServerRepository serverRepository,
                                  ISiteBuilderFactory builderFactory,
                                  IEnvironment environment,
-                                 IDeploymentSettingsManager settingsManager,
                                  IFileSystem fileSystem,
-                                 ITraceFactory profilerFactory)
+                                 ITraceFactory traceFactory)
         {
             _serverRepository = serverRepository;
             _builderFactory = builderFactory;
             _environment = environment;
-            _settingsManager = settingsManager;
             _fileSystem = fileSystem;
-            _tracerFactory = profilerFactory;
+            _traceFactory = traceFactory;
         }
 
         private string ActiveDeploymentId
@@ -59,7 +56,7 @@ namespace Kudu.Core.Deployment
 
         public IEnumerable<DeployResult> GetResults()
         {
-            ITracer tracer = _tracerFactory.GetTracer();
+            ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("DeploymentManager.GetResults"))
             {
                 return EnumerateResults().ToList();
@@ -73,7 +70,7 @@ namespace Kudu.Core.Deployment
 
         public IEnumerable<LogEntry> GetLogEntries(string id)
         {
-            ITracer tracer = _tracerFactory.GetTracer();
+            ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("DeploymentManager.GetLogEntries(id)"))
             {
                 string path = GetLogPath(id, ensureDirectory: false);
@@ -89,7 +86,7 @@ namespace Kudu.Core.Deployment
 
         public IEnumerable<LogEntry> GetLogEntryDetails(string id, string entryId)
         {
-            ITracer tracer = _tracerFactory.GetTracer();
+            ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("DeploymentManager.GetLogEntryDetails(id, entryId)"))
             {
                 string path = GetLogPath(id, ensureDirectory: false);
@@ -105,7 +102,7 @@ namespace Kudu.Core.Deployment
 
         public void Delete(string id)
         {
-            ITracer tracer = _tracerFactory.GetTracer();
+            ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("DeploymentManager.Delete(id)"))
             {
                 string path = GetRoot(id, ensureDirectory: false);
@@ -126,7 +123,7 @@ namespace Kudu.Core.Deployment
 
         public void Deploy(string id, bool clean)
         {
-            ITracer tracer = _tracerFactory.GetTracer();
+            ITracer tracer = _traceFactory.GetTracer();
             IDisposable deployStep = null;
 
             try
@@ -172,7 +169,7 @@ namespace Kudu.Core.Deployment
 
         public void Deploy()
         {
-            var tracer = _tracerFactory.GetTracer();
+            var tracer = _traceFactory.GetTracer();
             IDisposable deployStep = null;
 
             try
@@ -248,8 +245,6 @@ namespace Kudu.Core.Deployment
         /// </summary>
         private DeployResult GetResult(string id, string activeDeploymentId)
         {
-            var profiler = _tracerFactory.GetTracer();
-
             var file = OpenStatusFile(id);
 
             if (file == null)
@@ -343,12 +338,14 @@ namespace Kudu.Core.Deployment
                            deployStep.Dispose();
                        });
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
+                tracer.TraceError(ex);
+
                 if (innerLogger != null)
                 {
-                    LogError(innerLogger, currentStatus, e);
-                    innerLogger.Log(e);
+                    LogError(innerLogger, currentStatus, ex);
+                    innerLogger.Log(ex);
 
                     ReportStatus(id);
                 }

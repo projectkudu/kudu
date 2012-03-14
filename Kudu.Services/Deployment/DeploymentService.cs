@@ -24,7 +24,9 @@ namespace Kudu.Services.Deployment
         private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
 
-        public DeploymentService(ITracer tracer, IDeploymentManager deploymentManager, IOperationLock deploymentLock)
+        public DeploymentService(ITracer tracer, 
+                                 IDeploymentManager deploymentManager, 
+                                 IOperationLock deploymentLock)
         {
             _tracer = tracer;
             _deploymentManager = deploymentManager;

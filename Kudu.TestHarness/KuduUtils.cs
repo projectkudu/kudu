@@ -21,7 +21,7 @@ namespace Kudu.TestHarness
                 });
 
 
-                var result = client.GetAsync(serviceUrl + "diag").Result;
+                var result = client.GetAsync(serviceUrl + "dump").Result;
                 if (result.IsSuccessStatusCode)
                 {
                     using (Stream stream = result.Content.ReadAsStreamAsync().Result)

@@ -23,8 +23,8 @@
 namespace Kudu.Services.GitServer
 {
     using System;
+    using System.Collections.Generic;
     using System.ComponentModel;
-    using System.Diagnostics;
     using System.IO;
     using System.IO.Compression;
     using System.Net;
@@ -33,12 +33,11 @@ namespace Kudu.Services.GitServer
     using System.ServiceModel;
     using System.ServiceModel.Web;
     using System.Threading;
-    using Kudu.Contracts;
     using Kudu.Contracts.Infrastructure;
+    using Kudu.Contracts.Tracing;
     using Kudu.Core.Deployment;
     using Kudu.Core.SourceControl.Git;
     using Kudu.Services.Infrastructure;
-    using Kudu.Contracts.Tracing;
 
     // Handles {project}/git-upload-pack and {project}/git-receive-pack
     [ServiceContract]
@@ -115,8 +114,7 @@ namespace Kudu.Services.GitServer
                 }
                 catch (Exception ex)
                 {
-                    // TODO: Add better logging
-                    Debug.WriteLine(ex.Message);
+                    _tracer.TraceError(ex);
                 }
                 finally
                 {
@@ -140,9 +138,13 @@ namespace Kudu.Services.GitServer
 
         private HttpResponseMessage CreateResponse(MemoryStream stream, string mediaType)
         {
+            var attribs = new Dictionary<string, string> { 
+                { "length", stream.Length.ToString() },
+                { "type", "response" }
+            };
+
             HttpContent content = null;
-            string flushStepTitle = String.Format("Creating content. L: {0}", stream.Length);
-            using (_tracer.Step(flushStepTitle))
+            using (_tracer.Step("Response content", attribs))
             {
                 content = stream.AsContent();
             }

@@ -14,7 +14,7 @@ using Kudu.Core.Tracing;
 using Kudu.Services.Authorization;
 using Kudu.Services.Deployment;
 using Kudu.Services.Performance;
-using Kudu.Services.Web.Elmah;
+using Kudu.Services.Web.Tracing;
 using Kudu.Services.Web.Services;
 using Kudu.Services.Web.Tracing;
 using Microsoft.Web.Infrastructure.DynamicModuleHelper;
@@ -76,16 +76,14 @@ namespace Kudu.Services.Web.App_Start
             var serverConfiguration = new ServerConfiguration();
             IEnvironment environment = GetEnvironment();
             var propertyProvider = new BuildPropertyProvider();
-            var lockObj = new LockFile(Path.Combine(environment.DeploymentCachePath, DeploymentLockFile));
-
+            
             // General
             kernel.Bind<HttpContextBase>().ToMethod(context => new HttpContextWrapper(HttpContext.Current));
             kernel.Bind<IBuildPropertyProvider>().ToConstant(propertyProvider);
             kernel.Bind<IEnvironment>().ToConstant(environment);
             kernel.Bind<IUserValidator>().To<SimpleUserValidator>().InSingletonScope();
             kernel.Bind<IServerConfiguration>().ToConstant(serverConfiguration);
-            kernel.Bind<IFileSystem>().To<FileSystem>().InSingletonScope();
-            kernel.Bind<IOperationLock>().ToConstant(lockObj);
+            kernel.Bind<IFileSystem>().To<FileSystem>().InSingletonScope();            
 
             if (TraceServices.Enabled)
             {
@@ -106,13 +104,18 @@ namespace Kudu.Services.Web.App_Start
                 kernel.Bind<ITraceFactory>().ToConstant(NullTracerFactory.Instance).InSingletonScope();
             }
 
+
+            // Setup the deployment lock
+            string lockPath = Path.Combine(environment.DeploymentCachePath, DeploymentLockFile);
+            var lockObj = new LockFile(kernel.Get<ITraceFactory>(), lockPath);
+            kernel.Bind<IOperationLock>().ToConstant(lockObj);
+
             // Setup the diagnostics service to collect information from the following paths:
             // 1. The deployments folder
             // 2. The elmah error log
             // 3. The profile dump
             var paths = new[] { 
                 environment.DeploymentCachePath,
-                Path.Combine(environment.ApplicationRootPath, KuduErrorLog.ElmahErrorLogPath),
                 Path.Combine(environment.ApplicationRootPath, TracePath),
             };
 
@@ -159,23 +162,19 @@ namespace Kudu.Services.Web.App_Start
 
         private static IDeploymentManagerFactory GetDeploymentManagerFactory(IEnvironment environment,
                                                                              IBuildPropertyProvider propertyProvider,
-                                                                             ITraceFactory profilerFactory)
+                                                                             ITraceFactory traceFactory)
         {
             return new DeploymentManagerFactory(() =>
             {
-                var serverRepository = new GitExeServer(environment.DeploymentRepositoryPath, profilerFactory);
-                var settingsPath = GetSettingsPath(environment);
-                var settings = new XmlSettings.Settings(settingsPath);
-                var settingsManager = new DeploymentSettingsManager(settings);
+                var serverRepository = new GitExeServer(environment.DeploymentRepositoryPath, traceFactory);
                 var fileSystem = new FileSystem();
                 var siteBuilderFactory = new SiteBuilderFactory(propertyProvider, environment);
 
                 var deploymentManager = new DeploymentManager(serverRepository,
                                                               siteBuilderFactory,
                                                               environment,
-                                                              settingsManager,
                                                               fileSystem,
-                                                              profilerFactory);
+                                                              traceFactory);
 
                 SubscribeForDeploymentEvents(deploymentManager);
 

@@ -23,6 +23,7 @@
 namespace Kudu.Services.GitServer
 {
     using System;
+    using System.Collections.Generic;
     using System.ComponentModel;
     using System.IO;
     using System.Net;
@@ -30,10 +31,9 @@ namespace Kudu.Services.GitServer
     using System.Net.Http.Headers;
     using System.ServiceModel;
     using System.ServiceModel.Web;
-    using Kudu.Contracts;
+    using Kudu.Contracts.Tracing;
     using Kudu.Core.SourceControl.Git;
     using Kudu.Services.Infrastructure;
-    using Kudu.Contracts.Tracing;
 
     // Handles /{project}/info/refs
     [ServiceContract]
@@ -64,6 +64,7 @@ namespace Kudu.Services.GitServer
                 }
 
                 // Dumb protocol isn't supported
+                _tracer.TraceWarning("Attempting to use dumb protocol.");
                 return new HttpResponseMessage(HttpStatusCode.NotImplemented);
             }
         }
@@ -89,9 +90,13 @@ namespace Kudu.Services.GitServer
                     _gitServer.AdvertiseReceivePack(memoryStream);
                 }
 
+                var attribs = new Dictionary<string, string> { 
+                    { "length", memoryStream.Length.ToString() },
+                    { "type", "response" }
+                };
+
                 HttpContent content = null;
-                string flushStepTitle = String.Format("Creating content. L: {0}", memoryStream.Length);
-                using (_tracer.Step(flushStepTitle))
+                using (_tracer.Step("Response content", attribs))
                 {
                     content = memoryStream.AsContent();
                 }

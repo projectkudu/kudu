@@ -12,7 +12,7 @@ using Kudu.Services.Performance;
 using Kudu.Services.Settings;
 using Kudu.Services.SourceControl;
 using Kudu.Services.Web;
-using Kudu.Services.Web.Elmah;
+using Kudu.Services.Web.Tracing;
 using Microsoft.ApplicationServer.Http.Activation;
 using Ninject;
 using Ninject.Extensions.Wcf;
@@ -64,7 +64,7 @@ namespace Kudu.Services
                 MapServiceRoute<ConnectionStringsService>("connectionstrings", factory);
             }
 
-            MapServiceRoute<DiagnosticsService>("diag", factory);
+            MapServiceRoute<DiagnosticsService>("dump", factory);
         }
 
         private static ServiceRoute MapServiceRoute<T>(string url, HttpServiceHostFactory factory)
@@ -104,7 +104,7 @@ namespace Kudu.Services
 
             factory.Configuration.ErrorHandlers = (handlers, service, op) =>
             {
-                handlers.Add(new ElmahErrorHandler());
+                handlers.Add(KernelContainer.Kernel.Get<TraceErrorHandler>());
             };
 
             // Add the authorization handler on specific services method.

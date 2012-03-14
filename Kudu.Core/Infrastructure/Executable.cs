@@ -58,7 +58,7 @@ namespace Kudu.Core.Infrastructure
                 {
                     string text = String.IsNullOrEmpty(error) ? output : error;
 
-                    tracer.Trace(text);
+                    tracer.TraceError(text);
 
                     throw new Exception(text);
                 }
@@ -108,11 +108,12 @@ namespace Kudu.Core.Infrastructure
 
         private IDisposable GetProcessStep(ITracer tracer, string arguments, object[] args)
         {
-            string formattedArgs = String.Format(arguments, args);
-            string stepTitle = String.Format(@"Executing external process P(""{0}"", ""{1}"")",
-                                             System.IO.Path.GetFileName(Path),
-                                             formattedArgs);
-            return tracer.Step(stepTitle);
+            return tracer.Step("Executing external process", new Dictionary<string, string>
+            {
+                { "type", "process" },
+                { "path", System.IO.Path.GetFileName(Path) },
+                { "arguments", String.Format(arguments, args) }
+            });
         }
 
         private Process CreateProcess(string arguments, object[] args)

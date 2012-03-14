@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Web;
-using Kudu.Contracts.Tracing;
 
 namespace Kudu.Services.Web.Tracing
 {
@@ -16,9 +16,7 @@ namespace Kudu.Services.Web.Tracing
 
                 // Skip certain paths
                 if (httpContext.Request.RawUrl.EndsWith("favicon.ico", StringComparison.OrdinalIgnoreCase) ||
-                    httpContext.Request.Path.StartsWith("/profile", StringComparison.OrdinalIgnoreCase) ||
-                    httpContext.Request.Path.StartsWith("/diag", StringComparison.OrdinalIgnoreCase) ||
-                    httpContext.Request.Path.StartsWith("/elmah.axd", StringComparison.OrdinalIgnoreCase) ||
+                    httpContext.Request.Path.StartsWith("/dump", StringComparison.OrdinalIgnoreCase) ||
                     httpContext.Request.RawUrl == "/")
                 {
                     return;
@@ -27,7 +25,12 @@ namespace Kudu.Services.Web.Tracing
                 // Setup the request for the tracer
                 var tracer = TraceServices.CreateRequesTracer(httpContext);
 
-                httpContext.Items[_stepKey] = tracer.Step(httpContext.Request.RawUrl);
+                httpContext.Items[_stepKey] = tracer.Step("Incoming Request", new Dictionary<string, string>
+                {
+                    { "url", httpContext.Request.RawUrl },
+                    { "method", httpContext.Request.HttpMethod },
+                    { "type", "request" }
+                });
             };
 
             context.EndRequest += (sender, e) =>

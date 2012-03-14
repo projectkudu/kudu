@@ -7,14 +7,14 @@ namespace Kudu.Contracts.Tracing
     {
         private static readonly Dictionary<string, string> _empty = new Dictionary<string, string>();
 
-        public static IDisposable Step(this ITracer tracer, string value)
+        public static IDisposable Step(this ITracer tracer, string message)
         {
-            return tracer.Step(value, _empty);
+            return tracer.Step(message, _empty);
         }
 
-        public static void Trace(this ITracer tracer, string value, params object[] args)
+        public static void Trace(this ITracer tracer, string message, params object[] args)
         {
-            tracer.Trace(String.Format(value, args), _empty);
+            tracer.Trace(String.Format(message, args), _empty);
         }
 
         public static void TraceError(this ITracer tracer, Exception ex)
@@ -22,13 +22,21 @@ namespace Kudu.Contracts.Tracing
             tracer.Trace(ex.Message, new Dictionary<string, string>
             {
                 { "type", "error" },
-                { "stack.trace", ex.StackTrace }
+                { "stackTrace", ex.StackTrace }
             });
         }
 
-        public static void TraceWarning(this ITracer tracer, string value, params object[] args)
+        public static void TraceError(this ITracer tracer, string message)
         {
-            tracer.Trace(String.Format(value, args), new Dictionary<string, string>
+            tracer.Trace(message, new Dictionary<string, string>
+            {
+                { "type", "error" }
+            });
+        }
+
+        public static void TraceWarning(this ITracer tracer, string message, params object[] args)
+        {
+            tracer.Trace(String.Format(message, args), new Dictionary<string, string>
             {
                 { "type", "warning" }
             });
