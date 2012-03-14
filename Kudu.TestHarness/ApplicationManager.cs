@@ -101,9 +101,9 @@ namespace Kudu.TestHarness
                 var repositoryInfo = repositoryManager.GetRepositoryInfo().Result;
                 gitUrl = repositoryInfo.GitUrl.ToString();
             }
-            catch
+            catch (Exception ex)
             {
-                gitUrl = site.ServiceUrl + "git";
+                throw new Exception("GetRepositoryInfo Failed" + ex);
             }
 
             return new ApplicationManager(siteManager, site, applicationName, gitUrl)
