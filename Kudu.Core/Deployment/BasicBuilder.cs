@@ -106,7 +106,7 @@ namespace Kudu.Core.Deployment
                 catch (Exception ex)
                 {
                     // This fails if it's already set
-                    context.Tracer.Trace(ex.Message);
+                    context.Tracer.TraceError(ex);
                 }
 
                 // Run install on the output directory
