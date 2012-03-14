@@ -24,7 +24,7 @@ namespace Kudu.Core.Deployment
         
         public override Task Build(DeploymentContext context)
         {
-            ILogger innerLogger = context.Logger.Log("Building solution {0}.", Path.GetFileName(SolutionPath));
+            ILogger innerLogger = context.Logger.Log(Resources.Log_BuildingSolution, Path.GetFileName(SolutionPath));
 
             try
             {
@@ -47,7 +47,7 @@ namespace Kudu.Core.Deployment
             catch (Exception ex)
             {
                 var tcs = new TaskCompletionSource<object>();
-                innerLogger.Log("Building solution failed.", LogEntryType.Error);
+                innerLogger.Log(Resources.Log_BuildingSolutionFailed, LogEntryType.Error);
                 innerLogger.Log(ex);
                 tcs.SetException(ex);
 

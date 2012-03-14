@@ -10,28 +10,42 @@ using SignalR.Client;
 
 namespace Kudu.Client.Deployment
 {
-    public class RemoteDeploymentManager : KuduRemoteClientBase, IEventProvider
+    public class RemoteDeploymentManager : KuduRemoteClientBase
     {
         private Connection _connection;
+        private Action<DeployResult> _statusChanged;
+        private long _connections;
 
-        public event Action<DeployResult> StatusChanged;
+        public event Action<DeployResult> StatusChanged
+        {
+            add
+            {
+                if (Interlocked.Increment(ref _connections) == 1)
+                {
+                    Start();
+                }
+
+                _statusChanged += value;                
+            }
+            remove
+            {
+                _statusChanged -= value;
+
+                if (Interlocked.Decrement(ref _connections) == 0)
+                {
+                    Stop();
+                }
+            }
+        }
 
         public RemoteDeploymentManager(string serviceUrl)
             : base(serviceUrl)
         {
         }
 
-        public bool IsActive
-        {
-            get
-            {
-                return _connection != null && _connection.IsActive;
-            }
-        }
-
         public Task<IEnumerable<DeployResult>> GetResultsAsync(int? maxItems = null, bool excludeFailed = false)
         {
-            string url = "?$orderby=DeploymentReceivedTime desc";
+            string url = "?$orderby=ReceivedTime desc";
             if (maxItems != null && maxItems >= 0)
             {
                 url += String.Format("&$top={0}", maxItems);
@@ -43,22 +57,22 @@ namespace Kudu.Client.Deployment
 
             return _client.GetJsonAsync<IEnumerable<DeployResult>>(url);
         }
-        
+
         public Task<DeployResult> GetResultAsync(string id)
         {
             return _client.GetJsonAsync<DeployResult>(id);
         }
-        
+
         public Task<IEnumerable<LogEntry>> GetLogEntriesAsync(string id)
         {
             return _client.GetJsonAsync<IEnumerable<LogEntry>>(id + "/log");
         }
-   
+
         public Task<IEnumerable<LogEntry>> GetLogEntryDetailsAsync(string id, string logId)
         {
             return _client.GetJsonAsync<IEnumerable<LogEntry>>(id + "/log/" + logId);
         }
-       
+
         public Task DeleteAsync(string id)
         {
             return _client.DeleteSafeAsync(id);
@@ -69,7 +83,13 @@ namespace Kudu.Client.Deployment
             return _client.PutAsync(id);
         }
 
-        public void Start()
+        public Task DeployAsync(string id, bool clean)
+        {
+            var param = new KeyValuePair<string, string>("clean", "true");
+            return _client.PutAsync(id, param);
+        }
+
+        private void Start()
         {
             if (_connection == null)
             {
@@ -121,7 +141,7 @@ namespace Kudu.Client.Deployment
             });
         }
 
-        public void Stop()
+        private void Stop()
         {
             if (_connection != null)
             {
@@ -131,10 +151,10 @@ namespace Kudu.Client.Deployment
 
         private void OnReceived(string data)
         {
-            if (StatusChanged != null)
+            if (_statusChanged != null)
             {
                 var result = JsonConvert.DeserializeObject<DeployResult>(data);
-                StatusChanged(result);
+                _statusChanged(result);
             }
         }
     }

@@ -24,6 +24,9 @@ namespace Kudu.FunctionalTests
                 ex = KuduAssert.ThrowsUnwrapped<HttpRequestException>(() => appManager.DeploymentManager.DeployAsync(id).Wait());
                 Assert.Equal("Response status code does not indicate success: 404 (Not Found).", ex.Message);
 
+                ex = KuduAssert.ThrowsUnwrapped<HttpRequestException>(() => appManager.DeploymentManager.DeployAsync(id, clean: true).Wait());
+                Assert.Equal("Response status code does not indicate success: 404 (Not Found).", ex.Message);
+
                 ex = KuduAssert.ThrowsUnwrapped<HttpRequestException>(() => appManager.DeploymentManager.GetLogEntriesAsync(id).Wait());
                 Assert.Equal("Response status code does not indicate success: 404 (Not Found).", ex.Message);
 
@@ -72,8 +75,28 @@ namespace Kudu.FunctionalTests
                     KuduAssert.VerifyUrl(resultAgain.Url, cred);
                     KuduAssert.VerifyUrl(resultAgain.LogUrl, cred);
 
+                    repo.WriteFile("HelloWorld.txt", "This is a test");
+                    Git.Commit(repo.PhysicalPath, "Another commit");
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
+                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                    Assert.Equal(2, results.Count);
+                    string oldId = results[1].Id;
+
+                    // Delete one
+                    appManager.DeploymentManager.DeleteAsync(oldId).Wait();
+
+                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    Assert.Equal(1, results.Count);
+                    Assert.NotEqual(oldId, results[0].Id);
+
+                    result = results[0];
+
                     // Redeploy
                     appManager.DeploymentManager.DeployAsync(result.Id).Wait();
+
+                    // Clean deploy
+                    appManager.DeploymentManager.DeployAsync(result.Id, clean: true).Wait();
 
                     var entries = appManager.DeploymentManager.GetLogEntriesAsync(result.Id).Result.ToList();
 
@@ -83,11 +106,9 @@ namespace Kudu.FunctionalTests
 
                     Assert.Equal(1, nested.Count);
 
-                    appManager.DeploymentManager.DeleteAsync(result.Id).Wait();
-
-                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-
-                    Assert.Equal(0, results.Count);
+                    // Can't delete the active one
+                    var ex = KuduAssert.ThrowsUnwrapped<HttpRequestException>(() => appManager.DeploymentManager.DeleteAsync(result.Id).Wait());
+                    Assert.Equal("Response status code does not indicate success: 409 (Conflict).", ex.Message);                    
                 });
             }
         }

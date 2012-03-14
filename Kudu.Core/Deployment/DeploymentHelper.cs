@@ -10,6 +10,7 @@ namespace Kudu.Core.Deployment
     public static class DeploymentHelper
     {
         private static readonly string[] _projectFileExtensions = new[] { ".csproj", ".vbproj" };
+        private static readonly List<string> _emptyList = Enumerable.Empty<string>().ToList();
 
         public static void CopyWithManifest(string sourcePath, string destinationPath, IDeploymentManifestReader previousManifest, bool skipOldFiles = true)
         {
@@ -29,17 +30,26 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public static IList<string> GetDeployableProjects(string path, SearchOption searchOption = SearchOption.AllDirectories)
+        public static IList<string> GetProjects(string path, SearchOption searchOption = SearchOption.AllDirectories)
         {
+            if (!Directory.Exists(path))
+            {
+                return _emptyList;
+            }
+
             return (from projectFile in Directory.GetFiles(path, "*.*", searchOption)
-                    where IsDeployableProject(projectFile)
+                    where IsProject(projectFile)
                     select projectFile).ToList();
+        }
+
+        public static bool IsProject(string path)
+        {
+            return _projectFileExtensions.Any(extension => path.EndsWith(extension, StringComparison.OrdinalIgnoreCase));
         }
 
         public static bool IsDeployableProject(string path)
         {
-            return _projectFileExtensions.Any(extension => path.EndsWith(extension, StringComparison.OrdinalIgnoreCase)) &&
-                    VsHelper.IsWap(path);
+            return IsProject(path) && VsHelper.IsWap(path);
         }
 
         public static void SmartCopy(string sourcePath, string destinationPath, Func<string, bool> existsInPrevious)

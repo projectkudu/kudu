@@ -58,6 +58,8 @@
     <Compile Include="Editor\IProjectSystem.cs" />
     <Compile Include="Editor\Project.cs" />
     <Compile Include="IEnvironment.cs" />
+    <Compile Include="Infrastructure\IOperationLock.cs" />
+    <Compile Include="Infrastructure\LockExtensions.cs" />
     <Compile Include="Infrastructure\TaskExtensions.cs" />
     <Compile Include="Performance\IProfiler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -74,7 +76,6 @@
     <Compile Include="SourceControl\Git\IGitServer.cs" />
     <Compile Include="SourceControl\Hg\IHgServer.cs" />
     <Compile Include="SourceControl\IRepository.cs" />
-    <Compile Include="SourceControl\IRepositoryManager.cs" />
     <Compile Include="SourceControl\IServerRepository.cs" />
     <Compile Include="SourceControl\LineDiff.cs" />
     <Compile Include="SourceControl\PushInfo.cs" />

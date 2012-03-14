@@ -28,9 +28,6 @@ namespace Kudu.Core.Deployment
 
         public string ExecuteMSBuild(IProfiler profiler, string arguments, params object[] args)
         {
-            // Map the profile folders for msbuild
-            _msbuildExe.MapProfiles(_tempPath);
-
             return _msbuildExe.Execute(profiler, arguments, args).Item1;
         }
 

@@ -482,7 +482,7 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        [Fact]
+        [Fact(Skip = "Known failure, NPM bug https://github.com/isaacs/npm/issues/2190")]
         public void NpmSiteInstallsPackages()
         {
             string repositoryName = "NpmSiteInstallsPackages";
@@ -506,7 +506,7 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        [Fact]
+        [Fact(Skip = "Known failure, NPM bug https://github.com/isaacs/npm/issues/2190")]
         public void FailedNpmFailsDeployment()
         {
             string repositoryName = "FailedNpmFailsDeployment";
@@ -632,7 +632,50 @@ namespace Kudu.FunctionalTests
                                           "This is a website!");
         }
 
-        private void VerifyDeploymentConfiguration(string siteName, string targetProject, string expectedText)
+        [Fact]
+        public void SpecificDeploymentConfigurationForWebsiteNotPartOfSolution()
+        {
+            VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForWebsiteNotPartOfSolution",
+                                          "WebSiteRemovedFromSolution",
+                                          "This web site was removed from solution!");
+        }
+
+        [Fact]
+        public void SpecificDeploymentConfigurationForWebProjectNotPartOfSolution()
+        {
+            VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForWebProjectNotPartOfSolution",
+                                          "MvcApplicationRemovedFromSolution",
+                                          "This web project was removed from solution!");
+        }
+
+        [Fact]
+        public void SpecificDeploymentConfigurationForNonDeployableProjectFile()
+        {
+            VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForNonDeployableProjectFile",
+                                          "MvcApplicationRemovedFromSolution.Tests/MvcApplicationRemovedFromSolution.Tests.csproj",
+                                          "The web site is under construction",
+                                          DeployStatus.Failed);
+        }
+
+        [Fact]
+        public void SpecificDeploymentConfigurationForNonDeployableProject()
+        {
+            VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForNonDeployableProject",
+                                          "MvcApplicationRemovedFromSolution.Tests",
+                                          "The web site is under construction",
+                                          DeployStatus.Failed);
+        }
+
+        [Fact]
+        public void SpecificDeploymentConfigurationForDirectoryThatDoesNotExist()
+        {
+            VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForDirectoryThatDoesNotExist",
+                                          "IDoNotExist",
+                                          "The web site is under construction",
+                                          DeployStatus.Failed);
+        }
+
+        private void VerifyDeploymentConfiguration(string siteName, string targetProject, string expectedText, DeployStatus expectedStatus = DeployStatus.Success)
         {
             string name = KuduUtils.GetRandomWebsiteName(siteName);
             string cloneUrl = "https://github.com/KuduApps/SpecificDeploymentConfiguration.git";
@@ -651,7 +694,7 @@ project = {0}", targetProject));
 
                     // Assert
                     Assert.Equal(1, results.Count);
-                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    Assert.Equal(expectedStatus, results[0].Status);                    
                     KuduAssert.VerifyUrl(appManager.SiteUrl, expectedText);
                 });
             }

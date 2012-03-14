@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Kudu.Core.Infrastructure;
@@ -281,7 +282,9 @@ namespace Kudu.Core.SourceControl.Hg
                     break;
             }
 
-            throw new InvalidOperationException("Unsupported status " + state);
+            throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, 
+                                                              Resources.Error_UnsupportedStatus, 
+                                                              state));
         }
     }
 }

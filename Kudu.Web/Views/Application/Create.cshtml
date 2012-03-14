@@ -4,7 +4,12 @@
     ViewBag.Title = "New Application";
 }
 
+@if (!ViewData.ModelState.IsValid)
+{ 
+<div class="alert alert-error">
 @Html.ValidationSummary(true)
+</div>
+}
 
 @using (Html.BeginForm())
 {    

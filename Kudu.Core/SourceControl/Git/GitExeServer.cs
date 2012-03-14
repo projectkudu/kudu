@@ -45,6 +45,15 @@ namespace Kudu.Core.SourceControl.Git
             }
         }
 
+        public bool Exists
+        {
+            get
+            {
+                return Directory.Exists(_gitExe.WorkingDirectory) && 
+                       Directory.EnumerateFileSystemEntries(_gitExe.WorkingDirectory).Any();
+            }
+        }
+
         public void AdvertiseReceivePack(Stream output)
         {
             IProfiler profiler = _profilerFactory.GetProfiler();
@@ -61,6 +70,11 @@ namespace Kudu.Core.SourceControl.Git
             {
                 Advertise(profiler, "upload-pack", output);
             }
+        }
+
+        public void Clean()
+        {
+            _repository.Clean();
         }
 
         public bool Receive(Stream inputStream, Stream outputStream)
@@ -131,6 +145,12 @@ namespace Kudu.Core.SourceControl.Git
             IProfiler profiler = _profilerFactory.GetProfiler();
             using (profiler.Step("GitExeServer.Initialize"))
             {
+                if (Exists)
+                {
+                    // Repository already exists so do nothing
+                    return;
+                }
+
                 _repository.Initialize();
 
                 using (profiler.Step("Configure git server"))
@@ -154,6 +174,11 @@ echo $i > pushinfo
         public ChangeSet GetChangeSet(string id)
         {
             return _repository.GetChangeSet(id);
+        }
+
+        public RepositoryType GetRepositoryType()
+        {
+            return RepositoryType.Git;
         }
 
         public void Update(string id)

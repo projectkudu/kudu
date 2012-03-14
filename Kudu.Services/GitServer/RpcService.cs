@@ -27,12 +27,14 @@ namespace Kudu.Services.GitServer
     using System.Diagnostics;
     using System.IO;
     using System.IO.Compression;
+    using System.Net;
     using System.Net.Http;
     using System.Net.Http.Headers;
     using System.ServiceModel;
     using System.ServiceModel.Web;
     using System.Threading;
     using Kudu.Contracts;
+    using Kudu.Contracts.Infrastructure;
     using Kudu.Core.Deployment;
     using Kudu.Core.SourceControl.Git;
     using Kudu.Services.Infrastructure;
@@ -44,12 +46,14 @@ namespace Kudu.Services.GitServer
         private readonly IDeploymentManagerFactory _deploymentManagerFactory;
         private readonly IGitServer _gitServer;
         private readonly IProfiler _profiler;
+        private readonly IOperationLock _deploymentLock;
 
-        public RpcService(IProfiler profiler, IGitServer gitServer, IDeploymentManagerFactory deploymentManagerFactory)
+        public RpcService(IProfiler profiler, IGitServer gitServer, IDeploymentManagerFactory deploymentManagerFactory, IOperationLock deploymentLock)
         {
             _gitServer = gitServer;
             _deploymentManagerFactory = deploymentManagerFactory;
             _profiler = profiler;
+            _deploymentLock = deploymentLock;
         }
 
         [Description("Handles a 'git pull' command.")]
@@ -59,9 +63,14 @@ namespace Kudu.Services.GitServer
             using (_profiler.Step("RpcService.UploadPack"))
             {
                 var memoryStream = new MemoryStream();
-                _gitServer.Upload(GetInputStream(request), memoryStream);
+
+                _deploymentLock.LockHttpOperation(() =>
+                {
+                    _gitServer.Upload(GetInputStream(request), memoryStream);
+                });
 
                 return CreateResponse(memoryStream, "application/x-git-{0}-result".With("upload-pack"));
+
             }
         }
 
@@ -71,12 +80,23 @@ namespace Kudu.Services.GitServer
         {
             using (_profiler.Step("RpcService.ReceivePack"))
             {
+                bool lockTaken = _deploymentLock.Lock();
+
+                if (!lockTaken)
+                {
+                    return new HttpResponseMessage(HttpStatusCode.Conflict);
+                }
+
                 var memoryStream = new MemoryStream();
 
                 // Only if we've completed the receive pack should we start a deployment
                 if (_gitServer.Receive(GetInputStream(request), memoryStream))
                 {
                     Deploy();
+                }
+                else
+                {
+                    _deploymentLock.Release();
                 }
 
                 return CreateResponse(memoryStream, "application/x-git-{0}-result".With("receive-pack"));
@@ -96,6 +116,10 @@ namespace Kudu.Services.GitServer
                 {
                     // TODO: Add better logging
                     Debug.WriteLine(ex.Message);
+                }
+                finally
+                {
+                    _deploymentLock.Release();
                 }
             });
         }

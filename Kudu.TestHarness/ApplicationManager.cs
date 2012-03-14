@@ -60,7 +60,7 @@ namespace Kudu.TestHarness
         public static void Run(string applicationName, Action<ApplicationManager> action)
         {
             var appManager = CreateApplication(applicationName);
-            var dumpPath = Path.Combine(PathHelper.TestResultsPath, applicationName + ".zip");
+            var dumpPath = Path.Combine(PathHelper.TestResultsPath, applicationName, applicationName + ".zip");
             try
             {
                 action(appManager);

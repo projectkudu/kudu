@@ -87,7 +87,7 @@ namespace Kudu.Web.Controllers
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError("__FORM", ex.Message);
+                ModelState.AddModelError("", ex.Message);
             }
 
             return View("Create");

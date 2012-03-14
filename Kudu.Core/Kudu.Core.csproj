@@ -86,14 +86,12 @@
     <Compile Include="Deployment\DeploymentManifest.cs" />
     <Compile Include="Deployment\IDeploymentManifestReader.cs" />
     <Compile Include="Deployment\IDeploymentManifestWriter.cs" />
-    <Compile Include="Deployment\IProgressReporter.cs" />
     <Compile Include="Deployment\ManifestWriterExtensions.cs" />
     <Compile Include="Deployment\MsBuildSiteBuilder.cs" />
     <Compile Include="Deployment\NpmExecutable.cs" />
-    <Compile Include="Deployment\ProgressReporter.cs" />
     <Compile Include="Infrastructure\DisposableAction.cs" />
-    <Compile Include="Infrastructure\ExecutableExtensions.cs" />
     <Compile Include="Infrastructure\IniFile.cs" />
+    <Compile Include="Infrastructure\LockFile.cs" />
     <Compile Include="Infrastructure\OperationManager.cs" />
     <Compile Include="Infrastructure\VsHelper.cs" />
     <Compile Include="Performance\IProfilerFactory.cs" />
@@ -103,6 +101,11 @@
     <Compile Include="Performance\ProfilerFactory.cs" />
     <Compile Include="Performance\ProfilerStep.cs" />
     <Compile Include="Deployment\BasicBuilder.cs" />
+    <Compile Include="Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="Settings\DeploymentSettingsManager.cs" />
     <Compile Include="Deployment\IBuildPropertyProvider.cs" />
     <Compile Include="Deployment\SolutionBasedSiteBuilder.cs" />
@@ -139,7 +142,6 @@
     <Compile Include="SourceControl\Hg\HgRepository.cs" />
     <Compile Include="SourceControl\Hg\HgServer.cs" />
     <Compile Include="SourceControl\NullRepository.cs" />
-    <Compile Include="SourceControl\RepositoryManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -149,6 +151,12 @@
       <Project>{EC0ED988-2C60-4F31-A434-645E048BFD95}</Project>
       <Name>Kudu.Contracts</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\Build\Kudu.targets" />

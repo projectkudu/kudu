@@ -16,7 +16,7 @@ namespace Kudu.Client.Infrastructure
         {
             var response = client.GetAsync(url);
             var content = response.Result.EnsureSuccessStatusCode().Content.ReadAsStringAsync().Result;
-            
+
             return JsonConvert.DeserializeObject<T>(content);
         }
 
@@ -62,6 +62,14 @@ namespace Kudu.Client.Infrastructure
         public static Task<HttpResponseMessage> PutAsync(this HttpClient client, string requestUri)
         {
             return client.PutAsync(requestUri, new StringContent(String.Empty)).Then(result =>
+            {
+                return result.EnsureSuccessStatusCode();
+            });
+        }
+
+        public static Task<HttpResponseMessage> PutAsync(this HttpClient client, string requestUri, params KeyValuePair<string, string>[] items)
+        {
+            return client.PutAsync(requestUri, HttpClientHelper.CreateJsonContent(items)).Then(result =>
             {
                 return result.EnsureSuccessStatusCode();
             });

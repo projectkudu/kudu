@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -44,10 +45,7 @@ namespace Kudu.Core.Infrastructure
 
         public VsSolution(string solutionPath)
         {
-            if (_solutionParser == null)
-            {
-                throw new InvalidOperationException("Can not find type 'Microsoft.Build.Construction.SolutionParser' are you missing a assembly reference to 'Microsoft.Build.dll'?");
-            }
+            Debug.Assert(_solutionParser != null, "Can not find type 'Microsoft.Build.Construction.SolutionParser' are you missing a assembly reference to 'Microsoft.Build.dll'?");
 
             Path = solutionPath;
         }

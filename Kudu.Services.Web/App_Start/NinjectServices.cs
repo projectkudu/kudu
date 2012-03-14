@@ -2,10 +2,11 @@ using System.IO;
 using System.IO.Abstractions;
 using System.Web;
 using Kudu.Contracts;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Core;
-using Kudu.Core.Commands;
 using Kudu.Core.Deployment;
 using Kudu.Core.Editor;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.Performance;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
@@ -29,11 +30,9 @@ namespace Kudu.Services.Web.App_Start
 {
     public static class NinjectServices
     {
-        private static CommandExecutor _devExecutor;
-        private static CommandExecutor _liveExecutor;
-
         private const string DeploymentCachePath = "deployments";
-        private const string ProfilerPath = "profiles";
+        private const string DeploymentLockFile = "deployments.lock";
+        private const string ProfilerPath = @"LogFiles\Git\profiles";
         private const string DeploySettingsPath = "settings.xml";
 
         /// <summary>
@@ -72,16 +71,19 @@ namespace Kudu.Services.Web.App_Start
         /// <param name="kernel">The kernel.</param>
         private static void RegisterServices(IKernel kernel)
         {
+            var serverConfiguration = new ServerConfiguration();
             IEnvironment environment = GetEnvironment();
             var propertyProvider = new BuildPropertyProvider();
+            var lockObj = new LockFile(Path.Combine(environment.DeploymentCachePath, DeploymentLockFile));
 
             // General
             kernel.Bind<HttpContextBase>().ToMethod(context => new HttpContextWrapper(HttpContext.Current));
             kernel.Bind<IBuildPropertyProvider>().ToConstant(propertyProvider);
             kernel.Bind<IEnvironment>().ToConstant(environment);
             kernel.Bind<IUserValidator>().To<SimpleUserValidator>().InSingletonScope();
-            kernel.Bind<IServerConfiguration>().To<ServerConfiguration>().InSingletonScope();
+            kernel.Bind<IServerConfiguration>().ToConstant(serverConfiguration);
             kernel.Bind<IFileSystem>().To<FileSystem>().InSingletonScope();
+            kernel.Bind<IOperationLock>().ToConstant(lockObj);
 
             if (ProfilerServices.Enabled)
             {
@@ -113,10 +115,6 @@ namespace Kudu.Services.Web.App_Start
             };
 
             kernel.Bind<DiagnosticsService>().ToMethod(context => new DiagnosticsService(paths));
-
-            // Repository Management
-            kernel.Bind<IRepositoryManager>().ToMethod(context => new RepositoryManager(environment.DeploymentRepositoryPath))
-                                             .InRequestScope();
 
 
             // Deployment Service
@@ -246,15 +244,15 @@ namespace Kudu.Services.Web.App_Start
             string deployPath = Path.Combine(root, Constants.WebRoot);
             string deployCachePath = Path.Combine(root, DeploymentCachePath);
             string deploymentRepositoryPath = Path.Combine(root, Constants.RepositoryPath);
-            string tempPath = Path.Combine(Path.GetTempPath(), "kudu", System.Guid.NewGuid().ToString());
+            string tempPath = Path.GetTempPath();
             string deploymentTempPath = Path.Combine(tempPath, Constants.RepositoryPath);
 
-            return new Environment(site, 
-                                   root, 
-                                   tempPath, 
-                                   () => deploymentRepositoryPath, 
-                                   () => ResolveRepositoryPath(site), 
-                                   deployPath, 
+            return new Environment(site,
+                                   root,
+                                   tempPath,
+                                   () => deploymentRepositoryPath,
+                                   () => ResolveRepositoryPath(site),
+                                   deployPath,
                                    deployCachePath);
         }
 
