@@ -23,7 +23,7 @@ namespace Kudu.FunctionalTests
         {
             if (!skip)
             {
-                string randomTestName = GetRandomWebSiteName(repoName);
+                string randomTestName = KuduUtils.GetRandomWebsiteName(repoName);
                 using (var repo = Git.Clone(randomTestName, repoCloneUrl))
                 {
                     ApplicationManager.Run(randomTestName, appManager =>
@@ -52,11 +52,6 @@ namespace Kudu.FunctionalTests
             {
                 return gitTestConfig.GetTests();
             }
-        }
-
-        private string GetRandomWebSiteName(string webSiteName)
-        {
-            return webSiteName;
         }
     }
 }

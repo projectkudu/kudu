@@ -62,5 +62,10 @@ namespace Kudu.TestHarness
             return document;
         }
 
+        public static string GetRandomWebsiteName(string name)
+        {
+            int maxLen = Math.Min(name.Length, 25);
+            return name.Substring(0, maxLen) + Guid.NewGuid().ToString("N").Substring(0, 4);
+        }
     }
 }
