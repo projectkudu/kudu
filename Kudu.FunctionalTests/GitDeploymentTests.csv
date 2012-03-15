@@ -7,6 +7,6 @@ Joomla,Joomla,https://github.com/KuduApps/JoomlaWeb,https://github.com/KuduApps/
 Drupal,Drupal,https://github.com/KuduApps/drupal,https://github.com/KuduApps/drupal.git,"7.x","Select an installation profile",200,false
 MvcMusicStore,MvcMusicStore,https://github.com/KuduApps/MvcMusicStore,https://github.com/KuduApps/MvcMusicStore.git,"master","ASP.NET MVC MUSIC STORE",200,false
 Orchard,Orchard,https://github.com/KuduApps/Orchard,https://github.com/KuduApps/Orchard.git,"master","Welcome to Orchard",200,false
-Nuget,Nuget,https://github.com/KuduApps/NuGetGallery,https://github.com/KuduApps/NuGetGallery.git,"master","Error: Oh no, we broke something!",500,false
+Nuget,Nuget,https://github.com/KuduApps/NuGetGallery,https://github.com/KuduApps/NuGetGallery.git,"master","Error: Oh no, we broke something!",500,true
 ProjectWithNoSolution,ProjectWithNoSolution,https://github.com/KuduApps/ProjectWithNoSolution,https://github.com/KuduApps/ProjectWithNoSolution.git,"master",Project without solution,200,false
 HiddenFoldersAndFiles,HiddenFoldersAndFiles,https://github.com/KuduApps/HiddenFoldersAndFiles,https://github.com/KuduApps/HiddenFoldersAndFiles.git,"master",Hello World,200,false
