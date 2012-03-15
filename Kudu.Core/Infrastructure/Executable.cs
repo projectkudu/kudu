@@ -52,13 +52,18 @@ namespace Kudu.Core.Infrastructure
                 string output = reader.EndInvoke(outputReader);
                 string error = reader.EndInvoke(errorReader);
 
+                tracer.Trace("Process dump", new Dictionary<string, string>
+                {
+                    { "outStream", output },
+                    { "errorStream", error },
+                    { "type", "processOutput" }
+                });
+
                 // Sometimes, we get an exit code of 1 even when the command succeeds (e.g. with 'git reset .').
                 // So also make sure there is an error string
                 if (process.ExitCode != 0)
                 {
                     string text = String.IsNullOrEmpty(error) ? output : error;
-
-                    tracer.TraceError(text);
 
                     throw new Exception(text);
                 }
