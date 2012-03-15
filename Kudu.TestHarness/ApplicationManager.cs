@@ -87,7 +87,7 @@ namespace Kudu.TestHarness
             {
                 siteManager.DeleteSite(applicationName);
             }
-            catch (System.ServiceModel.EndpointNotFoundException)
+            catch (Exception)
             {
 
             }
