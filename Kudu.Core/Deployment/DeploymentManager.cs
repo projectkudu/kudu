@@ -301,8 +301,26 @@ namespace Kudu.Core.Deployment
 
                 ReportStatus(id);
 
-                // Create a deployer
-                ISiteBuilder builder = _builderFactory.CreateBuilder(tracer, innerLogger);
+                ISiteBuilder builder = null;
+
+                try
+                {
+                    builder = _builderFactory.CreateBuilder(tracer, innerLogger);
+                }
+                catch(Exception ex)
+                {
+                    tracer.TraceError(ex);
+
+                    innerLogger.Log(ex);
+
+                    MarkFailed(currentStatus);
+
+                    ReportStatus(id);
+
+                    deployStep.Dispose();
+
+                    return;
+                }
 
                 buildStep = tracer.Step("Building");
 
