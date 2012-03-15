@@ -54,7 +54,7 @@ namespace Kudu.FunctionalTests.Infrastructure
         public static void VerifyLogOutput(ApplicationManager appManager, string id, params string[] expectedMatches)
         {
             var entries = appManager.DeploymentManager.GetLogEntriesAsync(id).Result.ToList();
-            Assert.Equal(3, entries.Count);
+            Assert.True(entries.Count > 0);
             var allDetails = entries.SelectMany(e => appManager.DeploymentManager.GetLogEntryDetailsAsync(id, e.Id).Result).ToList();
             var allEntries = entries.Concat(allDetails).ToList();
             Assert.True(expectedMatches.All(match => allDetails.Any(e => e.Message.Contains(match))));

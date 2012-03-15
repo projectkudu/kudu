@@ -100,11 +100,11 @@ namespace Kudu.FunctionalTests
 
                     var entries = appManager.DeploymentManager.GetLogEntriesAsync(result.Id).Result.ToList();
 
-                    Assert.Equal(3, entries.Count);
+                    Assert.True(entries.Count > 0);
 
                     var nested = appManager.DeploymentManager.GetLogEntryDetailsAsync(result.Id, entries[1].Id).Result.ToList();
 
-                    Assert.Equal(1, nested.Count);
+                    Assert.True(nested.Count > 0);
 
                     // Can't delete the active one
                     var ex = KuduAssert.ThrowsUnwrapped<HttpRequestException>(() => appManager.DeploymentManager.DeleteAsync(result.Id).Wait());
