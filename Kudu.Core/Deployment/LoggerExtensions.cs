@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 
 namespace Kudu.Core.Deployment
 {
@@ -19,15 +21,19 @@ namespace Kudu.Core.Deployment
             return returnLog;
         }
 
-        public static string GetTopLevelError(this ILogger logger)
+        public static void LogUnexpetedError(this ILogger logger)
         {
-            // TODO: Clean this up
-            if (logger is XmlLogger)
+            if (logger == null)
             {
-                return ((XmlLogger)logger).GetFirstErrorEntryMessage();
+                return;
             }
 
-            return "Cannot parse error from this log format. Expand the log to get details of the error.";
+            logger.Log(Resources.Log_UnexpectedError);
+        }
+
+        public static void LogFileList(this ILogger logger, IEnumerable<string> files)
+        {
+            logger.Log(String.Join("\n", files.Select(path => String.Format(Resources.Copied, path))));
         }
     }
 }

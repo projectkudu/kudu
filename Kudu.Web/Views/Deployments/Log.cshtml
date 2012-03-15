@@ -40,7 +40,7 @@
         <i class="@icon"></i>
         @log.LogTime <span>@log.Message </span>
     }
-    @if (!verbose && (index == 1 || Model.Count == 1))
+    @if (!verbose && (index < 3 || Model.Count == 1))
     { 
         <a href="@Url.RouteUrl("DeploymentLogVerbose", new { slug = ViewBag.slug, id = ViewBag.id, logId = log.Id })">Details</a>
     }

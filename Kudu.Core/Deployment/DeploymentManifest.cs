@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Kudu.Core.Deployment
 {
-    public class DeploymentManifest : IDeploymentManifestWriter, IDeploymentManifestReader
+    public class DeploymentManifest : IDeploymentManifestWriter
     {
         private readonly string _path;
 

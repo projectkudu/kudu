@@ -117,6 +117,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="Copied" xml:space="preserve">
+    <value>Copied '{0}'.</value>
+  </data>
   <data name="Error_AmbiguousProjects" xml:space="preserve">
     <value>Unable to determine which project file to build. {0}.</value>
   </data>
@@ -150,32 +153,17 @@
   <data name="Log_BuildingSolution" xml:space="preserve">
     <value>Building solution '{0}'.</value>
   </data>
-  <data name="Log_BuildingSolutionFailed" xml:space="preserve">
-    <value>Building solution failed.</value>
-  </data>
   <data name="Log_BuildingWebProject" xml:space="preserve">
     <value>Building web project '{0}'.</value>
   </data>
-  <data name="Log_BuildingWebProjectFailed" xml:space="preserve">
-    <value>Building web project failed.</value>
-  </data>
   <data name="Log_CopyingFiles" xml:space="preserve">
-    <value>Copying files.</value>
-  </data>
-  <data name="Log_CopyingFilesFailed" xml:space="preserve">
-    <value>Copying files failed.</value>
-  </data>
-  <data name="Log_CopyingFilesToDirectory" xml:space="preserve">
-    <value>Copying files to '{0}'.</value>
-  </data>
-  <data name="Log_CopyingWebsiteFailed" xml:space="preserve">
-    <value>Copying website failed.</value>
-  </data>
-  <data name="Log_DeploymentFailed" xml:space="preserve">
-    <value>Deployment failed.</value>
+    <value>Copying files to output directory.</value>
   </data>
   <data name="Log_DeploymentSuccessful" xml:space="preserve">
     <value>Deployment successful.</value>
+  </data>
+  <data name="Log_DownloadingNodePackages" xml:space="preserve">
+    <value>Downloading node packages.</value>
   </data>
   <data name="Log_NoDeployableProjects" xml:space="preserve">
     <value>Found solution '{0}' with no deployable projects. Deploying files instead.</value>
@@ -183,8 +171,14 @@
   <data name="Log_NpmNotInstalled" xml:space="preserve">
     <value>NPM not installed or couldn't be located. Skipping package installation.</value>
   </data>
+  <data name="Log_PackagesAlreadyInstalled" xml:space="preserve">
+    <value>Packages already installed.</value>
+  </data>
   <data name="Log_PreparingDeployment" xml:space="preserve">
     <value>Preparing deployment for '{0}'.</value>
+  </data>
+  <data name="Log_UnexpectedError" xml:space="preserve">
+    <value>An unknown error has occured. Check the diagnostic log for details.</value>
   </data>
   <data name="Log_UsingWebsiteProject" xml:space="preserve">
     <value>Using website project '{0}'.</value>

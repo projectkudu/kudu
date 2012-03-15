@@ -23,8 +23,7 @@ namespace Kudu.Core.Deployment
         {
             var tcs = new TaskCompletionSource<object>();
 
-            var innerLogger = context.Logger.Log(Resources.Log_CopyingFiles);
-            innerLogger.Log(Resources.Log_CopyingFilesToDirectory, context.OutputPath);
+            ILogger innerLogger = context.Logger.Log(Resources.Log_CopyingFiles);
 
             try
             {
@@ -34,22 +33,38 @@ namespace Kudu.Core.Deployment
                     DeploymentHelper.CopyWithManifest(_sourcePath, context.OutputPath, context.PreviousMainfest);
                 }
 
-                // Download node packages
-                DownloadNodePackages(innerLogger, context);
-
                 using (context.Tracer.Step("Building manifest"))
                 {
                     // Generate a manifest from those build artifacts
                     context.ManifestWriter.AddFiles(_sourcePath);
                 }
 
-                innerLogger.Log("Done.");
+                // Log the copied files from the manifest
+                innerLogger.LogFileList(context.ManifestWriter.GetPaths());
+            }
+            catch (Exception ex)
+            {
+                context.Tracer.TraceError(ex);
+
+                innerLogger.Log(ex);
+
+                tcs.SetException(ex);
+
+                // Bail out early
+                return tcs.Task;
+            }
+
+            try
+            {
+                // Download node packages
+                DownloadNodePackages(context);
+
                 tcs.SetResult(null);
             }
             catch (Exception ex)
             {
-                innerLogger.Log(Resources.Log_CopyingFilesFailed);
-                innerLogger.Log(ex);
+                context.Tracer.TraceError(ex);
+
                 tcs.SetException(ex);
             }
 
@@ -57,9 +72,9 @@ namespace Kudu.Core.Deployment
         }
 
         /// <summary>
-        /// Download node packages as part of the deployment
+        /// Download node packages as part of the deployment.
         /// </summary>
-        private void DownloadNodePackages(ILogger logger, DeploymentContext context)
+        private void DownloadNodePackages(DeploymentContext context)
         {
             // Check to see if there's a package.json file
             string packagePath = Path.Combine(context.OutputPath, PackageJsonFile);
@@ -70,14 +85,17 @@ namespace Kudu.Core.Deployment
                 return;
             }
 
+            ILogger innerLogger = context.Logger.Log(Resources.Log_DownloadingNodePackages);
+
             using (context.Tracer.Step("Downloading node packages"))
             {
                 var npm = new NpmExecutable(context.OutputPath);
 
-
                 if (!npm.IsAvailable)
                 {
-                    logger.Log(Resources.Log_NpmNotInstalled);
+                    context.Tracer.TraceError(Resources.Log_NpmNotInstalled);
+
+                    innerLogger.Log(Resources.Log_NpmNotInstalled, LogEntryType.Error);
                     return;
                 }
 
@@ -98,6 +116,7 @@ namespace Kudu.Core.Deployment
                     npm.EnvironmentVariables["HTTPS_PROXY"] = proxyHttpsProxyUrl.ToString();
                 }
 
+                // REVIEW: Do we still need this?
                 try
                 {
                     // Use the http proxy since https is failing for some reason
@@ -109,9 +128,28 @@ namespace Kudu.Core.Deployment
                     context.Tracer.TraceError(ex);
                 }
 
-                // Run install on the output directory
-                string log = npm.Execute(context.Tracer, "install").Item1;
-                logger.Log(log);
+                try
+                {
+                    // Run install on the output directory
+                    string log = npm.Execute(context.Tracer, "install").Item1;
+                    
+                    if (String.IsNullOrWhiteSpace(log))
+                    {
+                        innerLogger.Log(Resources.Log_PackagesAlreadyInstalled);
+                    }
+                    else
+                    {
+                        innerLogger.Log(log);
+                    }
+                }
+                catch(Exception ex)
+                {
+                    // Log the exception
+                    innerLogger.Log(ex);
+
+                    // re-throw
+                    throw;
+                }
             }
         }
     }

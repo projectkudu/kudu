@@ -2,7 +2,7 @@
 
 namespace Kudu.Core.Deployment
 {
-    public interface IDeploymentManifestWriter
+    public interface IDeploymentManifestWriter : IDeploymentManifestReader
     {
         void AddPaths(IEnumerable<string> paths);
     }

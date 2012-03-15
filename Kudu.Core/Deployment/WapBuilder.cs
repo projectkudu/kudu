@@ -29,18 +29,35 @@ namespace Kudu.Core.Deployment
         public override Task Build(DeploymentContext context)
         {
             var tcs = new TaskCompletionSource<object>();
-            var innerLogger = context.Logger.Log(Resources.Log_BuildingWebProject, Path.GetFileName(_projectPath));
             string buildTempPath = Path.Combine(_tempPath, Guid.NewGuid().ToString());
+
+            ILogger buildLogger = context.Logger.Log(Resources.Log_BuildingWebProject, Path.GetFileName(_projectPath));
 
             try
             {
-                string log = null;
-
                 using (context.Tracer.Step("Running msbuild on project file"))
                 {
-                    log = BuildProject(context.Tracer, buildTempPath);
-                }
+                    var log = BuildProject(context.Tracer, buildTempPath);
 
+                    // Log the details of the build
+                    buildLogger.Log(log);
+                }
+            }
+            catch (Exception ex)
+            {
+                context.Tracer.TraceError(ex);
+
+                buildLogger.Log(ex);
+
+                tcs.SetException(ex);
+
+                return tcs.Task;
+            }
+
+            ILogger copyLogger = context.Logger.Log(Resources.Log_CopyingFiles);
+
+            try
+            {
                 using (context.Tracer.Step("Copying files to output directory"))
                 {
                     // Copy to the output path and use the previous manifest if there
@@ -53,20 +70,18 @@ namespace Kudu.Core.Deployment
                     context.ManifestWriter.AddFiles(buildTempPath);
                 }
 
-                // Log the details of the build
-                innerLogger.Log(log);
+                // Log the copied files from the manifest
+                copyLogger.LogFileList(context.ManifestWriter.GetPaths());
 
-                // Mark this as done
                 tcs.SetResult(null);
             }
             catch (Exception ex)
             {
-                innerLogger.Log(Resources.Log_BuildingWebProjectFailed, LogEntryType.Error);
-                innerLogger.Log(ex);
+                context.Tracer.TraceError(ex);
+                
+                copyLogger.Log(ex);
 
                 tcs.SetException(ex);
-
-                context.Tracer.TraceError(ex);
             }
             finally
             {

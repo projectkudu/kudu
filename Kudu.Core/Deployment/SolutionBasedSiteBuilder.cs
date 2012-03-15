@@ -25,7 +25,7 @@ namespace Kudu.Core.Deployment
         
         public override Task Build(DeploymentContext context)
         {
-            ILogger innerLogger = context.Logger.Log(Resources.Log_BuildingSolution, Path.GetFileName(SolutionPath));
+            ILogger buildLogger = context.Logger.Log(Resources.Log_BuildingSolution, Path.GetFileName(SolutionPath));
 
             try
             {
@@ -40,19 +40,19 @@ namespace Kudu.Core.Deployment
                 {
                     // Build the solution first
                     string log = ExecuteMSBuild(context.Tracer, @"""{0}"" /verbosity:m /nologo{1}", SolutionPath, propertyString);
-                    innerLogger.Log(log);
+                    buildLogger.Log(log);
                 }
 
                 return BuildProject(context);
             }
             catch (Exception ex)
             {
-                var tcs = new TaskCompletionSource<object>();
-                innerLogger.Log(Resources.Log_BuildingSolutionFailed, LogEntryType.Error);
-                innerLogger.Log(ex);
-                tcs.SetException(ex);
-
                 context.Tracer.TraceError(ex);
+
+                buildLogger.Log(ex);
+
+                var tcs = new TaskCompletionSource<object>();
+                tcs.SetException(ex);
 
                 return tcs.Task;
             }
