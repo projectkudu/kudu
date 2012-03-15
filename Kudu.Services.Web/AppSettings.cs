@@ -5,9 +5,9 @@ namespace Kudu.Services.Web
 {
     public static class AppSettings
     {
-        private const string EnableAuthenticationKey = "enableAuthentication";
-        private const string EnableTraceKey = "enableTrace";
-        private const string EnableSettingsKey = "enableSettings";
+        private const string EnableAuthenticationKey = "kudu.enableAuthentication";
+        private const string EnableTraceKey = "kudu.enableTrace";
+        private const string EnableSettingsKey = "kudu.enableSettings";
         private const string NuGetCachePathKey = "nuget.cache";
 
         public static bool AuthenticationEnabled
