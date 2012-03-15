@@ -77,14 +77,16 @@ namespace Kudu.Core.Deployment
                                       repositoryRoot,
                                       project.AbsolutePath,
                                       _environment.TempPath,
+                                      _environment.NuGetCachePath,
                                       solution.Path);
             }
 
-            return new WebSiteBuilder(_propertyProvider,
-                                      repositoryRoot,
-                                      solution.Path,
-                                      project.AbsolutePath,
-                                      _environment.TempPath);
+            return new WebSiteBuilder(_propertyProvider, 
+                                      repositoryRoot, 
+                                      project.AbsolutePath, 
+                                      _environment.TempPath, 
+                                      _environment.NuGetCachePath, 
+                                      solution.Path);
         }
 
         private ISiteBuilder ResolveProject(string repositoryRoot, bool tryWebSiteProject = false, SearchOption searchOption = SearchOption.AllDirectories)
@@ -127,11 +129,12 @@ namespace Kudu.Core.Deployment
                 else if (solutions.Count == 1)
                 {
                     // Unambiguously pick the root
-                    return new WebSiteBuilder(_propertyProvider,
-                                              repositoryRoot,
-                                              solutions[0].Path,
-                                              targetPath,
-                                              _environment.TempPath);
+                    return new WebSiteBuilder(_propertyProvider, 
+                                              repositoryRoot, 
+                                              targetPath, 
+                                              _environment.TempPath, 
+                                              _environment.NuGetCachePath, 
+                                              solutions[0].Path);
                 }
             }
 
@@ -165,6 +168,7 @@ namespace Kudu.Core.Deployment
                                       repositoryRoot,
                                       targetPath,
                                       _environment.TempPath,
+                                      _environment.NuGetCachePath,
                                       solutionPath);
             }
 

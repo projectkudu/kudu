@@ -14,11 +14,12 @@ namespace Kudu.Core
 
         public Environment(string appName, 
                            string applicationRootPath, 
-                           string tempPath, 
+                           string tempPath,
                            Func<string> deploymentRepositoryPathResolver, 
                            Func<string> repositoryPathResolver, 
                            string deployPath, 
-                           string deployCachePath)
+                           string deployCachePath,
+                           string nugetCachePath)
         {
             AppName = appName;
             ApplicationRootPath = applicationRootPath;
@@ -27,6 +28,7 @@ namespace Kudu.Core
             _repositoryPathResolver = repositoryPathResolver;
             _deployPath = deployPath;
             _deployCachePath = deployCachePath;
+            NuGetCachePath = nugetCachePath;
         }
 
         public string DeploymentRepositoryPath
@@ -84,6 +86,12 @@ namespace Kudu.Core
             {
                 return _tempPath;
             }
+        }
+
+        public string NuGetCachePath
+        {
+            get;
+            private set;
         }
 
         public string AppName

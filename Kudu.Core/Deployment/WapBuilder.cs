@@ -13,13 +13,8 @@ namespace Kudu.Core.Deployment
         private readonly string _tempPath;
         private readonly string _solutionPath;
 
-        public WapBuilder(IBuildPropertyProvider propertyProvider, string sourcePath, string projectPath, string tempPath)
-            : this(propertyProvider, sourcePath, projectPath, tempPath, null)
-        {
-        }
-
-        public WapBuilder(IBuildPropertyProvider propertyProvider, string sourcePath, string projectPath, string tempPath, string solutionPath)
-            : base(propertyProvider, sourcePath, tempPath)
+        public WapBuilder(IBuildPropertyProvider propertyProvider, string sourcePath, string projectPath, string tempPath, string nugetCachePath, string solutionPath)
+            : base(propertyProvider, sourcePath, tempPath, nugetCachePath)
         {
             _projectPath = projectPath;
             _tempPath = tempPath;
@@ -78,7 +73,7 @@ namespace Kudu.Core.Deployment
             catch (Exception ex)
             {
                 context.Tracer.TraceError(ex);
-                
+
                 copyLogger.Log(ex);
 
                 tcs.SetException(ex);

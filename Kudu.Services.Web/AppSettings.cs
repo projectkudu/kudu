@@ -8,6 +8,7 @@ namespace Kudu.Services.Web
         private const string EnableAuthenticationKey = "enableAuthentication";
         private const string EnableTraceKey = "enableTrace";
         private const string EnableSettingsKey = "enableSettings";
+        private const string NuGetCachePathKey = "nuget.cache";
 
         public static bool AuthenticationEnabled
         {
@@ -30,6 +31,14 @@ namespace Kudu.Services.Web
             get
             {
                 return GetValue<bool>(EnableSettingsKey);
+            }
+        }
+
+        public static string NuGetCachePath
+        {
+            get
+            {
+                return GetValue<string>(NuGetCachePathKey);
             }
         }
 
