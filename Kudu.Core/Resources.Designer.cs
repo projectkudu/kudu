@@ -61,6 +61,15 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Copied &apos;{0}&apos;..
+        /// </summary>
+        internal static string Copied {
+            get {
+                return ResourceManager.GetString("Copied", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Unable to determine which project file to build. {0}..
         /// </summary>
         internal static string Error_AmbiguousProjects {
@@ -160,15 +169,6 @@ namespace Kudu.Core {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Building solution failed..
-        /// </summary>
-        internal static string Log_BuildingSolutionFailed {
-            get {
-                return ResourceManager.GetString("Log_BuildingSolutionFailed", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Building web project &apos;{0}&apos;..
         /// </summary>
         internal static string Log_BuildingWebProject {
@@ -178,56 +178,11 @@ namespace Kudu.Core {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Building web project failed..
-        /// </summary>
-        internal static string Log_BuildingWebProjectFailed {
-            get {
-                return ResourceManager.GetString("Log_BuildingWebProjectFailed", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Copying files..
+        ///   Looks up a localized string similar to Copying files to output directory..
         /// </summary>
         internal static string Log_CopyingFiles {
             get {
                 return ResourceManager.GetString("Log_CopyingFiles", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Copying files failed..
-        /// </summary>
-        internal static string Log_CopyingFilesFailed {
-            get {
-                return ResourceManager.GetString("Log_CopyingFilesFailed", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Copying files to &apos;{0}&apos;..
-        /// </summary>
-        internal static string Log_CopyingFilesToDirectory {
-            get {
-                return ResourceManager.GetString("Log_CopyingFilesToDirectory", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Copying website failed..
-        /// </summary>
-        internal static string Log_CopyingWebsiteFailed {
-            get {
-                return ResourceManager.GetString("Log_CopyingWebsiteFailed", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Deployment failed..
-        /// </summary>
-        internal static string Log_DeploymentFailed {
-            get {
-                return ResourceManager.GetString("Log_DeploymentFailed", resourceCulture);
             }
         }
         
@@ -237,6 +192,15 @@ namespace Kudu.Core {
         internal static string Log_DeploymentSuccessful {
             get {
                 return ResourceManager.GetString("Log_DeploymentSuccessful", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Downloading node packages..
+        /// </summary>
+        internal static string Log_DownloadingNodePackages {
+            get {
+                return ResourceManager.GetString("Log_DownloadingNodePackages", resourceCulture);
             }
         }
         
@@ -259,11 +223,29 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Packages already installed..
+        /// </summary>
+        internal static string Log_PackagesAlreadyInstalled {
+            get {
+                return ResourceManager.GetString("Log_PackagesAlreadyInstalled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Preparing deployment for &apos;{0}&apos;..
         /// </summary>
         internal static string Log_PreparingDeployment {
             get {
                 return ResourceManager.GetString("Log_PreparingDeployment", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to An unknown error has occured. Check the diagnostic log for details..
+        /// </summary>
+        internal static string Log_UnexpectedError {
+            get {
+                return ResourceManager.GetString("Log_UnexpectedError", resourceCulture);
             }
         }
         

@@ -17,7 +17,7 @@ namespace Kudu.Core.Deployment
         protected override Task BuildProject(DeploymentContext context)
         {
             var tcs = new TaskCompletionSource<object>();
-            var innerLogger = context.Logger.Log(Resources.Log_UsingWebsiteProject, _projectPath);
+            ILogger copyLogger = context.Logger.Log(Resources.Log_CopyingFiles);
 
             try
             {
@@ -33,15 +33,18 @@ namespace Kudu.Core.Deployment
                     context.ManifestWriter.AddFiles(_projectPath);
                 }
 
+                // Log the copied files from the manifest
+                copyLogger.LogFileList(context.ManifestWriter.GetPaths());
+
                 tcs.SetResult(null);
             }
             catch (Exception ex)
             {
-                innerLogger.Log(Resources.Log_CopyingWebsiteFailed, LogEntryType.Error);
-                innerLogger.Log(ex);
-                tcs.SetException(ex);
-
                 context.Tracer.TraceError(ex);
+
+                copyLogger.Log(ex);
+
+                tcs.SetException(ex);
             }
 
             return tcs.Task;

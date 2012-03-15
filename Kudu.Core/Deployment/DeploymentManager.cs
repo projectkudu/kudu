@@ -154,7 +154,7 @@ namespace Kudu.Core.Deployment
                 // Perform the build deployment of this changeset
                 Build(id, tracer, deployStep);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 tracer.TraceError(ex);
 
@@ -227,7 +227,7 @@ namespace Kudu.Core.Deployment
 
                 Build(id, tracer, deployStep);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 tracer.TraceError(ex);
 
@@ -281,7 +281,6 @@ namespace Kudu.Core.Deployment
 
             ILogger logger = null;
             DeploymentStatusFile currentStatus = null;
-            ILogger innerLogger = null;
             IDisposable buildStep = null;
 
             try
@@ -291,7 +290,7 @@ namespace Kudu.Core.Deployment
                 FileSystemHelpers.DeleteFileSafe(logPath);
 
                 logger = GetLogger(id);
-                innerLogger = logger.Log(Resources.Log_PreparingDeployment, id);
+                ILogger innerLogger = logger.Log(Resources.Log_PreparingDeployment, TrimId(id));
 
                 currentStatus = OpenStatusFile(id);
                 currentStatus.Complete = false;
@@ -330,7 +329,7 @@ namespace Kudu.Core.Deployment
                            // End the build step
                            buildStep.Dispose();
 
-                           LogError(logger, currentStatus, ex);
+                           MarkFailed(currentStatus);
 
                            ReportStatus(id);
 
@@ -342,13 +341,7 @@ namespace Kudu.Core.Deployment
             {
                 tracer.TraceError(ex);
 
-                if (innerLogger != null)
-                {
-                    LogError(innerLogger, currentStatus, ex);
-                    innerLogger.Log(ex);
-
-                    ReportStatus(id);
-                }
+                logger.LogUnexpetedError();
 
                 if (buildStep != null)
                 {
@@ -357,6 +350,20 @@ namespace Kudu.Core.Deployment
 
                 deployStep.Dispose();
             }
+        }
+
+        private void MarkFailed(DeploymentStatusFile currentStatus)
+        {
+            if (currentStatus == null)
+            {
+                return;
+            }
+
+            currentStatus.Complete = true;
+            currentStatus.Status = DeployStatus.Failed;
+            currentStatus.StatusText = String.Empty;
+            currentStatus.EndTime = DateTime.Now;
+            currentStatus.Save(_fileSystem);
         }
 
         private IEnumerable<DeployResult> EnumerateResults()
@@ -405,12 +412,11 @@ namespace Kudu.Core.Deployment
             }
             catch (Exception ex)
             {
-                if (logger != null)
-                {
-                    LogError(logger, currentStatus, ex);
-                }
-
                 tracer.TraceError(ex);
+
+                MarkFailed(currentStatus);
+
+                logger.LogUnexpetedError();
             }
             finally
             {
@@ -425,18 +431,9 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        private void LogError(ILogger logger, DeploymentStatusFile currentStatus, Exception exception)
+        private string TrimId(string id)
         {
-            logger.Log(Resources.Log_DeploymentFailed, LogEntryType.Error);
-
-            if (currentStatus != null)
-            {
-                currentStatus.Complete = true;
-                currentStatus.Status = DeployStatus.Failed;
-                currentStatus.StatusText = logger.GetTopLevelError();
-                currentStatus.EndTime = DateTime.Now;
-                currentStatus.Save(_fileSystem);
-            }
+            return id.Substring(0, 10);
         }
 
         private void ReportStatus(string id)
