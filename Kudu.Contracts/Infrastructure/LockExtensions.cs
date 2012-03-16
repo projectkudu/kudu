@@ -18,7 +18,6 @@ namespace Kudu.Contracts.Infrastructure
 
             try
             {
-                lockObj.Lock();
                 operation();
             }
             finally
