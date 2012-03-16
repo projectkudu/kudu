@@ -1,10 +1,6 @@
 using System;
 using System.Web;
 using Kudu.Contracts.Tracing;
-using Microsoft.Web.Infrastructure.DynamicModuleHelper;
-
-[assembly: WebActivator.PreApplicationStartMethod(
-    typeof(Kudu.Services.Web.Tracing.TraceServices), "Initialize")]
 
 namespace Kudu.Services.Web.Tracing
 {
@@ -12,14 +8,6 @@ namespace Kudu.Services.Web.Tracing
     {
         private static readonly object _traceKey = new object();
         private static Func<ITracer> _traceFactory;
-
-        internal static bool Enabled
-        {
-            get
-            {
-                return AppSettings.TraceEnabled;
-            }
-        }
 
         internal static ITracer CurrentRequestTracer
         {
@@ -56,14 +44,6 @@ namespace Kudu.Services.Web.Tracing
 
             return tracer;
         }
-
-        public static void Initialize()
-        {
-            if (TraceServices.Enabled)
-            {
-                DynamicModuleUtility.RegisterModule(typeof(TraceModule));
-            }
-        }
-    }    
+    }
 }
 
