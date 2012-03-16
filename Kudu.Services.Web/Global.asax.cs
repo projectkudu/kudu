@@ -89,6 +89,7 @@ namespace Kudu.Services
             factory.Configuration.MaxBufferSize = Int32.MaxValue;
             factory.Configuration.MaxReceivedMessageSize = Int32.MaxValue;
             factory.Configuration.EnableHelpPage = true;
+            factory.Configuration.EnableTestClient = true;
             factory.Configuration.TransferMode = TransferMode.Streamed;
 
             factory.Configuration.Formatters.Clear();

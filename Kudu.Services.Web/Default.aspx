@@ -108,13 +108,13 @@
         <div>
             <h3>Live site management</h3>
             <ul>
-                <li><a href="live/scm/help">Source Control Management API</a></li>
+                <li><a href="live/scm/help">Source Control Management API</a> (<a href="live/scm/test">test</a>)</li>
             </ul>
         </div>
         <div>
             <h3>Deployment</h3>
             <ul>
-                <li><a href="deployments/help">Deployment API</a></li>
+                <li><a href="deployments/help">Deployment API</a> (<a href="deployments/test">test</a>)</li>
             </ul>
         </div>
         <% if (AppSettings.SettingsEnabled) { %>
