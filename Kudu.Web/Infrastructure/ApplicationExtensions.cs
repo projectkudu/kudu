@@ -1,7 +1,13 @@
-﻿using System.Net;
+﻿using System;
+using System.IO;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
+using System.Xml.Linq;
+using Ionic.Zip;
 using Kudu.Client.Deployment;
 using Kudu.Client.SourceControl;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Web.Models;
 
@@ -29,5 +35,33 @@ namespace Kudu.Web.Infrastructure
             deploymentSettingsManager.Credentials = credentials;
             return deploymentSettingsManager;
         }
+
+        public static Task<XDocument> DownloadTrace(this IApplication application, ICredentials credentials)
+        {
+            var client = new HttpClient(new HttpClientHandler()
+            {
+                Credentials = credentials
+            });
+
+
+            return client.GetAsync(application.ServiceUrl + "dump").Then(response =>
+            {
+                return response.EnsureSuccessStatusCode().Content.ReadAsStreamAsync().Then(stream =>
+                {
+                    using (var zip = ZipFile.Read(stream))
+                    {
+                        foreach (var entry in zip)
+                        {
+                            if (entry.FileName.EndsWith("trace.xml", StringComparison.OrdinalIgnoreCase))
+                            {
+                                return XDocument.Load(entry.OpenReader());
+                            }
+                        }
+                    }
+
+                    return null;
+                });                
+            });
+        }        
     }
 }

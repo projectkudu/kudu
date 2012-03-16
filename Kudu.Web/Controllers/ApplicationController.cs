@@ -103,5 +103,21 @@ namespace Kudu.Web.Controllers
 
             return HttpNotFound();
         }
+
+        public Task<ActionResult> Trace(string slug)
+        {
+            IApplication application = _applicationService.GetApplication(slug);
+
+            if (application == null)
+            {
+                return HttpNotFoundAsync();
+            }
+
+            ICredentials credentials = _credentialProvider.GetCredentials();
+            return application.DownloadTrace(credentials).Then(document =>
+            {
+                return (ActionResult)View(document);
+            });
+        }
     }
 }

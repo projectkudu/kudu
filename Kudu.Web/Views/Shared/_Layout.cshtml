@@ -72,7 +72,8 @@
               {<text>class="active"</text> }>@Html.RouteLink("Deployments", "Deployments", new { slug = ViewBag.slug }, null)</li>
           <li @if (ViewBag.tab == "configuration")
               {<text>class="active"</text> }>@Html.RouteLink("Configuration", "Configuration", new { slug = ViewBag.slug }, null)</li>
-          @*<li>@Html.ActionLink("Develop", "editor", "application", new { slug = ViewBag.slug }, new { target = "_blank" })</li>*@
+          <li @if (ViewBag.tab == "trace")
+              {<text>class="active"</text> }>@Html.RouteLink("Trace", "Trace", new { slug = ViewBag.slug }, null)</li>
         </ul>
     </div>
         
