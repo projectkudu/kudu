@@ -14,7 +14,6 @@ using Kudu.Core.Tracing;
 using Kudu.Services.Authorization;
 using Kudu.Services.Deployment;
 using Kudu.Services.Performance;
-using Kudu.Services.Web.Tracing;
 using Kudu.Services.Web.Services;
 using Kudu.Services.Web.Tracing;
 using Microsoft.Web.Infrastructure.DynamicModuleHelper;
@@ -85,7 +84,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IServerConfiguration>().ToConstant(serverConfiguration);
             kernel.Bind<IFileSystem>().To<FileSystem>().InSingletonScope();            
 
-            if (TraceServices.Enabled)
+            if (AppSettings.TraceEnabled)
             {
                 string tracePath = Path.Combine(environment.ApplicationRootPath, TracePath, TraceFile);
                 System.Func<ITracer> createTracerThunk = () => new Tracer(tracePath);

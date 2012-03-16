@@ -8,6 +8,7 @@ namespace Kudu.Services.Web
         private const string EnableAuthenticationKey = "kudu.enableAuthentication";
         private const string EnableTraceKey = "kudu.enableTrace";
         private const string EnableSettingsKey = "kudu.enableSettings";
+        private const string BlockLocalRequests = "kudu.blockLocalRequests";
         private const string NuGetCachePathKey = "nuget.cache";
 
         public static bool AuthenticationEnabled
@@ -31,6 +32,14 @@ namespace Kudu.Services.Web
             get
             {
                 return GetValue<bool>(EnableSettingsKey);
+            }
+        }
+
+        public static bool BlockLocalhost
+        {
+            get
+            {
+                return GetValue<bool>(BlockLocalRequests);
             }
         }
 
