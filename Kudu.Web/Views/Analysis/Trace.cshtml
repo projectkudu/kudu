@@ -1,0 +1,197 @@
+﻿@model XDocument
+
+@using System.Xml
+@using System.Xml.Linq
+
+@{
+    ViewBag.Title = "Trace";
+}
+
+<style>
+.step {
+    padding: 5px;
+    list-style: none;
+}
+
+.step .icon {
+    margin-right: 5px;
+}
+
+.title {
+    margin-bottom: 5px;
+    cursor: pointer;
+}
+
+.error {
+    
+}
+
+.process {
+    
+}
+
+.response {
+    
+}
+
+.req-method {
+    font-weight: bold;
+}
+
+.err-stream {
+    margin-bottom: 5px;
+}
+
+.out-stream {
+    margin-bottom: 5px;
+}
+
+.toggle {
+    margin-left: 30px;
+    margin-bottom: 10px;
+}
+
+.analysis > ul {
+    padding-left: 0;
+    margin-left: 0;
+}
+
+</style>
+
+@functions {
+    string GetAnnotations(string type)
+    {
+        switch (type)
+        {
+            case "error":
+                return "label-important";
+            default:
+                break;
+        }
+
+        return "label-info";
+    }
+}
+
+@helper RenderElement(XElement element)
+    {
+    var typeAttr = element.Attribute("type");
+    if (typeAttr != null)
+    {
+        var cssCls = GetAnnotations(typeAttr.Value);
+        <li class="step @typeAttr.Value">            
+            <div class="label @cssCls title">
+                @if (element.Elements().Any()) { 
+                <span class="more icon-white icon-chevron-down"></span>
+                }
+                @if (typeAttr.Value == "lock") { 
+                    <i class="icon-white icon-lock"></i>
+                }
+                @element.Attribute("title").Value - @element.Attribute("date").Value
+            @if (element.Attribute("elapsed").Value != "0")
+            { <text>, took @element.Attribute("elapsed").Value ms</text> }</div>
+        @switch (typeAttr.Value)
+        {
+            case "request":
+                if (element.Attribute("git") != null)
+                { 
+                <span class="label label-success">git</span>
+                }
+                <span class="req-method">@element.Attribute("method").Value</span> @element.Attribute("url").Value
+                break;
+            case "process":
+                <pre>@element.Attribute("path").Value @element.Attribute("arguments").Value</pre>
+                                                 break;
+            case "error":
+                <pre>@element.Attribute("text").Value</pre>
+                break;
+            case "processOutput":
+                var os = element.Attribute("outStream").Value;
+                var es = element.Attribute("errorStream").Value;
+                if (!String.IsNullOrEmpty(os))
+                { 
+                <div class="out-stream">output stream</div>
+                <pre>@os</pre>
+                }
+                if (!String.IsNullOrEmpty(es))
+                { 
+                <div class="err-stream">error stream</div>
+                <pre>@es</pre>
+                }
+                break;
+        }    
+        @RenderElements(element.Elements())    
+        </li>        
+    }
+    else 
+    {
+        <li class="step">
+            <div class="label title">
+                @if (element.Elements().Any())
+                { 
+                <span class="more icon-white icon-chevron-down"></span>
+                }
+                @element.Attribute("title").Value - @element.Attribute("date").Value, took @element.Attribute("elapsed").Value ms
+            </div>
+            @RenderElements(element.Elements())
+        </li>        
+    }
+}
+
+@helper RenderElements(IEnumerable<XElement> elements)
+{
+    var filtered = elements.Where(e => e.Attribute("date") != null);
+    var sorted = filtered.OrderBy(e => DateTime.ParseExact(e.Attribute("date").Value, "MM/dd H:mm:ss", System.Globalization.CultureInfo.CurrentCulture));
+    foreach (var e in sorted)
+    {
+    <ul>
+        @RenderElement(e)
+    </ul>
+    }
+}
+
+<p class="alert alert-info">Upload a trace.xml file for analysis</p>
+<form action="@Url.Action("trace")" method="post" enctype="multipart/form-data" class="well">
+  <fieldset>
+    <div class="control-group">
+      <div class="controls">        
+        <input type="file" name="traceFile" />
+      </div>
+    </div>
+    <p>
+        <input type="submit" value="Analyze" class="btn-primary" />
+    </p>
+  </fieldset>
+</form>
+
+
+@if (Model != null)
+{ 
+    <h3>Analysis</h3>
+    <div class="analysis">
+    @RenderElements(Model.Root.Elements())
+    </div>
+}
+
+<script type="text/javascript">
+    $(function () {
+        $('.title ').toggle(function () {
+            var $this = $(this);
+            var $icon = $this.find('.more');
+            $this.parent().find('ul').hide();
+            $icon.addClass('icon-chevron-up');
+            $icon.removeClass('icon-chevron-down');
+        },
+        function () {
+            var $this = $(this);
+            var $icon = $this.find('.more');
+            $this.parent().find('ul').show();
+            $icon.removeClass('icon-chevron-up');
+            $icon.addClass('icon-chevron-down');
+        });
+
+        $('.toggle').click(function () {
+            $('.step').click();
+        });
+    });
+</script>

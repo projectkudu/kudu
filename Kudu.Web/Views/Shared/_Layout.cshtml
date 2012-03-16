@@ -26,6 +26,8 @@
     <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
     <link rel="apple-touch-icon" sizes="72x72" href="images/apple-touch-icon-72x72.png">
     <link rel="apple-touch-icon" sizes="114x114" href="images/apple-touch-icon-114x114.png">*@
+    <script src="@Url.Content("~/Scripts/jquery-1.7.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/bootstrap.min.js")"></script>
     @RenderSection("head", required: false)
   </head>
 
@@ -43,6 +45,7 @@
           <div class="nav-collapse">
             <ul class="nav">
               <li>@Html.RouteLink("Create Application", "ApplicationCreate")</li>
+              @RenderPage("_Tools.cshtml")
             </ul>
             <ul class="nav pull-right">
               <li>@Html.ActionLink("Admin", "index", "admin")</li>               
@@ -91,9 +94,7 @@
 
     <!-- Le javascript
     ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="@Url.Content("~/Scripts/jquery-1.7.min.js")"></script>
-    <script src="@Url.Content("~/Scripts/bootstrap.min.js")"></script>
+    <!-- Placed at the end of the document so the pages load faster -->    
     <script type="text/javascript">
         $(function () {
             $('#clone-url').click(function () {
