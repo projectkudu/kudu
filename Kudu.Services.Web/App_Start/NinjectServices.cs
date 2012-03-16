@@ -2,6 +2,7 @@ using System.IO;
 using System.IO.Abstractions;
 using System.Web;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
@@ -73,16 +74,23 @@ namespace Kudu.Services.Web.App_Start
         private static void RegisterServices(IKernel kernel)
         {
             var serverConfiguration = new ServerConfiguration();
+            var gitConfiguration = new RepositoryConfiguration
+            {
+                Username = AppSettings.GitUsername,
+                Email = AppSettings.GitEmail
+            };
+
             IEnvironment environment = GetEnvironment();
             var propertyProvider = new BuildPropertyProvider();
-            
+
             // General
             kernel.Bind<HttpContextBase>().ToMethod(context => new HttpContextWrapper(HttpContext.Current));
             kernel.Bind<IBuildPropertyProvider>().ToConstant(propertyProvider);
             kernel.Bind<IEnvironment>().ToConstant(environment);
             kernel.Bind<IUserValidator>().To<SimpleUserValidator>().InSingletonScope();
             kernel.Bind<IServerConfiguration>().ToConstant(serverConfiguration);
-            kernel.Bind<IFileSystem>().To<FileSystem>().InSingletonScope();            
+            kernel.Bind<IFileSystem>().To<FileSystem>().InSingletonScope();
+            kernel.Bind<RepositoryConfiguration>().ToConstant(gitConfiguration);
 
             if (AppSettings.TraceEnabled)
             {
@@ -246,7 +254,6 @@ namespace Kudu.Services.Web.App_Start
             string deploymentRepositoryPath = Path.Combine(root, Constants.RepositoryPath);
             string tempPath = Path.GetTempPath();
             string deploymentTempPath = Path.Combine(tempPath, Constants.RepositoryPath);
-            string nugetCachePath = AppSettings.NuGetCachePath;
 
             return new Environment(site,
                                    root,
@@ -255,7 +262,7 @@ namespace Kudu.Services.Web.App_Start
                                    () => ResolveRepositoryPath(site),
                                    deployPath,
                                    deployCachePath,
-                                   nugetCachePath);
+                                   AppSettings.NuGetCachePath);
         }
 
         private static string ResolveRepositoryPath(string site)

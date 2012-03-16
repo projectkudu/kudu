@@ -1,11 +1,14 @@
-﻿namespace Kudu.Core.SourceControl
+﻿using Kudu.Contracts.SourceControl;
+
+namespace Kudu.Core.SourceControl
 {
     public interface IServerRepository
     {
         string CurrentId { get; }
         bool Exists { get; }
         PushInfo GetPushInfo();
-        void Initialize();
+        bool Initialize(RepositoryConfiguration configuration);
+        bool Initialize(RepositoryConfiguration configuration, string path);
         ChangeSet GetChangeSet(string id);
         void Update(string id);
         void Update();

@@ -23,5 +23,10 @@ namespace Kudu.TestHarness
         {
             return File.ReadAllText(Path.Combine(repository.PhysicalPath, path));
         }
+
+        public static bool FileExists(this TestRepository repository, string path)
+        {
+            return File.Exists(Path.Combine(repository.PhysicalPath, path));
+        }
     }
 }

@@ -63,7 +63,7 @@ namespace Kudu.Services.HgServer
 
             if (!_hgServer.IsRunning)
             {
-                _severRepository.Initialize();
+                _severRepository.Initialize(null);
                 _hgServer.Start();
             }
 

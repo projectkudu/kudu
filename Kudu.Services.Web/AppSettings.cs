@@ -10,6 +10,8 @@ namespace Kudu.Services.Web
         private const string EnableSettingsKey = "kudu.enableSettings";
         private const string BlockLocalRequests = "kudu.blockLocalRequests";
         private const string NuGetCachePathKey = "nuget.cache";
+        private const string GitUsernameKey = "git.username";
+        private const string GitEmailKey = "git.email";
 
         public static bool AuthenticationEnabled
         {
@@ -40,6 +42,22 @@ namespace Kudu.Services.Web
             get
             {
                 return GetValue<bool>(BlockLocalRequests);
+            }
+        }
+
+        public static string GitUsername
+        {
+            get
+            {
+                return GetValue<string>(GitUsernameKey);
+            }
+        }
+
+        public static string GitEmail
+        {
+            get
+            {
+                return GetValue<string>(GitEmailKey);
             }
         }
 
