@@ -1,8 +1,10 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
+using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Core.SourceControl.Git
 {
@@ -49,7 +51,7 @@ namespace Kudu.Core.SourceControl.Git
         {
             get
             {
-                return Directory.Exists(_gitExe.WorkingDirectory) && 
+                return Directory.Exists(_gitExe.WorkingDirectory) &&
                        Directory.EnumerateFileSystemEntries(_gitExe.WorkingDirectory).Any();
             }
         }
@@ -140,23 +142,54 @@ namespace Kudu.Core.SourceControl.Git
             return null;
         }
 
-        public void Initialize()
+        public bool Initialize(RepositoryConfiguration configuration, string path)
         {
+            if (!Initialize(configuration))
+            {
+                return false;
+            }
+
+            ITracer tracer = _traceFactory.GetTracer();
+            using (tracer.Step("GitExeServer.Initialize(path)"))
+            {
+                tracer.Trace("Initializing repository from path", new Dictionary<string, string>
+                {
+                    { "path", path }
+                });
+                
+                // Copy all of the files into the repository
+                FileSystemHelpers.Copy(path, _gitExe.WorkingDirectory);
+
+                // Make the initial commit
+                _repository.Commit("Initial commit");
+            }
+
+            return true;
+        }
+
+        public bool Initialize(RepositoryConfiguration configuration)
+        {
+            if (Exists)
+            {
+                // Repository already exists so do nothing
+                return false;
+            }
+
             ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("GitExeServer.Initialize"))
             {
-                if (Exists)
-                {
-                    // Repository already exists so do nothing
-                    return;
-                }
-
                 _repository.Initialize();
 
                 using (tracer.Step("Configure git server"))
                 {
                     // Allow getting pushes even though we're not bare
                     _gitExe.Execute(tracer, "config receive.denyCurrentBranch ignore");
+                }
+
+                using (tracer.Step("Configure git user and email"))
+                {
+                    _gitExe.Execute(tracer, @"config user.name ""{0}""", configuration.Username);
+                    _gitExe.Execute(tracer, @"config user.email ""{0}""", configuration.Email);
                 }
 
                 using (tracer.Step("Setup post receive hook"))
@@ -169,6 +202,8 @@ echo $i > pushinfo
 ");
                 }
             }
+
+            return true;
         }
 
         public ChangeSet GetChangeSet(string id)

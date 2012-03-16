@@ -31,7 +31,9 @@ namespace Kudu.Services.GitServer
     using System.Net.Http.Headers;
     using System.ServiceModel;
     using System.ServiceModel.Web;
+    using Kudu.Contracts.SourceControl;
     using Kudu.Contracts.Tracing;
+    using Kudu.Core;
     using Kudu.Core.SourceControl.Git;
     using Kudu.Services.Infrastructure;
 
@@ -41,11 +43,15 @@ namespace Kudu.Services.GitServer
     {
         private readonly IGitServer _gitServer;
         private readonly ITracer _tracer;
+        private readonly string _deploymentTargetPath;
+        private readonly RepositoryConfiguration _configuration;
 
-        public InfoRefsService(ITracer tracer, IGitServer gitServer)
+        public InfoRefsService(ITracer tracer, IGitServer gitServer, IEnvironment environment, RepositoryConfiguration configuration)
         {
             _gitServer = gitServer;
             _tracer = tracer;
+            _deploymentTargetPath = environment.DeploymentTargetPath;
+            _configuration = configuration;
         }
 
         [Description("Handles git commands.")]
@@ -80,13 +86,13 @@ namespace Kudu.Services.GitServer
 
                 if (service == "upload-pack")
                 {
-                    _gitServer.Initialize();
+                    // Initialize the repository from the deployment files (if this is the first commit)
+                    _gitServer.Initialize(_configuration, _deploymentTargetPath);
                     _gitServer.AdvertiseUploadPack(memoryStream);
                 }
-
                 else if (service == "receive-pack")
                 {
-                    _gitServer.Initialize();
+                    _gitServer.Initialize(_configuration);
                     _gitServer.AdvertiseReceivePack(memoryStream);
                 }
 

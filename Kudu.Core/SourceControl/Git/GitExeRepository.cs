@@ -16,7 +16,7 @@ namespace Kudu.Core.SourceControl.Git
     public class GitExeRepository : IRepository
     {
         private readonly GitExecutable _gitExe;
-        private readonly ITraceFactory _profilerFactory;
+        private readonly ITraceFactory _tracerFactory;
 
         public GitExeRepository(string path)
             : this(path, NullTracerFactory.Instance)
@@ -26,7 +26,7 @@ namespace Kudu.Core.SourceControl.Git
         public GitExeRepository(string path, ITraceFactory profilerFactory)
         {
             _gitExe = new GitExecutable(path);
-            _profilerFactory = profilerFactory;
+            _tracerFactory = profilerFactory;
         }
 
         public string CurrentId
@@ -39,7 +39,7 @@ namespace Kudu.Core.SourceControl.Git
 
         public void Initialize()
         {
-            var profiler = _profilerFactory.GetTracer();
+            var profiler = _tracerFactory.GetTracer();
             using (profiler.Step("GitExeRepository.Initialize"))
             {
                 _gitExe.Execute(profiler, "init");
@@ -107,6 +107,28 @@ namespace Kudu.Core.SourceControl.Git
                 // If the file is untracked, delete it
                 string fullPath = Path.Combine(_gitExe.WorkingDirectory, path);
                 File.Delete(fullPath);
+            }
+        }
+        
+        public void Commit(string message)
+        {
+            ITracer tracer = _tracerFactory.GetTracer();
+
+            // Add all unstaged files
+            _gitExe.Execute(tracer, "add -A");
+
+            try
+            {
+                _gitExe.Execute(tracer, "commit -m\"{0}\"", message);
+            }
+            catch (Exception e)
+            {
+                if (e.Message.Contains("nothing to commit"))
+                {
+                    return;
+                }
+
+                throw;
             }
         }
 

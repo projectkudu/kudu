@@ -40,7 +40,7 @@ namespace Kudu.FunctionalTests
         {
             // Arrange
             string repositoryName = "Mvc3Application";
-            string appName =  KuduUtils.GetRandomWebsiteName("PushMultiProjects");
+            string appName = KuduUtils.GetRandomWebsiteName("PushMultiProjects");
             string verificationText = "Welcome to ASP.NET MVC! - Change1";
             using (var repo = Git.CreateLocalRepository(repositoryName))
             {
@@ -437,6 +437,20 @@ namespace Kudu.FunctionalTests
             });
         }
 
+        [Fact]
+        public void CloneFromNewRepoShouldHaveFile()
+        {
+            string repositoryName = "CloneFromNewRepoShouldHaveFile";
+            string appName = KuduUtils.GetRandomWebsiteName("CloneNew");
+
+            ApplicationManager.Run(appName, appManager =>
+            {
+                using (var repo = Git.Clone(repositoryName, appManager.GitUrl, createDirectory: true))
+                {
+                    Assert.True(repo.FileExists("index.html"));
+                }
+            });
+        }
 
         [Fact]
         public void GoingBackInTimeDeploysOldFiles()
@@ -694,7 +708,7 @@ project = {0}", targetProject));
 
                     // Assert
                     Assert.Equal(1, results.Count);
-                    Assert.Equal(expectedStatus, results[0].Status);                    
+                    Assert.Equal(expectedStatus, results[0].Status);
                     KuduAssert.VerifyUrl(appManager.SiteUrl, expectedText);
                 });
             }
