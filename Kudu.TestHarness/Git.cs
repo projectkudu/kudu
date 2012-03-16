@@ -16,9 +16,6 @@ namespace Kudu.TestHarness
         {
             Executable gitExe = GetGitExe(repositoryPath);
 
-            // Increase the post buffer size
-            gitExe.Execute("config http.postBuffer 52428800");
-
             if (localBranchName.Equals("master"))
             {
                 // Dump out the error stream (git curl verbose)
