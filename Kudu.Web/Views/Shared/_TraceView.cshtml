@@ -117,7 +117,7 @@
     var result = RenderElements(Model.Root.Elements()).ToString();
     <h3>Analysis</h3>
     <p>
-        <span class="badge badge-error">@errors</span> Errors <span class="badge badge-warning">@warnings</span> Warnings
+        <span class="all-errors badge badge-error">@errors</span> Errors <span class="all-warnings badge badge-warning">@warnings</span> Warnings
     </p>
     <div class="analysis">
         @Html.Raw(result)
@@ -139,6 +139,33 @@
             $this.parent().children('ul').show();
             $icon.removeClass('icon-chevron-up');
             $icon.addClass('icon-chevron-down');
+        });
+
+        $('.all-warnings').toggle(function () {
+            if ($(this).text() == '0') {
+                return;
+            }
+
+            var $step = $('.step');
+            $step.show();
+            $step.not('.warning').hide();
+            $('.warning').parents('li.step').show();
+        },
+        function () {
+            $('.step').show();
+        });
+
+        $('.all-errors').toggle(function () {
+            if ($(this).text() == '0') {
+                return;
+            }
+            var $step = $('.step');
+            $step.show();
+            $step.not('.error').hide();
+            $('.error').parents('li.step').show();
+        },
+        function () {
+            $('.step').show();
         });
 
         $('.toggle').click(function () {
