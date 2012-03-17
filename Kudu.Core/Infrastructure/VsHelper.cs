@@ -73,18 +73,13 @@ namespace Kudu.Core.Infrastructure
         private static bool ExistsInSolution(VsSolution solution, string targetPath)
         {
             return (from p in solution.Projects
-                    where NormalizePath(p.AbsolutePath).Equals(NormalizePath(targetPath))
+                    where PathUtility.NormalizePath(p.AbsolutePath).Equals(PathUtility.NormalizePath(targetPath))
                     select p).Any();
         }
 
         private static XName GetName(string name)
         {
             return XName.Get(name, "http://schemas.microsoft.com/developer/msbuild/2003");
-        }
-
-        private static string NormalizePath(string path)
-        {
-            return Path.GetFullPath(path).ToUpperInvariant();
         }
     }
 }

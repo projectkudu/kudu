@@ -30,5 +30,10 @@ namespace Kudu.Core.Infrastructure
             string windir = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.Windows);
             return Path.Combine(windir, @"Microsoft.NET", "Framework", "v4.0.30319", "MSBuild.exe");
         }
+
+        internal static string NormalizePath(string path)
+        {
+            return Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar).ToUpperInvariant();
+        }
     }
 }
