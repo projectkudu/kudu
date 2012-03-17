@@ -2,12 +2,16 @@
 @using System.Xml.Linq
 
 @functions {
+    int errors = 0, warnings = 0;
+    
     string GetAnnotations(string type)
     {
         switch (type)
         {
             case "error":
                 return "label-important";
+            case "warning":
+                return "label-warning";
             default:
                 break;
         }
@@ -31,8 +35,11 @@
                     <i class="icon-white icon-lock"></i>
                 }
                 @element.Attribute("title").Value - @element.Attribute("date").Value
-            @if (element.Attribute("elapsed").Value != "0")
-            { <text>, took @element.Attribute("elapsed").Value ms</text> }</div>
+                @if (element.Attribute("elapsed").Value != "0")
+                { 
+                    <text>, took @element.Attribute("elapsed").Value ms</text> 
+                }
+           </div>
         @switch (typeAttr.Value)
         {
             case "request":
@@ -46,6 +53,14 @@
                 <pre>@element.Attribute("path").Value @element.Attribute("arguments").Value</pre>
                 break;
             case "error":
+                errors++;
+                if (element.Attribute("text") != null)
+                { 
+                <pre>@element.Attribute("text").Value</pre>
+                }
+                break;
+            case "warning":
+                warnings++;                
                 if (element.Attribute("text") != null)
                 { 
                 <pre>@element.Attribute("text").Value</pre>
@@ -65,7 +80,7 @@
                 <pre>@es</pre>
                 }
                 break;
-        }    
+        }
         @RenderElements(element.Elements())    
         </li>        
     }
@@ -85,23 +100,27 @@
 }
 
 @helper RenderElements(IEnumerable<XElement> elements)
-    {
-    var filtered = elements.Where(e => e.Attribute("date") != null);
-    var sorted = filtered.OrderBy(e => DateTime.ParseExact(e.Attribute("date").Value, "MM/dd H:mm:ss", System.Globalization.CultureInfo.CurrentCulture));
-    foreach (var e in sorted)
-    {
+{
+        var filtered = elements.Where(e => e.Attribute("date") != null);
+        var sorted = filtered.OrderBy(e => DateTime.ParseExact(e.Attribute("date").Value, "MM/dd H:mm:ss", System.Globalization.CultureInfo.CurrentCulture));
+        foreach (var e in sorted)
+        {
     <ul>
         @RenderElement(e)
     </ul>
-    }
+        }
 }
 
 
 @if (Model != null)
-{ 
+{
+    var result = RenderElements(Model.Root.Elements()).ToString();
     <h3>Analysis</h3>
+    <p>
+        <span class="badge badge-error">@errors</span> Errors <span class="badge badge-warning">@warnings</span> Warnings
+    </p>
     <div class="analysis">
-    @RenderElements(Model.Root.Elements())
+        @Html.Raw(result)
     </div>
 }
 
@@ -110,14 +129,14 @@
         $('.title ').toggle(function () {
             var $this = $(this);
             var $icon = $this.find('.more');
-            $this.parent().find('ul').hide();
+            $this.parent().children('ul').hide();
             $icon.addClass('icon-chevron-up');
             $icon.removeClass('icon-chevron-down');
         },
         function () {
             var $this = $(this);
             var $icon = $this.find('.more');
-            $this.parent().find('ul').show();
+            $this.parent().children('ul').show();
             $icon.removeClass('icon-chevron-up');
             $icon.addClass('icon-chevron-down');
         });

@@ -8,6 +8,7 @@
 }
 
 .title {
+    padding: 5px;
     margin-bottom: 5px;
     cursor: pointer;
 }
@@ -44,4 +45,12 @@
 .analysis > ul {
     padding-left: 0;
     margin-left: 0;
+}
+
+.attributes-link {
+    color: White;
+}
+
+.attributes-link:hover {
+    color: White;
 }
