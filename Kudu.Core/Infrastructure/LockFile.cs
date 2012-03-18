@@ -29,23 +29,28 @@ namespace Kudu.Core.Infrastructure
         {
             get
             {
+                // If there's no file then there's no process holding onto it
+                if (!File.Exists(_path))
+                {
+                    return false;
+                }
+
                 try
                 {
-                    // If there's no file then there's no process holding onto it
-                    if (!File.Exists(_path))
-                    {
-                        return false;
-                    }
-
                     // If there is a file, lets see if someone has an open handle to it, or if it's
                     // just hanging there for no reason
                     using (new FileStream(_path, FileMode.Open, FileAccess.Write, FileShare.None))
                     {
-                        // Nobody is here
+                        try
+                        {
+                            // Nobody is here, so delete the turd file
+                            File.Delete(_path);
+                        }
+                        catch { }
                         return false;
                     }
                 }
-                catch
+                catch(IOException)
                 {
                     return true;
                 }
