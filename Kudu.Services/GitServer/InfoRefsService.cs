@@ -96,9 +96,16 @@ namespace Kudu.Services.GitServer
                     _gitServer.AdvertiseReceivePack(memoryStream);
                 }
 
-                _tracer.Trace("Writing {0} bytes", memoryStream.Length);
+                if (memoryStream.Length < 100)
+                {
+                    _tracer.TraceWarning("Unexpected number of bytes written. {0} bytes", memoryStream.Length);
+                }
+                else
+                {
+                    _tracer.Trace("Writing {0} bytes", memoryStream.Length);
+                }
 
-                HttpContent content = memoryStream.AsContent(); 
+                HttpContent content = memoryStream.AsContent();
 
                 content.Headers.ContentType =
                     new MediaTypeHeaderValue("application/x-git-{0}-advertisement".With(service));

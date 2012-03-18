@@ -79,12 +79,30 @@ namespace Kudu.Core.Infrastructure
                 var process = CreateProcess(arguments, args);
 
                 Func<StreamReader, string> reader = (StreamReader streamReader) => streamReader.ReadToEnd();
-                Action<Stream, Stream, bool> copyStream = (Stream from, Stream to, bool closeAfterCopy) =>
+                Action<Stream, Stream, bool, Func<IDisposable>> copyStream = (Stream from, Stream to, bool closeAfterCopy, Func<IDisposable> step) =>
                 {
-                    from.CopyTo(to);
-                    if (closeAfterCopy)
+                    try
                     {
-                        to.Close();
+                        using (step())
+                        {
+                            from.CopyTo(to);
+                            if (closeAfterCopy)
+                            {
+                                to.Close();
+
+                                tracer.Trace("Stream closed after copy");
+                            }
+                            else
+                            {
+                                tracer.Trace("Stream left open after copy");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        tracer.TraceError(ex);
+
+                        throw;
                     }
                 };
 
@@ -92,22 +110,37 @@ namespace Kudu.Core.Infrastructure
                 if (input != null)
                 {
                     // Copy into the input stream, and close it to tell the exe it can process it
-                    copyStream.BeginInvoke(input, process.StandardInput.BaseStream, true, null, null);
+                    copyStream.BeginInvoke(input,
+                                           process.StandardInput.BaseStream,
+                                           true,
+                                           () => tracer.Step("Copying input stream to stdin."),
+                                           null,
+                                           null);
                 }
 
                 // Copy the exe's output into the output stream
-                copyStream.BeginInvoke(process.StandardOutput.BaseStream, output, false, null, null);
+                copyStream.BeginInvoke(process.StandardOutput.BaseStream,
+                                       output,
+                                       false,
+                                       () => tracer.Step("Copying stdout to output stream."),
+                                       null,
+                                       null);
 
                 process.WaitForExit();
 
                 string error = reader.EndInvoke(errorReader);
 
+                tracer.Trace("Process dump", new Dictionary<string, string>
+                {
+                    { "outStream", "" },
+                    { "errorStream", error },
+                    { "type", "processOutput" }
+                });
+
                 if (process.ExitCode != 0)
                 {
                     throw new Exception(error);
                 }
-
-                Debug.WriteLine(error);
             }
         }
 
