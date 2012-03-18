@@ -113,7 +113,7 @@ namespace Kudu.Services.Web.App_Start
 
 
             // Setup the deployment lock
-            string lockPath = Path.Combine(environment.DeploymentCachePath, DeploymentLockFile);
+            string lockPath = Path.Combine(environment.ApplicationRootPath, DeploymentLockFile);
             var lockObj = new LockFile(kernel.Get<ITraceFactory>(), lockPath);
             kernel.Bind<IOperationLock>().ToConstant(lockObj);
 
