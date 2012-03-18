@@ -28,7 +28,7 @@ namespace Kudu.Core.Deployment
                 return;
             }
 
-            logger.Log(Resources.Log_UnexpectedError);
+            logger.Log(Resources.Log_UnexpectedError, LogEntryType.Error);
         }
 
         public static void LogFileList(this ILogger logger, IEnumerable<string> files)
