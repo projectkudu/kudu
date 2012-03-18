@@ -132,16 +132,9 @@ namespace Kudu.Services.GitServer
 
         private HttpResponseMessage CreateResponse(MemoryStream stream, string mediaType)
         {
-            var attribs = new Dictionary<string, string> { 
-                { "length", stream.Length.ToString() },
-                { "type", "response" }
-            };
+            _tracer.Trace("Writing {0} bytes", stream.Length);
 
-            HttpContent content = null;
-            using (_tracer.Step("Response content", attribs))
-            {
-                content = stream.AsContent();
-            }
+            HttpContent content = stream.AsContent();
 
             content.Headers.ContentType = new MediaTypeHeaderValue(mediaType);
             // REVIEW: Why is it that we do not write an empty Content-Type here, like for InfoRefsController?

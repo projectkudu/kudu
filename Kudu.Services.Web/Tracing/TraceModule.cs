@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Web;
+using Kudu.Contracts.Tracing;
 
 namespace Kudu.Services.Web.Tracing
 {
@@ -8,9 +10,9 @@ namespace Kudu.Services.Web.Tracing
     {
         private static readonly object _stepKey = new object();
 
-        public void Init(HttpApplication context)
+        public void Init(HttpApplication app)
         {
-            context.BeginRequest += (sender, e) =>
+            app.BeginRequest += (sender, e) =>
             {
                 var httpContext = ((HttpApplication)sender).Context;
 
@@ -31,6 +33,11 @@ namespace Kudu.Services.Web.Tracing
                     { "method", httpContext.Request.HttpMethod },
                     { "type", "request" }
                 };
+
+                foreach (string key in httpContext.Request.Headers)
+                {
+                    attribs["h_" + key] = httpContext.Request.Headers[key];
+                }
                 
                 if (httpContext.Request.RawUrl.Contains(".git"))
                 {
@@ -41,9 +48,49 @@ namespace Kudu.Services.Web.Tracing
                 httpContext.Items[_stepKey] = tracer.Step("Incoming Request", attribs);
             };
 
-            context.EndRequest += (sender, e) =>
+            app.Error += (sender, e) =>
+            {
+                try
+                {
+                    var httpContext = ((HttpApplication)sender).Context;
+                    var tracer = TraceServices.GetRequestTracer(httpContext);
+
+                    if (tracer == null)
+                    {
+                        return;
+                    }
+
+                    tracer.TraceError(app.Server.GetLastError());
+                }
+                catch(Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                }
+            };
+
+            app.EndRequest += (sender, e) =>
             {
                 var httpContext = ((HttpApplication)sender).Context;
+                var tracer = TraceServices.GetRequestTracer(httpContext);
+
+                if (tracer == null)
+                {
+                    return;
+                }
+
+                var attribs = new Dictionary<string, string>
+                {
+                    { "type", "response" },
+                    { "statusCode", httpContext.Response.StatusCode.ToString() },
+                    { "statusText", httpContext.Response.StatusDescription }
+                };
+
+                foreach (string key in httpContext.Response.Headers)
+                {
+                    attribs["h_" + key] = httpContext.Response.Headers[key];
+                }
+
+                tracer.Trace("Outgoing response", attribs);
 
                 var requestStep = (IDisposable)httpContext.Items[_stepKey];
 

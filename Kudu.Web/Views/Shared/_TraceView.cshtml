@@ -12,6 +12,8 @@
                 return "label-important";
             case "warning":
                 return "label-warning";
+            case "response":
+                return "label-success";
             default:
                 break;
         }
@@ -34,6 +36,9 @@
                 @if (typeAttr.Value == "lock") { 
                     <i class="icon-white icon-lock"></i>
                 }
+                else if (typeAttr.Value == "response") { 
+                    <i class="icon-white icon-chevron-left"></i>
+                }
                 @element.Attribute("title").Value - @element.Attribute("date").Value
                 @if (element.Attribute("elapsed").Value != "0")
                 { 
@@ -48,6 +53,25 @@
                 <span class="label label-success">git</span>
                 }
                 <span class="req-method">@element.Attribute("method").Value</span> @element.Attribute("url").Value
+                foreach (var a in element.Attributes())
+                {
+                if (a.Name.LocalName.StartsWith("h_")) { 
+                <div><strong>@a.Name.LocalName.Substring(2)</strong> : @a.Value</div>
+                }
+                }
+                break;
+            case "response":
+                if (element.Attribute("statusCode") != null)
+                { 
+                <span class="statusCode">@element.Attribute("statusCode").Value</span>
+                <span class="statusText">@element.Attribute("statusText").Value</span>
+                foreach (var a in element.Attributes())
+                {
+                if (a.Name.LocalName.StartsWith("h_")) { 
+                <div><strong>@a.Name.LocalName.Substring(2)</strong> : @a.Value</div>
+                }
+                }
+                }
                 break;
             case "process":
                 <pre>@element.Attribute("path").Value @element.Attribute("arguments").Value</pre>
@@ -60,7 +84,7 @@
                 }
                 break;
             case "warning":
-                warnings++;                
+                warnings++;
                 if (element.Attribute("text") != null)
                 { 
                 <pre>@element.Attribute("text").Value</pre>

@@ -96,16 +96,9 @@ namespace Kudu.Services.GitServer
                     _gitServer.AdvertiseReceivePack(memoryStream);
                 }
 
-                var attribs = new Dictionary<string, string> { 
-                    { "length", memoryStream.Length.ToString() },
-                    { "type", "response" }
-                };
+                _tracer.Trace("Writing {0} bytes", memoryStream.Length);
 
-                HttpContent content = null;
-                using (_tracer.Step("Response content", attribs))
-                {
-                    content = memoryStream.AsContent();
-                }
+                HttpContent content = memoryStream.AsContent(); 
 
                 content.Headers.ContentType =
                     new MediaTypeHeaderValue("application/x-git-{0}-advertisement".With(service));
