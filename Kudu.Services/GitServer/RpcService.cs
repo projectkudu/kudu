@@ -49,9 +49,9 @@ namespace Kudu.Services.GitServer
         private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
 
-        public RpcService(ITracer tracer, 
-                          IGitServer gitServer, 
-                          IDeploymentManagerFactory deploymentManagerFactory, 
+        public RpcService(ITracer tracer,
+                          IGitServer gitServer,
+                          IDeploymentManagerFactory deploymentManagerFactory,
                           IOperationLock deploymentLock)
         {
             _gitServer = gitServer;
@@ -116,7 +116,7 @@ namespace Kudu.Services.GitServer
                 }
             });
         }
-        
+
         private Stream GetInputStream(HttpRequestMessage request)
         {
             using (_tracer.Step("RpcService.GetInputStream"))
@@ -160,9 +160,9 @@ namespace Kudu.Services.GitServer
             private readonly ITracer _tracer;
             private readonly IDeploymentManagerFactory _deploymentManagerFactory;
             private readonly IOperationLock _deploymentLock;
-            
-            public Deployer(ITracer tracer, 
-                            IDeploymentManagerFactory deploymentManagerFactory, 
+
+            public Deployer(ITracer tracer,
+                            IDeploymentManagerFactory deploymentManagerFactory,
                             IOperationLock deploymentLock)
             {
                 _tracer = tracer;
@@ -175,30 +175,23 @@ namespace Kudu.Services.GitServer
 
             public void Stop(bool immediate)
             {
-                try
+                if (!_deploymentLock.IsHeld)
                 {
-                    if (!_deploymentLock.IsHeld)
-                    {
-                        return;
-                    }
-
-                    _tracer.TraceWarning("Initiating ASP.NET shutdown. Waiting on deployment to complete.");
-
-                    // Wait until ASP.NET or IIS kills us
-                    bool timeout = _deploymentLock.Wait(TimeSpan.MaxValue);
-
-                    if (timeout)
-                    {
-                        _tracer.TraceWarning("Deployment timed out.");
-                    }
-                    else
-                    {
-                        _tracer.Trace("Deployment completed.");
-                    }
+                    return;
                 }
-                finally
+
+                _tracer.TraceWarning("Initiating ASP.NET shutdown. Waiting on deployment to complete.");
+
+                // Wait until ASP.NET or IIS kills us
+                bool timeout = _deploymentLock.Wait(TimeSpan.MaxValue);
+
+                if (timeout)
                 {
-                    HostingEnvironment.UnregisterObject(this);
+                    _tracer.TraceWarning("Deployment timed out.");
+                }
+                else
+                {
+                    _tracer.Trace("Deployment completed.");
                 }
             }
 
@@ -216,6 +209,7 @@ namespace Kudu.Services.GitServer
                 finally
                 {
                     _deploymentLock.Release();
+                    HostingEnvironment.UnregisterObject(this);
                 }
             }
         }
