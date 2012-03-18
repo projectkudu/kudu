@@ -33,7 +33,7 @@ namespace Kudu.Core.SourceControl.Git
         {
             get
             {
-                return _gitExe.Execute("rev-parse HEAD").Item1.Trim();
+                return Resolve("HEAD");
             }
         }
 
@@ -46,6 +46,11 @@ namespace Kudu.Core.SourceControl.Git
 
                 _gitExe.Execute(profiler, "config core.autocrlf true");
             }
+        }
+
+        public string Resolve(string id)
+        {
+            return _gitExe.Execute("rev-parse {0}", id).Item1.Trim();
         }
 
         public IEnumerable<FileStatus> GetStatus()

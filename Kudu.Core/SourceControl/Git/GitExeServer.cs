@@ -139,12 +139,13 @@ namespace Kudu.Core.SourceControl.Git
                 string newId = pushDetails[1];
                 string reference = pushDetails[2];
                 string branch = reference.Split('/').Last().Trim();
+                string fullNewId = _repository.Resolve(branch);
 
                 return new PushInfo
                 {
                     OldId = oldId,
                     NewId = newId,
-                    Branch = new GitBranch(newId, branch, false)
+                    Branch = new GitBranch(fullNewId, branch, false)
                 };
             }
 

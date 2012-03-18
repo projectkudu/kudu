@@ -194,15 +194,8 @@ namespace Kudu.Core.Deployment
                     return;
                 }
 
-                using (tracer.Step("Update to specific changeset"))
-                {
-                    // Update to the default branch
-                    _serverRepository.Update();
-                }
-
-                // Get the pointer to the default branch
-                string id = _serverRepository.CurrentId;
-
+                // Get the pushed branch's id
+                string id = pushInfo.Branch.Id;
                 // If nothing changed then do nothing
                 if (IsActive(id))
                 {
@@ -223,6 +216,12 @@ namespace Kudu.Core.Deployment
                     statusFile.Author = changeSet.AuthorName;
                     statusFile.AuthorEmail = changeSet.AuthorEmail;
                     statusFile.Save(_fileSystem);
+                }
+
+                using (tracer.Step("Update to specific changeset"))
+                {
+                    // Update to the default branch
+                    _serverRepository.Update();
                 }
 
                 Build(id, tracer, deployStep);
