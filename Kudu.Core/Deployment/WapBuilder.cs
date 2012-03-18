@@ -108,13 +108,17 @@ namespace Kudu.Core.Deployment
             // Don't block the current thread to clean up the build folder since it could take some time
             ThreadPool.QueueUserWorkItem(_ =>
             {
-                try
+                try { }
+                finally
                 {
-                    FileSystemHelpers.DeleteDirectorySafe(buildTempPath);
-                }
-                catch (Exception ex)
-                {
-                    tracer.TraceError(ex);
+                    try
+                    {
+                        FileSystemHelpers.DeleteDirectorySafe(buildTempPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        tracer.TraceError(ex);
+                    }
                 }
             });
         }
