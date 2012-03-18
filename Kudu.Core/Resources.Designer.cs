@@ -178,6 +178,15 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cleaning git repository..
+        /// </summary>
+        internal static string Log_CleaningGitRepository {
+            get {
+                return ResourceManager.GetString("Log_CleaningGitRepository", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Copying files to output directory..
         /// </summary>
         internal static string Log_CopyingFiles {
@@ -201,6 +210,15 @@ namespace Kudu.Core {
         internal static string Log_DownloadingNodePackages {
             get {
                 return ResourceManager.GetString("Log_DownloadingNodePackages", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to New deployment received..
+        /// </summary>
+        internal static string Log_NewDeploymentReceived {
+            get {
+                return ResourceManager.GetString("Log_NewDeploymentReceived", resourceCulture);
             }
         }
         
@@ -246,6 +264,15 @@ namespace Kudu.Core {
         internal static string Log_UnexpectedError {
             get {
                 return ResourceManager.GetString("Log_UnexpectedError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Updating to branch &apos;{0}&apos;..
+        /// </summary>
+        internal static string Log_UpdatingToBranch {
+            get {
+                return ResourceManager.GetString("Log_UpdatingToBranch", resourceCulture);
             }
         }
         

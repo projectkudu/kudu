@@ -139,6 +139,12 @@ namespace Kudu.Core.Deployment
                     throw new FileNotFoundException(String.Format(CultureInfo.CurrentCulture, Resources.Error_DeployNotFound, id));
                 }
 
+                // Remove the old log file for this deployment id
+                string logPath = GetLogPath(id);
+                FileSystemHelpers.DeleteFileSafe(logPath);
+
+                ILogger logger = GetLogger(id);
+
                 using (tracer.Step("Updating to specific changeset"))
                 {
                     // Update to the the specific changeset
@@ -148,6 +154,9 @@ namespace Kudu.Core.Deployment
                 if (clean)
                 {
                     tracer.Trace("Cleaning git repository");
+
+                    logger.Log(Resources.Log_CleaningGitRepository);
+
                     _serverRepository.Clean();
                 }
 
@@ -206,6 +215,8 @@ namespace Kudu.Core.Deployment
                     return;
                 }
 
+                ILogger logger = GetLogger(id);
+
                 using (tracer.Step("Collecting changeset information"))
                 {
                     // Create the status file and store information about the commit
@@ -216,10 +227,14 @@ namespace Kudu.Core.Deployment
                     statusFile.Author = changeSet.AuthorName;
                     statusFile.AuthorEmail = changeSet.AuthorEmail;
                     statusFile.Save(_fileSystem);
+
+                    logger.Log(Resources.Log_NewDeploymentReceived);
                 }
 
-                using (tracer.Step("Update to specific changeset"))
+                using (tracer.Step("Update to " + pushInfo.Branch.Name))
                 {
+                    logger.Log(Resources.Log_UpdatingToBranch, pushInfo.Branch.Name);
+
                     // Update to the default branch
                     _serverRepository.Update();
                 }
@@ -284,10 +299,6 @@ namespace Kudu.Core.Deployment
 
             try
             {
-                // Remove the old log file for this deployment id
-                string logPath = GetLogPath(id);
-                FileSystemHelpers.DeleteFileSafe(logPath);
-
                 logger = GetLogger(id);
                 ILogger innerLogger = logger.Log(Resources.Log_PreparingDeployment, TrimId(id));
 
@@ -306,7 +317,7 @@ namespace Kudu.Core.Deployment
                 {
                     builder = _builderFactory.CreateBuilder(tracer, innerLogger);
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     tracer.TraceError(ex);
 

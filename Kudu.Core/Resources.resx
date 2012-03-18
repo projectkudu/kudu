@@ -156,6 +156,9 @@
   <data name="Log_BuildingWebProject" xml:space="preserve">
     <value>Building web project '{0}'.</value>
   </data>
+  <data name="Log_CleaningGitRepository" xml:space="preserve">
+    <value>Cleaning git repository.</value>
+  </data>
   <data name="Log_CopyingFiles" xml:space="preserve">
     <value>Copying files to output directory.</value>
   </data>
@@ -164,6 +167,9 @@
   </data>
   <data name="Log_DownloadingNodePackages" xml:space="preserve">
     <value>Downloading node packages.</value>
+  </data>
+  <data name="Log_NewDeploymentReceived" xml:space="preserve">
+    <value>New deployment received.</value>
   </data>
   <data name="Log_NoDeployableProjects" xml:space="preserve">
     <value>Found solution '{0}' with no deployable projects. Deploying files instead.</value>
@@ -179,6 +185,9 @@
   </data>
   <data name="Log_UnexpectedError" xml:space="preserve">
     <value>An unknown error has occured. Check the diagnostic log for details.</value>
+  </data>
+  <data name="Log_UpdatingToBranch" xml:space="preserve">
+    <value>Updating to branch '{0}'.</value>
   </data>
   <data name="Log_UsingWebsiteProject" xml:space="preserve">
     <value>Using website project '{0}'.</value>
