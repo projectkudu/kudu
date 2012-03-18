@@ -1,5 +1,8 @@
-﻿using System.Web.Mvc;
+﻿using System;
+using System.IO;
+using System.Web.Mvc;
 using System.Xml.Linq;
+using Kudu.Web.Infrastructure;
 
 namespace Kudu.Web.Controllers
 {
@@ -15,7 +18,17 @@ namespace Kudu.Web.Controllers
         [ActionName("trace")]
         public ActionResult PerformTrace()
         {
-            var document = XDocument.Load(Request.Files[0].InputStream);
+            var file = Request.Files[0];
+            XDocument document = null;
+
+            if (Path.GetExtension(file.FileName).Equals(".zip", StringComparison.OrdinalIgnoreCase))
+            {
+                document = ZipHelper.ExtractTrace(file.InputStream);
+            }
+            else
+            {
+                document = XDocument.Load(file.InputStream);
+            }
             return View(document);
         }
     }

@@ -1,10 +1,7 @@
-﻿using System;
-using System.IO;
-using System.Net;
+﻿using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using Ionic.Zip;
 using Kudu.Client.Deployment;
 using Kudu.Client.SourceControl;
 using Kudu.Contracts.Infrastructure;
@@ -48,20 +45,9 @@ namespace Kudu.Web.Infrastructure
             {
                 return response.EnsureSuccessStatusCode().Content.ReadAsStreamAsync().Then(stream =>
                 {
-                    using (var zip = ZipFile.Read(stream))
-                    {
-                        foreach (var entry in zip)
-                        {
-                            if (entry.FileName.EndsWith("trace.xml", StringComparison.OrdinalIgnoreCase))
-                            {
-                                return XDocument.Load(entry.OpenReader());
-                            }
-                        }
-                    }
-
-                    return null;
-                });                
+                    return ZipHelper.ExtractTrace(stream);
+                });
             });
-        }        
+        }
     }
 }
