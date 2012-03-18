@@ -85,7 +85,7 @@ namespace Kudu.Client.Deployment
 
         public Task DeployAsync(string id, bool clean)
         {
-            var param = new KeyValuePair<string, string>("clean", "true");
+            var param = new KeyValuePair<string, string>("clean", clean.ToString());
             return _client.PutAsync(id, param);
         }
 
