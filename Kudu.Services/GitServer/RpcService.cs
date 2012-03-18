@@ -33,6 +33,7 @@ namespace Kudu.Services.GitServer
     using System.ServiceModel;
     using System.ServiceModel.Web;
     using System.Threading;
+    using System.Web.Hosting;
     using Kudu.Contracts.Infrastructure;
     using Kudu.Contracts.Tracing;
     using Kudu.Core.Deployment;
@@ -48,7 +49,10 @@ namespace Kudu.Services.GitServer
         private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
 
-        public RpcService(ITracer tracer, IGitServer gitServer, IDeploymentManagerFactory deploymentManagerFactory, IOperationLock deploymentLock)
+        public RpcService(ITracer tracer, 
+                          IGitServer gitServer, 
+                          IDeploymentManagerFactory deploymentManagerFactory, 
+                          IOperationLock deploymentLock)
         {
             _gitServer = gitServer;
             _deploymentManagerFactory = deploymentManagerFactory;
@@ -103,22 +107,16 @@ namespace Kudu.Services.GitServer
         {
             ThreadPool.QueueUserWorkItem(_ =>
             {
-                try
-                {
-                    IDeploymentManager deploymentManager = _deploymentManagerFactory.CreateDeploymentManager();
-                    deploymentManager.Deploy();
-                }
-                catch (Exception ex)
-                {
-                    _tracer.TraceError(ex);
-                }
+                try { }
                 finally
                 {
-                    _deploymentLock.Release();
+                    // Avoid thread aborts by putting this logic in the finally
+                    var deployer = new Deployer(_tracer, _deploymentManagerFactory, _deploymentLock);
+                    deployer.Deploy();
                 }
             });
         }
-
+        
         private Stream GetInputStream(HttpRequestMessage request)
         {
             using (_tracer.Step("RpcService.GetInputStream"))
@@ -152,6 +150,74 @@ namespace Kudu.Services.GitServer
             response.Content = content;
             response.WriteNoCache();
             return response;
+        }
+
+        /// <summary>
+        /// Let ASP.NET know about our background deployment thread.
+        /// </summary>
+        private class Deployer : IRegisteredObject
+        {
+            private readonly ITracer _tracer;
+            private readonly IDeploymentManagerFactory _deploymentManagerFactory;
+            private readonly IOperationLock _deploymentLock;
+            
+            public Deployer(ITracer tracer, 
+                            IDeploymentManagerFactory deploymentManagerFactory, 
+                            IOperationLock deploymentLock)
+            {
+                _tracer = tracer;
+                _deploymentManagerFactory = deploymentManagerFactory;
+                _deploymentLock = deploymentLock;
+
+                // Let the hosting environment know about this object.
+                HostingEnvironment.RegisterObject(this);
+            }
+
+            public void Stop(bool immediate)
+            {
+                try
+                {
+                    if (!_deploymentLock.IsHeld)
+                    {
+                        return;
+                    }
+
+                    _tracer.TraceWarning("Initiating ASP.NET shutdown. Waiting on deployment to complete.");
+
+                    // Wait until ASP.NET or IIS kills us
+                    bool timeout = _deploymentLock.Wait(TimeSpan.MaxValue);
+
+                    if (timeout)
+                    {
+                        _tracer.TraceWarning("Deployment timed out.");
+                    }
+                    else
+                    {
+                        _tracer.Trace("Deployment completed.");
+                    }
+                }
+                finally
+                {
+                    HostingEnvironment.UnregisterObject(this);
+                }
+            }
+
+            public void Deploy()
+            {
+                try
+                {
+                    IDeploymentManager deploymentManager = _deploymentManagerFactory.CreateDeploymentManager();
+                    deploymentManager.Deploy();
+                }
+                catch (Exception ex)
+                {
+                    _tracer.TraceError(ex);
+                }
+                finally
+                {
+                    _deploymentLock.Release();
+                }
+            }
         }
     }
 }
