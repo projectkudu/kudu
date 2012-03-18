@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
@@ -450,6 +451,28 @@ namespace Kudu.FunctionalTests
                     Assert.True(repo.FileExists("index.html"));
                 }
             });
+        }
+
+        [Fact]
+        public void ClonesInParallel()
+        {
+            string appName = KuduUtils.GetRandomWebsiteName("ClonesInParallel");
+
+            ApplicationManager.Run(appName, appManager =>
+            {
+                var t1 = Task.Factory.StartNew(() => DoClone("PClone1", appManager));
+                var t2 = Task.Factory.StartNew(() => DoClone("PClone2", appManager));
+                var t3 = Task.Factory.StartNew(() => DoClone("PClone3", appManager));
+                Task.WaitAll(t1, t2, t3);
+            });
+        }
+
+        private static void DoClone(string repositoryName, ApplicationManager appManager)
+        {
+            using (var repo = Git.Clone(repositoryName, appManager.GitUrl, createDirectory: true))
+            {
+                Assert.True(repo.FileExists("index.html"));
+            }
         }
 
         [Fact]

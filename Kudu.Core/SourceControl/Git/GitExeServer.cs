@@ -1,10 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
-using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Core.SourceControl.Git
 {
@@ -13,14 +15,21 @@ namespace Kudu.Core.SourceControl.Git
         private readonly GitExecutable _gitExe;
         private readonly ITraceFactory _traceFactory;
         private readonly GitExeRepository _repository;
-        
-        public GitExeServer(string path, ITraceFactory traceFactory)
+        private readonly LockFile _initLock;
+
+        private const string InitLockFile = "init.lock";
+        private static readonly TimeSpan _initTimeout = TimeSpan.FromMinutes(8);
+
+        public GitExeServer(string path, string rootPath, ITraceFactory traceFactory)
         {
             _gitExe = new GitExecutable(path);
             _gitExe.SetTraceLevel(2);
             _traceFactory = traceFactory;
             _repository = new GitExeRepository(path, traceFactory);
             _repository.SetTraceLevel(2);
+
+            // Create a new lock that will be used for initialing the repository
+            _initLock = new LockFile(traceFactory, Path.Combine(rootPath, InitLockFile));
         }
 
         private string PostReceiveHookPath
@@ -144,37 +153,51 @@ namespace Kudu.Core.SourceControl.Git
 
         public bool Initialize(RepositoryConfiguration configuration, string path)
         {
-            if (!Initialize(configuration))
+            if (Exists && !_initLock.IsHeld)
             {
+                // Repository already exists and there's nothing happening then do nothing
                 return false;
             }
 
-            ITracer tracer = _traceFactory.GetTracer();
-            using (tracer.Step("GitExeServer.Initialize(path)"))
+            _initLock.LockOrWait(() =>
             {
-                tracer.Trace("Initializing repository from path", new Dictionary<string, string>
-                {
-                    { "path", path }
-                });
-                
-                // Copy all of the files into the repository
-                FileSystemHelpers.Copy(path, _gitExe.WorkingDirectory);
+                InitializeRepository(configuration);
 
-                // Make the initial commit
-                _repository.Commit("Initial commit");
-            }
+                ITracer tracer = _traceFactory.GetTracer();
+                using (tracer.Step("GitExeServer.Initialize(path)"))
+                {
+                    tracer.Trace("Initializing repository from path", new Dictionary<string, string>
+                    {
+                        { "path", path }
+                    });
+
+                    // Copy all of the files into the repository
+                    FileSystemHelpers.Copy(path, _gitExe.WorkingDirectory);
+
+                    // Make the initial commit
+                    _repository.Commit("Initial commit");
+                }
+            },
+            _initTimeout);
 
             return true;
         }
 
         public bool Initialize(RepositoryConfiguration configuration)
         {
-            if (Exists)
+            if (Exists && !_initLock.IsHeld)
             {
-                // Repository already exists so do nothing
+                // Repository already exists and there's nothing happening then do nothing
                 return false;
             }
 
+            _initLock.LockOrWait(() => InitializeRepository(configuration), _initTimeout);
+
+            return true;
+        }
+
+        private void InitializeRepository(RepositoryConfiguration configuration)
+        {
             ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("GitExeServer.Initialize"))
             {
@@ -202,8 +225,6 @@ echo $i > pushinfo
 ");
                 }
             }
-
-            return true;
         }
 
         public ChangeSet GetChangeSet(string id)

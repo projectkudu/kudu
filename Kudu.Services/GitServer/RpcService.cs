@@ -64,13 +64,9 @@ namespace Kudu.Services.GitServer
             {
                 var memoryStream = new MemoryStream();
 
-                _deploymentLock.LockHttpOperation(() =>
-                {
-                    _gitServer.Upload(GetInputStream(request), memoryStream);
-                });
+                _gitServer.Upload(GetInputStream(request), memoryStream);
 
                 return CreateResponse(memoryStream, "application/x-git-{0}-result".With("upload-pack"));
-
             }
         }
 

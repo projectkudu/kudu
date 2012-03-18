@@ -137,7 +137,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<ISiteBuilderFactory>().To<SiteBuilderFactory>()
                                              .InRequestScope();
 
-            kernel.Bind<IServerRepository>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, context.Kernel.Get<ITraceFactory>()))
+            kernel.Bind<IServerRepository>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, environment.ApplicationRootPath, context.Kernel.Get<ITraceFactory>()))
                                             .InRequestScope();
 
             kernel.Bind<IDeploymentManager>().To<DeploymentManager>()
@@ -147,7 +147,7 @@ namespace Kudu.Services.Web.App_Start
             // Git server
             kernel.Bind<IDeploymentManagerFactory>().ToMethod(context => GetDeploymentManagerFactory(environment, propertyProvider, context.Kernel.Get<ITraceFactory>()));
 
-            kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, context.Kernel.Get<ITraceFactory>()))
+            kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, environment.ApplicationRootPath, context.Kernel.Get<ITraceFactory>()))
                                      .InRequestScope();
 
             // Hg Server
@@ -173,7 +173,7 @@ namespace Kudu.Services.Web.App_Start
         {
             return new DeploymentManagerFactory(() =>
             {
-                var serverRepository = new GitExeServer(environment.DeploymentRepositoryPath, traceFactory);
+                var serverRepository = new GitExeServer(environment.DeploymentRepositoryPath, environment.ApplicationRootPath, traceFactory);
                 var fileSystem = new FileSystem();
                 var siteBuilderFactory = new SiteBuilderFactory(propertyProvider, environment);
 
