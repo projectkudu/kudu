@@ -109,57 +109,31 @@ namespace Kudu.Core.Infrastructure
 
         public bool Wait(TimeSpan timeout)
         {
-            if (_lockStream == null)
+            TraceLock("Waiting on lock");
+
+            // Poll the file system every second
+            var interval = TimeSpan.FromSeconds(1);
+            var elapsed = TimeSpan.Zero;
+
+            bool timedout = false;
+
+            // This is less efficient than a file change nofitication but more reliable
+            // as there's a race condition when setting up the notification
+            while (IsHeld)
             {
-                TraceLock("Waiting on lock");
+                Thread.Sleep(interval);
+                elapsed += interval;
 
-                // Poll the file system every second
-                var interval = TimeSpan.FromSeconds(1);
-                var elapsed = TimeSpan.Zero;
-
-                bool timedout = false;
-
-                // This is less efficient than a file change nofitication but more reliable
-                // as there's a race condition when setting up the notification
-                while (IsHeld)
+                if (elapsed >= timeout)
                 {
-                    Thread.Sleep(interval);
-                    elapsed += interval;
-
-                    if (elapsed > timeout)
-                    {
-                        timedout = true;
-                        break;
-                    }
+                    timedout = true;
+                    break;
                 }
-
-                TraceLock("Waiting complete");
-
-                return timedout;
             }
-            else
-            {
-                // Same instance of the lock, so we can shortcut to an event handler
-                var wh = new ManualResetEventSlim();
-                Action handler = null;
 
-                handler = () =>
-                {
-                    wh.Set();
+            TraceLock("Waiting complete");
 
-                    _lockReleased -= handler;
-                };
-
-                _lockReleased += handler;
-
-                TraceLock("Waiting on lock");
-
-                bool timedout = wh.Wait(timeout);
-
-                TraceLock("Waiting complete");
-
-                return timedout;
-            }
+            return timedout;
         }
 
         private void TraceLock(string message)
