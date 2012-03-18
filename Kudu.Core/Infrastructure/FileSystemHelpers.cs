@@ -18,6 +18,22 @@ namespace Kudu.Core.Infrastructure
             DeleteDirectoryContentsSafe(new DirectoryInfoWrapper(new DirectoryInfo(path)));
         }
 
+        public static void DeleteIfEmpty(string path)
+        {
+            if (!Directory.Exists(path))
+            {
+                return;
+            }
+
+            if (Directory.EnumerateFileSystemEntries(path).Any())
+            {
+                return;
+            }
+
+            // Just delete this directory
+            Directory.Delete(path);
+        }
+
         internal static string EnsureDirectory(string path)
         {
             return EnsureDirectory(new FileSystem(), path);
@@ -150,7 +166,7 @@ namespace Kudu.Core.Infrastructure
                 Copy(sourcePath, destinationPath, sourceSubDirectory, targetSubDirectory, createDirectoryInfo, skipScmFolder);
             }
         }
-        
+
         internal static bool IsSourceControlFolder(string path)
         {
             // TODO: Add hg later

@@ -31,8 +31,11 @@ namespace Kudu.Services.Web.App_Start
 {
     public static class NinjectServices
     {
-        private const string DeploymentCachePath = "deployments";
+        private const string LockPath = "locks";
         private const string DeploymentLockFile = "deployments.lock";
+        private const string InitLockFile = "init.lock";
+
+        private const string DeploymentCachePath = "deployments";
         private const string TracePath = @"LogFiles\Git\trace";
         private const string DeploySettingsPath = "settings.xml";
         private const string TraceFile = "trace.xml";
@@ -113,9 +116,14 @@ namespace Kudu.Services.Web.App_Start
 
 
             // Setup the deployment lock
-            string lockPath = Path.Combine(environment.ApplicationRootPath, DeploymentLockFile);
-            var lockObj = new LockFile(kernel.Get<ITraceFactory>(), lockPath);
-            kernel.Bind<IOperationLock>().ToConstant(lockObj);
+            string lockPath = Path.Combine(environment.ApplicationRootPath, LockPath);
+            string deploymentLockPath = Path.Combine(lockPath, DeploymentLockFile);
+            string initLockPath = Path.Combine(lockPath, InitLockFile);
+
+            var deploymentLock = new LockFile(kernel.Get<ITraceFactory>(), deploymentLockPath);
+            var initLock = new LockFile(kernel.Get<ITraceFactory>(), initLockPath);
+
+            kernel.Bind<IOperationLock>().ToConstant(deploymentLock);
 
             // Setup the diagnostics service to collect information from the following paths:
             // 1. The deployments folder
@@ -137,7 +145,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<ISiteBuilderFactory>().To<SiteBuilderFactory>()
                                              .InRequestScope();
 
-            kernel.Bind<IServerRepository>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, environment.ApplicationRootPath, context.Kernel.Get<ITraceFactory>()))
+            kernel.Bind<IServerRepository>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, initLock, context.Kernel.Get<ITraceFactory>()))
                                             .InRequestScope();
 
             kernel.Bind<IDeploymentManager>().To<DeploymentManager>()
@@ -145,9 +153,9 @@ namespace Kudu.Services.Web.App_Start
                                              .OnActivation(SubscribeForDeploymentEvents);
 
             // Git server
-            kernel.Bind<IDeploymentManagerFactory>().ToMethod(context => GetDeploymentManagerFactory(environment, propertyProvider, context.Kernel.Get<ITraceFactory>()));
+            kernel.Bind<IDeploymentManagerFactory>().ToMethod(context => GetDeploymentManagerFactory(environment, initLock, propertyProvider, context.Kernel.Get<ITraceFactory>()));
 
-            kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, environment.ApplicationRootPath, context.Kernel.Get<ITraceFactory>()))
+            kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, initLock, context.Kernel.Get<ITraceFactory>()))
                                      .InRequestScope();
 
             // Hg Server
@@ -168,12 +176,13 @@ namespace Kudu.Services.Web.App_Start
         }
 
         private static IDeploymentManagerFactory GetDeploymentManagerFactory(IEnvironment environment,
+                                                                             IOperationLock initLock,
                                                                              IBuildPropertyProvider propertyProvider,
                                                                              ITraceFactory traceFactory)
         {
             return new DeploymentManagerFactory(() =>
             {
-                var serverRepository = new GitExeServer(environment.DeploymentRepositoryPath, environment.ApplicationRootPath, traceFactory);
+                var serverRepository = new GitExeServer(environment.DeploymentRepositoryPath, initLock, traceFactory);
                 var fileSystem = new FileSystem();
                 var siteBuilderFactory = new SiteBuilderFactory(propertyProvider, environment);
 

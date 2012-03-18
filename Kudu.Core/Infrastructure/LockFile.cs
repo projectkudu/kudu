@@ -14,16 +14,16 @@ namespace Kudu.Core.Infrastructure
     public class LockFile : IOperationLock
     {
         private readonly string _path;
+        private readonly string _directory;
         private Stream _lockStream;
         private readonly ITraceFactory _traceFactory;
-        private event Action _lockReleased;
 
         public LockFile(ITraceFactory traceFactory, string path)
         {
             _traceFactory = traceFactory;
             _path = Path.GetFullPath(path);
+            _directory = Path.GetDirectoryName(_path);
         }
-
 
         public bool IsHeld
         {
@@ -61,6 +61,8 @@ namespace Kudu.Core.Infrastructure
         {
             try
             {
+                FileSystemHelpers.EnsureDirectory(_directory);
+
                 if (Interlocked.Exchange(ref _lockStream, new FileStream(_path, FileMode.Create, FileAccess.Write, FileShare.None)) == null)
                 {
                     TraceLock("Aquired Lock");
@@ -88,12 +90,17 @@ namespace Kudu.Core.Infrastructure
                 _lockStream.Close();
                 File.Delete(_path);
 
-                if (_lockReleased != null)
+                TraceLock("Lock released");
+
+                try
                 {
-                    _lockReleased();
+                    FileSystemHelpers.DeleteIfEmpty(_directory);
+                }
+                catch
+                {
+                    // Doesn't matter if this fails, we're just trying to be tidy
                 }
 
-                TraceLock("Lock released");
                 return true;
             }
             catch

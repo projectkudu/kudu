@@ -15,21 +15,18 @@ namespace Kudu.Core.SourceControl.Git
         private readonly GitExecutable _gitExe;
         private readonly ITraceFactory _traceFactory;
         private readonly GitExeRepository _repository;
-        private readonly LockFile _initLock;
+        private readonly IOperationLock _initLock;
 
-        private const string InitLockFile = "init.lock";
         private static readonly TimeSpan _initTimeout = TimeSpan.FromMinutes(8);
 
-        public GitExeServer(string path, string rootPath, ITraceFactory traceFactory)
+        public GitExeServer(string path, IOperationLock initLock, ITraceFactory traceFactory)
         {
             _gitExe = new GitExecutable(path);
             _gitExe.SetTraceLevel(2);
             _traceFactory = traceFactory;
             _repository = new GitExeRepository(path, traceFactory);
             _repository.SetTraceLevel(2);
-
-            // Create a new lock that will be used for initialing the repository
-            _initLock = new LockFile(traceFactory, Path.Combine(rootPath, InitLockFile));
+            _initLock = initLock;
         }
 
         private string PostReceiveHookPath
