@@ -28,23 +28,21 @@
     if (typeAttr != null)
     {
         var cssCls = GetAnnotations(typeAttr.Value);
-        <li class="step @typeAttr.Value">            
+        <li class="step @typeAttr.Value">
             <div class="label @cssCls title">
-                @if (element.Elements().Any()) { 
-                <span class="more icon-white icon-chevron-down"></span>
-                }
                 @if (typeAttr.Value == "lock") { 
                     <i class="icon-white icon-lock"></i>
                 }
-                else if (typeAttr.Value == "response") { 
-                    <i class="icon-white icon-chevron-left"></i>
+                else {
+                    <span class="more icon-white icon-chevron-down"></span>
                 }
                 @element.Attribute("title").Value - @element.Attribute("date").Value
                 @if (element.Attribute("elapsed").Value != "0")
                 { 
                     <text>, took @element.Attribute("elapsed").Value ms</text> 
                 }
-           </div>
+            </div>
+            <div class="content">
         @switch (typeAttr.Value)
         {
             case "request":
@@ -104,8 +102,12 @@
                 <pre>@es</pre>
                 }
                 break;
+            case "gitStream":
+                <pre>@element.Attribute("output").Value</pre>
+                break;
         }
-        @RenderElements(element.Elements())    
+        @RenderElements(element.Elements())
+        </div>
         </li>        
     }
     else
@@ -118,7 +120,9 @@
                 }
                 @element.Attribute("title").Value - @element.Attribute("date").Value, took @element.Attribute("elapsed").Value ms
             </div>
+            <div class="content">
             @RenderElements(element.Elements())
+            </div>
         </li>        
     }
 }
@@ -150,17 +154,17 @@
 
 <script type="text/javascript">
     $(function () {
-        $('.title ').toggle(function () {
+        $('.title').toggle(function () {
             var $this = $(this);
             var $icon = $this.find('.more');
-            $this.parent().children('ul').hide();
+            $this.parent().children('.content').hide();
             $icon.addClass('icon-chevron-up');
             $icon.removeClass('icon-chevron-down');
         },
         function () {
             var $this = $(this);
             var $icon = $this.find('.more');
-            $this.parent().children('ul').show();
+            $this.parent().children('.content').show();
             $icon.removeClass('icon-chevron-up');
             $icon.addClass('icon-chevron-down');
         });

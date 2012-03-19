@@ -56,7 +56,8 @@ namespace Kudu.Core.Tracing
 
             foreach (var pair in attributes)
             {
-                newStepElement.Add(new XAttribute(pair.Key, pair.Value));
+                string safeValue = XmlUtility.Sanitize(pair.Value);
+                newStepElement.Add(new XAttribute(pair.Key, safeValue));
             }
 
             if (_currentSteps.Count == 0)
