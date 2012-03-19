@@ -107,26 +107,37 @@ namespace Kudu.Core.Infrastructure
                 };
 
                 IAsyncResult errorReader = reader.BeginInvoke(process.StandardError, null, null);
+                IAsyncResult inputResult = null;
+
                 if (input != null)
                 {
                     // Copy into the input stream, and close it to tell the exe it can process it
-                    copyStream.BeginInvoke(input,
-                                           process.StandardInput.BaseStream,
-                                           true,
-                                           () => tracer.Step("Copying input stream to stdin."),
-                                           null,
-                                           null);
+                    inputResult = copyStream.BeginInvoke(input,
+                                                         process.StandardInput.BaseStream,
+                                                         true,
+                                                         () => tracer.Step("Copying input stream to stdin."),
+                                                         null,
+                                                         null);
                 }
 
                 // Copy the exe's output into the output stream
-                copyStream.BeginInvoke(process.StandardOutput.BaseStream,
-                                       output,
-                                       false,
-                                       () => tracer.Step("Copying stdout to output stream."),
-                                       null,
-                                       null);
+                IAsyncResult outputResult = copyStream.BeginInvoke(process.StandardOutput.BaseStream,
+                                                                   output,
+                                                                   false,
+                                                                   () => tracer.Step("Copying stdout to output stream."),
+                                                                   null,
+                                                                   null);
 
                 process.WaitForExit();
+
+                // Wait for the input operation to complete
+                if (inputResult != null)
+                {
+                    inputResult.AsyncWaitHandle.WaitOne();
+                }
+
+                // Wait for the output operation to be complete
+                outputResult.AsyncWaitHandle.WaitOne();
 
                 string error = reader.EndInvoke(errorReader);
 
