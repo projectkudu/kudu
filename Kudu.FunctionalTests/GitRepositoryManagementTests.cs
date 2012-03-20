@@ -640,7 +640,6 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void DeployTargetToTestProjectShouldFail()
         {
-            // Arrange
             string repositoryName = "Mvc3Application";
             string appName = KuduUtils.GetRandomWebsiteName("DeployTestProj");
 
