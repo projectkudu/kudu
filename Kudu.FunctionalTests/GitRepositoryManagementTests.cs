@@ -638,6 +638,34 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public void DeployTargetToTestProjectShouldFail()
+        {
+            // Arrange
+            string repositoryName = "Mvc3Application";
+            string appName = KuduUtils.GetRandomWebsiteName("DeployTestProj");
+
+            using (var repo = Git.CreateLocalRepository(repositoryName))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    string deployment = @"[config]
+project = Mvc3Application.Tests\Mvc3Application.Tests.csproj
+                    ";
+                    repo.WriteFile(".deployment", deployment);
+                    Git.Commit(repo.PhysicalPath, "Add Deployment File");
+
+                    appManager.AssertGitDeploy(repo.PhysicalPath);
+                    // Assert
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Failed, results[0].Status);
+                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, "is not a deployable project");
+                }
+                );
+            }
+        }
+
+        [Fact]
         public void SpecificDeploymentConfiguration()
         {
             VerifyDeploymentConfiguration("SpecificDeployConfig",
