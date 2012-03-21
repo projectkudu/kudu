@@ -638,33 +638,6 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void DeployTargetToTestProjectShouldFail()
-        {
-            string repositoryName = "Mvc3Application";
-            string appName = KuduUtils.GetRandomWebsiteName("DeployTestProj");
-
-            using (var repo = Git.CreateLocalRepository(repositoryName))
-            {
-                ApplicationManager.Run(appName, appManager =>
-                {
-                    string deployment = @"[config]
-project = Mvc3Application.Tests\Mvc3Application.Tests.csproj
-                    ";
-                    repo.WriteFile(".deployment", deployment);
-                    Git.Commit(repo.PhysicalPath, "Add Deployment File");
-
-                    appManager.AssertGitDeploy(repo.PhysicalPath);
-                    // Assert
-                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-                    Assert.Equal(1, results.Count);
-                    Assert.Equal(DeployStatus.Failed, results[0].Status);
-                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, "is not a deployable project");
-                }
-                );
-            }
-        }
-
-        [Fact]
         public void SpecificDeploymentConfiguration()
         {
             VerifyDeploymentConfiguration("SpecificDeployConfig",
@@ -727,7 +700,8 @@ project = Mvc3Application.Tests\Mvc3Application.Tests.csproj
             VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForNonDeployableProject",
                                           "MvcApplicationRemovedFromSolution.Tests",
                                           "The web site is under construction",
-                                          DeployStatus.Failed);
+                                          DeployStatus.Failed,
+                                          "is not a deployable project");
         }
 
         [Fact]
@@ -739,7 +713,7 @@ project = Mvc3Application.Tests\Mvc3Application.Tests.csproj
                                           DeployStatus.Failed);
         }
 
-        private void VerifyDeploymentConfiguration(string siteName, string targetProject, string expectedText, DeployStatus expectedStatus = DeployStatus.Success)
+        private void VerifyDeploymentConfiguration(string siteName, string targetProject, string expectedText, DeployStatus expectedStatus = DeployStatus.Success, string expectedLog = null)
         {
             string name = KuduUtils.GetRandomWebsiteName(siteName);
             string cloneUrl = "https://github.com/KuduApps/SpecificDeploymentConfiguration.git";
@@ -760,6 +734,10 @@ project = {0}", targetProject));
                     Assert.Equal(1, results.Count);
                     Assert.Equal(expectedStatus, results[0].Status);
                     KuduAssert.VerifyUrl(appManager.SiteUrl, expectedText);
+                    if (!string.IsNullOrEmpty(expectedLog))
+                    {
+                        KuduAssert.VerifyLogOutput(appManager, results[0].Id, expectedLog);
+                    }
                 });
             }
         }
