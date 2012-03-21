@@ -2,7 +2,7 @@
 
 namespace Kudu.Services.Deployment
 {
-    public class DeploymentStatusHandler : PersistentConnection
+    public class DeploymentStatusConnection : PersistentConnection
     {
     }
 }

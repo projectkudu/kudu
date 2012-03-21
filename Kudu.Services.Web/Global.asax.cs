@@ -16,8 +16,7 @@ using Kudu.Services.Web.Tracing;
 using Microsoft.ApplicationServer.Http.Activation;
 using Ninject;
 using Ninject.Extensions.Wcf;
-using SignalR;
-using SignalR.Routing;
+using SignalR.Hosting.AspNet.Routing;
 
 namespace Kudu.Services
 {
@@ -28,7 +27,7 @@ namespace Kudu.Services
             var configuration = KernelContainer.Kernel.Get<IServerConfiguration>();
             var factory = GetFactory();
 
-            routes.MapConnection<DeploymentStatusHandler>("DeploymentStatus", "deployments/status/{*operation}");
+            routes.MapConnection<DeploymentStatusConnection>("DeploymentStatus", "deployments/status/{*operation}");
             // routes.MapConnection<LiveCommandStatusHandler>("LiveCommandStatus", "live/command/status/{*operation}");
             // routes.MapConnection<DevCommandStatusHandler>("DevCommandStatus", "dev/command/status/{*operation}");
 
@@ -76,8 +75,6 @@ namespace Kudu.Services
 
         protected void Application_Start()
         {
-            Signaler.Instance.DefaultTimeout = TimeSpan.FromSeconds(15);
-
             RegisterRoutes(RouteTable.Routes);
         }
 

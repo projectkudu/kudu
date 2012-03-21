@@ -22,6 +22,8 @@ using Ninject;
 using Ninject.Activation;
 using Ninject.Extensions.Wcf;
 using SignalR;
+using SignalR.Hosting.AspNet;
+using SignalR.Infrastructure;
 using XmlSettings;
 
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Start")]
@@ -313,7 +315,10 @@ namespace Kudu.Services.Web.App_Start
 
         private static void SubscribeForDeploymentEvents(IDeploymentManager deploymentManager)
         {
-            IConnection connection = Connection.GetConnection<DeploymentStatusHandler>();
+            IConnection connection = AspNetHost.DependencyResolver
+                                               .Resolve<IConnectionManager>()
+                                               .GetConnection<DeploymentStatusConnection>();
+
             deploymentManager.StatusChanged += status =>
             {
                 connection.Broadcast(status);

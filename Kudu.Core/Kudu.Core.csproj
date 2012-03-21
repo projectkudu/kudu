@@ -53,9 +53,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\JsonValue.0.6.0\lib\40\Microsoft.Server.Common.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>..\packages\Newtonsoft.Json.4.0.3\lib\net40\Newtonsoft.Json.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.IO.Abstractions, Version=1.4.0.12, Culture=neutral, processorArchitecture=MSIL">

@@ -64,9 +64,12 @@
       <Private>True</Private>
       <HintPath>..\packages\Microsoft.Web.Infrastructure.1.0.0.0\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
     </Reference>
-    <Reference Include="SignalR, Version=0.3.5.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\packages\Newtonsoft.Json.4.0.8\lib\net40\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="SignalR, Version=0.4.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\SignalR.Server.0.3.5\lib\net40\SignalR.dll</HintPath>
+      <HintPath>..\packages\SignalR.Server.0.4.0.0\lib\net40\SignalR.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -100,7 +103,7 @@
     <Compile Include="Commands\CommandService.cs" />
     <Compile Include="Commands\CommandStatusHandler.cs" />
     <Compile Include="Deployment\DeploymentService.cs" />
-    <Compile Include="Deployment\DeploymentStatusHandler.cs" />
+    <Compile Include="Deployment\DeploymentStatusConnection.cs" />
     <Compile Include="Editor\FilesService.cs" />
     <Compile Include="GitServer\Helpers.cs" />
     <Compile Include="GitServer\InfoRefsService.cs" />
