@@ -136,6 +136,10 @@
       <Component Id="SignalR.dll" Guid="{05B0AC56-6BD2-4F46-B80B-ADC05F4996FF}">
         <File Id="SignalR.dll" Source="$(var.KuduServiceBinDir)\SignalR.dll" />
       </Component>
+      
+      <Component Id="SignalR.Hosting.AspNet.dll" Guid="{BC2B76D2-0C89-4A48-BB1C-0504C3F4A2E6}">
+        <File Id="SignalR.Hosting.AspNet.dll" Source="$(var.KuduServiceBinDir)\SignalR.Hosting.AspNet.dll" />
+      </Component>
 
       <Component Id="LibGit2Sharp.dll" Guid="{0496B795-B6E6-4394-934E-A1016AD594F3}">
         <File Id="LibGit2Sharp.dll" Source="$(var.KuduServiceBinDir)\LibGit2Sharp.dll" />
@@ -235,6 +239,7 @@
       <ComponentRef Id="Ninject.Extensions.Wcf.dll" />
 
       <ComponentRef Id="SignalR.dll" />
+      <ComponentRef Id="SignalR.Hosting.AspNet.dll" />
       <ComponentRef Id="Ionic.Zip.dll" />
 
       <ComponentRef Id="LibGit2Sharp.dll" />
