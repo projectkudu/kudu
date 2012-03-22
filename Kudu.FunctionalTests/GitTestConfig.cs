@@ -37,7 +37,8 @@ namespace Kudu.TestHarness
                     var testData = new object[] { reader.GetField("Name"), reader.GetField("RepoName"),
                                                   reader.GetField("RepoUrl"), reader.GetField("RepoCloneUrl"), 
                                                   reader.GetField("DefaultBranchName"), reader.GetField("VerificationText"), 
-                                                  reader.GetField<HttpStatusCode>("ExpectedResponseCode"), reader.GetField<bool>("Skip") };
+                                                  reader.GetField<HttpStatusCode>("ExpectedResponseCode"), reader.GetField<bool>("Skip"), 
+                                                  reader.GetField("VerificationLogText")};
                     tests.Add(testData);                                        
                 }
             }
