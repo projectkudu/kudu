@@ -17,7 +17,7 @@ namespace Kudu.FunctionalTests
             {
                 for (int i = 0; i < 5; i++)
                 {
-                    string applicationName = repositoryName + i;
+                    string applicationName = KuduUtils.GetRandomWebsiteName(repositoryName + i);
                     ApplicationManager.Run(applicationName, appManager =>
                     {
                         // Act

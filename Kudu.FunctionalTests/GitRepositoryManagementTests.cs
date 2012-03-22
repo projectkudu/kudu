@@ -708,7 +708,8 @@ namespace Kudu.FunctionalTests
             VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForNonDeployableProject",
                                           "MvcApplicationRemovedFromSolution.Tests",
                                           "The web site is under construction",
-                                          DeployStatus.Failed);
+                                          DeployStatus.Failed,
+                                          "is not a deployable project");
         }
 
         [Fact]
@@ -720,7 +721,7 @@ namespace Kudu.FunctionalTests
                                           DeployStatus.Failed);
         }
 
-        private void VerifyDeploymentConfiguration(string siteName, string targetProject, string expectedText, DeployStatus expectedStatus = DeployStatus.Success)
+        private void VerifyDeploymentConfiguration(string siteName, string targetProject, string expectedText, DeployStatus expectedStatus = DeployStatus.Success, string expectedLog = null)
         {
             string name = KuduUtils.GetRandomWebsiteName(siteName);
             string cloneUrl = "https://github.com/KuduApps/SpecificDeploymentConfiguration.git";
@@ -741,6 +742,10 @@ project = {0}", targetProject));
                     Assert.Equal(1, results.Count);
                     Assert.Equal(expectedStatus, results[0].Status);
                     KuduAssert.VerifyUrl(appManager.SiteUrl, expectedText);
+                    if (!String.IsNullOrEmpty(expectedLog))
+                    {
+                        KuduAssert.VerifyLogOutput(appManager, results[0].Id, expectedLog);
+                    }
                 });
             }
         }
