@@ -734,7 +734,7 @@ project = {0}", targetProject));
                     Assert.Equal(1, results.Count);
                     Assert.Equal(expectedStatus, results[0].Status);
                     KuduAssert.VerifyUrl(appManager.SiteUrl, expectedText);
-                    if (!string.IsNullOrEmpty(expectedLog))
+                    if (!String.IsNullOrEmpty(expectedLog))
                     {
                         KuduAssert.VerifyLogOutput(appManager, results[0].Id, expectedLog);
                     }
