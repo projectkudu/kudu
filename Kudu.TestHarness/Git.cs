@@ -172,8 +172,7 @@ namespace Kudu.TestHarness
             var exe = new GitExecutable(repositoryPath);
             exe.SetTraceLevel(2);
             exe.SetHttpVerbose(true);
-
-            exe.EnvironmentVariables["GIT_SSL_NO_VERIFY"] = "true";
+            exe.SetSSLNoVerify(true);
 
             return exe;
         }
