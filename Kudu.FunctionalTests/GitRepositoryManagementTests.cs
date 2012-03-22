@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
@@ -238,6 +239,9 @@ namespace Kudu.FunctionalTests
 
                     appManager.ProjectSystem.WriteAllText("Views/Home/Index.cshtml", "Hello world!");
 
+                    // Sleep a little since it's a remote call
+                    Thread.Sleep(500);
+
                     KuduAssert.VerifyUrl(appManager.SiteUrl, "Hello world!");
 
                     // Make an unrelated change (newline to the end of web.config)
@@ -286,6 +290,8 @@ namespace Kudu.FunctionalTests
 
                     // Make a server site change and verify it shows up
                     appManager.ProjectSystem.WriteAllText("Views/Home/Index.cshtml", "Hello world!");
+
+                    Thread.Sleep(500);
 
                     KuduAssert.VerifyUrl(appManager.SiteUrl, "Hello world!");
 
@@ -352,6 +358,8 @@ namespace Kudu.FunctionalTests
                 {
                     appManager.ProjectSystem.WriteAllText("foo.txt", "This is a test file");
                     string url = appManager.SiteUrl + "/foo.txt";
+
+                    Thread.Sleep(500);
 
                     KuduAssert.VerifyUrl(url, "This is a test file");
 

@@ -134,10 +134,6 @@ namespace Kudu.Client.Deployment
 
                     TryStart(retries - 1);
                 }
-                else
-                {
-                    Debug.WriteLine("Success!");
-                }
             });
         }
 
