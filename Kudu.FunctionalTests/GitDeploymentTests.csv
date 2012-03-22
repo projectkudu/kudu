@@ -1,13 +1,14 @@
-﻿Name,RepoName,RepoUrl,RepoCloneUrl,DefaultBranchName,VerificationText,ExpectedResponseCode,Skip
-WordPress,WordPress,https://github.com/KuduApps/WordPress,https://github.com/KuduApps/WordPress.git,"master",There doesn't seem to be a <code>wp-config.php</code> file.,500,false
-Express-Template,Express-Template,https://github.com/KuduApps/Express-Template,https://github.com/KuduApps/Express-Template.git,"master",Modify this template to jump-start your Node.JS Express Web Pages application,200,true
-OpenCart,OpenCart,https://github.com/KuduApps/OpenCartWeb,https://github.com/KuduApps/OpenCartWeb.git,"master",GNU GENERAL PUBLIC LICENSE,200,false
-PhpBB,PhpBB,https://github.com/KuduApps/PhpBBweb,https://github.com/KuduApps/PhpBBweb.git,"master",Welcome to phpBB3,200,false
-Joomla,Joomla,https://github.com/KuduApps/JoomlaWeb,https://github.com/KuduApps/JoomlaWeb.git,"master",Joomla! 1.7.3 Installation,200,false
-Drupal,Drupal,https://github.com/KuduApps/drupal,https://github.com/KuduApps/drupal.git,"7.x","Select an installation profile",200,false
-MvcMusicStore,MvcMusicStore,https://github.com/KuduApps/MvcMusicStore,https://github.com/KuduApps/MvcMusicStore.git,"master","ASP.NET MVC MUSIC STORE",200,false
-Orchard,Orchard,https://github.com/KuduApps/Orchard,https://github.com/KuduApps/Orchard.git,"master","Welcome to Orchard",200,false
-Nuget,Nuget,https://github.com/KuduApps/NuGetGallery,https://github.com/KuduApps/NuGetGallery.git,"master","Error: Oh no, we broke something!",500,true
-ProjectWithNoSolution,ProjectWithNoSolution,https://github.com/KuduApps/ProjectWithNoSolution,https://github.com/KuduApps/ProjectWithNoSolution.git,"master",Project without solution,200,false
-HiddenFoldersAndFiles,HiddenFoldersAndFiles,https://github.com/KuduApps/HiddenFoldersAndFiles,https://github.com/KuduApps/HiddenFoldersAndFiles.git,"master",Hello World,200,false
-WebSiteInSolution,WebSiteInSolution,https://github.com/KuduApps/WebSiteInSolution,https://github.com/KuduApps/WebSiteInSolution.git,"master","SomeDummyLibrary.Class1",200,false
+﻿Name,RepoName,RepoUrl,RepoCloneUrl,DefaultBranchName,VerificationText,ExpectedResponseCode,Skip,VerificationLogText
+WordPress,WordPress,https://github.com/KuduApps/WordPress,https://github.com/KuduApps/WordPress.git,"master",There doesn't seem to be a <code>wp-config.php</code> file.,500,false,""
+Express-Template,Express-Template,https://github.com/KuduApps/Express-Template,https://github.com/KuduApps/Express-Template.git,"master",Modify this template to jump-start your Node.JS Express Web Pages application,200,true,""
+OpenCart,OpenCart,https://github.com/KuduApps/OpenCartWeb,https://github.com/KuduApps/OpenCartWeb.git,"master",GNU GENERAL PUBLIC LICENSE,200,false,""
+PhpBB,PhpBB,https://github.com/KuduApps/PhpBBweb,https://github.com/KuduApps/PhpBBweb.git,"master",Welcome to phpBB3,200,false,""
+Joomla,Joomla,https://github.com/KuduApps/JoomlaWeb,https://github.com/KuduApps/JoomlaWeb.git,"master",Joomla! 1.7.3 Installation,200,false,""
+Drupal,Drupal,https://github.com/KuduApps/drupal,https://github.com/KuduApps/drupal.git,"7.x","Select an installation profile",200,false,""
+MvcMusicStore,MvcMusicStore,https://github.com/KuduApps/MvcMusicStore,https://github.com/KuduApps/MvcMusicStore.git,"master","ASP.NET MVC MUSIC STORE",200,false,""
+Orchard,Orchard,https://github.com/KuduApps/Orchard,https://github.com/KuduApps/Orchard.git,"master","Welcome to Orchard",200,false,""
+Nuget,Nuget,https://github.com/KuduApps/NuGetGallery,https://github.com/KuduApps/NuGetGallery.git,"master","Error: Oh no, we broke something!",500,true,""
+ProjectWithNoSolution,ProjectWithNoSolution,https://github.com/KuduApps/ProjectWithNoSolution,https://github.com/KuduApps/ProjectWithNoSolution.git,"master",Project without solution,200,false,""
+HiddenFoldersAndFiles,HiddenFoldersAndFiles,https://github.com/KuduApps/HiddenFoldersAndFiles,https://github.com/KuduApps/HiddenFoldersAndFiles.git,"master",Hello World,200,false,""
+WebSiteInSolution,WebSiteInSolution,https://github.com/KuduApps/WebSiteInSolution,https://github.com/KuduApps/WebSiteInSolution.git,"master","SomeDummyLibrary.Class1",200,false,""
+kuduglob,kuduglob,https://github.com/KuduApps/kuduglob,https://github.com/KuduApps/kuduglob.git,"master","ASP.NET MVC",200,false,"酷度"
