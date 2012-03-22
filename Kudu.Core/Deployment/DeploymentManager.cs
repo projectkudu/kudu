@@ -20,6 +20,7 @@ namespace Kudu.Core.Deployment
         private readonly IEnvironment _environment;
         private readonly IFileSystem _fileSystem;
         private readonly ITraceFactory _traceFactory;
+        private readonly IOperationLock _deploymentLock;
 
         private const string StatusFile = "status.xml";
         private const string LogFile = "log.xml";
@@ -32,13 +33,15 @@ namespace Kudu.Core.Deployment
                                  ISiteBuilderFactory builderFactory,
                                  IEnvironment environment,
                                  IFileSystem fileSystem,
-                                 ITraceFactory traceFactory)
+                                 ITraceFactory traceFactory,
+                                 IOperationLock deploymentLock)
         {
             _serverRepository = serverRepository;
             _builderFactory = builderFactory;
             _environment = environment;
             _fileSystem = fileSystem;
             _traceFactory = traceFactory;
+            _deploymentLock = deploymentLock;
         }
 
         private string ActiveDeploymentId
@@ -54,6 +57,14 @@ namespace Kudu.Core.Deployment
             }
         }
 
+        private bool IsDeploying
+        {
+            get
+            {
+                return _deploymentLock.IsHeld;
+            }
+        }
+
         public IEnumerable<DeployResult> GetResults()
         {
             ITracer tracer = _traceFactory.GetTracer();
@@ -65,7 +76,7 @@ namespace Kudu.Core.Deployment
 
         public DeployResult GetResult(string id)
         {
-            return GetResult(id, ActiveDeploymentId);
+            return GetResult(id, ActiveDeploymentId, IsDeploying);
         }
 
         public IEnumerable<LogEntry> GetLogEntries(string id)
@@ -79,6 +90,8 @@ namespace Kudu.Core.Deployment
                 {
                     throw new FileNotFoundException(String.Format(CultureInfo.CurrentCulture, Resources.Error_NoLogFound, id));
                 }
+
+                VerifyDeployment(id);
 
                 return new XmlLogger(_fileSystem, path).GetLogEntries().ToList();
             }
@@ -95,6 +108,8 @@ namespace Kudu.Core.Deployment
                 {
                     throw new FileNotFoundException(String.Format(CultureInfo.CurrentCulture, Resources.Error_NoLogFound, id));
                 }
+
+                VerifyDeployment(id);
 
                 return new XmlLogger(_fileSystem, path).GetLogEntryDetails(entryId).ToList();
             }
@@ -254,12 +269,9 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        /// <summary>
-        /// Get result with ActiveDeploymentId
-        /// </summary>
-        private DeployResult GetResult(string id, string activeDeploymentId)
+        private DeployResult GetResult(string id, string activeDeploymentId, bool isDeploying)
         {
-            var file = OpenStatusFile(id);
+            var file = VerifyDeployment(id, isDeploying);
 
             if (file == null)
             {
@@ -402,14 +414,53 @@ namespace Kudu.Core.Deployment
             }
 
             string activeDeploymentId = ActiveDeploymentId;
+            bool isDeploying = IsDeploying;
+
             foreach (var id in _fileSystem.Directory.GetDirectories(_environment.DeploymentCachePath))
             {
-                var result = GetResult(id, activeDeploymentId);
+                DeployResult result = GetResult(id, activeDeploymentId, isDeploying);
+
                 if (result != null)
                 {
                     yield return result;
                 }
             }
+        }
+
+
+        private DeploymentStatusFile VerifyDeployment(string id)
+        {
+            return VerifyDeployment(id, IsDeploying);
+        }
+
+        /// <summary>
+        /// Ensure the deployment is in a valid state.
+        /// </summary>
+        private DeploymentStatusFile VerifyDeployment(string id, bool isDeploying)
+        {
+            DeploymentStatusFile statusFile = OpenStatusFile(id);
+
+            if (statusFile == null)
+            {
+                return null;
+            }
+
+            if (statusFile.Complete)
+            {
+                return statusFile;
+            }
+
+            // There's an incomplete deployment, yet nothing is going on, mark this deployment as failed
+            // since it probably means something died
+            if (!isDeploying)
+            {
+                MarkFailed(statusFile);
+
+                ILogger logger = GetLogger(id);
+                logger.LogUnexpetedError();
+            }
+
+            return statusFile;
         }
 
         /// <summary>

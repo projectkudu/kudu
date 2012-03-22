@@ -153,7 +153,7 @@ namespace Kudu.Services.Web.App_Start
                                              .OnActivation(SubscribeForDeploymentEvents);
 
             // Git server
-            kernel.Bind<IDeploymentManagerFactory>().ToMethod(context => GetDeploymentManagerFactory(environment, initLock, propertyProvider, context.Kernel.Get<ITraceFactory>()));
+            kernel.Bind<IDeploymentManagerFactory>().ToMethod(context => GetDeploymentManagerFactory(environment, initLock, deploymentLock, propertyProvider, context.Kernel.Get<ITraceFactory>()));
 
             kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, initLock, context.Kernel.Get<ITraceFactory>()))
                                      .InRequestScope();
@@ -177,6 +177,7 @@ namespace Kudu.Services.Web.App_Start
 
         private static IDeploymentManagerFactory GetDeploymentManagerFactory(IEnvironment environment,
                                                                              IOperationLock initLock,
+                                                                             IOperationLock deploymentLock,
                                                                              IBuildPropertyProvider propertyProvider,
                                                                              ITraceFactory traceFactory)
         {
@@ -190,7 +191,8 @@ namespace Kudu.Services.Web.App_Start
                                                               siteBuilderFactory,
                                                               environment,
                                                               fileSystem,
-                                                              traceFactory);
+                                                              traceFactory,
+                                                              deploymentLock);
 
                 SubscribeForDeploymentEvents(deploymentManager);
 
