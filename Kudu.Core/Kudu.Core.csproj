@@ -33,10 +33,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="LibGit2Sharp, Version=0.7.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\LibGit2Sharp.0.7\lib\net35\LibGit2Sharp.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.Json, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\JsonValue.0.6.0\lib\40\Microsoft.Json.dll</HintPath>
@@ -130,8 +126,6 @@
     <Compile Include="SourceControl\Git\GitExeRepository.cs" />
     <Compile Include="SourceControl\Git\GitExeServer.cs" />
     <Compile Include="Infrastructure\PathUtility.cs" />
-    <Compile Include="SourceControl\Git\HybridGitRepository.cs" />
-    <Compile Include="SourceControl\Git\LibGitRepository.cs" />
     <Compile Include="SourceControl\NullRepository.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -150,7 +144,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="..\Build\Kudu.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
