@@ -72,7 +72,7 @@ namespace Kudu.Web.App_Start
 
             kernel.Bind<IPathResolver>().ToConstant(pathResolver);
             kernel.Bind<ISiteManager>().To<SiteManager>().InSingletonScope();
-            kernel.Bind<KuduEnvironment>().ToConstant(new KuduEnvironment
+            kernel.Bind<KuduEnvironment>().ToMethod(_ => new KuduEnvironment
             {
                 RunningAgainstLocalKuduService = true,
                 IsAdmin = IdentityHelper.IsAnAdministrator(),

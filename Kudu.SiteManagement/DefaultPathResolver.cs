@@ -1,15 +1,18 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace Kudu.SiteManagement
 {
     public class DefaultPathResolver : IPathResolver
     {
-        private readonly string _rootPath;
-        private readonly string _serviceSitePath;
+        private const string DefaultKuduServicePath = @"%SystemDrive%\KuduService\wwwroot";
 
-        public DefaultPathResolver(string serviceSitePath, string rootPath)
+        private readonly string _rootPath;
+        private readonly string _fallbackServiceSitePath;
+
+        public DefaultPathResolver(string fallbackServiceSitePath, string rootPath)
         {
-            _serviceSitePath = Path.GetFullPath(serviceSitePath);
+            _fallbackServiceSitePath = Path.GetFullPath(fallbackServiceSitePath);
             _rootPath = Path.GetFullPath(rootPath);
         }
 
@@ -17,7 +20,14 @@ namespace Kudu.SiteManagement
         {
             get
             {
-                return _serviceSitePath;
+                // If the default path to the kudu service exists then use it
+                string path = Environment.ExpandEnvironmentVariables(DefaultKuduServicePath);
+                if (Directory.Exists(path))
+                {
+                    return path;
+                }
+                
+                return _fallbackServiceSitePath;
             }
         }
 
