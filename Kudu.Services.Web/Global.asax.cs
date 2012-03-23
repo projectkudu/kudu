@@ -31,10 +31,7 @@ namespace Kudu.Services
             // routes.MapConnection<LiveCommandStatusHandler>("LiveCommandStatus", "live/command/status/{*operation}");
             // routes.MapConnection<DevCommandStatusHandler>("DevCommandStatus", "dev/command/status/{*operation}");
 
-            // Source control servers
-            // Mercurial
-            // MapServiceRoute<ProxyService>(configuration.HgServerRoot, factory);
-
+            // Source control servers            
             // Git
             MapServiceRoute<InfoRefsService>(configuration.GitServerRoot + "/info/refs", factory);
             MapServiceRoute<RpcService>(configuration.GitServerRoot, factory);

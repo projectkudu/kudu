@@ -75,7 +75,6 @@
     <Compile Include="SourceControl\FileInfo.cs" />
     <Compile Include="SourceControl\FileStatus.cs" />
     <Compile Include="SourceControl\Git\IGitServer.cs" />
-    <Compile Include="SourceControl\Hg\IHgServer.cs" />
     <Compile Include="SourceControl\IRepository.cs" />
     <Compile Include="SourceControl\IServerRepository.cs" />
     <Compile Include="SourceControl\LineDiff.cs" />

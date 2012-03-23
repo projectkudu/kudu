@@ -10,7 +10,6 @@ using Kudu.Core.Editor;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
-using Kudu.Core.SourceControl.Hg;
 using Kudu.Core.Tracing;
 using Kudu.Services.Authorization;
 using Kudu.Services.Deployment;
@@ -159,11 +158,7 @@ namespace Kudu.Services.Web.App_Start
 
             kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, initLock, context.Kernel.Get<ITraceFactory>()))
                                      .InRequestScope();
-
-            // Hg Server
-            kernel.Bind<IHgServer>().To<Kudu.Core.SourceControl.Hg.HgServer>()
-                                   .InSingletonScope();
-
+ 
             // Editor
             kernel.Bind<IProjectSystem>().ToMethod(context => GetEditorProjectSystem(environment, context))
                                          .InRequestScope();

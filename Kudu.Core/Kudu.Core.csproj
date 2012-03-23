@@ -37,10 +37,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\LibGit2Sharp.0.7\lib\net35\LibGit2Sharp.dll</HintPath>
     </Reference>
-    <Reference Include="Mercurial.Net, Version=1.1.1.607, Culture=neutral, PublicKeyToken=9e2fabf3af85dba9, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Mercurial.Net.1.1.1.607\lib\net35-Client\Mercurial.Net.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.Json, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\JsonValue.0.6.0\lib\40\Microsoft.Json.dll</HintPath>
@@ -136,9 +132,6 @@
     <Compile Include="Infrastructure\PathUtility.cs" />
     <Compile Include="SourceControl\Git\HybridGitRepository.cs" />
     <Compile Include="SourceControl\Git\LibGitRepository.cs" />
-    <Compile Include="SourceControl\Hg\HgBranch.cs" />
-    <Compile Include="SourceControl\Hg\HgRepository.cs" />
-    <Compile Include="SourceControl\Hg\HgServer.cs" />
     <Compile Include="SourceControl\NullRepository.cs" />
   </ItemGroup>
   <ItemGroup>

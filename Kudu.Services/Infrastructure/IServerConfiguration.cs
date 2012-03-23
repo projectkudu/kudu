@@ -4,6 +4,5 @@
     {
         string ApplicationName { get; }
         string GitServerRoot { get; }
-        string HgServerRoot { get; }
     }
 }

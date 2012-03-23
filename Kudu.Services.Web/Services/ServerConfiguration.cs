@@ -13,18 +13,6 @@ namespace Kudu.Services.Web
             }
         }
 
-        public string HgServerRoot
-        {
-            get
-            {
-                if (String.IsNullOrEmpty(ApplicationName))
-                {
-                    return "hg";
-                }
-                return ApplicationName;
-            }
-        }
-
         public string GitServerRoot
         {
             get

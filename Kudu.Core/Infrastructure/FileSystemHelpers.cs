@@ -169,7 +169,6 @@ namespace Kudu.Core.Infrastructure
 
         internal static bool IsSourceControlFolder(string path)
         {
-            // TODO: Add hg later
             return path.StartsWith(".git", StringComparison.OrdinalIgnoreCase);
         }
 
