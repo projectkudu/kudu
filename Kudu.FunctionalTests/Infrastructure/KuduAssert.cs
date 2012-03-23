@@ -57,7 +57,7 @@ namespace Kudu.FunctionalTests.Infrastructure
             Assert.True(entries.Count > 0);
             var allDetails = entries.SelectMany(e => appManager.DeploymentManager.GetLogEntryDetailsAsync(id, e.Id).Result).ToList();
             var allEntries = entries.Concat(allDetails).ToList();
-            Assert.True(expectedMatches.All(match => allDetails.Any(e => e.Message.Contains(match))));
+            Assert.True(expectedMatches.All(match => allEntries.Any(e => e.Message.Contains(match))));
         }
     }
 }
