@@ -32,7 +32,7 @@
             <ReplaceWith>$(Version)</ReplaceWith>
         </RegexTransform>
         <RegexTransform Include="$(ProjectRoot)\Kudu.Setup\Kudu.wxs">
-            <Find><![CDATA[KuduProductVersion = "0.0.0.0"]]></Find>
+            <Find><![CDATA[KuduProductVersion = "\d+\.\d+\.\d+\.\d+"]]></Find>
             <ReplaceWith><![CDATA[KuduProductVersion = "$(Version)"]]></ReplaceWith>
         </RegexTransform>
     </ItemGroup>

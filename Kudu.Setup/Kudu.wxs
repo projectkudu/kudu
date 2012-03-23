@@ -4,7 +4,7 @@
 
   <!-- Common definitions -->
   <?ifndef KuduProductVersion?>
-  <?define KuduProductVersion = "0.0.0.0"?>
+  <?define KuduProductVersion = "0.6.0.0"?>
   <?endif?>
   <?ifndef KuduManufacturer?>
   <?define KuduManufacturer = "Outercurve Foundation"?>
