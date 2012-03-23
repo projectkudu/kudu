@@ -144,10 +144,6 @@
       <Component Id="LibGit2Sharp.dll" Guid="{0496B795-B6E6-4394-934E-A1016AD594F3}">
         <File Id="LibGit2Sharp.dll" Source="$(var.KuduServiceBinDir)\LibGit2Sharp.dll" />
       </Component>
-
-      <Component Id="Mercurial.Net.dll" Guid="{F2706686-C1DD-4168-996D-B27D02B636D8}">
-        <File Id="Mercurial.Net.dll" Source="$(var.KuduServiceBinDir)\Mercurial.Net.dll" />
-      </Component>
       
       <Component Id="git2.dll" Guid="{5DAFC5EE-CBD4-4664-9BE1-FD21B37D03BA}">
         <File Id="git2.dll" Source="$(var.KuduServiceBinDir)\git2.dll" />
@@ -243,7 +239,6 @@
       <ComponentRef Id="Ionic.Zip.dll" />
 
       <ComponentRef Id="LibGit2Sharp.dll" />
-      <ComponentRef Id="Mercurial.Net.dll" />
       
       <ComponentRef Id="git2.dll" />
 
