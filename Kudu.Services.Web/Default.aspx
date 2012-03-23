@@ -148,10 +148,6 @@
             <td><strong>Runtime Environment</strong></td>
             <td><a href="Env.aspx">View</a></td>
         </tr>
-        <tr>
-            <td><strong>Check Access</strong></td>
-            <td><a href="CheckAccess.aspx">Check permissions</a></td>
-        </tr>
     </table>
 </body>
 </html>
