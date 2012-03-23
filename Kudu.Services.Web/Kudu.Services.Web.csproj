@@ -120,7 +120,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="CheckAccess.aspx" />
     <Content Include="Env.aspx" />
     <Content Include="Default.aspx" />
     <Content Include="Global.asax" />
