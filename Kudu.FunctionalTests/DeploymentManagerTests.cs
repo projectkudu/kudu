@@ -106,6 +106,8 @@ namespace Kudu.FunctionalTests
 
                     Assert.True(nested.Count > 0);
 
+                    KuduAssert.VerifyLogOutput(appManager, result.Id, "Cleaning git repository");
+
                     // Can't delete the active one
                     var ex = KuduAssert.ThrowsUnwrapped<HttpRequestException>(() => appManager.DeploymentManager.DeleteAsync(result.Id).Wait());
                     Assert.Equal("Response status code does not indicate success: 409 (Conflict).", ex.Message);                    
