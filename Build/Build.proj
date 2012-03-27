@@ -13,6 +13,7 @@
         <ClientSiteTargetPath Condition="$(ClientSiteTargetPath) == ''">$(ArtifactsPath)\KuduWeb</ClientSiteTargetPath>
         <ClientSiteProject>$(ProjectRoot)\Kudu.Web\Kudu.Web.csproj</ClientSiteProject>
         <TestResultsPath>$(ArtifactsPath)\TestResults</TestResultsPath>
+        <SetupTargetPath>$(ArtifactsPath)\msi</SetupTargetPath>
     </PropertyGroup>
     
     <PropertyGroup>
@@ -88,5 +89,12 @@
                  Targets="Build" 
                  Properties="Configuration=$(Configuration);
                              MSBuildExtensionsPath32=$(ProjectRoot)\Kudu.Services.Web\msbuild" />
+    </Target>
+    
+    <Target Name="BuildSetup" DependsOnTargets="RunAll">
+        <MSBuild Projects="$(ProjectRoot)\Kudu.Setup.sln" 
+                 Targets="Build"
+                 Properties="OutputPath=$(SetupTargetPath);
+                             Configuration=$(Configuration);" />
     </Target>
 </Project>
