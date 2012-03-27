@@ -46,13 +46,13 @@ namespace Kudu.TestHarness
             try
             {
                 // Start measuring elapsed time
-                sw = Stopwatch.StartNew();  
-
-                // Do something
-                action();
+                sw = Stopwatch.StartNew();
 
                 // Create deployment manager and wait for the deployment to finish
                 deploymentManager.StatusChanged += handler;
+
+                // Do something
+                action();
 
                 timedOut = deployEvent.WaitOne(waitTimeout);                
             }

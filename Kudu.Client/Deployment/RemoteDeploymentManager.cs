@@ -25,7 +25,7 @@ namespace Kudu.Client.Deployment
                     Start();
                 }
 
-                _statusChanged += value;                
+                _statusChanged += value;
             }
             remove
             {
@@ -108,33 +108,33 @@ namespace Kudu.Client.Deployment
 
         private void TryStart(int retries)
         {
-            if (retries <= 0)
+            while (retries > 0)
             {
-                return;
-            }
-
-            if (_connection.MessageId == null)
-            {
-                // We never want to miss messages if we're just connecting
-                // This is for tests
-                _connection.MessageId = 0;
-            }
-
-            // REVIEW: Should this return task?
-            _connection.Start().ContinueWith(t =>
-            {
-                if (t.IsFaulted)
+                try
                 {
-                    Debug.WriteLine("KUDU ERROR: " + t.Exception.GetBaseException());
+                    _connection.Start().Wait();
+                    break;
+                }
+                catch (AggregateException agg)
+                {
+                    Debug.WriteLine("KUDU ERROR: " + agg.GetBaseException());
 
                     Stop();
 
-                    // Sleep for a second and retry
-                    Thread.Sleep(1000);
+                    retries--;
 
-                    TryStart(retries - 1);
+                    if (retries > 0)
+                    {
+                        // Sleep for a second and retry
+                        Thread.Sleep(1000);
+                    }
+                    else
+                    {
+                        // We failed to connect so throw
+                        throw;
+                    }
                 }
-            });
+            }
         }
 
         private void Stop()
