@@ -41,10 +41,6 @@
         <RegexTransform Items="@(RegexTransform)" />
     </Target>
     
-    <ItemGroup>
-        <TestProjects Include="$(ProjectRoot)\Kudu.Core.Test\bin\$(Configuration)\Kudu.Core.Test.dll" />
-    </ItemGroup>
-    
     <UsingTask AssemblyFile="$(XunitPath)xunit.runner.msbuild.dll"
                TaskName="Xunit.Runner.MSBuild.xunit" />
     
@@ -74,11 +70,15 @@
     </Target>
   
     <Target Name="RunTests">
-        <xunit Assembly="%(TestProjects.FullPath)" />
+        <xunit Assembly="$(ProjectRoot)\Kudu.Core.Test\bin\$(Configuration)\Kudu.Core.Test.dll" 
+               Xml="$(ProjectRoot)\Kudu.Core.Test\bin\$(Configuration)\XunitResuls.xml" 
+               Verbose="true" />
     </Target>
     
     <Target Name="RunFunctionalTests">
-        <xunit Assembly="$(ProjectRoot)\Kudu.FunctionalTests\bin\$(Configuration)\Kudu.FunctionalTests.dll"  Xml="..\artifacts\test.xunit.results.xml" Verbose="true" />
+        <xunit Assembly="$(ProjectRoot)\Kudu.FunctionalTests\bin\$(Configuration)\Kudu.FunctionalTests.dll" 
+               Xml="$(ProjectRoot)\Kudu.FunctionalTests\bin\$(Configuration)\XunitResuls.xml" 
+               Verbose="true" />
     </Target>
     
     <Target Name="Build" DependsOnTargets="CreateOutputPath">
