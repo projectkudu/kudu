@@ -12,6 +12,7 @@
         <ServiceSiteProject>$(ProjectRoot)\Kudu.Services.Web\Kudu.Services.Web.csproj</ServiceSiteProject>
         <ClientSiteTargetPath Condition="$(ClientSiteTargetPath) == ''">$(ArtifactsPath)\KuduWeb</ClientSiteTargetPath>
         <ClientSiteProject>$(ProjectRoot)\Kudu.Web\Kudu.Web.csproj</ClientSiteProject>
+        <TestResultsPath>$(ArtifactsPath)\TestResults</TestResultsPath>
     </PropertyGroup>
     
     <PropertyGroup>
@@ -48,6 +49,7 @@
     
     <Target Name="CreateOutputPath">
         <MakeDir Directories="$(ArtifactsPath)" Condition="!Exists('$(ArtifactsPath)')" />
+        <MakeDir Directories="$(TestResultsPath)" Condition="!Exists('$(TestResultsPath)')" />
     </Target>
 
     <Target Name="BuildSites">
@@ -69,15 +71,15 @@
                              MSBuildExtensionsPath32=$(ProjectRoot)\Kudu.Services.Web\msbuild"/>
     </Target>
   
-    <Target Name="RunTests">
+    <Target Name="RunTests" DependsOnTargets="CreateOutputPath">
         <xunit Assembly="$(ProjectRoot)\Kudu.Core.Test\bin\$(Configuration)\Kudu.Core.Test.dll" 
-               Xml="$(ProjectRoot)\Kudu.Core.Test\bin\$(Configuration)\XunitResuls.xml" 
+               Xml="$(TestResultsPath)\Kudu.Core.Test.XunitResults.xml"
                Verbose="true" />
     </Target>
     
-    <Target Name="RunFunctionalTests">
+    <Target Name="RunFunctionalTests" DependsOnTargets="CreateOutputPath">
         <xunit Assembly="$(ProjectRoot)\Kudu.FunctionalTests\bin\$(Configuration)\Kudu.FunctionalTests.dll" 
-               Xml="$(ProjectRoot)\Kudu.FunctionalTests\bin\$(Configuration)\XunitResuls.xml" 
+               Xml="$(TestResultsPath)\Kudu.FunctionalTests.XunitResults.xml"
                Verbose="true" />
     </Target>
     
