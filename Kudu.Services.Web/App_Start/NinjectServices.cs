@@ -32,15 +32,6 @@ namespace Kudu.Services.Web.App_Start
 {
     public static class NinjectServices
     {
-        private const string LockPath = "locks";
-        private const string DeploymentLockFile = "deployments.lock";
-        private const string InitLockFile = "init.lock";
-
-        private const string DeploymentCachePath = "deployments";
-        private const string TracePath = @"LogFiles\Git\trace";
-        private const string DeploySettingsPath = "settings.xml";
-        private const string TraceFile = "trace.xml";
-
         /// <summary>
         /// Starts the application
         /// </summary>
@@ -98,7 +89,7 @@ namespace Kudu.Services.Web.App_Start
 
             if (AppSettings.TraceEnabled)
             {
-                string tracePath = Path.Combine(environment.ApplicationRootPath, TracePath, TraceFile);
+                string tracePath = Path.Combine(environment.ApplicationRootPath, Constants.TracePath, Constants.TraceFile);
                 System.Func<ITracer> createTracerThunk = () => new Tracer(tracePath);
 
                 // First try to use the current request profiler if any, otherwise create a new one
@@ -117,9 +108,9 @@ namespace Kudu.Services.Web.App_Start
 
 
             // Setup the deployment lock
-            string lockPath = Path.Combine(environment.ApplicationRootPath, LockPath);
-            string deploymentLockPath = Path.Combine(lockPath, DeploymentLockFile);
-            string initLockPath = Path.Combine(lockPath, InitLockFile);
+            string lockPath = Path.Combine(environment.ApplicationRootPath, Constants.LockPath);
+            string deploymentLockPath = Path.Combine(lockPath, Constants.DeploymentLockFile);
+            string initLockPath = Path.Combine(lockPath, Constants.InitLockFile);
 
             var deploymentLock = new LockFile(kernel.Get<ITraceFactory>(), deploymentLockPath);
             var initLock = new LockFile(kernel.Get<ITraceFactory>(), initLockPath);
@@ -132,7 +123,7 @@ namespace Kudu.Services.Web.App_Start
             // 3. The profile dump
             var paths = new[] { 
                 environment.DeploymentCachePath,
-                Path.Combine(environment.ApplicationRootPath, TracePath),
+                Path.Combine(environment.ApplicationRootPath, Constants.TracePath),
             };
 
             kernel.Bind<DiagnosticsService>().ToMethod(context => new DiagnosticsService(paths));
@@ -146,7 +137,10 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<ISiteBuilderFactory>().To<SiteBuilderFactory>()
                                              .InRequestScope();
 
-            kernel.Bind<IServerRepository>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, initLock, context.Kernel.Get<ITraceFactory>()))
+            kernel.Bind<IServerRepository>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, 
+                                                                                  initLock,
+                                                                                  context.Kernel.Get<IDeploymentCommandGenerator>(),
+                                                                                  context.Kernel.Get<ITraceFactory>()))
                                             .InRequestScope();
 
             kernel.Bind<IDeploymentManager>().To<DeploymentManager>()
@@ -154,39 +148,17 @@ namespace Kudu.Services.Web.App_Start
                                              .OnActivation(SubscribeForDeploymentEvents);
 
             // Git server
-            kernel.Bind<IDeploymentManagerFactory>().ToMethod(context => GetDeploymentManagerFactory(environment, initLock, deploymentLock, propertyProvider, context.Kernel.Get<ITraceFactory>()));
+            kernel.Bind<IDeploymentCommandGenerator>().To<DeploymentCommandGenerator>();
 
-            kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, initLock, context.Kernel.Get<ITraceFactory>()))
+            kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, 
+                                                                           initLock, 
+                                                                           context.Kernel.Get<IDeploymentCommandGenerator>(), 
+                                                                           context.Kernel.Get<ITraceFactory>()))
                                      .InRequestScope();
- 
+
             // Editor
             kernel.Bind<IProjectSystem>().ToMethod(context => GetEditorProjectSystem(environment, context))
                                          .InRequestScope();
-        }
-
-        private static IDeploymentManagerFactory GetDeploymentManagerFactory(IEnvironment environment,
-                                                                             IOperationLock initLock,
-                                                                             IOperationLock deploymentLock,
-                                                                             IBuildPropertyProvider propertyProvider,
-                                                                             ITraceFactory traceFactory)
-        {
-            return new DeploymentManagerFactory(() =>
-            {
-                var serverRepository = new GitExeServer(environment.DeploymentRepositoryPath, initLock, traceFactory);
-                var fileSystem = new FileSystem();
-                var siteBuilderFactory = new SiteBuilderFactory(propertyProvider, environment);
-
-                var deploymentManager = new DeploymentManager(serverRepository,
-                                                              siteBuilderFactory,
-                                                              environment,
-                                                              fileSystem,
-                                                              traceFactory,
-                                                              deploymentLock);
-
-                SubscribeForDeploymentEvents(deploymentManager);
-
-                return deploymentManager;
-            });
         }
 
         private static IProjectSystem GetEditorProjectSystem(IEnvironment environment, IContext context)
@@ -196,32 +168,28 @@ namespace Kudu.Services.Web.App_Start
 
         private static string GetSettingsPath(IEnvironment environment)
         {
-            return Path.Combine(environment.DeploymentCachePath, DeploySettingsPath);
+            return Path.Combine(environment.DeploymentCachePath, Constants.DeploySettingsPath);
         }
 
         private static IEnvironment GetEnvironment()
         {
-            string targetRoot = PathResolver.ResolveRootPath();
-
-            string site = HttpRuntime.AppDomainAppVirtualPath.Trim('/');
-            string root = Path.Combine(targetRoot, site);
+            string root = PathResolver.ResolveRootPath();
             string deployPath = Path.Combine(root, Constants.WebRoot);
-            string deployCachePath = Path.Combine(root, DeploymentCachePath);
+            string deployCachePath = Path.Combine(root, Constants.DeploymentCachePath);
             string deploymentRepositoryPath = Path.Combine(root, Constants.RepositoryPath);
             string tempPath = Path.GetTempPath();
             string deploymentTempPath = Path.Combine(tempPath, Constants.RepositoryPath);
 
-            return new Environment(site,
-                                   root,
+            return new Environment(root,
                                    tempPath,
                                    () => deploymentRepositoryPath,
-                                   () => ResolveRepositoryPath(site),
+                                   () => ResolveRepositoryPath(),
                                    deployPath,
                                    deployCachePath,
                                    AppSettings.NuGetCachePath);
         }
 
-        private static string ResolveRepositoryPath(string site)
+        private static string ResolveRepositoryPath()
         {
             string path = PathResolver.ResolveDevelopmentPath();
 
@@ -230,7 +198,7 @@ namespace Kudu.Services.Web.App_Start
                 return null;
             }
 
-            return Path.Combine(path, site, Constants.WebRoot);
+            return Path.Combine(path, Constants.WebRoot);
         }
 
         private static void SubscribeForDeploymentEvents(IDeploymentManager deploymentManager)

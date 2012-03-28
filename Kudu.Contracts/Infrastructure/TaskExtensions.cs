@@ -60,7 +60,7 @@ namespace Kudu.Contracts.Infrastructure
                     Trace.TraceError(t.Exception.Message);
                     handler(t.Exception);
                 }
-            }, TaskContinuationOptions.OnlyOnFaulted);
+            }, TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
         }
 
         public static Task Then<TInnerResult>(this Task<TInnerResult> task, Action<TInnerResult> continuation, CancellationToken cancellationToken = default(CancellationToken))

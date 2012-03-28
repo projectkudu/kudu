@@ -7,6 +7,7 @@ namespace Kudu.Core.SourceControl.Git
         public GitExecutable(string workingDirectory)
             : base(PathUtility.ResolveGitPath(), workingDirectory)
         {
+            //EnvironmentVariables[KnownVariables.GIT_DIR] = workingDirectory;
         }
 
         public void SetTraceLevel(int level)
@@ -37,6 +38,7 @@ namespace Kudu.Core.SourceControl.Git
             public const string GIT_CURL_VERBOSE = "GIT_CURL_VERBOSE";
             public const string GIT_TRACE = "GIT_TRACE";
             public const string GIT_SSL_NO_VERIFY = "GIT_SSL_NO_VERIFY";
+            public const string GIT_DIR = "GIT_DIR";
         }
     }
 }

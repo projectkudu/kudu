@@ -10,6 +10,5 @@ namespace Kudu.Core
         string ApplicationRootPath { get; }
         string NuGetCachePath { get; }
         string TempPath { get; }
-        string AppName { get; }
     }
 }

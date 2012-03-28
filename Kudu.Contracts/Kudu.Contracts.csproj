@@ -51,6 +51,7 @@
     <Compile Include="Commands\ICommandExecutor.cs" />
     <Compile Include="Deployment\DeployResult.cs" />
     <Compile Include="Deployment\DeployStatus.cs" />
+    <Compile Include="Deployment\IDeploymentCommandGenerator.cs" />
     <Compile Include="Deployment\IDeploymentManager.cs" />
     <Compile Include="Deployment\IDeploymentManagerFactory.cs" />
     <Compile Include="Deployment\LogEntry.cs" />
@@ -61,6 +62,7 @@
     <Compile Include="Infrastructure\IOperationLock.cs" />
     <Compile Include="Infrastructure\LockExtensions.cs" />
     <Compile Include="Infrastructure\TaskExtensions.cs" />
+    <Compile Include="SourceControl\IDeploymentRepository.cs" />
     <Compile Include="SourceControl\RepositoryConfiguration.cs" />
     <Compile Include="Tracing\ITracer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

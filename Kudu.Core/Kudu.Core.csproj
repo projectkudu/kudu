@@ -69,6 +69,7 @@
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="Commands\CommandExecutor.cs" />
+    <Compile Include="Deployment\CascadeLogger.cs" />
     <Compile Include="Deployment\DeploymentConfiguration.cs" />
     <Compile Include="Deployment\DeploymentContext.cs" />
     <Compile Include="Deployment\DeploymentHelper.cs" />
@@ -78,12 +79,14 @@
     <Compile Include="Deployment\ManifestWriterExtensions.cs" />
     <Compile Include="Deployment\MsBuildSiteBuilder.cs" />
     <Compile Include="Deployment\NpmExecutable.cs" />
+    <Compile Include="Deployment\NullLogger.cs" />
     <Compile Include="Infrastructure\DisposableAction.cs" />
     <Compile Include="Infrastructure\IniFile.cs" />
     <Compile Include="Infrastructure\LockFile.cs" />
     <Compile Include="Infrastructure\OperationManager.cs" />
     <Compile Include="Infrastructure\VsHelper.cs" />
     <Compile Include="Infrastructure\XmlUtility.cs" />
+    <Compile Include="SourceControl\Git\GitDeploymentRepository.cs" />
     <Compile Include="Tracing\ITraceFactory.cs" />
     <Compile Include="Tracing\NullTracer.cs" />
     <Compile Include="Tracing\NullTracerFactory.cs" />

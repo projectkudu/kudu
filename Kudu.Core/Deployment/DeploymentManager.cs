@@ -4,23 +4,23 @@ using System.Globalization;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
-using Kudu.Contracts;
 using Kudu.Contracts.Infrastructure;
-using Kudu.Core.Infrastructure;
-using Kudu.Core.Tracing;
-using Kudu.Core.SourceControl;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Infrastructure;
+using Kudu.Core.SourceControl;
+using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Deployment
 {
     public class DeploymentManager : IDeploymentManager
     {
-        private readonly IServerRepository _serverRepository;
+        private readonly IDeploymentRepository _serverRepository;
         private readonly ISiteBuilderFactory _builderFactory;
         private readonly IEnvironment _environment;
         private readonly IFileSystem _fileSystem;
         private readonly ITraceFactory _traceFactory;
         private readonly IOperationLock _deploymentLock;
+        private readonly ILogger _globalLogger;
 
         private const string StatusFile = "status.xml";
         private const string LogFile = "log.xml";
@@ -29,12 +29,13 @@ namespace Kudu.Core.Deployment
 
         public event Action<DeployResult> StatusChanged;
 
-        public DeploymentManager(IServerRepository serverRepository,
+        public DeploymentManager(IDeploymentRepository serverRepository,
                                  ISiteBuilderFactory builderFactory,
                                  IEnvironment environment,
                                  IFileSystem fileSystem,
                                  ITraceFactory traceFactory,
-                                 IOperationLock deploymentLock)
+                                 IOperationLock deploymentLock,
+                                 ILogger globalLogger)
         {
             _serverRepository = serverRepository;
             _builderFactory = builderFactory;
@@ -42,6 +43,7 @@ namespace Kudu.Core.Deployment
             _fileSystem = fileSystem;
             _traceFactory = traceFactory;
             _deploymentLock = deploymentLock;
+            _globalLogger = globalLogger ?? NullLogger.Instance;
         }
 
         private string ActiveDeploymentId
@@ -222,6 +224,8 @@ namespace Kudu.Core.Deployment
                     else
                     {
                         tracer.Trace("Non-master branch deployed {0}", pushInfo.Branch.Name);
+
+                        _globalLogger.Log("Non-master branch deployed {0}", pushInfo.Branch.Name);
                     }
 
                     ReportCompleted();
@@ -235,6 +239,8 @@ namespace Kudu.Core.Deployment
                 if (IsActive(id))
                 {
                     tracer.Trace("Deployment '{0}' already active", id);
+
+                    _globalLogger.Log("Deployment '{0}' already active", id);
 
                     ReportCompleted();
                     deployStep.Dispose();
@@ -255,6 +261,8 @@ namespace Kudu.Core.Deployment
             }
             catch (Exception ex)
             {
+                _globalLogger.Log(ex);
+
                 tracer.TraceError(ex);
 
                 if (deployStep != null)
@@ -377,6 +385,8 @@ namespace Kudu.Core.Deployment
                 }
                 catch (Exception ex)
                 {
+                    _globalLogger.Log(ex);
+
                     tracer.TraceError(ex);
 
                     innerLogger.Log(ex);
@@ -412,6 +422,8 @@ namespace Kudu.Core.Deployment
                        })
                        .Catch(ex =>
                        {
+                           _globalLogger.Log(ex.GetBaseException());
+
                            // End the build step
                            buildStep.Dispose();
 
@@ -610,7 +622,9 @@ namespace Kudu.Core.Deployment
 
         private ILogger GetLogger(string id)
         {
-            return new XmlLogger(_fileSystem, GetLogPath(id));
+            var path = GetLogPath(id);
+            var xmlLogger = new XmlLogger(_fileSystem, path);
+            return new CascadeLogger(xmlLogger, _globalLogger);
         }
 
         private string GetStatusFilePath(string id, bool ensureDirectory = true)

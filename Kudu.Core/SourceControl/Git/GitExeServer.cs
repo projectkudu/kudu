@@ -5,6 +5,7 @@ using System.Linq;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
@@ -16,10 +17,11 @@ namespace Kudu.Core.SourceControl.Git
         private readonly ITraceFactory _traceFactory;
         private readonly GitExeRepository _repository;
         private readonly IOperationLock _initLock;
+        private readonly IDeploymentCommandGenerator _deploymentCommandGenerator;
 
         private static readonly TimeSpan _initTimeout = TimeSpan.FromMinutes(8);
 
-        public GitExeServer(string path, IOperationLock initLock, ITraceFactory traceFactory)
+        public GitExeServer(string path, IOperationLock initLock, IDeploymentCommandGenerator deploymentCommandGenerator, ITraceFactory traceFactory)
         {
             _gitExe = new GitExecutable(path);
             _gitExe.SetTraceLevel(2);
@@ -27,6 +29,7 @@ namespace Kudu.Core.SourceControl.Git
             _repository = new GitExeRepository(path, traceFactory);
             _repository.SetTraceLevel(2);
             _initLock = initLock;
+            _deploymentCommandGenerator = deploymentCommandGenerator;
         }
 
         private string PostReceiveHookPath
@@ -45,12 +48,9 @@ namespace Kudu.Core.SourceControl.Git
             }
         }
 
-        public string CurrentId
+        public void Clean()
         {
-            get
-            {
-                return _repository.CurrentId;
-            }
+            _repository.Clean();
         }
 
         public bool Exists
@@ -78,11 +78,6 @@ namespace Kudu.Core.SourceControl.Git
             {
                 Advertise(tracer, "upload-pack", output);
             }
-        }
-
-        public void Clean()
-        {
-            _repository.Clean();
         }
 
         public bool Receive(Stream inputStream, Stream outputStream)
@@ -117,36 +112,6 @@ namespace Kudu.Core.SourceControl.Git
         private void ServiceRpc(ITracer tracer, string serviceName, Stream input, Stream output)
         {
             _gitExe.Execute(tracer, input, output, @"{0} --stateless-rpc ""{1}""", serviceName, _gitExe.WorkingDirectory);
-        }
-
-        public PushInfo GetPushInfo()
-        {
-            string path = PushInfoPath;
-
-            if (!File.Exists(path))
-            {
-                return null;
-            }
-
-            string[] pushDetails = File.ReadAllText(path).Split(' ');
-
-            if (pushDetails.Length == 3)
-            {
-                string oldId = pushDetails[0];
-                string newId = pushDetails[1];
-                string reference = pushDetails[2];
-                string branch = reference.Split('/').Last().Trim();
-                string fullNewId = _repository.Resolve(branch);
-
-                return new PushInfo
-                {
-                    OldId = oldId,
-                    NewId = newId,
-                    Branch = new GitBranch(fullNewId, branch, false)
-                };
-            }
-
-            return null;
         }
 
         public ChangeSet Initialize(RepositoryConfiguration configuration, string path)
@@ -220,32 +185,20 @@ namespace Kudu.Core.SourceControl.Git
                 {
                     FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(PostReceiveHookPath));
 
-                    File.WriteAllText(PostReceiveHookPath, @"#!/bin/sh
+                    string content = @"#!/bin/sh
 read i
 echo $i > pushinfo
-");
+";
+                    string command = "\n" + _deploymentCommandGenerator.GetDeploymentCommand();
+
+                    File.WriteAllText(PostReceiveHookPath, content + command);
                 }
             }
-        }
-
-        public ChangeSet GetChangeSet(string id)
-        {
-            return _repository.GetChangeSet(id);
         }
 
         public RepositoryType GetRepositoryType()
         {
             return RepositoryType.Git;
-        }
-
-        public void Update(string id)
-        {
-            _repository.Update(id);
-        }
-
-        public void Update()
-        {
-            _repository.Update();
         }
     }
 }
