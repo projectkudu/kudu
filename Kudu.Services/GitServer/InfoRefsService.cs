@@ -97,21 +97,7 @@ namespace Kudu.Services.GitServer
                     _gitServer.AdvertiseReceivePack(memoryStream);
                 }
 
-                if (memoryStream.Length < 100)
-                {
-                    _tracer.TraceWarning("Unexpected number of bytes written. {0} bytes", memoryStream.Length);                   
-                }
-                else
-                {
-                    _tracer.Trace("Writing {0} bytes", memoryStream.Length);
-                }
-
-                // TODO: Should we only do this in debug mode?
-                _tracer.Trace("Git stream", new Dictionary<string, string>
-                {
-                    { "type", "gitStream" },
-                    { "output", Encoding.UTF8.GetString(memoryStream.ToArray()) }
-                });
+                _tracer.Trace("Writing {0} bytes", memoryStream.Length);
 
                 HttpContent content = memoryStream.AsContent();
 

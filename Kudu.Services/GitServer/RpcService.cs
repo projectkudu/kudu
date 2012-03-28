@@ -135,13 +135,6 @@ namespace Kudu.Services.GitServer
         {
             _tracer.Trace("Writing {0} bytes", stream.Length);
 
-            // TODO: Should we only do this in debug mode?
-            _tracer.Trace("Git stream", new Dictionary<string, string>
-            {
-                { "type", "gitStream" },
-                { "output", Encoding.UTF8.GetString(stream.ToArray()) }
-            });
-
             HttpContent content = stream.AsContent();
 
             content.Headers.ContentType = new MediaTypeHeaderValue(mediaType);

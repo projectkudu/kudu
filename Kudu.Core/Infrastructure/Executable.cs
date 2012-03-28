@@ -54,8 +54,7 @@ namespace Kudu.Core.Infrastructure
 
                 tracer.Trace("Process dump", new Dictionary<string, string>
                 {
-                    { "outStream", output },
-                    { "errorStream", error },
+                    { "exitCode", process.ExitCode.ToString() },
                     { "type", "processOutput" }
                 });
 
@@ -79,23 +78,14 @@ namespace Kudu.Core.Infrastructure
                 var process = CreateProcess(arguments, args);
 
                 Func<StreamReader, string> reader = (StreamReader streamReader) => streamReader.ReadToEnd();
-                Action<Stream, Stream, bool, Func<IDisposable>> copyStream = (Stream from, Stream to, bool closeAfterCopy, Func<IDisposable> step) =>
+                Action<Stream, Stream, bool> copyStream = (Stream from, Stream to, bool closeAfterCopy) =>
                 {
                     try
                     {
-                        using (step())
+                        from.CopyTo(to);
+                        if (closeAfterCopy)
                         {
-                            from.CopyTo(to);
-                            if (closeAfterCopy)
-                            {
-                                to.Close();
-
-                                tracer.Trace("Stream closed after copy");
-                            }
-                            else
-                            {
-                                tracer.Trace("Stream left open after copy");
-                            }
+                            to.Close();
                         }
                     }
                     catch (Exception ex)
@@ -115,7 +105,6 @@ namespace Kudu.Core.Infrastructure
                     inputResult = copyStream.BeginInvoke(input,
                                                          process.StandardInput.BaseStream,
                                                          true,
-                                                         () => tracer.Step("Copying input stream to stdin."),
                                                          null,
                                                          null);
                 }
@@ -124,7 +113,6 @@ namespace Kudu.Core.Infrastructure
                 IAsyncResult outputResult = copyStream.BeginInvoke(process.StandardOutput.BaseStream,
                                                                    output,
                                                                    false,
-                                                                   () => tracer.Step("Copying stdout to output stream."),
                                                                    null,
                                                                    null);
 
@@ -143,8 +131,7 @@ namespace Kudu.Core.Infrastructure
 
                 tracer.Trace("Process dump", new Dictionary<string, string>
                 {
-                    { "outStream", "" },
-                    { "errorStream", error },
+                    { "exitCode", process.ExitCode.ToString() },
                     { "type", "processOutput" }
                 });
 
