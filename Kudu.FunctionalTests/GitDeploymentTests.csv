@@ -12,3 +12,4 @@ ProjectWithNoSolution,ProjectWithNoSolution,https://github.com/KuduApps/ProjectW
 HiddenFoldersAndFiles,HiddenFoldersAndFiles,https://github.com/KuduApps/HiddenFoldersAndFiles,https://github.com/KuduApps/HiddenFoldersAndFiles.git,"master",Hello World,200,false,""
 WebSiteInSolution,WebSiteInSolution,https://github.com/KuduApps/WebSiteInSolution,https://github.com/KuduApps/WebSiteInSolution.git,"master","SomeDummyLibrary.Class1",200,false,""
 kuduglob,kuduglob,https://github.com/KuduApps/kuduglob,https://github.com/KuduApps/kuduglob.git,"master","ASP.NET MVC",200,false,"酷度"
+AppWithPostBuildEvent,AppWithPostBuildEvent,https://github.com/KuduApps/AppWithPostBuildEvent,https://github.com/KuduApps/AppWithPostBuildEvent.git,"master","Hello Kudu",200,false,"Deployment successful"
