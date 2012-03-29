@@ -39,7 +39,7 @@ namespace Kudu.FunctionalTests
                         KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText, expectedResponseCode);
                         if (!String.IsNullOrEmpty(verificationLogText.Trim()))
                         {
-                            KuduAssert.VerifyLogOutput(appManager, results[0].Id, verificationLogText);
+                            KuduAssert.VerifyLogOutput(appManager, results[0].Id, verificationLogText.Trim());
                         }
                     });
                 }
