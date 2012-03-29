@@ -114,7 +114,10 @@ namespace Kudu.Services.Deployment
                     var deployments = _deploymentManager.GetLogEntries(id).ToList();
                     foreach (var entry in deployments)
                     {
-                        entry.DetailsUrl = UriHelper.MakeRelative(request.RequestUri, entry.Id);
+                        if (entry.HasDetails)
+                        {
+                            entry.DetailsUrl = UriHelper.MakeRelative(request.RequestUri, entry.Id);
+                        }
                     }
 
                     return deployments;

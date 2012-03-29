@@ -40,7 +40,7 @@
         <i class="@icon"></i>
         @log.LogTime <span>@log.Message </span>
     }
-    @if (!verbose)
+    @if (log.DetailsUrl != null)
     { 
         <a href="@Url.RouteUrl("DeploymentLogVerbose", new { slug = ViewBag.slug, id = ViewBag.id, logId = log.Id })">Details</a>
     }
