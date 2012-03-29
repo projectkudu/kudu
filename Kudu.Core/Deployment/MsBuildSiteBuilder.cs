@@ -18,7 +18,10 @@ namespace Kudu.Core.Deployment
         {
             _propertyProvider = propertyProvider;
             _msbuildExe = new Executable(PathUtility.ResolveMSBuildPath(), workingDirectory);
-            _msbuildExe.EnvironmentVariables[NuGetCachePathKey] = nugetCachePath;
+
+            // Disable this for now
+            // _msbuildExe.EnvironmentVariables[NuGetCachePathKey] = nugetCachePath;
+
             _tempPath = tempPath;
         }
 
