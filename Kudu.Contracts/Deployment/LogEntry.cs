@@ -21,6 +21,8 @@ namespace Kudu.Core.Deployment
         [DataMember(Name = "details_url")]
         public Uri DetailsUrl { get; set; }
 
+        public bool HasDetails { get; set; }
+
         public LogEntry()
         {
         }

@@ -102,7 +102,12 @@ namespace Kudu.FunctionalTests
 
                     Assert.True(entries.Count > 0);
 
-                    var nested = appManager.DeploymentManager.GetLogEntryDetailsAsync(result.Id, entries[2].Id).Result.ToList();
+                    // First entry is always null
+                    Assert.Null(entries[0].DetailsUrl);
+
+                    var entryWithDetails = entries.First(e => e.DetailsUrl != null);
+
+                    var nested = appManager.DeploymentManager.GetLogEntryDetailsAsync(result.Id, entryWithDetails.Id).Result.ToList();
 
                     Assert.True(nested.Count > 0);
 

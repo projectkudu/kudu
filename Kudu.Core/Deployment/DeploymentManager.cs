@@ -93,7 +93,16 @@ namespace Kudu.Core.Deployment
 
                 VerifyDeployment(id);
 
-                return new XmlLogger(_fileSystem, path).GetLogEntries().ToList();
+                var logger = new XmlLogger(_fileSystem, path);
+                List<LogEntry> entries = logger.GetLogEntries().ToList();
+
+                // Determine if there's details to show at all
+                foreach (var e in entries)
+                {
+                    e.HasDetails = logger.GetLogEntryDetails(e.Id).Any();
+                }
+
+                return entries;
             }
         }
 
@@ -111,7 +120,9 @@ namespace Kudu.Core.Deployment
 
                 VerifyDeployment(id);
 
-                return new XmlLogger(_fileSystem, path).GetLogEntryDetails(entryId).ToList();
+                var logger = new XmlLogger(_fileSystem, path);
+
+                return logger.GetLogEntryDetails(entryId).ToList();
             }
         }
 
