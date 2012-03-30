@@ -25,7 +25,7 @@
         <!-- Build number is of the format (CurrentYear - VersionStartYear + 1)(2 digit month)(2 digit day) -->
         <Build>$([MSBuild]::Add(1, $([MSBuild]::Subtract($([System.DateTime]::Now.Year), $(VersionStartYear)))))$([System.DateTime]::Now.ToString("MMdd"))</Build>
         <Revision>$(BUILD_NUMBER)</Revision>
-        <Version>$(MajorVersion).$(MinorVersion).$(Build).$(Revision)</Version>
+        <Version>$(MajorVersion).$(MinorVersion).$(Revision).$(Build)</Version>
     </PropertyGroup>
     
    <ItemGroup>
