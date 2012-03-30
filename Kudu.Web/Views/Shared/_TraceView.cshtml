@@ -89,17 +89,23 @@
                 }
                 break;
             case "processOutput":
-                var os = element.Attribute("outStream").Value;
-                var es = element.Attribute("errorStream").Value;
-                if (!String.IsNullOrEmpty(os))
+                var ose = element.Attribute("outStream");
+                var ese = element.Attribute("errorStream");
+                var ece = element.Attribute("exitCode");
+                if (ose != null && !String.IsNullOrEmpty(ose.Value))
                 { 
                 <div class="out-stream">output stream</div>
-                <pre>@os</pre>
+                <pre>@ose.Value</pre>
                 }
-                if (!String.IsNullOrEmpty(es))
+                if (ese != null && !String.IsNullOrEmpty(ese.Value))
                 { 
                 <div class="err-stream">error stream</div>
-                <pre>@es</pre>
+                <pre>@ese.Value</pre>
+                }
+                if (ece != null) 
+                {
+                var cls = ece.Value == "0" ? "badge-success" : "badge-error";
+                <span class="badge @cls">@ece.Value</span>
                 }
                 break;
             case "gitStream":
@@ -128,15 +134,15 @@
 }
 
 @helper RenderElements(IEnumerable<XElement> elements)
-{
-        var filtered = elements.Where(e => e.Attribute("date") != null);
-        var sorted = filtered.OrderBy(e => DateTime.ParseExact(e.Attribute("date").Value, "MM/dd H:mm:ss", System.Globalization.CultureInfo.CurrentCulture));
-        foreach (var e in sorted)
-        {
+    {
+    var filtered = elements.Where(e => e.Attribute("date") != null);
+    var sorted = filtered.OrderBy(e => DateTime.ParseExact(e.Attribute("date").Value, "MM/dd H:mm:ss", System.Globalization.CultureInfo.CurrentCulture));
+    foreach (var e in sorted)
+    {
     <ul>
         @RenderElement(e)
     </ul>
-        }
+    }
 }
 
 
