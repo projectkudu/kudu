@@ -14,7 +14,7 @@
   <?define KuduServiceBinDir = "$(var.KuduServiceDir)\bin"?>
   <?define KuduServiceMsBuildDir = "$(var.KuduServiceDir)\msbuild\Microsoft\VisualStudio\v10.0"?>
 
-  <Product Id="82fa4608-ca6f-4d5e-9fa1-906987106ab9"
+  <Product Id="*"
            Name="Kudu.Setup"
            Language="1033"
            Version="$(var.KuduProductVersion)"
@@ -26,7 +26,7 @@
              InstallScope="perMachine"
              Description="Kudu services" />
 
-    <MajorUpgrade DowngradeErrorMessage="A newer version of Kudu Service was detected in the machine, this installation will abort." />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Kudu Service was detected in the machine, this installation will abort." Schedule="afterInstallInitialize" />
 
     <Media Id="1"
            Cabinet="KuduService.cab"
