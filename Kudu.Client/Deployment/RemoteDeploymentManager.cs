@@ -52,7 +52,7 @@ namespace Kudu.Client.Deployment
             }
             if (excludeFailed)
             {
-                url += String.Format("&$filter=Status ne {0}", (int)DeployStatus.Failed);
+                url += "&$filter=LastSuccessEndTime ne null";
             }
 
             return _client.GetJsonAsync<IEnumerable<DeployResult>>(url);
