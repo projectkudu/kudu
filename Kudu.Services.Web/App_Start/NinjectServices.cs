@@ -12,7 +12,6 @@ using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Tracing;
 using Kudu.Services.Authorization;
-using Kudu.Services.Deployment;
 using Kudu.Services.Performance;
 using Kudu.Services.Web.Services;
 using Kudu.Services.Web.Tracing;
@@ -20,9 +19,6 @@ using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 using Ninject;
 using Ninject.Activation;
 using Ninject.Extensions.Wcf;
-using SignalR;
-using SignalR.Hosting.AspNet;
-using SignalR.Infrastructure;
 using XmlSettings;
 
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Start")]
@@ -128,7 +124,6 @@ namespace Kudu.Services.Web.App_Start
 
             kernel.Bind<DiagnosticsService>().ToMethod(context => new DiagnosticsService(paths));
 
-
             // Deployment Service
             kernel.Bind<ISettings>().ToMethod(context => new XmlSettings.Settings(GetSettingsPath(environment)));
 
@@ -143,9 +138,12 @@ namespace Kudu.Services.Web.App_Start
                                                                                   context.Kernel.Get<ITraceFactory>()))
                                             .InRequestScope();
 
+            kernel.Bind<ILogger>().ToConstant(NullLogger.Instance);
             kernel.Bind<IDeploymentManager>().To<DeploymentManager>()
-                                             .InRequestScope()
-                                             .OnActivation(SubscribeForDeploymentEvents);
+                                             .InRequestScope();
+
+            kernel.Bind<IDeploymentRepository>().ToMethod(context => new GitDeploymentRepository(environment.DeploymentRepositoryPath, context.Kernel.Get<ITraceFactory>()))
+                                                .InRequestScope();
 
             // Git server
             kernel.Bind<IDeploymentCommandGenerator>().To<DeploymentCommandGenerator>();
@@ -199,18 +197,6 @@ namespace Kudu.Services.Web.App_Start
             }
 
             return Path.Combine(path, Constants.WebRoot);
-        }
-
-        private static void SubscribeForDeploymentEvents(IDeploymentManager deploymentManager)
-        {
-            IConnection connection = AspNetHost.DependencyResolver
-                                               .Resolve<IConnectionManager>()
-                                               .GetConnection<DeploymentStatusConnection>();
-
-            deploymentManager.StatusChanged += status =>
-            {
-                connection.Broadcast(status);
-            };
         }
 
         private class DeploymentManagerFactory : IDeploymentManagerFactory

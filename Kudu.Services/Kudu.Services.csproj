@@ -108,6 +108,7 @@
     <Compile Include="Editor\FilesService.cs" />
     <Compile Include="GitServer\Helpers.cs" />
     <Compile Include="GitServer\InfoRefsService.cs" />
+    <Compile Include="GitServer\ReceivePackService.cs" />
     <Compile Include="GitServer\RpcService.cs" />
     <Compile Include="Infrastructure\IServerConfiguration.cs" />
     <Compile Include="Diagnostics\DiagnosticsService.cs" />

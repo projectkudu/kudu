@@ -19,11 +19,6 @@ namespace Kudu.Console
                 return 1;
             }
 
-            while (!System.Diagnostics.Debugger.IsAttached)
-            {
-
-            }
-
             System.Environment.SetEnvironmentVariable("GIT_DIR", null, System.EnvironmentVariableTarget.Process);
 
             var appRoot = args[0];

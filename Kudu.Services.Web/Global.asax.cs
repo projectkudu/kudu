@@ -12,6 +12,7 @@ using Kudu.Services.Performance;
 using Kudu.Services.Settings;
 using Kudu.Services.SourceControl;
 using Kudu.Services.Web;
+using Kudu.Services.Web.Infrastruture;
 using Kudu.Services.Web.Tracing;
 using Microsoft.ApplicationServer.Http.Activation;
 using Ninject;
@@ -30,22 +31,23 @@ namespace Kudu.Services
             routes.MapConnection<DeploymentStatusConnection>("DeploymentStatus", "deployments/status/{*operation}");
             // routes.MapConnection<LiveCommandStatusHandler>("LiveCommandStatus", "live/command/status/{*operation}");
             // routes.MapConnection<DevCommandStatusHandler>("DevCommandStatus", "dev/command/status/{*operation}");
+            routes.MapHandler<ReceivePackService>("git-receive-pack", configuration.GitServerRoot + "/git-receive-pack");
 
-            // Source control servers            
+            // Source control servers
             // Git
-            MapServiceRoute<InfoRefsService>(configuration.GitServerRoot + "/info/refs", factory);
-            MapServiceRoute<RpcService>(configuration.GitServerRoot, factory);
+            MapServiceRoute<InfoRefsService>(routes, configuration.GitServerRoot + "/info/refs", factory);
+            MapServiceRoute<RpcService>(routes, configuration.GitServerRoot, factory);
 
 
             // Source control interaction
-            MapServiceRoute<DeploymentSourceControlService>("live/scm", factory);
+            MapServiceRoute<DeploymentSourceControlService>(routes, "live/scm", factory);
 
             // Deployment
-            MapServiceRoute<DeploymentService>("deployments", factory);
+            MapServiceRoute<DeploymentService>(routes, "deployments", factory);
 
             // Files            
             // MapServiceRoute<FilesService>("dev/files", factory);
-            var liveFilesRoute = MapServiceRoute<FilesService>("live/files", factory);
+            var liveFilesRoute = MapServiceRoute<FilesService>(routes, "live/files", factory);
             liveFilesRoute.Defaults = new RouteValueDictionary(new { live = true });
 
             // Commands
@@ -56,17 +58,17 @@ namespace Kudu.Services
             if (AppSettings.SettingsEnabled)
             {
                 // Settings
-                MapServiceRoute<AppSettingsService>("appsettings", factory);
-                MapServiceRoute<ConnectionStringsService>("connectionstrings", factory);
+                MapServiceRoute<AppSettingsService>(routes, "appsettings", factory);
+                MapServiceRoute<ConnectionStringsService>(routes, "connectionstrings", factory);
             }
 
-            MapServiceRoute<DiagnosticsService>("dump", factory);
+            MapServiceRoute<DiagnosticsService>(routes, "dump", factory);
         }
 
-        private static ServiceRoute MapServiceRoute<T>(string url, HttpServiceHostFactory factory)
+        private static ServiceRoute MapServiceRoute<T>(RouteCollection routes, string url, HttpServiceHostFactory factory)
         {
             var route = new ServiceRoute(url, factory, typeof(T));
-            RouteTable.Routes.Add(route);
+            routes.Add(route);
             return route;
         }
 
