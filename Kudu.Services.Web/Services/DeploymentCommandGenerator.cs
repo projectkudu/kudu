@@ -17,8 +17,9 @@ namespace Kudu.Services.Web.Services
 
         public string GetDeploymentCommand()
         {
-            return String.Format(@"""C:/dev/github/kudu/Kudu.Console/bin/Debug/kudu.exe"" ""{0}"" ""{1}""", 
-                                 _environment.ApplicationRootPath, 
+            return String.Format(@"""{0}"" ""{1}"" ""{2}""",
+                                 Path.Combine(HttpRuntime.AppDomainAppPath, @"bin", "kudu.exe"),
+                                 _environment.ApplicationRootPath,
                                  Path.Combine(HttpRuntime.AppDomainAppPath, "msbuild"));
         }
     }
