@@ -102,14 +102,14 @@ namespace Kudu.TestHarness
             return new TestRepository(repositoryPath);
         }
 
-        public static GitDeploymentResult GitDeploy(string kuduServiceUrl, string localRepoPath, string remoteRepoUrl, string localBranchName, string remoteBranchName, TimeSpan waitTimeout)
+        public static GitDeploymentResult GitDeploy(string kuduServiceUrl, string localRepoPath, string remoteRepoUrl, string localBranchName, string remoteBranchName)
         {
             var deploymentManager = new RemoteDeploymentManager(kuduServiceUrl);
 
-            return GitDeploy(deploymentManager, kuduServiceUrl, localRepoPath, remoteRepoUrl, localBranchName, remoteBranchName, waitTimeout);
+            return GitDeploy(deploymentManager, kuduServiceUrl, localRepoPath, remoteRepoUrl, localBranchName, remoteBranchName);
         }
 
-        public static GitDeploymentResult GitDeploy(RemoteDeploymentManager deploymentManager, string kuduServiceUrl, string localRepoPath, string remoteRepoUrl, string localBranchName, string remoteBranchName, TimeSpan waitTimeout)
+        public static GitDeploymentResult GitDeploy(RemoteDeploymentManager deploymentManager, string kuduServiceUrl, string localRepoPath, string remoteRepoUrl, string localBranchName, string remoteBranchName)
         {
             Stopwatch sw = null;
 
@@ -119,14 +119,12 @@ namespace Kudu.TestHarness
                 sw = Stopwatch.StartNew();
                 Git.Push(localRepoPath, remoteRepoUrl, localBranchName, remoteBranchName);
                 sw.Stop();
-            },
-            waitTimeout);
+            });
 
             return new GitDeploymentResult
             {
                 PushResponseTime = sw.Elapsed,
-                TotalResponseTime = result.Item1,
-                TimedOut = !result.Item2
+                TotalResponseTime = result,
             };
         }
 

@@ -5,39 +5,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Client.Infrastructure;
 using Kudu.Core.Deployment;
-using Newtonsoft.Json;
-using SignalR.Client;
 
 namespace Kudu.Client.Deployment
 {
     public class RemoteDeploymentManager : KuduRemoteClientBase
     {
-        private Connection _connection;
-        private Action<DeployResult> _statusChanged;
-        private long _connections;
-
-        public event Action<DeployResult> StatusChanged
-        {
-            add
-            {
-                if (Interlocked.Increment(ref _connections) == 1)
-                {
-                    Start();
-                }
-
-                _statusChanged += value;
-            }
-            remove
-            {
-                _statusChanged -= value;
-
-                if (Interlocked.Decrement(ref _connections) == 0)
-                {
-                    Stop();
-                }
-            }
-        }
-
         public RemoteDeploymentManager(string serviceUrl)
             : base(serviceUrl)
         {
@@ -87,71 +59,6 @@ namespace Kudu.Client.Deployment
         {
             var param = new KeyValuePair<string, string>("clean", clean.ToString());
             return _client.PutAsync(id, param);
-        }
-
-        private void Start()
-        {
-            if (_connection == null)
-            {
-                // Raise the event when data comes in
-                _connection = new Connection(ServiceUrl + "status");
-                _connection.Credentials = Credentials;
-                _connection.Received += OnReceived;
-                _connection.Error += (e) =>
-                {
-                    Debug.WriteLine("Error: " + e.Message);
-                };
-            }
-
-            TryStart(retries: 5);
-        }
-
-        private void TryStart(int retries)
-        {
-            while (retries > 0)
-            {
-                try
-                {
-                    _connection.Start().Wait();
-                    break;
-                }
-                catch (AggregateException agg)
-                {
-                    Debug.WriteLine("KUDU ERROR: " + agg.GetBaseException());
-
-                    Stop();
-
-                    retries--;
-
-                    if (retries > 0)
-                    {
-                        // Sleep for a second and retry
-                        Thread.Sleep(1000);
-                    }
-                    else
-                    {
-                        // We failed to connect so throw
-                        throw;
-                    }
-                }
-            }
-        }
-
-        private void Stop()
-        {
-            if (_connection != null)
-            {
-                _connection.Stop();
-            }
-        }
-
-        private void OnReceived(string data)
-        {
-            if (_statusChanged != null)
-            {
-                var result = JsonConvert.DeserializeObject<DeployResult>(data);
-                _statusChanged(result);
-            }
         }
     }
 }
