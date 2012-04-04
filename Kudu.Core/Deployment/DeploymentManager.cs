@@ -275,7 +275,7 @@ namespace Kudu.Core.Deployment
             {
                 deployStep = tracer.Step("Deploy");
 
-                ILogger logger = CreateAndPopulateStatusFile(tracer, id);
+                CreateAndPopulateStatusFile(tracer, id);
 
                 IDeploymentManifestWriter manifestWriter = GetDeploymentManifestWriter(id);
                 manifestWriter.AddFiles(_environment.DeploymentTargetPath);
