@@ -280,6 +280,49 @@ namespace Kudu.Core.Deployment
             }
         }
 
+        public void CreateExistingDeployment(string id)
+        {
+            var tracer = _traceFactory.GetTracer();
+            IDisposable deployStep = null;
+
+            try
+            {
+                deployStep = tracer.Step("Deploy");
+
+                ILogger logger = GetLogger(id);
+
+                using (tracer.Step("Collecting changeset information"))
+                {
+                    // Create the status file and store information about the commit
+                    DeploymentStatusFile statusFile = CreateStatusFile(id);
+                    statusFile.Id = id;
+                    ChangeSet changeSet = _serverRepository.GetChangeSet(id);
+                    statusFile.Message = changeSet.Message;
+                    statusFile.Author = changeSet.AuthorName;
+                    statusFile.AuthorEmail = changeSet.AuthorEmail;
+                    statusFile.Save(_fileSystem);
+
+                    logger.Log(Resources.Log_NewDeploymentReceived);
+                }
+
+                IDeploymentManifestWriter manifestWriter = GetDeploymentManifestWriter(id);
+                manifestWriter.AddFiles(_environment.DeploymentTargetPath);
+
+                FinishDeployment(id, tracer, deployStep);
+            }
+            catch (Exception ex)
+            {
+                tracer.TraceError(ex);
+
+                if (deployStep != null)
+                {
+                    deployStep.Dispose();
+                }
+
+                ReportCompleted();
+            }
+        }
+
         private DeployResult GetResult(string id, string activeDeploymentId, bool isDeploying)
         {
             var file = VerifyDeployment(id, isDeploying);

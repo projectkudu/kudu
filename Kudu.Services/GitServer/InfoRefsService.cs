@@ -23,7 +23,6 @@
 namespace Kudu.Services.GitServer
 {
     using System;
-    using System.Collections.Generic;
     using System.ComponentModel;
     using System.IO;
     using System.Net;
@@ -31,10 +30,11 @@ namespace Kudu.Services.GitServer
     using System.Net.Http.Headers;
     using System.ServiceModel;
     using System.ServiceModel.Web;
-    using System.Text;
     using Kudu.Contracts.SourceControl;
     using Kudu.Contracts.Tracing;
     using Kudu.Core;
+    using Kudu.Core.Deployment;
+    using Kudu.Core.SourceControl;
     using Kudu.Core.SourceControl.Git;
     using Kudu.Services.Infrastructure;
 
@@ -42,14 +42,21 @@ namespace Kudu.Services.GitServer
     [ServiceContract]
     public class InfoRefsService
     {
+        private readonly IDeploymentManager _deploymentManager;
         private readonly IGitServer _gitServer;
         private readonly ITracer _tracer;
         private readonly string _deploymentTargetPath;
         private readonly RepositoryConfiguration _configuration;
 
-        public InfoRefsService(ITracer tracer, IGitServer gitServer, IEnvironment environment, RepositoryConfiguration configuration)
+        public InfoRefsService(
+            ITracer tracer,
+            IGitServer gitServer,
+            IDeploymentManager deploymentManager,
+            IEnvironment environment,
+            RepositoryConfiguration configuration)
         {
             _gitServer = gitServer;
+            _deploymentManager = deploymentManager;
             _tracer = tracer;
             _deploymentTargetPath = environment.DeploymentTargetPath;
             _configuration = configuration;
@@ -88,8 +95,14 @@ namespace Kudu.Services.GitServer
                 if (service == "upload-pack")
                 {
                     // Initialize the repository from the deployment files (if this is the first commit)
-                    _gitServer.Initialize(_configuration, _deploymentTargetPath);
+                    ChangeSet changeSet = _gitServer.Initialize(_configuration, _deploymentTargetPath);
                     _gitServer.AdvertiseUploadPack(memoryStream);
+
+                    // If we just created the repo, make a 'pseudo' deployment for the initial commit
+                    if (changeSet != null)
+                    {
+                        _deploymentManager.CreateExistingDeployment(changeSet.Id);
+                    }
                 }
                 else if (service == "receive-pack")
                 {

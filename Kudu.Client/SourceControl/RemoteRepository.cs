@@ -84,7 +84,7 @@ namespace Kudu.Client.SourceControl
                    .EnsureSuccessStatusCode();
         }
 
-        public ChangeSet Commit(string authorName, string message)
+        public ChangeSet Commit(string message, string authorName)
         {
             string json = _client.PostAsync("commit", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("name", authorName), new KeyValuePair<string, string>("message", message)))
                                  .Result

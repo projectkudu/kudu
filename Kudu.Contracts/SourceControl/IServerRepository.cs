@@ -8,7 +8,7 @@ namespace Kudu.Core.SourceControl
         bool Exists { get; }
         PushInfo GetPushInfo();
         bool Initialize(RepositoryConfiguration configuration);
-        bool Initialize(RepositoryConfiguration configuration, string path);
+        ChangeSet Initialize(RepositoryConfiguration configuration, string path);
         ChangeSet GetChangeSet(string id);
         void Update(string id);
         void Update();
