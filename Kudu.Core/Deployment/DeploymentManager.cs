@@ -241,21 +241,7 @@ namespace Kudu.Core.Deployment
                     return;
                 }
 
-                ILogger logger = GetLogger(id);
-
-                using (tracer.Step("Collecting changeset information"))
-                {
-                    // Create the status file and store information about the commit
-                    DeploymentStatusFile statusFile = CreateStatusFile(id);
-                    statusFile.Id = id;
-                    ChangeSet changeSet = _serverRepository.GetChangeSet(id);
-                    statusFile.Message = changeSet.Message;
-                    statusFile.Author = changeSet.AuthorName;
-                    statusFile.AuthorEmail = changeSet.AuthorEmail;
-                    statusFile.Save(_fileSystem);
-
-                    logger.Log(Resources.Log_NewDeploymentReceived);
-                }
+                ILogger logger = CreateAndPopulateStatusFile(tracer, id);
 
                 using (tracer.Step("Update to " + pushInfo.Branch.Name))
                 {
@@ -278,6 +264,55 @@ namespace Kudu.Core.Deployment
 
                 ReportCompleted();
             }
+        }
+
+        public void CreateExistingDeployment(string id)
+        {
+            var tracer = _traceFactory.GetTracer();
+            IDisposable deployStep = null;
+
+            try
+            {
+                deployStep = tracer.Step("Deploy");
+
+                CreateAndPopulateStatusFile(tracer, id);
+
+                IDeploymentManifestWriter manifestWriter = GetDeploymentManifestWriter(id);
+                manifestWriter.AddFiles(_environment.DeploymentTargetPath);
+
+                FinishDeployment(id, tracer, deployStep);
+            }
+            catch (Exception ex)
+            {
+                tracer.TraceError(ex);
+
+                if (deployStep != null)
+                {
+                    deployStep.Dispose();
+                }
+
+                ReportCompleted();
+            }
+        }
+
+        private ILogger CreateAndPopulateStatusFile(ITracer tracer, string id)
+        {
+            ILogger logger = GetLogger(id);
+
+            using (tracer.Step("Collecting changeset information"))
+            {
+                // Create the status file and store information about the commit
+                DeploymentStatusFile statusFile = CreateStatusFile(id);
+                statusFile.Id = id;
+                ChangeSet changeSet = _serverRepository.GetChangeSet(id);
+                statusFile.Message = changeSet.Message;
+                statusFile.Author = changeSet.AuthorName;
+                statusFile.AuthorEmail = changeSet.AuthorEmail;
+                statusFile.Save(_fileSystem);
+
+                logger.Log(Resources.Log_NewDeploymentReceived);
+            }
+            return logger;
         }
 
         private DeployResult GetResult(string id, string activeDeploymentId, bool isDeploying)

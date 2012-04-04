@@ -16,7 +16,7 @@ namespace Kudu.Core.SourceControl
         ChangeSetDetail GetWorkingChanges();
         void AddFile(string path);
         void RevertFile(string path);
-        ChangeSet Commit(string authorName, string message);
+        ChangeSet Commit(string message, string authorName);
         void Update(string id);
         void Update();
         void Push();

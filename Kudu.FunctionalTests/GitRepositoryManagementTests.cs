@@ -440,7 +440,7 @@ namespace Kudu.FunctionalTests
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
-                    Assert.Equal(1, results.Count);
+                    Assert.Equal(2, results.Count);
                     KuduAssert.VerifyUrl(helloUrl, "Wow");
                 }
             });

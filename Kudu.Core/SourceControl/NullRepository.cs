@@ -69,7 +69,7 @@ namespace Kudu.Core.SourceControl
 
         }
 
-        public ChangeSet Commit(string authorName, string message)
+        public ChangeSet Commit(string message, string authorName)
         {
             return null;
         }
