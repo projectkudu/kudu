@@ -114,36 +114,24 @@ namespace Kudu.Core.SourceControl.Git
                 File.Delete(fullPath);
             }
         }
-        
-        public void Commit(string message)
+
+        public ChangeSet Commit(string message, string authorName = null)
         {
             ITracer tracer = _tracerFactory.GetTracer();
 
             // Add all unstaged files
-            _gitExe.Execute(tracer, "add -A");
-
-            try
-            {
-                _gitExe.Execute(tracer, "commit -m\"{0}\"", message);
-            }
-            catch (Exception e)
-            {
-                if (e.Message.Contains("nothing to commit"))
-                {
-                    return;
-                }
-
-                throw;
-            }
-        }
-
-        public ChangeSet Commit(string authorName, string message)
-        {
-            // Add all unstaged files
             _gitExe.Execute("add -A");
             try
             {
-                string output = _gitExe.Execute("commit -m\"{0}\" --author=\"{1}\"", message, authorName).Item1;
+                string output;
+                if (authorName == null)
+                {
+                    output = _gitExe.Execute(tracer, "commit -m\"{0}\"", message).Item1;
+                }
+                else
+                {
+                    output = _gitExe.Execute("commit -m\"{0}\" --author=\"{1}\"", message, authorName).Item1;
+                }
 
                 // No pending changes
                 if (output.Contains("working directory clean"))

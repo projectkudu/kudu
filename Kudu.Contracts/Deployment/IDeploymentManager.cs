@@ -14,5 +14,6 @@ namespace Kudu.Core.Deployment
         void Delete(string id);
         void Deploy(string id, bool clean);
         void Deploy();
+        void CreateExistingDeployment(string id);
     }
 }

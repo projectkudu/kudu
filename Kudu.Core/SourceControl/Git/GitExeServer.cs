@@ -149,13 +149,15 @@ namespace Kudu.Core.SourceControl.Git
             return null;
         }
 
-        public bool Initialize(RepositoryConfiguration configuration, string path)
+        public ChangeSet Initialize(RepositoryConfiguration configuration, string path)
         {
             if (Exists && !_initLock.IsHeld)
             {
                 // Repository already exists and there's nothing happening then do nothing
-                return false;
+                return null;
             }
+
+            ChangeSet changeSet = null;
 
             _initLock.LockOrWait(() =>
             {
@@ -173,12 +175,13 @@ namespace Kudu.Core.SourceControl.Git
                     FileSystemHelpers.Copy(path, _gitExe.WorkingDirectory);
 
                     // Make the initial commit
-                    _repository.Commit("Initial commit");
+                    changeSet = _repository.Commit("Initial commit");
+
                 }
             },
             _initTimeout);
 
-            return true;
+            return changeSet;
         }
 
         public bool Initialize(RepositoryConfiguration configuration)
