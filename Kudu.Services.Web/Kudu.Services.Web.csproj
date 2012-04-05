@@ -147,6 +147,7 @@
     <Compile Include="Infrastruture\HttpHandlerRouteHandler.cs" />
     <Compile Include="Security\BlockLocalhostModule.cs" />
     <Compile Include="Services\DeploymentCommandGenerator.cs" />
+    <Compile Include="Services\NullBuildPropertyProvider.cs" />
     <Compile Include="Tracing\TraceModule.cs" />
     <Compile Include="Tracing\TraceServices.cs" />
     <Compile Include="App_Start\NinjectServices.cs" />

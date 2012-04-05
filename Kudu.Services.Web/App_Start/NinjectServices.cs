@@ -80,6 +80,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IServerConfiguration>().ToConstant(serverConfiguration);
             kernel.Bind<IFileSystem>().To<FileSystem>().InSingletonScope();
             kernel.Bind<RepositoryConfiguration>().ToConstant(gitConfiguration);
+            kernel.Bind<IBuildPropertyProvider>().ToConstant(NullBuildPropertyProvider.Instance);
 
             if (AppSettings.TraceEnabled)
             {
