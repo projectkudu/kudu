@@ -13,31 +13,6 @@ namespace Kudu.TestHarness
     {
         private static int _errorCallbackInitialized;
 
-        public static TimeSpan WaitForDeployment(this RemoteDeploymentManager deploymentManager, Action action)
-        {
-            Stopwatch sw = null;
-
-            if (Interlocked.Exchange(ref _errorCallbackInitialized, 1) == 0)
-            {
-                TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
-            }
-
-            try
-            {
-                // Start measuring elapsed time
-                sw = Stopwatch.StartNew();
-
-                // Do something
-                action();
-            }
-            finally
-            {
-                sw.Stop();
-            }
-
-            return sw.Elapsed;
-        }
-
         public static XDocument GetServerProfile(this ApplicationManager appManager, string applicationName)
         {            
             var zippedLogsPath = Path.Combine(PathHelper.TestResultsPath, applicationName + ".zip");

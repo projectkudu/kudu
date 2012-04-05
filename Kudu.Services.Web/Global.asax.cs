@@ -28,7 +28,6 @@ namespace Kudu.Services
             var configuration = KernelContainer.Kernel.Get<IServerConfiguration>();
             var factory = GetFactory();
 
-            routes.MapConnection<DeploymentStatusConnection>("DeploymentStatus", "deployments/status/{*operation}");
             // routes.MapConnection<LiveCommandStatusHandler>("LiveCommandStatus", "live/command/status/{*operation}");
             // routes.MapConnection<DevCommandStatusHandler>("DevCommandStatus", "dev/command/status/{*operation}");
             routes.MapHandler<ReceivePackService>("git-receive-pack", configuration.GitServerRoot + "/git-receive-pack");

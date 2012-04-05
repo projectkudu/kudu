@@ -296,11 +296,7 @@ namespace Kudu.FunctionalTests
                     KuduAssert.VerifyUrl(appManager.SiteUrl, "Hello world!");
 
                     // Now go back in time
-                    appManager.DeploymentManager.WaitForDeployment(() =>
-                    {
-                        appManager.DeploymentManager.DeployAsync(id).Wait();
-                    });
-
+                    appManager.DeploymentManager.DeployAsync(id).Wait();
 
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 

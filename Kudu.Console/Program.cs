@@ -1,6 +1,8 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.IO.Abstractions;
 using Kudu.Console.Services;
+using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
@@ -29,7 +31,8 @@ namespace Kudu.Console
 
             // Setup the trace
             string tracePath = Path.Combine(env.ApplicationRootPath, Constants.TracePath, Constants.TraceFile);
-            var traceFactory = new TracerFactory(() => new Tracer(tracePath));
+            var tracer = new Tracer(tracePath);
+            var traceFactory = new TracerFactory(() => tracer);
 
             // Calculate the lock path
             string lockPath = Path.Combine(env.ApplicationRootPath, Constants.LockPath);
@@ -42,23 +45,35 @@ namespace Kudu.Console
             var serverRepository = new GitDeploymentRepository(env.DeploymentRepositoryPath, traceFactory);
 
             var logger = new ConsoleLogger();
-            var deploymentManager = new DeploymentManager(serverRepository, 
-                                                          builderFactory, 
-                                                          env, 
-                                                          fs, 
-                                                          traceFactory, 
+            var deploymentManager = new DeploymentManager(serverRepository,
+                                                          builderFactory,
+                                                          env,
+                                                          fs,
+                                                          traceFactory,
                                                           deploymentLock,
                                                           logger);
 
-            try
+            var step = tracer.Step("Executing external process", new Dictionary<string, string>
             {
-                deploymentManager.Deploy();
-            }
-            catch(System.Exception ex)
-            {
-                System.Console.Error.WriteLine(ex.Message);
+                { "type", "process" },
+                { "path", "kudu.exe" },
+                { "arguments", appRoot + " " + wapTargets }
+            });
 
-                throw;
+            using (step)
+            {
+                try
+                {
+                    deploymentManager.Deploy();
+                }
+                catch (System.Exception ex)
+                {
+                    System.Console.Error.WriteLine(ex.Message);
+
+                    tracer.TraceError(ex);
+
+                    throw;
+                }
             }
 
             if (logger.HasErrors)
