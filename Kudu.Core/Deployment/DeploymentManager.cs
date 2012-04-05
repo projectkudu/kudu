@@ -225,7 +225,7 @@ namespace Kudu.Core.Deployment
                     {
                         tracer.Trace("Non-master branch deployed {0}", pushInfo.Branch.Name);
 
-                        _globalLogger.Log("Non-master branch deployed {0}", pushInfo.Branch.Name);
+                        _globalLogger.Log(Resources.Log_NonMasterBranchPushed, pushInfo.Branch.Name);
                     }
 
                     ReportCompleted();
@@ -240,7 +240,7 @@ namespace Kudu.Core.Deployment
                 {
                     tracer.Trace("Deployment '{0}' already active", id);
 
-                    _globalLogger.Log("Deployment '{0}' already active", id);
+                    _globalLogger.Log(Resources.Log_DeploymentAlreadyActive, id);
 
                     ReportCompleted();
                     deployStep.Dispose();
