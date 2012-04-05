@@ -188,10 +188,6 @@ namespace Kudu.Core.SourceControl.Git
                     string content = @"#!/bin/sh
 read i
 echo $i > pushinfo
-while read oldrev newrev refname
-do
-:
-done
 ";
                     string command = "\n" + _deploymentCommandGenerator.GetDeploymentCommand();
 
