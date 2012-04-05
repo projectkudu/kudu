@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.IO.Abstractions;
+using Kudu.Console.Services;
 using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
@@ -84,44 +84,6 @@ namespace Kudu.Console
                                    deployPath,
                                    deployCachePath,
                                    nugetCachePath);
-        }
-
-        private class BuildPropertyProvider : IBuildPropertyProvider
-        {
-            private readonly string _extensionsPath;
-
-            public BuildPropertyProvider(string extensionsPath)
-            {
-                _extensionsPath = extensionsPath;
-            }
-
-            public IDictionary<string, string> GetProperties()
-            {
-                return new Dictionary<string, string> {
-                    { "MSBuildExtensionsPath32", _extensionsPath }
-                };
-            }
-        }
-
-        private class ConsoleLogger : ILogger
-        {
-            public ILogger Log(string value, LogEntryType type)
-            {
-                if (type == LogEntryType.Error)
-                {
-                    HasErrors = true;
-
-                    System.Console.Error.WriteLine(value);
-                }
-                else
-                {
-                    System.Console.WriteLine(value);
-                }
-
-                return NullLogger.Instance;
-            }
-
-            public bool HasErrors { get; set; }
         }
     }
 }

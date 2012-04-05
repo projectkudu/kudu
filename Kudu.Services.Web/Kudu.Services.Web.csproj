@@ -151,7 +151,6 @@
     <Compile Include="Tracing\TraceServices.cs" />
     <Compile Include="App_Start\NinjectServices.cs" />
     <Compile Include="App_Start\PathResolver.cs" />
-    <Compile Include="Services\BuildPropertyProvider.cs" />
     <Compile Include="Tracing\TraceErrorHandler.cs" />
     <Compile Include="Services\ServerConfiguration.cs" />
     <Compile Include="Global.asax.cs">
