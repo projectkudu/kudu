@@ -1,6 +1,7 @@
 ﻿using System;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
+using System.IO;
 
 namespace Kudu.Core
 {
@@ -12,16 +13,14 @@ namespace Kudu.Core
         private readonly Func<string> _deploymentRepositoryPathResolver;
         private readonly Func<string> _repositoryPathResolver;
 
-        public Environment(string appName, 
-                           string applicationRootPath, 
-                           string tempPath,
+        public Environment(string applicationRootPath, 
+                           string tempPath, 
                            Func<string> deploymentRepositoryPathResolver, 
                            Func<string> repositoryPathResolver, 
                            string deployPath, 
-                           string deployCachePath,
+                           string deployCachePath, 
                            string nugetCachePath)
         {
-            AppName = appName;
             ApplicationRootPath = applicationRootPath;
             _tempPath = tempPath;
             _deploymentRepositoryPathResolver = deploymentRepositoryPathResolver;
@@ -89,12 +88,6 @@ namespace Kudu.Core
         }
 
         public string NuGetCachePath
-        {
-            get;
-            private set;
-        }
-
-        public string AppName
         {
             get;
             private set;

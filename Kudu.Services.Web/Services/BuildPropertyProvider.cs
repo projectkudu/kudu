@@ -10,8 +10,8 @@ namespace Kudu.Services.Web.Services
         public IDictionary<string, string> GetProperties()
         {
             return new Dictionary<string, string> {
-                    { "MSBuildExtensionsPath32", Path.Combine(HttpRuntime.AppDomainAppPath, "msbuild") }
-                };
+                { "MSBuildExtensionsPath32", Path.Combine(HttpRuntime.AppDomainAppPath, "msbuild") }
+            };
         }
     }
 }

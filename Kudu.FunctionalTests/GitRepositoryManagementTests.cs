@@ -296,11 +296,7 @@ namespace Kudu.FunctionalTests
                     KuduAssert.VerifyUrl(appManager.SiteUrl, "Hello world!");
 
                     // Now go back in time
-                    appManager.DeploymentManager.WaitForDeployment(() =>
-                    {
-                        appManager.DeploymentManager.DeployAsync(id).Wait();
-                    });
-
+                    appManager.DeploymentManager.DeployAsync(id).Wait();
 
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
@@ -514,11 +510,8 @@ namespace Kudu.FunctionalTests
                     Assert.Equal(DeployStatus.Success, results[1].Status);
                     KuduAssert.VerifyUrl(helloUrl, "Wow");
 
-                    appManager.DeploymentManager.WaitForDeployment(() =>
-                    {
-                        // Go back to the first deployment
-                        appManager.DeploymentManager.DeployAsync(originalCommitId).Wait();
-                    });
+                    // Go back to the first deployment
+                    appManager.DeploymentManager.DeployAsync(originalCommitId).Wait();
 
                     results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                     KuduAssert.VerifyUrl(helloUrl, statusCode: HttpStatusCode.NotFound);

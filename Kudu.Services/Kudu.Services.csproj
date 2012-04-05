@@ -104,10 +104,10 @@
     <Compile Include="Commands\CommandService.cs" />
     <Compile Include="Commands\CommandStatusHandler.cs" />
     <Compile Include="Deployment\DeploymentService.cs" />
-    <Compile Include="Deployment\DeploymentStatusConnection.cs" />
     <Compile Include="Editor\FilesService.cs" />
     <Compile Include="GitServer\Helpers.cs" />
     <Compile Include="GitServer\InfoRefsService.cs" />
+    <Compile Include="GitServer\ReceivePackService.cs" />
     <Compile Include="GitServer\RpcService.cs" />
     <Compile Include="Infrastructure\IServerConfiguration.cs" />
     <Compile Include="Diagnostics\DiagnosticsService.cs" />

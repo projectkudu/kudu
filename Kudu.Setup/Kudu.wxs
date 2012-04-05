@@ -108,6 +108,11 @@
       <Component Id="Kudu.Contracts.dll" Guid="{61A18C06-83A8-41CA-AA38-F9F665DE10C3}">
         <File Id="Kudu.Contracts.dll" Source="$(var.KuduServiceBinDir)\Kudu.Contracts.dll" />
       </Component>
+      
+      <Component Id="kudu.exe" Guid="{760F98D3-D22B-48BA-8C57-26FADBFBC845}">
+        <File Id="kudu.exe" Source="$(var.KuduServiceBinDir)\kudu.exe" />
+      </Component>
+      
       <Component Id="Kudu.Core.dll" Guid="{B617864C-C336-46F9-B214-C583C4C8F30C}">
         <File Id="Kudu.Core.dll" Source="$(var.KuduServiceBinDir)\Kudu.Core.dll" />
       </Component>
@@ -216,6 +221,7 @@
       <ComponentRef Id="Web.config" />
       <ComponentRef Id="commit" />
 
+      <ComponentRef Id="kudu.exe"/>
       <ComponentRef Id="Kudu.Contracts.dll"/>
       <ComponentRef Id="Kudu.Core.dll"/>
       <ComponentRef Id="Kudu.Services.dll"/>

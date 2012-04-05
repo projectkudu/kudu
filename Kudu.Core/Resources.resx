@@ -162,6 +162,9 @@
   <data name="Log_CopyingFiles" xml:space="preserve">
     <value>Copying files to output directory.</value>
   </data>
+  <data name="Log_DeploymentAlreadyActive" xml:space="preserve">
+    <value>Deployment '{0}' already active.</value>
+  </data>
   <data name="Log_DeploymentSuccessful" xml:space="preserve">
     <value>Deployment successful.</value>
   </data>
@@ -173,6 +176,9 @@
   </data>
   <data name="Log_NoDeployableProjects" xml:space="preserve">
     <value>Found solution '{0}' with no deployable projects. Deploying files instead.</value>
+  </data>
+  <data name="Log_NonMasterBranchPushed" xml:space="preserve">
+    <value>Non-master branch deployed {0}.</value>
   </data>
   <data name="Log_NpmNotInstalled" xml:space="preserve">
     <value>NPM not installed or couldn't be located. Skipping package installation.</value>

@@ -196,6 +196,15 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Deployment &apos;{0}&apos; already active..
+        /// </summary>
+        internal static string Log_DeploymentAlreadyActive {
+            get {
+                return ResourceManager.GetString("Log_DeploymentAlreadyActive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Deployment successful..
         /// </summary>
         internal static string Log_DeploymentSuccessful {
@@ -228,6 +237,15 @@ namespace Kudu.Core {
         internal static string Log_NoDeployableProjects {
             get {
                 return ResourceManager.GetString("Log_NoDeployableProjects", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Non-master branch deployed {0}..
+        /// </summary>
+        internal static string Log_NonMasterBranchPushed {
+            get {
+                return ResourceManager.GetString("Log_NonMasterBranchPushed", resourceCulture);
             }
         }
         

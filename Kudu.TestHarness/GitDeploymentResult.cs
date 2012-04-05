@@ -6,7 +6,6 @@ namespace Kudu.TestHarness
     {
         public TimeSpan PushResponseTime { get; set; }
         public TimeSpan TotalResponseTime { get; set; }
-        public bool TimedOut { get; set; }
     }
 
 }

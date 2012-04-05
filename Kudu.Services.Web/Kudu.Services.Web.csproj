@@ -144,12 +144,14 @@
     </Compile>
     <Compile Include="AppSettings.cs" />
     <Compile Include="App_Start\ModuleInit.cs" />
+    <Compile Include="Infrastruture\HttpHandlerRouteHandler.cs" />
     <Compile Include="Security\BlockLocalhostModule.cs" />
+    <Compile Include="Services\DeploymentCommandGenerator.cs" />
+    <Compile Include="Services\BuildPropertyProvider.cs" />
     <Compile Include="Tracing\TraceModule.cs" />
     <Compile Include="Tracing\TraceServices.cs" />
     <Compile Include="App_Start\NinjectServices.cs" />
     <Compile Include="App_Start\PathResolver.cs" />
-    <Compile Include="Services\BuildPropertyProvider.cs" />
     <Compile Include="Tracing\TraceErrorHandler.cs" />
     <Compile Include="Services\ServerConfiguration.cs" />
     <Compile Include="Global.asax.cs">
