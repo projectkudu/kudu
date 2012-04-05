@@ -72,23 +72,6 @@ namespace Kudu.Services.GitServer
             }
         }
 
-        //[Description("Handles a 'git push' command.")]
-        //[WebInvoke(UriTemplate = "git-receive-pack")]
-        //public HttpResponseMessage ReceivePack(HttpRequestMessage request)
-        //{
-        //    using (_tracer.Step("RpcService.ReceivePack"))
-        //    {
-        //        var memoryStream = new MemoryStream();
-
-        //        _deploymentLock.LockHttpOperation(() =>
-        //        {
-        //            _gitServer.Receive(GetInputStream(request), memoryStream);
-        //        });
-                
-        //        return CreateResponse(memoryStream, "application/x-git-{0}-result".With("receive-pack"));
-        //    }
-        //}
-
         private Stream GetInputStream(HttpRequestMessage request)
         {
             using (_tracer.Step("RpcService.GetInputStream"))
