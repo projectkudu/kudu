@@ -251,7 +251,7 @@ namespace Kudu.Core.Deployment
 
                 using (tracer.Step("Update to " + pushInfo.Branch.Name))
                 {
-                    logger.Log(Resources.Log_UpdatingToBranch, pushInfo.Branch.Name);
+                    logger.Log(Resources.Log_UpdatingBranch, pushInfo.Branch.Name);
 
                     // Update to the default branch
                     _serverRepository.Update();

@@ -17,7 +17,7 @@ namespace Kudu.Core.Deployment
         protected override Task BuildProject(DeploymentContext context)
         {
             var tcs = new TaskCompletionSource<object>();
-            ILogger copyLogger = context.Logger.Log(Resources.Log_CopyingFiles);
+            ILogger copyLogger = context.Logger.Log(Resources.Log_PreparingFiles);
 
             try
             {

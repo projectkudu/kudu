@@ -187,15 +187,6 @@ namespace Kudu.Core {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Copying files to output directory..
-        /// </summary>
-        internal static string Log_CopyingFiles {
-            get {
-                return ResourceManager.GetString("Log_CopyingFiles", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Deployment &apos;{0}&apos; already active..
         /// </summary>
         internal static string Log_DeploymentAlreadyActive {
@@ -214,7 +205,7 @@ namespace Kudu.Core {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Downloading node packages..
+        ///   Looks up a localized string similar to Downloading NPM packages..
         /// </summary>
         internal static string Log_DownloadingNodePackages {
             get {
@@ -241,7 +232,7 @@ namespace Kudu.Core {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Non-master branch deployed {0}..
+        ///   Looks up a localized string similar to Deployment skipped. Received push for &apos;{0}&apos; branch, and only pushes to &apos;master&apos; are deployed..
         /// </summary>
         internal static string Log_NonMasterBranchPushed {
             get {
@@ -268,11 +259,20 @@ namespace Kudu.Core {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Preparing deployment for &apos;{0}&apos;..
+        ///   Looks up a localized string similar to Preparing deployment for commit id &apos;{0}&apos;..
         /// </summary>
         internal static string Log_PreparingDeployment {
             get {
                 return ResourceManager.GetString("Log_PreparingDeployment", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Preparing files for deployment..
+        /// </summary>
+        internal static string Log_PreparingFiles {
+            get {
+                return ResourceManager.GetString("Log_PreparingFiles", resourceCulture);
             }
         }
         
@@ -286,11 +286,11 @@ namespace Kudu.Core {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Updating to branch &apos;{0}&apos;..
+        ///   Looks up a localized string similar to Updating branch &apos;{0}&apos;..
         /// </summary>
-        internal static string Log_UpdatingToBranch {
+        internal static string Log_UpdatingBranch {
             get {
-                return ResourceManager.GetString("Log_UpdatingToBranch", resourceCulture);
+                return ResourceManager.GetString("Log_UpdatingBranch", resourceCulture);
             }
         }
         

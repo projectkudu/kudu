@@ -70,6 +70,8 @@ namespace Kudu.Console
                 {
                     System.Console.Error.WriteLine(ex.Message);
 
+                    System.Console.Error.WriteLine(Resources.Log_DeploymentError);
+
                     tracer.TraceError(ex);
 
                     throw;
@@ -78,6 +80,7 @@ namespace Kudu.Console
 
             if (logger.HasErrors)
             {
+                System.Console.Error.WriteLine(Resources.Log_DeploymentError);
                 return 1;
             }
 

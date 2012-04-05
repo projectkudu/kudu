@@ -23,7 +23,7 @@ namespace Kudu.Core.Deployment
         {
             var tcs = new TaskCompletionSource<object>();
 
-            ILogger innerLogger = context.Logger.Log(Resources.Log_CopyingFiles);
+            ILogger innerLogger = context.Logger.Log(Resources.Log_PreparingFiles);
 
             try
             {

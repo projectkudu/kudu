@@ -49,7 +49,7 @@ namespace Kudu.Core.Deployment
                 return tcs.Task;
             }
 
-            ILogger copyLogger = context.Logger.Log(Resources.Log_CopyingFiles);
+            ILogger copyLogger = context.Logger.Log(Resources.Log_PreparingFiles);
 
             try
             {
