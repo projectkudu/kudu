@@ -32,7 +32,12 @@ namespace Kudu.Core.Deployment
             {
                 using (context.Tracer.Step("Running msbuild on project file"))
                 {
-                    var log = BuildProject(context.Tracer, buildTempPath);
+                    string log = null;
+                    using (var writer = new ProgressWriter())
+                    {
+                        writer.Start();
+                        log = BuildProject(context.Tracer, buildTempPath);
+                    }
 
                     // Log the details of the build
                     buildLogger.Log(log);

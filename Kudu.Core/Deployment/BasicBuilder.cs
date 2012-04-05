@@ -130,8 +130,13 @@ namespace Kudu.Core.Deployment
 
                 try
                 {
-                    // Run install on the output directory
-                    string log = npm.Execute(context.Tracer, "install").Item1;
+                    string log = null;
+                    using (var writer = new ProgressWriter())
+                    {
+                        writer.Start();
+                        // Run install on the output directory
+                        log = npm.Execute(context.Tracer, "install").Item1;
+                    }
                     
                     if (String.IsNullOrWhiteSpace(log))
                     {

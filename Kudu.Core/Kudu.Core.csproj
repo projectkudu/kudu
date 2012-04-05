@@ -80,6 +80,7 @@
     <Compile Include="Deployment\MsBuildSiteBuilder.cs" />
     <Compile Include="Deployment\NpmExecutable.cs" />
     <Compile Include="Deployment\NullLogger.cs" />
+    <Compile Include="Deployment\ProgressWriter.cs" />
     <Compile Include="Infrastructure\DisposableAction.cs" />
     <Compile Include="Infrastructure\IniFile.cs" />
     <Compile Include="Infrastructure\LockFile.cs" />
