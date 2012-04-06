@@ -30,6 +30,9 @@ namespace Kudu.Core.SourceControl.Git
             _repository.SetTraceLevel(2);
             _initLock = initLock;
             _deploymentCommandGenerator = deploymentCommandGenerator;
+
+            // Setup the deployment environment variable to be used by the post receive hook
+            _gitExe.EnvironmentVariables[_deploymentCommandGenerator.DeploymentEnvironmentVariable] = _deploymentCommandGenerator.GetDeploymentExePath();
         }
 
         private string PostReceiveHookPath

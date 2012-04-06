@@ -15,10 +15,23 @@ namespace Kudu.Services.Web.Services
             _environment = environment;
         }
 
+        public string DeploymentEnvironmentVariable
+        {
+            get
+            {
+                return "KUDU_EXE";
+            }
+        }
+
+        public string GetDeploymentExePath()
+        {
+            return Path.Combine(HttpRuntime.AppDomainAppPath, @"bin", "kudu.exe");
+        }
+
         public string GetDeploymentCommand()
         {
-            return String.Format(@"""{0}"" ""{1}"" ""{2}""",
-                                 Path.Combine(HttpRuntime.AppDomainAppPath, @"bin", "kudu.exe"),
+            return String.Format(@"${0} ""{1}"" ""{2}""",
+                                 DeploymentEnvironmentVariable,
                                  _environment.ApplicationRootPath,
                                  Path.Combine(HttpRuntime.AppDomainAppPath, "msbuild"));
         }
