@@ -169,7 +169,8 @@ namespace Kudu.Core.SourceControl.Git
 
         public void Update(string id)
         {
-            _gitExe.Execute("checkout {0} --force", id);
+            ITracer tracer = _tracerFactory.GetTracer();
+            _gitExe.Execute(tracer, "checkout {0} --force", id);
         }
 
         public void Update()
