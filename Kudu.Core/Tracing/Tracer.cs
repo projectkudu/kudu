@@ -142,16 +142,16 @@ namespace Kudu.Core.Tracing
         {
             try
             {
-                var entries = document.Root.Elements().ToList();
-
-                if (entries.Count <= MaxLogEntries)
-                {
-                    return;
-                }
+                List<XElement> entries = document.Root.Elements().ToList();
 
                 // Amount of entries we have to trim. It should be 1 all of the time
                 // but just in case something went wrong, we're going to try to fix it this time around
                 int trim = entries.Count - MaxLogEntries;
+
+                if (trim <= 0)
+                {
+                    return;
+                }
 
                 foreach (var e in entries.Take(trim))
                 {
