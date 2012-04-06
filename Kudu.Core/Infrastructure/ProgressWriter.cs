@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Kudu.Core.Deployment
+namespace Kudu.Core.Infrastructure
 {
     public class ProgressWriter : IDisposable
     {
