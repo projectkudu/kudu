@@ -114,8 +114,7 @@ namespace Kudu.Services.Web.App_Start
 
             // Setup the diagnostics service to collect information from the following paths:
             // 1. The deployments folder
-            // 2. The elmah error log
-            // 3. The profile dump
+            // 2. The profile dump
             var paths = new[] { 
                 environment.DeploymentCachePath,
                 Path.Combine(environment.ApplicationRootPath, Constants.LogFilesPath),

@@ -12,7 +12,7 @@ namespace Kudu
         public const string InitLockFile = "init.lock";
 
         public const string DeploymentCachePath = "deployments";
-        public const string LogFilesPath = @"LogFiles";
+        public const string LogFilesPath = @"..\LogFiles";
         public const string TracePath = LogFilesPath + @"\Git\trace";
         public const string DeploySettingsPath = "settings.xml";
         public const string TraceFile = "trace.xml";
