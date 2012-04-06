@@ -118,7 +118,7 @@ namespace Kudu.Services.Web.App_Start
             // 3. The profile dump
             var paths = new[] { 
                 environment.DeploymentCachePath,
-                Path.Combine(environment.ApplicationRootPath, Constants.TracePath),
+                Path.Combine(environment.ApplicationRootPath, Constants.LogFilesPath),
             };
 
             kernel.Bind<DiagnosticsService>().ToMethod(context => new DiagnosticsService(paths));
