@@ -28,6 +28,7 @@ namespace Kudu.Core.Infrastructure
         public string WorkingDirectory { get; private set; }
         public string Path { get; private set; }
         public IDictionary<string, string> EnvironmentVariables { get; set; }
+        public bool DetectEncoding { get; set; }
 
         public Tuple<string, string> Execute(string arguments, params object[] args)
         {
@@ -39,6 +40,7 @@ namespace Kudu.Core.Infrastructure
             using (GetProcessStep(tracer, arguments, args))
             {
                 var process = CreateProcess(arguments, args);
+                process.Start();
 
                 Func<StreamReader, string> reader = (StreamReader streamReader) => streamReader.ReadToEnd();
 
@@ -76,6 +78,7 @@ namespace Kudu.Core.Infrastructure
             using (GetProcessStep(tracer, arguments, args))
             {
                 var process = CreateProcess(arguments, args);
+                process.Start();
 
                 Func<StreamReader, string> reader = (StreamReader streamReader) => streamReader.ReadToEnd();
                 Action<Stream, Stream, bool> copyStream = (Stream from, Stream to, bool closeAfterCopy) =>
@@ -142,6 +145,46 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
+        public void Execute(ITracer tracer, Action<string> onWriteOutput, Action<string> onWriteError, string arguments, params object[] args)
+        {
+            using (GetProcessStep(tracer, arguments, args))
+            {
+                var process = CreateProcess(arguments, args);
+                process.EnableRaisingEvents = true;
+
+                var errorBuffer = new StringBuilder();
+
+                process.OutputDataReceived += (sender, e) =>
+                {
+                    onWriteOutput(e.Data);
+                };
+
+                process.ErrorDataReceived += (sender, e) =>
+                {
+                    onWriteError(e.Data);
+                    errorBuffer.Append(e.Data);
+                };
+
+                process.Start();
+
+                process.BeginErrorReadLine();
+                process.BeginOutputReadLine();
+
+                process.WaitForExit();
+
+                tracer.Trace("Process dump", new Dictionary<string, string>
+                {
+                    { "exitCode", process.ExitCode.ToString() },
+                    { "type", "processOutput" }
+                });
+
+                if (process.ExitCode != 0)
+                {
+                    throw new Exception(errorBuffer.ToString());
+                }
+            }
+        }
+
         private IDisposable GetProcessStep(ITracer tracer, string arguments, object[] args)
         {
             return tracer.Step("Executing external process", new Dictionary<string, string>
@@ -161,8 +204,6 @@ namespace Kudu.Core.Infrastructure
                 RedirectStandardInput = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
-                StandardOutputEncoding = Encoding.UTF8,
-                StandardErrorEncoding = Encoding.UTF8,
                 CreateNoWindow = true,
                 WindowStyle = ProcessWindowStyle.Hidden,
                 UseShellExecute = false,
@@ -170,12 +211,21 @@ namespace Kudu.Core.Infrastructure
                 Arguments = String.Format(arguments, args)
             };
 
+            if (!DetectEncoding)
+            {
+                psi.StandardOutputEncoding = Encoding.UTF8;
+                psi.StandardErrorEncoding = Encoding.UTF8;
+            }
+
             foreach (var pair in EnvironmentVariables)
             {
                 psi.EnvironmentVariables[pair.Key] = pair.Value;
             }
 
-            var process = Process.Start(psi);
+            var process = new Process()
+            {
+                StartInfo = psi
+            };
 
             return process;
         }

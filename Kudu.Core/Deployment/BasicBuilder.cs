@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Net;
+using System.Text;
 using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
@@ -131,14 +132,22 @@ namespace Kudu.Core.Deployment
 
                 try
                 {
-                    string log = null;
-                    using (var writer = new ProgressWriter())
+
+                    // Run install on the output directory
+                    var logBuffer = new StringBuilder();
+                    npm.Execute(context.Tracer, data =>
                     {
-                        writer.Start();
-                        // Run install on the output directory
-                        log = npm.Execute(context.Tracer, "install").Item1;
-                    }
-                    
+                        logBuffer.AppendLine(data);
+                        Console.WriteLine(data);
+                    },
+                    error =>
+                    {
+                        Console.Error.WriteLine(error);
+                    },
+                    "install");
+
+                    string log = logBuffer.ToString();
+
                     if (String.IsNullOrWhiteSpace(log))
                     {
                         innerLogger.Log(Resources.Log_PackagesAlreadyInstalled);
@@ -148,7 +157,7 @@ namespace Kudu.Core.Deployment
                         innerLogger.Log(log);
                     }
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     // Log the exception
                     innerLogger.Log(ex);

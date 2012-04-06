@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
@@ -36,11 +37,22 @@ namespace Kudu.Core.Deployment
 
         public string ExecuteMSBuild(ITracer tracer, string arguments, params object[] args)
         {
-            using (var writer = new ProgressWriter())
+            var output = new StringBuilder();
+
+            _msbuildExe.Execute(tracer,
+            data =>
             {
-                writer.Start();
-                return _msbuildExe.Execute(tracer, arguments, args).Item1;
-            }
+                output.AppendLine(data);
+                Console.WriteLine(data);
+            },
+            error =>
+            {
+                Console.Error.WriteLine(error);
+            },
+            arguments,
+            args);
+
+            return output.ToString();
         }
 
         public abstract Task Build(DeploymentContext context);
