@@ -36,7 +36,11 @@ namespace Kudu.Core.Deployment
 
         public string ExecuteMSBuild(ITracer tracer, string arguments, params object[] args)
         {
-            return _msbuildExe.Execute(tracer, arguments, args).Item1;
+            using (var writer = new ProgressWriter())
+            {
+                writer.Start();
+                return _msbuildExe.Execute(tracer, arguments, args).Item1;
+            }
         }
 
         public abstract Task Build(DeploymentContext context);
