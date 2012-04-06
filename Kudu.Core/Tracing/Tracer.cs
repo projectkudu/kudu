@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
+using System.Linq;
 using System.Xml.Linq;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
@@ -12,6 +13,9 @@ namespace Kudu.Core.Tracing
 {
     public class Tracer : ITracer
     {
+        // TODO: Make this configurable
+        private const int MaxLogEntries = 1000;
+
         private readonly Stack<TraceStep> _currentSteps = new Stack<TraceStep>();
         private readonly List<TraceStep> _steps = new List<TraceStep>();
         private readonly Stack<XElement> _elements = new Stack<XElement>();
@@ -119,6 +123,10 @@ namespace Kudu.Core.Tracing
             lock (_pathLocks[_path])
             {
                 XDocument document = GetDocument();
+
+                // Make sure the size of the log doesn't go over the limit
+                EnsureSize(document);
+
                 document.Root.Add(stepElement);
                 document.Save(_path);
             }
@@ -128,6 +136,33 @@ namespace Kudu.Core.Tracing
         {
             // Add a fake step
             using (Step(value, attributes)) { }
+        }
+
+        private void EnsureSize(XDocument document)
+        {
+            try
+            {
+                var entries = document.Root.Elements().ToList();
+
+                if (entries.Count <= MaxLogEntries)
+                {
+                    return;
+                }
+
+                // Amount of entries we have to trim. It should be 1 all of the time
+                // but just in case something went wrong, we're going to try to fix it this time around
+                int trim = entries.Count - MaxLogEntries;
+
+                foreach (var e in entries.Take(trim))
+                {
+                    e.Remove();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Something went wrong so just continue
+                Debug.WriteLine(ex.Message);
+            }
         }
 
         private XDocument GetDocument()
