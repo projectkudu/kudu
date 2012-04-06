@@ -7,6 +7,7 @@ namespace Kudu.Core.Deployment
     public class ProgressWriter : IDisposable
     {
         private bool _running;
+        private bool _printed;
 
         public void Start()
         {
@@ -18,6 +19,7 @@ namespace Kudu.Core.Deployment
                 {
                     Console.Write(".");
 
+                    _printed = true;
                     Thread.Sleep(1000);
                 }
             });
@@ -25,7 +27,11 @@ namespace Kudu.Core.Deployment
 
         public void Stop()
         {
-            Console.WriteLine();
+            if (_printed)
+            {
+                // Only print the new line if we printed any progress at all
+                Console.WriteLine();
+            }
             _running = false;
         }
 
