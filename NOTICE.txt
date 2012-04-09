@@ -76,24 +76,6 @@ Website:      http://json.codeplex.com/
 Copyright:    Copyright (c) 2007 James Newton-King
 License:      MIT
 
-libgit2
------
-Website:      https://github.com/libgit2/libgit2
-Copyright:    Copyright (C) 2007-2009, The Git Development Community and the GitSharp Team
-License:      GPL2 with linking exemption
-
-libgit2sharp
------
-Website:      https://github.com/libgit2/libgit2sharp
-Copyright:    Copyright (c) 2011 LibGit2Sharp contributors
-License:      MIT
-
-Mercurial.Net
------
-Website:      http://mercurialnet.codeplex.com/
-Copyright:    Copyright (c) 2010-2011, Lasse V. Karlsen
-License:      BSD
-
 Microsoft Web Infrastructure
 -----
 Website:    http://www.asp.net/
