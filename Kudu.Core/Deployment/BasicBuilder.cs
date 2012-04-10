@@ -132,21 +132,8 @@ namespace Kudu.Core.Deployment
 
                 try
                 {
-
                     // Run install on the output directory
-                    var logBuffer = new StringBuilder();
-                    npm.Execute(context.Tracer, data =>
-                    {
-                        logBuffer.AppendLine(data);
-                        Console.WriteLine(data);
-                    },
-                    error =>
-                    {
-                        Console.Error.WriteLine(error);
-                    },
-                    "install");
-
-                    string log = logBuffer.ToString();
+                    string log = npm.ExecuteWithConsoleOutput(context.Tracer, "install").Item1;
 
                     if (String.IsNullOrWhiteSpace(log))
                     {

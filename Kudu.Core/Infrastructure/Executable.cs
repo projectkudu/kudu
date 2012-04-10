@@ -145,7 +145,12 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        public void Execute(ITracer tracer, Action<string> onWriteOutput, Action<string> onWriteError, string arguments, params object[] args)
+        public Tuple<string, string> ExecuteWithConsoleOutput(ITracer tracer, string arguments, params object[] args)
+        {
+            return Execute(tracer, Console.WriteLine, Console.Error.WriteLine, arguments, args);
+        }
+
+        public Tuple<string, string> Execute(ITracer tracer, Action<string> onWriteOutput, Action<string> onWriteError, string arguments, params object[] args)
         {
             using (GetProcessStep(tracer, arguments, args))
             {
@@ -153,16 +158,28 @@ namespace Kudu.Core.Infrastructure
                 process.EnableRaisingEvents = true;
 
                 var errorBuffer = new StringBuilder();
+                var outputBuffer = new StringBuilder();
 
                 process.OutputDataReceived += (sender, e) =>
                 {
+                    if (e.Data == null)
+                    {
+                        return;
+                    }
+
+                    outputBuffer.AppendLine(e.Data);
                     onWriteOutput(e.Data);
                 };
 
                 process.ErrorDataReceived += (sender, e) =>
                 {
+                    if (e.Data == null)
+                    {
+                        return;
+                    }
+
+                    errorBuffer.AppendLine(e.Data);
                     onWriteError(e.Data);
-                    errorBuffer.Append(e.Data);
                 };
 
                 process.Start();
@@ -178,10 +195,17 @@ namespace Kudu.Core.Infrastructure
                     { "type", "processOutput" }
                 });
 
+                string output = outputBuffer.ToString().Trim();
+                string error = errorBuffer.ToString().Trim();
+
                 if (process.ExitCode != 0)
                 {
-                    throw new Exception(errorBuffer.ToString());
+                    string text = String.IsNullOrEmpty(error) ? output : error;
+
+                    throw new Exception(text);
                 }
+
+                return Tuple.Create(output, error);
             }
         }
 
