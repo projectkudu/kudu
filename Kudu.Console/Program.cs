@@ -21,6 +21,11 @@ namespace Kudu.Console
                 return 1;
             }
 
+            // The post receive hook launches the exe from sh and intereprets newline differently.
+            // This fixes very wacky issues with how the output shows up in the conosle on push
+            System.Console.Error.NewLine = "\n";
+            System.Console.Out.NewLine = "\n";
+
             System.Environment.SetEnvironmentVariable("GIT_DIR", null, System.EnvironmentVariableTarget.Process);
 
             var appRoot = args[0];

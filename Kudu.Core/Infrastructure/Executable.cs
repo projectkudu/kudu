@@ -175,7 +175,9 @@ namespace Kudu.Core.Infrastructure
                 psi.EnvironmentVariables[pair.Key] = pair.Value;
             }
 
-            return Process.Start(psi);
+            var process = Process.Start(psi);
+
+            return process;
         }
     }
 }
