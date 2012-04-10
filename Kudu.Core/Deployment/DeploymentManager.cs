@@ -422,8 +422,6 @@ namespace Kudu.Core.Deployment
                        })
                        .Catch(ex =>
                        {
-                           _globalLogger.Log(ex.GetBaseException());
-
                            // End the build step
                            buildStep.Dispose();
 

@@ -71,13 +71,9 @@ namespace Kudu.Console
                 {
                     deploymentManager.Deploy();
                 }
-                catch (System.Exception ex)
+                catch
                 {
-                    System.Console.Error.WriteLine(ex.Message);
-
                     System.Console.Error.WriteLine(Resources.Log_DeploymentError);
-
-                    tracer.TraceError(ex);
 
                     throw;
                 }
