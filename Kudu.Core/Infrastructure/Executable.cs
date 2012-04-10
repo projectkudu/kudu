@@ -160,7 +160,7 @@ namespace Kudu.Core.Infrastructure
         {
             using (GetProcessStep(tracer, arguments, args))
             {
-                var process = CreateProcess(arguments, args);
+                Process process = CreateProcess(arguments, args);
                 process.EnableRaisingEvents = true;
 
                 var errorBuffer = new StringBuilder();
@@ -168,24 +168,20 @@ namespace Kudu.Core.Infrastructure
 
                 process.OutputDataReceived += (sender, e) =>
                 {
-                    if (e.Data == null)
+                    if (e.Data != null)
                     {
-                        return;
+                        outputBuffer.AppendLine(Encoding.UTF8.GetString(encoding.GetBytes(e.Data)));
+                        onWriteOutput(e.Data);
                     }
-
-                    outputBuffer.AppendLine(Encoding.UTF8.GetString(encoding.GetBytes(e.Data)));
-                    onWriteOutput(e.Data);
                 };
 
                 process.ErrorDataReceived += (sender, e) =>
                 {
-                    if (e.Data == null)
+                    if (e.Data != null)
                     {
-                        return;
+                        errorBuffer.AppendLine(Encoding.UTF8.GetString(encoding.GetBytes(e.Data)));
+                        onWriteError(e.Data);
                     }
-
-                    errorBuffer.AppendLine(Encoding.UTF8.GetString(encoding.GetBytes(e.Data)));
-                    onWriteError(e.Data);
                 };
 
                 process.Start();
