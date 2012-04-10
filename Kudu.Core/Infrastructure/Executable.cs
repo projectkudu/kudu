@@ -15,6 +15,7 @@ namespace Kudu.Core.Infrastructure
             Path = path;
             WorkingDirectory = workingDirectory;
             EnvironmentVariables = new Dictionary<string, string>();
+            Encoding = Encoding.UTF8;
         }
 
         public bool IsAvailable
@@ -28,7 +29,7 @@ namespace Kudu.Core.Infrastructure
         public string WorkingDirectory { get; private set; }
         public string Path { get; private set; }
         public IDictionary<string, string> EnvironmentVariables { get; set; }
-        public bool DetectEncoding { get; set; }
+        public Encoding Encoding { get; set; }
 
         public Tuple<string, string> Execute(string arguments, params object[] args)
         {
@@ -147,10 +148,15 @@ namespace Kudu.Core.Infrastructure
 
         public Tuple<string, string> ExecuteWithConsoleOutput(ITracer tracer, string arguments, params object[] args)
         {
-            return Execute(tracer, Console.WriteLine, Console.Error.WriteLine, arguments, args);
+            return Execute(tracer,
+                           Console.Out.WriteLine,
+                           Console.Error.WriteLine,
+                           Console.OutputEncoding,
+                           arguments,
+                           args);
         }
 
-        public Tuple<string, string> Execute(ITracer tracer, Action<string> onWriteOutput, Action<string> onWriteError, string arguments, params object[] args)
+        public Tuple<string, string> Execute(ITracer tracer, Action<string> onWriteOutput, Action<string> onWriteError, Encoding encoding, string arguments, params object[] args)
         {
             using (GetProcessStep(tracer, arguments, args))
             {
@@ -167,7 +173,7 @@ namespace Kudu.Core.Infrastructure
                         return;
                     }
 
-                    outputBuffer.AppendLine(e.Data);
+                    outputBuffer.AppendLine(Encoding.UTF8.GetString(encoding.GetBytes(e.Data)));
                     onWriteOutput(e.Data);
                 };
 
@@ -178,7 +184,7 @@ namespace Kudu.Core.Infrastructure
                         return;
                     }
 
-                    errorBuffer.AppendLine(e.Data);
+                    errorBuffer.AppendLine(Encoding.UTF8.GetString(encoding.GetBytes(e.Data)));
                     onWriteError(e.Data);
                 };
 
@@ -235,10 +241,10 @@ namespace Kudu.Core.Infrastructure
                 Arguments = String.Format(arguments, args)
             };
 
-            if (!DetectEncoding)
+            if (Encoding != null)
             {
-                psi.StandardOutputEncoding = Encoding.UTF8;
-                psi.StandardErrorEncoding = Encoding.UTF8;
+                psi.StandardOutputEncoding = Encoding;
+                psi.StandardErrorEncoding = Encoding;
             }
 
             foreach (var pair in EnvironmentVariables)

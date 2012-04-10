@@ -7,7 +7,7 @@ namespace Kudu.Core.Deployment
         public NpmExecutable(string workingDirectory)
             : base(PathUtility.ResolveNpmPath(), workingDirectory)
         {
-            DetectEncoding = true;
+            Encoding = null;
         }
     }
 }
