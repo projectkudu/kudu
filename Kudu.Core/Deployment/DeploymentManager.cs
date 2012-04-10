@@ -253,8 +253,12 @@ namespace Kudu.Core.Deployment
                 {
                     logger.Log(Resources.Log_UpdatingBranch, pushInfo.Branch.Name);
 
-                    // Update to the default branch
-                    _serverRepository.Update();
+                    using (var progressWriter = new ProgressWriter())
+                    {
+                        progressWriter.Start();
+                        // Update to the default branch
+                        _serverRepository.Update();
+                    }
                 }
 
                 Build(id, tracer, deployStep);
