@@ -149,14 +149,22 @@ namespace Kudu.Core.Infrastructure
         public Tuple<string, string> ExecuteWithConsoleOutput(ITracer tracer, string arguments, params object[] args)
         {
             return Execute(tracer,
-                           Console.Out.WriteLine,
-                           Console.Error.WriteLine,
+                           output =>
+                           {
+                               Console.Out.WriteLine(output);
+                               return true;
+                           },
+                           error =>
+                           {
+                               Console.Error.WriteLine(error);
+                               return true;
+                           },
                            Console.OutputEncoding,
                            arguments,
                            args);
         }
 
-        public Tuple<string, string> Execute(ITracer tracer, Action<string> onWriteOutput, Action<string> onWriteError, Encoding encoding, string arguments, params object[] args)
+        public Tuple<string, string> Execute(ITracer tracer, Func<string, bool> onWriteOutput, Func<string, bool> onWriteError, Encoding encoding, string arguments, params object[] args)
         {
             using (GetProcessStep(tracer, arguments, args))
             {
@@ -170,8 +178,10 @@ namespace Kudu.Core.Infrastructure
                 {
                     if (e.Data != null)
                     {
-                        outputBuffer.AppendLine(Encoding.UTF8.GetString(encoding.GetBytes(e.Data)));
-                        onWriteOutput(e.Data);
+                        if (onWriteOutput(e.Data))
+                        {
+                            outputBuffer.AppendLine(Encoding.UTF8.GetString(encoding.GetBytes(e.Data)));
+                        }
                     }
                 };
 
@@ -179,8 +189,10 @@ namespace Kudu.Core.Infrastructure
                 {
                     if (e.Data != null)
                     {
-                        errorBuffer.AppendLine(Encoding.UTF8.GetString(encoding.GetBytes(e.Data)));
-                        onWriteError(e.Data);
+                        if (onWriteError(e.Data))
+                        {
+                            errorBuffer.AppendLine(Encoding.UTF8.GetString(encoding.GetBytes(e.Data)));
+                        }
                     }
                 };
 

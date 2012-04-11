@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
@@ -37,7 +36,26 @@ namespace Kudu.Core.Deployment
 
         public string ExecuteMSBuild(ITracer tracer, string arguments, params object[] args)
         {
-            return _msbuildExe.ExecuteWithConsoleOutput(tracer, arguments, args).Item1;
+            // The line with the MSB3644 warnings since it's not important
+            return _msbuildExe.Execute(tracer,
+                                       output =>
+                                       {
+                                           if (output.Contains("MSB3644:"))
+                                           {
+                                               return false;
+                                           }
+
+                                           Console.Out.WriteLine(output);
+                                           return true;
+                                       },
+                                       error =>
+                                       {
+                                           Console.Error.WriteLine(error);
+                                           return true;
+                                       },
+                                       Console.OutputEncoding,
+                                       arguments,
+                                       args).Item1;
         }
 
         public abstract Task Build(DeploymentContext context);
