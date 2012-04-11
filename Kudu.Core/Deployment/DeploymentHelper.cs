@@ -14,19 +14,24 @@ namespace Kudu.Core.Deployment
 
         public static void CopyWithManifest(string sourcePath, string destinationPath, IDeploymentManifestReader previousManifest, bool skipOldFiles = true)
         {
-            if (previousManifest != null)
+            using (var progressWriter = new ProgressWriter())
             {
-                var previousFiles = new HashSet<string>(previousManifest.GetPaths(), StringComparer.OrdinalIgnoreCase);
+                progressWriter.Start();
 
-                SmartCopy(sourcePath, destinationPath, previousFiles.Contains, new DirectoryInfoWrapper(new DirectoryInfo(sourcePath)), new DirectoryInfoWrapper(new DirectoryInfo(destinationPath)), path => new DirectoryInfoWrapper(new DirectoryInfo(path)));
-            }
-            else
-            {
-                // On first deployment, delete the contents of the destination path before copying
-                FileSystemHelpers.DeleteDirectoryContentsSafe(destinationPath);
+                if (previousManifest != null)
+                {
+                    var previousFiles = new HashSet<string>(previousManifest.GetPaths(), StringComparer.OrdinalIgnoreCase);
 
-                // If there's no manifest then there's nothing to copy
-                FileSystemHelpers.Copy(sourcePath, destinationPath);
+                    SmartCopy(sourcePath, destinationPath, previousFiles.Contains, new DirectoryInfoWrapper(new DirectoryInfo(sourcePath)), new DirectoryInfoWrapper(new DirectoryInfo(destinationPath)), path => new DirectoryInfoWrapper(new DirectoryInfo(path)));
+                }
+                else
+                {
+                    // On first deployment, delete the contents of the destination path before copying
+                    FileSystemHelpers.DeleteDirectoryContentsSafe(destinationPath);
+
+                    // If there's no manifest then there's nothing to copy
+                    FileSystemHelpers.Copy(sourcePath, destinationPath);
+                }
             }
         }
 
