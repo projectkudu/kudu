@@ -10,14 +10,17 @@ namespace Kudu.Client.Infrastructure
 {
     internal static class HttpClientHelper
     {
-        public static HttpClient Create(string url)
+        public static HttpClient Create(string url, HttpMessageHandler handler)
         {
             // The URL needs to end with a slash for HttpClient to do the right thing with relative paths
             url = UrlUtility.EnsureTrailingSlash(url);
 
-            var handler = new TrailingSlashHandler();
+            var slashHandler = new TrailingSlashHandler()
+            {
+                InnerHandler = handler ?? new HttpClientHandler()
+            };
 
-            var client = new HttpClient(handler)
+            var client = new HttpClient(slashHandler)
             {
                 BaseAddress = new Uri(url),
                 MaxResponseContentBufferSize = 30 * 1024 * 1024
@@ -38,7 +41,7 @@ namespace Kudu.Client.Infrastructure
             return new ObjectContent(typeof(JsonObject), jsonObject, "application/json");
         }
 
-        private class TrailingSlashHandler : HttpClientHandler
+        private class TrailingSlashHandler : DelegatingHandler
         {
             protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
             {

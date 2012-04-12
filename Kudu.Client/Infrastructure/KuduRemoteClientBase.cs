@@ -10,9 +10,15 @@ namespace Kudu.Client.Infrastructure
         private ICredentials _credentials;
 
         public KuduRemoteClientBase(string serviceUrl)
+            : this(serviceUrl, null)
+        {
+
+        }
+
+        public KuduRemoteClientBase(string serviceUrl, HttpMessageHandler handler)
         {
             ServiceUrl = UrlUtility.EnsureTrailingSlash(serviceUrl);
-            _client = HttpClientHelper.Create(ServiceUrl);
+            _client = HttpClientHelper.Create(ServiceUrl, handler);
         }
 
         public string ServiceUrl { get; private set; }

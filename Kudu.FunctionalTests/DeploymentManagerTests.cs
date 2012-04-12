@@ -1,6 +1,8 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
+using Kudu.Client.Deployment;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
@@ -115,8 +117,45 @@ namespace Kudu.FunctionalTests
 
                     // Can't delete the active one
                     var ex = KuduAssert.ThrowsUnwrapped<HttpRequestException>(() => appManager.DeploymentManager.DeleteAsync(result.Id).Wait());
-                    Assert.Equal("Response status code does not indicate success: 409 (Conflict).", ex.Message);                    
+                    Assert.Equal("Response status code does not indicate success: 409 (Conflict).", ex.Message);
                 });
+            }
+        }
+
+        [Fact]
+        public void DeploymentManagerExtensibility()
+        {
+            // Arrange
+            string repositoryName = "Mvc3Application";
+            string appName = KuduUtils.GetRandomWebsiteName("DeploymentApis");
+
+            using (var repo = Git.CreateLocalRepository(repositoryName))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    var handler = new FakeMessageHandler()
+                    {
+                        InnerHandler = new HttpClientHandler()
+                    };
+
+                    var manager = new RemoteDeploymentManager(appManager.DeploymentManager.ServiceUrl, handler);
+                    manager.Credentials = appManager.DeploymentManager.Credentials;
+                    var results = manager.GetResultsAsync().Result.ToList();
+
+                    Assert.Equal(0, results.Count);
+                    Assert.NotNull(handler.Url);
+                });
+            }
+        }
+
+        private class FakeMessageHandler : DelegatingHandler
+        {
+            public Uri Url { get; set; }
+
+            protected override System.Threading.Tasks.Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, System.Threading.CancellationToken cancellationToken)
+            {
+                Url = request.RequestUri;
+                return base.SendAsync(request, cancellationToken);
             }
         }
     }

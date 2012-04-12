@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Kudu.Client.Infrastructure;
 using Kudu.Core.Deployment;
@@ -12,6 +11,11 @@ namespace Kudu.Client.Deployment
     {
         public RemoteDeploymentManager(string serviceUrl)
             : base(serviceUrl)
+        {
+        }
+
+        public RemoteDeploymentManager(string serviceUrl, HttpMessageHandler handler)
+            : base(serviceUrl, handler)
         {
         }
 
