@@ -20,3 +20,4 @@ App_Data/
 /artifacts
 msbuild.log
 _app/
+*.ncrunchsolution
