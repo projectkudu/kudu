@@ -11,8 +11,6 @@ namespace Kudu.TestHarness
 {
     public static class DeploymentManagerExtensions
     {
-        private static int _errorCallbackInitialized;
-
         public static XDocument GetServerProfile(this ApplicationManager appManager, string applicationName)
         {            
             var zippedLogsPath = Path.Combine(PathHelper.TestResultsPath, applicationName + ".zip");
