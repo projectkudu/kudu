@@ -106,7 +106,7 @@ namespace Kudu.Core.Deployment
         private void CleanBuild(ITracer tracer, string buildTempPath)
         {
             // Don't block the current thread to clean up the build folder since it could take some time
-            ThreadPool.QueueUserWorkItem(_ =>
+            new Thread(_ =>
             {
                 try { }
                 finally
@@ -120,7 +120,7 @@ namespace Kudu.Core.Deployment
                         tracer.TraceError(ex);
                     }
                 }
-            });
+            }).Start();
         }
     }
 }
