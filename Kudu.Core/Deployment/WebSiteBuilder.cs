@@ -42,6 +42,8 @@ namespace Kudu.Core.Deployment
             {
                 context.Tracer.TraceError(ex);
 
+                context.GlobalLogger.Log(ex);
+
                 copyLogger.Log(ex);
 
                 tcs.SetException(ex);

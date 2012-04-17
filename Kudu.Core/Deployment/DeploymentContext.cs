@@ -8,6 +8,7 @@ namespace Kudu.Core.Deployment
         public IDeploymentManifestWriter ManifestWriter { get; set; }
         public ITracer Tracer { get; set; }
         public ILogger Logger { get; set; }
+        public ILogger GlobalLogger { get; set; }
         public string OutputPath { get; set; }
     }
 }
