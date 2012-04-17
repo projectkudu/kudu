@@ -412,6 +412,7 @@ namespace Kudu.Core.Deployment
                     PreviousMainfest = GetActiveDeploymentManifestReader(),
                     Tracer = tracer,
                     Logger = logger,
+                    GlobalLogger = _globalLogger,
                     OutputPath = _environment.DeploymentTargetPath,
                 };
 
