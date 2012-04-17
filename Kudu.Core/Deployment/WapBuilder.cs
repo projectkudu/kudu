@@ -45,7 +45,7 @@ namespace Kudu.Core.Deployment
                 // HACK: Log an empty error to the global logger (post receive hook console output).
                 // The reason we don't log the real exception is because the 'live output' running
                 // msbuild has already been captured.
-                context.GlobalLogger.Log(String.Empty, LogEntryType.Error);
+                context.GlobalLogger.LogError();
 
                 buildLogger.Log(ex);
 
