@@ -30,7 +30,7 @@ namespace Kudu.FunctionalTests
                     ApplicationManager.Run(randomTestName, appManager =>
                     {
                         // Act
-                        appManager.AssertGitDeploy(repo.PhysicalPath, defaultBranchName);
+                        appManager.GitDeploy(repo.PhysicalPath, defaultBranchName);
                         var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                         // Assert

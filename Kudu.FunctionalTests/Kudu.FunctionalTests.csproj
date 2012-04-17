@@ -80,7 +80,6 @@
     <Compile Include="GitRepositoryManagementTests.cs" />
     <Compile Include="GitStabilityTests.cs" />
     <Compile Include="GitTestConfig.cs" />
-    <Compile Include="Infrastructure\ApplicationManagerExtensions.cs" />
     <Compile Include="Infrastructure\KuduAssert.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="GitDeploymentTests.cs" />

@@ -51,7 +51,7 @@ namespace Kudu.FunctionalTests
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
-                    appManager.AssertGitDeploy(repo.PhysicalPath);
+                    appManager.GitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     Assert.Equal(1, results.Count);
@@ -79,7 +79,7 @@ namespace Kudu.FunctionalTests
 
                     repo.WriteFile("HelloWorld.txt", "This is a test");
                     Git.Commit(repo.PhysicalPath, "Another commit");
-                    appManager.AssertGitDeploy(repo.PhysicalPath);
+                    appManager.GitDeploy(repo.PhysicalPath);
                     results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                     Assert.Equal(2, results.Count);
                     string oldId = results[1].Id;

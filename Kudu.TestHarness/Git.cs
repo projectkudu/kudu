@@ -12,13 +12,15 @@ namespace Kudu.TestHarness
 {
     public static class Git
     {
-        public static void Push(string repositoryPath, string url, string localBranchName = "master", string remoteBranchName = "master")
+        public static string Push(string repositoryPath, string url, string localBranchName = "master", string remoteBranchName = "master")
         {
             Executable gitExe = GetGitExe(repositoryPath);
 
+            string stdErr = null;
+
             if (localBranchName.Equals("master"))
             {
-                var stdErr = gitExe.Execute("push {0} {1}", url, remoteBranchName).Item2;
+                stdErr = gitExe.Execute("push {0} {1}", url, remoteBranchName).Item2;
 
                 // Dump out the error stream (git curl verbose)
                 Debug.WriteLine(stdErr);
@@ -26,10 +28,12 @@ namespace Kudu.TestHarness
             else
             {
                 // Dump out the error stream (git curl verbose)
-                var stdErr = gitExe.Execute("push {0} {1}:{2}", url, localBranchName, remoteBranchName).Item2;
+                stdErr = gitExe.Execute("push {0} {1}:{2}", url, localBranchName, remoteBranchName).Item2;
 
                 Debug.WriteLine(stdErr);
             }
+
+            return stdErr;
         }
 
         public static void Init(string repositoryPath)
@@ -102,22 +106,25 @@ namespace Kudu.TestHarness
             return new TestRepository(repositoryPath);
         }
 
-        public static TimeSpan GitDeploy(string kuduServiceUrl, string localRepoPath, string remoteRepoUrl, string localBranchName, string remoteBranchName)
+        public static GitDeploymentResult GitDeploy(string kuduServiceUrl, string localRepoPath, string remoteRepoUrl, string localBranchName, string remoteBranchName)
         {
             var deploymentManager = new RemoteDeploymentManager(kuduServiceUrl);
 
             return GitDeploy(deploymentManager, kuduServiceUrl, localRepoPath, remoteRepoUrl, localBranchName, remoteBranchName);
         }
 
-        public static TimeSpan GitDeploy(RemoteDeploymentManager deploymentManager, string kuduServiceUrl, string localRepoPath, string remoteRepoUrl, string localBranchName, string remoteBranchName)
+        public static GitDeploymentResult GitDeploy(RemoteDeploymentManager deploymentManager, string kuduServiceUrl, string localRepoPath, string remoteRepoUrl, string localBranchName, string remoteBranchName)
         {
-
             HttpUtils.WaitForSite(kuduServiceUrl);
             Stopwatch sw = Stopwatch.StartNew();
-            Git.Push(localRepoPath, remoteRepoUrl, localBranchName, remoteBranchName);
+            string trace = Git.Push(localRepoPath, remoteRepoUrl, localBranchName, remoteBranchName);
             sw.Stop();
 
-            return sw.Elapsed;
+            return new GitDeploymentResult
+            {
+                GitTrace = trace,
+                TotalResponseTime = sw.Elapsed
+            };
         }
 
         public static TestRepository CreateLocalRepository(string repositoryName)

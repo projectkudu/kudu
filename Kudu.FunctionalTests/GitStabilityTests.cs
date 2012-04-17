@@ -21,7 +21,7 @@ namespace Kudu.FunctionalTests
                     ApplicationManager.Run(applicationName, appManager =>
                     {
                         // Act
-                        appManager.AssertGitDeploy(repositoryName);
+                        appManager.GitDeploy(repositoryName);
                         var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                         // Assert
