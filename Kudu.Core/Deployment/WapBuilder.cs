@@ -105,22 +105,17 @@ namespace Kudu.Core.Deployment
 
         private void CleanBuild(ITracer tracer, string buildTempPath)
         {
-            // Don't block the current thread to clean up the build folder since it could take some time
-            new Thread(_ =>
+            using (tracer.Step("Cleaning up temp files"))
             {
-                try { }
-                finally
+                try
                 {
-                    try
-                    {
-                        FileSystemHelpers.DeleteDirectorySafe(buildTempPath);
-                    }
-                    catch (Exception ex)
-                    {
-                        tracer.TraceError(ex);
-                    }
+                    FileSystemHelpers.DeleteDirectorySafe(buildTempPath);
                 }
-            }).Start();
+                catch (Exception ex)
+                {
+                    tracer.TraceError(ex);
+                }
+            }
         }
     }
 }
