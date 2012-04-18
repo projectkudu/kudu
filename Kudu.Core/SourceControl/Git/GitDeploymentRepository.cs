@@ -60,6 +60,14 @@ namespace Kudu.Core.SourceControl.Git
             {
                 string oldId = pushDetails[0];
                 string newId = pushDetails[1];
+
+                // When a branch gets deleted, the newId is an all-zero string.
+                // In those cases, we never want to do anything, so return null
+                if (newId.Trim('0').Length == 0)
+                {
+                    return null;
+                }
+
                 string reference = pushDetails[2];
                 string branch = reference.Split('/').Last().Trim();
                 string fullNewId = _repository.Resolve(branch);
