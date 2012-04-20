@@ -577,7 +577,7 @@ namespace Kudu.FunctionalTests
         {
             string repositoryName = "NodeHelloWorldNoConfig";
             string appName = KuduUtils.GetRandomWebsiteName("NodeConfig");
-            string cloneUrl = "https://davidebbo@github.com/KuduApps/NodeHelloWorldNoConfig.git";
+            string cloneUrl = "https://github.com/KuduApps/NodeHelloWorldNoConfig.git";
 
             using (var repo = Git.Clone(repositoryName, cloneUrl))
             {
