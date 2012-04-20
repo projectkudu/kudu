@@ -62,6 +62,7 @@ namespace Kudu.FunctionalTests
                     Assert.Equal(DeployStatus.Success, result.Status);
                     Assert.NotNull(result.Url);
                     Assert.NotNull(result.LogUrl);
+                    Assert.True(String.IsNullOrEmpty(result.Deployer));
 
                     ICredentials cred = appManager.DeploymentManager.Credentials;
                     KuduAssert.VerifyUrl(result.Url, cred);

@@ -33,7 +33,7 @@ namespace Kudu.Core.SourceControl.Git
             _gitExe.EnvironmentVariables[KnownEnviornment.EXEPATH] = deploymentEnvironment.ExePath;
             _gitExe.EnvironmentVariables[KnownEnviornment.APPPATH] = deploymentEnvironment.ApplicationPath;
             _gitExe.EnvironmentVariables[KnownEnviornment.MSBUILD] = deploymentEnvironment.MSBuildExtensionsPath;
-            _gitExe.EnvironmentVariables[KnownEnviornment.AUTHOR] = "";
+            _gitExe.EnvironmentVariables[KnownEnviornment.DEPLOYER] = "";
         }
 
         private string PostReceiveHookPath
@@ -204,9 +204,9 @@ echo $i > pushinfo
             return RepositoryType.Git;
         }
 
-        public void SetAuthor(string author)
+        public void SetDeployer(string deployer)
         {
-            _gitExe.EnvironmentVariables[KnownEnviornment.AUTHOR] = author;
+            _gitExe.EnvironmentVariables[KnownEnviornment.DEPLOYER] = deployer;
         }
 
         /// <summary>
@@ -217,13 +217,13 @@ echo $i > pushinfo
             public const string EXEPATH = "KUDU_EXE";
             public const string APPPATH = "KUDU_APPPATH";
             public const string MSBUILD = "KUDU_MSBUILD";
-            public const string AUTHOR = "KUDU_AUTHOR";
+            public const string DEPLOYER = "KUDU_DEPLOYER";
 
             // Command to launch the post receive hook
             public static string KUDUCOMMAND = "$" + EXEPATH + " " +
                                                "$" + APPPATH + " " +
                                                "$" + MSBUILD + " " +
-                                               "$" + AUTHOR;
+                                               "$" + DEPLOYER;
         }
     }
 }

@@ -37,10 +37,10 @@ namespace Kudu.Services.GitServer
             {
                 _deploymentLock.LockOperation(() =>
                 {
-                    string author = null;
-                    if (AuthUtility.TryExtractBasicAuthUser(context.Request, out author))
+                    string username = null;
+                    if (AuthUtility.TryExtractBasicAuthUser(context.Request, out username))
                     {
-                        _gitServer.SetAuthor(author);
+                        _gitServer.SetDeployer(username);
                     }
 
                     context.Response.Buffer = false;
