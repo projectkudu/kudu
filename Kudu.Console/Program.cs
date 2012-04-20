@@ -17,7 +17,7 @@ namespace Kudu.Console
         {
             if (args.Length < 2)
             {
-                System.Console.WriteLine("Usage: kudu.exe {appRoot} {wapTargets}");
+                System.Console.WriteLine("Usage: kudu.exe appRoot wapTargets [deployer]");
                 return 1;
             }
 
@@ -30,6 +30,7 @@ namespace Kudu.Console
 
             var appRoot = args[0];
             var wapTargets = args[1];
+            string deployer = args.Length == 2 ? null : args[2];
             string nugetCachePath = null;
 
             IEnvironment env = GetEnvironment(appRoot, nugetCachePath);
@@ -69,7 +70,7 @@ namespace Kudu.Console
             {
                 try
                 {
-                    deploymentManager.Deploy();
+                    deploymentManager.Deploy(deployer);
                 }
                 catch
                 {

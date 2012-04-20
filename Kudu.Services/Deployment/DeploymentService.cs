@@ -24,8 +24,8 @@ namespace Kudu.Services.Deployment
         private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
 
-        public DeploymentService(ITracer tracer, 
-                                 IDeploymentManager deploymentManager, 
+        public DeploymentService(ITracer tracer,
+                                 IDeploymentManager deploymentManager,
                                  IOperationLock deploymentLock)
         {
             _tracer = tracer;
@@ -81,7 +81,10 @@ namespace Kudu.Services.Deployment
                             clean = cleanValue != null && cleanValue.ReadAs<bool>();
                         }
 
-                        _deploymentManager.Deploy(id, clean);
+                        string username = null;
+                        AuthUtility.TryExtractBasicAuthUser(request, out username);
+
+                        _deploymentManager.Deploy(id, username, clean);
                     }
                     catch (FileNotFoundException ex)
                     {
@@ -161,8 +164,8 @@ namespace Kudu.Services.Deployment
                 if (result == null)
                 {
                     var response = new HttpResponseMessage(HttpStatusCode.NotFound);
-                    response.Content = new StringContent(String.Format(CultureInfo.CurrentCulture, 
-                                                                       Resources.Error_DeploymentNotFound, 
+                    response.Content = new StringContent(String.Format(CultureInfo.CurrentCulture,
+                                                                       Resources.Error_DeploymentNotFound,
                                                                        id));
                     throw new HttpResponseException(response);
                 }
