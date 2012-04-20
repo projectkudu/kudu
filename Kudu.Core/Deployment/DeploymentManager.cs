@@ -149,7 +149,7 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public void Deploy(string id, bool clean)
+        public void Deploy(string id, string deployer, bool clean)
         {
             ITracer tracer = _traceFactory.GetTracer();
             IDisposable deployStep = null;
@@ -188,6 +188,14 @@ namespace Kudu.Core.Deployment
                     _serverRepository.Clean();
                 }
 
+                if (!String.IsNullOrEmpty(deployer))
+                {
+                    // Update the deployer
+                    DeploymentStatusFile statusFile = OpenStatusFile(id);
+                    statusFile.Deployer = deployer;
+                    statusFile.Save(_fileSystem);
+                }
+
                 // Perform the build deployment of this changeset
                 Build(id, tracer, deployStep);
             }
@@ -204,7 +212,7 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public void Deploy()
+        public void Deploy(string deployer)
         {
             var tracer = _traceFactory.GetTracer();
             IDisposable deployStep = null;
@@ -247,7 +255,7 @@ namespace Kudu.Core.Deployment
                     return;
                 }
 
-                ILogger logger = CreateAndPopulateStatusFile(tracer, id);
+                ILogger logger = CreateAndPopulateStatusFile(tracer, id, deployer);
 
                 using (tracer.Step("Update to " + pushInfo.Branch.Name))
                 {
@@ -307,7 +315,7 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        private ILogger CreateAndPopulateStatusFile(ITracer tracer, string id)
+        private ILogger CreateAndPopulateStatusFile(ITracer tracer, string id, string deployer = null)
         {
             ILogger logger = GetLogger(id);
 
@@ -319,11 +327,13 @@ namespace Kudu.Core.Deployment
                 ChangeSet changeSet = _serverRepository.GetChangeSet(id);
                 statusFile.Message = changeSet.Message;
                 statusFile.Author = changeSet.AuthorName;
+                statusFile.Deployer = deployer;
                 statusFile.AuthorEmail = changeSet.AuthorEmail;
                 statusFile.Save(_fileSystem);
 
                 logger.Log(Resources.Log_NewDeploymentReceived);
             }
+
             return logger;
         }
 
@@ -340,6 +350,7 @@ namespace Kudu.Core.Deployment
             {
                 Id = file.Id,
                 Author = file.Author,
+                Deployer = file.Deployer,
                 AuthorEmail = file.AuthorEmail,
                 Message = file.Message,
                 StartTime = file.StartTime,

@@ -4,6 +4,7 @@ using System.Web;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.SourceControl.Git;
+using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.GitServer
 {
@@ -36,6 +37,12 @@ namespace Kudu.Services.GitServer
             {
                 _deploymentLock.LockOperation(() =>
                 {
+                    string author = null;
+                    if (AuthUtility.TryExtractBasicAuthUser(context.Request, out author))
+                    {
+                        _gitServer.SetAuthor(author);
+                    }
+
                     context.Response.Buffer = false;
                     context.Response.BufferOutput = false;
 

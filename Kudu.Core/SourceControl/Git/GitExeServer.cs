@@ -17,11 +17,10 @@ namespace Kudu.Core.SourceControl.Git
         private readonly ITraceFactory _traceFactory;
         private readonly GitExeRepository _repository;
         private readonly IOperationLock _initLock;
-        private readonly IDeploymentCommandGenerator _deploymentCommandGenerator;
 
         private static readonly TimeSpan _initTimeout = TimeSpan.FromMinutes(8);
 
-        public GitExeServer(string path, IOperationLock initLock, IDeploymentCommandGenerator deploymentCommandGenerator, ITraceFactory traceFactory)
+        public GitExeServer(string path, IOperationLock initLock, IDeploymentEnvironment deploymentEnvironment, ITraceFactory traceFactory)
         {
             _gitExe = new GitExecutable(path);
             _gitExe.SetTraceLevel(2);
@@ -29,10 +28,12 @@ namespace Kudu.Core.SourceControl.Git
             _repository = new GitExeRepository(path, traceFactory);
             _repository.SetTraceLevel(2);
             _initLock = initLock;
-            _deploymentCommandGenerator = deploymentCommandGenerator;
 
             // Setup the deployment environment variable to be used by the post receive hook
-            _gitExe.EnvironmentVariables[_deploymentCommandGenerator.DeploymentEnvironmentVariable] = _deploymentCommandGenerator.GetDeploymentExePath();
+            _gitExe.EnvironmentVariables[KnownEnviornment.EXEPATH] = deploymentEnvironment.ExePath;
+            _gitExe.EnvironmentVariables[KnownEnviornment.APPPATH] = deploymentEnvironment.ApplicationPath;
+            _gitExe.EnvironmentVariables[KnownEnviornment.MSBUILD] = deploymentEnvironment.MSBuildExtensionsPath;
+            _gitExe.EnvironmentVariables[KnownEnviornment.AUTHOR] = "";
         }
 
         private string PostReceiveHookPath
@@ -191,10 +192,9 @@ namespace Kudu.Core.SourceControl.Git
                     string content = @"#!/bin/sh
 read i
 echo $i > pushinfo
-";
-                    string command = "\n" + _deploymentCommandGenerator.GetDeploymentCommand();
+" + KnownEnviornment.KUDUCOMMAND + "\n";
 
-                    File.WriteAllText(PostReceiveHookPath, content + command);
+                    File.WriteAllText(PostReceiveHookPath, content);
                 }
             }
         }
@@ -202,6 +202,28 @@ echo $i > pushinfo
         public RepositoryType GetRepositoryType()
         {
             return RepositoryType.Git;
+        }
+
+        public void SetAuthor(string author)
+        {
+            _gitExe.EnvironmentVariables[KnownEnviornment.AUTHOR] = author;
+        }
+
+        /// <summary>
+        /// Environment variables used for the post receive hook
+        /// </summary>
+        private static class KnownEnviornment
+        {
+            public const string EXEPATH = "KUDU_EXE";
+            public const string APPPATH = "KUDU_APPPATH";
+            public const string MSBUILD = "KUDU_MSBUILD";
+            public const string AUTHOR = "KUDU_AUTHOR";
+
+            // Command to launch the post receive hook
+            public static string KUDUCOMMAND = "$" + EXEPATH + " " +
+                                               "$" + APPPATH + " " +
+                                               "$" + MSBUILD + " " +
+                                               "$" + AUTHOR;
         }
     }
 }

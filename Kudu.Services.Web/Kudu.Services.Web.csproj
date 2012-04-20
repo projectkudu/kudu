@@ -146,7 +146,7 @@
     <Compile Include="App_Start\ModuleInit.cs" />
     <Compile Include="Infrastruture\HttpHandlerRouteHandler.cs" />
     <Compile Include="Security\BlockLocalhostModule.cs" />
-    <Compile Include="Services\DeploymentCommandGenerator.cs" />
+    <Compile Include="Services\DeploymentEnvironment.cs" />
     <Compile Include="Services\BuildPropertyProvider.cs" />
     <Compile Include="Tracing\TraceModule.cs" />
     <Compile Include="Tracing\TraceServices.cs" />
