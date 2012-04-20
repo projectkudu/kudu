@@ -11,6 +11,8 @@ namespace Kudu.Core.Deployment
     public class BasicBuilder : ISiteBuilder
     {
         private const string PackageJsonFile = "package.json";
+        private const string NodeDetectionFile = "server.js";
+        private const string WebConfigFile = "web.config";
 
         private readonly string _sourcePath;
         private readonly string _tempPath;
@@ -76,6 +78,8 @@ namespace Kudu.Core.Deployment
 
                 tcs.SetException(ex);
             }
+
+            AddIISNodeConfig(context);
 
             return tcs.Task;
         }
@@ -158,6 +162,25 @@ namespace Kudu.Core.Deployment
 
                     // re-throw
                     throw;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Add a web.config file if we detect a Node site
+        /// </summary>
+        private void AddIISNodeConfig(DeploymentContext context)
+        {
+            // Check if this seems to be a Node app
+            string serverJs = Path.Combine(context.OutputPath, NodeDetectionFile);
+            if (File.Exists(serverJs))
+            {
+                // If there is no web.config file already, create one for iinode 
+                string webConfig = Path.Combine(context.OutputPath, WebConfigFile);
+                if (!File.Exists(webConfig))
+                {
+                    context.Logger.Log(Resources.Log_CreatingNodeConfig);
+                    File.WriteAllText(webConfig, Resources.IisNodeWebConfig);
                 }
             }
         }

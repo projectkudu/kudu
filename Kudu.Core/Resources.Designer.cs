@@ -160,6 +160,28 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+        ///&lt;!--
+        ///  For more information on how to configure your ASP.NET application, please visit
+        ///  http://go.microsoft.com/fwlink/?LinkId=169433
+        ///  --&gt;
+        ///&lt;configuration&gt;
+        ///  &lt;system.webServer&gt;
+        ///    &lt;modules runAllManagedModulesForAllRequests=&quot;false&quot; /&gt;
+        ///
+        ///    &lt;!-- NOTE: By default, debugging and logging are unsecure and should not be enabled for production applications in the cloud.--&gt;
+        ///    &lt;iisnode 
+        ///      debuggingEnabled=&quot;false&quot;
+        ///      loggingEnabled=&quot;false&quot;
+        ///      devErrors [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string IisNodeWebConfig {
+            get {
+                return ResourceManager.GetString("IisNodeWebConfig", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Building solution &apos;{0}&apos;..
         /// </summary>
         internal static string Log_BuildingSolution {
@@ -183,6 +205,15 @@ namespace Kudu.Core {
         internal static string Log_CleaningGitRepository {
             get {
                 return ResourceManager.GetString("Log_CleaningGitRepository", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Deploying Web.config to enable Node.js activation..
+        /// </summary>
+        internal static string Log_CreatingNodeConfig {
+            get {
+                return ResourceManager.GetString("Log_CreatingNodeConfig", resourceCulture);
             }
         }
         
