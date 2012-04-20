@@ -573,6 +573,32 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public void NodeHelloWorldNoConfig()
+        {
+            string repositoryName = "NodeHelloWorldNoConfig";
+            string appName = KuduUtils.GetRandomWebsiteName("NodeConfig");
+            string cloneUrl = "https://github.com/KuduApps/NodeHelloWorldNoConfig.git";
+
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    appManager.GitDeploy(repo.PhysicalPath);
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                    var files = appManager.ProjectSystem.GetProject().Files.ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+
+                    // Make sure a web.config file got created at deployment time
+                    Assert.True(files.Contains("web.config"));
+                });
+            }
+        }
+
+        [Fact]
         public void GetResultsWithMaxItemsAndExcludeFailed()
         {
             // Arrange
