@@ -150,6 +150,41 @@
   <data name="Error_UnsupportedStatus" xml:space="preserve">
     <value>Unsupported status '{0}'.</value>
   </data>
+  <data name="IisNodeWebConfig" xml:space="preserve">
+    <value>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;!--
+  For more information on how to configure your ASP.NET application, please visit
+  http://go.microsoft.com/fwlink/?LinkId=169433
+  --&gt;
+&lt;configuration&gt;
+  &lt;system.webServer&gt;
+    &lt;modules runAllManagedModulesForAllRequests="false" /&gt;
+
+    &lt;!-- NOTE: By default, debugging and logging are unsecure and should not be enabled for production applications in the cloud.--&gt;
+    &lt;iisnode 
+      debuggingEnabled="false"
+      loggingEnabled="false"
+      devErrorsEnabled="false"
+    /&gt;
+
+    &lt;!-- indicates that the server.js file is a node.js application 
+    to be handled by the iisnode module --&gt;
+    &lt;handlers&gt;
+      &lt;add name="iisnode" path="server.js" verb="*" modules="iisnode" /&gt;
+    &lt;/handlers&gt;
+    &lt;rewrite&gt;
+      &lt;rules&gt;
+        &lt;clear /&gt;
+        &lt;rule name="app" enabled="true" patternSyntax="ECMAScript" stopProcessing="true"&gt;
+            &lt;match url="server\.js.+" negate="true" /&gt;
+            &lt;conditions logicalGrouping="MatchAll" trackAllCaptures="false" /&gt;
+            &lt;action type="Rewrite" url="server.js" /&gt;
+        &lt;/rule&gt;
+      &lt;/rules&gt;
+    &lt;/rewrite&gt;
+  &lt;/system.webServer&gt;
+&lt;/configuration&gt;</value>
+  </data>
   <data name="Log_BuildingSolution" xml:space="preserve">
     <value>Building solution '{0}'.</value>
   </data>
@@ -158,6 +193,9 @@
   </data>
   <data name="Log_CleaningGitRepository" xml:space="preserve">
     <value>Cleaning git repository.</value>
+  </data>
+  <data name="Log_CreatingNodeConfig" xml:space="preserve">
+    <value>Deploying Web.config to enable Node.js activation.</value>
   </data>
   <data name="Log_DeploymentAlreadyActive" xml:space="preserve">
     <value>Deployment '{0}' already active.</value>
