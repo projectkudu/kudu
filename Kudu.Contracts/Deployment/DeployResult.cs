@@ -23,6 +23,9 @@ namespace Kudu.Core.Deployment
         [DataMember(Name = "author")]
         public string Author { get; set; }
 
+        [DataMember(Name = "deployer")]
+        public string Deployer { get; set; }
+
         [DataMember(Name = "message")]
         public string Message { get; set; }
 

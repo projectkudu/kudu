@@ -51,7 +51,7 @@
     <Compile Include="Commands\ICommandExecutor.cs" />
     <Compile Include="Deployment\DeployResult.cs" />
     <Compile Include="Deployment\DeployStatus.cs" />
-    <Compile Include="Deployment\IDeploymentCommandGenerator.cs" />
+    <Compile Include="Deployment\IDeploymentEnvironment.cs" />
     <Compile Include="Deployment\IDeploymentManager.cs" />
     <Compile Include="Deployment\IDeploymentManagerFactory.cs" />
     <Compile Include="Deployment\LogEntry.cs" />

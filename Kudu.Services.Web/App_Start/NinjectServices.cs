@@ -132,7 +132,7 @@ namespace Kudu.Services.Web.App_Start
 
             kernel.Bind<IServerRepository>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, 
                                                                                   initLock,
-                                                                                  context.Kernel.Get<IDeploymentCommandGenerator>(),
+                                                                                  context.Kernel.Get<IDeploymentEnvironment>(),
                                                                                   context.Kernel.Get<ITraceFactory>()))
                                             .InRequestScope();
 
@@ -144,11 +144,11 @@ namespace Kudu.Services.Web.App_Start
                                                 .InRequestScope();
 
             // Git server
-            kernel.Bind<IDeploymentCommandGenerator>().To<DeploymentCommandGenerator>();
+            kernel.Bind<IDeploymentEnvironment>().To<DeploymentEnvrionment>();
 
             kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, 
                                                                            initLock, 
-                                                                           context.Kernel.Get<IDeploymentCommandGenerator>(), 
+                                                                           context.Kernel.Get<IDeploymentEnvironment>(), 
                                                                            context.Kernel.Get<ITraceFactory>()))
                                      .InRequestScope();
 
