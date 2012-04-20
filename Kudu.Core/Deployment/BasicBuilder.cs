@@ -65,6 +65,8 @@ namespace Kudu.Core.Deployment
                 // Download node packages
                 DownloadNodePackages(context);
 
+                AddIISNodeConfig(context);
+
                 tcs.SetResult(null);
             }
             catch (Exception ex)
@@ -78,8 +80,6 @@ namespace Kudu.Core.Deployment
 
                 tcs.SetException(ex);
             }
-
-            AddIISNodeConfig(context);
 
             return tcs.Task;
         }
