@@ -179,8 +179,11 @@ namespace Kudu.Core.Deployment
                 string webConfig = Path.Combine(context.OutputPath, WebConfigFile);
                 if (!File.Exists(webConfig))
                 {
-                    context.Logger.Log(Resources.Log_CreatingNodeConfig);
-                    File.WriteAllText(webConfig, Resources.IisNodeWebConfig);
+                    using (context.Tracer.Step(Resources.Log_CreatingNodeConfig))
+                    {
+                        context.Logger.Log(Resources.Log_CreatingNodeConfig);
+                        File.WriteAllText(webConfig, Resources.IisNodeWebConfig);
+                    }
                 }
             }
         }
