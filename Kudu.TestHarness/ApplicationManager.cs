@@ -57,6 +57,14 @@ namespace Kudu.TestHarness
             _siteManager.DeleteSite(_appName);
         }
 
+        public void Save(string path, string content)
+        {
+            string fullPath = Path.Combine(PathHelper.TestResultsPath, _appName, path);
+            Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
+
+            File.WriteAllText(fullPath, content);
+        }
+
         public static void Run(string applicationName, Action<ApplicationManager> action)
         {
             var appManager = CreateApplication(applicationName);
