@@ -8,7 +8,7 @@ namespace Kudu.TestHarness
         {
             GitDeploymentResult result = Git.GitDeploy(appManager.DeploymentManager, appManager.ServiceUrl, localRepoPath, appManager.GitUrl, localBranchName, remoteBranchName);
 
-            string traceFile = String.Format("git-{0:MM-dd-H-mm-ss}.txt", DateTime.Now);
+            string traceFile = String.Format("git-push-{0:MM-dd-H-mm-ss}.txt", DateTime.Now);
 
             appManager.Save(traceFile, result.GitTrace);
 
