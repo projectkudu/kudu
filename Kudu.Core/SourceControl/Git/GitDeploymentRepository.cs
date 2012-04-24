@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Linq;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.SourceControl.Git
@@ -9,7 +10,7 @@ namespace Kudu.Core.SourceControl.Git
         private readonly GitExecutable _gitExe;
         private readonly ITraceFactory _traceFactory;
         private readonly GitExeRepository _repository;
-        
+
         public GitDeploymentRepository(string path, ITraceFactory traceFactory)
         {
             _gitExe = new GitExecutable(path);
@@ -85,12 +86,28 @@ namespace Kudu.Core.SourceControl.Git
 
         public void Update()
         {
+            EnsureNoLockFile();
             _repository.Update();
         }
 
         public void Update(string id)
         {
+            EnsureNoLockFile();
             _repository.Update(id);
+        }
+
+        private void EnsureNoLockFile()
+        {
+            ITracer tracer = _traceFactory.GetTracer();
+
+            // Delete the lock file from the .git folder
+            string lockFilePath = Path.Combine(_gitExe.WorkingDirectory, ".git", "index.lock");
+            if (File.Exists(lockFilePath))
+            {
+                tracer.TraceWarning("Deleting left over index.lock file");
+                File.Delete(lockFilePath);
+            }
+
         }
     }
 }
