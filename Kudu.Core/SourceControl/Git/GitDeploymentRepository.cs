@@ -98,12 +98,11 @@ namespace Kudu.Core.SourceControl.Git
 
         private void EnsureNoLockFile()
         {
-            ITracer tracer = _traceFactory.GetTracer();
-
             // Delete the lock file from the .git folder
             string lockFilePath = Path.Combine(_gitExe.WorkingDirectory, ".git", "index.lock");
             if (File.Exists(lockFilePath))
             {
+                ITracer tracer = _traceFactory.GetTracer();
                 tracer.TraceWarning("Deleting left over index.lock file");
                 File.Delete(lockFilePath);
             }
