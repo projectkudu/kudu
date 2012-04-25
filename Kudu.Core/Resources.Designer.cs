@@ -255,7 +255,7 @@ namespace Kudu.Core {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Warning: Application appears to be a node.js application but no server.js is present. If it is a node application, please rename your startup js file to server.js and re-publish your application..
+        ///   Looks up a localized string similar to WARNING: Application appears to be a node.js application but no server.js is present. If it is a node application, please rename your startup js file to server.js and re-publish your application..
         /// </summary>
         internal static string Log_NodeWithMissingServerJs {
             get {

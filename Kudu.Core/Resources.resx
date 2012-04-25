@@ -249,7 +249,7 @@
     <value>Found solution '{0}' with no deployable projects. Deploying files instead.</value>
   </data>
   <data name="Log_NodeWithMissingServerJs" xml:space="preserve">
-    <value>Warning: Application appears to be a node.js application but no server.js is present. If it is a node application, please rename your startup js file to server.js and re-publish your application.</value>
+    <value>WARNING: Application appears to be a node.js application but no server.js is present. If it is a node application, please rename your startup js file to server.js and re-publish your application.</value>
   </data>
   <data name="Log_NonMasterBranchPushed" xml:space="preserve">
     <value>Deployment skipped. Received push for '{0}' branch, and only pushes to 'master' are deployed.</value>
