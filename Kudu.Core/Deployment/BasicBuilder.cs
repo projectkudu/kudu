@@ -172,9 +172,11 @@ namespace Kudu.Core.Deployment
         /// </summary>
         private void AddIISNodeConfig(DeploymentContext context)
         {
-            // If there is a config file already, don't do anything
-            string webConfig = Path.Combine(context.OutputPath, WebConfigFile);
-            if (File.Exists(webConfig)) return;
+            // If the repo already has a config file, don't do anything
+            if (File.Exists(Path.Combine(_sourcePath, WebConfigFile)))
+            {
+                return;
+            }
 
             foreach (var nodeDetectionFile in NodeDetectionFiles)
             {
@@ -185,7 +187,9 @@ namespace Kudu.Core.Deployment
                     using (context.Tracer.Step(Resources.Log_CreatingNodeConfig))
                     {
                         context.Logger.Log(Resources.Log_CreatingNodeConfig);
-                        File.WriteAllText(webConfig, String.Format(Resources.IisNodeWebConfig, nodeDetectionFile));
+                        File.WriteAllText(
+                            Path.Combine(context.OutputPath, WebConfigFile),
+                            String.Format(Resources.IisNodeWebConfig, nodeDetectionFile));
                         return;
                     }
                 }
