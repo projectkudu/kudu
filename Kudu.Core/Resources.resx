@@ -203,9 +203,6 @@
   <data name="Log_DeploymentSuccessful" xml:space="preserve">
     <value>Deployment successful.</value>
   </data>
-  <data name="Log_DownloadingNodePackages" xml:space="preserve">
-    <value>Downloading NPM packages.</value>
-  </data>
   <data name="Log_NewDeploymentReceived" xml:space="preserve">
     <value>New deployment received.</value>
   </data>
@@ -226,6 +223,9 @@
   </data>
   <data name="Log_PreparingFiles" xml:space="preserve">
     <value>Preparing files for deployment.</value>
+  </data>
+  <data name="Log_RunningNPM" xml:space="preserve">
+    <value>Running NPM.</value>
   </data>
   <data name="Log_UnexpectedError" xml:space="preserve">
     <value>An unknown error has occured. Check the diagnostic log for details.</value>

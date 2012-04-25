@@ -236,15 +236,6 @@ namespace Kudu.Core {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Downloading NPM packages..
-        /// </summary>
-        internal static string Log_DownloadingNodePackages {
-            get {
-                return ResourceManager.GetString("Log_DownloadingNodePackages", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to New deployment received..
         /// </summary>
         internal static string Log_NewDeploymentReceived {
@@ -304,6 +295,15 @@ namespace Kudu.Core {
         internal static string Log_PreparingFiles {
             get {
                 return ResourceManager.GetString("Log_PreparingFiles", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Running NPM..
+        /// </summary>
+        internal static string Log_RunningNPM {
+            get {
+                return ResourceManager.GetString("Log_RunningNPM", resourceCulture);
             }
         }
         

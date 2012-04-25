@@ -98,7 +98,7 @@ namespace Kudu.Core.Deployment
                 return;
             }
 
-            ILogger innerLogger = context.Logger.Log(Resources.Log_DownloadingNodePackages);
+            ILogger innerLogger = context.Logger.Log(Resources.Log_RunningNPM);
 
             using (context.Tracer.Step("Downloading node packages"))
             {
