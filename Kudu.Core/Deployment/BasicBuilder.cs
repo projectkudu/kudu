@@ -13,6 +13,7 @@ namespace Kudu.Core.Deployment
     {
         private const string PackageJsonFile = "package.json";
         private readonly string[] NodeDetectionFiles = new[] { "server.js", "app.js" };
+        private readonly string[] NonNodeExtensions = new[] { "*.php", "*.htm", "*.html", "*.aspx", "*.cshtml" };
         private const string WebConfigFile = "web.config";
 
         private readonly string _sourcePath;
@@ -211,14 +212,22 @@ namespace Kudu.Core.Deployment
                 return true;
             }
 
-            // If it has any PHP/HTML files at the root, treat it as non-Node
-            if (Directory.EnumerateFiles(webRoot, "*.php").Any() || Directory.EnumerateFiles(webRoot, "*.htm").Any() || Directory.EnumerateFiles(webRoot, "*.html").Any())
+            // If it has no .js filed at the root, it's not Node
+            if (!Directory.EnumerateFiles(webRoot, "*.js").Any())
             {
                 return false;
             }
 
-            // Treat it as Node if it has at least one .js file at the root
-            return Directory.EnumerateFiles(webRoot, "*.js").Any();
+            // If it has files that have a clear non-Node extension, treat it as non-Node
+            foreach (var extension in NonNodeExtensions)
+            {
+                if (Directory.EnumerateFiles(webRoot, extension).Any())
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }
