@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,7 +12,7 @@ namespace Kudu.Core.Deployment
     public class BasicBuilder : ISiteBuilder
     {
         private const string PackageJsonFile = "package.json";
-        private const string NodeDetectionFile = "server.js";
+        private readonly string[] NodeDetectionFiles = new[] { "server.js", "app.js" };
         private const string WebConfigFile = "web.config";
 
         private readonly string _sourcePath;
@@ -171,21 +172,49 @@ namespace Kudu.Core.Deployment
         /// </summary>
         private void AddIISNodeConfig(DeploymentContext context)
         {
-            // Check if this seems to be a Node app
-            string serverJs = Path.Combine(context.OutputPath, NodeDetectionFile);
-            if (File.Exists(serverJs))
+            // If there is a config file already, don't do anything
+            string webConfig = Path.Combine(context.OutputPath, WebConfigFile);
+            if (File.Exists(webConfig)) return;
+
+            foreach (var nodeDetectionFile in NodeDetectionFiles)
             {
-                // If there is no web.config file already, create one for iinode 
-                string webConfig = Path.Combine(context.OutputPath, WebConfigFile);
-                if (!File.Exists(webConfig))
+                // If the node detection file exists, create an iisnode web.config file for it
+                string fullPath = Path.Combine(context.OutputPath, nodeDetectionFile);
+                if (File.Exists(fullPath))
                 {
                     using (context.Tracer.Step(Resources.Log_CreatingNodeConfig))
                     {
                         context.Logger.Log(Resources.Log_CreatingNodeConfig);
-                        File.WriteAllText(webConfig, Resources.IisNodeWebConfig);
+                        File.WriteAllText(webConfig, String.Format(Resources.IisNodeWebConfig, nodeDetectionFile));
+                        return;
                     }
                 }
             }
+
+            // If we couldn't treat it as a Node site, but it appears that the user expects it to be,
+            // give a warning.
+            if (LooksLikeNodeSite(context.OutputPath))
+            {
+                context.Logger.Log(Resources.Log_NodeWithMissingServerJs);
+            }
+        }
+
+        private bool LooksLikeNodeSite(string webRoot)
+        {
+            // If it has a node_modules folder, it's likely Node
+            if (Directory.Exists(Path.Combine(webRoot, "node_modules")))
+            {
+                return true;
+            }
+
+            // If it has any PHP/HTML files at the root, treat it as non-Node
+            if (Directory.EnumerateFiles(webRoot, "*.php").Any() || Directory.EnumerateFiles(webRoot, "*.htm").Any() || Directory.EnumerateFiles(webRoot, "*.html").Any())
+            {
+                return false;
+            }
+
+            // Treat it as Node if it has at least one .js file at the root
+            return Directory.EnumerateFiles(webRoot, "*.js").Any();
         }
     }
 }
