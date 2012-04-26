@@ -1,18 +1,15 @@
 ﻿using System;
 using System.IO;
+using System.IO.Abstractions;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
-using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment
 {
     public class BasicBuilder : ISiteBuilder
     {
         private const string PackageJsonFile = "package.json";
-        private const string NodeDetectionFile = "server.js";
-        private const string WebConfigFile = "web.config";
 
         private readonly string _sourcePath;
         private readonly string _tempPath;
@@ -171,19 +168,25 @@ namespace Kudu.Core.Deployment
         /// </summary>
         private void AddIISNodeConfig(DeploymentContext context)
         {
-            // Check if this seems to be a Node app
-            string serverJs = Path.Combine(context.OutputPath, NodeDetectionFile);
-            if (File.Exists(serverJs))
+            var nodeSiteEnabler = new NodeSiteEnabler(
+                new FileSystem(),
+                repoFolder: _sourcePath,
+                siteFolder: context.OutputPath);
+
+            // Check if need to do anythng related to Node
+            if (nodeSiteEnabler.NeedNodeHandling())
             {
-                // If there is no web.config file already, create one for iinode 
-                string webConfig = Path.Combine(context.OutputPath, WebConfigFile);
-                if (!File.Exists(webConfig))
+                // If we can figure out the start file, create the config file.
+                // Otherwise give a warning
+                string nodeStartFile = nodeSiteEnabler.GetNodeStartFile();
+                if (nodeStartFile != null)
                 {
-                    using (context.Tracer.Step(Resources.Log_CreatingNodeConfig))
-                    {
-                        context.Logger.Log(Resources.Log_CreatingNodeConfig);
-                        File.WriteAllText(webConfig, Resources.IisNodeWebConfig);
-                    }
+                    context.Logger.Log(Resources.Log_CreatingNodeConfig);
+                    nodeSiteEnabler.CreateConfigFile(nodeStartFile);
+                }
+                else
+                {
+                    context.Logger.Log(Resources.Log_NodeWithMissingServerJs);
                 }
             }
         }
