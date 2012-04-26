@@ -47,9 +47,9 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.IO.Abstractions, Version=1.4.0.12, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="System.IO.Abstractions, Version=1.4.0.23, Culture=neutral, PublicKeyToken=d480b5b72fb413da, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\System.IO.Abstractions.1.4.0.12\lib\net35\System.IO.Abstractions.dll</HintPath>
+      <HintPath>..\packages\System.IO.Abstractions.1.4.0.23\lib\net35\System.IO.Abstractions.dll</HintPath>
     </Reference>
     <Reference Include="System.Net.Http">
       <HintPath>..\packages\HttpClient.0.6.0\lib\40\System.Net.Http.dll</HintPath>
@@ -78,6 +78,7 @@
     <Compile Include="Deployment\IDeploymentManifestWriter.cs" />
     <Compile Include="Deployment\ManifestWriterExtensions.cs" />
     <Compile Include="Deployment\MsBuildSiteBuilder.cs" />
+    <Compile Include="Deployment\NodeSiteEnabler.cs" />
     <Compile Include="Deployment\NpmExecutable.cs" />
     <Compile Include="Deployment\NullLogger.cs" />
     <Compile Include="Infrastructure\ProgressWriter.cs" />
