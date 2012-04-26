@@ -2,6 +2,7 @@
 using System.IO;
 using System.IO.Abstractions;
 using System.Xml.Linq;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment
 {
@@ -118,10 +119,14 @@ namespace Kudu.Core.Deployment
                     new XElement("complete", Complete.ToString())
                 ));
 
-            using (Stream stream = fileSystem.File.Create(_path))
+            // Retry saves to the file to make it robust incase of failure
+            OperationManager.Attempt(() =>
             {
-                document.Save(stream);
-            }
+                using (Stream stream = fileSystem.File.Create(_path))
+                {
+                    document.Save(stream);
+                }
+            });
         }
 
         private static string GetOptionalElementValue(XElement element, string localName, string namespaceName = null)
