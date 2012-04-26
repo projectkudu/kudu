@@ -140,8 +140,11 @@ namespace Kudu.Core.SourceControl.Git
                         { "path", path }
                     });
 
-                    // Copy all of the files into the repository
-                    FileSystemHelpers.Copy(path, _gitExe.WorkingDirectory);
+                    using (tracer.Step("Copying files into repository"))
+                    {
+                        // Copy all of the files into the repository
+                        FileSystemHelpers.Copy(path, _gitExe.WorkingDirectory);
+                    }
 
                     // Make the initial commit
                     changeSet = _repository.Commit("Initial commit");
