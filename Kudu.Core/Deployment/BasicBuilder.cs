@@ -13,9 +13,6 @@ namespace Kudu.Core.Deployment
     public class BasicBuilder : ISiteBuilder
     {
         private const string PackageJsonFile = "package.json";
-        private readonly string[] NodeDetectionFiles = new[] { "server.js", "app.js" };
-        private readonly string[] NonNodeExtensions = new[] { "*.php", "*.htm", "*.html", "*.aspx", "*.cshtml" };
-        private const string WebConfigFile = "web.config";
 
         private readonly string _sourcePath;
         private readonly string _tempPath;
