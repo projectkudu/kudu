@@ -1,12 +1,9 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
+using System.IO.Abstractions;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
-using Kudu.Core.Infrastructure;
-using System.IO.Abstractions;
 
 namespace Kudu.Core.Deployment
 {
