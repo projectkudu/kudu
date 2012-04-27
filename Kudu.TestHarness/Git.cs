@@ -129,8 +129,10 @@ namespace Kudu.TestHarness
 
         public static TestRepository CreateLocalRepository(string repositoryName)
         {
+            string targetPath = Path.Combine(PathHelper.ZippedRepositoriesDir, repositoryName + ".zip");
+
             // Get the path to the repository
-            string zippedPath = Path.Combine(PathHelper.ZippedRepositoriesDir, repositoryName + ".zip");
+            string zippedPath = PathHelper.GetPath(targetPath);
 
             // Unzip it
             ZipUtils.Unzip(zippedPath, PathHelper.LocalRepositoriesDir);

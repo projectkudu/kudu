@@ -1,4 +1,5 @@
-﻿using System.Configuration;
+﻿using System;
+using System.Configuration;
 using System.IO;
 
 namespace Kudu.TestHarness
@@ -13,8 +14,28 @@ namespace Kudu.TestHarness
         internal static readonly string TestsRootPath = Path.Combine(Directory.GetCurrentDirectory(), "Tests");
         internal static readonly string LocalRepositoriesDir = Path.GetFullPath(Path.Combine(TestsRootPath, "TestRepositories"));
         internal static readonly string TestResultsPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "TestResults"));
-        internal static readonly string ZippedRepositoriesDir = Path.Combine(@"..\..\ZippedRepositories");
-        internal static readonly string GitDeploymentTestsFile = Path.Combine(@"..\..\GitDeploymentTests.csv");
 
+        internal static readonly string ZippedRepositoriesDir = "ZippedRepositories";
+        internal static readonly string ZippedWebSitesPath = "ZippedWebSites";
+        internal static readonly string GitDeploymentTestsFile = "GitDeploymentTests.csv";
+
+        public static string GetPath(string targetPath)
+        {
+            var directory = new DirectoryInfo(Directory.GetCurrentDirectory());
+
+            while (directory.Parent != null)
+            {
+                string configPath = Path.Combine(directory.FullName, targetPath);
+
+                if (File.Exists(configPath))
+                {
+                    return configPath;
+                }
+
+                directory = directory.Parent;
+            }
+
+            throw new InvalidOperationException("Unable to find file " + targetPath);
+        }
     }
 }

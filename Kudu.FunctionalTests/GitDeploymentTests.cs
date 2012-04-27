@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
@@ -7,13 +8,12 @@ using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
 using Xunit;
 using Xunit.Extensions;
-using System;
 
 namespace Kudu.FunctionalTests
 {
     public class GitDeploymentTests
-    {       
-        static GitTestConfig gitTestConfig = new GitTestConfig(PathHelper.GitDeploymentTestsFile);
+    {
+        static GitTestConfig gitTestConfig = GetConfig();
     
         [Theory]
         [PropertyData("GetTestData")]
@@ -57,6 +57,12 @@ namespace Kudu.FunctionalTests
             {
                 return gitTestConfig.GetTests();
             }
+        }
+
+        private static GitTestConfig GetConfig()
+        {
+            string path = PathHelper.GetPath(PathHelper.GitDeploymentTestsFile);
+            return new GitTestConfig(path);
         }
     }
 }
