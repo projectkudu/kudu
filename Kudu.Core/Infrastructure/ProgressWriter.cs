@@ -1,59 +1,105 @@
 ﻿using System;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Kudu.Core.Infrastructure
 {
-    public class ProgressWriter : IDisposable
+    internal class ProgressWriter : IDisposable
     {
+        private readonly IWriter _writer;
+        private Thread _progressThread;
+        private bool _writingProgress;
         private bool _running;
-        private bool _printed;
+
+        private DateTime _lastWriteTime;
+
+        public ProgressWriter()
+        {
+        }
+
+        public ProgressWriter(IWriter writer)
+        {
+            _writer = writer;
+            _writer.BeforeWrite += OnBeforeWrite;
+        }
 
         public void Start()
         {
-            _running = true;
-
-            Delay(TimeSpan.FromSeconds(5)).ContinueWith(task =>
+            if (_progressThread == null)
             {
-                while (_running)
-                {
-                    Console.Write(".");
-
-                    _printed = true;
-                    Thread.Sleep(1000);
-                }
-            });
+                // Set the last write time and initialize progress thread
+                _lastWriteTime = DateTime.Now;
+                _running = true;
+                _progressThread = new Thread(UpdateWriterState);
+                _progressThread.Start();
+            }
         }
 
-        public void Stop()
+        private void OnBeforeWrite()
         {
-            if (_printed)
+            _lastWriteTime = DateTime.Now;
+
+            if (_writingProgress)
             {
-                // Only print the new line if we printed any progress at all
+                // Go back to not writing progress and print a new line before
+                // we start to write new content
+                _writingProgress = false;
                 Console.WriteLine();
             }
-            _running = false;
+        }
+
+        private void UpdateWriterState()
+        {
+            // Keep the background thread running
+            while (_running)
+            {
+                if (!_writingProgress)
+                {
+                    // If 5 seconds elapsed since the last write then switch into progress writing state
+                    var elapsed = DateTime.Now - _lastWriteTime;
+
+                    if (elapsed.TotalSeconds >= 5)
+                    {
+                        _writingProgress = true;
+                    }
+                    else
+                    {
+                        Thread.Sleep(500);
+                    }
+                }
+                else
+                {
+                    // Write progress
+                    Console.Write(".");
+
+                    Thread.Sleep(1000);
+                }
+            }
         }
 
         public void Dispose()
         {
-            Stop();
-        }
+            // Set running to false
+            _running = false;
 
-        private static Task Delay(TimeSpan timeOut)
-        {
-            var tcs = new TaskCompletionSource<object>();
-
-            var timer = new Timer(tcs.SetResult,
-            null,
-            timeOut,
-            TimeSpan.FromMilliseconds(-1));
-
-            return tcs.Task.ContinueWith(_ =>
+            if (_writer != null)
             {
-                timer.Dispose();
-            },
-            TaskContinuationOptions.ExecuteSynchronously);
+                _writer.BeforeWrite -= OnBeforeWrite;
+            }
+
+            if (_progressThread != null)
+            {
+                // Wait for the thread to terminate (should always happen since we set _running to false)
+                _progressThread.Join();
+                _progressThread = null;
+            }
+
+            if (_writingProgress)
+            {
+                // If nobody called write but we're done writing progress then end with a new line
+                // and turn the flag off
+                Console.WriteLine();
+                _writingProgress = false;
+            }
         }
     }
 }

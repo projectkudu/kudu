@@ -36,26 +36,33 @@ namespace Kudu.Core.Deployment
 
         public string ExecuteMSBuild(ITracer tracer, string arguments, params object[] args)
         {
-            // The line with the MSB3644 warnings since it's not important
-            return _msbuildExe.Execute(tracer,
-                                       output =>
-                                       {
-                                           if (output.Contains("MSB3644:"))
-                                           {
-                                               return false;
-                                           }
+            var consoleWriter = new ConsoleWriter();
 
-                                           Console.Out.WriteLine(output);
-                                           return true;
-                                       },
-                                       error =>
-                                       {
-                                           Console.Error.WriteLine(error);
-                                           return true;
-                                       },
-                                       Console.OutputEncoding,
-                                       arguments,
-                                       args).Item1;
+            using (var writer = new ProgressWriter(consoleWriter))
+            {
+                writer.Start();
+
+                // The line with the MSB3644 warnings since it's not important
+                return _msbuildExe.Execute(tracer,
+                                           output =>
+                                           {
+                                               if (output.Contains("MSB3644:"))
+                                               {
+                                                   return false;
+                                               }
+
+                                               consoleWriter.WriteOutLine(output);
+                                               return true;
+                                           },
+                                           error =>
+                                           {
+                                               consoleWriter.WriteErrorLine(error);
+                                               return true;
+                                           },
+                                           Console.OutputEncoding,
+                                           arguments,
+                                           args).Item1;
+            }
         }
 
         public abstract Task Build(DeploymentContext context);

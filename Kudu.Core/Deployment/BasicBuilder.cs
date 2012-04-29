@@ -4,6 +4,7 @@ using System.IO.Abstractions;
 using System.Net;
 using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment
 {
@@ -140,8 +141,16 @@ namespace Kudu.Core.Deployment
 
                 try
                 {
-                    // Run install on the output directory
-                    string log = npm.ExecuteWithConsoleOutput(context.Tracer, "install").Item1;
+                    var consoleWriter = new ConsoleWriter();
+
+                    string log = null;
+
+                    using (var writer = new ProgressWriter(consoleWriter))
+                    {
+                        writer.Start();
+                        // Run install on the output directory
+                        log = npm.Install(context.Tracer, consoleWriter);
+                    }
 
                     if (String.IsNullOrWhiteSpace(log))
                     {
