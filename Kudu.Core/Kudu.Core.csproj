@@ -81,8 +81,6 @@
     <Compile Include="Deployment\NodeSiteEnabler.cs" />
     <Compile Include="Deployment\NpmExecutable.cs" />
     <Compile Include="Deployment\NullLogger.cs" />
-    <Compile Include="Infrastructure\ConsoleWriter.cs" />
-    <Compile Include="Infrastructure\IWriter.cs" />
     <Compile Include="Infrastructure\ProgressWriter.cs" />
     <Compile Include="Infrastructure\DisposableAction.cs" />
     <Compile Include="Infrastructure\IniFile.cs" />

@@ -36,9 +36,7 @@ namespace Kudu.Core.Deployment
 
         public string ExecuteMSBuild(ITracer tracer, string arguments, params object[] args)
         {
-            var consoleWriter = new ConsoleWriter();
-
-            using (var writer = new ProgressWriter(consoleWriter))
+            using (var writer = new ProgressWriter())
             {
                 writer.Start();
 
@@ -51,12 +49,12 @@ namespace Kudu.Core.Deployment
                                                    return false;
                                                }
 
-                                               consoleWriter.WriteOutLine(output);
+                                               writer.WriteOutLine(output);
                                                return true;
                                            },
                                            error =>
                                            {
-                                               consoleWriter.WriteErrorLine(error);
+                                               writer.WriteErrorLine(error);
                                                return true;
                                            },
                                            Console.OutputEncoding,

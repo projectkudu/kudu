@@ -12,17 +12,17 @@ namespace Kudu.Core.Deployment
             Encoding = null;
         }
 
-        public string Install(ITracer tracer, ConsoleWriter consoleWriter)
+        public string Install(ITracer tracer, ProgressWriter writer)
         {
             return Execute(tracer,
                            output =>
                            {
-                               consoleWriter.WriteOutLine(output);
+                               writer.WriteOutLine(output);
                                return true;
                            },
                            error =>
                            {
-                               consoleWriter.WriteOutLine(error);
+                               writer.WriteOutLine(error);
                                return true;
                            },
                            Console.OutputEncoding,

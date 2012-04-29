@@ -141,15 +141,13 @@ namespace Kudu.Core.Deployment
 
                 try
                 {
-                    var consoleWriter = new ConsoleWriter();
-
                     string log = null;
 
-                    using (var writer = new ProgressWriter(consoleWriter))
+                    using (var writer = new ProgressWriter())
                     {
                         writer.Start();
                         // Run install on the output directory
-                        log = npm.Install(context.Tracer, consoleWriter);
+                        log = npm.Install(context.Tracer, writer);
                     }
 
                     if (String.IsNullOrWhiteSpace(log))

@@ -5,22 +5,11 @@ namespace Kudu.Core.Infrastructure
 {
     internal class ProgressWriter : IDisposable
     {
-        private readonly IWriter _writer;
         private Thread _progressThread;
         private bool _writingProgress;
         private bool _running;
 
         private DateTime _lastWriteTime;
-
-        public ProgressWriter()
-        {
-        }
-
-        public ProgressWriter(IWriter writer)
-        {
-            _writer = writer;
-            _writer.BeforeWrite += OnBeforeWrite;
-        }
 
         public void Start()
         {
@@ -32,6 +21,20 @@ namespace Kudu.Core.Infrastructure
                 _progressThread = new Thread(UpdateWriterState);
                 _progressThread.Start();
             }
+        }
+
+        public void WriteOutLine(string value)
+        {
+            OnBeforeWrite();
+
+            Console.Out.WriteLine(value);
+        }
+
+        public void WriteErrorLine(string value)
+        {
+            OnBeforeWrite();
+
+            Console.Error.WriteLine(value);
         }
 
         private void OnBeforeWrite()
@@ -81,11 +84,6 @@ namespace Kudu.Core.Infrastructure
             // Set running to false
             _running = false;
 
-            if (_writer != null)
-            {
-                _writer.BeforeWrite -= OnBeforeWrite;
-            }
-
             if (_progressThread != null)
             {
                 // Wait for the thread to terminate (should always happen since we set _running to false)
@@ -93,13 +91,7 @@ namespace Kudu.Core.Infrastructure
                 _progressThread = null;
             }
 
-            if (_writingProgress)
-            {
-                // If nobody called write but we're done writing progress then end with a new line
-                // and turn the flag off
-                Console.WriteLine();
-                _writingProgress = false;
-            }
+            OnBeforeWrite();
         }
     }
 }
