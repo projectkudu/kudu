@@ -192,7 +192,7 @@ namespace Kudu.Core.Infrastructure
             {
                 return null;
             }
-            return info.GetFiles().ToDictionary(f => f.Name, StringComparer.OrdinalIgnoreCase);
+            return info.GetFilesWithRetry().ToDictionary(f => f.Name, StringComparer.OrdinalIgnoreCase);
         }
 
         internal static IDictionary<string, DirectoryInfoBase> GetDirectories(DirectoryInfoBase info)
@@ -202,6 +202,16 @@ namespace Kudu.Core.Infrastructure
                 return null;
             }
             return info.GetDirectories().ToDictionary(d => d.Name, StringComparer.OrdinalIgnoreCase);
+        }
+
+        // Call DirectoryInfoBase.GetFiles under a retry loop to make the system
+        // more resilient when some files are temporarily in use
+        internal static FileInfoBase[] GetFilesWithRetry(this DirectoryInfoBase info)
+        {
+            return OperationManager.Attempt(() =>
+            {
+                return info.GetFiles();
+            });
         }
     }
 }
