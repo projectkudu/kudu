@@ -208,13 +208,10 @@ namespace Kudu.Core.Infrastructure
         // more resilient when some files are temporarily in use
         internal static FileInfoBase[] GetFilesWithRetry(this DirectoryInfoBase info)
         {
-            FileInfoBase[] files = null;
-            OperationManager.Attempt(() =>
+            return OperationManager.Attempt(() =>
             {
-                files = info.GetFiles();
+                return info.GetFiles();
             });
-
-            return files;
         }
     }
 }

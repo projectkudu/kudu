@@ -7,11 +7,22 @@ namespace Kudu.Core.Infrastructure
     {
         public static void Attempt(Action action, Func<bool> condition = null, int retries = 3, int delayBeforeRetry = 250)
         {
+            OperationManager.Attempt<object>(() =>
+            {
+                action();
+                return null;
+            });
+        }
+
+        public static T Attempt<T>(Func<T> action, Func<bool> condition = null, int retries = 3, int delayBeforeRetry = 250)
+        {
+            T result = default(T);
+
             while (retries > 0)
             {
                 try
                 {
-                    action();
+                    result = action();
                     break;
                 }
                 catch
@@ -25,6 +36,8 @@ namespace Kudu.Core.Infrastructure
 
                 Thread.Sleep(delayBeforeRetry);
             }
+
+            return result;
         }
 
         public static void WaitUntil(Func<bool> condition, int retries = 3, int delayBeforeRetry = 500)
