@@ -131,8 +131,8 @@ namespace Kudu.Core.Deployment
                 OperationManager.Attempt(() => sourceFile.CopyTo(path, overwrite: true));
             }
 
-            var sourceDirectoryLookup = FileSystemHelpers.GetDirectores(sourceDirectory);
-            var destDirectoryLookup = FileSystemHelpers.GetDirectores(destinationDirectory);
+            var sourceDirectoryLookup = FileSystemHelpers.GetDirectories(sourceDirectory);
+            var destDirectoryLookup = FileSystemHelpers.GetDirectories(destinationDirectory);
 
             foreach (var destSubDirectory in destDirectoryLookup.Values)
             {

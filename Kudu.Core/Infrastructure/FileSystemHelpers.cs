@@ -153,7 +153,7 @@ namespace Kudu.Core.Infrastructure
             }
 
 
-            var destDirectoryLookup = GetDirectores(destinationDirectory);
+            var destDirectoryLookup = GetDirectories(destinationDirectory);
             foreach (var sourceSubDirectory in sourceDirectory.GetDirectories())
             {
                 DirectoryInfoBase targetSubDirectory;
@@ -195,7 +195,7 @@ namespace Kudu.Core.Infrastructure
             return info.GetFiles().ToDictionary(f => f.Name, StringComparer.OrdinalIgnoreCase);
         }
 
-        internal static IDictionary<string, DirectoryInfoBase> GetDirectores(DirectoryInfoBase info)
+        internal static IDictionary<string, DirectoryInfoBase> GetDirectories(DirectoryInfoBase info)
         {
             if (info == null)
             {
