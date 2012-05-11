@@ -146,14 +146,26 @@ namespace Kudu.Core.Tracing
 
                 // Amount of entries we have to trim. It should be 1 all of the time
                 // but just in case something went wrong, we're going to try to fix it this time around
-                int trim = entries.Count - MaxLogEntries;
+                int trim = entries.Count - MaxLogEntries + 1;
 
                 if (trim <= 0)
                 {
                     return;
                 }
 
-                foreach (var e in entries.Take(trim))
+                // Search for all skippable requests first
+                var filteredEntries = entries.Take(MaxLogEntries / 2)
+                                             .Where(Skippable)
+                                             .ToList();
+
+                // If we didn't find skippable entries just remove the oldest
+                if (filteredEntries.Count == 0)
+                {
+                    // If there's none just use the full list
+                    filteredEntries = entries;
+                }
+
+                foreach (var e in filteredEntries.Take(trim))
                 {
                     e.Remove();
                 }
@@ -163,6 +175,17 @@ namespace Kudu.Core.Tracing
                 // Something went wrong so just continue
                 Debug.WriteLine(ex.Message);
             }
+        }
+
+        private static bool Skippable(XElement e)
+        {
+            // Git requests have type git="true"
+            bool isGit = e.Attribute("git") != null;
+
+            // The only top level exe is kudu
+            bool isKudu = e.Attribute("type") != null && e.Attribute("path") != null;
+
+            return !isGit && !isKudu;
         }
 
         private XDocument GetDocument()
