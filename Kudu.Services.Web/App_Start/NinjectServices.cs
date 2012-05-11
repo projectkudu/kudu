@@ -115,9 +115,11 @@ namespace Kudu.Services.Web.App_Start
             // Setup the diagnostics service to collect information from the following paths:
             // 1. The deployments folder
             // 2. The profile dump
+            // 3. The npm log
             var paths = new[] { 
                 environment.DeploymentCachePath,
                 Path.Combine(environment.ApplicationRootPath, Constants.LogFilesPath),
+                Path.Combine(environment.DeploymentTargetPath, Constants.NpmDebugLogFile),
             };
 
             kernel.Bind<DiagnosticsService>().ToMethod(context => new DiagnosticsService(paths));

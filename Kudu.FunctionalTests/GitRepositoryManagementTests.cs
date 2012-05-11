@@ -522,7 +522,7 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        [Fact(Skip = "Known failure, NPM bug https://github.com/isaacs/npm/issues/2190")]
+        [Fact]
         public void NpmSiteInstallsPackages()
         {
             string repositoryName = "NpmSiteInstallsPackages";
@@ -546,7 +546,7 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        [Fact(Skip = "Known failure, NPM bug https://github.com/isaacs/npm/issues/2190")]
+        [Fact]
         public void FailedNpmFailsDeployment()
         {
             string repositoryName = "FailedNpmFailsDeployment";

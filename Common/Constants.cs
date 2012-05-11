@@ -10,6 +10,7 @@ namespace Kudu
         public const string LockPath = "locks";
         public const string DeploymentLockFile = "deployments.lock";
         public const string InitLockFile = "init.lock";
+        public const string NpmDebugLogFile = "npm-debug.log";
 
         public const string DeploymentCachePath = "deployments";
         public const string LogFilesPath = @"..\LogFiles";

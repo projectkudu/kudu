@@ -34,6 +34,10 @@ namespace Kudu.Services.Performance
                         {
                             zip.AddDirectory(path, Path.GetFileName(path));
                         }
+                        else if (File.Exists(path))
+                        {
+                            zip.AddFile(path, String.Empty);
+                        }
                     }
 
                     var ms = new MemoryStream();
