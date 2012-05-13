@@ -522,7 +522,7 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        [Fact]
+        [Fact(Skip = "NPM issue")]
         public void NpmSiteInstallsPackages()
         {
             string repositoryName = "NpmSiteInstallsPackages";
@@ -546,7 +546,7 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        [Fact]
+        [Fact(Skip = "NPM issue")]
         public void FailedNpmFailsDeployment()
         {
             string repositoryName = "FailedNpmFailsDeployment";
