@@ -2,7 +2,7 @@
 @using System.Xml.Linq
 
 @functions {
-    int errors = 0, warnings = 0;
+    int errors = 0, warnings = 0, slow = 0;
     
     string GetAnnotations(string type)
     {
@@ -20,27 +20,64 @@
 
         return "label-info";
     }
+
+    TimeSpan GetElapsed(XElement element)
+    {
+        string elapsedValue = element.Attribute("elapsed").Value;
+        int elapsedMs;
+        if (Int32.TryParse(elapsedValue, out elapsedMs)) {
+            return TimeSpan.FromMilliseconds(elapsedMs);
+        }
+        return TimeSpan.Zero;
+    }
+
+}
+
+@helper RenderElapsedSpeed(TimeSpan elapsed)
+{
+    if (elapsed.TotalMinutes > 3)
+    {
+        <i class="label label-warning">Very Slow</i>
+    }
+    else if (elapsed.TotalMinutes > 2)
+    {
+        <i class="label label-warning">Slow</i>
+    }    
+}
+
+@helper RenderElapsedHeader(TimeSpan elapsed)
+{    
+    if (elapsed.TotalMilliseconds > 0)
+    { 
+        <text>, took @elapsed.TotalMilliseconds ms @if (elapsed.TotalMinutes > 1)
+                                                    { <text>(@String.Format("{0:0.00}", elapsed.TotalMinutes) minutes)</text> } </text> 
+    }
 }
 
 @helper RenderElement(XElement element)
-    {
+{
     var typeAttr = element.Attribute("type");
+    var elapsed = GetElapsed(element);
+    var slowCss = elapsed.TotalMinutes > 2 ? "slow" : "";
+    if(!String.IsNullOrEmpty(slowCss)) 
+    {
+        slow++;
+    }
+
     if (typeAttr != null)
     {
         var cssCls = GetAnnotations(typeAttr.Value);
         <li class="step @typeAttr.Value">
-            <div class="label @cssCls title">
+            <div class="label @cssCls title @slowCss">
                 @if (typeAttr.Value == "lock") { 
                     <i class="icon-white icon-lock"></i>
                 }
                 else {
                     <span class="more icon-white icon-chevron-down"></span>
                 }
+                @RenderElapsedSpeed(elapsed)
                 @element.Attribute("title").Value - @element.Attribute("date").Value
-                @if (element.Attribute("elapsed").Value != "0")
-                { 
-                    <text>, took @element.Attribute("elapsed").Value ms</text> 
-                }
+                @RenderElapsedHeader(elapsed)
             </div>
             <div class="content">
         @switch (typeAttr.Value)
@@ -119,12 +156,14 @@
     else
     {
         <li class="step">
-            <div class="label title">
+            <div class="label title @slowCss">
                 @if (element.Elements().Any())
                 { 
                 <span class="more icon-white icon-chevron-down"></span>
                 }
-                @element.Attribute("title").Value - @element.Attribute("date").Value, took @element.Attribute("elapsed").Value ms
+                @RenderElapsedSpeed(elapsed)
+                @element.Attribute("title").Value - @element.Attribute("date").Value
+                @RenderElapsedHeader(elapsed)
             </div>
             <div class="content">
             @RenderElements(element.Elements())
@@ -151,7 +190,7 @@
     var result = RenderElements(Model.Root.Elements()).ToString();
     <h3>Analysis</h3>
     <p>
-        <span class="all-errors badge badge-error">@errors</span> Errors <span class="all-warnings badge badge-warning">@warnings</span> Warnings
+        <span class="all-errors badge badge-error">@errors</span> Errors <span class="all-warnings badge badge-warning">@warnings</span> Warnings <span class="all-slow badge badge-warning">@slow</span> Long Operations (> 2 minutes running time)
     </p>
     <div class="analysis">
         @Html.Raw(result)
@@ -197,6 +236,20 @@
             $step.show();
             $step.not('.error').hide();
             $('.error').parents('li.step').show();
+        },
+        function () {
+            $('.step').show();
+        });
+
+        $('.all-slow').toggle(function () {
+            if ($(this).text() == '0') {
+                return;
+            }
+            var $step = $('.step');
+            $step.show();
+            $step.not('.slow').hide();
+            $('.slow').parents('li.step').show();
+            $('.slow').parents('li.step').show();
         },
         function () {
             $('.step').show();
