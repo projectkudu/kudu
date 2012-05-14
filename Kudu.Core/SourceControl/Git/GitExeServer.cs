@@ -148,7 +148,6 @@ namespace Kudu.Core.SourceControl.Git
 
                     // Make the initial commit
                     changeSet = _repository.Commit("Initial commit");
-
                 }
             },
             _initTimeout);

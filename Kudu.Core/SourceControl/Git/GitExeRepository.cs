@@ -120,7 +120,8 @@ namespace Kudu.Core.SourceControl.Git
             ITracer tracer = _tracerFactory.GetTracer();
 
             // Add all unstaged files
-            _gitExe.Execute("add -A");
+            _gitExe.Execute(tracer, "add -A");
+
             try
             {
                 string output;
@@ -139,8 +140,12 @@ namespace Kudu.Core.SourceControl.Git
                     return null;
                 }
 
-                string newCommit = _gitExe.Execute("show HEAD").Item1;
-                return ParseCommit(newCommit.AsReader());
+                string newCommit = _gitExe.Execute(tracer, "show HEAD").Item1;
+
+                using (tracer.Step("Parsing commit information"))
+                {
+                    return ParseCommit(newCommit.AsReader());
+                }
             }
             catch (Exception e)
             {
