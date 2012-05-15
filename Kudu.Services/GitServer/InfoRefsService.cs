@@ -101,7 +101,7 @@ namespace Kudu.Services.GitServer
                     // If we just created the repo, make a 'pseudo' deployment for the initial commit
                     if (changeSet != null)
                     {
-                        _deploymentManager.CreateExistingDeployment(changeSet.Id);
+                        _deploymentManager.CreateExistingDeployment(changeSet.Id, _configuration.Username);
                     }
                 }
                 else if (service == "receive-pack")

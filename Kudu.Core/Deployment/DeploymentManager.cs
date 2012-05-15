@@ -286,7 +286,7 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public void CreateExistingDeployment(string id)
+        public void CreateExistingDeployment(string id, string deployer)
         {
             var tracer = _traceFactory.GetTracer();
             IDisposable deployStep = null;
@@ -295,7 +295,7 @@ namespace Kudu.Core.Deployment
             {
                 deployStep = tracer.Step("Deploy");
 
-                CreateAndPopulateStatusFile(tracer, id);
+                CreateAndPopulateStatusFile(tracer, id, deployer);
 
                 IDeploymentManifestWriter manifestWriter = GetDeploymentManifestWriter(id);
                 manifestWriter.AddFiles(_environment.DeploymentTargetPath);
@@ -315,7 +315,7 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        private ILogger CreateAndPopulateStatusFile(ITracer tracer, string id, string deployer = null)
+        private ILogger CreateAndPopulateStatusFile(ITracer tracer, string id, string deployer)
         {
             ILogger logger = GetLogger(id);
 
