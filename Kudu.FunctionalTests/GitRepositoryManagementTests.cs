@@ -438,14 +438,14 @@ namespace Kudu.FunctionalTests
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
-                    Assert.Equal(2, results.Count);
+                    Assert.Equal(1, results.Count);
                     KuduAssert.VerifyUrl(helloUrl, "Wow");
                 }
             });
         }
 
         [Fact]
-        public void CloneFromNewRepoShouldHaveFile()
+        public void CloneFromNewRepoShouldHaveBeEmpty()
         {
             string repositoryName = "CloneFromNewRepoShouldHaveFile";
             string appName = KuduUtils.GetRandomWebsiteName("CloneNew");
@@ -454,7 +454,7 @@ namespace Kudu.FunctionalTests
             {
                 using (var repo = Git.Clone(repositoryName, appManager.GitUrl, createDirectory: true))
                 {
-                    Assert.True(repo.FileExists("index.html"));
+                    Assert.False(repo.FileExists("index.html"));
                 }
             });
         }
@@ -477,7 +477,7 @@ namespace Kudu.FunctionalTests
         {
             using (var repo = Git.Clone(repositoryName, appManager.GitUrl, createDirectory: true))
             {
-                Assert.True(repo.FileExists("index.html"));
+                Assert.False(repo.FileExists("index.html"));
             }
         }
 
