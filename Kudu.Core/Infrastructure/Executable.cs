@@ -95,8 +95,6 @@ namespace Kudu.Core.Infrastructure
                     catch (Exception ex)
                     {
                         tracer.TraceError(ex);
-
-                        throw;
                     }
                 };
 
