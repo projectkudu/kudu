@@ -14,6 +14,7 @@
         <ClientSiteProject>$(ProjectRoot)\Kudu.Web\Kudu.Web.csproj</ClientSiteProject>
         <TestResultsPath>$(ArtifactsPath)\TestResults</TestResultsPath>
         <SetupTargetPath>$(ArtifactsPath)\msi</SetupTargetPath>
+        <SignedTargetPath>$(ArtifactsPath)\signed</SignedTargetPath>
     </PropertyGroup>
     
     <PropertyGroup>
@@ -98,5 +99,17 @@
                  Targets="Build"
                  Properties="OutputPath=$(SetupTargetPath);
                              Configuration=$(Configuration);" />
+    </Target>
+    
+    <Target Name="BuildSignedClient" Condition="$(KeyFile) != '' And Exists('$(KeyFile)')">
+        <ItemGroup>
+            <Projects Include="$(ProjectRoot)\Kudu.Contracts\Kudu.Contracts.csproj" />
+            <Projects Include="$(ProjectRoot)\Kudu.Client\Kudu.Client.csproj" />
+        </ItemGroup>
+        <MakeDir Directories="$(SignedTargetPath)" Condition="!Exists('$(SignedTargetPath)')" />
+        <Message Text="Using Keyfile $(KeyFile)" Importance="High" />
+        <MSBuild Projects="%(Projects.Identity)" 
+                 Targets="Rebuild" 
+                 Properties="Configuration=$(Configuration);KeyFile=$(KeyFile);OutputPath=$(SignedTargetPath)" />
     </Target>
 </Project>
