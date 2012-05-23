@@ -24,7 +24,6 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.ServiceModel.Web;
 using System.Web.Http;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
@@ -73,7 +72,7 @@ namespace Kudu.Services.GitServer
 
                 // Dumb protocol isn't supported
                 _tracer.TraceWarning("Attempting to use dumb protocol.");
-                return new HttpResponseMessage(HttpStatusCode.NotImplemented);
+                return Request.CreateErrorResponse(HttpStatusCode.NotImplemented, Resources.Error_DumbProtocolNotSupported);
             }
         }
 

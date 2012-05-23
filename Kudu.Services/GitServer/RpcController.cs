@@ -20,21 +20,18 @@
 
 #endregion
 
+using System.IO;
+using System.IO.Compression;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Web.Http;
+using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.Tracing;
+using Kudu.Core.SourceControl.Git;
+using Kudu.Services.Infrastructure;
+
 namespace Kudu.Services.GitServer
 {
-    using System.ComponentModel;
-    using System.IO;
-    using System.IO.Compression;
-    using System.Net.Http;
-    using System.Net.Http.Headers;
-    using System.ServiceModel;
-    using System.ServiceModel.Web;
-    using System.Web.Http;
-    using Kudu.Contracts.Infrastructure;
-    using Kudu.Contracts.Tracing;
-    using Kudu.Core.SourceControl.Git;
-    using Kudu.Services.Infrastructure;
-
     public class RpcController : ApiController
     {
         private readonly IGitServer _gitServer;
@@ -50,13 +47,14 @@ namespace Kudu.Services.GitServer
             _deploymentLock = deploymentLock;
         }
 
-        public HttpResponseMessage UploadPack(HttpRequestMessage request)
+        [HttpPost]
+        public HttpResponseMessage UploadPack()
         {
             using (_tracer.Step("RpcService.UploadPack"))
             {
                 var memoryStream = new MemoryStream();
 
-                _gitServer.Upload(GetInputStream(request), memoryStream);
+                _gitServer.Upload(GetInputStream(Request), memoryStream);
 
                 return CreateResponse(memoryStream, "application/x-git-{0}-result".With("upload-pack"));
             }
