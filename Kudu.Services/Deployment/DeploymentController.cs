@@ -1,40 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Globalization;
 using System.IO;
-using System.Json;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.ServiceModel;
-using System.ServiceModel.Web;
+using System.Web.Http;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
 using Kudu.Services.Infrastructure;
-using Microsoft.ApplicationServer.Http.Dispatcher;
+using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.Deployment
 {
-    [ServiceContract]
-    public class DeploymentService
+    public class DeploymentController : ApiController
     {
         private readonly IDeploymentManager _deploymentManager;
         private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
 
-        public DeploymentService(ITracer tracer,
-                                 IDeploymentManager deploymentManager,
-                                 IOperationLock deploymentLock)
+        public DeploymentController(ITracer tracer,
+                                    IDeploymentManager deploymentManager,
+                                    IOperationLock deploymentLock)
         {
             _tracer = tracer;
             _deploymentManager = deploymentManager;
             _deploymentLock = deploymentLock;
         }
 
-        [Description("Deletes a deployment.")]
-        [WebInvoke(UriTemplate = "{id}", Method = "DELETE")]
+        [HttpDelete]
         public void Delete(string id)
         {
             using (_tracer.Step("DeploymentService.Delete"))
@@ -47,26 +42,22 @@ namespace Kudu.Services.Deployment
                     }
                     catch (DirectoryNotFoundException ex)
                     {
-                        var response = new HttpResponseMessage(HttpStatusCode.NotFound);
-                        response.Content = new StringContent(ex.Message);
-                        throw new HttpResponseException(response);
+                        throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, ex));
                     }
                     catch (InvalidOperationException ex)
                     {
-                        var response = new HttpResponseMessage(HttpStatusCode.Conflict);
-                        response.Content = new StringContent(ex.Message);
-                        throw new HttpResponseException(response);
+                        throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, ex));
                     }
                 });
             }
         }
 
-        [Description("Deploys a specific deployment based on its id.")]
-        [WebInvoke(Method = "PUT", UriTemplate = "{id}")]
-        public void Deploy(HttpRequestMessage request, string id)
+        [HttpPut]
+        public void Deploy(string id)
         {
+            JObject result = GetJsonContent();
+
             // Just block here to read the json payload from the body
-            var result = request.Content.ReadAsAsync<JsonValue>().Result;
             using (_tracer.Step("DeploymentService.Deploy(id)"))
             {
                 _deploymentLock.LockHttpOperation(() =>
@@ -77,49 +68,45 @@ namespace Kudu.Services.Deployment
 
                         if (result != null)
                         {
-                            JsonValue cleanValue = result["clean"];
-                            clean = cleanValue != null && cleanValue.ReadAs<bool>();
+                            clean = result.Value<bool>("clean");
                         }
 
                         string username = null;
-                        AuthUtility.TryExtractBasicAuthUser(request, out username);
+                        AuthUtility.TryExtractBasicAuthUser(Request, out username);
 
                         _deploymentManager.Deploy(id, username, clean);
                     }
                     catch (FileNotFoundException ex)
                     {
-                        var response = new HttpResponseMessage(HttpStatusCode.NotFound);
-                        response.Content = new StringContent(ex.Message);
-                        throw new HttpResponseException(response);
+                        throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, ex));
                     }
                 });
             }
         }
-
-        [Description("Gets the deployment results of all deployments.")]
-        [WebGet(UriTemplate = "")]
-        public IQueryable<DeployResult> GetDeployResults(HttpRequestMessage request)
+        
+        [HttpGet]
+        [Queryable]
+        public IQueryable<DeployResult> GetDeployResults()
         {
             using (_tracer.Step("DeploymentService.GetDeployResults"))
             {
-                return GetResults(request).AsQueryable();
+                return GetResults(Request).AsQueryable();
             }
         }
 
-        [Description("Gets the log of a specific deployment based on its id.")]
-        [WebGet(UriTemplate = "{id}/log")]
-        public IEnumerable<LogEntry> GetLogEntry(HttpRequestMessage request, string id)
+        [HttpGet]
+        public IEnumerable<LogEntry> GetLogEntry(string id)
         {
             using (_tracer.Step("DeploymentService.GetLogEntry"))
             {
                 try
                 {
-                    var deployments = _deploymentManager.GetLogEntries(id).ToList();
+                    IEnumerable<LogEntry> deployments = _deploymentManager.GetLogEntries(id).ToList();
                     foreach (var entry in deployments)
                     {
                         if (entry.HasDetails)
                         {
-                            entry.DetailsUrl = UriHelper.MakeRelative(request.RequestUri, entry.Id);
+                            entry.DetailsUrl = UriHelper.MakeRelative(Request.RequestUri, entry.Id);
                         }
                     }
 
@@ -127,15 +114,12 @@ namespace Kudu.Services.Deployment
                 }
                 catch (FileNotFoundException ex)
                 {
-                    var response = new HttpResponseMessage(HttpStatusCode.NotFound);
-                    response.Content = new StringContent(ex.Message);
-                    throw new HttpResponseException(response);
+                    throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, ex));
                 }
             }
         }
 
-        [Description("Gets the specified log entry details.")]
-        [WebGet(UriTemplate = "{id}/log/{logId}")]
+        [HttpGet]
         public IEnumerable<LogEntry> GetLogEntryDetails(string id, string logId)
         {
             using (_tracer.Step("DeploymentService.GetLogEntryDetails"))
@@ -146,16 +130,13 @@ namespace Kudu.Services.Deployment
                 }
                 catch (FileNotFoundException ex)
                 {
-                    var response = new HttpResponseMessage(HttpStatusCode.NotFound);
-                    response.Content = new StringContent(ex.Message);
-                    throw new HttpResponseException(response);
+                    throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, ex));
                 }
             }
         }
 
-        [Description("Gets the deployment result of a specific deployment based on its id.")]
-        [WebGet(UriTemplate = "{id}")]
-        public DeployResult GetResult(HttpRequestMessage request, string id)
+        [HttpGet]
+        public DeployResult GetResult(string id)
         {
             using (_tracer.Step("DeploymentService.GetResult"))
             {
@@ -163,15 +144,14 @@ namespace Kudu.Services.Deployment
 
                 if (result == null)
                 {
-                    var response = new HttpResponseMessage(HttpStatusCode.NotFound);
-                    response.Content = new StringContent(String.Format(CultureInfo.CurrentCulture,
+                    var response = Request.CreateErrorResponse(HttpStatusCode.NotFound, String.Format(CultureInfo.CurrentCulture,
                                                                        Resources.Error_DeploymentNotFound,
                                                                        id));
                     throw new HttpResponseException(response);
                 }
 
-                result.Url = request.RequestUri;
-                result.LogUrl = UriHelper.MakeRelative(request.RequestUri, "log");
+                result.Url = Request.RequestUri;
+                result.LogUrl = UriHelper.MakeRelative(Request.RequestUri, "log");
 
                 return result;
             }
@@ -184,6 +164,21 @@ namespace Kudu.Services.Deployment
                 result.Url = UriHelper.MakeRelative(request.RequestUri, result.Id);
                 result.LogUrl = UriHelper.MakeRelative(request.RequestUri, result.Id + "/log");
                 yield return result;
+            }
+        }
+
+        private JObject GetJsonContent()
+        {
+            try
+            {
+                return Request.Content.ReadAsAsync<JObject>().Result;
+            }
+            catch
+            {
+                // We're going to return null here since we don't want to force a breaking change
+                // on the client side. If the incoming request isn't application/json, we want this 
+                // to return null.
+                return null;
             }
         }
     }

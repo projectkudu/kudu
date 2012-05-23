@@ -19,28 +19,23 @@
 // This file was modified from the one found in git-dot-aspx
 
 #endregion
+using System;
+using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.ServiceModel.Web;
+using System.Web.Http;
+using Kudu.Contracts.SourceControl;
+using Kudu.Contracts.Tracing;
+using Kudu.Core;
+using Kudu.Core.Deployment;
+using Kudu.Core.SourceControl.Git;
+using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.GitServer
-{
-    using System;
-    using System.ComponentModel;
-    using System.IO;
-    using System.Net;
-    using System.Net.Http;
-    using System.Net.Http.Headers;
-    using System.ServiceModel;
-    using System.ServiceModel.Web;
-    using Kudu.Contracts.SourceControl;
-    using Kudu.Contracts.Tracing;
-    using Kudu.Core;
-    using Kudu.Core.Deployment;
-    using Kudu.Core.SourceControl;
-    using Kudu.Core.SourceControl.Git;
-    using Kudu.Services.Infrastructure;
-
-    // Handles /{project}/info/refs
-    [ServiceContract]
-    public class InfoRefsService
+{    
+    public class InfoRefsController : ApiController
     {
         private readonly IDeploymentManager _deploymentManager;
         private readonly IGitServer _gitServer;
@@ -48,7 +43,7 @@ namespace Kudu.Services.GitServer
         private readonly string _deploymentTargetPath;
         private readonly RepositoryConfiguration _configuration;
 
-        public InfoRefsService(
+        public InfoRefsController(
             ITracer tracer,
             IGitServer gitServer,
             IDeploymentManager deploymentManager,
@@ -62,8 +57,7 @@ namespace Kudu.Services.GitServer
             _configuration = configuration;
         }
 
-        [Description("Handles git commands.")]
-        [WebGet(UriTemplate = "?service={service}")]
+        [HttpGet]
         public HttpResponseMessage Execute(string service)
         {
             using (_tracer.Step("InfoRefsService.Execute"))

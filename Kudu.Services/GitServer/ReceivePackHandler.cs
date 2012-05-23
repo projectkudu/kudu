@@ -8,13 +8,13 @@ using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.GitServer
 {
-    public class ReceivePackService : IHttpHandler
+    public class ReceivePackHandler : IHttpHandler
     {
         private readonly IGitServer _gitServer;
         private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
 
-        public ReceivePackService(ITracer tracer,
+        public ReceivePackHandler(ITracer tracer,
                                   IGitServer gitServer,
                                   IOperationLock deploymentLock)
         {
