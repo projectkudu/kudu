@@ -1,6 +1,9 @@
 using System.IO;
 using System.IO.Abstractions;
+using System.Net.Http.Formatting;
 using System.Web;
+using System.Web.Http;
+using System.Web.Routing;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
@@ -11,19 +14,15 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Tracing;
+using Kudu.Services.GitServer;
 using Kudu.Services.Performance;
-using Kudu.Services.Web.Services;
 using Kudu.Services.Web.Infrastruture;
+using Kudu.Services.Web.Services;
 using Kudu.Services.Web.Tracing;
 using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 using Ninject;
 using Ninject.Activation;
 using XmlSettings;
-using System.Web.Routing;
-using Kudu.Services.GitServer;
-using System.Web.Http;
-using System.Net.Http.Formatting;
-using Newtonsoft.Json.Serialization;
 
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Start")]
 [assembly: WebActivator.ApplicationShutdownMethodAttribute(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Stop")]
