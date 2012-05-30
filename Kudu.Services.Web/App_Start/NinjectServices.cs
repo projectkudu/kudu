@@ -1,5 +1,6 @@
 using System.IO;
 using System.IO.Abstractions;
+using System.Net;
 using System.Net.Http.Formatting;
 using System.Web;
 using System.Web.Http;
@@ -170,7 +171,6 @@ namespace Kudu.Services.Web.App_Start
         public static void RegisterRoutes(IKernel kernel, RouteCollection routes)
         {
             var configuration = kernel.Get<IServerConfiguration>();
-
             GlobalConfiguration.Configuration.Formatters.Clear();
             GlobalConfiguration.Configuration.IncludeErrorDetailPolicy = IncludeErrorDetailPolicy.LocalOnly;
             var jsonFormatter = new JsonMediaTypeFormatter();
@@ -197,7 +197,7 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("delete-file", "live/files/{*path}", new { controller = "Files", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
 
             // Live Command Line
-            routes.MapHttpRoute("execute-command", "live/command", new { controller = "Command", action = "ExecuteCommand" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpRoute("execute-command", "command", new { controller = "Command", action = "ExecuteCommand" }, new { verb = new HttpMethodConstraint("POST") });
 
             // Deployments
             routes.MapHttpRoute("all-deployments", "deployments", new { controller = "Deployment", action = "GetDeployResults" });
@@ -218,7 +218,12 @@ namespace Kudu.Services.Web.App_Start
 
         private static ICommandExecutor GetCommandExecutor(IEnvironment environment, IContext context)
         {
-            return new CommandExecutor(environment.DeploymentRepositoryPath);
+            if (System.String.IsNullOrEmpty(environment.RepositoryPath))
+            {
+                throw new HttpResponseException(HttpStatusCode.NotFound);
+            }
+
+            return new CommandExecutor(environment.RepositoryPath);
         }
 
         private static string GetSettingsPath(IEnvironment environment)
