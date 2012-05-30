@@ -8,6 +8,7 @@ using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
+using Kudu.Core.Commands;
 using Kudu.Core.Deployment;
 using Kudu.Core.Editor;
 using Kudu.Core.Infrastructure;
@@ -159,9 +160,13 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IProjectSystem>().ToMethod(context => GetEditorProjectSystem(environment, context))
                                          .InRequestScope();
 
+            // Command executor
+            kernel.Bind<ICommandExecutor>().ToMethod(context => GetCommandExecutor(environment, context))
+                                           .InRequestScope();
+
             RegisterRoutes(kernel, RouteTable.Routes);
         }
-
+        
         public static void RegisterRoutes(IKernel kernel, RouteCollection routes)
         {
             var configuration = kernel.Get<IServerConfiguration>();
@@ -191,6 +196,9 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("save-file", "live/files/{*path}", new { controller = "Files", action = "Save" }, new { verb = new HttpMethodConstraint("PUT") });
             routes.MapHttpRoute("delete-file", "live/files/{*path}", new { controller = "Files", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
 
+            // Live Command Line
+            routes.MapHttpRoute("execute-command", "live/command", new { controller = "Command", action = "ExecuteCommand" }, new { verb = new HttpMethodConstraint("POST") });
+
             // Deployments
             routes.MapHttpRoute("all-deployments", "deployments", new { controller = "Deployment", action = "GetDeployResults" });
             routes.MapHttpRoute("one-deployment-get", "deployments/{id}", new { controller = "Deployment", action = "GetResult" }, new { verb = new HttpMethodConstraint("GET") });
@@ -206,6 +214,11 @@ namespace Kudu.Services.Web.App_Start
         private static IProjectSystem GetEditorProjectSystem(IEnvironment environment, IContext context)
         {
             return new ProjectSystem(environment.DeploymentTargetPath);
+        }
+
+        private static ICommandExecutor GetCommandExecutor(IEnvironment environment, IContext context)
+        {
+            return new CommandExecutor(environment.DeploymentRepositoryPath);
         }
 
         private static string GetSettingsPath(IEnvironment environment)

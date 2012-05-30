@@ -85,6 +85,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\CommandController.cs" />
     <Compile Include="Deployment\DeploymentController.cs" />
     <Compile Include="Editor\FilesController.cs" />
     <Compile Include="GitServer\Helpers.cs" />

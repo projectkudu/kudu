@@ -48,6 +48,7 @@
     </Compile>
     <Compile Include="Commands\CommandEvent.cs" />
     <Compile Include="Commands\CommandEventType.cs" />
+    <Compile Include="Commands\CommandResult.cs" />
     <Compile Include="Commands\ICommandExecutor.cs" />
     <Compile Include="Deployment\DeployResult.cs" />
     <Compile Include="Deployment\DeployStatus.cs" />
