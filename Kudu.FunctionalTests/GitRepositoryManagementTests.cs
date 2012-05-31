@@ -187,6 +187,30 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public void AppNameWithSignalRWorks()
+        {
+            // Arrange
+            string repositoryName = "Mvc3Application";
+            string appName = KuduUtils.GetRandomWebsiteName("signalroverflow");
+            string verificationText = "Welcome to ASP.NET MVC!";
+
+            using (var repo = Git.CreateLocalRepository(repositoryName))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    appManager.GitDeploy(repo.PhysicalPath);
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText);
+                });
+            }
+        }
+
+        [Fact]
         public void DeletesToRepositoryArePropagatedForWaps()
         {
             string repositoryName = "Mvc3Application";

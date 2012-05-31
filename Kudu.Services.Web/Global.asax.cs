@@ -17,7 +17,6 @@ using Kudu.Services.Web.Tracing;
 using Microsoft.ApplicationServer.Http.Activation;
 using Ninject;
 using Ninject.Extensions.Wcf;
-using SignalR.Hosting.AspNet.Routing;
 
 namespace Kudu.Services
 {
