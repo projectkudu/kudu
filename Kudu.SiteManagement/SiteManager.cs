@@ -109,7 +109,7 @@ namespace Kudu.SiteManagement
                 return true;
             }
 
-            siteUrl = null;
+            siteUrl = String.Format("http://localhost:{0}/", site.Bindings[0].EndPoint.Port);
             return false;
         }
 

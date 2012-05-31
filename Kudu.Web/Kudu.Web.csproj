@@ -266,6 +266,7 @@
     <Content Include="Views\Shared\_Tools.cshtml" />
     <Content Include="Views\Shared\_TraceView.cshtml" />
     <Content Include="Views\Application\Trace.cshtml" />
+    <Content Include="Views\Application\Develop.cshtml" />
     <None Include="_bin_deployableAssemblies\Microsoft.Web.Infrastructure.dll" />
     <None Include="_bin_deployableAssemblies\System.Web.WebPages.Razor.dll" />
     <None Include="_bin_deployableAssemblies\System.Web.WebPages.dll" />

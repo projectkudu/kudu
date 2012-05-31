@@ -70,6 +70,8 @@
               {<text>class="active"</text> }>@Html.RouteLink("Settings", "ApplicationDetails", new { slug = ViewBag.slug }, null)</li>
           <li @if (ViewBag.tab == "deployments")
               {<text>class="active"</text> }>@Html.RouteLink("Deployments", "Deployments", new { slug = ViewBag.slug }, null)</li>
+          <li @if (ViewBag.tab == "develop")
+              {<text>class="active"</text> }>@Html.RouteLink("Develop", "Develop", new { slug = ViewBag.slug }, null)</li>
           <li @if (ViewBag.tab == "configuration")
               {<text>class="active"</text> }>@Html.RouteLink("Configuration", "Configuration", new { slug = ViewBag.slug }, null)</li>
           <li @if (ViewBag.tab == "trace")

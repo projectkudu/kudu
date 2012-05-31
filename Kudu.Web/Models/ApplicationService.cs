@@ -77,6 +77,13 @@ namespace Kudu.Web.Models
         {
             return _db.Applications.FirstOrDefault(a => a.Name == name);
         }
+
+        public string CreateDevelopmentSite(string name)
+        {
+            string siteUrl;
+            _siteManager.TryCreateDeveloperSite(name, out siteUrl);
+            return siteUrl;
+        }
     }
 
     public class SiteExistsFoundException : InvalidOperationException
