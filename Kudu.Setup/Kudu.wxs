@@ -122,10 +122,6 @@
       <Component Id="Kudu.Services.Web.dll" Guid="{4A3F4105-858A-4972-AE21-805C073F4CD9}">
         <File Id="Kudu.Services.Web.dll" Source="$(var.KuduServiceBinDir)\Kudu.Services.Web.dll" />
       </Component>
-
-      <Component Id="Newtonsoft.Json.dll" Guid="{11210292-AF01-42CB-BAA6-6619CCA6E682}">
-        <File Id="Newtonsoft.Json.dll" Source="$(var.KuduServiceBinDir)\Newtonsoft.Json.dll" />
-      </Component>
       
       <Component Id="Ionic.Zip.dll" Guid="{7BB6559B-39A6-4D67-A325-5DD73BECCCC7}">
         <File Id="Ionic.Zip.dll" Source="$(var.KuduServiceBinDir)\Ionic.Zip.dll" />
@@ -137,15 +133,7 @@
       <Component Id="Ninject.Extensions.Wcf.dll" Guid="{40213169-2163-4F4F-B7E2-40C8E4C3DADC}">
         <File Id="Ninject.Extensions.Wcf.dll" Source="$(var.KuduServiceBinDir)\Ninject.Extensions.Wcf.dll" />
       </Component>
-
-      <Component Id="SignalR.dll" Guid="{05B0AC56-6BD2-4F46-B80B-ADC05F4996FF}">
-        <File Id="SignalR.dll" Source="$(var.KuduServiceBinDir)\SignalR.dll" />
-      </Component>
       
-      <Component Id="SignalR.Hosting.AspNet.dll" Guid="{BC2B76D2-0C89-4A48-BB1C-0504C3F4A2E6}">
-        <File Id="SignalR.Hosting.AspNet.dll" Source="$(var.KuduServiceBinDir)\SignalR.Hosting.AspNet.dll" />
-      </Component>
-
       <Component Id="Microsoft.ApplicationServer.Http.dll" Guid="{64BD205C-7377-4BFE-BA9B-855824112E0F}">
         <File Id="Microsoft.ApplicationServer.Http.dll" Source="$(var.KuduServiceBinDir)\Microsoft.ApplicationServer.Http.dll" />
       </Component>
@@ -227,13 +215,9 @@
       <ComponentRef Id="Kudu.Services.dll"/>
       <ComponentRef Id="Kudu.Services.Web.dll"/>
 
-      <ComponentRef Id="Newtonsoft.Json.dll" />
-
       <ComponentRef Id="Ninject.dll" />
       <ComponentRef Id="Ninject.Extensions.Wcf.dll" />
 
-      <ComponentRef Id="SignalR.dll" />
-      <ComponentRef Id="SignalR.Hosting.AspNet.dll" />
       <ComponentRef Id="Ionic.Zip.dll" />
 
       <ComponentRef Id="Microsoft.ApplicationServer.Http.dll" />
