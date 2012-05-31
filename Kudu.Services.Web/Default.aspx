@@ -117,15 +117,6 @@
                 <li><a href="deployments/help">Deployment API</a> (<a href="deployments/test">test</a>)</li>
             </ul>
         </div>
-        <% if (AppSettings.SettingsEnabled) { %>
-        <div>
-            <h3>Environment variables and connection strings</h3>
-            <ul>
-                <li><a href="appsettings/help">AppSettings API</a></li>
-                <li><a href="connectionstrings/help">ConnectionStrings API</a></li>
-            </ul>
-        </div>
-        <% } %>
 
     </div>
    
@@ -136,6 +127,13 @@
             <td><strong>Live Site</strong></td>
             <td class="path"><%= MapPath("_app") %></td>
         </tr>
+        <% var devSitePath = PathResolver.ResolveDevelopmentPath(); %>
+        <% if (!String.IsNullOrEmpty(devSitePath)) { %>
+        <tr>
+            <td><strong>Dev Site</strong></td>
+            <td class="path"><%= devSitePath%></td>
+        </tr>
+        <% } %>
         <tr>
             <td><strong>Temp</strong></td>
             <td class="path"> <%= Path.GetTempPath() %></td>
