@@ -8,6 +8,6 @@ namespace Kudu.Web.Models
         bool DeleteApplication(string name);
         IEnumerable<string> GetApplications();
         IApplication GetApplication(string name);
-        string CreateDevelopmentSite(string name);
+        void CreateDevelopmentSite(string name);
     }
 }
