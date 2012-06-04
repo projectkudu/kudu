@@ -86,6 +86,13 @@ namespace Kudu.Core.Commands
             _executingProcess.StartInfo.StandardErrorEncoding = Encoding.UTF8;
             _executingProcess.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             _executingProcess.StartInfo.ErrorDialog = false;
+            var pathEnv = _executingProcess.StartInfo.EnvironmentVariables["PATH"];
+            if (!pathEnv.EndsWith(";"))
+            {
+                pathEnv += ";";
+            }
+            pathEnv += PathUtility.ResolveGitBinPath();
+            _executingProcess.StartInfo.EnvironmentVariables["PATH"] = pathEnv;
 
             var commandEvent = CommandEvent;
 
