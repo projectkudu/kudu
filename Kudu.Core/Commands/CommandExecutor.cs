@@ -91,7 +91,9 @@ namespace Kudu.Core.Commands
             {
                 pathEnv += ";";
             }
-            pathEnv += PathUtility.ResolveGitBinPath();
+            pathEnv += Path.GetDirectoryName(PathUtility.ResolveGitPath());
+            pathEnv += ";";
+            pathEnv += Path.GetDirectoryName(PathUtility.ResolveMSBuildPath());
             _executingProcess.StartInfo.EnvironmentVariables["PATH"] = pathEnv;
 
             var commandEvent = CommandEvent;

@@ -19,12 +19,6 @@ namespace Kudu.Core.Infrastructure
             return path;
         }
         
-        internal static string ResolveGitBinPath()
-        {
-            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
-            return Path.Combine(programFiles, "Git", "bin");
-        }
-
         internal static string ResolveNpmPath()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
