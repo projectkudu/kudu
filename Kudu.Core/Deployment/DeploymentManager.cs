@@ -380,7 +380,7 @@ namespace Kudu.Core.Deployment
 
             try
             {
-                logger = GetLogger(id);
+                logger = GetLogger(tracer, id);
                 ILogger innerLogger = logger.Log(Resources.Log_PreparingDeployment, TrimId(id));
 
                 currentStatus = OpenStatusFile(id);
@@ -636,8 +636,13 @@ namespace Kudu.Core.Deployment
 
         private ILogger GetLogger(string id)
         {
+            return GetLogger(NullTracer.Instance, id);
+        }
+
+        private ILogger GetLogger(ITracer tracer, string id)
+        {
             var path = GetLogPath(id);
-            var xmlLogger = new XmlLogger(_fileSystem, path);
+            var xmlLogger = new XmlLogger(tracer, _fileSystem, path);
             return new CascadeLogger(xmlLogger, _globalLogger);
         }
 
