@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Xml.Linq;
+using Kudu.Contracts.Tracing;
+using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Deployment
 {
@@ -11,9 +13,16 @@ namespace Kudu.Core.Deployment
         private readonly string _path;
         private readonly IFileSystem _fileSystem;
         private readonly static object LogLock = new object();
+        private readonly ITracer _tracer;
 
         public XmlLogger(IFileSystem fileSystem, string path)
+            : this(NullTracer.Instance, fileSystem, path)
         {
+        }
+
+        public XmlLogger(ITracer tracer, IFileSystem fileSystem, string path)
+        {
+            _tracer = tracer;
             _fileSystem = fileSystem;
             _path = path;
         }
@@ -85,16 +94,34 @@ namespace Kudu.Core.Deployment
         {
             if (!_fileSystem.File.Exists(_path))
             {
-                return new XDocument(new XElement("entries"));
+                return CreateDocument();
             }
 
-            XDocument document;
-            using (var stream = _fileSystem.File.OpenRead(_path))
+            try
             {
-                document = XDocument.Load(stream);
-            }
+                XDocument document;
+                using (var stream = _fileSystem.File.OpenRead(_path))
+                {
+                    document = XDocument.Load(stream);
+                }
 
-            return document;
+                return document;
+            }
+            catch (Exception ex)
+            {
+                if (_tracer != null)
+                {
+                    _tracer.TraceError(ex);
+                    _tracer.TraceWarning("Creating new document because of an error.");
+                }
+
+                return CreateDocument();
+            }
+        }
+
+        private static XDocument CreateDocument()
+        {
+            return new XDocument(new XElement("entries"));
         }
 
         private class InnerXmlLogger : ILogger
