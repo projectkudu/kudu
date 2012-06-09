@@ -55,6 +55,10 @@
     </Target>
 
     <Target Name="BuildSites">
+        <ItemGroup>
+            <SqlCe32Binaries Include="$(ProjectRoot)\Kudu.Web\bin\x86\**\*.dll"></SqlCe32Binaries>
+            <SqlCe64Binaries Include="$(ProjectRoot)\Kudu.Web\bin\amd64\**\*.dll"></SqlCe64Binaries>
+        </ItemGroup>
         <MSBuild Projects="$(ServiceSiteProject)" 
                  Targets="pipelinePreDeployCopyAllFilesToOneFolder" 
                  Properties="_PackageTempDir=$(ServiceSiteTargetPath);
@@ -73,6 +77,10 @@
                              AutoParameterizationWebConfigConnectionStrings=false;
                              SolutionDir=$(ProjectRoot)\;
                              MSBuildExtensionsPath32=$(ProjectRoot)\Kudu.Services.Web\msbuild"/>
+
+        <Copy SourceFiles="@(SqlCe32Binaries)" DestinationFolder="$(ClientSiteTargetPath)\bin\x86\" />
+        <Copy SourceFiles="@(SqlCe64Binaries)" DestinationFolder="$(ClientSiteTargetPath)\bin\amd64\" />
+        <MakeDir Directories="$(ClientSiteTargetPath)\App_Data" />
     </Target>
   
     <Target Name="RunTests" DependsOnTargets="CreateOutputPath">
