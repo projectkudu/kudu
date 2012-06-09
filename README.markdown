@@ -10,15 +10,15 @@ See the [documentation](https://github.com/projectkudu/kudu/wiki)
 
 ### Getting Started
 
-1. First clone your local repository.
+1. First clone the repository.
 
-        git clone git@github.com:projectkudu/kudu.git
+        git clone git://github.com/projectkudu/kudu.git
 
 3. Open Kudu.sln as **Administrator** and build it.
 
 4. Set **Kudu.Web** as the startup project and run!
 
-For more details, see the documentation.
+5. [Deploy your application](https://github.com/projectkudu/kudu/wiki/Getting-started)
 
 ### License
 
