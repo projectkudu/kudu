@@ -24,7 +24,8 @@ For more details, see the documentation.
 
 [Apache License 2.0](https://github.com/projectkudu/kudu/blob/master/LICENSE.txt)
 
-
 ### Questions?
 
 You can use the [forum](http://social.msdn.microsoft.com/Forums/en-US/azuregit/threads), of open issues in this repository.
+
+[JabbR](https://jabbr.net/#/rooms/kudu)
