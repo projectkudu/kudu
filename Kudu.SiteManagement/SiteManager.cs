@@ -228,7 +228,16 @@ namespace Kudu.SiteManagement
             try
             {
                 // Give full control to the app folder (we can make it minimal later)
-                icacls.Execute(@"""{0}\*"" /remove ""IIS AppPool\{1}""", applicationPath, appPoolName);
+                icacls.Execute(@"""{0}\"" /remove ""IIS AppPool\{1}""", applicationPath, appPoolName);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+
+            try
+            {
+                icacls.Execute(@"""{0}"" /remove ""IIS AppPool\{1}""", _pathResolver.ServiceSitePath, appPoolName);
             }
             catch (Exception ex)
             {
@@ -259,7 +268,16 @@ namespace Kudu.SiteManagement
             try
             {
                 // Give full control to the app folder (we can make it minimal later)
-                icacls.Execute(@"""{0}\*"" /grant ""IIS AppPool\{1}:F"" /C /Q /T", applicationPath, appPoolName);
+                icacls.Execute(@"""{0}"" /grant:r ""IIS AppPool\{1}:(OI)(CI)(F)"" /C /Q /T", applicationPath, appPoolName);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+
+            try
+            {
+                icacls.Execute(@"""{0}"" /grant:r ""IIS AppPool\{1}:(OI)(CI)(RX)"" /C /Q /T", _pathResolver.ServiceSitePath, appPoolName);
             }
             catch (Exception ex)
             {
@@ -270,7 +288,7 @@ namespace Kudu.SiteManagement
             {
                 // Give full control to the temp folder
                 string windowsTemp = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp");
-                icacls.Execute(@"""{0}"" /grant ""IIS AppPool\{1}:F"" /C /Q /T", windowsTemp, appPoolName);
+                icacls.Execute(@"""{0}"" /grant:r ""IIS AppPool\{1}:(OI)(CI)(F)"" /C /Q /T", windowsTemp, appPoolName);
             }
             catch (Exception ex)
             {
