@@ -26,6 +26,4 @@ See the [documentation](https://github.com/projectkudu/kudu/wiki)
 
 ### Questions?
 
-You can use the [forum](http://social.msdn.microsoft.com/Forums/en-US/azuregit/threads), of open issues in this repository.
-
-[JabbR](https://jabbr.net/#/rooms/kudu)
+You can use the [forum](http://social.msdn.microsoft.com/Forums/en-US/azuregit/threads), chat on the [JabbR](https://jabbr.net/#/rooms/kudu), or open issues in this repository.
