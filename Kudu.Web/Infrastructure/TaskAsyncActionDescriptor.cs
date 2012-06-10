@@ -91,7 +91,7 @@ namespace Mvc.Async
 
         private static Func<object, object> CreateTaskValueExtractor(Type taskType)
         {
-            if (taskType.IsGenericType && taskType.GetGenericTypeDefinition() == typeof(Task<>))
+            if (taskType.IsGenericType)
             {
                 ParameterExpression parameterExpression = Expression.Parameter(typeof(object));
                 return Expression.Lambda<Func<object, object>>((Expression)Expression.Convert((Expression)Expression.Property((Expression)Expression.Convert((Expression)parameterExpression, taskType), "Result"), typeof(object)), new ParameterExpression[1]
