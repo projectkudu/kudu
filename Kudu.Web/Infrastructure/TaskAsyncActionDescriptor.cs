@@ -61,7 +61,7 @@ namespace Mvc.Async
 
         public override object EndExecute(IAsyncResult asyncResult)
         {
-            return TaskAsyncActionDescriptor._taskValueExtractors.GetOrAdd(asyncResult.GetType(), new Func<Type, Func<object, object>>(TaskAsyncActionDescriptor.CreateTaskValueExtractor))((object)asyncResult);
+            return TaskAsyncActionDescriptor._taskValueExtractors.GetOrAdd(MethodInfo.ReturnType, new Func<Type, Func<object, object>>(TaskAsyncActionDescriptor.CreateTaskValueExtractor))((object)asyncResult);
         }
 
         public override object Execute(ControllerContext controllerContext, IDictionary<string, object> parameters)
@@ -91,7 +91,7 @@ namespace Mvc.Async
 
         private static Func<object, object> CreateTaskValueExtractor(Type taskType)
         {
-            if (taskType.IsGenericType)
+            if (taskType.IsGenericType && taskType.GetGenericTypeDefinition() == typeof(Task<>))
             {
                 ParameterExpression parameterExpression = Expression.Parameter(typeof(object));
                 return Expression.Lambda<Func<object, object>>((Expression)Expression.Convert((Expression)Expression.Property((Expression)Expression.Convert((Expression)parameterExpression, taskType), "Result"), typeof(object)), new ParameterExpression[1]
