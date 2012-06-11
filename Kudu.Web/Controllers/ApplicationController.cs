@@ -119,5 +119,12 @@ namespace Kudu.Web.Controllers
                 return (ActionResult)View(document);
             });
         }
+
+        public ActionResult Develop(string slug)
+        {
+            _applicationService.CreateDevelopmentSite(slug);
+
+            return RedirectToAction("Details", new { slug });
+        }
     }
 }

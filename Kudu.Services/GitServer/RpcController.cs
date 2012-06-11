@@ -20,36 +20,25 @@
 
 #endregion
 
+using System.IO;
+using System.IO.Compression;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Web.Http;
+using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.Tracing;
+using Kudu.Core.SourceControl.Git;
+using Kudu.Services.Infrastructure;
+
 namespace Kudu.Services.GitServer
 {
-    using System;
-    using System.Collections.Generic;
-    using System.ComponentModel;
-    using System.IO;
-    using System.IO.Compression;
-    using System.Net;
-    using System.Net.Http;
-    using System.Net.Http.Headers;
-    using System.ServiceModel;
-    using System.ServiceModel.Web;
-    using System.Text;
-    using System.Threading;
-    using System.Web.Hosting;
-    using Kudu.Contracts.Infrastructure;
-    using Kudu.Contracts.Tracing;
-    using Kudu.Core.Deployment;
-    using Kudu.Core.SourceControl.Git;
-    using Kudu.Services.Infrastructure;
-
-    // Handles {project}/git-upload-pack and {project}/git-receive-pack
-    [ServiceContract]
-    public class RpcService
+    public class RpcController : ApiController
     {
         private readonly IGitServer _gitServer;
         private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
 
-        public RpcService(ITracer tracer,
+        public RpcController(ITracer tracer,
                           IGitServer gitServer,
                           IOperationLock deploymentLock)
         {
@@ -58,15 +47,14 @@ namespace Kudu.Services.GitServer
             _deploymentLock = deploymentLock;
         }
 
-        [Description("Handles a 'git pull' command.")]
-        [WebInvoke(UriTemplate = "git-upload-pack")]
-        public HttpResponseMessage UploadPack(HttpRequestMessage request)
+        [HttpPost]
+        public HttpResponseMessage UploadPack()
         {
             using (_tracer.Step("RpcService.UploadPack"))
             {
                 var memoryStream = new MemoryStream();
 
-                _gitServer.Upload(GetInputStream(request), memoryStream);
+                _gitServer.Upload(GetInputStream(Request), memoryStream);
 
                 return CreateResponse(memoryStream, "application/x-git-{0}-result".With("upload-pack"));
             }

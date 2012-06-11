@@ -18,7 +18,7 @@ namespace Kudu.Core.Infrastructure
 
             return path;
         }
-
+        
         internal static string ResolveNpmPath()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);

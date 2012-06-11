@@ -4,10 +4,6 @@
 <%@ Import Namespace="Kudu.Services" %>
 <%@ Import Namespace="System.Web.Hosting" %>
 
-<% 
-    var showUpdateLink = HostingEnvironment.VirtualPathProvider.FileExists("~/Update.aspx");
-%>
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head id="Head1" runat="server">
@@ -90,7 +86,7 @@
         <% 
             string commitFile = MapPath("~/commit");
             string sha = File.Exists(commitFile) ? File.ReadAllText(commitFile).Trim() : null;
-            var version = typeof(MvcApplication).Assembly.GetName().Version;
+            var version = typeof(AppSettings).Assembly.GetName().Version;
             bool devSiteEnabled = PathResolver.ResolveDevelopmentPath() != null;
         %>
         
@@ -98,37 +94,9 @@
         <% if (sha != null) { %>
         (<a id="sha" href="https://github.com/projectkudu/kudu/commit/<%= sha %>"><%= sha.Substring(0, 10) %></a>)
         <% } %>
-        <% if (showUpdateLink) { %>
-        <a id="update-link" href="Update.aspx">Update</a>
-        <% } %>
         </h1>
     </div>
-    <div>
-        <h2>API Help</h2>
-        <div>
-            <h3>Live site management</h3>
-            <ul>
-                <li><a href="live/scm/help">Source Control Management API</a> (<a href="live/scm/test">test</a>)</li>
-            </ul>
-        </div>
-        <div>
-            <h3>Deployment</h3>
-            <ul>
-                <li><a href="deployments/help">Deployment API</a> (<a href="deployments/test">test</a>)</li>
-            </ul>
-        </div>
-        <% if (AppSettings.SettingsEnabled) { %>
-        <div>
-            <h3>Environment variables and connection strings</h3>
-            <ul>
-                <li><a href="appsettings/help">AppSettings API</a></li>
-                <li><a href="connectionstrings/help">ConnectionStrings API</a></li>
-            </ul>
-        </div>
-        <% } %>
-
-    </div>
-   
+    
    <div class="header">Environment</div>
 
     <table>
@@ -136,6 +104,13 @@
             <td><strong>Live Site</strong></td>
             <td class="path"><%= MapPath("_app") %></td>
         </tr>
+        <% var devSitePath = PathResolver.ResolveDevelopmentPath(); %>
+        <% if (!String.IsNullOrEmpty(devSitePath)) { %>
+        <tr>
+            <td><strong>Dev Site</strong></td>
+            <td class="path"><%= devSitePath%></td>
+        </tr>
+        <% } %>
         <tr>
             <td><strong>Temp</strong></td>
             <td class="path"> <%= Path.GetTempPath() %></td>

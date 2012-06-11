@@ -50,7 +50,6 @@ namespace Kudu.Core
                     return null;
                 }
 
-                FileSystemHelpers.EnsureDirectory(path);
                 return path;
             }
         }

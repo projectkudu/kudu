@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Net;
 using System.Net.Http;
+using System.Web.Http;
 using Kudu.Contracts.Infrastructure;
-using Microsoft.ApplicationServer.Http.Dispatcher;
 
 namespace Kudu.Services.Infrastructure
 {

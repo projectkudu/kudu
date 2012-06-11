@@ -16,7 +16,7 @@ namespace Kudu.Client.Editor
         {
             // REVIEW: Do we need to url encode?
             // REVIEW: this goes through the same client that set the Accept header to application/json, but we receive text/plain
-            return _client.GetAsync("?path=" + path)
+            return _client.GetAsync(path)
                           .Result
                           .EnsureSuccessStatusCode()
                           .Content
@@ -31,14 +31,14 @@ namespace Kudu.Client.Editor
 
         public void WriteAllText(string path, string content)
         {
-            _client.PostAsync("save", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("path", path), new KeyValuePair<string, string>("content", content)))
+            _client.PutAsync(path, HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("content", content)))
                    .Result
                    .EnsureSuccessStatusCode();
         }
 
         public void Delete(string path)
         {
-            _client.PostAsync("delete", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("path", path)))
+            _client.DeleteAsync(path)
                    .Result
                    .EnsureSuccessStatusCode();
         }

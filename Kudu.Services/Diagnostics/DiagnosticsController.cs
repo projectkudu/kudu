@@ -2,30 +2,28 @@
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.ServiceModel;
-using System.ServiceModel.Web;
+using System.Web.Http;
 using Ionic.Zip;
 using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.Performance
 {
-    [ServiceContract]
-    public class DiagnosticsService
+    public class DiagnosticsController : ApiController
     {
         private readonly string[] _paths;
         private static object _lockObj = new object();
 
-        public DiagnosticsService(params string[] paths)
+        public DiagnosticsController(params string[] paths)
         {
             _paths = paths;
         }
 
-        [WebGet(UriTemplate = "")]
-        public HttpResponseMessage GetDiagnostics()
+        [HttpGet]
+        public HttpResponseMessage GetLog()
         {
             lock (_lockObj)
             {
-                var response = new HttpResponseMessage();
+                HttpResponseMessage response = Request.CreateResponse();
                 using (var zip = new ZipFile())
                 {
                     foreach (var path in _paths)

@@ -4,7 +4,9 @@ namespace Kudu.Core.Commands
 {
     public interface ICommandExecutor
     {
-        void ExecuteCommand(string command);
+        CommandResult ExecuteCommand(string command);
+
+        void ExecuteCommandAsync(string command);
         void CancelCommand();
 
         event Action<CommandEvent> CommandEvent;

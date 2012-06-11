@@ -1,27 +1,25 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Net.Http;
-using System.ServiceModel;
 using System.ServiceModel.Web;
+using System.Web.Http;
 using Kudu.Core.SourceControl;
 using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.SourceControl
 {
-    [ServiceContract]
-    public class DeploymentSourceControlService
+    public class LiveScmController : ApiController
     {
         private readonly IServerRepository _repository;
         private readonly IServerConfiguration _serverConfiguration;
 
-        public DeploymentSourceControlService(IServerRepository repository, IServerConfiguration serverConfiguration)
+        public LiveScmController(IServerRepository repository, IServerConfiguration serverConfiguration)
         {
             _repository = repository;
             _serverConfiguration = serverConfiguration;
         }
 
-        [Description("Gets the repository information.")]
-        [WebGet(UriTemplate = "info")]
+        [HttpGet]
         public RepositoryInfo GetRepositoryInfo(HttpRequestMessage request)
         {
             var baseUri = new Uri(request.RequestUri.GetComponents(UriComponents.SchemeAndServer, UriFormat.Unescaped));
@@ -32,8 +30,7 @@ namespace Kudu.Services.SourceControl
             };
         }
 
-        [Description("Does a clean of the repository.")]
-        [WebInvoke(UriTemplate = "clean", Method = "POST")]
+        [HttpPost]
         public void Clean()
         {
             _repository.Clean();

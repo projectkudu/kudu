@@ -21,6 +21,16 @@
         <p class="help-block">This is the link to your website.</p>
         </div>
     </div>
+    @if (Model.DevSiteUrl != null)
+    { 
+    <div class="control-group">
+        <label class="control-label"><strong>Developement Site URL</strong></label>
+        <div class="controls">
+        <a href="@Model.DevSiteUrl" target="_blank">@Model.DevSiteUrl</a>
+        <p class="help-block">This is the link to your development website.</p>
+        </div>
+    </div>
+    }
     <div class="control-group">
         <label class="control-label"><strong>Service URL</strong></label>
         <div class="controls">
@@ -29,6 +39,14 @@
         </div>
     </div>
 </div>
+
+@if (Model.DevSiteUrl == null)
+{
+    using (Html.BeginForm("Develop", "Application", new { slug = Model.Name.GenerateSlug() }))
+    { 
+        <input type="submit" class="btn btn-large" name="name" value="Enable Development Site" />
+    }
+}
 
 @using (Html.BeginForm("Delete", "Application", new { slug = Model.Name.GenerateSlug() }))
 { 

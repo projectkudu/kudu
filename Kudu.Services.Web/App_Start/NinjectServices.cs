@@ -1,24 +1,29 @@
 using System.IO;
 using System.IO.Abstractions;
+using System.Net;
+using System.Net.Http.Formatting;
 using System.Web;
+using System.Web.Http;
+using System.Web.Routing;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
+using Kudu.Core.Commands;
 using Kudu.Core.Deployment;
 using Kudu.Core.Editor;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Tracing;
-using Kudu.Services.Authorization;
+using Kudu.Services.GitServer;
 using Kudu.Services.Performance;
+using Kudu.Services.Web.Infrastruture;
 using Kudu.Services.Web.Services;
 using Kudu.Services.Web.Tracing;
 using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 using Ninject;
 using Ninject.Activation;
-using Ninject.Extensions.Wcf;
 using XmlSettings;
 
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Start")]
@@ -54,7 +59,6 @@ namespace Kudu.Services.Web.App_Start
 
             RegisterServices(kernel);
 
-            KernelContainer.Kernel = kernel;
             return kernel;
         }
 
@@ -76,7 +80,6 @@ namespace Kudu.Services.Web.App_Start
             // General
             kernel.Bind<HttpContextBase>().ToMethod(context => new HttpContextWrapper(HttpContext.Current));
             kernel.Bind<IEnvironment>().ToConstant(environment);
-            kernel.Bind<IUserValidator>().To<SimpleUserValidator>().InSingletonScope();
             kernel.Bind<IServerConfiguration>().ToConstant(serverConfiguration);
             kernel.Bind<IFileSystem>().To<FileSystem>().InSingletonScope();
             kernel.Bind<RepositoryConfiguration>().ToConstant(gitConfiguration);
@@ -122,7 +125,7 @@ namespace Kudu.Services.Web.App_Start
                 Path.Combine(environment.DeploymentTargetPath, Constants.NpmDebugLogFile),
             };
 
-            kernel.Bind<DiagnosticsService>().ToMethod(context => new DiagnosticsService(paths));
+            kernel.Bind<DiagnosticsController>().ToMethod(context => new DiagnosticsController(paths));
 
             // Deployment Service
             kernel.Bind<ISettings>().ToMethod(context => new XmlSettings.Settings(GetSettingsPath(environment)));
@@ -132,7 +135,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<ISiteBuilderFactory>().To<SiteBuilderFactory>()
                                              .InRequestScope();
 
-            kernel.Bind<IServerRepository>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, 
+            kernel.Bind<IServerRepository>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath,
                                                                                   initLock,
                                                                                   context.Kernel.Get<IDeploymentEnvironment>(),
                                                                                   context.Kernel.Get<ITraceFactory>()))
@@ -148,20 +151,81 @@ namespace Kudu.Services.Web.App_Start
             // Git server
             kernel.Bind<IDeploymentEnvironment>().To<DeploymentEnvrionment>();
 
-            kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath, 
-                                                                           initLock, 
-                                                                           context.Kernel.Get<IDeploymentEnvironment>(), 
+            kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath,
+                                                                           initLock,
+                                                                           context.Kernel.Get<IDeploymentEnvironment>(),
                                                                            context.Kernel.Get<ITraceFactory>()))
                                      .InRequestScope();
 
             // Editor
             kernel.Bind<IProjectSystem>().ToMethod(context => GetEditorProjectSystem(environment, context))
                                          .InRequestScope();
+
+            // Command executor
+            kernel.Bind<ICommandExecutor>().ToMethod(context => GetCommandExecutor(environment, context))
+                                           .InRequestScope();
+
+            RegisterRoutes(kernel, RouteTable.Routes);
+        }
+        
+        public static void RegisterRoutes(IKernel kernel, RouteCollection routes)
+        {
+            var configuration = kernel.Get<IServerConfiguration>();
+            GlobalConfiguration.Configuration.Formatters.Clear();
+            GlobalConfiguration.Configuration.IncludeErrorDetailPolicy = IncludeErrorDetailPolicy.LocalOnly;
+            var jsonFormatter = new JsonMediaTypeFormatter();
+            GlobalConfiguration.Configuration.Formatters.Add(jsonFormatter);
+            GlobalConfiguration.Configuration.DependencyResolver = new NinjectWebApiDependencyResolver(kernel);
+
+            // Git Service
+            routes.MapHttpRoute("git-info-refs", configuration.GitServerRoot + "/info/refs", new { controller = "InfoRefs", action = "Execute" });
+
+            // Push url
+            routes.MapHandler<ReceivePackHandler>(kernel, "git-receive-pack", configuration.GitServerRoot + "/git-receive-pack");
+
+            // Clone url
+            routes.MapHttpRoute("git-upload-pack", configuration.GitServerRoot + "/git-upload-pack ", new { controller = "Rpc", action = "UploadPack" });
+
+            // Live Scm (deployment repository)
+            routes.MapHttpRoute("scm-info", "live/scm/info", new { controller = "LiveScm", action = "GetRepositoryInfo" });
+            routes.MapHttpRoute("scm-clean", "live/scm/clean", new { controller = "LiveScm", action = "Clean" });
+
+            // Live Files
+            routes.MapHttpRoute("all-files", "live/files", new { controller = "Files", action = "GetFiles" });
+            routes.MapHttpRoute("one-file", "live/files/{*path}", new { controller = "Files", action = "GetFile" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("save-file", "live/files/{*path}", new { controller = "Files", action = "Save" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRoute("delete-file", "live/files/{*path}", new { controller = "Files", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
+
+            // Live Command Line
+            routes.MapHttpRoute("execute-command", "command", new { controller = "Command", action = "ExecuteCommand" }, new { verb = new HttpMethodConstraint("POST") });
+
+            // Deployments
+            routes.MapHttpRoute("all-deployments", "deployments", new { controller = "Deployment", action = "GetDeployResults" });
+            routes.MapHttpRoute("one-deployment-get", "deployments/{id}", new { controller = "Deployment", action = "GetResult" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("one-deployment-put", "deployments/{id}", new { controller = "Deployment", action = "Deploy" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRoute("one-deployment-delete", "deployments/{id}", new { controller = "Deployment", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpRoute("one-deployment-log", "deployments/{id}/log", new { controller = "Deployment", action = "GetLogEntry" });
+            routes.MapHttpRoute("one-deployment-log-details", "deployments/{id}/log/{logId}", new { controller = "Deployment", action = "GetLogEntryDetails" });
+
+            // Diagnostics
+            routes.MapHttpRoute("diagnostics", "dump", new { controller = "Diagnostics", action = "GetLog" });
         }
 
         private static IProjectSystem GetEditorProjectSystem(IEnvironment environment, IContext context)
         {
             return new ProjectSystem(environment.DeploymentTargetPath);
+        }
+
+        private static ICommandExecutor GetCommandExecutor(IEnvironment environment, IContext context)
+        {
+            if (System.String.IsNullOrEmpty(environment.RepositoryPath))
+            {
+                throw new HttpResponseException(HttpStatusCode.NotFound);
+            }
+
+            // Start one directory up
+            string path = Path.Combine(environment.RepositoryPath, "..");
+            return new CommandExecutor(Path.GetFullPath(path));
         }
 
         private static string GetSettingsPath(IEnvironment environment)

@@ -123,4 +123,7 @@
   <data name="Error_DeploymentNotFound" xml:space="preserve">
     <value>Deployment '{0}' not found.</value>
   </data>
+  <data name="Error_DumbProtocolNotSupported" xml:space="preserve">
+    <value>The dumb protocol is not supported.</value>
+  </data>
 </root>

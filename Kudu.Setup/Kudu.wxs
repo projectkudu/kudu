@@ -89,10 +89,6 @@
         <File Id="Env.aspx" Source="$(var.KuduServiceDir)\Env.aspx" />
       </Component>
 
-      <Component Id="Global.asax" Guid="{9120F0CD-A9BC-4B94-8D1C-2D591D1EF98A}">
-        <File Id="Global.asax" Source="$(var.KuduServiceDir)\Global.asax" />
-      </Component>
-
       <Component Id="Web.config" Guid="{457A4FB5-F65C-4431-AB8A-A87F960ADDCC}">
         <File Id="Web.config" Source="$(var.KuduServiceDir)\Web.config" />
       </Component>
@@ -130,47 +126,41 @@
       <Component Id="Ninject.dll" Guid="{1337933F-2537-4C76-8FEF-FBADD5816448}">
         <File Id="Ninject.dll" Source="$(var.KuduServiceBinDir)\Ninject.dll" />
       </Component>
-      <Component Id="Ninject.Extensions.Wcf.dll" Guid="{40213169-2163-4F4F-B7E2-40C8E4C3DADC}">
-        <File Id="Ninject.Extensions.Wcf.dll" Source="$(var.KuduServiceBinDir)\Ninject.Extensions.Wcf.dll" />
-      </Component>
-      
-      <Component Id="Microsoft.ApplicationServer.Http.dll" Guid="{64BD205C-7377-4BFE-BA9B-855824112E0F}">
-        <File Id="Microsoft.ApplicationServer.Http.dll" Source="$(var.KuduServiceBinDir)\Microsoft.ApplicationServer.Http.dll" />
-      </Component>
-      <Component Id="Microsoft.Json.dll" Guid="{3E727695-40A8-4A1F-85A4-404791512915}">
-        <File Id="Microsoft.Json.dll" Source="$(var.KuduServiceBinDir)\Microsoft.Json.dll" />
-      </Component>
       
       <Component Id="System.Net.Http.dll" Guid="{3D963AD3-1BA2-4508-AFAE-9635600B7D27}">
         <File Id="System.Net.Http.dll" Source="$(var.KuduServiceBinDir)\System.Net.Http.dll" />
-      </Component>
+      </Component> 
       
-      <Component Id="Microsoft.Net.Http.Formatting.dll" Guid="{C6C5008D-10AC-4B16-A8BC-7B720D671951}">
-        <File Id="Microsoft.Net.Http.Formatting.dll" Source="$(var.KuduServiceBinDir)\Microsoft.Net.Http.Formatting.dll" />
-      </Component>
-      <Component Id="Microsoft.Runtime.Serialization.Internal.dll" Guid="{4D860EFC-1EF4-4098-8C72-6F11AEBD3153}">
-        <File Id="Microsoft.Runtime.Serialization.Internal.dll" Source="$(var.KuduServiceBinDir)\Microsoft.Runtime.Serialization.Internal.dll" />
-      </Component>
-      <Component Id="Microsoft.ServiceModel.Internal.dll" Guid="{7E046CF4-5D62-40C2-A706-23DF903D4A9C}">
-        <File Id="Microsoft.ServiceModel.Internal.dll" Source="$(var.KuduServiceBinDir)\Microsoft.ServiceModel.Internal.dll" />
-      </Component>
-
-      <Component Id="Microsoft.Server.Common.dll" Guid="{4F476863-1DE8-4699-9691-5A7BDEC0BE47}">
-        <File Id="Microsoft.Server.Common.dll" Source="$(var.KuduServiceBinDir)\Microsoft.Server.Common.dll" />
-      </Component>
       <Component Id="Microsoft.Web.Infrastructure.dll" Guid="{96A2A444-20B6-48C6-867A-01A7E13AC927}">
         <File Id="Microsoft.Web.Infrastructure.dll" Source="$(var.KuduServiceBinDir)\Microsoft.Web.Infrastructure.dll" />
       </Component>
+      
       <Component Id="System.IO.Abstractions.dll" Guid="{235869F1-F053-4FEE-8CD5-04E197A916ED}">
         <File Id="System.IO.Abstractions.dll" Source="$(var.KuduServiceBinDir)\System.IO.Abstractions.dll" />
       </Component>
       <Component Id="WebActivator.dll" Guid="{0C6F4200-3B48-4BB0-97E7-17543B5AECB3}">
         <File Id="WebActivator.dll" Source="$(var.KuduServiceBinDir)\WebActivator.dll" />
       </Component>
+      
       <Component Id="XmlSettings.dll" Guid="{A0569F8D-226B-4361-A596-7B636DBB3581}">
         <File Id="XmlSettings.dll" Source="$(var.KuduServiceBinDir)\XmlSettings.dll" />
       </Component>
+      
+      <Component Id="System.Net.Http.Formatting.dll" Guid="{018623FB-6032-49BE-9AC1-08E4398FD98F}">
+        <File Id="System.Net.Http.Formatting.dll" Source="$(var.KuduServiceBinDir)\System.Net.Http.Formatting.dll" />
+      </Component>
 
+      <Component Id="System.Net.Http.WebRequest.dll" Guid="{CD943BF7-8EE4-4BC7-BA66-79CD91EAEC57}">
+        <File Id="System.Net.Http.WebRequest.dll" Source="$(var.KuduServiceBinDir)\System.Net.Http.WebRequest.dll" />
+      </Component>
+
+      <Component Id="System.Web.Http.dll" Guid="{8C405A12-9961-4167-BC11-70986B31A444}">
+        <File Id="System.Web.Http.dll" Source="$(var.KuduServiceBinDir)\System.Web.Http.dll" />
+      </Component>
+
+      <Component Id="System.Web.Http.WebHost.dll" Guid="{1F9F48D0-39F9-48EB-B878-420E501D020F}">
+        <File Id="System.Web.Http.WebHost.dll" Source="$(var.KuduServiceBinDir)\System.Web.Http.WebHost.dll" />
+      </Component>
     </DirectoryRef>
 
     <DirectoryRef Id="KUDU_SERVICE_MSBUILD_MS_VS_10_WEB">
@@ -205,7 +195,6 @@
 
       <ComponentRef Id="Default.aspx" />
       <ComponentRef Id="Env.aspx" />
-      <ComponentRef Id="Global.asax" />
       <ComponentRef Id="Web.config" />
       <ComponentRef Id="commit" />
 
@@ -216,22 +205,19 @@
       <ComponentRef Id="Kudu.Services.Web.dll"/>
 
       <ComponentRef Id="Ninject.dll" />
-      <ComponentRef Id="Ninject.Extensions.Wcf.dll" />
 
       <ComponentRef Id="Ionic.Zip.dll" />
 
-      <ComponentRef Id="Microsoft.ApplicationServer.Http.dll" />
-      <ComponentRef Id="Microsoft.Json.dll" />
-      <ComponentRef Id="System.Net.Http.dll" />
-      <ComponentRef Id="Microsoft.Net.Http.Formatting.dll" />
-      <ComponentRef Id="Microsoft.Runtime.Serialization.Internal.dll" />
-      <ComponentRef Id="Microsoft.ServiceModel.Internal.dll" />
-
-      <ComponentRef Id="Microsoft.Server.Common.dll" />
       <ComponentRef Id="Microsoft.Web.Infrastructure.dll" />
       <ComponentRef Id="System.IO.Abstractions.dll" />
       <ComponentRef Id="WebActivator.dll" />
       <ComponentRef Id="XmlSettings.dll" />
+      
+      <ComponentRef Id="System.Net.Http.dll" />
+      <ComponentRef Id="System.Net.Http.Formatting.dll" />
+      <ComponentRef Id="System.Net.Http.WebRequest.dll" />
+      <ComponentRef Id="System.Web.Http.dll" />
+      <ComponentRef Id="System.Web.Http.WebHost.dll" />
 
       <ComponentRef Id="Microsoft.Web.Publishing.AllFilesInProjectFolder.targets" />
       <ComponentRef Id="Microsoft.Web.Publishing.AllFilesInTheProject.targets" />
