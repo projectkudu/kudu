@@ -148,6 +148,8 @@ namespace Kudu.Core.Deployment
                         writer.Start();
                         // Run install on the output directory
                         log = npm.Install(context.Tracer, writer);
+                        // Run rebuild in case any binary packages are included in the git repository
+                        log = npm.Rebuild(context.Tracer, writer);
                     }
 
                     if (String.IsNullOrWhiteSpace(log))
