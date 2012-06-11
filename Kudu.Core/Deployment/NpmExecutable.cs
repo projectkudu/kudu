@@ -14,6 +14,16 @@ namespace Kudu.Core.Deployment
 
         public string Install(ITracer tracer, ProgressWriter writer)
         {
+            return RunCommandWithProgress(tracer, writer, "install --production");
+        }
+
+        internal string Rebuild(ITracer tracer, ProgressWriter writer)
+        {
+            return RunCommandWithProgress(tracer, writer, "rebuild");
+        }
+
+        private string RunCommandWithProgress(ITracer tracer, ProgressWriter writer, string command)
+        {
             return Execute(tracer,
                            output =>
                            {
@@ -26,7 +36,7 @@ namespace Kudu.Core.Deployment
                                return true;
                            },
                            Console.OutputEncoding,
-                           "install").Item1;
+                           command).Item1;
         }
     }
 }
