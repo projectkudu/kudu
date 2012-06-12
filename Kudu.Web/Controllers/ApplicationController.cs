@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Web.Mvc;
 using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Infrastructure;
+using Kudu.SiteManagement;
 using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
 using Mvc.Async;
@@ -16,14 +17,17 @@ namespace Kudu.Web.Controllers
         private readonly IApplicationService _applicationService;
         private readonly KuduEnvironment _environment;
         private readonly ICredentialProvider _credentialProvider;
+        private readonly ISiteManager _siteManager;
 
         public ApplicationController(IApplicationService applicationService,
                                      ICredentialProvider credentialProvider,
-                                     KuduEnvironment environment)
+                                     KuduEnvironment environment, 
+                                     ISiteManager siteManager)
         {
             _applicationService = applicationService;
             _credentialProvider = credentialProvider;
             _environment = environment;
+            _siteManager = siteManager;
         }
 
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
@@ -43,17 +47,17 @@ namespace Kudu.Web.Controllers
 
         public Task<ActionResult> Details(string slug)
         {
-            IApplication application = _applicationService.GetApplication(slug);
+            var site = _siteManager.GetSite(slug);
 
-            if (application == null)
+            if (site == null)
             {
                 return HttpNotFoundAsync();
             }
 
             ICredentials credentials = _credentialProvider.GetCredentials();
-            return application.GetRepositoryInfo(credentials).Then(repositoryInfo =>
+            return site.GetRepositoryInfo(credentials).Then(repositoryInfo =>
             {
-                var appViewModel = new ApplicationViewModel(application);
+                var appViewModel = new ApplicationViewModel(slug, site);
                 appViewModel.RepositoryInfo = repositoryInfo;
 
                 ViewBag.slug = slug;
@@ -71,13 +75,13 @@ namespace Kudu.Web.Controllers
         }
 
         [HttpPost]
-        public ActionResult Create(string name)
+        public ActionResult Create(string name, string hostname = null, int port = 0)
         {
             string slug = name.GenerateSlug();
 
             try
             {
-                _applicationService.AddApplication(slug);
+                _applicationService.AddApplication(slug, hostname, port);
 
                 return RedirectToAction("Details", new { slug });
             }
@@ -106,15 +110,16 @@ namespace Kudu.Web.Controllers
 
         public Task<ActionResult> Trace(string slug)
         {
+            var site = _siteManager.GetSite(slug);
             IApplication application = _applicationService.GetApplication(slug);
 
-            if (application == null)
+            if (application == null || site == null)
             {
                 return HttpNotFoundAsync();
             }
 
             ICredentials credentials = _credentialProvider.GetCredentials();
-            return application.DownloadTrace(credentials).Then(document =>
+            return site.DownloadTrace(credentials).Then(document =>
             {
                 return (ActionResult)View(document);
             });

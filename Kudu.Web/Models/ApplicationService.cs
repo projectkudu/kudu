@@ -17,6 +17,11 @@ namespace Kudu.Web.Models
         }
 
         public void AddApplication(string name)
+        {
+            AddApplication(name, null, 0);
+        }
+
+        public void AddApplication(string name, string hostname, int port)
         {            
             if (_db.Applications.Any(a => a.Name == name))
             {
@@ -27,13 +32,11 @@ namespace Kudu.Web.Models
             
             try
             {
-                site = _siteManager.CreateSite(name);
+                site = _siteManager.CreateSite(name, hostname, port);
 
                 var newApp = new Application
                 {
-                    Name = name,
-                    ServiceUrl = site.ServiceUrl,
-                    SiteUrl = site.SiteUrl
+                    Name = name
                 };
 
                 _db.Applications.Add(newApp);
@@ -83,12 +86,13 @@ namespace Kudu.Web.Models
             string siteUrl;
             if (_siteManager.TryCreateDeveloperSite(name, out siteUrl))
             {
-                var application = _db.Applications.FirstOrDefault(a => a.Name == name);
-                if (application != null)
-                {
-                    application.DevSiteUrl = siteUrl;
-                    _db.SaveChanges();
-                }
+                // JH : Removed, no need.
+                //var application = _db.Applications.FirstOrDefault(a => a.Name == name);
+                //if (application != null)
+                //{
+                //    application.DevSiteUrl = siteUrl;
+                //    _db.SaveChanges();
+                //}
             }
         }
     }

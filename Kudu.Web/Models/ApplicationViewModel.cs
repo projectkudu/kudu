@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
+using Kudu.SiteManagement;
 
 namespace Kudu.Web.Models
 {
@@ -11,16 +12,17 @@ namespace Kudu.Web.Models
         {
         }
 
-        public ApplicationViewModel(IApplication application)
+        public ApplicationViewModel(string name, Site site)
         {
-            Name = application.Name;
-            SiteUrl = application.SiteUrl;
-            ServiceUrl = application.ServiceUrl;
-            DevSiteUrl = application.DevSiteUrl;
+            Name = name;
+            SiteUrl = site.SiteUrl;
+            ServiceUrl = site.ServiceUrl;
         }
 
         [Required]
         public string Name { get; set; }
+        public string Hostname { get; set; }
+        public int Port { get; set; }
         public string SiteUrl { get; set; }
         public string ServiceUrl { get; set; }
         public string DevSiteUrl { get; set; }

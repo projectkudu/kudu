@@ -5,6 +5,7 @@ using System.Web.Mvc;
 using Kudu.Client.Deployment;
 using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Infrastructure;
+using Kudu.SiteManagement;
 using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
 using Mvc.Async;
@@ -15,12 +16,15 @@ namespace Kudu.Web.Controllers
     {
         private readonly IApplicationService _applicationService;
         private readonly ICredentialProvider _credentialProvider;
+        private readonly ISiteManager _siteManager;
 
         public DeploymentsController(IApplicationService applicationService,
-                                     ICredentialProvider credentialProvider)
+                                     ICredentialProvider credentialProvider, 
+                                     ISiteManager siteManager)
         {
             _applicationService = applicationService;
             _credentialProvider = credentialProvider;
+            _siteManager = siteManager;
         }
 
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
@@ -32,22 +36,22 @@ namespace Kudu.Web.Controllers
 
         public Task<ActionResult> Index(string slug)
         {
-            IApplication application = _applicationService.GetApplication(slug);
+            var site = _siteManager.GetSite(slug);
 
-            if (application == null)
+            if (site == null)
             {
                 return HttpNotFoundAsync();
             }
 
             ICredentials credentials = _credentialProvider.GetCredentials();
-            RemoteDeploymentManager deploymentManager = application.GetDeploymentManager(credentials);
+            RemoteDeploymentManager deploymentManager = site.GetDeploymentManager(credentials);
 
             // TODO: Do this in parallel
             return deploymentManager.GetResultsAsync().Then(results =>
             {
-                return application.GetRepositoryInfo(credentials).Then(repositoryInfo =>
+                return site.GetRepositoryInfo(credentials).Then(repositoryInfo =>
                 {
-                    var appViewModel = new ApplicationViewModel(application);
+                    var appViewModel = new ApplicationViewModel(slug, site);
                     appViewModel.RepositoryInfo = repositoryInfo;
                     appViewModel.Deployments = results.ToList();
 
@@ -62,15 +66,15 @@ namespace Kudu.Web.Controllers
 
         public Task<ActionResult> Deploy(string slug, string id, bool? clean)
         {
-            IApplication application = _applicationService.GetApplication(slug);
+            var site = _siteManager.GetSite(slug);
 
-            if (application == null)
+            if (site == null)
             {
                 return HttpNotFoundAsync();
             }
 
             ICredentials credentials = _credentialProvider.GetCredentials();
-            RemoteDeploymentManager deploymentManager = application.GetDeploymentManager(credentials);
+            RemoteDeploymentManager deploymentManager = site.GetDeploymentManager(credentials);
 
             return deploymentManager.DeployAsync(id, clean ?? false)
                                     .ContinueWith(task =>
@@ -81,20 +85,20 @@ namespace Kudu.Web.Controllers
 
         public Task<ActionResult> Log(string slug, string id)
         {
-            IApplication application = _applicationService.GetApplication(slug);
+            var site = _siteManager.GetSite(slug);
 
-            if (application == null)
+            if (site == null)
             {
                 return HttpNotFoundAsync();
             }
 
             ICredentials credentials = _credentialProvider.GetCredentials();
-            RemoteDeploymentManager deploymentManager = application.GetDeploymentManager(credentials);
+            RemoteDeploymentManager deploymentManager = site.GetDeploymentManager(credentials);
 
             return deploymentManager.GetLogEntriesAsync(id).Then(entries =>
             {
                 ViewBag.slug = slug;
-                ViewBag.appName = application.Name;
+                ViewBag.appName = slug;
                 ViewBag.id = id;
 
                 return (ActionResult)View(entries);
@@ -103,19 +107,19 @@ namespace Kudu.Web.Controllers
 
         public Task<ActionResult> Details(string slug, string id, string logId)
         {
-            IApplication application = _applicationService.GetApplication(slug);
-            if (application == null)
+            var site = _siteManager.GetSite(slug);
+            if (site == null)
             {
                 return HttpNotFoundAsync();
             }
 
             ICredentials credentials = _credentialProvider.GetCredentials();
-            RemoteDeploymentManager deploymentManager = application.GetDeploymentManager(credentials);
+            RemoteDeploymentManager deploymentManager = site.GetDeploymentManager(credentials);
 
             return deploymentManager.GetLogEntryDetailsAsync(id, logId).Then(entries =>
             {
                 ViewBag.slug = slug;
-                ViewBag.appName = application.Name;
+                ViewBag.appName = slug;
                 ViewBag.id = id;
                 ViewBag.verbose = true;
 

@@ -6,34 +6,36 @@ using Kudu.Client.Deployment;
 using Kudu.Client.SourceControl;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Core.SourceControl;
+using Kudu.SiteManagement;
 using Kudu.Web.Models;
+
 
 namespace Kudu.Web.Infrastructure
 {
-    public static class ApplicationExtensions
+    public static class SiteExtensions
     {
-        public static Task<RepositoryInfo> GetRepositoryInfo(this IApplication application, ICredentials credentials)
+        public static Task<RepositoryInfo> GetRepositoryInfo(this Site site, ICredentials credentials)
         {
-            var repositoryManager = new RemoteRepositoryManager(application.ServiceUrl + "live/scm");
+            var repositoryManager = new RemoteRepositoryManager(site.ServiceUrl + "live/scm");
             repositoryManager.Credentials = credentials;
             return repositoryManager.GetRepositoryInfo();
         }
 
-        public static RemoteDeploymentManager GetDeploymentManager(this IApplication application, ICredentials credentials)
+        public static RemoteDeploymentManager GetDeploymentManager(this Site site, ICredentials credentials)
         {
-            var deploymentManager = new RemoteDeploymentManager(application.ServiceUrl + "/deployments");
+            var deploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "/deployments");
             deploymentManager.Credentials = credentials;
             return deploymentManager;
         }
 
-        public static RemoteDeploymentSettingsManager GetSettingsManager(this IApplication application, ICredentials credentials)
+        public static RemoteDeploymentSettingsManager GetSettingsManager(this Site site, ICredentials credentials)
         {
-            var deploymentSettingsManager = new RemoteDeploymentSettingsManager(application.ServiceUrl);
+            var deploymentSettingsManager = new RemoteDeploymentSettingsManager(site.ServiceUrl);
             deploymentSettingsManager.Credentials = credentials;
             return deploymentSettingsManager;
         }
 
-        public static Task<XDocument> DownloadTrace(this IApplication application, ICredentials credentials)
+        public static Task<XDocument> DownloadTrace(this Site site, ICredentials credentials)
         {
             var client = new HttpClient(new HttpClientHandler()
             {
@@ -41,7 +43,7 @@ namespace Kudu.Web.Infrastructure
             });
 
 
-            return client.GetAsync(application.ServiceUrl + "dump").Then(response =>
+            return client.GetAsync(site.ServiceUrl + "dump").Then(response =>
             {
                 return response.EnsureSuccessStatusCode().Content.ReadAsStreamAsync().Then(stream =>
                 {
