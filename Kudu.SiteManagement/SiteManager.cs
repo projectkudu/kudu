@@ -31,23 +31,24 @@ namespace Kudu.SiteManagement
 
         public Site GetSite(string applicationName) {
             var iis = new IIS.ServerManager();
-
             var sitesForApplication = iis.Sites.Where(x => x.ApplicationDefaults.ApplicationPoolName.EndsWith(applicationName));
-            if(sitesForApplication.Any()) {
+
+            if(sitesForApplication.Any()) 
+            {
                 var site = new Site();
-                foreach (var iisSite in sitesForApplication) {
-                    if(GetServiceSite(applicationName) == iisSite.Name) {
-                        var binding = iisSite.Bindings.First();
-                        site.ServiceUrl = string.Format("http://{0}:{1}/", (string.IsNullOrEmpty(binding.Host) ? "localhost" : binding.Host), binding.EndPoint.Port);
-                    }
+                foreach (var iisSite in sitesForApplication)
+                {
+                    var binding = iisSite.Bindings.First();
+                    var targetUrl = string.Format("http://{0}:{1}/", (string.IsNullOrEmpty(binding.Host) ? "localhost" : binding.Host), binding.EndPoint.Port);
+
+                    if(GetServiceSite(applicationName) == iisSite.Name)
+                        site.ServiceUrl = targetUrl;
 
                     if (GetLiveSite(applicationName) == iisSite.Name)
-                    {
-                        var binding = iisSite.Bindings.First();
-                        site.SiteUrl = string.Format("http://{0}:{1}/", (string.IsNullOrEmpty(binding.Host) ? "localhost" : binding.Host), binding.EndPoint.Port);
-                    }
+                        site.SiteUrl = targetUrl;
 
-                        
+                    if (GetDevSite(applicationName) == iisSite.Name)
+                        site.DevSiteUrl = targetUrl;
                 }    
                 return site;
             }

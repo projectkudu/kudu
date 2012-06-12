@@ -25,7 +25,6 @@ namespace Kudu.Web.Models
         public ISettings GetSettings(string siteName)
         {
             var site = _siteManager.GetSite(siteName);
-            IApplication application = _applicationService.GetApplication(siteName);
             ICredentials credentials = _credentialProvider.GetCredentials();
             RemoteDeploymentSettingsManager settingsManager = site.GetSettingsManager(credentials);
 

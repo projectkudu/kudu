@@ -17,6 +17,7 @@ namespace Kudu.Web.Models
             Name = name;
             SiteUrl = site.SiteUrl;
             ServiceUrl = site.ServiceUrl;
+            DevSiteUrl = site.DevSiteUrl;
         }
 
         [Required]
