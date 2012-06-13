@@ -22,59 +22,36 @@ namespace Kudu.Web.Models
         }
 
         public void AddApplication(string name, string hostname, int port)
-        {            
-            if (_db.Applications.Any(a => a.Name == name))
+        {
+            if (GetApplications().Any(x => x == name))
             {
                 throw new SiteExistsFoundException();
             }
 
-            Site site = null;
-            
-            try
-            {
-                site = _siteManager.CreateSite(name, hostname, port);
-
-                var newApp = new Application
-                {
-                    Name = name
-                };
-
-                _db.Applications.Add(newApp);
-                _db.SaveChanges();
-            }
-            catch
-            {
-                if (site != null)
-                {
-                    _siteManager.DeleteSite(name);
-                }
-
-                throw;
-            }
+            _siteManager.CreateSite(name, hostname, port);
         }
 
         public bool DeleteApplication(string name)
-        {            
-            Application application = _db.Applications.SingleOrDefault(a => a.Name == name);
+        {   
+            IApplication application = GetApplication(name);
             if (application == null)
             {
                 return false;
             }
 
             _siteManager.DeleteSite(application.Name);
-
-            _db.Applications.Remove(application);
-            _db.SaveChanges();
-
             return true;
         }
 
         public IEnumerable<string> GetApplications()
         {
-            return (from a in _db.Applications
-                    select a.Name).ToList();
-        }
+            var sites = _siteManager.GetSites();
+            const string sitePrefix = "kudu_";
 
+            return sites
+                .Where(x => x.StartsWith(sitePrefix) && !x.StartsWith(sitePrefix + "dev_") && !x.StartsWith(sitePrefix + "service_"))
+                .Select(x => x.Split('_')[1]);
+        }
 
         public IApplication GetApplication(string name)
         {

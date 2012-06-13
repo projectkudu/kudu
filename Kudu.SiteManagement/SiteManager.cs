@@ -30,6 +30,13 @@ namespace Kudu.SiteManagement
             _traceFailedRequests = traceFailedRequests;
         }
 
+        public IEnumerable<string> GetSites()
+        {
+            var iis = new IIS.ServerManager();
+            var kuduSites = iis.Sites.Where(x => x.Name.StartsWith("kudu_")).Select(x => x.Name);
+            return kuduSites;
+        }
+
         public Site GetSite(string applicationName) {
             var iis = new IIS.ServerManager();
             var serviceSite = GetServiceSite(applicationName);
