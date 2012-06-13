@@ -33,13 +33,13 @@ namespace Kudu.Web.Models
 
         public bool DeleteApplication(string name)
         {   
-            IApplication application = GetApplication(name);
-            if (application == null)
+            Site site = GetSite(name);
+            if (site == null)
             {
                 return false;
             }
 
-            _siteManager.DeleteSite(application.Name);
+            _siteManager.DeleteSite(name);
             return true;
         }
 
@@ -51,11 +51,6 @@ namespace Kudu.Web.Models
             return sites
                 .Where(x => x.StartsWith(sitePrefix) && !x.StartsWith(sitePrefix + "dev_") && !x.StartsWith(sitePrefix + "service_"))
                 .Select(x => x.Split('_')[1]);
-        }
-
-        public IApplication GetApplication(string name)
-        {
-            return _db.Applications.FirstOrDefault(a => a.Name == name);
         }
 
         public Site GetSite(string name)

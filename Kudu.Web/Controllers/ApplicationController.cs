@@ -71,13 +71,13 @@ namespace Kudu.Web.Controllers
         }
 
         [HttpPost]
-        public ActionResult Create(string name, string hostname = null, int port = 0)
+        public ActionResult Create(string name)
         {
             string slug = name.GenerateSlug();
 
             try
             {
-                _applicationService.AddApplication(slug, hostname, port);
+                _applicationService.AddApplication(slug);
 
                 return RedirectToAction("Details", new { slug });
             }
@@ -107,9 +107,8 @@ namespace Kudu.Web.Controllers
         public Task<ActionResult> Trace(string slug)
         {
             var site = _applicationService.GetSite(slug);
-            IApplication application = _applicationService.GetApplication(slug);
 
-            if (application == null || site == null)
+            if (site == null)
             {
                 return HttpNotFoundAsync();
             }

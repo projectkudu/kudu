@@ -23,22 +23,6 @@
         <p class="help-block">Name of the application</p>
       </div>
     </div>
-    <div class="control-group">
-      @Html.LabelFor(model => model.Hostname)
-      <div class="controls">        
-        @Html.EditorFor(model => model.Hostname)
-        @Html.ValidationMessageFor(model => model.Hostname)
-        <p class="help-block">Hostname for the application (leave blank for wildcard)</p>
-      </div>
-    </div>
-    <div class="control-group">
-      @Html.LabelFor(model => model.Port)
-      <div class="controls">        
-        @Html.EditorFor(model => model.Port)
-        @Html.ValidationMessageFor(model => model.Port)
-        <p class="help-block">Port for the application (leave blank for random)</p>
-      </div>
-    </div>
     <p>
         <input type="submit" value="Create application" class="btn-primary" />
     </p>

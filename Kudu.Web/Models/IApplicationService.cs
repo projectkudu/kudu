@@ -9,7 +9,6 @@ namespace Kudu.Web.Models
         void AddApplication(string name, string hostname, int port);
         bool DeleteApplication(string name);
         IEnumerable<string> GetApplications();
-        IApplication GetApplication(string name);
         Site GetSite(string name);
         void CreateDevelopmentSite(string name);
     }

@@ -38,7 +38,6 @@ namespace Kudu.Web.Models
         public void SetConnectionString(string siteName, string name, string connectionString)
         {
             var site = _siteManager.GetSite(siteName);
-            IApplication application = _applicationService.GetApplication(siteName);
             ICredentials credentials = _credentialProvider.GetCredentials();
             RemoteDeploymentSettingsManager settingsManager = site.GetSettingsManager(credentials);
 
@@ -48,7 +47,6 @@ namespace Kudu.Web.Models
         public void RemoveConnectionString(string siteName, string name)
         {
             var site = _siteManager.GetSite(siteName);
-            IApplication application = _applicationService.GetApplication(siteName);
             ICredentials credentials = _credentialProvider.GetCredentials();
             RemoteDeploymentSettingsManager settingsManager = site.GetSettingsManager(credentials);
 
@@ -58,7 +56,6 @@ namespace Kudu.Web.Models
         public void RemoveAppSetting(string siteName, string key)
         {
             var site = _siteManager.GetSite(siteName);
-            IApplication application = _applicationService.GetApplication(siteName);
             ICredentials credentials = _credentialProvider.GetCredentials();
             RemoteDeploymentSettingsManager settingsManager = site.GetSettingsManager(credentials);
 
@@ -68,7 +65,6 @@ namespace Kudu.Web.Models
         public void SetAppSetting(string siteName, string key, string value)
         {
             var site = _siteManager.GetSite(siteName);
-            IApplication application = _applicationService.GetApplication(siteName);
             ICredentials credentials = _credentialProvider.GetCredentials();
             RemoteDeploymentSettingsManager settingsManager = site.GetSettingsManager(credentials);
 
