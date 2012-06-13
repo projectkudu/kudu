@@ -16,15 +16,12 @@ namespace Kudu.Web.Controllers
     {
         private readonly IApplicationService _applicationService;
         private readonly ICredentialProvider _credentialProvider;
-        private readonly ISiteManager _siteManager;
 
         public DeploymentsController(IApplicationService applicationService,
-                                     ICredentialProvider credentialProvider, 
-                                     ISiteManager siteManager)
+                                     ICredentialProvider credentialProvider)
         {
             _applicationService = applicationService;
             _credentialProvider = credentialProvider;
-            _siteManager = siteManager;
         }
 
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
@@ -36,7 +33,7 @@ namespace Kudu.Web.Controllers
 
         public Task<ActionResult> Index(string slug)
         {
-            var site = _siteManager.GetSite(slug);
+            var site = _applicationService.GetSite(slug);
 
             if (site == null)
             {
@@ -66,7 +63,7 @@ namespace Kudu.Web.Controllers
 
         public Task<ActionResult> Deploy(string slug, string id, bool? clean)
         {
-            var site = _siteManager.GetSite(slug);
+            var site = _applicationService.GetSite(slug);
 
             if (site == null)
             {
@@ -85,7 +82,7 @@ namespace Kudu.Web.Controllers
 
         public Task<ActionResult> Log(string slug, string id)
         {
-            var site = _siteManager.GetSite(slug);
+            var site = _applicationService.GetSite(slug);
 
             if (site == null)
             {
@@ -107,7 +104,7 @@ namespace Kudu.Web.Controllers
 
         public Task<ActionResult> Details(string slug, string id, string logId)
         {
-            var site = _siteManager.GetSite(slug);
+            var site = _applicationService.GetSite(slug);
             if (site == null)
             {
                 return HttpNotFoundAsync();

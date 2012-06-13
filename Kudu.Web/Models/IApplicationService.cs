@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Kudu.SiteManagement;
 
 namespace Kudu.Web.Models
 {
@@ -9,6 +10,7 @@ namespace Kudu.Web.Models
         bool DeleteApplication(string name);
         IEnumerable<string> GetApplications();
         IApplication GetApplication(string name);
+        Site GetSite(string name);
         void CreateDevelopmentSite(string name);
     }
 }

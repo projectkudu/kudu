@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using System.Web.Mvc;
 using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Infrastructure;
-using Kudu.SiteManagement;
 using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
 using Mvc.Async;
@@ -17,17 +16,14 @@ namespace Kudu.Web.Controllers
         private readonly IApplicationService _applicationService;
         private readonly KuduEnvironment _environment;
         private readonly ICredentialProvider _credentialProvider;
-        private readonly ISiteManager _siteManager;
 
         public ApplicationController(IApplicationService applicationService,
                                      ICredentialProvider credentialProvider,
-                                     KuduEnvironment environment, 
-                                     ISiteManager siteManager)
+                                     KuduEnvironment environment)
         {
             _applicationService = applicationService;
             _credentialProvider = credentialProvider;
             _environment = environment;
-            _siteManager = siteManager;
         }
 
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
@@ -47,7 +43,7 @@ namespace Kudu.Web.Controllers
 
         public Task<ActionResult> Details(string slug)
         {
-            var site = _siteManager.GetSite(slug);
+            var site = _applicationService.GetSite(slug);
 
             if (site == null)
             {
@@ -110,7 +106,7 @@ namespace Kudu.Web.Controllers
 
         public Task<ActionResult> Trace(string slug)
         {
-            var site = _siteManager.GetSite(slug);
+            var site = _applicationService.GetSite(slug);
             IApplication application = _applicationService.GetApplication(slug);
 
             if (application == null || site == null)

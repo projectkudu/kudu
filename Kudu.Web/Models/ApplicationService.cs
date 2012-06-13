@@ -81,6 +81,11 @@ namespace Kudu.Web.Models
             return _db.Applications.FirstOrDefault(a => a.Name == name);
         }
 
+        public Site GetSite(string name)
+        {
+            return _siteManager.GetSite(name);
+        }
+
         public void CreateDevelopmentSite(string name)
         {
             string siteUrl;

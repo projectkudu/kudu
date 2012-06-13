@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -31,7 +32,11 @@ namespace Kudu.SiteManagement
 
         public Site GetSite(string applicationName) {
             var iis = new IIS.ServerManager();
-            var sitesForApplication = iis.Sites.Where(x => x.ApplicationDefaults.ApplicationPoolName.EndsWith(applicationName));
+            var serviceSite = GetServiceSite(applicationName);
+            var mainSite = GetLiveSite(applicationName);
+            var devSite = GetDevSite(applicationName);
+            var siteNames = new List<string> {serviceSite, mainSite, devSite};
+            var sitesForApplication = iis.Sites.Where(x => siteNames.Contains(x.Name));
 
             if(sitesForApplication.Any()) 
             {
@@ -41,14 +46,20 @@ namespace Kudu.SiteManagement
                     var binding = iisSite.Bindings.First();
                     var targetUrl = string.Format("http://{0}:{1}/", (string.IsNullOrEmpty(binding.Host) ? "localhost" : binding.Host), binding.EndPoint.Port);
 
-                    if(GetServiceSite(applicationName) == iisSite.Name)
+                    if(serviceSite == iisSite.Name)
+                    {
                         site.ServiceUrl = targetUrl;
+                    }
 
-                    if (GetLiveSite(applicationName) == iisSite.Name)
+                    if (mainSite == iisSite.Name)
+                    {
                         site.SiteUrl = targetUrl;
+                    }
 
-                    if (GetDevSite(applicationName) == iisSite.Name)
+                    if (devSite == iisSite.Name)
+                    {
                         site.DevSiteUrl = targetUrl;
+                    }
                 }    
                 return site;
             }
