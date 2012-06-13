@@ -14,6 +14,9 @@ namespace Kudu.Core.Deployment
 
         public static void CopyWithManifest(string sourcePath, string destinationPath, IDeploymentManifestReader previousManifest, bool skipOldFiles = true)
         {
+            sourcePath = Path.GetFullPath(sourcePath);
+            destinationPath = Path.GetFullPath(destinationPath);
+
             using (var progressWriter = new ProgressWriter())
             {
                 progressWriter.Start();

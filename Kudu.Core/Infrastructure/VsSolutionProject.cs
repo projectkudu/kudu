@@ -102,7 +102,7 @@ namespace Kudu.Core.Infrastructure
             var relativePath = _relativePathProperty.GetValue<string>(_projectInstance);
             var projectType = _projectTypeProperty.GetValue<SolutionProjectType>(_projectInstance);
 
-            _absolutePath = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(_solutionPath), relativePath));
+            _absolutePath = Path.Combine(Path.GetDirectoryName(_solutionPath), relativePath);
             _isWebSite = projectType == SolutionProjectType.WebProject;
 
             if (projectType == SolutionProjectType.KnownToBeMSBuildFormat && File.Exists(_absolutePath))
