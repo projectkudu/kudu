@@ -143,7 +143,7 @@ namespace Kudu.Core.SourceControl.Git
                     using (tracer.Step("Copying files into repository"))
                     {
                         // Copy all of the files into the repository
-                        FileSystemHelpers.Copy(Path.GetFullPath(path), _gitExe.WorkingDirectory);
+                        FileSystemHelpers.Copy(path, _gitExe.WorkingDirectory);
                     }
 
                     // Make the initial commit

@@ -119,6 +119,9 @@ namespace Kudu.Core.Infrastructure
 
         internal static void Copy(string sourcePath, string destinationPath, bool skipScmFolder = true)
         {
+            sourcePath = Path.GetFullPath(sourcePath);
+            destinationPath = Path.GetFullPath(destinationPath);
+
             Copy(sourcePath,
                  destinationPath,
                  new DirectoryInfoWrapper(new DirectoryInfo(sourcePath)),
