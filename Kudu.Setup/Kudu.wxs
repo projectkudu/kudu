@@ -127,6 +127,10 @@
         <File Id="Ninject.dll" Source="$(var.KuduServiceBinDir)\Ninject.dll" />
       </Component>
       
+      <Component Id="Newtonsoft.Json.dll" Guid="{A60AA633-1F5F-4FE1-A93B-B891D63232A2}">
+        <File Id="Newtonsoft.Json.dll" Source="$(var.KuduServiceBinDir)\Newtonsoft.Json.dll" />
+      </Component>
+      
       <Component Id="System.Net.Http.dll" Guid="{3D963AD3-1BA2-4508-AFAE-9635600B7D27}">
         <File Id="System.Net.Http.dll" Source="$(var.KuduServiceBinDir)\System.Net.Http.dll" />
       </Component> 
@@ -207,6 +211,7 @@
       <ComponentRef Id="Ninject.dll" />
 
       <ComponentRef Id="Ionic.Zip.dll" />
+      <ComponentRef Id="Newtonsoft.Json.dll" />
 
       <ComponentRef Id="Microsoft.Web.Infrastructure.dll" />
       <ComponentRef Id="System.IO.Abstractions.dll" />
