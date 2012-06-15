@@ -7,6 +7,11 @@ namespace Kudu.Core.Deployment
 {
     public static class LoggerExtensions
     {
+        public static ILogger Log(this ILogger logger, string value)
+        {
+            return logger.Log(value, LogEntryType.Message);
+        }
+
         public static ILogger Log(this ILogger logger, string value, params object[] args)
         {
             return logger.Log(String.Format(CultureInfo.CurrentCulture, value, args), LogEntryType.Message);
