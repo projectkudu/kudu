@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Xml.Linq;
-using Kudu.Contracts.Tracing;
-using Kudu.Core.Infrastructure;
-using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Deployment
 {
@@ -14,23 +11,15 @@ namespace Kudu.Core.Deployment
         private readonly string _path;
         private readonly IFileSystem _fileSystem;
         private readonly static object LogLock = new object();
-        private readonly ITracer _tracer;
 
         public XmlLogger(IFileSystem fileSystem, string path)
-            : this(NullTracer.Instance, fileSystem, path)
         {
-        }
-
-        public XmlLogger(ITracer tracer, IFileSystem fileSystem, string path)
-        {
-            _tracer = tracer;
             _fileSystem = fileSystem;
             _path = path;
         }
 
         public ILogger Log(string value, LogEntryType type)
         {
-            value = XmlUtility.Sanitize(value);
             var xmlLogEntry = new XElement("entry",
                                            new XAttribute("time", DateTime.Now),
                                            new XAttribute("id", Guid.NewGuid()),
@@ -96,34 +85,16 @@ namespace Kudu.Core.Deployment
         {
             if (!_fileSystem.File.Exists(_path))
             {
-                return CreateDocument();
+                return new XDocument(new XElement("entries"));
             }
 
-            try
+            XDocument document;
+            using (var stream = _fileSystem.File.OpenRead(_path))
             {
-                XDocument document;
-                using (var stream = _fileSystem.File.OpenRead(_path))
-                {
-                    document = XDocument.Load(stream);
-                }
-
-                return document;
+                document = XDocument.Load(stream);
             }
-            catch (Exception ex)
-            {
-                if (_tracer != null)
-                {
-                    _tracer.TraceError(ex);
-                    _tracer.TraceWarning("Creating new document because of an error.");
-                }
 
-                return CreateDocument();
-            }
-        }
-
-        private static XDocument CreateDocument()
-        {
-            return new XDocument(new XElement("entries"));
+            return document;
         }
 
         private class InnerXmlLogger : ILogger
@@ -139,7 +110,6 @@ namespace Kudu.Core.Deployment
 
             public ILogger Log(string value, LogEntryType type)
             {
-                value = XmlUtility.Sanitize(value);
                 var xmlLogEntry = new XElement("entry",
                                                new XAttribute("time", DateTime.Now),
                                                new XAttribute("id", Guid.NewGuid()),
