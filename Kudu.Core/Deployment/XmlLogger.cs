@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Xml.Linq;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment
 {
@@ -20,6 +21,7 @@ namespace Kudu.Core.Deployment
 
         public ILogger Log(string value, LogEntryType type)
         {
+            value = XmlUtility.Sanitize(value);
             var xmlLogEntry = new XElement("entry",
                                            new XAttribute("time", DateTime.Now),
                                            new XAttribute("id", Guid.NewGuid()),
@@ -110,6 +112,7 @@ namespace Kudu.Core.Deployment
 
             public ILogger Log(string value, LogEntryType type)
             {
+                value = XmlUtility.Sanitize(value);
                 var xmlLogEntry = new XElement("entry",
                                                new XAttribute("time", DateTime.Now),
                                                new XAttribute("id", Guid.NewGuid()),
