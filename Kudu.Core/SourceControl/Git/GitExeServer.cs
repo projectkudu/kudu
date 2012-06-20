@@ -23,10 +23,8 @@ namespace Kudu.Core.SourceControl.Git
         public GitExeServer(string path, IOperationLock initLock, IDeploymentEnvironment deploymentEnvironment, ITraceFactory traceFactory)
         {
             _gitExe = new GitExecutable(path);
-            _gitExe.SetTraceLevel(2);
             _traceFactory = traceFactory;
             _repository = new GitExeRepository(path, traceFactory);
-            _repository.SetTraceLevel(2);
             _initLock = initLock;
 
             // Setup the deployment environment variable to be used by the post receive hook

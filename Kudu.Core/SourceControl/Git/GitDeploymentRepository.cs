@@ -14,10 +14,8 @@ namespace Kudu.Core.SourceControl.Git
         public GitDeploymentRepository(string path, ITraceFactory traceFactory)
         {
             _gitExe = new GitExecutable(path);
-            _gitExe.SetTraceLevel(2);
             _traceFactory = traceFactory;
             _repository = new GitExeRepository(path, traceFactory);
-            _repository.SetTraceLevel(2);
         }
 
         private string PostReceiveHookPath
