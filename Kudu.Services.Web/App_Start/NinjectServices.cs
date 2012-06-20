@@ -184,7 +184,7 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHandler<ReceivePackHandler>(kernel, "git-receive-pack", configuration.GitServerRoot + "/git-receive-pack");
 
             // Clone url
-            routes.MapHttpRoute("git-upload-pack", configuration.GitServerRoot + "/git-upload-pack ", new { controller = "Rpc", action = "UploadPack" });
+            routes.MapHttpRoute("git-upload-pack", configuration.GitServerRoot + "/git-upload-pack", new { controller = "Rpc", action = "UploadPack" });
 
             // Live Scm (deployment repository)
             routes.MapHttpRoute("scm-info", "live/scm/info", new { controller = "LiveScm", action = "GetRepositoryInfo" });

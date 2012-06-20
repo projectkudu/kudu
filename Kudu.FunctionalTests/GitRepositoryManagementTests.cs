@@ -469,6 +469,27 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public void PushThenClone()
+        {
+            string repositoryName = "Bakery10";
+            string appName = KuduUtils.GetRandomWebsiteName("PushThenClone");
+
+            using (var repo = Git.CreateLocalRepository(repositoryName))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    appManager.GitDeploy(repo.PhysicalPath);
+
+                    using (var clonedRepo = Git.Clone(repositoryName, appManager.GitUrl, createDirectory: true))
+                    {
+                        Assert.True(clonedRepo.FileExists("Default.cshtml"));
+                    }
+                });
+            }
+        }
+
+        [Fact]
         public void CloneFromNewRepoShouldHaveBeEmpty()
         {
             string repositoryName = "CloneFromNewRepoShouldHaveFile";
