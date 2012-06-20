@@ -62,6 +62,57 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public void PushSimpleWapWithCustomDeploymentScript()
+        {
+            // Arrange
+            string repositoryName = "WapWithCustomDeploymentScript";
+            string appName = KuduUtils.GetRandomWebsiteName("WapWithCustomDeploymentScript");
+            string cloneUrl = "https://github.com/KuduApps/CustomBuildScript.git";
+
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    GitDeploymentResult deployResult = appManager.GitDeploy(repo.PhysicalPath);
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, "DEBUG");
+                });
+            }
+        }
+
+        [Fact]
+        public void PushSimpleWapWithFailingCustomDeploymentScript()
+        {
+            // Arrange
+            string repositoryName = "WapWithFailingCustomDeploymentScript";
+            string appName = KuduUtils.GetRandomWebsiteName("WapWithFailingCustomDeploymentScript");
+            string cloneUrl = "https://github.com/KuduApps/CustomBuildScript.git";
+
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            {
+                repo.WriteFile("deploy.cmd", "bogus");
+                Git.Commit(repo.PhysicalPath, "Updated the deploy file.");
+
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    GitDeploymentResult deployResult = appManager.GitDeploy(repo.PhysicalPath);
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Failed, results[0].Status);
+                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, "'bogus' is not recognized as an internal or external command");
+                });
+            }
+        }
+
+        [Fact]
         public void WarningsAsErrors()
         {
             // Arrange
