@@ -25,11 +25,19 @@ namespace Kudu.Core.Deployment
         {
             var tcs = new TaskCompletionSource<object>();
 
-            ILogger customLogger = context.Logger.Log("Running custom deployment..");
+            ILogger customLogger = context.Logger.Log("Running custom deployment...");
 
             Executable exe = GetExecutable();
             exe.EnvironmentVariables[SourcePath] = _repositoryPath;
             exe.EnvironmentVariables[TargetPath] = context.OutputPath;
+
+            // Add the msbuild path and git path to the %PATH% so more tools are available
+            var toolsPaths = new[] {
+                Path.GetDirectoryName(PathUtility.ResolveMSBuildPath()),
+                Path.GetDirectoryName(PathUtility.ResolveGitPath())
+            };
+
+            exe.AddToPath(toolsPaths);
 
             try
             {
@@ -72,7 +80,7 @@ namespace Kudu.Core.Deployment
 
         private Executable GetExecutable()
         {
-            // Creates an executable poiting to Deploy.cmd and the working directory being
+            // Creates an executable pointing to Deploy.cmd and the working directory being
             // the repository root
             return new Executable(_targetFile, _repositoryPath);
         }
