@@ -6,8 +6,5 @@ namespace Kudu.Web.Models
     {
         [Key]
         public string Name { get; set; }
-        public string ServiceUrl { get; set; }
-        public string SiteUrl { get; set; }
-        public string DevSiteUrl { get; set; }
     }
 }

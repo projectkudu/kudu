@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading;
 using Kudu.Core.Infrastructure;
@@ -28,7 +30,56 @@ namespace Kudu.SiteManagement
             _traceFailedRequests = traceFailedRequests;
         }
 
+        public IEnumerable<string> GetSites()
+        {
+            var iis = new IIS.ServerManager();
+            var kuduSites = iis.Sites.Where(x => x.Name.StartsWith("kudu_")).Select(x => x.Name);
+            return kuduSites;
+        }
+
+        public Site GetSite(string applicationName) {
+            var iis = new IIS.ServerManager();
+            var serviceSite = GetServiceSite(applicationName);
+            var mainSite = GetLiveSite(applicationName);
+            var devSite = GetDevSite(applicationName);
+            var siteNames = new List<string> {serviceSite, mainSite, devSite};
+            var sitesForApplication = iis.Sites.Where(x => siteNames.Contains(x.Name));
+
+            if(sitesForApplication.Any()) 
+            {
+                var site = new Site();
+                foreach (var iisSite in sitesForApplication)
+                {
+                    var binding = iisSite.Bindings.First();
+                    var targetUrl = string.Format("http://{0}:{1}/", (string.IsNullOrEmpty(binding.Host) ? "localhost" : binding.Host), binding.EndPoint.Port);
+
+                    if(serviceSite == iisSite.Name)
+                    {
+                        site.ServiceUrl = targetUrl;
+                    }
+
+                    if (mainSite == iisSite.Name)
+                    {
+                        site.SiteUrl = targetUrl;
+                    }
+
+                    if (devSite == iisSite.Name)
+                    {
+                        site.DevSiteUrl = targetUrl;
+                    }
+                }    
+                return site;
+            }
+
+            return null;
+        }
+
         public Site CreateSite(string applicationName)
+        {
+            return CreateSite(applicationName, null, 0);
+        }
+
+        public Site CreateSite(string applicationName, string hostname, int port)
         {
             var iis = new IIS.ServerManager();
 
@@ -57,7 +108,7 @@ namespace Kudu.SiteManagement
 </body> 
 </html>");
 
-                int sitePort = CreateSite(iis, applicationName, siteName, webRoot);
+                int sitePort = CreateSite(iis, applicationName, siteName, webRoot, hostname, port);
 
                 // Map a path called app to the site root under the service site
                 MapServiceSitePath(iis, applicationName, Constants.MappedLiveSite, siteRoot);
@@ -69,10 +120,11 @@ namespace Kudu.SiteManagement
                 // REVIEW: Should we poll the site's state?
                 Thread.Sleep(1000);
 
+                var siteUrlHostname = (string.IsNullOrEmpty(hostname) ? "localhost" : hostname);
                 return new Site
                 {
                     ServiceUrl = String.Format("http://localhost:{0}/", serviceSitePort),
-                    SiteUrl = String.Format("http://localhost:{0}/", sitePort),
+                    SiteUrl = String.Format("http://{0}:{1}/", siteUrlHostname, sitePort),
                 };
             }
             catch
@@ -334,10 +386,16 @@ namespace Kudu.SiteManagement
 
         private int CreateSite(IIS.ServerManager iis, string applicationName, string siteName, string siteRoot)
         {
+            return CreateSite(iis, applicationName, siteName, siteRoot, null, 0);
+        }
+
+        private int CreateSite(IIS.ServerManager iis, string applicationName, string siteName, string siteRoot, string hostname, int port)
+        {
             var pool = EnsureAppPool(iis, applicationName);
 
-            int sitePort = GetRandomPort(iis);
-            var site = iis.Sites.Add(siteName, siteRoot, sitePort);
+            int sitePort = port == 0 ? GetRandomPort(iis) : port;
+            var binding = "*:" + sitePort + ":" + hostname;
+            var site = iis.Sites.Add(siteName, "http", binding, siteRoot);
             site.ApplicationDefaults.ApplicationPoolName = pool.Name;
 
             if (_traceFailedRequests)

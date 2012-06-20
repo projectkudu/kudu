@@ -4,6 +4,7 @@ using System.Net;
 using Kudu.Client.Deployment;
 using Kudu.Client.Infrastructure;
 using Kudu.Core.Deployment;
+using Kudu.SiteManagement;
 using Kudu.Web.Infrastructure;
 
 namespace Kudu.Web.Models
@@ -12,18 +13,20 @@ namespace Kudu.Web.Models
     {
         private readonly IApplicationService _applicationService;
         private readonly ICredentialProvider _credentialProvider;
+        private readonly ISiteManager _siteManager;
 
-        public SettingsService(IApplicationService applicationService, ICredentialProvider credentialProvider)
+        public SettingsService(IApplicationService applicationService, ICredentialProvider credentialProvider, ISiteManager siteManager)
         {
             _applicationService = applicationService;
             _credentialProvider = credentialProvider;
+            _siteManager = siteManager;
         }
 
         public ISettings GetSettings(string siteName)
         {
-            IApplication application = _applicationService.GetApplication(siteName);
+            var site = _siteManager.GetSite(siteName);
             ICredentials credentials = _credentialProvider.GetCredentials();
-            RemoteDeploymentSettingsManager settingsManager = application.GetSettingsManager(credentials);
+            RemoteDeploymentSettingsManager settingsManager = site.GetSettingsManager(credentials);
 
             return new Settings
             {
@@ -34,36 +37,36 @@ namespace Kudu.Web.Models
 
         public void SetConnectionString(string siteName, string name, string connectionString)
         {
-            IApplication application = _applicationService.GetApplication(siteName);
+            var site = _siteManager.GetSite(siteName);
             ICredentials credentials = _credentialProvider.GetCredentials();
-            RemoteDeploymentSettingsManager settingsManager = application.GetSettingsManager(credentials);
+            RemoteDeploymentSettingsManager settingsManager = site.GetSettingsManager(credentials);
 
             settingsManager.SetConnectionString(name, connectionString);
         }
 
         public void RemoveConnectionString(string siteName, string name)
         {
-            IApplication application = _applicationService.GetApplication(siteName);
+            var site = _siteManager.GetSite(siteName);
             ICredentials credentials = _credentialProvider.GetCredentials();
-            RemoteDeploymentSettingsManager settingsManager = application.GetSettingsManager(credentials);
+            RemoteDeploymentSettingsManager settingsManager = site.GetSettingsManager(credentials);
 
             settingsManager.RemoveConnectionString(name);
         }
 
         public void RemoveAppSetting(string siteName, string key)
         {
-            IApplication application = _applicationService.GetApplication(siteName);
+            var site = _siteManager.GetSite(siteName);
             ICredentials credentials = _credentialProvider.GetCredentials();
-            RemoteDeploymentSettingsManager settingsManager = application.GetSettingsManager(credentials);
+            RemoteDeploymentSettingsManager settingsManager = site.GetSettingsManager(credentials);
 
             settingsManager.RemoveAppSetting(key);
         }
 
         public void SetAppSetting(string siteName, string key, string value)
         {
-            IApplication application = _applicationService.GetApplication(siteName);
+            var site = _siteManager.GetSite(siteName);
             ICredentials credentials = _credentialProvider.GetCredentials();
-            RemoteDeploymentSettingsManager settingsManager = application.GetSettingsManager(credentials);
+            RemoteDeploymentSettingsManager settingsManager = site.GetSettingsManager(credentials);
 
             settingsManager.SetAppSetting(key, value);
         }

@@ -17,65 +17,45 @@ namespace Kudu.Web.Models
         }
 
         public void AddApplication(string name)
-        {            
-            if (_db.Applications.Any(a => a.Name == name))
+        {
+            AddApplication(name, null, 0);
+        }
+
+        public void AddApplication(string name, string hostname, int port)
+        {
+            if (GetApplications().Any(x => x == name))
             {
                 throw new SiteExistsFoundException();
             }
 
-            Site site = null;
-            
-            try
-            {
-                site = _siteManager.CreateSite(name);
-
-                var newApp = new Application
-                {
-                    Name = name,
-                    ServiceUrl = site.ServiceUrl,
-                    SiteUrl = site.SiteUrl
-                };
-
-                _db.Applications.Add(newApp);
-                _db.SaveChanges();
-            }
-            catch
-            {
-                if (site != null)
-                {
-                    _siteManager.DeleteSite(name);
-                }
-
-                throw;
-            }
+            _siteManager.CreateSite(name, hostname, port);
         }
 
         public bool DeleteApplication(string name)
-        {            
-            Application application = _db.Applications.SingleOrDefault(a => a.Name == name);
-            if (application == null)
+        {   
+            Site site = GetSite(name);
+            if (site == null)
             {
                 return false;
             }
 
-            _siteManager.DeleteSite(application.Name);
-
-            _db.Applications.Remove(application);
-            _db.SaveChanges();
-
+            _siteManager.DeleteSite(name);
             return true;
         }
 
         public IEnumerable<string> GetApplications()
         {
-            return (from a in _db.Applications
-                    select a.Name).ToList();
+            var sites = _siteManager.GetSites();
+            const string sitePrefix = "kudu_";
+
+            return sites
+                .Where(x => x.StartsWith(sitePrefix) && !x.StartsWith(sitePrefix + "dev_") && !x.StartsWith(sitePrefix + "service_"))
+                .Select(x => x.Split('_')[1]);
         }
 
-
-        public IApplication GetApplication(string name)
+        public Site GetSite(string name)
         {
-            return _db.Applications.FirstOrDefault(a => a.Name == name);
+            return _siteManager.GetSite(name);
         }
 
         public void CreateDevelopmentSite(string name)
@@ -83,12 +63,13 @@ namespace Kudu.Web.Models
             string siteUrl;
             if (_siteManager.TryCreateDeveloperSite(name, out siteUrl))
             {
-                var application = _db.Applications.FirstOrDefault(a => a.Name == name);
-                if (application != null)
-                {
-                    application.DevSiteUrl = siteUrl;
-                    _db.SaveChanges();
-                }
+                // JH : Removed, no need.
+                //var application = _db.Applications.FirstOrDefault(a => a.Name == name);
+                //if (application != null)
+                //{
+                //    application.DevSiteUrl = siteUrl;
+                //    _db.SaveChanges();
+                //}
             }
         }
     }

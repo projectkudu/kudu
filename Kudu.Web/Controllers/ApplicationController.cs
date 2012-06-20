@@ -43,17 +43,17 @@ namespace Kudu.Web.Controllers
 
         public Task<ActionResult> Details(string slug)
         {
-            IApplication application = _applicationService.GetApplication(slug);
+            var site = _applicationService.GetSite(slug);
 
-            if (application == null)
+            if (site == null)
             {
                 return HttpNotFoundAsync();
             }
 
             ICredentials credentials = _credentialProvider.GetCredentials();
-            return application.GetRepositoryInfo(credentials).Then(repositoryInfo =>
+            return site.GetRepositoryInfo(credentials).Then(repositoryInfo =>
             {
-                var appViewModel = new ApplicationViewModel(application);
+                var appViewModel = new ApplicationViewModel(slug, site);
                 appViewModel.RepositoryInfo = repositoryInfo;
 
                 ViewBag.slug = slug;
@@ -106,15 +106,15 @@ namespace Kudu.Web.Controllers
 
         public Task<ActionResult> Trace(string slug)
         {
-            IApplication application = _applicationService.GetApplication(slug);
+            var site = _applicationService.GetSite(slug);
 
-            if (application == null)
+            if (site == null)
             {
                 return HttpNotFoundAsync();
             }
 
             ICredentials credentials = _credentialProvider.GetCredentials();
-            return application.DownloadTrace(credentials).Then(document =>
+            return site.DownloadTrace(credentials).Then(document =>
             {
                 return (ActionResult)View(document);
             });
