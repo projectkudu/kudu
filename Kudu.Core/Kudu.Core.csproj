@@ -55,6 +55,7 @@
     </Compile>
     <Compile Include="Commands\CommandExecutor.cs" />
     <Compile Include="Deployment\CascadeLogger.cs" />
+    <Compile Include="Deployment\CustomBuilder.cs" />
     <Compile Include="Deployment\DeploymentConfiguration.cs" />
     <Compile Include="Deployment\DeploymentContext.cs" />
     <Compile Include="Deployment\DeploymentHelper.cs" />
