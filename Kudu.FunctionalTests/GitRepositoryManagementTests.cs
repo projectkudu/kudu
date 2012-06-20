@@ -89,8 +89,8 @@ namespace Kudu.FunctionalTests
         public void PushSimpleWapWithFailingCustomDeploymentScript()
         {
             // Arrange
-            string repositoryName = "WapWithCustomDeploymentScript";
-            string appName = KuduUtils.GetRandomWebsiteName("WapWithCustomDeploymentScript");
+            string repositoryName = "WapWithFailingCustomDeploymentScript";
+            string appName = KuduUtils.GetRandomWebsiteName("WapWithFailingCustomDeploymentScript");
             string cloneUrl = "https://github.com/KuduApps/CustomBuildScript.git";
 
             using (var repo = Git.Clone(repositoryName, cloneUrl))
