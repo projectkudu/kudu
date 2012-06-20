@@ -23,6 +23,13 @@ namespace Kudu.Core.Deployment
         {
             string repositoryRoot = _environment.DeploymentRepositoryPath;
 
+            // If there's a custom deployment file then let that take over.
+            string customDeploymentFile;
+            if (CustomBuilder.TryGetCustomDeploymentFile(repositoryRoot, out customDeploymentFile))
+            {
+                return new CustomBuilder(repositoryRoot, customDeploymentFile);
+            }
+
             var configuration = new DeploymentConfiguration(repositoryRoot);
 
             // If the repository has an explicit pointer to a project path to be deployed
