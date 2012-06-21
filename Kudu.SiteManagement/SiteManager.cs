@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading;
 using Kudu.Core.Infrastructure;
@@ -26,6 +28,50 @@ namespace Kudu.SiteManagement
             _logPath = logPath;
             _pathResolver = pathResolver;
             _traceFailedRequests = traceFailedRequests;
+        }
+
+        public IEnumerable<string> GetSites()
+        {
+            var iis = new IIS.ServerManager();
+            var kuduSites = iis.Sites.Where(x => x.Name.StartsWith("kudu_")).Select(x => x.Name);
+            return kuduSites;
+        }
+
+        public Site GetSite(string applicationName) {
+            var iis = new IIS.ServerManager();
+            var serviceSite = GetServiceSite(applicationName);
+            var mainSite = GetLiveSite(applicationName);
+            var devSite = GetDevSite(applicationName);
+            var siteNames = new List<string> {serviceSite, mainSite, devSite};
+            var sitesForApplication = iis.Sites.Where(x => siteNames.Contains(x.Name));
+
+            if(sitesForApplication.Any()) 
+            {
+                var site = new Site();
+                foreach (var iisSite in sitesForApplication)
+                {
+                    var binding = iisSite.Bindings.First();
+                    var targetUrl = string.Format("http://{0}:{1}/", (string.IsNullOrEmpty(binding.Host) ? "localhost" : binding.Host), binding.EndPoint.Port);
+
+                    if(serviceSite == iisSite.Name)
+                    {
+                        site.ServiceUrl = targetUrl;
+                    }
+
+                    if (mainSite == iisSite.Name)
+                    {
+                        site.SiteUrl = targetUrl;
+                    }
+
+                    if (devSite == iisSite.Name)
+                    {
+                        site.DevSiteUrl = targetUrl;
+                    }
+                }    
+                return site;
+            }
+
+            return null;
         }
 
         public Site CreateSite(string applicationName)
