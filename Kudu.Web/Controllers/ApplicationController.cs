@@ -81,7 +81,7 @@ namespace Kudu.Web.Controllers
 
                 return RedirectToAction("Details", new { slug });
             }
-            catch (SiteExistsFoundException)
+            catch (SiteExistsException)
             {
                 ModelState.AddModelError("Name", "Site already exists");
             }

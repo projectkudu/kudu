@@ -20,7 +20,7 @@ namespace Kudu.Web.Models
         {
             if (GetApplications().Any(x => x == name))
             {
-                throw new SiteExistsFoundException();
+                throw new SiteExistsException();
             }
 
             _siteManager.CreateSite(name);
@@ -40,19 +40,20 @@ namespace Kudu.Web.Models
 
         public IEnumerable<string> GetApplications()
         {
-            var sites = _siteManager.GetSites();
-            const string sitePrefix = "kudu_";
-
-            // Selects only the live sites
-            return sites
-                .Where(x => x.StartsWith(sitePrefix) && !x.StartsWith(sitePrefix + "dev_") && !x.StartsWith(sitePrefix + "service_"))
-                .Select(x => x.Split('_')[1]);
+            return _siteManager.GetSites();
         }
 
         public IApplication GetApplication(string name)
         {
             var site = _siteManager.GetSite(name);
-            return new Application { Name = name, SiteUrl = site.SiteUrl, DevSiteUrl = site.DevSiteUrl, ServiceUrl = site.ServiceUrl };
+
+            return new Application
+            {
+                Name = name,
+                SiteUrl = site.SiteUrl,
+                DevSiteUrl = site.DevSiteUrl,
+                ServiceUrl = site.ServiceUrl
+            };
         }
 
         public void CreateDevelopmentSite(string name)
@@ -62,7 +63,7 @@ namespace Kudu.Web.Models
         }
     }
 
-    public class SiteExistsFoundException : InvalidOperationException
+    public class SiteExistsException : InvalidOperationException
     {
     }
 

@@ -33,45 +33,63 @@ namespace Kudu.SiteManagement
         public IEnumerable<string> GetSites()
         {
             var iis = new IIS.ServerManager();
-            var kuduSites = iis.Sites.Where(x => x.Name.StartsWith("kudu_")).Select(x => x.Name);
-            return kuduSites;
+            // The app pool is the app name
+            return iis.Sites.Where(x => x.Name.StartsWith("kudu_"))
+                            .Select(x => x.Applications[0].ApplicationPoolName)
+                            .Distinct();
         }
 
-        public Site GetSite(string applicationName) {
+        public Site GetSite(string applicationName)
+        {
             var iis = new IIS.ServerManager();
-            var serviceSite = GetServiceSite(applicationName);
-            var mainSite = GetLiveSite(applicationName);
-            var devSite = GetDevSite(applicationName);
-            var siteNames = new List<string> {serviceSite, mainSite, devSite};
-            var sitesForApplication = iis.Sites.Where(x => siteNames.Contains(x.Name));
+            var mainSiteName = GetLiveSite(applicationName);
+            var serviceSiteName = GetServiceSite(applicationName);
+            var devSiteName = GetDevSite(applicationName);
 
-            if(sitesForApplication.Any()) 
+            IIS.Site mainSite = iis.Sites[mainSiteName];
+
+            if (mainSite == null)
             {
-                var site = new Site();
-                foreach (var iisSite in sitesForApplication)
-                {
-                    var binding = iisSite.Bindings.First();
-                    var targetUrl = string.Format("http://{0}:{1}/", (string.IsNullOrEmpty(binding.Host) ? "localhost" : binding.Host), binding.EndPoint.Port);
-
-                    if(serviceSite == iisSite.Name)
-                    {
-                        site.ServiceUrl = targetUrl;
-                    }
-
-                    if (mainSite == iisSite.Name)
-                    {
-                        site.SiteUrl = targetUrl;
-                    }
-
-                    if (devSite == iisSite.Name)
-                    {
-                        site.DevSiteUrl = targetUrl;
-                    }
-                }    
-                return site;
+                return null;
             }
 
-            return null;
+            IIS.Site serviceSite = iis.Sites[serviceSiteName];
+            IIS.Site devSite = iis.Sites[devSiteName];
+
+            var site = new Site();
+            site.SiteUrl = GetSiteUrl(mainSite);
+            site.ServiceUrl = GetSiteUrl(serviceSite);
+            site.DevSiteUrl = GetSiteUrl(devSite);
+            return site;
+        }
+
+        private string GetSiteUrl(IIS.Site site)
+        {
+            if (site == null)
+            {
+                return null;
+            }
+
+            IIS.Binding binding = site.Bindings.Last();
+            var builder = new UriBuilder
+            {
+                Host = String.IsNullOrEmpty(binding.Host) ? "localhost" : binding.Host,
+                Scheme = binding.Protocol,
+                Port = binding.EndPoint.Port
+            };
+
+            if (builder.Port == 80)
+            {
+                builder.Port = -1;
+            }
+
+            return builder.ToString();
+        }
+
+        private static IEnumerable<IIS.Site> GetSites(IIS.ServerManager iis, List<string> siteNames)
+        {
+            var sitesForApplication = iis.Sites.Where(x => siteNames.Contains(x.Name));
+            return sitesForApplication;
         }
 
         public Site CreateSite(string applicationName)
