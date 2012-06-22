@@ -7,12 +7,10 @@ namespace Kudu.Web.Models
 {
     public class ApplicationService : IApplicationService
     {
-        private readonly KuduContext _db;
         private readonly ISiteManager _siteManager;
 
-        public ApplicationService(KuduContext db, ISiteManager siteManager)
+        public ApplicationService(ISiteManager siteManager)
         {
-            _db = db;
             _siteManager = siteManager;
         }
 

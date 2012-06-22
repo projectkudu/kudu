@@ -1,6 +1,4 @@
 using System.Configuration;
-using System.Data.Entity;
-using System.Data.Entity.Infrastructure;
 using System.IO;
 using System.Web;
 using Kudu.Client.Infrastructure;
@@ -83,12 +81,9 @@ namespace Kudu.Web.App_Start
             // TODO: Integrate with membership system
             kernel.Bind<ICredentialProvider>().ToConstant(new BasicAuthCredentialProvider("admin", "kudu"));
             kernel.Bind<IApplicationService>().To<ApplicationService>().InRequestScope();
-            kernel.Bind<KuduContext>().ToSelf().InRequestScope();
             kernel.Bind<ISettingsService>().To<SettingsService>();
 
             // Sql CE setup
-            Database.SetInitializer(new DropCreateDatabaseIfModelChanges<KuduContext>());
-            Database.DefaultConnectionFactory = new SqlCeConnectionFactory("System.Data.SqlServerCe.4.0");
             Directory.CreateDirectory(Path.Combine(root, "App_Data"));
         }
     }
