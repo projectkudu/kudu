@@ -86,12 +86,6 @@ namespace Kudu.SiteManagement
             return builder.ToString();
         }
 
-        private static IEnumerable<IIS.Site> GetSites(IIS.ServerManager iis, List<string> siteNames)
-        {
-            var sitesForApplication = iis.Sites.Where(x => siteNames.Contains(x.Name));
-            return sitesForApplication;
-        }
-
         public Site CreateSite(string applicationName)
         {
             var iis = new IIS.ServerManager();
