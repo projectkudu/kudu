@@ -220,20 +220,20 @@ namespace Kudu.Core.Deployment
             try
             {
                 deployStep = tracer.Step("Deploy");
-                PushInfo pushInfo = _serverRepository.GetPushInfo();
+                ReceiveInfo receiveInfo = _serverRepository.GetReceiveInfo();
 
                 // Something went wrong here since we weren't able to 
-                if (pushInfo == null || !pushInfo.Branch.IsMaster)
+                if (receiveInfo == null || !receiveInfo.Branch.IsMaster)
                 {
-                    if (pushInfo == null)
+                    if (receiveInfo == null)
                     {
                         tracer.TraceWarning("Push info was null. Post receive hook didn't execute correctly");
                     }
                     else
                     {
-                        tracer.Trace("Non-master branch deployed {0}", pushInfo.Branch.Name);
+                        tracer.Trace("Non-master branch deployed {0}", receiveInfo.Branch.Name);
 
-                        _globalLogger.Log(Resources.Log_NonMasterBranchPushed, pushInfo.Branch.Name);
+                        _globalLogger.Log(Resources.Log_NonMasterBranchPushed, receiveInfo.Branch.Name);
                     }
 
                     ReportCompleted();
@@ -242,7 +242,7 @@ namespace Kudu.Core.Deployment
                 }
 
                 // Get the pushed branch's id
-                string id = pushInfo.Branch.Id;
+                string id = receiveInfo.Branch.Id;
                 // If nothing changed then do nothing
                 if (IsActive(id))
                 {
@@ -257,9 +257,9 @@ namespace Kudu.Core.Deployment
 
                 ILogger logger = CreateAndPopulateStatusFile(tracer, id, deployer);
 
-                using (tracer.Step("Update to " + pushInfo.Branch.Name))
+                using (tracer.Step("Update to " + receiveInfo.Branch.Name))
                 {
-                    logger.Log(Resources.Log_UpdatingBranch, pushInfo.Branch.Name);
+                    logger.Log(Resources.Log_UpdatingBranch, receiveInfo.Branch.Name);
 
                     using (var progressWriter = new ProgressWriter())
                     {

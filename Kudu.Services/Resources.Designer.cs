@@ -86,5 +86,32 @@ namespace Kudu.Services {
                 return ResourceManager.GetString("Error_DumbProtocolNotSupported", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Missing repository url..
+        /// </summary>
+        internal static string Error_MissingRepositoryUrl {
+            get {
+                return ResourceManager.GetString("Error_MissingRepositoryUrl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The json payload is unsupported..
+        /// </summary>
+        internal static string Error_UnsupportedFormat {
+            get {
+                return ResourceManager.GetString("Error_UnsupportedFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Nothing to update..
+        /// </summary>
+        internal static string NothingToUpdate {
+            get {
+                return ResourceManager.GetString("NothingToUpdate", resourceCulture);
+            }
+        }
     }
 }

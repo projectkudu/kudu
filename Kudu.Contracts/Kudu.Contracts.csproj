@@ -81,7 +81,7 @@
     <Compile Include="SourceControl\IRepository.cs" />
     <Compile Include="SourceControl\IServerRepository.cs" />
     <Compile Include="SourceControl\LineDiff.cs" />
-    <Compile Include="SourceControl\PushInfo.cs" />
+    <Compile Include="SourceControl\ReceiveInfo.cs" />
     <Compile Include="SourceControl\RepositoryInfo.cs" />
     <Compile Include="SourceControl\RepositoryType.cs" />
     <Compile Include="Tracing\TraceExtensions.cs" />

@@ -6,7 +6,7 @@ namespace Kudu.Core.SourceControl
     {
         void Clean();
         ChangeSet GetChangeSet(string id);
-        PushInfo GetPushInfo();
+        ReceiveInfo GetReceiveInfo();
         void Update();
         void Update(string id);
     }

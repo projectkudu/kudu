@@ -1,6 +1,6 @@
 ﻿namespace Kudu.Core.SourceControl
 {
-    public class PushInfo
+    public class ReceiveInfo
     {
         public string OldId { get; set; }
         public string NewId { get; set; }

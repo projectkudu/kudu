@@ -172,6 +172,26 @@ namespace Kudu.Core.SourceControl.Git
             _gitExe.Execute(@"push origin master");
         }
 
+        public void FetchWithoutConflict(string remote, string remoteAlias, string branchName)
+        {
+            ITracer tracer = _tracerFactory.GetTracer();
+            try
+            {
+                _gitExe.Execute(tracer, @"remote add {0} ""{1}""", remoteAlias, remote);
+                _gitExe.Execute(tracer, @"fetch {0}", remoteAlias);
+                _gitExe.Execute(tracer, @"branch -f {0} {1}/{2}", branchName, remoteAlias, branchName);
+                _gitExe.Execute(tracer, @"reset --hard");
+            }
+            finally
+            {
+                try
+                {
+                    _gitExe.Execute(tracer, @"remote rm {0}", remoteAlias);
+                }
+                catch { }
+            }
+        }
+
         public void Update(string id)
         {
             ITracer tracer = _tracerFactory.GetTracer();
@@ -755,6 +775,6 @@ namespace Kudu.Core.SourceControl.Git
                 reader.Skip("@@");
                 return range;
             }
-        }        
+        }
     }
 }

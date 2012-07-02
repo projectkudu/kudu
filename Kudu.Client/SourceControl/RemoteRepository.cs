@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace Kudu.Client.SourceControl
 {
-    public class RemoteRepository : KuduRemoteClientBase, IRepository
+    public class RemoteRepository : KuduRemoteClientBase
     {
         public RemoteRepository(string serviceUrl)
             :base(serviceUrl)

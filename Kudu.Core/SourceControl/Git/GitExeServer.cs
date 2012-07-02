@@ -55,6 +55,11 @@ namespace Kudu.Core.SourceControl.Git
             _repository.Clean();
         }
 
+        public void FetchWithoutConflict(string remote, string remoteAlias, string branchName)
+        {
+            _repository.FetchWithoutConflict(remote, remoteAlias, branchName);
+        }
+
         public bool Exists
         {
             get
@@ -207,6 +212,11 @@ echo $i > pushinfo
         public void SetDeployer(string deployer)
         {
             _gitExe.EnvironmentVariables[KnownEnviornment.DEPLOYER] = deployer;
+        }
+
+        public void SetReceiveInfo(string oldRef, string newRef, string branchName)
+        {
+            File.WriteAllText(PushInfoPath, oldRef + " " + newRef + " " + branchName);
         }
 
         /// <summary>

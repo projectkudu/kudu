@@ -44,7 +44,7 @@ namespace Kudu.Core.SourceControl.Git
             return _repository.GetChangeSet(id);
         }
 
-        public PushInfo GetPushInfo()
+        public ReceiveInfo GetReceiveInfo()
         {
             string path = PushInfoPath;
 
@@ -71,7 +71,7 @@ namespace Kudu.Core.SourceControl.Git
                 string branch = reference.Split('/').Last().Trim();
                 string fullNewId = _repository.Resolve(branch);
 
-                return new PushInfo
+                return new ReceiveInfo
                 {
                     OldId = oldId,
                     NewId = newId,

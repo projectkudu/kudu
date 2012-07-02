@@ -118,7 +118,6 @@
     <Compile Include="SourceControl\Git\GitExeRepository.cs" />
     <Compile Include="SourceControl\Git\GitExeServer.cs" />
     <Compile Include="Infrastructure\PathUtility.cs" />
-    <Compile Include="SourceControl\NullRepository.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
