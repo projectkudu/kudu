@@ -179,8 +179,8 @@ namespace Kudu.Core.SourceControl.Git
             {
                 _gitExe.Execute(tracer, @"remote add {0} ""{1}""", remoteAlias, remote);
                 _gitExe.Execute(tracer, @"fetch {0}", remoteAlias);
-                _gitExe.Execute(tracer, @"branch -f {0} {1}/{2}", branchName, remoteAlias, branchName);
-                _gitExe.Execute(tracer, @"reset --hard");
+                Update(branchName);
+                _gitExe.Execute(tracer, @"reset --hard {0}/{1}", remoteAlias, branchName);
             }
             finally
             {
