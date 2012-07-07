@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -10,12 +11,13 @@ namespace Kudu.Core.Infrastructure
     [DebuggerDisplay("{ProjectName}")]
     public class VsSolutionProject
     {
-        private const string ProjectInSolutionTypeName = "Microsoft.Build.Construction.ProjectInSolution, Microsoft.Build, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";        
+        private const string ProjectInSolutionTypeName = "Microsoft.Build.Construction.ProjectInSolution, Microsoft.Build, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
 
         private static readonly Type _projectInSolutionType;
         private static readonly PropertyInfo _projectNameProperty;
         private static readonly PropertyInfo _relativePathProperty;
         private static readonly PropertyInfo _projectTypeProperty;
+        private static readonly PropertyInfo _aspNetConfigurationsProperty;
 
         static VsSolutionProject()
         {
@@ -26,6 +28,7 @@ namespace Kudu.Core.Infrastructure
                 _projectNameProperty = ReflectionUtility.GetInternalProperty(_projectInSolutionType, "ProjectName");
                 _relativePathProperty = ReflectionUtility.GetInternalProperty(_projectInSolutionType, "RelativePath");
                 _projectTypeProperty = ReflectionUtility.GetInternalProperty(_projectInSolutionType, "ProjectType");
+                _aspNetConfigurationsProperty = ReflectionUtility.GetInternalProperty(_projectInSolutionType, "AspNetConfigurations");
             }
         }
 
@@ -48,7 +51,7 @@ namespace Kudu.Core.Infrastructure
                 return _projectTypeGuids;
             }
         }
-        
+
         public string ProjectName
         {
             get
@@ -99,11 +102,31 @@ namespace Kudu.Core.Infrastructure
             }
 
             _projectName = _projectNameProperty.GetValue<string>(_projectInstance);
-            var relativePath = _relativePathProperty.GetValue<string>(_projectInstance);
             var projectType = _projectTypeProperty.GetValue<SolutionProjectType>(_projectInstance);
+            var relativePath = _relativePathProperty.GetValue<string>(_projectInstance);
+            _isWebSite = projectType == SolutionProjectType.WebProject;
+
+            // When using websites with IISExpress, the relative path property becomes a URL.
+            // When that happens we're going to grab the path from the Release.AspNetCompiler.PhysicalPath
+            // property in the solution.
+
+            Uri uri;
+            if (_isWebSite && Uri.TryCreate(relativePath, UriKind.Absolute, out uri))
+            {
+                var aspNetConfigurations = _aspNetConfigurationsProperty.GetValue<Hashtable>(_projectInstance);
+
+                // Use the release configuraiton and debug if it isn't available
+                object configurationObject = aspNetConfigurations["Release"] ?? aspNetConfigurations["Debug"];
+
+                // REVIEW: Is there always a configuration object (i.e. can this ever be null?)
+
+                // The aspNetPhysicalPath contains the relative to the website
+                FieldInfo aspNetPhysicalPathField = configurationObject.GetType().GetField("aspNetPhysicalPath", BindingFlags.NonPublic | BindingFlags.Instance);
+
+                relativePath = (string)aspNetPhysicalPathField.GetValue(configurationObject);
+            }
 
             _absolutePath = Path.Combine(Path.GetDirectoryName(_solutionPath), relativePath);
-            _isWebSite = projectType == SolutionProjectType.WebProject;
 
             if (projectType == SolutionProjectType.KnownToBeMSBuildFormat && File.Exists(_absolutePath))
             {
