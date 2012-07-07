@@ -27,7 +27,7 @@ namespace Kudu.Core.Deployment
             string customDeploymentFile;
             if (CustomBuilder.TryGetCustomDeploymentFile(repositoryRoot, out customDeploymentFile))
             {
-                return new CustomBuilder(repositoryRoot, customDeploymentFile);
+                return new CustomBuilder(repositoryRoot, customDeploymentFile, _propertyProvider);
             }
 
             var configuration = new DeploymentConfiguration(repositoryRoot);
