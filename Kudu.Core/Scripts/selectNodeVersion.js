@@ -12,13 +12,20 @@ var flushAndExit = function (code) {
     });
 };
 
-// Determine the installation location of node.js
+// Determine the installation location of node.js and iisnode
 
 var existsSync = fs.existsSync || path.existsSync;
-var nodejsDir = path.resolve(process.env['programfiles(x86)'] || process.env['programfiles'], 'nodejs');
 
+var nodejsDir = path.resolve(process.env['programfiles(x86)'] || process.env['programfiles'], 'nodejs');
 if (!existsSync(nodejsDir))
     throw new Error('Unable to locate node.js installation directory at ' + nodejsDir);
+
+var interceptorJs = path.resolve(process.env['programfiles(x86)'], 'iisnode', 'interceptor.js');
+if (!existsSync(interceptorJs)) {
+    interceptorJs = path.resolve(process.env['programfiles'], 'iisnode', 'interceptor.js');
+    if (!existsSync(interceptorJs))
+        throw new Error('Unable to locate iisnode installation directory with interceptor.js file');
+}
 
 // Validate input parameters
 
@@ -90,7 +97,7 @@ console.log('Selected node.js version ' + version + '. Use package.json file to 
 if (yml !== '')
     yml += '\r\n';
 
-yml += 'nodeProcessCommandLine: "' + path.resolve(nodejsDir, version, 'node.exe') + '" "' + path.resolve(nodejsDir, 'interceptor.js') + '"';
+yml += 'nodeProcessCommandLine: "' + path.resolve(nodejsDir, version, 'node.exe') + '" "' + interceptorJs + '"';
 fs.writeFileSync(path.resolve(wwwroot, 'iisnode.yml'), yml);
 
 
