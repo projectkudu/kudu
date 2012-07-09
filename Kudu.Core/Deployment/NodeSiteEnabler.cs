@@ -2,6 +2,8 @@
 using System.Linq;
 using System.IO;
 using System.IO.Abstractions;
+using System.Diagnostics;
+using System.Globalization;
 
 namespace Kudu.Core.Deployment
 {
@@ -13,6 +15,7 @@ namespace Kudu.Core.Deployment
         private readonly string[] NodeStartFiles = new[] { "server.js", "app.js" };
         private readonly string[] NonNodeExtensions = new[] { "*.php", "*.htm", "*.html", "*.aspx", "*.cshtml" };
         private const string WebConfigFile = "web.config";
+        private const string PackageJsonFile = "package.json";
 
         public NodeSiteEnabler(IFileSystem fileSystem, string repoFolder, string siteFolder)
         {
@@ -27,6 +30,17 @@ namespace Kudu.Core.Deployment
             if (_fileSystem.File.Exists(Path.Combine(_repoFolder, WebConfigFile)))
             {
                 return false;
+            }
+
+            return this.LooksLikeNode();
+        }
+
+        public bool LooksLikeNode()
+        {
+            // If it has package.json at the root, it is node
+            if (_fileSystem.File.Exists(Path.Combine(_siteFolder, PackageJsonFile)))
+            {
+                return true;
             }
 
             // If it has no .js files at the root, it's not Node
@@ -73,6 +87,42 @@ namespace Kudu.Core.Deployment
             _fileSystem.File.WriteAllText(
                 Path.Combine(_siteFolder, WebConfigFile),
                 String.Format(Resources.IisNodeWebConfig, nodeStartFile));
+        }
+
+        public void SelectNodeVersion(ILogger logger, string scriptDir)
+        {
+            // The node.js version selection logic is implemented in selectNodeVersion.js. 
+            Process node = new Process();
+            node.StartInfo.UseShellExecute = false;
+            node.StartInfo.FileName = "node.exe"; // run with default node.js version which is on the path
+            node.StartInfo.Arguments = string.Format(
+                CultureInfo.InvariantCulture,
+                "\"{0}\\selectNodeVersion.js\" \"{1}\" \"{2}\"",
+                scriptDir,
+                _repoFolder,
+                _siteFolder);
+            node.StartInfo.RedirectStandardOutput = true;
+            node.Start();
+            string output = node.StandardOutput.ReadToEnd();
+            node.WaitForExit();
+            if (!string.IsNullOrEmpty(output))
+            {
+                output.Split('\n').ToList().ForEach(line =>
+                {
+                    if (!string.IsNullOrEmpty(line))
+                    {
+                        logger.Log(line);
+                    }
+                });
+            }
+            
+            if (node.ExitCode != 0)
+            {
+                throw new InvalidOperationException(string.Format(
+                    CultureInfo.CurrentCulture,
+                    Resources.Error_UnableToSelectNodeVersion,
+                    node.ExitCode));
+            }
         }
     }
 }

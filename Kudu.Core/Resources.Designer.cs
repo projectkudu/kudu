@@ -151,6 +151,15 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Unable to select node.js version to run the application with. Node.js version selection exited with code &apos;{0}&apos;..
+        /// </summary>
+        internal static string Error_UnableToSelectNodeVersion {
+            get {
+                return ResourceManager.GetString("Error_UnableToSelectNodeVersion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Unsupported status &apos;{0}&apos;..
         /// </summary>
         internal static string Error_UnsupportedStatus {

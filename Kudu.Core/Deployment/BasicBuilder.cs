@@ -5,6 +5,7 @@ using System.Net;
 using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
+using System.Diagnostics;
 
 namespace Kudu.Core.Deployment
 {
@@ -64,6 +65,8 @@ namespace Kudu.Core.Deployment
                 DownloadNodePackages(context);
 
                 AddIISNodeConfig(context);
+
+                SelectNodeVersion(context);
 
                 tcs.SetResult(null);
             }
@@ -196,6 +199,24 @@ namespace Kudu.Core.Deployment
                 {
                     context.Logger.Log(Resources.Log_NodeWithMissingServerJs);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Selects a node.js version to run the application with and augments iisnode.yml accordingly
+        /// </summary>
+        private void SelectNodeVersion(DeploymentContext context)
+        {
+            var fileSystem = new FileSystem();
+            var nodeSiteEnabler = new NodeSiteEnabler(
+                 fileSystem,
+                 repoFolder: _sourcePath,
+                 siteFolder: context.OutputPath);
+
+            if (nodeSiteEnabler.LooksLikeNode())
+            {
+                var scriptDir = Path.Combine(fileSystem.FileInfo.FromFileName(Process.GetCurrentProcess().MainModule.FileName).DirectoryName, "scripts");
+                nodeSiteEnabler.SelectNodeVersion(context.Logger, scriptDir);
             }
         }
     }
