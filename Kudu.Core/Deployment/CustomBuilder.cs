@@ -10,15 +10,17 @@ namespace Kudu.Core.Deployment
     {
         private readonly string _targetFile;
         private readonly string _repositoryPath;
+        private readonly IBuildPropertyProvider _propertyProvider;
 
         private const string SourcePath = "SOURCE";
         private const string TargetPath = "TARGET";
         private const string DeployCmd = "deploy.cmd";
 
-        public CustomBuilder(string repositoryPath, string targetFile)
+        public CustomBuilder(string repositoryPath, string targetFile, IBuildPropertyProvider propertyProvider)
         {
             _repositoryPath = repositoryPath;
             _targetFile = targetFile;
+            _propertyProvider = propertyProvider;
         }
 
         public Task Build(DeploymentContext context)
@@ -30,6 +32,12 @@ namespace Kudu.Core.Deployment
             Executable exe = GetExecutable();
             exe.EnvironmentVariables[SourcePath] = _repositoryPath;
             exe.EnvironmentVariables[TargetPath] = context.OutputPath;
+
+            // Populate the enviornment with the build propeties
+            foreach (var property in _propertyProvider.GetProperties())
+            {
+                exe.EnvironmentVariables[property.Key] = property.Value;
+            }
 
             // Add the msbuild path and git path to the %PATH% so more tools are available
             var toolsPaths = new[] {

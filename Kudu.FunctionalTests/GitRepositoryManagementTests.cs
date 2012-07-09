@@ -212,6 +212,30 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public void WebsiteWithIISExpressWorks()
+        {
+            // Arrange
+            string repositoryName = "WebsiteWithIISExpressWorks";
+            string appName = KuduUtils.GetRandomWebsiteName("WebsiteWithIISExpressWorks");
+            string cloneUrl = "https://github.com/KuduApps/waws.git";
+
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    appManager.GitDeploy(repo.PhysicalPath);
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, "Home");
+                });
+            }
+        }
+
+        [Fact]
         public void PushAppChangesShouldTriggerBuild()
         {
             // Arrange
