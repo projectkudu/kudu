@@ -41,16 +41,16 @@ if (!existsSync(wwwroot) || !existsSync(repo))
 
 var packageJson = path.resolve(repo, 'package.json');
 if (!existsSync(packageJson)) {
-    console.log('The package.json file is not present. '
-		+ 'The node.js application will run with the default node.js version '
+    console.log('The package.json file is not present.');
+    console.log('The node.js application will run with the default node.js version '
         + process.versions.node + '.');
     return flushAndExit(0);
 }
 
 var json = JSON.parse(fs.readFileSync(packageJson, 'utf8'));
 if (typeof json !== 'object' || typeof json.engines !== 'object' || typeof json.engines.node !== 'string') {
-    console.log('The package.json file does not specify node.js engine version constraints. '
-        + 'The node.js application will run with the default node.js version '
+    console.log('The package.json file does not specify node.js engine version constraints.');
+    console.log('The node.js application will run with the default node.js version '
         + process.versions.node + '.');
     return flushAndExit(0);
 }
@@ -86,7 +86,8 @@ console.log('Node.js versions available on the platform are: ' + versions.join('
 var version = require('./semver.js').maxSatisfying(versions, json.engines.node);
 if (!version) {
     console.log('No available node.js version matches application\'s version constraint of \''
-        + json.engines.node + '\'. Use package.json to choose one of the available versions.');
+        + json.engines.node + '\'.');
+    console.log('Use package.json to choose one of the available versions.');
     return flushAndExit(-1);
 }
 
