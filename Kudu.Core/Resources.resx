@@ -147,6 +147,9 @@
   <data name="Error_UnableToDeleteNoDeploymentFound" xml:space="preserve">
     <value>Unable to delete '{0}'. No deployment found.</value>
   </data>
+  <data name="Error_UnableToSelectNodeVersion" xml:space="preserve">
+    <value>Unable to select node.js version to run the application with.</value>
+  </data>
   <data name="Error_UnsupportedStatus" xml:space="preserve">
     <value>Unsupported status '{0}'.</value>
   </data>
@@ -177,10 +180,10 @@
            &lt;/rules&gt;
       &lt;/rewrite&gt;
     &lt;iisnode 
-      debuggingEnabled="false" 
-      watchedFiles="*.js;iisnode.yml;node_modules\*" 
-      nodeProcessCommandLine="&amp;quot;%programfiles(x86)%\nodejs\node.exe&amp;quot; &amp;quot;%programfiles(x86)%\iisnode\logger.js&amp;quot;"
-    /&gt;
+      nodeProcessCommandLine="&amp;quot;%programfiles(x86)%\nodejs\%node_version%\node.exe&amp;quot; &amp;quot;%programfiles(x86)%\iisnode\interceptor.js&amp;quot;"
+      debuggingEnabled="false"
+      logDirectory="..\..\LogFiles\nodejs" 
+      watchedFiles="*.js;iisnode.yml;node_modules\*" /&gt;
    &lt;/system.webServer&gt;
  &lt;/configuration&gt;</value>
   </data>

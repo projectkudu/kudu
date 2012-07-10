@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
 using System.Net;
@@ -14,11 +15,13 @@ namespace Kudu.Core.Deployment
 
         private readonly string _sourcePath;
         private readonly string _tempPath;
+        private readonly string _scriptPath;
 
-        public BasicBuilder(string sourcePath, string tempPath)
+        public BasicBuilder(string sourcePath, string tempPath, string scriptPath)
         {
             _sourcePath = sourcePath;
             _tempPath = tempPath;
+            _scriptPath = scriptPath;
         }
 
         public Task Build(DeploymentContext context)
@@ -64,6 +67,8 @@ namespace Kudu.Core.Deployment
                 DownloadNodePackages(context);
 
                 AddIISNodeConfig(context);
+
+                SelectNodeVersion(context);
 
                 tcs.SetResult(null);
             }
@@ -179,7 +184,8 @@ namespace Kudu.Core.Deployment
             var nodeSiteEnabler = new NodeSiteEnabler(
                 new FileSystem(),
                 repoFolder: _sourcePath,
-                siteFolder: context.OutputPath);
+                siteFolder: context.OutputPath,
+                scriptPath: _scriptPath);
 
             // Check if need to do anythng related to Node
             if (nodeSiteEnabler.NeedNodeHandling())
@@ -196,6 +202,24 @@ namespace Kudu.Core.Deployment
                 {
                     context.Logger.Log(Resources.Log_NodeWithMissingServerJs);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Selects a node.js version to run the application with and augments iisnode.yml accordingly
+        /// </summary>
+        private void SelectNodeVersion(DeploymentContext context)
+        {
+            var fileSystem = new FileSystem();
+            var nodeSiteEnabler = new NodeSiteEnabler(
+                 fileSystem,
+                 repoFolder: _sourcePath,
+                 siteFolder: context.OutputPath,
+                 scriptPath: _scriptPath);
+
+            if (nodeSiteEnabler.LooksLikeNode())
+            {
+                nodeSiteEnabler.SelectNodeVersion(context.Logger);
             }
         }
     }

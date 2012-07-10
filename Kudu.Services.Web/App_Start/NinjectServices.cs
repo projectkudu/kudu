@@ -251,7 +251,8 @@ namespace Kudu.Services.Web.App_Start
                                    () => ResolveRepositoryPath(),
                                    deployPath,
                                    deployCachePath,
-                                   AppSettings.NuGetCachePath);
+                                   AppSettings.NuGetCachePath,
+                                   null);
         }
 
         private static string ResolveRepositoryPath()

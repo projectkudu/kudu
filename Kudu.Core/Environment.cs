@@ -10,6 +10,7 @@ namespace Kudu.Core
         private readonly string _deployPath;
         private readonly string _deployCachePath;
         private readonly string _tempPath;
+        private readonly string _scriptPath;
         private readonly Func<string> _deploymentRepositoryPathResolver;
         private readonly Func<string> _repositoryPathResolver;
 
@@ -19,7 +20,8 @@ namespace Kudu.Core
                            Func<string> repositoryPathResolver, 
                            string deployPath, 
                            string deployCachePath, 
-                           string nugetCachePath)
+                           string nugetCachePath, 
+                           string scriptPath)
         {
             ApplicationRootPath = applicationRootPath;
             _tempPath = tempPath;
@@ -28,6 +30,7 @@ namespace Kudu.Core
             _deployPath = deployPath;
             _deployCachePath = deployCachePath;
             NuGetCachePath = nugetCachePath;
+            _scriptPath = scriptPath;
         }
 
         public string DeploymentRepositoryPath
@@ -90,6 +93,14 @@ namespace Kudu.Core
         {
             get;
             private set;
+        }
+
+        public string ScriptPath
+        {
+            get
+            {
+                return _scriptPath;
+            }
         }
     }
 }
