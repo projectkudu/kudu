@@ -1,10 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
 using Kudu.Core.Deployment;
 using Xunit;
-using System.IO.Abstractions;
-using System.IO;
-using System;
 
 namespace Kudu.Core.Test
 {

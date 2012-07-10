@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
 using Kudu.Console.Services;
@@ -8,7 +9,6 @@ using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Tracing;
-using System.Diagnostics;
 
 namespace Kudu.Console
 {

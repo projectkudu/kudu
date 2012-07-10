@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Linq;
-using System.IO;
-using System.IO.Abstractions;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
+using System.IO.Abstractions;
+using System.Linq;
 using Kudu.Core.Commands;
 
 namespace Kudu.Core.Deployment
