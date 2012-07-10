@@ -148,7 +148,7 @@
     <value>Unable to delete '{0}'. No deployment found.</value>
   </data>
   <data name="Error_UnableToSelectNodeVersion" xml:space="preserve">
-    <value>Unable to select node.js version to run the application with. Node.js version selection exited with code '{0}'.</value>
+    <value>Unable to select node.js version to run the application with.</value>
   </data>
   <data name="Error_UnsupportedStatus" xml:space="preserve">
     <value>Unsupported status '{0}'.</value>

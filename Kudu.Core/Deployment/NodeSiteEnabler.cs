@@ -4,7 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
-using Kudu.Core.Commands;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment
 {
@@ -97,19 +97,27 @@ namespace Kudu.Core.Deployment
             // The node.js version selection logic is implemented in selectNodeVersion.js. 
 
             // run with default node.js version which is on the path
-            string command = string.Format(
-                CultureInfo.InvariantCulture,
-                "node.exe \"{0}\\selectNodeVersion.js\" \"{1}\" \"{2}\"",
-                _scriptPath,
-                _repoFolder,
-                _siteFolder);
-
-            CommandExecutor executor = new CommandExecutor(string.Empty);
-            CommandResult result = executor.ExecuteCommand(command);
-
-            if (!string.IsNullOrEmpty(result.Output))
+            Executable executor = new Executable("node.exe", string.Empty);
+            string result;
+            bool success;
+            try
             {
-                result.Output.Split('\n').ToList().ForEach(line =>
+                result = executor.Execute(
+                    "\"{0}\\selectNodeVersion.js\" \"{1}\" \"{2}\"",
+                    _scriptPath,
+                    _repoFolder,
+                    _siteFolder).Item1;
+                success = true;
+            }
+            catch (Exception e)
+            {
+                result = e.Message;
+                success = false;
+            }
+
+            if (!string.IsNullOrEmpty(result))
+            {
+                result.Split('\n').ToList().ForEach(line =>
                 {
                     if (!string.IsNullOrEmpty(line))
                     {
@@ -118,12 +126,9 @@ namespace Kudu.Core.Deployment
                 });
             }
             
-            if (result.ExitCode != 0)
+            if (!success)
             {
-                throw new InvalidOperationException(string.Format(
-                    CultureInfo.CurrentCulture,
-                    Resources.Error_UnableToSelectNodeVersion,
-                    result.ExitCode));
+                throw new InvalidOperationException(Resources.Error_UnableToSelectNodeVersion);
             }
         }
     }
