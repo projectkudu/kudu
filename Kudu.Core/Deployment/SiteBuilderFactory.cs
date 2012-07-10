@@ -75,7 +75,7 @@ namespace Kudu.Core.Deployment
             {
                 logger.Log(Resources.Log_NoDeployableProjects, solution.Path);
 
-                return new BasicBuilder(repositoryRoot, _environment.TempPath);
+                return new BasicBuilder(repositoryRoot, _environment.TempPath, _environment.ScriptPath);
             }
 
             if (project.IsWap)
@@ -155,7 +155,7 @@ namespace Kudu.Core.Deployment
             }
 
             // If there's none then use the basic builder (the site is xcopy deployable)
-            return new BasicBuilder(targetPath, _environment.TempPath);
+            return new BasicBuilder(targetPath, _environment.TempPath, _environment.ScriptPath);
         }
 
         private ISiteBuilder DetermineProject(string repositoryRoot, string targetPath)

@@ -13,16 +13,18 @@ namespace Kudu.Core.Deployment
         private IFileSystem _fileSystem;
         private string _siteFolder;
         private string _repoFolder;
+        private string _scriptPath;
         private readonly string[] NodeStartFiles = new[] { "server.js", "app.js" };
         private readonly string[] NonNodeExtensions = new[] { "*.php", "*.htm", "*.html", "*.aspx", "*.cshtml" };
         private const string WebConfigFile = "web.config";
         private const string PackageJsonFile = "package.json";
 
-        public NodeSiteEnabler(IFileSystem fileSystem, string repoFolder, string siteFolder)
+        public NodeSiteEnabler(IFileSystem fileSystem, string repoFolder, string siteFolder, string scriptPath)
         {
             _fileSystem = fileSystem;
             _repoFolder = repoFolder;
             _siteFolder = siteFolder;
+            _scriptPath = scriptPath;
         }
 
         public bool NeedNodeHandling()
@@ -90,7 +92,7 @@ namespace Kudu.Core.Deployment
                 String.Format(Resources.IisNodeWebConfig, nodeStartFile));
         }
 
-        public void SelectNodeVersion(ILogger logger, string scriptDir)
+        public void SelectNodeVersion(ILogger logger)
         {
             // The node.js version selection logic is implemented in selectNodeVersion.js. 
 
@@ -98,7 +100,7 @@ namespace Kudu.Core.Deployment
             string command = string.Format(
                 CultureInfo.InvariantCulture,
                 "node.exe \"{0}\\selectNodeVersion.js\" \"{1}\" \"{2}\"",
-                scriptDir,
+                _scriptPath,
                 _repoFolder,
                 _siteFolder);
 

@@ -15,11 +15,13 @@ namespace Kudu.Core.Deployment
 
         private readonly string _sourcePath;
         private readonly string _tempPath;
+        private readonly string _scriptPath;
 
-        public BasicBuilder(string sourcePath, string tempPath)
+        public BasicBuilder(string sourcePath, string tempPath, string scriptPath)
         {
             _sourcePath = sourcePath;
             _tempPath = tempPath;
+            _scriptPath = scriptPath;
         }
 
         public Task Build(DeploymentContext context)
@@ -182,7 +184,8 @@ namespace Kudu.Core.Deployment
             var nodeSiteEnabler = new NodeSiteEnabler(
                 new FileSystem(),
                 repoFolder: _sourcePath,
-                siteFolder: context.OutputPath);
+                siteFolder: context.OutputPath,
+                scriptPath: _scriptPath);
 
             // Check if need to do anythng related to Node
             if (nodeSiteEnabler.NeedNodeHandling())
@@ -211,12 +214,12 @@ namespace Kudu.Core.Deployment
             var nodeSiteEnabler = new NodeSiteEnabler(
                  fileSystem,
                  repoFolder: _sourcePath,
-                 siteFolder: context.OutputPath);
+                 siteFolder: context.OutputPath,
+                 scriptPath: _scriptPath);
 
             if (nodeSiteEnabler.LooksLikeNode())
             {
-                var scriptDir = Path.Combine(fileSystem.FileInfo.FromFileName(Process.GetCurrentProcess().MainModule.FileName).DirectoryName, "scripts");
-                nodeSiteEnabler.SelectNodeVersion(context.Logger, scriptDir);
+                nodeSiteEnabler.SelectNodeVersion(context.Logger);
             }
         }
     }

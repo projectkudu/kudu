@@ -30,7 +30,7 @@ namespace Kudu.Core.Test
                 { @"c:\site\foo.blah", new MockFileData("some file") },
             });
 
-            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, @"c:\repo", @"c:\site");
+            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, @"c:\repo", @"c:\site", null);
 
             Assert.True(nodeSiteEnabler.NeedNodeHandling());
 
@@ -53,7 +53,7 @@ namespace Kudu.Core.Test
                 { @"c:\repo\web.config", new MockFileData("some config") },
             });
 
-            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, @"c:\repo", @"c:\site");
+            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, @"c:\repo", @"c:\site", null);
 
             Assert.False(nodeSiteEnabler.NeedNodeHandling());
         }
@@ -67,7 +67,7 @@ namespace Kudu.Core.Test
                 { @"c:\site\web.config", new MockFileData("some config") },
             });
 
-            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, @"c:\repo", @"c:\site");
+            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, @"c:\repo", @"c:\site", null);
 
             Assert.True(nodeSiteEnabler.NeedNodeHandling());
 
@@ -95,7 +95,7 @@ namespace Kudu.Core.Test
                 { @"c:\site\" + nonNodeFile, new MockFileData("some file") },
             });
 
-            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, @"c:\repo", @"c:\site");
+            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, @"c:\repo", @"c:\site", null);
 
             Assert.False(nodeSiteEnabler.NeedNodeHandling());
         }
@@ -109,7 +109,7 @@ namespace Kudu.Core.Test
                 { @"c:\site\foo.blah", new MockFileData("some file") },
             });
 
-            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, @"c:\repo", @"c:\site");
+            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, @"c:\repo", @"c:\site", null);
 
             Assert.True(nodeSiteEnabler.NeedNodeHandling());
 
@@ -126,7 +126,7 @@ namespace Kudu.Core.Test
                 { @"c:\site\node_modules\foo.txt", new MockFileData("some file") },
             });
 
-            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, @"c:\repo", @"c:\site");
+            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, @"c:\repo", @"c:\site", null);
 
             Assert.True(nodeSiteEnabler.NeedNodeHandling());
 
@@ -167,9 +167,9 @@ namespace Kudu.Core.Test
             fileSystem.File.WriteAllText(Path.Combine(siteDir, "server.js"), "some js");
             var scriptDir = Path.Combine(System.Environment.CurrentDirectory, "scripts");
 
-            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, repoDir, siteDir);
+            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, repoDir, siteDir, scriptDir);
             Assert.True(nodeSiteEnabler.LooksLikeNode());
-            nodeSiteEnabler.SelectNodeVersion(logger, scriptDir);
+            nodeSiteEnabler.SelectNodeVersion(logger);
             Assert.True(logger.Output.Contains("The package.json file is not present"),
                 "the package.json was determined absent");
             Assert.True(!fileSystem.File.Exists(Path.Combine(siteDir, "iisnode.yml")), 
@@ -192,9 +192,9 @@ namespace Kudu.Core.Test
             fileSystem.File.WriteAllText(Path.Combine(siteDir, "package.json"), "{}");
             var scriptDir = Path.Combine(System.Environment.CurrentDirectory, "scripts");
 
-            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, repoDir, siteDir);
+            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, repoDir, siteDir, scriptDir);
             Assert.True(nodeSiteEnabler.LooksLikeNode());
-            nodeSiteEnabler.SelectNodeVersion(logger, scriptDir);
+            nodeSiteEnabler.SelectNodeVersion(logger);
             Assert.True(logger.Output.Contains("The package.json file does not specify node.js engine version constraints"),
                 "the package.json does not specify node.js version");
             Assert.True(!fileSystem.File.Exists(Path.Combine(siteDir, "iisnode.yml")),
@@ -217,9 +217,9 @@ namespace Kudu.Core.Test
             fileSystem.File.WriteAllText(Path.Combine(siteDir, "iisnode.yml"), "foo: bar");
             var scriptDir = Path.Combine(System.Environment.CurrentDirectory, "scripts");
 
-            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, repoDir, siteDir);
+            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, repoDir, siteDir, scriptDir);
             Assert.True(nodeSiteEnabler.LooksLikeNode());
-            nodeSiteEnabler.SelectNodeVersion(logger, scriptDir);
+            nodeSiteEnabler.SelectNodeVersion(logger);
             Assert.True(logger.Output.Contains("The package.json file is not present"),
                 "the package.json does not specify node.js version");
             Assert.True(fileSystem.File.Exists(Path.Combine(siteDir, "iisnode.yml")),
@@ -246,9 +246,9 @@ namespace Kudu.Core.Test
             fileSystem.File.WriteAllText(Path.Combine(siteDir, "iisnode.yml"), "nodeProcessCommandLine: bar");
             var scriptDir = Path.Combine(System.Environment.CurrentDirectory, "scripts");
 
-            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, repoDir, siteDir);
+            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, repoDir, siteDir, scriptDir);
             Assert.True(nodeSiteEnabler.LooksLikeNode());
-            nodeSiteEnabler.SelectNodeVersion(logger, scriptDir);
+            nodeSiteEnabler.SelectNodeVersion(logger);
             Assert.True(logger.Output.Contains("The iisnode.yml file explicitly sets nodeProcessCommandLine"),
                 "The iisnode.yml file explicitly sets nodeProcessCommandLine");
             Assert.True(fileSystem.File.Exists(Path.Combine(siteDir, "iisnode.yml")),
@@ -273,9 +273,9 @@ namespace Kudu.Core.Test
             fileSystem.File.WriteAllText(Path.Combine(siteDir, "package.json"), "{ \"engines\": { \"node\": \"0.1.0\" }}");
             var scriptDir = Path.Combine(System.Environment.CurrentDirectory, "scripts");
 
-            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, repoDir, siteDir);
+            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, repoDir, siteDir, scriptDir);
             Assert.True(nodeSiteEnabler.LooksLikeNode());
-            Assert.Throws(typeof(InvalidOperationException), () => { nodeSiteEnabler.SelectNodeVersion(logger, scriptDir); });
+            Assert.Throws(typeof(InvalidOperationException), () => { nodeSiteEnabler.SelectNodeVersion(logger); });
             Assert.True(logger.Output.Contains("No available node.js version matches"),
                 "No available node.js version matches");
             Assert.True(!fileSystem.File.Exists(Path.Combine(siteDir, "iisnode.yml")),
@@ -298,9 +298,9 @@ namespace Kudu.Core.Test
             fileSystem.File.WriteAllText(Path.Combine(siteDir, "package.json"), "{ \"engines\": { \"node\": \"> 0.6.0\" }}");
             var scriptDir = Path.Combine(System.Environment.CurrentDirectory, "scripts");
 
-            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, repoDir, siteDir);
+            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, repoDir, siteDir, scriptDir);
             Assert.True(nodeSiteEnabler.LooksLikeNode());
-            nodeSiteEnabler.SelectNodeVersion(logger, scriptDir);
+            nodeSiteEnabler.SelectNodeVersion(logger);
             Assert.True(logger.Output.Contains("Selected node.js version"),
                 "Selected node.js version");
             Assert.True(fileSystem.File.Exists(Path.Combine(siteDir, "iisnode.yml")),
