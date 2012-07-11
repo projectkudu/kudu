@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
 using Kudu.Console.Services;
@@ -96,6 +97,8 @@ namespace Kudu.Console
             string deploymentRepositoryPath = Path.Combine(root, Constants.RepositoryPath);
             string tempPath = Path.GetTempPath();
             string deploymentTempPath = Path.Combine(tempPath, Constants.RepositoryPath);
+            string binPath = new FileInfo(Process.GetCurrentProcess().MainModule.FileName).DirectoryName;
+            string scriptPath = Path.Combine(binPath, Constants.ScriptsPath);
 
             return new Environment(root,
                                    tempPath,
@@ -103,7 +106,8 @@ namespace Kudu.Console
                                    () => null,
                                    deployPath,
                                    deployCachePath,
-                                   nugetCachePath);
+                                   nugetCachePath,
+                                   scriptPath);
         }
     }
 }

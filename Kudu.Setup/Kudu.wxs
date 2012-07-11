@@ -12,6 +12,7 @@
   <?define ArtifactsDir = "..\artifacts\$(var.Configuration)"?>
   <?define KuduServiceDir = "$(var.ArtifactsDir)\KuduService"?>
   <?define KuduServiceBinDir = "$(var.KuduServiceDir)\bin"?>
+  <?define KuduServiceBinScriptsDir = "$(var.KuduServiceBinDir)\scripts"?>
   <?define KuduServiceMsBuildDir = "$(var.KuduServiceDir)\msbuild\Microsoft\VisualStudio\v10.0"?>
 
   <Product Id="*"
@@ -51,7 +52,9 @@
         <Directory Id="KUDU_BASE_DIR" Name="KuduService">
           <Directory Id="KUDU_WWWROOT" Name="wwwroot">
 
-            <Directory Id="KUDU_SERVICE_BIN" Name="Bin" />
+            <Directory Id="KUDU_SERVICE_BIN" Name="Bin">
+              <Directory Id="KUDU_SERVICE_BIN_SCRIPTS" Name="Scripts" />
+            </Directory>
 
             <Directory Id="KUDU_SERVICE_MSBUILD" Name="msbuild">
               <Directory Id ="KUDU_SERVICE_MSBUILD_MS" Name="Microsoft">
@@ -95,6 +98,18 @@
 
       <Component Id="commit" Guid="{DCC5FEC1-0431-492E-9960-DC43A91D6002}">
         <File Id="commit" Source="$(var.KuduServiceDir)\commit" />
+      </Component>
+
+    </DirectoryRef>
+
+    <DirectoryRef Id="KUDU_SERVICE_BIN_SCRIPTS">
+
+      <Component Id="selectNodeVersion.js" Guid="{A614DB70-81C5-43C0-BC74-3776408987D4}">
+        <File Id="selectNodeVersion.js" Source="$(var.KuduServiceBinScriptsDir)\selectNodeVersion.js" />
+      </Component>
+
+      <Component Id="semver.js" Guid="{B54E4DAF-E614-4C3A-9583-97327362D1CB}">
+        <File Id="semver.js" Source="$(var.KuduServiceBinScriptsDir)\semver.js" />
       </Component>
 
     </DirectoryRef>
@@ -207,6 +222,8 @@
       <ComponentRef Id="Kudu.Core.dll"/>
       <ComponentRef Id="Kudu.Services.dll"/>
       <ComponentRef Id="Kudu.Services.Web.dll"/>
+      <ComponentRef Id="selectNodeVersion.js"/>
+      <ComponentRef Id="semver.js"/>
 
       <ComponentRef Id="Ninject.dll" />
 
