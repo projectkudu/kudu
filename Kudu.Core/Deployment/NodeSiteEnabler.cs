@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment
@@ -92,43 +93,24 @@ namespace Kudu.Core.Deployment
                 String.Format(Resources.IisNodeWebConfig, nodeStartFile));
         }
 
-        public void SelectNodeVersion(ILogger logger)
+        public string SelectNodeVersion(ITracer tracer)
         {
             // The node.js version selection logic is implemented in selectNodeVersion.js. 
 
             // run with default node.js version which is on the path
             Executable executor = new Executable("node.exe", string.Empty);
-            string result;
-            bool success;
             try
             {
-                result = executor.Execute(
+                return executor.ExecuteWithConsoleOutput(
+                    tracer,
                     "\"{0}\\selectNodeVersion.js\" \"{1}\" \"{2}\"",
                     _scriptPath,
                     _repoFolder,
                     _siteFolder).Item1;
-                success = true;
             }
             catch (Exception e)
             {
-                result = e.Message;
-                success = false;
-            }
-
-            if (!string.IsNullOrEmpty(result))
-            {
-                result.Split('\n').ToList().ForEach(line =>
-                {
-                    if (!string.IsNullOrEmpty(line))
-                    {
-                        logger.Log(line);
-                    }
-                });
-            }
-            
-            if (!success)
-            {
-                throw new InvalidOperationException(Resources.Error_UnableToSelectNodeVersion);
+                throw new InvalidOperationException(Resources.Error_UnableToSelectNodeVersion, e);
             }
         }
     }

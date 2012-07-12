@@ -219,7 +219,7 @@ namespace Kudu.Core.Deployment
 
             if (nodeSiteEnabler.LooksLikeNode())
             {
-                nodeSiteEnabler.SelectNodeVersion(context.Logger);
+                nodeSiteEnabler.SelectNodeVersion(context.Tracer);
             }
         }
     }
