@@ -20,7 +20,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;SITEMANAGEMENT</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -28,7 +28,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;SITEMANAGEMENT</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -55,12 +55,6 @@
     <Compile Include="..\Common\Constants.cs">
       <Link>Constants.cs</Link>
     </Compile>
-    <Compile Include="..\Kudu.Contracts\Tracing\ITracer.cs">
-      <Link>ITracer.cs</Link>
-    </Compile>
-    <Compile Include="..\Kudu.Contracts\Tracing\TraceExtensions.cs">
-      <Link>TraceExtensions.cs</Link>
-    </Compile>
     <Compile Include="..\Kudu.Core\Infrastructure\DisposableAction.cs">
       <Link>DisposableAction.cs</Link>
     </Compile>
@@ -72,9 +66,6 @@
     </Compile>
     <Compile Include="..\Kudu.Core\Infrastructure\OperationManager.cs">
       <Link>OperationManager.cs</Link>
-    </Compile>
-    <Compile Include="..\Kudu.Core\Tracing\NullTracer.cs">
-      <Link>NullTracer.cs</Link>
     </Compile>
     <Compile Include="DefaultPathResolver.cs" />
     <Compile Include="IISExtensions.cs" />

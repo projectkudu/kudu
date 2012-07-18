@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+
+#if !SITEMANAGEMENT
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Tracing;
+#endif
 
 namespace Kudu.Core.Infrastructure
 {
@@ -31,15 +34,22 @@ namespace Kudu.Core.Infrastructure
         public IDictionary<string, string> EnvironmentVariables { get; set; }
         public Encoding Encoding { get; set; }
 
+#if !SITEMANAGEMENT
         public Tuple<string, string> Execute(string arguments, params object[] args)
         {
             return Execute(NullTracer.Instance, arguments, args);
         }
 
         public Tuple<string, string> Execute(ITracer tracer, string arguments, params object[] args)
+#else
+        public Tuple<string, string> Execute(string arguments, params object[] args)
+#endif
         {
+
+#if !SITEMANAGEMENT
             using (GetProcessStep(tracer, arguments, args))
             {
+#endif
                 var process = CreateProcess(arguments, args);
                 process.Start();
 
@@ -55,11 +65,13 @@ namespace Kudu.Core.Infrastructure
                 string output = reader.EndInvoke(outputReader);
                 string error = reader.EndInvoke(errorReader);
 
+#if !SITEMANAGEMENT
                 tracer.Trace("Process dump", new Dictionary<string, string>
                 {
                     { "exitCode", process.ExitCode.ToString() },
                     { "type", "processOutput" }
                 });
+#endif
 
                 // Sometimes, we get an exit code of 1 even when the command succeeds (e.g. with 'git reset .').
                 // So also make sure there is an error string
@@ -71,9 +83,13 @@ namespace Kudu.Core.Infrastructure
                 }
 
                 return Tuple.Create(output, error);
+
+#if !SITEMANAGEMENT
             }
+#endif
         }
 
+#if !SITEMANAGEMENT
         public void Execute(ITracer tracer, Stream input, Stream output, string arguments, params object[] args)
         {
             using (GetProcessStep(tracer, arguments, args))
@@ -230,7 +246,7 @@ namespace Kudu.Core.Infrastructure
                 { "arguments", String.Format(arguments, args) }
             });
         }
-
+#endif
         private Process CreateProcess(string arguments, object[] args)
         {
             var psi = new ProcessStartInfo
