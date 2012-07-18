@@ -98,7 +98,5 @@ console.log('Selected node.js version ' + version + '. Use package.json file to 
 if (yml !== '')
     yml += '\r\n';
 
-yml += 'nodeProcessCommandLine: "' + path.resolve(nodejsDir, version, 'node.exe') + '" "' + interceptorJs + '"';
+yml += 'nodeProcessCommandLine: "' + path.resolve(nodejsDir, version, 'node.exe') + '"';
 fs.writeFileSync(path.resolve(wwwroot, 'iisnode.yml'), yml);
-
-
