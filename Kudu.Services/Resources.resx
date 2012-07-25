@@ -135,4 +135,7 @@
   <data name="NothingToUpdate" xml:space="preserve">
     <value>Nothing to update.</value>
   </data>
+  <data name="SettingDoesNotExist" xml:space="preserve">
+    <value>The setting '{0}' does not exist.</value>
+  </data>
 </root>

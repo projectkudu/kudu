@@ -93,9 +93,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\WebActivator.1.5\lib\net40\WebActivator.dll</HintPath>
     </Reference>
-    <Reference Include="XmlSettings, Version=0.1.1.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="XmlSettings, Version=0.1.2.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\XmlSettings.0.1.1\lib\net40\XmlSettings.dll</HintPath>
+      <HintPath>..\packages\XmlSettings.0.1.2.0\lib\net40\XmlSettings.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
