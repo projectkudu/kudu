@@ -17,7 +17,7 @@ namespace Kudu.Client.Deployment
         public Task SetValue(string key, string value)
         {
             var values = HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("key", key), new KeyValuePair<string, string>("value", value));
-            return _client.PostAsync("/settings", values);
+            return _client.PostAsync("/settings", values).Then(response => response.EnsureSuccessStatusCode());
         }
 
         public Task<NameValueCollection> GetValues()
@@ -41,10 +41,7 @@ namespace Kudu.Client.Deployment
 
         public Task Delete(string key)
         {
-            return _client.DeleteAsync("/settings/" + key).Then(response =>
-            {
-                return response.EnsureSuccessStatusCode();
-            });
+            return _client.DeleteAsync("/settings/" + key).Then(response => response.EnsureSuccessStatusCode());
         }
     }
 }
