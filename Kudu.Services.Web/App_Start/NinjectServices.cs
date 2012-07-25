@@ -6,6 +6,7 @@ using System.Web;
 using System.Web.Http;
 using System.Web.Routing;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
@@ -13,6 +14,7 @@ using Kudu.Core.Commands;
 using Kudu.Core.Deployment;
 using Kudu.Core.Editor;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Tracing;
@@ -129,6 +131,7 @@ namespace Kudu.Services.Web.App_Start
 
             // Deployment Service
             kernel.Bind<ISettings>().ToMethod(context => new XmlSettings.Settings(GetSettingsPath(environment)));
+            kernel.Bind<IDeploymentSettingsManager>().To<DeploymentSettingsManager>();
 
             kernel.Bind<ISiteBuilderFactory>().To<SiteBuilderFactory>()
                                              .InRequestScope();

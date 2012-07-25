@@ -40,6 +40,12 @@ namespace Kudu.TestHarness
             private set;
         }
 
+        public RemoteDeploymentSettingsManager SettingsManager
+        {
+            get;
+            private set;
+        }
+
         public RemoteProjectSystem ProjectSystem
         {
             get;
@@ -111,7 +117,8 @@ namespace Kudu.TestHarness
                 SiteUrl = site.SiteUrl,
                 ServiceUrl = site.ServiceUrl,
                 DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "deployments"),
-                ProjectSystem = new RemoteProjectSystem(site.ServiceUrl + "live/files")
+                ProjectSystem = new RemoteProjectSystem(site.ServiceUrl + "live/files"),
+                SettingsManager = new RemoteDeploymentSettingsManager(site.ServiceUrl + "settings")
             };
         }
 

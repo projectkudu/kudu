@@ -2,19 +2,19 @@
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+using Kudu.Contracts.Settings;
 using Newtonsoft.Json.Linq;
-using XmlSettings;
 
 namespace Kudu.Services.Settings
 {
     public class SettingsController : ApiController
     {
         private const string DeploymentSettingsSection = "deployment";
-        private readonly ISettings _settings;
+        private readonly IDeploymentSettingsManager _settingsManager;
 
-        public SettingsController(ISettings settings)
+        public SettingsController(IDeploymentSettingsManager settingsManager)
         {
-            _settings = settings;
+            _settingsManager = settingsManager;
         }
 
         public HttpResponseMessage Set(JObject pair)
@@ -33,7 +33,7 @@ namespace Kudu.Services.Settings
 
             string value = pair["value"].Value<string>();
 
-            _settings.SetValue(DeploymentSettingsSection, key, value);
+            _settingsManager.SetValue(key, value);
 
             return Request.CreateResponse(HttpStatusCode.NoContent);
         }
@@ -45,19 +45,14 @@ namespace Kudu.Services.Settings
                 return Request.CreateResponse(HttpStatusCode.BadRequest);
             }
 
-            _settings.DeleteValue(DeploymentSettingsSection, key);
+            _settingsManager.DeleteValue(key);
 
             return Request.CreateResponse(HttpStatusCode.NoContent);
         }
 
         public HttpResponseMessage GetAll()
         {
-            var values = _settings.GetValues(DeploymentSettingsSection);
-
-            if (values == null)
-            {
-                return Request.CreateResponse(HttpStatusCode.OK, new string[0]);
-            }
+            var values = _settingsManager.GetValues();
 
             return Request.CreateResponse(HttpStatusCode.OK, values);
         }
@@ -69,7 +64,7 @@ namespace Kudu.Services.Settings
                 return Request.CreateResponse(HttpStatusCode.BadRequest);
             }
 
-            string value = _settings.GetValue(DeploymentSettingsSection, key);
+            string value = _settingsManager.GetValue(key);
 
             if (value == null)
             {

@@ -63,6 +63,7 @@
     <Compile Include="Infrastructure\IOperationLock.cs" />
     <Compile Include="Infrastructure\LockExtensions.cs" />
     <Compile Include="Infrastructure\TaskExtensions.cs" />
+    <Compile Include="Settings\IDeploymentSettingsManager.cs" />
     <Compile Include="SourceControl\IDeploymentRepository.cs" />
     <Compile Include="SourceControl\RepositoryConfiguration.cs" />
     <Compile Include="Tracing\ITracer.cs" />

@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Web;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
@@ -14,6 +15,7 @@ namespace Kudu.Services.GitServer
     {
         private readonly IGitServer _gitServer;
         private readonly IDeploymentManager _deploymentManager;
+        private readonly IDeploymentSettingsManager _settings;
         private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
         private readonly RepositoryConfiguration _configuration;
@@ -21,11 +23,13 @@ namespace Kudu.Services.GitServer
         public FetchHandler(ITracer tracer,
                             IGitServer gitServer,
                             IDeploymentManager deploymentManager,
+                            IDeploymentSettingsManager settings,
                             IOperationLock deploymentLock,
                             RepositoryConfiguration configuration)
         {
             _gitServer = gitServer;
             _deploymentManager = deploymentManager;
+            _settings = settings;
             _tracer = tracer;
             _deploymentLock = deploymentLock;
             _configuration = configuration;
@@ -70,9 +74,14 @@ namespace Kudu.Services.GitServer
                     return;
                 }
 
-                // TODO: Change this when we have the ability to configure branches
-                if (!repositoryInfo.Branch.Equals("master", StringComparison.OrdinalIgnoreCase))
+                string targetBranch = _settings.GetValue("branch") ?? "master";
+
+                _tracer.Trace("Attempting to fetch target branch {0}", targetBranch);
+
+                if (!targetBranch.Equals(repositoryInfo.Branch, StringComparison.OrdinalIgnoreCase))
                 {
+                    _tracer.Trace("Expected to fetch {0} but got {1}.", targetBranch, repositoryInfo.Branch);
+
                     context.Response.StatusCode = 200;
                     context.Response.Write(Resources.NothingToUpdate);
                     context.ApplicationInstance.CompleteRequest();
@@ -146,6 +155,7 @@ namespace Kudu.Services.GitServer
             // If there's no specified branch assume master
             if (String.IsNullOrEmpty(info.Branch))
             {
+                // REVIEW: Is this correct
                 info.Branch = "master";
             }
 
