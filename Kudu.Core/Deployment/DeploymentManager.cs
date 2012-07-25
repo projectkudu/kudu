@@ -31,14 +31,14 @@ namespace Kudu.Core.Deployment
 
         public event Action<DeployResult> StatusChanged;
 
-        public DeploymentManager(IDeploymentRepository serverRepository,
-                                 ISiteBuilderFactory builderFactory,
-                                 IEnvironment environment,
-                                 IFileSystem fileSystem,
-                                 ITraceFactory traceFactory,
-                                 IOperationLock deploymentLock,
-                                 ILogger globalLogger,
-                                 IDeploymentSettingsManager settings)
+        public DeploymentManager(IDeploymentRepository serverRepository, 
+                                 ISiteBuilderFactory builderFactory, 
+                                 IEnvironment environment, 
+                                 IFileSystem fileSystem, 
+                                 ITraceFactory traceFactory, 
+                                 IDeploymentSettingsManager settings, 
+                                 IOperationLock deploymentLock, 
+                                 ILogger globalLogger)
         {
             _serverRepository = serverRepository;
             _builderFactory = builderFactory;

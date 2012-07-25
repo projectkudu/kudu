@@ -56,13 +56,13 @@ namespace Kudu.Console
 
             var logger = new ConsoleLogger();
             var deploymentManager = new DeploymentManager(serverRepository,
-                                                          builderFactory,
-                                                          env,
-                                                          fs,
-                                                          traceFactory,
-                                                          deploymentLock,
-                                                          logger,
-                                                          settingsManager);
+                                                          builderFactory, 
+                                                          env, 
+                                                          fs, 
+                                                          traceFactory, 
+                                                          settingsManager, 
+                                                          deploymentLock, 
+                                                          logger);
 
             var step = tracer.Step("Executing external process", new Dictionary<string, string>
             {
