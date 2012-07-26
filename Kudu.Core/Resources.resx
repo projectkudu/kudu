@@ -162,12 +162,6 @@
      &lt;/handlers&gt;
       &lt;rewrite&gt;
            &lt;rules&gt;
-                &lt;rule name="LogFile" patternSyntax="ECMAScript" stopProcessing="true"&gt;
-                     &lt;match url="^[a-zA-Z0-9_\-]+\.js\.logs\/\d+\.txt$"/&gt;
-                &lt;/rule&gt;
-                &lt;rule name="NodeInspector" patternSyntax="ECMAScript" stopProcessing="true"&gt;                    
-                    &lt;match url="^{0}\/debug[\/]?" /&gt;
-                &lt;/rule&gt;
                 &lt;rule name="StaticContent"&gt;
                      &lt;action type="Rewrite" url="public{{REQUEST_URI}}"/&gt;
                 &lt;/rule&gt;
@@ -183,7 +177,7 @@
       nodeProcessCommandLine="&amp;quot;%programfiles(x86)%\nodejs\%node_version%\node.exe&amp;quot; &amp;quot;%programfiles(x86)%\iisnode\interceptor.js&amp;quot;"
       debuggingEnabled="false"
       logDirectory="..\..\LogFiles\nodejs" 
-      watchedFiles="*.js;iisnode.yml;node_modules\*" /&gt;
+      watchedFiles="*.js;iisnode.yml;node_modules\*;views\*.jade;views\*.ejb;routes\*.js" /&gt;
    &lt;/system.webServer&gt;
  &lt;/configuration&gt;</value>
   </data>
