@@ -214,9 +214,6 @@
   <data name="Log_NodeWithMissingServerJs" xml:space="preserve">
     <value>WARNING: Application appears to be a node.js application but no server.js is present. If it is a node application, please rename your startup js file to server.js and re-publish your application.</value>
   </data>
-  <data name="Log_NonMasterBranchPushed" xml:space="preserve">
-    <value>Deployment skipped. Received push for '{0}' branch, and only pushes to 'master' are deployed.</value>
-  </data>
   <data name="Log_NpmNotInstalled" xml:space="preserve">
     <value>NPM not installed or couldn't be located. Skipping package installation.</value>
   </data>
@@ -231,6 +228,9 @@
   </data>
   <data name="Log_RunningNPM" xml:space="preserve">
     <value>Running NPM.</value>
+  </data>
+  <data name="Log_UnexpectedBranchPushed" xml:space="preserve">
+    <value>Deployment skipped. Received '{0}' branch, and only pushes to '{1}' are deployed.</value>
   </data>
   <data name="Log_UnexpectedError" xml:space="preserve">
     <value>An unknown error has occured. Check the diagnostic log for details.</value>

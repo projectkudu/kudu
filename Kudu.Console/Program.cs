@@ -9,6 +9,7 @@ using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Tracing;
+using Kudu.Core.Settings;
 
 namespace Kudu.Console
 {
@@ -50,14 +51,17 @@ namespace Kudu.Console
             var buildPropertyProvider = new BuildPropertyProvider(wapTargets);
             var builderFactory = new SiteBuilderFactory(buildPropertyProvider, env);
             var serverRepository = new GitDeploymentRepository(env.DeploymentRepositoryPath, traceFactory);
+            var settings = new XmlSettings.Settings(GetSettingsPath(env));
+            var settingsManager = new DeploymentSettingsManager(settings);
 
             var logger = new ConsoleLogger();
             var deploymentManager = new DeploymentManager(serverRepository,
-                                                          builderFactory,
-                                                          env,
-                                                          fs,
-                                                          traceFactory,
-                                                          deploymentLock,
+                                                          builderFactory, 
+                                                          env, 
+                                                          fs, 
+                                                          traceFactory, 
+                                                          settingsManager, 
+                                                          deploymentLock, 
                                                           logger);
 
             var step = tracer.Step("Executing external process", new Dictionary<string, string>
@@ -88,6 +92,11 @@ namespace Kudu.Console
             }
 
             return 0;
+        }
+
+        private static string GetSettingsPath(IEnvironment environment)
+        {
+            return Path.Combine(environment.DeploymentCachePath, Constants.DeploySettingsPath);
         }
 
         private static IEnvironment GetEnvironment(string root, string nugetCachePath)

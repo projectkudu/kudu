@@ -113,5 +113,14 @@ namespace Kudu.Services {
                 return ResourceManager.GetString("NothingToUpdate", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The setting &apos;{0}&apos; does not exist..
+        /// </summary>
+        internal static string SettingDoesNotExist {
+            get {
+                return ResourceManager.GetString("SettingDoesNotExist", resourceCulture);
+            }
+        }
     }
 }

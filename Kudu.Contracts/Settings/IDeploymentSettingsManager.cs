@@ -1,14 +1,12 @@
 ﻿using System.Collections.Generic;
 
-namespace Kudu.Core.Deployment
+namespace Kudu.Contracts.Settings
 {
     public interface IDeploymentSettingsManager
     {
-        IEnumerable<DeploymentSetting> GetAppSettings();
-        IEnumerable<ConnectionStringSetting> GetConnectionStrings();
-        void SetConnectionString(string key, string value);
-        void RemoveConnectionString(string key);
-        void RemoveAppSetting(string key);
-        void SetAppSetting(string key, string value);
+        void SetValue(string key, string value);
+        IEnumerable<KeyValuePair<string, string>> GetValues();
+        string GetValue(string key);
+        void DeleteValue(string key);
     }
 }

@@ -28,5 +28,10 @@ namespace Kudu.TestHarness
         {
             return File.Exists(Path.Combine(repository.PhysicalPath, path));
         }
+
+        public static void DeleteFile(this TestRepository repository, string path)
+        {
+            File.Delete(Path.Combine(repository.PhysicalPath, path));
+        }
     }
 }

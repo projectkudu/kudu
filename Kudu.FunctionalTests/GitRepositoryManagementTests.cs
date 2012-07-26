@@ -496,6 +496,29 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public void PushingConfiguredBranch()
+        {
+            string repositoryName = "PushingConfiguredBranch";
+            string appName = KuduUtils.GetRandomWebsiteName("PushingConfiguredBranch");
+            string cloneUrl = "https://github.com/KuduApps/RepoWithMultipleBranches.git";
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            {
+                Git.CheckOut(repo.PhysicalPath, "test");
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    appManager.SettingsManager.SetValue("branch", "test").Wait();
+                    appManager.GitDeploy(repo.PhysicalPath, "test", "test");
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, "Test branch");
+                });
+            }
+        }
+
+        [Fact]
         public void PushingNonMasterBranchToMasterBranchShouldDeploy()
         {
             string repositoryName = "PushingNonMasterBranchToMasterBranchShouldDeploy";

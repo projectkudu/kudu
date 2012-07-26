@@ -5,6 +5,7 @@ using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
@@ -21,6 +22,7 @@ namespace Kudu.Core.Deployment
         private readonly ITraceFactory _traceFactory;
         private readonly IOperationLock _deploymentLock;
         private readonly ILogger _globalLogger;
+        private readonly IDeploymentSettingsManager _settings;
 
         private const string StatusFile = "status.xml";
         private const string LogFile = "log.xml";
@@ -29,12 +31,13 @@ namespace Kudu.Core.Deployment
 
         public event Action<DeployResult> StatusChanged;
 
-        public DeploymentManager(IDeploymentRepository serverRepository,
-                                 ISiteBuilderFactory builderFactory,
-                                 IEnvironment environment,
-                                 IFileSystem fileSystem,
-                                 ITraceFactory traceFactory,
-                                 IOperationLock deploymentLock,
+        public DeploymentManager(IDeploymentRepository serverRepository, 
+                                 ISiteBuilderFactory builderFactory, 
+                                 IEnvironment environment, 
+                                 IFileSystem fileSystem, 
+                                 ITraceFactory traceFactory, 
+                                 IDeploymentSettingsManager settings, 
+                                 IOperationLock deploymentLock, 
                                  ILogger globalLogger)
         {
             _serverRepository = serverRepository;
@@ -44,6 +47,7 @@ namespace Kudu.Core.Deployment
             _traceFactory = traceFactory;
             _deploymentLock = deploymentLock;
             _globalLogger = globalLogger ?? NullLogger.Instance;
+            _settings = settings;
         }
 
         private string ActiveDeploymentId
@@ -222,8 +226,12 @@ namespace Kudu.Core.Deployment
                 deployStep = tracer.Step("Deploy");
                 ReceiveInfo receiveInfo = _serverRepository.GetReceiveInfo();
 
-                // Something went wrong here since we weren't able to 
-                if (receiveInfo == null || !receiveInfo.Branch.IsMaster)
+                string targetBranch = _settings.GetValue("branch") ?? "master";
+
+                tracer.Trace("Deploying branch '{0}'", targetBranch);
+
+                // Something went wrong here since we weren't able to deploy if receiveInfo is null
+                if (receiveInfo == null || !targetBranch.Equals(receiveInfo.Branch.Name, StringComparison.OrdinalIgnoreCase))
                 {
                     if (receiveInfo == null)
                     {
@@ -231,9 +239,9 @@ namespace Kudu.Core.Deployment
                     }
                     else
                     {
-                        tracer.Trace("Non-master branch deployed {0}", receiveInfo.Branch.Name);
+                        tracer.Trace("Unexpected branch deployed '{0}'.", receiveInfo.Branch.Name);
 
-                        _globalLogger.Log(Resources.Log_NonMasterBranchPushed, receiveInfo.Branch.Name);
+                        _globalLogger.Log(Resources.Log_UnexpectedBranchPushed, receiveInfo.Branch.Name, targetBranch);
                     }
 
                     ReportCompleted();
@@ -264,8 +272,9 @@ namespace Kudu.Core.Deployment
                     using (var progressWriter = new ProgressWriter())
                     {
                         progressWriter.Start();
-                        // Update to the default branch
-                        _serverRepository.Update();
+
+                        // Update to the target branch
+                        _serverRepository.Update(targetBranch);
                     }
                 }
 

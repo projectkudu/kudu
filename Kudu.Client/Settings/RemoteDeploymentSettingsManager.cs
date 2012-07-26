@@ -1,58 +1,47 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Threading.Tasks;
 using Kudu.Client.Infrastructure;
-using Kudu.Core.Deployment;
+using Kudu.Contracts.Infrastructure;
+using Newtonsoft.Json.Linq;
 
 namespace Kudu.Client.Deployment
 {
-    public class RemoteDeploymentSettingsManager : KuduRemoteClientBase, IDeploymentSettingsManager
+    public class RemoteDeploymentSettingsManager : KuduRemoteClientBase
     {
         public RemoteDeploymentSettingsManager(string serviceUrl)
             : base(serviceUrl)
         {
         }
 
-        public IEnumerable<DeploymentSetting> GetAppSettings()
+        public Task SetValue(string key, string value)
         {
-            return _client.GetJson<IEnumerable<DeploymentSetting>>("appSettings");
+            var values = HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("key", key), new KeyValuePair<string, string>("value", value));
+            return _client.PostAsync("/settings", values).Then(response => response.EnsureSuccessStatusCode());
         }
 
-        public IEnumerable<ConnectionStringSetting> GetConnectionStrings()
+        public Task<NameValueCollection> GetValues()
         {
-            return _client.GetJson<IEnumerable<ConnectionStringSetting>>("connectionStrings");
+            return _client.GetJsonAsync<JObject>("/settings").Then(obj =>
+            {
+                var nvc = new NameValueCollection();
+                foreach (var kvp in obj)
+                {
+                    nvc[kvp.Key] = kvp.Value.Value<string>();
+                }
+
+                return nvc;
+            }); 
+         }
+
+        public Task<string> GetValue(string key)
+        {
+            return _client.GetJsonAsync<string>("/settings/" + key);
         }
 
-        public void SetConnectionString(string name, string connectionString)
+        public Task Delete(string key)
         {
-            SetValue("connectionStrings", name, connectionString);
-        }
-
-        public void RemoveConnectionString(string key)
-        {
-            DeleteValue("connectionStrings", key);
-        }
-
-        public void RemoveAppSetting(string key)
-        {
-            DeleteValue("appSettings", key);
-        }
-
-        public void SetAppSetting(string key, string value)
-        {
-            SetValue("appSettings", key, value);
-        }
-
-        private void SetValue(string section, string key, string value)
-        {
-            _client.PostAsync(section + "/set", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("key", key), new KeyValuePair<string, string>("value", value)))
-                   .Result
-                   .EnsureSuccessStatusCode();
-        }
-
-        private void DeleteValue(string section, string key)
-        {
-            _client.PostAsync(section + "/remove", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("key", key)))
-                   .Result
-                   .EnsureSuccessStatusCode();
+            return _client.DeleteAsync("/settings/" + key).Then(response => response.EnsureSuccessStatusCode());
         }
     }
 }

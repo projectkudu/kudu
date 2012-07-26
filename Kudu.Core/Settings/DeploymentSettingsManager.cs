@@ -1,12 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using Kudu.Contracts.Settings;
 using XmlSettings;
 
-namespace Kudu.Core.Deployment
+namespace Kudu.Core.Settings
 {
     public class DeploymentSettingsManager : IDeploymentSettingsManager
     {
+        private const string DeploymentSettingsSection = "deployment";
         private readonly ISettings _settings;
 
         public DeploymentSettingsManager(ISettings settings)
@@ -14,54 +15,31 @@ namespace Kudu.Core.Deployment
             _settings = settings;
         }
 
-        public IEnumerable<DeploymentSetting> GetAppSettings()
+        public void SetValue(string key, string value)
         {
-            return GetSettings("appSettings", pair => new DeploymentSetting
-            {
-                Key = pair.Key,
-                Value = pair.Value
-            });
+            _settings.SetValue(DeploymentSettingsSection, key, value);
         }
 
-        public IEnumerable<ConnectionStringSetting> GetConnectionStrings()
+        public IEnumerable<KeyValuePair<string, string>> GetValues()
         {
-            return GetSettings("connectionStrings", pair => new ConnectionStringSetting
-            {
-                Name = pair.Key,
-                ConnectionString = pair.Value
-            });
-        }
+            var values = _settings.GetValues(DeploymentSettingsSection);
 
-        private IEnumerable<T> GetSettings<T>(string sectionName, Func<KeyValuePair<string, string>, T> selector)
-        {
-            var section = _settings.GetValues(sectionName);
-
-            if (section != null)
+            if (values == null)
             {
-                return section.Select(selector);
+                return Enumerable.Empty<KeyValuePair<string, string>>();
             }
 
-            return Enumerable.Empty<T>();
+            return values;
         }
 
-        public void SetConnectionString(string key, string value)
+        public string GetValue(string key)
         {
-            _settings.SetValue("connectionStrings", key, value);
+            return _settings.GetValue(DeploymentSettingsSection, key);
         }
 
-        public void RemoveConnectionString(string key)
+        public void DeleteValue(string key)
         {
-            _settings.DeleteValue("connectionStrings", key);
-        }
-
-        public void RemoveAppSetting(string key)
-        {
-            _settings.DeleteValue("appSettings", key);
-        }
-
-        public void SetAppSetting(string key, string value)
-        {
-            _settings.SetValue("appSettings", key, value);
+            _settings.DeleteValue(DeploymentSettingsSection, key);
         }
     }
 }
