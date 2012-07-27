@@ -34,6 +34,15 @@ var wwwroot = process.argv[3];
 if (!existsSync(wwwroot) || !existsSync(repo))
     throw new Error('Usage: node.exe selectNodeVersion.js <path_to_repo> <path_to_wwwroot>');
 
+// If the iinode.yml file does not exit in the repo but exists in wwwroot, remove it from wwwroot 
+// to prevent side-effects of previous deployments
+
+var iisnodeYml = path.resolve(repo, 'iisnode.yml');
+var wwwrootIisnodeYml = path.resolve(wwwroot, 'iisnode.yml');
+if (!existsSync(iisnodeYml) && existsSync(wwwrootIisnodeYml)) {
+    fs.unlinkSync(wwwrootIisnodeYml);
+}
+
 // If the package.json file is not included with the application 
 // or if it does not specify node.js version constraints, exit this script. 
 // This will cause the default node.js version to be used to run the application, 
@@ -59,7 +68,6 @@ if (typeof json !== 'object' || typeof json.engines !== 'object' || typeof json.
 // nodeProcessCommandLine, exit this script. The presence of nodeProcessCommandLine
 // deactivates automatic version selection.
 
-var iisnodeYml = path.resolve(repo, 'iisnode.yml');
 var yml = '';
 if (existsSync(iisnodeYml)) {
     yml = fs.readFileSync(iisnodeYml, 'utf8');
@@ -99,4 +107,4 @@ if (yml !== '')
     yml += '\r\n';
 
 yml += 'nodeProcessCommandLine: "' + path.resolve(nodejsDir, version, 'node.exe') + '"';
-fs.writeFileSync(path.resolve(wwwroot, 'iisnode.yml'), yml);
+fs.writeFileSync(wwwrootIisnodeYml, yml);
