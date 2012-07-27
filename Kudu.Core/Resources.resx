@@ -174,7 +174,7 @@
            &lt;/rules&gt;
       &lt;/rewrite&gt;
     &lt;iisnode 
-      nodeProcessCommandLine="&amp;quot;%programfiles(x86)%\nodejs\%node_version%\node.exe&amp;quot; &amp;quot;%programfiles(x86)%\iisnode\interceptor.js&amp;quot;"
+      nodeProcessCommandLine="&amp;quot;%programfiles(x86)%\nodejs\%node_version%\node.exe&amp;quot;"
       debuggingEnabled="false"
       logDirectory="..\..\LogFiles\nodejs" 
       watchedFiles="*.js;iisnode.yml;node_modules\*;views\*.jade;views\*.ejb;routes\*.js" /&gt;
