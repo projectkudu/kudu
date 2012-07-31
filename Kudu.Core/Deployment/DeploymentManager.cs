@@ -192,14 +192,6 @@ namespace Kudu.Core.Deployment
                     _serverRepository.Clean();
                 }
 
-                if (!String.IsNullOrEmpty(deployer))
-                {
-                    // Update the deployer
-                    DeploymentStatusFile statusFile = OpenStatusFile(id);
-                    statusFile.Deployer = deployer;
-                    statusFile.Save(_fileSystem);
-                }
-
                 // Perform the build deployment of this changeset
                 Build(id, tracer, deployStep);
             }
