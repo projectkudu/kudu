@@ -223,6 +223,9 @@
   <data name="Log_RunningNPM" xml:space="preserve">
     <value>Running NPM.</value>
   </data>
+  <data name="Log_SelectNodeJsVersion" xml:space="preserve">
+    <value>Selecting nodejs version.</value>
+  </data>
   <data name="Log_UnexpectedBranchPushed" xml:space="preserve">
     <value>Deployment skipped. Received '{0}' branch, and only pushes to '{1}' are deployed.</value>
   </data>
