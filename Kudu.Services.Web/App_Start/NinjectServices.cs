@@ -251,6 +251,7 @@ namespace Kudu.Services.Web.App_Start
             string deploymentRepositoryPath = Path.Combine(root, Constants.RepositoryPath);
             string tempPath = Path.GetTempPath();
             string deploymentTempPath = Path.Combine(tempPath, Constants.RepositoryPath);
+            string scriptPath = Path.Combine(HttpRuntime.BinDirectory, Constants.ScriptsPath);
 
             return new Environment(root,
                                    tempPath,
@@ -259,7 +260,7 @@ namespace Kudu.Services.Web.App_Start
                                    deployPath,
                                    deployCachePath,
                                    AppSettings.NuGetCachePath,
-                                   null);
+                                   scriptPath);
         }
 
         private static string ResolveRepositoryPath()

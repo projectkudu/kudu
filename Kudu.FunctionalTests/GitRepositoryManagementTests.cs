@@ -742,6 +742,45 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public void RedeployNodeSite()
+        {
+            string repositoryName = "RedeployNodeSite";
+            string appName = KuduUtils.GetRandomWebsiteName("RedeployNodeSite");
+            string cloneUrl = "https://github.com/KuduApps/NodeHelloWorldNoConfig.git";
+
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    appManager.GitDeploy(repo.PhysicalPath);
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+
+                    string id = results[0].Id;
+
+                    repo.Replace("server.js", "world", "world2");
+                    Git.Commit(repo.PhysicalPath, "Made a small change");
+
+                    appManager.GitDeploy(repo.PhysicalPath);
+                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    Assert.Equal(2, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[1].Status);
+
+                    appManager.DeploymentManager.DeployAsync(id).Wait();
+                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                    Assert.Equal(2, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    Assert.Equal(DeployStatus.Success, results[1].Status);
+                });
+            }
+        }
+
+        [Fact]
         public void GetResultsWithMaxItemsAndExcludeFailed()
         {
             // Arrange
