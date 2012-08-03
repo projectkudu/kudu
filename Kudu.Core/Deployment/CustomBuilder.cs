@@ -8,18 +8,17 @@ namespace Kudu.Core.Deployment
 {
     public class CustomBuilder : ISiteBuilder
     {
-        private readonly string _targetFile;
+        private readonly string _command;
         private readonly string _repositoryPath;
         private readonly IBuildPropertyProvider _propertyProvider;
 
         private const string SourcePath = "SOURCE";
         private const string TargetPath = "TARGET";
-        private const string DeployCmd = "deploy.cmd";
 
-        public CustomBuilder(string repositoryPath, string targetFile, IBuildPropertyProvider propertyProvider)
+        public CustomBuilder(string repositoryPath, string command, IBuildPropertyProvider propertyProvider)
         {
             _repositoryPath = repositoryPath;
-            _targetFile = targetFile;
+            _command = command;
             _propertyProvider = propertyProvider;
         }
 
@@ -29,7 +28,9 @@ namespace Kudu.Core.Deployment
 
             ILogger customLogger = context.Logger.Log("Running custom deployment...");
 
-            Executable exe = GetExecutable();
+            // Creates an executable pointing to cmd and the working directory being
+            // the repository root
+            var exe = new Executable("cmd", _repositoryPath);
             exe.EnvironmentVariables[SourcePath] = _repositoryPath;
             exe.EnvironmentVariables[TargetPath] = context.OutputPath;
 
@@ -38,6 +39,9 @@ namespace Kudu.Core.Deployment
             {
                 exe.EnvironmentVariables[property.Key] = property.Value;
             }
+
+            // Set the path so we can add more variables
+            exe.EnvironmentVariables["PATH"] = System.Environment.GetEnvironmentVariable("PATH");
 
             // Add the msbuild path and git path to the %PATH% so more tools are available
             var toolsPaths = new[] {
@@ -49,7 +53,7 @@ namespace Kudu.Core.Deployment
 
             try
             {
-                string output = exe.ExecuteWithConsoleOutput(context.Tracer, String.Empty).Item1;
+                string output = exe.ExecuteWithConsoleOutput(context.Tracer, "/c " + _command, String.Empty).Item1;
 
                 customLogger.Log(output);
 
@@ -70,27 +74,6 @@ namespace Kudu.Core.Deployment
             }
 
             return tcs.Task;
-        }
-
-        public static bool TryGetCustomDeploymentFile(string repositoryRoot, out string customDeploymentFile)
-        {
-            string targetFile = Path.Combine(repositoryRoot, DeployCmd);
-            customDeploymentFile = null;
-
-            if (File.Exists(targetFile))
-            {
-                customDeploymentFile = targetFile;
-                return true;
-            }
-
-            return false;
-        }
-
-        private Executable GetExecutable()
-        {
-            // Creates an executable pointing to Deploy.cmd and the working directory being
-            // the repository root
-            return new Executable(_targetFile, _repositoryPath);
         }
     }
 }

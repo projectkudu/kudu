@@ -82,11 +82,11 @@ namespace Kudu.Core.Infrastructure
                 }
                 else
                 {
-                    var kvp = value.Split('=');
-                    if (kvp.Length == 2)
+                    int index = value.IndexOf('=');
+                    if (index != -1)
                     {
-                        var key = kvp[0];
-                        var keyValue = kvp[1];
+                        var key = value.Substring(0, index);
+                        var keyValue = value.Substring(index + 1);
 
                         if (String.IsNullOrEmpty(key))
                         {

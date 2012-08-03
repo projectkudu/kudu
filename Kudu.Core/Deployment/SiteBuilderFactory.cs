@@ -22,15 +22,13 @@ namespace Kudu.Core.Deployment
         public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger)
         {
             string repositoryRoot = _environment.DeploymentRepositoryPath;
+            var configuration = new DeploymentConfiguration(repositoryRoot);
 
             // If there's a custom deployment file then let that take over.
-            string customDeploymentFile;
-            if (CustomBuilder.TryGetCustomDeploymentFile(repositoryRoot, out customDeploymentFile))
+            if (!String.IsNullOrEmpty(configuration.Command))
             {
-                return new CustomBuilder(repositoryRoot, customDeploymentFile, _propertyProvider);
+                return new CustomBuilder(repositoryRoot, configuration.Command, _propertyProvider);
             }
-
-            var configuration = new DeploymentConfiguration(repositoryRoot);
 
             // If the repository has an explicit pointer to a project path to be deployed
             // then use it.

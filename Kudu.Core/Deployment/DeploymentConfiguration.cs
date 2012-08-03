@@ -29,5 +29,19 @@ namespace Kudu.Core.Deployment
                 return Path.GetFullPath(Path.Combine(_path, projectPath.TrimStart('/', '\\')));
             }
         }
+
+        public string Command
+        {
+            get
+            {
+                string command = _iniFile.GetSectionValue("config", "command");
+                if (String.IsNullOrEmpty(command))
+                {
+                    return null;
+                }
+
+                return command;
+            }
+        }
     }
 }

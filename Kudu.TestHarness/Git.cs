@@ -36,10 +36,12 @@ namespace Kudu.TestHarness
             return stdErr;
         }
 
-        public static void Init(string repositoryPath)
+        public static TestRepository Init(string repositoryPath)
         {
             Executable gitExe = GetGitExe(repositoryPath);
             gitExe.Execute("init");
+
+            return new TestRepository(repositoryPath);
         }
 
         public static void Revert(string repositoryPath, string commit = "HEAD")
