@@ -27,7 +27,7 @@ namespace Kudu.Core.Deployment
             // If there's a custom deployment file then let that take over.
             if (!String.IsNullOrEmpty(configuration.Command))
             {
-                return new CustomBuilder(repositoryRoot, configuration.Command, _propertyProvider);
+                return new CustomBuilder(repositoryRoot, _environment.TempPath, configuration.Command, _propertyProvider);
             }
 
             // If the repository has an explicit pointer to a project path to be deployed
@@ -86,11 +86,11 @@ namespace Kudu.Core.Deployment
                                       solution.Path);
             }
 
-            return new WebSiteBuilder(_propertyProvider, 
-                                      repositoryRoot, 
-                                      project.AbsolutePath, 
-                                      _environment.TempPath, 
-                                      _environment.NuGetCachePath, 
+            return new WebSiteBuilder(_propertyProvider,
+                                      repositoryRoot,
+                                      project.AbsolutePath,
+                                      _environment.TempPath,
+                                      _environment.NuGetCachePath,
                                       solution.Path);
         }
 
@@ -134,11 +134,11 @@ namespace Kudu.Core.Deployment
                 else if (solutions.Count == 1)
                 {
                     // Unambiguously pick the root
-                    return new WebSiteBuilder(_propertyProvider, 
-                                              repositoryRoot, 
-                                              targetPath, 
-                                              _environment.TempPath, 
-                                              _environment.NuGetCachePath, 
+                    return new WebSiteBuilder(_propertyProvider,
+                                              repositoryRoot,
+                                              targetPath,
+                                              _environment.TempPath,
+                                              _environment.NuGetCachePath,
                                               solutions[0].Path);
                 }
             }
@@ -160,8 +160,8 @@ namespace Kudu.Core.Deployment
         {
             if (!DeploymentHelper.IsDeployableProject(targetPath))
             {
-                throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, 
-                                                                  Resources.Error_ProjectNotDeployable, 
+                throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,
+                                                                  Resources.Error_ProjectNotDeployable,
                                                                   targetPath));
             }
             else if (File.Exists(targetPath))

@@ -10,14 +10,17 @@ namespace Kudu.Core.Deployment
     {
         private readonly string _command;
         private readonly string _repositoryPath;
+        private readonly string _tempPath;
         private readonly IBuildPropertyProvider _propertyProvider;
 
         private const string SourcePath = "SOURCE";
         private const string TargetPath = "TARGET";
+        private const string BuildTempPath = "BUILDTEMP";
 
-        public CustomBuilder(string repositoryPath, string command, IBuildPropertyProvider propertyProvider)
+        public CustomBuilder(string repositoryPath, string tempPath, string command, IBuildPropertyProvider propertyProvider)
         {
             _repositoryPath = repositoryPath;
+            _tempPath = tempPath;
             _command = command;
             _propertyProvider = propertyProvider;
         }
@@ -26,13 +29,18 @@ namespace Kudu.Core.Deployment
         {
             var tcs = new TaskCompletionSource<object>();
 
-            ILogger customLogger = context.Logger.Log("Running custom deployment...");
+            ILogger customLogger = context.Logger.Log("Running custom deployment command...");
 
             // Creates an executable pointing to cmd and the working directory being
             // the repository root
             var exe = new Executable("cmd", _repositoryPath);
             exe.EnvironmentVariables[SourcePath] = _repositoryPath;
             exe.EnvironmentVariables[TargetPath] = context.OutputPath;
+
+            // Create a directory for the script output temporary artifacts
+            string buildTempPath = Path.Combine(_tempPath, Guid.NewGuid().ToString());
+            FileSystemHelpers.EnsureDirectory(buildTempPath);
+            exe.EnvironmentVariables[BuildTempPath] = buildTempPath;
 
             // Populate the enviornment with the build propeties
             foreach (var property in _propertyProvider.GetProperties())
@@ -71,6 +79,11 @@ namespace Kudu.Core.Deployment
                 customLogger.Log(ex);
 
                 tcs.SetException(ex);
+            }
+            finally
+            {
+                // Clean the temp folder up
+                FileSystemHelpers.DeleteDirectorySafe(buildTempPath);
             }
 
             return tcs.Task;
