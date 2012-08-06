@@ -36,6 +36,7 @@ namespace Kudu.Core.Deployment
             var exe = new Executable("cmd", _repositoryPath);
             exe.EnvironmentVariables[SourcePath] = _repositoryPath;
             exe.EnvironmentVariables[TargetPath] = context.OutputPath;
+            exe.EnvironmentVariables[WellKnownEnvironmentVariables.NuGetPackageRestoreKey] = "true";
 
             // Create a directory for the script output temporary artifacts
             string buildTempPath = Path.Combine(_tempPath, Guid.NewGuid().ToString());

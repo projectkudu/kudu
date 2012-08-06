@@ -9,7 +9,6 @@ namespace Kudu.Core.Deployment
     public abstract class MsBuildSiteBuilder : ISiteBuilder
     {
         private const string NuGetCachePathKey = "NuGetCachePath";
-        private const string NuGetPackageRestoreKey = "EnableNuGetPackageRestore";
 
         private readonly Executable _msbuildExe;
         private readonly IBuildPropertyProvider _propertyProvider;
@@ -24,7 +23,7 @@ namespace Kudu.Core.Deployment
             // _msbuildExe.EnvironmentVariables[NuGetCachePathKey] = nugetCachePath;
 
             // NuGet.exe 1.8 will require an environment variable to make package restore work
-            _msbuildExe.EnvironmentVariables[NuGetPackageRestoreKey] = "true";
+            _msbuildExe.EnvironmentVariables[WellKnownEnvironmentVariables.NuGetPackageRestoreKey] = "true";
 
             _tempPath = tempPath;
         }
