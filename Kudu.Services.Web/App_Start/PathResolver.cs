@@ -16,7 +16,12 @@ namespace Kudu.Services.Web
             string path = HostingEnvironment.MapPath(Constants.MappedDevSite);
             if (!Directory.Exists(path))
             {
-                return null;
+                // Temporary workaround until MapPath("/_devapp") is fixed
+                path = Path.Combine(ResolveRootPath(), @"dev_wwwroot");
+                if (!Directory.Exists(path))
+                {
+                    return null;
+                }
             }
             return Path.GetFullPath(path);
         }
