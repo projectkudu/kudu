@@ -38,8 +38,9 @@ namespace Kudu.Services.Web.Tracing
                 {
                     attribs["h_" + key] = httpContext.Request.Headers[key];
                 }
-                
-                if (httpContext.Request.RawUrl.Contains(".git"))
+
+                if (httpContext.Request.RawUrl.Contains(".git") ||
+                    httpContext.Request.RawUrl.EndsWith("/deploy", StringComparison.OrdinalIgnoreCase))
                 {
                     // Mark git requests specially
                     attribs.Add("git", "true");
@@ -62,7 +63,7 @@ namespace Kudu.Services.Web.Tracing
 
                     tracer.TraceError(app.Server.GetLastError());
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     Debug.WriteLine(ex.Message);
                 }

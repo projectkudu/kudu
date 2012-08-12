@@ -1,39 +1,30 @@
 ﻿using System;
+using System.Linq;
 using System.Configuration;
 
 namespace Kudu.Services.Web
 {
     public static class AppSettings
     {
-        private const string EnableAuthenticationKey = "kudu.enableAuthentication";
-        private const string EnableTraceKey = "kudu.enableTrace";
-        private const string EnableSettingsKey = "kudu.enableSettings";
+        private const string TraceLevelKey = "kudu.traceLevel";
         private const string BlockLocalRequests = "kudu.blockLocalRequests";
         private const string NuGetCachePathKey = "nuget.cache";
         private const string GitUsernameKey = "git.username";
         private const string GitEmailKey = "git.email";
 
-        public static bool AuthenticationEnabled
-        {
-            get
-            {
-                return GetValue<bool>(EnableAuthenticationKey);
-            }
-        }
-
         public static bool TraceEnabled
         {
             get
             {
-                return GetValue<bool>(EnableTraceKey);
+                return TraceLevel > 0;
             }
         }
 
-        public static bool SettingsEnabled
+        public static int TraceLevel
         {
             get
             {
-                return GetValue<bool>(EnableSettingsKey);
+                return GetValue<int>(TraceLevelKey);
             }
         }
 
@@ -71,7 +62,13 @@ namespace Kudu.Services.Web
 
         public static T GetValue<T>(string key)
         {
-            string value = ConfigurationManager.AppSettings[key];
+            string value = Environment.GetEnvironmentVariable(key);
+
+            if (String.IsNullOrEmpty(value))
+            {
+                value = ConfigurationManager.AppSettings[key];
+            }
+
             try
             {
                 return (T)Convert.ChangeType(value, typeof(T));

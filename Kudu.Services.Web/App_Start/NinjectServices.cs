@@ -74,7 +74,8 @@ namespace Kudu.Services.Web.App_Start
             var gitConfiguration = new RepositoryConfiguration
             {
                 Username = AppSettings.GitUsername,
-                Email = AppSettings.GitEmail
+                Email = AppSettings.GitEmail,
+                TraceLevel = AppSettings.TraceLevel
             };
 
             IEnvironment environment = GetEnvironment();
@@ -168,7 +169,7 @@ namespace Kudu.Services.Web.App_Start
 
             RegisterRoutes(kernel, RouteTable.Routes);
         }
-        
+
         public static void RegisterRoutes(IKernel kernel, RouteCollection routes)
         {
             var configuration = kernel.Get<IServerConfiguration>();

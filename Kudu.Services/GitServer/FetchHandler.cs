@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using Kudu.Contracts.Infrastructure;
@@ -59,6 +60,11 @@ namespace Kudu.Services.GitServer
                     return;
                 }
 
+                if (_configuration.TraceLevel > 1)
+                {
+                    TracePayload(json);
+                }
+
                 RepositoryInfo repositoryInfo = null;
 
                 try
@@ -101,6 +107,16 @@ namespace Kudu.Services.GitServer
                     context.ApplicationInstance.CompleteRequest();
                 });
             }
+        }
+
+        private void TracePayload(string json)
+        {
+            var attribs = new Dictionary<string, string>
+            {
+                { "json", json }
+            };
+
+            _tracer.Trace("payload", attribs);
         }
 
         private RepositoryInfo GetRepositoryInfo(HttpRequest request, string json)
