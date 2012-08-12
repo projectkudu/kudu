@@ -13,9 +13,9 @@ namespace Kudu.Core.Deployment
         private readonly string _tempPath;
         private readonly IBuildPropertyProvider _propertyProvider;
 
-        private const string SourcePath = "SOURCE";
-        private const string TargetPath = "TARGET";
-        private const string BuildTempPath = "BUILDTEMP";
+        private const string SourcePath = "DEPLOYMENT_SOURCE";
+        private const string TargetPath = "DEPLOYMENT_TARGET";
+        private const string BuildTempPath = "DEPLOYMENT_TEMP";
 
         public CustomBuilder(string repositoryPath, string tempPath, string command, IBuildPropertyProvider propertyProvider)
         {

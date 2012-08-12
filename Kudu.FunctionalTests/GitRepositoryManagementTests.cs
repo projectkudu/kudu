@@ -61,7 +61,7 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        [Fact]
+        [Fact(Skip = "Dangerous")]
         public void PushSimpleWapWithInlineCommand()
         {
             // Arrange
@@ -73,7 +73,7 @@ namespace Kudu.FunctionalTests
             {
                 repo.WriteFile(".deployment", @"
 [config]
-command = msbuild SimpleWebApplication/SimpleWebApplication.csproj /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""%TARGET%"";AutoParameterizationWebConfigConnectionStrings=false;Configuration=Debug;SolutionDir=""%SOURCE%""");
+command = msbuild SimpleWebApplication/SimpleWebApplication.csproj /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""%DEPLOYMENT_TARGET%"";AutoParameterizationWebConfigConnectionStrings=false;Configuration=Debug;SolutionDir=""%DEPLOYMENT_SOURCE%""");
                 Git.Commit(repo.PhysicalPath, "Custom build command added");
 
                 ApplicationManager.Run(appName, appManager =>
@@ -90,7 +90,7 @@ command = msbuild SimpleWebApplication/SimpleWebApplication.csproj /t:pipelinePr
             }
         }
 
-        [Fact]
+        [Fact(Skip = "Dangerous")]
         public void PushSimpleWapWithCustomDeploymentScript()
         {
             // Arrange
@@ -751,7 +751,7 @@ command = deploy.cmd");
                 });
             }
         }
-        
+
         [Fact]
         public void CustomNodeScript()
         {
@@ -784,22 +784,22 @@ command = deploy.cmd");
       watchedFiles=""*.js;iisnode.yml;node_modules\*;views\*.jade;views\*.ejb;routes\*.js"" />
    </system.webServer>
  </configuration>";
-            
+
             var path = Git.GetRepositoryPath(repositoryName);
 
             using (var repo = Git.Init(path))
             {
                 repo.WriteFile("build.js", String.Format(@"var fs = require('fs');
 console.log('Creating server.js on the fly!');
-console.log('target is ' + process.env.TARGET);
-fs.writeFileSync(process.env.TARGET + '\server.js', ""var http = require('http'); http.createServer(function (req, res) {{ res.writeHead(200, {{'Content-Type': 'text/html'}}); res.end('Hello, world! [helloworld sample; iisnode version is ' + process.env.IISNODE_VERSION + ', node version is ' + process.version + ']'); }}).listen(process.env.PORT);"");
+console.log('target is ' + process.env.DEPLOYMENT_TARGET);
+fs.writeFileSync(process.env.DEPLOYMENT_TARGET + '\server.js', ""var http = require('http'); http.createServer(function (req, res) {{ res.writeHead(200, {{'Content-Type': 'text/html'}}); res.end('Hello, world! [helloworld sample; iisnode version is ' + process.env.IISNODE_VERSION + ', node version is ' + process.version + ']'); }}).listen(process.env.PORT);"");
 console.log('Done!');", webConfig));
                 repo.WriteFile(".deployment", @"
 [config]
 command = node build.js
 ");
                 repo.WriteFile("web.config", webConfig);
-                
+
                 Git.Commit(repo.PhysicalPath, "Added build.js");
 
                 ApplicationManager.Run(appName, appManager =>
