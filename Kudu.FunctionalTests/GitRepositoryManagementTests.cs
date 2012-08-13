@@ -702,7 +702,7 @@ command = deploy.cmd");
             }
         }
 
-        [Fact(Skip = "NPM issue")]
+        [Fact]
         public void NpmSiteInstallsPackages()
         {
             string repositoryName = "NpmSiteInstallsPackages";
@@ -726,7 +726,7 @@ command = deploy.cmd");
             }
         }
 
-        [Fact(Skip = "NPM issue")]
+        [Fact]
         public void FailedNpmFailsDeployment()
         {
             string repositoryName = "FailedNpmFailsDeployment";
