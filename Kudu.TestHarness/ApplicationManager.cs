@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using Kudu.Client;
 using Kudu.Client.Deployment;
 using Kudu.Client.Editor;
 using Kudu.Client.SourceControl;
@@ -47,6 +48,12 @@ namespace Kudu.TestHarness
         }
 
         public RemoteProjectSystem ProjectSystem
+        {
+            get;
+            private set;
+        }
+
+        public RemoteEnvironmentManager EnvironmentManager
         {
             get;
             private set;
@@ -118,7 +125,8 @@ namespace Kudu.TestHarness
                 ServiceUrl = site.ServiceUrl,
                 DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "deployments"),
                 ProjectSystem = new RemoteProjectSystem(site.ServiceUrl + "live/files"),
-                SettingsManager = new RemoteDeploymentSettingsManager(site.ServiceUrl + "settings")
+                SettingsManager = new RemoteDeploymentSettingsManager(site.ServiceUrl + "settings"),
+                EnvironmentManager = new RemoteEnvironmentManager(site.ServiceUrl + "environment")
             };
         }
 
