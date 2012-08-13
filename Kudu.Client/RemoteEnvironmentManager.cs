@@ -16,10 +16,5 @@ namespace Kudu.Client
             : base(serviceUrl, handler)
         {
         }
-
-        public Task Delete()
-        {
-            return _client.DeleteSafeAsync(String.Empty);
-        }
     }
 }

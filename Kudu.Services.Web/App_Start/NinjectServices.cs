@@ -194,6 +194,7 @@ namespace Kudu.Services.Web.App_Start
             // Live Scm (deployment repository)
             routes.MapHttpRoute("scm-info", "live/scm/info", new { controller = "LiveScm", action = "GetRepositoryInfo" });
             routes.MapHttpRoute("scm-clean", "live/scm/clean", new { controller = "LiveScm", action = "Clean" });
+            routes.MapHttpRoute("scm-delete", "live/scm", new { controller = "LiveScm", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
 
             // Live Files
             routes.MapHttpRoute("all-files", "live/files", new { controller = "Files", action = "GetFiles" });
@@ -213,9 +214,7 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("one-deployment-log-details", "deployments/{id}/log/{logId}", new { controller = "Deployment", action = "GetLogEntryDetails" });
 
             // Environment
-            // REVIEW: This should the root but we have that lovely Default.aspx page
             routes.MapHttpRoute("get-env", "environment", new { controller = "Environment", action = "Get" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("delete-env", "environment", new { controller = "Environment", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
 
             // Settings
             routes.MapHttpRoute("set-setting", "settings", new { controller = "Settings", action = "Set" }, new { verb = new HttpMethodConstraint("POST") });

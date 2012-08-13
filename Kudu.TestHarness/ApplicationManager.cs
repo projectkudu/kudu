@@ -53,7 +53,7 @@ namespace Kudu.TestHarness
             private set;
         }
 
-        public RemoteEnvironmentManager EnvironmentManager
+        public RemoteRepositoryManager RepositoryManager
         {
             get;
             private set;
@@ -126,7 +126,7 @@ namespace Kudu.TestHarness
                 DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "deployments"),
                 ProjectSystem = new RemoteProjectSystem(site.ServiceUrl + "live/files"),
                 SettingsManager = new RemoteDeploymentSettingsManager(site.ServiceUrl + "settings"),
-                EnvironmentManager = new RemoteEnvironmentManager(site.ServiceUrl + "environment")
+                RepositoryManager = repositoryManager
             };
         }
 

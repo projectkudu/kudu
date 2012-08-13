@@ -170,7 +170,7 @@ namespace Kudu.FunctionalTests
                     Assert.Equal(DeployStatus.Success, results[0].Status);
                     Assert.NotNull(results[0].LastSuccessEndTime);
 
-                    appManager.EnvironmentManager.Delete().Wait();
+                    appManager.RepositoryManager.Delete().Wait();
                     results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     Assert.Equal(0, results.Count);
