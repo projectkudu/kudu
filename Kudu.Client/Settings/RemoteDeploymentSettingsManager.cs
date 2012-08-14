@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Infrastructure;
@@ -14,34 +16,39 @@ namespace Kudu.Client.Deployment
         {
         }
 
+        public RemoteDeploymentSettingsManager(string serviceUrl, HttpClientHandler handler)
+            : base(serviceUrl, handler)
+        {
+        }
+
         public Task SetValue(string key, string value)
         {
             var values = HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("key", key), new KeyValuePair<string, string>("value", value));
-            return _client.PostAsync("/settings", values).Then(response => response.EnsureSuccessStatusCode());
+            return _client.PostAsync(String.Empty, values).Then(response => response.EnsureSuccessStatusCode());
         }
 
         public Task<NameValueCollection> GetValues()
         {
-            return _client.GetJsonAsync<JObject>("/settings").Then(obj =>
+            return _client.GetJsonAsync<JArray>(String.Empty).Then(obj =>
             {
                 var nvc = new NameValueCollection();
-                foreach (var kvp in obj)
+                foreach (JObject value in obj)
                 {
-                    nvc[kvp.Key] = kvp.Value.Value<string>();
+                    nvc[value["Key"].Value<string>()] = value["Value"].Value<string>();
                 }
 
                 return nvc;
-            }); 
-         }
+            });
+        }
 
         public Task<string> GetValue(string key)
         {
-            return _client.GetJsonAsync<string>("/settings/" + key);
+            return _client.GetJsonAsync<string>(key);
         }
 
         public Task Delete(string key)
         {
-            return _client.DeleteAsync("/settings/" + key).Then(response => response.EnsureSuccessStatusCode());
+            return _client.DeleteSafeAsync(key);
         }
     }
 }

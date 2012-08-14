@@ -87,6 +87,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="GitDeploymentTests.cs" />
     <Compile Include="SelectNodeVersionFacts.cs" />
+    <Compile Include="SettingsApiFacts.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="GitDeploymentTests.csv" />
