@@ -88,7 +88,7 @@ namespace Kudu.Services.GitServer
                 {
                     _tracer.Trace("Expected to fetch {0} but got {1}.", targetBranch, repositoryInfo.Branch);
 
-                    context.Response.StatusCode = 200;
+                    context.Response.StatusCode = 202;
                     context.Response.Write(Resources.NothingToUpdate);
                     context.ApplicationInstance.CompleteRequest();
                     return;
