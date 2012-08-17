@@ -28,7 +28,7 @@ namespace Kudu.Web.Infrastructure
 
         public static RemoteDeploymentSettingsManager GetSettingsManager(this IApplication application, ICredentials credentials)
         {
-            var deploymentSettingsManager = new RemoteDeploymentSettingsManager(application.ServiceUrl);
+            var deploymentSettingsManager = new RemoteDeploymentSettingsManager(application.ServiceUrl + "/settings");
             deploymentSettingsManager.Credentials = credentials;
             return deploymentSettingsManager;
         }

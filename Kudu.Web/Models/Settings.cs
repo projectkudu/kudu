@@ -15,5 +15,11 @@ namespace Kudu.Web.Models
             get;
             set;
         }
+
+        public NameValueCollection KuduSettings
+        {
+            get;
+            set;
+        }
     }
 }

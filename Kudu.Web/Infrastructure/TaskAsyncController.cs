@@ -26,5 +26,12 @@ namespace Mvc.Async
             tcs.SetResult(HttpNotFound());
             return tcs.Task;
         }
+
+        protected Task<ActionResult> RedirectToActionAsync(string actionName, object routeValues)
+        {
+            var tcs = new TaskCompletionSource<ActionResult>();
+            tcs.SetResult(RedirectToAction(actionName, routeValues));
+            return tcs.Task;
+        }
     }
 }

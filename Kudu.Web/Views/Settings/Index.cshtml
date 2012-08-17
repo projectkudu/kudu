@@ -24,93 +24,114 @@
     </style>
 }
 
-<div class="page-header">
+@if(Model.AppSettings != null) 
+{
+    <div class="page-header">
     <h3>Application Settings</h3>
-</div>
-
-@if (Model.AppSettings.Count > 0)
-{
-<table id="app-settings" class="table">
-    <tr>
-        <th>Key</th>
-        <th>Value</th>
-        <th></th>
-    </tr>
-    @foreach (string key in Model.AppSettings)
-    {
-        <tr>
-            <td>@key</td>
-            <td>@Model.AppSettings[key]</td>
-            <td class="actions">
-                @using (Html.BeginForm("delete-app-setting", "settings", new { ViewBag.slug }))
-                {
-                    @Html.Hidden("Key", key)
-                    <input type="submit" class="btn-danger" value="Delete" />
-                }
-            </td>
-        </tr>
-    }
+    </div>
     
-</table>
-}
-else
-{ 
-    <p>
-        No app settings configured
-    </p>
-}
-
-
-@using (Html.BeginForm("new-app-setting", "settings", new { ViewBag.slug }, FormMethod.Post, new { @class = "well form-inline" }))
-{    
-    @Html.TextBox("Key", ViewData["Key"], new { placeholder = "name" })
-    @Html.ValidationMessage("Key", "*")   
-    @Html.TextBox("Value", ViewData["Value"], new { placeholder = "value" })
-    @Html.ValidationMessage("Value", "*")
-    <input type="submit" class="btn-primary" value="Add" />
-}
-
-<div class="page-header">
-    <h3>Connection Strings (.NET only)</h3>
-</div>
-
-@if (Model.ConnectionStrings.Count > 0)
-{
-<table id="connection-strings" class="table"> 
-    <tr>
-        <th>Name</th>
-        <th>Connection String</th>
-        <th></th>
-    </tr>
-    @foreach (string name in Model.ConnectionStrings)
+    if (Model.AppSettings.Count > 0)
     {
+    <table id="app-settings" class="table">
         <tr>
-            <td>@name</td>
-            <td>@Model.ConnectionStrings[name]</td>
-            <td class="actions">
-                @using (Html.BeginForm("delete-connection-string", "settings", new { ViewBag.slug }))
-                {
-                    @Html.Hidden("Name", name)
-                    <input type="submit" class="btn-danger" value="Delete" />
-                }
-            </td>
+            <th>Key</th>
+            <th>Value</th>
+            <th></th>
         </tr>
-    }
+        @foreach (string key in Model.AppSettings)
+        {
+            <tr>
+                <td>@key</td>
+                <td>@Model.AppSettings[key]</td>
+                <td class="actions">
+                    @using (Html.BeginForm("delete-app-setting", "settings", new { ViewBag.slug }))
+                    {
+                        @Html.Hidden("Key", key)
+                        <input type="submit" class="btn-danger" value="Delete" />
+                    }
+                </td>
+            </tr>
+        }
     
-</table>
-}
-else
-{ 
-    <p>
-        No connection strings configured
-    </p>
+    </table>
+    }
+    else
+    { 
+        <p>
+            No app settings configured
+        </p>
+    }
+
+    using (Html.BeginForm("new-app-setting", "settings", new { ViewBag.slug }, FormMethod.Post, new { @class = "well form-inline" }))
+    {    
+        @Html.TextBox("Key", ViewData["Key"], new { placeholder = "name" })
+        @Html.ValidationMessage("Key", "*")   
+        @Html.TextBox("Value", ViewData["Value"], new { placeholder = "value" })
+        @Html.ValidationMessage("Value", "*")
+        <input type="submit" class="btn-primary" value="Add" />
+    }
 }
 
-@using (Html.BeginForm("new-connection-string", "settings", new { ViewBag.slug }, FormMethod.Post, new { @class = "well form-inline" }))
+@if(Model.ConnectionStrings != null)
 {
-    @Html.TextBox("Name", ViewData["Name"], new { placeholder = "name" })
-    @Html.ValidationMessage("Name", "*")
-    @Html.TextBox("ConnectionString", ViewData["ConnectionString"], new { placeholder = "connection string" })
-    @Html.ValidationMessage("ConnectionString", "*")
-    <input type="submit" class="btn-primary" value="Add" />    
+    <div class="page-header">
+        <h3>Connection Strings (.NET only)</h3>
+    </div>
+
+    if (Model.ConnectionStrings.Count > 0)
+    {
+    <table id="connection-strings" class="table"> 
+        <tr>
+            <th>Name</th>
+            <th>Connection String</th>
+            <th></th>
+        </tr>
+        @foreach (string name in Model.ConnectionStrings)
+        {
+            <tr>
+                <td>@name</td>
+                <td>@Model.ConnectionStrings[name]</td>
+                <td class="actions">
+                    @using (Html.BeginForm("delete-connection-string", "settings", new { ViewBag.slug }))
+                    {
+                        @Html.Hidden("Name", name)
+                        <input type="submit" class="btn-danger" value="Delete" />
+                    }
+                </td>
+            </tr>
+        }
+    
+    </table>
+    }
+    else
+    { 
+        <p>
+            No connection strings configured
+        </p>
+    }
+
+    using (Html.BeginForm("new-connection-string", "settings", new { ViewBag.slug }, FormMethod.Post, new { @class = "well form-inline" }))
+    {
+        @Html.TextBox("Name", ViewData["Name"], new { placeholder = "name" })
+        @Html.ValidationMessage("Name", "*")
+        @Html.TextBox("ConnectionString", ViewData["ConnectionString"], new { placeholder = "connection string" })
+        @Html.ValidationMessage("ConnectionString", "*")
+        <input type="submit" class="btn-primary" value="Add" />    
+    }
 }
+
+@if(Model.KuduSettings != null)
+{
+    <div class="page-header">
+        <h3>Git Branch</h3>        
+    </div>
+
+    using (Html.BeginForm("new-branch", "settings", new { ViewBag.slug }, FormMethod.Post, new { @class = "well form-inline" }))
+    {
+        <p class="help-block">The branch to deploy.</p>
+        @Html.TextBox("Branch", ViewData["Branch"] ?? Model.KuduSettings["Branch"] ?? "master", new { placeholder = "branch name" })
+        @Html.ValidationMessage("Branch", "*")
+        <input type="submit" class="btn-primary" value="Save" />    
+    }
+}
+

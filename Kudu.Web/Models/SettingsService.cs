@@ -1,6 +1,8 @@
 ﻿using System.Net;
+using System.Threading.Tasks;
 using Kudu.Client.Deployment;
 using Kudu.Client.Infrastructure;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Web.Infrastructure;
 
 namespace Kudu.Web.Models
@@ -16,53 +18,45 @@ namespace Kudu.Web.Models
             _credentialProvider = credentialProvider;
         }
 
-        public ISettings GetSettings(string siteName)
+        public Task<ISettings> GetSettings(string siteName)
         {
             IApplication application = _applicationService.GetApplication(siteName);
             ICredentials credentials = _credentialProvider.GetCredentials();
             RemoteDeploymentSettingsManager settingsManager = application.GetSettingsManager(credentials);
 
-            return new Settings
+            return settingsManager.GetValues().Then(values => (ISettings)new Settings
             {
-                AppSettings = settingsManager.GetValues().Result
-            };
+                KuduSettings = values
+            });
         }
 
         public void SetConnectionString(string siteName, string name, string connectionString)
         {
-            IApplication application = _applicationService.GetApplication(siteName);
-            ICredentials credentials = _credentialProvider.GetCredentials();
-            RemoteDeploymentSettingsManager settingsManager = application.GetSettingsManager(credentials);
-
-            // settingsManager.SetConnectionString(name, connectionString);
+            // Not supported
         }
 
         public void RemoveConnectionString(string siteName, string name)
         {
-            IApplication application = _applicationService.GetApplication(siteName);
-            ICredentials credentials = _credentialProvider.GetCredentials();
-            RemoteDeploymentSettingsManager settingsManager = application.GetSettingsManager(credentials);
-
-            // settingsManager.RemoveConnectionString(name);
+            // Not supported
         }
 
         public void RemoveAppSetting(string siteName, string key)
         {
-            IApplication application = _applicationService.GetApplication(siteName);
-            ICredentials credentials = _credentialProvider.GetCredentials();
-            RemoteDeploymentSettingsManager settingsManager = application.GetSettingsManager(credentials);
-
-            settingsManager.Delete(key);
+            // Not supported 
         }
 
         public void SetAppSetting(string siteName, string key, string value)
+        {
+            // Not supported
+        }
+
+        public Task SetKuduSetting(string siteName, string key, string value)
         {
             IApplication application = _applicationService.GetApplication(siteName);
             ICredentials credentials = _credentialProvider.GetCredentials();
             RemoteDeploymentSettingsManager settingsManager = application.GetSettingsManager(credentials);
 
-            settingsManager.SetValue(key, value);
+            return settingsManager.SetValue(key, value);
         }
-
     }
 }

@@ -1,14 +1,14 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{FA1EA7CE-E6A4-4E55-AD76-6B43572A9092}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.Core", "Kudu.Core\Kudu.Core.csproj", "{5320177C-725A-44BD-8FA6-F88D9725B46C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.Web", "Kudu.Web\Kudu.Web.csproj", "{B0265397-6FCD-4C67-8785-3272D8C1AD79}"
 	ProjectSection(ProjectDependencies) = postProject
 		{6295D938-63FD-4C26-AE00-B32776CC689E} = {6295D938-63FD-4C26-AE00-B32776CC689E}
 	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{FA1EA7CE-E6A4-4E55-AD76-6B43572A9092}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.Core.Test", "Kudu.Core.Test\Kudu.Core.Test.csproj", "{4ED64AAA-8F69-4FEE-9004-9060A9CB8111}"
 EndProject
