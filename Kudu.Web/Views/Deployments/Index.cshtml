@@ -75,7 +75,7 @@
                     <span class="label">@d.Status</span>
                 }
             </td>
-            <td>
+            <td style="width: 100px">
                 @if (d.Current)
                 {
                     <div class="icon-ok"></div>
@@ -94,7 +94,7 @@
 </div>
                 }
             </td>
-            <td>
+            <td style="width:60px">
                 <a href="@Url.Action("log", "deployments", new { slug = ViewBag.slug, id = d.Id })">View Log</a>
             </td>
             </tr>
