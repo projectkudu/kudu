@@ -83,22 +83,12 @@ namespace Kudu.Services.GitServer
                 string targetBranch = _settings.GetValue("branch") ?? "master";
 
                 _tracer.Trace("Attempting to fetch target branch {0}", targetBranch);
-
-                if (!targetBranch.Equals(repositoryInfo.Branch, StringComparison.OrdinalIgnoreCase))
-                {
-                    _tracer.Trace("Expected to fetch {0} but got {1}.", targetBranch, repositoryInfo.Branch);
-
-                    context.Response.StatusCode = 202;
-                    context.Response.Write(Resources.NothingToUpdate);
-                    context.ApplicationInstance.CompleteRequest();
-                    return;
-                }
-
+ 
                 _deploymentLock.LockOperation(() =>
                 {
                     _gitServer.Initialize(_configuration);
-                    _gitServer.SetReceiveInfo(repositoryInfo.OldRef, repositoryInfo.NewRef, repositoryInfo.Branch);
-                    _gitServer.FetchWithoutConflict(repositoryInfo.RepositoryUrl, "external", repositoryInfo.Branch);
+                    _gitServer.SetReceiveInfo(repositoryInfo.OldRef, repositoryInfo.NewRef, targetBranch);
+                    _gitServer.FetchWithoutConflict(repositoryInfo.RepositoryUrl, "external", targetBranch);
                     _deploymentManager.Deploy(repositoryInfo.Deployer);
                 },
                 () =>

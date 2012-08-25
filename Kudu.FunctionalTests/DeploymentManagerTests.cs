@@ -280,6 +280,40 @@ namespace Kudu.FunctionalTests
             });
         }
 
+        [Fact]
+        public void DeployingBranchThatExists()
+        {
+            string payload = @"{ ""oldRef"": ""0000000000000000000"", ""newRef"": ""ad21595c668f3de813463df17c04a3b23065fedc"", ""url"": ""https://github.com/KuduApps/RepoWithMultipleBranches.git"", ""deployer"" : ""me!"", branch: ""test"" }";
+            string appName = KuduUtils.GetRandomWebsiteName("DeployingBranchThatExists");
+
+            ApplicationManager.Run(appName, appManager =>
+            {
+                var handler = new HttpClientHandler
+                {
+                    Credentials = appManager.DeploymentManager.Credentials
+                };
+
+                var client = new HttpClient(handler)
+                {
+                    BaseAddress = new Uri(appManager.ServiceUrl),
+                    Timeout = TimeSpan.FromMinutes(5)
+                };
+
+                var post = new Dictionary<string, string>
+                {
+                    { "payload", payload }
+                };
+
+                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Wait();
+
+                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                Assert.Equal(1, results.Count);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
+                KuduAssert.VerifyUrl(appManager.SiteUrl, "Master branch");
+                Assert.Equal("me!", results[0].Deployer);
+            });
+        }
+
         private class FakeMessageHandler : DelegatingHandler
         {
             public Uri Url { get; set; }
