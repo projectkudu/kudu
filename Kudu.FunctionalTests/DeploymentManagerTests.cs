@@ -249,7 +249,7 @@ namespace Kudu.FunctionalTests
         public void PullApiTestGenericFormatCustomBranch()
         {
             string payload = @"{ ""oldRef"": ""0000000000000000000"", ""newRef"": ""ad21595c668f3de813463df17c04a3b23065fedc"", ""url"": ""https://github.com/KuduApps/RepoWithMultipleBranches.git"", ""deployer"" : ""me!"", branch: ""test"" }";
-            string appName = KuduUtils.GetRandomWebsiteName("PullApiTestGenericFormatCustomBranch");
+            string appName = KuduUtils.GetRandomWebsiteName("PullApiTestGenericCustomBranch");
 
             ApplicationManager.Run(appName, appManager =>
             {

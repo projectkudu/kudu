@@ -9,6 +9,9 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl.Git;
 using Newtonsoft.Json.Linq;
+using Kudu.Core;
+using Kudu.Core.Infrastructure;
+using System.IO;
 
 namespace Kudu.Services.GitServer
 {
@@ -20,13 +23,15 @@ namespace Kudu.Services.GitServer
         private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
         private readonly RepositoryConfiguration _configuration;
+        private readonly IEnvironment _environment;
 
         public FetchHandler(ITracer tracer,
                             IGitServer gitServer,
                             IDeploymentManager deploymentManager,
                             IDeploymentSettingsManager settings,
                             IOperationLock deploymentLock,
-                            RepositoryConfiguration configuration)
+                            RepositoryConfiguration configuration,
+                            IEnvironment environment)
         {
             _gitServer = gitServer;
             _deploymentManager = deploymentManager;
@@ -34,6 +39,7 @@ namespace Kudu.Services.GitServer
             _tracer = tracer;
             _deploymentLock = deploymentLock;
             _configuration = configuration;
+            _environment = environment;
         }
 
         public bool IsReusable
@@ -41,6 +47,14 @@ namespace Kudu.Services.GitServer
             get
             {
                 return false;
+            }
+        }
+
+        private string MarkerFilePath
+        {
+            get
+            {
+                return Path.Combine(_environment.DeploymentCachePath, "pending");
             }
         }
 
@@ -83,19 +97,64 @@ namespace Kudu.Services.GitServer
                 string targetBranch = _settings.GetValue("branch") ?? "master";
 
                 _tracer.Trace("Attempting to fetch target branch {0}", targetBranch);
- 
+
                 _deploymentLock.LockOperation(() =>
                 {
-                    _gitServer.Initialize(_configuration);
-                    _gitServer.SetReceiveInfo(repositoryInfo.OldRef, repositoryInfo.NewRef, targetBranch);
-                    _gitServer.FetchWithoutConflict(repositoryInfo.RepositoryUrl, "external", targetBranch);
-                    _deploymentManager.Deploy(repositoryInfo.Deployer);
+                    PerformDeployment(repositoryInfo, targetBranch);
                 },
                 () =>
                 {
+                    // Create a marker file that indicates if there's another deployment to pull
+                    // because there was a deployment in progress.
+                    using (_tracer.Step("Creating maker file"))
+                    {
+                        // REVIEW: This makes the assumption that the repository url is the same.
+                        // If it isn't the result would be buggy either way.
+                        CreateMarkerFile();
+                    }
+
                     context.Response.StatusCode = 409;
                     context.ApplicationInstance.CompleteRequest();
                 });
+            }
+        }
+
+        private void CreateMarkerFile()
+        {
+            File.WriteAllText(MarkerFilePath, String.Empty);
+        }
+
+        private bool MarkerFileExists()
+        {
+            return File.Exists(MarkerFilePath);
+        }
+
+        private void DeleteMarkerFile()
+        {
+            FileSystemHelpers.DeleteFileSafe(MarkerFilePath);
+        }
+
+        private void PerformDeployment(RepositoryInfo repositoryInfo, string targetBranch)
+        {
+            using (_tracer.Step("Performing fetch based deployment"))
+            {
+                _gitServer.Initialize(_configuration);
+                _gitServer.SetReceiveInfo(repositoryInfo.OldRef, repositoryInfo.NewRef, targetBranch);
+                _gitServer.FetchWithoutConflict(repositoryInfo.RepositoryUrl, "external", targetBranch);
+                _deploymentManager.Deploy(repositoryInfo.Deployer);
+
+                if (MarkerFileExists())
+                {
+                    using (_tracer.Step("Marker file exists"))
+                    {
+                        using (_tracer.Step("Deleting marker file"))
+                        {
+                            DeleteMarkerFile();
+                        }
+
+                        PerformDeployment(repositoryInfo, targetBranch);
+                    }
+                }
             }
         }
 
