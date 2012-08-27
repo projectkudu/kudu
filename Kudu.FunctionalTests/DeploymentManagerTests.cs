@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 using Kudu.Client.Deployment;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
@@ -307,6 +309,54 @@ namespace Kudu.FunctionalTests
                 client.PostAsync("deploy", new FormUrlEncodedContent(post)).Wait();
 
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                Assert.Equal(1, results.Count);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
+                KuduAssert.VerifyUrl(appManager.SiteUrl, "Master branch");
+                Assert.Equal("me!", results[0].Deployer);
+            });
+        }
+
+        [Fact]
+        public void PullApiTestConsecutivePushesGetQueued()
+        {
+            string payload = @"{ ""oldRef"": ""0000000000000000000"", ""newRef"": ""ad21595c668f3de813463df17c04a3b23065fedc"", ""url"": ""https://github.com/KuduApps/RepoWithMultipleBranches.git"", ""deployer"" : ""me!"", branch: ""test"" }";
+            string appName = KuduUtils.GetRandomWebsiteName("PullApiTestPushesGetQueued");
+
+            ApplicationManager.Run(appName, appManager =>
+            {
+                var handler = new HttpClientHandler
+                {
+                    Credentials = appManager.DeploymentManager.Credentials
+                };
+
+                var client = new HttpClient(handler)
+                {
+                    BaseAddress = new Uri(appManager.ServiceUrl),
+                    Timeout = TimeSpan.FromMinutes(5)
+                };
+
+                var post = new Dictionary<string, string>
+                {
+                    { "payload", payload }
+                };
+
+                Task<HttpResponseMessage> responseTask = null;
+
+                // Do another post in parallel a second after
+                new Thread(() =>
+                {
+                    Thread.Sleep(1000);
+                    
+                    // Ideally we'd push something else to github but at least this exercises the code path
+                    responseTask = client.PostAsync("deploy", new FormUrlEncodedContent(post));
+
+                }).Start();
+
+                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Wait();
+
+                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                Assert.NotNull(responseTask);
+                Assert.Equal(HttpStatusCode.Conflict, responseTask.Result.StatusCode);
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "Master branch");

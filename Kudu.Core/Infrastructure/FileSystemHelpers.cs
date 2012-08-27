@@ -48,22 +48,25 @@ namespace Kudu.Core.Infrastructure
             return path;
         }
 
-        public static void DeleteFileSafe(string path)
+        public static bool DeleteFileSafe(string path)
         {
-            DeleteFileSafe(new FileSystem(), path);
+            return DeleteFileSafe(new FileSystem(), path);
         }
 
-        internal static void DeleteFileSafe(IFileSystem fileSystem, string path)
+        internal static bool DeleteFileSafe(IFileSystem fileSystem, string path)
         {
             try
             {
                 if (fileSystem.File.Exists(path))
                 {
                     fileSystem.File.Delete(path);
+                    return true;
                 }
             }
             catch (UnauthorizedAccessException) { }
             catch (FileNotFoundException) { }
+
+            return false;
         }
 
         private static void DeleteFileSystemInfo(FileSystemInfoBase fileSystemInfo)
