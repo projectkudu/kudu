@@ -55,6 +55,9 @@
     <Compile Include="..\Common\Constants.cs">
       <Link>Constants.cs</Link>
     </Compile>
+    <Compile Include="..\Kudu.Core\Infrastructure\CommandLineException.cs">
+      <Link>CommandLineException.cs</Link>
+    </Compile>
     <Compile Include="..\Kudu.Core\Infrastructure\DisposableAction.cs">
       <Link>DisposableAction.cs</Link>
     </Compile>

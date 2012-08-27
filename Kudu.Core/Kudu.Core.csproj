@@ -68,6 +68,7 @@
     <Compile Include="Deployment\NpmExecutable.cs" />
     <Compile Include="Deployment\NullLogger.cs" />
     <Compile Include="Deployment\WellKnownEnvironmentVariables.cs" />
+    <Compile Include="Infrastructure\CommandLineException.cs" />
     <Compile Include="Infrastructure\ExecutableExtensions.cs" />
     <Compile Include="Infrastructure\ProgressWriter.cs" />
     <Compile Include="Infrastructure\DisposableAction.cs" />

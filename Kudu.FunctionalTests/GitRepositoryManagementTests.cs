@@ -144,6 +144,7 @@ command = deploy.cmd");
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Failed, results[0].Status);
+                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, ">bogus");
                     KuduAssert.VerifyLogOutput(appManager, results[0].Id, "'bogus' is not recognized as an internal or external command");
                 });
             }

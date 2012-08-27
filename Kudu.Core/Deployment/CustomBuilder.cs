@@ -68,7 +68,7 @@ namespace Kudu.Core.Deployment
 
                 tcs.SetResult(null);
             }
-            catch (Exception ex)
+            catch (CommandLineException ex)
             {
                 context.Tracer.TraceError(ex);
 
@@ -77,7 +77,10 @@ namespace Kudu.Core.Deployment
                 // msbuild has already been captured.
                 context.GlobalLogger.LogError();
 
-                customLogger.Log(ex);
+                // Add the output stream and the error stream to the log for better
+                // debugging
+                customLogger.Log(ex.Output, LogEntryType.Error);
+                customLogger.Log(ex.Error, LogEntryType.Error);
 
                 tcs.SetException(ex);
             }

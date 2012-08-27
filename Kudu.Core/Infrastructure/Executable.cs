@@ -79,7 +79,12 @@ namespace Kudu.Core.Infrastructure
                 {
                     string text = String.IsNullOrEmpty(error) ? output : error;
 
-                    throw new Exception(text);
+                    throw new CommandLineException(text)
+                    {
+                        ExitCode = process.ExitCode,
+                        Output = output,
+                        Error = error
+                    };
                 }
 
                 return Tuple.Create(output, error);
@@ -155,7 +160,11 @@ namespace Kudu.Core.Infrastructure
 
                 if (process.ExitCode != 0)
                 {
-                    throw new Exception(error);
+                    throw new CommandLineException(error)
+                    {
+                        ExitCode = process.ExitCode,
+                        Error = error
+                    };
                 }
             }
         }
@@ -230,7 +239,12 @@ namespace Kudu.Core.Infrastructure
                 {
                     string text = String.IsNullOrEmpty(error) ? output : error;
 
-                    throw new Exception(text);
+                    throw new CommandLineException(text)
+                    {
+                        ExitCode = process.ExitCode,
+                        Output = output,
+                        Error = error
+                    };
                 }
 
                 return Tuple.Create(output, error);
