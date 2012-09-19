@@ -255,7 +255,7 @@ namespace Kudu.Services.GitServer
             // This is kind of hacky, we should have a consistent way of figuring out who's pushing to us
             if (httpRequest.Headers["X-Github-Event"] != null)
             {
-                return "github";
+                return "GitHub";
             }
 
             // Look for a specific header here
