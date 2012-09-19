@@ -14,8 +14,12 @@
 </form>
 
 <form class="well form-inline">
-  <label class="control-label"><strong>Custom URL</strong></label>
-  <input type="input" id="clone-url" name="name" value="@Model.CustomUrl" readonly="readonly" />
+  <label class="control-label"><strong>Custom URL</strong></label><br />
+    @foreach (var url in Model.SiteUrls)
+    {
+        <input type="input" id="clone-url" name="name" value="@url" readonly="readonly" /><br />
+    }
+  
 </form>
 
 <div class="well">

@@ -62,13 +62,16 @@ namespace Kudu.Web.App_Start
             string root = HttpRuntime.AppDomainAppPath;
             string serviceSitePath = ConfigurationManager.AppSettings["serviceSitePath"];
             string sitesPath = ConfigurationManager.AppSettings["sitesPath"];
+            string sitesBaseUrl = ConfigurationManager.AppSettings["urlBaseValue"];
 
             serviceSitePath = Path.Combine(root, serviceSitePath);
             sitesPath = Path.Combine(root, sitesPath);
 
             var pathResolver = new DefaultPathResolver(serviceSitePath, sitesPath);
+            var settingsResolver = new DefaultSettingsResolver(sitesBaseUrl);
 
             kernel.Bind<IPathResolver>().ToConstant(pathResolver);
+            kernel.Bind<ISettingsResolver>().ToConstant(settingsResolver);
             kernel.Bind<ISiteManager>().To<SiteManager>().InSingletonScope();
             kernel.Bind<KuduEnvironment>().ToMethod(_ => new KuduEnvironment
             {

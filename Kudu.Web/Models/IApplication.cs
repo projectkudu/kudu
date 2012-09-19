@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Kudu.Web.Models
 {
@@ -7,6 +8,7 @@ namespace Kudu.Web.Models
         string Name { get; set; }
         string ServiceUrl { get; set; }
         string SiteUrl { get; set; }
+        List<string> SiteUrls { get; set; }
         string DevSiteUrl { get; set; }
     }
 }
