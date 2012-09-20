@@ -214,6 +214,41 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public void PullApiTestBitbucketFormat()
+        {
+            string bitbucketPayload = @"{ ""canon_url"": ""https://github.com"", ""commits"": [ { ""author"": ""davidebbo"", ""branch"": ""master"", ""files"": [ { ""file"": ""Mvc3Application/Views/Home/Index.cshtml"", ""type"": ""modified"" } ], ""message"": ""Blah2\n"", ""node"": ""e550351c5188"", ""parents"": [ ""297fcc65308c"" ], ""raw_author"": ""davidebbo <david.ebbo@microsoft.com>"", ""raw_node"": ""e550351c5188681a9ed889e07bc1fbc0bd51a0f2"", ""revision"": null, ""size"": -1, ""timestamp"": ""2012-09-20 03:11:20"", ""utctimestamp"": ""2012-09-20 01:11:20+00:00"" } ], ""repository"": { ""absolute_url"": ""/KuduApps/SimpleWebApplication"", ""fork"": false, ""is_private"": false, ""name"": ""Mvc3Application"", ""owner"": ""davidebbo"", ""scm"": ""git"", ""slug"": ""mvc3application"", ""website"": """" }, ""user"": ""davidebbo"" }";
+            string appName = KuduUtils.GetRandomWebsiteName("PullApiTestBitbucketFormat");
+
+            ApplicationManager.Run(appName, appManager =>
+            {
+                var handler = new HttpClientHandler
+                {
+                    Credentials = appManager.DeploymentManager.Credentials
+                };
+
+                var client = new HttpClient(handler)
+                {
+                    BaseAddress = new Uri(appManager.ServiceUrl),
+                    Timeout = TimeSpan.FromMinutes(5)
+                };
+
+                client.DefaultRequestHeaders.Add("User-Agent", "Bitbucket.org");
+
+                var post = new Dictionary<string, string>
+                {
+                    { "payload", bitbucketPayload }
+                };
+
+                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Wait();
+
+                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                Assert.Equal(1, results.Count);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
+                KuduAssert.VerifyUrl(appManager.SiteUrl, "Welcome to ASP.NET!");
+            });
+        }
+
+        [Fact]
         public void PullApiTestGenericFormat()
         {
             string payload = @"{ ""oldRef"": ""0000000000000000000"", ""newRef"": ""7e2a599e2d28665047ec347ab36731c905c95e8b"", ""url"": ""https://github.com/KuduApps/SimpleWebApplication.git"", ""deployer"" : ""me!"" }";
