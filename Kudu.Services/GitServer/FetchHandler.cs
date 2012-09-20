@@ -205,24 +205,45 @@ namespace Kudu.Services.GitServer
 
             if (repository != null)
             {
-                // Try to assume the github format
-                // { repository: { url: "" }, ref: "", before: "", after: "" } 
-                info.RepositoryUrl = repository.Value<string>("url");
-
-                // The format of ref is refs/something/something else
-                // For master it's normally refs/head/master
-                string @ref = payload.Value<string>("ref");
-
-                if (String.IsNullOrEmpty(@ref))
+                if (request.UserAgent != null && request.UserAgent.StartsWith("Bitbucket", StringComparison.OrdinalIgnoreCase))
                 {
-                    throw new FormatException(Resources.Error_UnsupportedFormat);
-                }
+                    string server = payload.Value<string>("canon_url");     // e.g. https://bitbucket.org
+                    string path = repository.Value<string>("absolute_url"); // e.g. /davidebbo/testrepo/
 
-                // Just get the last token
-                info.Branch = @ref.Split('/').Last();
-                info.Deployer = GetDeployer(request);
-                info.OldRef = payload.Value<string>("before");
-                info.NewRef = payload.Value<string>("after");
+                    // Combine them to get the full URL
+                    info.RepositoryUrl = server + path;
+
+                    info.Deployer = "Bitbucket";
+
+                    // We don't get any refs from bitbucket, so write dummy string (we ignore it later anyway)
+                    info.OldRef = "dummy";
+
+                    // When there are no commits, set the new ref to an all-zero string to cause the logic in
+                    // GitDeploymentRepository.GetReceiveInfo ignore the push
+                    var commits = payload.Value<JArray>("commits");
+                    info.NewRef = commits.Count == 0 ? "000" : "dummy";
+                }
+                else
+                {
+                    // Try to assume the github format
+                    // { repository: { url: "" }, ref: "", before: "", after: "" } 
+                    info.RepositoryUrl = repository.Value<string>("url");
+
+                    // The format of ref is refs/something/something else
+                    // For master it's normally refs/head/master
+                    string @ref = payload.Value<string>("ref");
+
+                    if (String.IsNullOrEmpty(@ref))
+                    {
+                        throw new FormatException(Resources.Error_UnsupportedFormat);
+                    }
+
+                    // Just get the last token
+                    info.Branch = @ref.Split('/').Last();
+                    info.Deployer = GetDeployer(request);
+                    info.OldRef = payload.Value<string>("before");
+                    info.NewRef = payload.Value<string>("after");
+                }
             }
             else
             {
