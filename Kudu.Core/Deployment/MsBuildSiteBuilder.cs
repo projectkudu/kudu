@@ -43,7 +43,7 @@ namespace Kudu.Core.Deployment
                 return _msbuildExe.Execute(tracer,
                                            output =>
                                            {
-                                               if (output.Contains("MSB3644:"))
+                                               if (output.Contains("MSB3644:") || output.Contains("MSB3270:"))
                                                {
                                                    return false;
                                                }
