@@ -14,6 +14,7 @@
   <?define KuduServiceBinDir = "$(var.KuduServiceDir)\bin"?>
   <?define KuduServiceBinScriptsDir = "$(var.KuduServiceBinDir)\scripts"?>
   <?define KuduServiceMsBuildDir = "$(var.KuduServiceDir)\msbuild\Microsoft\VisualStudio\v10.0"?>
+  <?define KuduServiceMsBuildDir11 = "$(var.KuduServiceDir)\msbuild\Microsoft\VisualStudio\v11.0"?>
 
   <Product Id="*"
            Name="Kudu.Setup"
@@ -63,6 +64,15 @@
 
                     <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS_10_WEB" Name="Web"/>
                     <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS_10_WEBAPPS" Name="WebApplications"/>
+
+                  </Directory>
+                  <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS_11" Name="v11.0">
+
+                    <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS_11_WEB" Name="Web">
+                      <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS_11_WEB_COLLECTFILES" Name="CollectFiles"/>
+                      <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS_11_WEB_TRANSFORM" Name="Transform"/>
+                    </Directory>
+                    <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS_11_WEBAPPS" Name="WebApplications"/>
 
                   </Directory>
                 </Directory>
@@ -209,6 +219,42 @@
       </Component>
     </DirectoryRef>
 
+    <DirectoryRef Id="KUDU_SERVICE_MSBUILD_MS_VS_11_WEB">
+      <Component Id="Microsoft.Web.Publishing.targets.v11" Guid="{2D5EADE2-1CAB-4B07-B9E5-5C79466475AC}">
+        <File Id="Microsoft.Web.Publishing.targets.v11" Source="$(var.KuduServiceMsBuildDir11)\Web\Microsoft.Web.Publishing.targets" />
+      </Component>
+      <Component Id="Microsoft.Web.Publishing.Tasks.Dll.v11" Guid="{40B916DA-20D7-40DC-B369-AF49B34780E5}">
+        <File Id="Microsoft.Web.Publishing.Tasks.Dll.v11" Source="$(var.KuduServiceMsBuildDir11)\Web\Microsoft.Web.Publishing.Tasks.Dll" />
+      </Component>
+    </DirectoryRef>
+
+    <DirectoryRef Id="KUDU_SERVICE_MSBUILD_MS_VS_11_WEB_COLLECTFILES">
+      <Component Id="Microsoft.Web.Publishing.AllFilesInProjectFolder.targets.v11" Guid="{BE9D7EE5-D292-462A-A29A-FC2516BEE8AE}">
+        <File Id="Microsoft.Web.Publishing.AllFilesInProjectFolder.targets.v11" Source="$(var.KuduServiceMsBuildDir11)\Web\CollectFiles\Microsoft.Web.Publishing.AllFilesInProjectFolder.targets" />
+      </Component>
+      <Component Id="Microsoft.Web.Publishing.AllFilesInTheProject.targets.v11" Guid="{D6109FB2-040D-4FF1-8418-B3D4199A56FF}">
+        <File Id="Microsoft.Web.Publishing.AllFilesInTheProject.targets.v11" Source="$(var.KuduServiceMsBuildDir11)\Web\CollectFiles\Microsoft.Web.Publishing.AllFilesInTheProject.targets" />
+      </Component>
+      <Component Id="Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets.v11" Guid="{1C4F999E-0342-44C1-9A46-6C2A56E404DC}">
+        <File Id="Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets.v11" Source="$(var.KuduServiceMsBuildDir11)\Web\CollectFiles\Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets" />
+      </Component>
+    </DirectoryRef>
+
+    <DirectoryRef Id="KUDU_SERVICE_MSBUILD_MS_VS_11_WEB_TRANSFORM">
+      <Component Id="Microsoft.Web.Publishing.AspNetCompileMerge.targets.v11" Guid="{022E1290-E8DD-4110-95BA-9E7DFD7EF6C1}">
+        <File Id="Microsoft.Web.Publishing.AspNetCompileMerge.targets.v11" Source="$(var.KuduServiceMsBuildDir11)\Web\Transform\Microsoft.Web.Publishing.AspNetCompileMerge.targets" />
+      </Component>
+    </DirectoryRef>
+
+    <DirectoryRef Id="KUDU_SERVICE_MSBUILD_MS_VS_11_WEBAPPS">
+      <Component Id="Microsoft.WebApplication.Build.Tasks.Dll.v11" Guid="{7E288120-AE2E-47C0-86A3-96F02322144E}">
+        <File Id="Microsoft.WebApplication.Build.Tasks.Dll.v11" Source="$(var.KuduServiceMsBuildDir11)\WebApplications\Microsoft.WebApplication.Build.Tasks.Dll" />
+      </Component>
+      <Component Id="Microsoft.WebApplication.targets.v11" Guid="{9640EA37-6A07-423B-85A4-A5BDB267BBE6}">
+        <File Id="Microsoft.WebApplication.targets.v11" Source="$(var.KuduServiceMsBuildDir11)\WebApplications\Microsoft.WebApplication.targets" />
+      </Component>
+    </DirectoryRef>
+
     <Feature Id="RequiredComponents" Level="1">
       <ComponentRef Id="RegistryComponent" />
 
@@ -249,6 +295,16 @@
 
       <ComponentRef Id="Microsoft.WebApplication.Build.Tasks.Dll" />
       <ComponentRef Id="Microsoft.WebApplication.targets" />
+
+      <ComponentRef Id="Microsoft.Web.Publishing.AllFilesInProjectFolder.targets.v11" />
+      <ComponentRef Id="Microsoft.Web.Publishing.AllFilesInTheProject.targets.v11" />
+      <ComponentRef Id="Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets.v11" />
+      <ComponentRef Id="Microsoft.Web.Publishing.AspNetCompileMerge.targets.v11" />
+      <ComponentRef Id="Microsoft.Web.Publishing.targets.v11" />
+      <ComponentRef Id="Microsoft.Web.Publishing.Tasks.Dll.v11" />
+
+      <ComponentRef Id="Microsoft.WebApplication.Build.Tasks.Dll.v11" />
+      <ComponentRef Id="Microsoft.WebApplication.targets.v11" />
     </Feature>
 
   </Product>
