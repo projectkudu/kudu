@@ -9,6 +9,7 @@ namespace Kudu.Core
     {
         private readonly string _deployPath;
         private readonly string _deployCachePath;
+        private readonly string _sshKeyPath;
         private readonly string _tempPath;
         private readonly string _scriptPath;
         private readonly Func<string> _deploymentRepositoryPathResolver;
@@ -19,7 +20,8 @@ namespace Kudu.Core
                            Func<string> deploymentRepositoryPathResolver, 
                            Func<string> repositoryPathResolver, 
                            string deployPath, 
-                           string deployCachePath, 
+                           string deployCachePath,
+                           string sshKeyPath, 
                            string nugetCachePath, 
                            string scriptPath)
         {
@@ -29,6 +31,7 @@ namespace Kudu.Core
             _repositoryPathResolver = repositoryPathResolver;
             _deployPath = deployPath;
             _deployCachePath = deployCachePath;
+            _sshKeyPath = sshKeyPath;
             NuGetCachePath = nugetCachePath;
             _scriptPath = scriptPath;
         }
@@ -72,6 +75,15 @@ namespace Kudu.Core
             {
                 FileSystemHelpers.EnsureDirectory(_deployCachePath);
                 return _deployCachePath;
+            }
+        }
+
+        public string SSHKeyPath
+        {
+            get
+            {
+                FileSystemHelpers.EnsureDirectory(_sshKeyPath);
+                return _sshKeyPath;
             }
         }
 

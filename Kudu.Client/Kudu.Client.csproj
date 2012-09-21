@@ -88,6 +88,7 @@
     <Compile Include="Editor\RemoteProjectSystem.cs" />
     <Compile Include="SourceControl\RemoteRepository.cs" />
     <Compile Include="SourceControl\RemoteRepositoryManager.cs" />
+    <Compile Include="SSHKey\RemoteSSHKeyManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config">

@@ -1,22 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Web;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
+using Kudu.Core;
 using Kudu.Core.Deployment;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
 using Newtonsoft.Json.Linq;
-using Kudu.Core;
-using Kudu.Core.Infrastructure;
-using System.IO;
+using System.Net;
 
 namespace Kudu.Services.GitServer
 {
     public class FetchHandler : IHttpHandler
     {
+        private const string PrivateKeyFile = "id_rsa";
+        private const string PublicKeyFile = "id_rsa.pub";
+
         private readonly IGitServer _gitServer;
         private readonly IDeploymentManager _deploymentManager;
         private readonly IDeploymentSettingsManager _settings;
@@ -136,6 +140,14 @@ namespace Kudu.Services.GitServer
 
         private void PerformDeployment(RepositoryInfo repositoryInfo, string targetBranch)
         {
+            if (repositoryInfo.UseSSH)
+            {
+                using (_tracer.Step("Prepare SSH environment"))
+                {
+                    _gitServer.SetSSHEnv(repositoryInfo.Host, _environment.ApplicationRootPath);
+                }
+            }
+
             bool hasPendingDeployment;
 
             do
@@ -207,11 +219,15 @@ namespace Kudu.Services.GitServer
             {
                 if (request.UserAgent != null && request.UserAgent.StartsWith("Bitbucket", StringComparison.OrdinalIgnoreCase))
                 {
+                    // bitbucket format
+                    // { repository: { absolute_url: "/a/b", is_private: true }, canon_url: "https//..." } 
                     string server = payload.Value<string>("canon_url");     // e.g. https://bitbucket.org
                     string path = repository.Value<string>("absolute_url"); // e.g. /davidebbo/testrepo/
 
                     // Combine them to get the full URL
                     info.RepositoryUrl = server + path;
+
+                    info.IsPrivate = repository.Value<bool>("is_private");
 
                     info.Deployer = "Bitbucket";
 
@@ -225,9 +241,11 @@ namespace Kudu.Services.GitServer
                 }
                 else
                 {
-                    // Try to assume the github format
-                    // { repository: { url: "" }, ref: "", before: "", after: "" } 
+                    // github format
+                    // { repository: { url: "https//...", private: False }, ref: "", before: "", after: "" } 
                     info.RepositoryUrl = repository.Value<string>("url");
+
+                    info.IsPrivate = repository.Value<bool>("private");
 
                     // The format of ref is refs/something/something else
                     // For master it's normally refs/head/master
@@ -244,16 +262,18 @@ namespace Kudu.Services.GitServer
                     info.OldRef = payload.Value<string>("before");
                     info.NewRef = payload.Value<string>("after");
                 }
-            }
-            else
-            {
-                // Look for the generic format
-                // { url: "", branch: "", deployer: "", oldRef: "", newRef: "" } 
-                info.RepositoryUrl = payload.Value<string>("url");
-                info.Branch = payload.Value<string>("branch");
-                info.Deployer = payload.Value<string>("deployer");
-                info.OldRef = payload.Value<string>("oldRef");
-                info.NewRef = payload.Value<string>("newRef");
+
+                // private repo, use SSH
+                if (info.IsPrivate)
+                {
+                    Uri uri = new Uri(info.RepositoryUrl);
+                    if (uri.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                    {
+                        info.Host = "git@" + uri.Host;
+                        info.RepositoryUrl = info.Host + ":" + uri.AbsolutePath.TrimStart('/');
+                        info.UseSSH = true;
+                    }
+                }
             }
 
             // If there's no specified branch assume master
@@ -286,6 +306,9 @@ namespace Kudu.Services.GitServer
         private class RepositoryInfo
         {
             public string RepositoryUrl { get; set; }
+            public bool IsPrivate { get; set; }
+            public bool UseSSH { get; set; }
+            public string Host { get; set; }
             public string OldRef { get; set; }
             public string NewRef { get; set; }
             public string Branch { get; set; }

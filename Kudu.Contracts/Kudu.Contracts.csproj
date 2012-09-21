@@ -66,6 +66,7 @@
     <Compile Include="Settings\IDeploymentSettingsManager.cs" />
     <Compile Include="SourceControl\IDeploymentRepository.cs" />
     <Compile Include="SourceControl\RepositoryConfiguration.cs" />
+    <Compile Include="SSHKey\ISSHKeyManager.cs" />
     <Compile Include="Tracing\ITracer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SourceControl\Branch.cs" />

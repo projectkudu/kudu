@@ -7,6 +7,7 @@ namespace Kudu.Core
         string DeploymentRepositoryPath { get; }
         string DeploymentTargetPath { get; }
         string DeploymentCachePath { get; }
+        string SSHKeyPath { get; }
         string ApplicationRootPath { get; }
         string NuGetCachePath { get; }
         string TempPath { get; }

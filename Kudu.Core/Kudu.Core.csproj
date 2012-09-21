@@ -79,6 +79,8 @@
     <Compile Include="Infrastructure\XmlUtility.cs" />
     <Compile Include="Settings\DeploymentSettingsManager.cs" />
     <Compile Include="SourceControl\Git\GitDeploymentRepository.cs" />
+    <Compile Include="SSHKey\SSHExecutable.cs" />
+    <Compile Include="SSHKey\SSHKeyManager.cs" />
     <Compile Include="Tracing\ITraceFactory.cs" />
     <Compile Include="Tracing\NullTracer.cs" />
     <Compile Include="Tracing\NullTracerFactory.cs" />

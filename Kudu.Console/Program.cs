@@ -103,6 +103,7 @@ namespace Kudu.Console
         {
             string deployPath = Path.Combine(root, Constants.WebRoot);
             string deployCachePath = Path.Combine(root, Constants.DeploymentCachePath);
+            string sshKeyPath = Path.Combine(root, Constants.SSHKeyPath);
             string deploymentRepositoryPath = Path.Combine(root, Constants.RepositoryPath);
             string tempPath = Path.GetTempPath();
             string deploymentTempPath = Path.Combine(tempPath, Constants.RepositoryPath);
@@ -115,6 +116,7 @@ namespace Kudu.Console
                                    () => null,
                                    deployPath,
                                    deployCachePath,
+                                   sshKeyPath,
                                    nugetCachePath,
                                    scriptPath);
         }
