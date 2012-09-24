@@ -21,3 +21,4 @@ App_Data/
 msbuild.log
 _app/
 *.ncrunchsolution
+nuget.exe
