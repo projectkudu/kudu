@@ -10,6 +10,7 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Tracing;
 using Kudu.Core.Settings;
+using Kudu.Services;
 
 namespace Kudu.Console
 {
