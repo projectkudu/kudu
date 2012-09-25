@@ -18,7 +18,8 @@ namespace Kudu.Services
             return new Dictionary<string, string> 
             {
                 { "MSBuildExtensionsPath32", _extensionsPath },
-                { "KuduReferenceAssemblyDirectory", Path.Combine(_extensionsPath, "ReferenceAssemblies") }
+                { "KuduReferenceAssemblyDirectory", Path.Combine(_extensionsPath, "ReferenceAssemblies") },
+                { "Sdk40ToolsPath", Path.Combine(_extensionsPath, "SDK", "v4.0") }
             };
         }
     }

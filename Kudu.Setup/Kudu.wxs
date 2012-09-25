@@ -18,8 +18,10 @@
   
   <?if $(env.PROCESSOR_ARCHITECTURE) = 'AMD64' ?>
     <?define ReferenceAssembliesDir = "$(env.ProgramFiles(x86))\Reference Assemblies"?>
+    <?define Net40SdkBinDir = "$(env.ProgramFiles(x86))\Microsoft SDKs\Windows\v7.0A\Bin" ?>
  <?else ?>
-  <?define ReferenceAssembliesDir = "$(env.ProgramFiles)\Reference Assemblies"?>
+    <?define ReferenceAssembliesDir = "$(env.ProgramFiles)\Reference Assemblies"?>
+    <?define Net40SdkBinDir = "$(env.ProgramFiles)\Microsoft SDKs\Windows\v7.0A\Bin"?>
  <?endif?>
   
   <Product Id="*"
@@ -83,8 +85,14 @@
                   </Directory>
                 </Directory>
               </Directory>
+              <!-- Directory for References Assemblies -->
               <Directory Id="KUDU_SERVICE_REF_ASM" Name="ReferenceAssemblies">
                 <Directory Id="KUDU_SERVICE_REF_ASM_v40" Name="v4.0" />
+              </Directory>
+              
+              <!-- Directory for the SDK binaries -->
+              <Directory Id="KUDU_SERVICE_FX_SDK" Name="SDK">
+                <Directory Id="KUDU_SERVICE_FX_SDK_v40" Name="v4.0" />
               </Directory>
             </Directory>
 
@@ -273,6 +281,40 @@
       </Component>
     </DirectoryRef>
 
+    <DirectoryRef Id="KUDU_SERVICE_FX_SDK_v40">
+      <Component Id="Al.exe.v40" Guid="{0221E10E-CEED-4D91-908F-0620C4FD72D7}">
+        <File Source="$(var.Net40SdkBinDir)\Al.exe" />
+      </Component>
+
+      <Component Id="Al.exe.config.v40" Guid="{29DA148A-11EA-4516-95B1-B25DAF72F031}">
+        <File Source="$(var.Net40SdkBinDir)\Al.exe.config" />
+      </Component>
+
+      <Component Id="Lc.exe.v40" Guid="{DDB07AD5-5940-438A-9057-D256A82014D3}">
+        <File Source="$(var.Net40SdkBinDir)\Lc.exe" />
+      </Component>
+      
+      <Component Id="Lc.exe.config.v40" Guid="{88938FEC-457D-415B-BD7A-78C514A56F5C}">
+        <File Source="$(var.Net40SdkBinDir)\Lc.exe.config" />
+      </Component>
+
+      <Component Id="Resgen.exe.v40" Guid="{A47488CA-4A10-47EA-AC2C-DC6EF6A0A95B}">
+        <File Source="$(var.Net40SdkBinDir)\Resgen.exe" />
+      </Component>
+
+      <Component Id="Resgen.exe.config.v40" Guid="{8A5F7FA4-CC54-450D-9CF7-F5F00CA6D086}">
+        <File Source="$(var.Net40SdkBinDir)\Resgen.exe.config" />
+      </Component>
+      
+        <Component Id="sgen.exe.v40" Guid="{E6F05463-565F-4E37-A9D7-9B3CFD388F08}">
+        <File Source="$(var.Net40SdkBinDir)\sgen.exe" />
+      </Component>
+
+      <Component Id="sgen.exe.config.v40" Guid="{58CC21EB-EA46-464E-ABD9-B94854EF3859}">
+        <File Source="$(var.Net40SdkBinDir)\sgen.exe.config" />
+      </Component>
+    </DirectoryRef>
+
     <Feature Id="RequiredComponents" Level="1">
       <ComponentRef Id="RegistryComponent" />
 
@@ -326,6 +368,17 @@
       <ComponentRef Id="Microsoft.WebApplication.targets.v11" />
 
       <ComponentRef Id="System.ComponentModel.DataAnnotations.dll.v40" />
+      <ComponentRef Id="Al.exe.v40" />
+      <ComponentRef Id="Al.exe.config.v40" />
+
+      <ComponentRef Id="Lc.exe.v40" />
+      <ComponentRef Id="Lc.exe.config.v40" />
+
+      <ComponentRef Id="Resgen.exe.v40" />
+      <ComponentRef Id="Resgen.exe.config.v40" />
+      
+      <ComponentRef Id="sgen.exe.v40" />
+      <ComponentRef Id="sgen.exe.config.v40" />
     </Feature>
 
   </Product>
