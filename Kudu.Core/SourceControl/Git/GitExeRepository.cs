@@ -17,7 +17,6 @@ namespace Kudu.Core.SourceControl.Git
     public class GitExeRepository : IRepository
     {
         private readonly GitExecutable _gitExe;
-        private readonly SSHExecutable _sshExe;
         private readonly ITraceFactory _tracerFactory;
 
         public GitExeRepository(string path)
@@ -28,7 +27,6 @@ namespace Kudu.Core.SourceControl.Git
         public GitExeRepository(string path, ITraceFactory profilerFactory)
         {
             _gitExe = new GitExecutable(path);
-            _sshExe = new SSHExecutable(path);
             _tracerFactory = profilerFactory;
         }
 
@@ -178,24 +176,9 @@ namespace Kudu.Core.SourceControl.Git
         public void SetSSHEnv(string host, string homePath)
         {
             // SSH requires HOME directory
-            _gitExe.EnvironmentVariables["HOME"] = _sshExe.EnvironmentVariables["HOME"] = homePath;
-            _gitExe.EnvironmentVariables["HOMEDRIVE"] = _sshExe.EnvironmentVariables["HOMEDRIVE"] = 
-                homePath.Substring(0, homePath.IndexOf(':') + 1);
-            _gitExe.EnvironmentVariables["HOMEPATH"] = _sshExe.EnvironmentVariables["HOMEPATH"] = 
-                homePath.Substring(homePath.IndexOf(':') + 1);
-
-            try
-            {
-                ITracer tracer = _tracerFactory.GetTracer();
-                _sshExe.Execute(tracer, "-o StrictHostKeychecking=no {0}", host);
-            }
-            catch (Exception ex)
-            {
-                if (!ex.Message.Contains("successfully authenticated"))
-                {
-                    throw;
-                }
-            }
+            _gitExe.EnvironmentVariables["HOME"] = homePath;
+            _gitExe.EnvironmentVariables["HOMEDRIVE"] = homePath.Substring(0, homePath.IndexOf(':') + 1);
+            _gitExe.EnvironmentVariables["HOMEPATH"] = homePath.Substring(homePath.IndexOf(':') + 1);
         }
 
         public void FetchWithoutConflict(string remote, string remoteAlias, string branchName)

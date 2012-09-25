@@ -39,14 +39,13 @@ namespace Kudu.Services.SSHKey
                 throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.BadRequest, new ArgumentNullException(KeyParameterName)));
             }
 
-            bool overwrite = result.Value<bool>("overwrite");
             using (_tracer.Step("SSHKeyController.SetPrivateKey"))
             {
                 _sshKeyLock.LockOrWait(() =>
                 {
                     try
                     {
-                        _sshKeyManager.SetPrivateKey(key, overwrite);
+                        _sshKeyManager.SetPrivateKey(key);
                     }
                     catch (ArgumentException ex)
                     {

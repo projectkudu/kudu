@@ -20,12 +20,11 @@ namespace Kudu.Client.SSHKey
         {
         }
 
-        public Task SetPrivateKey(string key, bool overwrite = false)
+        public Task SetPrivateKey(string key)
         {
             KeyValuePair<string, string>[] param = new KeyValuePair<string, string>[] 
             { 
-                new KeyValuePair<string, string>("key", key),
-                new KeyValuePair<string, string>("overwrite", overwrite.ToString())
+                new KeyValuePair<string, string>("key", key)
             };
 
             return _client.PutAsync(string.Empty, param).Then(response =>

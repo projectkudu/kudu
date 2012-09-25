@@ -10,11 +10,13 @@ namespace Kudu.Core.SSHKey
     public class SSHKeyManager : ISSHKeyManager
     {
         public const string PrivateKeyFile = "id_rsa";
-
+        public const string ConfigFile = "config";
+        public const string ConfigContent = "HOST *\r\n  StrictHostKeyChecking no";
         private readonly IFileSystem _fileSystem;
         private readonly ITraceFactory _traceFactory;
         private readonly string _sshPath;
         private readonly string _id_rsa;
+        private readonly string _config;
 
         public SSHKeyManager(IEnvironment environment, IFileSystem fileSystem, ITraceFactory traceFactory)
             : this(fileSystem, traceFactory, environment.SSHKeyPath)
@@ -29,23 +31,18 @@ namespace Kudu.Core.SSHKey
             _traceFactory = traceFactory;
             _sshPath = sshPath;
             _id_rsa = Path.Combine(sshPath, PrivateKeyFile);
+            _config = Path.Combine(sshPath, ConfigFile);
         }
 
-        public void SetPrivateKey(string key, bool overwrite)
+        public void SetPrivateKey(string key)
         {
             ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("SSHKeyManager.SetPrivateKey"))
             {
-                if (_fileSystem.File.Exists(_id_rsa) && !overwrite)
-                {
-                    string pem = _fileSystem.File.ReadAllText(_id_rsa);
-                    if (!string.Equals(key, pem))
-                    {
-                        throw new InvalidOperationException("PEM key file already exist!");
-                    }
-                }
-
                 FileSystemHelpers.EnsureDirectory(_fileSystem, _sshPath);
+
+                // bypass service key checking prompt (StrictHostKeyChecking=no).
+                _fileSystem.File.WriteAllText(_config, ConfigContent);
 
                 // This overrides if file exists
                 _fileSystem.File.WriteAllText(_id_rsa, key);
