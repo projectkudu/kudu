@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using Kudu.Core.Deployment;
 
-namespace Kudu.Console.Services
+namespace Kudu.Services
 {
     public class BuildPropertyProvider : IBuildPropertyProvider
     {
@@ -14,9 +15,11 @@ namespace Kudu.Console.Services
 
         public IDictionary<string, string> GetProperties()
         {
-            return new Dictionary<string, string> {
-                    { "MSBuildExtensionsPath32", _extensionsPath }
-                };
+            return new Dictionary<string, string> 
+            {
+                { "MSBuildExtensionsPath32", _extensionsPath },
+                { "KuduReferenceAssemblyDirectory", Path.Combine(_extensionsPath, "ReferenceAssemblies") }
+            };
         }
     }
 }

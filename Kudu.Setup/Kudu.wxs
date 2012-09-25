@@ -15,7 +15,13 @@
   <?define KuduServiceBinScriptsDir = "$(var.KuduServiceBinDir)\scripts"?>
   <?define KuduServiceMsBuildDir = "$(var.KuduServiceDir)\msbuild\Microsoft\VisualStudio\v10.0"?>
   <?define KuduServiceMsBuildDir11 = "$(var.KuduServiceDir)\msbuild\Microsoft\VisualStudio\v11.0"?>
-
+  
+  <?if $(env.PROCESSOR_ARCHITECTURE) = 'AMD64' ?>
+    <?define ReferenceAssembliesDir = "$(env.ProgramFiles(x86))\Reference Assemblies"?>
+ <?else ?>
+  <?define ReferenceAssembliesDir = "$(env.ProgramFiles)\Reference Assemblies"?>
+ <?endif?>
+  
   <Product Id="*"
            Name="Kudu.Setup"
            Language="1033"
@@ -76,6 +82,9 @@
 
                   </Directory>
                 </Directory>
+              </Directory>
+              <Directory Id="KUDU_SERVICE_REF_ASM" Name="ReferenceAssemblies">
+                <Directory Id="KUDU_SERVICE_REF_ASM_v40" Name="v4.0" />
               </Directory>
             </Directory>
 
@@ -253,6 +262,15 @@
       <Component Id="Microsoft.WebApplication.targets.v11" Guid="{9640EA37-6A07-423B-85A4-A5BDB267BBE6}">
         <File Id="Microsoft.WebApplication.targets.v11" Source="$(var.KuduServiceMsBuildDir11)\WebApplications\Microsoft.WebApplication.targets" />
       </Component>
+      <Component Id="Kudu.targets.v11" Guid="{04A18D17-6C3F-4281-B1B1-372BDF1AD2C6}">
+        <File Source="$(var.KuduServiceMsBuildDir11)\WebApplications\Kudu.targets" />
+      </Component>
+    </DirectoryRef>
+
+    <DirectoryRef Id="KUDU_SERVICE_REF_ASM_v40">
+      <Component Id="System.ComponentModel.DataAnnotations.dll.v40" Guid="{1CF53B6B-2137-4DD7-AE33-875B5BBEA794}">
+        <File Source="$(var.ReferenceAssembliesDir)\Microsoft\Framework\.NETFramework\v4.0\System.ComponentModel.DataAnnotations.dll" />
+      </Component>
     </DirectoryRef>
 
     <Feature Id="RequiredComponents" Level="1">
@@ -295,6 +313,7 @@
 
       <ComponentRef Id="Microsoft.WebApplication.Build.Tasks.Dll" />
       <ComponentRef Id="Microsoft.WebApplication.targets" />
+      <ComponentRef Id="Kudu.targets.v11" />
 
       <ComponentRef Id="Microsoft.Web.Publishing.AllFilesInProjectFolder.targets.v11" />
       <ComponentRef Id="Microsoft.Web.Publishing.AllFilesInTheProject.targets.v11" />
@@ -305,6 +324,8 @@
 
       <ComponentRef Id="Microsoft.WebApplication.Build.Tasks.Dll.v11" />
       <ComponentRef Id="Microsoft.WebApplication.targets.v11" />
+
+      <ComponentRef Id="System.ComponentModel.DataAnnotations.dll.v40" />
     </Feature>
 
   </Product>
