@@ -13,7 +13,8 @@
   <?define KuduServiceDir = "$(var.ArtifactsDir)\KuduService"?>
   <?define KuduServiceBinDir = "$(var.KuduServiceDir)\bin"?>
   <?define KuduServiceBinScriptsDir = "$(var.KuduServiceBinDir)\scripts"?>
-  <?define KuduServiceMsBuildDir = "$(var.KuduServiceDir)\msbuild\Microsoft\VisualStudio\v10.0"?>
+  <?define KuduServiceTargetsRootDir = "$(var.KuduServiceDir)\msbuild\Microsoft\VisualStudio" ?>
+  <?define KuduServiceMsBuildDir = "$(var.KuduServiceTargetsRootDir)\v10.0"?>
   <?define KuduServiceMsBuildDir11 = "$(var.KuduServiceDir)\msbuild\Microsoft\VisualStudio\v11.0"?>
   
   <?if $(env.PROCESSOR_ARCHITECTURE) = 'AMD64' ?>
@@ -226,6 +227,12 @@
         <File Id="Microsoft.Web.Publishing.Tasks.Dll" Source="$(var.KuduServiceMsBuildDir)\Web\Microsoft.Web.Publishing.Tasks.Dll" />
       </Component>
     </DirectoryRef>
+    
+    <DirectoryRef Id="KUDU_SERVICE_MSBUILD_MS_VS">
+        <Component Id="Kudu.targets" Guid="{04A18D17-6C3F-4281-B1B1-372BDF1AD2C6}">
+            <File Source="$(var.KuduServiceTargetsRootDir)\Kudu.targets" />
+        </Component>
+    </DirectoryRef>
 
     <DirectoryRef Id="KUDU_SERVICE_MSBUILD_MS_VS_10_WEBAPPS">
       <Component Id="Microsoft.WebApplication.Build.Tasks.Dll" Guid="{D9A90644-3F50-420E-9FC7-0EF987C2D29A}">
@@ -269,9 +276,6 @@
       </Component>
       <Component Id="Microsoft.WebApplication.targets.v11" Guid="{9640EA37-6A07-423B-85A4-A5BDB267BBE6}">
         <File Id="Microsoft.WebApplication.targets.v11" Source="$(var.KuduServiceMsBuildDir11)\WebApplications\Microsoft.WebApplication.targets" />
-      </Component>
-      <Component Id="Kudu.targets.v11" Guid="{04A18D17-6C3F-4281-B1B1-372BDF1AD2C6}">
-        <File Source="$(var.KuduServiceMsBuildDir11)\WebApplications\Kudu.targets" />
       </Component>
     </DirectoryRef>
 
@@ -355,7 +359,7 @@
 
       <ComponentRef Id="Microsoft.WebApplication.Build.Tasks.Dll" />
       <ComponentRef Id="Microsoft.WebApplication.targets" />
-      <ComponentRef Id="Kudu.targets.v11" />
+      <ComponentRef Id="Kudu.targets" />
 
       <ComponentRef Id="Microsoft.Web.Publishing.AllFilesInProjectFolder.targets.v11" />
       <ComponentRef Id="Microsoft.Web.Publishing.AllFilesInTheProject.targets.v11" />

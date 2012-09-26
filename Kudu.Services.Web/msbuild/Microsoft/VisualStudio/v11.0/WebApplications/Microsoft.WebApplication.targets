@@ -377,7 +377,7 @@ Copyright (C) Microsoft Corporation. All rights reserved.
   <Import Project="..\Web\Microsoft.Web.Publishing.targets" Condition="Exists('..\Web\Microsoft.Web.Publishing.targets')" />
   
   <!-- Import custom kudu target -->
-  <Import Project="Kudu.targets" Condition="Exists('Kudu.targets')" />
+  <Import Project="..\..\Kudu.targets" Condition="Exists('..\..\Kudu.targets')" />
 
   <!--Ensure the Siliverlight zap file is created and copied to the bin folder for the Microsoft.Web.Publishing.targets-->
   <PropertyGroup>

@@ -181,7 +181,7 @@
     <Content Include="msbuild\Microsoft\VisualStudio\v11.0\Web\Transform\Microsoft.Web.Publishing.AspNetCompileMerge.targets" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="msbuild\Microsoft\VisualStudio\v11.0\WebApplications\Kudu.targets" />
+    <Content Include="msbuild\Microsoft\VisualStudio\Kudu.targets" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

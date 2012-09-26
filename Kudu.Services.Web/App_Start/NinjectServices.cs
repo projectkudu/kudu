@@ -38,6 +38,11 @@ namespace Kudu.Services.Web.App_Start
     public static class NinjectServices
     {
         /// <summary>
+        /// Root directory that contains the VS target files
+        /// </summary>
+        private const string SdkRootDirectory = "msbuild";
+
+        /// <summary>
         /// Starts the application
         /// </summary>
         public static void Start()
@@ -88,7 +93,9 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IServerConfiguration>().ToConstant(serverConfiguration);
             kernel.Bind<IFileSystem>().To<FileSystem>().InSingletonScope();
             kernel.Bind<RepositoryConfiguration>().ToConstant(gitConfiguration);
-            kernel.Bind<IBuildPropertyProvider>().ToConstant(new BuildPropertyProvider(HttpRuntime.AppDomainAppPath));
+
+            string sdkPath = Path.Combine(HttpRuntime.AppDomainAppPath, SdkRootDirectory);
+            kernel.Bind<IBuildPropertyProvider>().ToConstant(new BuildPropertyProvider(sdkPath));
 
             if (AppSettings.TraceEnabled)
             {
