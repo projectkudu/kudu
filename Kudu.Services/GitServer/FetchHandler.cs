@@ -275,6 +275,16 @@ namespace Kudu.Services.GitServer
                     }
                 }
             }
+            else
+            {
+                // Look for the generic format
+                // { url: "", branch: "", deployer: "", oldRef: "", newRef: "" } 
+                info.RepositoryUrl = payload.Value<string>("url");
+                info.Branch = payload.Value<string>("branch");
+                info.Deployer = payload.Value<string>("deployer");
+                info.OldRef = payload.Value<string>("oldRef");
+                info.NewRef = payload.Value<string>("newRef");
+            }
 
             // If there's no specified branch assume master
             if (String.IsNullOrEmpty(info.Branch))
