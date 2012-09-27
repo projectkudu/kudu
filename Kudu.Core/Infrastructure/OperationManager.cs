@@ -5,16 +5,19 @@ namespace Kudu.Core.Infrastructure
 {
     internal static class OperationManager
     {
-        public static void Attempt(Action action, Func<bool> condition = null, int retries = 3, int delayBeforeRetry = 250)
+        private const int DefaultRetries = 3;
+        private const int DefaultDelayBeforeRetry = 250; // 250 ms
+
+        public static void Attempt(Action action, int retries = DefaultRetries, int delayBeforeRetry = DefaultDelayBeforeRetry)
         {
             OperationManager.Attempt<object>(() =>
             {
                 action();
                 return null;
-            });
+            }, retries, delayBeforeRetry);
         }
 
-        public static T Attempt<T>(Func<T> action, Func<bool> condition = null, int retries = 3, int delayBeforeRetry = 250)
+        public static T Attempt<T>(Func<T> action, int retries = DefaultRetries, int delayBeforeRetry = DefaultDelayBeforeRetry)
         {
             T result = default(T);
 
@@ -39,25 +42,5 @@ namespace Kudu.Core.Infrastructure
 
             return result;
         }
-
-        public static void WaitUntil(Func<bool> condition, int retries = 3, int delayBeforeRetry = 500)
-        {
-            if (condition())
-            {
-                return;
-            }
-
-            while (retries > 0)
-            {
-                if (condition())
-                {
-                    return;
-                }
-
-                retries--; 
-                Thread.Sleep(delayBeforeRetry);
-            }
-        }
-
     }
 }

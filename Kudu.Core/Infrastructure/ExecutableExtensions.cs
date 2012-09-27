@@ -9,7 +9,7 @@ namespace Kudu.Core.Infrastructure
             string pathEnv;
             exe.EnvironmentVariables.TryGetValue("PATH", out pathEnv);
             pathEnv = pathEnv ?? String.Empty;
-            if (!pathEnv.EndsWith(";"))
+            if (pathEnv.Length > 0 && !pathEnv.EndsWith(";"))
             {
                 pathEnv += ";";
             }
