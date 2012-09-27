@@ -1,12 +1,12 @@
 ﻿using System;
+using System.IO.Abstractions;
 using Kudu.Core.Infrastructure;
-using Kudu.Core.SourceControl;
-using System.IO;
 
 namespace Kudu.Core
 {
     public class Environment : IEnvironment
     {
+        private readonly IFileSystem _fileSystem;
         private readonly string _deployPath;
         private readonly string _deployCachePath;
         private readonly string _sshKeyPath;
@@ -15,16 +15,32 @@ namespace Kudu.Core
         private readonly Func<string> _deploymentRepositoryPathResolver;
         private readonly Func<string> _repositoryPathResolver;
 
-        public Environment(string applicationRootPath, 
-                           string tempPath, 
-                           Func<string> deploymentRepositoryPathResolver, 
-                           Func<string> repositoryPathResolver, 
-                           string deployPath, 
-                           string deployCachePath,
-                           string sshKeyPath, 
-                           string nugetCachePath, 
-                           string scriptPath)
+        public Environment(
+                IFileSystem fileSystem,
+                string applicationRootPath,
+                string tempPath,
+                Func<string> deploymentRepositoryPathResolver,
+                Func<string> repositoryPathResolver,
+                string deployPath,
+                string deployCachePath,
+                string sshKeyPath,
+                string nugetCachePath,
+                string scriptPath)
         {
+            if (fileSystem == null)
+            {
+                throw new ArgumentNullException("fileSystem");
+            }
+            if (deploymentRepositoryPathResolver == null)
+            {
+                throw new ArgumentNullException("deploymentRepositoryPathResolver");
+            }
+            if (repositoryPathResolver == null)
+            {
+                throw new ArgumentNullException("repositoryPathResolver");
+            }
+
+            _fileSystem = fileSystem;
             ApplicationRootPath = applicationRootPath;
             _tempPath = tempPath;
             _deploymentRepositoryPathResolver = deploymentRepositoryPathResolver;
@@ -41,7 +57,7 @@ namespace Kudu.Core
             get
             {
                 string path = _deploymentRepositoryPathResolver();
-                FileSystemHelpers.EnsureDirectory(path);
+                FileSystemHelpers.EnsureDirectory(_fileSystem, path);
                 return path;
             }
         }
@@ -64,7 +80,7 @@ namespace Kudu.Core
         {
             get
             {
-                FileSystemHelpers.EnsureDirectory(_deployPath);
+                FileSystemHelpers.EnsureDirectory(_fileSystem, _deployPath);
                 return _deployPath;
             }
         }
@@ -73,7 +89,7 @@ namespace Kudu.Core
         {
             get
             {
-                FileSystemHelpers.EnsureDirectory(_deployCachePath);
+                FileSystemHelpers.EnsureDirectory(_fileSystem, _deployCachePath);
                 return _deployCachePath;
             }
         }
@@ -82,7 +98,7 @@ namespace Kudu.Core
         {
             get
             {
-                FileSystemHelpers.EnsureDirectory(_sshKeyPath);
+                FileSystemHelpers.EnsureDirectory(_fileSystem, _sshKeyPath);
                 return _sshKeyPath;
             }
         }

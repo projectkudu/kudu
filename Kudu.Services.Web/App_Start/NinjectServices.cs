@@ -277,7 +277,9 @@ namespace Kudu.Services.Web.App_Start
             string deploymentTempPath = Path.Combine(tempPath, Constants.RepositoryPath);
             string scriptPath = Path.Combine(HttpRuntime.BinDirectory, Constants.ScriptsPath);
 
-            return new Environment(root,
+            return new Environment(
+                                   new FileSystem(),
+                                   root,
                                    tempPath,
                                    () => deploymentRepositoryPath,
                                    () => ResolveRepositoryPath(),

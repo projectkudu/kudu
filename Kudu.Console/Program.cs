@@ -111,7 +111,8 @@ namespace Kudu.Console
             string binPath = new FileInfo(Process.GetCurrentProcess().MainModule.FileName).DirectoryName;
             string scriptPath = Path.Combine(binPath, Constants.ScriptsPath);
 
-            return new Environment(root,
+            return new Environment(new FileSystem(),
+                                   root,
                                    tempPath,
                                    () => deploymentRepositoryPath,
                                    () => null,
