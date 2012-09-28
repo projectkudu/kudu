@@ -65,6 +65,7 @@
     <Compile Include="Infrastructure\DisposableActionFacts.cs" />
     <Compile Include="Infrastructure\ExecutableExtensionFacts.cs" />
     <Compile Include="Infrastructure\OperationManagerFacts.cs" />
+    <Compile Include="Infrastructure\VsSolutionTest.cs" />
     <Compile Include="Infrastructure\XmlUtilityFacts.cs" />
     <Compile Include="NodeSiteEnablerFacts.cs" />
     <Compile Include="FileSystemHelpersTest.cs" />

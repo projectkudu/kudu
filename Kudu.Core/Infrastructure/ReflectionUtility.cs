@@ -10,9 +10,9 @@ namespace Kudu.Core.Infrastructure
             return typeName.GetProperty(propertyName, BindingFlags.NonPublic | BindingFlags.Instance);
         }
 
-        public static MethodInfo GetInternalMethod(Type typeName, string methodName)
+        public static MethodInfo GetInternalMethod(Type typeName, string methodName, Type[] types)
         {
-            return typeName.GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
+            return typeName.GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance, binder: null, types: types, modifiers: null);
         }
 
         public static T GetValue<T>(this PropertyInfo property, object instance)

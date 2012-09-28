@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 
 namespace Kudu.Core.Infrastructure
@@ -27,7 +26,7 @@ namespace Kudu.Core.Infrastructure
             {
                 _solutionReaderProperty = ReflectionUtility.GetInternalProperty(_solutionParser, "SolutionReader");
                 _projectsProperty = ReflectionUtility.GetInternalProperty(_solutionParser, "Projects");
-                _parseSolutionMethod = ReflectionUtility.GetInternalMethod(_solutionParser, "ParseSolution");
+                _parseSolutionMethod = ReflectionUtility.GetInternalMethod(_solutionParser, "ParseSolution", Type.EmptyTypes);
             }
         }
 
@@ -79,7 +78,7 @@ namespace Kudu.Core.Infrastructure
         private static object GetSolutionParserInstance()
         {
             // Get the constructor for Solution parser
-            var ctor = _solutionParser.GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic).First();
+            var ctor = _solutionParser.GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, binder: null, types: Type.EmptyTypes, modifiers: null);
 
             // Create an instance of the solution parser
             return ctor.Invoke(null);
