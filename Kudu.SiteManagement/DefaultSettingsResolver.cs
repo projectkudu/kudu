@@ -9,7 +9,9 @@ namespace Kudu.SiteManagement
 
         public DefaultSettingsResolver(string sitesBaseUrl)
         {
-            _sitesBaseUrl = sitesBaseUrl;
+            // Ensure the base url is normalised to not have a leading dot,
+            // we will add this on later when joining the application name up
+            _sitesBaseUrl = sitesBaseUrl.TrimStart(new [] { '.' });
         }
 
         public string SitesBaseUrl

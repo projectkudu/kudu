@@ -13,15 +13,6 @@
   <input type="input" id="clone-url" name="name" value="@Model.GitUrl" readonly="readonly" />
 </form>
 
-<form class="well form-inline">
-  <label class="control-label"><strong>Custom URL</strong></label><br />
-    @foreach (var url in Model.SiteUrls)
-    {
-        <input type="input" id="clone-url" name="name" value="@url" readonly="readonly" /><br />
-    }
-  
-</form>
-
 <div class="well">
     <div class="control-group">
         <label class="control-label"><strong>Application URL</strong></label>

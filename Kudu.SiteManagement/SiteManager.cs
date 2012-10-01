@@ -126,7 +126,7 @@ namespace Kudu.SiteManagement
             {
                 // Determine the host header values
                 List<string> siteBindings = !String.IsNullOrWhiteSpace(_settingsResolver.SitesBaseUrl) 
-                    ? new List<string>() { String.Concat(applicationName, _settingsResolver.SitesBaseUrl) } 
+                    ? new List<string>() { String.Concat(String.Concat(applicationName, "."), _settingsResolver.SitesBaseUrl) } 
                     : new List<string>();
 
                 // Create the service site for this site
