@@ -233,7 +233,7 @@
     <value>Deployment skipped. Received '{0}' branch, and only pushes to '{1}' are deployed.</value>
   </data>
   <data name="Log_UnexpectedError" xml:space="preserve">
-    <value>An unknown error has occured. Check the diagnostic log for details.</value>
+    <value>An unknown error has occurred. Check the diagnostic log for details.</value>
   </data>
   <data name="Log_UpdatingBranch" xml:space="preserve">
     <value>Updating branch '{0}'.</value>
