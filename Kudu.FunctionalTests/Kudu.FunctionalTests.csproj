@@ -36,18 +36,13 @@
     <Reference Include="CsvHelper, Version=1.1.2.40563, Culture=neutral, PublicKeyToken=8c4959082be5c823, processorArchitecture=MSIL">
       <HintPath>..\packages\CsvHelper.1.1.2\lib\net20\CsvHelper.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Json, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\JsonValue.0.6.0\lib\40\Microsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Net.Http.Formatting, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\HttpClient.0.6.0\lib\40\Microsoft.Net.Http.Formatting.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Server.Common, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\JsonValue.0.6.0\lib\40\Microsoft.Server.Common.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.Web.Administration, Version=7.9.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\Windows\System32\inetsrv\Microsoft.Web.Administration.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Newtonsoft.Json.4.5.9\lib\net40\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
@@ -57,8 +52,14 @@
     <Reference Include="System.IO.Abstractions, Version=1.4.0.23, Culture=neutral, PublicKeyToken=d480b5b72fb413da, processorArchitecture=MSIL">
       <HintPath>..\packages\System.IO.Abstractions.1.4.0.23\lib\net35\System.IO.Abstractions.dll</HintPath>
     </Reference>
-    <Reference Include="System.Net.Http, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\HttpClient.0.6.0\lib\40\System.Net.Http.dll</HintPath>
+    <Reference Include="System.Net.Http, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Net.Http.2.0.20710.0\lib\net40\System.Net.Http.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Http.Formatting, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.Client.4.0.20710.0\lib\net40\System.Net.Http.Formatting.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Http.WebRequest, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Net.Http.2.0.20710.0\lib\net40\System.Net.Http.WebRequest.dll</HintPath>
     </Reference>
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.ServiceModel.Activation" />
