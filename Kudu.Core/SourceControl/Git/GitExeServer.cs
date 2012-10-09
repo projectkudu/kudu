@@ -235,10 +235,10 @@ echo $i > pushinfo
             public const string DEPLOYER = "KUDU_DEPLOYER";
 
             // Command to launch the post receive hook
-            public static string KUDUCOMMAND = "$" + EXEPATH + " " +
-                                               "$" + APPPATH + " " +
-                                               "$" + MSBUILD + " " +
-                                               "$" + DEPLOYER;
+            public static string KUDUCOMMAND = "\"$" + EXEPATH + "\" " +
+                                               "\"$" + APPPATH + "\" " +
+                                               "\"$" + MSBUILD + "\" " +
+                                               "\"$" + DEPLOYER + "\"";
         }
     }
 }
