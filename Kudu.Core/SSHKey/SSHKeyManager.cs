@@ -19,19 +19,22 @@ namespace Kudu.Core.SSHKey
         private readonly string _config;
 
         public SSHKeyManager(IEnvironment environment, IFileSystem fileSystem, ITraceFactory traceFactory)
-            : this(fileSystem, traceFactory, environment.SSHKeyPath)
         {
-            _fileSystem = fileSystem;
-            _traceFactory = traceFactory;
-        }
+            if (environment == null)
+            {
+                throw new ArgumentNullException("environment");
+            } 
+            
+            if (fileSystem == null)
+            {
+                throw new ArgumentNullException("fileSystem");
+            }
 
-        protected SSHKeyManager(IFileSystem fileSystem, ITraceFactory traceFactory, string sshPath)
-        {
             _fileSystem = fileSystem;
-            _traceFactory = traceFactory;
-            _sshPath = sshPath;
-            _id_rsa = Path.Combine(sshPath, PrivateKeyFile);
-            _config = Path.Combine(sshPath, ConfigFile);
+            _traceFactory = traceFactory ?? NullTracerFactory.Instance;
+            _sshPath = environment.SSHKeyPath;
+            _id_rsa = Path.Combine(_sshPath, PrivateKeyFile);
+            _config = Path.Combine(_sshPath, ConfigFile);
         }
 
         public void SetPrivateKey(string key)
