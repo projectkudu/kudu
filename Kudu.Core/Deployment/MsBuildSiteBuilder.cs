@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
@@ -31,7 +30,7 @@ namespace Kudu.Core.Deployment
 
         protected string GetPropertyString()
         {
-            return String.Join(";", _propertyProvider.GetProperties().Select(p => string.Format(CultureInfo.CurrentCulture, "{0}=\"{1}\"", p.Key, p.Value)));
+            return String.Join(";", _propertyProvider.GetProperties().Select(p => String.Format("{0}=\"{1}\"", p.Key, p.Value)));
         }
 
         public string ExecuteMSBuild(ITracer tracer, string arguments, params object[] args)
