@@ -111,10 +111,6 @@
   <ItemGroup>
     <Content Include="Env.aspx" />
     <Content Include="Default.aspx" />
-    <Content Include="msbuild\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.Build.Tasks.Dll" />
-    <Content Include="msbuild\Microsoft\VisualStudio\v10.0\Web\Microsoft.Web.Publishing.Tasks.Dll" />
-    <Content Include="msbuild\Microsoft\VisualStudio\v11.0\WebApplications\Microsoft.WebApplication.Build.Tasks.Dll" />
-    <Content Include="msbuild\Microsoft\VisualStudio\v11.0\Web\Microsoft.Web.Publishing.Tasks.dll" />
     <Content Include="Web.config">
       <SubType>Designer</SubType>
     </Content>
@@ -164,24 +160,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="msbuild\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" />
-    <Content Include="msbuild\Microsoft\VisualStudio\v10.0\Web\Microsoft.Web.Publishing.AllFilesInProjectFolder.targets" />
-    <Content Include="msbuild\Microsoft\VisualStudio\v10.0\Web\Microsoft.Web.Publishing.AllFilesInTheProject.targets" />
-    <Content Include="msbuild\Microsoft\VisualStudio\v10.0\Web\Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets" />
-    <Content Include="msbuild\Microsoft\VisualStudio\v10.0\Web\Microsoft.Web.Publishing.targets" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="msbuild\Microsoft\VisualStudio\v11.0\WebApplications\Microsoft.WebApplication.targets" />
-    <Content Include="msbuild\Microsoft\VisualStudio\v11.0\Web\CollectFiles\Microsoft.Web.Publishing.AllFilesInProjectFolder.targets" />
-    <Content Include="msbuild\Microsoft\VisualStudio\v11.0\Web\CollectFiles\Microsoft.Web.Publishing.AllFilesInTheProject.targets" />
-    <Content Include="msbuild\Microsoft\VisualStudio\v11.0\Web\CollectFiles\Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets" />
-    <Content Include="msbuild\Microsoft\VisualStudio\v11.0\Web\Microsoft.Web.Publishing.targets" />
-    <Content Include="msbuild\Microsoft\VisualStudio\v11.0\Web\Transform\Microsoft.Web.Publishing.AspNetCompileMerge.targets" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="msbuild\Microsoft\VisualStudio\Kudu.targets" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

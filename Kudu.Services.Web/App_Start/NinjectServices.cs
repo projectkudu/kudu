@@ -95,7 +95,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<RepositoryConfiguration>().ToConstant(gitConfiguration);
 
             string sdkPath = Path.Combine(HttpRuntime.AppDomainAppPath, SdkRootDirectory);
-            kernel.Bind<IBuildPropertyProvider>().ToConstant(new BuildPropertyProvider(sdkPath));
+            kernel.Bind<IBuildPropertyProvider>().ToConstant(new BuildPropertyProvider());
 
             if (AppSettings.TraceEnabled)
             {

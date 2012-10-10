@@ -17,14 +17,6 @@
   <?define KuduServiceMsBuildDir = "$(var.KuduServiceTargetsRootDir)\v10.0"?>
   <?define KuduServiceMsBuildDir11 = "$(var.KuduServiceDir)\msbuild\Microsoft\VisualStudio\v11.0"?>
   
-  <?if $(env.PROCESSOR_ARCHITECTURE) = 'AMD64' ?>
-    <?define ReferenceAssembliesDir = "$(env.ProgramFiles(x86))\Reference Assemblies"?>
-    <?define Net40SdkBinDir = "$(env.ProgramFiles(x86))\Microsoft SDKs\Windows\v7.0A\Bin" ?>
- <?else ?>
-    <?define ReferenceAssembliesDir = "$(env.ProgramFiles)\Reference Assemblies"?>
-    <?define Net40SdkBinDir = "$(env.ProgramFiles)\Microsoft SDKs\Windows\v7.0A\Bin"?>
- <?endif?>
-  
   <Product Id="*"
            Name="Kudu.Setup"
            Language="1033"
@@ -61,42 +53,9 @@
       <Directory Id="WINDOWSDRIVE">
         <Directory Id="KUDU_BASE_DIR" Name="KuduService">
           <Directory Id="KUDU_WWWROOT" Name="wwwroot">
-
             <Directory Id="KUDU_SERVICE_BIN" Name="Bin">
               <Directory Id="KUDU_SERVICE_BIN_SCRIPTS" Name="Scripts" />
             </Directory>
-
-            <Directory Id="KUDU_SERVICE_MSBUILD" Name="msbuild">
-              <Directory Id ="KUDU_SERVICE_MSBUILD_MS" Name="Microsoft">
-                <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS" Name="VisualStudio">
-                  <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS_10" Name="v10.0">
-
-                    <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS_10_WEB" Name="Web"/>
-                    <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS_10_WEBAPPS" Name="WebApplications"/>
-
-                  </Directory>
-                  <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS_11" Name="v11.0">
-
-                    <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS_11_WEB" Name="Web">
-                      <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS_11_WEB_COLLECTFILES" Name="CollectFiles"/>
-                      <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS_11_WEB_TRANSFORM" Name="Transform"/>
-                    </Directory>
-                    <Directory Id="KUDU_SERVICE_MSBUILD_MS_VS_11_WEBAPPS" Name="WebApplications"/>
-
-                  </Directory>
-                </Directory>
-              </Directory>
-              <!-- Directory for References Assemblies -->
-              <Directory Id="KUDU_SERVICE_REF_ASM" Name="ReferenceAssemblies">
-                <Directory Id="KUDU_SERVICE_REF_ASM_v40" Name="v4.0" />
-              </Directory>
-              
-              <!-- Directory for the SDK binaries -->
-              <Directory Id="KUDU_SERVICE_FX_SDK" Name="SDK">
-                <Directory Id="KUDU_SERVICE_FX_SDK_v40" Name="v4.0" />
-              </Directory>
-            </Directory>
-
           </Directory>
         </Directory>
       </Directory>
@@ -210,115 +169,6 @@
       </Component>
     </DirectoryRef>
 
-    <DirectoryRef Id="KUDU_SERVICE_MSBUILD_MS_VS_10_WEB">
-      <Component Id="Microsoft.Web.Publishing.AllFilesInProjectFolder.targets" Guid="{0DE02D81-BAFE-4939-B903-D454B4D3603D}">
-        <File Id="Microsoft.Web.Publishing.AllFilesInProjectFolder.targets" Source="$(var.KuduServiceMsBuildDir)\Web\Microsoft.Web.Publishing.AllFilesInProjectFolder.targets" />
-      </Component>
-      <Component Id="Microsoft.Web.Publishing.AllFilesInTheProject.targets" Guid="{9A35F0F7-6D04-4173-803E-040270478FB6}">
-        <File Id="Microsoft.Web.Publishing.AllFilesInTheProject.targets" Source="$(var.KuduServiceMsBuildDir)\Web\Microsoft.Web.Publishing.AllFilesInTheProject.targets" />
-      </Component>
-      <Component Id="Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets" Guid="{BA70D756-5EF3-4B27-909A-8CB13E3F8413}">
-        <File Id="Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets" Source="$(var.KuduServiceMsBuildDir)\Web\Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets" />
-      </Component>
-      <Component Id="Microsoft.Web.Publishing.targets" Guid="{4B06DD4C-5DF8-4B04-83D1-83CBBD16A818}">
-        <File Id="Microsoft.Web.Publishing.targets" Source="$(var.KuduServiceMsBuildDir)\Web\Microsoft.Web.Publishing.targets" />
-      </Component>
-      <Component Id="Microsoft.Web.Publishing.Tasks.Dll" Guid="{CFE7A1D6-B7A9-4F97-8C2D-EB19C783E999}">
-        <File Id="Microsoft.Web.Publishing.Tasks.Dll" Source="$(var.KuduServiceMsBuildDir)\Web\Microsoft.Web.Publishing.Tasks.Dll" />
-      </Component>
-    </DirectoryRef>
-    
-    <DirectoryRef Id="KUDU_SERVICE_MSBUILD_MS_VS">
-        <Component Id="Kudu.targets" Guid="{04A18D17-6C3F-4281-B1B1-372BDF1AD2C6}">
-            <File Source="$(var.KuduServiceTargetsRootDir)\Kudu.targets" />
-        </Component>
-    </DirectoryRef>
-
-    <DirectoryRef Id="KUDU_SERVICE_MSBUILD_MS_VS_10_WEBAPPS">
-      <Component Id="Microsoft.WebApplication.Build.Tasks.Dll" Guid="{D9A90644-3F50-420E-9FC7-0EF987C2D29A}">
-        <File Id="Microsoft.WebApplication.Build.Tasks.Dll" Source="$(var.KuduServiceMsBuildDir)\WebApplications\Microsoft.WebApplication.Build.Tasks.Dll" />
-      </Component>
-      <Component Id="Microsoft.WebApplication.targets" Guid="{555CAE90-180E-4345-AAAF-EF13C7DB4134}">
-        <File Id="Microsoft.WebApplication.targets" Source="$(var.KuduServiceMsBuildDir)\WebApplications\Microsoft.WebApplication.targets" />
-      </Component>
-    </DirectoryRef>
-
-    <DirectoryRef Id="KUDU_SERVICE_MSBUILD_MS_VS_11_WEB">
-      <Component Id="Microsoft.Web.Publishing.targets.v11" Guid="{2D5EADE2-1CAB-4B07-B9E5-5C79466475AC}">
-        <File Id="Microsoft.Web.Publishing.targets.v11" Source="$(var.KuduServiceMsBuildDir11)\Web\Microsoft.Web.Publishing.targets" />
-      </Component>
-      <Component Id="Microsoft.Web.Publishing.Tasks.Dll.v11" Guid="{40B916DA-20D7-40DC-B369-AF49B34780E5}">
-        <File Id="Microsoft.Web.Publishing.Tasks.Dll.v11" Source="$(var.KuduServiceMsBuildDir11)\Web\Microsoft.Web.Publishing.Tasks.Dll" />
-      </Component>
-    </DirectoryRef>
-
-    <DirectoryRef Id="KUDU_SERVICE_MSBUILD_MS_VS_11_WEB_COLLECTFILES">
-      <Component Id="Microsoft.Web.Publishing.AllFilesInProjectFolder.targets.v11" Guid="{BE9D7EE5-D292-462A-A29A-FC2516BEE8AE}">
-        <File Id="Microsoft.Web.Publishing.AllFilesInProjectFolder.targets.v11" Source="$(var.KuduServiceMsBuildDir11)\Web\CollectFiles\Microsoft.Web.Publishing.AllFilesInProjectFolder.targets" />
-      </Component>
-      <Component Id="Microsoft.Web.Publishing.AllFilesInTheProject.targets.v11" Guid="{D6109FB2-040D-4FF1-8418-B3D4199A56FF}">
-        <File Id="Microsoft.Web.Publishing.AllFilesInTheProject.targets.v11" Source="$(var.KuduServiceMsBuildDir11)\Web\CollectFiles\Microsoft.Web.Publishing.AllFilesInTheProject.targets" />
-      </Component>
-      <Component Id="Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets.v11" Guid="{1C4F999E-0342-44C1-9A46-6C2A56E404DC}">
-        <File Id="Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets.v11" Source="$(var.KuduServiceMsBuildDir11)\Web\CollectFiles\Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets" />
-      </Component>
-    </DirectoryRef>
-
-    <DirectoryRef Id="KUDU_SERVICE_MSBUILD_MS_VS_11_WEB_TRANSFORM">
-      <Component Id="Microsoft.Web.Publishing.AspNetCompileMerge.targets.v11" Guid="{022E1290-E8DD-4110-95BA-9E7DFD7EF6C1}">
-        <File Id="Microsoft.Web.Publishing.AspNetCompileMerge.targets.v11" Source="$(var.KuduServiceMsBuildDir11)\Web\Transform\Microsoft.Web.Publishing.AspNetCompileMerge.targets" />
-      </Component>
-    </DirectoryRef>
-
-    <DirectoryRef Id="KUDU_SERVICE_MSBUILD_MS_VS_11_WEBAPPS">
-      <Component Id="Microsoft.WebApplication.Build.Tasks.Dll.v11" Guid="{7E288120-AE2E-47C0-86A3-96F02322144E}">
-        <File Id="Microsoft.WebApplication.Build.Tasks.Dll.v11" Source="$(var.KuduServiceMsBuildDir11)\WebApplications\Microsoft.WebApplication.Build.Tasks.Dll" />
-      </Component>
-      <Component Id="Microsoft.WebApplication.targets.v11" Guid="{9640EA37-6A07-423B-85A4-A5BDB267BBE6}">
-        <File Id="Microsoft.WebApplication.targets.v11" Source="$(var.KuduServiceMsBuildDir11)\WebApplications\Microsoft.WebApplication.targets" />
-      </Component>
-    </DirectoryRef>
-
-    <DirectoryRef Id="KUDU_SERVICE_REF_ASM_v40">
-      <Component Id="System.ComponentModel.DataAnnotations.dll.v40" Guid="{1CF53B6B-2137-4DD7-AE33-875B5BBEA794}">
-        <File Source="$(var.ReferenceAssembliesDir)\Microsoft\Framework\.NETFramework\v4.0\System.ComponentModel.DataAnnotations.dll" />
-      </Component>
-    </DirectoryRef>
-
-    <DirectoryRef Id="KUDU_SERVICE_FX_SDK_v40">
-      <Component Id="Al.exe.v40" Guid="{0221E10E-CEED-4D91-908F-0620C4FD72D7}">
-        <File Source="$(var.Net40SdkBinDir)\Al.exe" />
-      </Component>
-
-      <Component Id="Al.exe.config.v40" Guid="{29DA148A-11EA-4516-95B1-B25DAF72F031}">
-        <File Source="$(var.Net40SdkBinDir)\Al.exe.config" />
-      </Component>
-
-      <Component Id="Lc.exe.v40" Guid="{DDB07AD5-5940-438A-9057-D256A82014D3}">
-        <File Source="$(var.Net40SdkBinDir)\Lc.exe" />
-      </Component>
-      
-      <Component Id="Lc.exe.config.v40" Guid="{88938FEC-457D-415B-BD7A-78C514A56F5C}">
-        <File Source="$(var.Net40SdkBinDir)\Lc.exe.config" />
-      </Component>
-
-      <Component Id="Resgen.exe.v40" Guid="{A47488CA-4A10-47EA-AC2C-DC6EF6A0A95B}">
-        <File Source="$(var.Net40SdkBinDir)\Resgen.exe" />
-      </Component>
-
-      <Component Id="Resgen.exe.config.v40" Guid="{8A5F7FA4-CC54-450D-9CF7-F5F00CA6D086}">
-        <File Source="$(var.Net40SdkBinDir)\Resgen.exe.config" />
-      </Component>
-      
-        <Component Id="sgen.exe.v40" Guid="{E6F05463-565F-4E37-A9D7-9B3CFD388F08}">
-        <File Source="$(var.Net40SdkBinDir)\sgen.exe" />
-      </Component>
-
-      <Component Id="sgen.exe.config.v40" Guid="{58CC21EB-EA46-464E-ABD9-B94854EF3859}">
-        <File Source="$(var.Net40SdkBinDir)\sgen.exe.config" />
-      </Component>
-    </DirectoryRef>
-
     <Feature Id="RequiredComponents" Level="1">
       <ComponentRef Id="RegistryComponent" />
 
@@ -350,39 +200,6 @@
       <ComponentRef Id="System.Net.Http.WebRequest.dll" />
       <ComponentRef Id="System.Web.Http.dll" />
       <ComponentRef Id="System.Web.Http.WebHost.dll" />
-
-      <ComponentRef Id="Microsoft.Web.Publishing.AllFilesInProjectFolder.targets" />
-      <ComponentRef Id="Microsoft.Web.Publishing.AllFilesInTheProject.targets" />
-      <ComponentRef Id="Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets" />
-      <ComponentRef Id="Microsoft.Web.Publishing.targets" />
-      <ComponentRef Id="Microsoft.Web.Publishing.Tasks.Dll" />
-
-      <ComponentRef Id="Microsoft.WebApplication.Build.Tasks.Dll" />
-      <ComponentRef Id="Microsoft.WebApplication.targets" />
-      <ComponentRef Id="Kudu.targets" />
-
-      <ComponentRef Id="Microsoft.Web.Publishing.AllFilesInProjectFolder.targets.v11" />
-      <ComponentRef Id="Microsoft.Web.Publishing.AllFilesInTheProject.targets.v11" />
-      <ComponentRef Id="Microsoft.Web.Publishing.OnlyFilesToRunTheApp.targets.v11" />
-      <ComponentRef Id="Microsoft.Web.Publishing.AspNetCompileMerge.targets.v11" />
-      <ComponentRef Id="Microsoft.Web.Publishing.targets.v11" />
-      <ComponentRef Id="Microsoft.Web.Publishing.Tasks.Dll.v11" />
-
-      <ComponentRef Id="Microsoft.WebApplication.Build.Tasks.Dll.v11" />
-      <ComponentRef Id="Microsoft.WebApplication.targets.v11" />
-
-      <ComponentRef Id="System.ComponentModel.DataAnnotations.dll.v40" />
-      <ComponentRef Id="Al.exe.v40" />
-      <ComponentRef Id="Al.exe.config.v40" />
-
-      <ComponentRef Id="Lc.exe.v40" />
-      <ComponentRef Id="Lc.exe.config.v40" />
-
-      <ComponentRef Id="Resgen.exe.v40" />
-      <ComponentRef Id="Resgen.exe.config.v40" />
-      
-      <ComponentRef Id="sgen.exe.v40" />
-      <ComponentRef Id="sgen.exe.config.v40" />
     </Feature>
 
   </Product>

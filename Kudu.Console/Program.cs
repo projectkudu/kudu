@@ -49,7 +49,7 @@ namespace Kudu.Console
             var deploymentLock = new LockFile(traceFactory, deploymentLockPath);
 
             var fs = new FileSystem();
-            var buildPropertyProvider = new BuildPropertyProvider(wapTargets);
+            var buildPropertyProvider = new BuildPropertyProvider();
             var builderFactory = new SiteBuilderFactory(buildPropertyProvider, env);
             var serverRepository = new GitDeploymentRepository(env.DeploymentRepositoryPath, traceFactory);
             var settings = new XmlSettings.Settings(GetSettingsPath(env));

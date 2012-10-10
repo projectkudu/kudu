@@ -59,8 +59,7 @@
                  Targets="pipelinePreDeployCopyAllFilesToOneFolder" 
                  Properties="_PackageTempDir=$(ServiceSiteTargetPath);
                              AutoParameterizationWebConfigConnectionStrings=false;
-                             SolutionDir=$(ProjectRoot)\;
-                             MSBuildExtensionsPath32=$(ProjectRoot)\Kudu.Services.Web\msbuild"/>
+                             SolutionDir=$(ProjectRoot)\;"/>
                              
         <Exec Command="&quot;$(MSBuildProgramFiles32)\Git\bin\git.exe&quot; rev-parse HEAD > $(ServiceSiteTargetPath)\commit"
               WorkingDirectory="$(ProjectRoot)" />
@@ -71,8 +70,7 @@
                  Targets="pipelinePreDeployCopyAllFilesToOneFolder" 
                  Properties="_PackageTempDir=$(ClientSiteTargetPath);
                              AutoParameterizationWebConfigConnectionStrings=false;
-                             SolutionDir=$(ProjectRoot)\;
-                             MSBuildExtensionsPath32=$(ProjectRoot)\Kudu.Services.Web\msbuild"/>
+                             SolutionDir=$(ProjectRoot)\;"/>
     </Target>
   
     <Target Name="RunTests" DependsOnTargets="CreateOutputPath">
@@ -90,8 +88,7 @@
     <Target Name="Build" DependsOnTargets="CreateOutputPath">
         <MSBuild Projects="$(ProjectRoot)\kudu.sln" 
                  Targets="Build" 
-                 Properties="Configuration=$(Configuration);
-                             MSBuildExtensionsPath32=$(ProjectRoot)\Kudu.Services.Web\msbuild" />
+                 Properties="Configuration=$(Configuration);" />
     </Target>
     
     <Target Name="BuildSetup" DependsOnTargets="RunAll">
