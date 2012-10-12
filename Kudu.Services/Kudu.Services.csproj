@@ -91,6 +91,7 @@
     </Compile>
     <Compile Include="Commands\CommandController.cs" />
     <Compile Include="Deployment\DeploymentController.cs" />
+    <Compile Include="GitServer\UploadPackHandler.cs" />
     <Compile Include="SSHKey\SSHKeyController.cs" />
     <Compile Include="Editor\FilesController.cs" />
     <Compile Include="EnvironmentController.cs" />
@@ -98,7 +99,6 @@
     <Compile Include="GitServer\Helpers.cs" />
     <Compile Include="GitServer\InfoRefsController.cs" />
     <Compile Include="GitServer\ReceivePackHandler.cs" />
-    <Compile Include="GitServer\RpcController.cs" />
     <Compile Include="Infrastructure\AuthUtility.cs" />
     <Compile Include="Infrastructure\IServerConfiguration.cs" />
     <Compile Include="Diagnostics\DiagnosticsController.cs" />

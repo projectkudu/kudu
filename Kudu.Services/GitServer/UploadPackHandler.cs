@@ -26,17 +26,16 @@ using System.Web;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.SourceControl.Git;
-using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.GitServer
 {
-    public class ReceivePackHandler : IHttpHandler
+    public class UploadPackHandler : IHttpHandler
     {
         private readonly IGitServer _gitServer;
         private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
 
-        public ReceivePackHandler(ITracer tracer,
+        public UploadPackHandler(ITracer tracer,
                                   IGitServer gitServer,
                                   IOperationLock deploymentLock)
         {
@@ -55,31 +54,17 @@ namespace Kudu.Services.GitServer
 
         public void ProcessRequest(HttpContext context)
         {
-            using (_tracer.Step("RpcService.ReceivePack"))
+            using (_tracer.Step("RpcService.UploadPackHandler"))
             {
-                _deploymentLock.LockOperation(() =>
-                {
-                    string username = null;
-                    if (AuthUtility.TryExtractBasicAuthUser(context.Request, out username))
-                    {
-                        _gitServer.SetDeployer(username);
-                    }
+                context.Response.Buffer = false;
+                context.Response.BufferOutput = false;
 
-                    context.Response.Buffer = false;
-                    context.Response.BufferOutput = false;
+                context.Response.ContentType = "application/x-git-{0}-result".With("upload-pack");
+                context.Response.AddHeader("Expires", "Fri, 01 Jan 1980 00:00:00 GMT");
+                context.Response.AddHeader("Pragma", "no-cache");
+                context.Response.AddHeader("Cache-Control", "no-cache, max-age=0, must-revalidate");
 
-                    context.Response.ContentType = "application/x-git-receive-pack-result";
-                    context.Response.AddHeader("Expires", "Fri, 01 Jan 1980 00:00:00 GMT");
-                    context.Response.AddHeader("Pragma", "no-cache");
-                    context.Response.AddHeader("Cache-Control", "no-cache, max-age=0, must-revalidate");
-
-                    _gitServer.Receive(GetInputStream(context.Request), context.Response.OutputStream);
-                },
-                () =>
-                {
-                    context.Response.StatusCode = 409;
-                    context.ApplicationInstance.CompleteRequest();
-                });
+                _gitServer.Upload(GetInputStream(context.Request), context.Response.OutputStream);
             }
         }
 
