@@ -12,20 +12,16 @@ using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
 using Newtonsoft.Json.Linq;
-using System.Net;
 
 namespace Kudu.Services.GitServer
 {
-    public class FetchHandler : IHttpHandler
+    public class FetchHandler : GitServerHttpHandler
     {
         private const string PrivateKeyFile = "id_rsa";
         private const string PublicKeyFile = "id_rsa.pub";
 
-        private readonly IGitServer _gitServer;
         private readonly IDeploymentManager _deploymentManager;
         private readonly IDeploymentSettingsManager _settings;
-        private readonly ITracer _tracer;
-        private readonly IOperationLock _deploymentLock;
         private readonly RepositoryConfiguration _configuration;
         private readonly IEnvironment _environment;
 
@@ -36,22 +32,12 @@ namespace Kudu.Services.GitServer
                             IOperationLock deploymentLock,
                             RepositoryConfiguration configuration,
                             IEnvironment environment)
+            : base(tracer, gitServer, deploymentLock)
         {
-            _gitServer = gitServer;
             _deploymentManager = deploymentManager;
             _settings = settings;
-            _tracer = tracer;
-            _deploymentLock = deploymentLock;
             _configuration = configuration;
             _environment = environment;
-        }
-
-        public bool IsReusable
-        {
-            get
-            {
-                return false;
-            }
         }
 
         private string MarkerFilePath
@@ -62,7 +48,7 @@ namespace Kudu.Services.GitServer
             }
         }
 
-        public void ProcessRequest(HttpContext context)
+        public override void ProcessRequest(HttpContext context)
         {
             using (_tracer.Step("FetchHandler"))
             {
