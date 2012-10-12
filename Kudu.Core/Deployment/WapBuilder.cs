@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -94,20 +95,32 @@ namespace Kudu.Core.Deployment
             return tcs.Task;
         }
 
-        private string BuildProject(ITracer tracer, string buildTempPath)
+        internal string BuildProject(ITracer tracer, string buildTempPath)
         {
-            string command = @"""{0}"" /nologo /verbosity:m /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""{1}"";AutoParameterizationWebConfigConnectionStrings=false;Configuration=Release;";
-            if (String.IsNullOrEmpty(_solutionPath))
-            {
-                command += "{2}";
-                return ExecuteMSBuild(tracer, command, _projectPath, buildTempPath, GetPropertyString());
-            }
+            string command = GetMSBuildArguments(buildTempPath);
 
-            string solutionDir = Path.GetDirectoryName(_solutionPath) + @"\\";
-            command += @"SolutionDir=""{2}"";{3}";
 
             // Build artifacts into a temp path
-            return ExecuteMSBuild(tracer, command, _projectPath, buildTempPath, solutionDir, GetPropertyString());
+            return ExecuteMSBuild(tracer, command);
+        }
+
+        internal string GetMSBuildArguments(string buildTempPath)
+        {
+            string command = @"""{0}"" /nologo /verbosity:m /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""{1}"";AutoParameterizationWebConfigConnectionStrings=false;Configuration=Release";
+            string properties = GetPropertyString();
+            if (!String.IsNullOrEmpty(properties))
+            {
+                command += " /p:" + properties;
+            }
+
+            string solutionDir = null;
+            if (!String.IsNullOrEmpty(_solutionPath))
+            {
+                solutionDir = Path.GetDirectoryName(_solutionPath) + @"\\";
+                command += @" /p:SolutionDir=""{2}""";
+            }
+            command = String.Format(CultureInfo.InvariantCulture, command, _projectPath, buildTempPath, solutionDir);
+            return command;
         }
 
         private void CleanBuild(ITracer tracer, string buildTempPath)

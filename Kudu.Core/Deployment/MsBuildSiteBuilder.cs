@@ -33,7 +33,7 @@ namespace Kudu.Core.Deployment
             return String.Join(";", _propertyProvider.GetProperties().Select(p => String.Format("{0}=\"{1}\"", p.Key, p.Value)));
         }
 
-        public string ExecuteMSBuild(ITracer tracer, string arguments, params object[] args)
+        public virtual string ExecuteMSBuild(ITracer tracer, string arguments, params object[] args)
         {
             using (var writer = new ProgressWriter())
             {
