@@ -91,6 +91,7 @@
     </Compile>
     <Compile Include="Commands\CommandController.cs" />
     <Compile Include="Deployment\DeploymentController.cs" />
+    <Compile Include="GitServer\GitServerHttpHandler.cs" />
     <Compile Include="GitServer\UploadPackHandler.cs" />
     <Compile Include="SSHKey\SSHKeyController.cs" />
     <Compile Include="Editor\FilesController.cs" />
