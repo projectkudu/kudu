@@ -203,7 +203,7 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHandler<FetchHandler>(kernel, "fetch", "deploy");
 
             // Clone url
-            routes.MapHttpRoute("git-upload-pack", configuration.GitServerRoot + "/git-upload-pack", new { controller = "Rpc", action = "UploadPack" });
+            routes.MapHandler<UploadPackHandler>(kernel, "git-upload-pack", configuration.GitServerRoot + "/git-upload-pack");
 
             // Live Scm (deployment repository)
             routes.MapHttpRoute("scm-info", "live/scm/info", new { controller = "LiveScm", action = "GetRepositoryInfo" });
