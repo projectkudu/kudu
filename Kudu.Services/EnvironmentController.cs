@@ -9,6 +9,10 @@ namespace Kudu.Services
     {
         private static readonly string _version = typeof(EnvironmentController).Assembly.GetName().Version.ToString();
 
+        /// <summary>
+        /// Get the Kudu version
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         public HttpResponseMessage Get()
         {

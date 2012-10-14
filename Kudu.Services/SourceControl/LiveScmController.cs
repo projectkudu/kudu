@@ -32,6 +32,11 @@ namespace Kudu.Services.SourceControl
             _serverConfiguration = serverConfiguration;
         }
 
+        /// <summary>
+        /// Get information about the repository
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         [HttpGet]
         public RepositoryInfo GetRepositoryInfo(HttpRequestMessage request)
         {
@@ -43,6 +48,9 @@ namespace Kudu.Services.SourceControl
             };
         }
 
+        /// <summary>
+        /// Delete the repository
+        /// </summary>
         [HttpDelete]
         public void Delete()
         {
@@ -66,11 +74,13 @@ namespace Kudu.Services.SourceControl
             }
         }
 
+        /// <summary>
+        /// Clean the repository, using 'git clean -xdf'
+        /// </summary>
         [HttpPost]
         public void Clean()
         {
             _repository.Clean();
         }
-
     }
 }

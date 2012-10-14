@@ -16,6 +16,11 @@ namespace Kudu.Services.Commands
             _commandExecutor = commandExecutor;
         }
 
+        /// <summary>
+        /// Executes an arbitrary command line and return its output
+        /// </summary>
+        /// <param name="input">The command line to execute</param>
+        /// <returns></returns>
         [HttpPost]
         public HttpResponseMessage ExecuteCommand(JObject input)
         {

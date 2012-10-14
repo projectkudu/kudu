@@ -28,7 +28,10 @@ namespace Kudu.Services.SSHKey
             _sshKeyLock = sshKeyLock;
         }
 
-        // The key format that we support is privacy enhanced mail (PEM)
+        
+        /// <summary>
+        /// Set the private key. The supported key format is privacy enhanced mail (PEM)
+        /// </summary>
         [HttpPut]
         public void SetPrivateKey()
         {
