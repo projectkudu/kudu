@@ -117,6 +117,9 @@
       <Component Id="Kudu.Services.dll" Guid="{03D8B0B2-4FE2-4CCC-B54A-144430B05514}">
         <File Id="Kudu.Services.dll" Source="$(var.KuduServiceBinDir)\Kudu.Services.dll" />
       </Component>
+      <Component Id="Kudu.Services.xml" Guid="{DE48C752-BC81-46DB-8F82-A474F333A6C3}">
+        <File Id="Kudu.Services.xml" Source="$(var.KuduServiceBinDir)\Kudu.Services.xml" />
+      </Component>
       <Component Id="Kudu.Services.Web.dll" Guid="{4A3F4105-858A-4972-AE21-805C073F4CD9}">
         <File Id="Kudu.Services.Web.dll" Source="$(var.KuduServiceBinDir)\Kudu.Services.Web.dll" />
       </Component>
@@ -181,6 +184,7 @@
       <ComponentRef Id="Kudu.Contracts.dll"/>
       <ComponentRef Id="Kudu.Core.dll"/>
       <ComponentRef Id="Kudu.Services.dll"/>
+      <ComponentRef Id="Kudu.Services.xml"/>
       <ComponentRef Id="Kudu.Services.Web.dll"/>
       <ComponentRef Id="selectNodeVersion.js"/>
       <ComponentRef Id="semver.js"/>
