@@ -216,6 +216,11 @@ namespace Kudu.SiteManagement
                 // Remove the app pool and commit changes
                 iis.ApplicationPools.Remove(iis.ApplicationPools[appPoolName]);
                 iis.CommitChanges();
+
+                // Clear out the app pool user profile directory if it exists
+                string userDir = Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile).TrimEnd(Path.DirectorySeparatorChar));
+                string appPoolDirectory = Path.Combine(userDir, appPoolName);
+                DeleteSafe(appPoolDirectory);
             }
         }
 
