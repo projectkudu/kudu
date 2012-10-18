@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <PackagesDir>$(ProjectRoot)..\packages</PackagesDir>
+    </PropertyGroup>
+    <ItemGroup>
+        <XunitAssembly Include="$(PackagesDir)\xunit.*\lib\*\xunit.runner.msbuild.dll" />
+    </ItemGroup>    
+
+    <UsingTask AssemblyFile="@(XunitAssembly)" TaskName="Xunit.Runner.MSBuild.xunit" />
+    
+    <Target Name="_RunTests">
+        <xunit Verbose="true" Assembly="$(Assembly)" Xml="$(Xml)" />
+    </Target>
+</Project>

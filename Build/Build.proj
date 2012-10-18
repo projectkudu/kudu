@@ -6,7 +6,7 @@
         <Configuration Condition="$(Configuration) == ''">Debug</Configuration>
         <ProjectRoot>$(MSBuildProjectDirectory)\..</ProjectRoot>
         <ToolsPath>$(ProjectRoot)\tools\</ToolsPath>
-        <XunitPath>$(ToolsPath)xunit\</XunitPath>
+        <XunitPath>$(ProjectRoot)xunit\</XunitPath>
         <ArtifactsPath>$(ProjectRoot)\artifacts\$(Configuration)</ArtifactsPath>
         <ServiceSiteTargetPath Condition="$(ServiceSiteTargetPath) == ''">$(ArtifactsPath)\KuduService</ServiceSiteTargetPath>
         <ServiceSiteProject>$(ProjectRoot)\Kudu.Services.Web\Kudu.Services.Web.csproj</ServiceSiteProject>
@@ -44,9 +44,6 @@
         <RegexTransform Items="@(RegexTransform)" />
     </Target>
     
-    <UsingTask AssemblyFile="$(XunitPath)xunit.runner.msbuild.dll"
-               TaskName="Xunit.Runner.MSBuild.xunit" />
-    
     <Target Name="RunAll" DependsOnTargets="UpdateVersion; Build; RunTests; BuildSites" />
     
     <Target Name="CreateOutputPath">
@@ -74,15 +71,13 @@
     </Target>
   
     <Target Name="RunTests" DependsOnTargets="CreateOutputPath">
-        <xunit Assembly="$(ProjectRoot)\Kudu.Core.Test\bin\$(Configuration)\Kudu.Core.Test.dll" 
-               Xml="$(TestResultsPath)\Kudu.Core.Test.XunitResults.xml"
-               Verbose="true" />
+        <MsBuild Projects="Build.xunit.targets" Targets="_RunTests" 
+                  Properties="Assembly=$(ProjectRoot)\Kudu.Core.Test\bin\$(Configuration)\Kudu.Core.Test.dll;Xml=$(TestResultsPath)\Kudu.Core.Test.XunitResults.xml" />
     </Target>
     
     <Target Name="RunFunctionalTests" DependsOnTargets="CreateOutputPath">
-        <xunit Assembly="$(ProjectRoot)\Kudu.FunctionalTests\bin\$(Configuration)\Kudu.FunctionalTests.dll" 
-               Xml="$(TestResultsPath)\Kudu.FunctionalTests.XunitResults.xml"
-               Verbose="true" />
+        <MsBuild Projects="Build.xunit.targets" Targets="_RunTests" 
+                  Properties="Assembly=$(ProjectRoot)\Kudu.FunctionalTests\bin\$(Configuration)\Kudu.FunctionalTests.dll;Xml=$(TestResultsPath)\Kudu.FunctionalTests.XunitResults.xml" />
     </Target>
     
     <Target Name="Build" DependsOnTargets="CreateOutputPath">

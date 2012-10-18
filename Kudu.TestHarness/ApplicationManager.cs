@@ -87,8 +87,6 @@ namespace Kudu.TestHarness
                 action(appManager);
 
                 KuduUtils.DownloadDump(appManager.ServiceUrl, dumpPath);
-
-                appManager.Delete();
             }
             catch (Exception ex)
             {
@@ -96,6 +94,10 @@ namespace Kudu.TestHarness
 
                 Debug.WriteLine(ex.Message);
                 throw;
+            }
+            finally
+            {
+                appManager.Delete();
             }
         }
 
