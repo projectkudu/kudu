@@ -205,10 +205,15 @@ namespace Kudu.Services.Web.App_Start
             // Clone url
             routes.MapHandler<UploadPackHandler>(kernel, "git-upload-pack", configuration.GitServerRoot + "/git-upload-pack");
 
-            // Live Scm (deployment repository)
-            routes.MapHttpRoute("scm-info", "live/scm/info", new { controller = "LiveScm", action = "GetRepositoryInfo" });
-            routes.MapHttpRoute("scm-clean", "live/scm/clean", new { controller = "LiveScm", action = "Clean" });
-            routes.MapHttpRoute("scm-delete", "live/scm", new { controller = "LiveScm", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
+            // Scm (deployment repository)
+            routes.MapHttpRoute("scm-info", "scm/info", new { controller = "LiveScm", action = "GetRepositoryInfo" });
+            routes.MapHttpRoute("scm-clean", "scm/clean", new { controller = "LiveScm", action = "Clean" });
+            routes.MapHttpRoute("scm-delete", "scm", new { controller = "LiveScm", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
+
+            // These older scm routes are there for backward compat, and should eventually be deleted once clients are changed.
+            routes.MapHttpRoute("live-scm-info", "live/scm/info", new { controller = "LiveScm", action = "GetRepositoryInfo" });
+            routes.MapHttpRoute("live-scm-clean", "live/scm/clean", new { controller = "LiveScm", action = "Clean" });
+            routes.MapHttpRoute("live-scm-delete", "live/scm", new { controller = "LiveScm", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
 
             // Live Files
             routes.MapHttpRoute("all-files", "live/files", new { controller = "Files", action = "GetFiles" });
