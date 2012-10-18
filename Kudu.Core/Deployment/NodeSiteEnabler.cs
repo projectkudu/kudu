@@ -98,7 +98,7 @@ namespace Kudu.Core.Deployment
             // The node.js version selection logic is implemented in selectNodeVersion.js. 
 
             // run with default node.js version which is on the path
-            Executable executor = new Executable("node.exe", string.Empty);
+            Executable executor = new Executable("node.exe", String.Empty);
             try
             {
                 return executor.ExecuteWithConsoleOutput(

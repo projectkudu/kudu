@@ -43,11 +43,11 @@ namespace Kudu.FunctionalTests
                         }
                     });
                 }
-                Debug.Write(string.Format("Test completed: {0}\n", name));
+                Debug.Write(String.Format("Test completed: {0}\n", name));
             }
             else
             {
-                Debug.Write(string.Format("Test skipped: {0}\n", name));
+                Debug.Write(String.Format("Test skipped: {0}\n", name));
             }
         }
 

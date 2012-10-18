@@ -49,7 +49,7 @@ namespace Mvc.Async
             Task result = new ReflectedActionDescriptor(this.MethodInfo, this.ActionName, this.ControllerDescriptor).Execute(controllerContext, parameters) as Task;
             if (result == null)
             {
-                throw new InvalidOperationException(string.Format("Method {0} should have returned a Task!", (object)this.MethodInfo));
+                throw new InvalidOperationException(String.Format("Method {0} should have returned a Task!", (object)this.MethodInfo));
             }
             else
             {

@@ -37,7 +37,7 @@ namespace Kudu.Services.SSHKey
         {
             JObject result = GetJsonContent();
             string key = result == null ? null : result.Value<string>(KeyParameterName);
-            if (result == null || string.IsNullOrEmpty(key))
+            if (result == null || String.IsNullOrEmpty(key))
             {
                 throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.BadRequest, new ArgumentNullException(KeyParameterName)));
             }

@@ -36,7 +36,7 @@ namespace Kudu.Core.Infrastructure.Test
                 yield return new object[] { properties, @"sanity=""sane"";sanity1=""sane1"";sanity2=""sane2""" };
 
                 properties = new Dictionary<string, string>();
-                yield return new object[] { properties, string.Empty };
+                yield return new object[] { properties, String.Empty };
             }
         }
 

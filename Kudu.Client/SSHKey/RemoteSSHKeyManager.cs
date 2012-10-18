@@ -27,7 +27,7 @@ namespace Kudu.Client.SSHKey
                 new KeyValuePair<string, string>("key", key)
             };
 
-            return _client.PutAsync(string.Empty, param).Then(response =>
+            return _client.PutAsync(String.Empty, param).Then(response =>
             {
                 response.EnsureSuccessStatusCode();
                 return;
