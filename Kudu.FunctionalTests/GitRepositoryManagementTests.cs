@@ -365,18 +365,20 @@ command = deploy.cmd");
             // Arrange
             string repositoryName = "Mvc3Application";
             string appName = KuduUtils.GetRandomWebsiteName("PushOverwriteModified");
-            string verificationText = "Welcome to ASP.NET MVC!";
+            string verificationText = "The base color for this template is #5c87b2";
 
             using (var repo = Git.CreateLocalRepository(repositoryName))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
+                    string url = appManager.SiteUrl + @"/Content/Site.css";
+
                     // Act
                     appManager.GitDeploy(repo.PhysicalPath);
 
-                    KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText);
+                    KuduAssert.VerifyUrl(url, verificationText);
 
-                    appManager.ProjectSystem.WriteAllText("Views/Home/Index.cshtml", "Hello world!");
+                    appManager.ProjectSystem.WriteAllText(url, "Hello world!");
 
                     // Sleep a little since it's a remote call
                     Thread.Sleep(500);
@@ -395,7 +397,7 @@ command = deploy.cmd");
                     // Assert
                     Assert.Equal(2, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText);
+                    KuduAssert.VerifyUrl(url, verificationText);
                 });
             }
         }
@@ -406,7 +408,7 @@ command = deploy.cmd");
             // Arrange
             string repositoryName = "Mvc3Application";
             string appName = KuduUtils.GetRandomWebsiteName("GoBackOverwriteModified");
-            string verificationText = "Welcome to ASP.NET MVC!";
+            string verificationText = "The base color for this template is #5c87b2";
 
             using (var repo = Git.CreateLocalRepository(repositoryName))
             {
@@ -414,12 +416,13 @@ command = deploy.cmd");
 
                 ApplicationManager.Run(appName, appManager =>
                 {
+                    string url = appManager.SiteUrl + "/Content/Site.css";
                     // Act
                     appManager.GitDeploy(repositoryName);
 
-                    KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText);
+                    KuduAssert.VerifyUrl(url, verificationText);
 
-                    repo.AppendFile(@"Mvc3Application\Views\Home\Index.cshtml", "Say Whattttt!");
+                    repo.AppendFile(@"Mvc3Application\Content\Site.css", "Say Whattttt!");
 
                     // Make a small changes and commit them to the local repo
                     Git.Commit(repositoryName, "This is a small changes");
@@ -428,11 +431,11 @@ command = deploy.cmd");
                     appManager.GitDeploy(repositoryName);
 
                     // Make a server site change and verify it shows up
-                    appManager.ProjectSystem.WriteAllText("Views/Home/Index.cshtml", "Hello world!");
+                    appManager.ProjectSystem.WriteAllText("Content/Site.css", "Hello world!");
 
                     Thread.Sleep(500);
 
-                    KuduAssert.VerifyUrl(appManager.SiteUrl, "Hello world!");
+                    KuduAssert.VerifyUrl(url, "Hello world!");
 
                     // Now go back in time
                     appManager.DeploymentManager.DeployAsync(id).Wait();
@@ -442,7 +445,7 @@ command = deploy.cmd");
                     // Assert
                     Assert.Equal(2, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText);
+                    KuduAssert.VerifyUrl(url, verificationText);
                 });
             }
         }

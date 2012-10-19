@@ -17,14 +17,8 @@ namespace Kudu.FunctionalTests
             get
             {
                 //// Name, RepoName, RepoUrl, RepoCloneUrl, DefaultBranchName, VerificationText, ExpectedResponseCode, Skip, VerificationLogText
-                yield return new object[] { "MvcMusicStore", "MvcMusicStore", "https://github.com/KuduApps/MvcMusicStore.git", 
-                    "master", "ASP.NET MVC MUSIC STORE", HttpStatusCode.OK, "" };
-
                 yield return new object[] { "Orchard", "Orchard", "https://github.com/KuduApps/Orchard.git", 
                     "master", "Welcome to Orchard", HttpStatusCode.OK, "" };
-
-                //yield return new object[] { "Nuget", "Nuget", "https://github.com/KuduApps/NuGetGallery.git", 
-                //    "master", "Error: Oh no, we broke something!", HttpStatusCode.InternalServerError,  "" };
 
                 yield return new object[] { "ProjectWithNoSolution", "ProjectWithNoSolution", "https://github.com/KuduApps/ProjectWithNoSolution.git", 
                     "master", "Project without solution", HttpStatusCode.OK, "" };
@@ -58,7 +52,7 @@ namespace Kudu.FunctionalTests
             get
             {
                 // Name, RepoName, RepoUrl, RepoCloneUrl, DefaultBranchName, VerificationText, ExpectedResponseCode, Skip, VerificationLogText
-                yield return new object[] { "Express-Template", "Express-Template", "https://github.com/KuduApps/Express-Template", "https://github.com/KuduApps/Express-Template.git", 
+                yield return new object[] { "Express-Template", "Express-Template", "https://github.com/KuduApps/Express-Template.git", 
                     "master", "Modify this template to jump-start your Node.JS Express Web Pages application", HttpStatusCode.OK, "" };
             }
         }
@@ -79,20 +73,8 @@ namespace Kudu.FunctionalTests
             get
             {
                 // Name, RepoName, RepoUrl, RepoCloneUrl, DefaultBranchName, VerificationText, ExpectedResponseCode, Skip, VerificationLogText
-                yield return new object[] { "WordPress", "WordPress", "https://github.com/KuduApps/WordPress.git",
-                    "master", "There doesn't seem to be a <code>wp-config.php</code> file.", HttpStatusCode.InternalServerError, "" };
-
-                yield return new object[] { "OpenCart", "OpenCartWeb", "https://github.com/KuduApps/OpenCartWeb.git", 
-                    "master", "GNU GENERAL PUBLIC LICENSE", HttpStatusCode.OK, "" };
-
                 yield return new object[] { "PhpBB", "PhpBBweb", "https://github.com/KuduApps/PhpBBweb.git", 
                     "master", "Welcome to phpBB3", HttpStatusCode.OK, "" };
-
-                yield return new object[] { "Joomla", "JoomlaWeb", "https://github.com/KuduApps/JoomlaWeb.git", 
-                    "master", "Joomla! 1.7.3 Installation", HttpStatusCode.OK, "" };
-
-                yield return new object[] { "Drupal", "Drupal", "https://github.com/KuduApps/drupal.git", 
-                    "7.x", "Select an installation profile", HttpStatusCode.OK, "" };
             }
         }
 
