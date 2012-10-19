@@ -140,37 +140,6 @@ namespace Kudu.SiteManagement
             }
         }
 
-        public bool TryCreateDeveloperSite(string applicationName, out string siteUrl)
-        {
-            var iis = new IIS.ServerManager();
-
-            string devSiteName = GetDevSite(applicationName);
-
-            IIS.Site site = iis.Sites[devSiteName];
-            if (site == null)
-            {
-                // Get the path to the dev site
-                string siteRoot = _pathResolver.GetDeveloperApplicationPath(applicationName);
-                string webRoot = Path.Combine(siteRoot, Constants.WebRoot);
-                int sitePort = CreateSite(iis, applicationName, devSiteName, webRoot);
-
-                // Ensure the directory is created
-                FileSystemHelpers.EnsureDirectory(webRoot);
-
-                // Map a path called app to the site root under the service site
-                MapServiceSitePath(iis, applicationName, Constants.MappedDevSite, siteRoot);
-
-                iis.CommitChanges();
-
-
-                siteUrl = String.Format("http://localhost:{0}/", sitePort);
-                return true;
-            }
-
-            siteUrl = String.Format("http://localhost:{0}/", site.Bindings[0].EndPoint.Port);
-            return false;
-        }
-
         public void DeleteSite(string applicationName)
         {
             var iis = new IIS.ServerManager();

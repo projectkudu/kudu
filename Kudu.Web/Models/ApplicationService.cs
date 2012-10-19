@@ -49,15 +49,8 @@ namespace Kudu.Web.Models
             {
                 Name = name,
                 SiteUrl = site.SiteUrl,
-                DevSiteUrl = site.DevSiteUrl,
                 ServiceUrl = site.ServiceUrl
             };
-        }
-
-        public void CreateDevelopmentSite(string name)
-        {
-            string siteUrl;
-            _siteManager.TryCreateDeveloperSite(name, out siteUrl);
         }
     }
 

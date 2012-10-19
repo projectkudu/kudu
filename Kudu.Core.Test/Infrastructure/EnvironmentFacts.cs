@@ -12,7 +12,7 @@ namespace Kudu.Core.Test
         {
             // Act and Assert
             var ex = Assert.Throws<ArgumentNullException>(() =>
-                new Environment(null, null, null, null, null, null, null, null, null, null));
+                new Environment(null, null, null, null, null, null, null, null, null));
 
             Assert.Equal("fileSystem", ex.ParamName);
         }
@@ -22,19 +22,9 @@ namespace Kudu.Core.Test
         {
             // Act and Assert
             var ex = Assert.Throws<ArgumentNullException>(() =>
-                new Environment(Mock.Of<IFileSystem>(), null, null, null, null, null, null, null, null, null));
+                new Environment(Mock.Of<IFileSystem>(), null, null, null, null, null, null, null, null));
 
             Assert.Equal("deploymentRepositoryPathResolver", ex.ParamName);
-        }
-
-        [Fact]
-        public void ConstructorThrowsIfRepositoryPathResolverIsNull()
-        {
-            // Act and Assert
-            var ex = Assert.Throws<ArgumentNullException>(() =>
-                new Environment(Mock.Of<IFileSystem>(), null, null, () => "", null, null, null, null, null, null));
-
-            Assert.Equal("repositoryPathResolver", ex.ParamName);
         }
 
         [Fact]
@@ -130,7 +120,6 @@ namespace Kudu.Core.Test
             string applicationRootPath = null,
             string tempPath = null,
             Func<string> deploymentRepositoryPathResolver = null,
-            Func<string> repositoryPathResolver = null,
             string deployPath = null,
             string deployCachePath = null,
             string sshKeyPath = null,
@@ -139,13 +128,11 @@ namespace Kudu.Core.Test
         {
             fileSystem = fileSystem ?? Mock.Of<IFileSystem>();
             deploymentRepositoryPathResolver = deploymentRepositoryPathResolver ?? (() => "");
-            repositoryPathResolver = repositoryPathResolver ?? (() => "");
 
             return new Environment(fileSystem,
                     applicationRootPath,
                     tempPath,
                     deploymentRepositoryPathResolver,
-                    repositoryPathResolver,
                     deployPath,
                     deployCachePath,
                     sshKeyPath,

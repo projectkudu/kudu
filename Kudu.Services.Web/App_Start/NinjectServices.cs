@@ -256,13 +256,13 @@ namespace Kudu.Services.Web.App_Start
 
         private static ICommandExecutor GetCommandExecutor(IEnvironment environment, IContext context)
         {
-            if (System.String.IsNullOrEmpty(environment.RepositoryPath))
+            if (System.String.IsNullOrEmpty(environment.DeploymentRepositoryPath))
             {
                 throw new HttpResponseException(HttpStatusCode.NotFound);
             }
 
             // Start one directory up
-            string path = Path.Combine(environment.RepositoryPath, "..");
+            string path = Path.Combine(environment.DeploymentRepositoryPath, "..");
             return new CommandExecutor(Path.GetFullPath(path));
         }
 
@@ -287,24 +287,11 @@ namespace Kudu.Services.Web.App_Start
                                    root,
                                    tempPath,
                                    () => deploymentRepositoryPath,
-                                   () => ResolveRepositoryPath(),
                                    deployPath,
                                    deployCachePath,
                                    sshKeyPath,
                                    AppSettings.NuGetCachePath,
                                    scriptPath);
-        }
-
-        private static string ResolveRepositoryPath()
-        {
-            string path = PathResolver.ResolveDevelopmentPath();
-
-            if (System.String.IsNullOrEmpty(path))
-            {
-                return null;
-            }
-
-            return Path.Combine(path, Constants.WebRoot);
         }
 
         private class DeploymentManagerFactory : IDeploymentManagerFactory

@@ -115,7 +115,6 @@ namespace Kudu.Console
                                    root,
                                    tempPath,
                                    () => deploymentRepositoryPath,
-                                   () => null,
                                    deployPath,
                                    deployCachePath,
                                    sshKeyPath,
