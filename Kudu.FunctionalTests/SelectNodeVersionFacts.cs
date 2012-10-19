@@ -41,7 +41,7 @@ namespace Kudu.FunctionalTests
         public void TestFallbackToDefaultNodeJsVersionWithServerJsAndEmptyPackageJson()
         {
             // Arrange
-            string repositoryName = "FallbackToDefaultNodeJsVersionWithServerJsAndEmptyPackageJson";
+            string repositoryName = "FallbackToDefaultNodeJsVersionWithServerJs";
             string appName = KuduUtils.GetRandomWebsiteName("FallbackToDefaultNodeJsVersionWithServerJsAndEmptyPackageJson");
             string cloneUrl = "https://github.com/KuduApps/VersionPinnedNodeJsApp.git";
 
@@ -126,7 +126,7 @@ namespace Kudu.FunctionalTests
         public void TestMismatchBetweenAvailableVersionsAndRequestedVersions()
         {
             // Arrange
-            string repositoryName = "TestMismatchBetweenAvailableVersionsAndRequestedVersions";
+            string repositoryName = "TestMismatchBetweenVersions";
             string appName = KuduUtils.GetRandomWebsiteName("TestMismatchBetweenAvailableVersionsAndRequestedVersions");
             string cloneUrl = "https://github.com/KuduApps/VersionPinnedNodeJsApp.git";
 
