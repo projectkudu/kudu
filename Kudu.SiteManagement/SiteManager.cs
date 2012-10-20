@@ -166,14 +166,12 @@ namespace Kudu.SiteManagement
 
             string appPath = _pathResolver.GetApplicationPath(applicationName);
             var sitePath = _pathResolver.GetLiveSitePath(applicationName);
-            var devPath = _pathResolver.GetDeveloperApplicationPath(applicationName);
 
             try
             {
                 kuduPool.StopAndWait();
 
                 DeleteSafe(sitePath);
-                DeleteSafe(devPath);
                 DeleteSafe(appPath);
             }
             catch (Exception ex)
@@ -193,7 +191,7 @@ namespace Kudu.SiteManagement
             }
         }
 
-        public void SetDeveloperSiteWebRoot(string applicationName, string siteRoot)
+        public void SetSiteWebRoot(string applicationName, string siteRoot)
         {
             var iis = new IIS.ServerManager();
             string siteName = GetDevSite(applicationName);
@@ -201,8 +199,8 @@ namespace Kudu.SiteManagement
             IIS.Site site = iis.Sites[siteName];
             if (site != null)
             {
-                string devSitePath = _pathResolver.GetDeveloperApplicationPath(applicationName);
-                string webRoot = Path.Combine(devSitePath, Constants.WebRoot, siteRoot);
+                string sitePath = _pathResolver.GetLiveSitePath(applicationName);
+                string webRoot = Path.Combine(sitePath, Constants.WebRoot, siteRoot);
 
                 // Change the web root
                 site.Applications[0].VirtualDirectories[0].PhysicalPath = webRoot;
