@@ -23,7 +23,7 @@ namespace Kudu.Web.Models
         [Required]
         public string Name { get; set; }
         public string SiteUrl { get; set; }
-        public List<string> SiteUrls { get; set; }
+        public IEnumerable<string> SiteUrls { get; set; }
         public string CustomUrl { get; set; }
         public string ServiceUrl { get; set; }
         public string DevSiteUrl { get; set; }

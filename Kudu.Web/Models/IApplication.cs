@@ -8,7 +8,7 @@ namespace Kudu.Web.Models
         string Name { get; set; }
         string ServiceUrl { get; set; }
         string SiteUrl { get; set; }
-        List<string> SiteUrls { get; set; }
+        IList<string> SiteUrls { get; set; }
         string DevSiteUrl { get; set; }
     }
 }
