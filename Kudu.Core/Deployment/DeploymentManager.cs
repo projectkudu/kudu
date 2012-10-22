@@ -28,6 +28,7 @@ namespace Kudu.Core.Deployment
         private const string LogFile = "log.xml";
         private const string ManifestFile = "manifest";
         private const string ActiveDeploymentFile = "active";
+        private const string TemporaryDeploymentId = "InProgress";
 
         public event Action<DeployResult> StatusChanged;
 
@@ -316,12 +317,33 @@ namespace Kudu.Core.Deployment
             }
         }
 
+        public IDisposable CreateTemporaryDeployment(string statusText)
+        {
+            var tracer = _traceFactory.GetTracer();
+            string id = TemporaryDeploymentId;
+
+            using (tracer.Step("Creating temporary deployment"))
+            {
+                DeploymentStatusFile statusFile = CreateStatusFile(id);
+                statusFile.Id = id;
+                statusFile.Status = DeployStatus.Pending;
+                statusFile.StatusText = statusText;
+                statusFile.Save(_fileSystem);
+            }
+
+            // Return a handle that deletes the deployment on dispose.
+            return new TemporaryDeploymentHandle(this);
+        }
+
         private ILogger CreateAndPopulateStatusFile(ITracer tracer, string id, string deployer)
         {
             ILogger logger = GetLogger(id);
 
             using (tracer.Step("Collecting changeset information"))
             {
+                // Remove any old instance of a temporary deployment if exists
+                this.Delete(TemporaryDeploymentId);
+
                 // Create the status file and store information about the commit
                 DeploymentStatusFile statusFile = CreateStatusFile(id);
                 statusFile.Id = id;
@@ -336,6 +358,15 @@ namespace Kudu.Core.Deployment
             }
 
             return logger;
+        }
+
+        /// <summary>
+        /// Deletes the temporary deployment, will not fail if it doesn't exist.
+        /// </summary>
+        private void DeleteTemporaryDeployment()
+        {
+            string temporaryDeploymentPath = GetRoot(TemporaryDeploymentId, ensureDirectory: false);
+            FileSystemHelpers.DeleteFileSafe(temporaryDeploymentPath);
         }
 
         private DeployResult GetResult(string id, string activeDeploymentId, bool isDeploying)
@@ -694,6 +725,21 @@ namespace Kudu.Core.Deployment
         private bool IsActive(string id)
         {
             return id.Equals(ActiveDeploymentId, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private class TemporaryDeploymentHandle : IDisposable
+        {
+            private DeploymentManager _deploymentManager;
+
+            public TemporaryDeploymentHandle(DeploymentManager deploymentManager)
+            {
+                this._deploymentManager = deploymentManager;
+            }
+
+            public void Dispose()
+            {
+                _deploymentManager.DeleteTemporaryDeployment();
+            }
         }
     }
 }

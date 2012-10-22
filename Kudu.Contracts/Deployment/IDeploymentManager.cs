@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Kudu.Contracts.Tracing;
+using System;
 using System.Collections.Generic;
 
 namespace Kudu.Core.Deployment
@@ -15,5 +16,6 @@ namespace Kudu.Core.Deployment
         void Deploy(string id, string deployer, bool clean);
         void Deploy(string deployer);
         void CreateExistingDeployment(string id, string deployer);
+        IDisposable CreateTemporaryDeployment(string statusText);
     }
 }

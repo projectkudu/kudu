@@ -25,6 +25,7 @@ using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Services.Infrastructure;
+using Kudu.Core.Deployment;
 
 namespace Kudu.Services.GitServer
 {
@@ -32,8 +33,9 @@ namespace Kudu.Services.GitServer
     {
         public ReceivePackHandler(ITracer tracer,
                                   IGitServer gitServer,
-                                  IOperationLock deploymentLock)
-            : base(tracer, gitServer, deploymentLock)
+                                  IOperationLock deploymentLock,
+                                  IDeploymentManager deploymentManager)
+            : base(tracer, gitServer, deploymentLock, deploymentManager)
         {
         }
 
@@ -53,7 +55,10 @@ namespace Kudu.Services.GitServer
 
                     context.Response.ContentType = "application/x-git-receive-pack-result";
 
-                    _gitServer.Receive(GetInputStream(context.Request), context.Response.OutputStream);
+                    using (_deploymentManager.CreateTemporaryDeployment("Fetching changes."))
+                    {
+                        _gitServer.Receive(GetInputStream(context.Request), context.Response.OutputStream);
+                    }
                 },
                 () =>
                 {

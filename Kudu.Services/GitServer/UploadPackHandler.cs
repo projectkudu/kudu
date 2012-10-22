@@ -24,6 +24,7 @@ using System.Web;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.SourceControl.Git;
+using Kudu.Core.Deployment;
 
 namespace Kudu.Services.GitServer
 {
@@ -31,8 +32,9 @@ namespace Kudu.Services.GitServer
     {
         public UploadPackHandler(ITracer tracer,
                                   IGitServer gitServer,
-                                  IOperationLock deploymentLock)
-            : base(tracer, gitServer, deploymentLock)
+                                  IOperationLock deploymentLock,
+                                  IDeploymentManager deploymentManager)
+            : base(tracer, gitServer, deploymentLock, deploymentManager)
         {
         }
 

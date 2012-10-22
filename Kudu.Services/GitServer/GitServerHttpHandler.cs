@@ -26,6 +26,7 @@ using System.Web;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.SourceControl.Git;
+using Kudu.Core.Deployment;
 
 namespace Kudu.Services.GitServer
 {
@@ -34,12 +35,14 @@ namespace Kudu.Services.GitServer
         protected readonly IGitServer _gitServer;
         protected readonly ITracer _tracer;
         protected readonly IOperationLock _deploymentLock;
+        protected readonly IDeploymentManager _deploymentManager;
 
-        public GitServerHttpHandler(ITracer tracer, IGitServer gitServer, IOperationLock deploymentLock)
+        public GitServerHttpHandler(ITracer tracer, IGitServer gitServer, IOperationLock deploymentLock, IDeploymentManager deploymentManager)
         {
             _gitServer = gitServer;
             _tracer = tracer;
             _deploymentLock = deploymentLock;
+            _deploymentManager = deploymentManager;
         }
 
         public virtual bool IsReusable
