@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Kudu.Client.Infrastructure
 {
@@ -36,9 +37,17 @@ namespace Kudu.Client.Infrastructure
         {
             return client.GetAsync(url).Then(result =>
             {
-                return result.EnsureSuccessStatusCode().Content.ReadAsStringAsync().Then(content =>
+                return result.Content.ReadAsStringAsync().Then(content =>
                 {
-                    return JsonConvert.DeserializeObject<T>(content);
+                    if (result.IsSuccessStatusCode)
+                    {
+                        return JsonConvert.DeserializeObject<T>(content);
+                    }
+                    else
+                    {
+                        JObject j = JObject.Parse(content);
+                        throw new InvalidOperationException(string.Format("Received an error from the Kudu service: '{0}'\nDetails: {1}\nStatus Code: {2}", j["Message"].Value<string>(), j["ExceptionMessage"].Value<string>(), result.StatusCode));
+                    }
                 });
             });
         }
