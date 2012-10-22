@@ -140,7 +140,7 @@ namespace Kudu.Services.GitServer
 
                 using (_tracer.Step("Performing fetch based deployment"))
                 {
-                    using (_deploymentManager.CreateTemporaryDeployment("Fetching changes."))
+                    using (_deploymentManager.CreateTemporaryDeployment(Resources.FetchingChanges))
                     {
                         // Configure the repository
                         _gitServer.Initialize(_configuration);
