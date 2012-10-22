@@ -12,13 +12,13 @@ namespace Kudu.Core
         private readonly string _sshKeyPath;
         private readonly string _tempPath;
         private readonly string _scriptPath;
-        private readonly Func<string> _repositoryPathResolver;
+        private readonly string _repositoryPath;
 
         public Environment(
                 IFileSystem fileSystem,
                 string siteRootPath,
                 string tempPath,
-                Func<string> repositoryPathResolver,
+                string repositoryPath,
                 string webRootPath,
                 string deployCachePath,
                 string sshKeyPath,
@@ -29,15 +29,15 @@ namespace Kudu.Core
             {
                 throw new ArgumentNullException("fileSystem");
             }
-            if (repositoryPathResolver == null)
+            if (repositoryPath == null)
             {
-                throw new ArgumentNullException("repositoryPathResolver");
+                throw new ArgumentNullException("repositoryPath");
             }
 
             _fileSystem = fileSystem;
             SiteRootPath = siteRootPath;
             _tempPath = tempPath;
-            _repositoryPathResolver = repositoryPathResolver;
+            _repositoryPath = repositoryPath;
             _webRootPath = webRootPath;
             _deployCachePath = deployCachePath;
             _sshKeyPath = sshKeyPath;
@@ -49,9 +49,8 @@ namespace Kudu.Core
         {
             get
             {
-                string path = _repositoryPathResolver();
-                FileSystemHelpers.EnsureDirectory(_fileSystem, path);
-                return path;
+                FileSystemHelpers.EnsureDirectory(_fileSystem, _repositoryPath);
+                return _repositoryPath;
             }
         }
 

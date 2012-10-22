@@ -24,7 +24,7 @@ namespace Kudu.Core.Test
             var ex = Assert.Throws<ArgumentNullException>(() =>
                 new Environment(Mock.Of<IFileSystem>(), null, null, null, null, null, null, null, null));
 
-            Assert.Equal("repositoryPathResolver", ex.ParamName);
+            Assert.Equal("repositoryPath", ex.ParamName);
         }
 
         [Fact]
@@ -39,7 +39,7 @@ namespace Kudu.Core.Test
             var mockFileSystem = new Mock<IFileSystem>();
             mockFileSystem.Setup(s => s.Directory).Returns(directory.Object);
 
-            var environment = CreateEnvironment(mockFileSystem.Object, repositoryPathResolver: () => repositoryPath);
+            var environment = CreateEnvironment(mockFileSystem.Object, repositoryPath: repositoryPath);
 
             // Act
             string output = environment.RepositoryPath;
@@ -119,7 +119,7 @@ namespace Kudu.Core.Test
             IFileSystem fileSystem = null,
             string siteRootPath = null,
             string tempPath = null,
-            Func<string> repositoryPathResolver = null,
+            string repositoryPath = null,
             string webRootPath = null,
             string deployCachePath = null,
             string sshKeyPath = null,
@@ -127,12 +127,12 @@ namespace Kudu.Core.Test
             string scriptPath = null)
         {
             fileSystem = fileSystem ?? Mock.Of<IFileSystem>();
-            repositoryPathResolver = repositoryPathResolver ?? (() => "");
+            repositoryPath = repositoryPath ?? "";
 
             return new Environment(fileSystem,
                     siteRootPath,
                     tempPath,
-                    repositoryPathResolver,
+                    repositoryPath,
                     webRootPath,
                     deployCachePath,
                     sshKeyPath,

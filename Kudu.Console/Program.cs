@@ -114,7 +114,7 @@ namespace Kudu.Console
             return new Environment(new FileSystem(),
                                    root,
                                    tempPath,
-                                   () => repositoryPath,
+                                   repositoryPath,
                                    webRootPath,
                                    deployCachePath,
                                    sshKeyPath,

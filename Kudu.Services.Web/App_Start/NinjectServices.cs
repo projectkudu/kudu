@@ -286,7 +286,7 @@ namespace Kudu.Services.Web.App_Start
                                    new FileSystem(),
                                    root,
                                    tempPath,
-                                   () => repositoryPath,
+                                   repositoryPath,
                                    webRootPath,
                                    deployCachePath,
                                    sshKeyPath,
