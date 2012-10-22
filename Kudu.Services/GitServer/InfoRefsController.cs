@@ -39,7 +39,7 @@ namespace Kudu.Services.GitServer
         private readonly IDeploymentManager _deploymentManager;
         private readonly IGitServer _gitServer;
         private readonly ITracer _tracer;
-        private readonly string _deploymentTargetPath;
+        private readonly string _webRootPath;
         private readonly RepositoryConfiguration _configuration;
 
         public InfoRefsController(
@@ -52,7 +52,7 @@ namespace Kudu.Services.GitServer
             _gitServer = gitServer;
             _deploymentManager = deploymentManager;
             _tracer = tracer;
-            _deploymentTargetPath = environment.DeploymentTargetPath;
+            _webRootPath = environment.WebRootPath;
             _configuration = configuration;
         }
 
@@ -88,7 +88,7 @@ namespace Kudu.Services.GitServer
                 if (service == "upload-pack")
                 {
                     //// Initialize the repository from the deployment files (if this is the first commit)
-                    //ChangeSet changeSet = _gitServer.Initialize(_configuration, _deploymentTargetPath);
+                    //ChangeSet changeSet = _gitServer.Initialize(_configuration, _webRootPath);
                     //_gitServer.AdvertiseUploadPack(memoryStream);
 
                     //// If we just created the repo, make a 'pseudo' deployment for the initial commit

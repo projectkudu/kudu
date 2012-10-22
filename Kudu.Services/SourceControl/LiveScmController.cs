@@ -70,7 +70,7 @@ namespace Kudu.Services.SourceControl
             using (_tracer.Step("Deleting repository"))
             {
                 // Delete the repository
-                FileSystemHelpers.DeleteDirectorySafe(_environment.DeploymentRepositoryPath);
+                FileSystemHelpers.DeleteDirectorySafe(_environment.RepositoryPath);
             }
         }
 

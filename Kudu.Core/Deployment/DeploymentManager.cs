@@ -299,7 +299,7 @@ namespace Kudu.Core.Deployment
                 CreateAndPopulateStatusFile(tracer, id, deployer);
 
                 IDeploymentManifestWriter manifestWriter = GetDeploymentManifestWriter(id);
-                manifestWriter.AddFiles(_environment.DeploymentTargetPath);
+                manifestWriter.AddFiles(_environment.WebRootPath);
 
                 FinishDeployment(id, tracer, deployStep);
             }
@@ -425,7 +425,7 @@ namespace Kudu.Core.Deployment
                     Tracer = tracer,
                     Logger = logger,
                     GlobalLogger = _globalLogger,
-                    OutputPath = _environment.DeploymentTargetPath,
+                    OutputPath = _environment.WebRootPath,
                 };
 
                 builder.Build(context)

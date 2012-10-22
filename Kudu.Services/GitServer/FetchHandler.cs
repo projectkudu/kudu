@@ -130,7 +130,7 @@ namespace Kudu.Services.GitServer
             {
                 using (_tracer.Step("Prepare SSH environment"))
                 {
-                    _gitServer.SetSSHEnv(repositoryInfo.Host, _environment.ApplicationRootPath);
+                    _gitServer.SetSSHEnv(repositoryInfo.Host, _environment.SiteRootPath);
                 }
             }
 

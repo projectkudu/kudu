@@ -26,7 +26,7 @@ namespace Kudu.Services.Web.Services
         {
             get
             {
-                return _environment.ApplicationRootPath;
+                return _environment.SiteRootPath;
             }
         }
 

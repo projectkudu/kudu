@@ -18,56 +18,56 @@ namespace Kudu.Core.Test
         }
 
         [Fact]
-        public void ConstructorThrowsIfDeploymentRepositoryPathResolverIsNull()
+        public void ConstructorThrowsIfRepositoryPathResolverIsNull()
         {
             // Act and Assert
             var ex = Assert.Throws<ArgumentNullException>(() =>
                 new Environment(Mock.Of<IFileSystem>(), null, null, null, null, null, null, null, null));
 
-            Assert.Equal("deploymentRepositoryPathResolver", ex.ParamName);
+            Assert.Equal("repositoryPathResolver", ex.ParamName);
         }
 
         [Fact]
-        public void DeploymentRepositoryPathCreatesDirectoryIfItDoesNotExist()
+        public void RepositoryPathCreatesDirectoryIfItDoesNotExist()
         {
             // Arrange
-            string deploymentRepositoryPath = @"x:\deployment-repository";
+            string repositoryPath = @"x:\deployment-repository";
             var directory = new Mock<DirectoryBase>(MockBehavior.Strict);
-            directory.Setup(d => d.Exists(deploymentRepositoryPath)).Returns(false);
-            directory.Setup(d => d.CreateDirectory(deploymentRepositoryPath)).Returns(Mock.Of<DirectoryInfoBase>()).Verifiable();
+            directory.Setup(d => d.Exists(repositoryPath)).Returns(false);
+            directory.Setup(d => d.CreateDirectory(repositoryPath)).Returns(Mock.Of<DirectoryInfoBase>()).Verifiable();
 
             var mockFileSystem = new Mock<IFileSystem>();
             mockFileSystem.Setup(s => s.Directory).Returns(directory.Object);
 
-            var environment = CreateEnvironment(mockFileSystem.Object, deploymentRepositoryPathResolver: () => deploymentRepositoryPath);
+            var environment = CreateEnvironment(mockFileSystem.Object, repositoryPathResolver: () => repositoryPath);
 
             // Act
-            string output = environment.DeploymentRepositoryPath;
+            string output = environment.RepositoryPath;
 
             // Assert
-            Assert.Equal(deploymentRepositoryPath, output);
+            Assert.Equal(repositoryPath, output);
             directory.Verify();
         }
 
         [Fact]
-        public void DeploymentTargetPathCreatesDirectoryIfItDoesNotExist()
+        public void WebRootPathCreatesDirectoryIfItDoesNotExist()
         {
             // Arrange
-            string deployPath = @"x:\deployment-path";
+            string webRootPath = @"x:\webroot-path";
             var directory = new Mock<DirectoryBase>(MockBehavior.Strict);
-            directory.Setup(d => d.Exists(deployPath)).Returns(false);
-            directory.Setup(d => d.CreateDirectory(deployPath)).Returns(Mock.Of<DirectoryInfoBase>()).Verifiable();
+            directory.Setup(d => d.Exists(webRootPath)).Returns(false);
+            directory.Setup(d => d.CreateDirectory(webRootPath)).Returns(Mock.Of<DirectoryInfoBase>()).Verifiable();
 
             var mockFileSystem = new Mock<IFileSystem>();
             mockFileSystem.Setup(s => s.Directory).Returns(directory.Object);
 
-            var environment = CreateEnvironment(mockFileSystem.Object, deployPath: deployPath);
+            var environment = CreateEnvironment(mockFileSystem.Object, webRootPath: webRootPath);
 
             // Act
-            string output = environment.DeploymentTargetPath;
+            string output = environment.WebRootPath;
 
             // Assert
-            Assert.Equal(deployPath, output);
+            Assert.Equal(webRootPath, output);
             directory.Verify();
         }
 
@@ -117,23 +117,23 @@ namespace Kudu.Core.Test
 
         private static Environment CreateEnvironment(
             IFileSystem fileSystem = null,
-            string applicationRootPath = null,
+            string siteRootPath = null,
             string tempPath = null,
-            Func<string> deploymentRepositoryPathResolver = null,
-            string deployPath = null,
+            Func<string> repositoryPathResolver = null,
+            string webRootPath = null,
             string deployCachePath = null,
             string sshKeyPath = null,
             string nugetCachePath = null,
             string scriptPath = null)
         {
             fileSystem = fileSystem ?? Mock.Of<IFileSystem>();
-            deploymentRepositoryPathResolver = deploymentRepositoryPathResolver ?? (() => "");
+            repositoryPathResolver = repositoryPathResolver ?? (() => "");
 
             return new Environment(fileSystem,
-                    applicationRootPath,
+                    siteRootPath,
                     tempPath,
-                    deploymentRepositoryPathResolver,
-                    deployPath,
+                    repositoryPathResolver,
+                    webRootPath,
                     deployCachePath,
                     sshKeyPath,
                     nugetCachePath,

@@ -99,7 +99,7 @@ namespace Kudu.Services.Web.App_Start
 
             if (AppSettings.TraceEnabled)
             {
-                string tracePath = Path.Combine(environment.ApplicationRootPath, Constants.TracePath, Constants.TraceFile);
+                string tracePath = Path.Combine(environment.SiteRootPath, Constants.TracePath, Constants.TraceFile);
                 System.Func<ITracer> createTracerThunk = () => new Tracer(tracePath);
 
                 // First try to use the current request profiler if any, otherwise create a new one
@@ -118,7 +118,7 @@ namespace Kudu.Services.Web.App_Start
 
 
             // Setup the deployment lock
-            string lockPath = Path.Combine(environment.ApplicationRootPath, Constants.LockPath);
+            string lockPath = Path.Combine(environment.SiteRootPath, Constants.LockPath);
             string deploymentLockPath = Path.Combine(lockPath, Constants.DeploymentLockFile);
             string sshKeyLockPath = Path.Combine(lockPath, Constants.SSHKeyLockFile);
             string initLockPath = Path.Combine(lockPath, Constants.InitLockFile);
@@ -136,8 +136,8 @@ namespace Kudu.Services.Web.App_Start
             // 3. The npm log
             var paths = new[] { 
                 environment.DeploymentCachePath,
-                Path.Combine(environment.ApplicationRootPath, Constants.LogFilesPath),
-                Path.Combine(environment.DeploymentTargetPath, Constants.NpmDebugLogFile),
+                Path.Combine(environment.SiteRootPath, Constants.LogFilesPath),
+                Path.Combine(environment.WebRootPath, Constants.NpmDebugLogFile),
             };
 
             kernel.Bind<DiagnosticsController>().ToMethod(context => new DiagnosticsController(paths));
@@ -149,7 +149,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<ISiteBuilderFactory>().To<SiteBuilderFactory>()
                                              .InRequestScope();
 
-            kernel.Bind<IServerRepository>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath,
+            kernel.Bind<IServerRepository>().ToMethod(context => new GitExeServer(environment.RepositoryPath,
                                                                                   initLock,
                                                                                   context.Kernel.Get<IDeploymentEnvironment>(),
                                                                                   context.Kernel.Get<ITraceFactory>()))
@@ -161,13 +161,13 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<ISSHKeyManager>().To<SSHKeyManager>()
                                              .InRequestScope();
 
-            kernel.Bind<IDeploymentRepository>().ToMethod(context => new GitDeploymentRepository(environment.DeploymentRepositoryPath, context.Kernel.Get<ITraceFactory>()))
+            kernel.Bind<IDeploymentRepository>().ToMethod(context => new GitDeploymentRepository(environment.RepositoryPath, context.Kernel.Get<ITraceFactory>()))
                                                 .InRequestScope();
 
             // Git server
             kernel.Bind<IDeploymentEnvironment>().To<DeploymentEnvrionment>();
 
-            kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath,
+            kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.RepositoryPath,
                                                                            initLock,
                                                                            context.Kernel.Get<IDeploymentEnvironment>(),
                                                                            context.Kernel.Get<ITraceFactory>()))
@@ -251,18 +251,18 @@ namespace Kudu.Services.Web.App_Start
 
         private static IProjectSystem GetEditorProjectSystem(IEnvironment environment, IContext context)
         {
-            return new ProjectSystem(environment.DeploymentTargetPath);
+            return new ProjectSystem(environment.WebRootPath);
         }
 
         private static ICommandExecutor GetCommandExecutor(IEnvironment environment, IContext context)
         {
-            if (System.String.IsNullOrEmpty(environment.DeploymentRepositoryPath))
+            if (System.String.IsNullOrEmpty(environment.RepositoryPath))
             {
                 throw new HttpResponseException(HttpStatusCode.NotFound);
             }
 
             // Start one directory up
-            string path = Path.Combine(environment.DeploymentRepositoryPath, "..");
+            string path = Path.Combine(environment.RepositoryPath, "..");
             return new CommandExecutor(Path.GetFullPath(path));
         }
 
@@ -274,10 +274,10 @@ namespace Kudu.Services.Web.App_Start
         private static IEnvironment GetEnvironment()
         {
             string root = PathResolver.ResolveRootPath();
-            string deployPath = Path.Combine(root, Constants.WebRoot);
+            string webRootPath = Path.Combine(root, Constants.WebRoot);
             string deployCachePath = Path.Combine(root, Constants.DeploymentCachePath);
             string sshKeyPath = Path.Combine(root, Constants.SSHKeyPath);
-            string deploymentRepositoryPath = Path.Combine(root, Constants.RepositoryPath);
+            string repositoryPath = Path.Combine(root, Constants.RepositoryPath);
             string tempPath = Path.GetTempPath();
             string deploymentTempPath = Path.Combine(tempPath, Constants.RepositoryPath);
             string scriptPath = Path.Combine(HttpRuntime.BinDirectory, Constants.ScriptsPath);
@@ -286,8 +286,8 @@ namespace Kudu.Services.Web.App_Start
                                    new FileSystem(),
                                    root,
                                    tempPath,
-                                   () => deploymentRepositoryPath,
-                                   deployPath,
+                                   () => repositoryPath,
+                                   webRootPath,
                                    deployCachePath,
                                    sshKeyPath,
                                    AppSettings.NuGetCachePath,

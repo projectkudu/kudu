@@ -39,19 +39,19 @@ namespace Kudu.Console
             IEnvironment env = GetEnvironment(appRoot, nugetCachePath);
 
             // Setup the trace
-            string tracePath = Path.Combine(env.ApplicationRootPath, Constants.TracePath, Constants.TraceFile);
+            string tracePath = Path.Combine(env.SiteRootPath, Constants.TracePath, Constants.TraceFile);
             var tracer = new Tracer(tracePath);
             var traceFactory = new TracerFactory(() => tracer);
 
             // Calculate the lock path
-            string lockPath = Path.Combine(env.ApplicationRootPath, Constants.LockPath);
+            string lockPath = Path.Combine(env.SiteRootPath, Constants.LockPath);
             string deploymentLockPath = Path.Combine(lockPath, Constants.DeploymentLockFile);
             var deploymentLock = new LockFile(traceFactory, deploymentLockPath);
 
             var fs = new FileSystem();
             var buildPropertyProvider = new BuildPropertyProvider();
             var builderFactory = new SiteBuilderFactory(buildPropertyProvider, env);
-            var serverRepository = new GitDeploymentRepository(env.DeploymentRepositoryPath, traceFactory);
+            var serverRepository = new GitDeploymentRepository(env.RepositoryPath, traceFactory);
             var settings = new XmlSettings.Settings(GetSettingsPath(env));
             var settingsManager = new DeploymentSettingsManager(settings);
 
@@ -102,10 +102,10 @@ namespace Kudu.Console
 
         private static IEnvironment GetEnvironment(string root, string nugetCachePath)
         {
-            string deployPath = Path.Combine(root, Constants.WebRoot);
+            string webRootPath = Path.Combine(root, Constants.WebRoot);
             string deployCachePath = Path.Combine(root, Constants.DeploymentCachePath);
             string sshKeyPath = Path.Combine(root, Constants.SSHKeyPath);
-            string deploymentRepositoryPath = Path.Combine(root, Constants.RepositoryPath);
+            string repositoryPath = Path.Combine(root, Constants.RepositoryPath);
             string tempPath = Path.GetTempPath();
             string deploymentTempPath = Path.Combine(tempPath, Constants.RepositoryPath);
             string binPath = new FileInfo(Process.GetCurrentProcess().MainModule.FileName).DirectoryName;
@@ -114,8 +114,8 @@ namespace Kudu.Console
             return new Environment(new FileSystem(),
                                    root,
                                    tempPath,
-                                   () => deploymentRepositoryPath,
-                                   deployPath,
+                                   () => repositoryPath,
+                                   webRootPath,
                                    deployCachePath,
                                    sshKeyPath,
                                    nugetCachePath,
