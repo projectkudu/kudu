@@ -99,7 +99,7 @@ namespace Kudu.Services.Web.App_Start
 
             if (AppSettings.TraceEnabled)
             {
-                string tracePath = Path.Combine(environment.SiteRootPath, Constants.TracePath, Constants.TraceFile);
+                string tracePath = Path.Combine(environment.RootPath, Constants.TracePath, Constants.TraceFile);
                 System.Func<ITracer> createTracerThunk = () => new Tracer(tracePath);
 
                 // First try to use the current request profiler if any, otherwise create a new one
@@ -136,7 +136,7 @@ namespace Kudu.Services.Web.App_Start
             // 3. The npm log
             var paths = new[] { 
                 environment.DeploymentCachePath,
-                Path.Combine(environment.SiteRootPath, Constants.LogFilesPath),
+                Path.Combine(environment.RootPath, Constants.LogFilesPath),
                 Path.Combine(environment.WebRootPath, Constants.NpmDebugLogFile),
             };
 
@@ -216,10 +216,10 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("live-scm-delete", "live/scm", new { controller = "LiveScm", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
 
             // Live Files
-            routes.MapHttpRoute("all-files", "live/files", new { controller = "Files", action = "GetFiles" });
-            routes.MapHttpRoute("one-file", "live/files/{*path}", new { controller = "Files", action = "GetFile" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("save-file", "live/files/{*path}", new { controller = "Files", action = "Save" }, new { verb = new HttpMethodConstraint("PUT") });
-            routes.MapHttpRoute("delete-file", "live/files/{*path}", new { controller = "Files", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpRoute("all-files", "files", new { controller = "Files", action = "GetFiles" });
+            routes.MapHttpRoute("one-file", "files/{*path}", new { controller = "Files", action = "GetFile" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("save-file", "files/{*path}", new { controller = "Files", action = "Save" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRoute("delete-file", "files/{*path}", new { controller = "Files", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
 
             // Live Command Line
             routes.MapHttpRoute("execute-command", "command", new { controller = "Command", action = "ExecuteCommand" }, new { verb = new HttpMethodConstraint("POST") });
@@ -251,7 +251,7 @@ namespace Kudu.Services.Web.App_Start
 
         private static IProjectSystem GetEditorProjectSystem(IEnvironment environment, IContext context)
         {
-            return new ProjectSystem(environment.WebRootPath);
+            return new ProjectSystem(environment.RootPath);
         }
 
         private static ICommandExecutor GetCommandExecutor(IEnvironment environment, IContext context)
@@ -274,7 +274,7 @@ namespace Kudu.Services.Web.App_Start
         private static IEnvironment GetEnvironment()
         {
             string siteRoot = PathResolver.ResolveSiteRootPath();
-            string root = Path.Combine(siteRoot, "..");
+            string root = Path.GetFullPath(Path.Combine(siteRoot, ".."));
             string webRootPath = Path.Combine(siteRoot, Constants.WebRoot);
             string deployCachePath = Path.Combine(siteRoot, Constants.DeploymentCachePath);
             string sshKeyPath = Path.Combine(siteRoot, Constants.SSHKeyPath);

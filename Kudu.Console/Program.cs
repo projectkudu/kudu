@@ -102,7 +102,7 @@ namespace Kudu.Console
 
         private static IEnvironment GetEnvironment(string siteRoot, string nugetCachePath)
         {
-            string root = Path.Combine(siteRoot, "..");
+            string root = Path.GetFullPath(Path.Combine(siteRoot, ".."));
             string webRootPath = Path.Combine(siteRoot, Constants.WebRoot);
             string deployCachePath = Path.Combine(siteRoot, Constants.DeploymentCachePath);
             string sshKeyPath = Path.Combine(siteRoot, Constants.SSHKeyPath);
