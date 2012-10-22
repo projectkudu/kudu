@@ -3,7 +3,7 @@ namespace Kudu
     public static class Constants 
     {
         public const string WebRoot = "wwwroot";
-        public const string MappedLiveSite = "/_app";
+        public const string MappedSite = "/_app";
         public const string RepositoryPath = "repository";
 
         public const string LockPath = "locks";

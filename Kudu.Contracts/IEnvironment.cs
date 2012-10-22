@@ -3,6 +3,7 @@ namespace Kudu.Core
 {
     public interface IEnvironment
     {
+        string RootPath { get; }
         string RepositoryPath { get; }
         string WebRootPath { get; }
         string DeploymentCachePath { get; }

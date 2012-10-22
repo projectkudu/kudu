@@ -100,12 +100,13 @@ namespace Kudu.Console
             return Path.Combine(environment.DeploymentCachePath, Constants.DeploySettingsPath);
         }
 
-        private static IEnvironment GetEnvironment(string root, string nugetCachePath)
+        private static IEnvironment GetEnvironment(string siteRoot, string nugetCachePath)
         {
-            string webRootPath = Path.Combine(root, Constants.WebRoot);
-            string deployCachePath = Path.Combine(root, Constants.DeploymentCachePath);
-            string sshKeyPath = Path.Combine(root, Constants.SSHKeyPath);
-            string repositoryPath = Path.Combine(root, Constants.RepositoryPath);
+            string root = Path.Combine(siteRoot, "..");
+            string webRootPath = Path.Combine(siteRoot, Constants.WebRoot);
+            string deployCachePath = Path.Combine(siteRoot, Constants.DeploymentCachePath);
+            string sshKeyPath = Path.Combine(siteRoot, Constants.SSHKeyPath);
+            string repositoryPath = Path.Combine(siteRoot, Constants.RepositoryPath);
             string tempPath = Path.GetTempPath();
             string deploymentTempPath = Path.Combine(tempPath, Constants.RepositoryPath);
             string binPath = new FileInfo(Process.GetCurrentProcess().MainModule.FileName).DirectoryName;
@@ -113,6 +114,7 @@ namespace Kudu.Console
 
             return new Environment(new FileSystem(),
                                    root,
+                                   siteRoot,
                                    tempPath,
                                    repositoryPath,
                                    webRootPath,

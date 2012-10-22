@@ -118,7 +118,7 @@ namespace Kudu.SiteManagement
                 int sitePort = CreateSite(iis, applicationName, siteName, webRoot);
 
                 // Map a path called app to the site root under the service site
-                MapServiceSitePath(iis, applicationName, Constants.MappedLiveSite, siteRoot);
+                MapServiceSitePath(iis, applicationName, Constants.MappedSite, siteRoot);
 
                 // Commit the changes to iis
                 iis.CommitChanges();

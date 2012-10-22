@@ -5,9 +5,9 @@ namespace Kudu.Services.Web
 {
     public static class PathResolver
     {
-        public static string ResolveRootPath()
+        public static string ResolveSiteRootPath()
         {
-            string path = HostingEnvironment.MapPath(Constants.MappedLiveSite);
+            string path = HostingEnvironment.MapPath(Constants.MappedSite);
             return Path.GetFullPath(path);
         }
     }

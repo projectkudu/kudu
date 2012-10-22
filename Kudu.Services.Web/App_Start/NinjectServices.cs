@@ -273,11 +273,12 @@ namespace Kudu.Services.Web.App_Start
 
         private static IEnvironment GetEnvironment()
         {
-            string root = PathResolver.ResolveRootPath();
-            string webRootPath = Path.Combine(root, Constants.WebRoot);
-            string deployCachePath = Path.Combine(root, Constants.DeploymentCachePath);
-            string sshKeyPath = Path.Combine(root, Constants.SSHKeyPath);
-            string repositoryPath = Path.Combine(root, Constants.RepositoryPath);
+            string siteRoot = PathResolver.ResolveSiteRootPath();
+            string root = Path.Combine(siteRoot, "..");
+            string webRootPath = Path.Combine(siteRoot, Constants.WebRoot);
+            string deployCachePath = Path.Combine(siteRoot, Constants.DeploymentCachePath);
+            string sshKeyPath = Path.Combine(siteRoot, Constants.SSHKeyPath);
+            string repositoryPath = Path.Combine(siteRoot, Constants.RepositoryPath);
             string tempPath = Path.GetTempPath();
             string deploymentTempPath = Path.Combine(tempPath, Constants.RepositoryPath);
             string scriptPath = Path.Combine(HttpRuntime.BinDirectory, Constants.ScriptsPath);
@@ -285,6 +286,7 @@ namespace Kudu.Services.Web.App_Start
             return new Environment(
                                    new FileSystem(),
                                    root,
+                                   siteRoot,
                                    tempPath,
                                    repositoryPath,
                                    webRootPath,

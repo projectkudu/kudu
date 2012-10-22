@@ -7,6 +7,7 @@ namespace Kudu.Core
     public class Environment : IEnvironment
     {
         private readonly IFileSystem _fileSystem;
+        private readonly string _rootPath;
         private readonly string _webRootPath;
         private readonly string _deployCachePath;
         private readonly string _sshKeyPath;
@@ -16,6 +17,7 @@ namespace Kudu.Core
 
         public Environment(
                 IFileSystem fileSystem,
+                string rootPath,
                 string siteRootPath,
                 string tempPath,
                 string repositoryPath,
@@ -35,6 +37,7 @@ namespace Kudu.Core
             }
 
             _fileSystem = fileSystem;
+            RootPath = rootPath;
             SiteRootPath = siteRootPath;
             _tempPath = tempPath;
             _repositoryPath = repositoryPath;
@@ -79,6 +82,12 @@ namespace Kudu.Core
                 FileSystemHelpers.EnsureDirectory(_fileSystem, _sshKeyPath);
                 return _sshKeyPath;
             }
+        }
+
+        public string RootPath
+        {
+            get;
+            private set;
         }
 
         public string SiteRootPath
