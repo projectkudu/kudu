@@ -10,6 +10,7 @@ namespace Kudu.Core.Infrastructure
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             string path = Path.Combine(programFiles, "Git", "bin", "git.exe");
+            // throw new InvalidOperationException(Resources.Error_FailedToLocateGit);
 
             if (!File.Exists(path))
             {
