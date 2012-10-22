@@ -1,17 +1,16 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.IO.Abstractions;
-using Kudu.Console.Services;
-using Kudu.Contracts.Tracing;
+﻿using Kudu.Console.Services;
 using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Settings;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Tracing;
-using Kudu.Core.Settings;
 using Kudu.Services;
+using System.Collections.Generic;
 using System.Configuration;
+using System.Diagnostics;
+using System.IO;
+using System.IO.Abstractions;
 
 namespace Kudu.Console
 {
