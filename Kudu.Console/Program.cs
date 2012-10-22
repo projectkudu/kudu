@@ -39,7 +39,7 @@ namespace Kudu.Console
             IEnvironment env = GetEnvironment(appRoot, nugetCachePath);
 
             // Setup the trace
-            string tracePath = Path.Combine(env.SiteRootPath, Constants.TracePath, Constants.TraceFile);
+            string tracePath = Path.Combine(env.RootPath, Constants.TracePath, Constants.TraceFile);
             var tracer = new Tracer(tracePath);
             var traceFactory = new TracerFactory(() => tracer);
 
