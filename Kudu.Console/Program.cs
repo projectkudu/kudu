@@ -11,6 +11,7 @@ using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Tracing;
 using Kudu.Core.Settings;
 using Kudu.Services;
+using System.Configuration;
 
 namespace Kudu.Console
 {
@@ -18,6 +19,15 @@ namespace Kudu.Console
     {
         static int Main(string[] args)
         {
+            // Turn flag on in app.config to wait for debugger on launch
+            if (ConfigurationManager.AppSettings["WaitForDebuggerOnStart"] == "true")
+            {
+                while (!Debugger.IsAttached)
+                {
+                    System.Threading.Thread.Sleep(100);
+                }
+            }
+
             if (args.Length < 2)
             {
                 System.Console.WriteLine("Usage: kudu.exe appRoot wapTargets [deployer]");
