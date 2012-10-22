@@ -55,7 +55,7 @@ namespace Kudu.Services.GitServer
 
                     context.Response.ContentType = "application/x-git-receive-pack-result";
 
-                    using (_deploymentManager.CreateTemporaryDeployment("Fetching changes."))
+                    using (_deploymentManager.CreateTemporaryDeployment(Resources.ReceivingChanges))
                     {
                         _gitServer.Receive(GetInputStream(context.Request), context.Response.OutputStream);
                     }

@@ -325,7 +325,6 @@ namespace Kudu.Core.Deployment
             using (tracer.Step("Creating temporary deployment"))
             {
                 DeploymentStatusFile statusFile = CreateStatusFile(id);
-                statusFile.Id = id;
                 statusFile.Status = DeployStatus.Pending;
                 statusFile.StatusText = statusText;
                 statusFile.Save(_fileSystem);
@@ -346,7 +345,6 @@ namespace Kudu.Core.Deployment
 
                 // Create the status file and store information about the commit
                 DeploymentStatusFile statusFile = CreateStatusFile(id);
-                statusFile.Id = id;
                 ChangeSet changeSet = _serverRepository.GetChangeSet(id);
                 statusFile.Message = changeSet.Message;
                 statusFile.Author = changeSet.AuthorName;
@@ -663,7 +661,9 @@ namespace Kudu.Core.Deployment
 
         private DeploymentStatusFile CreateStatusFile(string id)
         {
-            return DeploymentStatusFile.Create(GetStatusFilePath(id));
+            DeploymentStatusFile deploymentStatusFile = DeploymentStatusFile.Create(GetStatusFilePath(id));
+            deploymentStatusFile.Id = id;
+            return deploymentStatusFile;
         }
 
         private ILogger GetLogger(string id)
@@ -729,6 +729,7 @@ namespace Kudu.Core.Deployment
 
         private class TemporaryDeploymentHandle : IDisposable
         {
+            private bool _disposed;
             private DeploymentManager _deploymentManager;
 
             public TemporaryDeploymentHandle(DeploymentManager deploymentManager)
@@ -738,7 +739,11 @@ namespace Kudu.Core.Deployment
 
             public void Dispose()
             {
-                _deploymentManager.DeleteTemporaryDeployment();
+                if (!_disposed)
+                {
+                    _deploymentManager.DeleteTemporaryDeployment();
+                    _disposed = true;
+                }
             }
         }
     }
