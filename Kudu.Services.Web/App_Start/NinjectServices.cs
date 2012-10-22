@@ -261,9 +261,7 @@ namespace Kudu.Services.Web.App_Start
                 throw new HttpResponseException(HttpStatusCode.NotFound);
             }
 
-            // Start one directory up
-            string path = Path.Combine(environment.RepositoryPath, "..");
-            return new CommandExecutor(Path.GetFullPath(path));
+            return new CommandExecutor(environment.RootPath);
         }
 
         private static string GetSettingsPath(IEnvironment environment)

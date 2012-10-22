@@ -30,7 +30,8 @@ namespace Kudu.Services.Commands
             }
 
             string command = input.Value<string>("command");
-            CommandResult result = _commandExecutor.ExecuteCommand(command);
+            string workingDirectory = input.Value<string>("dir");
+            CommandResult result = _commandExecutor.ExecuteCommand(command, workingDirectory);
             return Request.CreateResponse(HttpStatusCode.OK, result);
         }
     }

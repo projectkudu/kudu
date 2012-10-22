@@ -12,17 +12,17 @@ namespace Kudu.Core.Commands
 {
     public class CommandExecutor : ICommandExecutor
     {
-        private readonly string _workingDirectory;
+        private readonly string _rootDirectory;
         private Process _executingProcess;
 
-        public CommandExecutor(string workingDirectory)
+        public CommandExecutor(string rootDirectory)
         {
-            _workingDirectory = workingDirectory;
+            _rootDirectory = rootDirectory;
         }
 
         public event Action<CommandEvent> CommandEvent;
 
-        public CommandResult ExecuteCommand(string command)
+        public CommandResult ExecuteCommand(string command, string workingDirectory)
         {
             var result = new CommandResult();
 
@@ -53,7 +53,7 @@ namespace Kudu.Core.Commands
                 // Code reuse is good
                 CommandEvent += handler;
 
-                ExecuteCommandAsync(command);
+                ExecuteCommandAsync(command, workingDirectory);
             }
             finally
             {
@@ -69,13 +69,21 @@ namespace Kudu.Core.Commands
             return result;
         }
 
-        public void ExecuteCommandAsync(string command)
+        public void ExecuteCommandAsync(string command, string relativeWorkingDirectory)
         {
-            string path = _workingDirectory;
+            string workingDirectory;
+            if (String.IsNullOrEmpty(relativeWorkingDirectory))
+            {
+                workingDirectory = _rootDirectory;
+            }
+            else
+            {
+                workingDirectory = Path.Combine(_rootDirectory, relativeWorkingDirectory);
+            }
 
             _executingProcess = new Process();
             _executingProcess.StartInfo.FileName = "cmd";
-            _executingProcess.StartInfo.WorkingDirectory = path;
+            _executingProcess.StartInfo.WorkingDirectory = workingDirectory;
             _executingProcess.StartInfo.Arguments = "/c " + command;
             _executingProcess.StartInfo.CreateNoWindow = true;
             _executingProcess.StartInfo.UseShellExecute = false;
