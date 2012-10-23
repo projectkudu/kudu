@@ -20,7 +20,6 @@ namespace Kudu.Services.GitServer
         private const string PrivateKeyFile = "id_rsa";
         private const string PublicKeyFile = "id_rsa.pub";
 
-        private readonly IDeploymentManager _deploymentManager;
         private readonly IDeploymentSettingsManager _settings;
         private readonly RepositoryConfiguration _configuration;
         private readonly IEnvironment _environment;
@@ -32,9 +31,8 @@ namespace Kudu.Services.GitServer
                             IOperationLock deploymentLock,
                             RepositoryConfiguration configuration,
                             IEnvironment environment)
-            : base(tracer, gitServer, deploymentLock)
+            : base(tracer, gitServer, deploymentLock, deploymentManager)
         {
-            _deploymentManager = deploymentManager;
             _settings = settings;
             _configuration = configuration;
             _environment = environment;
@@ -142,31 +140,34 @@ namespace Kudu.Services.GitServer
 
                 using (_tracer.Step("Performing fetch based deployment"))
                 {
-                    // Configure the repository
-                    _gitServer.Initialize(_configuration);
-
-                    // Setup the receive info (this is important to know if branches were deleted etc)
-                    _gitServer.SetReceiveInfo(repositoryInfo.OldRef, repositoryInfo.NewRef, targetBranch);
-
-                    // Fetch from url
-                    _gitServer.FetchWithoutConflict(repositoryInfo.RepositoryUrl, "external", targetBranch);
-
-                    // Perform the actual deployment
-                    _deploymentManager.Deploy(repositoryInfo.Deployer);
-
-                    if (MarkerFileExists())
+                    using (_deploymentManager.CreateTemporaryDeployment(Resources.FetchingChanges))
                     {
-                        _tracer.Trace("Pending deployment marker file exists");
+                        // Configure the repository
+                        _gitServer.Initialize(_configuration);
 
-                        hasPendingDeployment = DeleteMarkerFile();
+                        // Setup the receive info (this is important to know if branches were deleted etc)
+                        _gitServer.SetReceiveInfo(repositoryInfo.OldRef, repositoryInfo.NewRef, targetBranch);
 
-                        if (hasPendingDeployment)
+                        // Fetch from url
+                        _gitServer.FetchWithoutConflict(repositoryInfo.RepositoryUrl, "external", targetBranch);
+
+                        // Perform the actual deployment
+                        _deploymentManager.Deploy(repositoryInfo.Deployer);
+
+                        if (MarkerFileExists())
                         {
-                            _tracer.Trace("Deleted marker file");
-                        }
-                        else
-                        {
-                            _tracer.TraceError("Failed to delete marker file");
+                            _tracer.Trace("Pending deployment marker file exists");
+
+                            hasPendingDeployment = DeleteMarkerFile();
+
+                            if (hasPendingDeployment)
+                            {
+                                _tracer.Trace("Deleted marker file");
+                            }
+                            else
+                            {
+                                _tracer.TraceError("Failed to delete marker file");
+                            }
                         }
                     }
                 }

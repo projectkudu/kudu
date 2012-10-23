@@ -28,6 +28,7 @@ namespace Kudu.Core.Deployment
         private const string LogFile = "log.xml";
         private const string ManifestFile = "manifest";
         private const string ActiveDeploymentFile = "active";
+        private const string TemporaryDeploymentId = "InProgress";
 
         public event Action<DeployResult> StatusChanged;
 
@@ -316,15 +317,34 @@ namespace Kudu.Core.Deployment
             }
         }
 
+        public IDisposable CreateTemporaryDeployment(string statusText)
+        {
+            var tracer = _traceFactory.GetTracer();
+            string id = TemporaryDeploymentId;
+
+            using (tracer.Step("Creating temporary deployment"))
+            {
+                DeploymentStatusFile statusFile = CreateStatusFile(id);
+                statusFile.Status = DeployStatus.Pending;
+                statusFile.StatusText = statusText;
+                statusFile.Save(_fileSystem);
+            }
+
+            // Return a handle that deletes the deployment on dispose.
+            return new DisposableAction(DeleteTemporaryDeployment);
+        }
+
         private ILogger CreateAndPopulateStatusFile(ITracer tracer, string id, string deployer)
         {
             ILogger logger = GetLogger(id);
 
             using (tracer.Step("Collecting changeset information"))
             {
+                // Remove any old instance of a temporary deployment if exists
+                Delete(TemporaryDeploymentId);
+
                 // Create the status file and store information about the commit
                 DeploymentStatusFile statusFile = CreateStatusFile(id);
-                statusFile.Id = id;
                 ChangeSet changeSet = _serverRepository.GetChangeSet(id);
                 statusFile.Message = changeSet.Message;
                 statusFile.Author = changeSet.AuthorName;
@@ -336,6 +356,15 @@ namespace Kudu.Core.Deployment
             }
 
             return logger;
+        }
+
+        /// <summary>
+        /// Deletes the temporary deployment, will not fail if it doesn't exist.
+        /// </summary>
+        private void DeleteTemporaryDeployment()
+        {
+            string temporaryDeploymentPath = GetRoot(TemporaryDeploymentId, ensureDirectory: false);
+            FileSystemHelpers.DeleteFileSafe(temporaryDeploymentPath);
         }
 
         private DeployResult GetResult(string id, string activeDeploymentId, bool isDeploying)
@@ -632,7 +661,9 @@ namespace Kudu.Core.Deployment
 
         private DeploymentStatusFile CreateStatusFile(string id)
         {
-            return DeploymentStatusFile.Create(GetStatusFilePath(id));
+            DeploymentStatusFile deploymentStatusFile = DeploymentStatusFile.Create(GetStatusFilePath(id));
+            deploymentStatusFile.Id = id;
+            return deploymentStatusFile;
         }
 
         private ILogger GetLogger(string id)
