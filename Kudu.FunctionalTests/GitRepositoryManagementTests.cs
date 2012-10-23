@@ -371,19 +371,20 @@ command = deploy.cmd");
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
-                    string url = appManager.SiteUrl + @"/Content/Site.css";
+                    string path = @"Content/Site.css";
+                    string url = appManager.SiteUrl + path;
 
                     // Act
                     appManager.GitDeploy(repo.PhysicalPath);
 
                     KuduAssert.VerifyUrl(url, verificationText);
 
-                    appManager.ProjectSystem.WriteAllText(url, "Hello world!");
+                    appManager.ProjectSystem.WriteAllText(path, "Hello world!");
 
                     // Sleep a little since it's a remote call
                     Thread.Sleep(500);
 
-                    KuduAssert.VerifyUrl(appManager.SiteUrl, "Hello world!");
+                    KuduAssert.VerifyUrl(url, "Hello world!");
 
                     // Make an unrelated change (newline to the end of web.config)
                     repo.AppendFile(@"Mvc3Application\Web.config", "\n");

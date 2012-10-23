@@ -29,7 +29,7 @@ namespace Kudu.Client.SSHKey
 
             return _client.PutAsync(String.Empty, param).Then(response =>
             {
-                response.EnsureSuccessStatusCode();
+                response.EnsureSuccessful();
                 return;
             });
         }

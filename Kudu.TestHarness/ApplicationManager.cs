@@ -93,6 +93,12 @@ namespace Kudu.TestHarness
                 KuduUtils.DownloadDump(appManager.ServiceUrl, dumpPath);
 
                 Debug.WriteLine(ex.Message);
+
+                var httpResponseEx = ex as HttpUnsuccessfulRequestException;
+                if (httpResponseEx != null)
+                {
+                    Debug.WriteLine(httpResponseEx.ResponseMessage);
+                }
                 throw;
             }
             finally
