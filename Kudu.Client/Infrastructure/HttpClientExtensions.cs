@@ -15,7 +15,7 @@ namespace Kudu.Client.Infrastructure
         public static T GetJson<T>(this HttpClient client, string url)
         {
             var response = client.GetAsync(url);
-            var content = response.Result.EnsureSuccessStatusCode().Content.ReadAsStringAsync().Result;
+            var content = response.Result.EnsureSuccessful().Content.ReadAsStringAsync().Result;
 
             return JsonConvert.DeserializeObject<T>(content);
         }
@@ -47,7 +47,7 @@ namespace Kudu.Client.Infrastructure
         {
             return client.PostAsync(String.Empty, new StringContent(String.Empty)).Then(result =>
             {
-                return result.EnsureSuccessStatusCode();
+                return result.EnsureSuccessful();
             });
         }
 
@@ -55,7 +55,7 @@ namespace Kudu.Client.Infrastructure
         {
             return client.PostAsync(requestUri, new StringContent(String.Empty)).Then(result =>
             {
-                return result.EnsureSuccessStatusCode();
+                return result.EnsureSuccessful();
             });
         }
 
@@ -63,7 +63,7 @@ namespace Kudu.Client.Infrastructure
         {
             return client.PutAsync(requestUri, new StringContent(String.Empty)).Then(result =>
             {
-                return result.EnsureSuccessStatusCode();
+                return result.EnsureSuccessful();
             });
         }
 
@@ -71,7 +71,7 @@ namespace Kudu.Client.Infrastructure
         {
             return client.PutAsync(requestUri, HttpClientHelper.CreateJsonContent(items)).Then(result =>
             {
-                return result.EnsureSuccessStatusCode();
+                return result.EnsureSuccessful();
             });
         }
 
@@ -79,7 +79,7 @@ namespace Kudu.Client.Infrastructure
         {
             return client.DeleteAsync(requestUri).Then(result =>
             {
-                return result.EnsureSuccessStatusCode();
+                return result.EnsureSuccessful();
             });
         }
 
@@ -87,7 +87,7 @@ namespace Kudu.Client.Infrastructure
         {
             return client.PostAsync(url, HttpClientHelper.CreateJsonContent(param)).Then(result =>
             {
-                return result.EnsureSuccessStatusCode();
+                return result.EnsureSuccessful();
             });
         }
     }

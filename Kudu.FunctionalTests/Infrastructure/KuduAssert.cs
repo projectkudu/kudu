@@ -15,7 +15,7 @@ namespace Kudu.FunctionalTests.Infrastructure
         {
             var ex = Assert.Throws<AggregateException>(() => action());
             var baseEx = ex.GetBaseException();
-            Assert.IsType<T>(baseEx);
+            Assert.IsAssignableFrom<T>(baseEx);
             return (T)baseEx;
         }
 
@@ -34,7 +34,10 @@ namespace Kudu.FunctionalTests.Infrastructure
             if (contents.Length > 0)
             {
                 var responseBody = response.Content.ReadAsStringAsync().Result;
-                Assert.True(contents.All(responseBody.Contains));
+                foreach (var content in contents)
+                {
+                    Assert.Contains(content, responseBody, StringComparison.Ordinal);
+                }
             }
         }
 
@@ -47,7 +50,7 @@ namespace Kudu.FunctionalTests.Infrastructure
             if (content != null)
             {
                 var responseBody = response.Content.ReadAsStringAsync().Result;
-                Assert.True(responseBody.Contains(content));
+                Assert.Contains(content, responseBody, StringComparison.Ordinal);
             }
         }
 

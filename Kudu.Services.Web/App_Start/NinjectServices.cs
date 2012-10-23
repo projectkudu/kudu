@@ -251,7 +251,7 @@ namespace Kudu.Services.Web.App_Start
 
         private static IProjectSystem GetEditorProjectSystem(IEnvironment environment, IContext context)
         {
-            return new ProjectSystem(environment.RootPath);
+            return new ProjectSystem(environment.WebRootPath);
         }
 
         private static ICommandExecutor GetCommandExecutor(IEnvironment environment, IContext context)
