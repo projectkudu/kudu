@@ -331,7 +331,7 @@ namespace Kudu.Core.Deployment
             }
 
             // Return a handle that deletes the deployment on dispose.
-            return new TemporaryDeploymentHandle(this);
+            return new DisposableAction(DeleteTemporaryDeployment);
         }
 
         private ILogger CreateAndPopulateStatusFile(ITracer tracer, string id, string deployer)
@@ -725,26 +725,6 @@ namespace Kudu.Core.Deployment
         private bool IsActive(string id)
         {
             return id.Equals(ActiveDeploymentId, StringComparison.OrdinalIgnoreCase);
-        }
-
-        private class TemporaryDeploymentHandle : IDisposable
-        {
-            private bool _disposed;
-            private DeploymentManager _deploymentManager;
-
-            public TemporaryDeploymentHandle(DeploymentManager deploymentManager)
-            {
-                this._deploymentManager = deploymentManager;
-            }
-
-            public void Dispose()
-            {
-                if (!_disposed)
-                {
-                    _deploymentManager.DeleteTemporaryDeployment();
-                    _disposed = true;
-                }
-            }
         }
     }
 }
