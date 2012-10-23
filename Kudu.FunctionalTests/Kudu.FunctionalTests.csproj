@@ -87,6 +87,7 @@
     <Compile Include="GitRepositoryManagementTests.cs" />
     <Compile Include="GitStabilityTests.cs" />
     <Compile Include="Infrastructure\KuduAssert.cs" />
+    <Compile Include="LogStreamManagerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="GitDeploymentTests.cs" />
     <Compile Include="SelectNodeVersionFacts.cs" />

@@ -142,6 +142,10 @@ namespace Kudu.Services.Web.App_Start
 
             kernel.Bind<DiagnosticsController>().ToMethod(context => new DiagnosticsController(paths));
 
+            // LogStream service
+            kernel.Bind<LogStreamManager>().ToMethod(context => new LogStreamManager(Path.Combine(environment.RootPath, Constants.LogFilesPath),
+                                                                                     context.Kernel.Get<ITracer>()));
+
             // Deployment Service
             kernel.Bind<ISettings>().ToMethod(context => new XmlSettings.Settings(GetSettingsPath(environment)));
             kernel.Bind<IDeploymentSettingsManager>().To<DeploymentSettingsManager>();
@@ -247,6 +251,9 @@ namespace Kudu.Services.Web.App_Start
 
             // Diagnostics
             routes.MapHttpRoute("diagnostics", "dump", new { controller = "Diagnostics", action = "GetLog" });
+
+            // LogStream
+            routes.MapHandler<LogStreamHandler>(kernel, "logstream", "logstream/{*path}");
         }
 
         private static IProjectSystem GetEditorProjectSystem(IEnvironment environment, IContext context)

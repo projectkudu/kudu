@@ -23,7 +23,7 @@ namespace Kudu.Contracts.Tracing
             {
                 { "type", "error" },
                 { "text", ex.Message },
-                { "stackTrace", ex.StackTrace }
+                { "stackTrace", ex.StackTrace ?? String.Empty }
             });
         }
 

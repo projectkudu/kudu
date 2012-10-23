@@ -112,6 +112,10 @@
             <td><a href="dump">Download</a></td>
         </tr>
         <tr>
+            <td><strong>Diagnostics Log</strong></td>
+            <td><a href="logstream">Stream</a></td>
+        </tr>
+        <tr>
             <td><strong>Runtime Environment</strong></td>
             <td><a href="Env.aspx">View</a></td>
         </tr>
