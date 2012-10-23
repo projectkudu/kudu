@@ -126,7 +126,7 @@ namespace Kudu.TestHarness
                 SiteUrl = site.SiteUrl,
                 ServiceUrl = site.ServiceUrl,
                 DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "deployments"),
-                ProjectSystem = new RemoteProjectSystem(site.ServiceUrl + "files/site/wwwroot"),
+                ProjectSystem = new RemoteProjectSystem(site.ServiceUrl + "files"),
                 SettingsManager = new RemoteDeploymentSettingsManager(site.ServiceUrl + "settings"),
                 RepositoryManager = repositoryManager
             };

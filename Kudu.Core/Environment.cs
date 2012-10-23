@@ -7,7 +7,6 @@ namespace Kudu.Core
     public class Environment : IEnvironment
     {
         private readonly IFileSystem _fileSystem;
-        private readonly string _rootPath;
         private readonly string _webRootPath;
         private readonly string _deployCachePath;
         private readonly string _sshKeyPath;
