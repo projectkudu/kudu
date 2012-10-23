@@ -341,7 +341,7 @@ namespace Kudu.Core.Deployment
             using (tracer.Step("Collecting changeset information"))
             {
                 // Remove any old instance of a temporary deployment if exists
-                this.Delete(TemporaryDeploymentId);
+                Delete(TemporaryDeploymentId);
 
                 // Create the status file and store information about the commit
                 DeploymentStatusFile statusFile = CreateStatusFile(id);
