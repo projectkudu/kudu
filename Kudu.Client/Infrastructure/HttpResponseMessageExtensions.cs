@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using System.Net.Http;
 
 namespace Kudu.Client
@@ -44,7 +45,7 @@ namespace Kudu.Client
         public HttpUnsuccessfulRequestException(HttpExceptionMessage responseMessage)
             : base(
                 responseMessage != null ?
-                    string.Format("{0}: {1}\nStatus Code: {2}", responseMessage.ReasonPhrase, responseMessage.ExceptionMessage, responseMessage.StatusCode) :
+                    String.Format("{0}: {1}\nStatus Code: {2}", responseMessage.ReasonPhrase, responseMessage.ExceptionMessage, responseMessage.StatusCode) :
                     null)
         {
             ResponseMessage = responseMessage;
