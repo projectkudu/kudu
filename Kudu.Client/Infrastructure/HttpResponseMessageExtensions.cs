@@ -17,7 +17,7 @@ namespace Kudu.Client
                 exceptionMessage.StatusCode = httpResponseMessage.StatusCode;
                 exceptionMessage.ReasonPhrase = httpResponseMessage.ReasonPhrase;
 
-                throw new HttpUnsuccessfulRequestException { ResponseMessage = exceptionMessage };
+                throw new HttpUnsuccessfulRequestException(exceptionMessage);
             }
             return httpResponseMessage.EnsureSuccessStatusCode();
         }
@@ -36,6 +36,20 @@ namespace Kudu.Client
 
     public class HttpUnsuccessfulRequestException : HttpRequestException
     {
-        public HttpExceptionMessage ResponseMessage { get; set; }
+        public HttpUnsuccessfulRequestException()
+            : this(null)
+        {
+        }
+
+        public HttpUnsuccessfulRequestException(HttpExceptionMessage responseMessage)
+            : base(
+                responseMessage != null ?
+                    string.Format("{0}: {1}\nStatus Code: {2}", responseMessage.ReasonPhrase, responseMessage.ExceptionMessage, responseMessage.StatusCode) :
+                    null)
+        {
+            ResponseMessage = responseMessage;
+        }
+
+        public HttpExceptionMessage ResponseMessage { get; private set; }
     }
 }
