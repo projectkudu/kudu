@@ -37,17 +37,9 @@ namespace Kudu.Client.Infrastructure
         {
             return client.GetAsync(url).Then(result =>
             {
-                return result.Content.ReadAsStringAsync().Then(content =>
+                return result.EnsureSuccessful().Content.ReadAsStringAsync().Then(content =>
                 {
-                    if (result.IsSuccessStatusCode)
-                    {
-                        return JsonConvert.DeserializeObject<T>(content);
-                    }
-                    else
-                    {
-                        JObject j = JObject.Parse(content);
-                        throw new InvalidOperationException(string.Format("Received an error from the Kudu service: '{0}'\nDetails: {1}\nStatus Code: {2}", j["Message"].Value<string>(), j["ExceptionMessage"].Value<string>(), result.StatusCode));
-                    }
+                    return JsonConvert.DeserializeObject<T>(content);
                 });
             });
         }
