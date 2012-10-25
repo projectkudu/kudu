@@ -235,7 +235,6 @@ namespace Kudu.SiteManagement
                 iis.ApplicationPools.Add(appPoolName);
                 iis.CommitChanges();
                 kuduAppPool = iis.ApplicationPools[appPoolName];
-                kuduAppPool.Enable32BitAppOnWin64 = true;
                 kuduAppPool.ManagedPipelineMode = IIS.ManagedPipelineMode.Integrated;
                 kuduAppPool.ManagedRuntimeVersion = "v4.0";
                 kuduAppPool.AutoStart = true;
