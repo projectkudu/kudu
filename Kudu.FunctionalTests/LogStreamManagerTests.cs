@@ -47,12 +47,12 @@ namespace Kudu.FunctionalTests
                     string content = Guid.NewGuid().ToString();
                     File.WriteAllLines(txtFile, new string[] { content });
                     line = waitHandle.WaitNextLine(10000);
-                    Assert.Equal(line, content);
+                    Assert.Equal(content, line);
 
                     content = Guid.NewGuid().ToString();
                     File.WriteAllLines(logFile, new string[] { content });
                     line = waitHandle.WaitNextLine(10000);
-                    Assert.Equal(line, content);
+                    Assert.Equal(content, line);
 
                     // write to xml file, we should not get any live stream
                     content = Guid.NewGuid().ToString();
@@ -106,9 +106,9 @@ namespace Kudu.FunctionalTests
                         string content = Guid.NewGuid().ToString();
                         File.WriteAllLines(logFiles[0], new string[] { content });
                         line = waitHandle.WaitNextLine(10000);
-                        Assert.Equal(line, content);
+                        Assert.Equal(content, line);
                         line = waitHandles[0].WaitNextLine(10000);
-                        Assert.Equal(line, content);
+                        Assert.Equal(content, line);
                         line = waitHandles[1].WaitNextLine(1000);
                         Assert.True(line == null, "no more message: " + line);
 
@@ -116,9 +116,9 @@ namespace Kudu.FunctionalTests
                         content = Guid.NewGuid().ToString();
                         File.WriteAllLines(logFiles[1], new string[] { content });
                         line = waitHandle.WaitNextLine(10000);
-                        Assert.Equal(line, content);
+                        Assert.Equal(content, line);
                         line = waitHandles[1].WaitNextLine(10000);
-                        Assert.Equal(line, content);
+                        Assert.Equal(content, line);
                         line = waitHandles[0].WaitNextLine(1000);
                         Assert.True(line == null, "no more message: " + line);
                     }
@@ -290,13 +290,24 @@ namespace Kudu.FunctionalTests
                     {
                         using (StreamReader reader = new StreamReader(stream))
                         {
+                            bool initial = true;
                             while (!reader.EndOfStream)
                             {
                                 string line = reader.ReadLine();
-                                lock (lines)
+                                if (line != null)
                                 {
-                                    lines.Add(line);
-                                    this.sem.Release();
+                                    if (initial)
+                                    {
+                                        // accommodate for gap between first welcome and event hookup
+                                        Thread.Sleep(1000);
+                                        initial = false;
+                                    }
+                                    
+                                    lock (lines)
+                                    {
+                                        lines.Add(line);
+                                        this.sem.Release();
+                                    }
                                 }
                             }
                         }
