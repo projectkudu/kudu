@@ -46,11 +46,14 @@ namespace Kudu.FunctionalTests.Infrastructure
         {
             var client = new HttpClient();
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Kudu-Test", "1.0"));
-            var response = client.GetAsync(url).Result.EnsureSuccessful();
-            Assert.Equal(statusCode, response.StatusCode);
+            var response = client.GetAsync(url).Result;
+            string responseBody = response.Content.ReadAsStringAsync().Result;
+            
+            Assert.True(statusCode == response.StatusCode, 
+                String.Format("For {0}, Expected Status Code: {1} Actual Status Code: {2}. \r\n Response: {3}", url, statusCode, response.StatusCode, responseBody));
+            
             if (content != null)
             {
-                var responseBody = response.Content.ReadAsStringAsync().Result;
                 Assert.Contains(content, responseBody, StringComparison.Ordinal);
             }
         }

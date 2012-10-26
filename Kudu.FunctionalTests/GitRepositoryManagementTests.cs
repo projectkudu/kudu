@@ -496,7 +496,7 @@ command = deploy.cmd");
                 ApplicationManager.Run(appName, appManager =>
                 {
                     appManager.ProjectSystem.WriteAllText("foo.txt", "This is a test file");
-                    string url = appManager.SiteUrl + "/foo.txt";
+                    string url = appManager.SiteUrl + "foo.txt";
 
                     Thread.Sleep(500);
 
