@@ -16,49 +16,46 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void TestLogStreamBasic()
         {
+            string repoName = "LogTester";
+            string repoCloneUrl = "https://github.com/KuduApps/LogTester.git";
             string appName = KuduUtils.GetRandomWebsiteName("TestLogStreamBasic");
+
+            TestRepository testRepository = null;
+
+            string localRepo = KuduUtils.GetCachedRepositoryPath(repoName);
+
+            if (localRepo == null)
+            {
+                testRepository = Git.Clone(appName, repoCloneUrl);
+                localRepo = testRepository.PhysicalPath;
+            }
 
             ApplicationManager.Run(appName, appManager =>
             {
-                string logFilePath = Path.Combine(PathHelper.SitesPath, appName, "logFiles");
-                string txtFile = Path.Combine(logFilePath, "temp.txt");
-                if (File.Exists(txtFile))
-                {
-                    File.Delete(txtFile);
-                }
-                string logFile = Path.Combine(logFilePath, "temp.log");
-                if (File.Exists(logFile))
-                {
-                    File.Delete(logFile);
-                }
-                string xmlFile = Path.Combine(logFilePath, "temp.xml");
-                if (File.Exists(xmlFile))
-                {
-                    File.Delete(xmlFile);
-                }
+                // Act
+                appManager.GitDeploy(localRepo);
+                var manager = new RemoteLogStreamManager(appManager.ServiceUrl + "/logstream");
 
-                RemoteLogStreamManager manager = new RemoteLogStreamManager(appManager.ServiceUrl + "/logstream");
-
-                using (LogStreamWaitHandle waitHandle = new LogStreamWaitHandle(manager.GetStream().Result))
+                using (var waitHandle = new LogStreamWaitHandle(manager.GetStream().Result))
                 {
                     string line = waitHandle.WaitNextLine(10000);
-                    Assert.True(!string.IsNullOrEmpty(line) && line.StartsWith("Welcome", StringComparison.OrdinalIgnoreCase), "check welcome message: " + line);
+                    Assert.True(!String.IsNullOrEmpty(line) && line.StartsWith("Welcome", StringComparison.OrdinalIgnoreCase), "check welcome message: " + line);
 
                     string content = Guid.NewGuid().ToString();
-                    File.WriteAllLines(txtFile, new string[] { content });
+                    WriteLogText(appManager.SiteUrl, @"LogFiles\temp.txt", content);
                     line = waitHandle.WaitNextLine(10000);
                     Assert.Equal(content, line);
 
                     content = Guid.NewGuid().ToString();
-                    File.WriteAllLines(logFile, new string[] { content });
+                    WriteLogText(appManager.SiteUrl, @"LogFiles\temp.log", content);
                     line = waitHandle.WaitNextLine(10000);
                     Assert.Equal(content, line);
 
                     // write to xml file, we should not get any live stream
                     content = Guid.NewGuid().ToString();
-                    File.WriteAllLines(xmlFile, new string[] { content });
+                    WriteLogText(appManager.SiteUrl, @"LogFiles\temp.xml", content);
                     line = waitHandle.WaitNextLine(1000);
-                    Assert.True(line == null, "no more message: " + line);
+                    Assert.Null(line);
                 }
             });
         }
@@ -67,25 +64,28 @@ namespace Kudu.FunctionalTests
         public void TestLogStreamSubFolder()
         {
             string appName = KuduUtils.GetRandomWebsiteName("TestLogStreamFilter");
+            string repoName = "LogTester";
+            string repoCloneUrl = "https://github.com/KuduApps/LogTester.git";
+
+            TestRepository testRepository = null;
+            string localRepo = KuduUtils.GetCachedRepositoryPath(repoName);
+            if (localRepo == null)
+            {
+                testRepository = Git.Clone(appName, repoCloneUrl);
+                localRepo = testRepository.PhysicalPath;
+            }
 
             ApplicationManager.Run(appName, appManager =>
             {
+                // Act
+                appManager.GitDeploy(localRepo);
                 List<string> logFiles = new List<string>();
                 List<LogStreamWaitHandle> waitHandles = new List<LogStreamWaitHandle>();
                 for (int i = 0; i < 2; ++i)
                 {
-                    string logFilePath = Path.Combine(PathHelper.SitesPath, appName, "logFiles", "folder" + i);
-                    if (!Directory.Exists(logFilePath))
-                    {
-                        Directory.CreateDirectory(logFilePath);
-                    }
-                    string logFile = Path.Combine(logFilePath, "temp.txt");
-                    if (File.Exists(logFile))
-                    {
-                        File.Delete(logFile);
-                    }
-                    logFiles.Add(logFile);
-
+                    logFiles.Add(@"LogFiles\Folder" + i + "\\temp.txt");
+                    //Create the directory
+                    CreateLogDirectory(appManager.SiteUrl, @"LogFiles\Folder" + i);
                     RemoteLogStreamManager mgr = new RemoteLogStreamManager(appManager.ServiceUrl + "/logstream/folder" + i);
                     LogStreamWaitHandle waitHandle = new LogStreamWaitHandle(mgr.GetStream().Result);
                     string line = waitHandle.WaitNextLine(10000);
@@ -104,7 +104,7 @@ namespace Kudu.FunctionalTests
 
                         // write to folder0, we should not get any live stream for folder1 listener
                         string content = Guid.NewGuid().ToString();
-                        File.WriteAllLines(logFiles[0], new string[] { content });
+                        WriteLogText(appManager.SiteUrl, logFiles[0], content);
                         line = waitHandle.WaitNextLine(10000);
                         Assert.Equal(content, line);
                         line = waitHandles[0].WaitNextLine(10000);
@@ -114,7 +114,7 @@ namespace Kudu.FunctionalTests
 
                         // write to folder1, we should not get any live stream for folder0 listener
                         content = Guid.NewGuid().ToString();
-                        File.WriteAllLines(logFiles[1], new string[] { content });
+                        WriteLogText(appManager.SiteUrl, logFiles[1], content);
                         line = waitHandle.WaitNextLine(10000);
                         Assert.Equal(content, line);
                         line = waitHandles[1].WaitNextLine(10000);
@@ -142,6 +142,23 @@ namespace Kudu.FunctionalTests
                 var ex = KuduAssert.ThrowsUnwrapped<WebException>(() => manager.GetStream().Wait());
                 Assert.Equal(((HttpWebResponse)ex.Response).StatusCode, HttpStatusCode.NotFound);
             });
+        }
+
+
+        private static void WriteLogText(string siteUrl, string filePath, string content)
+        {
+            string url = String.Format("{0}?path={1}&content={2}", siteUrl, filePath, content);
+            KuduAssert.VerifyUrl(url);
+        }
+
+        private static void CreateLogDirectory(string siteUrl, string directory)
+        {
+            if (!directory.EndsWith("\\"))
+            {
+                directory += "\\";
+            }
+            string url = String.Format("{0}?path={1}", siteUrl, directory);
+            KuduAssert.VerifyUrl(url);
         }
 
         // This is a test class current workaround Stream.Close hangs.
@@ -302,7 +319,7 @@ namespace Kudu.FunctionalTests
                                         Thread.Sleep(1000);
                                         initial = false;
                                     }
-                                    
+
                                     lock (lines)
                                     {
                                         lines.Add(line);
