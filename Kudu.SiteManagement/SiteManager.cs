@@ -169,8 +169,6 @@ namespace Kudu.SiteManagement
 
             try
             {
-                kuduPool.StopAndWait();
-
                 DeleteSafe(sitePath);
                 DeleteSafe(appPath);
             }
