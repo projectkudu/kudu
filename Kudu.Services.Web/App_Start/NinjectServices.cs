@@ -225,6 +225,12 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("save-file", "files/{*path}", new { controller = "Files", action = "Save" }, new { verb = new HttpMethodConstraint("PUT") });
             routes.MapHttpRoute("delete-file", "files/{*path}", new { controller = "Files", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
 
+            // These older files routes are there for backward compat, and should eventually be deleted once clients are changed.
+            routes.MapHttpRoute("all-files", "live/files", new { controller = "Files", action = "GetFiles" });
+            routes.MapHttpRoute("one-file", "live/files/{*path}", new { controller = "Files", action = "GetFile" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("save-file", "live/files/{*path}", new { controller = "Files", action = "Save" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRoute("delete-file", "live/files/{*path}", new { controller = "Files", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
+
             // Live Command Line
             routes.MapHttpRoute("execute-command", "command", new { controller = "Command", action = "ExecuteCommand" }, new { verb = new HttpMethodConstraint("POST") });
 

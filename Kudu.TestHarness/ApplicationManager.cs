@@ -124,7 +124,7 @@ namespace Kudu.TestHarness
             Site site = siteManager.CreateSite(applicationName);
 
             string gitUrl = null;
-            var repositoryManager = new RemoteRepositoryManager(site.ServiceUrl + "scm");
+            var repositoryManager = new RemoteRepositoryManager(site.ServiceUrl + "live/scm");
             var repositoryInfo = repositoryManager.GetRepositoryInfo().Result;
             gitUrl = repositoryInfo.GitUrl.ToString();
             return new ApplicationManager(siteManager, site, applicationName, gitUrl)
@@ -132,7 +132,7 @@ namespace Kudu.TestHarness
                 SiteUrl = site.SiteUrl,
                 ServiceUrl = site.ServiceUrl,
                 DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "deployments"),
-                ProjectSystem = new RemoteProjectSystem(site.ServiceUrl + "files"),
+                ProjectSystem = new RemoteProjectSystem(site.ServiceUrl + "live/files"),
                 SettingsManager = new RemoteDeploymentSettingsManager(site.ServiceUrl + "settings"),
                 RepositoryManager = repositoryManager
             };
