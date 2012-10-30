@@ -59,6 +59,12 @@ namespace Kudu.TestHarness
             private set;
         }
 
+        public RemoteLogStreamManager LogStreamManager
+        {
+            get;
+            private set;
+        }
+
         public string GitUrl
         {
             get;
@@ -134,8 +140,19 @@ namespace Kudu.TestHarness
                 DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "deployments"),
                 ProjectSystem = new RemoteProjectSystem(site.ServiceUrl + "live/files"),
                 SettingsManager = new RemoteDeploymentSettingsManager(site.ServiceUrl + "settings"),
+                LogStreamManager = new RemoteLogStreamManager(site.ServiceUrl + "logstream"),
+
                 RepositoryManager = repositoryManager
             };
+        }
+
+        public RemoteLogStreamManager CreateLogStreamManager(string path = null)
+        {
+            if (path != null)
+            {
+                path = "/" + path;
+            }
+            return new RemoteLogStreamManager(_site.ServiceUrl + "logstream" + path);
         }
 
         private static SiteManager GetSiteManager(DefaultPathResolver pathResolver)

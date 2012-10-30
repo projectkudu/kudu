@@ -63,8 +63,10 @@
     <Compile Include="DeploymentManagerExtensions.cs" />
     <Compile Include="Git.cs" />
     <Compile Include="GitDeploymentResult.cs" />
+    <Compile Include="LogStreamWaitHandle.cs" />
     <Compile Include="PathHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RemoteLogStreamManager.cs" />
     <Compile Include="TestRepository.cs" />
     <Compile Include="TestRepositoryExtensions.cs" />
     <Compile Include="ZipUtils.cs" />

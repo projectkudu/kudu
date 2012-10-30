@@ -20,23 +20,12 @@ namespace Kudu.FunctionalTests
             string repoCloneUrl = "https://github.com/KuduApps/LogTester.git";
             string appName = KuduUtils.GetRandomWebsiteName("TestLogStreamBasic");
 
-            TestRepository testRepository = null;
-
-            string localRepo = KuduUtils.GetCachedRepositoryPath(repoName);
-
-            if (localRepo == null)
-            {
-                testRepository = Git.Clone(appName, repoCloneUrl);
-                localRepo = testRepository.PhysicalPath;
-            }
-
+            string localRepo = GetRepositoryPath(repoName, repoCloneUrl, appName);
             ApplicationManager.Run(appName, appManager =>
             {
                 // Act
                 appManager.GitDeploy(localRepo);
-                var manager = new RemoteLogStreamManager(appManager.ServiceUrl + "/logstream");
-
-                using (var waitHandle = new LogStreamWaitHandle(manager.GetStream().Result))
+                using (var waitHandle = new LogStreamWaitHandle(appManager.LogStreamManager.GetStream().Result))
                 {
                     string line = waitHandle.WaitNextLine(10000);
                     Assert.True(!String.IsNullOrEmpty(line) && line.StartsWith("Welcome", StringComparison.OrdinalIgnoreCase), "check welcome message: " + line);
@@ -86,16 +75,14 @@ namespace Kudu.FunctionalTests
                     logFiles.Add(@"LogFiles\Folder" + i + "\\temp.txt");
                     //Create the directory
                     CreateLogDirectory(appManager.SiteUrl, @"LogFiles\Folder" + i);
-                    RemoteLogStreamManager mgr = new RemoteLogStreamManager(appManager.ServiceUrl + "/logstream/folder" + i);
-                    LogStreamWaitHandle waitHandle = new LogStreamWaitHandle(mgr.GetStream().Result);
+                    RemoteLogStreamManager mgr = appManager.CreateLogStreamManager("folder" + i);
+                    var waitHandle = new LogStreamWaitHandle(mgr.GetStream().Result);
                     string line = waitHandle.WaitNextLine(10000);
                     Assert.True(!string.IsNullOrEmpty(line) && line.StartsWith("Welcome", StringComparison.OrdinalIgnoreCase), "check welcome message: " + line);
                     waitHandles.Add(waitHandle);
                 }
 
-                RemoteLogStreamManager manager = new RemoteLogStreamManager(appManager.ServiceUrl + "/logstream");
-
-                using (LogStreamWaitHandle waitHandle = new LogStreamWaitHandle(manager.GetStream().Result))
+                using (LogStreamWaitHandle waitHandle = new LogStreamWaitHandle(appManager.LogStreamManager.GetStream().Result))
                 {
                     try
                     {
@@ -144,7 +131,6 @@ namespace Kudu.FunctionalTests
             });
         }
 
-
         private static void WriteLogText(string siteUrl, string filePath, string content)
         {
             string url = String.Format("{0}?path={1}&content={2}", siteUrl, filePath, content);
@@ -161,204 +147,18 @@ namespace Kudu.FunctionalTests
             KuduAssert.VerifyUrl(url);
         }
 
-        // This is a test class current workaround Stream.Close hangs.
-        class RemoteLogStreamManager : KuduRemoteClientBase
+        private static string GetRepositoryPath(string repoName, string repoCloneUrl, string appName)
         {
-            public RemoteLogStreamManager(string serviceUrl)
-                : base(serviceUrl)
+            TestRepository testRepository = null;
+
+            string localRepo = KuduUtils.GetCachedRepositoryPath(repoName);
+
+            if (localRepo == null)
             {
+                testRepository = Git.Clone(appName, repoCloneUrl);
+                localRepo = testRepository.PhysicalPath;
             }
-
-            public Task<Stream> GetStream()
-            {
-                HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(ServiceUrl);
-                TaskCompletionSource<Stream> tcs = new TaskCompletionSource<Stream>();
-                RequestState state = new RequestState { Manager = this, TaskCompletionSource = tcs, Request = request };
-
-                if (this._client.DefaultRequestHeaders.Authorization != null)
-                {
-                    request.Headers["Authorization"] = this._client.DefaultRequestHeaders.Authorization.Scheme + " " + this._client.DefaultRequestHeaders.Authorization.Parameter;
-                }
-
-                IAsyncResult result = request.BeginGetResponse(RemoteLogStreamManager.OnGetResponse, state);
-                if (result.CompletedSynchronously)
-                {
-                    state.Response = (HttpWebResponse)request.EndGetResponse(result);
-                    OnGetResponse(state);
-                }
-
-                return tcs.Task;
-            }
-
-            private static void OnGetResponse(IAsyncResult result)
-            {
-                RequestState state = (RequestState)result.AsyncState;
-                try
-                {
-                    state.Response = (HttpWebResponse)state.Request.EndGetResponse(result);
-                    state.Manager.OnGetResponse(state);
-                }
-                catch (Exception ex)
-                {
-                    state.TaskCompletionSource.TrySetException(ex);
-                }
-            }
-
-            private void OnGetResponse(RequestState state)
-            {
-                state.TaskCompletionSource.TrySetResult(new DelegatingStream(state.Response.GetResponseStream(), state));
-            }
-
-            class RequestState
-            {
-                public RemoteLogStreamManager Manager { get; set; }
-                public TaskCompletionSource<Stream> TaskCompletionSource { get; set; }
-                public HttpWebRequest Request { get; set; }
-                public HttpWebResponse Response { get; set; }
-            }
-
-            class DelegatingStream : Stream
-            {
-                Stream inner;
-                RequestState state;
-
-                public DelegatingStream(Stream inner, RequestState state)
-                {
-                    this.inner = inner;
-                    this.state = state;
-                }
-
-                public override void Close()
-                {
-                    // To avoid hanging!
-                    this.state.Request.Abort();
-
-                    this.inner.Close();
-                }
-
-                public override bool CanRead
-                {
-                    get { return this.inner.CanRead; }
-                }
-
-                public override bool CanSeek
-                {
-                    get { return this.inner.CanSeek; }
-                }
-
-                public override bool CanWrite
-                {
-                    get { return this.inner.CanWrite; }
-                }
-
-                public override void Flush()
-                {
-                    this.inner.Flush();
-                }
-
-                public override long Length
-                {
-                    get { return this.inner.Length; }
-                }
-
-                public override long Position
-                {
-                    get { return this.inner.Position; }
-                    set { this.inner.Position = value; }
-                }
-
-                public override int Read(byte[] buffer, int offset, int count)
-                {
-                    return this.inner.Read(buffer, offset, count);
-                }
-
-                public override long Seek(long offset, SeekOrigin origin)
-                {
-                    return this.inner.Seek(offset, origin);
-                }
-
-                public override void SetLength(long value)
-                {
-                    this.inner.SetLength(value);
-                }
-
-                public override void Write(byte[] buffer, int offset, int count)
-                {
-                    this.inner.Write(buffer, offset, count);
-                }
-            }
-        }
-
-        class LogStreamWaitHandle : IDisposable
-        {
-            Stream stream;
-            List<string> lines;
-            Semaphore sem;
-            ManualResetEvent disposed = new ManualResetEvent(false);
-
-            public LogStreamWaitHandle(Stream stream)
-            {
-                this.stream = stream;
-                this.lines = new List<string>();
-                this.sem = new Semaphore(0, Int32.MaxValue);
-                Task.Factory.StartNew(() =>
-                {
-                    try
-                    {
-                        using (StreamReader reader = new StreamReader(stream))
-                        {
-                            bool initial = true;
-                            while (!reader.EndOfStream)
-                            {
-                                string line = reader.ReadLine();
-                                if (line != null)
-                                {
-                                    if (initial)
-                                    {
-                                        // accommodate for gap between first welcome and event hookup
-                                        Thread.Sleep(1000);
-                                        initial = false;
-                                    }
-
-                                    lock (lines)
-                                    {
-                                        lines.Add(line);
-                                        this.sem.Release();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    catch
-                    {
-                    }
-                    finally
-                    {
-                        disposed.Set();
-                    }
-                });
-            }
-
-            public void Dispose()
-            {
-                this.stream.Close();
-                this.disposed.WaitOne(10000);
-            }
-
-            public string WaitNextLine(int millisecs)
-            {
-                if (this.sem.WaitOne(millisecs))
-                {
-                    lock (lines)
-                    {
-                        string result = lines[0];
-                        lines.RemoveAt(0);
-                        return result;
-                    }
-                }
-
-                return null;
-            }
+            return localRepo;
         }
     }
 }
