@@ -27,5 +27,10 @@ namespace Kudu.Core.Deployment
         {
             File.WriteAllLines(_path, paths);
         }
+
+        public string ManifestFilePath
+        {
+            get { return _path;  }
+        }
     }
 }
