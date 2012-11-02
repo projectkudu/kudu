@@ -244,7 +244,6 @@ namespace Kudu.Services.GitServer
                     }
 
                     // Just get the last token
-                    info.Branch = @ref.Split('/').Last();
                     info.Deployer = GetDeployer(request);
                     info.OldRef = payload.Value<string>("before");
                     info.NewRef = payload.Value<string>("after");
@@ -267,17 +266,9 @@ namespace Kudu.Services.GitServer
                 // Look for the generic format
                 // { url: "", branch: "", deployer: "", oldRef: "", newRef: "" } 
                 info.RepositoryUrl = payload.Value<string>("url");
-                info.Branch = payload.Value<string>("branch");
                 info.Deployer = payload.Value<string>("deployer");
                 info.OldRef = payload.Value<string>("oldRef");
                 info.NewRef = payload.Value<string>("newRef");
-            }
-
-            // If there's no specified branch assume master
-            if (String.IsNullOrEmpty(info.Branch))
-            {
-                // REVIEW: Is this correct
-                info.Branch = "master";
             }
 
             if (String.IsNullOrEmpty(info.RepositoryUrl))
@@ -308,7 +299,6 @@ namespace Kudu.Services.GitServer
             public string Host { get; set; }
             public string OldRef { get; set; }
             public string NewRef { get; set; }
-            public string Branch { get; set; }
             public string Deployer { get; set; }
         }
     }

@@ -91,6 +91,10 @@
       <Project>{D163E227-9EB6-4619-AD37-D8EEF831AEF0}</Project>
       <Name>Kudu.Services</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Kudu.Services.Web\Kudu.Services.Web.csproj">
+      <Project>{6295D938-63FD-4C26-AE00-B32776CC689E}</Project>
+      <Name>Kudu.Services.Web</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Infrastructure\EnvironmentFacts.cs" />

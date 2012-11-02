@@ -197,17 +197,23 @@ namespace Kudu.Services.Web.App_Start
             GlobalConfiguration.Configuration.Formatters.Add(jsonFormatter);
             GlobalConfiguration.Configuration.DependencyResolver = new NinjectWebApiDependencyResolver(kernel);
 
-            // Git Service
-            routes.MapHttpRoute("git-info-refs", configuration.GitServerRoot + "/info/refs", new { controller = "InfoRefs", action = "Execute" });
+            // the scenario is to have kudu service running but w/o git functionalities.
+            // this is utilized by windows azures where we try to avoid deployment collision - if git disabled.
+            // we intentionally on block git related operation - not other repository-related such as /deployment
+            if (!AppSettings.DisableGit)
+            {
+                // Git Service
+                routes.MapHttpRoute("git-info-refs", configuration.GitServerRoot + "/info/refs", new { controller = "InfoRefs", action = "Execute" });
 
-            // Push url
-            routes.MapHandler<ReceivePackHandler>(kernel, "git-receive-pack", configuration.GitServerRoot + "/git-receive-pack");
+                // Push url
+                routes.MapHandler<ReceivePackHandler>(kernel, "git-receive-pack", configuration.GitServerRoot + "/git-receive-pack");
 
-            // Fetch Hook
-            routes.MapHandler<FetchHandler>(kernel, "fetch", "deploy");
+                // Fetch Hook
+                routes.MapHandler<FetchHandler>(kernel, "fetch", "deploy");
 
-            // Clone url
-            routes.MapHandler<UploadPackHandler>(kernel, "git-upload-pack", configuration.GitServerRoot + "/git-upload-pack");
+                // Clone url
+                routes.MapHandler<UploadPackHandler>(kernel, "git-upload-pack", configuration.GitServerRoot + "/git-upload-pack");
+            }
 
             // Scm (deployment repository)
             routes.MapHttpRoute("scm-info", "scm/info", new { controller = "LiveScm", action = "GetRepositoryInfo" });

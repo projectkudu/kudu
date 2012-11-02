@@ -1,7 +1,10 @@
 ﻿using System;
 using System.IO.Abstractions;
+using Kudu.Services.Web;
 using Moq;
 using Xunit;
+
+using SystemEnvironment = System.Environment;
 
 namespace Kudu.Core.Test
 {
@@ -113,6 +116,36 @@ namespace Kudu.Core.Test
             // Assert
             Assert.Equal(sshPath, output);
             directory.Verify();
+        }
+
+        [Fact]
+        public void GitDisabledTest()
+        {
+            const string DisableGitKey = "kudu.disableGit";
+            string previous = SystemEnvironment.GetEnvironmentVariable(DisableGitKey);
+            Assert.Equal(AppSettings.DisableGit, previous == "1");
+
+            try
+            {
+                SystemEnvironment.SetEnvironmentVariable(DisableGitKey, "1");
+                Assert.Equal(true, AppSettings.DisableGit);
+
+                SystemEnvironment.SetEnvironmentVariable(DisableGitKey, "0");
+                Assert.Equal(false, AppSettings.DisableGit);
+
+                SystemEnvironment.SetEnvironmentVariable(DisableGitKey, "TRUE");
+                Assert.Equal(false, AppSettings.DisableGit);
+
+                SystemEnvironment.SetEnvironmentVariable(DisableGitKey, String.Empty);
+                Assert.Equal(false, AppSettings.DisableGit);
+
+                SystemEnvironment.SetEnvironmentVariable(DisableGitKey, null);
+                Assert.Equal(false, AppSettings.DisableGit);
+            }
+            finally
+            {
+                SystemEnvironment.SetEnvironmentVariable(DisableGitKey, previous);
+            }
         }
 
         private static Environment CreateEnvironment(

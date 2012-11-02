@@ -72,6 +72,12 @@ namespace Kudu.Services.SourceControl
                 // Delete the repository
                 FileSystemHelpers.DeleteDirectorySafe(_environment.RepositoryPath);
             }
+
+            using (_tracer.Step("Deleting ssh key"))
+            {
+                // Delete the ssh key
+                FileSystemHelpers.DeleteDirectorySafe(_environment.SSHKeyPath);
+            }
         }
 
         /// <summary>
