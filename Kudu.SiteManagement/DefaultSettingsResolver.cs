@@ -7,6 +7,11 @@ namespace Kudu.SiteManagement
     {
         private readonly string _sitesBaseUrl;
 
+        public DefaultSettingsResolver()
+            : this(sitesBaseUrl: null)
+        {
+        }
+
         public DefaultSettingsResolver(string sitesBaseUrl)
         {
             // Ensure the base url is normalised to not have a leading dot,

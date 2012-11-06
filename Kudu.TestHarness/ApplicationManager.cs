@@ -118,7 +118,7 @@ namespace Kudu.TestHarness
         public static ApplicationManager CreateApplication(string applicationName)
         {
             var pathResolver = new DefaultPathResolver(PathHelper.ServiceSitePath, PathHelper.SitesPath);
-            var settingsResolver = new DefaultSettingsResolver(".example.org");
+            var settingsResolver = new DefaultSettingsResolver();
 
             var siteManager = GetSiteManager(pathResolver, settingsResolver);
 
