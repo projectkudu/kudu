@@ -16,17 +16,6 @@ namespace Kudu.SiteManagement
             {
                 return SiteUrls.FirstOrDefault();
             }
-            set
-            {
-                if (SiteUrls.Count > 0)
-                {
-                    SiteUrls[0] = value;
-                }
-                else
-                {
-                    SiteUrls.Add(value);
-                }
-            }
         }
         public IList<string> SiteUrls { get; set; }
         public string DevSiteUrl { get; set; }

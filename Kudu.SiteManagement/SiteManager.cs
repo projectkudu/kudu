@@ -59,7 +59,6 @@ namespace Kudu.SiteManagement
             IIS.Site devSite = iis.Sites[devSiteName];
 
             var site = new Site();
-            site.SiteUrl = GetSiteUrl(mainSite);
             site.ServiceUrl = GetSiteUrl(serviceSite);
             site.DevSiteUrl = GetSiteUrl(devSite);
             site.SiteUrls = GetSiteUrls(mainSite);
