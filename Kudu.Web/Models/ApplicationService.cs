@@ -49,7 +49,6 @@ namespace Kudu.Web.Models
             {
                 Name = name,
                 SiteUrls = site.SiteUrls,
-                DevSiteUrl = site.DevSiteUrl,
                 ServiceUrl = site.ServiceUrl
             };
         }

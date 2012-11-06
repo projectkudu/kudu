@@ -20,6 +20,5 @@ namespace Kudu.Web.Models
             }
         }
         public IList<string> SiteUrls { get; set; }
-        public string DevSiteUrl { get; set; }
     }
 }

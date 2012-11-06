@@ -60,7 +60,6 @@ namespace Kudu.SiteManagement
 
             var site = new Site();
             site.ServiceUrl = GetSiteUrl(serviceSite);
-            site.DevSiteUrl = GetSiteUrl(devSite);
             site.SiteUrls = GetSiteUrls(mainSite);
             return site;
         }
