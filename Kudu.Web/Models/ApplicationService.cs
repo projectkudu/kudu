@@ -48,7 +48,6 @@ namespace Kudu.Web.Models
             return new Application
             {
                 Name = name,
-                SiteUrl = site.SiteUrl,
                 SiteUrls = site.SiteUrls,
                 DevSiteUrl = site.DevSiteUrl,
                 ServiceUrl = site.ServiceUrl

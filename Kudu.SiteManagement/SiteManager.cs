@@ -62,7 +62,7 @@ namespace Kudu.SiteManagement
             site.SiteUrl = GetSiteUrl(mainSite);
             site.ServiceUrl = GetSiteUrl(serviceSite);
             site.DevSiteUrl = GetSiteUrl(devSite);
-            site.SiteUrls = GetSiteUrls(mainSite).ToList<string>();
+            site.SiteUrls = GetSiteUrls(mainSite);
             return site;
         }
 
@@ -70,17 +70,17 @@ namespace Kudu.SiteManagement
         {
             var urls = GetSiteUrls(site);
 
-            if (urls == null || urls.Count() < 1)
+            if (urls == null)
             {
                 return null;
             }
             else
             {
-                return urls.First();
+                return urls.FirstOrDefault();
             }
         }
 
-        private IEnumerable<string> GetSiteUrls(IIS.Site site)
+        private List<string> GetSiteUrls(IIS.Site site)
         {
             var urls = new List<string>();
 
@@ -95,13 +95,8 @@ namespace Kudu.SiteManagement
                 {
                     Host = String.IsNullOrEmpty(binding.Host) ? "localhost" : binding.Host,
                     Scheme = binding.Protocol,
-                    Port = binding.EndPoint.Port
+                    Port = binding.EndPoint.Port == 80 ? -1 : binding.EndPoint.Port
                 };
-
-                if (builder.Port == 80)
-                {
-                    builder.Port = -1;
-                }
 
                 urls.Add(builder.ToString());
             }
@@ -116,9 +111,7 @@ namespace Kudu.SiteManagement
             try
             {
                 // Determine the host header values
-                List<string> siteBindings = !String.IsNullOrWhiteSpace(_settingsResolver.SitesBaseUrl) 
-                    ? new List<string>() { applicationName + "." + _settingsResolver.SitesBaseUrl } 
-                    : new List<string>();
+                List<string> siteBindings = GetDefaultBindings(applicationName);
 
                 // Create the service site for this site
                 string serviceSiteName = GetServiceSite(applicationName);
@@ -170,7 +163,6 @@ namespace Kudu.SiteManagement
                 return new Site
                 {
                     ServiceUrl = String.Format("http://localhost:{0}/", serviceSitePort),
-                    SiteUrl = String.Format("http://localhost:{0}/", sitePort),
                     SiteUrls = siteUrls
                 };
             }
@@ -186,9 +178,7 @@ namespace Kudu.SiteManagement
             var iis = new IIS.ServerManager();
 
             // Determine the host header values
-            List<string> siteBindings = !String.IsNullOrWhiteSpace(_settingsResolver.SitesBaseUrl)
-                ? new List<string>() { applicationName + "." + _settingsResolver.SitesBaseUrl }
-                : new List<string>();
+            List<string> siteBindings = GetDefaultBindings(applicationName);
 
             string devSiteName = GetDevSite(applicationName);
 
@@ -342,6 +332,16 @@ namespace Kudu.SiteManagement
             return iisBinding;
         }
 
+        private List<String> GetDefaultBindings(string applicationName)
+        {
+            var siteBindings = new List<string>();
+            if (!String.IsNullOrWhiteSpace(_settingsResolver.SitesBaseUrl))
+            {
+                siteBindings.Add(applicationName + "." + _settingsResolver.SitesBaseUrl);
+            }
+            return siteBindings;
+        }
+
         private void RemoveAcls(string appName, string appPoolName)
         {
             // Setup Acls for this user
@@ -479,7 +479,7 @@ namespace Kudu.SiteManagement
 
         private IIS.Site CreateSite(IIS.ServerManager iis, string applicationName, string siteName, string siteRoot, List<string> siteBindings)
         {
-            Boolean randomPort = false;
+            var randomPort = false;
 
             if (siteBindings == null || siteBindings.Count < 1)
             {
