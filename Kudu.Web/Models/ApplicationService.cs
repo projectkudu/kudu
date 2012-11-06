@@ -53,12 +53,6 @@ namespace Kudu.Web.Models
                 ServiceUrl = site.ServiceUrl
             };
         }
-
-        public void CreateDevelopmentSite(string name)
-        {
-            string siteUrl;
-            _siteManager.TryCreateDeveloperSite(name, out siteUrl);
-        }
     }
 
     public class SiteExistsException : InvalidOperationException

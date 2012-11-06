@@ -1,22 +1,15 @@
 ﻿using System.Collections.Generic;
 using Kudu.Core.Deployment;
 
-namespace Kudu.Console.Services
+namespace Kudu.Services
 {
     public class BuildPropertyProvider : IBuildPropertyProvider
     {
-        private readonly string _extensionsPath;
-
-        public BuildPropertyProvider(string extensionsPath)
-        {
-            _extensionsPath = extensionsPath;
-        }
+        private static readonly Dictionary<string, string> _nullProperties = new Dictionary<string, string>(0);
 
         public IDictionary<string, string> GetProperties()
         {
-            return new Dictionary<string, string> {
-                    { "MSBuildExtensionsPath32", _extensionsPath }
-                };
+            return _nullProperties;
         }
     }
 }

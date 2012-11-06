@@ -122,8 +122,6 @@ namespace Kudu.Web.Controllers
 
         public ActionResult Develop(string slug)
         {
-            _applicationService.CreateDevelopmentSite(slug);
-
             return RedirectToAction("Details", new { slug });
         }
     }

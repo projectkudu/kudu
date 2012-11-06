@@ -17,7 +17,6 @@ namespace Kudu.Web.Models
             SiteUrl = application.SiteUrl;
             SiteUrls = application.SiteUrls;
             ServiceUrl = application.ServiceUrl;
-            DevSiteUrl = application.DevSiteUrl;
         }
 
         [Required]
@@ -25,7 +24,6 @@ namespace Kudu.Web.Models
         public string SiteUrl { get; set; }
         public IEnumerable<string> SiteUrls { get; set; }
         public string ServiceUrl { get; set; }
-        public string DevSiteUrl { get; set; }
 
         public RepositoryInfo RepositoryInfo { get; set; }
         

@@ -29,6 +29,10 @@ namespace Kudu.Services.Deployment
             _deploymentLock = deploymentLock;
         }
 
+        /// <summary>
+        /// Delete a deployment
+        /// </summary>
+        /// <param name="id">id of the deployment to delete</param>
         [HttpDelete]
         public void Delete(string id)
         {
@@ -52,6 +56,10 @@ namespace Kudu.Services.Deployment
             }
         }
 
+        /// <summary>
+        /// Deploy a previous deployment
+        /// </summary>
+        /// <param name="id">id of the deployment to redeploy</param>
         [HttpPut]
         public void Deploy(string id)
         {
@@ -84,6 +92,10 @@ namespace Kudu.Services.Deployment
             }
         }
         
+        /// <summary>
+        /// Get the list of all deployments
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         [Queryable]
         public IQueryable<DeployResult> GetDeployResults()
@@ -94,6 +106,11 @@ namespace Kudu.Services.Deployment
             }
         }
 
+        /// <summary>
+        /// Get the list of log entries for a deployment
+        /// </summary>
+        /// <param name="id">id of the deployment</param>
+        /// <returns></returns>
         [HttpGet]
         public IEnumerable<LogEntry> GetLogEntry(string id)
         {
@@ -119,6 +136,12 @@ namespace Kudu.Services.Deployment
             }
         }
 
+        /// <summary>
+        /// Get the list of log entry details for a log entry
+        /// </summary>
+        /// <param name="id">id of the deployment</param>
+        /// <param name="logId">id of the log entry</param>
+        /// <returns></returns>
         [HttpGet]
         public IEnumerable<LogEntry> GetLogEntryDetails(string id, string logId)
         {
@@ -135,6 +158,11 @@ namespace Kudu.Services.Deployment
             }
         }
 
+        /// <summary>
+        /// Get a deployment
+        /// </summary>
+        /// <param name="id">id of the deployment</param>
+        /// <returns></returns>
         [HttpGet]
         public DeployResult GetResult(string id)
         {

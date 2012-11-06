@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Json;
 using System.Net.Http;
+using System.Net.Http.Formatting;
 using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace Kudu.Client.Infrastructure
 {
@@ -33,12 +34,12 @@ namespace Kudu.Client.Infrastructure
 
         public static HttpContent CreateJsonContent(params KeyValuePair<string, string>[] items)
         {
-            var jsonObject = new JsonObject();
+            var jsonObject = new JObject();
             foreach (KeyValuePair<string, string> kv in items)
             {
                 jsonObject.Add(kv.Key, kv.Value);
             }
-            return new ObjectContent(typeof(JsonObject), jsonObject, "application/json");
+            return new ObjectContent(typeof(JObject), jsonObject, new JsonMediaTypeFormatter());
         }
 
         private class TrailingSlashHandler : DelegatingHandler

@@ -20,7 +20,7 @@ namespace Kudu.Client.SourceControl
             {
                 return _client.GetAsync("id")
                               .Result
-                              .EnsureSuccessStatusCode()
+                              .EnsureSuccessful()
                               .Content
                               .ReadAsStringAsync()
                               .Result;
@@ -31,7 +31,7 @@ namespace Kudu.Client.SourceControl
         {
             _client.PostAsync("init", new StringContent(String.Empty))
                    .Result
-                   .EnsureSuccessStatusCode();
+                   .EnsureSuccessful();
         }
 
         public IEnumerable<Branch> GetBranches()
@@ -74,21 +74,21 @@ namespace Kudu.Client.SourceControl
         {
             _client.PostAsync("add", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("path", path)))
                    .Result
-                   .EnsureSuccessStatusCode();
+                   .EnsureSuccessful();
         }
 
         public void RevertFile(string path)
         {
             _client.PostAsync("remove", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("path", path)))
                    .Result
-                   .EnsureSuccessStatusCode();
+                   .EnsureSuccessful();
         }
 
         public ChangeSet Commit(string message, string authorName)
         {
             string json = _client.PostAsync("commit", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("name", authorName), new KeyValuePair<string, string>("message", message)))
                                  .Result
-                                 .EnsureSuccessStatusCode()
+                                 .EnsureSuccessful()
                                  .Content.ReadAsStringAsync()
                                  .Result;
 
@@ -99,21 +99,21 @@ namespace Kudu.Client.SourceControl
         {
             _client.PostAsync("push", new StringContent(String.Empty))
                    .Result
-                   .EnsureSuccessStatusCode();
+                   .EnsureSuccessful();
         }
 
         public void Update(string id)
         {
             _client.PostAsync("update", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("id", id)))
                    .Result
-                   .EnsureSuccessStatusCode();
+                   .EnsureSuccessful();
         }
 
         public void Update()
         {
             _client.PostAsync("update", new StringContent(String.Empty))
                    .Result
-                   .EnsureSuccessStatusCode();
+                   .EnsureSuccessful();
         }
     }
 }

@@ -16,6 +16,11 @@ namespace Kudu.Services.Commands
             _commandExecutor = commandExecutor;
         }
 
+        /// <summary>
+        /// Executes an arbitrary command line and return its output
+        /// </summary>
+        /// <param name="input">The command line to execute</param>
+        /// <returns></returns>
         [HttpPost]
         public HttpResponseMessage ExecuteCommand(JObject input)
         {
@@ -25,7 +30,8 @@ namespace Kudu.Services.Commands
             }
 
             string command = input.Value<string>("command");
-            CommandResult result = _commandExecutor.ExecuteCommand(command);
+            string workingDirectory = input.Value<string>("dir");
+            CommandResult result = _commandExecutor.ExecuteCommand(command, workingDirectory);
             return Request.CreateResponse(HttpStatusCode.OK, result);
         }
     }

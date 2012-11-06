@@ -17,6 +17,11 @@ namespace Kudu.Services.Settings
             _settingsManager = settingsManager;
         }
 
+        /// <summary>
+        /// Create or change a setting
+        /// </summary>
+        /// <param name="pair">The name/value pair for the setting</param>
+        /// <returns></returns>
         public HttpResponseMessage Set(JObject pair)
         {
             if (pair == null)
@@ -38,6 +43,11 @@ namespace Kudu.Services.Settings
             return Request.CreateResponse(HttpStatusCode.NoContent);
         }
 
+        /// <summary>
+        /// Delete a setting
+        /// </summary>
+        /// <param name="key">The key of the setting to delete</param>
+        /// <returns></returns>
         public HttpResponseMessage Delete(string key)
         {
             if (String.IsNullOrEmpty(key))
@@ -50,6 +60,10 @@ namespace Kudu.Services.Settings
             return Request.CreateResponse(HttpStatusCode.NoContent);
         }
 
+        /// <summary>
+        /// Get the list of all settings
+        /// </summary>
+        /// <returns></returns>
         public HttpResponseMessage GetAll()
         {
             var values = _settingsManager.GetValues();
@@ -57,6 +71,11 @@ namespace Kudu.Services.Settings
             return Request.CreateResponse(HttpStatusCode.OK, values);
         }
 
+        /// <summary>
+        /// Get the value of a setting
+        /// </summary>
+        /// <param name="key">The setting's key</param>
+        /// <returns></returns>
         public HttpResponseMessage Get(string key)
         {
             if (String.IsNullOrEmpty(key))

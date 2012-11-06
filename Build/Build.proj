@@ -6,7 +6,7 @@
         <Configuration Condition="$(Configuration) == ''">Debug</Configuration>
         <ProjectRoot>$(MSBuildProjectDirectory)\..</ProjectRoot>
         <ToolsPath>$(ProjectRoot)\tools\</ToolsPath>
-        <XunitPath>$(ToolsPath)xunit\</XunitPath>
+        <XunitPath>$(ProjectRoot)xunit\</XunitPath>
         <ArtifactsPath>$(ProjectRoot)\artifacts\$(Configuration)</ArtifactsPath>
         <ServiceSiteTargetPath Condition="$(ServiceSiteTargetPath) == ''">$(ArtifactsPath)\KuduService</ServiceSiteTargetPath>
         <ServiceSiteProject>$(ProjectRoot)\Kudu.Services.Web\Kudu.Services.Web.csproj</ServiceSiteProject>
@@ -19,14 +19,14 @@
     
     <PropertyGroup>
         <MajorVersion>0</MajorVersion>
-        <MinorVersion>6</MinorVersion>
+        <MinorVersion>7</MinorVersion>
         <!-- Ensure that we come up with a new version every 65535 years -->
         <VersionStartYear>2012</VersionStartYear>
         
         <!-- Build number is of the format (CurrentYear - VersionStartYear + 1)(2 digit month)(2 digit day) -->
-        <Build>$([MSBuild]::Add(1, $([MSBuild]::Subtract($([System.DateTime]::Now.Year), $(VersionStartYear)))))$([System.DateTime]::Now.ToString("MMdd"))</Build>
+        <Build>$([MSBuild]::Add(1, $([MSBuild]::Subtract($([System.DateTime]::UtcNow.Year), $(VersionStartYear)))))$([System.DateTime]::UtcNow.ToString("MMdd"))</Build>
         <Revision>$(BUILD_NUMBER)</Revision>
-        <Version>$(MajorVersion).$(MinorVersion).$(Revision).$(Build)</Version>
+        <Version>$(MajorVersion).$(MinorVersion).$(Build).$(Revision)</Version>
     </PropertyGroup>
     
    <ItemGroup>
@@ -44,9 +44,6 @@
         <RegexTransform Items="@(RegexTransform)" />
     </Target>
     
-    <UsingTask AssemblyFile="$(XunitPath)xunit.runner.msbuild.dll"
-               TaskName="Xunit.Runner.MSBuild.xunit" />
-    
     <Target Name="RunAll" DependsOnTargets="UpdateVersion; Build; RunTests; BuildSites" />
     
     <Target Name="CreateOutputPath">
@@ -59,8 +56,7 @@
                  Targets="pipelinePreDeployCopyAllFilesToOneFolder" 
                  Properties="_PackageTempDir=$(ServiceSiteTargetPath);
                              AutoParameterizationWebConfigConnectionStrings=false;
-                             SolutionDir=$(ProjectRoot)\;
-                             MSBuildExtensionsPath32=$(ProjectRoot)\Kudu.Services.Web\msbuild"/>
+                             SolutionDir=$(ProjectRoot)\;"/>
                              
         <Exec Command="&quot;$(MSBuildProgramFiles32)\Git\bin\git.exe&quot; rev-parse HEAD > $(ServiceSiteTargetPath)\commit"
               WorkingDirectory="$(ProjectRoot)" />
@@ -71,27 +67,23 @@
                  Targets="pipelinePreDeployCopyAllFilesToOneFolder" 
                  Properties="_PackageTempDir=$(ClientSiteTargetPath);
                              AutoParameterizationWebConfigConnectionStrings=false;
-                             SolutionDir=$(ProjectRoot)\;
-                             MSBuildExtensionsPath32=$(ProjectRoot)\Kudu.Services.Web\msbuild"/>
+                             SolutionDir=$(ProjectRoot)\;"/>
     </Target>
   
     <Target Name="RunTests" DependsOnTargets="CreateOutputPath">
-        <xunit Assembly="$(ProjectRoot)\Kudu.Core.Test\bin\$(Configuration)\Kudu.Core.Test.dll" 
-               Xml="$(TestResultsPath)\Kudu.Core.Test.XunitResults.xml"
-               Verbose="true" />
+        <MsBuild Projects="Build.xunit.targets" Targets="_RunTests" 
+                  Properties="Assembly=$(ProjectRoot)\Kudu.Core.Test\bin\$(Configuration)\Kudu.Core.Test.dll;Xml=$(TestResultsPath)\Kudu.Core.Test.XunitResults.xml" />
     </Target>
     
     <Target Name="RunFunctionalTests" DependsOnTargets="CreateOutputPath">
-        <xunit Assembly="$(ProjectRoot)\Kudu.FunctionalTests\bin\$(Configuration)\Kudu.FunctionalTests.dll" 
-               Xml="$(TestResultsPath)\Kudu.FunctionalTests.XunitResults.xml"
-               Verbose="true" />
+        <MsBuild Projects="Build.xunit.targets" Targets="_RunTests" 
+                  Properties="Assembly=$(ProjectRoot)\Kudu.FunctionalTests\bin\$(Configuration)\Kudu.FunctionalTests.dll;Xml=$(TestResultsPath)\Kudu.FunctionalTests.XunitResults.xml" />
     </Target>
     
     <Target Name="Build" DependsOnTargets="CreateOutputPath">
         <MSBuild Projects="$(ProjectRoot)\kudu.sln" 
                  Targets="Build" 
-                 Properties="Configuration=$(Configuration);
-                             MSBuildExtensionsPath32=$(ProjectRoot)\Kudu.Services.Web\msbuild" />
+                 Properties="Configuration=$(Configuration);" />
     </Target>
     
     <Target Name="BuildSetup" DependsOnTargets="RunAll">

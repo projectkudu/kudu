@@ -10,6 +10,10 @@ namespace Kudu.Core.Infrastructure
 
         public StringReader(string raw)
         {
+            if (raw == null)
+            {
+                throw new ArgumentNullException("raw");
+            }
             _raw = raw;
         }
 
@@ -47,7 +51,7 @@ namespace Kudu.Core.Infrastructure
 
         public string Read(int n)
         {
-            if (_index + n < _raw.Length)
+            if (_index + n <= _raw.Length)
             {
                 string value = _raw.Substring(_index, n);
                 Skip(n);
@@ -66,7 +70,7 @@ namespace Kudu.Core.Infrastructure
         public int ReadInt()
         {
             string value = ReadUntil(ch => !Char.IsDigit(ch));
-            return Int32.Parse(value);
+            return String.IsNullOrEmpty(value) ? 0 : Int32.Parse(value);
         }
 
         public string ReadUntilWhitespace()
@@ -224,14 +228,6 @@ namespace Kudu.Core.Infrastructure
         public void PutBack(int n)
         {
             _index = Math.Max(0, _index - n);
-        }
-
-        private string Peek(int n)
-        {
-            int prev = _index;
-            string value = Read(n);
-            _index = prev;
-            return value;
         }
     }
 

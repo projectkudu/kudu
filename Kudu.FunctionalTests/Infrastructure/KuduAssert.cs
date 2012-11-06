@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using Kudu.Client;
 using Kudu.Client.Infrastructure;
 using Kudu.TestHarness;
 using Xunit;
@@ -15,7 +16,7 @@ namespace Kudu.FunctionalTests.Infrastructure
         {
             var ex = Assert.Throws<AggregateException>(() => action());
             var baseEx = ex.GetBaseException();
-            Assert.IsType<T>(baseEx);
+            Assert.IsAssignableFrom<T>(baseEx);
             return (T)baseEx;
         }
 
@@ -29,12 +30,15 @@ namespace Kudu.FunctionalTests.Infrastructure
             var client = new HttpClient();
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Kudu-Test", "1.0"));
             client.SetClientCredentials(cred);
-            var response = client.GetAsync(url).Result;
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var response = client.GetAsync(url).Result.EnsureSuccessful();
+
             if (contents.Length > 0)
             {
                 var responseBody = response.Content.ReadAsStringAsync().Result;
-                Assert.True(contents.All(responseBody.Contains));
+                foreach (var content in contents)
+                {
+                    Assert.Contains(content, responseBody, StringComparison.Ordinal);
+                }
             }
         }
 
@@ -43,11 +47,14 @@ namespace Kudu.FunctionalTests.Infrastructure
             var client = new HttpClient();
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Kudu-Test", "1.0"));
             var response = client.GetAsync(url).Result;
-            Assert.Equal(statusCode, response.StatusCode);
+            string responseBody = response.Content.ReadAsStringAsync().Result;
+            
+            Assert.True(statusCode == response.StatusCode, 
+                String.Format("For {0}, Expected Status Code: {1} Actual Status Code: {2}. \r\n Response: {3}", url, statusCode, response.StatusCode, responseBody));
+            
             if (content != null)
             {
-                var responseBody = response.Content.ReadAsStringAsync().Result;
-                Assert.True(responseBody.Contains(content));
+                Assert.Contains(content, responseBody, StringComparison.Ordinal);
             }
         }
 

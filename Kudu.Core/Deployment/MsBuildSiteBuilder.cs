@@ -30,10 +30,10 @@ namespace Kudu.Core.Deployment
 
         protected string GetPropertyString()
         {
-            return String.Join(";", _propertyProvider.GetProperties().Select(p => p.Key + "=" + p.Value));
+            return String.Join(";", _propertyProvider.GetProperties().Select(p => String.Format("{0}=\"{1}\"", p.Key, p.Value)));
         }
 
-        public string ExecuteMSBuild(ITracer tracer, string arguments, params object[] args)
+        public virtual string ExecuteMSBuild(ITracer tracer, string arguments, params object[] args)
         {
             using (var writer = new ProgressWriter())
             {
@@ -43,7 +43,7 @@ namespace Kudu.Core.Deployment
                 return _msbuildExe.Execute(tracer,
                                            output =>
                                            {
-                                               if (output.Contains("MSB3644:"))
+                                               if (output.Contains("MSB3644:") || output.Contains("MSB3270:"))
                                                {
                                                    return false;
                                                }

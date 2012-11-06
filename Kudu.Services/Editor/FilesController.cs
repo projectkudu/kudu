@@ -15,12 +15,21 @@ namespace Kudu.Services.Documents
             _projectSystem = projectSystem;
         }
 
+        /// <summary>
+        /// Get the list of all files
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         public Project GetFiles()
         {
             return _projectSystem.GetProject();
         }
 
+        /// <summary>
+        /// Get the content of a file
+        /// </summary>
+        /// <param name="path">path of the file relative to the root</param>
+        /// <returns></returns>
         [HttpGet]
         public HttpResponseMessage GetFile(string path)
         {
@@ -30,6 +39,11 @@ namespace Kudu.Services.Documents
             return response;
         }
 
+        /// <summary>
+        /// Set the content of a file, either creating or replacing it
+        /// </summary>
+        /// <param name="path">path of the file relative to the root</param>
+        /// <param name="input">content of the file</param>
         [HttpPut]
         public void Save(string path, JObject input)
         {
@@ -37,6 +51,10 @@ namespace Kudu.Services.Documents
             _projectSystem.WriteAllText(path, content);
         }
 
+        /// <summary>
+        /// Delete a file
+        /// </summary>
+        /// <param name="path">path of the file relative to the root</param>
         [HttpDelete]
         public void Delete(string path)
         {

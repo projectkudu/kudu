@@ -21,7 +21,7 @@ namespace Kudu.Core.Deployment
 
         public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger)
         {
-            string repositoryRoot = _environment.DeploymentRepositoryPath;
+            string repositoryRoot = _environment.RepositoryPath;
             var configuration = new DeploymentConfiguration(repositoryRoot);
 
             // If there's a custom deployment file then let that take over.

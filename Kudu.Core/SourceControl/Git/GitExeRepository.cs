@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.SSHKey;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.SourceControl.Git
@@ -170,6 +171,14 @@ namespace Kudu.Core.SourceControl.Git
         public void Push()
         {
             _gitExe.Execute(@"push origin master");
+        }
+
+        public void SetSSHEnv(string host, string homePath)
+        {
+            // SSH requires HOME directory
+            _gitExe.EnvironmentVariables["HOME"] = homePath;
+            _gitExe.EnvironmentVariables["HOMEDRIVE"] = homePath.Substring(0, homePath.IndexOf(':') + 1);
+            _gitExe.EnvironmentVariables["HOMEPATH"] = homePath.Substring(homePath.IndexOf(':') + 1);
         }
 
         public void FetchWithoutConflict(string remote, string remoteAlias, string branchName)

@@ -87,7 +87,6 @@
             string commitFile = MapPath("~/commit");
             string sha = File.Exists(commitFile) ? File.ReadAllText(commitFile).Trim() : null;
             var version = typeof(AppSettings).Assembly.GetName().Version;
-            bool devSiteEnabled = PathResolver.ResolveDevelopmentPath() != null;
         %>
         
         <h1>Kudu - Build <%= version %>
@@ -104,13 +103,6 @@
             <td><strong>Live Site</strong></td>
             <td class="path"><%= MapPath("_app") %></td>
         </tr>
-        <% var devSitePath = PathResolver.ResolveDevelopmentPath(); %>
-        <% if (!String.IsNullOrEmpty(devSitePath)) { %>
-        <tr>
-            <td><strong>Dev Site</strong></td>
-            <td class="path"><%= devSitePath%></td>
-        </tr>
-        <% } %>
         <tr>
             <td><strong>Temp</strong></td>
             <td class="path"> <%= Path.GetTempPath() %></td>
@@ -118,6 +110,10 @@
         <tr>
             <td><strong>Diagnostics Dump</strong></td>
             <td><a href="dump">Download</a></td>
+        </tr>
+        <tr>
+            <td><strong>Diagnostics Log</strong></td>
+            <td><a href="logstream">Stream</a></td>
         </tr>
         <tr>
             <td><strong>Runtime Environment</strong></td>

@@ -67,5 +67,18 @@ namespace Kudu.TestHarness
             int maxLen = Math.Min(name.Length, 25);
             return name.Substring(0, maxLen) + Guid.NewGuid().ToString("N").Substring(0, 4);
         }
+
+        /// <summary>
+        /// Determines if we have a cached copy of the repository available locally. 
+        /// </summary>
+        public static string GetCachedRepositoryPath(string repositoryName)
+        {
+            string testRepositories = Environment.GetEnvironmentVariable("KuduTestRepositoryRoot");
+            if (!String.IsNullOrEmpty(testRepositories) && Directory.Exists(Path.Combine(testRepositories, repositoryName)))
+            {
+               return Path.Combine(testRepositories, repositoryName);
+            }
+            return null;
+        }
     }
 }

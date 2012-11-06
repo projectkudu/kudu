@@ -1,27 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Web;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
+using Kudu.Core;
 using Kudu.Core.Deployment;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
 using Newtonsoft.Json.Linq;
-using Kudu.Core;
-using Kudu.Core.Infrastructure;
-using System.IO;
 
 namespace Kudu.Services.GitServer
 {
-    public class FetchHandler : IHttpHandler
+    public class FetchHandler : GitServerHttpHandler
     {
-        private readonly IGitServer _gitServer;
-        private readonly IDeploymentManager _deploymentManager;
+        private const string PrivateKeyFile = "id_rsa";
+        private const string PublicKeyFile = "id_rsa.pub";
+
         private readonly IDeploymentSettingsManager _settings;
-        private readonly ITracer _tracer;
-        private readonly IOperationLock _deploymentLock;
         private readonly RepositoryConfiguration _configuration;
         private readonly IEnvironment _environment;
 
@@ -32,22 +31,11 @@ namespace Kudu.Services.GitServer
                             IOperationLock deploymentLock,
                             RepositoryConfiguration configuration,
                             IEnvironment environment)
+            : base(tracer, gitServer, deploymentLock, deploymentManager)
         {
-            _gitServer = gitServer;
-            _deploymentManager = deploymentManager;
             _settings = settings;
-            _tracer = tracer;
-            _deploymentLock = deploymentLock;
             _configuration = configuration;
             _environment = environment;
-        }
-
-        public bool IsReusable
-        {
-            get
-            {
-                return false;
-            }
         }
 
         private string MarkerFilePath
@@ -58,7 +46,7 @@ namespace Kudu.Services.GitServer
             }
         }
 
-        public void ProcessRequest(HttpContext context)
+        public override void ProcessRequest(HttpContext context)
         {
             using (_tracer.Step("FetchHandler"))
             {
@@ -136,6 +124,14 @@ namespace Kudu.Services.GitServer
 
         private void PerformDeployment(RepositoryInfo repositoryInfo, string targetBranch)
         {
+            if (repositoryInfo.UseSSH)
+            {
+                using (_tracer.Step("Prepare SSH environment"))
+                {
+                    _gitServer.SetSSHEnv(repositoryInfo.Host, _environment.SiteRootPath);
+                }
+            }
+
             bool hasPendingDeployment;
 
             do
@@ -144,31 +140,34 @@ namespace Kudu.Services.GitServer
 
                 using (_tracer.Step("Performing fetch based deployment"))
                 {
-                    // Configure the repository
-                    _gitServer.Initialize(_configuration);
-
-                    // Setup the receive info (this is important to know if branches were deleted etc)
-                    _gitServer.SetReceiveInfo(repositoryInfo.OldRef, repositoryInfo.NewRef, targetBranch);
-
-                    // Fetch from url
-                    _gitServer.FetchWithoutConflict(repositoryInfo.RepositoryUrl, "external", targetBranch);
-
-                    // Perform the actual deployment
-                    _deploymentManager.Deploy(repositoryInfo.Deployer);
-
-                    if (MarkerFileExists())
+                    using (_deploymentManager.CreateTemporaryDeployment(Resources.FetchingChanges))
                     {
-                        _tracer.Trace("Pending deployment marker file exists");
+                        // Configure the repository
+                        _gitServer.Initialize(_configuration);
 
-                        hasPendingDeployment = DeleteMarkerFile();
+                        // Setup the receive info (this is important to know if branches were deleted etc)
+                        _gitServer.SetReceiveInfo(repositoryInfo.OldRef, repositoryInfo.NewRef, targetBranch);
 
-                        if (hasPendingDeployment)
+                        // Fetch from url
+                        _gitServer.FetchWithoutConflict(repositoryInfo.RepositoryUrl, "external", targetBranch);
+
+                        // Perform the actual deployment
+                        _deploymentManager.Deploy(repositoryInfo.Deployer);
+
+                        if (MarkerFileExists())
                         {
-                            _tracer.Trace("Deleted marker file");
-                        }
-                        else
-                        {
-                            _tracer.TraceError("Failed to delete marker file");
+                            _tracer.Trace("Pending deployment marker file exists");
+
+                            hasPendingDeployment = DeleteMarkerFile();
+
+                            if (hasPendingDeployment)
+                            {
+                                _tracer.Trace("Deleted marker file");
+                            }
+                            else
+                            {
+                                _tracer.TraceError("Failed to delete marker file");
+                            }
                         }
                     }
                 }
@@ -205,24 +204,63 @@ namespace Kudu.Services.GitServer
 
             if (repository != null)
             {
-                // Try to assume the github format
-                // { repository: { url: "" }, ref: "", before: "", after: "" } 
-                info.RepositoryUrl = repository.Value<string>("url");
-
-                // The format of ref is refs/something/something else
-                // For master it's normally refs/head/master
-                string @ref = payload.Value<string>("ref");
-
-                if (String.IsNullOrEmpty(@ref))
+                if (request.UserAgent != null && request.UserAgent.StartsWith("Bitbucket", StringComparison.OrdinalIgnoreCase))
                 {
-                    throw new FormatException(Resources.Error_UnsupportedFormat);
+                    // bitbucket format
+                    // { repository: { absolute_url: "/a/b", is_private: true }, canon_url: "https//..." } 
+                    string server = payload.Value<string>("canon_url");     // e.g. https://bitbucket.org
+                    string path = repository.Value<string>("absolute_url"); // e.g. /davidebbo/testrepo/
+
+                    // Combine them to get the full URL
+                    info.RepositoryUrl = server + path;
+
+                    info.IsPrivate = repository.Value<bool>("is_private");
+
+                    info.Deployer = "Bitbucket";
+
+                    // We don't get any refs from bitbucket, so write dummy string (we ignore it later anyway)
+                    info.OldRef = "dummy";
+
+                    // When there are no commits, set the new ref to an all-zero string to cause the logic in
+                    // GitDeploymentRepository.GetReceiveInfo ignore the push
+                    var commits = payload.Value<JArray>("commits");
+                    info.NewRef = commits.Count == 0 ? "000" : "dummy";
+                }
+                else
+                {
+                    // github format
+                    // { repository: { url: "https//...", private: False }, ref: "", before: "", after: "" } 
+                    info.RepositoryUrl = repository.Value<string>("url");
+
+                    info.IsPrivate = repository.Value<bool>("private");
+
+                    // The format of ref is refs/something/something else
+                    // For master it's normally refs/head/master
+                    string @ref = payload.Value<string>("ref");
+
+                    if (String.IsNullOrEmpty(@ref))
+                    {
+                        throw new FormatException(Resources.Error_UnsupportedFormat);
+                    }
+
+                    // Just get the last token
+                    info.Branch = @ref.Split('/').Last();
+                    info.Deployer = GetDeployer(request);
+                    info.OldRef = payload.Value<string>("before");
+                    info.NewRef = payload.Value<string>("after");
                 }
 
-                // Just get the last token
-                info.Branch = @ref.Split('/').Last();
-                info.Deployer = GetDeployer(request);
-                info.OldRef = payload.Value<string>("before");
-                info.NewRef = payload.Value<string>("after");
+                // private repo, use SSH
+                if (info.IsPrivate)
+                {
+                    Uri uri = new Uri(info.RepositoryUrl);
+                    if (uri.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                    {
+                        info.Host = "git@" + uri.Host;
+                        info.RepositoryUrl = info.Host + ":" + uri.AbsolutePath.TrimStart('/');
+                        info.UseSSH = true;
+                    }
+                }
             }
             else
             {
@@ -265,6 +303,9 @@ namespace Kudu.Services.GitServer
         private class RepositoryInfo
         {
             public string RepositoryUrl { get; set; }
+            public bool IsPrivate { get; set; }
+            public bool UseSSH { get; set; }
+            public string Host { get; set; }
             public string OldRef { get; set; }
             public string NewRef { get; set; }
             public string Branch { get; set; }

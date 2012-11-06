@@ -1,68 +1,67 @@
 ﻿using System;
+using System.IO.Abstractions;
 using Kudu.Core.Infrastructure;
-using Kudu.Core.SourceControl;
-using System.IO;
 
 namespace Kudu.Core
 {
     public class Environment : IEnvironment
     {
-        private readonly string _deployPath;
+        private readonly IFileSystem _fileSystem;
+        private readonly string _webRootPath;
         private readonly string _deployCachePath;
+        private readonly string _sshKeyPath;
         private readonly string _tempPath;
         private readonly string _scriptPath;
-        private readonly Func<string> _deploymentRepositoryPathResolver;
-        private readonly Func<string> _repositoryPathResolver;
+        private readonly string _repositoryPath;
 
-        public Environment(string applicationRootPath, 
-                           string tempPath, 
-                           Func<string> deploymentRepositoryPathResolver, 
-                           Func<string> repositoryPathResolver, 
-                           string deployPath, 
-                           string deployCachePath, 
-                           string nugetCachePath, 
-                           string scriptPath)
+        public Environment(
+                IFileSystem fileSystem,
+                string rootPath,
+                string siteRootPath,
+                string tempPath,
+                string repositoryPath,
+                string webRootPath,
+                string deployCachePath,
+                string sshKeyPath,
+                string nugetCachePath,
+                string scriptPath)
         {
-            ApplicationRootPath = applicationRootPath;
+            if (fileSystem == null)
+            {
+                throw new ArgumentNullException("fileSystem");
+            }
+            if (repositoryPath == null)
+            {
+                throw new ArgumentNullException("repositoryPath");
+            }
+
+            _fileSystem = fileSystem;
+            RootPath = rootPath;
+            SiteRootPath = siteRootPath;
             _tempPath = tempPath;
-            _deploymentRepositoryPathResolver = deploymentRepositoryPathResolver;
-            _repositoryPathResolver = repositoryPathResolver;
-            _deployPath = deployPath;
+            _repositoryPath = repositoryPath;
+            _webRootPath = webRootPath;
             _deployCachePath = deployCachePath;
+            _sshKeyPath = sshKeyPath;
             NuGetCachePath = nugetCachePath;
             _scriptPath = scriptPath;
-        }
-
-        public string DeploymentRepositoryPath
-        {
-            get
-            {
-                string path = _deploymentRepositoryPathResolver();
-                FileSystemHelpers.EnsureDirectory(path);
-                return path;
-            }
         }
 
         public string RepositoryPath
         {
             get
             {
-                string path = _repositoryPathResolver();
-                if (String.IsNullOrEmpty(path))
-                {
-                    return null;
-                }
-
-                return path;
+                FileSystemHelpers.EnsureDirectory(_fileSystem, _repositoryPath);
+                return _repositoryPath;
             }
         }
 
-        public string DeploymentTargetPath
+        public string WebRootPath
         {
             get
             {
-                FileSystemHelpers.EnsureDirectory(_deployPath);
-                return _deployPath;
+                FileSystemHelpers.EnsureDirectory(_fileSystem, _webRootPath);
+                return _webRootPath;
             }
         }
 
@@ -70,12 +69,27 @@ namespace Kudu.Core
         {
             get
             {
-                FileSystemHelpers.EnsureDirectory(_deployCachePath);
+                FileSystemHelpers.EnsureDirectory(_fileSystem, _deployCachePath);
                 return _deployCachePath;
             }
         }
 
-        public string ApplicationRootPath
+        public string SSHKeyPath
+        {
+            get
+            {
+                FileSystemHelpers.EnsureDirectory(_fileSystem, _sshKeyPath);
+                return _sshKeyPath;
+            }
+        }
+
+        public string RootPath
+        {
+            get;
+            private set;
+        }
+
+        public string SiteRootPath
         {
             get;
             private set;

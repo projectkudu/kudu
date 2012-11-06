@@ -17,9 +17,11 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
+using Kudu.Core.SSHKey;
 using Kudu.Core.Tracing;
 using Kudu.Services.GitServer;
 using Kudu.Services.Performance;
+using Kudu.Services.SSHKey;
 using Kudu.Services.Web.Infrastruture;
 using Kudu.Services.Web.Services;
 using Kudu.Services.Web.Tracing;
@@ -35,6 +37,11 @@ namespace Kudu.Services.Web.App_Start
 {
     public static class NinjectServices
     {
+        /// <summary>
+        /// Root directory that contains the VS target files
+        /// </summary>
+        private const string SdkRootDirectory = "msbuild";
+
         /// <summary>
         /// Starts the application
         /// </summary>
@@ -86,11 +93,13 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IServerConfiguration>().ToConstant(serverConfiguration);
             kernel.Bind<IFileSystem>().To<FileSystem>().InSingletonScope();
             kernel.Bind<RepositoryConfiguration>().ToConstant(gitConfiguration);
+
+            string sdkPath = Path.Combine(HttpRuntime.AppDomainAppPath, SdkRootDirectory);
             kernel.Bind<IBuildPropertyProvider>().ToConstant(new BuildPropertyProvider());
 
             if (AppSettings.TraceEnabled)
             {
-                string tracePath = Path.Combine(environment.ApplicationRootPath, Constants.TracePath, Constants.TraceFile);
+                string tracePath = Path.Combine(environment.RootPath, Constants.TracePath, Constants.TraceFile);
                 System.Func<ITracer> createTracerThunk = () => new Tracer(tracePath);
 
                 // First try to use the current request profiler if any, otherwise create a new one
@@ -109,13 +118,16 @@ namespace Kudu.Services.Web.App_Start
 
 
             // Setup the deployment lock
-            string lockPath = Path.Combine(environment.ApplicationRootPath, Constants.LockPath);
+            string lockPath = Path.Combine(environment.SiteRootPath, Constants.LockPath);
             string deploymentLockPath = Path.Combine(lockPath, Constants.DeploymentLockFile);
+            string sshKeyLockPath = Path.Combine(lockPath, Constants.SSHKeyLockFile);
             string initLockPath = Path.Combine(lockPath, Constants.InitLockFile);
 
             var deploymentLock = new LockFile(kernel.Get<ITraceFactory>(), deploymentLockPath);
             var initLock = new LockFile(kernel.Get<ITraceFactory>(), initLockPath);
+            var sshKeyLock = new LockFile(kernel.Get<ITraceFactory>(), sshKeyLockPath);
 
+            kernel.Bind<IOperationLock>().ToConstant(sshKeyLock).WhenInjectedInto<SSHKeyController>();
             kernel.Bind<IOperationLock>().ToConstant(deploymentLock);
 
             // Setup the diagnostics service to collect information from the following paths:
@@ -124,11 +136,15 @@ namespace Kudu.Services.Web.App_Start
             // 3. The npm log
             var paths = new[] { 
                 environment.DeploymentCachePath,
-                Path.Combine(environment.ApplicationRootPath, Constants.LogFilesPath),
-                Path.Combine(environment.DeploymentTargetPath, Constants.NpmDebugLogFile),
+                Path.Combine(environment.RootPath, Constants.LogFilesPath),
+                Path.Combine(environment.WebRootPath, Constants.NpmDebugLogFile),
             };
 
             kernel.Bind<DiagnosticsController>().ToMethod(context => new DiagnosticsController(paths));
+
+            // LogStream service
+            kernel.Bind<LogStreamManager>().ToMethod(context => new LogStreamManager(Path.Combine(environment.RootPath, Constants.LogFilesPath),
+                                                                                     context.Kernel.Get<ITracer>()));
 
             // Deployment Service
             kernel.Bind<ISettings>().ToMethod(context => new XmlSettings.Settings(GetSettingsPath(environment)));
@@ -137,7 +153,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<ISiteBuilderFactory>().To<SiteBuilderFactory>()
                                              .InRequestScope();
 
-            kernel.Bind<IServerRepository>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath,
+            kernel.Bind<IServerRepository>().ToMethod(context => new GitExeServer(environment.RepositoryPath,
                                                                                   initLock,
                                                                                   context.Kernel.Get<IDeploymentEnvironment>(),
                                                                                   context.Kernel.Get<ITraceFactory>()))
@@ -146,14 +162,16 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<ILogger>().ToConstant(NullLogger.Instance);
             kernel.Bind<IDeploymentManager>().To<DeploymentManager>()
                                              .InRequestScope();
+            kernel.Bind<ISSHKeyManager>().To<SSHKeyManager>()
+                                             .InRequestScope();
 
-            kernel.Bind<IDeploymentRepository>().ToMethod(context => new GitDeploymentRepository(environment.DeploymentRepositoryPath, context.Kernel.Get<ITraceFactory>()))
+            kernel.Bind<IDeploymentRepository>().ToMethod(context => new GitDeploymentRepository(environment.RepositoryPath, context.Kernel.Get<ITraceFactory>()))
                                                 .InRequestScope();
 
             // Git server
             kernel.Bind<IDeploymentEnvironment>().To<DeploymentEnvrionment>();
 
-            kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.DeploymentRepositoryPath,
+            kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.RepositoryPath,
                                                                            initLock,
                                                                            context.Kernel.Get<IDeploymentEnvironment>(),
                                                                            context.Kernel.Get<ITraceFactory>()))
@@ -189,18 +207,29 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHandler<FetchHandler>(kernel, "fetch", "deploy");
 
             // Clone url
-            routes.MapHttpRoute("git-upload-pack", configuration.GitServerRoot + "/git-upload-pack", new { controller = "Rpc", action = "UploadPack" });
+            routes.MapHandler<UploadPackHandler>(kernel, "git-upload-pack", configuration.GitServerRoot + "/git-upload-pack");
 
-            // Live Scm (deployment repository)
-            routes.MapHttpRoute("scm-info", "live/scm/info", new { controller = "LiveScm", action = "GetRepositoryInfo" });
-            routes.MapHttpRoute("scm-clean", "live/scm/clean", new { controller = "LiveScm", action = "Clean" });
-            routes.MapHttpRoute("scm-delete", "live/scm", new { controller = "LiveScm", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
+            // Scm (deployment repository)
+            routes.MapHttpRoute("scm-info", "scm/info", new { controller = "LiveScm", action = "GetRepositoryInfo" });
+            routes.MapHttpRoute("scm-clean", "scm/clean", new { controller = "LiveScm", action = "Clean" });
+            routes.MapHttpRoute("scm-delete", "scm", new { controller = "LiveScm", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
+
+            // These older scm routes are there for backward compat, and should eventually be deleted once clients are changed.
+            routes.MapHttpRoute("live-scm-info", "live/scm/info", new { controller = "LiveScm", action = "GetRepositoryInfo" });
+            routes.MapHttpRoute("live-scm-clean", "live/scm/clean", new { controller = "LiveScm", action = "Clean" });
+            routes.MapHttpRoute("live-scm-delete", "live/scm", new { controller = "LiveScm", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
 
             // Live Files
-            routes.MapHttpRoute("all-files", "live/files", new { controller = "Files", action = "GetFiles" });
-            routes.MapHttpRoute("one-file", "live/files/{*path}", new { controller = "Files", action = "GetFile" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("save-file", "live/files/{*path}", new { controller = "Files", action = "Save" }, new { verb = new HttpMethodConstraint("PUT") });
-            routes.MapHttpRoute("delete-file", "live/files/{*path}", new { controller = "Files", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpRoute("all-files", "files", new { controller = "Files", action = "GetFiles" });
+            routes.MapHttpRoute("one-file", "files/{*path}", new { controller = "Files", action = "GetFile" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("save-file", "files/{*path}", new { controller = "Files", action = "Save" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRoute("delete-file", "files/{*path}", new { controller = "Files", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
+
+            // These older files routes are there for backward compat, and should eventually be deleted once clients are changed.
+            routes.MapHttpRoute("old-all-files", "live/files", new { controller = "Files", action = "GetFiles" });
+            routes.MapHttpRoute("old-one-file", "live/files/{*path}", new { controller = "Files", action = "GetFile" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("old-save-file", "live/files/{*path}", new { controller = "Files", action = "Save" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRoute("old-delete-file", "live/files/{*path}", new { controller = "Files", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
 
             // Live Command Line
             routes.MapHttpRoute("execute-command", "command", new { controller = "Command", action = "ExecuteCommand" }, new { verb = new HttpMethodConstraint("POST") });
@@ -213,6 +242,10 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("one-deployment-log", "deployments/{id}/log", new { controller = "Deployment", action = "GetLogEntry" });
             routes.MapHttpRoute("one-deployment-log-details", "deployments/{id}/log/{logId}", new { controller = "Deployment", action = "GetLogEntryDetails" });
 
+            // SSHKey
+            routes.MapHttpRoute("get-sshkey", "sshkey", new { controller = "SSHKey", action = "GetPublicKey" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("put-sshkey", "sshkey", new { controller = "SSHKey", action = "SetPrivateKey" }, new { verb = new HttpMethodConstraint("PUT") });
+
             // Environment
             routes.MapHttpRoute("get-env", "environment", new { controller = "Environment", action = "Get" }, new { verb = new HttpMethodConstraint("GET") });
 
@@ -224,11 +257,14 @@ namespace Kudu.Services.Web.App_Start
 
             // Diagnostics
             routes.MapHttpRoute("diagnostics", "dump", new { controller = "Diagnostics", action = "GetLog" });
+
+            // LogStream
+            routes.MapHandler<LogStreamHandler>(kernel, "logstream", "logstream/{*path}");
         }
 
         private static IProjectSystem GetEditorProjectSystem(IEnvironment environment, IContext context)
         {
-            return new ProjectSystem(environment.DeploymentTargetPath);
+            return new ProjectSystem(environment.WebRootPath);
         }
 
         private static ICommandExecutor GetCommandExecutor(IEnvironment environment, IContext context)
@@ -238,9 +274,7 @@ namespace Kudu.Services.Web.App_Start
                 throw new HttpResponseException(HttpStatusCode.NotFound);
             }
 
-            // Start one directory up
-            string path = Path.Combine(environment.RepositoryPath, "..");
-            return new CommandExecutor(Path.GetFullPath(path));
+            return new CommandExecutor(environment.RootPath);
         }
 
         private static string GetSettingsPath(IEnvironment environment)
@@ -250,34 +284,27 @@ namespace Kudu.Services.Web.App_Start
 
         private static IEnvironment GetEnvironment()
         {
-            string root = PathResolver.ResolveRootPath();
-            string deployPath = Path.Combine(root, Constants.WebRoot);
-            string deployCachePath = Path.Combine(root, Constants.DeploymentCachePath);
-            string deploymentRepositoryPath = Path.Combine(root, Constants.RepositoryPath);
+            string siteRoot = PathResolver.ResolveSiteRootPath();
+            string root = Path.GetFullPath(Path.Combine(siteRoot, ".."));
+            string webRootPath = Path.Combine(siteRoot, Constants.WebRoot);
+            string deployCachePath = Path.Combine(siteRoot, Constants.DeploymentCachePath);
+            string sshKeyPath = Path.Combine(siteRoot, Constants.SSHKeyPath);
+            string repositoryPath = Path.Combine(siteRoot, Constants.RepositoryPath);
             string tempPath = Path.GetTempPath();
             string deploymentTempPath = Path.Combine(tempPath, Constants.RepositoryPath);
             string scriptPath = Path.Combine(HttpRuntime.BinDirectory, Constants.ScriptsPath);
 
-            return new Environment(root,
+            return new Environment(
+                                   new FileSystem(),
+                                   root,
+                                   siteRoot,
                                    tempPath,
-                                   () => deploymentRepositoryPath,
-                                   () => ResolveRepositoryPath(),
-                                   deployPath,
+                                   repositoryPath,
+                                   webRootPath,
                                    deployCachePath,
+                                   sshKeyPath,
                                    AppSettings.NuGetCachePath,
                                    scriptPath);
-        }
-
-        private static string ResolveRepositoryPath()
-        {
-            string path = PathResolver.ResolveDevelopmentPath();
-
-            if (System.String.IsNullOrEmpty(path))
-            {
-                return null;
-            }
-
-            return Path.Combine(path, Constants.WebRoot);
         }
 
         private class DeploymentManagerFactory : IDeploymentManagerFactory

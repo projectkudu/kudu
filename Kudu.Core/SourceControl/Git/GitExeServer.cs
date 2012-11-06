@@ -55,6 +55,11 @@ namespace Kudu.Core.SourceControl.Git
             _repository.Clean();
         }
 
+        public void SetSSHEnv(string host, string homePath)
+        {
+            _repository.SetSSHEnv(host, homePath);
+        }
+
         public void FetchWithoutConflict(string remote, string remoteAlias, string branchName)
         {
             _repository.FetchWithoutConflict(remote, remoteAlias, branchName);
@@ -230,10 +235,10 @@ echo $i > pushinfo
             public const string DEPLOYER = "KUDU_DEPLOYER";
 
             // Command to launch the post receive hook
-            public static string KUDUCOMMAND = "$" + EXEPATH + " " +
-                                               "$" + APPPATH + " " +
-                                               "$" + MSBUILD + " " +
-                                               "$" + DEPLOYER;
+            public static string KUDUCOMMAND = "\"$" + EXEPATH + "\" " +
+                                               "\"$" + APPPATH + "\" " +
+                                               "\"$" + MSBUILD + "\" " +
+                                               "\"$" + DEPLOYER + "\"";
         }
     }
 }

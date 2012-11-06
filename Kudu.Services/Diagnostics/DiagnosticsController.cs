@@ -18,6 +18,10 @@ namespace Kudu.Services.Performance
             _paths = paths;
         }
 
+        /// <summary>
+        /// Get all the diagnostic logs as a zip file
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         public HttpResponseMessage GetLog()
         {

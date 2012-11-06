@@ -18,6 +18,19 @@ namespace Kudu.Core.Infrastructure
 
             return path;
         }
+
+        internal static string ResolveSSHPath()
+        {
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            string path = Path.Combine(programFiles, "Git", "bin", "ssh.exe");
+
+            if (!File.Exists(path))
+            {
+                throw new InvalidOperationException(Resources.Error_FailedToLocateSsh);
+            }
+
+            return path;
+        }
         
         internal static string ResolveNpmPath()
         {
