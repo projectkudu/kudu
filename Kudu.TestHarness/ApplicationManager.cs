@@ -12,15 +12,17 @@ namespace Kudu.TestHarness
     public class ApplicationManager
     {
         private readonly ISiteManager _siteManager;
+        private readonly ISettingsResolver _settingsResolver;
         private readonly Site _site;
         private readonly string _appName;
 
-        private ApplicationManager(ISiteManager siteManager, Site site, string appName, string gitUrl)
+        private ApplicationManager(ISiteManager siteManager, Site site, string appName, string gitUrl, ISettingsResolver settingsResolver)
         {
             _siteManager = siteManager;
             _site = site;
             _appName = appName;
             GitUrl = gitUrl;
+            _settingsResolver = settingsResolver;
         }
 
         public string SiteUrl
@@ -116,7 +118,9 @@ namespace Kudu.TestHarness
         public static ApplicationManager CreateApplication(string applicationName)
         {
             var pathResolver = new DefaultPathResolver(PathHelper.ServiceSitePath, PathHelper.SitesPath);
-            var siteManager = GetSiteManager(pathResolver);
+            var settingsResolver = new DefaultSettingsResolver();
+
+            var siteManager = GetSiteManager(pathResolver, settingsResolver);
 
             try
             {
@@ -133,7 +137,7 @@ namespace Kudu.TestHarness
             var repositoryManager = new RemoteRepositoryManager(site.ServiceUrl + "live/scm");
             var repositoryInfo = repositoryManager.GetRepositoryInfo().Result;
             gitUrl = repositoryInfo.GitUrl.ToString();
-            return new ApplicationManager(siteManager, site, applicationName, gitUrl)
+            return new ApplicationManager(siteManager, site, applicationName, gitUrl, settingsResolver)
             {
                 SiteUrl = site.SiteUrl,
                 ServiceUrl = site.ServiceUrl,
@@ -155,9 +159,9 @@ namespace Kudu.TestHarness
             return new RemoteLogStreamManager(_site.ServiceUrl + "logstream" + path);
         }
 
-        private static SiteManager GetSiteManager(DefaultPathResolver pathResolver)
+        private static SiteManager GetSiteManager(DefaultPathResolver pathResolver, DefaultSettingsResolver settingsResolver)
         {
-            return new SiteManager(pathResolver, traceFailedRequests: true, logPath: PathHelper.TestResultsPath);
+            return new SiteManager(pathResolver, traceFailedRequests: true, logPath: PathHelper.TestResultsPath, settingsResolver: settingsResolver);
         }
     }
 }

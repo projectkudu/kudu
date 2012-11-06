@@ -17,17 +17,19 @@ namespace Kudu.SiteManagement
         private readonly IPathResolver _pathResolver;
         private readonly bool _traceFailedRequests;
         private readonly string _logPath;
+        private readonly ISettingsResolver _settingsResolver;
 
-        public SiteManager(IPathResolver pathResolver)
-            : this(pathResolver, traceFailedRequests: false, logPath: null)
+        public SiteManager(IPathResolver pathResolver, ISettingsResolver settingsResolver)
+            : this(pathResolver, traceFailedRequests: false, logPath: null, settingsResolver: settingsResolver)
         {
         }
 
-        public SiteManager(IPathResolver pathResolver, bool traceFailedRequests, string logPath)
+        public SiteManager(IPathResolver pathResolver, bool traceFailedRequests, string logPath, ISettingsResolver settingsResolver)
         {
             _logPath = logPath;
             _pathResolver = pathResolver;
             _traceFailedRequests = traceFailedRequests;
+            _settingsResolver = settingsResolver;
         }
 
         public IEnumerable<string> GetSites()
@@ -57,33 +59,47 @@ namespace Kudu.SiteManagement
             IIS.Site devSite = iis.Sites[devSiteName];
 
             var site = new Site();
-            site.SiteUrl = GetSiteUrl(mainSite);
             site.ServiceUrl = GetSiteUrl(serviceSite);
-            site.DevSiteUrl = GetSiteUrl(devSite);
+            site.SiteUrls = GetSiteUrls(mainSite);
             return site;
         }
 
         private string GetSiteUrl(IIS.Site site)
         {
+            var urls = GetSiteUrls(site);
+
+            if (urls == null)
+            {
+                return null;
+            }
+            else
+            {
+                return urls.FirstOrDefault();
+            }
+        }
+
+        private List<string> GetSiteUrls(IIS.Site site)
+        {
+            var urls = new List<string>();
+
             if (site == null)
             {
                 return null;
             }
 
-            IIS.Binding binding = site.Bindings.Last();
-            var builder = new UriBuilder
+            foreach (IIS.Binding binding in site.Bindings)
             {
-                Host = String.IsNullOrEmpty(binding.Host) ? "localhost" : binding.Host,
-                Scheme = binding.Protocol,
-                Port = binding.EndPoint.Port
-            };
+                var builder = new UriBuilder
+                {
+                    Host = String.IsNullOrEmpty(binding.Host) ? "localhost" : binding.Host,
+                    Scheme = binding.Protocol,
+                    Port = binding.EndPoint.Port == 80 ? -1 : binding.EndPoint.Port
+                };
 
-            if (builder.Port == 80)
-            {
-                builder.Port = -1;
+                urls.Add(builder.ToString());
             }
 
-            return builder.ToString();
+            return urls;
         }
 
         public Site CreateSite(string applicationName)
@@ -92,9 +108,15 @@ namespace Kudu.SiteManagement
 
             try
             {
+                // Determine the host header values
+                List<string> siteBindings = GetDefaultBindings(applicationName);
+
                 // Create the service site for this site
                 string serviceSiteName = GetServiceSite(applicationName);
-                int serviceSitePort = CreateSite(iis, applicationName, serviceSiteName, _pathResolver.ServiceSitePath);
+                var serviceSite = CreateSite(iis, applicationName, serviceSiteName, _pathResolver.ServiceSitePath, siteBindings, true);
+
+                IIS.Binding serviceSiteBinding = EnsureBinding(serviceSite.Bindings);
+                int serviceSitePort = serviceSiteBinding.EndPoint.Port;
 
                 // Create the main site
                 string siteName = GetLiveSite(applicationName);
@@ -115,7 +137,10 @@ namespace Kudu.SiteManagement
 </body> 
 </html>");
 
-                int sitePort = CreateSite(iis, applicationName, siteName, webRoot);
+                var site = CreateSite(iis, applicationName, siteName, webRoot, siteBindings);
+
+                IIS.Binding iisBinding = EnsureBinding(site.Bindings);
+                int sitePort = iisBinding.EndPoint.Port;
 
                 // Map a path called app to the site root under the service site
                 MapServiceSitePath(iis, applicationName, Constants.MappedSite, siteRoot);
@@ -127,10 +152,16 @@ namespace Kudu.SiteManagement
                 // REVIEW: Should we poll the site's state?
                 Thread.Sleep(1000);
 
+                var siteUrls = new List<string>();
+                foreach (var url in site.Bindings)
+                {
+                    siteUrls.Add(String.Format("http://{0}:{1}/", String.IsNullOrEmpty(url.Host) ? "localhost" : url.Host, url.EndPoint.Port));
+                }
+
                 return new Site
                 {
                     ServiceUrl = String.Format("http://localhost:{0}/", serviceSitePort),
-                    SiteUrl = String.Format("http://localhost:{0}/", sitePort),
+                    SiteUrls = siteUrls
                 };
             }
             catch
@@ -243,6 +274,33 @@ namespace Kudu.SiteManagement
             }
 
             return kuduAppPool;
+        }
+
+        private IIS.Binding EnsureBinding(IIS.BindingCollection siteBindings)
+        {
+            if (siteBindings == null)
+            {
+                throw new NoHostNameFoundException();
+            }
+
+            IIS.Binding iisBinding = siteBindings.FirstOrDefault();
+
+            if (iisBinding == null)
+            {
+                throw new NoHostNameFoundException();
+            }
+
+            return iisBinding;
+        }
+
+        private List<String> GetDefaultBindings(string applicationName)
+        {
+            var siteBindings = new List<string>();
+            if (!String.IsNullOrWhiteSpace(_settingsResolver.SitesBaseUrl))
+            {
+                siteBindings.Add(applicationName + "." + _settingsResolver.SitesBaseUrl);
+            }
+            return siteBindings;
         }
 
         private void RemoveAcls(string appName, string appPoolName)
@@ -359,12 +417,56 @@ namespace Kudu.SiteManagement
             return true;
         }
 
-        private int CreateSite(IIS.ServerManager iis, string applicationName, string siteName, string siteRoot)
+        private bool IsUrlAvailable(string url, IIS.ServerManager iis)
+        {
+            foreach (var iisSite in iis.Sites)
+            {
+                foreach (var binding in iisSite.Bindings)
+                {
+                    if (binding.Host != null && binding.Host.Equals(url, StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        private IIS.Site CreateSite(IIS.ServerManager iis, string applicationName, string siteName, string siteRoot)
+        {
+            return CreateSite(iis, applicationName, siteName, siteRoot, null, true);
+        }
+
+        private IIS.Site CreateSite(IIS.ServerManager iis, string applicationName, string siteName, string siteRoot, List<string> siteBindings)
+        {
+            var randomPort = false;
+
+            if (siteBindings == null || siteBindings.Count < 1)
+            {
+                randomPort = true;
+            }
+
+            return CreateSite(iis, applicationName, siteName, siteRoot, siteBindings, randomPort);
+        }
+
+        private IIS.Site CreateSite(IIS.ServerManager iis, string applicationName, string siteName, string siteRoot, List<string> siteBindings, bool randomPort)
         {
             var pool = EnsureAppPool(iis, applicationName);
 
-            int sitePort = GetRandomPort(iis);
-            var site = iis.Sites.Add(siteName, siteRoot, sitePort);
+            IIS.Site site;
+
+            int sitePort = randomPort ? GetRandomPort(iis) : 80;
+
+            if (siteBindings != null && siteBindings.Count > 0)
+            {
+                site = iis.Sites.Add(siteName, "http", String.Format("*:{0}:{1}", sitePort.ToString(), siteBindings.First()), siteRoot);
+            }
+            else
+            {
+                site = iis.Sites.Add(siteName, siteRoot, sitePort);
+            }
+
             site.ApplicationDefaults.ApplicationPoolName = pool.Name;
 
             if (_traceFailedRequests)
@@ -375,7 +477,7 @@ namespace Kudu.SiteManagement
                 site.TraceFailedRequestsLogging.Directory = path;
             }
 
-            return sitePort;
+            return site;
         }
 
         private void DeleteSite(IIS.ServerManager iis, string siteName, bool deletePhysicalFiles = true)
@@ -422,5 +524,9 @@ namespace Kudu.SiteManagement
 
             FileSystemHelpers.DeleteDirectorySafe(physicalPath);
         }
+    }
+
+    public class NoHostNameFoundException : InvalidOperationException
+    {
     }
 }

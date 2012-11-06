@@ -70,6 +70,8 @@
     <Compile Include="..\Kudu.Core\Infrastructure\OperationManager.cs">
       <Link>OperationManager.cs</Link>
     </Compile>
+    <Compile Include="DefaultSettingsResolver.cs" />
+    <Compile Include="ISettingsResolver.cs" />
     <Compile Include="DefaultPathResolver.cs" />
     <Compile Include="IISExtensions.cs" />
     <Compile Include="IPathResolver.cs" />
