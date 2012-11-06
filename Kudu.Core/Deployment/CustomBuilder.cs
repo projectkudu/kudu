@@ -17,7 +17,7 @@ namespace Kudu.Core.Deployment
         private const string TargetPath = "DEPLOYMENT_TARGET";
         private const string BuildTempPath = "DEPLOYMENT_TEMP";
         private const string PreviousManifestPath = "PREVIOUS_MANIFEST_PATH";
-        private const string CurrentManifestPath = "CURRENT_MANIFEST_PATH";
+        private const string NextManifestPath = "NEXT_MANIFEST_PATH";
         private const string MSBuildPath = "MSBUILD_PATH";
 
         public CustomBuilder(string repositoryPath, string tempPath, string command, IBuildPropertyProvider propertyProvider)
@@ -40,7 +40,7 @@ namespace Kudu.Core.Deployment
             exe.EnvironmentVariables[SourcePath] = _repositoryPath;
             exe.EnvironmentVariables[TargetPath] = context.OutputPath;
             exe.EnvironmentVariables[PreviousManifestPath] = (context.PreviousMainfest != null) ? context.PreviousMainfest.ManifestFilePath : string.Empty;
-            exe.EnvironmentVariables[CurrentManifestPath] = context.ManifestWriter.ManifestFilePath;
+            exe.EnvironmentVariables[NextManifestPath] = context.ManifestWriter.ManifestFilePath;
             exe.EnvironmentVariables[MSBuildPath] = PathUtility.ResolveMSBuildPath();
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.NuGetPackageRestoreKey] = "true";
 
