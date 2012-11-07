@@ -299,7 +299,8 @@ namespace Kudu.SiteManagement
             var siteBindings = new List<string>();
             if (!String.IsNullOrWhiteSpace(_settingsResolver.SitesBaseUrl))
             {
-                siteBindings.Add(applicationName + "." + _settingsResolver.SitesBaseUrl);
+                string binding = CreateBindingInformation(applicationName, _settingsResolver.SitesBaseUrl);
+                siteBindings.Add(binding);
             }
             return siteBindings;
         }
@@ -309,7 +310,8 @@ namespace Kudu.SiteManagement
             var siteBindings = new List<string>();
             if (!String.IsNullOrWhiteSpace(_settingsResolver.ServiceSitesBaseUrl))
             {
-                siteBindings.Add(applicationName + "." + _settingsResolver.ServiceSitesBaseUrl);
+                string binding = CreateBindingInformation(applicationName, _settingsResolver.ServiceSitesBaseUrl);
+                siteBindings.Add(binding);
             }
             return siteBindings;
         }
@@ -444,37 +446,19 @@ namespace Kudu.SiteManagement
             return true;
         }
 
-        private IIS.Site CreateSite(IIS.ServerManager iis, string applicationName, string siteName, string siteRoot)
-        {
-            return CreateSite(iis, applicationName, siteName, siteRoot, null, true);
-        }
-
         private IIS.Site CreateSite(IIS.ServerManager iis, string applicationName, string siteName, string siteRoot, List<string> siteBindings)
-        {
-            var randomPort = false;
-
-            if (siteBindings == null || siteBindings.Count < 1)
-            {
-                randomPort = true;
-            }
-
-            return CreateSite(iis, applicationName, siteName, siteRoot, siteBindings, randomPort);
-        }
-
-        private IIS.Site CreateSite(IIS.ServerManager iis, string applicationName, string siteName, string siteRoot, List<string> siteBindings, bool randomPort)
         {
             var pool = EnsureAppPool(iis, applicationName);
 
             IIS.Site site;
 
-            int sitePort = randomPort ? GetRandomPort(iis) : 80;
-
             if (siteBindings != null && siteBindings.Count > 0)
             {
-                site = iis.Sites.Add(siteName, "http", String.Format("*:{0}:{1}", sitePort.ToString(), siteBindings.First()), siteRoot);
+                site = iis.Sites.Add(siteName, "http", siteBindings.First(), siteRoot);
             }
             else
             {
+                int sitePort = GetRandomPort(iis);
                 site = iis.Sites.Add(siteName, siteRoot, sitePort);
             }
 
@@ -489,6 +473,32 @@ namespace Kudu.SiteManagement
             }
 
             return site;
+        }
+
+        private string CreateBindingInformation(string applicationName, string bindingInformation, string defaultIp = "*", string defaultPort = "80")
+        {
+            string[] parts = bindingInformation.Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+            string ip = defaultIp;
+            string host = string.Empty;
+            string port = defaultPort;
+
+            switch (parts.Length)
+            {
+                case 1:
+                    host = parts[0];
+                    break;
+                case 2:
+                    host = parts[0];
+                    port = parts[1];
+                    break;
+                case 3:
+                    ip = parts[0];
+                    port = parts[1];
+                    host = parts[2];
+                    break;
+            }
+
+            return String.Format("{0}:{1}:{2}", ip, port, applicationName + "." + host);
         }
 
         private void DeleteSite(IIS.ServerManager iis, string siteName, bool deletePhysicalFiles = true)
