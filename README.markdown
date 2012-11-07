@@ -1,3 +1,5 @@
+ [![Outercurve Foundation](http://www.outercurve.org/Portals/0/logo.gif)](http://www.outercurve.org/)
+
 ### Kudu
 
 Kudu is the engine behind [git deployments in Azure Web Sites](https://www.windowsazure.com/en-us/develop/nodejs/common-tasks/publishing-with-git/). It can also run outside of Azure.
