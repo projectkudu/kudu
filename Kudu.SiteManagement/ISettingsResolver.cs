@@ -3,5 +3,7 @@
     public interface ISettingsResolver
     {
         string SitesBaseUrl { get; }
+        
+        string ServiceSitesBaseUrl { get; }
     }
 }
