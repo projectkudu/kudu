@@ -114,7 +114,7 @@ namespace Kudu.SiteManagement
 
                 // Create the service site for this site
                 string serviceSiteName = GetServiceSite(applicationName);
-                var serviceSite = CreateSite(iis, applicationName, serviceSiteName, _pathResolver.ServiceSitePath, serviceSiteBindings, true);
+                var serviceSite = CreateSite(iis, applicationName, serviceSiteName, _pathResolver.ServiceSitePath, serviceSiteBindings);
 
                 IIS.Binding serviceSiteBinding = EnsureBinding(serviceSite.Bindings);
                 int serviceSitePort = serviceSiteBinding.EndPoint.Port;

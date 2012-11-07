@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Configuration;
 using System.IO;
 
 namespace Kudu.SiteManagement
@@ -24,6 +25,14 @@ namespace Kudu.SiteManagement
             if (serviceSitesBaseUrl != null)
             {
                 _serviceSitesBaseUrl = serviceSitesBaseUrl.TrimStart('.');
+            }
+
+            if (!String.IsNullOrEmpty(_serviceSitesBaseUrl) && !String.IsNullOrEmpty(_sitesBaseUrl))
+            {
+                if (_serviceSitesBaseUrl.ToLowerInvariant().Equals(_sitesBaseUrl.ToLowerInvariant()))
+                {
+                    throw new ArgumentException("serviceSitesBaseUrl cannot be the same as sitesBaseUrl.");
+                }
             }
         }
 
