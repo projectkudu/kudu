@@ -35,6 +35,24 @@ namespace Kudu.Core.Infrastructure
             return null;
         }
 
+        public IDictionary<string, string> GetSection(string section)
+        {
+            if (!File.Exists(_path))
+            {
+                return null;
+            }
+
+            ParseIniFile();
+
+            Dictionary<string, string> valueLookup;
+            if (_sectionLookup.TryGetValue(section, out valueLookup))
+            {
+                return new Dictionary<string, string>(valueLookup);
+            }
+
+            return null;
+        }
+
         private void ParseIniFile()
         {
             if (_sectionLookup != null)

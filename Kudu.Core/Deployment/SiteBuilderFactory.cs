@@ -30,6 +30,16 @@ namespace Kudu.Core.Deployment
                 return new CustomBuilder(repositoryRoot, _environment.TempPath, configuration.Command, _propertyProvider);
             }
 
+            // If there are custom build properties in the deployment file, copy to build property provider
+            if (configuration.BuildProperties != null && configuration.BuildProperties.Count > 0)
+            {
+                var buildProps = _propertyProvider.GetProperties();
+                foreach (var buildProperty in configuration.BuildProperties)
+                {
+                    buildProps[buildProperty.Key] = buildProperty.Value;
+                }
+            }
+
             // If the repository has an explicit pointer to a project path to be deployed
             // then use it.
             string targetProjectPath = configuration.ProjectPath;

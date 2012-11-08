@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Kudu.Core.Infrastructure;
 
@@ -41,6 +42,14 @@ namespace Kudu.Core.Deployment
                 }
 
                 return command;
+            }
+        }
+
+        public IDictionary<string, string> BuildProperties
+        {
+            get
+            {
+                return _iniFile.GetSection("build.properties");
             }
         }
     }
