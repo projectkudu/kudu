@@ -110,10 +110,11 @@ namespace Kudu.SiteManagement
             {
                 // Determine the host header values
                 List<string> siteBindings = GetDefaultBindings(applicationName);
+                List<string> serviceSiteBindings = GetDefaultServiceBindings(applicationName);
 
                 // Create the service site for this site
                 string serviceSiteName = GetServiceSite(applicationName);
-                var serviceSite = CreateSite(iis, applicationName, serviceSiteName, _pathResolver.ServiceSitePath, siteBindings, true);
+                var serviceSite = CreateSite(iis, applicationName, serviceSiteName, _pathResolver.ServiceSitePath, serviceSiteBindings);
 
                 IIS.Binding serviceSiteBinding = EnsureBinding(serviceSite.Bindings);
                 int serviceSitePort = serviceSiteBinding.EndPoint.Port;
@@ -299,6 +300,16 @@ namespace Kudu.SiteManagement
             if (!String.IsNullOrWhiteSpace(_settingsResolver.SitesBaseUrl))
             {
                 siteBindings.Add(applicationName + "." + _settingsResolver.SitesBaseUrl);
+            }
+            return siteBindings;
+        }
+
+        private List<String> GetDefaultServiceBindings(string applicationName)
+        {
+            var siteBindings = new List<string>();
+            if (!String.IsNullOrWhiteSpace(_settingsResolver.ServiceSitesBaseUrl))
+            {
+                siteBindings.Add(applicationName + "." + _settingsResolver.ServiceSitesBaseUrl);
             }
             return siteBindings;
         }
