@@ -184,6 +184,11 @@ namespace Kudu.Core.Deployment
                     _serverRepository.Update(id);
                 }
 
+                using (tracer.Step("Updating submodules"))
+                {
+                    _serverRepository.UpdateSubmodules(_environment.SiteRootPath);
+                }
+
                 if (clean)
                 {
                     tracer.Trace("Cleaning git repository");
@@ -268,6 +273,18 @@ namespace Kudu.Core.Deployment
 
                         // Update to the target branch
                         _serverRepository.Update(targetBranch);
+                    }
+                }
+
+                using (tracer.Step("Update submodules"))
+                {
+                    logger.Log(Resources.Log_UpdatingSubmodules);
+
+                    using (var progressWriter = new ProgressWriter())
+                    {
+                        progressWriter.Start();
+
+                        _serverRepository.UpdateSubmodules(_environment.SiteRootPath);
                     }
                 }
 

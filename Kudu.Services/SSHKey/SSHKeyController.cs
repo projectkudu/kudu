@@ -13,7 +13,6 @@ namespace Kudu.Services.SSHKey
     public class SSHKeyController : ApiController
     {
         private const string KeyParameterName = "key";
-        private const string OverrideParameterName = "overwrite";
 
         private readonly ITracer _tracer;
         private readonly ISSHKeyManager _sshKeyManager;

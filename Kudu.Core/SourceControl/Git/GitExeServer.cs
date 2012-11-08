@@ -55,9 +55,9 @@ namespace Kudu.Core.SourceControl.Git
             _repository.Clean();
         }
 
-        public void SetSSHEnv(string host, string homePath)
+        public void SetSSHEnv(string homePath)
         {
-            _repository.SetSSHEnv(host, homePath);
+            _repository.SetSSHEnv(homePath);
         }
 
         public void FetchWithoutConflict(string remote, string remoteAlias, string branchName)

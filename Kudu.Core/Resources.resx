@@ -238,6 +238,9 @@
   <data name="Log_UpdatingBranch" xml:space="preserve">
     <value>Updating branch '{0}'.</value>
   </data>
+  <data name="Log_UpdatingSubmodules" xml:space="preserve">
+    <value>Updating submodules.</value>
+  </data>
   <data name="Log_UsingWebsiteProject" xml:space="preserve">
     <value>Using website project '{0}'.</value>
   </data>

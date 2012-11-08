@@ -5,6 +5,7 @@ using Kudu.Client;
 using Kudu.Client.Deployment;
 using Kudu.Client.Editor;
 using Kudu.Client.SourceControl;
+using Kudu.Client.SSHKey;
 using Kudu.SiteManagement;
 
 namespace Kudu.TestHarness
@@ -62,6 +63,12 @@ namespace Kudu.TestHarness
         }
 
         public RemoteLogStreamManager LogStreamManager
+        {
+            get;
+            private set;
+        }
+
+        public RemoteSSHKeyManager SSHKeyManager
         {
             get;
             private set;
@@ -145,7 +152,7 @@ namespace Kudu.TestHarness
                 ProjectSystem = new RemoteProjectSystem(site.ServiceUrl + "live/files"),
                 SettingsManager = new RemoteDeploymentSettingsManager(site.ServiceUrl + "settings"),
                 LogStreamManager = new RemoteLogStreamManager(site.ServiceUrl + "logstream"),
-
+                SSHKeyManager = new RemoteSSHKeyManager(site.ServiceUrl + "sshkey"),
                 RepositoryManager = repositoryManager
             };
         }

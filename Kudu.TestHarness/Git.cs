@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -6,7 +7,6 @@ using Kudu.Client.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
 using SystemEnvironment = System.Environment;
-
 
 namespace Kudu.TestHarness
 {
@@ -84,7 +84,7 @@ namespace Kudu.TestHarness
             gitExe.Execute("add \"{0}\"", path);
         }
 
-        public static TestRepository Clone(string repositoryPath, string source, bool createDirectory = false)
+        public static TestRepository Clone(string repositoryPath, string source, bool createDirectory = false, IDictionary<string, string> environments = null)
         {
             // Gets full path in case path is relative 
             repositoryPath = GetRepositoryPath(repositoryPath);
@@ -92,6 +92,14 @@ namespace Kudu.TestHarness
             // Make sure the directory is empty
             FileSystemHelpers.DeleteDirectorySafe(repositoryPath);
             Executable gitExe = GetGitExe(repositoryPath);
+
+            if (environments != null)
+            {
+                foreach (KeyValuePair<string, string> pair in environments)
+                {
+                    gitExe.EnvironmentVariables[pair.Key] = pair.Value;
+                }
+            }
 
             if (createDirectory)
             {

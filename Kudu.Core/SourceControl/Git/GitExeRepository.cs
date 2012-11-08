@@ -165,7 +165,9 @@ namespace Kudu.Core.SourceControl.Git
 
         public void Clean()
         {
-            _gitExe.Execute(@"clean -xdf");
+            // two f to remove submodule (dir with git).
+            // see https://github.com/capistrano/capistrano/issues/135
+            _gitExe.Execute(@"clean -xdff");
         }
 
         public void Push()
@@ -173,7 +175,7 @@ namespace Kudu.Core.SourceControl.Git
             _gitExe.Execute(@"push origin master");
         }
 
-        public void SetSSHEnv(string host, string homePath)
+        public void SetSSHEnv(string homePath)
         {
             // SSH requires HOME directory
             _gitExe.EnvironmentVariables["HOME"] = homePath;
@@ -210,6 +212,21 @@ namespace Kudu.Core.SourceControl.Git
         public void Update()
         {
             Update("master");
+        }
+
+        public void UpdateSubmodules(string homePath)
+        {
+            // submodule update only needed when submodule added/updated
+            // in case of submodule delete, the git database and .gitmodules already reflects that
+            // there may be a submodule folder leftover, one could clean it manually by /live/scm/clean
+            if (File.Exists(Path.Combine(_gitExe.WorkingDirectory, ".gitmodules")))
+            {
+                ITracer tracer = _tracerFactory.GetTracer();
+
+                SetSSHEnv(homePath);
+
+                _gitExe.Execute(tracer, "submodule update --init --recursive");
+            }
         }
 
         public ChangeSetDetail GetDetails(string id)

@@ -94,6 +94,8 @@
     <Compile Include="SettingsApiFacts.cs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include=".ssh\config" />
+    <EmbeddedResource Include=".ssh\id_rsa" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>

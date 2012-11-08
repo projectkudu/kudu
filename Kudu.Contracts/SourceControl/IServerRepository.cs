@@ -9,7 +9,7 @@ namespace Kudu.Core.SourceControl
         ChangeSet Initialize(RepositoryConfiguration configuration, string path);
         RepositoryType GetRepositoryType();
         void Clean();
-        void SetSSHEnv(string host, string homePath);
+        void SetSSHEnv(string homePath);
         void FetchWithoutConflict(string remoteUrl, string remoteAlias, string branchName);
         void SetReceiveInfo(string oldRef, string newRef, string branchName);
     }

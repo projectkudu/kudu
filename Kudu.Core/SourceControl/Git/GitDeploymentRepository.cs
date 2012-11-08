@@ -94,6 +94,12 @@ namespace Kudu.Core.SourceControl.Git
             _repository.Update(id);
         }
 
+        public void UpdateSubmodules(string homePath)
+        {
+            EnsureNoLockFile();
+            _repository.UpdateSubmodules(homePath);
+        }
+
         private void EnsureNoLockFile()
         {
             // Delete the lock file from the .git folder

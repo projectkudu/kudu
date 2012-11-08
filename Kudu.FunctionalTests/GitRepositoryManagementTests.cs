@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Core.Deployment;
@@ -953,6 +955,92 @@ command = node build.js
                     Assert.True(results[0].Current);
                 });
             }
+        }
+
+        [Fact]
+        public void RepoWithPublicSubModuleTest()
+        {
+            // Arrange
+            string repositoryName = "RepoWithPublicSubModule";
+            string appName = KuduUtils.GetRandomWebsiteName("RepoWithPublicSubModule");
+            string cloneUrl = KuduUtils.GetCachedRepositoryPath(repositoryName) ?? "https://github.com/KuduApps/RepoWithPublicSubModule.git";
+
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    appManager.GitDeploy(repo.PhysicalPath);
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl + "default.htm", "Hello from RepoWithPublicSubModule!");
+                    KuduAssert.VerifyUrl(appManager.SiteUrl + "PublicSubModule/default.htm", "Hello from PublicSubModule!");
+                });
+            }
+        }
+
+        [Fact]
+        public void RepoWithPrivateSubModuleTest()
+        {
+            // Arrange
+            string repositoryName = "RepoWithPrivateSubModule";
+            string appName = KuduUtils.GetRandomWebsiteName("RepoWithPrivateSubModule");
+            string cloneUrl = KuduUtils.GetCachedRepositoryPath(repositoryName) ?? "git@github.com:KuduQAOrg/RepoWithPrivateSubModule.git";
+            string id_rsa;
+
+            using (var repo = Git.Clone(repositoryName, cloneUrl, environments: PrepareSSHEnv(out id_rsa)))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    appManager.SSHKeyManager.SetPrivateKey(id_rsa);
+
+                    // Act
+                    appManager.GitDeploy(repo.PhysicalPath);
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl + "default.htm", "Hello from RepoWithPrivateSubModule!");
+                    KuduAssert.VerifyUrl(appManager.SiteUrl + "PrivateSubModule/default.htm", "Hello from PrivateSubModule!");
+                });
+            }
+        }
+
+        private IDictionary<string, string> PrepareSSHEnv(out string id_rsa)
+        {
+            id_rsa = null;
+            var sshPath = new DirectoryInfo(Path.Combine(Kudu.TestHarness.PathHelper.TestsRootPath, ".ssh"));
+            if (!sshPath.Exists)
+            {
+                sshPath.Create();
+            }
+
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            foreach (var fileName in new string[] { "config", "id_rsa" })
+            {
+                using (var reader = new StreamReader(assembly.GetManifestResourceStream("Kudu.FunctionalTests..ssh." + fileName)))
+                {
+                    using (var writer = new StreamWriter(new FileStream(Path.Combine(sshPath.FullName, fileName), FileMode.Create, FileAccess.Write)))
+                    {
+                        string content = reader.ReadToEnd();
+                        if (fileName == "id_rsa")
+                        {
+                            id_rsa = content;
+                        }
+                        writer.Write(content);
+                    }
+                }
+            }
+
+            Dictionary<string, string> environments = new Dictionary<string, string>();
+            environments["HOME"] = sshPath.Parent.FullName;
+            environments["HOMEDRIVE"] = sshPath.Root.Name.Trim('\\');
+            environments["HOMEPATH"] = environments["HOME"].Replace(environments["HOMEDRIVE"], String.Empty);
+            return environments;
         }
 
         [Fact]
