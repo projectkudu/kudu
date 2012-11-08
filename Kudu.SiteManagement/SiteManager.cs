@@ -109,8 +109,8 @@ namespace Kudu.SiteManagement
             try
             {
                 // Determine the host header values
-                List<string> siteBindings = GetDefaultBindings(applicationName);
-                List<string> serviceSiteBindings = GetDefaultServiceBindings(applicationName);
+                List<string> siteBindings = GetDefaultBindings(applicationName, _settingsResolver.SitesBaseUrl);
+                List<string> serviceSiteBindings = GetDefaultBindings(applicationName, _settingsResolver.ServiceSitesBaseUrl);
 
                 // Create the service site for this site
                 string serviceSiteName = GetServiceSite(applicationName);
@@ -294,23 +294,12 @@ namespace Kudu.SiteManagement
             return iisBinding;
         }
 
-        private List<String> GetDefaultBindings(string applicationName)
+        private List<String> GetDefaultBindings(string applicationName, string baseUrl)
         {
             var siteBindings = new List<string>();
-            if (!String.IsNullOrWhiteSpace(_settingsResolver.SitesBaseUrl))
+            if (!String.IsNullOrWhiteSpace(baseUrl))
             {
-                string binding = CreateBindingInformation(applicationName, _settingsResolver.SitesBaseUrl);
-                siteBindings.Add(binding);
-            }
-            return siteBindings;
-        }
-
-        private List<String> GetDefaultServiceBindings(string applicationName)
-        {
-            var siteBindings = new List<string>();
-            if (!String.IsNullOrWhiteSpace(_settingsResolver.ServiceSitesBaseUrl))
-            {
-                string binding = CreateBindingInformation(applicationName, _settingsResolver.ServiceSitesBaseUrl);
+                string binding = CreateBindingInformation(applicationName, baseUrl);
                 siteBindings.Add(binding);
             }
             return siteBindings;
@@ -475,23 +464,29 @@ namespace Kudu.SiteManagement
             return site;
         }
 
-        private string CreateBindingInformation(string applicationName, string bindingInformation, string defaultIp = "*", string defaultPort = "80")
+        private string CreateBindingInformation(string applicationName, string baseUrl, string defaultIp = "*", string defaultPort = "80")
         {
-            string[] parts = bindingInformation.Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+            // Creates the 'bindingInformation' parameter for IIS.ServerManager.Sites.Add()
+            // Accepts baseUrl in 3 formats: hostname, hostname:port and ip:port:hostname
+            
+            // Based on the default parameters, applicationName + baseUrl it creates
+            // a string in the format ip:port:hostname
+
+            string[] parts = baseUrl.Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
             string ip = defaultIp;
             string host = string.Empty;
             string port = defaultPort;
 
             switch (parts.Length)
             {
-                case 1:
+                case 1: // kudu.mydomain
                     host = parts[0];
                     break;
-                case 2:
+                case 2: // kudu.mydomain:8080
                     host = parts[0];
                     port = parts[1];
                     break;
-                case 3:
+                case 3: // 192.168.100.3:80:kudu.mydomain
                     ip = parts[0];
                     port = parts[1];
                     host = parts[2];

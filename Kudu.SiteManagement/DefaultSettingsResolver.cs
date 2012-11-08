@@ -29,7 +29,7 @@ namespace Kudu.SiteManagement
 
             if (!String.IsNullOrEmpty(_serviceSitesBaseUrl) && !String.IsNullOrEmpty(_sitesBaseUrl))
             {
-                if (_serviceSitesBaseUrl.ToLowerInvariant().Equals(_sitesBaseUrl.ToLowerInvariant()))
+                if (_serviceSitesBaseUrl.Equals(_sitesBaseUrl, StringComparison.InvariantCultureIgnoreCase))
                 {
                     throw new ArgumentException("serviceSitesBaseUrl cannot be the same as sitesBaseUrl.");
                 }
