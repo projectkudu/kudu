@@ -982,7 +982,6 @@ command = node build.js
             }
         }
 
-        [Fact]
         public void RepoWithPrivateSubModuleTest()
         {
             // Arrange

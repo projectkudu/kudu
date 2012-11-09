@@ -13,12 +13,14 @@ namespace Kudu.Services.Performance
     public class LogStreamManager
     {
         private const string InitialMessage = "Welcome, you are now connected to log-streaming service.\r\n";
-        private const string HeartbeatMessage = "\r\nNo new trace in the past {0} mins.\r\n";
+        private const string HeartbeatMessage = "\r\nNo new trace in the past {0} min(s).\r\n";
+        private const string IdleMessage = "\r\nStream terminated due to no new trace in the past {0} min(s).\r\n";
         private const string ErrorMessage = "\r\nError has occured and stream is terminated. {0}\r\n";
 
         // Antares 3 mins timeout, heartbeat every mins keep alive.
         private static string[] LogFileExtensions = new string[] { ".txt", ".log" };
         private static TimeSpan HeartbeatInterval = TimeSpan.FromMinutes(1);
+        private static TimeSpan IdleTimeout = TimeSpan.FromMinutes(10);
 
         private readonly object _thisLock = new object();
         private readonly string _logPath;
@@ -105,7 +107,11 @@ namespace Kudu.Services.Performance
             if (_watcher != null)
             {
                 _watcher.EnableRaisingEvents = false;
-                _watcher.Dispose();
+                // dispose is blocked till all change request handled, 
+                // this could lead to deadlock as we share the same lock
+                // http://stackoverflow.com/questions/73128/filesystemwatcher-dispose-call-hangs
+                // in the meantime, let GC handle it
+                // _watcher.Dispose();
                 _watcher = null;
             }
 
@@ -132,8 +138,14 @@ namespace Kudu.Services.Performance
                     TimeSpan ts = DateTime.UtcNow.Subtract(lastTraceTime);
                     if (ts >= HeartbeatInterval)
                     {
-                        byte[] bytes = Encoding.UTF8.GetBytes(string.Format(HeartbeatMessage, (int)ts.TotalMinutes));
-                        NotifyClient(bytes, bytes.Length);
+                        if (ts >= IdleTimeout)
+                        {
+                            TerminateClient(string.Format(IdleMessage, (int)ts.TotalMinutes));
+                        }
+                        else
+                        {
+                            NotifyClient(string.Format(HeartbeatMessage, (int)ts.TotalMinutes));
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -220,6 +232,12 @@ namespace Kudu.Services.Performance
             return false;
         }
 
+        private void NotifyClient(string text)
+        {
+            byte[] bytes = Encoding.UTF8.GetBytes(text);
+            NotifyClient(bytes, bytes.Length);
+        }
+
         private void NotifyClient(byte[] bytes, int count)
         {
             lock (_thisLock)
@@ -265,6 +283,13 @@ namespace Kudu.Services.Performance
         {
             lock (_thisLock)
             {
+                // do no-op if races between idle timeout and file change event
+                if (_results.Count == 0)
+                {
+                    count = 0;
+                    return null;
+                }
+
                 long offset = 0;
                 if (!_logFiles.TryGetValue(e.FullPath, out offset))
                 {
@@ -359,9 +384,12 @@ namespace Kudu.Services.Performance
 
         private void OnCriticalError(Exception ex)
         {
-            byte[] bytes = Encoding.UTF8.GetBytes(string.Format(ErrorMessage, ex.Message));
+            TerminateClient(string.Format(ErrorMessage, ex.Message));
+        }
 
-            NotifyClient(bytes, bytes.Length);
+        private void TerminateClient(string text)
+        {
+            NotifyClient(text);
 
             lock (_thisLock)
             {
@@ -369,6 +397,11 @@ namespace Kudu.Services.Performance
                 {
                     result.Complete(false);
                 }
+
+                _results.Clear();
+
+                // Proactively cleanup resources
+                Reset();
             }
         }
 
