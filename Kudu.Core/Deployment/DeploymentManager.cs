@@ -447,6 +447,14 @@ namespace Kudu.Core.Deployment
                 }
                 catch (Exception ex)
                 {
+                    // If we get a TargetInvocationException, use the inner exception instead to avoid
+                    // useless 'Exception has been thrown by the target of an invocation' messages
+                    var targetInvocationException = ex as System.Reflection.TargetInvocationException;
+                    if (targetInvocationException != null)
+                    {
+                        ex = targetInvocationException.InnerException;
+                    }
+
                     _globalLogger.Log(ex);
 
                     tracer.TraceError(ex);
