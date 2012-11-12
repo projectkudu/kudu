@@ -224,7 +224,7 @@ namespace Kudu.Core.Deployment
                 deployStep = tracer.Step("Deploy");
                 ReceiveInfo receiveInfo = _serverRepository.GetReceiveInfo();
 
-                string targetBranch = _settings.GetValue("branch") ?? "master";
+                string targetBranch = _settings.GetValue(SettingsKeys.Branch);
 
                 tracer.Trace("Deploying branch '{0}'", targetBranch);
 

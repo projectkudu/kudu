@@ -82,7 +82,7 @@ namespace Kudu.Services.GitServer
                     return;
                 }
 
-                string targetBranch = _settings.GetValue("branch") ?? "master";
+                string targetBranch = _settings.GetValue(SettingsKeys.Branch);
 
                 _tracer.Trace("Attempting to fetch target branch {0}", targetBranch);
 

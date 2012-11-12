@@ -36,10 +36,12 @@ namespace Kudu.Core.Deployment
                     propertyString = " /p:" + propertyString;
                 }
 
+                string extraArguments = GetMSBuildExtraArguments();
+
                 using (context.Tracer.Step("Running msbuild on solution"))
                 {
                     // Build the solution first
-                    string log = ExecuteMSBuild(context.Tracer, @"""{0}"" /verbosity:m /nologo{1}", SolutionPath, propertyString);
+                    string log = ExecuteMSBuild(context.Tracer, @"""{0}"" /verbosity:m /nologo{1} {2}", SolutionPath, propertyString, extraArguments);
                     buildLogger.Log(log);
                 }
 
