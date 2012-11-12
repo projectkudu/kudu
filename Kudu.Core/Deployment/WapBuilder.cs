@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 
@@ -14,8 +15,8 @@ namespace Kudu.Core.Deployment
         private readonly string _tempPath;
         private readonly string _solutionPath;
 
-        public WapBuilder(IBuildPropertyProvider propertyProvider, string sourcePath, string projectPath, string tempPath, string nugetCachePath, string solutionPath)
-            : base(propertyProvider, sourcePath, tempPath, nugetCachePath)
+        public WapBuilder(IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectPath, string tempPath, string nugetCachePath, string solutionPath)
+            : base(settings, propertyProvider, sourcePath, tempPath, nugetCachePath)
         {
             _projectPath = projectPath;
             _tempPath = tempPath;
@@ -120,6 +121,13 @@ namespace Kudu.Core.Deployment
                 command += @" /p:SolutionDir=""{2}""";
             }
             command = String.Format(CultureInfo.InvariantCulture, command, _projectPath, buildTempPath, solutionDir);
+
+            string extraArguments = GetMSBuildExtraArguments();
+            if (!String.IsNullOrEmpty(extraArguments))
+            {
+                command += " " + extraArguments;
+            }
+
             return command;
         }
 

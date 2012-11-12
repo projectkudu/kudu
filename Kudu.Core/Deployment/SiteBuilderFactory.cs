@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 
@@ -10,11 +11,13 @@ namespace Kudu.Core.Deployment
 {
     public class SiteBuilderFactory : ISiteBuilderFactory
     {
+        private readonly IDeploymentSettingsManager _settings;
         private readonly IEnvironment _environment;
         private readonly IBuildPropertyProvider _propertyProvider;
 
-        public SiteBuilderFactory(IBuildPropertyProvider propertyProvider, IEnvironment environment)
+        public SiteBuilderFactory(IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, IEnvironment environment)
         {
+            _settings = settings;
             _propertyProvider = propertyProvider;
             _environment = environment;
         }
@@ -78,7 +81,8 @@ namespace Kudu.Core.Deployment
 
             if (project.IsWap)
             {
-                return new WapBuilder(_propertyProvider,
+                return new WapBuilder(_settings,
+                                      _propertyProvider,
                                       repositoryRoot,
                                       project.AbsolutePath,
                                       _environment.TempPath,
@@ -169,7 +173,8 @@ namespace Kudu.Core.Deployment
                 var solution = VsHelper.FindContainingSolution(repositoryRoot, targetPath);
                 string solutionPath = solution != null ? solution.Path : null;
 
-                return new WapBuilder(_propertyProvider,
+                return new WapBuilder(_settings,
+                                     _propertyProvider,
                                       repositoryRoot,
                                       targetPath,
                                       _environment.TempPath,

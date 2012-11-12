@@ -1,6 +1,6 @@
-﻿using Kudu.Contracts.Settings;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using Kudu.Contracts.Settings;
 using XmlSettings;
 
 namespace Kudu.Core.Settings
@@ -15,7 +15,8 @@ namespace Kudu.Core.Settings
         // kudu.exe, so they actually need to be in a shaed config file. For now, it's easier to hard code
         // the defaults, since things like 'branch' will rarely want a different global default
         private static Dictionary<string, string> _defaultSettings = new Dictionary<string, string> {
-            { "branch", "master" }
+            { SettingsKeys.Branch, "master" },
+            { SettingsKeys.BuildArgs, "" }
         };
 
         public DeploymentSettingsManager(ISettings settings)
