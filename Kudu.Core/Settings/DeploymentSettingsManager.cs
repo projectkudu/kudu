@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Kudu.Contracts.Settings;
+﻿using Kudu.Contracts.Settings;
+using System;
+using System.Collections.Generic;
 using XmlSettings;
 
 namespace Kudu.Core.Settings
@@ -8,7 +8,15 @@ namespace Kudu.Core.Settings
     public class DeploymentSettingsManager : IDeploymentSettingsManager
     {
         private const string DeploymentSettingsSection = "deployment";
+        private const string EnvVariablePrefix = "KUDU_";
         private readonly ISettings _settings;
+
+        // Ideally, these default settings would live in Kudu's web.config. However, we also need them in 
+        // kudu.exe, so they actually need to be in a shaed config file. For now, it's easier to hard code
+        // the defaults, since things like 'branch' will rarely want a different global default
+        private static Dictionary<string, string> _defaultSettings = new Dictionary<string, string> {
+            { "branch", "master" }
+        };
 
         public DeploymentSettingsManager(ISettings settings)
         {
@@ -17,16 +25,28 @@ namespace Kudu.Core.Settings
 
         public void SetValue(string key, string value)
         {
+            // Note that this only applies to persisted per-site settings
             _settings.SetValue(DeploymentSettingsSection, key, value);
         }
 
         public IEnumerable<KeyValuePair<string, string>> GetValues()
         {
-            var values = _settings.GetValues(DeploymentSettingsSection);
+            var values = new Dictionary<string, string>();
 
-            if (values == null)
+            // Start with the default values, potentially overridden by environment variables
+            foreach (var pair in _defaultSettings)
             {
-                return Enumerable.Empty<KeyValuePair<string, string>>();
+                values[pair.Key] = GetEnvironmentVariableValueWithFallback(pair.Key);
+            }
+
+            // Add all the per-site settings, overriding AppSettings if needed
+            var settings = _settings.GetValues(DeploymentSettingsSection);
+            if (settings != null)
+            {
+                foreach (var entry in settings)
+                {
+                    values[entry.Key] = entry.Value;
+                }
             }
 
             return values;
@@ -34,12 +54,35 @@ namespace Kudu.Core.Settings
 
         public string GetValue(string key)
         {
-            return _settings.GetValue(DeploymentSettingsSection, key);
+            // First try the per-site persisted settings
+            string val = _settings.GetValue(DeploymentSettingsSection, key);
+            if (!String.IsNullOrEmpty(val))
+            {
+                return val;
+            }
+
+            return GetEnvironmentVariableValueWithFallback(key);
         }
 
         public void DeleteValue(string key)
         {
+            // Note that this only applies to persisted per-site settings
             _settings.DeleteValue(DeploymentSettingsSection, key);
+        }
+
+        private string GetEnvironmentVariableValueWithFallback(string key)
+        {
+            // Note that we only look for environment variables if they match a default setting
+            if (!_defaultSettings.ContainsKey(key)) return null;
+
+            string val = System.Environment.GetEnvironmentVariable(EnvVariablePrefix + key);
+            if (String.IsNullOrEmpty(val))
+            {
+                // Fall back to the default
+                val = _defaultSettings[key];
+            }
+
+            return val;
         }
     }
 }
