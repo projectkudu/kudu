@@ -29,12 +29,12 @@ namespace Kudu.Client.Deployment
 
         public Task<NameValueCollection> GetValues()
         {
-            return _client.GetJsonAsync<JArray>(String.Empty).Then(obj =>
+            return _client.GetJsonAsync<JObject>(String.Empty).Then(obj =>
             {
                 var nvc = new NameValueCollection();
-                foreach (JObject value in obj)
+                foreach (var pair in obj)
                 {
-                    nvc[value["Key"].Value<string>()] = value["Value"].Value<string>();
+                    nvc[pair.Key] = pair.Value.Value<string>();
                 }
 
                 return nvc;
