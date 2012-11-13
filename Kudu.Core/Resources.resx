@@ -139,7 +139,7 @@
     <value>No log found for '{0}'.</value>
   </data>
   <data name="Error_ProjectDoesNotExist" xml:space="preserve">
-    <value>The specified path '{0}' doesn't exist.</value>
+    <value>The specified project '{0}' is not valid. It needs to point to either a csproj/vbproj file or to a directory.</value>
   </data>
   <data name="Error_ProjectNotDeployable" xml:space="preserve">
     <value>'{0}' is not a deployable project.</value>
