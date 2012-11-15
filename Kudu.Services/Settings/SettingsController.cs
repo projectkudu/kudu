@@ -18,27 +18,42 @@ namespace Kudu.Services.Settings
         }
 
         /// <summary>
-        /// Create or change a setting
+        /// Create or change some settings
         /// </summary>
-        /// <param name="pair">The name/value pair for the setting</param>
+        /// <param name="newSettings">The object containing the new settings</param>
         /// <returns></returns>
-        public HttpResponseMessage Set(JObject pair)
+        public HttpResponseMessage Set(JObject newSettings)
         {
-            if (pair == null)
+            if (newSettings == null)
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest);
             }
 
-            string key = pair["key"].Value<string>();
+            // We support two formats here:
+            // 1. For backward compat, we support {key: 'someKey', value: 'someValue' }
+            // 2. The preferred format is { someKey = 'someValue' }
+            // Note that #2 allows multiple settings to be set, e.g. { someKey = 'someValue', someKey2 = 'someValue2' }
 
-            if (String.IsNullOrEmpty(key))
+
+            JToken keyToken, valueToken;
+            if (newSettings.Count == 2 && newSettings.TryGetValue("key", out keyToken) && newSettings.TryGetValue("value", out valueToken))
             {
-                return Request.CreateResponse(HttpStatusCode.BadRequest);
+                string key = keyToken.Value<string>();
+
+                if (String.IsNullOrEmpty(key))
+                {
+                    return Request.CreateResponse(HttpStatusCode.BadRequest);
+                }
+
+                _settingsManager.SetValue(key, valueToken.Value<string>());
             }
-
-            string value = pair["value"].Value<string>();
-
-            _settingsManager.SetValue(key, value);
+            else
+            {
+                foreach (var keyValuePair in newSettings)
+                {
+                    _settingsManager.SetValue(keyValuePair.Key, keyValuePair.Value.Value<string>());
+                }
+            }
 
             return Request.CreateResponse(HttpStatusCode.NoContent);
         }

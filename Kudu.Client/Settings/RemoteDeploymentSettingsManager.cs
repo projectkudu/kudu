@@ -21,9 +21,15 @@ namespace Kudu.Client.Deployment
         {
         }
 
-        public Task SetValue(string key, string value)
+        public Task SetValueLegacy(string key, string value)
         {
             var values = HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("key", key), new KeyValuePair<string, string>("value", value));
+            return _client.PostAsync(String.Empty, values).Then(response => response.EnsureSuccessful());
+        }
+
+        public Task SetValue(string key, string value)
+        {
+            var values = HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>(key, value));
             return _client.PostAsync(String.Empty, values).Then(response => response.EnsureSuccessful());
         }
 
