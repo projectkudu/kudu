@@ -21,11 +21,14 @@ namespace Kudu.FunctionalTests
                 {
                     // Act
                     appManager.SettingsManager.SetValue("x", "1").Wait();
+                    appManager.SettingsManager.SetValueLegacy("y", "2").Wait();
 
                     // Assert
                     string result = appManager.SettingsManager.GetValue("x").Result;
-
                     Assert.Equal("1", result);
+                    result = appManager.SettingsManager.GetValue("y").Result;
+                    Assert.Equal("2", result);
+
                 });
             }
         }
