@@ -9,6 +9,6 @@ namespace Kudu.Core.SourceControl
         ReceiveInfo GetReceiveInfo();
         void Update();
         void Update(string id);
-        void UpdateSubmodules(string homePath);
+        void UpdateSubmodules();
     }
 }

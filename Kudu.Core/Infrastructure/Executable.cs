@@ -29,6 +29,15 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
+        public void SetHomePath(string homePath)
+        {
+            // SSH requires HOME directory and applies to git, npm and (CustomBuilder) cmd
+            // Excutable seems to be the most optimal class for this api.
+            EnvironmentVariables["HOME"] = homePath;
+            EnvironmentVariables["HOMEDRIVE"] = homePath.Substring(0, homePath.IndexOf(':') + 1);
+            EnvironmentVariables["HOMEPATH"] = homePath.Substring(homePath.IndexOf(':') + 1);
+        }
+
         public string WorkingDirectory { get; private set; }
         public string Path { get; private set; }
         public IDictionary<string, string> EnvironmentVariables { get; set; }

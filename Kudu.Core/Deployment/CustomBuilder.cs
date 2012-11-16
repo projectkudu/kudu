@@ -11,6 +11,7 @@ namespace Kudu.Core.Deployment
         private readonly string _command;
         private readonly string _repositoryPath;
         private readonly string _tempPath;
+        private readonly string _homePath;
         private readonly IBuildPropertyProvider _propertyProvider;
 
         private const string SourcePath = "DEPLOYMENT_SOURCE";
@@ -20,12 +21,13 @@ namespace Kudu.Core.Deployment
         private const string NextManifestPath = "NEXT_MANIFEST_PATH";
         private const string MSBuildPath = "MSBUILD_PATH";
 
-        public CustomBuilder(string repositoryPath, string tempPath, string command, IBuildPropertyProvider propertyProvider)
+        public CustomBuilder(string repositoryPath, string tempPath, string command, IBuildPropertyProvider propertyProvider, string homePath)
         {
             _repositoryPath = repositoryPath;
             _tempPath = tempPath;
             _command = command;
             _propertyProvider = propertyProvider;
+            _homePath = homePath;
         }
 
         public Task Build(DeploymentContext context)
@@ -43,6 +45,8 @@ namespace Kudu.Core.Deployment
             exe.EnvironmentVariables[NextManifestPath] = context.ManifestWriter.ManifestFilePath;
             exe.EnvironmentVariables[MSBuildPath] = PathUtility.ResolveMSBuildPath();
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.NuGetPackageRestoreKey] = "true";
+
+            exe.SetHomePath(_homePath);
 
             // Create a directory for the script output temporary artifacts
             string buildTempPath = Path.Combine(_tempPath, Guid.NewGuid().ToString());

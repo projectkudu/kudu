@@ -5,8 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
-using Kudu.Core.SSHKey;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.SourceControl.Git
@@ -20,14 +20,19 @@ namespace Kudu.Core.SourceControl.Git
         private readonly ITraceFactory _tracerFactory;
 
         public GitExeRepository(string path)
-            : this(path, NullTracerFactory.Instance)
+            : this(path, null, NullTracerFactory.Instance)
         {
         }
 
-        public GitExeRepository(string path, ITraceFactory profilerFactory)
+        public GitExeRepository(string path, string homePath, ITraceFactory profilerFactory)
         {
             _gitExe = new GitExecutable(path);
             _tracerFactory = profilerFactory;
+
+            if (!String.IsNullOrEmpty(homePath))
+            {
+                _gitExe.SetHomePath(homePath);
+            }
         }
 
         public string CurrentId
@@ -175,14 +180,6 @@ namespace Kudu.Core.SourceControl.Git
             _gitExe.Execute(@"push origin master");
         }
 
-        public void SetSSHEnv(string homePath)
-        {
-            // SSH requires HOME directory
-            _gitExe.EnvironmentVariables["HOME"] = homePath;
-            _gitExe.EnvironmentVariables["HOMEDRIVE"] = homePath.Substring(0, homePath.IndexOf(':') + 1);
-            _gitExe.EnvironmentVariables["HOMEPATH"] = homePath.Substring(homePath.IndexOf(':') + 1);
-        }
-
         public void FetchWithoutConflict(string remote, string remoteAlias, string branchName)
         {
             ITracer tracer = _tracerFactory.GetTracer();
@@ -214,7 +211,7 @@ namespace Kudu.Core.SourceControl.Git
             Update("master");
         }
 
-        public void UpdateSubmodules(string homePath)
+        public void UpdateSubmodules()
         {
             // submodule update only needed when submodule added/updated
             // in case of submodule delete, the git database and .gitmodules already reflects that
@@ -222,9 +219,6 @@ namespace Kudu.Core.SourceControl.Git
             if (File.Exists(Path.Combine(_gitExe.WorkingDirectory, ".gitmodules")))
             {
                 ITracer tracer = _tracerFactory.GetTracer();
-
-                SetSSHEnv(homePath);
-
                 _gitExe.Execute(tracer, "submodule update --init --recursive");
             }
         }

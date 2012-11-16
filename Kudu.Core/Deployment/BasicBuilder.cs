@@ -16,12 +16,14 @@ namespace Kudu.Core.Deployment
         private readonly string _sourcePath;
         private readonly string _tempPath;
         private readonly string _scriptPath;
+        private readonly string _homePath;
 
-        public BasicBuilder(string sourcePath, string tempPath, string scriptPath)
+        public BasicBuilder(string sourcePath, string tempPath, string scriptPath, string homePath)
         {
             _sourcePath = sourcePath;
             _tempPath = tempPath;
             _scriptPath = scriptPath;
+            _homePath = homePath;
         }
 
         public Task Build(DeploymentContext context)
@@ -131,6 +133,8 @@ namespace Kudu.Core.Deployment
                 {
                     npm.EnvironmentVariables["HTTPS_PROXY"] = proxyHttpsProxyUrl.ToString();
                 }
+
+                npm.SetHomePath(_homePath);
 
                 // REVIEW: Do we still need this?
                 try

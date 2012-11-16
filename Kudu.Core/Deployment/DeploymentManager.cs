@@ -186,7 +186,7 @@ namespace Kudu.Core.Deployment
 
                 using (tracer.Step("Updating submodules"))
                 {
-                    _serverRepository.UpdateSubmodules(_environment.SiteRootPath);
+                    _serverRepository.UpdateSubmodules();
                 }
 
                 if (clean)
@@ -284,7 +284,7 @@ namespace Kudu.Core.Deployment
                     {
                         progressWriter.Start();
 
-                        _serverRepository.UpdateSubmodules(_environment.SiteRootPath);
+                        _serverRepository.UpdateSubmodules();
                     }
                 }
 

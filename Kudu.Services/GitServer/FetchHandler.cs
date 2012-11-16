@@ -125,14 +125,6 @@ namespace Kudu.Services.GitServer
 
         private void PerformDeployment(RepositoryInfo repositoryInfo, string targetBranch)
         {
-            if (repositoryInfo.UseSSH)
-            {
-                using (_tracer.Step("Prepare SSH environment"))
-                {
-                    _gitServer.SetSSHEnv(_environment.SiteRootPath);
-                }
-            }
-
             bool hasPendingDeployment;
 
             do

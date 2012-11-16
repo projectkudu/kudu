@@ -30,7 +30,7 @@ namespace Kudu.Core.Deployment
             // If there's a custom deployment file then let that take over.
             if (!String.IsNullOrEmpty(configuration.Command))
             {
-                return new CustomBuilder(repositoryRoot, _environment.TempPath, configuration.Command, _propertyProvider);
+                return new CustomBuilder(repositoryRoot, _environment.TempPath, configuration.Command, _propertyProvider, _environment.SiteRootPath);
             }
 
             // If the repository has an explicit pointer to a project path to be deployed
@@ -76,7 +76,7 @@ namespace Kudu.Core.Deployment
             {
                 logger.Log(Resources.Log_NoDeployableProjects, solution.Path);
 
-                return new BasicBuilder(repositoryRoot, _environment.TempPath, _environment.ScriptPath);
+                return new BasicBuilder(repositoryRoot, _environment.TempPath, _environment.ScriptPath, _environment.SiteRootPath);
             }
 
             if (project.IsWap)
@@ -157,7 +157,7 @@ namespace Kudu.Core.Deployment
             }
 
             // If there's none then use the basic builder (the site is xcopy deployable)
-            return new BasicBuilder(targetPath, _environment.TempPath, _environment.ScriptPath);
+            return new BasicBuilder(targetPath, _environment.TempPath, _environment.ScriptPath, _environment.SiteRootPath);
         }
 
         private ISiteBuilder DetermineProject(string repositoryRoot, string targetPath)

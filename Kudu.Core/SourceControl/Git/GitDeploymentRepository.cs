@@ -7,22 +7,22 @@ namespace Kudu.Core.SourceControl.Git
 {
     public class GitDeploymentRepository : IDeploymentRepository
     {
-        private readonly GitExecutable _gitExe;
+        private readonly string _path;
         private readonly ITraceFactory _traceFactory;
         private readonly GitExeRepository _repository;
 
-        public GitDeploymentRepository(string path, ITraceFactory traceFactory)
+        public GitDeploymentRepository(string path, string homePath, ITraceFactory traceFactory)
         {
-            _gitExe = new GitExecutable(path);
+            _path = path;
             _traceFactory = traceFactory;
-            _repository = new GitExeRepository(path, traceFactory);
+            _repository = new GitExeRepository(path, homePath, traceFactory);
         }
 
         private string PostReceiveHookPath
         {
             get
             {
-                return Path.Combine(_gitExe.WorkingDirectory, ".git", "hooks", "post-receive");
+                return Path.Combine(_path, ".git", "hooks", "post-receive");
             }
         }
 
@@ -30,7 +30,7 @@ namespace Kudu.Core.SourceControl.Git
         {
             get
             {
-                return Path.Combine(_gitExe.WorkingDirectory, ".git", "pushinfo");
+                return Path.Combine(_path, ".git", "pushinfo");
             }
         }
 
@@ -94,16 +94,16 @@ namespace Kudu.Core.SourceControl.Git
             _repository.Update(id);
         }
 
-        public void UpdateSubmodules(string homePath)
+        public void UpdateSubmodules()
         {
             EnsureNoLockFile();
-            _repository.UpdateSubmodules(homePath);
+            _repository.UpdateSubmodules();
         }
 
         private void EnsureNoLockFile()
         {
             // Delete the lock file from the .git folder
-            string lockFilePath = Path.Combine(_gitExe.WorkingDirectory, ".git", "index.lock");
+            string lockFilePath = Path.Combine(_path, ".git", "index.lock");
             if (File.Exists(lockFilePath))
             {
                 ITracer tracer = _traceFactory.GetTracer();
