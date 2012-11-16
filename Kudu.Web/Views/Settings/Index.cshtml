@@ -1,10 +1,11 @@
-﻿@model Kudu.Web.Models.SettingsViewModel
+﻿@using Kudu.Contracts.Settings
+@model Kudu.Web.Models.SettingsViewModel
 
 @{
     ViewBag.Title = "Configuration Settings";
 }
 
-@if (!Model.Enabled) 
+@if (!Model.Enabled)
 {
     <div class="alert alert-error">Configuration settings are not enabled on the kudu service.</div>
     return;
@@ -13,18 +14,20 @@
 @section head 
 {
     <style>
-        table form {
+        table form
+        {
             padding: 0;
             margin: 0;
         }
-        
-        input {
+
+        input
+        {
             margin-right: 5px;
         }
     </style>
 }
 
-@if(Model.AppSettings != null) 
+@if (Model.AppSettings != null)
 {
     <div class="page-header">
     <h3>Application Settings</h3>
@@ -72,7 +75,7 @@
     }
 }
 
-@if(Model.ConnectionStrings != null)
+@if (Model.ConnectionStrings != null)
 {
     <div class="page-header">
         <h3>Connection Strings (.NET only)</h3>
@@ -120,18 +123,31 @@
     }
 }
 
-@if(Model.KuduSettings != null)
+@if (Model.KuduSettings != null)
 {
     <div class="page-header">
-        <h3>Git Branch</h3>        
-    </div>
-
-    using (Html.BeginForm("new-branch", "settings", new { ViewBag.slug }, FormMethod.Post, new { @class = "well form-inline" }))
+    @using (Html.BeginForm("new-branch", "settings", new { ViewBag.slug }, FormMethod.Post, new { @class = "well form-inline" }))
     {
+        <h3>Git Branch</h3>        
         <p class="help-block">The branch to deploy.</p>
-        @Html.TextBox("Branch", ViewData["Branch"] ?? Model.KuduSettings["Branch"] ?? "master", new { placeholder = "branch name" })
+        @Html.TextBox("Branch", ViewData["Branch"] ?? Model.KuduSettings[SettingsKeys.Branch] ?? "master", new { placeholder = "branch name" })
         @Html.ValidationMessage("Branch", "*")
-        <input type="submit" class="btn-primary" value="Save" />    
+        <input type="submit" class="btn-primary" value="Update branch" />
     }
+    </div>
+    <div class="page-header">
+    @using (Html.BeginForm("set-buildargs", "settings", new { ViewBag.slug }, FormMethod.Post, new { @class = "well form-inline" }))
+    {
+        <h3>MSBuild command line arguments</h3>        
+        <p class="help-block">
+            If not using a custom deployment script, this get's added to the MSBuild commandline.
+        </p>
+        <p class="help-block">
+            You could for example use: /P:Configuration=Release
+        </p>
+        @Html.TextBox("BuildArgs", ViewData["BuildArgs"] ?? Model.KuduSettings[SettingsKeys.BuildArgs] ?? "", new { placeholder = "Build arguments" })
+        <input type="submit" class="btn-primary" value="Update build arguments" />
+    }
+    </div>
 }
 

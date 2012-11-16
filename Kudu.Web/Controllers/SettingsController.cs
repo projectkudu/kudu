@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using System.Web.Mvc;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.Settings;
 using Kudu.Web.Models;
 using Mvc.Async;
 
@@ -111,40 +112,66 @@ namespace Kudu.Web.Controllers
         [ActionName("new-branch")]
         public Task<ActionResult> SetBranch(string slug, string branch)
         {
-            try
+            if (String.IsNullOrEmpty(branch))
             {
-                if (String.IsNullOrEmpty(branch))
-                {
-                    ModelState.AddModelError("Branch", "branch is required");
-                }
-
-                if (ModelState.IsValid)
-                {
-                    var tcs = new TaskCompletionSource<ActionResult>();
-                    _service.SetKuduSetting(slug, "branch", branch)
-                                   .ContinueWith(task =>
-                                   {
-                                       if (task.IsFaulted)
-                                       {
-                                           tcs.SetException(task.Exception.InnerExceptions);
-                                       }
-                                       else
-                                       {
-                                           tcs.SetResult(RedirectToAction("Index", new { slug }));
-                                       }
-                                   });
-
-                    return tcs.Task;
-                }
+                ModelState.AddModelError("Branch", "branch is required");
             }
-            catch
+
+            if (ModelState.IsValid)
             {
+                var tcs = new TaskCompletionSource<ActionResult>();
+                _service.SetKuduSetting(slug, "branch", branch)
+                                .ContinueWith(task =>
+                                {
+                                    if (task.IsFaulted)
+                                    {
+                                        tcs.SetException(task.Exception.InnerExceptions);
+                                    }
+                                    else
+                                    {
+                                        tcs.SetResult(RedirectToAction("Index", new { slug }));
+                                    }
+                                });
+
+                return tcs.Task;
             }
 
             return GetSettingsViewModel(slug).Then(model =>
             {
                 ViewBag.appName = slug;
                 ViewBag.branch = branch;
+
+                return (ActionResult)View("index", model);
+            });
+        }
+
+        [HttpPost]
+        [ActionName("set-buildargs")]
+        public Task<ActionResult> SetBuildArgs(string slug, string buildargs)
+        {
+            if (buildargs != null)
+            {
+                var tcs = new TaskCompletionSource<ActionResult>();
+                _service.SetKuduSetting(slug, SettingsKeys.BuildArgs, buildargs)
+                               .ContinueWith(task =>
+                               {
+                                   if (task.IsFaulted)
+                                   {
+                                       tcs.SetException(task.Exception.InnerExceptions);
+                                   }
+                                   else
+                                   {
+                                       tcs.SetResult(RedirectToAction("Index", new { slug }));
+                                   }
+                               });
+
+                return tcs.Task;                
+            }
+
+            return GetSettingsViewModel(slug).Then(model =>
+            {
+                ViewBag.appName = slug;
+                ViewBag.buildargs = buildargs;
 
                 return (ActionResult)View("index", model);
             });
