@@ -1,6 +1,6 @@
 ﻿namespace Kudu.Core.Deployment
 {
-    internal class CascadeLogger : ILogger
+    public class CascadeLogger : ILogger
     {
         private readonly ILogger _primary;
         private readonly ILogger _secondary;
@@ -13,8 +13,7 @@
 
         public ILogger Log(string value, LogEntryType type)
         {
-            _secondary.Log(value, type);
-            return _primary.Log(value, type);
+            return new CascadeLogger(_primary.Log(value, type), _secondary.Log(value, type));
         }
     }
 }

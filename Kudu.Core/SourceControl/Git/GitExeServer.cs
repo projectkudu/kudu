@@ -20,12 +20,15 @@ namespace Kudu.Core.SourceControl.Git
 
         private static readonly TimeSpan _initTimeout = TimeSpan.FromMinutes(8);
 
-        public GitExeServer(string path, IOperationLock initLock, IDeploymentEnvironment deploymentEnvironment, ITraceFactory traceFactory)
+        public GitExeServer(string path, IOperationLock initLock, string logFileEnv, IDeploymentEnvironment deploymentEnvironment, ITraceFactory traceFactory)
         {
             _gitExe = new GitExecutable(path);
             _traceFactory = traceFactory;
             _repository = new GitExeRepository(path, traceFactory);
             _initLock = initLock;
+
+            // Transfer logFileEnv => git.exe => kudu.exe, this represent per-request tracefile
+            _gitExe.EnvironmentVariables[Constants.TraceFileEnvKey] = logFileEnv;
 
             // Setup the deployment environment variable to be used by the post receive hook
             _gitExe.EnvironmentVariables[KnownEnviornment.EXEPATH] = deploymentEnvironment.ExePath;

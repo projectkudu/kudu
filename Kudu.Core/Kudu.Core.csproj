@@ -53,6 +53,9 @@
     <Compile Include="..\Common\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="..\Common\Constants.cs">
+      <Link>Constants.cs</Link>
+    </Compile>
     <Compile Include="Commands\CommandExecutor.cs" />
     <Compile Include="Deployment\CascadeLogger.cs" />
     <Compile Include="Deployment\CustomBuilder.cs" />
@@ -80,9 +83,12 @@
     <Compile Include="Settings\DeploymentSettingsManager.cs" />
     <Compile Include="SourceControl\Git\GitDeploymentRepository.cs" />
     <Compile Include="SSHKey\SSHKeyManager.cs" />
+    <Compile Include="Tracing\CascadeTracer.cs" />
     <Compile Include="Tracing\ITraceFactory.cs" />
+    <Compile Include="Tracing\TextLogger.cs" />
     <Compile Include="Tracing\NullTracer.cs" />
     <Compile Include="Tracing\NullTracerFactory.cs" />
+    <Compile Include="Tracing\TextTracer.cs" />
     <Compile Include="Tracing\Tracer.cs" />
     <Compile Include="Tracing\TracerFactory.cs" />
     <Compile Include="Tracing\TraceStep.cs" />

@@ -12,6 +12,7 @@ using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
 using Newtonsoft.Json.Linq;
+using System.Diagnostics;
 
 namespace Kudu.Services.GitServer
 {
@@ -62,7 +63,7 @@ namespace Kudu.Services.GitServer
                     return;
                 }
 
-                if (_configuration.TraceLevel > 1)
+                if (_tracer.TraceLevel >= TraceLevel.Verbose)
                 {
                     TracePayload(json);
                 }

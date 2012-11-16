@@ -17,6 +17,7 @@ namespace Kudu.Core.Settings
         // the defaults, since things like 'branch' will rarely want a different global default
         private static Dictionary<string, string> _defaultSettings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
             { SettingsKeys.Branch, "master" },
+            { SettingsKeys.TraceLevel, ((int)DeploymentSettingsExtension.DefaultTraceLevel).ToString() },
             { SettingsKeys.BuildArgs, "" }
         };
 
@@ -27,6 +28,8 @@ namespace Kudu.Core.Settings
 
         public void SetValue(string key, string value)
         {
+            // TODO: key/value validator
+
             // Note that this only applies to persisted per-site settings
             _perSiteSettings.SetValue(DeploymentSettingsSection, key, value);
         }
@@ -69,14 +72,14 @@ namespace Kudu.Core.Settings
 
         private string GetEnvironmentVariableValueWithFallback(string key)
         {
-            // Note that we only look for environment variables if they match a default setting
-            if (!_defaultSettings.ContainsKey(key)) return null;
-
             string val = System.Environment.GetEnvironmentVariable(EnvVariablePrefix + key);
             if (String.IsNullOrEmpty(val))
             {
                 // Fall back to the default
-                val = _defaultSettings[key];
+                if (_defaultSettings.TryGetValue(key, out val))
+                {
+                    return val;
+                }
             }
 
             return val;

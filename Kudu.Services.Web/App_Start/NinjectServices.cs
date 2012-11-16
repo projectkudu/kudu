@@ -1,3 +1,5 @@
+using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
 using System.Net;
@@ -81,8 +83,7 @@ namespace Kudu.Services.Web.App_Start
             var gitConfiguration = new RepositoryConfiguration
             {
                 Username = AppSettings.GitUsername,
-                Email = AppSettings.GitEmail,
-                TraceLevel = AppSettings.TraceLevel
+                Email = AppSettings.GitEmail
             };
 
             IEnvironment environment = GetEnvironment();
@@ -97,25 +98,15 @@ namespace Kudu.Services.Web.App_Start
             string sdkPath = Path.Combine(HttpRuntime.AppDomainAppPath, SdkRootDirectory);
             kernel.Bind<IBuildPropertyProvider>().ToConstant(new BuildPropertyProvider());
 
-            if (AppSettings.TraceEnabled)
-            {
-                string tracePath = Path.Combine(environment.RootPath, Constants.TracePath, Constants.TraceFile);
-                System.Func<ITracer> createTracerThunk = () => new Tracer(tracePath);
+            System.Func<ITracer> createTracerThunk = () => GetTracer(environment, kernel);
+            System.Func<ILogger> createLoggerThunk = () => GetLogger(environment, kernel);
 
-                // First try to use the current request profiler if any, otherwise create a new one
-                var traceFactory = new TracerFactory(() => TraceServices.CurrentRequestTracer ?? createTracerThunk());
+            // First try to use the current request profiler if any, otherwise create a new one
+            var traceFactory = new TracerFactory(() => TraceServices.CurrentRequestTracer ?? createTracerThunk());
 
-                kernel.Bind<ITracer>().ToMethod(context => TraceServices.CurrentRequestTracer ?? NullTracer.Instance);
-                kernel.Bind<ITraceFactory>().ToConstant(traceFactory);
-                TraceServices.SetTraceFactory(createTracerThunk);
-            }
-            else
-            {
-                // Return No-op providers
-                kernel.Bind<ITracer>().ToConstant(NullTracer.Instance).InSingletonScope();
-                kernel.Bind<ITraceFactory>().ToConstant(NullTracerFactory.Instance).InSingletonScope();
-            }
-
+            kernel.Bind<ITracer>().ToMethod(context => TraceServices.CurrentRequestTracer ?? NullTracer.Instance);
+            kernel.Bind<ITraceFactory>().ToConstant(traceFactory);
+            TraceServices.SetTraceFactory(createTracerThunk, createLoggerThunk);
 
             // Setup the deployment lock
             string lockPath = Path.Combine(environment.SiteRootPath, Constants.LockPath);
@@ -155,11 +146,13 @@ namespace Kudu.Services.Web.App_Start
 
             kernel.Bind<IServerRepository>().ToMethod(context => new GitExeServer(environment.RepositoryPath,
                                                                                   initLock,
+                                                                                  GetRequestTraceFile(environment, context.Kernel),
                                                                                   context.Kernel.Get<IDeploymentEnvironment>(),
                                                                                   context.Kernel.Get<ITraceFactory>()))
                                             .InRequestScope();
 
-            kernel.Bind<ILogger>().ToConstant(NullLogger.Instance);
+            kernel.Bind<ILogger>().ToMethod(context => GetLogger(environment, context.Kernel))
+                                             .InRequestScope();
             kernel.Bind<IDeploymentManager>().To<DeploymentManager>()
                                              .InRequestScope();
             kernel.Bind<ISSHKeyManager>().To<SSHKeyManager>()
@@ -173,6 +166,7 @@ namespace Kudu.Services.Web.App_Start
 
             kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.RepositoryPath,
                                                                            initLock,
+                                                                           GetRequestTraceFile(environment, context.Kernel),
                                                                            context.Kernel.Get<IDeploymentEnvironment>(),
                                                                            context.Kernel.Get<ITraceFactory>()))
                                      .InRequestScope();
@@ -268,6 +262,42 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHandler<LogStreamHandler>(kernel, "logstream", "logstream/{*path}");
         }
 
+        private static ITracer GetTracer(IEnvironment environment, IKernel kernel)
+        {
+            TraceLevel level = kernel.Get<IDeploymentSettingsManager>().GetTraceLevel();
+            if (level > TraceLevel.Off)
+            {
+                string tracePath = Path.Combine(environment.TracePath, Constants.TraceFile);
+                string textPath = Path.Combine(environment.TracePath, TraceServices.CurrentRequestTraceFile);
+                return new CascadeTracer(new Tracer(tracePath, level), new TextTracer(textPath, level));
+            }
+
+            return NullTracer.Instance;
+        }
+
+        private static ILogger GetLogger(IEnvironment environment, IKernel kernel)
+        {
+            TraceLevel level = kernel.Get<IDeploymentSettingsManager>().GetTraceLevel();
+            if (level > TraceLevel.Off)
+            {
+                string textPath = Path.Combine(environment.DeploymentTracePath, TraceServices.CurrentRequestTraceFile);
+                return new TextLogger(textPath);
+            }
+
+            return NullLogger.Instance;
+        }
+
+        private static string GetRequestTraceFile(IEnvironment environment, IKernel kernel)
+        {
+            TraceLevel level = kernel.Get<IDeploymentSettingsManager>().GetTraceLevel();
+            if (level > TraceLevel.Off)
+            {
+                return TraceServices.CurrentRequestTraceFile;
+            }
+
+            return null;
+        }
+
         private static IProjectSystem GetEditorProjectSystem(IEnvironment environment, IContext context)
         {
             return new ProjectSystem(environment.WebRootPath);
@@ -300,7 +330,7 @@ namespace Kudu.Services.Web.App_Start
             string deploymentTempPath = Path.Combine(tempPath, Constants.RepositoryPath);
             string scriptPath = Path.Combine(HttpRuntime.BinDirectory, Constants.ScriptsPath);
 
-            return new Environment(
+            return new Kudu.Core.Environment(
                                    new FileSystem(),
                                    root,
                                    siteRoot,

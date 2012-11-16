@@ -169,9 +169,6 @@
     <Compile Include="..\Common\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="..\Common\Constants.cs">
-      <Link>Constants.cs</Link>
-    </Compile>
     <Compile Include="AppSettings.cs" />
     <Compile Include="App_Start\ModuleInit.cs" />
     <Compile Include="Areas\HelpPageAreaRegistration.cs" />
@@ -271,7 +268,7 @@
         <WebProjectProperties>
           <UseIIS>False</UseIIS>
           <AutoAssignPort>True</AutoAssignPort>
-          <DevelopmentServerPort>13073</DevelopmentServerPort>
+          <DevelopmentServerPort>54085</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>
           <IISUrl>http://localhost:13073/</IISUrl>
           <NTLMAuthentication>False</NTLMAuthentication>

@@ -17,10 +17,7 @@ namespace Kudu.Services.Web.App_Start
                 DynamicModuleUtility.RegisterModule(typeof(BlockLocalhostModule));
             }
 
-            if (AppSettings.TraceEnabled)
-            {
-                DynamicModuleUtility.RegisterModule(typeof(TraceModule));
-            }
+            DynamicModuleUtility.RegisterModule(typeof(TraceModule));
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Specialized;
 using System.Net.Http;
+using Kudu.Contracts.Settings;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
 using Xunit;
@@ -81,6 +82,11 @@ namespace Kudu.FunctionalTests
 
                     // Assert
                     NameValueCollection results = appManager.SettingsManager.GetValues().Result;
+
+                    // Default
+                    Assert.Equal("master", results[SettingsKeys.Branch]);
+                    Assert.Equal("", results[SettingsKeys.BuildArgs]);
+                    Assert.Equal("0", results[SettingsKeys.TraceLevel]);
 
                     Assert.Equal("1", results["x"]);
                     Assert.Equal("2", results["y"]);

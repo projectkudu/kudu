@@ -162,6 +162,7 @@ namespace Kudu.Core.Test
         {
             fileSystem = fileSystem ?? Mock.Of<IFileSystem>();
             repositoryPath = repositoryPath ?? "";
+            rootPath = rootPath ?? "";
 
             return new Environment(fileSystem,
                     rootPath,

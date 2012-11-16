@@ -22,26 +22,33 @@ namespace Kudu.Core.Tracing
 
         private readonly string _path;
         private readonly IFileSystem _fileSystem;
+        private readonly TraceLevel _level;
 
         private const string TraceRoot = "trace";
 
         private static readonly ConcurrentDictionary<string, object> _pathLocks = new ConcurrentDictionary<string, object>();
 
-        public Tracer(string path)
-            : this(new FileSystem(), path)
+        public Tracer(string path, TraceLevel level)
+            : this(new FileSystem(), path, level)
         {
 
         }
 
-        public Tracer(IFileSystem fileSystem, string path)
+        public Tracer(IFileSystem fileSystem, string path, TraceLevel level)
         {
             _fileSystem = fileSystem;
             _path = path;
+            _level = level;
 
             if (!_pathLocks.ContainsKey(path))
             {
                 _pathLocks.TryAdd(path, new object());
             }
+        }
+
+        public TraceLevel TraceLevel
+        {
+            get { return _level; }
         }
 
         public IEnumerable<TraceStep> Steps
@@ -56,7 +63,7 @@ namespace Kudu.Core.Tracing
         {
             var newStep = new TraceStep(title);
             var newStepElement = new XElement("step", new XAttribute("title", title),
-                                                      new XAttribute("date", DateTime.Now.ToString("MM/dd H:mm:ss")));
+                                                      new XAttribute("date", DateTime.UtcNow.ToString("MM/dd H:mm:ss")));
 
             foreach (var pair in attributes)
             {

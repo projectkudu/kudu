@@ -25,7 +25,12 @@ namespace Kudu.Services.Web.Tracing
                 }
 
                 // Setup the request for the tracer
-                var tracer = TraceServices.CreateRequesTracer(httpContext);
+                var tracer = TraceServices.CreateRequestTracer(httpContext);
+
+                if (tracer == null || tracer.TraceLevel <= TraceLevel.Off)
+                {
+                    return;
+                }
 
                 var attribs = new Dictionary<string, string>
                 {
@@ -33,6 +38,8 @@ namespace Kudu.Services.Web.Tracing
                     { "method", httpContext.Request.HttpMethod },
                     { "type", "request" }
                 };
+
+                AddTraceLevel(httpContext, attribs);
 
                 foreach (string key in httpContext.Request.Headers)
                 {
@@ -56,7 +63,7 @@ namespace Kudu.Services.Web.Tracing
                     var httpContext = ((HttpApplication)sender).Context;
                     var tracer = TraceServices.GetRequestTracer(httpContext);
 
-                    if (tracer == null)
+                    if (tracer == null || tracer.TraceLevel <= TraceLevel.Off)
                     {
                         return;
                     }
@@ -74,7 +81,7 @@ namespace Kudu.Services.Web.Tracing
                 var httpContext = ((HttpApplication)sender).Context;
                 var tracer = TraceServices.GetRequestTracer(httpContext);
 
-                if (tracer == null)
+                if (tracer == null || tracer.TraceLevel <= TraceLevel.Off)
                 {
                     return;
                 }
@@ -85,6 +92,8 @@ namespace Kudu.Services.Web.Tracing
                     { "statusCode", httpContext.Response.StatusCode.ToString() },
                     { "statusText", httpContext.Response.StatusDescription }
                 };
+
+                AddTraceLevel(httpContext, attribs);
 
                 foreach (string key in httpContext.Response.Headers)
                 {
@@ -100,6 +109,15 @@ namespace Kudu.Services.Web.Tracing
                     requestStep.Dispose();
                 }
             };
+        }
+
+        private void AddTraceLevel(HttpContext httpContext, Dictionary<string, string> attribs)
+        {
+            if (!httpContext.Request.RawUrl.StartsWith("/logstream", StringComparison.OrdinalIgnoreCase) &&
+                !httpContext.Request.RawUrl.StartsWith("/deployments", StringComparison.OrdinalIgnoreCase))
+            {
+                attribs["traceLevel"] = ((int)TraceLevel.Info).ToString();
+            }
         }
 
         public void Dispose() { }

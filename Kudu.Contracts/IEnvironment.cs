@@ -12,5 +12,7 @@ namespace Kudu.Core
         string NuGetCachePath { get; }
         string TempPath { get; }
         string ScriptPath { get; }
+        string TracePath { get; }               // e.g. /logfiles/git/trace
+        string DeploymentTracePath { get; }     // e.g. /logfiles/git/deployment
     }
 }

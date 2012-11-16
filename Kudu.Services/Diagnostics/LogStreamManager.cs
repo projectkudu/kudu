@@ -12,10 +12,10 @@ namespace Kudu.Services.Performance
 {
     public class LogStreamManager
     {
-        private const string InitialMessage = "Welcome, you are now connected to log-streaming service.\r\n";
-        private const string HeartbeatMessage = "\r\nNo new trace in the past {0} min(s).\r\n";
-        private const string IdleMessage = "\r\nStream terminated due to no new trace in the past {0} min(s).\r\n";
-        private const string ErrorMessage = "\r\nError has occured and stream is terminated. {0}\r\n";
+        private const string InitialMessage = "{0}  Welcome, you are now connected to log-streaming service.\r\n";
+        private const string HeartbeatMessage = "{0}  No new trace in the past {1} min(s).\r\n";
+        private const string IdleMessage = "{0}  Stream terminated due to no new trace in the past {1} min(s).\r\n";
+        private const string ErrorMessage = "\r\n{0}  Error has occured and stream is terminated. {1}\r\n";
 
         // Antares 3 mins timeout, heartbeat every mins keep alive.
         private static string[] LogFileExtensions = new string[] { ".txt", ".log" };
@@ -126,7 +126,7 @@ namespace Kudu.Services.Performance
 
         private void WriteInitialMessage(HttpContext context)
         {
-            context.Response.Write(InitialMessage);
+            context.Response.Write(string.Format(InitialMessage, DateTime.UtcNow.ToString("s")));
         }
 
         private void OnHeartbeat(object state)
@@ -140,11 +140,11 @@ namespace Kudu.Services.Performance
                     {
                         if (ts >= IdleTimeout)
                         {
-                            TerminateClient(string.Format(IdleMessage, (int)ts.TotalMinutes));
+                            TerminateClient(string.Format(IdleMessage, DateTime.UtcNow.ToString("s"), (int)ts.TotalMinutes));
                         }
                         else
                         {
-                            NotifyClient(string.Format(HeartbeatMessage, (int)ts.TotalMinutes));
+                            NotifyClient(string.Format(HeartbeatMessage, DateTime.UtcNow.ToString("s"), (int)ts.TotalMinutes));
                         }
                     }
                 }
@@ -384,7 +384,7 @@ namespace Kudu.Services.Performance
 
         private void OnCriticalError(Exception ex)
         {
-            TerminateClient(string.Format(ErrorMessage, ex.Message));
+            TerminateClient(string.Format(ErrorMessage, DateTime.UtcNow.ToString("s"), ex.Message));
         }
 
         private void TerminateClient(string text)
