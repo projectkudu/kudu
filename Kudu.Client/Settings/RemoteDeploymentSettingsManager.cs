@@ -33,6 +33,12 @@ namespace Kudu.Client.Deployment
             return _client.PostAsync(String.Empty, values).Then(response => response.EnsureSuccessful());
         }
 
+        public Task SetValues(params KeyValuePair<string, string>[] values)
+        {
+            var jsonvalues = HttpClientHelper.CreateJsonContent(values);
+            return _client.PostAsync(String.Empty, jsonvalues).Then(response => response.EnsureSuccessful());
+        }
+
         public Task<NameValueCollection> GetValues()
         {
             return _client.GetJsonAsync<JObject>(String.Empty).Then(obj =>
