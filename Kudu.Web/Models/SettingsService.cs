@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
 using Kudu.Client.Deployment;
 using Kudu.Client.Infrastructure;
@@ -57,6 +58,24 @@ namespace Kudu.Web.Models
             RemoteDeploymentSettingsManager settingsManager = application.GetSettingsManager(credentials);
 
             return settingsManager.SetValue(key, value);
+        }
+
+        public Task SetKuduSettings(string siteName, params KeyValuePair<string, string>[] settings)
+        {
+            IApplication application = _applicationService.GetApplication(siteName);
+            ICredentials credentials = _credentialProvider.GetCredentials();
+            RemoteDeploymentSettingsManager settingsManager = application.GetSettingsManager(credentials);
+            
+            return settingsManager.SetValues(settings);
+        }
+
+        public Task RemoveKuduSetting(string siteName, string key)
+        {
+            IApplication application = _applicationService.GetApplication(siteName);
+            ICredentials credentials = _credentialProvider.GetCredentials();
+            RemoteDeploymentSettingsManager settingsManager = application.GetSettingsManager(credentials);
+
+            return settingsManager.Delete(key);
         }
     }
 }
