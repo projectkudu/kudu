@@ -1,5 +1,4 @@
-﻿@using Kudu.Contracts.Settings
-@model Kudu.Web.Models.SettingsViewModel
+﻿@model Kudu.Web.Models.SettingsViewModel
 
 @{
     ViewBag.Title = "Configuration Settings";
@@ -130,7 +129,7 @@
     {
         <h3>Git Branch</h3>        
         <p class="help-block">The branch to deploy.</p>
-        @Html.TextBox("Branch", ViewData["Branch"] ?? Model.KuduSettings[SettingsKeys.Branch] ?? "master", new { placeholder = "branch name" })
+        @Html.TextBox("Branch", ViewData["Branch"] ?? Model.KuduSettings.Branch ?? "master", new { placeholder = "branch name" })
         @Html.ValidationMessage("Branch", "*")
         <input type="submit" class="btn-primary" value="Update branch" />
     }
@@ -145,9 +144,70 @@
         <p class="help-block">
             You could for example use: /P:Configuration=Release
         </p>
-        @Html.TextBox("BuildArgs", ViewData["BuildArgs"] ?? Model.KuduSettings[SettingsKeys.BuildArgs] ?? "", new { placeholder = "Build arguments" })
+        @Html.TextBox("BuildArgs", ViewData["BuildArgs"] ?? Model.KuduSettings.BuildArgs ?? "", new { placeholder = "Build arguments" })
         <input type="submit" class="btn-primary" value="Update build arguments" />
     }
     </div>
+    <div class="page-header well">
+        <h3>Custom properties:</h3>        
+        <p class="help-block">
+            Specify additional deployment properties.
+        </p>
+        <p class="help-block">
+            
+        </p>
+        @if (Model.KuduSettings.SiteSettings.Count > 0)
+        {
+            using (Html.BeginForm("set-customproperties", "settings", new { ViewBag.slug }, FormMethod.Post, new { @class = "form-inline" }))
+            {
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Property name:</th>
+                            <th>Property value:</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            var i = 0;
+                            foreach (var setting in Model.KuduSettings.SiteSettings)
+                            {
+                                <tr>
+                                    <td>@setting.Key</td>
+                                    <td>
+                                        @Html.Hidden(String.Format("Settings[{0}].Key", i), setting.Key)
+                                        @Html.TextBox(String.Format("Settings[{0}].Value", i), setting.Value)
+                                    </td>
+                                    <td><button type="button" class="btn btn-primary" onclick=" removeSetting('@setting.Key') ">Remove</button></td>
+                                </tr>
+                            }
+                        }           
+                    </tbody>
+                </table>
+                <input type="submit" class="btn-primary" value="Save properties" />
+            }
+        }
+
+        @using (Html.BeginForm("add-customproperty", "settings", new { ViewBag.slug }, FormMethod.Post, new { @class = "form-inline" }))
+        {
+            <h3>Add custom property</h3>            
+            @Html.TextBox("Key", ViewData["Key"], new { placeholder = "property name" })
+            @Html.TextBox("Value", ViewData["Value"], new { placeholder = "property value" })
+            <button id="add_buildproperty" type="submit" class="btn btn-primary">Add property</button>
+            @Html.ValidationMessage("Key", "Please specify property name")
+        }
+        @using (Html.BeginForm("remove-customproperty", "settings", new { ViewBag.slug }, FormMethod.Post, new { id = "remove-setting-form" }))
+        {
+            @Html.Hidden("Key", "", new { id = "removesettingkey" })
+        }
+    </div>
+    <script type="text/javascript">
+        function removeSetting(key) {
+            if (confirm('Remove the following property: ' + key)) {
+                $('#removesettingkey').val(key).closest('form').submit();
+            }
+        }
+    </script>
 }
 

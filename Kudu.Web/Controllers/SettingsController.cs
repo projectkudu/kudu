@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Web.Mvc;
 using Kudu.Contracts.Infrastructure;
@@ -178,6 +181,86 @@ namespace Kudu.Web.Controllers
         }
 
         [HttpPost]
+        [ActionName("set-customproperties")]
+        public Task<ActionResult> SetCustomProperties(string slug, IDictionary<string, string> settings)
+        {
+            if (settings != null && settings.Count > 0)
+            {
+                var tcs = new TaskCompletionSource<ActionResult>();
+                _service.SetKuduSettings(slug, settings.ToArray())
+                               .ContinueWith(task =>
+                               {
+                                   if (task.IsFaulted)
+                                   {
+                                       tcs.SetException(task.Exception.InnerExceptions);
+                                   }
+                                   else
+                                   {
+                                       tcs.SetResult(RedirectToAction("Index", new { slug }));
+                                   }
+                               });
+
+                return tcs.Task;
+            }
+
+            return GetSettingsViewModel(slug).Then(model =>
+            {
+                ViewBag.appName = slug;
+
+                return (ActionResult)View("index", model);
+            });
+        }
+
+        [HttpPost]
+        [ActionName("add-customproperty")]
+        public Task<ActionResult> AddCustomProperty(string slug, string key, string value)
+        {
+            if (String.IsNullOrEmpty(key))
+            {
+                ModelState.AddModelError("Key", "key is required");
+            }
+
+            if (ModelState.IsValid)
+            {
+                _service.SetKuduSetting(slug, key, value);
+                return RedirectToActionAsync("Index", new {slug});
+            }
+
+            return GetSettingsViewModel(slug).Then(model =>
+            {
+                ViewBag.Key = key;
+                ViewBag.Value = value;
+
+                return (ActionResult)View("index", model);
+            }); 
+        }
+
+        [HttpPost]
+        [ActionName("remove-customproperty")]
+        public Task<ActionResult> RemoveCustomProperty(string slug, string key)
+        {
+            if (String.IsNullOrEmpty(key))
+            {
+                ModelState.AddModelError("Key", "key is required");
+            }
+
+            if (ModelState.IsValid)
+            {
+                // REVIEW: TODO: remove a kudu setting
+                _service.RemoveKuduSetting(slug, key);
+
+                return RedirectToActionAsync("Index", new { slug });
+            }
+
+            return GetSettingsViewModel(slug).Then(model =>
+            {
+                ViewBag.Key = key;
+
+                return (ActionResult)View("index", model);
+            });
+        }
+
+        [HttpPost]
         [ActionName("delete-connection-string")]
         public ActionResult DeleteConnectionString(string slug, string name)
         {
@@ -219,7 +302,7 @@ namespace Kudu.Web.Controllers
                     {
                         AppSettings = task.Result.AppSettings,
                         ConnectionStrings = task.Result.ConnectionStrings,
-                        KuduSettings = task.Result.KuduSettings,
+                        KuduSettings = new DeploymentSettingsViewModel(task.Result.KuduSettings),
                         Enabled = true
                     };
                 });
