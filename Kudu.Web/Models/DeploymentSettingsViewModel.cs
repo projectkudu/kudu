@@ -8,6 +8,9 @@ namespace Kudu.Web.Models
 {
     public class DeploymentSettingsViewModel
     {
+        // these keys are not allowed to be added as a custom property, this is validated by the controller
+        public static readonly string[] ReservedSettingKeys = new[] { SettingsKeys.Branch, SettingsKeys.BuildArgs };
+        
         public string Branch { get; set; }
 
         public string BuildArgs { get; set; }
@@ -15,13 +18,13 @@ namespace Kudu.Web.Models
         public IDictionary<string, string> SiteSettings { get; set; }
 
         public DeploymentSettingsViewModel()
-            : this(null)
+            : this(kuduSettings: null)
         {
         }
 
-        public DeploymentSettingsViewModel(NameValueCollection kuduSettings)
+        public DeploymentSettingsViewModel(NameValueCollection kuduSettings = null)
         {
-            SiteSettings = new Dictionary<string, string>();
+            SiteSettings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             if (kuduSettings != null)
             {
                 foreach (var key in kuduSettings.AllKeys)

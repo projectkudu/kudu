@@ -1,4 +1,5 @@
-﻿@model Kudu.Web.Models.SettingsViewModel
+﻿@using Kudu.Web.Models
+@model Kudu.Web.Models.SettingsViewModel
 
 @{
     ViewBag.Title = "Configuration Settings";
@@ -151,7 +152,7 @@
     <div class="page-header well">
         <h3>Custom properties:</h3>        
         <p class="help-block">
-            Specify additional deployment properties.
+            Specify additional deployment properties. Cannot be one of @String.Join(", ", DeploymentSettingsViewModel.ReservedSettingKeys)
         </p>
         <p class="help-block">
             
@@ -192,10 +193,10 @@
         @using (Html.BeginForm("add-customproperty", "settings", new { ViewBag.slug }, FormMethod.Post, new { @class = "form-inline" }))
         {
             <h3>Add custom property</h3>            
+            @Html.ValidationSummary()
             @Html.TextBox("Key", ViewData["Key"], new { placeholder = "property name" })
             @Html.TextBox("Value", ViewData["Value"], new { placeholder = "property value" })
             <button id="add_buildproperty" type="submit" class="btn btn-primary">Add property</button>
-            @Html.ValidationMessage("Key", "Please specify property name")
         }
         @using (Html.BeginForm("remove-customproperty", "settings", new { ViewBag.slug }, FormMethod.Post, new { id = "remove-setting-form" }))
         {

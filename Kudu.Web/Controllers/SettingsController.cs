@@ -215,9 +215,19 @@ namespace Kudu.Web.Controllers
         [ActionName("add-customproperty")]
         public Task<ActionResult> AddCustomProperty(string slug, string key, string value)
         {
-            if (String.IsNullOrEmpty(key))
+            if (String.IsNullOrWhiteSpace(key))
             {
-                ModelState.AddModelError("Key", "key is required");
+                ModelState.AddModelError("Key", "property name is required");
+            }
+
+            if (String.IsNullOrWhiteSpace(value))
+            {
+                ModelState.AddModelError("Value", "property value is required");
+            }
+
+            if (DeploymentSettingsViewModel.ReservedSettingKeys.Contains(key))
+            {
+                ModelState.AddModelError("Key", "this is a reserved property name");
             }
 
             if (ModelState.IsValid)
@@ -246,7 +256,6 @@ namespace Kudu.Web.Controllers
 
             if (ModelState.IsValid)
             {
-                // REVIEW: TODO: remove a kudu setting
                 _service.RemoveKuduSetting(slug, key);
 
                 return RedirectToActionAsync("Index", new { slug });
