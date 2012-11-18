@@ -59,10 +59,13 @@
     <Compile Include="Deployment\LogEntryType.cs" />
     <Compile Include="Editor\IProjectSystem.cs" />
     <Compile Include="Editor\Project.cs" />
+    <Compile Include="Editor\VfsStatEntry.cs" />
     <Compile Include="IEnvironment.cs" />
     <Compile Include="Infrastructure\IOperationLock.cs" />
     <Compile Include="Infrastructure\LockExtensions.cs" />
-    <Compile Include="Infrastructure\TaskExtensions.cs" />
+    <Compile Include="Infrastructure\RS.cs" />
+    <Compile Include="Infrastructure\TaskHelpers.cs" />
+    <Compile Include="Infrastructure\TaskHelpersExtensions.cs" />
     <Compile Include="Settings\DeploymentSettingsExtension.cs" />
     <Compile Include="Settings\IDeploymentSettingsManager.cs" />
     <Compile Include="Settings\SettingsKeys.cs" />

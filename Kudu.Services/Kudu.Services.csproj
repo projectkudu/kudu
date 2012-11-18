@@ -132,10 +132,14 @@
     <Compile Include="..\Kudu.Core\Infrastructure\OperationManager.cs">
       <Link>Infrastructure\OperationManager.cs</Link>
     </Compile>
+    <Compile Include="ByteRanges\ByteRangeStream.cs" />
+    <Compile Include="ByteRanges\ByteRangeStreamContent.cs" />
+    <Compile Include="ByteRanges\InvalidByteRangeException.cs" />
     <Compile Include="Commands\CommandController.cs" />
     <Compile Include="Deployment\DeploymentController.cs" />
     <Compile Include="Diagnostics\LogStreamHandler.cs" />
     <Compile Include="Diagnostics\LogStreamManager.cs" />
+    <Compile Include="Editor\VfsController.cs" />
     <Compile Include="GitServer\GitServerHttpHandler.cs" />
     <Compile Include="GitServer\ServiceHookHandlers\CodebaseHqHandler.cs" />
     <Compile Include="GitServer\ServiceHookHandlers\FallbackHandler.cs" />
@@ -147,6 +151,11 @@
     <Compile Include="GitServer\ServiceHookHandlers\GithubHandler.cs" />
     <Compile Include="GitServer\UploadPackHandler.cs" />
     <Compile Include="Infrastructure\ShutdownDetector.cs" />
+    <Compile Include="Infrastructure\DelegatingStream.cs" />
+    <Compile Include="ByteRanges\HttpRequestMessageExtensions.cs" />
+    <Compile Include="Infrastructure\MediaTypeMap.cs" />
+    <Compile Include="Infrastructure\VfsControllerBase.cs" />
+    <Compile Include="SourceControl\LiveScmEditorController.cs" />
     <Compile Include="SSHKey\SSHKeyController.cs" />
     <Compile Include="Editor\FilesController.cs" />
     <Compile Include="EnvironmentController.cs" />
@@ -177,6 +186,10 @@
       <Project>{EC0ED988-2C60-4F31-A434-645E048BFD95}</Project>
       <Name>Kudu.Contracts</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Kudu.Core\Kudu.Core.csproj">
+      <Project>{5320177c-725a-44bd-8fa6-f88d9725b46c}</Project>
+      <Name>Kudu.Core</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources.resx">
@@ -184,7 +197,6 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

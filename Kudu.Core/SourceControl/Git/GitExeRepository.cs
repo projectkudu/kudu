@@ -4,8 +4,8 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
-using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
@@ -43,7 +43,7 @@ namespace Kudu.Core.SourceControl.Git
             }
         }
 
-        public void Initialize()
+        public void Initialize(RepositoryConfiguration configuration)
         {
             var profiler = _tracerFactory.GetTracer();
             using (profiler.Step("GitExeRepository.Initialize"))
@@ -51,6 +51,10 @@ namespace Kudu.Core.SourceControl.Git
                 _gitExe.Execute(profiler, "init");
 
                 _gitExe.Execute(profiler, "config core.autocrlf true");
+
+                _gitExe.Execute(profiler, @"config user.name ""{0}""", configuration.Username);
+
+                _gitExe.Execute(profiler, @"config user.email ""{0}""", configuration.Email);
             }
         }
 
@@ -267,6 +271,27 @@ namespace Kudu.Core.SourceControl.Git
             }
 
             return detail;
+        }
+
+        public void CreateOrResetBranch(string branchName, string startPoint)
+        {
+            _gitExe.Execute("checkout -B \"{0}\" {1}", branchName, startPoint);
+        }
+
+        public bool Rebase(string branchName)
+        {
+            string output = _gitExe.Execute("rebase \"{0}\"", branchName).Item1;
+            return output.Contains("is up to date");
+        }
+
+        public void RebaseAbort()
+        {
+            _gitExe.Execute("rebase --abort");
+        }
+
+        public void UpdateRef(string source)
+        {
+            _gitExe.Execute("update-ref refs/heads/master refs/heads/{0}", source);
         }
 
         private ChangeSetDetail MakeNewFileDiff(IEnumerable<FileStatus> statuses)
