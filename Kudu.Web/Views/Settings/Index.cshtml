@@ -171,14 +171,16 @@
                     </thead>
                     <tbody>
                         @{
-                            var i = 0;
+                            var i = -1;
                             foreach (var setting in Model.KuduSettings.SiteSettings)
                             {
+                                i++;
                                 <tr>
                                     <td>@setting.Key</td>
                                     <td>
                                         @Html.Hidden(String.Format("Settings[{0}].Key", i), setting.Key)
                                         @Html.TextBox(String.Format("Settings[{0}].Value", i), setting.Value)
+                                        @Html.ValidationMessage(String.Format("Settings[{0}].Value", i))
                                     </td>
                                     <td><button type="button" class="btn btn-primary" onclick=" removeSetting('@setting.Key') ">Remove</button></td>
                                 </tr>

@@ -168,7 +168,7 @@ namespace Kudu.Web.Controllers
                                    }
                                });
 
-                return tcs.Task;                
+                return tcs.Task;
             }
 
             return GetSettingsViewModel(slug).Then(model =>
@@ -186,26 +186,45 @@ namespace Kudu.Web.Controllers
         {
             if (settings != null && settings.Count > 0)
             {
-                var tcs = new TaskCompletionSource<ActionResult>();
-                _service.SetKuduSettings(slug, settings.ToArray())
-                               .ContinueWith(task =>
-                               {
-                                   if (task.IsFaulted)
-                                   {
-                                       tcs.SetException(task.Exception.InnerExceptions);
-                                   }
-                                   else
-                                   {
-                                       tcs.SetResult(RedirectToAction("Index", new { slug }));
-                                   }
-                               });
+                // validate custom property name/values
+                int i = 0;
+                foreach (var setting in settings)
+                {
+                    if (string.IsNullOrWhiteSpace(setting.Key))
+                    {
+                        ModelState.AddModelError(String.Format("Settings[{0}].Key", i), "property name cannot be empty");
+                    }
 
-                return tcs.Task;
+                    if (string.IsNullOrWhiteSpace(setting.Value))
+                    {
+                        ModelState.AddModelError(String.Format("Settings[{0}].Value", i), "property value cannot be empty");
+                    }
+                    i++;
+                }
+
+                if (ModelState.IsValid)
+                {
+                    var tcs = new TaskCompletionSource<ActionResult>();
+                    _service.SetKuduSettings(slug, settings.ToArray())
+                                   .ContinueWith(task =>
+                                   {
+                                       if (task.IsFaulted)
+                                       {
+                                           tcs.SetException(task.Exception.InnerExceptions);
+                                       }
+                                       else
+                                       {
+                                           tcs.SetResult(RedirectToAction("Index", new { slug }));
+                                       }
+                                   });
+
+                    return tcs.Task;
+                }
             }
 
             return GetSettingsViewModel(slug).Then(model =>
             {
-                ViewBag.appName = slug;
+                model.KuduSettings.SiteSettings = settings;
 
                 return (ActionResult)View("index", model);
             });
@@ -233,7 +252,7 @@ namespace Kudu.Web.Controllers
             if (ModelState.IsValid)
             {
                 _service.SetKuduSetting(slug, key, value);
-                return RedirectToActionAsync("Index", new {slug});
+                return RedirectToActionAsync("Index", new { slug });
             }
 
             return GetSettingsViewModel(slug).Then(model =>
@@ -242,7 +261,7 @@ namespace Kudu.Web.Controllers
                 ViewBag.Value = value;
 
                 return (ActionResult)View("index", model);
-            }); 
+            });
         }
 
         [HttpPost]
