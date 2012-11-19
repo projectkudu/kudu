@@ -318,6 +318,7 @@
     <Compile Include="Models\ISettings.cs" />
     <Compile Include="Models\ISettingsService.cs" />
     <Compile Include="Models\Settings.cs" />
+    <Compile Include="Models\DeploymentSettingsViewModel.cs" />
     <Compile Include="Models\SettingsService.cs" />
     <Compile Include="Models\SettingsViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

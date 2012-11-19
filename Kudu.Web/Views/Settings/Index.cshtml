@@ -1,10 +1,11 @@
-﻿@model Kudu.Web.Models.SettingsViewModel
+﻿@using Kudu.Web.Models
+@model Kudu.Web.Models.SettingsViewModel
 
 @{
     ViewBag.Title = "Configuration Settings";
 }
 
-@if (!Model.Enabled) 
+@if (!Model.Enabled)
 {
     <div class="alert alert-error">Configuration settings are not enabled on the kudu service.</div>
     return;
@@ -13,18 +14,20 @@
 @section head 
 {
     <style>
-        table form {
+        table form
+        {
             padding: 0;
             margin: 0;
         }
-        
-        input {
+
+        input
+        {
             margin-right: 5px;
         }
     </style>
 }
 
-@if(Model.AppSettings != null) 
+@if (Model.AppSettings != null)
 {
     <div class="page-header">
     <h3>Application Settings</h3>
@@ -72,7 +75,7 @@
     }
 }
 
-@if(Model.ConnectionStrings != null)
+@if (Model.ConnectionStrings != null)
 {
     <div class="page-header">
         <h3>Connection Strings (.NET only)</h3>
@@ -120,18 +123,94 @@
     }
 }
 
-@if(Model.KuduSettings != null)
+@if (Model.KuduSettings != null)
 {
     <div class="page-header">
-        <h3>Git Branch</h3>        
-    </div>
-
-    using (Html.BeginForm("new-branch", "settings", new { ViewBag.slug }, FormMethod.Post, new { @class = "well form-inline" }))
+    @using (Html.BeginForm("new-branch", "settings", new { ViewBag.slug }, FormMethod.Post, new { @class = "well form-inline" }))
     {
+        <h3>Git Branch</h3>        
         <p class="help-block">The branch to deploy.</p>
-        @Html.TextBox("Branch", ViewData["Branch"] ?? Model.KuduSettings["Branch"] ?? "master", new { placeholder = "branch name" })
+        @Html.TextBox("Branch", ViewData["Branch"] ?? Model.KuduSettings.Branch ?? "master", new { placeholder = "branch name" })
         @Html.ValidationMessage("Branch", "*")
-        <input type="submit" class="btn-primary" value="Save" />    
+        <input type="submit" class="btn-primary" value="Update branch" />
     }
+    </div>
+    <div class="page-header">
+    @using (Html.BeginForm("set-buildargs", "settings", new { ViewBag.slug }, FormMethod.Post, new { @class = "well form-inline" }))
+    {
+        <h3>MSBuild command line arguments</h3>        
+        <p class="help-block">
+            If not using a custom deployment script, this get's added to the MSBuild commandline.
+        </p>
+        <p class="help-block">
+            You could for example use: /P:Configuration=Release
+        </p>
+        @Html.TextBox("BuildArgs", ViewData["BuildArgs"] ?? Model.KuduSettings.BuildArgs ?? "", new { placeholder = "Build arguments" })
+        <input type="submit" class="btn-primary" value="Update build arguments" />
+    }
+    </div>
+    <div class="page-header well">
+        <h3>Custom properties:</h3>        
+        <p class="help-block">
+            Specify additional deployment properties. Cannot be one of @String.Join(", ", DeploymentSettingsViewModel.ReservedSettingKeys)
+        </p>
+        <p class="help-block">
+            
+        </p>
+        @if (Model.KuduSettings.SiteSettings.Count > 0)
+        {
+            using (Html.BeginForm("set-customproperties", "settings", new { ViewBag.slug }, FormMethod.Post, new { @class = "form-inline" }))
+            {
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Property name:</th>
+                            <th>Property value:</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            var i = -1;
+                            foreach (var setting in Model.KuduSettings.SiteSettings)
+                            {
+                                i++;
+                                <tr>
+                                    <td>@setting.Key</td>
+                                    <td>
+                                        @Html.Hidden(String.Format("Settings[{0}].Key", i), setting.Key)
+                                        @Html.TextBox(String.Format("Settings[{0}].Value", i), setting.Value)
+                                        @Html.ValidationMessage(String.Format("Settings[{0}].Value", i))
+                                    </td>
+                                    <td><button type="button" class="btn btn-primary" onclick=" removeSetting('@setting.Key') ">Remove</button></td>
+                                </tr>
+                            }
+                        }           
+                    </tbody>
+                </table>
+                <input type="submit" class="btn-primary" value="Save properties" />
+            }
+        }
+
+        @using (Html.BeginForm("add-customproperty", "settings", new { ViewBag.slug }, FormMethod.Post, new { @class = "form-inline" }))
+        {
+            <h3>Add custom property</h3>            
+            @Html.ValidationSummary()
+            @Html.TextBox("Key", ViewData["Key"], new { placeholder = "property name" })
+            @Html.TextBox("Value", ViewData["Value"], new { placeholder = "property value" })
+            <button id="add_buildproperty" type="submit" class="btn btn-primary">Add property</button>
+        }
+        @using (Html.BeginForm("remove-customproperty", "settings", new { ViewBag.slug }, FormMethod.Post, new { id = "remove-setting-form" }))
+        {
+            @Html.Hidden("Key", "", new { id = "removesettingkey" })
+        }
+    </div>
+    <script type="text/javascript">
+        function removeSetting(key) {
+            if (confirm('Remove the following property: ' + key)) {
+                $('#removesettingkey').val(key).closest('form').submit();
+            }
+        }
+    </script>
 }
 

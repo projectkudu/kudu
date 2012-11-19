@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Kudu.Web.Models
 {
@@ -10,5 +11,7 @@ namespace Kudu.Web.Models
         void RemoveAppSetting(string siteName, string key);
         void SetAppSetting(string siteName, string key, string value);
         Task SetKuduSetting(string siteName, string key, string value);
+        Task SetKuduSettings(string siteName, params KeyValuePair<string, string>[] values);
+        Task RemoveKuduSetting(string siteName, string key);
     }
 }

@@ -6,7 +6,7 @@ namespace Kudu.Web.Models
     {
         public NameValueCollection AppSettings { get; set; }
         public NameValueCollection ConnectionStrings { get; set; }
-        public NameValueCollection KuduSettings { get; set; }
+        public DeploymentSettingsViewModel KuduSettings { get; set; }
         public bool Enabled { get; set; }
     }
 }
