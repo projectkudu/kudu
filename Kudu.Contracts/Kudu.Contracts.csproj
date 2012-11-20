@@ -59,6 +59,7 @@
     <Compile Include="Deployment\LogEntryType.cs" />
     <Compile Include="Editor\IProjectSystem.cs" />
     <Compile Include="Editor\Project.cs" />
+    <Compile Include="Editor\VfsStatEntry.cs" />
     <Compile Include="IEnvironment.cs" />
     <Compile Include="Infrastructure\IOperationLock.cs" />
     <Compile Include="Infrastructure\LockExtensions.cs" />

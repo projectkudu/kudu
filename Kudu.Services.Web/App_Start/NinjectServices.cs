@@ -159,6 +159,9 @@ namespace Kudu.Services.Web.App_Start
                                                                                   context.Kernel.Get<ITraceFactory>()))
                                             .InRequestScope();
 
+            kernel.Bind<IRepository>().ToMethod(context => new GitExeRepository(environment.RepositoryPath, context.Kernel.Get<ITraceFactory>()))
+                                                .InRequestScope();
+
             kernel.Bind<ILogger>().ToConstant(NullLogger.Instance);
             kernel.Bind<IDeploymentManager>().To<DeploymentManager>()
                                              .InRequestScope();
@@ -220,6 +223,10 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("scm-clean", "scm/clean", new { controller = "LiveScm", action = "Clean" });
             routes.MapHttpRoute("scm-delete", "scm", new { controller = "LiveScm", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
 
+            // Scm files editor
+            routes.MapHttpRoute("scm-get-files", "scmvfs/{*path}", new { controller = "LiveScmEditor", action = "GetItem" }, new { verb = new HttpMethodConstraint("GET", "HEAD") });
+            routes.MapHttpRoute("scm-put-files", "scmvfs/{*path}", new { controller = "LiveScmEditor", action = "PutItem" }, new { verb = new HttpMethodConstraint("PUT") });
+
             // These older scm routes are there for backward compat, and should eventually be deleted once clients are changed.
             routes.MapHttpRoute("live-scm-info", "live/scm/info", new { controller = "LiveScm", action = "GetRepositoryInfo" });
             routes.MapHttpRoute("live-scm-clean", "live/scm/clean", new { controller = "LiveScm", action = "Clean" });
@@ -230,6 +237,10 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("one-file", "files/{*path}", new { controller = "Files", action = "GetFile" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("save-file", "files/{*path}", new { controller = "Files", action = "Save" }, new { verb = new HttpMethodConstraint("PUT") });
             routes.MapHttpRoute("delete-file", "files/{*path}", new { controller = "Files", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
+
+            // Live files editor
+            routes.MapHttpRoute("vfs-get-files", "vfs/{*path}", new { controller = "Vfs", action = "GetItem" }, new { verb = new HttpMethodConstraint("GET", "HEAD") });
+            routes.MapHttpRoute("vfs-put-files", "vfs/{*path}", new { controller = "Vfs", action = "PutItem" }, new { verb = new HttpMethodConstraint("PUT") });
 
             // These older files routes are there for backward compat, and should eventually be deleted once clients are changed.
             routes.MapHttpRoute("old-all-files", "live/files", new { controller = "Files", action = "GetFiles" });

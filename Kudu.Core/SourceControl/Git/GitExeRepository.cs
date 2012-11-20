@@ -6,7 +6,6 @@ using System.Linq;
 using System.Text;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
-using Kudu.Core.SSHKey;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.SourceControl.Git
@@ -273,6 +272,26 @@ namespace Kudu.Core.SourceControl.Git
             }
 
             return detail;
+        }
+
+        public void CreateOrResetBranch(string branchName, string startPoint)
+        {
+            _gitExe.Execute("checkout -B \"{0}\" {1}", branchName, startPoint);
+        }
+
+        public void Rebase()
+        {
+            _gitExe.Execute("rebase master");
+        }
+
+        public void RebaseAbort()
+        {
+            _gitExe.Execute("rebase --abort");
+        }
+
+        public void UpdateRef(string source)
+        {
+            _gitExe.Execute("update-ref refs/heads/master refs/heads/{0}", source);
         }
 
         private ChangeSetDetail MakeNewFileDiff(IEnumerable<FileStatus> statuses)
