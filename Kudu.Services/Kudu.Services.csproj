@@ -140,15 +140,17 @@
     <Compile Include="Diagnostics\LogStreamHandler.cs" />
     <Compile Include="Diagnostics\LogStreamManager.cs" />
     <Compile Include="Editor\VfsController.cs" />
+    <Compile Include="Dropbox\DropboxHelper.cs" />
     <Compile Include="GitServer\GitServerHttpHandler.cs" />
     <Compile Include="GitServer\ServiceHookHandlers\CodebaseHqHandler.cs" />
-    <Compile Include="GitServer\ServiceHookHandlers\FallbackHandler.cs" />
+    <Compile Include="GitServer\ServiceHookHandlers\CodePlexHandler.cs" />
+    <Compile Include="GitServer\ServiceHookHandlers\DropboxHandler.cs" />
     <Compile Include="GitServer\ServiceHookHandlers\GitlabHqHandler.cs" />
     <Compile Include="GitServer\ServiceHookHandlers\JsonServiceHookHandler.cs" />
     <Compile Include="GitServer\ServiceHookHandlers\RepositoryInfo.cs" />
     <Compile Include="GitServer\ServiceHookHandlers\IServiceHookHandler.cs" />
     <Compile Include="GitServer\ServiceHookHandlers\BitbucketHandler.cs" />
-    <Compile Include="GitServer\ServiceHookHandlers\GithubHandler.cs" />
+    <Compile Include="GitServer\ServiceHookHandlers\GitHubHandler.cs" />
     <Compile Include="GitServer\UploadPackHandler.cs" />
     <Compile Include="Infrastructure\ShutdownDetector.cs" />
     <Compile Include="Infrastructure\DelegatingStream.cs" />
@@ -195,6 +197,7 @@
     <EmbeddedResource Include="Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

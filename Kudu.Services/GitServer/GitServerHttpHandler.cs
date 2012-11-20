@@ -20,13 +20,11 @@
 
 #endregion
 
-using System.IO;
-using System.IO.Compression;
 using System.Web;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
-using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Deployment;
+using Kudu.Core.SourceControl.Git;
 
 namespace Kudu.Services.GitServer
 {
@@ -63,21 +61,6 @@ namespace Kudu.Services.GitServer
             response.AddHeader("Expires", "Fri, 01 Jan 1980 00:00:00 GMT");
             response.AddHeader("Pragma", "no-cache");
             response.AddHeader("Cache-Control", "no-cache, max-age=0, must-revalidate");
-        }
-
-        protected Stream GetInputStream(HttpRequest request)
-        {
-            using (_tracer.Step("RpcService.GetInputStream"))
-            {
-                var contentEncoding = request.Headers["Content-Encoding"];
-
-                if (contentEncoding != null && contentEncoding.Contains("gzip"))
-                {
-                    return new GZipStream(request.InputStream, CompressionMode.Decompress);
-                }
-
-                return request.InputStream;
-            }
         }
     }
 }

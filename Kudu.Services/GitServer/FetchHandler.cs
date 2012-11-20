@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Web;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
@@ -13,16 +12,11 @@ using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Services.GitServer.ServiceHookHandlers;
-using Newtonsoft.Json.Linq;
-using System.Diagnostics;
 
 namespace Kudu.Services.GitServer
 {
     public class FetchHandler : GitServerHttpHandler
     {
-        private const string PrivateKeyFile = "id_rsa";
-        private const string PublicKeyFile = "id_rsa.pub";
-
         private readonly IDeploymentSettingsManager _settings;
         private readonly RepositoryConfiguration _configuration;
         private readonly IEnvironment _environment;
@@ -58,14 +52,7 @@ namespace Kudu.Services.GitServer
             {
                 context.Response.TrySkipIisCustomErrors = true;
 
-                if (_tracer.TraceLevel >= TraceLevel.Verbose)
-                {
-                    var body = new StreamReader(context.Request.InputStream).ReadToEnd();
-                    TracePayload(body);
-                }
-
                 RepositoryInfo repositoryInfo = null;
-
                 try
                 {
                     repositoryInfo = GetRepositoryInfo(context.Request);
@@ -138,7 +125,7 @@ namespace Kudu.Services.GitServer
                         _gitServer.SetReceiveInfo(repositoryInfo.OldRef, repositoryInfo.NewRef, targetBranch);
 
                         // Fetch from url
-                        _gitServer.FetchWithoutConflict(repositoryInfo.RepositoryUrl, "external", targetBranch);
+                        repositoryInfo.Handler.Fetch(repositoryInfo, targetBranch);
 
                         // Perform the actual deployment
                         _deploymentManager.Deploy(repositoryInfo.Deployer);
@@ -189,32 +176,23 @@ namespace Kudu.Services.GitServer
             RepositoryInfo info = null;
             foreach (var handler in _serviceHookHandlers)
             {
-                try
+                if (handler.TryGetRepositoryInfo(request, out info))
                 {
-                    if (!handler.TryGetRepositoryInfo(request, out info)) continue;
-                    
-                    // don't trust parser, validate repository
-                    if (info != null
-                        && !String.IsNullOrEmpty(info.RepositoryUrl)
-                        && !String.IsNullOrEmpty(info.OldRef)
-                        && !String.IsNullOrEmpty(info.NewRef)
-                        && !String.IsNullOrEmpty(info.Deployer))
+                    Debug.Assert(info != null, "info must not be null");
+                    Debug.Assert(!String.IsNullOrEmpty(info.OldRef), "OldRef must not be null");
+                    Debug.Assert(!String.IsNullOrEmpty(info.NewRef), "NewRef must not be null");
+                    Debug.Assert(!String.IsNullOrEmpty(info.Deployer), "Deployer must not be null");
+
+                    if (_tracer.TraceLevel >= TraceLevel.Verbose)
                     {
-                        if (_tracer.TraceLevel >= TraceLevel.Verbose)
-                        {
-                            TraceHandler(handler);
-                        }
-                        return info;
+                        TraceHandler(handler);
                     }
-                }
-                catch (Exception)
-                {
-                    // TODO: review
-                    // ignore exceptions from parsing, just continue to the next
-                    _tracer.TraceWarning("Exception occured in ServiceHookParser");
-                    // _tracer.TraceError(ex);
+
+                    info.Handler = handler;
+                    return info;
                 }
             }
+
             throw new FormatException(Resources.Error_UnsupportedFormat);
         }
     }

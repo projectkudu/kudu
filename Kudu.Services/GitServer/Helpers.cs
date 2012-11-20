@@ -24,9 +24,11 @@ namespace Kudu.Services.GitServer
 {
     using System;
     using System.IO;
+    using System.IO.Compression;
     using System.Net.Http;
     using System.Net.Http.Headers;
     using System.Text;
+    using System.Web;
 
     public static class Helpers
     {
@@ -58,6 +60,18 @@ namespace Kudu.Services.GitServer
         {
             var toWrite = "0000";
             response.Write(Encoding.UTF8.GetBytes(toWrite), 0, Encoding.UTF8.GetByteCount(toWrite));
+        }
+
+        public static Stream GetInputStream(this HttpRequest request)
+        {
+            var contentEncoding = request.Headers["Content-Encoding"];
+
+            if (contentEncoding != null && contentEncoding.Contains("gzip"))
+            {
+                return new GZipStream(request.InputStream, CompressionMode.Decompress);
+            }
+
+            return request.InputStream;
         }
     }
 }

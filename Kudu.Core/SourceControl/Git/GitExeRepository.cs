@@ -137,11 +137,11 @@ namespace Kudu.Core.SourceControl.Git
                 string output;
                 if (authorName == null)
                 {
-                    output = _gitExe.Execute(tracer, "commit -m\"{0}\"", message).Item1;
+                    output = _gitExe.Execute(tracer, "commit -m \"{0}\"", message).Item1;
                 }
                 else
                 {
-                    output = _gitExe.Execute("commit -m\"{0}\" --author=\"{1}\"", message, authorName).Item1;
+                    output = _gitExe.Execute(tracer, "commit -m \"{0}\" --author=\"{1}\"", message, authorName).Item1;
                 }
 
                 // No pending changes

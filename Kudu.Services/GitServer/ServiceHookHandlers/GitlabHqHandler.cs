@@ -1,11 +1,17 @@
 ﻿using System;
 using System.Web;
+using Kudu.Core.SourceControl.Git;
 using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.GitServer.ServiceHookHandlers
 {
     public class GitlabHqHandler : JsonServiceHookHandler
     {
+        public GitlabHqHandler(IGitServer gitServer)
+            : base(gitServer)
+        {
+        }
+
         protected override RepositoryInfo GetRepositoryInfo(HttpRequest request, JObject payload)
         {
             var repository = payload.Value<JObject>("repository");

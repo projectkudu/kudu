@@ -57,6 +57,8 @@
     <Compile Include="Deployment\IDeploymentManagerFactory.cs" />
     <Compile Include="Deployment\LogEntry.cs" />
     <Compile Include="Deployment\LogEntryType.cs" />
+    <Compile Include="Dropbox\DropboxDeltaInfo.cs" />
+    <Compile Include="Dropbox\DropboxDeployInfo.cs" />
     <Compile Include="Editor\IProjectSystem.cs" />
     <Compile Include="Editor\Project.cs" />
     <Compile Include="Editor\VfsStatEntry.cs" />

@@ -84,6 +84,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DeploymentManagerTests.cs" />
+    <Compile Include="DropboxTests.cs" />
     <Compile Include="GitRepositoryManagementTests.cs" />
     <Compile Include="GitStabilityTests.cs" />
     <Compile Include="Infrastructure\KuduAssert.cs" />
@@ -100,6 +101,7 @@
     <EmbeddedResource Include=".ssh\config" />
     <EmbeddedResource Include=".ssh\id_rsa" />
     <None Include="App.config" />
+    <EmbeddedResource Include="dropbox\oauth.json" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>

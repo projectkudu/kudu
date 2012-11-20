@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Web;
+using Kudu.Core.SourceControl.Git;
 using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.GitServer.ServiceHookHandlers
@@ -10,6 +11,13 @@ namespace Kudu.Services.GitServer.ServiceHookHandlers
     /// </summary>
     public class JsonServiceHookHandler : IServiceHookHandler
     {
+        protected readonly IGitServer _gitServer;
+
+        public JsonServiceHookHandler(IGitServer gitServer)
+        {
+            _gitServer = gitServer;
+        }
+
         public virtual bool TryGetRepositoryInfo(HttpRequest request, out RepositoryInfo repositoryInfo)
         {
             string json = String.Empty;
@@ -25,13 +33,21 @@ namespace Kudu.Services.GitServer.ServiceHookHandlers
             {
                 // assume raw json
                 request.InputStream.Seek(0, SeekOrigin.Begin);
-                json = new StreamReader(request.InputStream).ReadToEnd();
+
+                // TODO, suwatch: this is problematic as multiple handler may not collaborate.
+                // input stream can only be read once.
+                json = new StreamReader(request.GetInputStream()).ReadToEnd();
             }
 
             JObject payload = JObject.Parse(json);
-
             repositoryInfo = GetRepositoryInfo(request, payload);
             return repositoryInfo != null;
+        }
+
+        public virtual void Fetch(RepositoryInfo repositoryInfo, string targetBranch)
+        {
+            // Fetch from url
+            _gitServer.FetchWithoutConflict(repositoryInfo.RepositoryUrl, "external", targetBranch);
         }
 
         protected virtual RepositoryInfo GetRepositoryInfo(HttpRequest request, JObject payload)

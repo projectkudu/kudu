@@ -343,6 +343,10 @@ namespace Kudu.Core.Deployment
             using (tracer.Step("Creating temporary deployment"))
             {
                 DeploymentStatusFile statusFile = CreateStatusFile(id);
+                statusFile.Message = "N/A";
+                statusFile.Author = "N/A";
+                statusFile.Deployer = "N/A";
+                statusFile.AuthorEmail = "N/A";
                 statusFile.Status = DeployStatus.Pending;
                 statusFile.StatusText = statusText;
                 statusFile.Save(_fileSystem);

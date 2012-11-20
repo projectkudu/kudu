@@ -1,9 +1,15 @@
 ﻿using System.Web;
+using Kudu.Core.SourceControl.Git;
 
 namespace Kudu.Services.GitServer.ServiceHookHandlers
 {
-    public class GithubHandler : JsonServiceHookHandler
+    public class GitHubHandler : JsonServiceHookHandler
     {
+        public GitHubHandler(IGitServer gitServer)
+            : base(gitServer)
+        {
+        }
+
         public override bool TryGetRepositoryInfo(HttpRequest request, out RepositoryInfo repositoryInfo)
         {
             repositoryInfo = null;
