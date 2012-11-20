@@ -261,9 +261,21 @@ namespace Kudu.Services.SourceControl
                             return conflictResponse;
                         }
 
-                        // Return either 204 No Content or 201 Created response
-                        HttpResponseMessage successFileResponse =
-                            Request.CreateResponse(itemExists ? HttpStatusCode.NoContent : HttpStatusCode.Created);
+                        // If item does not already exist then we return 201 Created. Otherwise, as a successful commit could result 
+                        // in a non-conflicting merge we send back the committed version so that a client
+                        // can get the latest bits. This means we use a 200 OK response instead of a 204 response.
+                        HttpResponseMessage successFileResponse = null;
+                        if (itemExists)
+                        {
+                            successFileResponse = Request.CreateResponse(HttpStatusCode.Created);
+                            _readStream = new RepositoryItemStream(this, GetFileReadStream(localFilePath));
+                            successFileResponse.Content = new StreamContent(_readStream, BufferSize);
+                            successFileResponse.Content.Headers.ContentType = MediaTypeMap.GetMediaType(info.Extension);
+                        }
+                        else
+                        {
+                            successFileResponse = Request.CreateResponse(HttpStatusCode.OK);
+                        }
 
                         // Set updated etag for the file
                         successFileResponse.Headers.ETag = CreateEtag(_repository.CurrentId);
