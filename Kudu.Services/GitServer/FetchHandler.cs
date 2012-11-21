@@ -197,6 +197,7 @@ namespace Kudu.Services.GitServer
 
             if (repository != null)
             {
+                bool isPrivate = false;
                 if (request.UserAgent != null && request.UserAgent.StartsWith("Bitbucket", StringComparison.OrdinalIgnoreCase))
                 {
                     // bitbucket format
@@ -207,7 +208,7 @@ namespace Kudu.Services.GitServer
                     // Combine them to get the full URL
                     info.RepositoryUrl = server + path;
 
-                    info.IsPrivate = repository.Value<bool>("is_private");
+                    isPrivate = repository.Value<bool>("is_private");
 
                     info.Deployer = "Bitbucket";
 
@@ -225,7 +226,7 @@ namespace Kudu.Services.GitServer
                     // { repository: { url: "https//...", private: False }, ref: "", before: "", after: "" } 
                     info.RepositoryUrl = repository.Value<string>("url");
 
-                    info.IsPrivate = repository.Value<bool>("private");
+                    isPrivate = repository.Value<bool>("private");
 
                     // The format of ref is refs/something/something else
                     // For master it's normally refs/head/master
@@ -243,7 +244,7 @@ namespace Kudu.Services.GitServer
                 }
 
                 // private repo, use SSH
-                if (info.IsPrivate)
+                if (isPrivate)
                 {
                     Uri uri = new Uri(info.RepositoryUrl);
                     if (uri.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase))
@@ -287,7 +288,6 @@ namespace Kudu.Services.GitServer
         private class RepositoryInfo
         {
             public string RepositoryUrl { get; set; }
-            public bool IsPrivate { get; set; }
             public bool UseSSH { get; set; }
             public string Host { get; set; }
             public string OldRef { get; set; }

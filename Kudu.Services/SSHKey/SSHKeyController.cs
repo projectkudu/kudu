@@ -34,9 +34,20 @@ namespace Kudu.Services.SSHKey
         [HttpPut]
         public void SetPrivateKey()
         {
-            JObject result = GetJsonContent();
-            string key = result == null ? null : result.Value<string>(KeyParameterName);
-            if (result == null || String.IsNullOrEmpty(key))
+            string key;
+            if (IsContentType("application/json"))
+            {
+                JObject result = GetJsonContent();
+                key = result == null ? null : result.Value<string>(KeyParameterName);
+            }
+            else
+            {
+                // any other content-type assuming the content is key
+                // curl http://server/sshkey -X PUT --upload-file /c/temp/id_rsa
+                key = Request.Content.ReadAsStringAsync().Result;
+            }
+
+            if (String.IsNullOrEmpty(key))
             {
                 throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.BadRequest, new ArgumentNullException(KeyParameterName)));
             }
@@ -59,6 +70,18 @@ namespace Kudu.Services.SSHKey
                     }
                 }, TimeSpan.FromSeconds(5));
             }
+        }
+
+        private bool IsContentType(string mediaType)
+        {
+            var contentType = Request.Content.Headers.ContentType;
+            if (contentType == null)
+            {
+                return false;
+            }
+
+            return contentType.MediaType != null &&
+                contentType.MediaType.StartsWith(mediaType, StringComparison.OrdinalIgnoreCase);
         }
 
         private JObject GetJsonContent()
