@@ -25,10 +25,13 @@ namespace Kudu.FunctionalTests
             {
                 // Act
                 appManager.GitDeploy(localRepo);
+
+                CreateLogDirectory(appManager.SiteUrl, @"LogFiles");
+
                 using (var waitHandle = new LogStreamWaitHandle(appManager.LogStreamManager.GetStream().Result))
                 {
                     string line = waitHandle.WaitNextLine(10000);
-                    Assert.True(!String.IsNullOrEmpty(line) && line.StartsWith("Welcome", StringComparison.OrdinalIgnoreCase), "check welcome message: " + line);
+                    Assert.True(!String.IsNullOrEmpty(line) && line.Contains("Welcome"), "check welcome message: " + line);
 
                     string content = Guid.NewGuid().ToString();
                     WriteLogText(appManager.SiteUrl, @"LogFiles\temp.txt", content);
@@ -78,7 +81,7 @@ namespace Kudu.FunctionalTests
                     RemoteLogStreamManager mgr = appManager.CreateLogStreamManager("folder" + i);
                     var waitHandle = new LogStreamWaitHandle(mgr.GetStream().Result);
                     string line = waitHandle.WaitNextLine(10000);
-                    Assert.True(!string.IsNullOrEmpty(line) && line.StartsWith("Welcome", StringComparison.OrdinalIgnoreCase), "check welcome message: " + line);
+                    Assert.True(!string.IsNullOrEmpty(line) && line.Contains("Welcome"), "check welcome message: " + line);
                     waitHandles.Add(waitHandle);
                 }
 
@@ -87,7 +90,7 @@ namespace Kudu.FunctionalTests
                     try
                     {
                         string line = waitHandle.WaitNextLine(10000);
-                        Assert.True(!string.IsNullOrEmpty(line) && line.StartsWith("Welcome", StringComparison.OrdinalIgnoreCase), "check welcome message: " + line);
+                        Assert.True(!string.IsNullOrEmpty(line) && line.Contains("Welcome"), "check welcome message: " + line);
 
                         // write to folder0, we should not get any live stream for folder1 listener
                         string content = Guid.NewGuid().ToString();
