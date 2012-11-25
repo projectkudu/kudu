@@ -9,6 +9,11 @@ namespace Kudu.Services.GitServer.ServiceHookParser
         public bool TryGetRepositoryInfo(HttpRequest request, Lazy<string> bodyDontUse, out RepositoryInfo repositoryInfo)
         {
             repositoryInfo = null;
+            if (request.Headers["X-Github-Event"] == null)
+            {
+                return false;
+            }
+
             string json = request.Form["payload"];
             JObject payload = JObject.Parse(json);
 
