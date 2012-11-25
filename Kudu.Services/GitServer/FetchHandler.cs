@@ -57,21 +57,11 @@ namespace Kudu.Services.GitServer
             {
                 context.Response.TrySkipIisCustomErrors = true;
 
-                Stream inputStream = context.Request.InputStream;
-                inputStream.Seek(0, SeekOrigin.Begin);
-                string body = new StreamReader(inputStream).ReadToEnd();
-
-                if (String.IsNullOrEmpty(body))
-                {
-                    _tracer.TraceWarning("Received empty json payload");
-                    context.Response.StatusCode = 400;
-                    context.ApplicationInstance.CompleteRequest();
-                    return;
-                }
+                var body = new Lazy<string>(() => new StreamReader(context.Request.InputStream).ReadToEnd());
 
                 if (_tracer.TraceLevel >= TraceLevel.Verbose)
                 {
-                    TracePayload(body);
+                    TracePayload(body.Value);
                 }
 
                 RepositoryInfo repositoryInfo = null;
@@ -184,7 +174,7 @@ namespace Kudu.Services.GitServer
             _tracer.Trace("payload", attribs);
         }
 
-        private RepositoryInfo GetRepositoryInfo(HttpRequest request, string body)
+        private RepositoryInfo GetRepositoryInfo(HttpRequest request, Lazy<string> body)
         {
             RepositoryInfo info = null;
             foreach (var parser in _serviceHookParsers)

@@ -1,9 +1,10 @@
-﻿using System.Web;
+﻿using System;
+using System.Web;
 
 namespace Kudu.Services.GitServer.ServiceHookParser
 {
     public interface IServiceHookParser
     {
-        bool TryGetRepositoryInfo(HttpRequest request, string body, out RepositoryInfo repositoryInfo);
+        bool TryGetRepositoryInfo(HttpRequest request, Lazy<string> body, out RepositoryInfo repositoryInfo);
     }
 }

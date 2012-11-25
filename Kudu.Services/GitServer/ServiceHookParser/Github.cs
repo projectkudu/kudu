@@ -6,7 +6,7 @@ namespace Kudu.Services.GitServer.ServiceHookParser
 {
     public class Github : IServiceHookParser
     {
-        public bool TryGetRepositoryInfo(HttpRequest request, string bodyDontUse, out RepositoryInfo repositoryInfo)
+        public bool TryGetRepositoryInfo(HttpRequest request, Lazy<string> bodyDontUse, out RepositoryInfo repositoryInfo)
         {
             repositoryInfo = null;
             string json = request.Form["payload"];
@@ -40,7 +40,7 @@ namespace Kudu.Services.GitServer.ServiceHookParser
                 return false;
             }
 
-            info.Deployer = "GitHub";
+            info.Deployer = GetDeployer(request);
             info.OldRef = payload.Value<string>("before");
             info.NewRef = payload.Value<string>("after");
 
@@ -58,6 +58,17 @@ namespace Kudu.Services.GitServer.ServiceHookParser
 
             repositoryInfo = info;
             return true;
+        }
+
+        private string GetDeployer(HttpRequest request)
+        {
+            if (request.Headers["X-Github-Event"] != null)
+            {
+                return "GitHub";
+            }
+
+            // looks like github, 
+            return "GitHub compatible";
         }
     }
 }
