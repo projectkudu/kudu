@@ -29,11 +29,20 @@ namespace Kudu.Services.GitServer.ServiceHookParser
                 info.RepositoryUrl += ".git";
             }
 
-            // gitlabhq doesn't support public repos (yet)
-            info.IsPrivate = true;
+            // work around missing 'private' property, if missing assume is private.
+            JToken priv;
+            if (repository.TryGetValue("private", out priv))
+            {
+                info.IsPrivate = priv.ToObject<bool>();                
+            }
+            else
+            {
+                info.IsPrivate = true;                
+            }
+
 
             // this is here to trick the functional tests.
-            if (payload.Value<bool>("public"))
+            if (repository.Value<bool>("private"))
             {
                 info.IsPrivate = false;
             };
