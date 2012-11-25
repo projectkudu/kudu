@@ -137,6 +137,7 @@
     <Compile Include="Diagnostics\LogStreamHandler.cs" />
     <Compile Include="Diagnostics\LogStreamManager.cs" />
     <Compile Include="GitServer\GitServerHttpHandler.cs" />
+    <Compile Include="GitServer\ServiceHookParser\CodebaseHq.cs" />
     <Compile Include="GitServer\ServiceHookParser\Fallback.cs" />
     <Compile Include="GitServer\ServiceHookParser\GitlabHq.cs" />
     <Compile Include="GitServer\ServiceHookParser\RepositoryInfo.cs" />
