@@ -6,7 +6,7 @@ namespace Kudu.Services.GitServer.ServiceHookParser
 {
     public class Bitbucket : IServiceHookParser
     {
-        public bool TryGetRepositoryInfo(HttpRequest request, string bodyDontUse, out RepositoryInfo repositoryInfo)
+        public bool TryGetRepositoryInfo(HttpRequest request, Lazy<string> bodyDontUse, out RepositoryInfo repositoryInfo)
         {
             repositoryInfo = null;
             if (request.UserAgent != null &&

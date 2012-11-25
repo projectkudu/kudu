@@ -6,7 +6,7 @@ namespace Kudu.Services.GitServer.ServiceHookParser
 {
     public class Fallback : IServiceHookParser
     {
-        public bool TryGetRepositoryInfo(HttpRequest request, string body, out RepositoryInfo repositoryInfo)
+        public bool TryGetRepositoryInfo(HttpRequest request, Lazy<string> body, out RepositoryInfo repositoryInfo)
         {
             string json = request.Form["payload"];
             JObject payload = JObject.Parse(json);
