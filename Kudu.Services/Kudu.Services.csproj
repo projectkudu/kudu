@@ -137,6 +137,11 @@
     <Compile Include="Diagnostics\LogStreamHandler.cs" />
     <Compile Include="Diagnostics\LogStreamManager.cs" />
     <Compile Include="GitServer\GitServerHttpHandler.cs" />
+    <Compile Include="GitServer\ServiceHookParser\Fallback.cs" />
+    <Compile Include="GitServer\ServiceHookParser\RepositoryInfo.cs" />
+    <Compile Include="GitServer\ServiceHookParser\IServiceHookParser.cs" />
+    <Compile Include="GitServer\ServiceHookParser\Bitbucket.cs" />
+    <Compile Include="GitServer\ServiceHookParser\Github.cs" />
     <Compile Include="GitServer\UploadPackHandler.cs" />
     <Compile Include="Infrastructure\ShutdownDetector.cs" />
     <Compile Include="SSHKey\SSHKeyController.cs" />
