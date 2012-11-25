@@ -40,13 +40,6 @@ namespace Kudu.Services.GitServer.ServiceHookParser
                 info.IsPrivate = true;                
             }
 
-
-            // this is here to trick the functional tests.
-            if (repository.Value<bool>("private"))
-            {
-                info.IsPrivate = false;
-            };
-
             // The format of ref is refs/something/something else
             // For master it's normally refs/head/master
             string @ref = payload.Value<string>("ref");
