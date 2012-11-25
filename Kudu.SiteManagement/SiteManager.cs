@@ -315,7 +315,7 @@ namespace Kudu.SiteManagement
             try
             {
                 // Give full control to the app folder (we can make it minimal later)
-                icacls.Execute(@"""{0}\"" /remove ""IIS AppPool\{1}""", applicationPath, appPoolName);
+                icacls.Execute(@"""{0}"" /remove ""IIS AppPool\{1}""", applicationPath, appPoolName);
             }
             catch (Exception ex)
             {
