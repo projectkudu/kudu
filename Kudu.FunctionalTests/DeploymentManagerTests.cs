@@ -255,7 +255,7 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void PullApiTestGitlabHQFormat()
         {
-            string payload = @"{ ""public"": true, ""before"":""7e2a599e2d28665047ec347ab36731c905c95e8b"", ""after"":""7e2a599e2d28665047ec347ab36731c905c95e8b"", ""ref"":""refs/heads/master"", ""user_id"":1, ""user_name"":""Remco Ros"", ""repository"":{ ""name"":""testing"", ""url"":""https://github.com/KuduApps/SimpleWebApplication"", ""description"":null, ""homepage"":""https://github.com/KuduApps/SimpleWebApplication""  }}";
+            string payload = @"{ ""before"":""7e2a599e2d28665047ec347ab36731c905c95e8b"", ""after"":""7e2a599e2d28665047ec347ab36731c905c95e8b"", ""ref"":""refs/heads/master"", ""user_id"":1, ""user_name"":""Remco Ros"", ""repository"":{ ""name"":""testing"", ""private"":false, ""url"":""https://github.com/KuduApps/SimpleWebApplication"", ""description"":null, ""homepage"":""https://github.com/KuduApps/SimpleWebApplication""  }}";
             string appName = KuduUtils.GetRandomWebsiteName("PullApiTestGitlabHQFormat");
 
             ApplicationManager.Run(appName, appManager =>
