@@ -282,6 +282,40 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public void PullApiTestCodebaseFormat()
+        {
+            string payload = @"{ ""before"":""7e2a599e2d28665047ec347ab36731c905c95e8b"", ""after"":""7e2a599e2d28665047ec347ab36731c905c95e8b"", ""ref"":""refs/heads/master"", ""repository"":{ ""name"":""testing"", ""private"":false, ""url"":""http://test.codebasehq.com/projects/test-repositories/repositories/git1"", ""clone_urls"": {""ssh"": ""https://github.com/KuduApps/SimpleWebApplication""}}}";
+            string appName = KuduUtils.GetRandomWebsiteName("PullApiTestCodebaseFormat");
+
+            ApplicationManager.Run(appName, appManager =>
+            {
+                var handler = new HttpClientHandler
+                {
+                    Credentials = appManager.DeploymentManager.Credentials
+                };
+
+                var client = new HttpClient(handler)
+                {
+                    BaseAddress = new Uri(appManager.ServiceUrl),
+                    Timeout = TimeSpan.FromMinutes(5)
+                };
+
+                var post = new Dictionary<string, string>
+                {
+                    { "payload", payload }
+                };
+
+                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Wait();
+
+                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                Assert.Equal(1, results.Count);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
+                Assert.Equal("CodebaseHQ", results[0].Deployer);
+                KuduAssert.VerifyUrl(appManager.SiteUrl, "Welcome to ASP.NET!");
+            });
+        }
+
+        [Fact]
         public void PullApiTestGenericFormat()
         {
             string payload = @"{ ""oldRef"": ""0000000000000000000"", ""newRef"": ""7e2a599e2d28665047ec347ab36731c905c95e8b"", ""url"": ""https://github.com/KuduApps/SimpleWebApplication.git"", ""deployer"" : ""me!"" }";

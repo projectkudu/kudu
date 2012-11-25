@@ -184,6 +184,7 @@ namespace Kudu.Services.Web.App_Start
             // Git Servicehook parsers
             kernel.Bind<IServiceHookParser>().To<Github>().InTransientScope();
             kernel.Bind<IServiceHookParser>().To<Bitbucket>().InTransientScope();
+            kernel.Bind<IServiceHookParser>().To<CodebaseHq>().InTransientScope();
             kernel.Bind<IServiceHookParser>().To<GitlabHq>().InTransientScope();
             kernel.Bind<IServiceHookParser>().To<Fallback>().InTransientScope();
             
