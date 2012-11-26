@@ -185,10 +185,10 @@ namespace Kudu.Services.GitServer
                     
                     // don't trust parser, validate repository
                     if (info != null
-                        && !string.IsNullOrEmpty(info.RepositoryUrl)
-                        && !string.IsNullOrEmpty(info.OldRef)
-                        && !string.IsNullOrEmpty(info.NewRef)
-                        && !string.IsNullOrEmpty(info.Deployer))
+                        && !String.IsNullOrEmpty(info.RepositoryUrl)
+                        && !String.IsNullOrEmpty(info.OldRef)
+                        && !String.IsNullOrEmpty(info.NewRef)
+                        && !String.IsNullOrEmpty(info.Deployer))
                     {
                         return info;
                     }
