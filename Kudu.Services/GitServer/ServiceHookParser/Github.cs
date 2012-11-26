@@ -9,11 +9,7 @@ namespace Kudu.Services.GitServer.ServiceHookParser
         public bool TryGetRepositoryInfo(HttpRequest request, Lazy<string> bodyDontUse, out RepositoryInfo repositoryInfo)
         {
             repositoryInfo = null;
-            if (request.Headers["X-Github-Event"] == null)
-            {
-                return false;
-            }
-
+            
             string json = request.Form["payload"];
             JObject payload = JObject.Parse(json);
 
@@ -29,7 +25,13 @@ namespace Kudu.Services.GitServer.ServiceHookParser
             // { repository: { url: "https//...", private: False }, ref: "", before: "", after: "" } 
             info.RepositoryUrl = repository.Value<string>("url");
 
-            if (string.IsNullOrEmpty(info.RepositoryUrl))
+            if (String.IsNullOrEmpty(info.RepositoryUrl))
+            {
+                return false;
+            }
+
+            // HACK: don't conflict with CodebaseHQ
+            if (info.RepositoryUrl.Contains("codebasehq.com"))
             {
                 return false;
             }
