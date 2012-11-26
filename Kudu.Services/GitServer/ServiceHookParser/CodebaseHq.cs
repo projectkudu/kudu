@@ -20,16 +20,19 @@ namespace Kudu.Services.GitServer.ServiceHookParser
             var info = new RepositoryInfo();
 
             // CodebaseHq format, see http://support.codebasehq.com/kb/howtos/repository-push-commit-notifications
-            info.IsPrivate = true;
-
             var urls = repository.Value<JObject>("clone_urls");
             info.RepositoryUrl = urls.Value<string>("ssh");
 
-            // work around missing 'private' property, if missing assume is private.
-            JToken priv;
-            if (repository.TryGetValue("private", out priv))
+            // Codebase uses 'public_access' to 
+            JToken isPublic;
+            if (repository.TryGetValue("public_access", out isPublic))
             {
-                info.IsPrivate = priv.ToObject<bool>();
+                info.IsPrivate = !isPublic.ToObject<bool>();
+                if (!info.IsPrivate)
+                {
+                    // use http clone url if it's a public repo
+                    info.RepositoryUrl = urls.Value<string>("http");
+                }
             }
             else
             {
