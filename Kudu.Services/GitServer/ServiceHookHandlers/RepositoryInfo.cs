@@ -1,4 +1,4 @@
-﻿namespace Kudu.Services.GitServer.ServiceHookParser
+﻿namespace Kudu.Services.GitServer.ServiceHookHandlers
 {
     public class RepositoryInfo
     {

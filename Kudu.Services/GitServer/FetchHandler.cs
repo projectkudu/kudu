@@ -12,7 +12,7 @@ using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
-using Kudu.Services.GitServer.ServiceHookParser;
+using Kudu.Services.GitServer.ServiceHookHandlers;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 
