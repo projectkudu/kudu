@@ -4,68 +4,40 @@ using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.GitServer.ServiceHookParser
 {
-    public class CodebaseHq : IServiceHookParser
+    public class CodebaseHq : Github
     {
-        public bool TryGetRepositoryInfo(HttpRequest request, Lazy<string> body, out RepositoryInfo repositoryInfo)
+        public override bool TryGetRepositoryInfo(HttpRequest request, Lazy<string> body, out RepositoryInfo repositoryInfo)
         {
             repositoryInfo = null;
-            JObject payload = JObject.Parse(request.Form["payload"]);
-
-            var repository = payload.Value<JObject>("repository");
-            if (repository == null)
+            if (request.UserAgent != null &&
+                request.UserAgent.StartsWith("Codebasehq", StringComparison.OrdinalIgnoreCase))
             {
-                return false;
+                return base.TryGetRepositoryInfo(request, body, out repositoryInfo);
             }
+            return false;
+        }
 
-            var info = new RepositoryInfo();
+        protected override RepositoryInfo GetRepositoryInfo(HttpRequest request, JObject payload)
+        {
+            var info = base.GetRepositoryInfo(request, payload);
 
             // CodebaseHq format, see http://support.codebasehq.com/kb/howtos/repository-push-commit-notifications
+            var repository = payload.Value<JObject>("repository");
             var urls = repository.Value<JObject>("clone_urls");
-            info.RepositoryUrl = urls.Value<string>("ssh");
+            info.IsPrivate = repository.Value<bool>("private");
 
-            // Codebase uses 'public_access' to 
-            JToken isPublic;
-            if (repository.TryGetValue("public_access", out isPublic))
+            if (info.IsPrivate)
             {
-                info.IsPrivate = !isPublic.ToObject<bool>();
-                if (!info.IsPrivate)
-                {
-                    // use http clone url if it's a public repo
-                    info.RepositoryUrl = urls.Value<string>("http");
-                }
+                info.RepositoryUrl = urls.Value<string>("ssh");
             }
             else
             {
-                info.IsPrivate = true;
-            }
-
-            // The format of ref is refs/something/something else
-            // For master it's normally refs/head/master
-            string @ref = payload.Value<string>("ref");
-
-            if (String.IsNullOrEmpty(@ref))
-            {
-                return false;
+                // use http clone url if it's a public repo
+                info.RepositoryUrl = urls.Value<string>("http");                
             }
 
             info.Deployer = "CodebaseHQ";
-            info.OldRef = payload.Value<string>("before");
-            info.NewRef = payload.Value<string>("after");
-
-            // private repo, use SSH
-            if (info.IsPrivate)
-            {
-                Uri uri = new Uri(info.RepositoryUrl);
-                if (uri.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                {
-                    info.Host = "git@" + uri.Host;
-                    info.RepositoryUrl = info.Host + ":" + uri.AbsolutePath.TrimStart('/');
-                    info.UseSSH = true;
-                }
-            }
-
-            repositoryInfo = info;
-            return true;
+            return info;
         }
     }
 }

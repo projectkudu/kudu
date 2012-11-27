@@ -177,12 +177,12 @@ namespace Kudu.Services.Web.App_Start
                                      .InRequestScope();
 
             // Git Servicehook parsers
-            kernel.Bind<IServiceHookParser>().To<Github>().InTransientScope();
-            kernel.Bind<IServiceHookParser>().To<Bitbucket>().InTransientScope();
-            kernel.Bind<IServiceHookParser>().To<CodebaseHq>().InTransientScope();
-            kernel.Bind<IServiceHookParser>().To<GitlabHq>().InTransientScope();
-            kernel.Bind<IServiceHookParser>().To<Fallback>().InTransientScope();
-            
+            kernel.Bind<IServiceHookParser>().To<Bitbucket>();
+            kernel.Bind<IServiceHookParser>().To<CodebaseHq>();
+            kernel.Bind<IServiceHookParser>().To<GitlabHq>();
+            kernel.Bind<IServiceHookParser>().To<Github>();
+            kernel.Bind<IServiceHookParser>().To<Fallback>();
+
             // Editor
             kernel.Bind<IProjectSystem>().ToMethod(context => GetEditorProjectSystem(environment, context))
                                          .InRequestScope();

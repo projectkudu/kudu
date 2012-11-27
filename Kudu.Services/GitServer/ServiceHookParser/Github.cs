@@ -4,19 +4,14 @@ using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.GitServer.ServiceHookParser
 {
-    public class Github : IServiceHookParser
+    public class Github : JsonServiceHookParser
     {
-        public bool TryGetRepositoryInfo(HttpRequest request, Lazy<string> bodyDontUse, out RepositoryInfo repositoryInfo)
+        protected override RepositoryInfo GetRepositoryInfo(HttpRequest request, JObject payload)
         {
-            repositoryInfo = null;
-            
-            string json = request.Form["payload"];
-            JObject payload = JObject.Parse(json);
-
-            var repository = payload.Value<JObject>("repository");
+            JObject repository = payload.Value<JObject>("repository");
             if (repository == null)
             {
-                return false;
+                return null;
             }
 
             var info = new RepositoryInfo();
@@ -24,18 +19,6 @@ namespace Kudu.Services.GitServer.ServiceHookParser
             // github format
             // { repository: { url: "https//...", private: False }, ref: "", before: "", after: "" } 
             info.RepositoryUrl = repository.Value<string>("url");
-
-            if (String.IsNullOrEmpty(info.RepositoryUrl))
-            {
-                return false;
-            }
-
-            // HACK: don't conflict with CodebaseHQ
-            if (info.RepositoryUrl.Contains("codebasehq.com"))
-            {
-                return false;
-            }
-
             info.IsPrivate = repository.Value<bool>("private");
 
             // The format of ref is refs/something/something else
@@ -44,7 +27,7 @@ namespace Kudu.Services.GitServer.ServiceHookParser
 
             if (String.IsNullOrEmpty(@ref))
             {
-                return false;
+                return null;
             }
 
             info.Deployer = GetDeployer(request);
@@ -63,11 +46,10 @@ namespace Kudu.Services.GitServer.ServiceHookParser
                 }
             }
 
-            repositoryInfo = info;
-            return true;
+            return info;
         }
 
-        private string GetDeployer(HttpRequest request)
+        protected string GetDeployer(HttpRequest request)
         {
             if (request.Headers["X-Github-Event"] != null)
             {
