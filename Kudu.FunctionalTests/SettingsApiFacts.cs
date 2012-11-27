@@ -80,19 +80,25 @@ namespace Kudu.FunctionalTests
                     appManager.SettingsManager.SetValue("y", "2").Wait();
                     appManager.SettingsManager.SetValue("z", "3").Wait();
 
-                    // Assert
+                    NameValueCollection resultsLegacy = appManager.SettingsManager.GetValuesLegacy().Result;
                     NameValueCollection results = appManager.SettingsManager.GetValues().Result;
 
-                    // Default
-                    Assert.Equal("master", results[SettingsKeys.Branch]);
-                    Assert.Equal("", results[SettingsKeys.BuildArgs]);
-                    Assert.Equal("0", results[SettingsKeys.TraceLevel]);
-
-                    Assert.Equal("1", results["x"]);
-                    Assert.Equal("2", results["y"]);
-                    Assert.Equal("3", results["z"]);
+                    // Assert
+                    CheckSettings(resultsLegacy);
+                    CheckSettings(results);
                 });
             }
+        }
+
+        private static void CheckSettings(NameValueCollection results)
+        {
+            Assert.Equal("master", results[SettingsKeys.Branch]);
+            Assert.Equal("", results[SettingsKeys.BuildArgs]);
+            Assert.Equal("0", results[SettingsKeys.TraceLevel]);
+
+            Assert.Equal("1", results["x"]);
+            Assert.Equal("2", results["y"]);
+            Assert.Equal("3", results["z"]);
         }
 
         [Fact]

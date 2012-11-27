@@ -39,9 +39,23 @@ namespace Kudu.Client.Deployment
             return _client.PostAsync(String.Empty, jsonvalues).Then(response => response.EnsureSuccessful());
         }
 
+        public Task<NameValueCollection> GetValuesLegacy()
+        {
+            return _client.GetJsonAsync<JArray>(String.Empty).Then(obj =>
+            {
+                var nvc = new NameValueCollection();
+                foreach (JObject value in obj)
+                {
+                    nvc[value["Key"].Value<string>()] = value["Value"].Value<string>();
+                }
+
+                return nvc;
+            });
+        }
+
         public Task<NameValueCollection> GetValues()
         {
-            return _client.GetJsonAsync<JObject>(String.Empty).Then(obj =>
+            return _client.GetJsonAsync<JObject>("?version=2").Then(obj =>
             {
                 var nvc = new NameValueCollection();
                 foreach (var pair in obj)

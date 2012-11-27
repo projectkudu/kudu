@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
@@ -79,9 +81,35 @@ namespace Kudu.Services.Settings
         /// Get the list of all settings
         /// </summary>
         /// <returns></returns>
-        public HttpResponseMessage GetAll()
+        public HttpResponseMessage GetAll(int version)
         {
+            /*
+            Old format looks like this:
+            [
+                {
+                    Key: "branch",
+                    Value: "master"
+                },
+                {
+                    Key: "foo",
+                    Value: "123"
+                }
+            ]
+
+            New format looks like:
+            {
+                branch: "master",
+                foo: "123"
+            }
+            */
+
             var values = _settingsManager.GetValues();
+
+            if (version < 2)
+            {
+                var legacyValues = values.Select(pair => new Dictionary<string, string> { { "Key", pair.Key }, { "Value", pair.Value } });
+                return Request.CreateResponse(HttpStatusCode.OK, legacyValues);
+            }
 
             return Request.CreateResponse(HttpStatusCode.OK, values);
         }
