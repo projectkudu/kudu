@@ -22,7 +22,7 @@ using Kudu.Core.SourceControl.Git;
 using Kudu.Core.SSHKey;
 using Kudu.Core.Tracing;
 using Kudu.Services.GitServer;
-using Kudu.Services.GitServer.ServiceHookParser;
+using Kudu.Services.GitServer.ServiceHookHandlers;
 using Kudu.Services.Performance;
 using Kudu.Services.SSHKey;
 using Kudu.Services.Web.Infrastruture;

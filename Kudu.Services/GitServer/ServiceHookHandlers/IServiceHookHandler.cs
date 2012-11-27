@@ -1,7 +1,6 @@
-﻿using System;
-using System.Web;
+﻿using System.Web;
 
-namespace Kudu.Services.GitServer.ServiceHookParser
+namespace Kudu.Services.GitServer.ServiceHookHandlers
 {
     public interface IServiceHookHandler
     {

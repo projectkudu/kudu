@@ -1,8 +1,7 @@
-﻿using System;
-using System.Web;
+﻿using System.Web;
 using Newtonsoft.Json.Linq;
 
-namespace Kudu.Services.GitServer.ServiceHookParser
+namespace Kudu.Services.GitServer.ServiceHookHandlers
 {
     public class FallbackHandler : IServiceHookHandler
     {
