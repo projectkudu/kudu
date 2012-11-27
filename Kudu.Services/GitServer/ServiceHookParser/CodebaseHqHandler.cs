@@ -4,15 +4,15 @@ using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.GitServer.ServiceHookParser
 {
-    public class CodebaseHq : Github
+    public class CodebaseHqHandler : JsonServiceHookHandler
     {
-        public override bool TryGetRepositoryInfo(HttpRequest request, Lazy<string> body, out RepositoryInfo repositoryInfo)
+        public override bool TryGetRepositoryInfo(HttpRequest request, out RepositoryInfo repositoryInfo)
         {
             repositoryInfo = null;
             if (request.UserAgent != null &&
                 request.UserAgent.StartsWith("Codebasehq", StringComparison.OrdinalIgnoreCase))
             {
-                return base.TryGetRepositoryInfo(request, body, out repositoryInfo);
+                return base.TryGetRepositoryInfo(request, out repositoryInfo);
             }
             return false;
         }

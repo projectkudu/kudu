@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Web;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
@@ -25,7 +26,7 @@ namespace Kudu.Services.GitServer
         private readonly IDeploymentSettingsManager _settings;
         private readonly RepositoryConfiguration _configuration;
         private readonly IEnvironment _environment;
-        private readonly IEnumerable<IServiceHookParser> _serviceHookParsers;
+        private readonly IEnumerable<IServiceHookHandler> _serviceHookHandlers;
 
         public FetchHandler(ITracer tracer,
                             IGitServer gitServer,
@@ -34,13 +35,13 @@ namespace Kudu.Services.GitServer
                             IOperationLock deploymentLock,
                             RepositoryConfiguration configuration,
                             IEnvironment environment,
-                            IEnumerable<IServiceHookParser> serviceHookParsers)
+                            IEnumerable<IServiceHookHandler> serviceHookHandlers)
             : base(tracer, gitServer, deploymentLock, deploymentManager)
         {
             _settings = settings;
             _configuration = configuration;
             _environment = environment;
-            _serviceHookParsers = serviceHookParsers;
+            _serviceHookHandlers = serviceHookHandlers;
         }
 
         private string MarkerFilePath
@@ -57,18 +58,17 @@ namespace Kudu.Services.GitServer
             {
                 context.Response.TrySkipIisCustomErrors = true;
 
-                var body = new Lazy<string>(() => new StreamReader(context.Request.InputStream).ReadToEnd());
-
                 if (_tracer.TraceLevel >= TraceLevel.Verbose)
                 {
-                    TracePayload(body.Value);
+                    var body = new StreamReader(context.Request.InputStream).ReadToEnd();
+                    TracePayload(body);
                 }
 
                 RepositoryInfo repositoryInfo = null;
 
                 try
                 {
-                    repositoryInfo = GetRepositoryInfo(context.Request, body);
+                    repositoryInfo = GetRepositoryInfo(context.Request);
                 }
                 catch (FormatException ex)
                 {
@@ -173,15 +173,25 @@ namespace Kudu.Services.GitServer
 
             _tracer.Trace("payload", attribs);
         }
+        
+        private void TraceHandler(IServiceHookHandler handler)
+        {
+            var attribs = new Dictionary<string, string>
+            {
+                { "type", handler.GetType().FullName }
+            };
 
-        private RepositoryInfo GetRepositoryInfo(HttpRequest request, Lazy<string> body)
+            _tracer.Trace("handler", attribs);
+        }
+
+        private RepositoryInfo GetRepositoryInfo(HttpRequest request)
         {
             RepositoryInfo info = null;
-            foreach (var parser in _serviceHookParsers)
+            foreach (var handler in _serviceHookHandlers)
             {
                 try
                 {
-                    if (!parser.TryGetRepositoryInfo(request, body, out info)) continue;
+                    if (!handler.TryGetRepositoryInfo(request, out info)) continue;
                     
                     // don't trust parser, validate repository
                     if (info != null
@@ -190,6 +200,10 @@ namespace Kudu.Services.GitServer
                         && !String.IsNullOrEmpty(info.NewRef)
                         && !String.IsNullOrEmpty(info.Deployer))
                     {
+                        if (_tracer.TraceLevel >= TraceLevel.Verbose)
+                        {
+                            TraceHandler(handler);
+                        }
                         return info;
                     }
                 }

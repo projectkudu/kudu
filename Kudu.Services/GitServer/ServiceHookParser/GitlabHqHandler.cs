@@ -4,13 +4,10 @@ using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.GitServer.ServiceHookParser
 {
-    public class GitlabHq : IServiceHookParser
+    public class GitlabHqHandler : JsonServiceHookHandler
     {
-        public bool TryGetRepositoryInfo(HttpRequest request, Lazy<string> body, out RepositoryInfo repositoryInfo)
+        protected override RepositoryInfo GetRepositoryInfo(HttpRequest request, JObject payload)
         {
-            repositoryInfo = null;
-            JObject payload = JObject.Parse(body.Value);
-
             var repository = payload.Value<JObject>("repository");
             var userid = payload.Value<int?>("user_id");
             var username = payload.Value<string>("user_name");
@@ -18,7 +15,7 @@ namespace Kudu.Services.GitServer.ServiceHookParser
             if (repository == null || userid == null || username == null)
             {
                 // doesn't look like GitlabHQ
-                return false;
+                return null;
             }
 
             var info = new RepositoryInfo();
@@ -37,11 +34,11 @@ namespace Kudu.Services.GitServer.ServiceHookParser
             JToken priv;
             if (repository.TryGetValue("private", out priv))
             {
-                info.IsPrivate = priv.ToObject<bool>();                
+                info.IsPrivate = priv.ToObject<bool>();
             }
             else
             {
-                info.IsPrivate = true;                
+                info.IsPrivate = true;
             }
 
             // The format of ref is refs/something/something else
@@ -50,7 +47,7 @@ namespace Kudu.Services.GitServer.ServiceHookParser
 
             if (String.IsNullOrEmpty(@ref))
             {
-                return false;
+                return null;
             }
             info.OldRef = payload.Value<string>("before");
             info.NewRef = payload.Value<string>("after");
@@ -69,8 +66,7 @@ namespace Kudu.Services.GitServer.ServiceHookParser
                 }
             }
 
-            repositoryInfo = info;
-            return true;
-        }       
+            return info;
+        }
     }
 }

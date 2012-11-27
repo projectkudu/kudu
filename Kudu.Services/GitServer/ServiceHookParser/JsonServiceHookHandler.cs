@@ -1,12 +1,40 @@
 ﻿using System;
+using System.IO;
 using System.Web;
 using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.GitServer.ServiceHookParser
 {
-    public class Github : JsonServiceHookParser
+    /// <summary>
+    /// Default Servicehook Handler, uses github format.
+    /// </summary>
+    public class JsonServiceHookHandler : IServiceHookHandler
     {
-        protected override RepositoryInfo GetRepositoryInfo(HttpRequest request, JObject payload)
+        public virtual bool TryGetRepositoryInfo(HttpRequest request, out RepositoryInfo repositoryInfo)
+        {
+            string json = String.Empty;
+            if (request.Form.Count > 0)
+            {
+                json = request.Form["payload"];
+                if (String.IsNullOrEmpty(json))
+                {
+                    json = request.Form[0];
+                }
+            }
+            else
+            {
+                // assume raw json
+                request.InputStream.Seek(0, SeekOrigin.Begin);
+                json = new StreamReader(request.InputStream).ReadToEnd();
+            }
+
+            JObject payload = JObject.Parse(json);
+
+            repositoryInfo = GetRepositoryInfo(request, payload);
+            return repositoryInfo != null;
+        }
+
+        protected virtual RepositoryInfo GetRepositoryInfo(HttpRequest request, JObject payload)
         {
             JObject repository = payload.Value<JObject>("repository");
             if (repository == null)
@@ -46,16 +74,11 @@ namespace Kudu.Services.GitServer.ServiceHookParser
                 }
             }
 
-            return info;
+            return info;            
         }
 
-        protected string GetDeployer(HttpRequest request)
+        protected virtual string GetDeployer(HttpRequest request)
         {
-            if (request.Headers["X-Github-Event"] != null)
-            {
-                return "GitHub";
-            }
-
             // looks like github, 
             return "GitHub compatible";
         }
