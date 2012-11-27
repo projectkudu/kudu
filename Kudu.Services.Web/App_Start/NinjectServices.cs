@@ -22,6 +22,7 @@ using Kudu.Core.SourceControl.Git;
 using Kudu.Core.SSHKey;
 using Kudu.Core.Tracing;
 using Kudu.Services.GitServer;
+using Kudu.Services.GitServer.ServiceHookHandlers;
 using Kudu.Services.Performance;
 using Kudu.Services.SSHKey;
 using Kudu.Services.Web.Infrastruture;
@@ -174,6 +175,14 @@ namespace Kudu.Services.Web.App_Start
                                                                            context.Kernel.Get<IDeploymentEnvironment>(),
                                                                            context.Kernel.Get<ITraceFactory>()))
                                      .InRequestScope();
+
+            // Git Servicehook parsers
+            kernel.Bind<IServiceHookHandler>().To<BitbucketHandler>();
+            kernel.Bind<IServiceHookHandler>().To<CodebaseHqHandler>();
+            kernel.Bind<IServiceHookHandler>().To<GitlabHqHandler>();
+            kernel.Bind<IServiceHookHandler>().To<GithubHandler>();
+            kernel.Bind<IServiceHookHandler>().To<JsonServiceHookHandler>();
+            kernel.Bind<IServiceHookHandler>().To<FallbackHandler>();
 
             // Editor
             kernel.Bind<IProjectSystem>().ToMethod(context => GetEditorProjectSystem(environment, context))

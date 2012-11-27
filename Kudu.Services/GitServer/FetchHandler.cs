@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Web;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
@@ -11,6 +12,7 @@ using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
+using Kudu.Services.GitServer.ServiceHookHandlers;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 
@@ -24,6 +26,7 @@ namespace Kudu.Services.GitServer
         private readonly IDeploymentSettingsManager _settings;
         private readonly RepositoryConfiguration _configuration;
         private readonly IEnvironment _environment;
+        private readonly IEnumerable<IServiceHookHandler> _serviceHookHandlers;
 
         public FetchHandler(ITracer tracer,
                             IGitServer gitServer,
@@ -31,12 +34,14 @@ namespace Kudu.Services.GitServer
                             IDeploymentSettingsManager settings,
                             IOperationLock deploymentLock,
                             RepositoryConfiguration configuration,
-                            IEnvironment environment)
+                            IEnvironment environment,
+                            IEnumerable<IServiceHookHandler> serviceHookHandlers)
             : base(tracer, gitServer, deploymentLock, deploymentManager)
         {
             _settings = settings;
             _configuration = configuration;
             _environment = environment;
+            _serviceHookHandlers = serviceHookHandlers;
         }
 
         private string MarkerFilePath
@@ -51,28 +56,19 @@ namespace Kudu.Services.GitServer
         {
             using (_tracer.Step("FetchHandler"))
             {
-                string json = context.Request.Form["payload"];
-
                 context.Response.TrySkipIisCustomErrors = true;
-
-                if (String.IsNullOrEmpty(json))
-                {
-                    _tracer.TraceWarning("Received empty json payload");
-                    context.Response.StatusCode = 400;
-                    context.ApplicationInstance.CompleteRequest();
-                    return;
-                }
 
                 if (_tracer.TraceLevel >= TraceLevel.Verbose)
                 {
-                    TracePayload(json);
+                    var body = new StreamReader(context.Request.InputStream).ReadToEnd();
+                    TracePayload(body);
                 }
 
                 RepositoryInfo repositoryInfo = null;
 
                 try
                 {
-                    repositoryInfo = GetRepositoryInfo(context.Request, json);
+                    repositoryInfo = GetRepositoryInfo(context.Request);
                 }
                 catch (FormatException ex)
                 {
@@ -177,122 +173,49 @@ namespace Kudu.Services.GitServer
 
             _tracer.Trace("payload", attribs);
         }
-
-        private RepositoryInfo GetRepositoryInfo(HttpRequest request, string json)
+        
+        private void TraceHandler(IServiceHookHandler handler)
         {
-            JObject payload = null;
-            try
+            var attribs = new Dictionary<string, string>
             {
-                payload = JObject.Parse(json);
-            }
-            catch (Exception ex)
-            {
-                throw new FormatException(Resources.Error_UnsupportedFormat, ex);
-            }
+                { "type", handler.GetType().FullName }
+            };
 
-            var info = new RepositoryInfo();
-
-            // If it has a repository, then try to get information from that
-            var repository = payload.Value<JObject>("repository");
-
-            if (repository != null)
-            {
-                bool isPrivate = false;
-                if (request.UserAgent != null && request.UserAgent.StartsWith("Bitbucket", StringComparison.OrdinalIgnoreCase))
-                {
-                    // bitbucket format
-                    // { repository: { absolute_url: "/a/b", is_private: true }, canon_url: "https//..." } 
-                    string server = payload.Value<string>("canon_url");     // e.g. https://bitbucket.org
-                    string path = repository.Value<string>("absolute_url"); // e.g. /davidebbo/testrepo/
-
-                    // Combine them to get the full URL
-                    info.RepositoryUrl = server + path;
-
-                    isPrivate = repository.Value<bool>("is_private");
-
-                    info.Deployer = "Bitbucket";
-
-                    // We don't get any refs from bitbucket, so write dummy string (we ignore it later anyway)
-                    info.OldRef = "dummy";
-
-                    // When there are no commits, set the new ref to an all-zero string to cause the logic in
-                    // GitDeploymentRepository.GetReceiveInfo ignore the push
-                    var commits = payload.Value<JArray>("commits");
-                    info.NewRef = commits.Count == 0 ? "000" : "dummy";
-                }
-                else
-                {
-                    // github format
-                    // { repository: { url: "https//...", private: False }, ref: "", before: "", after: "" } 
-                    info.RepositoryUrl = repository.Value<string>("url");
-
-                    isPrivate = repository.Value<bool>("private");
-
-                    // The format of ref is refs/something/something else
-                    // For master it's normally refs/head/master
-                    string @ref = payload.Value<string>("ref");
-
-                    if (String.IsNullOrEmpty(@ref))
-                    {
-                        throw new FormatException(Resources.Error_UnsupportedFormat);
-                    }
-
-                    // Just get the last token
-                    info.Deployer = GetDeployer(request);
-                    info.OldRef = payload.Value<string>("before");
-                    info.NewRef = payload.Value<string>("after");
-                }
-
-                // private repo, use SSH
-                if (isPrivate)
-                {
-                    Uri uri = new Uri(info.RepositoryUrl);
-                    if (uri.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                    {
-                        info.Host = "git@" + uri.Host;
-                        info.RepositoryUrl = info.Host + ":" + uri.AbsolutePath.TrimStart('/');
-                        info.UseSSH = true;
-                    }
-                }
-            }
-            else
-            {
-                // Look for the generic format
-                // { url: "", branch: "", deployer: "", oldRef: "", newRef: "" } 
-                info.RepositoryUrl = payload.Value<string>("url");
-                info.Deployer = payload.Value<string>("deployer");
-                info.OldRef = payload.Value<string>("oldRef");
-                info.NewRef = payload.Value<string>("newRef");
-            }
-
-            if (String.IsNullOrEmpty(info.RepositoryUrl))
-            {
-                throw new FormatException(Resources.Error_MissingRepositoryUrl);
-            }
-
-            return info;
+            _tracer.Trace("handler", attribs);
         }
 
-        private string GetDeployer(HttpRequest httpRequest)
+        private RepositoryInfo GetRepositoryInfo(HttpRequest request)
         {
-            // This is kind of hacky, we should have a consistent way of figuring out who's pushing to us
-            if (httpRequest.Headers["X-Github-Event"] != null)
+            RepositoryInfo info = null;
+            foreach (var handler in _serviceHookHandlers)
             {
-                return "GitHub";
+                try
+                {
+                    if (!handler.TryGetRepositoryInfo(request, out info)) continue;
+                    
+                    // don't trust parser, validate repository
+                    if (info != null
+                        && !String.IsNullOrEmpty(info.RepositoryUrl)
+                        && !String.IsNullOrEmpty(info.OldRef)
+                        && !String.IsNullOrEmpty(info.NewRef)
+                        && !String.IsNullOrEmpty(info.Deployer))
+                    {
+                        if (_tracer.TraceLevel >= TraceLevel.Verbose)
+                        {
+                            TraceHandler(handler);
+                        }
+                        return info;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // TODO: review
+                    // ignore exceptions from parsing, just continue to the next
+                    _tracer.TraceWarning("Exception occured in ServiceHookParser");
+                    // _tracer.TraceError(ex);
+                }
             }
-
-            // Look for a specific header here
-            return null;
-        }
-
-        private class RepositoryInfo
-        {
-            public string RepositoryUrl { get; set; }
-            public bool UseSSH { get; set; }
-            public string Host { get; set; }
-            public string OldRef { get; set; }
-            public string NewRef { get; set; }
-            public string Deployer { get; set; }
+            throw new FormatException(Resources.Error_UnsupportedFormat);
         }
     }
 }

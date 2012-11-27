@@ -199,6 +199,8 @@ namespace Kudu.FunctionalTests
                     Timeout = TimeSpan.FromMinutes(5)
                 };
 
+                client.DefaultRequestHeaders.Add("X-Github-Event", "push");
+
                 var post = new Dictionary<string, string>
                 {
                     { "payload", githubPayload }
@@ -209,6 +211,7 @@ namespace Kudu.FunctionalTests
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
+                Assert.Equal("GitHub", results[0].Deployer);
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "Welcome to ASP.NET!");
             });
         }
@@ -244,6 +247,73 @@ namespace Kudu.FunctionalTests
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
+                Assert.True(results[0].Deployer.StartsWith("Bitbucket"));
+                
+                KuduAssert.VerifyUrl(appManager.SiteUrl, "Welcome to ASP.NET!");
+            });
+        }
+
+        [Fact]
+        public void PullApiTestGitlabHQFormat()
+        {
+            string payload = @"{ ""before"":""7e2a599e2d28665047ec347ab36731c905c95e8b"", ""after"":""7e2a599e2d28665047ec347ab36731c905c95e8b"", ""ref"":""refs/heads/master"", ""user_id"":1, ""user_name"":""Remco Ros"", ""repository"":{ ""name"":""testing"", ""private"":false, ""url"":""https://github.com/KuduApps/SimpleWebApplication"", ""description"":null, ""homepage"":""https://github.com/KuduApps/SimpleWebApplication""  }}";
+            string appName = KuduUtils.GetRandomWebsiteName("PullApiTestGitlabHQFormat");
+
+            ApplicationManager.Run(appName, appManager =>
+            {
+                var handler = new HttpClientHandler
+                {
+                    Credentials = appManager.DeploymentManager.Credentials
+                };
+
+                var client = new HttpClient(handler)
+                {
+                    BaseAddress = new Uri(appManager.ServiceUrl),
+                    Timeout = TimeSpan.FromMinutes(5)
+                };
+
+                client.PostAsync("deploy", new StringContent(payload)).Wait();
+
+                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                Assert.Equal(1, results.Count);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
+                Assert.Equal("GitlabHQ", results[0].Deployer);
+                KuduAssert.VerifyUrl(appManager.SiteUrl, "Welcome to ASP.NET!");
+            });
+        }
+
+        [Fact]
+        public void PullApiTestCodebaseFormat()
+        {
+            string payload = @"{ ""before"":""7e2a599e2d28665047ec347ab36731c905c95e8b"", ""after"":""7e2a599e2d28665047ec347ab36731c905c95e8b"", ""ref"":""refs/heads/master"", ""repository"":{ ""name"":""testing"", ""public_access"":true, ""url"":""http://test.codebasehq.com/projects/test-repositories/repositories/git1"", ""clone_urls"": {""ssh"": ""git@codebasehq.com:test/test-repositories/git1.git"", ""http"": ""https://github.com/KuduApps/SimpleWebApplication""}}}";
+            string appName = KuduUtils.GetRandomWebsiteName("PullApiTestCodebaseFormat");
+
+            ApplicationManager.Run(appName, appManager =>
+            {
+                var handler = new HttpClientHandler
+                {
+                    Credentials = appManager.DeploymentManager.Credentials
+                };
+
+                var client = new HttpClient(handler)
+                {
+                    BaseAddress = new Uri(appManager.ServiceUrl),
+                    Timeout = TimeSpan.FromMinutes(5)
+                };
+                
+                client.DefaultRequestHeaders.Add("User-Agent", "Codebasehq.com");
+                
+                var post = new Dictionary<string, string>
+                {
+                    { "payload", payload }
+                };
+
+                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Wait();
+
+                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                Assert.Equal(1, results.Count);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
+                Assert.Equal("CodebaseHQ", results[0].Deployer);
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "Welcome to ASP.NET!");
             });
         }
