@@ -4,9 +4,9 @@ using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.GitServer.ServiceHookParser
 {
-    public class Fallback : IServiceHookParser
+    public class FallbackHandler : IServiceHookHandler
     {
-        public bool TryGetRepositoryInfo(HttpRequest request, Lazy<string> body, out RepositoryInfo repositoryInfo)
+        public bool TryGetRepositoryInfo(HttpRequest request, out RepositoryInfo repositoryInfo)
         {
             string json = request.Form["payload"];
             JObject payload = JObject.Parse(json);
