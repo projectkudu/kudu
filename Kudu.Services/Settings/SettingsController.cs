@@ -81,7 +81,7 @@ namespace Kudu.Services.Settings
         /// Get the list of all settings
         /// </summary>
         /// <returns></returns>
-        public HttpResponseMessage GetAll(int version)
+        public HttpResponseMessage GetAll(int version = 1)
         {
             /*
             Old format looks like this:
