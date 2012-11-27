@@ -4,23 +4,20 @@ using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.GitServer.ServiceHookParser
 {
-    public class Bitbucket : IServiceHookParser
+    public class Bitbucket : Github
     {
-        public bool TryGetRepositoryInfo(HttpRequest request, Lazy<string> bodyDontUse, out RepositoryInfo repositoryInfo)
+        public override bool TryGetRepositoryInfo(HttpRequest request, Lazy<string> body, out RepositoryInfo repositoryInfo)
         {
             repositoryInfo = null;
             if (request.UserAgent != null &&
                 request.UserAgent.StartsWith("Bitbucket", StringComparison.OrdinalIgnoreCase))
             {
-                var payload = JObject.Parse(request.Form["payload"]);
-                repositoryInfo = GetRepositoryInfo(request, payload);
-                return repositoryInfo != null;
+                return base.TryGetRepositoryInfo(request, body, out repositoryInfo);
             }
-
             return false;
         }
 
-        private RepositoryInfo GetRepositoryInfo(HttpRequest request, JObject payload)
+        protected override RepositoryInfo GetRepositoryInfo(HttpRequest request, JObject payload)
         {
             // bitbucket format
             // { repository: { absolute_url: "/a/b", is_private: true }, canon_url: "https//..." } 
@@ -36,10 +33,7 @@ namespace Kudu.Services.GitServer.ServiceHookParser
 
             // Combine them to get the full URL
             info.RepositoryUrl = server + path;
-
             info.IsPrivate = repository.Value<bool>("is_private");
-
-            info.Deployer = "Bitbucket";
 
             // We don't get any refs from bitbucket, so write dummy string (we ignore it later anyway)
             info.OldRef = "dummy";
@@ -49,19 +43,9 @@ namespace Kudu.Services.GitServer.ServiceHookParser
             var commits = payload.Value<JArray>("commits");
             info.NewRef = commits.Count == 0 ? "000" : "dummy";
 
-            // private repo, use SSH
-            if (info.IsPrivate)
-            {
-                Uri uri = new Uri(info.RepositoryUrl);
-                if (uri.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                {
-                    info.Host = "git@" + uri.Host;
-                    info.RepositoryUrl = info.Host + ":" + uri.AbsolutePath.TrimStart('/');
-                    info.UseSSH = true;
-                }
-            } 
-            
+            info.Deployer = request.UserAgent;
+
             return info;
-        }        
+        }
     }
 }

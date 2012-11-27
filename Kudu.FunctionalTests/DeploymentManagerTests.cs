@@ -247,7 +247,8 @@ namespace Kudu.FunctionalTests
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
-                Assert.Equal("Bitbucket", results[0].Deployer);
+                Assert.True(results[0].Deployer.StartsWith("Bitbucket"));
+                
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "Welcome to ASP.NET!");
             });
         }
@@ -299,7 +300,9 @@ namespace Kudu.FunctionalTests
                     BaseAddress = new Uri(appManager.ServiceUrl),
                     Timeout = TimeSpan.FromMinutes(5)
                 };
-
+                
+                client.DefaultRequestHeaders.Add("User-Agent", "Codebasehq.com");
+                
                 var post = new Dictionary<string, string>
                 {
                     { "payload", payload }
