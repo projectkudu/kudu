@@ -82,7 +82,11 @@ namespace Kudu.TestHarness
 
         private void Delete()
         {
-            _siteManager.DeleteSite(_appName);
+            // Don't delete the site if we're supposed to reuse it
+            if (!KuduUtils.ReuseSameSiteForAllTests)
+            {
+                _siteManager.DeleteSite(_appName);
+            }
         }
 
         public void Save(string path, string content)
@@ -96,6 +100,13 @@ namespace Kudu.TestHarness
         public static void Run(string applicationName, Action<ApplicationManager> action)
         {
             var appManager = CreateApplication(applicationName);
+
+            if (KuduUtils.ReuseSameSiteForAllTests)
+            {
+                // In site reuse mode, clean out the existing site so we start clean
+                appManager.RepositoryManager.Delete().Wait();
+            }
+
             var dumpPath = Path.Combine(PathHelper.TestResultsPath, applicationName, applicationName + ".zip");
             try
             {
@@ -118,7 +129,11 @@ namespace Kudu.TestHarness
             }
             finally
             {
-                appManager.Delete();
+                // Delete the site at the end, unless we're in site reuse mode
+                if (!KuduUtils.ReuseSameSiteForAllTests)
+                {
+                    appManager.Delete();
+                }
             }
         }
 
@@ -129,16 +144,30 @@ namespace Kudu.TestHarness
 
             var siteManager = GetSiteManager(pathResolver, settingsResolver);
 
-            try
+            Site site;
+            
+            if (KuduUtils.ReuseSameSiteForAllTests)
             {
-                siteManager.DeleteSite(applicationName);
+                // In site reuse mode, try to get the existing site, and create it if needed
+                site = siteManager.GetSite(applicationName);
+                if (site == null)
+                {
+                    site = siteManager.CreateSite(applicationName);
+                }
             }
-            catch (Exception)
+            else
             {
+                try
+                {
+                    siteManager.DeleteSite(applicationName);
+                }
+                catch (Exception)
+                {
 
+                }
+
+                site = siteManager.CreateSite(applicationName);
             }
-
-            Site site = siteManager.CreateSite(applicationName);
 
             string gitUrl = null;
             var repositoryManager = new RemoteRepositoryManager(site.ServiceUrl + "live/scm");

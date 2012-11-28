@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
@@ -64,8 +65,15 @@ namespace Kudu.TestHarness
 
         public static string GetRandomWebsiteName(string name)
         {
-            int maxLen = Math.Min(name.Length, 25);
-            return name.Substring(0, maxLen) + Guid.NewGuid().ToString("N").Substring(0, 4);
+            if (KuduUtils.ReuseSameSiteForAllTests)
+            {
+                return KuduUtils.SiteReusedForAllTests;
+            }
+            else
+            {
+                int maxLen = Math.Min(name.Length, 25);
+                return name.Substring(0, maxLen) + Guid.NewGuid().ToString("N").Substring(0, 4);
+            }
         }
 
         /// <summary>
@@ -79,6 +87,22 @@ namespace Kudu.TestHarness
                return Path.Combine(testRepositories, repositoryName);
             }
             return null;
+        }
+
+        public static string SiteReusedForAllTests
+        {
+            get
+            {
+                return ConfigurationManager.AppSettings["SiteReusedForAllTests"];
+            }
+        }
+
+        public static bool ReuseSameSiteForAllTests
+        {
+            get
+            {
+                return !String.IsNullOrEmpty(SiteReusedForAllTests);
+            }
         }
     }
 }
