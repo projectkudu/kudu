@@ -7,6 +7,7 @@ using System.Threading;
 using System.Web;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
+using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.Performance
 {
@@ -16,6 +17,7 @@ namespace Kudu.Services.Performance
         private const string HeartbeatMessage = "{0}  No new trace in the past {1} min(s).\r\n";
         private const string IdleMessage = "{0}  Stream terminated due to no new trace in the past {1} min(s).\r\n";
         private const string ErrorMessage = "\r\n{0}  Error has occured and stream is terminated. {1}\r\n";
+        private const string AppDomainShutdownMessage = "\r\n{0}  The application was terminated.\r\n";
 
         // Antares 3 mins timeout, heartbeat every mins keep alive.
         private static string[] LogFileExtensions = new string[] { ".txt", ".log" };
@@ -32,15 +34,25 @@ namespace Kudu.Services.Performance
         private Timer _heartbeat;
         private DateTime lastTraceTime = DateTime.UtcNow;
 
-        public LogStreamManager(string logPath, ITracer tracer)
+        private ShutdownDetector _shutdownDetector;
+        private CancellationTokenRegistration _cancellationTokenRegistration;
+
+        public LogStreamManager(string logPath, ITracer tracer, ShutdownDetector shutdownDetector)
         {
             _logPath = logPath;
             _tracer = tracer;
+            _shutdownDetector = shutdownDetector;
             _results = new List<ProcessRequestAsyncResult>();
         }
 
         public IAsyncResult BeginProcessRequest(HttpContext context, AsyncCallback cb, object extraData)
         {
+            // Close the client with a clear message when the app is shut down
+            _cancellationTokenRegistration = _shutdownDetector.Token.Register(() =>
+            {
+                TerminateClient(String.Format(AppDomainShutdownMessage, DateTime.UtcNow.ToString("s")));
+            });
+
             string path = GetFilePath(context);
             if (!Directory.Exists(path))
             {
@@ -64,6 +76,8 @@ namespace Kudu.Services.Performance
         public void EndProcessRequest(IAsyncResult result)
         {
             ProcessRequestAsyncResult.End(result);
+
+            _cancellationTokenRegistration.Dispose();
         }
 
         private void Initialize(string path)
