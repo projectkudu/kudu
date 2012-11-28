@@ -92,6 +92,9 @@
     <Compile Include="GitDeploymentTests.cs" />
     <Compile Include="SelectNodeVersionFacts.cs" />
     <Compile Include="SettingsApiFacts.cs" />
+    <Compile Include="Vfs\LiveScmEditorControllerTest.cs" />
+    <Compile Include="Vfs\VfsControllerBaseTest.cs" />
+    <Compile Include="Vfs\VfsControllerTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include=".ssh\config" />

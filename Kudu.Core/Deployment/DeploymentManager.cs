@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
+using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
@@ -32,13 +33,13 @@ namespace Kudu.Core.Deployment
 
         public event Action<DeployResult> StatusChanged;
 
-        public DeploymentManager(IDeploymentRepository serverRepository, 
-                                 ISiteBuilderFactory builderFactory, 
-                                 IEnvironment environment, 
-                                 IFileSystem fileSystem, 
-                                 ITraceFactory traceFactory, 
-                                 IDeploymentSettingsManager settings, 
-                                 IOperationLock deploymentLock, 
+        public DeploymentManager(IDeploymentRepository serverRepository,
+                                 ISiteBuilderFactory builderFactory,
+                                 IEnvironment environment,
+                                 IFileSystem fileSystem,
+                                 ITraceFactory traceFactory,
+                                 IDeploymentSettingsManager settings,
+                                 IOperationLock deploymentLock,
                                  ILogger globalLogger)
         {
             _serverRepository = serverRepository;
@@ -502,6 +503,8 @@ namespace Kudu.Core.Deployment
 
                            // End the deploy step
                            deployStep.Dispose();
+
+                           return ex.Handled();
                        });
             }
             catch (Exception ex)

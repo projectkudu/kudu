@@ -1,4 +1,3 @@
-using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
@@ -160,13 +159,17 @@ namespace Kudu.Services.Web.App_Start
 
             kernel.Bind<ILogger>().ToMethod(context => GetLogger(environment, context.Kernel))
                                              .InRequestScope();
+
+            kernel.Bind<IRepository>().ToMethod(context => new GitExeRepository(environment.RepositoryPath, environment.SiteRootPath, context.Kernel.Get<ITraceFactory>()))
+                                                .InRequestScope();
+
             kernel.Bind<IDeploymentManager>().To<DeploymentManager>()
                                              .InRequestScope();
             kernel.Bind<ISSHKeyManager>().To<SSHKeyManager>()
                                              .InRequestScope();
 
             kernel.Bind<IDeploymentRepository>().ToMethod(context => new GitDeploymentRepository(environment.RepositoryPath,
-                                                                                                 environment.SiteRootPath, 
+                                                                                                 environment.SiteRootPath,
                                                                                                  context.Kernel.Get<ITraceFactory>()))
                                                 .InRequestScope();
 
@@ -174,7 +177,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IDeploymentEnvironment>().To<DeploymentEnvrionment>();
 
             kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.RepositoryPath,
-                                                                           environment.SiteRootPath, 
+                                                                           environment.SiteRootPath,
                                                                            initLock,
                                                                            GetRequestTraceFile(environment, context.Kernel),
                                                                            context.Kernel.Get<IDeploymentEnvironment>(),
@@ -232,6 +235,11 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("scm-clean", "scm/clean", new { controller = "LiveScm", action = "Clean" });
             routes.MapHttpRoute("scm-delete", "scm", new { controller = "LiveScm", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
 
+            // Scm files editor
+            routes.MapHttpRoute("scm-get-files", "scmvfs/{*path}", new { controller = "LiveScmEditor", action = "GetItem" }, new { verb = new HttpMethodConstraint("GET", "HEAD") });
+            routes.MapHttpRoute("scm-put-files", "scmvfs/{*path}", new { controller = "LiveScmEditor", action = "PutItem" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRoute("scm-delete-files", "scmvfs/{*path}", new { controller = "LiveScmEditor", action = "DeleteItem" }, new { verb = new HttpMethodConstraint("DELETE") });
+
             // These older scm routes are there for backward compat, and should eventually be deleted once clients are changed.
             routes.MapHttpRoute("live-scm-info", "live/scm/info", new { controller = "LiveScm", action = "GetRepositoryInfo" });
             routes.MapHttpRoute("live-scm-clean", "live/scm/clean", new { controller = "LiveScm", action = "Clean" });
@@ -242,6 +250,11 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("one-file", "files/{*path}", new { controller = "Files", action = "GetFile" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("save-file", "files/{*path}", new { controller = "Files", action = "Save" }, new { verb = new HttpMethodConstraint("PUT") });
             routes.MapHttpRoute("delete-file", "files/{*path}", new { controller = "Files", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
+
+            // Live files editor
+            routes.MapHttpRoute("vfs-get-files", "vfs/{*path}", new { controller = "Vfs", action = "GetItem" }, new { verb = new HttpMethodConstraint("GET", "HEAD") });
+            routes.MapHttpRoute("vfs-put-files", "vfs/{*path}", new { controller = "Vfs", action = "PutItem" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRoute("vfs-delete-files", "vfs/{*path}", new { controller = "Vfs", action = "DeleteItem" }, new { verb = new HttpMethodConstraint("DELETE") });
 
             // These older files routes are there for backward compat, and should eventually be deleted once clients are changed.
             routes.MapHttpRoute("old-all-files", "live/files", new { controller = "Files", action = "GetFiles" });

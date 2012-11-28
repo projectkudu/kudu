@@ -117,6 +117,33 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="ArgumentMustBeGreaterThanOrEqualTo" xml:space="preserve">
+    <value>Value must be greater than or equal to {0}.</value>
+  </data>
+  <data name="ByteRangeStreamContentNoRanges" xml:space="preserve">
+    <value>Found zero byte ranges. There must be at least one byte range provided.</value>
+  </data>
+  <data name="ByteRangeStreamContentNotBytesRange" xml:space="preserve">
+    <value>The range unit '{0}' is not valid. The range must have a unit of '{1}'.</value>
+  </data>
+  <data name="ByteRangeStreamEmpty" xml:space="preserve">
+    <value>The stream over which '{0}' provides a range view must have a length greater than or equal to 1.</value>
+  </data>
+  <data name="ByteRangeStreamInvalidFrom" xml:space="preserve">
+    <value>The 'From' value of the range must be less than or equal to {0}.</value>
+  </data>
+  <data name="ByteRangeStreamNoneOverlap" xml:space="preserve">
+    <value>None of the requested ranges ({0}) overlap with the current extent of the selected resource.</value>
+  </data>
+  <data name="ByteRangeStreamNoOverlap" xml:space="preserve">
+    <value>The requested range ({0}) does not overlap with the current extent of the selected resource.</value>
+  </data>
+  <data name="ByteRangeStreamNotSeekable" xml:space="preserve">
+    <value>The stream over which '{0}' provides a range view must be seekable.</value>
+  </data>
+  <data name="ByteRangeStreamReadOnly" xml:space="preserve">
+    <value>This is a read-only stream.</value>
+  </data>
   <data name="Error_DeploymentInProgess" xml:space="preserve">
     <value>There's a deployment already in progress.</value>
   </data>
@@ -143,5 +170,32 @@
   </data>
   <data name="SettingDoesNotExist" xml:space="preserve">
     <value>The setting '{0}' does not exist.</value>
+  </data>
+  <data name="VfsController_Busy" xml:space="preserve">
+    <value>The repository is currently busy handling another request. Please try again later.</value>
+  </data>
+  <data name="VfsController_CannotUpdateOrDeleteDirectory" xml:space="preserve">
+    <value>The resource represents a directory which can not be updated or deleted.</value>
+  </data>
+  <data name="VfsController_EtagMismatch" xml:space="preserve">
+    <value>ETag does not represent the latest state of the resource.</value>
+  </data>
+  <data name="VfsController_MissingIfMatch" xml:space="preserve">
+    <value>Updating an existing resource requires an If-Match header carrying a single, strong ETag.</value>
+  </data>
+  <data name="VfsController_WriteConflict" xml:space="preserve">
+    <value>Could not write to local resource '{0}'.</value>
+  </data>
+  <data name="VfsScmController_EtagMismatch" xml:space="preserve">
+    <value>ETag does not represent an existing commit ID: '{0}'. Updates must be based on an existing commit ID.</value>
+  </data>
+  <data name="VfsScmController_MissingIfMatch" xml:space="preserve">
+    <value>Updating an existing resource requires an If-Match header carrying a single, strong ETag based on an existing commit ID.</value>
+  </data>
+  <data name="VfsScmController_WeakEtag" xml:space="preserve">
+    <value>Invalid ETag: '{0}'. Updating an existing resource requires a strong etag based on an existing commit ID.</value>
+  </data>
+  <data name="VfsController_fileChanged" xml:space="preserve">
+    <value>The contents of the file has changed while the operation was in progress. Please retry the request to avoid conflict.</value>
   </data>
 </root>

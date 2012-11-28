@@ -180,18 +180,12 @@ namespace Kudu.Core.SourceControl.Git
             ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("GitExeServer.Initialize"))
             {
-                _repository.Initialize();
+                _repository.Initialize(configuration);
 
                 using (tracer.Step("Configure git server"))
                 {
                     // Allow getting pushes even though we're not bare
                     _gitExe.Execute(tracer, "config receive.denyCurrentBranch ignore");
-                }
-
-                using (tracer.Step("Configure git user and email"))
-                {
-                    _gitExe.Execute(tracer, @"config user.name ""{0}""", configuration.Username);
-                    _gitExe.Execute(tracer, @"config user.email ""{0}""", configuration.Email);
                 }
 
                 using (tracer.Step("Setup post receive hook"))

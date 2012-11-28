@@ -8,7 +8,7 @@ namespace Kudu.TestHarness
     {
         // Hard code the path to the services site (makes it easier to debug)
         internal static readonly string ServiceSitePath = ConfigurationManager.AppSettings["serviceSitePath"] ?? Path.GetFullPath(@"..\..\..\Kudu.Services.Web");
-        internal static readonly string SitesPath = ConfigurationManager.AppSettings["sitesPath"] ?? Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "apps"));
+        internal static readonly string SitesPath = ConfigurationManager.AppSettings["sitesPath"] ?? Path.GetFullPath(Path.Combine(@"C:\Temp", "KuduApps"));
 
         // Test paths
         internal static readonly string TestsRootPath = Path.Combine(Directory.GetCurrentDirectory(), "Tests");
