@@ -207,7 +207,7 @@ namespace Kudu.Services.GitServer
                         return info;
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // TODO: review
                     // ignore exceptions from parsing, just continue to the next
