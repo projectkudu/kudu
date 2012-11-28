@@ -33,7 +33,7 @@ namespace Kudu.Services.Infrastructure
                 // This is a more aggresive check to see if the app domain is in the process of being shutdown and
                 // we trigger the same cts in that case.
                 if (HttpRuntime.UsingIntegratedPipeline &&
-                    UnsafeIISMethods.CanDetectAppDomainRestart)
+                    UnsafeIISMethods.CanDetectAppDomainRestart && _checkAppPoolTimer == null)
                 {
                     _checkAppPoolTimer = new Timer(_ =>
                     {
@@ -84,7 +84,7 @@ namespace Kudu.Services.Infrastructure
             {
                 get
                 {
-                    if (_iis.Value.CheckConfigChanged == null)
+                    if (!CanDetectAppDomainRestart)
                     {
                         return false;
                     }
