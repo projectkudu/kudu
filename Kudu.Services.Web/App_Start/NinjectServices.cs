@@ -22,6 +22,7 @@ using Kudu.Core.SourceControl.Git;
 using Kudu.Core.SSHKey;
 using Kudu.Core.Tracing;
 using Kudu.Services.GitServer;
+using Kudu.Services.Infrastructure;
 using Kudu.Services.Performance;
 using Kudu.Services.SSHKey;
 using Kudu.Services.Web.Infrastruture;
@@ -133,9 +134,13 @@ namespace Kudu.Services.Web.App_Start
 
             kernel.Bind<DiagnosticsController>().ToMethod(context => new DiagnosticsController(paths));
 
+            var shutdownDetector = new ShutdownDetector();
+            shutdownDetector.Initialize();
+
             // LogStream service
             kernel.Bind<LogStreamManager>().ToMethod(context => new LogStreamManager(Path.Combine(environment.RootPath, Constants.LogFilesPath),
-                                                                                     context.Kernel.Get<ITracer>()));
+                                                                                     context.Kernel.Get<ITracer>(),
+                                                                                     shutdownDetector));
 
             // Deployment Service
             kernel.Bind<ISettings>().ToMethod(context => new XmlSettings.Settings(GetSettingsPath(environment)));
