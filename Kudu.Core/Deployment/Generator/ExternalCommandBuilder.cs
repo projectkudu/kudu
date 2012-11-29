@@ -92,9 +92,36 @@ namespace Kudu.Core.Deployment.Generator
 
             try
             {
-                string output = exe.ExecuteWithConsoleOutput(context.Tracer, "/c " + command, String.Empty).Item1;
+                using (var writer = new ProgressWriter())
+                {
+                    writer.Start();
 
-                customLogger.Log(output);
+                    // TODO: The line with the MSB3644 warnings since it's not important
+                    string log = exe.Execute(context.Tracer,
+                                               output =>
+                                               {
+                                                   if (output.Contains("MSB3644:") || output.Contains("MSB3270:"))
+                                                   {
+                                                       return false;
+                                                   }
+
+                                                   writer.WriteOutLine(output);
+                                                   Console.Out.WriteLine(output);
+                                                   return true;
+                                               },
+                                               error =>
+                                               {
+                                                   writer.WriteErrorLine(error);
+                                                   Console.Error.WriteLine(error);
+                                                   return true;
+                                               },
+                                               Console.OutputEncoding,
+                                               "/c " + command,
+                                               String.Empty).Item1;
+
+                    // TODO: Is this required
+                    customLogger.Log(log);
+                }
             }
             catch (CommandLineException ex)
             {
