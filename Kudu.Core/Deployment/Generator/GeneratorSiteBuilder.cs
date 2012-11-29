@@ -60,15 +60,9 @@ namespace Kudu.Core.Deployment.Generator
                     {
                         writer.Start();
 
-                        // TODO: The line with the MSB3644 warnings since it's not important
                         string log = scriptGenerator.Execute(context.Tracer,
                                                    output =>
                                                    {
-                                                       if (output.Contains("MSB3644:") || output.Contains("MSB3270:"))
-                                                       {
-                                                           return false;
-                                                       }
-
                                                        writer.WriteOutLine(output);
                                                        return true;
                                                    },
