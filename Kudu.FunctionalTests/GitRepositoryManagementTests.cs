@@ -491,16 +491,17 @@ command = deploy.cmd");
         [Fact]
         public void FirstPushDeletesPriorContent()
         {
-            string repositoryName = "Bakery10";
+            string repositoryName = "HelloWorld";
             string appName = KuduUtils.GetRandomWebsiteName("FirstPushDelPrior");
-            using (var repo = Git.CreateLocalRepository(repositoryName))
+            string cloneUrl = KuduUtils.GetCachedRepositoryPath(repositoryName) ?? "https://github.com/KuduApps/HelloWorld.git";
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
                     appManager.ProjectSystem.WriteAllText("foo.txt", "This is a test file");
                     string url = appManager.SiteUrl + "foo.txt";
 
-                    Thread.Sleep(500);
+                    Thread.Sleep(200);
 
                     KuduAssert.VerifyUrl(url, "This is a test file");
 
