@@ -38,6 +38,14 @@ namespace Kudu.Core.SourceControl.Git
             _gitExe.EnvironmentVariables[KnownEnviornment.DEPLOYER] = "";
         }
 
+        public string CurrentId
+        {
+            get
+            {
+                return _repository.CurrentId;
+            }
+        }
+
         private string PostReceiveHookPath
         {
             get
@@ -215,6 +223,16 @@ echo $i > pushinfo
         public void SetReceiveInfo(string oldRef, string newRef, string branchName)
         {
             File.WriteAllText(PushInfoPath, oldRef + " " + newRef + " " + branchName);
+        }
+
+        public ChangeSet Commit(string message, string authorName)
+        {
+            return _repository.Commit(message, authorName);
+        }
+
+        public void Update(string id)
+        {
+            _repository.Update(id);
         }
 
         /// <summary>

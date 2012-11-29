@@ -46,7 +46,7 @@ namespace Kudu.Services.GitServer
 
                 context.Response.ContentType = "application/x-git-{0}-result".With("upload-pack");
 
-                _gitServer.Upload(GetInputStream(context.Request), context.Response.OutputStream);
+                _gitServer.Upload(context.Request.GetInputStream(), context.Response.OutputStream);
             }
         }
     }

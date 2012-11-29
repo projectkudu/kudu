@@ -57,7 +57,7 @@ namespace Kudu.Services.GitServer
 
                     using (_deploymentManager.CreateTemporaryDeployment(Resources.ReceivingChanges))
                     {
-                        _gitServer.Receive(GetInputStream(context.Request), context.Response.OutputStream);
+                        _gitServer.Receive(context.Request.GetInputStream(), context.Response.OutputStream);
                     }
                 },
                 () =>

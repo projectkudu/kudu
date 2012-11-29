@@ -19,12 +19,20 @@ namespace Kudu.Contracts.Tracing
 
         public static void TraceError(this ITracer tracer, Exception ex)
         {
-            tracer.Trace("Error occured", new Dictionary<string, string>
+            var attribs = new Dictionary<string, string>
             {
                 { "type", "error" },
                 { "text", ex.Message },
                 { "stackTrace", ex.StackTrace ?? String.Empty }
-            });
+            };
+
+            if (ex.InnerException != null)
+            {
+                attribs["innerText"] = ex.InnerException.Message;
+                attribs["innerStackTrace"] = ex.InnerException.StackTrace ?? String.Empty;
+            }
+
+            tracer.Trace("Error occured", attribs);
         }
 
         public static void TraceError(this ITracer tracer, string message)

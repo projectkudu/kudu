@@ -9,5 +9,6 @@
         public string OldRef { get; set; }
         public string NewRef { get; set; }
         public string Deployer { get; set; }
+        public IServiceHookHandler Handler { get; set; }
     }
 }

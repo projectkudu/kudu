@@ -1,11 +1,17 @@
 ﻿using System;
 using System.Web;
+using Kudu.Core.SourceControl.Git;
 using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.GitServer.ServiceHookHandlers
 {
     public class BitbucketHandler : JsonServiceHookHandler
     {
+        public BitbucketHandler(IGitServer gitServer)
+            : base(gitServer)
+        {
+        }
+
         public override bool TryGetRepositoryInfo(HttpRequest request, out RepositoryInfo repositoryInfo)
         {
             repositoryInfo = null;
@@ -19,6 +25,7 @@ namespace Kudu.Services.GitServer.ServiceHookHandlers
 
         protected override RepositoryInfo GetRepositoryInfo(HttpRequest request, JObject payload)
         {
+            // TODO, suwatch: this needs to throw, not returning null.
             // bitbucket format
             // { repository: { absolute_url: "/a/b", is_private: true }, canon_url: "https//..." } 
             var repository = payload.Value<JObject>("repository");
