@@ -5,7 +5,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.GitServer.ServiceHookHandlers
 {
-    public class GitlabHqHandler : JsonServiceHookHandler
+    public class GitlabHqHandler : GitHubCompatHandler
     {
         public GitlabHqHandler(IGitServer gitServer)
             : base(gitServer)

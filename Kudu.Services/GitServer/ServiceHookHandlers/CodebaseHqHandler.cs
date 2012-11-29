@@ -5,22 +5,23 @@ using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.GitServer.ServiceHookHandlers
 {
-    public class CodebaseHqHandler : JsonServiceHookHandler
+    public class CodebaseHqHandler : GitHubCompatHandler
     {
         public CodebaseHqHandler(IGitServer gitServer)
             : base(gitServer)
         {
         }
 
-        public override bool TryGetRepositoryInfo(HttpRequest request, out RepositoryInfo repositoryInfo)
+        public override bool TryGetRepositoryInfo(HttpRequest request, JObject payload, out RepositoryInfo repositoryInfo)
         {
             repositoryInfo = null;
             if (request.UserAgent != null &&
                 request.UserAgent.StartsWith("Codebasehq", StringComparison.OrdinalIgnoreCase))
             {
-                return base.TryGetRepositoryInfo(request, out repositoryInfo);
+                repositoryInfo = GetRepositoryInfo(request, payload);
             }
-            return false;
+
+            return repositoryInfo != null;
         }
 
         protected override RepositoryInfo GetRepositoryInfo(HttpRequest request, JObject payload)
@@ -42,8 +43,12 @@ namespace Kudu.Services.GitServer.ServiceHookHandlers
                 info.RepositoryUrl = urls.Value<string>("http");                
             }
 
-            info.Deployer = "CodebaseHQ";
             return info;
+        }
+
+        protected override string GetDeployer(HttpRequest request)
+        {
+            return "CodebaseHQ";
         }
     }
 }

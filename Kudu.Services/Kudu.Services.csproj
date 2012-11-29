@@ -145,8 +145,8 @@
     <Compile Include="GitServer\ServiceHookHandlers\CodebaseHqHandler.cs" />
     <Compile Include="GitServer\ServiceHookHandlers\CodePlexHandler.cs" />
     <Compile Include="GitServer\ServiceHookHandlers\DropboxHandler.cs" />
+    <Compile Include="GitServer\ServiceHookHandlers\GitHubCompatHandler.cs" />
     <Compile Include="GitServer\ServiceHookHandlers\GitlabHqHandler.cs" />
-    <Compile Include="GitServer\ServiceHookHandlers\JsonServiceHookHandler.cs" />
     <Compile Include="GitServer\ServiceHookHandlers\RepositoryInfo.cs" />
     <Compile Include="GitServer\ServiceHookHandlers\IServiceHookHandler.cs" />
     <Compile Include="GitServer\ServiceHookHandlers\BitbucketHandler.cs" />

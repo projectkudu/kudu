@@ -12,6 +12,8 @@ using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Services.GitServer.ServiceHookHandlers;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.GitServer
 {
@@ -55,7 +57,8 @@ namespace Kudu.Services.GitServer
                 RepositoryInfo repositoryInfo = null;
                 try
                 {
-                    repositoryInfo = GetRepositoryInfo(context.Request);
+                    JObject payload = GetPayload(context.Request);
+                    repositoryInfo = GetRepositoryInfo(context.Request, payload);
                 }
                 catch (FormatException ex)
                 {
@@ -151,11 +154,11 @@ namespace Kudu.Services.GitServer
             } while (hasPendingDeployment);
         }
 
-        private void TracePayload(string json)
+        private void TracePayload(JObject json)
         {
             var attribs = new Dictionary<string, string>
             {
-                { "json", json }
+                { "json", json.ToString() }
             };
 
             _tracer.Trace("payload", attribs);
@@ -171,18 +174,13 @@ namespace Kudu.Services.GitServer
             _tracer.Trace("handler", attribs);
         }
 
-        private RepositoryInfo GetRepositoryInfo(HttpRequest request)
+        private RepositoryInfo GetRepositoryInfo(HttpRequest request, JObject payload)
         {
             RepositoryInfo info = null;
             foreach (var handler in _serviceHookHandlers)
             {
-                if (handler.TryGetRepositoryInfo(request, out info))
+                if (handler.TryGetRepositoryInfo(request, payload, out info))
                 {
-                    Debug.Assert(info != null, "info must not be null");
-                    Debug.Assert(!String.IsNullOrEmpty(info.OldRef), "OldRef must not be null");
-                    Debug.Assert(!String.IsNullOrEmpty(info.NewRef), "NewRef must not be null");
-                    Debug.Assert(!String.IsNullOrEmpty(info.Deployer), "Deployer must not be null");
-
                     if (_tracer.TraceLevel >= TraceLevel.Verbose)
                     {
                         TraceHandler(handler);
@@ -194,6 +192,42 @@ namespace Kudu.Services.GitServer
             }
 
             throw new FormatException(Resources.Error_UnsupportedFormat);
+        }
+
+        private JObject GetPayload(HttpRequest request)
+        {
+            JObject payload;
+
+            // we don't care about content type, just let it choked
+            if (request.Form.Count > 0)
+            {
+                string json = request.Form["payload"];
+                if (String.IsNullOrEmpty(json))
+                {
+                    json = request.Form[0];
+                }
+
+                payload = JsonConvert.DeserializeObject<JObject>(json);
+            }
+            else
+            {
+                using (JsonTextReader reader = new JsonTextReader(new StreamReader(request.GetInputStream())))
+                {
+                    payload = JObject.Load(reader);
+                }
+            }
+
+            if (payload == null)
+            {
+                throw new FormatException(Resources.Error_EmptyPayload);
+            }
+
+            if (_tracer.TraceLevel >= TraceLevel.Verbose)
+            {
+                TracePayload(payload);
+            }
+
+            return payload;
         }
     }
 }

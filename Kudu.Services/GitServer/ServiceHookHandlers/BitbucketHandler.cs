@@ -5,34 +5,38 @@ using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.GitServer.ServiceHookHandlers
 {
-    public class BitbucketHandler : JsonServiceHookHandler
+    public class BitbucketHandler : IServiceHookHandler
     {
+        private readonly IGitServer _gitServer;
+
         public BitbucketHandler(IGitServer gitServer)
-            : base(gitServer)
         {
+            _gitServer = gitServer;
         }
 
-        public override bool TryGetRepositoryInfo(HttpRequest request, out RepositoryInfo repositoryInfo)
+        public bool TryGetRepositoryInfo(HttpRequest request, JObject payload, out RepositoryInfo repositoryInfo)
         {
             repositoryInfo = null;
             if (request.UserAgent != null &&
                 request.UserAgent.StartsWith("Bitbucket", StringComparison.OrdinalIgnoreCase))
             {
-                return base.TryGetRepositoryInfo(request, out repositoryInfo);
+                repositoryInfo = GetRepositoryInfo(request, payload);
             }
-            return false;
+
+            return repositoryInfo != null;
         }
 
-        protected override RepositoryInfo GetRepositoryInfo(HttpRequest request, JObject payload)
+        public void Fetch(RepositoryInfo repositoryInfo, string targetBranch)
         {
-            // TODO, suwatch: this needs to throw, not returning null.
+            // Fetch from url
+            _gitServer.FetchWithoutConflict(repositoryInfo.RepositoryUrl, "external", targetBranch);
+        }
+
+        private RepositoryInfo GetRepositoryInfo(HttpRequest request, JObject payload)
+        {
             // bitbucket format
             // { repository: { absolute_url: "/a/b", is_private: true }, canon_url: "https//..." } 
             var repository = payload.Value<JObject>("repository");
-            if (repository == null)
-            {
-                return null;
-            }
 
             var info = new RepositoryInfo();
             string server = payload.Value<string>("canon_url");     // e.g. https://bitbucket.org
@@ -51,6 +55,18 @@ namespace Kudu.Services.GitServer.ServiceHookHandlers
             info.NewRef = commits.Count == 0 ? "000" : "dummy";
 
             info.Deployer = request.UserAgent;
+
+            // private repo, use SSH
+            if (info.IsPrivate)
+            {
+                Uri uri = new Uri(info.RepositoryUrl);
+                if (uri.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                {
+                    info.Host = "git@" + uri.Host;
+                    info.RepositoryUrl = info.Host + ":" + uri.AbsolutePath.TrimStart('/');
+                    info.UseSSH = true;
+                }
+            }
 
             return info;
         }

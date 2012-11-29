@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Web;
 using Kudu.Core.SourceControl.Git;
 using Newtonsoft.Json.Linq;
@@ -9,39 +8,19 @@ namespace Kudu.Services.GitServer.ServiceHookHandlers
     /// <summary>
     /// Default Servicehook Handler, uses github format.
     /// </summary>
-    public class JsonServiceHookHandler : IServiceHookHandler
+    public class GitHubCompatHandler : IServiceHookHandler
     {
         protected readonly IGitServer _gitServer;
 
-        public JsonServiceHookHandler(IGitServer gitServer)
+        public GitHubCompatHandler(IGitServer gitServer)
         {
             _gitServer = gitServer;
         }
 
-        public virtual bool TryGetRepositoryInfo(HttpRequest request, out RepositoryInfo repositoryInfo)
+        public virtual bool TryGetRepositoryInfo(HttpRequest request, JObject payload, out RepositoryInfo repositoryInfo)
         {
-            string json = String.Empty;
-            if (request.Form.Count > 0)
-            {
-                json = request.Form["payload"];
-                if (String.IsNullOrEmpty(json))
-                {
-                    json = request.Form[0];
-                }
-            }
-            else
-            {
-                // assume raw json
-                request.InputStream.Seek(0, SeekOrigin.Begin);
-
-                // TODO, suwatch: this is problematic as multiple handler may not collaborate.
-                // input stream can only be read once.
-                json = new StreamReader(request.GetInputStream()).ReadToEnd();
-            }
-
-            JObject payload = JObject.Parse(json);
             repositoryInfo = GetRepositoryInfo(request, payload);
-            return repositoryInfo != null;
+            return repositoryInfo != null && repositoryInfo.IsValid();
         }
 
         public virtual void Fetch(RepositoryInfo repositoryInfo, string targetBranch)
@@ -95,8 +74,7 @@ namespace Kudu.Services.GitServer.ServiceHookHandlers
 
         protected virtual string GetDeployer(HttpRequest request)
         {
-            // looks like github, 
-            return "GitHub compatible";
+            return "External Provider";
         }
     }
 }

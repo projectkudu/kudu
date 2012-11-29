@@ -1,4 +1,6 @@
-﻿namespace Kudu.Services.GitServer.ServiceHookHandlers
+﻿using System;
+
+namespace Kudu.Services.GitServer.ServiceHookHandlers
 {
     public class RepositoryInfo
     {
@@ -10,5 +12,12 @@
         public string NewRef { get; set; }
         public string Deployer { get; set; }
         public IServiceHookHandler Handler { get; set; }
+
+        public bool IsValid()
+        {
+            return !String.IsNullOrEmpty(Deployer) &&
+                !String.IsNullOrEmpty(OldRef) &&
+                !String.IsNullOrEmpty(NewRef);
+        }
     }
 }

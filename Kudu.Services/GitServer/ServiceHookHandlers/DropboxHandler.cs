@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Web;
 using Kudu.Contracts.Dropbox;
@@ -9,7 +8,7 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.SourceControl;
 using Kudu.Services.Dropbox;
-using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.GitServer.ServiceHookHandlers
 {
@@ -27,22 +26,12 @@ namespace Kudu.Services.GitServer.ServiceHookHandlers
             _helper = new DropboxHelper(tracer, repository, settings, environment);
         }
 
-        public bool TryGetRepositoryInfo(HttpRequest request, out RepositoryInfo repositoryInfo)
+        public bool TryGetRepositoryInfo(HttpRequest request, JObject payload, out RepositoryInfo repositoryInfo)
         {
             repositoryInfo = null;
-            if (request.UserAgent != null &&
-                request.UserAgent.StartsWith(DropboxHelper.Dropbox , StringComparison.OrdinalIgnoreCase))
+            if (!String.IsNullOrEmpty(payload.Value<string>("NewCursor")))
             {
-                DropboxInfo info = DropboxInfo.Parse(request.GetInputStream());
-
-                _tracer.Trace("Dropbox payload", new Dictionary<string, string>
-                {
-                    { "changes", info.DeployInfo.Deltas.Count().ToString() },
-                    { "oldcursor", info.DeployInfo.OldCursor },
-                    { "newcursor", info.DeployInfo.NewCursor }
-                });
-
-                repositoryInfo = info;
+                repositoryInfo = new DropboxInfo(payload);
             }
 
             return repositoryInfo != null;
@@ -52,42 +41,21 @@ namespace Kudu.Services.GitServer.ServiceHookHandlers
         {
             // Sync with dropbox
             DropboxInfo info = (DropboxInfo)repositoryInfo;
+
             _helper.Sync(info.DeployInfo, targetBranch);
         }
 
         private class DropboxInfo : RepositoryInfo
         {
-            public DropboxDeployInfo DeployInfo { get; set; }
-
-            public static DropboxInfo Parse(Stream stream)
+            public DropboxInfo(JObject payload)
             {
-                DropboxDeployInfo deployInfo = null;
-                using (JsonTextReader reader = new JsonTextReader(new StreamReader(stream)))
-                {
-                    JsonSerializer serializer = new JsonSerializer();
-                    try
-                    {
-                        deployInfo = serializer.Deserialize<DropboxDeployInfo>(reader);
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new FormatException(Resources.Error_UnsupportedFormat, ex);
-                    }
-
-                    if (deployInfo == null)
-                    {
-                        throw new FormatException(Resources.Error_EmptyPayload);
-                    }
-                }
-
-                return new DropboxInfo
-                {
-                    Deployer = DropboxHelper.Dropbox,
-                    NewRef = "dummy",
-                    OldRef = "dummy",
-                    DeployInfo = deployInfo
-                };
+                Deployer = DropboxHelper.Dropbox;
+                NewRef = "dummy";
+                OldRef = "dummy";
+                DeployInfo = payload.ToObject<DropboxDeployInfo>();
             }
+
+            public DropboxDeployInfo DeployInfo { get; set; }
         }
     }
 }

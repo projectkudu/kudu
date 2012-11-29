@@ -14,18 +14,8 @@ namespace Kudu.Services.GitServer.ServiceHookHandlers
             _gitServer = gitServer;
         }
 
-        public bool TryGetRepositoryInfo(HttpRequest request, out RepositoryInfo repositoryInfo)
+        public bool TryGetRepositoryInfo(HttpRequest request, JObject payload, out RepositoryInfo repositoryInfo)
         {
-            repositoryInfo = null;
-
-            string json = request.Form["payload"];
-            if (String.IsNullOrEmpty(json))
-            {
-                return false;
-            }
-
-            JObject payload = JObject.Parse(json);
-
             // Look for the generic format
             // { url: "", branch: "", deployer: "", oldRef: "", newRef: "" } 
             repositoryInfo = new RepositoryInfo
@@ -36,10 +26,7 @@ namespace Kudu.Services.GitServer.ServiceHookHandlers
                 NewRef = payload.Value<string>("newRef")
             };
 
-            return !String.IsNullOrEmpty(repositoryInfo.RepositoryUrl) &&
-                !String.IsNullOrEmpty(repositoryInfo.Deployer) &&
-                !String.IsNullOrEmpty(repositoryInfo.OldRef) &&
-                !String.IsNullOrEmpty(repositoryInfo.NewRef);
+            return repositoryInfo.IsValid();
         }
 
         public virtual void Fetch(RepositoryInfo repositoryInfo, string targetBranch)

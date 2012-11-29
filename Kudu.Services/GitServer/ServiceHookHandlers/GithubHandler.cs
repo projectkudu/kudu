@@ -1,23 +1,30 @@
-﻿using System.Web;
+﻿using System;
+using System.Web;
 using Kudu.Core.SourceControl.Git;
+using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.GitServer.ServiceHookHandlers
 {
-    public class GitHubHandler : JsonServiceHookHandler
+    public class GitHubHandler : GitHubCompatHandler
     {
         public GitHubHandler(IGitServer gitServer)
             : base(gitServer)
         {
         }
 
-        public override bool TryGetRepositoryInfo(HttpRequest request, out RepositoryInfo repositoryInfo)
+        public override bool TryGetRepositoryInfo(HttpRequest request, JObject payload, out RepositoryInfo repositoryInfo)
         {
             repositoryInfo = null;
-            if (request.Headers["X-Github-Event"] == null)
+            if (request.Headers["X-Github-Event"] != null)
             {
-                return false;
+                repositoryInfo = GetRepositoryInfo(request, payload);
+                if (repositoryInfo == null)
+                {
+                    throw new FormatException(Resources.Error_UnsupportedFormat);
+                }
             }
-            return base.TryGetRepositoryInfo(request, out repositoryInfo);
+
+            return repositoryInfo != null;
         }
 
         protected override string GetDeployer(HttpRequest request)
