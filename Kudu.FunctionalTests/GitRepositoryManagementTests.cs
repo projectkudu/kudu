@@ -301,7 +301,8 @@ command = deploy.cmd");
             }
         }
 
-        [Fact]
+        // This test was only interesting when we used signalR (routing issue), which we don't anymore
+        //[Fact]
         public void AppNameWithSignalRWorks()
         {
             // Arrange
