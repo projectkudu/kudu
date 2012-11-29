@@ -16,5 +16,10 @@
         /// Path to the msbuild extension path (contains wap targets etc)
         /// </summary>
         string MSBuildExtensionsPath { get; }
+
+        /// <summary>
+        /// Path to our node modules
+        /// </summary>
+        string NodeModulesBinPath { get; }
     }
 }

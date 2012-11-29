@@ -37,5 +37,13 @@ namespace Kudu.Services.Web.Services
                 return Path.Combine(HttpRuntime.AppDomainAppPath, "msbuild");
             }
         }
+
+        public string NodeModulesBinPath
+        {
+            get
+            {
+                return Path.Combine(HttpRuntime.AppDomainAppPath, @"bin\node_modules\.bin");
+            }
+        }
     }
 }

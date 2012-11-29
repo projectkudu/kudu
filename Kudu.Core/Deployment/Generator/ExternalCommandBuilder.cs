@@ -9,6 +9,8 @@ namespace Kudu.Core.Deployment.Generator
 {
     public abstract class ExternalCommandBuilder : ISiteBuilder
     {
+        private static readonly string KuduSyncPath = Path.Combine(System.Environment.GetEnvironmentVariable(Constants.NodeModulesBinPathEnvKey), "kudusync.cmd");
+
         private const string SourcePath = "DEPLOYMENT_SOURCE";
         private const string TargetPath = "DEPLOYMENT_TARGET";
         private const string BuildTempPath = "DEPLOYMENT_TEMP";
@@ -59,6 +61,7 @@ namespace Kudu.Core.Deployment.Generator
             exe.EnvironmentVariables[MSBuildPath] = PathUtility.ResolveMSBuildPath();
             exe.EnvironmentVariables[PreviousManifestPath] = context.PreviousManifestFilePath ?? String.Empty;
             exe.EnvironmentVariables[NextManifestPath] = context.NextManifestFilePath;
+            exe.EnvironmentVariables["KUDU_SYNC_COMMAND"] = KuduSyncPath;
 
             // Disable this for now
             // exe.EnvironmentVariables[NuGetCachePathKey] = Environment.NuGetCachePath;
@@ -106,13 +109,11 @@ namespace Kudu.Core.Deployment.Generator
                                                    }
 
                                                    writer.WriteOutLine(output);
-                                                   Console.Out.WriteLine(output);
                                                    return true;
                                                },
                                                error =>
                                                {
                                                    writer.WriteErrorLine(error);
-                                                   Console.Error.WriteLine(error);
                                                    return true;
                                                },
                                                Console.OutputEncoding,

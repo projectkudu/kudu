@@ -10,7 +10,9 @@ namespace Kudu.Core.Deployment.Generator
 {
     public abstract class GeneratorSiteBuilder : ExternalCommandBuilder
     {
-        private static readonly string ScriptGeneratorCommandFormat = "site deploymentscript -y -r \"{0}\" {1}";
+        private const string ScriptGeneratorCommandFormat = "site deploymentscript -y --no-dot-deployment -r \"{0}\" {1}";
+
+        private static readonly string ScriptGeneratorPath = Path.Combine(System.Environment.GetEnvironmentVariable(Constants.NodeModulesBinPathEnvKey), "azure.cmd");
 
         public GeneratorSiteBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string repositoryPath)
             : base(environment, settings, propertyProvider, repositoryPath)
@@ -53,7 +55,7 @@ namespace Kudu.Core.Deployment.Generator
             {
                 using (context.Tracer.Step("Generating deployment script"))
                 {
-                    var scriptGenerator = new Executable(System.Environment.GetEnvironmentVariable(Constants.ScriptGeneratorPathEnvKey), RepositoryPath);
+                    var scriptGenerator = new Executable(ScriptGeneratorPath, RepositoryPath);
                     var scriptGeneratorCommand = String.Format(ScriptGeneratorCommandFormat, RepositoryPath, ScriptGeneratorCommandArguments);
 
                     using (var writer = new ProgressWriter())

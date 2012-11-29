@@ -280,6 +280,9 @@
     </VisualStudio>
   </ProjectExtensions>
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>npm install E:\dd\kudu1\azure-sdk-tools-xplat\ $(TargetDir) &amp; npm install kudusync $(TargetDir)</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
