@@ -36,6 +36,8 @@ namespace Kudu.Core.SourceControl.Git
             _gitExe.EnvironmentVariables[KnownEnvironment.APPPATH] = deploymentEnvironment.ApplicationPath;
             _gitExe.EnvironmentVariables[KnownEnvironment.MSBUILD] = deploymentEnvironment.MSBuildExtensionsPath;
             _gitExe.EnvironmentVariables[KnownEnvironment.DEPLOYER] = "";
+
+            _gitExe.EnvironmentVariables[Constants.NodeModulesBinPathEnvKey] = deploymentEnvironment.NodeModulesBinPath;
         }
 
         public string CurrentId
