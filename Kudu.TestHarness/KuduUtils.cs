@@ -76,19 +76,6 @@ namespace Kudu.TestHarness
             }
         }
 
-        /// <summary>
-        /// Determines if we have a cached copy of the repository available locally. 
-        /// </summary>
-        public static string GetCachedRepositoryPath(string repositoryName)
-        {
-            string testRepositories = Environment.GetEnvironmentVariable("KuduTestRepositoryRoot");
-            if (!String.IsNullOrEmpty(testRepositories) && Directory.Exists(Path.Combine(testRepositories, repositoryName)))
-            {
-               return Path.Combine(testRepositories, repositoryName);
-            }
-            return null;
-        }
-
         public static string SiteReusedForAllTests
         {
             get
