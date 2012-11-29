@@ -8,6 +8,16 @@ namespace Kudu.Core.Deployment
         public IDeploymentManifestWriter ManifestWriter { get; set; }
 
         /// <summary>
+        /// Path to the previous manifest file.
+        /// </summary>
+        public string PreviousManifestFilePath { get; set; }
+
+        /// <summary>
+        /// Path to the next manifest file.
+        /// </summary>
+        public string NextManifestFilePath { get; set; }
+
+        /// <summary>
         /// Writes diagnostic output to the trace.
         /// </summary>
         public ITracer Tracer { get; set; }
