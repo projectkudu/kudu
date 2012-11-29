@@ -61,11 +61,21 @@
     </Compile>
     <Compile Include="Commands\CommandExecutor.cs" />
     <Compile Include="Deployment\CascadeLogger.cs" />
+    <Compile Include="Deployment\Generator\BasicBuilder.cs" />
+    <Compile Include="Deployment\Generator\BaseBasicBuilder.cs" />
+    <Compile Include="Deployment\Generator\CustomBuilder.cs" />
+    <Compile Include="Deployment\Generator\ExternalCommandBuilder.cs" />
+    <Compile Include="Deployment\Generator\GeneratorSiteBuilder.cs" />
+    <Compile Include="Deployment\Generator\NodeSiteBuilder.cs" />
+    <Compile Include="Deployment\Generator\NodeSiteEnabler.cs" />
+    <Compile Include="Deployment\Generator\SiteBuilderFactory.cs" />
     <Compile Include="Deployment\CustomBuilder.cs" />
     <Compile Include="Deployment\DeploymentConfiguration.cs" />
     <Compile Include="Deployment\DeploymentContext.cs" />
     <Compile Include="Deployment\DeploymentHelper.cs" />
     <Compile Include="Deployment\DeploymentManifest.cs" />
+    <Compile Include="Deployment\Generator\WapBuilder.cs" />
+    <Compile Include="Deployment\Generator\WebSiteBuilder.cs" />
     <Compile Include="Deployment\IDeploymentManifestReader.cs" />
     <Compile Include="Deployment\IDeploymentManifestWriter.cs" />
     <Compile Include="Deployment\ManifestWriterExtensions.cs" />

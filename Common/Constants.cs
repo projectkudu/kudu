@@ -20,6 +20,8 @@ namespace Kudu
         public const string TraceFile = "trace.xml";
         public const string ScriptsPath = "scripts";
 
+        public const string ScriptGeneratorPathEnvKey = "KUDU_SCRIPT_GENERATOR";
+
         // Kudu trace text file related
         public const string DeploymentTracePath = LogFilesPath + @"\Git\deployment";
         public const string TraceFileFormat = "{0}-{1}.txt";

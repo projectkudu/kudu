@@ -487,6 +487,9 @@ namespace Kudu.Core.Deployment
                     OutputPath = _environment.WebRootPath,
                 };
 
+                context.NextManifestFilePath = context.ManifestWriter.ManifestFilePath;
+                context.PreviousManifestFilePath = context.PreviousMainfest != null ? context.PreviousMainfest.ManifestFilePath : null;
+
                 builder.Build(context)
                        .Then(() =>
                        {
