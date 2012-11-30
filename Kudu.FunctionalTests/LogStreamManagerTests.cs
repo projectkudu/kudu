@@ -20,11 +20,13 @@ namespace Kudu.FunctionalTests
             string repoCloneUrl = "https://github.com/KuduApps/LogTester.git";
             string appName = KuduUtils.GetRandomWebsiteName("TestLogStreamBasic");
 
-            string localRepo = GetRepositoryPath(repoName, repoCloneUrl, appName);
             ApplicationManager.Run(appName, appManager =>
             {
                 // Act
-                appManager.GitDeploy(localRepo);
+                using (var localRepo = Git.Clone(repoName, repoCloneUrl))
+                {
+                    appManager.GitDeploy(localRepo.PhysicalPath);
+                }
 
                 CreateLogDirectory(appManager.SiteUrl, @"LogFiles");
 
@@ -59,18 +61,13 @@ namespace Kudu.FunctionalTests
             string repoName = "LogTester";
             string repoCloneUrl = "https://github.com/KuduApps/LogTester.git";
 
-            TestRepository testRepository = null;
-            string localRepo = KuduUtils.GetCachedRepositoryPath(repoName);
-            if (localRepo == null)
-            {
-                testRepository = Git.Clone(appName, repoCloneUrl);
-                localRepo = testRepository.PhysicalPath;
-            }
-
             ApplicationManager.Run(appName, appManager =>
             {
                 // Act
-                appManager.GitDeploy(localRepo);
+                using (var localRepo = Git.Clone(repoName, repoCloneUrl))
+                {
+                    appManager.GitDeploy(localRepo.PhysicalPath);
+                }
                 List<string> logFiles = new List<string>();
                 List<LogStreamWaitHandle> waitHandles = new List<LogStreamWaitHandle>();
                 for (int i = 0; i < 2; ++i)
@@ -148,20 +145,6 @@ namespace Kudu.FunctionalTests
             }
             string url = String.Format("{0}?path={1}", siteUrl, directory);
             KuduAssert.VerifyUrl(url);
-        }
-
-        private static string GetRepositoryPath(string repoName, string repoCloneUrl, string appName)
-        {
-            TestRepository testRepository = null;
-
-            string localRepo = KuduUtils.GetCachedRepositoryPath(repoName);
-
-            if (localRepo == null)
-            {
-                testRepository = Git.Clone(appName, repoCloneUrl);
-                localRepo = testRepository.PhysicalPath;
-            }
-            return localRepo;
         }
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Kudu.Client.Deployment;
 using Kudu.Core.Infrastructure;
@@ -84,36 +85,49 @@ namespace Kudu.TestHarness
             gitExe.Execute("add \"{0}\"", path);
         }
 
-        public static TestRepository Clone(string repositoryPath, string source, bool createDirectory = false, IDictionary<string, string> environments = null)
+        public static TestRepository Clone(string repositoryName, string source, IDictionary<string, string> environments = null, bool requiresEditableRepository = false, bool noCache = false)
         {
-            // Gets full path in case path is relative 
-            repositoryPath = GetRepositoryPath(repositoryPath);
+            // Check if we have a cached instance of the repository available locally
+            string cachedPath = noCache ? null : CreateCachedRepo(repositoryName, source, environments);
 
-            // Make sure the directory is empty
-            FileSystemHelpers.DeleteDirectorySafe(repositoryPath);
-            Executable gitExe = GetGitExe(repositoryPath);
-
-            if (environments != null)
+            if (cachedPath != null && !requiresEditableRepository)
             {
-                foreach (KeyValuePair<string, string> pair in environments)
-                {
-                    gitExe.EnvironmentVariables[pair.Key] = pair.Value;
-                }
+                return new TestRepository(cachedPath, obliterateOnDispose: false);
             }
 
-            if (createDirectory)
-            {
-                var result = gitExe.Execute("clone \"{0}\"", source);
-
-                // Cloning into '{0}'...
-                var m = Regex.Match(result.Item1, @"Cloning\s+into\s+\'?(\w+)'?\.*", RegexOptions.IgnoreCase);
-                string folderName = m.Groups[1].Value;
-                return new TestRepository(Path.Combine(repositoryPath, folderName));
-            }
-
+            string repositoryPath = GetRepositoryPath(repositoryName);
+            source = cachedPath ?? source;
+            PathHelper.EnsureDirectory(repositoryPath);
+            Executable gitExe = GetGitExe(repositoryPath, environments);
             gitExe.Execute("clone \"{0}\" .", source);
 
-            return new TestRepository(repositoryPath);
+            return new TestRepository(repositoryPath, obliterateOnDispose: true);
+        }
+
+        private static string CreateCachedRepo(string repositoryName, string source, IDictionary<string, string> environments)
+        {
+            Executable gitExe;
+            string cachedPath = null;
+
+            if (source.IndexOf("github.com", StringComparison.OrdinalIgnoreCase) != -1)
+            {
+                // If we're allowed to cache the repository, check if it already exists. If not clone it.
+                Trace.WriteLine(String.Format("Checking if a cached copy exists for repository {0}", source));
+                string repoName = Path.GetFileNameWithoutExtension(source.Split('/').Last());
+                cachedPath = Path.Combine(PathHelper.RepositoryCachePath, repoName);
+                if (Directory.Exists(cachedPath))
+                {
+                    Trace.WriteLine(String.Format("Using cached copy at location {0}", cachedPath));
+                }
+                else
+                {
+                    Trace.WriteLine(String.Format("Could not find a cached copy for {0}. Cloning from source {1}.", repositoryName, source));
+                    PathHelper.EnsureDirectory(cachedPath);
+                    gitExe = GetGitExe(cachedPath, environments);
+                    gitExe.Execute("clone \"{0}\" .", source);
+                }
+            }
+            return cachedPath;
         }
 
         public static GitDeploymentResult GitDeploy(string kuduServiceUrl, string localRepoPath, string remoteRepoUrl, string localBranchName, string remoteBranchName)
@@ -173,7 +187,7 @@ namespace Kudu.TestHarness
             return path;
         }
 
-        private static Executable GetGitExe(string repositoryPath)
+        private static Executable GetGitExe(string repositoryPath, IDictionary<string, string> environments = null)
         {
             if (!Path.IsPathRooted(repositoryPath))
             {
@@ -186,6 +200,14 @@ namespace Kudu.TestHarness
             exe.SetTraceLevel(2);
             exe.SetHttpVerbose(true);
             exe.SetSSLNoVerify(true);
+
+            if (environments != null)
+            {
+                foreach (var pair in environments)
+                {
+                    exe.EnvironmentVariables.Add(pair);
+                }
+            }
 
             return exe;
         }

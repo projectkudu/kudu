@@ -47,10 +47,11 @@ namespace Kudu.FunctionalTests
         public void DeploymentApis()
         {
             // Arrange
-            string repositoryName = "Mvc3Application";
+            string repositoryName = "DeploymentApisTest";
+            string cloneUrl = "https://github.com/KuduApps/HelloWorld.git";
             string appName = KuduUtils.GetRandomWebsiteName("DeploymentApis");
 
-            using (var repo = Git.CreateLocalRepository(repositoryName))
+            using (var repo = Git.Clone(repositoryName, cloneUrl, requiresEditableRepository: true))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -59,8 +60,8 @@ namespace Kudu.FunctionalTests
 
                     Assert.Equal(1, results.Count);
                     var result = results[0];
-                    Assert.Equal("Raquel Almeida", result.Author);
-                    Assert.Equal("raquel_soares@msn.com", result.AuthorEmail);
+                    Assert.Equal("davidebbo", result.Author);
+                    Assert.Equal("david.ebbo@microsoft.com", result.AuthorEmail);
                     Assert.True(result.Current);
                     Assert.Equal(DeployStatus.Success, result.Status);
                     Assert.NotNull(result.Url);
@@ -72,8 +73,8 @@ namespace Kudu.FunctionalTests
                     KuduAssert.VerifyUrl(result.LogUrl, cred);
 
                     var resultAgain = appManager.DeploymentManager.GetResultAsync(result.Id).Result;
-                    Assert.Equal("Raquel Almeida", resultAgain.Author);
-                    Assert.Equal("raquel_soares@msn.com", resultAgain.AuthorEmail);
+                    Assert.Equal("davidebbo", resultAgain.Author);
+                    Assert.Equal("david.ebbo@microsoft.com", resultAgain.AuthorEmail);
                     Assert.True(resultAgain.Current);
                     Assert.Equal(DeployStatus.Success, resultAgain.Status);
                     Assert.NotNull(resultAgain.Url);
@@ -156,10 +157,11 @@ namespace Kudu.FunctionalTests
         public void DeleteKuduSiteCleansEverything()
         {
             // Arrange
-            string repositoryName = "Mvc3Application";
+            string repositoryName = "HelloWorld";
+            string cloneUrl = "https://github.com/KuduApps/HelloWorld.git";
             string appName = KuduUtils.GetRandomWebsiteName("DeleteKuduSiteCleansEverything");
 
-            using (var repo = Git.CreateLocalRepository(repositoryName))
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {

@@ -8,11 +8,19 @@ namespace Kudu.TestHarness
     {
         private readonly string _physicalPath;
         private readonly GitExeRepository _repository;
+        private readonly bool _obliterateOnDispose;
 
-        public TestRepository(string repositoryName)
+        public TestRepository(string repositoryName) 
+            : this(repositoryName, obliterateOnDispose: true)
+        {
+            
+        }
+
+        public TestRepository(string repositoryName, bool obliterateOnDispose)
         {
             _physicalPath = Git.GetRepositoryPath(repositoryName);
             _repository = new GitExeRepository(_physicalPath);
+            _obliterateOnDispose = obliterateOnDispose;
         }
 
 
@@ -34,7 +42,10 @@ namespace Kudu.TestHarness
 
         public void Dispose()
         {
-            FileSystemHelpers.DeleteDirectorySafe(PhysicalPath);
+            if (_obliterateOnDispose)
+            {
+                FileSystemHelpers.DeleteDirectorySafe(PhysicalPath);
+            }
         }
     }
 }
