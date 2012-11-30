@@ -1,47 +1,27 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 
 namespace Kudu.Client.Infrastructure
 {
     public abstract class KuduRemoteClientBase
     {
-        protected readonly HttpClient _client;
-        private ICredentials _credentials;
-
-        public KuduRemoteClientBase(string serviceUrl)
-            : this(serviceUrl, null)
+        protected KuduRemoteClientBase(string serviceUrl, ICredentials credentials = null, HttpMessageHandler handler = null)
         {
+            if (serviceUrl == null)
+            {
+                throw new ArgumentNullException("serviceUrl");
+            }
 
-        }
-
-        public KuduRemoteClientBase(string serviceUrl, HttpMessageHandler handler)
-        {
-            ServiceUrl = UrlUtility.EnsureTrailingSlash(serviceUrl);
-            _client = HttpClientHelper.Create(ServiceUrl, handler);
+            ServiceUrl = serviceUrl;
+            Credentials = credentials;
+            Client = HttpClientHelper.CreateClient(ServiceUrl, credentials, handler);
         }
 
         public string ServiceUrl { get; private set; }
 
-        public HttpRequestHeaders Headers
-        {
-            get
-            {
-                return _client.DefaultRequestHeaders;
-            }
-        }
+        public ICredentials Credentials { get; private set; }
 
-        public ICredentials Credentials
-        {
-            get
-            {
-                return _credentials;
-            }
-            set
-            {
-                _credentials = value;
-                _client.SetClientCredentials(_credentials);
-            }
-        }
+        public HttpClient Client { get; private set; }
     }
 }

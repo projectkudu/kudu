@@ -74,6 +74,18 @@ namespace Kudu.TestHarness
             private set;
         }
 
+        public RemoteVfsManager VfsManager
+        {
+            get;
+            private set;
+        }
+
+        public RemoteVfsManager LiveScmVfsManager
+        {
+            get;
+            private set;
+        }
+
         public string GitUrl
         {
             get;
@@ -145,7 +157,7 @@ namespace Kudu.TestHarness
             var siteManager = GetSiteManager(pathResolver, settingsResolver);
 
             Site site;
-            
+
             if (KuduUtils.ReuseSameSiteForAllTests)
             {
                 // In site reuse mode, try to get the existing site, and create it if needed
@@ -182,7 +194,9 @@ namespace Kudu.TestHarness
                 SettingsManager = new RemoteDeploymentSettingsManager(site.ServiceUrl + "settings"),
                 LogStreamManager = new RemoteLogStreamManager(site.ServiceUrl + "logstream"),
                 SSHKeyManager = new RemoteSSHKeyManager(site.ServiceUrl + "sshkey"),
-                RepositoryManager = repositoryManager
+                VfsManager = new RemoteVfsManager(site.ServiceUrl + "vfs"),
+                LiveScmVfsManager = new RemoteVfsManager(site.ServiceUrl + "scmvfs"),
+                RepositoryManager = repositoryManager,
             };
         }
 

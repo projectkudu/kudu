@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Client.Deployment;
+using Kudu.Client.Infrastructure;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
@@ -140,11 +141,10 @@ namespace Kudu.FunctionalTests
                 {
                     var handler = new FakeMessageHandler()
                     {
-                        InnerHandler = new HttpClientHandler()
+                        InnerHandler = HttpClientHelper.CreateClientHandler(appManager.DeploymentManager.ServiceUrl, appManager.DeploymentManager.Credentials)
                     };
 
-                    var manager = new RemoteDeploymentManager(appManager.DeploymentManager.ServiceUrl, handler);
-                    manager.Credentials = appManager.DeploymentManager.Credentials;
+                    var manager = new RemoteDeploymentManager(appManager.DeploymentManager.ServiceUrl, appManager.DeploymentManager.Credentials, handler);
                     var results = manager.GetResultsAsync().Result.ToList();
 
                     Assert.Equal(0, results.Count);
@@ -190,17 +190,7 @@ namespace Kudu.FunctionalTests
 
             ApplicationManager.Run(appName, appManager =>
             {
-                var handler = new HttpClientHandler
-                {
-                    Credentials = appManager.DeploymentManager.Credentials
-                };
-
-                var client = new HttpClient(handler)
-                {
-                    BaseAddress = new Uri(appManager.ServiceUrl),
-                    Timeout = TimeSpan.FromMinutes(5)
-                };
-
+                var client = CreateClient(appManager);
                 client.DefaultRequestHeaders.Add("X-Github-Event", "push");
 
                 var post = new Dictionary<string, string>
@@ -226,17 +216,7 @@ namespace Kudu.FunctionalTests
 
             ApplicationManager.Run(appName, appManager =>
             {
-                var handler = new HttpClientHandler
-                {
-                    Credentials = appManager.DeploymentManager.Credentials
-                };
-
-                var client = new HttpClient(handler)
-                {
-                    BaseAddress = new Uri(appManager.ServiceUrl),
-                    Timeout = TimeSpan.FromMinutes(5)
-                };
-
+                var client = CreateClient(appManager);
                 client.DefaultRequestHeaders.Add("User-Agent", "Bitbucket.org");
 
                 var post = new Dictionary<string, string>
@@ -250,7 +230,7 @@ namespace Kudu.FunctionalTests
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
                 Assert.True(results[0].Deployer.StartsWith("Bitbucket"));
-                
+
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "Welcome to ASP.NET!");
             });
         }
@@ -263,17 +243,7 @@ namespace Kudu.FunctionalTests
 
             ApplicationManager.Run(appName, appManager =>
             {
-                var handler = new HttpClientHandler
-                {
-                    Credentials = appManager.DeploymentManager.Credentials
-                };
-
-                var client = new HttpClient(handler)
-                {
-                    BaseAddress = new Uri(appManager.ServiceUrl),
-                    Timeout = TimeSpan.FromMinutes(5)
-                };
-
+                var client = CreateClient(appManager);
                 client.PostAsync("deploy", new StringContent(payload)).Wait();
 
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
@@ -292,19 +262,9 @@ namespace Kudu.FunctionalTests
 
             ApplicationManager.Run(appName, appManager =>
             {
-                var handler = new HttpClientHandler
-                {
-                    Credentials = appManager.DeploymentManager.Credentials
-                };
-
-                var client = new HttpClient(handler)
-                {
-                    BaseAddress = new Uri(appManager.ServiceUrl),
-                    Timeout = TimeSpan.FromMinutes(5)
-                };
-                
+                var client = CreateClient(appManager);
                 client.DefaultRequestHeaders.Add("User-Agent", "Codebasehq.com");
-                
+
                 var post = new Dictionary<string, string>
                 {
                     { "payload", payload }
@@ -328,17 +288,7 @@ namespace Kudu.FunctionalTests
 
             ApplicationManager.Run(appName, appManager =>
             {
-                var handler = new HttpClientHandler
-                {
-                    Credentials = appManager.DeploymentManager.Credentials
-                };
-
-                var client = new HttpClient(handler)
-                {
-                    BaseAddress = new Uri(appManager.ServiceUrl),
-                    Timeout = TimeSpan.FromMinutes(5)
-                };
-
+                var client = CreateClient(appManager);
                 var post = new Dictionary<string, string>
                 {
                     { "payload", payload }
@@ -362,17 +312,7 @@ namespace Kudu.FunctionalTests
 
             ApplicationManager.Run(appName, appManager =>
             {
-                var handler = new HttpClientHandler
-                {
-                    Credentials = appManager.DeploymentManager.Credentials
-                };
-
-                var client = new HttpClient(handler)
-                {
-                    BaseAddress = new Uri(appManager.ServiceUrl),
-                    Timeout = TimeSpan.FromMinutes(5)
-                };
-
+                var client = CreateClient(appManager);
                 var post = new Dictionary<string, string>
                 {
                     { "payload", payload }
@@ -397,17 +337,7 @@ namespace Kudu.FunctionalTests
 
             ApplicationManager.Run(appName, appManager =>
             {
-                var handler = new HttpClientHandler
-                {
-                    Credentials = appManager.DeploymentManager.Credentials
-                };
-
-                var client = new HttpClient(handler)
-                {
-                    BaseAddress = new Uri(appManager.ServiceUrl),
-                    Timeout = TimeSpan.FromMinutes(5)
-                };
-
+                var client = CreateClient(appManager);
                 var post = new Dictionary<string, string>
                 {
                     { "payload", payload }
@@ -431,17 +361,7 @@ namespace Kudu.FunctionalTests
 
             ApplicationManager.Run(appName, appManager =>
             {
-                var handler = new HttpClientHandler
-                {
-                    Credentials = appManager.DeploymentManager.Credentials
-                };
-
-                var client = new HttpClient(handler)
-                {
-                    BaseAddress = new Uri(appManager.ServiceUrl),
-                    Timeout = TimeSpan.FromMinutes(5)
-                };
-
+                var client = CreateClient(appManager);
                 var post = new Dictionary<string, string>
                 {
                     { "payload", payload }
@@ -453,7 +373,7 @@ namespace Kudu.FunctionalTests
                 new Thread(() =>
                 {
                     Thread.Sleep(1000);
-                    
+
                     // Ideally we'd push something else to github but at least this exercises the code path
                     responseTask = client.PostAsync("deploy", new FormUrlEncodedContent(post));
 
@@ -469,6 +389,16 @@ namespace Kudu.FunctionalTests
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "Master branch");
                 Assert.Equal("me!", results[0].Deployer);
             });
+        }
+
+        private static HttpClient CreateClient(ApplicationManager appManager)
+        {
+            HttpClientHandler handler = HttpClientHelper.CreateClientHandler(appManager.ServiceUrl, appManager.DeploymentManager.Credentials);
+            return new HttpClient(handler)
+            {
+                BaseAddress = new Uri(appManager.ServiceUrl),
+                Timeout = TimeSpan.FromMinutes(5)
+            };
         }
 
         private class FakeMessageHandler : DelegatingHandler

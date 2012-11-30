@@ -27,9 +27,8 @@ namespace Kudu.FunctionalTests.Infrastructure
 
         public static void VerifyUrl(string url, ICredentials cred, params string[] contents)
         {
-            var client = new HttpClient();
+            HttpClient client = HttpClientHelper.CreateClient(url, cred);
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Kudu-Test", "1.0"));
-            client.SetClientCredentials(cred);
             var response = client.GetAsync(url).Result.EnsureSuccessful();
 
             if (contents.Length > 0)
@@ -48,10 +47,10 @@ namespace Kudu.FunctionalTests.Infrastructure
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Kudu-Test", "1.0"));
             var response = client.GetAsync(url).Result;
             string responseBody = response.Content.ReadAsStringAsync().Result;
-            
-            Assert.True(statusCode == response.StatusCode, 
+
+            Assert.True(statusCode == response.StatusCode,
                 String.Format("For {0}, Expected Status Code: {1} Actual Status Code: {2}. \r\n Response: {3}", url, statusCode, response.StatusCode, responseBody));
-            
+
             if (content != null)
             {
                 Assert.Contains(content, responseBody, StringComparison.Ordinal);

@@ -1,19 +1,12 @@
-﻿using System;
-using System.Net.Http;
-using System.Threading.Tasks;
+﻿using System.Net;
 using Kudu.Client.Infrastructure;
 
 namespace Kudu.Client
 {
     public class RemoteEnvironmentManager : KuduRemoteClientBase
     {
-        public RemoteEnvironmentManager(string serviceUrl)
-            : base(serviceUrl)
-        {
-        }
-
-        public RemoteEnvironmentManager(string serviceUrl, HttpMessageHandler handler)
-            : base(serviceUrl, handler)
+        public RemoteEnvironmentManager(string serviceUrl, ICredentials credentials = null)
+            : base(UrlUtility.EnsureTrailingSlash(serviceUrl), credentials)
         {
         }
     }

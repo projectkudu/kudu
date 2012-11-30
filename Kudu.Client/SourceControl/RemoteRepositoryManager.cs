@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Kudu.Client.Infrastructure;
@@ -8,26 +9,19 @@ namespace Kudu.Client.SourceControl
 {
     public class RemoteRepositoryManager : KuduRemoteClientBase
     {
-        public RemoteRepositoryManager(string serviceUrl)
-            :base(serviceUrl)
+        public RemoteRepositoryManager(string serviceUrl, ICredentials credentials = null)
+            : base(UrlUtility.EnsureTrailingSlash(serviceUrl), credentials)
         {
-
-        }
-
-        public RemoteRepositoryManager(string serviceUrl, HttpMessageHandler handler)
-            : base(serviceUrl, handler)
-        {
-
         }
 
         public Task<RepositoryInfo> GetRepositoryInfo()
         {
-            return _client.GetJsonAsync<RepositoryInfo>("info");
+            return Client.GetJsonAsync<RepositoryInfo>("info");
         }
 
         public Task Delete()
         {
-            return _client.DeleteSafeAsync(String.Empty);
+            return Client.DeleteSafeAsync(String.Empty);
         }
     }
 }
