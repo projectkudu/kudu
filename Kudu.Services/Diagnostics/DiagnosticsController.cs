@@ -1,21 +1,37 @@
 ﻿using System;
 using System.IO;
+using System.IO.Abstractions;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Web.Http;
 using Ionic.Zip;
+using Kudu.Core;
+using Kudu.Core.Settings;
 using Kudu.Services.Infrastructure;
+using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.Performance
 {
     public class DiagnosticsController : ApiController
     {
+        private readonly JsonSettings _settings;
         private readonly string[] _paths;
         private static object _lockObj = new object();
 
-        public DiagnosticsController(params string[] paths)
+        public DiagnosticsController(IEnvironment environment, IFileSystem fileSystem)
         {
-            _paths = paths;
+            // Setup the diagnostics service to collect information from the following paths:
+            // 1. The deployments folder
+            // 2. The profile dump
+            // 3. The npm log
+            _paths = new[] { 
+                environment.DeploymentCachePath,
+                Path.Combine(environment.RootPath, Constants.LogFilesPath),
+                Path.Combine(environment.WebRootPath, Constants.NpmDebugLogFile),
+            };
+
+            _settings = new JsonSettings(fileSystem, Path.Combine(environment.DiagnosticsPath, Constants.SettingsJsonFile));
         }
 
         /// <summary>
@@ -51,6 +67,52 @@ namespace Kudu.Services.Performance
                 response.Content.Headers.ContentDisposition.FileName = String.Format("dump-{0:MM-dd-H:mm:ss}.zip", DateTime.UtcNow);
                 return response;
             }
+        }
+
+        public HttpResponseMessage Set(JObject newSettings)
+        {
+            if (newSettings == null)
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest);
+            }
+
+            _settings.SetValues(newSettings);
+
+            return Request.CreateResponse(HttpStatusCode.NoContent);
+        }
+
+        public HttpResponseMessage Delete(string key)
+        {
+            if (String.IsNullOrEmpty(key))
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest);
+            }
+
+            _settings.DeleteValue(key);
+
+            return Request.CreateResponse(HttpStatusCode.NoContent);
+        }
+
+        public HttpResponseMessage GetAll()
+        {
+            return Request.CreateResponse(HttpStatusCode.OK, _settings.GetValues());
+        }
+
+        public HttpResponseMessage Get(string key)
+        {
+            if (String.IsNullOrEmpty(key))
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest);
+            }
+
+            string value = _settings.GetValue(key);
+
+            if (value == null)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.NotFound, String.Format(Resources.SettingDoesNotExist, key));
+            }
+
+            return Request.CreateResponse(HttpStatusCode.OK, value);
         }
     }
 }

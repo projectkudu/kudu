@@ -33,6 +33,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.4.5.9\lib\net40\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.IO.Abstractions, Version=1.4.0.35, Culture=neutral, PublicKeyToken=d480b5b72fb413da, processorArchitecture=MSIL">
@@ -81,6 +84,7 @@
     <Compile Include="Infrastructure\VsHelper.cs" />
     <Compile Include="Infrastructure\XmlUtility.cs" />
     <Compile Include="Settings\DeploymentSettingsManager.cs" />
+    <Compile Include="Settings\JsonSettings.cs" />
     <Compile Include="SourceControl\Git\GitDeploymentRepository.cs" />
     <Compile Include="SSHKey\SSHKeyManager.cs" />
     <Compile Include="Tracing\CascadeTracer.cs" />

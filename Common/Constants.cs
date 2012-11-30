@@ -24,5 +24,8 @@ namespace Kudu
         public const string DeploymentTracePath = LogFilesPath + @"\Git\deployment";
         public const string TraceFileFormat = "{0}-{1}.txt";
         public const string TraceFileEnvKey = "KUDU_TRACE_FILE";
+
+        public const string DiagnosticsPath = @"diagnostics";
+        public const string SettingsJsonFile = @"settings.json";
     }
 }

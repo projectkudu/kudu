@@ -84,6 +84,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DeploymentManagerTests.cs" />
+    <Compile Include="DiagnosticsApiFacts.cs" />
     <Compile Include="DropboxTests.cs" />
     <Compile Include="GitRepositoryManagementTests.cs" />
     <Compile Include="GitStabilityTests.cs" />

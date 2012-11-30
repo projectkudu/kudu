@@ -8,6 +8,7 @@ namespace Kudu.Core
         string RepositoryPath { get; }          // e.g. /site/repository
         string WebRootPath { get; }             // e.g. /site/wwwroot
         string DeploymentCachePath { get; }     // e.g. /site/deployments
+        string DiagnosticsPath { get; }         // e.g. /site/diagnostics
         string SSHKeyPath { get; }
         string NuGetCachePath { get; }
         string TempPath { get; }

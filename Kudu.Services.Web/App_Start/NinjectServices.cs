@@ -121,18 +121,6 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IOperationLock>().ToConstant(sshKeyLock).WhenInjectedInto<SSHKeyController>();
             kernel.Bind<IOperationLock>().ToConstant(deploymentLock);
 
-            // Setup the diagnostics service to collect information from the following paths:
-            // 1. The deployments folder
-            // 2. The profile dump
-            // 3. The npm log
-            var paths = new[] { 
-                environment.DeploymentCachePath,
-                Path.Combine(environment.RootPath, Constants.LogFilesPath),
-                Path.Combine(environment.WebRootPath, Constants.NpmDebugLogFile),
-            };
-
-            kernel.Bind<DiagnosticsController>().ToMethod(context => new DiagnosticsController(paths));
-
             var shutdownDetector = new ShutdownDetector();
             shutdownDetector.Initialize();
 
@@ -186,13 +174,13 @@ namespace Kudu.Services.Web.App_Start
                                      .InRequestScope();
 
             // Git Servicehook parsers
-            kernel.Bind<IServiceHookHandler>().To<GitHubHandler>();
-            kernel.Bind<IServiceHookHandler>().To<BitbucketHandler>();
-            kernel.Bind<IServiceHookHandler>().To<DropboxHandler>();
-            kernel.Bind<IServiceHookHandler>().To<CodePlexHandler>();
-            kernel.Bind<IServiceHookHandler>().To<CodebaseHqHandler>();
-            kernel.Bind<IServiceHookHandler>().To<GitlabHqHandler>();
-            kernel.Bind<IServiceHookHandler>().To<GitHubCompatHandler>();
+            kernel.Bind<IServiceHookHandler>().To<GitHubHandler>().InRequestScope();
+            kernel.Bind<IServiceHookHandler>().To<BitbucketHandler>().InRequestScope();
+            kernel.Bind<IServiceHookHandler>().To<DropboxHandler>().InRequestScope();
+            kernel.Bind<IServiceHookHandler>().To<CodePlexHandler>().InRequestScope();
+            kernel.Bind<IServiceHookHandler>().To<CodebaseHqHandler>().InRequestScope();
+            kernel.Bind<IServiceHookHandler>().To<GitlabHqHandler>().InRequestScope();
+            kernel.Bind<IServiceHookHandler>().To<GitHubCompatHandler>().InRequestScope();
 
             // Command executor
             kernel.Bind<ICommandExecutor>().ToMethod(context => GetCommandExecutor(environment, context))
@@ -274,6 +262,10 @@ namespace Kudu.Services.Web.App_Start
 
             // Diagnostics
             routes.MapHttpRoute("diagnostics", "dump", new { controller = "Diagnostics", action = "GetLog" });
+            routes.MapHttpRoute("diagnostics-set-setting", "diagnostics/settings", new { controller = "Diagnostics", action = "Set" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpRoute("diagnostics-get-all-settings", "diagnostics/settings", new { controller = "Diagnostics", action = "GetAll" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("diagnostics-get-setting", "diagnostics/settings/{key}", new { controller = "Diagnostics", action = "Get" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("diagnostics-delete-setting", "diagnostics/settings/{key}", new { controller = "Diagnostics", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
 
             // LogStream
             routes.MapHandler<LogStreamHandler>(kernel, "logstream", "logstream/{*path}");
@@ -336,6 +328,7 @@ namespace Kudu.Services.Web.App_Start
             string root = Path.GetFullPath(Path.Combine(siteRoot, ".."));
             string webRootPath = Path.Combine(siteRoot, Constants.WebRoot);
             string deployCachePath = Path.Combine(siteRoot, Constants.DeploymentCachePath);
+            string diagnosticsPath = Path.Combine(siteRoot, Constants.DiagnosticsPath);
             string sshKeyPath = Path.Combine(siteRoot, Constants.SSHKeyPath);
             string repositoryPath = Path.Combine(siteRoot, Constants.RepositoryPath);
             string tempPath = Path.GetTempPath();
@@ -350,6 +343,7 @@ namespace Kudu.Services.Web.App_Start
                                    repositoryPath,
                                    webRootPath,
                                    deployCachePath,
+                                   diagnosticsPath,
                                    sshKeyPath,
                                    AppSettings.NuGetCachePath,
                                    scriptPath);

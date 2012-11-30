@@ -151,6 +151,7 @@ namespace Kudu.Console
             string root = Path.GetFullPath(Path.Combine(siteRoot, ".."));
             string webRootPath = Path.Combine(siteRoot, Constants.WebRoot);
             string deployCachePath = Path.Combine(siteRoot, Constants.DeploymentCachePath);
+            string diagnosticsPath = Path.Combine(siteRoot, Constants.DiagnosticsPath);
             string sshKeyPath = Path.Combine(siteRoot, Constants.SSHKeyPath);
             string repositoryPath = Path.Combine(siteRoot, Constants.RepositoryPath);
             string tempPath = Path.GetTempPath();
@@ -165,6 +166,7 @@ namespace Kudu.Console
                                    repositoryPath,
                                    webRootPath,
                                    deployCachePath,
+                                   diagnosticsPath,
                                    sshKeyPath,
                                    nugetCachePath,
                                    scriptPath);

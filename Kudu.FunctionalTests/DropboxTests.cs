@@ -9,6 +9,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
+using Kudu.Client;
 using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Dropbox;
 using Kudu.FunctionalTests.Infrastructure;
@@ -45,8 +46,7 @@ namespace Kudu.FunctionalTests
                     ).Wait();
 
                 HttpClient client = HttpClientHelper.CreateClient(appManager.ServiceUrl, appManager.DeploymentManager.Credentials);
-                client.DefaultRequestHeaders.Add("user-agent", "dropbox");
-                client.PostAsJsonAsync("deploy", deploy).Result.EnsureSuccessStatusCode();
+                client.PostAsJsonAsync("deploy", deploy).Result.EnsureSuccessful();
 
                 KuduAssert.VerifyUrl(appManager.SiteUrl + "/default.html", "Hello Default!");
                 KuduAssert.VerifyUrl(appManager.SiteUrl + "/temp/temp.html", "Hello Temp!");
@@ -67,7 +67,7 @@ namespace Kudu.FunctionalTests
         {
             var uri = new Uri("https://api.dropbox.com/1/account/info");
             var client = GetDropboxClient(HttpMethod.Get, uri, oauth);
-            var response = client.GetAsync(uri.PathAndQuery).Result.EnsureSuccessStatusCode();
+            var response = client.GetAsync(uri.PathAndQuery).Result.EnsureSuccessful();
             using (var reader = new JsonTextReader(new StreamReader(response.Content.ReadAsStreamAsync().Result)))
             {
                 JsonSerializer serializer = new JsonSerializer();
@@ -90,7 +90,7 @@ namespace Kudu.FunctionalTests
                 client = GetDropboxClient(HttpMethod.Post, uri, oauth);
             }
 
-            var response = client.PostAsync(uri.PathAndQuery, null).Result.EnsureSuccessStatusCode();
+            var response = client.PostAsync(uri.PathAndQuery, null).Result.EnsureSuccessful();
             using (var reader = new JsonTextReader(new StreamReader(response.Content.ReadAsStreamAsync().Result)))
             {
                 JsonSerializer serializer = new JsonSerializer();

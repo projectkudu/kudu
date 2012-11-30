@@ -15,7 +15,7 @@ namespace Kudu.Core.Test
         {
             // Act and Assert
             var ex = Assert.Throws<ArgumentNullException>(() =>
-                new Environment(null, null, null, null, null, null, null, null, null, null));
+                new Environment(null, null, null, null, null, null, null, null, null, null, null));
 
             Assert.Equal("fileSystem", ex.ParamName);
         }
@@ -25,7 +25,7 @@ namespace Kudu.Core.Test
         {
             // Act and Assert
             var ex = Assert.Throws<ArgumentNullException>(() =>
-                new Environment(Mock.Of<IFileSystem>(), null, null, null, null, null, null, null, null, null));
+                new Environment(Mock.Of<IFileSystem>(), null, null, null, null, null, null, null, null, null, null));
 
             Assert.Equal("repositoryPath", ex.ParamName);
         }
@@ -156,6 +156,7 @@ namespace Kudu.Core.Test
             string repositoryPath = null,
             string webRootPath = null,
             string deployCachePath = null,
+            string diagnosticsPath = null,
             string sshKeyPath = null,
             string nugetCachePath = null,
             string scriptPath = null)
@@ -171,6 +172,7 @@ namespace Kudu.Core.Test
                     repositoryPath,
                     webRootPath,
                     deployCachePath,
+                    diagnosticsPath,
                     sshKeyPath,
                     nugetCachePath,
                     scriptPath);

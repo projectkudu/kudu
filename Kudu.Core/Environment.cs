@@ -10,6 +10,7 @@ namespace Kudu.Core
         private readonly IFileSystem _fileSystem;
         private readonly string _webRootPath;
         private readonly string _deployCachePath;
+        private readonly string _diagnosticsPath;
         private readonly string _sshKeyPath;
         private readonly string _tempPath;
         private readonly string _scriptPath;
@@ -25,6 +26,7 @@ namespace Kudu.Core
                 string repositoryPath,
                 string webRootPath,
                 string deployCachePath,
+                string diagnosticsPath,
                 string sshKeyPath,
                 string nugetCachePath,
                 string scriptPath)
@@ -45,6 +47,7 @@ namespace Kudu.Core
             _repositoryPath = repositoryPath;
             _webRootPath = webRootPath;
             _deployCachePath = deployCachePath;
+            _diagnosticsPath = diagnosticsPath;
             _sshKeyPath = sshKeyPath;
             NuGetCachePath = nugetCachePath;
             _scriptPath = scriptPath;
@@ -76,6 +79,15 @@ namespace Kudu.Core
             {
                 FileSystemHelpers.EnsureDirectory(_fileSystem, _deployCachePath);
                 return _deployCachePath;
+            }
+        }
+
+        public string DiagnosticsPath
+        {
+            get
+            {
+                FileSystemHelpers.EnsureDirectory(_fileSystem, _diagnosticsPath);
+                return _diagnosticsPath;
             }
         }
 

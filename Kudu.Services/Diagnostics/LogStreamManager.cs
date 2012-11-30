@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading;
 using System.Web;
 using Kudu.Contracts.Tracing;
@@ -13,11 +13,12 @@ namespace Kudu.Services.Performance
 {
     public class LogStreamManager
     {
-        private const string InitialMessage = "{0}  Welcome, you are now connected to log-streaming service.\r\n";
-        private const string HeartbeatMessage = "{0}  No new trace in the past {1} min(s).\r\n";
-        private const string IdleMessage = "{0}  Stream terminated due to no new trace in the past {1} min(s).\r\n";
-        private const string ErrorMessage = "\r\n{0}  Error has occured and stream is terminated. {1}\r\n";
-        private const string AppDomainShutdownMessage = "\r\n{0}  The application was terminated.\r\n";
+        private const string InitialMessage = "{0}  Welcome, you are now connected to log-streaming service.";
+        private const string HeartbeatMessage = "{0}  No new trace in the past {1} min(s).";
+        private const string IdleMessage = "{0}  Stream terminated due to no new trace in the past {1} min(s).";
+        private const string ErrorMessage = "\r\n{0}  Error has occured and stream is terminated. {1}";
+        private const string AppDomainShutdownMessage = "\r\n{0}  The application was terminated.";
+        private const string FilterQueryKey = "filter";
 
         // Antares 3 mins timeout, heartbeat every mins keep alive.
         private static string[] LogFileExtensions = new string[] { ".txt", ".log" };
@@ -33,6 +34,7 @@ namespace Kudu.Services.Performance
         private FileSystemWatcher _watcher;
         private Timer _heartbeat;
         private DateTime lastTraceTime = DateTime.UtcNow;
+        private string _filter;
 
         private ShutdownDetector _shutdownDetector;
         private CancellationTokenRegistration _cancellationTokenRegistration;
@@ -53,7 +55,7 @@ namespace Kudu.Services.Performance
                 TerminateClient(String.Format(AppDomainShutdownMessage, DateTime.UtcNow.ToString("s")));
             });
 
-            string path = GetFilePath(context);
+            string path = ParseRequest(context);
             if (!Directory.Exists(path))
             {
                 throw new HttpException((Int32)HttpStatusCode.NotFound, string.Format("The directory name {0} does not exist.", path)); 
@@ -108,7 +110,15 @@ namespace Kudu.Services.Performance
                 {
                     foreach (var file in Directory.GetFiles(path, "*" + ext, SearchOption.AllDirectories))
                     {
-                        logFiles[file] = new FileInfo(file).Length;
+                        try
+                        {
+                            logFiles[file] = new FileInfo(file).Length;
+                        }
+                        catch (Exception ex)
+                        {
+                            // avoiding racy with providers cleaning up log file
+                            _tracer.TraceError(ex);
+                        }
                     }
                 }
 
@@ -141,6 +151,7 @@ namespace Kudu.Services.Performance
         private void WriteInitialMessage(HttpContext context)
         {
             context.Response.Write(string.Format(InitialMessage, DateTime.UtcNow.ToString("s")));
+            context.Response.Write(Environment.NewLine);
         }
 
         private void OnHeartbeat(object state)
@@ -207,24 +218,25 @@ namespace Kudu.Services.Performance
             if (e.ChangeType == WatcherChangeTypes.Changed && MatchFilters(e.FullPath))
             {
                 // reading the delta of file changed, retry if failed.
-                int count = 0;
-                byte[] bytes = null;
+                IEnumerable<string> lines = null;
                 OperationManager.Attempt(() =>
                 {
-                    bytes = GetChanges(e, out count);
+                    lines = GetChanges(e);
                 }, 3, 100);
 
-                if (count > 0)
+                if (lines.Count() > 0)
                 {
                     lastTraceTime = DateTime.UtcNow;
 
-                    NotifyClient(bytes, count);
+                    NotifyClient(lines);
                 }
             }
         }
 
-        private string GetFilePath(HttpContext context)
+        private string ParseRequest(HttpContext context)
         {
+            _filter = context.Request.QueryString[FilterQueryKey];
+
             string[] paths = context.Request.Path.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
             paths[0] = _logPath;
             return Path.Combine(paths);
@@ -248,11 +260,10 @@ namespace Kudu.Services.Performance
 
         private void NotifyClient(string text)
         {
-            byte[] bytes = Encoding.UTF8.GetBytes(text);
-            NotifyClient(bytes, bytes.Length);
+            NotifyClient(new string[] { text });
         }
 
-        private void NotifyClient(byte[] bytes, int count)
+        private void NotifyClient(IEnumerable<string> lines)
         {
             lock (_thisLock)
             {
@@ -263,7 +274,11 @@ namespace Kudu.Services.Performance
                     {
                         try
                         {
-                            result.HttpContext.Response.OutputStream.Write(bytes, 0, count);
+                            foreach (var line in lines)
+                            {
+                                result.HttpContext.Response.Write(line);
+                                result.HttpContext.Response.Write(Environment.NewLine);
+                            }
                         }
                         catch (Exception)
                         {
@@ -293,15 +308,14 @@ namespace Kudu.Services.Performance
             }
         }
 
-        private byte[] GetChanges(FileSystemEventArgs e, out int count)
+        private IEnumerable<string> GetChanges(FileSystemEventArgs e)
         {
             lock (_thisLock)
             {
                 // do no-op if races between idle timeout and file change event
                 if (_results.Count == 0)
                 {
-                    count = 0;
-                    return null;
+                    return Enumerable.Empty<string>();
                 }
 
                 long offset = 0;
@@ -323,8 +337,7 @@ namespace Kudu.Services.Performance
                     // multiple events
                     if (offset == length)
                     {
-                        count = 0;
-                        return null;
+                        return Enumerable.Empty<string>();
                     }
 
                     if (offset != 0)
@@ -332,19 +345,25 @@ namespace Kudu.Services.Performance
                         fs.Seek(offset, SeekOrigin.Begin);
                     }
 
-                    int read = 0;
-                    byte[] bytes = new byte[4096];
-                    MemoryStream mem = new MemoryStream();
-                    while (0 != (read = fs.Read(bytes, 0, bytes.Length)))
+                    List<string> changes = new List<string>();
+                    using (StreamReader reader = new StreamReader(fs))
                     {
-                        mem.Write(bytes, 0, read);
-                        offset += read;
+                        while (!reader.EndOfStream)
+                        {
+                            string line = reader.ReadLine();
+                            if (String.IsNullOrEmpty(_filter) || line.IndexOf(_filter, StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                changes.Add(line);
+                            }
+
+                            offset += line.Length + Environment.NewLine.Length;
+                        }
                     }
 
                     // Adjust offset and return changes
                     _logFiles[e.FullPath] = offset;
-                    count = (int)mem.Position;
-                    return mem.GetBuffer();
+
+                    return changes;
                 }
             }
         }

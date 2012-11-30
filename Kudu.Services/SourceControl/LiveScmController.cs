@@ -79,6 +79,12 @@ namespace Kudu.Services.SourceControl
                 FileSystemHelpers.DeleteDirectorySafe(_environment.SSHKeyPath);
             }
 
+            using (_tracer.Step("Deleting diagnostics"))
+            {
+                // Delete the repository
+                FileSystemHelpers.DeleteDirectorySafe(_environment.DiagnosticsPath);
+            }
+
             if (deleteWebRoot != 0)
             {
                 using (_tracer.Step("Deleting web root"))
