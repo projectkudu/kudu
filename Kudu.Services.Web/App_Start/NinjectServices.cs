@@ -143,8 +143,10 @@ namespace Kudu.Services.Web.App_Start
                                                                                      shutdownDetector));
 
             // Deployment Service
-            kernel.Bind<ISettings>().ToMethod(context => new XmlSettings.Settings(GetSettingsPath(environment)));
-            kernel.Bind<IDeploymentSettingsManager>().To<DeploymentSettingsManager>();
+            kernel.Bind<ISettings>().ToMethod(context => new XmlSettings.Settings(GetSettingsPath(environment)))
+                                             .InRequestScope();
+            kernel.Bind<IDeploymentSettingsManager>().To<DeploymentSettingsManager>()
+                                             .InRequestScope();
 
             kernel.Bind<ISiteBuilderFactory>().To<SiteBuilderFactory>()
                                              .InRequestScope();

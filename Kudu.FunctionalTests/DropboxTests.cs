@@ -42,7 +42,7 @@ namespace Kudu.FunctionalTests
                 appManager.SettingsManager.SetValues(
                     new KeyValuePair<string, string>("dropbox_username", account.display_name),
                     new KeyValuePair<string, string>("dropbox_email", account.email)
-                    );
+                    ).Wait();
 
                 HttpClient client = new HttpClient();
                 client.BaseAddress = new Uri(appManager.ServiceUrl);
