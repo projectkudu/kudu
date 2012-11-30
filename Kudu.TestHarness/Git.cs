@@ -112,7 +112,6 @@ namespace Kudu.TestHarness
             if (source.IndexOf("github.com", StringComparison.OrdinalIgnoreCase) != -1)
             {
                 // If we're allowed to cache the repository, check if it already exists. If not clone it.
-                Trace.WriteLine(String.Format("Checking if a cached copy exists for repository {0}", source));
                 string repoName = Path.GetFileNameWithoutExtension(source.Split('/').Last());
                 cachedPath = Path.Combine(PathHelper.RepositoryCachePath, repoName);
                 if (Directory.Exists(cachedPath))
@@ -121,7 +120,7 @@ namespace Kudu.TestHarness
                 }
                 else
                 {
-                    Trace.WriteLine(String.Format("Could not find a cached copy for {0}. Cloning from source {1}.", repositoryName, source));
+                    Trace.WriteLine(String.Format("Could not find a cached copy at {0}. Cloning from source {1}.", cachedPath, source));
                     PathHelper.EnsureDirectory(cachedPath);
                     gitExe = GetGitExe(cachedPath, environments);
                     gitExe.Execute("clone \"{0}\" .", source);

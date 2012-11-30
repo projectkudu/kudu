@@ -40,6 +40,65 @@ namespace Kudu.FunctionalTests
             }
         }
 
+        [Fact(Skip = "Dangerous")]
+        public void PushSimpleWapWithInlineCommand()
+        {
+            // Arrange
+            string repositoryName = "PushSimpleWapWithInlineCommand";
+            string appName = KuduUtils.GetRandomWebsiteName("PushSimpleWapWithInlineCommand");
+            string cloneUrl = "https://github.com/KuduApps/CustomBuildScript.git";
+
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            {
+                repo.WriteFile(".deployment", @"
+[config]
+command = msbuild SimpleWebApplication/SimpleWebApplication.csproj /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""%DEPLOYMENT_TARGET%"";AutoParameterizationWebConfigConnectionStrings=false;Configuration=Debug;SolutionDir=""%DEPLOYMENT_SOURCE%""");
+                Git.Commit(repo.PhysicalPath, "Custom build command added");
+
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    GitDeploymentResult deployResult = appManager.GitDeploy(repo.PhysicalPath);
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, "DEBUG");
+                });
+            }
+        }
+
+        [Fact(Skip = "Dangerous")]
+        public void PushSimpleWapWithCustomDeploymentScript()
+        {
+            // Arrange
+            string repositoryName = "WapWithCustomDeploymentScript";
+            string appName = KuduUtils.GetRandomWebsiteName("WapWithCustomDeploymentScript");
+            string cloneUrl = "https://github.com/KuduApps/CustomBuildScript.git";
+
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            {
+                repo.WriteFile(".deployment", @"
+[config]
+command = deploy.cmd");
+                Git.Commit(repo.PhysicalPath, "Custom build script added");
+
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    GitDeploymentResult deployResult = appManager.GitDeploy(repo.PhysicalPath);
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, "DEBUG");
+                });
+            }
+        }
+
+
         [Fact]
         public void PushSimpleWapWithFailingCustomDeploymentScript()
         {
