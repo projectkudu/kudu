@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using Kudu.Client.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
@@ -86,6 +85,11 @@ namespace Kudu.TestHarness
         }
 
         public static TestRepository Clone(string repositoryName, string source, IDictionary<string, string> environments = null, bool requiresEditableRepository = false, bool noCache = false)
+        {
+            return OperationManager.Attempt(() => CloneInternal(repositoryName, source, environments, requiresEditableRepository, noCache));
+        }
+
+        private static TestRepository CloneInternal(string repositoryName, string source, IDictionary<string, string> environments, bool requiresEditableRepository, bool noCache)
         {
             // Check if we have a cached instance of the repository available locally
             string cachedPath = noCache ? null : CreateCachedRepo(repositoryName, source, environments);
