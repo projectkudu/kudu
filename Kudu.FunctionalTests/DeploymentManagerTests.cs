@@ -52,7 +52,7 @@ namespace Kudu.FunctionalTests
             string cloneUrl = "https://github.com/KuduApps/HelloWorld.git";
             string appName = KuduUtils.GetRandomWebsiteName("DeploymentApis");
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl, requiresEditableRepository: true))
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {

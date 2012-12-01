@@ -13,7 +13,7 @@ namespace Kudu.FunctionalTests
         {
             string repositoryName = "HelloKudu";
             string cloneUrl = "https://github.com/KuduApps/HelloKudu.git";
-            using (Git.Clone(repositoryName, cloneUrl))
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
             {
                 for (int i = 0; i < 5; i++)
                 {
@@ -21,7 +21,7 @@ namespace Kudu.FunctionalTests
                     ApplicationManager.Run(applicationName, appManager =>
                     {
                         // Act
-                        appManager.GitDeploy(repositoryName);
+                        appManager.GitDeploy(repo.PhysicalPath);
                         var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                         // Assert
