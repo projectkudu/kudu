@@ -44,13 +44,8 @@ namespace Kudu.FunctionalTests
                     new KeyValuePair<string, string>("dropbox_email", account.email)
                     ).Wait();
 
-                HttpClient client = new HttpClient();
-                client.BaseAddress = new Uri(appManager.ServiceUrl);
+                HttpClient client = HttpClientHelper.CreateClient(appManager.ServiceUrl, appManager.DeploymentManager.Credentials);
                 client.DefaultRequestHeaders.Add("user-agent", "dropbox");
-                if (appManager.DeploymentManager.Credentials != null)
-                {
-                    client.SetClientCredentials(appManager.DeploymentManager.Credentials);
-                }
                 client.PostAsJsonAsync("deploy", deploy).Result.EnsureSuccessStatusCode();
 
                 KuduAssert.VerifyUrl(appManager.SiteUrl + "/default.html", "Hello Default!");

@@ -9,8 +9,8 @@ namespace Kudu.TestHarness
     // This is a test class current workaround Stream.Close hangs.
     public class RemoteLogStreamManager : KuduRemoteClientBase
     {
-        public RemoteLogStreamManager(string serviceUrl)
-            : base(serviceUrl)
+        public RemoteLogStreamManager(string serviceUrl, ICredentials credentials = null)
+            : base(UrlUtility.EnsureTrailingSlash(serviceUrl), credentials)
         {
         }
 
@@ -20,10 +20,9 @@ namespace Kudu.TestHarness
             TaskCompletionSource<Stream> tcs = new TaskCompletionSource<Stream>();
             RequestState state = new RequestState { Manager = this, TaskCompletionSource = tcs, Request = request };
 
-            if (this._client.DefaultRequestHeaders.Authorization != null)
+            if (Client.DefaultRequestHeaders.Authorization != null)
             {
-
-                request.Headers["Authorization"] = this._client.DefaultRequestHeaders.Authorization.Scheme + " " + this._client.DefaultRequestHeaders.Authorization.Parameter;
+                request.Headers["Authorization"] = Client.DefaultRequestHeaders.Authorization.Scheme + " " + Client.DefaultRequestHeaders.Authorization.Parameter;
             }
 
             IAsyncResult result = request.BeginGetResponse(RemoteLogStreamManager.OnGetResponse, state);

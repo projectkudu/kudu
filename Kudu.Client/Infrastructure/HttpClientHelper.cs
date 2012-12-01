@@ -1,35 +1,64 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Formatting;
 using System.Net.Http.Headers;
-using System.Threading;
-using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace Kudu.Client.Infrastructure
 {
-    internal static class HttpClientHelper
+    public static class HttpClientHelper
     {
-        public static HttpClient Create(string url, HttpMessageHandler handler)
+        private static readonly char[] uriPathSeparator = new char[] { '/' };
+
+        public static HttpClient CreateClient(string serviceUrl, ICredentials credentials = null, HttpMessageHandler handler = null)
         {
-            // The URL needs to end with a slash for HttpClient to do the right thing with relative paths
-            url = UrlUtility.EnsureTrailingSlash(url);
-
-            var slashHandler = new TrailingSlashHandler()
+            if (serviceUrl == null)
             {
-                InnerHandler = handler ?? new HttpClientHandler()
-            };
+                throw new ArgumentNullException("serviceUrl");
+            }
 
-            var client = new HttpClient(slashHandler)
+            HttpMessageHandler effectiveHandler = handler ?? CreateClientHandler(serviceUrl, credentials);
+            Uri serviceAddr = new Uri(serviceUrl);
+            HttpClient client = new HttpClient(effectiveHandler)
             {
-                BaseAddress = new Uri(url),
+                BaseAddress = serviceAddr,
                 MaxResponseContentBufferSize = 30 * 1024 * 1024
             };
 
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             return client;
+        }
+
+        public static HttpClientHandler CreateClientHandler(string serviceUrl, ICredentials credentials)
+        {
+            if (serviceUrl == null)
+            {
+                throw new ArgumentNullException("serviceUrl");
+            }
+
+            // Set up our own HttpClientHandler and configure it
+            HttpClientHandler clientHandler = new HttpClientHandler();
+
+            if (credentials != null)
+            {
+                // Set up credentials cache which will handle basic authentication
+                CredentialCache credentialCache = new CredentialCache();
+
+                // Get base address without terminating slash
+                string credentialAddress = new Uri(serviceUrl).GetLeftPart(UriPartial.Authority).TrimEnd(uriPathSeparator);
+
+                // Add credentials to cache and associate with handler
+                NetworkCredential networkCredentials = credentials.GetCredential(new Uri(credentialAddress), "Basic");
+                credentialCache.Add(new Uri(credentialAddress), "Basic", networkCredentials);
+                clientHandler.Credentials = credentialCache;
+                clientHandler.PreAuthenticate = true;
+            }
+
+            // Our handler is ready
+            return clientHandler;
         }
 
         public static HttpContent CreateJsonContent(params KeyValuePair<string, string>[] items)
@@ -40,25 +69,6 @@ namespace Kudu.Client.Infrastructure
                 jsonObject.Add(kv.Key, kv.Value);
             }
             return new ObjectContent(typeof(JObject), jsonObject, new JsonMediaTypeFormatter());
-        }
-
-        private class TrailingSlashHandler : DelegatingHandler
-        {
-            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-            {
-                // Remove trailing slash before any request is made (since credentials are lost when a 307 is returned when auth is enabled)
-                string url = request.RequestUri.OriginalString;
-                if (url.EndsWith("/"))
-                {
-                    url = url.Substring(0, url.Length - 1);
-                }
-
-                // Handle query strings
-                url = url.Replace("/?", "?");
-
-                request.RequestUri = new Uri(url);
-                return base.SendAsync(request, cancellationToken);
-            }
         }
     }
 }

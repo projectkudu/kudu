@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using Kudu.Client.Infrastructure;
 using Kudu.Core.Editor;
 
@@ -7,8 +8,8 @@ namespace Kudu.Client.Editor
 {
     public class RemoteProjectSystem : KuduRemoteClientBase, IProjectSystem
     {
-        public RemoteProjectSystem(string serviceUrl)
-            :base(serviceUrl)
+        public RemoteProjectSystem(string serviceUrl, ICredentials credentials = null)
+            : base(UrlUtility.EnsureTrailingSlash(serviceUrl), credentials)
         {
         }
 
@@ -16,7 +17,7 @@ namespace Kudu.Client.Editor
         {
             // REVIEW: Do we need to url encode?
             // REVIEW: this goes through the same client that set the Accept header to application/json, but we receive text/plain
-            return _client.GetAsync(path)
+            return Client.GetAsync(path)
                           .Result
                           .EnsureSuccessful()
                           .Content
@@ -26,21 +27,21 @@ namespace Kudu.Client.Editor
 
         public Project GetProject()
         {
-            return _client.GetJson<Project>(String.Empty);
+            return Client.GetJson<Project>(String.Empty);
         }
 
         public void WriteAllText(string path, string content)
         {
-            _client.PutAsync(path, HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("content", content)))
-                   .Result
-                   .EnsureSuccessful();
+            Client.PutAsync(path, HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("content", content)))
+                  .Result
+                  .EnsureSuccessful();
         }
 
         public void Delete(string path)
         {
-            _client.DeleteAsync(path)
-                   .Result
-                   .EnsureSuccessful();
+            Client.DeleteAsync(path)
+                  .Result
+                  .EnsureSuccessful();
         }
     }
 }

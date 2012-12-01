@@ -3,8 +3,8 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Kudu.Client.Deployment;
+using Kudu.Client.Infrastructure;
 using Kudu.Client.SourceControl;
-using Kudu.Contracts.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Web.Models;
 
@@ -14,32 +14,26 @@ namespace Kudu.Web.Infrastructure
     {
         public static Task<RepositoryInfo> GetRepositoryInfo(this IApplication application, ICredentials credentials)
         {
-            var repositoryManager = new RemoteRepositoryManager(application.ServiceUrl + "live/scm");
-            repositoryManager.Credentials = credentials;
+            var repositoryManager = new RemoteRepositoryManager(application.ServiceUrl + "live/scm", credentials);
             return repositoryManager.GetRepositoryInfo();
         }
 
         public static RemoteDeploymentManager GetDeploymentManager(this IApplication application, ICredentials credentials)
         {
-            var deploymentManager = new RemoteDeploymentManager(application.ServiceUrl + "/deployments");
-            deploymentManager.Credentials = credentials;
+            var deploymentManager = new RemoteDeploymentManager(application.ServiceUrl + "/deployments", credentials);
             return deploymentManager;
         }
 
         public static RemoteDeploymentSettingsManager GetSettingsManager(this IApplication application, ICredentials credentials)
         {
-            var deploymentSettingsManager = new RemoteDeploymentSettingsManager(application.ServiceUrl + "/settings");
-            deploymentSettingsManager.Credentials = credentials;
+            var deploymentSettingsManager = new RemoteDeploymentSettingsManager(application.ServiceUrl + "/settings", credentials);
             return deploymentSettingsManager;
         }
 
         public static Task<XDocument> DownloadTrace(this IApplication application, ICredentials credentials)
         {
-            var client = new HttpClient(new HttpClientHandler()
-            {
-                Credentials = credentials
-            });
-
+            var clientHandler = HttpClientHelper.CreateClientHandler(application.ServiceUrl, credentials);
+            var client = new HttpClient(clientHandler);
 
             return client.GetAsync(application.ServiceUrl + "dump").Then(response =>
             {

@@ -1,5 +1,4 @@
-﻿using System;
-using Kudu.TestHarness;
+﻿using Kudu.TestHarness;
 using Xunit;
 
 namespace Kudu.FunctionalTests
@@ -14,8 +13,7 @@ namespace Kudu.FunctionalTests
 
             ApplicationManager.Run(appName, appManager =>
             {
-                string vfsController = String.Format("{0}scmvfs", appManager.ServiceUrl);
-                VfsControllerBaseTest suite = new VfsControllerBaseTest(vfsController, testConflictingUpdates: true);
+                VfsControllerBaseTest suite = new VfsControllerBaseTest(appManager.LiveScmVfsManager, testConflictingUpdates: true);
 
                 // Act + Assert
                 suite.RunIntegrationTest();

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Kudu.Client.Infrastructure;
@@ -9,13 +10,8 @@ namespace Kudu.Client.Deployment
 {
     public class RemoteDeploymentManager : KuduRemoteClientBase
     {
-        public RemoteDeploymentManager(string serviceUrl)
-            : base(serviceUrl)
-        {
-        }
-
-        public RemoteDeploymentManager(string serviceUrl, HttpMessageHandler handler)
-            : base(serviceUrl, handler)
+        public RemoteDeploymentManager(string serviceUrl, ICredentials credentials = null, HttpMessageHandler handler = null)
+            : base(UrlUtility.EnsureTrailingSlash(serviceUrl), credentials, handler)
         {
         }
 
@@ -31,38 +27,38 @@ namespace Kudu.Client.Deployment
                 url += "&$filter=LastSuccessEndTime ne null";
             }
 
-            return _client.GetJsonAsync<IEnumerable<DeployResult>>(url);
+            return Client.GetJsonAsync<IEnumerable<DeployResult>>(url);
         }
 
         public Task<DeployResult> GetResultAsync(string id)
         {
-            return _client.GetJsonAsync<DeployResult>(id);
+            return Client.GetJsonAsync<DeployResult>(id);
         }
 
         public Task<IEnumerable<LogEntry>> GetLogEntriesAsync(string id)
         {
-            return _client.GetJsonAsync<IEnumerable<LogEntry>>(id + "/log");
+            return Client.GetJsonAsync<IEnumerable<LogEntry>>(id + "/log");
         }
 
         public Task<IEnumerable<LogEntry>> GetLogEntryDetailsAsync(string id, string logId)
         {
-            return _client.GetJsonAsync<IEnumerable<LogEntry>>(id + "/log/" + logId);
+            return Client.GetJsonAsync<IEnumerable<LogEntry>>(id + "/log/" + logId);
         }
 
         public Task DeleteAsync(string id)
         {
-            return _client.DeleteSafeAsync(id);
+            return Client.DeleteSafeAsync(id);
         }
 
         public Task DeployAsync(string id)
         {
-            return _client.PutAsync(id);
+            return Client.PutAsync(id);
         }
 
         public Task DeployAsync(string id, bool clean)
         {
             var param = new KeyValuePair<string, string>("clean", clean.ToString());
-            return _client.PutAsync(id, param);
+            return Client.PutAsync(id, param);
         }
     }
 }

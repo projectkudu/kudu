@@ -1,14 +1,17 @@
-﻿namespace Kudu.Client.Infrastructure
+﻿using System;
+
+namespace Kudu.Client.Infrastructure
 {
-    internal static class UrlUtility
+    public static class UrlUtility
     {
-        internal static string EnsureTrailingSlash(string url)
+        public static string EnsureTrailingSlash(string url)
         {
-            if (url.EndsWith("/"))
+            UriBuilder address = new UriBuilder(url);
+            if (!address.Path.EndsWith("/"))
             {
-                return url;
+                address.Path += "/";
             }
-            return url + "/";
+            return address.Uri.AbsoluteUri;
         }
     }
 }

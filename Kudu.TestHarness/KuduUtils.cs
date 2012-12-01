@@ -5,6 +5,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Xml.Linq;
+using Kudu.Client.Infrastructure;
 
 namespace Kudu.TestHarness
 {
@@ -16,12 +17,8 @@ namespace Kudu.TestHarness
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(zippedLogsPath));
 
-                var client = new HttpClient(new HttpClientHandler()
-                {
-                    Credentials = credentials
-                });
-
-
+                var clientHandler = HttpClientHelper.CreateClientHandler(serviceUrl, credentials);
+                var client = new HttpClient(clientHandler);
                 var result = client.GetAsync(serviceUrl + "dump").Result;
                 if (result.IsSuccessStatusCode)
                 {
