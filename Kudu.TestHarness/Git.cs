@@ -117,9 +117,15 @@ namespace Kudu.TestHarness
                 // If we're allowed to cache the repository, check if it already exists. If not clone it.
                 string repoName = Path.GetFileNameWithoutExtension(source.Split('/').Last());
                 cachedPath = Path.Combine(PathHelper.RepositoryCachePath, repoName);
+
+                // Check for the actually .git folder, in case some bogus parent exists but is not an actual repo
+                bool alreadyExists = Directory.Exists(Path.Combine(cachedPath, ".git"));
+
                 Executable gitExe = GetGitExe(cachedPath, environments);
-                if (Directory.Exists(cachedPath))
+
+                if (alreadyExists)
                 {
+
                     Trace.WriteLine(String.Format("Using cached copy at location {0}", cachedPath));
 
                     // Get it into a clean state that matches a clean clone from github
@@ -128,6 +134,13 @@ namespace Kudu.TestHarness
                 }
                 else
                 {
+                    // Delete any leftover, ignoring errors
+                    try
+                    {
+                        Directory.Delete(cachedPath, recursive: true);
+                    }
+                    catch { }
+
                     Trace.WriteLine(String.Format("Could not find a cached copy at {0}. Cloning from source {1}.", cachedPath, source));
                     PathHelper.EnsureDirectory(cachedPath);
                     gitExe.Execute("clone \"{0}\" .", source);
