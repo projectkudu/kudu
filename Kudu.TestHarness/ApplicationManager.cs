@@ -80,6 +80,12 @@ namespace Kudu.TestHarness
             private set;
         }
 
+        public RemoteVfsManager VfsWebRootManager
+        {
+            get;
+            private set;
+        }
+
         public RemoteVfsManager LiveScmVfsManager
         {
             get;
@@ -117,6 +123,9 @@ namespace Kudu.TestHarness
             {
                 // In site reuse mode, clean out the existing site so we start clean
                 appManager.RepositoryManager.Delete().Wait();
+
+                // Make sure we start with the correct default file as some tests expect it
+                appManager.VfsWebRootManager.WriteAllText("index.html", "<h1>The web site is under construction</h1>");
             }
 
             var dumpPath = Path.Combine(PathHelper.TestResultsPath, applicationName, applicationName + ".zip");
@@ -195,6 +204,7 @@ namespace Kudu.TestHarness
                 LogStreamManager = new RemoteLogStreamManager(site.ServiceUrl + "logstream"),
                 SSHKeyManager = new RemoteSSHKeyManager(site.ServiceUrl + "sshkey"),
                 VfsManager = new RemoteVfsManager(site.ServiceUrl + "vfs"),
+                VfsWebRootManager = new RemoteVfsManager(site.ServiceUrl + "vfs/site/wwwroot/"),
                 LiveScmVfsManager = new RemoteVfsManager(site.ServiceUrl + "scmvfs"),
                 RepositoryManager = repositoryManager,
             };
