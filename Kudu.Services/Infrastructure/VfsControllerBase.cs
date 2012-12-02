@@ -96,7 +96,7 @@ namespace Kudu.Services.Infrastructure
             if (itemExists && (info.Attributes & FileAttributes.Directory) != 0)
             {
                 HttpResponseMessage conflictDirectoryResponse = Request.CreateErrorResponse(
-                    HttpStatusCode.Conflict, Resources.VfsController_CannotUpdateOrDeleteDirectory);
+                    HttpStatusCode.Conflict, Resources.VfsController_CannotUpdateDirectory);
                 return TaskHelpers.FromResult(conflictDirectoryResponse);
             }
             else
@@ -128,9 +128,20 @@ namespace Kudu.Services.Infrastructure
             }
             else if ((info.Attributes & FileAttributes.Directory) != 0)
             {
-                HttpResponseMessage conflictDirectoryResponse = Request.CreateErrorResponse(
-                    HttpStatusCode.Conflict, Resources.VfsController_CannotUpdateOrDeleteDirectory);
-                return conflictDirectoryResponse;
+                try
+                {
+                    info.Delete();
+                }
+                catch (Exception ex)
+                {
+                    Tracer.TraceError(ex);
+                    HttpResponseMessage conflictDirectoryResponse = Request.CreateErrorResponse(
+                        HttpStatusCode.Conflict, Resources.VfsControllerBase_CannotDeleteDirectory);
+                    return conflictDirectoryResponse;
+                }
+
+                // Delete directory succeeded.
+                return Request.CreateResponse(HttpStatusCode.OK);
             }
             else
             {

@@ -25,11 +25,14 @@ namespace Kudu.Services.Infrastructure
                 {
                     using (RegistryKey key = Registry.ClassesRoot.OpenSubKey(fileExtension))
                     {
-                        string keyValue = key.GetValue("Content Type") as string;
-                        MediaTypeHeaderValue mediaType;
-                        if (keyValue != null && MediaTypeHeaderValue.TryParse(keyValue, out mediaType))
+                        if (key != null)
                         {
-                            return mediaType;
+                            string keyValue = key.GetValue("Content Type") as string;
+                            MediaTypeHeaderValue mediaType;
+                            if (keyValue != null && MediaTypeHeaderValue.TryParse(keyValue, out mediaType))
+                            {
+                                return mediaType;
+                            }
                         }
                         return _defaultMediaType;
                     }

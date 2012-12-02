@@ -12,6 +12,7 @@ namespace Kudu.FunctionalTests
     public class VfsControllerBaseTest
     {
         private static readonly char _segmentDelimiter = '/';
+        private static readonly char[] _segmentDelimiters = new char[] { _segmentDelimiter };
 
         private static readonly byte[] _fileContent0 = Encoding.UTF8.GetBytes("aaa\r\nbbb\r\nccc\r\n");
         private static readonly byte[] _fileContent1 = Encoding.UTF8.GetBytes("AAA\r\nbbb\r\nccc\r\n");
@@ -33,7 +34,7 @@ namespace Kudu.FunctionalTests
         {
             KuduClient = client;
             Client = client.Client;
-            BaseAddress = Client.BaseAddress.AbsoluteUri;
+            BaseAddress = RemoveTerminatingSlash(Client.BaseAddress);
             _testConflictingUpdates = testConflictingUpdates;
         }
 
@@ -184,7 +185,7 @@ namespace Kudu.FunctionalTests
             response = Client.PutAsync(dirAddress, CreateUploadContent(_fileContent0)).Result;
             Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
 
-            // Check that we can't delete a directory
+            // Check that we can't delete a non-empty directory
             response = Client.DeleteAsync(dirAddress).Result;
             Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
 
@@ -302,6 +303,10 @@ namespace Kudu.FunctionalTests
                     response = Client.SendAsync(deleteRequest).Result;
                     Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
                 }
+
+                // Check that we can delete an empty directory
+                response = Client.DeleteAsync(dirAddress).Result;
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             }
             else
             {
@@ -343,6 +348,20 @@ namespace Kudu.FunctionalTests
                     Assert.Equal(updatedEtag, response.Headers.ETag);
                 }
 
+                // Check that update with wildcard etag succeeds
+                using (HttpRequestMessage updateRequest = new HttpRequestMessage())
+                {
+                    updateRequest.Method = HttpMethod.Put;
+                    updateRequest.RequestUri = new Uri(fileAddress);
+                    updateRequest.Headers.IfMatch.Add(EntityTagHeaderValue.Any);
+                    updateRequest.Content = CreateUploadContent(_fileContent1);
+                    response = Client.SendAsync(updateRequest).Result;
+                    Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+                    Assert.NotNull(response.Headers.ETag);
+                    Assert.NotEqual(originalEtag, response.Headers.ETag);
+                    updatedEtag = response.Headers.ETag;
+                }
+
                 // Check that delete with invalid etag fails
                 using (HttpRequestMessage deleteRequest = new HttpRequestMessage())
                 {
@@ -373,6 +392,10 @@ namespace Kudu.FunctionalTests
                     response = Client.SendAsync(deleteRequest).Result;
                     Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
                 }
+
+                // Check that we can delete an empty directory
+                response = Client.DeleteAsync(dirAddress).Result;
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             }
         }
 
@@ -381,6 +404,13 @@ namespace Kudu.FunctionalTests
             HttpContent uploadContent = new ByteArrayContent(content);
             uploadContent.Headers.ContentType = _fileMediaType;
             return uploadContent;
+        }
+
+        private static string RemoveTerminatingSlash(Uri url)
+        {
+            UriBuilder address = new UriBuilder(url);
+            address.Path = address.Path.TrimEnd(_segmentDelimiters);
+            return address.Uri.AbsoluteUri;
         }
     }
 }

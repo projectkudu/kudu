@@ -180,8 +180,8 @@
   <data name="VfsController_Busy" xml:space="preserve">
     <value>The repository is currently busy handling another request. Please try again later.</value>
   </data>
-  <data name="VfsController_CannotUpdateOrDeleteDirectory" xml:space="preserve">
-    <value>The resource represents a directory which can not be updated or deleted.</value>
+  <data name="VfsController_CannotUpdateDirectory" xml:space="preserve">
+    <value>The resource represents a directory which can not be updated.</value>
   </data>
   <data name="VfsController_EtagMismatch" xml:space="preserve">
     <value>ETag does not represent the latest state of the resource.</value>
@@ -203,5 +203,8 @@
   </data>
   <data name="VfsController_fileChanged" xml:space="preserve">
     <value>The contents of the file has changed while the operation was in progress. Please retry the request to avoid conflict.</value>
+  </data>
+  <data name="VfsControllerBase_CannotDeleteDirectory" xml:space="preserve">
+    <value>Cannot delete directory. It is either not empty or access is not allowed.</value>
   </data>
 </root>
