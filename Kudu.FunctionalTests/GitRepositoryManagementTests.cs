@@ -439,7 +439,7 @@ command = deploy.cmd");
             string repositoryName = "Bakery";
             string cloneUrl = "https://github.com/KuduApps/Bakery.git";
             string appName = KuduUtils.GetRandomWebsiteName("DeleteForNonWaps");
-            using (var repo = Git.Clone(repositoryName, cloneUrl, requiresEditableRepository: true))
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -575,7 +575,7 @@ command = deploy.cmd");
             ApplicationManager.Run(appName, appManager =>
             {
                 // Act
-                using (var repo = Git.Clone(repositoryName, appManager.GitUrl, requiresEditableRepository: true))
+                using (var repo = Git.Clone(repositoryName, appManager.GitUrl))
                 {
                     // Add a file
                     repo.WriteFile("hello.txt", "Wow");
@@ -657,7 +657,7 @@ command = deploy.cmd");
             string repositoryName = "Bakery";
             string cloneUrl = "https://github.com/KuduApps/Bakery.git";
             string appName = KuduUtils.GetRandomWebsiteName("GoBackDeployOld");
-            using (var repo = Git.Clone(repositoryName, cloneUrl, requiresEditableRepository: true))
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
             {
                 string originalCommitId = repo.CurrentId;
 
@@ -1106,14 +1106,14 @@ command = node build.js
         {
             string name = KuduUtils.GetRandomWebsiteName(siteName);
             string cloneUrl = "https://github.com/KuduApps/SpecificDeploymentConfiguration.git";
-            using (var repo = Git.Clone(name, cloneUrl, requiresEditableRepository: true))
+            using (var repo = Git.Clone(name, cloneUrl))
             {
                 ApplicationManager.Run(name, appManager =>
                 {
                     string deploymentFile = Path.Combine(repo.PhysicalPath, @".deployment");
                     File.WriteAllText(deploymentFile, String.Format(@"[config]
 project = {0}", targetProject));
-                    Git.Commit(name, "Updated configuration");
+                    Git.Commit(repo.PhysicalPath, "Updated configuration");
 
                     // Act
                     appManager.GitDeploy(repo.PhysicalPath);

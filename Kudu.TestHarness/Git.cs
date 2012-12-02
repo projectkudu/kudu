@@ -84,17 +84,17 @@ namespace Kudu.TestHarness
             gitExe.Execute("add \"{0}\"", path);
         }
 
-        public static TestRepository Clone(string repositoryName, string source, IDictionary<string, string> environments = null, bool requiresEditableRepository = false, bool noCache = false)
+        public static TestRepository Clone(string repositoryName, string source, IDictionary<string, string> environments = null, bool noCache = false)
         {
-            return OperationManager.Attempt(() => CloneInternal(repositoryName, source, environments, requiresEditableRepository, noCache));
+            return OperationManager.Attempt(() => CloneInternal(repositoryName, source, environments, noCache));
         }
 
-        private static TestRepository CloneInternal(string repositoryName, string source, IDictionary<string, string> environments, bool requiresEditableRepository, bool noCache)
+        private static TestRepository CloneInternal(string repositoryName, string source, IDictionary<string, string> environments, bool noCache)
         {
             // Check if we have a cached instance of the repository available locally
             string cachedPath = noCache ? null : CreateCachedRepo(repositoryName, source, environments);
 
-            if (cachedPath != null && !requiresEditableRepository)
+            if (cachedPath != null)
             {
                 return new TestRepository(cachedPath, obliterateOnDispose: false);
             }
@@ -110,7 +110,6 @@ namespace Kudu.TestHarness
 
         private static string CreateCachedRepo(string repositoryName, string source, IDictionary<string, string> environments)
         {
-            Executable gitExe;
             string cachedPath = null;
 
             if (source.IndexOf("github.com", StringComparison.OrdinalIgnoreCase) != -1)
@@ -118,15 +117,19 @@ namespace Kudu.TestHarness
                 // If we're allowed to cache the repository, check if it already exists. If not clone it.
                 string repoName = Path.GetFileNameWithoutExtension(source.Split('/').Last());
                 cachedPath = Path.Combine(PathHelper.RepositoryCachePath, repoName);
+                Executable gitExe = GetGitExe(cachedPath, environments);
                 if (Directory.Exists(cachedPath))
                 {
                     Trace.WriteLine(String.Format("Using cached copy at location {0}", cachedPath));
+
+                    // Get it into a clean state that matches a clean clone from github
+                    gitExe.Execute("reset --hard origin/master");
+                    gitExe.Execute("clean -dxf");
                 }
                 else
                 {
                     Trace.WriteLine(String.Format("Could not find a cached copy at {0}. Cloning from source {1}.", cachedPath, source));
                     PathHelper.EnsureDirectory(cachedPath);
-                    gitExe = GetGitExe(cachedPath, environments);
                     gitExe.Execute("clone \"{0}\" .", source);
                 }
             }
