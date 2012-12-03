@@ -30,17 +30,11 @@ namespace Kudu.Client.Editor
 
         public void WriteAllText(string path, string content)
         {
-            // First make a HEAD response to get the ETag (if the file exists)
-            HttpResponseMessage response = GetHeadResponse(path);
-
             using (var request = new HttpRequestMessage())
             {
                 request.Method = HttpMethod.Put;
                 request.RequestUri = new Uri(path, UriKind.Relative);
-                if (response.StatusCode == HttpStatusCode.OK)
-                {
-                    request.Headers.IfMatch.Add(response.Headers.ETag);
-                }
+                request.Headers.IfMatch.Add(EntityTagHeaderValue.Any);
                 request.Content = new StringContent(content);
                 Client.SendAsync(request).Result.EnsureSuccessful();
             }
@@ -48,28 +42,19 @@ namespace Kudu.Client.Editor
 
         public void Delete(string path)
         {
-            // First make a HEAD response to get the ETag (if the file exists)
-            HttpResponseMessage response = GetHeadResponse(path);
-
-            // Nothing to delete if it doesn't exist
-            if (response.StatusCode == HttpStatusCode.NotFound) return;
-
             using (var request = new HttpRequestMessage())
             {
                 request.Method = HttpMethod.Delete;
                 request.RequestUri = new Uri(path, UriKind.Relative);
-                request.Headers.IfMatch.Add(response.Headers.ETag);
-                Client.SendAsync(request).Result.EnsureSuccessful();
-            }
-        }
+                request.Headers.IfMatch.Add(EntityTagHeaderValue.Any);
 
-        private HttpResponseMessage GetHeadResponse(string path)
-        {
-            using (var headRequest = new HttpRequestMessage())
-            {
-                headRequest.Method = HttpMethod.Head;
-                headRequest.RequestUri = new Uri(path, UriKind.Relative);
-                return Client.SendAsync(headRequest).Result;
+                HttpResponseMessage response = Client.SendAsync(request).Result;
+
+                // Don't throw if we got a 404, since we want to act as a 'delete if exists'
+                if (response.StatusCode != HttpStatusCode.NotFound)
+                {
+                    response.EnsureSuccessful();
+                }
             }
         }
     }
