@@ -10,7 +10,7 @@ namespace Kudu.TestHarness
     public class RemoteLogStreamManager : KuduRemoteClientBase
     {
         public RemoteLogStreamManager(string serviceUrl, ICredentials credentials = null)
-            : base(UrlUtility.EnsureTrailingSlash(serviceUrl), credentials)
+            : base(serviceUrl, credentials)
         {
         }
 

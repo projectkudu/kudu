@@ -204,7 +204,7 @@ namespace Kudu.TestHarness
                 LogStreamManager = new RemoteLogStreamManager(site.ServiceUrl + "logstream"),
                 SSHKeyManager = new RemoteSSHKeyManager(site.ServiceUrl + "sshkey"),
                 VfsManager = new RemoteVfsManager(site.ServiceUrl + "vfs"),
-                VfsWebRootManager = new RemoteVfsManager(site.ServiceUrl + "vfs/site/wwwroot/"),
+                VfsWebRootManager = new RemoteVfsManager(site.ServiceUrl + "vfs/site/wwwroot"),
                 LiveScmVfsManager = new RemoteVfsManager(site.ServiceUrl + "scmvfs"),
                 RepositoryManager = repositoryManager,
             };

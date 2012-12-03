@@ -9,7 +9,7 @@ namespace Kudu.Client.Editor
     public class RemoteProjectSystem : KuduRemoteClientBase, IProjectSystem
     {
         public RemoteProjectSystem(string serviceUrl, ICredentials credentials = null)
-            : base(UrlUtility.EnsureTrailingSlash(serviceUrl), credentials)
+            : base(serviceUrl, credentials)
         {
         }
 

@@ -11,7 +11,7 @@ namespace Kudu.Client.Deployment
     public class RemoteDeploymentManager : KuduRemoteClientBase
     {
         public RemoteDeploymentManager(string serviceUrl, ICredentials credentials = null, HttpMessageHandler handler = null)
-            : base(UrlUtility.EnsureTrailingSlash(serviceUrl), credentials, handler)
+            : base(serviceUrl, credentials, handler)
         {
         }
 

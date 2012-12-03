@@ -13,7 +13,7 @@ namespace Kudu.Client.Infrastructure
                 throw new ArgumentNullException("serviceUrl");
             }
 
-            ServiceUrl = serviceUrl;
+            ServiceUrl = UrlUtility.EnsureTrailingSlash(serviceUrl);
             Credentials = credentials;
             Client = HttpClientHelper.CreateClient(ServiceUrl, credentials, handler);
         }

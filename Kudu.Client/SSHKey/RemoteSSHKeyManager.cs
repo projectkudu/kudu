@@ -9,7 +9,7 @@ namespace Kudu.Client.SSHKey
     public class RemoteSSHKeyManager : KuduRemoteClientBase
     {
         public RemoteSSHKeyManager(string serviceUrl, ICredentials credentials = null)
-            : base(UrlUtility.EnsureTrailingSlash(serviceUrl), credentials)
+            : base(serviceUrl, credentials)
         {
         }
 
