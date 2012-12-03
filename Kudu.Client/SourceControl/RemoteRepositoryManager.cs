@@ -19,9 +19,9 @@ namespace Kudu.Client.SourceControl
             return Client.GetJsonAsync<RepositoryInfo>("info");
         }
 
-        public Task Delete()
+        public Task Delete(bool deleteWebRoot = false)
         {
-            return Client.DeleteSafeAsync(String.Empty);
+            return Client.DeleteSafeAsync(deleteWebRoot ? "?deleteWebRoot=1" : String.Empty);
         }
     }
 }

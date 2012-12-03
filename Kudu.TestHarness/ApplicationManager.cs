@@ -122,12 +122,9 @@ namespace Kudu.TestHarness
             if (KuduUtils.ReuseSameSiteForAllTests)
             {
                 // In site reuse mode, clean out the existing site so we start clean
-                appManager.RepositoryManager.Delete().Wait();
+                appManager.RepositoryManager.Delete(deleteWebRoot: true).Wait();
 
                 // Make sure we start with the correct default file as some tests expect it
-                // Note that ideally we'd wipe out the entire wwwroot, but it's slightly non trivial over Vfs
-                appManager.VfsWebRootManager.Delete("default.htm");
-                appManager.VfsWebRootManager.Delete("index.htm");
                 appManager.VfsWebRootManager.WriteAllText("index.html", "<h1>The web site is under construction</h1>");
             }
 

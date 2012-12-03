@@ -52,7 +52,7 @@ namespace Kudu.Services.SourceControl
         /// Delete the repository
         /// </summary>
         [HttpDelete]
-        public void Delete()
+        public void Delete(int deleteWebRoot = 0)
         {
             // Fail if a deployment is in progress
             if (_deploymentLock.IsHeld)
@@ -77,6 +77,15 @@ namespace Kudu.Services.SourceControl
             {
                 // Delete the ssh key
                 FileSystemHelpers.DeleteDirectorySafe(_environment.SSHKeyPath);
+            }
+
+            if (deleteWebRoot != 0)
+            {
+                using (_tracer.Step("Deleting web root"))
+                {
+                    // Delete the wwwroot folder
+                    FileSystemHelpers.DeleteDirectoryContentsSafe(_environment.WebRootPath);
+                }
             }
         }
 
