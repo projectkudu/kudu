@@ -98,15 +98,15 @@ namespace Kudu.Services.Editor
                 // Existing resources require an etag to be updated.
                 if (Request.Headers.IfMatch == null)
                 {
-                    HttpResponseMessage conflictDirectoryResponse = Request.CreateErrorResponse(
+                    HttpResponseMessage missingIfMatchResponse = Request.CreateErrorResponse(
                         HttpStatusCode.PreconditionFailed, Resources.VfsController_MissingIfMatch);
-                    return TaskHelpers.FromResult(conflictDirectoryResponse);
+                    return TaskHelpers.FromResult(missingIfMatchResponse);
                 }
 
                 bool isMatch = false;
                 foreach (EntityTagHeaderValue etag in Request.Headers.IfMatch)
                 {
-                    if (currentEtag.Equals(etag))
+                    if (currentEtag.Equals(etag) || etag == EntityTagHeaderValue.Any)
                     {
                         isMatch = true;
                         break;
@@ -189,7 +189,7 @@ namespace Kudu.Services.Editor
             bool isMatch = false;
             foreach (EntityTagHeaderValue etag in Request.Headers.IfMatch)
             {
-                if (currentEtag.Equals(etag))
+                if (currentEtag.Equals(etag) || etag == EntityTagHeaderValue.Any)
                 {
                     isMatch = true;
                     break;
