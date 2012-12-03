@@ -50,12 +50,6 @@ namespace Kudu.TestHarness
             private set;
         }
 
-        public RemoteProjectSystem ProjectSystem
-        {
-            get;
-            private set;
-        }
-
         public RemoteRepositoryManager RepositoryManager
         {
             get;
@@ -199,7 +193,6 @@ namespace Kudu.TestHarness
                 SiteUrl = site.SiteUrl,
                 ServiceUrl = site.ServiceUrl,
                 DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "deployments"),
-                ProjectSystem = new RemoteProjectSystem(site.ServiceUrl + "live/files"),
                 SettingsManager = new RemoteDeploymentSettingsManager(site.ServiceUrl + "settings"),
                 LogStreamManager = new RemoteLogStreamManager(site.ServiceUrl + "logstream"),
                 SSHKeyManager = new RemoteSSHKeyManager(site.ServiceUrl + "sshkey"),

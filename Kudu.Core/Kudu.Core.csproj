@@ -109,7 +109,6 @@
     <Compile Include="Deployment\WapBuilder.cs" />
     <Compile Include="Deployment\WebSiteBuilder.cs" />
     <Compile Include="Deployment\XmlLogger.cs" />
-    <Compile Include="Editor\ProjectSystem.cs" />
     <Compile Include="Environment.cs" />
     <Compile Include="Infrastructure\FileSystemHelpers.cs" />
     <Compile Include="Deployment\LoggerExtensions.cs" />
@@ -152,6 +151,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

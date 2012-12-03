@@ -13,7 +13,6 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Commands;
 using Kudu.Core.Deployment;
-using Kudu.Core.Editor;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
@@ -195,10 +194,6 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IServiceHookHandler>().To<GitlabHqHandler>();
             kernel.Bind<IServiceHookHandler>().To<GitHubCompatHandler>();
 
-            // Editor
-            kernel.Bind<IProjectSystem>().ToMethod(context => GetEditorProjectSystem(environment, context))
-                                         .InRequestScope();
-
             // Command executor
             kernel.Bind<ICommandExecutor>().ToMethod(context => GetCommandExecutor(environment, context))
                                            .InRequestScope();
@@ -248,22 +243,10 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("live-scm-clean", "live/scm/clean", new { controller = "LiveScm", action = "Clean" });
             routes.MapHttpRoute("live-scm-delete", "live/scm", new { controller = "LiveScm", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
 
-            // Live Files
-            routes.MapHttpRoute("all-files", "files", new { controller = "Files", action = "GetFiles" });
-            routes.MapHttpRoute("one-file", "files/{*path}", new { controller = "Files", action = "GetFile" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("save-file", "files/{*path}", new { controller = "Files", action = "Save" }, new { verb = new HttpMethodConstraint("PUT") });
-            routes.MapHttpRoute("delete-file", "files/{*path}", new { controller = "Files", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
-
             // Live files editor
             routes.MapHttpRoute("vfs-get-files", "vfs/{*path}", new { controller = "Vfs", action = "GetItem" }, new { verb = new HttpMethodConstraint("GET", "HEAD") });
             routes.MapHttpRoute("vfs-put-files", "vfs/{*path}", new { controller = "Vfs", action = "PutItem" }, new { verb = new HttpMethodConstraint("PUT") });
             routes.MapHttpRoute("vfs-delete-files", "vfs/{*path}", new { controller = "Vfs", action = "DeleteItem" }, new { verb = new HttpMethodConstraint("DELETE") });
-
-            // These older files routes are there for backward compat, and should eventually be deleted once clients are changed.
-            routes.MapHttpRoute("old-all-files", "live/files", new { controller = "Files", action = "GetFiles" });
-            routes.MapHttpRoute("old-one-file", "live/files/{*path}", new { controller = "Files", action = "GetFile" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("old-save-file", "live/files/{*path}", new { controller = "Files", action = "Save" }, new { verb = new HttpMethodConstraint("PUT") });
-            routes.MapHttpRoute("old-delete-file", "live/files/{*path}", new { controller = "Files", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
 
             // Live Command Line
             routes.MapHttpRoute("execute-command", "command", new { controller = "Command", action = "ExecuteCommand" }, new { verb = new HttpMethodConstraint("POST") });
@@ -330,11 +313,6 @@ namespace Kudu.Services.Web.App_Start
             }
 
             return null;
-        }
-
-        private static IProjectSystem GetEditorProjectSystem(IEnvironment environment, IContext context)
-        {
-            return new ProjectSystem(environment.WebRootPath);
         }
 
         private static ICommandExecutor GetCommandExecutor(IEnvironment environment, IContext context)

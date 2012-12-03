@@ -361,7 +361,7 @@ command = deploy.cmd");
 
                     KuduAssert.VerifyUrl(url, verificationText);
 
-                    appManager.ProjectSystem.WriteAllText(path, "Hello world!");
+                    appManager.VfsWebRootManager.WriteAllText(path, "Hello world!");
 
                     // Sleep a little since it's a remote call
                     Thread.Sleep(500);
@@ -414,7 +414,7 @@ command = deploy.cmd");
                     appManager.GitDeploy(repositoryName);
 
                     // Make a server site change and verify it shows up
-                    appManager.ProjectSystem.WriteAllText("Content/Site.css", "Hello world!");
+                    appManager.VfsWebRootManager.WriteAllText("Content/Site.css", "Hello world!");
 
                     Thread.Sleep(500);
 
@@ -479,7 +479,7 @@ command = deploy.cmd");
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
-                    appManager.ProjectSystem.WriteAllText("foo.txt", "This is a test file");
+                    appManager.VfsWebRootManager.WriteAllText("foo.txt", "This is a test file");
                     string url = appManager.SiteUrl + "foo.txt";
 
                     Thread.Sleep(200);
@@ -707,12 +707,11 @@ command = deploy.cmd");
                     // Act
                     appManager.GitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-                    var files = appManager.ProjectSystem.GetProject().Files.ToList();
 
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Assert.True(files.Any(f => f.StartsWith("node_modules/express")));
+                    Assert.True(appManager.VfsWebRootManager.Exists("node_modules/express"));
                 });
             }
         }
@@ -798,7 +797,6 @@ command = node build.js
                     // Act
                     appManager.GitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-                    var files = appManager.ProjectSystem.GetProject().Files.ToList();
 
                     // Assert
                     Assert.Equal(1, results.Count);
@@ -822,14 +820,13 @@ command = node build.js
                     // Act
                     appManager.GitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-                    var files = appManager.ProjectSystem.GetProject().Files.ToList();
 
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
 
                     // Make sure a web.config file got created at deployment time
-                    Assert.True(files.Contains("web.config"));
+                    Assert.True(appManager.VfsWebRootManager.Exists("web.config"));
                 });
             }
         }

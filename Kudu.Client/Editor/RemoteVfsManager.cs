@@ -28,6 +28,12 @@ namespace Kudu.Client.Editor
                 .Result;
         }
 
+        public bool Exists(string path)
+        {
+            HttpResponseMessage response = GetHeadResponse(path);
+            return response.StatusCode == HttpStatusCode.OK;
+        }
+
         public void WriteAllText(string path, string content)
         {
             using (var request = new HttpRequestMessage())
@@ -57,5 +63,16 @@ namespace Kudu.Client.Editor
                 }
             }
         }
+
+        private HttpResponseMessage GetHeadResponse(string path)
+        {
+            using (var headRequest = new HttpRequestMessage())
+            {
+                headRequest.Method = HttpMethod.Head;
+                headRequest.RequestUri = new Uri(path, UriKind.Relative);
+                return Client.SendAsync(headRequest).Result;
+            }
+        }
     }
 }
+

@@ -159,7 +159,6 @@
     <Compile Include="Infrastructure\VfsControllerBase.cs" />
     <Compile Include="SourceControl\LiveScmEditorController.cs" />
     <Compile Include="SSHKey\SSHKeyController.cs" />
-    <Compile Include="Editor\FilesController.cs" />
     <Compile Include="EnvironmentController.cs" />
     <Compile Include="GitServer\FetchHandler.cs" />
     <Compile Include="GitServer\Helpers.cs" />
