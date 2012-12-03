@@ -135,11 +135,7 @@ namespace Kudu.TestHarness
                 else
                 {
                     // Delete any leftover, ignoring errors
-                    try
-                    {
-                        Directory.Delete(cachedPath, recursive: true);
-                    }
-                    catch { }
+                    FileSystemHelpers.DeleteDirectorySafe(cachedPath);
 
                     Trace.WriteLine(String.Format("Could not find a cached copy at {0}. Cloning from source {1}.", cachedPath, source));
                     PathHelper.EnsureDirectory(cachedPath);
