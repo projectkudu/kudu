@@ -125,6 +125,9 @@ namespace Kudu.TestHarness
                 appManager.RepositoryManager.Delete().Wait();
 
                 // Make sure we start with the correct default file as some tests expect it
+                // Note that ideally we'd wipe out the entire wwwroot, but it's slightly non trivial over Vfs
+                appManager.VfsWebRootManager.Delete("default.htm");
+                appManager.VfsWebRootManager.Delete("index.htm");
                 appManager.VfsWebRootManager.WriteAllText("index.html", "<h1>The web site is under construction</h1>");
             }
 
