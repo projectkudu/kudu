@@ -34,7 +34,7 @@ namespace Kudu.FunctionalTests
         {
             KuduClient = client;
             Client = client.Client;
-            BaseAddress = RemoveTerminatingSlash(Client.BaseAddress);
+            BaseAddress = Client.BaseAddress.GetComponents(UriComponents.HttpRequestUrl, UriFormat.Unescaped).TrimEnd(_segmentDelimiters);
             _testConflictingUpdates = testConflictingUpdates;
         }
 
@@ -404,13 +404,6 @@ namespace Kudu.FunctionalTests
             HttpContent uploadContent = new ByteArrayContent(content);
             uploadContent.Headers.ContentType = _fileMediaType;
             return uploadContent;
-        }
-
-        private static string RemoveTerminatingSlash(Uri url)
-        {
-            UriBuilder address = new UriBuilder(url);
-            address.Path = address.Path.TrimEnd(_segmentDelimiters);
-            return address.Uri.AbsoluteUri;
         }
     }
 }
