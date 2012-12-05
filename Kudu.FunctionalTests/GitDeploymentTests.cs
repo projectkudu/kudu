@@ -78,7 +78,7 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        [Theory]
+        [Theory(Skip="Omitting PHP test since it's hard to set up and doesn't cover anything interesting to Kudu")]
         [PropertyData("PhpApps")]
         public void PushAndDeployPhpApps(string name, string repoName, string repoCloneUrl,
                                          string defaultBranchName, string verificationText,
