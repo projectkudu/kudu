@@ -26,12 +26,12 @@ namespace Kudu.Core.Deployment.Generator
 
                 if (!String.IsNullOrEmpty(_solutionPath))
                 {
-                    commandArguments.AppendFormat(CultureInfo.InvariantCulture, " --solutionFile \"{0}\"", _solutionPath);
+                    commandArguments.AppendFormat(CultureInfo.InvariantCulture, " --solutionFile \"{0}\"", CleanPath(_solutionPath));
                 }
 
                 if (!String.IsNullOrEmpty(_projectPath))
                 {
-                    commandArguments.AppendFormat(CultureInfo.InvariantCulture, " -p \"{0}\"", _projectPath);
+                    commandArguments.AppendFormat(CultureInfo.InvariantCulture, " --sitePath \"{0}\"", CleanPath(_projectPath));
                 }
 
                 return commandArguments.ToString();
