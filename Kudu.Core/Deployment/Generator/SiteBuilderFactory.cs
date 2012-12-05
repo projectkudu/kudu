@@ -7,6 +7,7 @@ using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using System.IO.Abstractions;
+using System.Diagnostics;
 
 namespace Kudu.Core.Deployment.Generator
 {
@@ -159,7 +160,7 @@ namespace Kudu.Core.Deployment.Generator
                                               _settings,
                                               _propertyProvider,
                                               repositoryRoot,
-                                              null, // No project.
+                                              targetPath,
                                               solutions[0].Path);
                 }
             }
@@ -195,7 +196,7 @@ namespace Kudu.Core.Deployment.Generator
                                       _propertyProvider,
                                       repositoryRoot,
                                       targetPath,
-                                      solution.Path);
+                                      solutionPath);
             }
 
             throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,

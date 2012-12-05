@@ -22,7 +22,7 @@ namespace Kudu.Core.Deployment.Generator
             {
                 if (!String.IsNullOrEmpty(_projectPath))
                 {
-                    return String.Format(CultureInfo.InvariantCulture, "{0} -p \"{1}\"", _commandArgument, _projectPath);
+                    return String.Format(CultureInfo.InvariantCulture, "{0} --sitePath \"{1}\"", _commandArgument, CleanPath(_projectPath));
                 }
 
                 return _commandArgument;

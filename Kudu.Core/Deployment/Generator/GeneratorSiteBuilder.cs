@@ -49,6 +49,15 @@ namespace Kudu.Core.Deployment.Generator
 
         protected abstract string ScriptGeneratorCommandArguments { get; }
 
+        /// <summary>
+        /// Due to node issue, an argument cannot end with \ followed by a " (\"),
+        /// This causes the arguments to be parsed incorrectly.
+        /// </summary>
+        protected string CleanPath(string path)
+        {
+            return path != null ? path.TrimEnd('\\') : null;
+        }
+
         private void GenerateScript(DeploymentContext context, ILogger buildLogger)
         {
             try
@@ -65,6 +74,7 @@ namespace Kudu.Core.Deployment.Generator
                         string log = scriptGenerator.Execute(context.Tracer,
                                                    output =>
                                                    {
+                                                       // TODO: Do we want those outputs?
                                                        writer.WriteOutLine(output);
                                                        return true;
                                                    },
