@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Net;
+using System.Text;
 using System.Threading.Tasks;
 using Kudu.Client.Infrastructure;
 
@@ -20,9 +21,11 @@ namespace Kudu.TestHarness
             TaskCompletionSource<Stream> tcs = new TaskCompletionSource<Stream>();
             RequestState state = new RequestState { Manager = this, TaskCompletionSource = tcs, Request = request };
 
-            if (Client.DefaultRequestHeaders.Authorization != null)
+            if (Credentials != null)
             {
-                request.Headers["Authorization"] = Client.DefaultRequestHeaders.Authorization.Scheme + " " + Client.DefaultRequestHeaders.Authorization.Parameter;
+                NetworkCredential networkCred = Credentials.GetCredential(Client.BaseAddress, "Basic");
+                string credParameter = Convert.ToBase64String(Encoding.ASCII.GetBytes(networkCred.UserName + ":" + networkCred.Password));
+                request.Headers["Authorization"] = "Basic " + credParameter;
             }
 
             IAsyncResult result = request.BeginGetResponse(RemoteLogStreamManager.OnGetResponse, state);
