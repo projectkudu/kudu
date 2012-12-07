@@ -129,7 +129,23 @@ namespace Kudu.TestHarness
                     Trace.WriteLine(String.Format("Using cached copy at location {0}", cachedPath));
 
                     // Get it into a clean state that matches a clean clone from github
-                    gitExe.Execute("reset --hard origin/master");
+                    try
+                    {
+                        gitExe.Execute("reset --hard origin/master");
+                    }
+                    catch (Exception e)
+                    {
+                        // Some repos like Drupal don't use a master branch (e.g. default branch is 7.x). In those cases,
+                        // simply reset to the HEAD. That won't undo any test commits, but at least it does some cleanup.
+                        if (e.Message.Contains("ambiguous argument 'origin/master'"))
+                        {
+                            gitExe.Execute("reset --hard HEAD");
+                        }
+                        else
+                        {
+                            throw;
+                        }
+                    }
                     gitExe.Execute("clean -dxf");
                 }
                 else
