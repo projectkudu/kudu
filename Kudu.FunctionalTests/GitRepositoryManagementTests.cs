@@ -654,8 +654,8 @@ command = deploy.cmd");
         [Fact]
         public void GoingBackInTimeDeploysOldFiles()
         {
-            string repositoryName = "Bakery";
-            string cloneUrl = "https://github.com/KuduApps/Bakery.git";
+            string repositoryName = "HelloWorld";
+            string cloneUrl = "https://github.com/KuduApps/HelloWorld.git";
             string appName = KuduUtils.GetRandomWebsiteName("GoBackDeployOld");
             using (var repo = Git.Clone(repositoryName, cloneUrl))
             {
