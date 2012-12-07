@@ -180,9 +180,6 @@ namespace Kudu.SiteManagement
             string appPoolName = GetAppPool(applicationName);
             IIS.ApplicationPool kuduPool = iis.ApplicationPools[appPoolName];
 
-            // Make sure the acls are gone
-            RemoveAcls(applicationName, appPoolName);
-
             if (kuduPool == null)
             {
                 // If there's no app pool then do nothing
@@ -270,8 +267,6 @@ namespace Kudu.SiteManagement
                 kuduAppPool.AutoStart = true;
                 kuduAppPool.ProcessModel.LoadUserProfile = true;
                 kuduAppPool.WaitForState(IIS.ObjectState.Started);
-
-                SetupAcls(appName, appPoolName);
             }
 
             return kuduAppPool;
@@ -303,84 +298,6 @@ namespace Kudu.SiteManagement
                 siteBindings.Add(binding);
             }
             return siteBindings;
-        }
-
-        private void RemoveAcls(string appName, string appPoolName)
-        {
-            // Setup Acls for this user
-            var icacls = new Executable(@"C:\Windows\System32\icacls.exe", Directory.GetCurrentDirectory());
-
-            string applicationPath = _pathResolver.GetApplicationPath(appName);
-
-            try
-            {
-                // Give full control to the app folder (we can make it minimal later)
-                icacls.Execute(@"""{0}"" /remove ""IIS AppPool\{1}""", applicationPath, appPoolName);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-            }
-
-            try
-            {
-                icacls.Execute(@"""{0}"" /remove ""IIS AppPool\{1}""", _pathResolver.ServiceSitePath, appPoolName);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-            }
-
-            try
-            {
-                // Give full control to the temp folder
-                string windowsTemp = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp");
-                icacls.Execute(@"""{0}"" /remove ""IIS AppPool\{1}""", windowsTemp, appPoolName);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-            }
-        }
-
-        private void SetupAcls(string appName, string appPoolName)
-        {
-            // Setup Acls for this user
-            var icacls = new Executable(@"C:\Windows\System32\icacls.exe", Directory.GetCurrentDirectory());
-
-            // Make sure the application path exists
-            string applicationPath = _pathResolver.GetApplicationPath(appName);
-            Directory.CreateDirectory(applicationPath);
-
-            try
-            {
-                // Give full control to the app folder (we can make it minimal later)
-                icacls.Execute(@"""{0}"" /grant:r ""IIS AppPool\{1}:(OI)(CI)(F)"" /C /Q /T", applicationPath, appPoolName);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-            }
-
-            try
-            {
-                icacls.Execute(@"""{0}"" /grant:r ""IIS AppPool\{1}:(OI)(CI)(RX)"" /C /Q /T", _pathResolver.ServiceSitePath, appPoolName);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-            }
-
-            try
-            {
-                // Give full control to the temp folder
-                string windowsTemp = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp");
-                icacls.Execute(@"""{0}"" /grant:r ""IIS AppPool\{1}:(OI)(CI)(F)"" /C /Q /T", windowsTemp, appPoolName);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-            }
         }
 
         private int GetRandomPort(IIS.ServerManager iis)
