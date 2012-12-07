@@ -119,7 +119,7 @@ namespace Kudu.TestHarness
                 appManager.RepositoryManager.Delete(deleteWebRoot: true).Wait();
 
                 // Make sure we start with the correct default file as some tests expect it
-                appManager.VfsWebRootManager.WriteAllText("index.html", "<h1>The web site is under construction</h1>");
+                appManager.VfsWebRootManager.WriteAllText("index.html", "<h1>This web site has been successfully created</h1>");
             }
 
             var dumpPath = Path.Combine(PathHelper.TestResultsPath, applicationName, applicationName + ".zip");

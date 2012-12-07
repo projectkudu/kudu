@@ -127,14 +127,14 @@ namespace Kudu.SiteManagement
                 FileSystemHelpers.EnsureDirectory(webRoot);
                 File.WriteAllText(Path.Combine(webRoot, "index.html"), @"<html> 
 <head>
-<title>The web site is under construction</title>
+<title>This web site has been successfully created</title>
 <style type=""text/css"">
  BODY { color: #444444; background-color: #E5F2FF; font-family: verdana; margin: 0px; text-align: center; margin-top: 100px; }
  H1 { font-size: 16pt; margin-bottom: 4px; }
 </style>
 </head>
 <body>
-<h1>The web site is under construction</h1><br/>
+<h1>This web site has been successfully created</h1><br/>
 </body> 
 </html>");
 

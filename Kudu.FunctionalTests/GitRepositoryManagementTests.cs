@@ -516,7 +516,7 @@ command = deploy.cmd");
 
                     // Assert
                     Assert.Equal(0, results.Count);
-                    KuduAssert.VerifyUrl(appManager.SiteUrl, "The web site is under construction");
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, KuduAssert.DefaultPageContent);
                 });
             }
         }
@@ -1076,7 +1076,7 @@ command = node build.js
         {
             VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForNonDeployableProjectFile",
                                           "MvcApplicationRemovedFromSolution.Tests/MvcApplicationRemovedFromSolution.Tests.csproj",
-                                          "The web site is under construction",
+                                          KuduAssert.DefaultPageContent,
                                           DeployStatus.Failed);
         }
 
@@ -1085,7 +1085,7 @@ command = node build.js
         {
             VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForNonDeployableProject",
                                           "MvcApplicationRemovedFromSolution.Tests",
-                                          "The web site is under construction",
+                                          KuduAssert.DefaultPageContent,
                                           DeployStatus.Failed,
                                           "is not a deployable project");
         }
@@ -1095,7 +1095,7 @@ command = node build.js
         {
             VerifyDeploymentConfiguration("SpecificDeploymentConfigurationForDirectoryThatDoesNotExist",
                                           "IDoNotExist",
-                                          "The web site is under construction",
+                                          KuduAssert.DefaultPageContent,
                                           DeployStatus.Failed);
         }
 

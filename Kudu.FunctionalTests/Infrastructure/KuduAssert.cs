@@ -12,6 +12,8 @@ namespace Kudu.FunctionalTests.Infrastructure
 {
     public static class KuduAssert
     {
+        public const string DefaultPageContent = "This web site has been successfully created";
+
         public static T ThrowsUnwrapped<T>(Action action) where T : Exception
         {
             var ex = Assert.Throws<AggregateException>(() => action());
