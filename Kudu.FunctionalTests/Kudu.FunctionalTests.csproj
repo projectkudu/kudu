@@ -83,6 +83,7 @@
     <Compile Include="DropboxTests.cs" />
     <Compile Include="GitRepositoryManagementTests.cs" />
     <Compile Include="GitStabilityTests.cs" />
+    <Compile Include="HgRepositoryFacts.cs" />
     <Compile Include="Infrastructure\KuduAssert.cs" />
     <Compile Include="LogStreamManagerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

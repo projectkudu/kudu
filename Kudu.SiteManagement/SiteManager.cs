@@ -300,6 +300,7 @@ namespace Kudu.SiteManagement
             return siteBindings;
         }
 
+        //TODO this is duplicated in HgServer.cs, though out of sync in functionality.
         private int GetRandomPort(IIS.ServerManager iis)
         {
             int randomPort = portNumberGenRnd.Next(1025, 65535);
@@ -311,6 +312,7 @@ namespace Kudu.SiteManagement
             return randomPort;
         }
 
+        //TODO this is duplicated in HgServer.cs, though out of sync in functionality.
         private bool IsAvailable(int port, IIS.ServerManager iis)
         {
             var tcpConnections = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpConnections();
