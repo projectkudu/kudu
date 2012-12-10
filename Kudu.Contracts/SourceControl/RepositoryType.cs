@@ -3,6 +3,7 @@
     public enum RepositoryType
     {
         None,
-        Git
+        Git,
+        Mercurial
     }
 }
