@@ -196,6 +196,35 @@ namespace Kudu.Core.Infrastructure
                            args);
         }
 
+        public Tuple<string, string> ExecuteWithProgressWriter(ITracer tracer, Func<string, bool> filter, string arguments, params object[] args)
+        {
+            using (var writer = new ProgressWriter())
+            {
+                writer.Start();
+
+                // TODO: The line with the MSB3644 warnings since it's not important
+                return Execute(tracer,
+                               output =>
+                               {
+                                   if (!filter(output))
+                                   {
+                                       return false;
+                                   }
+
+                                   writer.WriteOutLine(output);
+                                   return true;
+                               },
+                               error =>
+                               {
+                                   writer.WriteErrorLine(error);
+                                   return true;
+                               },
+                               Console.OutputEncoding,
+                               arguments,
+                               args);
+            }
+        }
+
         public Tuple<string, string> Execute(ITracer tracer, Func<string, bool> onWriteOutput, Func<string, bool> onWriteError, Encoding encoding, string arguments, params object[] args)
         {
             using (GetProcessStep(tracer, arguments, args))
