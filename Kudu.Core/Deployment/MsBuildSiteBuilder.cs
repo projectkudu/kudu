@@ -50,33 +50,14 @@ namespace Kudu.Core.Deployment
 
         public virtual string ExecuteMSBuild(ITracer tracer, string arguments, params object[] args)
         {
-            using (var writer = new ProgressWriter())
-            {
-                writer.Start();
-
-                // The line with the MSB3644 warnings since it's not important
-                return _msbuildExe.Execute(tracer,
-                                           output =>
-                                           {
-                                               if (output.Contains("MSB3644:") || output.Contains("MSB3270:"))
-                                               {
-                                                   return false;
-                                               }
-
-                                               writer.WriteOutLine(output);
-                                               return true;
-                                           },
-                                           error =>
-                                           {
-                                               writer.WriteErrorLine(error);
-                                               return true;
-                                           },
-                                           Console.OutputEncoding,
-                                           arguments,
-                                           args).Item1;
-            }
+            return _msbuildExe.ExecuteWithProgressWriter(tracer, FilterMsBuildWarnings, arguments, args).Item1;
         }
 
         public abstract Task Build(DeploymentContext context);
+
+        internal static bool FilterMsBuildWarnings(string outputLine)
+        {
+            return !outputLine.Contains("MSB3644:") && !outputLine.Contains("MSB3270:");
+        }
     }
 }
