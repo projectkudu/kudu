@@ -172,7 +172,7 @@ namespace Kudu.Core.Test
             var directory = new Mock<DirectoryBase>();
 
             // Arrange
-            file.Setup(f => f.Open(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)).Returns(() => 
+            file.Setup(f => f.Open(path, FileMode.Create, FileAccess.Write, FileShare.Read)).Returns(() => 
             {
                 mem = new MemoryStream();
                 return mem;
