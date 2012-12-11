@@ -57,6 +57,7 @@ namespace Kudu.Core.Deployment
 
         internal static bool FilterMsBuildWarnings(string outputLine)
         {
+            // TODO: The line with the MSB3644 warnings since it's not important
             return !outputLine.Contains("MSB3644:") && !outputLine.Contains("MSB3270:");
         }
     }
