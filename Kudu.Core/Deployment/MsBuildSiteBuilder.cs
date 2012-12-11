@@ -50,15 +50,15 @@ namespace Kudu.Core.Deployment
 
         public virtual string ExecuteMSBuild(ITracer tracer, string arguments, params object[] args)
         {
-            return _msbuildExe.ExecuteWithProgressWriter(tracer, FilterMsBuildWarnings, arguments, args).Item1;
+            return _msbuildExe.ExecuteWithProgressWriter(tracer, FilterOutMsBuildWarnings, arguments, args).Item1;
         }
 
         public abstract Task Build(DeploymentContext context);
 
-        internal static bool FilterMsBuildWarnings(string outputLine)
+        internal static bool FilterOutMsBuildWarnings(string outputLine)
         {
             // TODO: The line with the MSB3644 warnings since it's not important
-            return !outputLine.Contains("MSB3644:") && !outputLine.Contains("MSB3270:");
+            return outputLine.Contains("MSB3644:") || outputLine.Contains("MSB3270:");
         }
     }
 }
