@@ -72,7 +72,7 @@ namespace Kudu.Core.Deployment
 
             try
             {
-                string log = exe.ExecuteWithProgressWriter(context.Tracer, MsBuildSiteBuilder.FilterOutMsBuildWarnings, "/c " + _command, String.Empty).Item1;
+                string log = exe.ExecuteWithProgressWriter(context.Tracer, MsBuildSiteBuilder.ShouldFilterOutMsBuildWarnings, "/c " + _command, String.Empty).Item1;
 
                 customLogger.Log(log);
 

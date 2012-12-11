@@ -196,7 +196,7 @@ namespace Kudu.Core.Infrastructure
                            args);
         }
 
-        public Tuple<string, string> ExecuteWithProgressWriter(ITracer tracer, Func<string, bool> filterOut, string arguments, params object[] args)
+        public Tuple<string, string> ExecuteWithProgressWriter(ITracer tracer, Func<string, bool> shouldFilterOut, string arguments, params object[] args)
         {
             using (var writer = new ProgressWriter())
             {
@@ -205,7 +205,7 @@ namespace Kudu.Core.Infrastructure
                 return Execute(tracer,
                                output =>
                                {
-                                   if (filterOut(output))
+                                   if (shouldFilterOut(output))
                                    {
                                        return false;
                                    }
