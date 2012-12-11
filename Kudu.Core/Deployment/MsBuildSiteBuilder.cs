@@ -55,9 +55,9 @@ namespace Kudu.Core.Deployment
 
         public abstract Task Build(DeploymentContext context);
 
+        // TODO: Remove this filter once we figure out how to run the msbuild command without getting these warnings
         internal static bool FilterOutMsBuildWarnings(string outputLine)
         {
-            // TODO: The line with the MSB3644 warnings since it's not important
             return outputLine.Contains("MSB3644:") || outputLine.Contains("MSB3270:");
         }
     }
