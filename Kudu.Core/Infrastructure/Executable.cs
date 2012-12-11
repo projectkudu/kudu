@@ -202,7 +202,6 @@ namespace Kudu.Core.Infrastructure
             {
                 writer.Start();
 
-                // TODO: The line with the MSB3644 warnings since it's not important
                 return Execute(tracer,
                                output =>
                                {
