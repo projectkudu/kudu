@@ -91,6 +91,8 @@ namespace Kudu.Core.Settings
                 return new JObject();
             }
 
+            // opens file for FileAccess.Read but does allow other read/write (FileShare.ReadWrite).   
+            // it is the most optimal where write is infrequent and dirty read is acceptable.
             using (var reader = new JsonTextReader(new StreamReader(_fileSystem.File.Open(_path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))))
             {
                 return JObject.Load(reader);
@@ -104,10 +106,13 @@ namespace Kudu.Core.Settings
                 FileSystemHelpers.EnsureDirectory(_fileSystem, Path.GetDirectoryName(_path));
             }
 
-            using (var writer = new StreamWriter(_fileSystem.File.Open(_path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+            // opens file for FileAccess.Write but does allow other dirty read (FileShare.Read).   
+            // it is the most optimal where write is infrequent and dirty read is acceptable.
+            using (var writer = new JsonTextWriter(new StreamWriter(_fileSystem.File.Open(_path, FileMode.Create, FileAccess.Write, FileShare.Read))))
             {
                 // prefer indented-readable format
-                writer.Write(json.ToString());
+                writer.Formatting = Formatting.Indented;
+                json.WriteTo(writer);
             }
         }
     }
