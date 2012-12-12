@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Deployment.Generator;
 
 namespace Kudu.Core.Deployment
 {
@@ -72,7 +73,7 @@ namespace Kudu.Core.Deployment
 
             try
             {
-                string log = exe.ExecuteWithProgressWriter(context.Tracer, MsBuildSiteBuilder.ShouldFilterOutMsBuildWarnings, "/c " + _command, String.Empty).Item1;
+                string log = exe.ExecuteWithProgressWriter(context.Tracer, ExternalCommandBuilder.ShouldFilterOutMsBuildWarnings, "/c " + _command, String.Empty).Item1;
 
                 customLogger.Log(log);
 

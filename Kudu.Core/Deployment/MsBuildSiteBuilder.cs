@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Deployment.Generator;
 
 namespace Kudu.Core.Deployment
 {
@@ -45,15 +46,9 @@ namespace Kudu.Core.Deployment
 
         public virtual string ExecuteMSBuild(ITracer tracer, string arguments, params object[] args)
         {
-            return _msbuildExe.ExecuteWithProgressWriter(tracer, ShouldFilterOutMsBuildWarnings, arguments, args).Item1;
+            return _msbuildExe.ExecuteWithProgressWriter(tracer, ExternalCommandBuilder.ShouldFilterOutMsBuildWarnings, arguments, args).Item1;
         }
 
         public abstract Task Build(DeploymentContext context);
-
-        // TODO: Remove this filter once we figure out how to run the msbuild command without getting these warnings
-        internal static bool ShouldFilterOutMsBuildWarnings(string outputLine)
-        {
-            return outputLine.Contains("MSB3644:") || outputLine.Contains("MSB3270:");
-        }
     }
 }

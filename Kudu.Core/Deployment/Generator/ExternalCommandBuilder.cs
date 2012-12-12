@@ -97,28 +97,8 @@ namespace Kudu.Core.Deployment.Generator
                 {
                     writer.Start();
 
-                    // TODO: The line with the MSB3644 warnings since it's not important
-                    string log = exe.Execute(context.Tracer,
-                                               output =>
-                                               {
-                                                   if (output.Contains("MSB3644:") || output.Contains("MSB3270:"))
-                                                   {
-                                                       return false;
-                                                   }
+                    string log = exe.ExecuteWithProgressWriter(context.Tracer, ShouldFilterOutMsBuildWarnings, "/c " + command, String.Empty).Item1;
 
-                                                   writer.WriteOutLine(output);
-                                                   return true;
-                                               },
-                                               error =>
-                                               {
-                                                   writer.WriteErrorLine(error);
-                                                   return true;
-                                               },
-                                               Console.OutputEncoding,
-                                               "/c " + command,
-                                               String.Empty).Item1;
-
-                    // TODO: Is this required
                     customLogger.Log(log);
                 }
             }
@@ -167,6 +147,12 @@ namespace Kudu.Core.Deployment.Generator
             {
                 return Path.Combine(Environment.NodeModulesPath, ".bin", "kudusync.cmd");
             }
+        }
+
+        // TODO: Remove this filter once we figure out how to run the msbuild command without getting these warnings
+        internal static bool ShouldFilterOutMsBuildWarnings(string outputLine)
+        {
+            return outputLine.Contains("MSB3644:") || outputLine.Contains("MSB3270:");
         }
     }
 }
