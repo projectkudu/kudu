@@ -101,7 +101,7 @@ namespace Kudu.FunctionalTests
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
                 KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText, expectedResponseCode);
-                if (!String.IsNullOrEmpty(verificationLogText.Trim()))
+                if (!String.IsNullOrEmpty(verificationLogText))
                 {
                     KuduAssert.VerifyLogOutput(appManager, results[0].Id, verificationLogText.Trim());
                 }
