@@ -64,8 +64,6 @@ namespace Kudu.Core.Deployment.Generator
 
         private void GenerateScript(DeploymentContext context, ILogger buildLogger)
         {
-            StringBuilder log = new StringBuilder();
-
             try
             {
                 using (context.Tracer.Step("Generating deployment script"))
@@ -79,41 +77,39 @@ namespace Kudu.Core.Deployment.Generator
                     {
                         writer.Start();
 
-                        scriptGenerator.Execute(context.Tracer,
+                        string log = scriptGenerator.Execute(context.Tracer,
                                                    output =>
                                                    {
                                                        // TODO: Do we want those outputs?
                                                        writer.WriteOutLine(output);
-                                                       log.AppendLine(output);
                                                        return true;
                                                    },
                                                    error =>
                                                    {
                                                        writer.WriteErrorLine(error);
-                                                       log.AppendLine(error);
                                                        return true;
                                                    },
                                                    Console.OutputEncoding,
-                                                   scriptGeneratorCommand);
+                                                   scriptGeneratorCommand).Item1;
+                        buildLogger.Log(log);
                     }
                 }
             }
-            catch (Exception ex)
+            catch (CommandLineException ex)
             {
                 context.Tracer.TraceError(ex);
-
-                // TODO: don't swallow exception here
 
                 // HACK: Log an empty error to the global logger (post receive hook console output).
                 // The reason we don't log the real exception is because the 'live output' running
                 // msbuild has already been captured.
                 context.GlobalLogger.LogError();
-                context.Logger.Log(ex);
+
+                // Add the output stream and the error stream to the log for better
+                // debugging
+                buildLogger.Log(ex.Output, LogEntryType.Error);
+                buildLogger.Log(ex.Error, LogEntryType.Error);
+
                 throw;
-            }
-            finally
-            {
-                buildLogger.Log(log.ToString());
             }
         }
 
