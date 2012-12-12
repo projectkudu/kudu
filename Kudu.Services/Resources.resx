@@ -207,4 +207,19 @@
   <data name="VfsControllerBase_CannotDeleteDirectory" xml:space="preserve">
     <value>Cannot delete directory. It is either not empty or access is not allowed.</value>
   </data>
+  <data name="LogStream_AppShutdown" xml:space="preserve">
+    <value>{0}{1}  The application was terminated.</value>
+  </data>
+  <data name="LogStream_Error" xml:space="preserve">
+    <value>{0}{1}  Error has occured and stream is terminated. {2}</value>
+  </data>
+  <data name="LogStream_Heartbeat" xml:space="preserve">
+    <value>{0}  No new trace in the past {1} min(s).</value>
+  </data>
+  <data name="LogStream_Idle" xml:space="preserve">
+    <value>{0}  Stream terminated due to no new trace in the past {1} min(s).</value>
+  </data>
+  <data name="LogStream_Welcome" xml:space="preserve">
+    <value>{0}  Welcome, you are now connected to log-streaming service.</value>
+  </data>
 </root>
