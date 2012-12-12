@@ -488,7 +488,17 @@ namespace Kudu.Core.Deployment
                 };
 
                 context.NextManifestFilePath = context.ManifestWriter.ManifestFilePath;
-                context.PreviousManifestFilePath = context.PreviousMainfest != null ? context.PreviousMainfest.ManifestFilePath : null;
+
+                if (context.PreviousMainfest != null)
+                {
+                    context.PreviousManifestFilePath = context.PreviousMainfest.ManifestFilePath;
+                }
+                else
+                {
+                    // In this case it is the first deployment (no active deployment)
+                    // So we remove all files from wwwroot
+                    FileSystemHelpers.DeleteDirectoryContentsSafe(context.OutputPath);
+                }
 
                 builder.Build(context)
                        .Then(() =>

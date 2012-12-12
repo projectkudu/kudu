@@ -19,8 +19,7 @@ namespace Kudu
         public const string DeploySettingsPath = "settings.xml";
         public const string TraceFile = "trace.xml";
         public const string ScriptsPath = "scripts";
-
-        public const string NodeModulesBinPathEnvKey = "KUDU_NODE_MODULES_PATH";
+        public const string NodeModulesPath = "node_modules";
 
         // Kudu trace text file related
         public const string DeploymentTracePath = LogFilesPath + @"\Git\deployment";

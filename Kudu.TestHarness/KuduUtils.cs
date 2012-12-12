@@ -88,5 +88,20 @@ namespace Kudu.TestHarness
                 return !String.IsNullOrEmpty(SiteReusedForAllTests);
             }
         }
+
+        public static bool TestGeneratorSiteBuilderFactory
+        {
+            get
+            {
+                bool retValue;
+
+                if (bool.TryParse(ConfigurationManager.AppSettings["TestGeneratorSiteBuilderFactory"], out retValue))
+                {
+                    return retValue;
+                }
+
+                return false;
+            }
+        }
     }
 }

@@ -14,6 +14,7 @@ namespace Kudu.Core
         private readonly string _sshKeyPath;
         private readonly string _tempPath;
         private readonly string _scriptPath;
+        private readonly string _nodeModulesPath;
         private readonly string _repositoryPath;
         private readonly string _tracePath;
         private readonly string _deploymentTracePath;
@@ -28,7 +29,8 @@ namespace Kudu.Core
                 string deployCachePath,
                 string diagnosticsPath,
                 string sshKeyPath,
-                string scriptPath)
+                string scriptPath,
+                string nodeModulesPath)
         {
             if (fileSystem == null)
             {
@@ -49,6 +51,7 @@ namespace Kudu.Core
             _diagnosticsPath = diagnosticsPath;
             _sshKeyPath = sshKeyPath;
             _scriptPath = scriptPath;
+            _nodeModulesPath = nodeModulesPath;
             _tracePath = Path.Combine(rootPath, Constants.TracePath);
             _deploymentTracePath = Path.Combine(rootPath, Constants.DeploymentTracePath);
         }
@@ -123,6 +126,14 @@ namespace Kudu.Core
             get
             {
                 return _scriptPath;
+            }
+        }
+
+        public string NodeModulesPath
+        {
+            get
+            {
+                return _nodeModulesPath;
             }
         }
 

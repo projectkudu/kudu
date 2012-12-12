@@ -9,8 +9,6 @@ namespace Kudu.Core.Deployment.Generator
 {
     public abstract class ExternalCommandBuilder : ISiteBuilder
     {
-        private static readonly string KuduSyncPath = Path.Combine(System.Environment.GetEnvironmentVariable(Constants.NodeModulesBinPathEnvKey), "kudusync.cmd");
-
         private const string SourcePath = "DEPLOYMENT_SOURCE";
         private const string TargetPath = "DEPLOYMENT_TARGET";
         private const string BuildTempPath = "DEPLOYMENT_TEMP";
@@ -160,6 +158,14 @@ namespace Kudu.Core.Deployment.Generator
                 {
                     tracer.TraceError(ex);
                 }
+            }
+        }
+
+        private string KuduSyncPath
+        {
+            get
+            {
+                return Path.Combine(Environment.NodeModulesPath, ".bin", "kudusync.cmd");
             }
         }
     }

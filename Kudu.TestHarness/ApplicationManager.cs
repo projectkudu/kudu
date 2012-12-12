@@ -188,7 +188,7 @@ namespace Kudu.TestHarness
             var repositoryManager = new RemoteRepositoryManager(site.ServiceUrl + "live/scm");
             var repositoryInfo = repositoryManager.GetRepositoryInfo().Result;
             gitUrl = repositoryInfo.GitUrl.ToString();
-            return new ApplicationManager(siteManager, site, applicationName, gitUrl, settingsResolver)
+            var applicationManager = new ApplicationManager(siteManager, site, applicationName, gitUrl, settingsResolver)
             {
                 SiteUrl = site.SiteUrl,
                 ServiceUrl = site.ServiceUrl,
@@ -201,6 +201,18 @@ namespace Kudu.TestHarness
                 LiveScmVfsManager = new RemoteVfsManager(site.ServiceUrl + "scmvfs"),
                 RepositoryManager = repositoryManager,
             };
+
+            const string siteBuilderFactory = "site_builder_factory";
+            if (KuduUtils.TestGeneratorSiteBuilderFactory)
+            {
+                applicationManager.SettingsManager.SetValue(siteBuilderFactory, "generator");
+            }
+            else
+            {
+                applicationManager.SettingsManager.Delete(siteBuilderFactory);
+            }
+
+            return applicationManager;
         }
 
         public RemoteLogStreamManager CreateLogStreamManager(string path = null)
