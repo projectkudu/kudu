@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -13,11 +14,6 @@ namespace Kudu.Services.Performance
 {
     public class LogStreamManager
     {
-        private const string InitialMessage = "{0}  Welcome, you are now connected to log-streaming service.";
-        private const string HeartbeatMessage = "{0}  No new trace in the past {1} min(s).";
-        private const string IdleMessage = "{0}  Stream terminated due to no new trace in the past {1} min(s).";
-        private const string ErrorMessage = "\r\n{0}  Error has occured and stream is terminated. {1}";
-        private const string AppDomainShutdownMessage = "\r\n{0}  The application was terminated.";
         private const string FilterQueryKey = "filter";
 
         // Antares 3 mins timeout, heartbeat every mins keep alive.
@@ -52,7 +48,7 @@ namespace Kudu.Services.Performance
             // Close the client with a clear message when the app is shut down
             _cancellationTokenRegistration = _shutdownDetector.Token.Register(() =>
             {
-                TerminateClient(String.Format(AppDomainShutdownMessage, DateTime.UtcNow.ToString("s")));
+                TerminateClient(String.Format(CultureInfo.CurrentCulture, Resources.LogStream_AppShutdown, Environment.NewLine, DateTime.UtcNow.ToString("s")));
             });
 
             string path = ParseRequest(context);
@@ -150,7 +146,7 @@ namespace Kudu.Services.Performance
 
         private void WriteInitialMessage(HttpContext context)
         {
-            context.Response.Write(string.Format(InitialMessage, DateTime.UtcNow.ToString("s")));
+            context.Response.Write(String.Format(CultureInfo.CurrentCulture, Resources.LogStream_Welcome, DateTime.UtcNow.ToString("s")));
             context.Response.Write(Environment.NewLine);
         }
 
@@ -165,11 +161,11 @@ namespace Kudu.Services.Performance
                     {
                         if (ts >= IdleTimeout)
                         {
-                            TerminateClient(string.Format(IdleMessage, DateTime.UtcNow.ToString("s"), (int)ts.TotalMinutes));
+                            TerminateClient(String.Format(CultureInfo.CurrentCulture, Resources.LogStream_Idle, DateTime.UtcNow.ToString("s"), (int)ts.TotalMinutes));
                         }
                         else
                         {
-                            NotifyClient(string.Format(HeartbeatMessage, DateTime.UtcNow.ToString("s"), (int)ts.TotalMinutes));
+                            NotifyClient(String.Format(CultureInfo.CurrentCulture, Resources.LogStream_Heartbeat, DateTime.UtcNow.ToString("s"), (int)ts.TotalMinutes));
                         }
                     }
                 }
@@ -417,7 +413,7 @@ namespace Kudu.Services.Performance
 
         private void OnCriticalError(Exception ex)
         {
-            TerminateClient(string.Format(ErrorMessage, DateTime.UtcNow.ToString("s"), ex.Message));
+            TerminateClient(String.Format(CultureInfo.CurrentCulture, Resources.LogStream_Error, Environment.NewLine, DateTime.UtcNow.ToString("s"), ex.Message));
         }
 
         private void TerminateClient(string text)
