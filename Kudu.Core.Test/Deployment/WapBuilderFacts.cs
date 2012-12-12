@@ -15,7 +15,7 @@ namespace Kudu.Core.Deployment.Test
             var settings = new Mock<IDeploymentSettingsManager>();
             var buildPropertyProvider = new Mock<IBuildPropertyProvider>();
             buildPropertyProvider.Setup(s => s.GetProperties()).Returns(new Dictionary<string, string> {{ "ExtensionsPath", @"C:\Program Files" }, {"flp", "Detailed" }});
-            var wapBuilder = new WapBuilder(settings.Object, buildPropertyProvider.Object, @"x:\source-path", @"x:\project-path", @"x:\temp-path", @"x:\nuget-cache-path", @"x:\solution-dir\sol-path");
+            var wapBuilder = new WapBuilder(settings.Object, buildPropertyProvider.Object, @"x:\source-path", @"x:\project-path", @"x:\temp-path", @"x:\solution-dir\sol-path");
 
             // Act
             var commandLineParams = wapBuilder.GetMSBuildArguments(@"x:\temp-path\some-guid");
@@ -32,7 +32,7 @@ namespace Kudu.Core.Deployment.Test
             settings.Setup(s => s.GetValue(SettingsKeys.BuildArgs)).Returns("/extra_arg1 /extra_arg2");
             var buildPropertyProvider = new Mock<IBuildPropertyProvider>();
             buildPropertyProvider.Setup(s => s.GetProperties()).Returns(new Dictionary<string, string> { { "ExtensionsPath", @"C:\Program Files" }, { "flp", "Detailed" } });
-            var wapBuilder = new WapBuilder(settings.Object, buildPropertyProvider.Object, @"x:\source-path", @"x:\project-path", @"x:\temp-path", @"x:\nuget-cache-path", @"x:\solution-dir\sol-path");
+            var wapBuilder = new WapBuilder(settings.Object, buildPropertyProvider.Object, @"x:\source-path", @"x:\project-path", @"x:\temp-path", @"x:\solution-dir\sol-path");
 
             // Act
             var commandLineParams = wapBuilder.GetMSBuildArguments(@"x:\temp-path\some-guid");
@@ -49,7 +49,7 @@ namespace Kudu.Core.Deployment.Test
             settings.Setup(s => s.GetValue(SettingsKeys.BuildArgs)).Returns("/extra_arg1 /extra_arg2");
             var buildPropertyProvider = new Mock<IBuildPropertyProvider>();
             buildPropertyProvider.Setup(s => s.GetProperties()).Returns(new Dictionary<string, string>(0));
-            var wapBuilder = new WapBuilder(settings.Object, buildPropertyProvider.Object, @"x:\source-path", @"x:\project-path", @"x:\temp-path", @"x:\nuget-cache-path", @"x:\solution-dir\sol-path");
+            var wapBuilder = new WapBuilder(settings.Object, buildPropertyProvider.Object, @"x:\source-path", @"x:\project-path", @"x:\temp-path", @"x:\solution-dir\sol-path");
 
             // Act
             var commandLineParams = wapBuilder.GetMSBuildArguments(@"x:\temp-path\some-guid");
@@ -65,7 +65,7 @@ namespace Kudu.Core.Deployment.Test
             var settings = new Mock<IDeploymentSettingsManager>();
             var buildPropertyProvider = new Mock<IBuildPropertyProvider>();
             buildPropertyProvider.Setup(s => s.GetProperties()).Returns(new Dictionary<string, string>(0));
-            var wapBuilder = new WapBuilder(settings.Object, buildPropertyProvider.Object, @"x:\source-path", @"x:\project-path", @"x:\temp-path", @"x:\nuget-cache-path", @"x:\solution-dir\sol-path");
+            var wapBuilder = new WapBuilder(settings.Object, buildPropertyProvider.Object, @"x:\source-path", @"x:\project-path", @"x:\temp-path", @"x:\solution-dir\sol-path");
 
             // Act
             var commandLineParams = wapBuilder.GetMSBuildArguments(@"x:\temp-path\some-guid");
@@ -83,7 +83,7 @@ namespace Kudu.Core.Deployment.Test
             var settings = new Mock<IDeploymentSettingsManager>();
             var buildPropertyProvider = new Mock<IBuildPropertyProvider>();
             buildPropertyProvider.Setup(s => s.GetProperties()).Returns(new Dictionary<string, string>(0));
-            var wapBuilder = new WapBuilder(settings.Object, buildPropertyProvider.Object, @"x:\source-path", @"x:\project-path", @"x:\temp-path", @"x:\nuget-cache-path", solutionPath);
+            var wapBuilder = new WapBuilder(settings.Object, buildPropertyProvider.Object, @"x:\source-path", @"x:\project-path", @"x:\temp-path", solutionPath);
 
             // Act
             var commandLineParams = wapBuilder.GetMSBuildArguments(@"x:\temp-path\some-guid");

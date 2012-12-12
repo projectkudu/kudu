@@ -43,7 +43,7 @@ namespace Kudu.Core.Infrastructure.Test
         private class MsBuildSiteBuilderTest : MsBuildSiteBuilder
         {
             public MsBuildSiteBuilderTest(BuildPropertyProviderTest buildPropertyProviderTest)
-                : base(buildPropertyProviderTest, Path.GetTempPath(), Path.GetTempPath(), Path.GetTempPath())
+                : base(buildPropertyProviderTest, Path.GetTempPath(), Path.GetTempPath())
             {
             }
 

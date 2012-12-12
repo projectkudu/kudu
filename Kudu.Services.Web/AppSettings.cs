@@ -9,7 +9,6 @@ namespace Kudu.Services.Web
     {
         private const string BlockLocalRequests = "kudu.blockLocalRequests";
         private const string DisableGitKey = "kudu.disableGit";
-        private const string NuGetCachePathKey = "nuget.cache";
         private const string GitUsernameKey = "git.username";
         private const string GitEmailKey = "git.email";
 
@@ -34,14 +33,6 @@ namespace Kudu.Services.Web
             get
             {
                 return GetValue<string>(GitEmailKey);
-            }
-        }
-
-        public static string NuGetCachePath
-        {
-            get
-            {
-                return GetValue<string>(NuGetCachePathKey);
             }
         }
 

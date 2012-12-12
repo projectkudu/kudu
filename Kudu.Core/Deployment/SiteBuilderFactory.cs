@@ -86,7 +86,6 @@ namespace Kudu.Core.Deployment
                                       repositoryRoot,
                                       project.AbsolutePath,
                                       _environment.TempPath,
-                                      _environment.NuGetCachePath,
                                       solution.Path);
             }
 
@@ -94,7 +93,6 @@ namespace Kudu.Core.Deployment
                                       repositoryRoot,
                                       project.AbsolutePath,
                                       _environment.TempPath,
-                                      _environment.NuGetCachePath,
                                       solution.Path);
         }
 
@@ -142,7 +140,6 @@ namespace Kudu.Core.Deployment
                                               repositoryRoot,
                                               targetPath,
                                               _environment.TempPath,
-                                              _environment.NuGetCachePath,
                                               solutions[0].Path);
                 }
             }
@@ -178,7 +175,6 @@ namespace Kudu.Core.Deployment
                                       repositoryRoot,
                                       targetPath,
                                       _environment.TempPath,
-                                      _environment.NuGetCachePath,
                                       solutionPath);
             }
 

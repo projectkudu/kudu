@@ -46,9 +46,8 @@ namespace Kudu.Console
             var appRoot = args[0];
             var wapTargets = args[1];
             string deployer = args.Length == 2 ? null : args[2];
-            string nugetCachePath = null;
 
-            IEnvironment env = GetEnvironment(appRoot, nugetCachePath);
+            IEnvironment env = GetEnvironment(appRoot);
             var settings = new XmlSettings.Settings(GetSettingsPath(env));
             var settingsManager = new DeploymentSettingsManager(settings);
 
@@ -146,7 +145,7 @@ namespace Kudu.Console
             return Path.Combine(environment.DeploymentCachePath, Constants.DeploySettingsPath);
         }
 
-        private static IEnvironment GetEnvironment(string siteRoot, string nugetCachePath)
+        private static IEnvironment GetEnvironment(string siteRoot)
         {
             string root = Path.GetFullPath(Path.Combine(siteRoot, ".."));
             string webRootPath = Path.Combine(siteRoot, Constants.WebRoot);
@@ -168,7 +167,6 @@ namespace Kudu.Console
                                    deployCachePath,
                                    diagnosticsPath,
                                    sshKeyPath,
-                                   nugetCachePath,
                                    scriptPath);
         }
     }

@@ -345,7 +345,6 @@ namespace Kudu.Services.Web.App_Start
                                    deployCachePath,
                                    diagnosticsPath,
                                    sshKeyPath,
-                                   AppSettings.NuGetCachePath,
                                    scriptPath);
         }
 

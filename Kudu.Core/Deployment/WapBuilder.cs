@@ -15,8 +15,8 @@ namespace Kudu.Core.Deployment
         private readonly string _tempPath;
         private readonly string _solutionPath;
 
-        public WapBuilder(IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectPath, string tempPath, string nugetCachePath, string solutionPath)
-            : base(settings, propertyProvider, sourcePath, tempPath, nugetCachePath)
+        public WapBuilder(IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectPath, string tempPath, string solutionPath)
+            : base(settings, propertyProvider, sourcePath, tempPath)
         {
             _projectPath = projectPath;
             _tempPath = tempPath;

@@ -28,7 +28,6 @@ namespace Kudu.Core
                 string deployCachePath,
                 string diagnosticsPath,
                 string sshKeyPath,
-                string nugetCachePath,
                 string scriptPath)
         {
             if (fileSystem == null)
@@ -49,7 +48,6 @@ namespace Kudu.Core
             _deployCachePath = deployCachePath;
             _diagnosticsPath = diagnosticsPath;
             _sshKeyPath = sshKeyPath;
-            NuGetCachePath = nugetCachePath;
             _scriptPath = scriptPath;
             _tracePath = Path.Combine(rootPath, Constants.TracePath);
             _deploymentTracePath = Path.Combine(rootPath, Constants.DeploymentTracePath);
@@ -118,12 +116,6 @@ namespace Kudu.Core
             {
                 return _tempPath;
             }
-        }
-
-        public string NuGetCachePath
-        {
-            get;
-            private set;
         }
 
         public string ScriptPath
