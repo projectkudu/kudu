@@ -6,23 +6,24 @@ namespace Kudu.Core.Deployment.Generator
 {
     public abstract class BaseBasicBuilder : GeneratorSiteBuilder
     {
-        private readonly string _projectPath;
         private readonly string _commandArgument;
 
         public BaseBasicBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string repositoryPath, string projectPath, string commandArgument)
             : base(environment, settings, propertyProvider, repositoryPath)
         {
-            _projectPath = projectPath;
+            ProjectPath = CleanPath(projectPath);
             _commandArgument = commandArgument;
         }
+
+        protected string ProjectPath { get; private set; }
 
         protected override string ScriptGeneratorCommandArguments
         {
             get
             {
-                if (!String.IsNullOrEmpty(_projectPath))
+                if (!String.IsNullOrEmpty(ProjectPath))
                 {
-                    return String.Format(CultureInfo.InvariantCulture, "{0} --sitePath \"{1}\"", _commandArgument, CleanPath(_projectPath));
+                    return String.Format(CultureInfo.InvariantCulture, "{0} --sitePath \"{1}\"", _commandArgument, ProjectPath);
                 }
 
                 return _commandArgument;

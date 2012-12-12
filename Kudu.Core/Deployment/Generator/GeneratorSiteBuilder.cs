@@ -4,6 +4,7 @@ using Kudu.Core.Infrastructure;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Kudu.Core.Deployment.Generator
@@ -11,8 +12,6 @@ namespace Kudu.Core.Deployment.Generator
     public abstract class GeneratorSiteBuilder : ExternalCommandBuilder
     {
         private const string ScriptGeneratorCommandFormat = "site deploymentscript -y --no-dot-deployment -r \"{0}\" {1}";
-
-        private static readonly string ScriptGeneratorPath = Path.Combine(System.Environment.GetEnvironmentVariable(Constants.NodeModulesBinPathEnvKey), "azure.cmd");
 
         public GeneratorSiteBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string repositoryPath)
             : base(environment, settings, propertyProvider, repositoryPath)
@@ -34,6 +33,7 @@ namespace Kudu.Core.Deployment.Generator
 
             try
             {
+                PreBuild(context);
                 GenerateScript(context, buildLogger);
                 RunCommand(context, "deploy.cmd");
                 tcs.SetResult(null);
@@ -45,6 +45,10 @@ namespace Kudu.Core.Deployment.Generator
             }
 
             return tcs.Task;
+        }
+
+        protected virtual void PreBuild(DeploymentContext context)
+        {
         }
 
         protected abstract string ScriptGeneratorCommandArguments { get; }
@@ -60,33 +64,37 @@ namespace Kudu.Core.Deployment.Generator
 
         private void GenerateScript(DeploymentContext context, ILogger buildLogger)
         {
+            StringBuilder log = new StringBuilder();
+
             try
             {
                 using (context.Tracer.Step("Generating deployment script"))
                 {
-                    var scriptGenerator = new Executable(ScriptGeneratorPath, RepositoryPath);
+                    var scriptGenerator = new Executable(AzureScriptPath, RepositoryPath);
+                    scriptGenerator.SetHomePath(HomePath);
+
                     var scriptGeneratorCommand = String.Format(ScriptGeneratorCommandFormat, RepositoryPath, ScriptGeneratorCommandArguments);
 
                     using (var writer = new ProgressWriter())
                     {
                         writer.Start();
 
-                        string log = scriptGenerator.Execute(context.Tracer,
+                        scriptGenerator.Execute(context.Tracer,
                                                    output =>
                                                    {
                                                        // TODO: Do we want those outputs?
                                                        writer.WriteOutLine(output);
+                                                       log.AppendLine(output);
                                                        return true;
                                                    },
                                                    error =>
                                                    {
                                                        writer.WriteErrorLine(error);
+                                                       log.AppendLine(error);
                                                        return true;
                                                    },
                                                    Console.OutputEncoding,
-                                                   scriptGeneratorCommand).Item1;
-
-                        buildLogger.Log(log);
+                                                   scriptGeneratorCommand);
                     }
                 }
             }
@@ -102,6 +110,18 @@ namespace Kudu.Core.Deployment.Generator
                 context.GlobalLogger.LogError();
                 context.Logger.Log(ex);
                 throw;
+            }
+            finally
+            {
+                buildLogger.Log(log.ToString());
+            }
+        }
+
+        private string AzureScriptPath
+        {
+            get
+            {
+                return Path.Combine(Environment.NodeModulesPath, ".bin", "azure.cmd");
             }
         }
     }

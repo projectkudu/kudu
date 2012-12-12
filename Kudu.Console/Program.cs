@@ -64,7 +64,7 @@ namespace Kudu.Console
             var fs = new FileSystem();
             var buildPropertyProvider = new BuildPropertyProvider();
             var serverRepository = new GitDeploymentRepository(env.RepositoryPath, env.SiteRootPath, traceFactory);
-            var builderFactory = new Kudu.Core.Deployment.Generator.SiteBuilderFactory(settingsManager, buildPropertyProvider, env);
+            var builderFactory = new SiteBuilderFactoryDispatcher(settingsManager, buildPropertyProvider, env);
 
             var logger = new ConsoleLogger();
             var deploymentManager = new DeploymentManager(serverRepository,
@@ -157,6 +157,7 @@ namespace Kudu.Console
             string deploymentTempPath = Path.Combine(tempPath, Constants.RepositoryPath);
             string binPath = new FileInfo(Process.GetCurrentProcess().MainModule.FileName).DirectoryName;
             string scriptPath = Path.Combine(binPath, Constants.ScriptsPath);
+            string nodeModulesPath = Path.Combine(binPath, Constants.NodeModulesPath);
 
             return new Kudu.Core.Environment(new FileSystem(),
                                    root,
@@ -167,7 +168,8 @@ namespace Kudu.Console
                                    deployCachePath,
                                    diagnosticsPath,
                                    sshKeyPath,
-                                   scriptPath);
+                                   scriptPath,
+                                   nodeModulesPath);
         }
     }
 }

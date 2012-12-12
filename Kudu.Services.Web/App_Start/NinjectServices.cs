@@ -135,7 +135,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IDeploymentSettingsManager>().To<DeploymentSettingsManager>()
                                              .InRequestScope();
 
-            kernel.Bind<ISiteBuilderFactory>().To<SiteBuilderFactory>()
+            kernel.Bind<ISiteBuilderFactory>().To<SiteBuilderFactoryDispatcher>()
                                              .InRequestScope();
 
             kernel.Bind<IServerRepository>().ToMethod(context => new GitExeServer(environment.RepositoryPath,
@@ -334,6 +334,7 @@ namespace Kudu.Services.Web.App_Start
             string tempPath = Path.GetTempPath();
             string deploymentTempPath = Path.Combine(tempPath, Constants.RepositoryPath);
             string scriptPath = Path.Combine(HttpRuntime.BinDirectory, Constants.ScriptsPath);
+            string nodeModulesPath = Path.Combine(HttpRuntime.BinDirectory, Constants.NodeModulesPath);
 
             return new Kudu.Core.Environment(
                                    new FileSystem(),
@@ -345,7 +346,8 @@ namespace Kudu.Services.Web.App_Start
                                    deployCachePath,
                                    diagnosticsPath,
                                    sshKeyPath,
-                                   scriptPath);
+                                   scriptPath,
+                                   nodeModulesPath);
         }
 
         private class DeploymentManagerFactory : IDeploymentManagerFactory
