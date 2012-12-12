@@ -32,10 +32,10 @@ namespace Kudu.Core.SourceControl.Git
             _gitExe.EnvironmentVariables[Constants.TraceFileEnvKey] = logFileEnv;
 
             // Setup the deployment environment variable to be used by the post receive hook
-            _gitExe.EnvironmentVariables[KnownEnviornment.EXEPATH] = deploymentEnvironment.ExePath;
-            _gitExe.EnvironmentVariables[KnownEnviornment.APPPATH] = deploymentEnvironment.ApplicationPath;
-            _gitExe.EnvironmentVariables[KnownEnviornment.MSBUILD] = deploymentEnvironment.MSBuildExtensionsPath;
-            _gitExe.EnvironmentVariables[KnownEnviornment.DEPLOYER] = "";
+            _gitExe.EnvironmentVariables[KnownEnvironment.EXEPATH] = deploymentEnvironment.ExePath;
+            _gitExe.EnvironmentVariables[KnownEnvironment.APPPATH] = deploymentEnvironment.ApplicationPath;
+            _gitExe.EnvironmentVariables[KnownEnvironment.MSBUILD] = deploymentEnvironment.MSBuildExtensionsPath;
+            _gitExe.EnvironmentVariables[KnownEnvironment.DEPLOYER] = "";
         }
 
         public string CurrentId
@@ -203,7 +203,7 @@ namespace Kudu.Core.SourceControl.Git
                     string content = @"#!/bin/sh
 read i
 echo $i > pushinfo
-" + KnownEnviornment.KUDUCOMMAND + "\n";
+" + KnownEnvironment.KUDUCOMMAND + "\n";
 
                     File.WriteAllText(PostReceiveHookPath, content);
                 }
@@ -217,7 +217,7 @@ echo $i > pushinfo
 
         public void SetDeployer(string deployer)
         {
-            _gitExe.EnvironmentVariables[KnownEnviornment.DEPLOYER] = deployer;
+            _gitExe.EnvironmentVariables[KnownEnvironment.DEPLOYER] = deployer;
         }
 
         public void SetReceiveInfo(string oldRef, string newRef, string branchName)
@@ -238,7 +238,7 @@ echo $i > pushinfo
         /// <summary>
         /// Environment variables used for the post receive hook
         /// </summary>
-        private static class KnownEnviornment
+        private static class KnownEnvironment
         {
             public const string EXEPATH = "KUDU_EXE";
             public const string APPPATH = "KUDU_APPPATH";
