@@ -61,6 +61,12 @@
         <Exec Command="&quot;$(MSBuildProgramFiles32)\Git\bin\git.exe&quot; rev-parse HEAD > $(ServiceSiteTargetPath)\commit"
               WorkingDirectory="$(ProjectRoot)" />
         
+        <CreateItem Include="$(ProjectRoot)\Kudu.Services.Web\bin\node_modules\**\*.*">
+          <Output TaskParameter="Include" ItemName="NodeModulesFiles" />
+        </CreateItem>
+
+        <Copy SourceFiles="@(NodeModulesFiles)" DestinationFiles="@(NodeModulesFiles->'$(ServiceSiteTargetPath)\bin\node_modules\%(RecursiveDir)%(Filename)%(Extension)')" />
+
         <Copy SourceFiles="$(ProjectRoot)\Kudu.Services.Web\bin\kudu.exe" DestinationFolder="$(ServiceSiteTargetPath)\bin" />
               
         <MSBuild Projects="$(ClientSiteProject)" 
