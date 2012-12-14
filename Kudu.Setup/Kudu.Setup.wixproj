@@ -11,10 +11,18 @@
     <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
     <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
   </PropertyGroup>
+  <PropertyGroup>
+    <ArtifactsDir>..\artifacts\$(Configuration)</ArtifactsDir>
+    <KuduServiceDir>$(ArtifactsDir)\KuduService</KuduServiceDir>
+    <KuduServiceBinDir>$(KuduServiceDir)\bin</KuduServiceBinDir>
+    <KuduServiceBinNodeModulesDir>$(KuduServiceDir)\bin\node_modules</KuduServiceBinNodeModulesDir>
+  </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
-    <DefineConstants>Debug</DefineConstants>
+    <DefineConstants>Debug;ArtifactsDir=$(ArtifactsDir);KuduServiceDir=$(KuduServiceDir);KuduServiceBinDir=$(KuduServiceBinDir);KuduServiceBinNodeModulesDir=$(KuduServiceBinNodeModulesDir)</DefineConstants>
+    <WixVariables>
+    </WixVariables>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <OutputPath>bin\$(Configuration)\</OutputPath>
@@ -22,6 +30,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Kudu.wxs" />
+    <Compile Include="NodeModulesFragment.wxs" />
   </ItemGroup>
   <ItemGroup>
     <WixExtension Include="WixNetFxExtension">
@@ -30,6 +39,9 @@
     </WixExtension>
   </ItemGroup>
   <Import Project="$(WixTargetsPath)" />
+  <PropertyGroup>
+    <PreBuildEvent>"$(WIX)bin\heat" dir $(ProjectDir)\..\Kudu.Services.Web\bin\node_modules -cg NodeModules -dr KUDU_SERVICE_BIN_NODE_MODULES -gg -var var.KuduServiceBinNodeModulesDir -wixvar -out $(ProjectDir)\NodeModulesFragment.wxs</PreBuildEvent>
+  </PropertyGroup>
   <!--
     To modify your build process, add your task inside one of the targets below and uncomment it.
     Other similar extension points exist, see Wix.targets.
