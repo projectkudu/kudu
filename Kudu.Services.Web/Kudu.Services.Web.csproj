@@ -281,7 +281,7 @@
   </ProjectExtensions>
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" />
   <PropertyGroup>
-    <PostBuildEvent>npm install https://github.com/WindowsAzure/azure-sdk-tools-xplat/tarball/dev $(TargetDir) &amp; pushd $(TargetDir)\node_modules\azure-cli &amp; npm install &amp; popd &amp; npm install kudusync $(TargetDir)</PostBuildEvent>
+    <PostBuildEvent>$(ProjectDir)\updateNodeModules.cmd $(TargetDir)</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
