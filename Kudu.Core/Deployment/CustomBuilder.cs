@@ -42,7 +42,7 @@ namespace Kudu.Core.Deployment
             var exe = new Executable("cmd", _repositoryPath);
             exe.EnvironmentVariables[SourcePath] = _repositoryPath;
             exe.EnvironmentVariables[TargetPath] = context.OutputPath;
-            exe.EnvironmentVariables[PreviousManifestPath] = (context.PreviousMainfest != null) ? context.PreviousMainfest.ManifestFilePath : String.Empty;
+            exe.EnvironmentVariables[PreviousManifestPath] = (context.PreviousManifest != null) ? context.PreviousManifest.ManifestFilePath : String.Empty;
             exe.EnvironmentVariables[NextManifestPath] = context.ManifestWriter.ManifestFilePath;
             exe.EnvironmentVariables[MSBuildPath] = PathUtility.ResolveMSBuildPath();
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.NuGetPackageRestoreKey] = "true";

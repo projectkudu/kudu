@@ -22,7 +22,7 @@ namespace Kudu.Core.Deployment.Generator
         {
             get
             {
-                StringBuilder commandArguments = new StringBuilder("--aspWebSite");
+                var commandArguments = new StringBuilder("--aspWebSite");
 
                 if (!String.IsNullOrEmpty(_solutionPath))
                 {

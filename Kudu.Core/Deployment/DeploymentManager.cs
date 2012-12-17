@@ -480,7 +480,7 @@ namespace Kudu.Core.Deployment
                 var context = new DeploymentContext
                 {
                     ManifestWriter = GetDeploymentManifestWriter(id),
-                    PreviousMainfest = GetActiveDeploymentManifestReader(),
+                    PreviousManifest = GetActiveDeploymentManifestReader(),
                     Tracer = tracer,
                     Logger = logger,
                     GlobalLogger = _globalLogger,
@@ -489,9 +489,9 @@ namespace Kudu.Core.Deployment
 
                 context.NextManifestFilePath = context.ManifestWriter.ManifestFilePath;
 
-                if (context.PreviousMainfest != null)
+                if (context.PreviousManifest != null)
                 {
-                    context.PreviousManifestFilePath = context.PreviousMainfest.ManifestFilePath;
+                    context.PreviousManifestFilePath = context.PreviousManifest.ManifestFilePath;
                 }
                 else
                 {

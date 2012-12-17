@@ -4,7 +4,7 @@ namespace Kudu.Core.Deployment
 {
     public class DeploymentContext
     {
-        public IDeploymentManifestReader PreviousMainfest { get; set; }
+        public IDeploymentManifestReader PreviousManifest { get; set; }
         public IDeploymentManifestWriter ManifestWriter { get; set; }
 
         /// <summary>
