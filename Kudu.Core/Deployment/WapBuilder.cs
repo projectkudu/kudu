@@ -63,7 +63,7 @@ namespace Kudu.Core.Deployment
                 using (context.Tracer.Step("Copying files to output directory"))
                 {
                     // Copy to the output path and use the previous manifest if there
-                    DeploymentHelper.CopyWithManifest(buildTempPath, context.OutputPath, context.PreviousMainfest);
+                    DeploymentHelper.CopyWithManifest(buildTempPath, context.OutputPath, context.PreviousManifest);
                 }
 
                 using (context.Tracer.Step("Building manifest"))

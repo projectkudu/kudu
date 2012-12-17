@@ -68,7 +68,7 @@ namespace Kudu.Core.Deployment.Generator
             {
                 using (context.Tracer.Step("Generating deployment script"))
                 {
-                    var scriptGenerator = new Executable(AzureScriptPath, RepositoryPath);
+                    var scriptGenerator = new Executable(DeploymentScriptGeneratorToolPath, RepositoryPath);
                     scriptGenerator.SetHomePath(HomePath);
 
                     var scriptGeneratorCommand = String.Format(ScriptGeneratorCommandFormat, RepositoryPath, ScriptGeneratorCommandArguments);
@@ -113,7 +113,7 @@ namespace Kudu.Core.Deployment.Generator
             }
         }
 
-        private string AzureScriptPath
+        private string DeploymentScriptGeneratorToolPath
         {
             get
             {
