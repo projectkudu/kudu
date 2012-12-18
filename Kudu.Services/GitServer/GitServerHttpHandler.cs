@@ -24,6 +24,7 @@ using System.Web;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
+using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 
 namespace Kudu.Services.GitServer

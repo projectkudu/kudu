@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using Kudu.Core.SourceControl;
+using Kudu.Core.Tracing;
 using Kudu.TestHarness;
 using Xunit;
 using Xunit.Extensions;
@@ -21,7 +22,7 @@ namespace Kudu.FunctionalTests
             {
                 string helloTextPath = Path.Combine(testRepository.PhysicalPath, "Hello.txt");
                 string hgFolderPath = Path.Combine(testRepository.PhysicalPath, ".hg");
-                var hgRepo = new HgRepository(testRepository.PhysicalPath);
+                var hgRepo = new HgRepository(testRepository.PhysicalPath, NullTracerFactory.Instance);
 
                 // Act
                 hgRepo.Clone(source);
@@ -43,7 +44,7 @@ namespace Kudu.FunctionalTests
                 // Arrange
                 string remoteRepository = "https://kudutest@bitbucket.org/kudutest/hellomercurial";
                 string helloTextPath = Path.Combine(testRepository.PhysicalPath, "Hello.txt");
-                var hgRepo = new HgRepository(testRepository.PhysicalPath);
+                var hgRepo = new HgRepository(testRepository.PhysicalPath, NullTracerFactory.Instance);
                 hgRepo.Initialize();
 
                 // Act - 1
@@ -75,7 +76,7 @@ namespace Kudu.FunctionalTests
                 // Arrange
                 string remoteRepository = "https://kudutest@bitbucket.org/kudutest/hellomercurial";
                 string helloTextPath = Path.Combine(testRepository.PhysicalPath, "Hello.txt");
-                var hgRepo = new HgRepository(testRepository.PhysicalPath);
+                var hgRepo = new HgRepository(testRepository.PhysicalPath, NullTracerFactory.Instance);
 
                 // Act
                 hgRepo.Clone(remoteRepository);

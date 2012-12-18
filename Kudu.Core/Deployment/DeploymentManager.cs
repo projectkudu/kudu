@@ -10,13 +10,13 @@ using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
+using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Deployment
 {
     public class DeploymentManager : IDeploymentManager
     {
-        private readonly IDeploymentRepository _serverRepository;
         private readonly ISiteBuilderFactory _builderFactory;
         private readonly IEnvironment _environment;
         private readonly IFileSystem _fileSystem;
@@ -33,8 +33,7 @@ namespace Kudu.Core.Deployment
 
         public event Action<DeployResult> StatusChanged;
 
-        public DeploymentManager(IDeploymentRepository serverRepository,
-                                 ISiteBuilderFactory builderFactory,
+        public DeploymentManager(ISiteBuilderFactory builderFactory,
                                  IEnvironment environment,
                                  IFileSystem fileSystem,
                                  ITraceFactory traceFactory,
@@ -42,7 +41,6 @@ namespace Kudu.Core.Deployment
                                  IOperationLock deploymentLock,
                                  ILogger globalLogger)
         {
-            _serverRepository = serverRepository;
             _builderFactory = builderFactory;
             _environment = environment;
             _fileSystem = fileSystem;
@@ -159,19 +157,10 @@ namespace Kudu.Core.Deployment
         {
             ITracer tracer = _traceFactory.GetTracer();
             IDisposable deployStep = null;
-
+            IDeploymentRepository deploymentRepository = GetDeploymentRepository();
             try
             {
                 deployStep = tracer.Step("DeploymentManager.Deploy(id)");
-
-                // Check to see if we have a deployment with this id already
-                string trackingFilePath = GetStatusFilePath(id, ensureDirectory: false);
-
-                if (!_fileSystem.File.Exists(trackingFilePath))
-                {
-                    // If we don't then throw
-                    throw new FileNotFoundException(String.Format(CultureInfo.CurrentCulture, Resources.Error_DeployNotFound, id));
-                }
 
                 // Remove the old log file for this deployment id
                 string logPath = GetLogPath(id);
@@ -182,21 +171,21 @@ namespace Kudu.Core.Deployment
                 using (tracer.Step("Updating to specific changeset"))
                 {
                     // Update to the the specific changeset
-                    _serverRepository.Update(id);
+                    deploymentRepository.Update(id);
                 }
 
                 using (tracer.Step("Updating submodules"))
                 {
-                    _serverRepository.UpdateSubmodules();
+                    deploymentRepository.UpdateSubmodules();
                 }
 
                 if (clean)
                 {
-                    tracer.Trace("Cleaning git repository");
+                    tracer.Trace("Cleaning repository");
 
                     logger.Log(Resources.Log_CleaningGitRepository);
 
-                    _serverRepository.Clean();
+                    deploymentRepository.Clean();
                 }
 
                 // Perform the build deployment of this changeset
@@ -219,11 +208,11 @@ namespace Kudu.Core.Deployment
         {
             var tracer = _traceFactory.GetTracer();
             IDisposable deployStep = null;
-
+            IDeploymentRepository deploymentRepository = GetDeploymentRepository();
             try
             {
                 deployStep = tracer.Step("Deploy");
-                ReceiveInfo receiveInfo = _serverRepository.GetReceiveInfo();
+                ReceiveInfo receiveInfo = deploymentRepository.GetReceiveInfo();
 
                 string targetBranch = _settings.GetValue(SettingsKeys.Branch);
 
@@ -262,7 +251,7 @@ namespace Kudu.Core.Deployment
                     return;
                 }
 
-                ILogger logger = CreateAndPopulateStatusFile(tracer, id, deployer);
+                ILogger logger = CreateAndPopulateStatusFile(deploymentRepository, tracer, id, deployer);
 
                 using (tracer.Step("Update to " + receiveInfo.Branch.Name))
                 {
@@ -273,7 +262,7 @@ namespace Kudu.Core.Deployment
                         progressWriter.Start();
 
                         // Update to the target branch
-                        _serverRepository.Update(targetBranch);
+                        deploymentRepository.Update(targetBranch);
                     }
                 }
 
@@ -285,7 +274,7 @@ namespace Kudu.Core.Deployment
                     {
                         progressWriter.Start();
 
-                        _serverRepository.UpdateSubmodules();
+                        deploymentRepository.UpdateSubmodules();
                     }
                 }
 
@@ -306,57 +295,32 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public void CreateExistingDeployment(string id, string deployer)
+        public void CreateDeployment(ChangeSet changeSet, string deployedBy, string statusText)
         {
-            var tracer = _traceFactory.GetTracer();
-            IDisposable deployStep = null;
-
-            try
-            {
-                deployStep = tracer.Step("Deploy");
-
-                CreateAndPopulateStatusFile(tracer, id, deployer);
-
-                IDeploymentManifestWriter manifestWriter = GetDeploymentManifestWriter(id);
-                manifestWriter.AddFiles(_environment.WebRootPath);
-
-                FinishDeployment(id, tracer, deployStep);
-            }
-            catch (Exception ex)
-            {
-                tracer.TraceError(ex);
-
-                if (deployStep != null)
-                {
-                    deployStep.Dispose();
-                }
-
-                ReportCompleted();
-            }
+            DeploymentStatusFile statusFile = CreateStatusFile(changeSet.Id);
+            statusFile.Message = changeSet.Message;
+            statusFile.Author = changeSet.AuthorName;
+            statusFile.Deployer = deployedBy;
+            statusFile.AuthorEmail = changeSet.AuthorEmail;
+            statusFile.Status = DeployStatus.Pending;
+            statusFile.StatusText = statusText;
+            statusFile.Save(_fileSystem);
         }
 
         public IDisposable CreateTemporaryDeployment(string statusText)
         {
             var tracer = _traceFactory.GetTracer();
-            string id = TemporaryDeploymentId;
-
             using (tracer.Step("Creating temporary deployment"))
             {
-                DeploymentStatusFile statusFile = CreateStatusFile(id);
-                statusFile.Message = "N/A";
-                statusFile.Author = "N/A";
-                statusFile.Deployer = "N/A";
-                statusFile.AuthorEmail = "N/A";
-                statusFile.Status = DeployStatus.Pending;
-                statusFile.StatusText = statusText;
-                statusFile.Save(_fileSystem);
+                var changeset = new ChangeSet(TemporaryDeploymentId, "N/A", "N/A", "N/A", DateTimeOffset.MinValue);
+                CreateDeployment(changeset, "N/A", statusText);
             }
 
             // Return a handle that deletes the deployment on dispose.
             return new DisposableAction(DeleteTemporaryDeployment);
         }
 
-        private ILogger CreateAndPopulateStatusFile(ITracer tracer, string id, string deployer)
+        private ILogger CreateAndPopulateStatusFile(IDeploymentRepository deploymentRepository, ITracer tracer, string id, string deployer)
         {
             ILogger logger = GetLogger(id);
 
@@ -367,7 +331,7 @@ namespace Kudu.Core.Deployment
 
                 // Create the status file and store information about the commit
                 DeploymentStatusFile statusFile = CreateStatusFile(id);
-                ChangeSet changeSet = _serverRepository.GetChangeSet(id);
+                ChangeSet changeSet = deploymentRepository.GetChangeSet(id);
                 statusFile.Message = changeSet.Message;
                 statusFile.Author = changeSet.AuthorName;
                 statusFile.Deployer = deployer;
@@ -769,6 +733,22 @@ namespace Kudu.Core.Deployment
         private bool IsActive(string id)
         {
             return id.Equals(ActiveDeploymentId, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private IDeploymentRepository GetDeploymentRepository()
+        {
+            var trace = _traceFactory.GetTracer();
+            IRepository repository = new HgRepository(_environment.RepositoryPath, _traceFactory);
+            if (repository.Exists)
+            {
+                trace.Trace("Found mercurial repository at {0}", _environment.RepositoryPath);
+            }
+            else
+            {
+                trace.Trace("Assuming git repository at {0}", _environment.RepositoryPath);
+                repository = new GitExeRepository(_environment.RepositoryPath, _environment.SiteRootPath, _traceFactory);
+            }
+            return new DeploymentRepository(repository, _traceFactory);
         }
     }
 }
