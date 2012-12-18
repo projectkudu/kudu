@@ -93,14 +93,7 @@ namespace Kudu.Core.Deployment.Generator
 
             try
             {
-                using (var writer = new ProgressWriter())
-                {
-                    writer.Start();
-
-                    string log = exe.ExecuteWithProgressWriter(context.Tracer, ShouldFilterOutMsBuildWarnings, "/c " + command, String.Empty).Item1;
-
-                    customLogger.Log(log);
-                }
+                exe.ExecuteWithProgressWriter(customLogger, context.Tracer, ShouldFilterOutMsBuildWarnings, "/c " + command, String.Empty);
             }
             catch (CommandLineException ex)
             {

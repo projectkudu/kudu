@@ -29,7 +29,7 @@ namespace Kudu.Core.Deployment.Generator
             var tcs = new TaskCompletionSource<object>();
 
             // TODO: Localization for the default script
-            ILogger buildLogger = context.Logger.Log(Resources.Log_BuildingWebProject, Path.GetFileName(RepositoryPath));
+            ILogger buildLogger = context.Logger.Log(Resources.Log_GeneratingDeploymentScript, Path.GetFileName(RepositoryPath));
 
             try
             {
@@ -73,26 +73,7 @@ namespace Kudu.Core.Deployment.Generator
 
                     var scriptGeneratorCommand = String.Format(ScriptGeneratorCommandFormat, RepositoryPath, ScriptGeneratorCommandArguments);
 
-                    using (var writer = new ProgressWriter())
-                    {
-                        writer.Start();
-
-                        string log = scriptGenerator.Execute(context.Tracer,
-                                                   output =>
-                                                   {
-                                                       // TODO: Do we want those outputs?
-                                                       writer.WriteOutLine(output);
-                                                       return true;
-                                                   },
-                                                   error =>
-                                                   {
-                                                       writer.WriteErrorLine(error);
-                                                       return true;
-                                                   },
-                                                   Console.OutputEncoding,
-                                                   scriptGeneratorCommand).Item1;
-                        buildLogger.Log(log);
-                    }
+                    scriptGenerator.ExecuteWithProgressWriter(buildLogger, context.Tracer, _ => false, scriptGeneratorCommand);
                 }
             }
             catch (CommandLineException ex)

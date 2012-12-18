@@ -254,6 +254,15 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Generating deployment script..
+        /// </summary>
+        internal static string Log_GeneratingDeploymentScript {
+            get {
+                return ResourceManager.GetString("Log_GeneratingDeploymentScript", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to New deployment received..
         /// </summary>
         internal static string Log_NewDeploymentReceived {

@@ -7,6 +7,7 @@ using System.Text;
 #if !SITEMANAGEMENT
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Tracing;
+using Kudu.Core.Deployment;
 #endif
 
 namespace Kudu.Core.Infrastructure
@@ -196,7 +197,7 @@ namespace Kudu.Core.Infrastructure
                            args);
         }
 
-        public Tuple<string, string> ExecuteWithProgressWriter(ITracer tracer, Func<string, bool> shouldFilterOut, string arguments, params object[] args)
+        public Tuple<string, string> ExecuteWithProgressWriter(ILogger logger, ITracer tracer, Func<string, bool> shouldFilterOut, string arguments, params object[] args)
         {
             using (var writer = new ProgressWriter())
             {
@@ -211,17 +212,24 @@ namespace Kudu.Core.Infrastructure
                                    }
 
                                    writer.WriteOutLine(output);
+                                   logger.Log(output);
                                    return true;
                                },
                                error =>
                                {
                                    writer.WriteErrorLine(error);
+                                   logger.Log(error, LogEntryType.Error);
                                    return true;
                                },
                                Console.OutputEncoding,
                                arguments,
                                args);
             }
+        }
+
+        public Tuple<string, string> ExecuteWithProgressWriter(ITracer tracer, Func<string, bool> shouldFilterOut, string arguments, params object[] args)
+        {
+            return ExecuteWithProgressWriter(new NullLogger(), tracer, shouldFilterOut, arguments, args);
         }
 
         public Tuple<string, string> Execute(ITracer tracer, Func<string, bool> onWriteOutput, Func<string, bool> onWriteError, Encoding encoding, string arguments, params object[] args)

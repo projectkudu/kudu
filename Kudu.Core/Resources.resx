@@ -202,6 +202,9 @@
   <data name="Log_DeploymentSuccessful" xml:space="preserve">
     <value>Deployment successful.</value>
   </data>
+  <data name="Log_GeneratingDeploymentScript" xml:space="preserve">
+    <value>Generating deployment script.</value>
+  </data>
   <data name="Log_NewDeploymentReceived" xml:space="preserve">
     <value>New deployment received.</value>
   </data>
