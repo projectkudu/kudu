@@ -20,9 +20,9 @@ using Kudu.Core.SourceControl.Git;
 using Kudu.Core.SSHKey;
 using Kudu.Core.Tracing;
 using Kudu.Services.GitServer;
-using Kudu.Services.GitServer.ServiceHookHandlers;
 using Kudu.Services.Infrastructure;
 using Kudu.Services.Performance;
+using Kudu.Services.ServiceHookHandlers;
 using Kudu.Services.SSHKey;
 using Kudu.Services.Web.Infrastruture;
 using Kudu.Services.Web.Services;
@@ -157,9 +157,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<ISSHKeyManager>().To<SSHKeyManager>()
                                              .InRequestScope();
 
-            kernel.Bind<IDeploymentRepository>().ToMethod(context => new GitDeploymentRepository(environment.RepositoryPath,
-                                                                                                 environment.SiteRootPath,
-                                                                                                 context.Kernel.Get<ITraceFactory>()))
+            kernel.Bind<IDeploymentRepository>().To<DeploymentRepository>()
                                                 .InRequestScope();
 
             // Git server

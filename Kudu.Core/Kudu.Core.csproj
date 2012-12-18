@@ -105,7 +105,7 @@
     <Compile Include="Infrastructure\XmlUtility.cs" />
     <Compile Include="Settings\DeploymentSettingsManager.cs" />
     <Compile Include="Settings\JsonSettings.cs" />
-    <Compile Include="SourceControl\Git\GitDeploymentRepository.cs" />
+    <Compile Include="SourceControl\DeploymentRepository.cs" />
     <Compile Include="SSHKey\SSHKeyManager.cs" />
     <Compile Include="Tracing\CascadeTracer.cs" />
     <Compile Include="Tracing\ITraceFactory.cs" />

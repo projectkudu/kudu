@@ -76,8 +76,7 @@ namespace Kudu.Core.SourceControl.Git
         {
             get
             {
-                return Directory.Exists(_gitExe.WorkingDirectory) &&
-                       Directory.EnumerateFileSystemEntries(_gitExe.WorkingDirectory).Any();
+                return _repository.Exists;
             }
         }
 
@@ -218,11 +217,6 @@ echo $i > pushinfo
         public void SetDeployer(string deployer)
         {
             _gitExe.EnvironmentVariables[KnownEnvironment.DEPLOYER] = deployer;
-        }
-
-        public void SetReceiveInfo(string oldRef, string newRef, string branchName)
-        {
-            File.WriteAllText(PushInfoPath, oldRef + " " + newRef + " " + branchName);
         }
 
         public ChangeSet Commit(string message, string authorName)

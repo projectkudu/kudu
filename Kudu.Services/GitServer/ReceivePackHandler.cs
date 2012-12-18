@@ -54,7 +54,7 @@ namespace Kudu.Services.GitServer
                     UpdateNoCacheForResponse(context.Response);
 
                     context.Response.ContentType = "application/x-git-receive-pack-result";
-
+                    
                     using (_deploymentManager.CreateTemporaryDeployment(Resources.ReceivingChanges))
                     {
                         _gitServer.Receive(context.Request.GetInputStream(), context.Response.OutputStream);

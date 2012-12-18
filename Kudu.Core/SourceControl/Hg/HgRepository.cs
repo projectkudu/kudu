@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using Kudu.Contracts.SourceControl;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
+using Kudu.Core.Tracing;
 using Mercurial;
 
 namespace Kudu.Core.SourceControl
@@ -13,12 +15,17 @@ namespace Kudu.Core.SourceControl
     public class HgRepository : IRepository
     {
         private readonly Repository _repository;
-        private readonly Executable _hgExe;
+        private readonly ITraceFactory _traceFactory;
 
-        public HgRepository(string path)
+        public HgRepository(string path, ITraceFactory traceFactory)
         {
             _repository = new Repository(path);
-            _hgExe = new Executable(Client.ClientPath, path);
+            _traceFactory = traceFactory;
+        }
+
+        public string RepositoryPath
+        {
+            get { return _repository.Path; }
         }
 
         public string CurrentId
@@ -37,9 +44,23 @@ namespace Kudu.Core.SourceControl
             }
         }
 
+        public bool Exists
+        {
+            get
+            {
+                string hgDirectory = Path.Combine(_repository.Path, ".hg");
+                return Directory.Exists(hgDirectory) &&
+                       Directory.EnumerateFileSystemEntries(hgDirectory).Any();
+            }
+        }
+
         public void Initialize()
         {
-            _repository.Init();
+            // Do a quick check to verify if the mercurial directory exists before trying to initialize
+            if (!Exists)
+            {
+                _repository.Init();
+            }
         }
 
         public IEnumerable<FileStatus> GetStatus()
@@ -116,6 +137,11 @@ namespace Kudu.Core.SourceControl
             return detail;
         }
 
+        public void UpdateSubmodules()
+        {
+            _repository.Update();
+        }
+
         public void AddFile(string path)
         {
             _repository.Add(path);
@@ -126,7 +152,7 @@ namespace Kudu.Core.SourceControl
             _repository.Remove(path);
         }
 
-        public ChangeSet Commit(string authorName, string message)
+        public ChangeSet Commit(string message, string authorName = "")
         {
             if (!GetStatus().Any())
             {
@@ -137,7 +163,7 @@ namespace Kudu.Core.SourceControl
 
             var command = new CommitCommand
             {
-                OverrideAuthor = authorName,
+                OverrideAuthor = authorName ?? String.Empty,
                 Message = message
             };
 
@@ -187,11 +213,6 @@ namespace Kudu.Core.SourceControl
             return GetChangeSet((RevSpec)id);
         }
 
-        public void Initialize(RepositoryConfiguration configuration)
-        {
-            
-        }
-
         public void FetchWithoutConflict(string remote, string remoteAlias, string branchName)
         {
             PullCommand pullCommand = null;
@@ -210,6 +231,29 @@ namespace Kudu.Core.SourceControl
             _repository.Update(updateCommand);
         }
 
+        public void ClearLock()
+        {
+            // Delete the lock file from the .git folder
+            // From http://stackoverflow.com/questions/12865/mercurial-stuck-waiting-for-lock
+            string lockFilePath = Path.Combine(_repository.Path, ".hg/store/lock");
+            if (File.Exists(lockFilePath))
+            {
+                ITracer tracer = _traceFactory.GetTracer();
+                tracer.TraceWarning("Deleting left over index.lock file");
+                FileSystemHelpers.DeleteFileSafe(lockFilePath);
+            }
+        }
+
+        public ReceiveInfo GetReceiveInfo()
+        {
+            throw new NotSupportedException();
+        }
+
+        public void Initialize(RepositoryConfiguration configuration)
+        {
+            throw new NotSupportedException();
+        }
+
         public void CreateOrResetBranch(string branchName, string startPoint)
         {
             throw new NotSupportedException();
@@ -226,6 +270,11 @@ namespace Kudu.Core.SourceControl
         }
 
         public void UpdateRef(string source)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void Clean()
         {
             throw new NotSupportedException();
         }
@@ -314,12 +363,12 @@ namespace Kudu.Core.SourceControl
                     break;
             }
 
-            throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, 
-                                                              Resources.Error_UnsupportedStatus, 
+            throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,
+                                                              Resources.Error_UnsupportedStatus,
                                                               state));
         }
 
 
-        
+
     }
 }

@@ -7,6 +7,13 @@ namespace Kudu.Core.SourceControl
     {
         string CurrentId { get; }
 
+        string RepositoryPath { get; }
+
+        /// <summary>
+        /// Determines if a valid repository exists at that location.
+        /// </summary>
+        bool Exists { get; }
+
         /// <summary>
         /// Initialize a new repository using the given configuration.
         /// </summary>
@@ -27,6 +34,26 @@ namespace Kudu.Core.SourceControl
         void Update();
         void Push();
         void FetchWithoutConflict(string remote, string remoteAlias, string branchName);
+
+        /// <summary>
+        /// Returns details about changesets being pushed to the repository.
+        /// </summary>
+        /// <returns></returns>
+        ReceiveInfo GetReceiveInfo();
+
+        void Clean();
+
+        /// <summary>
+        /// Updates sub repositories \ sub modules linked to this repository
+        /// </summary>
+        void UpdateSubmodules();
+
+        /// <summary>
+        /// Removes any physical lock files added to the repository that might prevent source control operations.
+        /// </summary>
+        /// <remarks></remarks>
+        void ClearLock();
+        
 
         /// <summary>
         /// Creates a new branch or resets an existing branch at the given starting point. 

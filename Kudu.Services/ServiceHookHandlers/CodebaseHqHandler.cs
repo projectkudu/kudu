@@ -3,7 +3,7 @@ using System.Web;
 using Kudu.Core.SourceControl.Git;
 using Newtonsoft.Json.Linq;
 
-namespace Kudu.Services.GitServer.ServiceHookHandlers
+namespace Kudu.Services.ServiceHookHandlers
 {
     public class CodebaseHqHandler : GitHubCompatHandler
     {
@@ -12,21 +12,22 @@ namespace Kudu.Services.GitServer.ServiceHookHandlers
         {
         }
 
-        public override bool TryGetRepositoryInfo(HttpRequest request, JObject payload, out RepositoryInfo repositoryInfo)
+        public override DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
         {
-            repositoryInfo = null;
+            deploymentInfo = null;
             if (request.UserAgent != null &&
                 request.UserAgent.StartsWith("Codebasehq", StringComparison.OrdinalIgnoreCase))
             {
-                repositoryInfo = GetRepositoryInfo(request, payload);
+                deploymentInfo = GetDeploymentInfo(request, payload, targetBranch);
+                return deploymentInfo == null ? DeployAction.NoOp : DeployAction.ProcessDeployment;
             }
 
-            return repositoryInfo != null;
+            return DeployAction.UnknownPayload;
         }
 
-        protected override RepositoryInfo GetRepositoryInfo(HttpRequest request, JObject payload)
+        protected override DeploymentInfo GetDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch)
         {
-            var info = base.GetRepositoryInfo(request, payload);
+            var info = base.GetDeploymentInfo(request, payload, targetBranch);
 
             // CodebaseHq format, see http://support.codebasehq.com/kb/howtos/repository-push-commit-notifications
             var repository = payload.Value<JObject>("repository");
@@ -46,7 +47,7 @@ namespace Kudu.Services.GitServer.ServiceHookHandlers
             return info;
         }
 
-        protected override string GetDeployer(HttpRequest request)
+        protected override string GetDeployer(HttpRequestBase request)
         {
             return "CodebaseHQ";
         }

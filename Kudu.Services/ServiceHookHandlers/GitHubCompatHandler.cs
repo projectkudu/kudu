@@ -3,7 +3,7 @@ using System.Web;
 using Kudu.Core.SourceControl.Git;
 using Newtonsoft.Json.Linq;
 
-namespace Kudu.Services.GitServer.ServiceHookHandlers
+namespace Kudu.Services.ServiceHookHandlers
 {
     /// <summary>
     /// Default Servicehook Handler, uses github format.
@@ -17,19 +17,23 @@ namespace Kudu.Services.GitServer.ServiceHookHandlers
             _gitServer = gitServer;
         }
 
-        public virtual bool TryGetRepositoryInfo(HttpRequest request, JObject payload, out RepositoryInfo repositoryInfo)
+        public virtual DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
         {
-            repositoryInfo = GetRepositoryInfo(request, payload);
-            return repositoryInfo != null && repositoryInfo.IsValid();
+            deploymentInfo = GetDeploymentInfo(request, payload, targetBranch);
+            if (deploymentInfo != null && deploymentInfo.IsValid())
+            {
+                return DeployAction.ProcessDeployment;
+            }
+            return DeployAction.UnknownPayload;
         }
 
-        public virtual void Fetch(RepositoryInfo repositoryInfo, string targetBranch)
+        public virtual void Fetch(DeploymentInfo repositoryInfo, string targetBranch)
         {
             // Fetch from url
             _gitServer.FetchWithoutConflict(repositoryInfo.RepositoryUrl, "external", targetBranch);
         }
 
-        protected virtual RepositoryInfo GetRepositoryInfo(HttpRequest request, JObject payload)
+        protected virtual DeploymentInfo GetDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch)
         {
             JObject repository = payload.Value<JObject>("repository");
             if (repository == null)
@@ -37,7 +41,7 @@ namespace Kudu.Services.GitServer.ServiceHookHandlers
                 return null;
             }
 
-            var info = new RepositoryInfo();
+            var info = new DeploymentInfo();
 
             // github format
             // { repository: { url: "https//...", private: False }, ref: "", before: "", after: "" } 
@@ -54,8 +58,6 @@ namespace Kudu.Services.GitServer.ServiceHookHandlers
             }
 
             info.Deployer = GetDeployer(request);
-            info.OldRef = payload.Value<string>("before");
-            info.NewRef = payload.Value<string>("after");
 
             // private repo, use SSH
             if (info.IsPrivate)
@@ -72,7 +74,7 @@ namespace Kudu.Services.GitServer.ServiceHookHandlers
             return info;            
         }
 
-        protected virtual string GetDeployer(HttpRequest request)
+        protected virtual string GetDeployer(HttpRequestBase request)
         {
             return "External Provider";
         }
