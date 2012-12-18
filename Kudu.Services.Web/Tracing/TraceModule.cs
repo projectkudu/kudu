@@ -43,7 +43,10 @@ namespace Kudu.Services.Web.Tracing
 
                 foreach (string key in httpContext.Request.Headers)
                 {
-                    attribs["h_" + key] = httpContext.Request.Headers[key];
+                    if (!key.Equals("Authorization", StringComparison.OrdinalIgnoreCase))
+                    {
+                        attribs["h_" + key] = httpContext.Request.Headers[key];
+                    }
                 }
 
                 if (httpContext.Request.RawUrl.Contains(".git") ||

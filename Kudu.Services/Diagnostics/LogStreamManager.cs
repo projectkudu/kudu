@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading;
 using System.Web;
 using Kudu.Contracts.Tracing;
@@ -17,7 +18,7 @@ namespace Kudu.Services.Performance
         private const string FilterQueryKey = "filter";
 
         // Antares 3 mins timeout, heartbeat every mins keep alive.
-        private static string[] LogFileExtensions = new string[] { ".txt", ".log" };
+        private static string[] LogFileExtensions = new string[] { ".txt", ".log", ".htm" };
         private static TimeSpan HeartbeatInterval = TimeSpan.FromMinutes(1);
         private static TimeSpan IdleTimeout = TimeSpan.FromMinutes(10);
 
@@ -346,13 +347,14 @@ namespace Kudu.Services.Performance
                     {
                         while (!reader.EndOfStream)
                         {
-                            string line = reader.ReadLine();
+                            int read;
+                            string line = ReadLine(reader, out read);
                             if (String.IsNullOrEmpty(_filter) || line.IndexOf(_filter, StringComparison.OrdinalIgnoreCase) >= 0)
                             {
                                 changes.Add(line);
                             }
 
-                            offset += line.Length + Environment.NewLine.Length;
+                            offset += read;
                         }
                     }
 
@@ -432,6 +434,34 @@ namespace Kudu.Services.Performance
                 // Proactively cleanup resources
                 Reset();
             }
+        }
+
+        // this has the same performance and implementation as StreamReader.ReadLine()
+        // they both account for '\n' or '\r\n' as new line chars.  the difference is 
+        // this returns the precise total read bytes which our logstream needs for book keeping.
+        // without this, logstream can only guess whether it is '\n' or '\r\n' which is 
+        // subjective to each log providers/files.
+        private string ReadLine(StreamReader reader, out int read)
+        {
+            StringBuilder strb = new StringBuilder();
+            int val;
+            read = 0;
+            while ((val = reader.Read()) >= 0)
+            {
+                ++read;
+                switch ((char)val)
+                {
+                    case '\r':
+                        break;
+                    case '\n':
+                        return strb.ToString();
+                    default:
+                        strb.Append((char)val);
+                        break;
+                }
+            }
+
+            return strb.ToString();
         }
 
         class ProcessRequestAsyncResult : IAsyncResult
