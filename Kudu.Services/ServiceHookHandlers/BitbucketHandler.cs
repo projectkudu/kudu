@@ -10,14 +10,8 @@ using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.ServiceHookHandlers
 {
-    public class BitbucketHandler : PolymorphicHandler
+    public class BitbucketHandler : ServiceHookHandlerBase
     {
-        public BitbucketHandler(IGitServer gitServer, ITraceFactory tracer, IEnvironment environment, RepositoryConfiguration repositoryConfiguration)
-            : base(gitServer, tracer, environment, repositoryConfiguration)
-        {
-
-        }
-
         public override DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
         {
             deploymentInfo = null;

@@ -138,8 +138,6 @@
     <Compile Include="Diagnostics\LogStreamManager.cs" />
     <Compile Include="Editor\VfsController.cs" />
     <Compile Include="FetchHelpers\DropboxHelper.cs" />
-    <Compile Include="FetchHelpers\GitFetchHelper.cs" />
-    <Compile Include="FetchHelpers\HgFetchHelper.cs" />
     <Compile Include="GitServer\GitServerHttpHandler.cs" />
     <Compile Include="HttpRequestExtensions.cs" />
     <Compile Include="ServiceHookHandlers\CodebaseHqHandler.cs" />
@@ -147,8 +145,7 @@
     <Compile Include="ServiceHookHandlers\DropboxHandler.cs" />
     <Compile Include="ServiceHookHandlers\GitHubCompatHandler.cs" />
     <Compile Include="ServiceHookHandlers\GitlabHqHandler.cs" />
-    <Compile Include="ServiceHookHandlers\PolymorphicHandler.cs" />
-    <Compile Include="ServiceHookHandlers\RepositoryInfo.cs" />
+    <Compile Include="ServiceHookHandlers\DeploymentInfo.cs" />
     <Compile Include="ServiceHookHandlers\IServiceHookHandler.cs" />
     <Compile Include="ServiceHookHandlers\BitbucketHandler.cs" />
     <Compile Include="ServiceHookHandlers\GitHubHandler.cs" />
@@ -158,6 +155,7 @@
     <Compile Include="ByteRanges\HttpRequestMessageExtensions.cs" />
     <Compile Include="Infrastructure\MediaTypeMap.cs" />
     <Compile Include="Infrastructure\VfsControllerBase.cs" />
+    <Compile Include="ServiceHookHandlers\ServiceHookHandlerBase.cs" />
     <Compile Include="SourceControl\LiveScmEditorController.cs" />
     <Compile Include="SSHKey\SSHKeyController.cs" />
     <Compile Include="EnvironmentController.cs" />

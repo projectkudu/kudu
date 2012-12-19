@@ -9,6 +9,8 @@ namespace Kudu.Core.SourceControl
 
         string RepositoryPath { get; }
 
+        RepositoryType RepositoryType { get; }
+
         /// <summary>
         /// Determines if a valid repository exists at that location.
         /// </summary>

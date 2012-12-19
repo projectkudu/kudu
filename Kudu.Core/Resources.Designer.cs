@@ -115,6 +115,15 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Expected a &apos;{0}&apos; repository but found a &apos;{1}&apos; repository at path &apos;{2}&apos;..
+        /// </summary>
+        internal static string Error_MismatchRepository {
+            get {
+                return ResourceManager.GetString("Error_MismatchRepository", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to No log found for &apos;{0}&apos;..
         /// </summary>
         internal static string Error_NoLogFound {

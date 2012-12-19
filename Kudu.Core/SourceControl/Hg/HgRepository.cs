@@ -28,6 +28,11 @@ namespace Kudu.Core.SourceControl
             get { return _repository.Path; }
         }
 
+        public RepositoryType RepositoryType
+        {
+            get { return RepositoryType.Mercurial; }
+        }
+
         public string CurrentId
         {
             get

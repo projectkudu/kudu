@@ -48,6 +48,11 @@ namespace Kudu.Core.SourceControl.Git
             get { return _gitExe.WorkingDirectory; }
         }
 
+        public RepositoryType RepositoryType
+        {
+            get { return RepositoryType.Git; }
+        }
+
         public bool Exists
         {
             get

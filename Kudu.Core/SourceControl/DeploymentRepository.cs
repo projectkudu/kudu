@@ -1,17 +1,16 @@
 ﻿using System;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.SourceControl
 {
-    public class DeploymentRepository : IDeploymentRepository
+    internal sealed class DeploymentRepository
     {
-        private readonly ITraceFactory _traceFactory;
         private readonly IRepository _repository;
 
-        public DeploymentRepository(IRepository repository, ITraceFactory traceFactory)
+        public DeploymentRepository(IRepository repository)
         {
             _repository = repository;
-            _traceFactory = traceFactory;
         }
 
         public void Clean()
