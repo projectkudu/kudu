@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Kudu.Contracts.Settings;
+using System;
+using System.Collections.Generic;
 
 namespace Kudu.Core.Infrastructure
 {
@@ -16,6 +18,15 @@ namespace Kudu.Core.Infrastructure
 
             pathEnv += String.Join(";", paths);
             exe.EnvironmentVariables["PATH"] = pathEnv;
+        }
+
+        public static void AddDeploymentSettingsAsEnvironmentVariables(this Executable exe, IDeploymentSettingsManager deploymentSettingsManager)
+        {
+            IEnumerable<KeyValuePair<string, string>> deploymentSettings = deploymentSettingsManager.GetValues();
+            foreach (var keyValuePair in deploymentSettings)
+            {
+                exe.EnvironmentVariables[keyValuePair.Key] = keyValuePair.Value;
+            }
         }
     }
 }

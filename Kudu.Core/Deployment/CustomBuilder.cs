@@ -40,6 +40,7 @@ namespace Kudu.Core.Deployment
             // Creates an executable pointing to cmd and the working directory being
             // the repository root
             var exe = new Executable("cmd", _repositoryPath);
+            // exe.AddDeploymentSettingsAsEnvironmentVariables(DeploymentSettings);
             exe.EnvironmentVariables[SourcePath] = _repositoryPath;
             exe.EnvironmentVariables[TargetPath] = context.OutputPath;
             exe.EnvironmentVariables[PreviousManifestPath] = (context.PreviousManifest != null) ? context.PreviousManifest.ManifestFilePath : String.Empty;

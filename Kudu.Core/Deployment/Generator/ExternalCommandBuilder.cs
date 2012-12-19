@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Contracts.Settings;
+using System.Collections.Generic;
 
 namespace Kudu.Core.Deployment.Generator
 {
@@ -54,6 +55,7 @@ namespace Kudu.Core.Deployment.Generator
             // Creates an executable pointing to cmd and the working directory being
             // the repository root
             var exe = new Executable("cmd", RepositoryPath);
+            exe.AddDeploymentSettingsAsEnvironmentVariables(DeploymentSettings);
             exe.EnvironmentVariables[SourcePath] = RepositoryPath;
             exe.EnvironmentVariables[TargetPath] = context.OutputPath;
             exe.EnvironmentVariables[MSBuildPath] = PathUtility.ResolveMSBuildPath();
