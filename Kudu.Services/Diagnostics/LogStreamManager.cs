@@ -147,8 +147,7 @@ namespace Kudu.Services.Performance
 
         private void WriteInitialMessage(HttpContext context)
         {
-            context.Response.Write(String.Format(CultureInfo.CurrentCulture, Resources.LogStream_Welcome, DateTime.UtcNow.ToString("s")));
-            context.Response.Write(Environment.NewLine);
+            context.Response.Write(String.Format(CultureInfo.CurrentCulture, Resources.LogStream_Welcome, DateTime.UtcNow.ToString("s"), Environment.NewLine));
         }
 
         private void OnHeartbeat(object state)
@@ -162,11 +161,11 @@ namespace Kudu.Services.Performance
                     {
                         if (ts >= IdleTimeout)
                         {
-                            TerminateClient(String.Format(CultureInfo.CurrentCulture, Resources.LogStream_Idle, DateTime.UtcNow.ToString("s"), (int)ts.TotalMinutes));
+                            TerminateClient(String.Format(CultureInfo.CurrentCulture, Resources.LogStream_Idle, DateTime.UtcNow.ToString("s"), (int)ts.TotalMinutes, Environment.NewLine));
                         }
                         else
                         {
-                            NotifyClient(String.Format(CultureInfo.CurrentCulture, Resources.LogStream_Heartbeat, DateTime.UtcNow.ToString("s"), (int)ts.TotalMinutes));
+                            NotifyClient(String.Format(CultureInfo.CurrentCulture, Resources.LogStream_Heartbeat, DateTime.UtcNow.ToString("s"), (int)ts.TotalMinutes, Environment.NewLine));
                         }
                     }
                 }
@@ -274,7 +273,6 @@ namespace Kudu.Services.Performance
                             foreach (var line in lines)
                             {
                                 result.HttpContext.Response.Write(line);
-                                result.HttpContext.Response.Write(Environment.NewLine);
                             }
                         }
                         catch (Exception)
@@ -347,14 +345,13 @@ namespace Kudu.Services.Performance
                     {
                         while (!reader.EndOfStream)
                         {
-                            int read;
-                            string line = ReadLine(reader, out read);
+                            string line = ReadLine(reader);
                             if (String.IsNullOrEmpty(_filter) || line.IndexOf(_filter, StringComparison.OrdinalIgnoreCase) >= 0)
                             {
                                 changes.Add(line);
                             }
 
-                            offset += read;
+                            offset += line.Length;
                         }
                     }
 
@@ -438,30 +435,28 @@ namespace Kudu.Services.Performance
 
         // this has the same performance and implementation as StreamReader.ReadLine()
         // they both account for '\n' or '\r\n' as new line chars.  the difference is 
-        // this returns the precise total read bytes which our logstream needs for book keeping.
+        // this returns the result with preserved new line chars.
         // without this, logstream can only guess whether it is '\n' or '\r\n' which is 
         // subjective to each log providers/files.
-        private string ReadLine(StreamReader reader, out int read)
+        private string ReadLine(StreamReader reader)
         {
             var strb = new StringBuilder();
             int val;
-            read = 0;
             while ((val = reader.Read()) >= 0)
             {
                 char ch = (char)val;
-                ++read;
+                strb.Append(ch);
                 switch (ch)
                 {
                     case '\r':
                     case '\n':
                         if (ch == '\r' && (char)reader.Peek() == '\n')
                         {
-                            reader.Read();
-                            ++read;
+                            ch = (char)reader.Read();
+                            strb.Append(ch);
                         }
                         return strb.ToString();
                     default:
-                        strb.Append(ch);
                         break;
                 }
             }
