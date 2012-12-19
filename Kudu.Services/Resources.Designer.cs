@@ -214,7 +214,7 @@ namespace Kudu.Services {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}{1}  The application was terminated..
+        ///   Looks up a localized string similar to {0}{1}  The application was terminated.{0}.
         /// </summary>
         internal static string LogStream_AppShutdown {
             get {
@@ -223,7 +223,7 @@ namespace Kudu.Services {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}{1}  Error has occured and stream is terminated. {2}.
+        ///   Looks up a localized string similar to {0}{1}  Error has occured and stream is terminated. {2}{0}.
         /// </summary>
         internal static string LogStream_Error {
             get {
@@ -232,7 +232,7 @@ namespace Kudu.Services {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}  No new trace in the past {1} min(s)..
+        ///   Looks up a localized string similar to {0}  No new trace in the past {1} min(s).{2}.
         /// </summary>
         internal static string LogStream_Heartbeat {
             get {
@@ -241,7 +241,7 @@ namespace Kudu.Services {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}  Stream terminated due to no new trace in the past {1} min(s)..
+        ///   Looks up a localized string similar to {0}  Stream terminated due to no new trace in the past {1} min(s).{2}.
         /// </summary>
         internal static string LogStream_Idle {
             get {
@@ -250,7 +250,7 @@ namespace Kudu.Services {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}  Welcome, you are now connected to log-streaming service..
+        ///   Looks up a localized string similar to {0}  Welcome, you are now connected to log-streaming service.{1}.
         /// </summary>
         internal static string LogStream_Welcome {
             get {
