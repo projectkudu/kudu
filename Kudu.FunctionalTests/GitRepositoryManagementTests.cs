@@ -742,7 +742,7 @@ command = deploy.cmd");
             }
         }
 
-        [Fact]
+        [Fact(Skip = "Not a valid scenario")]
         public void CustomNodeScript()
         {
             string repositoryName = "CustomNodeScript";
