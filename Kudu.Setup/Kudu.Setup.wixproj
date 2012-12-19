@@ -16,11 +16,11 @@
     <KuduServiceDir>$(ArtifactsDir)\KuduService</KuduServiceDir>
     <KuduServiceBinDir>$(KuduServiceDir)\bin</KuduServiceBinDir>
     <KuduServiceBinNodeModulesDir>$(KuduServiceDir)\bin\node_modules</KuduServiceBinNodeModulesDir>
+    <DefineConstants>Debug;ArtifactsDir=$(ArtifactsDir);KuduServiceDir=$(KuduServiceDir);KuduServiceBinDir=$(KuduServiceBinDir);KuduServiceBinNodeModulesDir=$(KuduServiceBinNodeModulesDir)</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
-    <DefineConstants>Debug;ArtifactsDir=$(ArtifactsDir);KuduServiceDir=$(KuduServiceDir);KuduServiceBinDir=$(KuduServiceBinDir);KuduServiceBinNodeModulesDir=$(KuduServiceBinNodeModulesDir)</DefineConstants>
     <WixVariables>
     </WixVariables>
   </PropertyGroup>
