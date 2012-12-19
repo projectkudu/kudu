@@ -157,9 +157,6 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<ISSHKeyManager>().To<SSHKeyManager>()
                                              .InRequestScope();
 
-            kernel.Bind<IDeploymentRepository>().To<DeploymentRepository>()
-                                                .InRequestScope();
-
             // Git server
             kernel.Bind<IDeploymentEnvironment>().To<DeploymentEnvrionment>();
 

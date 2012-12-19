@@ -1,5 +1,8 @@
 ﻿using System;
+using System.IO;
+using System.Linq;
 using System.Web;
+using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Newtonsoft.Json.Linq;
 
@@ -8,7 +11,7 @@ namespace Kudu.Services.ServiceHookHandlers
     /// <summary>
     /// Default Servicehook Handler, uses github format.
     /// </summary>
-    public class GitHubCompatHandler : IServiceHookHandler
+    public class GitHubCompatHandler : ServiceHookHandlerBase
     {
         protected readonly IGitServer _gitServer;
 
@@ -17,7 +20,7 @@ namespace Kudu.Services.ServiceHookHandlers
             _gitServer = gitServer;
         }
 
-        public virtual DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
+        public override DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
         {
             deploymentInfo = GetDeploymentInfo(request, payload, targetBranch);
             if (deploymentInfo != null && deploymentInfo.IsValid())
@@ -25,12 +28,6 @@ namespace Kudu.Services.ServiceHookHandlers
                 return DeployAction.ProcessDeployment;
             }
             return DeployAction.UnknownPayload;
-        }
-
-        public virtual void Fetch(DeploymentInfo repositoryInfo, string targetBranch)
-        {
-            // Fetch from url
-            _gitServer.FetchWithoutConflict(repositoryInfo.RepositoryUrl, "external", targetBranch);
         }
 
         protected virtual DeploymentInfo GetDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch)
@@ -41,23 +38,46 @@ namespace Kudu.Services.ServiceHookHandlers
                 return null;
             }
 
+            // The format of ref is refs/something/something else
+            // For master it's normally refs/head/master
+            string branch = payload.Value<string>("ref");
+
+            if (String.IsNullOrEmpty(branch))
+            {
+                return null;
+            }
+            else
+            {
+                // Extract the name from /refs/head/master notation.
+                branch = Path.GetFileName(branch);
+                if (!branch.Equals(targetBranch, StringComparison.OrdinalIgnoreCase))
+                {
+                    return null;
+                }
+            }
+
+            var latestCommit = repository.Value<JArray>("commits").LastOrDefault();
+            if (latestCommit == null)
+            {
+                // If the commits list is empty, it is likely that the push was a branch delete.
+                return null;
+            }
+            
             var info = new DeploymentInfo();
 
             // github format
             // { repository: { url: "https//...", private: False }, ref: "", before: "", after: "" } 
             info.RepositoryUrl = repository.Value<string>("url");
             info.IsPrivate = repository.Value<bool>("private");
-
-            // The format of ref is refs/something/something else
-            // For master it's normally refs/head/master
-            string @ref = payload.Value<string>("ref");
-
-            if (String.IsNullOrEmpty(@ref))
-            {
-                return null;
-            }
-
             info.Deployer = GetDeployer(request);
+
+            var commitAuthor = latestCommit.Value<JObject>("committer");
+            info.TargetChangeset = new ChangeSet(
+                    latestCommit.Value<string>("id"), 
+                    commitAuthor.Value<string>("name"), 
+                    commitAuthor.Value<string>("email"),
+                    latestCommit.Value<string>("message"),
+                    latestCommit.Value<DateTimeOffset>("timestamp"));
 
             // private repo, use SSH
             if (info.IsPrivate)

@@ -9,6 +9,7 @@ using System.Web.Http;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
+using Kudu.Core.SourceControl;
 using Kudu.Services.Infrastructure;
 using Newtonsoft.Json.Linq;
 
@@ -19,14 +20,17 @@ namespace Kudu.Services.Deployment
         private readonly IDeploymentManager _deploymentManager;
         private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
+        private readonly RepositoryFactory _repositoryFactory;
 
         public DeploymentController(ITracer tracer,
                                     IDeploymentManager deploymentManager,
-                                    IOperationLock deploymentLock)
+                                    IOperationLock deploymentLock,
+                                    RepositoryFactory repositoryFactory)
         {
             _tracer = tracer;
             _deploymentManager = deploymentManager;
             _deploymentLock = deploymentLock;
+            _repositoryFactory = repositoryFactory;
         }
 
         /// <summary>
@@ -82,7 +86,8 @@ namespace Kudu.Services.Deployment
                         string username = null;
                         AuthUtility.TryExtractBasicAuthUser(Request, out username);
 
-                        _deploymentManager.Deploy(id, username, clean);
+                        IRepository repository = _repositoryFactory.GetRepository();
+                        _deploymentManager.Deploy(repository, id, username, clean);
                     }
                     catch (FileNotFoundException ex)
                     {

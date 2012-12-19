@@ -1,9 +1,5 @@
 ﻿using System.Web;
-using Kudu.Contracts.SourceControl;
-using Kudu.Core;
 using Kudu.Core.SourceControl;
-using Kudu.Core.SourceControl.Git;
-using Kudu.Core.Tracing;
 using Kudu.Services.ServiceHookHandlers;
 using Moq;
 using Newtonsoft.Json.Linq;
@@ -19,7 +15,7 @@ namespace Kudu.Services.Test
             // Arrange
             var httpRequest = new Mock<HttpRequestBase>();
             httpRequest.SetupGet(r => r.UserAgent).Returns("Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; WOW64; Trident/6.0)");
-            var bitbucketHandler = new BitbucketHandler(Mock.Of<IGitServer>(), Mock.Of<ITraceFactory>(), Mock.Of<IEnvironment>(), new RepositoryConfiguration());
+            var bitbucketHandler = new BitbucketHandler();
 
             // Act
             DeploymentInfo deploymentInfo;
@@ -37,7 +33,7 @@ namespace Kudu.Services.Test
 
             var httpRequest = new Mock<HttpRequestBase>();
             httpRequest.SetupGet(r => r.UserAgent).Returns("Bitbucket.org");
-            var bitbucketHandler = new BitbucketHandler(Mock.Of<IGitServer>(), Mock.Of<ITraceFactory>(), Mock.Of<IEnvironment>(), new RepositoryConfiguration());
+            var bitbucketHandler = new BitbucketHandler();
 
             // Act
             DeploymentInfo deploymentInfo;
@@ -56,7 +52,7 @@ namespace Kudu.Services.Test
 
             var httpRequest = new Mock<HttpRequestBase>();
             httpRequest.SetupGet(r => r.UserAgent).Returns("Bitbucket.org");
-            var bitbucketHandler = new BitbucketHandler(Mock.Of<IGitServer>(), Mock.Of<ITraceFactory>(), Mock.Of<IEnvironment>(), new RepositoryConfiguration());
+            var bitbucketHandler = new BitbucketHandler();
 
             // Act
             DeploymentInfo deploymentInfo;
@@ -80,7 +76,7 @@ namespace Kudu.Services.Test
 
             var httpRequest = new Mock<HttpRequestBase>();
             httpRequest.SetupGet(r => r.UserAgent).Returns("Bitbucket.org");
-            var bitbucketHandler = new BitbucketHandler(Mock.Of<IGitServer>(), Mock.Of<ITraceFactory>(), Mock.Of<IEnvironment>(), new RepositoryConfiguration());
+            var bitbucketHandler = new BitbucketHandler();
 
             // Act
             DeploymentInfo deploymentInfo;
@@ -104,7 +100,7 @@ namespace Kudu.Services.Test
 
             var httpRequest = new Mock<HttpRequestBase>();
             httpRequest.SetupGet(r => r.UserAgent).Returns("Bitbucket.org");
-            var bitbucketHandler = new BitbucketHandler(Mock.Of<IGitServer>(), Mock.Of<ITraceFactory>(), Mock.Of<IEnvironment>(), new RepositoryConfiguration());
+            var bitbucketHandler = new BitbucketHandler();
 
             // Act
             DeploymentInfo deploymentInfo;
@@ -128,7 +124,7 @@ namespace Kudu.Services.Test
 
             var httpRequest = new Mock<HttpRequestBase>();
             httpRequest.SetupGet(r => r.UserAgent).Returns("Bitbucket.org");
-            var bitbucketHandler = new BitbucketHandler(Mock.Of<IGitServer>(), Mock.Of<ITraceFactory>(), Mock.Of<IEnvironment>(), new RepositoryConfiguration());
+            var bitbucketHandler = new BitbucketHandler();
 
             // Act
             DeploymentInfo deploymentInfo;
@@ -152,7 +148,7 @@ namespace Kudu.Services.Test
 
             var httpRequest = new Mock<HttpRequestBase>();
             httpRequest.SetupGet(r => r.UserAgent).Returns("Bitbucket.org");
-            var bitbucketHandler = new BitbucketHandler(Mock.Of<IGitServer>(), Mock.Of<ITraceFactory>(), Mock.Of<IEnvironment>(), new RepositoryConfiguration());
+            var bitbucketHandler = new BitbucketHandler();
 
             // Act
             DeploymentInfo deploymentInfo;

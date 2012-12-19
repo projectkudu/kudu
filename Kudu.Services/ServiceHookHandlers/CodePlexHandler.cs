@@ -1,20 +1,10 @@
 ﻿using System.Web;
-using Kudu.Contracts.SourceControl;
-using Kudu.Core;
-using Kudu.Core.SourceControl.Git;
-using Kudu.Core.Tracing;
 using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.ServiceHookHandlers
 {
-    public class CodePlexHandler : PolymorphicHandler
+    public class CodePlexHandler : ServiceHookHandlerBase
     {
-        public CodePlexHandler(IGitServer gitServer, ITraceFactory tracer, IEnvironment environment, RepositoryConfiguration repositoryConfiguration)
-            : base(gitServer, tracer, environment, repositoryConfiguration)
-        {
-
-        }
-
         public override DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
         {
             // Look for the generic format

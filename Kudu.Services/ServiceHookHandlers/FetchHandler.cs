@@ -28,6 +28,7 @@ namespace Kudu.Services
         private readonly IOperationLock _deploymentLock;
         private readonly ITracer _tracer;
         private readonly RepositoryConfiguration _configuration;
+        private readonly RepositoryFactory _repositoryFactory;
 
 
         public FetchHandler(ITracer tracer,
@@ -36,7 +37,8 @@ namespace Kudu.Services
                             IOperationLock deploymentLock,
                             RepositoryConfiguration configuration,
                             IEnvironment environment,
-                            IEnumerable<IServiceHookHandler> serviceHookHandlers)
+                            IEnumerable<IServiceHookHandler> serviceHookHandlers,
+                            RepositoryFactory repositoryFactory)
         {
             _tracer = tracer;
             _deploymentLock = deploymentLock;
@@ -45,6 +47,7 @@ namespace Kudu.Services
             _configuration = configuration;
             _environment = environment;
             _serviceHookHandlers = serviceHookHandlers;
+            _repositoryFactory = repositoryFactory;
         }
 
         public bool IsReusable
@@ -141,12 +144,14 @@ namespace Kudu.Services
                 {
                     _tracer.Trace("Creating deployment file for changeset {0}", deploymentInfo.TargetChangeset.Id);
                     _deploymentManager.CreateDeployment(deploymentInfo.TargetChangeset, deploymentInfo.Deployer, Resources.FetchingChanges);
-                    
+
+                    IRepository repository = _repositoryFactory.EnsureRepository(deploymentInfo.RepositoryType);
+
                     // Fetch changes from the repository
-                    deploymentInfo.Handler.Fetch(deploymentInfo, targetBranch);
+                    deploymentInfo.Handler.Fetch(repository, deploymentInfo, targetBranch);
                     
                     // Perform the actual deployment
-                    _deploymentManager.Deploy(deploymentInfo.TargetChangeset.Id, deploymentInfo.Deployer, clean: false);
+                    _deploymentManager.Deploy(repository, deploymentInfo.TargetChangeset.Id, deploymentInfo.Deployer, clean: false);
 
                     if (MarkerFileExists())
                     {

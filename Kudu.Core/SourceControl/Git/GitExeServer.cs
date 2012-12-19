@@ -46,6 +46,11 @@ namespace Kudu.Core.SourceControl.Git
             }
         }
 
+        public RepositoryType RepositoryType
+        {
+            get { return RepositoryType.Mercurial; }
+        }
+
         private string PostReceiveHookPath
         {
             get

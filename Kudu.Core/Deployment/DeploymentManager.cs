@@ -10,7 +10,6 @@ using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
-using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Deployment
@@ -153,11 +152,11 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public void Deploy(string id, string deployer, bool clean)
+        public void Deploy(IRepository repository, string id, string deployer, bool clean)
         {
             ITracer tracer = _traceFactory.GetTracer();
             IDisposable deployStep = null;
-            IDeploymentRepository deploymentRepository = GetDeploymentRepository();
+            var deploymentRepository = new DeploymentRepository(repository);
             try
             {
                 deployStep = tracer.Step("DeploymentManager.Deploy(id)");
@@ -176,6 +175,7 @@ namespace Kudu.Core.Deployment
 
                 using (tracer.Step("Updating submodules"))
                 {
+                    
                     deploymentRepository.UpdateSubmodules();
                 }
 
@@ -204,11 +204,11 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public void Deploy(string deployer)
+        public void Deploy(IRepository repository, string deployer)
         {
             var tracer = _traceFactory.GetTracer();
             IDisposable deployStep = null;
-            IDeploymentRepository deploymentRepository = GetDeploymentRepository();
+            var deploymentRepository = new DeploymentRepository(repository);
             try
             {
                 deployStep = tracer.Step("Deploy");
@@ -320,7 +320,7 @@ namespace Kudu.Core.Deployment
             return new DisposableAction(DeleteTemporaryDeployment);
         }
 
-        private ILogger CreateAndPopulateStatusFile(IDeploymentRepository deploymentRepository, ITracer tracer, string id, string deployer)
+        private ILogger CreateAndPopulateStatusFile(DeploymentRepository deploymentRepository, ITracer tracer, string id, string deployer)
         {
             ILogger logger = GetLogger(id);
 
@@ -733,22 +733,6 @@ namespace Kudu.Core.Deployment
         private bool IsActive(string id)
         {
             return id.Equals(ActiveDeploymentId, StringComparison.OrdinalIgnoreCase);
-        }
-
-        private IDeploymentRepository GetDeploymentRepository()
-        {
-            var trace = _traceFactory.GetTracer();
-            IRepository repository = new HgRepository(_environment.RepositoryPath, _traceFactory);
-            if (repository.Exists)
-            {
-                trace.Trace("Found mercurial repository at {0}", _environment.RepositoryPath);
-            }
-            else
-            {
-                trace.Trace("Assuming git repository at {0}", _environment.RepositoryPath);
-                repository = new GitExeRepository(_environment.RepositoryPath, _environment.SiteRootPath, _traceFactory);
-            }
-            return new DeploymentRepository(repository, _traceFactory);
         }
     }
 }

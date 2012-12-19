@@ -14,8 +14,8 @@ namespace Kudu.Core.Deployment
         IEnumerable<LogEntry> GetLogEntryDetails(string id, string logId);
 
         void Delete(string id);
-        void Deploy(string id, string deployer, bool clean);
-        void Deploy(string deployer);
+        void Deploy(IRepository repository, string id, string deployer, bool clean);
+        void Deploy(IRepository repository, string deployer);
         
         /// <summary>
         /// Creates a permanent deployment for the changeset

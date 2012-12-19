@@ -40,7 +40,7 @@ namespace Kudu.Services.ServiceHookHandlers
             return true;
         }
 
-        public virtual void Fetch(DeploymentInfo deploymentInfo, string targetBranch)
+        public virtual void Fetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch)
         {
             // Sync with dropbox
             var dropboxInfo = ((DropboxInfo)deploymentInfo);

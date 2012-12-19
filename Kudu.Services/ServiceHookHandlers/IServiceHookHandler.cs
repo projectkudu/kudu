@@ -1,4 +1,5 @@
 ﻿using System.Web;
+using Kudu.Core.SourceControl;
 using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.ServiceHookHandlers
@@ -12,7 +13,7 @@ namespace Kudu.Services.ServiceHookHandlers
         /// <returns>True if successfully parsed</returns>
         DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo);
 
-        void Fetch(DeploymentInfo deploymentInfo, string targetBranch);
+        void Fetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch);
     }
 
     public enum DeployAction
