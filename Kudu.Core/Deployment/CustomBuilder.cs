@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Deployment.Generator;
+using Kudu.Contracts.Settings;
 
 namespace Kudu.Core.Deployment
 {
@@ -14,6 +15,7 @@ namespace Kudu.Core.Deployment
         private readonly string _tempPath;
         private readonly string _homePath;
         private readonly IBuildPropertyProvider _propertyProvider;
+        private readonly IDeploymentSettingsManager _settings;
 
         private const string SourcePath = "DEPLOYMENT_SOURCE";
         private const string TargetPath = "DEPLOYMENT_TARGET";
@@ -22,13 +24,14 @@ namespace Kudu.Core.Deployment
         private const string NextManifestPath = "NEXT_MANIFEST_PATH";
         private const string MSBuildPath = "MSBUILD_PATH";
 
-        public CustomBuilder(string repositoryPath, string tempPath, string command, IBuildPropertyProvider propertyProvider, string homePath)
+        public CustomBuilder(string repositoryPath, string tempPath, string command, IBuildPropertyProvider propertyProvider, string homePath, IDeploymentSettingsManager settings)
         {
             _repositoryPath = repositoryPath;
             _tempPath = tempPath;
             _command = command;
             _propertyProvider = propertyProvider;
             _homePath = homePath;
+            _settings = settings;
         }
 
         public Task Build(DeploymentContext context)
@@ -40,7 +43,7 @@ namespace Kudu.Core.Deployment
             // Creates an executable pointing to cmd and the working directory being
             // the repository root
             var exe = new Executable("cmd", _repositoryPath);
-            // exe.AddDeploymentSettingsAsEnvironmentVariables(DeploymentSettings);
+            exe.AddDeploymentSettingsAsEnvironmentVariables(_settings);
             exe.EnvironmentVariables[SourcePath] = _repositoryPath;
             exe.EnvironmentVariables[TargetPath] = context.OutputPath;
             exe.EnvironmentVariables[PreviousManifestPath] = (context.PreviousManifest != null) ? context.PreviousManifest.ManifestFilePath : String.Empty;

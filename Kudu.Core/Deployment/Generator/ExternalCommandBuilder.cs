@@ -47,8 +47,6 @@ namespace Kudu.Core.Deployment.Generator
 
         protected void RunCommand(DeploymentContext context, string command)
         {
-            // TODO: Add dots when there is no activity.
-
             ILogger customLogger = context.Logger.Log("Running deployment command...");
             customLogger.Log("Command: " + command);
 
