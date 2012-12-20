@@ -205,11 +205,11 @@ namespace Kudu.TestHarness
             const string siteBuilderFactory = "site_builder_factory";
             if (KuduUtils.TestGeneratorSiteBuilderFactory)
             {
-                applicationManager.SettingsManager.SetValue(siteBuilderFactory, "generator");
+                applicationManager.SettingsManager.SetValue(siteBuilderFactory, "generator").Wait();
             }
             else
             {
-                applicationManager.SettingsManager.Delete(siteBuilderFactory);
+                applicationManager.SettingsManager.Delete(siteBuilderFactory).Wait();
             }
 
             return applicationManager;

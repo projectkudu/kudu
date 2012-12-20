@@ -29,6 +29,10 @@ namespace Kudu.Core.Deployment.Generator
                 {
                     commandArguments.AppendFormat(" --solutionFile \"{0}\"", _solutionPath);
                 }
+                else
+                {
+                    commandArguments.AppendFormat(" --no-solution", _solutionPath);
+                }
 
                 return commandArguments.ToString();
             }

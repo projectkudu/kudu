@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Contracts.Settings;
+using System.Collections.Generic;
 
 namespace Kudu.Core.Deployment.Generator
 {
@@ -46,14 +47,13 @@ namespace Kudu.Core.Deployment.Generator
 
         protected void RunCommand(DeploymentContext context, string command)
         {
-            // TODO: Add dots when there is no activity.
-
             ILogger customLogger = context.Logger.Log("Running deployment command...");
             customLogger.Log("Command: " + command);
 
             // Creates an executable pointing to cmd and the working directory being
             // the repository root
             var exe = new Executable("cmd", RepositoryPath);
+            exe.AddDeploymentSettingsAsEnvironmentVariables(DeploymentSettings);
             exe.EnvironmentVariables[SourcePath] = RepositoryPath;
             exe.EnvironmentVariables[TargetPath] = context.OutputPath;
             exe.EnvironmentVariables[MSBuildPath] = PathUtility.ResolveMSBuildPath();
@@ -93,14 +93,7 @@ namespace Kudu.Core.Deployment.Generator
 
             try
             {
-                using (var writer = new ProgressWriter())
-                {
-                    writer.Start();
-
-                    string log = exe.ExecuteWithProgressWriter(context.Tracer, ShouldFilterOutMsBuildWarnings, "/c " + command, String.Empty).Item1;
-
-                    customLogger.Log(log);
-                }
+                exe.ExecuteWithProgressWriter(customLogger, context.Tracer, ShouldFilterOutMsBuildWarnings, "/c " + command, String.Empty);
             }
             catch (CommandLineException ex)
             {

@@ -66,6 +66,31 @@ namespace Kudu.FunctionalTests
             PushAndDeployApps(repoCloneUrl, defaultBranchName, verificationText, expectedResponseCode, verificationLogText);
         }
 
+        [Fact]
+        public void CustomDeploymentScriptShouldHaveDeploymentSetting()
+        {
+            var verificationLogText = "Settings Were Set Properly";
+            var repoCloneUrl = "https://github.com/KuduApps/CustomDeploymentSettingsTest.git";
+
+            string randomTestName = KuduUtils.GetRandomWebsiteName(Path.GetFileNameWithoutExtension(repoCloneUrl));
+            ApplicationManager.Run(randomTestName, appManager =>
+            {
+                appManager.SettingsManager.SetValue("TESTED_VAR", verificationLogText).Wait();
+
+                // Act
+                using (TestRepository testRepository = Git.Clone(randomTestName, repoCloneUrl))
+                {
+                    appManager.GitDeploy(testRepository.PhysicalPath, "master");
+                }
+                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                // Assert
+                Assert.Equal(1, results.Count);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
+                KuduAssert.VerifyLogOutput(appManager, results[0].Id, verificationLogText.Trim());
+            });
+        }
+
         public static IEnumerable<object[]> PhpApps
         {
             get
