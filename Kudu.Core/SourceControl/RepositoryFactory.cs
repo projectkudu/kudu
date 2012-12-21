@@ -56,15 +56,18 @@ namespace Kudu.Core.SourceControl
                     throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_MismatchRepository, repositoryType, RepositoryType.Git, _environment.RepositoryPath));
                 }
                 FileSystemHelpers.EnsureDirectory(_environment.RepositoryPath);
-                var hgRepository = new HgRepository(_environment.RepositoryPath, _traceFactory);
-                hgRepository.Initialize();
+                var hgRepository = new HgRepository(_environment.RepositoryPath, _environment.SiteRootPath, _traceFactory);
+                if (!hgRepository.Exists)
+                {
+                    hgRepository.Initialize(_repoConfig);
+                }
                 return hgRepository;
             }
             else 
             {
                 if (IsHgRepository)
                 {
-                    throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_MismatchRepository, repositoryType, RepositoryType.Git, _environment.RepositoryPath));
+                    throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_MismatchRepository, repositoryType, RepositoryType.Mercurial, _environment.RepositoryPath));
                 }
                 var gitRepository = new GitExeRepository(_environment.RepositoryPath, _environment.SiteRootPath, _traceFactory);
                 if (!gitRepository.Exists)
@@ -82,10 +85,14 @@ namespace Kudu.Core.SourceControl
             if (IsHgRepository)
             {
                 tracer.Trace("Found mercurial repository at {0}", _environment.RepositoryPath);
-                return new HgRepository(_environment.RepositoryPath, _traceFactory);
+                return new HgRepository(_environment.RepositoryPath, _environment.SiteRootPath, _traceFactory);
             }
-            tracer.Trace("Assuming git repository at {0}", _environment.RepositoryPath);
-            return new GitExeRepository(_environment.RepositoryPath, _environment.SiteRootPath, _traceFactory);
+            else if (IsGitRepository)
+            {
+                tracer.Trace("Assuming git repository at {0}", _environment.RepositoryPath);
+                return new GitExeRepository(_environment.RepositoryPath, _environment.SiteRootPath, _traceFactory);
+            }
+            return null;
         }
     }
 }

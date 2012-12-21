@@ -65,8 +65,6 @@ namespace Kudu.Services
 
         public void ProcessRequest(HttpContext context)
         {
-            Debugger.Break();
-            Debugger.Launch();
             using (_tracer.Step("FetchHandler"))
             {
                 context.Response.TrySkipIisCustomErrors = true;
@@ -143,29 +141,32 @@ namespace Kudu.Services
                 using (_tracer.Step("Performing fetch based deployment"))
                 {
                     _tracer.Trace("Creating deployment file for changeset {0}", deploymentInfo.TargetChangeset.Id);
-                    _deploymentManager.CreateDeployment(deploymentInfo.TargetChangeset, deploymentInfo.Deployer, Resources.FetchingChanges);
+                    // TODO: Create temp deployment
 
-                    IRepository repository = _repositoryFactory.EnsureRepository(deploymentInfo.RepositoryType);
-
-                    // Fetch changes from the repository
-                    deploymentInfo.Handler.Fetch(repository, deploymentInfo, targetBranch);
-                    
-                    // Perform the actual deployment
-                    _deploymentManager.Deploy(repository, deploymentInfo.TargetChangeset.Id, deploymentInfo.Deployer, clean: false);
-
-                    if (MarkerFileExists())
+                    using (_deploymentManager.CreateTemporaryDeployment(Resources.ReceivingChanges, deploymentInfo.TargetChangeset, deploymentInfo.Deployer))
                     {
-                        _tracer.Trace("Pending deployment marker file exists");
+                        IRepository repository = _repositoryFactory.EnsureRepository(deploymentInfo.RepositoryType);
 
-                        hasPendingDeployment = DeleteMarkerFile();
+                        // Fetch changes from the repository
+                        deploymentInfo.Handler.Fetch(repository, deploymentInfo, targetBranch);
 
-                        if (hasPendingDeployment)
+                        // Perform the actual deployment
+                        _deploymentManager.Deploy(repository, deploymentInfo.TargetChangeset, deploymentInfo.Deployer, clean: false);
+
+                        if (MarkerFileExists())
                         {
-                            _tracer.Trace("Deleted marker file");
-                        }
-                        else
-                        {
-                            _tracer.TraceError("Failed to delete marker file");
+                            _tracer.Trace("Pending deployment marker file exists");
+
+                            hasPendingDeployment = DeleteMarkerFile();
+
+                            if (hasPendingDeployment)
+                            {
+                                _tracer.Trace("Deleted marker file");
+                            }
+                            else
+                            {
+                                _tracer.TraceError("Failed to delete marker file");
+                            }
                         }
                     }
                 }

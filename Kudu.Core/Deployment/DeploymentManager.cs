@@ -152,11 +152,12 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public void Deploy(IRepository repository, string id, string deployer, bool clean)
+        public void Deploy(IRepository repository, ChangeSet changeSet, string deployer, bool clean)
         {
             ITracer tracer = _traceFactory.GetTracer();
             IDisposable deployStep = null;
             var deploymentRepository = new DeploymentRepository(repository);
+            string id = changeSet.Id;
             try
             {
                 deployStep = tracer.Step("DeploymentManager.Deploy(id)");
@@ -165,7 +166,7 @@ namespace Kudu.Core.Deployment
                 string logPath = GetLogPath(id);
                 FileSystemHelpers.DeleteFileSafe(logPath);
 
-                ILogger logger = GetLogger(id);
+                ILogger logger = GetOrCreateStatusFile(changeSet, tracer, deployer);
 
                 using (tracer.Step("Updating to specific changeset"))
                 {
@@ -251,7 +252,9 @@ namespace Kudu.Core.Deployment
                     return;
                 }
 
-                ILogger logger = CreateAndPopulateStatusFile(deploymentRepository, tracer, id, deployer);
+                ChangeSet changeSet = deploymentRepository.GetChangeSet(id);
+                ILogger logger = GetOrCreateStatusFile(changeSet, tracer, deployer);
+                logger.Log(Resources.Log_NewDeploymentReceived);
 
                 using (tracer.Step("Update to " + receiveInfo.Branch.Name))
                 {
@@ -295,33 +298,31 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public void CreateDeployment(ChangeSet changeSet, string deployedBy, string statusText)
-        {
-            DeploymentStatusFile statusFile = CreateStatusFile(changeSet.Id);
-            statusFile.Message = changeSet.Message;
-            statusFile.Author = changeSet.AuthorName;
-            statusFile.Deployer = deployedBy;
-            statusFile.AuthorEmail = changeSet.AuthorEmail;
-            statusFile.Status = DeployStatus.Pending;
-            statusFile.StatusText = statusText;
-            statusFile.Save(_fileSystem);
-        }
-
-        public IDisposable CreateTemporaryDeployment(string statusText)
+        public IDisposable CreateTemporaryDeployment(string statusText, ChangeSet changeSet = null, string deployedBy = null)
         {
             var tracer = _traceFactory.GetTracer();
+            string unknown = Resources.Deployment_UnknownValue;
             using (tracer.Step("Creating temporary deployment"))
             {
-                var changeset = new ChangeSet(TemporaryDeploymentId, "N/A", "N/A", "N/A", DateTimeOffset.MinValue);
-                CreateDeployment(changeset, "N/A", statusText);
+                changeSet = changeSet ?? new ChangeSet(TemporaryDeploymentId, unknown, unknown, unknown, DateTimeOffset.MinValue);
+                DeploymentStatusFile statusFile = CreateStatusFile(TemporaryDeploymentId);
+                statusFile.Id = changeSet.Id;
+                statusFile.Message = changeSet.Message;
+                statusFile.Author = changeSet.AuthorName;
+                statusFile.Deployer = deployedBy;
+                statusFile.AuthorEmail = changeSet.AuthorEmail;
+                statusFile.Status = DeployStatus.Pending;
+                statusFile.StatusText = statusText;
+                statusFile.Save(_fileSystem);
             }
 
             // Return a handle that deletes the deployment on dispose.
             return new DisposableAction(DeleteTemporaryDeployment);
         }
 
-        private ILogger CreateAndPopulateStatusFile(DeploymentRepository deploymentRepository, ITracer tracer, string id, string deployer)
+        private ILogger GetOrCreateStatusFile(ChangeSet changeSet, ITracer tracer, string deployer)
         {
+            string id = changeSet.Id;
             ILogger logger = GetLogger(id);
 
             using (tracer.Step("Collecting changeset information"))
@@ -329,16 +330,18 @@ namespace Kudu.Core.Deployment
                 // Remove any old instance of a temporary deployment if exists
                 DeleteTemporaryDeployment();
 
-                // Create the status file and store information about the commit
-                DeploymentStatusFile statusFile = CreateStatusFile(id);
-                ChangeSet changeSet = deploymentRepository.GetChangeSet(id);
-                statusFile.Message = changeSet.Message;
-                statusFile.Author = changeSet.AuthorName;
-                statusFile.Deployer = deployer;
-                statusFile.AuthorEmail = changeSet.AuthorEmail;
-                statusFile.Save(_fileSystem);
-
-                logger.Log(Resources.Log_NewDeploymentReceived);
+                // Check if the status file already exists. This would happen when we're doing a redeploy
+                DeploymentStatusFile statusFile = OpenStatusFile(id);
+                if (statusFile == null)
+                {
+                    // Create the status file and store information about the commit
+                    statusFile = CreateStatusFile(id);
+                    statusFile.Message = changeSet.Message;
+                    statusFile.Author = changeSet.AuthorName;
+                    statusFile.Deployer = deployer;
+                    statusFile.AuthorEmail = changeSet.AuthorEmail;
+                    statusFile.Save(_fileSystem);
+                }
             }
 
             return logger;

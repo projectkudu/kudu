@@ -207,6 +207,9 @@
   <data name="VfsControllerBase_CannotDeleteDirectory" xml:space="preserve">
     <value>Cannot delete directory. It is either not empty or access is not allowed.</value>
   </data>
+  <data name="Error_RepositoryNotFound" xml:space="preserve">
+    <value>Repository could not be found.</value>
+  </data>
   <data name="LogStream_AppShutdown" xml:space="preserve">
     <value>{0}{1}  The application was terminated.{0}</value>
   </data>

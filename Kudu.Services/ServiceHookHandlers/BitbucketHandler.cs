@@ -67,11 +67,16 @@ namespace Kudu.Services.ServiceHookHandlers
             // private repo, use SSH
             if (info.IsPrivate)
             {
-                Uri uri = new Uri(info.RepositoryUrl);
+                var uri = new UriBuilder(info.RepositoryUrl);
                 if (uri.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 {
-                    info.Host = "git@" + uri.Host;
-                    info.RepositoryUrl = info.Host + ":" + uri.AbsolutePath.TrimStart('/');
+                    uri.Scheme = "ssh";
+                    uri.Port = -1;
+                    uri.Host = (info.RepositoryType == RepositoryType.Mercurial ? "hg@" : "git@") + uri.Host;
+                    info.Host = uri.Host;
+
+                    // Private repo paths are of the format ssh://git@bitbucket.org/accountname/reponame.git
+                    info.RepositoryUrl = uri.ToString();
                     info.UseSSH = true;
                 }
             }

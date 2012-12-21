@@ -963,6 +963,7 @@ command = node build.js
             }
         }
 
+        [Fact]
         public void RepoWithPrivateSubModuleTest()
         {
             // Arrange
@@ -970,8 +971,14 @@ command = node build.js
             string appName = KuduUtils.GetRandomWebsiteName("RepoWithPrivateSubModule");
             string cloneUrl = "git@github.com:KuduQAOrg/RepoWithPrivateSubModule.git";
             string id_rsa;
+            
+            IDictionary<string, string> environmentVariables = SshHelper.PrepareSSHEnv(out id_rsa);
+            if (String.IsNullOrEmpty(id_rsa))
+            {
+                return;
+            }
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl, environments: PrepareSSHEnv(out id_rsa)))
+            using (var repo = Git.Clone(repositoryName, cloneUrl, environments: environmentVariables))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -988,39 +995,6 @@ command = node build.js
                     KuduAssert.VerifyUrl(appManager.SiteUrl + "PrivateSubModule/default.htm", "Hello from PrivateSubModule!");
                 });
             }
-        }
-
-        private IDictionary<string, string> PrepareSSHEnv(out string id_rsa)
-        {
-            id_rsa = null;
-            var sshPath = new DirectoryInfo(Path.Combine(Kudu.TestHarness.PathHelper.TestsRootPath, ".ssh"));
-            if (!sshPath.Exists)
-            {
-                sshPath.Create();
-            }
-
-            Assembly assembly = Assembly.GetExecutingAssembly();
-            foreach (var fileName in new string[] { "config", "id_rsa" })
-            {
-                using (var reader = new StreamReader(assembly.GetManifestResourceStream("Kudu.FunctionalTests..ssh." + fileName)))
-                {
-                    using (var writer = new StreamWriter(new FileStream(Path.Combine(sshPath.FullName, fileName), FileMode.Create, FileAccess.Write)))
-                    {
-                        string content = reader.ReadToEnd();
-                        if (fileName == "id_rsa")
-                        {
-                            id_rsa = content;
-                        }
-                        writer.Write(content);
-                    }
-                }
-            }
-
-            Dictionary<string, string> environments = new Dictionary<string, string>();
-            environments["HOME"] = sshPath.Parent.FullName;
-            environments["HOMEDRIVE"] = sshPath.Root.Name.Trim('\\');
-            environments["HOMEPATH"] = environments["HOME"].Replace(environments["HOMEDRIVE"], String.Empty);
-            return environments;
         }
 
         [Fact]

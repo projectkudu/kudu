@@ -14,12 +14,22 @@ namespace Kudu.Core.SourceControl
 {
     public class HgRepository : IRepository
     {
-        private readonly Repository _repository;
-        private readonly ITraceFactory _traceFactory;
+        private const string PATH_KEY = "Path";
+        private static readonly Lazy<bool> _lazyAction = new Lazy<bool>(EnsureClientInitialized);
 
-        public HgRepository(string path, ITraceFactory traceFactory)
+        private readonly Repository _repository;
+        private readonly Executable _hgExecutable;
+        private readonly ITraceFactory _traceFactory;
+        private readonly string _homePath;
+
+        public HgRepository(string path, string homePath, ITraceFactory traceFactory)
         {
+            _hgExecutable = new Executable(PathUtility.ResolveHgPath(), path);
+
+            // Ensure that the client path is set for the Repository instance
+            _lazyAction.Value.ToString();
             _repository = new Repository(path);
+            _homePath = homePath;
             _traceFactory = traceFactory;
         }
 
@@ -59,13 +69,9 @@ namespace Kudu.Core.SourceControl
             }
         }
 
-        public void Initialize()
+        public void Initialize(RepositoryConfiguration configuration)
         {
-            // Do a quick check to verify if the mercurial directory exists before trying to initialize
-            if (!Exists)
-            {
-                _repository.Init();
-            }
+            _repository.Init();
         }
 
         public IEnumerable<FileStatus> GetStatus()
@@ -144,7 +150,7 @@ namespace Kudu.Core.SourceControl
 
         public void UpdateSubmodules()
         {
-            _repository.Update();
+            // TODO: Figure out if calling Update without parameters works 
         }
 
         public void AddFile(string path)
@@ -220,20 +226,17 @@ namespace Kudu.Core.SourceControl
 
         public void FetchWithoutConflict(string remote, string remoteAlias, string branchName)
         {
-            PullCommand pullCommand = null;
-            if (!String.IsNullOrEmpty(branchName))
-            {
-                pullCommand = new PullCommand();
-                pullCommand.Branches.Add(branchName);
-            }
-            _repository.Pull(remote, pullCommand);
+            // To get ssh to work with hg, we need to ensure ssh.exe exists in the path and the HOME environment variable is set.
+            // NOTE: Although hge.exe accepts the path to ssh.exe via a --ssh parameter, it cannot handle any whitespace
+            // This doesn't work for us since ssh.exe is located under Program Files in typical Kudu scenarios.
+            _hgExecutable.SetHomePath(_homePath);
+            string currentPath = System.Environment.GetEnvironmentVariable(PATH_KEY);
+            currentPath = currentPath.TrimEnd(';') + ';' + Path.GetDirectoryName(PathUtility.ResolveSSHPath());
+            _hgExecutable.EnvironmentVariables[PATH_KEY] = currentPath;
 
-            var updateCommand = new UpdateCommand
-            {
-                Clean = true,
-                Revision = branchName
-            };
-            _repository.Update(updateCommand);
+            ITracer tracer = _traceFactory.GetTracer();
+            _hgExecutable.Execute(tracer, "pull {0} --branch {1}", remote, branchName, PathUtility.ResolveSSHPath());
+            _hgExecutable.Execute(tracer, "update --clean {0}", branchName);
         }
 
         public void ClearLock()
@@ -244,17 +247,12 @@ namespace Kudu.Core.SourceControl
             if (File.Exists(lockFilePath))
             {
                 ITracer tracer = _traceFactory.GetTracer();
-                tracer.TraceWarning("Deleting left over index.lock file");
+                tracer.TraceWarning("Deleting left over .hg/store/lock file");
                 FileSystemHelpers.DeleteFileSafe(lockFilePath);
             }
         }
 
         public ReceiveInfo GetReceiveInfo()
-        {
-            throw new NotSupportedException();
-        }
-
-        public void Initialize(RepositoryConfiguration configuration)
         {
             throw new NotSupportedException();
         }
@@ -373,7 +371,11 @@ namespace Kudu.Core.SourceControl
                                                               state));
         }
 
-
+        private static bool EnsureClientInitialized()
+        {
+            Client.SetClientPath(PathUtility.ResolveHgPath());
+            return true;
+        }
 
     }
 }

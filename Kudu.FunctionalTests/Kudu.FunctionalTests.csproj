@@ -85,6 +85,7 @@
     <Compile Include="GitStabilityTests.cs" />
     <Compile Include="HgRepositoryFacts.cs" />
     <Compile Include="Infrastructure\KuduAssert.cs" />
+    <Compile Include="Infrastructure\SshHelper.cs" />
     <Compile Include="LogStreamManagerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="GitDeploymentTests.cs" />

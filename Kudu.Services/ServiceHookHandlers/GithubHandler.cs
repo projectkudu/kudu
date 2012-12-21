@@ -17,8 +17,9 @@ namespace Kudu.Services.ServiceHookHandlers
             deploymentInfo = null;
             if (request.Headers["X-Github-Event"] != null)
             {
-                deploymentInfo = GetDeploymentInfo(request, payload, targetBranch);
-                return deploymentInfo == null ? DeployAction.NoOp : DeployAction.ProcessDeployment;
+                GitDeploymentInfo gitDeploymentInfo = GetDeploymentInfo(request, payload, targetBranch);
+                deploymentInfo = gitDeploymentInfo;
+                return deploymentInfo == null || IsDeleteCommit(gitDeploymentInfo.NewRef) ? DeployAction.NoOp : DeployAction.ProcessDeployment;
             }
             return DeployAction.UnknownPayload;
         }

@@ -92,6 +92,12 @@ namespace Kudu.TestHarness
             private set;
         }
 
+        public string SiteRoot
+        {
+            get;
+            private set;
+        }
+
         private void Delete()
         {
             // Don't delete the site if we're supposed to reuse it
@@ -190,6 +196,7 @@ namespace Kudu.TestHarness
             gitUrl = repositoryInfo.GitUrl.ToString();
             var applicationManager = new ApplicationManager(siteManager, site, applicationName, gitUrl, settingsResolver)
             {
+                SiteRoot = siteManager.GetSiteRoot(applicationName),
                 SiteUrl = site.SiteUrl,
                 ServiceUrl = site.ServiceUrl,
                 DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "deployments"),
