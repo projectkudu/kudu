@@ -22,15 +22,17 @@ namespace Kudu.Services.ServiceHookHandlers
 
         public override DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
         {
-            deploymentInfo = GetDeploymentInfo(request, payload, targetBranch);
-            if (deploymentInfo != null && deploymentInfo.IsValid())
+            GitDeploymentInfo gitDeploymentInfo = GetDeploymentInfo(request, payload, targetBranch);
+            if (gitDeploymentInfo != null && gitDeploymentInfo.IsValid())
             {
-                return DeployAction.ProcessDeployment;
+                deploymentInfo = gitDeploymentInfo;
+                return IsDeleteCommit(gitDeploymentInfo.NewRef) ? DeployAction.NoOp : DeployAction.ProcessDeployment;
             }
+            deploymentInfo = null;
             return DeployAction.UnknownPayload;
         }
 
-        protected virtual DeploymentInfo GetDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch)
+        protected virtual GitDeploymentInfo GetDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch)
         {
             JObject repository = payload.Value<JObject>("repository");
             if (repository == null)
@@ -56,28 +58,16 @@ namespace Kudu.Services.ServiceHookHandlers
                 }
             }
 
-            var latestCommit = repository.Value<JArray>("commits").LastOrDefault();
-            if (latestCommit == null)
-            {
-                // If the commits list is empty, it is likely that the push was a branch delete.
-                return null;
-            }
-            
-            var info = new DeploymentInfo();
-
+            var info = new GitDeploymentInfo { RepositoryType = RepositoryType.Git };
             // github format
             // { repository: { url: "https//...", private: False }, ref: "", before: "", after: "" } 
             info.RepositoryUrl = repository.Value<string>("url");
             info.IsPrivate = repository.Value<bool>("private");
             info.Deployer = GetDeployer(request);
+            info.NewRef = payload.Value<string>("after");
+            var commits = payload.Value<JArray>("commits");
 
-            var commitAuthor = latestCommit.Value<JObject>("committer");
-            info.TargetChangeset = new ChangeSet(
-                    latestCommit.Value<string>("id"), 
-                    commitAuthor.Value<string>("name"), 
-                    commitAuthor.Value<string>("email"),
-                    latestCommit.Value<string>("message"),
-                    latestCommit.Value<DateTimeOffset>("timestamp"));
+            info.TargetChangeset = ParseChangeSet(info.NewRef, commits);
 
             // private repo, use SSH
             if (info.IsPrivate)
@@ -94,9 +84,31 @@ namespace Kudu.Services.ServiceHookHandlers
             return info;            
         }
 
+        protected static ChangeSet ParseChangeSet(string id, JArray commits)
+        {
+            if (commits == null || !commits.HasValues)
+            {
+                return new ChangeSet(id, authorName: null, authorEmail: null, message: null, timestamp: DateTimeOffset.UtcNow);
+            }
+            JToken latestCommit = commits.Last;
+            JObject commitAuthor = latestCommit.Value<JObject>("author");
+            return new ChangeSet(
+                    id,
+                    commitAuthor.Value<string>("name"),
+                    commitAuthor.Value<string>("email"),
+                    latestCommit.Value<string>("message"),
+                    DateTimeOffset.Parse(latestCommit.Value<string>("timestamp"))
+            );
+        }
+
         protected virtual string GetDeployer(HttpRequestBase request)
         {
             return "External Provider";
+        }
+
+        protected bool IsDeleteCommit(string newRef)
+        {
+            return newRef.All(c => c == '0');
         }
     }
 }

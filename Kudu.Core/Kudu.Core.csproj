@@ -83,6 +83,7 @@
     <Compile Include="Deployment\DeploymentConfiguration.cs" />
     <Compile Include="Deployment\DeploymentContext.cs" />
     <Compile Include="Deployment\DeploymentHelper.cs" />
+    <Compile Include="Deployment\DeploymentManagerExtensions.cs" />
     <Compile Include="Deployment\DeploymentManifest.cs" />
     <Compile Include="Deployment\Generator\WapBuilder.cs" />
     <Compile Include="Deployment\Generator\WebSiteBuilder.cs" />

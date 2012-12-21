@@ -35,11 +35,6 @@ namespace Kudu.Services.ServiceHookHandlers
             return DeployAction.UnknownPayload;
         }
 
-        public bool RequiresProcessing(DeploymentInfo deploymentInfo, string targetBranch)
-        {
-            return true;
-        }
-
         public virtual void Fetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch)
         {
             // Sync with dropbox
@@ -53,6 +48,8 @@ namespace Kudu.Services.ServiceHookHandlers
             {
                 Deployer = DropboxHelper.Dropbox;
                 DeployInfo = payload.ToObject<DropboxDeployInfo>();
+                // This ensure that the fetch handler provides an underlying Git repository.
+                RepositoryType = RepositoryType.Git;
             }
 
             public DropboxDeployInfo DeployInfo { get; set; }

@@ -19,6 +19,25 @@ namespace Kudu.Core.Infrastructure
             return path;
         }
 
+        internal static string ResolveHgPath()
+        {
+            string programFiles32 = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            string path = Path.Combine(programFiles32, "Mercurial", "hg.exe");
+
+            if (!File.Exists(path))
+            {
+                string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFiles);
+                path = Path.Combine(programFiles, "Mercurial", "hg.exe");
+
+                if (!File.Exists(path))
+                {
+                    throw new InvalidOperationException(Resources.Error_FailedToLocateHg); 
+                }
+            }
+
+            return path;
+        }
+
         internal static string ResolveSSHPath()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);

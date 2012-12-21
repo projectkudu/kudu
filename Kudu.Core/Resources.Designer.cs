@@ -70,6 +70,15 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to N/A.
+        /// </summary>
+        internal static string Deployment_UnknownValue {
+            get {
+                return ResourceManager.GetString("Deployment_UnknownValue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Unable to determine which project file to build. {0}..
         /// </summary>
         internal static string Error_AmbiguousProjects {
@@ -102,6 +111,15 @@ namespace Kudu.Core {
         internal static string Error_FailedToLocateGit {
             get {
                 return ResourceManager.GetString("Error_FailedToLocateGit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to locate &apos;hg.exe&apos;. Make sure it is installed..
+        /// </summary>
+        internal static string Error_FailedToLocateHg {
+            get {
+                return ResourceManager.GetString("Error_FailedToLocateHg", resourceCulture);
             }
         }
         
@@ -227,11 +245,11 @@ namespace Kudu.Core {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cleaning git repository..
+        ///   Looks up a localized string similar to Cleaning repository..
         /// </summary>
-        internal static string Log_CleaningGitRepository {
+        internal static string Log_CleaningRepository {
             get {
-                return ResourceManager.GetString("Log_CleaningGitRepository", resourceCulture);
+                return ResourceManager.GetString("Log_CleaningRepository", resourceCulture);
             }
         }
         

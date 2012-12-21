@@ -120,6 +120,9 @@
   <data name="Copied" xml:space="preserve">
     <value>Copied '{0}'.</value>
   </data>
+  <data name="Deployment_UnknownValue" xml:space="preserve">
+    <value>N/A</value>
+  </data>
   <data name="Error_AmbiguousProjects" xml:space="preserve">
     <value>Unable to determine which project file to build. {0}.</value>
   </data>
@@ -131,6 +134,9 @@
   </data>
   <data name="Error_FailedToLocateGit" xml:space="preserve">
     <value>Unable to locate 'git.exe'. Make sure it is installed.</value>
+  </data>
+  <data name="Error_FailedToLocateHg" xml:space="preserve">
+    <value>Unable to locate 'hg.exe'. Make sure it is installed.</value>
   </data>
   <data name="Error_FailedToLocateSsh" xml:space="preserve">
     <value>Unable to locate 'ssh.exe'. Make sure it is installed.</value>
@@ -193,8 +199,8 @@
   <data name="Log_BuildingWebProject" xml:space="preserve">
     <value>Building web project '{0}'.</value>
   </data>
-  <data name="Log_CleaningGitRepository" xml:space="preserve">
-    <value>Cleaning git repository.</value>
+  <data name="Log_CleaningRepository" xml:space="preserve">
+    <value>Cleaning repository.</value>
   </data>
   <data name="Log_CreatingNodeConfig" xml:space="preserve">
     <value>Deploying Web.config to enable Node.js activation.</value>

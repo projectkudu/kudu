@@ -12,9 +12,7 @@ namespace Kudu.Services.ServiceHookHandlers
         public string Host { get; set; }
         public string Deployer { get; set; }
         public ChangeSet TargetChangeset { get; set; } 
-
         public IServiceHookHandler Handler { get; set; }
-        public IRepository Repository { get; set; }
 
         public bool IsValid()
         {

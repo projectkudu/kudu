@@ -63,6 +63,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BitbucketHandlerFacts.cs" />
+    <Compile Include="CodeBaseHqFacts.cs" />
     <Compile Include="GithubHandlerFacts.cs" />
     <Compile Include="Infrastructure\MediaTypeMapTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

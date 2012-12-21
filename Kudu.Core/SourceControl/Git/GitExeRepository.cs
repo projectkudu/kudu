@@ -216,8 +216,8 @@ namespace Kudu.Core.SourceControl.Git
             ITracer tracer = _tracerFactory.GetTracer();
             try
             {
-                _gitExe.Execute(tracer, @"remote add {0} ""{1}""", remoteAlias, remote);
-                _gitExe.Execute(tracer, @"fetch {0}", remoteAlias);
+                _gitExe.Execute(tracer, @"remote add -t {2} {0} ""{1}""", remoteAlias, remote, branchName);
+                _gitExe.Execute(tracer, @"fetch {0}", remoteAlias, branchName);
                 Update(branchName);
                 _gitExe.Execute(tracer, @"reset --hard {0}/{1}", remoteAlias, branchName);
             }

@@ -18,21 +18,28 @@ namespace Kudu.Services.ServiceHookHandlers
             if (request.UserAgent != null &&
                 request.UserAgent.StartsWith("Codebasehq", StringComparison.OrdinalIgnoreCase))
             {
-                deploymentInfo = GetDeploymentInfo(request, payload, targetBranch);
-                return deploymentInfo == null ? DeployAction.NoOp : DeployAction.ProcessDeployment;
+                GitDeploymentInfo gitDeploymentInfo = GetDeploymentInfo(request, payload, targetBranch);
+                deploymentInfo = gitDeploymentInfo;
+                return deploymentInfo == null || IsDeleteCommit(gitDeploymentInfo.NewRef) ? DeployAction.NoOp : DeployAction.ProcessDeployment;
             }
 
             return DeployAction.UnknownPayload;
         }
 
-        protected override DeploymentInfo GetDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch)
+        protected override GitDeploymentInfo GetDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch)
         {
             var info = base.GetDeploymentInfo(request, payload, targetBranch);
+
+            if (info == null)
+            {
+                return null;
+            }
 
             // CodebaseHq format, see http://support.codebasehq.com/kb/howtos/repository-push-commit-notifications
             var repository = payload.Value<JObject>("repository");
             var urls = repository.Value<JObject>("clone_urls");
             info.IsPrivate = repository.Value<bool>("private");
+            info.NewRef = payload.Value<string>("after");
 
             if (info.IsPrivate)
             {

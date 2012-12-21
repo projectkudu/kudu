@@ -87,6 +87,11 @@ namespace Kudu.Services.Deployment
                         AuthUtility.TryExtractBasicAuthUser(Request, out username);
 
                         IRepository repository = _repositoryFactory.GetRepository();
+                        if (repository == null)
+                        {
+                            throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, Resources.Error_RepositoryNotFound));
+                        }
+                        
                         _deploymentManager.Deploy(repository, id, username, clean);
                     }
                     catch (FileNotFoundException ex)

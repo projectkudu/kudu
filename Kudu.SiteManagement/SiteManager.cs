@@ -102,6 +102,11 @@ namespace Kudu.SiteManagement
             return urls;
         }
 
+        public string GetSiteRoot(string applicationName)
+        {
+            return _pathResolver.GetLiveSitePath(applicationName);
+        }
+
         public Site CreateSite(string applicationName)
         {
             var iis = new IIS.ServerManager();
@@ -121,7 +126,7 @@ namespace Kudu.SiteManagement
 
                 // Create the main site
                 string siteName = GetLiveSite(applicationName);
-                string siteRoot = _pathResolver.GetLiveSitePath(applicationName);
+                string siteRoot = GetSiteRoot(applicationName);
                 string webRoot = Path.Combine(siteRoot, Constants.WebRoot);
 
                 FileSystemHelpers.EnsureDirectory(webRoot);

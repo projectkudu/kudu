@@ -143,6 +143,7 @@
     <Compile Include="ServiceHookHandlers\CodebaseHqHandler.cs" />
     <Compile Include="ServiceHookHandlers\CodePlexHandler.cs" />
     <Compile Include="ServiceHookHandlers\DropboxHandler.cs" />
+    <Compile Include="ServiceHookHandlers\GitDeploymentInfo.cs" />
     <Compile Include="ServiceHookHandlers\GitHubCompatHandler.cs" />
     <Compile Include="ServiceHookHandlers\GitlabHqHandler.cs" />
     <Compile Include="ServiceHookHandlers\DeploymentInfo.cs" />
