@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
@@ -20,12 +21,12 @@ namespace Kudu.Core.SourceControl.Git
 
         private static readonly TimeSpan _initTimeout = TimeSpan.FromMinutes(8);
 
-        public GitExeServer(string path, string homePath, IOperationLock initLock, string logFileEnv, IDeploymentEnvironment deploymentEnvironment, ITraceFactory traceFactory)
+        public GitExeServer(string path, string homePath, IOperationLock initLock, string logFileEnv, IDeploymentEnvironment deploymentEnvironment, IDeploymentSettingsManager settings, ITraceFactory traceFactory)
         {
-            _gitExe = new GitExecutable(path);
+            _gitExe = new GitExecutable(path, settings.GetCommandIdleTimeout());
             _gitExe.SetHomePath(homePath);
             _traceFactory = traceFactory;
-            _repository = new GitExeRepository(path, homePath, traceFactory);
+            _repository = new GitExeRepository(path, homePath, settings, traceFactory);
             _initLock = initLock;
 
             // Transfer logFileEnv => git.exe => kudu.exe, this represent per-request tracefile

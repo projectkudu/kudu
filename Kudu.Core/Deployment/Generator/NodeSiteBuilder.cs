@@ -27,7 +27,7 @@ namespace Kudu.Core.Deployment.Generator
             try
             {
                 string sourcePath = String.IsNullOrEmpty(ProjectPath) ? RepositoryPath : ProjectPath;
-                string log = NodeSiteEnabler.SelectNodeVersion(fileSystem, Environment.ScriptPath, sourcePath, context.OutputPath, context.Tracer);
+                string log = NodeSiteEnabler.SelectNodeVersion(fileSystem, Environment.ScriptPath, sourcePath, context.OutputPath, DeploymentSettings, context.Tracer);
 
                 innerLogger.Log(log);
             }

@@ -143,13 +143,17 @@ namespace Kudu.Services.Web.App_Start
                                                                                   initLock,
                                                                                   GetRequestTraceFile(environment, context.Kernel),
                                                                                   context.Kernel.Get<IDeploymentEnvironment>(),
+                                                                                  context.Kernel.Get<IDeploymentSettingsManager>(),
                                                                                   context.Kernel.Get<ITraceFactory>()))
                                             .InRequestScope();
 
             kernel.Bind<ILogger>().ToMethod(context => GetLogger(environment, context.Kernel))
                                              .InRequestScope();
 
-            kernel.Bind<IRepository>().ToMethod(context => new GitExeRepository(environment.RepositoryPath, environment.SiteRootPath, context.Kernel.Get<ITraceFactory>()))
+            kernel.Bind<IRepository>().ToMethod(context => new GitExeRepository(environment.RepositoryPath,
+                                                                                environment.SiteRootPath,
+                                                                                context.Kernel.Get<IDeploymentSettingsManager>(),
+                                                                                context.Kernel.Get<ITraceFactory>()))
                                                 .InRequestScope();
 
             kernel.Bind<IDeploymentManager>().To<DeploymentManager>()
@@ -165,6 +169,7 @@ namespace Kudu.Services.Web.App_Start
                                                                            initLock,
                                                                            GetRequestTraceFile(environment, context.Kernel),
                                                                            context.Kernel.Get<IDeploymentEnvironment>(),
+                                                                           context.Kernel.Get<IDeploymentSettingsManager>(),
                                                                            context.Kernel.Get<ITraceFactory>()))
                                      .InRequestScope();
 

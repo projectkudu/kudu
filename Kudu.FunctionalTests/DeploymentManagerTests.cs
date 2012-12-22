@@ -256,7 +256,7 @@ namespace Kudu.FunctionalTests
                     { "payload", bitbucketPayload }
                 };
 
-                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Wait();
+                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result.EnsureSuccessful();
 
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                 Assert.Equal(1, results.Count);

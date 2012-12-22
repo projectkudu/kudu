@@ -66,7 +66,7 @@ namespace Kudu.Console
             var buildPropertyProvider = new BuildPropertyProvider();
             var builderFactory = new SiteBuilderFactoryDispatcher(settingsManager, buildPropertyProvider, env);
 
-            var gitRepository = new GitExeRepository(env.RepositoryPath, env.SiteRootPath, traceFactory);
+            var gitRepository = new GitExeRepository(env.RepositoryPath, env.SiteRootPath, settingsManager, traceFactory);
 
             var logger = new ConsoleLogger();
             var deploymentManager = new DeploymentManager(builderFactory, 

@@ -6,6 +6,7 @@ using System.Net;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Kudu.Contracts.Settings;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
@@ -971,7 +972,7 @@ command = node build.js
             string appName = KuduUtils.GetRandomWebsiteName("RepoWithPrivateSubModule");
             string cloneUrl = "git@github.com:KuduQAOrg/RepoWithPrivateSubModule.git";
             string id_rsa;
-            
+
             IDictionary<string, string> environmentVariables = SshHelper.PrepareSSHEnv(out id_rsa);
             if (String.IsNullOrEmpty(id_rsa))
             {
@@ -993,6 +994,35 @@ command = node build.js
                     Assert.Equal(DeployStatus.Success, results[0].Status);
                     KuduAssert.VerifyUrl(appManager.SiteUrl + "default.htm", "Hello from RepoWithPrivateSubModule!");
                     KuduAssert.VerifyUrl(appManager.SiteUrl + "PrivateSubModule/default.htm", "Hello from PrivateSubModule!");
+                });
+            }
+        }
+
+        [Fact]
+        public void HangProcessTest()
+        {
+            // Arrange
+            string repositoryName = "HangProcess";
+            string appName = KuduUtils.GetRandomWebsiteName("HangProcess");
+            string cloneUrl = "https://github.com/KuduApps/HangProcess.git";
+
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    // Set IdleTimeout to 10s meaning there must be activity every 10s
+                    // Otherwise process and its child will be terminated
+                    appManager.SettingsManager.SetValue(SettingsKeys.CommandIdleTimeout, "10").Wait();
+
+                    // This HangProcess repo spew out activity at 2s, 4s, 6s and 20s respectively
+                    // we should receive the one < 10s and terminate otherwise.
+                    GitDeploymentResult result = appManager.GitDeploy(repo.PhysicalPath);
+                    Assert.Contains("remote: Sleep(2000)", result.GitTrace);
+                    Assert.Contains("remote: Sleep(4000)", result.GitTrace);
+                    Assert.Contains("remote: Sleep(6000)", result.GitTrace);
+                    Assert.DoesNotContain("remote: Sleep(20000)", result.GitTrace);
+                    Assert.Contains("remote: Process 'starter.cmd' aborted due to idle timeout.", result.GitTrace);
                 });
             }
         }

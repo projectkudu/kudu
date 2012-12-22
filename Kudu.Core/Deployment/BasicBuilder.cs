@@ -6,6 +6,7 @@ using System.Net;
 using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
+using Kudu.Contracts.Settings;
 
 namespace Kudu.Core.Deployment
 {
@@ -17,13 +18,15 @@ namespace Kudu.Core.Deployment
         private readonly string _tempPath;
         private readonly string _scriptPath;
         private readonly string _homePath;
+        private readonly IDeploymentSettingsManager _settings;
 
-        public BasicBuilder(string sourcePath, string tempPath, string scriptPath, string homePath)
+        public BasicBuilder(string sourcePath, string tempPath, string scriptPath, string homePath, IDeploymentSettingsManager settings)
         {
             _sourcePath = sourcePath;
             _tempPath = tempPath;
             _scriptPath = scriptPath;
             _homePath = homePath;
+            _settings = settings;
         }
 
         public Task Build(DeploymentContext context)
@@ -107,7 +110,7 @@ namespace Kudu.Core.Deployment
 
             using (context.Tracer.Step("Downloading node packages"))
             {
-                var npm = new NpmExecutable(context.OutputPath);
+                var npm = new NpmExecutable(context.OutputPath, _settings.GetCommandIdleTimeout());
 
                 if (!npm.IsAvailable)
                 {
@@ -189,7 +192,8 @@ namespace Kudu.Core.Deployment
                 new FileSystem(),
                 repoFolder: _sourcePath,
                 siteFolder: context.OutputPath,
-                scriptPath: _scriptPath);
+                scriptPath: _scriptPath,
+                settings: _settings);
 
             // Check if need to do anythng related to Node
             if (nodeSiteEnabler.NeedNodeHandling())
@@ -219,7 +223,8 @@ namespace Kudu.Core.Deployment
                  fileSystem,
                  repoFolder: _sourcePath,
                  siteFolder: context.OutputPath,
-                 scriptPath: _scriptPath);
+                 scriptPath: _scriptPath,
+                 settings: _settings);
 
             ILogger innerLogger = null;
 

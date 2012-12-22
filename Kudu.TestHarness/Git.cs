@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Kudu.Client.Deployment;
+using Kudu.Contracts.Settings;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
 using SystemEnvironment = System.Environment;
@@ -226,7 +227,7 @@ namespace Kudu.TestHarness
 
             FileSystemHelpers.EnsureDirectory(repositoryPath);
 
-            var exe = new GitExecutable(repositoryPath);
+            var exe = new GitExecutable(repositoryPath, DeploymentSettingsExtension.DefaultCommandIdleTimeout);
             exe.SetTraceLevel(2);
             exe.SetHttpVerbose(true);
             exe.SetSSLNoVerify(true);

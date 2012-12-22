@@ -17,6 +17,7 @@ namespace Kudu.Core.Settings
         private static Dictionary<string, string> _defaultSettings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
             { SettingsKeys.Branch, "master" },
             { SettingsKeys.TraceLevel, ((int)DeploymentSettingsExtension.DefaultTraceLevel).ToString() },
+            { SettingsKeys.CommandIdleTimeout, ((int)DeploymentSettingsExtension.DefaultCommandIdleTimeout.TotalSeconds).ToString() },
             { SettingsKeys.BuildArgs, "" }
         };
 

@@ -76,7 +76,7 @@ namespace Kudu.Core.Deployment
             {
                 logger.Log(Resources.Log_NoDeployableProjects, solution.Path);
 
-                return new BasicBuilder(repositoryRoot, _environment.TempPath, _environment.ScriptPath, _environment.SiteRootPath);
+                return new BasicBuilder(repositoryRoot, _environment.TempPath, _environment.ScriptPath, _environment.SiteRootPath, _settings);
             }
 
             if (project.IsWap)
@@ -93,7 +93,8 @@ namespace Kudu.Core.Deployment
                                       repositoryRoot,
                                       project.AbsolutePath,
                                       _environment.TempPath,
-                                      solution.Path);
+                                      solution.Path,
+                                      _settings);
         }
 
         private ISiteBuilder ResolveProject(string repositoryRoot, bool tryWebSiteProject = false, SearchOption searchOption = SearchOption.AllDirectories)
@@ -140,7 +141,8 @@ namespace Kudu.Core.Deployment
                                               repositoryRoot,
                                               targetPath,
                                               _environment.TempPath,
-                                              solutions[0].Path);
+                                              solutions[0].Path,
+                                              _settings);
                 }
             }
 
@@ -154,7 +156,7 @@ namespace Kudu.Core.Deployment
             }
 
             // If there's none then use the basic builder (the site is xcopy deployable)
-            return new BasicBuilder(targetPath, _environment.TempPath, _environment.ScriptPath, _environment.SiteRootPath);
+            return new BasicBuilder(targetPath, _environment.TempPath, _environment.ScriptPath, _environment.SiteRootPath, _settings);
         }
 
         private ISiteBuilder DetermineProject(string repositoryRoot, string targetPath)

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
-using Kudu.Contracts.Tracing;
-using Kudu.Core.Infrastructure;
-using Kudu.Core.Deployment.Generator;
 using Kudu.Contracts.Settings;
+using Kudu.Contracts.Tracing;
+using Kudu.Core.Deployment.Generator;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment
 {
@@ -45,7 +45,7 @@ namespace Kudu.Core.Deployment
 
             // Creates an executable pointing to cmd and the working directory being
             // the repository root
-            var exe = new Executable(StarterScriptPath, _repositoryPath);
+            var exe = new Executable(StarterScriptPath, _repositoryPath, _settings.GetCommandIdleTimeout());
             exe.AddDeploymentSettingsAsEnvironmentVariables(_settings);
             exe.EnvironmentVariables[SourcePath] = _repositoryPath;
             exe.EnvironmentVariables[TargetPath] = context.OutputPath;

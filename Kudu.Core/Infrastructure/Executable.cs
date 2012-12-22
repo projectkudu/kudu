@@ -14,12 +14,13 @@ namespace Kudu.Core.Infrastructure
 {
     internal class Executable
     {
-        public Executable(string path, string workingDirectory)
+        public Executable(string path, string workingDirectory, TimeSpan idleTimeout)
         {
             Path = path;
             WorkingDirectory = workingDirectory;
             EnvironmentVariables = new Dictionary<string, string>();
             Encoding = Encoding.UTF8;
+            IdleTimeout = idleTimeout;
         }
 
         public bool IsAvailable
@@ -43,6 +44,7 @@ namespace Kudu.Core.Infrastructure
         public string Path { get; private set; }
         public IDictionary<string, string> EnvironmentVariables { get; set; }
         public Encoding Encoding { get; set; }
+        public TimeSpan IdleTimeout { get; private set; }
 
 #if !SITEMANAGEMENT
         public Tuple<string, string> Execute(string arguments, params object[] args)
@@ -63,14 +65,31 @@ namespace Kudu.Core.Infrastructure
                 var process = CreateProcess(arguments, args);
                 process.Start();
 
-                Func<StreamReader, string> reader = (StreamReader streamReader) => streamReader.ReadToEnd();
+#if !SITEMANAGEMENT
+                var idleManager = new IdleManager(Path, IdleTimeout, tracer);
+#else
+                var idleManager = new IdleManager();
+#endif
+                Func<StreamReader, string> reader = (StreamReader streamReader) =>
+                {
+                    var strb = new StringBuilder();
+                    char[] buffer = new char[1024];
+                    int read;
+                    while ((read = streamReader.ReadBlock(buffer, 0, buffer.Length)) != 0)
+                    {
+                        idleManager.UpdateActivity();
+                        strb.Append(buffer, 0, read);
+                    }
+                    idleManager.UpdateActivity();
+                    return strb.ToString();
+                };
 
                 IAsyncResult outputReader = reader.BeginInvoke(process.StandardOutput, null, null);
                 IAsyncResult errorReader = reader.BeginInvoke(process.StandardError, null, null);
 
                 process.StandardInput.Close();
 
-                process.WaitForExit();
+                idleManager.WaitForExit(process);
 
                 string output = reader.EndInvoke(outputReader);
                 string error = reader.EndInvoke(errorReader);
@@ -112,12 +131,21 @@ namespace Kudu.Core.Infrastructure
                 var process = CreateProcess(arguments, args);
                 process.Start();
 
+                var idleManager = new IdleManager(Path, IdleTimeout, tracer);
                 Func<StreamReader, string> reader = (StreamReader streamReader) => streamReader.ReadToEnd();
                 Action<Stream, Stream, bool> copyStream = (Stream from, Stream to, bool closeAfterCopy) =>
                 {
                     try
                     {
-                        from.CopyTo(to);
+                        byte[] bytes = new byte[1024];
+                        int read = 0;
+                        while ((read = from.Read(bytes, 0, bytes.Length)) != 0)
+                        {
+                            idleManager.UpdateActivity();
+                            to.Write(bytes, 0, read);
+                        }
+
+                        idleManager.UpdateActivity();
                         if (closeAfterCopy)
                         {
                             to.Close();
@@ -149,7 +177,7 @@ namespace Kudu.Core.Infrastructure
                                                                    null,
                                                                    null);
 
-                process.WaitForExit();
+                idleManager.WaitForExit(process);
 
                 // Wait for the input operation to complete
                 if (inputResult != null)
@@ -242,8 +270,10 @@ namespace Kudu.Core.Infrastructure
                 var errorBuffer = new StringBuilder();
                 var outputBuffer = new StringBuilder();
 
+                var idleManager = new IdleManager(Path, IdleTimeout, tracer);
                 process.OutputDataReceived += (sender, e) =>
                 {
+                    idleManager.UpdateActivity();
                     if (e.Data != null)
                     {
                         if (onWriteOutput(e.Data))
@@ -255,6 +285,7 @@ namespace Kudu.Core.Infrastructure
 
                 process.ErrorDataReceived += (sender, e) =>
                 {
+                    idleManager.UpdateActivity();
                     if (e.Data != null)
                     {
                         if (onWriteError(e.Data))
@@ -269,7 +300,15 @@ namespace Kudu.Core.Infrastructure
                 process.BeginErrorReadLine();
                 process.BeginOutputReadLine();
 
-                process.WaitForExit();
+                try
+                {
+                    idleManager.WaitForExit(process);
+                }
+                catch (Exception ex)
+                {
+                    onWriteError(ex.Message);
+                    throw;
+                }
 
                 tracer.Trace("Process dump", new Dictionary<string, string>
                 {
@@ -306,6 +345,7 @@ namespace Kudu.Core.Infrastructure
             });
         }
 #endif
+
         private Process CreateProcess(string arguments, object[] args)
         {
             var psi = new ProcessStartInfo
@@ -340,5 +380,63 @@ namespace Kudu.Core.Infrastructure
 
             return process;
         }
+
+#if !SITEMANAGEMENT
+        class IdleManager
+        {
+            private static int WaitInterval = 5000;
+            private readonly string _processName;
+            private readonly TimeSpan _idleTimeout;
+            private readonly ITracer _tracer;
+            private DateTime _lastActivity;
+
+            public IdleManager(string path, TimeSpan idleTimeout, ITracer tracer)
+            {
+                _processName = new FileInfo(path).Name;
+                _idleTimeout = idleTimeout;
+                _tracer = tracer;
+                _lastActivity = DateTime.UtcNow;
+            }
+
+            public void UpdateActivity()
+            {
+                _lastActivity = DateTime.UtcNow;
+            }
+
+            public void WaitForExit(Process process)
+            {
+                while (!process.WaitForExit(WaitInterval))
+                {
+                    if (DateTime.UtcNow > _lastActivity.Add(_idleTimeout))
+                    {
+                        process.Kill(true, _tracer);
+                        string message = String.Format(Resources.Error_ProcessAborted, _processName);
+                        throw new CommandLineException(message)
+                        {
+                            ExitCode = -1,
+                            Output = message,
+                            Error = message
+                        };
+                    }
+                }
+            }
+        }
+#else
+        class IdleManager
+        {
+            public IdleManager()
+            {
+            }
+
+            public void UpdateActivity()
+            {
+            }
+
+            public void WaitForExit(Process process)
+            {
+                process.WaitForExit();
+            }
+        }
+#endif
     }
 }

@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
@@ -16,10 +17,12 @@ namespace Kudu.Core.SourceControl
         private readonly IEnvironment _environment;
         private readonly ITraceFactory _traceFactory;
         private readonly RepositoryConfiguration _repoConfig;
+        private readonly IDeploymentSettingsManager _settings;
 
-        public RepositoryFactory(IEnvironment environment, ITraceFactory traceFactory, RepositoryConfiguration repositoryConfiguration)
+        public RepositoryFactory(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, RepositoryConfiguration repositoryConfiguration)
         {
             _environment = environment;
+            _settings = settings;
             _traceFactory = traceFactory;
             _repoConfig = repositoryConfiguration;
         }
@@ -56,7 +59,7 @@ namespace Kudu.Core.SourceControl
                     throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_MismatchRepository, repositoryType, RepositoryType.Git, _environment.RepositoryPath));
                 }
                 FileSystemHelpers.EnsureDirectory(_environment.RepositoryPath);
-                var hgRepository = new HgRepository(_environment.RepositoryPath, _environment.SiteRootPath, _traceFactory);
+                var hgRepository = new HgRepository(_environment.RepositoryPath, _environment.SiteRootPath, _settings, _traceFactory);
                 if (!hgRepository.Exists)
                 {
                     hgRepository.Initialize(_repoConfig);
@@ -69,7 +72,7 @@ namespace Kudu.Core.SourceControl
                 {
                     throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_MismatchRepository, repositoryType, RepositoryType.Mercurial, _environment.RepositoryPath));
                 }
-                var gitRepository = new GitExeRepository(_environment.RepositoryPath, _environment.SiteRootPath, _traceFactory);
+                var gitRepository = new GitExeRepository(_environment.RepositoryPath, _environment.SiteRootPath, _settings, _traceFactory);
                 if (!gitRepository.Exists)
                 {
                     gitRepository.Initialize(_repoConfig);
@@ -85,12 +88,12 @@ namespace Kudu.Core.SourceControl
             if (IsHgRepository)
             {
                 tracer.Trace("Found mercurial repository at {0}", _environment.RepositoryPath);
-                return new HgRepository(_environment.RepositoryPath, _environment.SiteRootPath, _traceFactory);
+                return new HgRepository(_environment.RepositoryPath, _environment.SiteRootPath, _settings, _traceFactory);
             }
             else if (IsGitRepository)
             {
                 tracer.Trace("Assuming git repository at {0}", _environment.RepositoryPath);
-                return new GitExeRepository(_environment.RepositoryPath, _environment.SiteRootPath, _traceFactory);
+                return new GitExeRepository(_environment.RepositoryPath, _environment.SiteRootPath, _settings, _traceFactory);
             }
             return null;
         }
