@@ -134,10 +134,6 @@
         <File Id="Newtonsoft.Json.dll" Source="$(var.KuduServiceBinDir)\Newtonsoft.Json.dll" />
       </Component>
       
-      <Component Id="System.Net.Http.dll" Guid="{3D963AD3-1BA2-4508-AFAE-9635600B7D27}">
-        <File Id="System.Net.Http.dll" Source="$(var.KuduServiceBinDir)\System.Net.Http.dll" />
-      </Component> 
-      
       <Component Id="Microsoft.Web.Infrastructure.dll" Guid="{96A2A444-20B6-48C6-867A-01A7E13AC927}">
         <File Id="Microsoft.Web.Infrastructure.dll" Source="$(var.KuduServiceBinDir)\Microsoft.Web.Infrastructure.dll" />
       </Component>
@@ -155,10 +151,6 @@
       
       <Component Id="System.Net.Http.Formatting.dll" Guid="{018623FB-6032-49BE-9AC1-08E4398FD98F}">
         <File Id="System.Net.Http.Formatting.dll" Source="$(var.KuduServiceBinDir)\System.Net.Http.Formatting.dll" />
-      </Component>
-
-      <Component Id="System.Net.Http.WebRequest.dll" Guid="{CD943BF7-8EE4-4BC7-BA66-79CD91EAEC57}">
-        <File Id="System.Net.Http.WebRequest.dll" Source="$(var.KuduServiceBinDir)\System.Net.Http.WebRequest.dll" />
       </Component>
 
       <Component Id="System.Web.Http.dll" Guid="{8C405A12-9961-4167-BC11-70986B31A444}">
@@ -197,9 +189,7 @@
       <ComponentRef Id="WebActivator.dll" />
       <ComponentRef Id="XmlSettings.dll" />
       
-      <ComponentRef Id="System.Net.Http.dll" />
       <ComponentRef Id="System.Net.Http.Formatting.dll" />
-      <ComponentRef Id="System.Net.Http.WebRequest.dll" />
       <ComponentRef Id="System.Web.Http.dll" />
       <ComponentRef Id="System.Web.Http.WebHost.dll" />
 
