@@ -185,8 +185,6 @@
     <Content Include="Scripts\jquery.render.min.js" />
     <Content Include="Components\Editor\codemirror\codemirror.css" />
     <Content Include="Components\Editor\codemirror\default-settings.css" />
-    <Content Include="Scripts\jQuery.tmpl.js" />
-    <Content Include="Scripts\jQuery.tmpl.min.js" />
     <Content Include="Scripts\loader.js" />
     <Content Include="images\addfile.png" />
     <Content Include="images\application_side_list.png" />
