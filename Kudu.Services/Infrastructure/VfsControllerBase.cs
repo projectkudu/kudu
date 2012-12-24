@@ -41,14 +41,15 @@ namespace Kudu.Services.Infrastructure
         }
 
         [AcceptVerbs("GET", "HEAD")]
-        public virtual HttpResponseMessage GetItem()
+        public virtual Task<HttpResponseMessage> GetItem()
         {
             string localFilePath = GetLocalFilePath();
             DirectoryInfo info = new DirectoryInfo(localFilePath);
 
             if (info.Attributes < 0)
             {
-                return Request.CreateResponse(HttpStatusCode.NotFound);
+                HttpResponseMessage notFoundResponse = Request.CreateResponse(HttpStatusCode.NotFound);
+                return Task.FromResult(notFoundResponse);
             }
             else if ((info.Attributes & FileAttributes.Directory) != 0)
             {
@@ -59,14 +60,14 @@ namespace Kudu.Services.Infrastructure
                     UriBuilder location = new UriBuilder(Request.RequestUri);
                     location.Path += "/";
                     redirectResponse.Headers.Location = location.Uri;
-                    return redirectResponse;
+                    return Task.FromResult(redirectResponse);
                 }
                 else
                 {
                     // Enumerate directory
                     IEnumerable<VfsStatEntry> directory = GetDirectoryResponse(info, localFilePath);
                     HttpResponseMessage successDirectoryResponse = Request.CreateResponse<IEnumerable<VfsStatEntry>>(HttpStatusCode.OK, directory);
-                    return successDirectoryResponse;
+                    return Task.FromResult(successDirectoryResponse);
                 }
             }
             else
@@ -78,7 +79,7 @@ namespace Kudu.Services.Infrastructure
                     UriBuilder location = new UriBuilder(Request.RequestUri);
                     location.Path = location.Path.TrimEnd(_uriSegmentSeparator);
                     redirectResponse.Headers.Location = location.Uri;
-                    return redirectResponse;
+                    return Task.FromResult(redirectResponse);
                 }
 
                 // We are ready to get the file
@@ -97,7 +98,7 @@ namespace Kudu.Services.Infrastructure
             {
                 HttpResponseMessage conflictDirectoryResponse = Request.CreateErrorResponse(
                     HttpStatusCode.Conflict, Resources.VfsController_CannotUpdateDirectory);
-                return TaskHelpers.FromResult(conflictDirectoryResponse);
+                return Task.FromResult(conflictDirectoryResponse);
             }
             else
             {
@@ -108,7 +109,7 @@ namespace Kudu.Services.Infrastructure
                     UriBuilder location = new UriBuilder(Request.RequestUri);
                     location.Path = location.Path.TrimEnd(_uriSegmentSeparator);
                     redirectResponse.Headers.Location = location.Uri;
-                    return TaskHelpers.FromResult(redirectResponse);
+                    return Task.FromResult(redirectResponse);
                 }
 
                 // We are ready to update the file
@@ -117,14 +118,15 @@ namespace Kudu.Services.Infrastructure
         }
 
         [HttpDelete]
-        public virtual HttpResponseMessage DeleteItem()
+        public virtual Task<HttpResponseMessage> DeleteItem()
         {
             string localFilePath = GetLocalFilePath();
             DirectoryInfo info = new DirectoryInfo(localFilePath);
 
             if (info.Attributes < 0)
             {
-                return Request.CreateResponse(HttpStatusCode.NotFound);
+                HttpResponseMessage notFoundResponse = Request.CreateResponse(HttpStatusCode.NotFound);
+                return Task.FromResult(notFoundResponse);
             }
             else if ((info.Attributes & FileAttributes.Directory) != 0)
             {
@@ -137,11 +139,12 @@ namespace Kudu.Services.Infrastructure
                     Tracer.TraceError(ex);
                     HttpResponseMessage conflictDirectoryResponse = Request.CreateErrorResponse(
                         HttpStatusCode.Conflict, Resources.VfsControllerBase_CannotDeleteDirectory);
-                    return conflictDirectoryResponse;
+                    return Task.FromResult(conflictDirectoryResponse);
                 }
 
                 // Delete directory succeeded.
-                return Request.CreateResponse(HttpStatusCode.OK);
+                HttpResponseMessage successResponse = Request.CreateResponse(HttpStatusCode.OK);
+                return Task.FromResult(successResponse);
             }
             else
             {
@@ -152,7 +155,7 @@ namespace Kudu.Services.Infrastructure
                     UriBuilder location = new UriBuilder(Request.RequestUri);
                     location.Path = location.Path.TrimEnd(_uriSegmentSeparator);
                     redirectResponse.Headers.Location = location.Uri;
-                    return redirectResponse;
+                    return Task.FromResult(redirectResponse);
                 }
 
                 // We are ready to delete the file
@@ -168,11 +171,11 @@ namespace Kudu.Services.Infrastructure
 
         protected MediaTypeMap MediaTypeMap { get; private set; }
 
-        protected abstract HttpResponseMessage CreateItemGetResponse(FileSystemInfo info, string localFilePath);
+        protected abstract Task<HttpResponseMessage> CreateItemGetResponse(FileSystemInfo info, string localFilePath);
 
         protected abstract Task<HttpResponseMessage> CreateItemPutResponse(FileSystemInfo info, string localFilePath, bool itemExists);
 
-        protected virtual HttpResponseMessage CreateItemDeleteResponse(FileSystemInfo info, string localFilePath)
+        protected virtual Task<HttpResponseMessage> CreateItemDeleteResponse(FileSystemInfo info, string localFilePath)
         {
             // Generate file response
             Stream fileStream = null;
@@ -180,13 +183,15 @@ namespace Kudu.Services.Infrastructure
             {
                 fileStream = GetFileDeleteStream(localFilePath, validate: info);
                 File.Delete(localFilePath);
-                return Request.CreateResponse(HttpStatusCode.OK);
+                HttpResponseMessage successResponse = Request.CreateResponse(HttpStatusCode.OK);
+                return Task.FromResult(successResponse);
             }
             catch (Exception e)
             {
                 // Could not delete the file
                 Tracer.TraceError(e);
-                return Request.CreateErrorResponse(HttpStatusCode.NotFound, e);
+                HttpResponseMessage notFoundResponse = Request.CreateErrorResponse(HttpStatusCode.NotFound, e);
+                return Task.FromResult(notFoundResponse);
             }
             finally
             {
