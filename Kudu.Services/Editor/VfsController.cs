@@ -24,7 +24,7 @@ namespace Kudu.Services.Editor
         {
         }
 
-        protected override HttpResponseMessage CreateItemGetResponse(FileSystemInfo info, string localFilePath)
+        protected override Task<HttpResponseMessage> CreateItemGetResponse(FileSystemInfo info, string localFilePath)
         {
             // Get current etag
             EntityTagHeaderValue currentEtag = GetCurrentEtag(info);
@@ -34,7 +34,7 @@ namespace Kudu.Services.Editor
             {
                 HttpResponseMessage notModifiedResponse = Request.CreateResponse(HttpStatusCode.NotModified);
                 notModifiedResponse.Headers.ETag = currentEtag;
-                return notModifiedResponse;
+                return Task.FromResult(notModifiedResponse);
             }
 
             // Check whether we have a conditional range request containing both a Range and If-Range header field
@@ -60,7 +60,7 @@ namespace Kudu.Services.Editor
 
                 // Set etag for the file
                 successFileResponse.Headers.ETag = currentEtag;
-                return successFileResponse;
+                return Task.FromResult(successFileResponse);
             }
             catch (InvalidByteRangeException invalidByteRangeException)
             {
@@ -72,7 +72,7 @@ namespace Kudu.Services.Editor
                 {
                     fileStream.Close();
                 }
-                return invalidByteRangeResponse;
+                return Task.FromResult(invalidByteRangeResponse);
             }
             catch (Exception e)
             {
@@ -83,7 +83,7 @@ namespace Kudu.Services.Editor
                 {
                     fileStream.Close();
                 }
-                return errorResponse;
+                return Task.FromResult(errorResponse);
             }
         }
 
@@ -100,7 +100,7 @@ namespace Kudu.Services.Editor
                 {
                     HttpResponseMessage missingIfMatchResponse = Request.CreateErrorResponse(
                         HttpStatusCode.PreconditionFailed, Resources.VfsController_MissingIfMatch);
-                    return TaskHelpers.FromResult(missingIfMatchResponse);
+                    return Task.FromResult(missingIfMatchResponse);
                 }
 
                 bool isMatch = false;
@@ -118,7 +118,7 @@ namespace Kudu.Services.Editor
                     HttpResponseMessage conflictFileResponse = Request.CreateErrorResponse(
                         HttpStatusCode.PreconditionFailed, Resources.VfsController_EtagMismatch);
                     conflictFileResponse.Headers.ETag = currentEtag;
-                    return TaskHelpers.FromResult(conflictFileResponse);
+                    return Task.FromResult(conflictFileResponse);
                 }
             }
 
@@ -169,11 +169,11 @@ namespace Kudu.Services.Editor
                 {
                     fileStream.Close();
                 }
-                return TaskHelpers.FromResult(errorResponse);
+                return Task.FromResult(errorResponse);
             }
         }
 
-        protected override HttpResponseMessage CreateItemDeleteResponse(FileSystemInfo info, string localFilePath)
+        protected override Task<HttpResponseMessage> CreateItemDeleteResponse(FileSystemInfo info, string localFilePath)
         {
             // Get current etag
             EntityTagHeaderValue currentEtag = GetCurrentEtag(info);
@@ -183,7 +183,7 @@ namespace Kudu.Services.Editor
             {
                 HttpResponseMessage conflictDirectoryResponse = Request.CreateErrorResponse(
                     HttpStatusCode.PreconditionFailed, Resources.VfsController_MissingIfMatch);
-                return conflictDirectoryResponse;
+                return Task.FromResult(conflictDirectoryResponse);
             }
 
             bool isMatch = false;
@@ -201,7 +201,7 @@ namespace Kudu.Services.Editor
                 HttpResponseMessage conflictFileResponse = Request.CreateErrorResponse(
                     HttpStatusCode.PreconditionFailed, Resources.VfsController_EtagMismatch);
                 conflictFileResponse.Headers.ETag = currentEtag;
-                return conflictFileResponse;
+                return Task.FromResult(conflictFileResponse);
             }
 
             return base.CreateItemDeleteResponse(info, localFilePath);

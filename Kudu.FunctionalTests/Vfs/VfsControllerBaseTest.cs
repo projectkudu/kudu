@@ -263,6 +263,20 @@ namespace Kudu.FunctionalTests
                     Assert.Equal(updatedEtag, response.Headers.ETag);
                 }
 
+                // Check that update with wildcard etag succeeds
+                using (HttpRequestMessage update6 = new HttpRequestMessage())
+                {
+                    update6.Method = HttpMethod.Put;
+                    update6.RequestUri = new Uri(fileAddress);
+                    update6.Headers.IfMatch.Add(EntityTagHeaderValue.Any);
+                    update6.Content = CreateUploadContent(_fileContent1);
+                    response = Client.SendAsync(update6).Result;
+                    Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+                    Assert.NotNull(response.Headers.ETag);
+                    Assert.NotEqual(originalEtag, response.Headers.ETag);
+                    updatedEtag = response.Headers.ETag;
+                }
+
                 // Check that delete with invalid etag fails
                 using (HttpRequestMessage deleteRequest = new HttpRequestMessage())
                 {

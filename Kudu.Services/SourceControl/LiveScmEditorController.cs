@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Common;
 using Kudu.Contracts.Infrastructure;
@@ -31,6 +32,26 @@ namespace Kudu.Services.SourceControl
         private readonly static MediaTypeHeaderValue _conflictMediaType = MediaTypeHeaderValue.Parse("text/plain");
         private readonly static char[] _quote = new char[] { '"' };
 
+        // In case we already have a lock on the repository, we deploy an exponential
+        // backoff algorithm, see http://en.wikipedia.org/wiki/Exponential_backoff. The backoff delays fall 
+        // in a range 0ms to 1280ms. The table below represents 8 pre-generated backoff sequences (eight rows)
+        // computed using Random with seed 0. When a request comes in and there is contention then it will
+        // get assigned one of the 8 sequences and backoff accordingly. If there still is content after having
+        // gone through all the delays then a 503 response is generated with a Retry-After header field 
+        // indicating that the client can try again after the specified delay.
+        private readonly static TimeSpan _retryAfter = TimeSpan.FromSeconds(2);
+        private readonly static int[][] _delaySets = new int[][]
+        {
+            new int[] { 0, 20, 60, 30, 170, 110, 320, 1280 },
+            new int[] { 10, 30, 40, 60, 0, 30, 890, 1140 },
+            new int[] { 0, 10, 20, 100, 140, 590, 180, 1280 },
+            new int[] { 10, 20, 70, 130, 290, 510, 1150 },
+            new int[] { 0, 30, 50, 0, 110, 430, 1280 },
+            new int[] { 10, 0, 20, 40, 260, 350, 1160 },
+            new int[] { 0, 10, 0, 70, 80, 270, 1280 },
+            new int[] { 10, 30, 60, 110, 230, 190, 1170 },
+        };
+
         private readonly IOperationLock _operationLock;
         private readonly IRepository _repository;
         private readonly RepositoryConfiguration _repositoryConfiguration;
@@ -38,6 +59,7 @@ namespace Kudu.Services.SourceControl
         private EntityTagHeaderValue _currentEtag = null;
         private RepositoryItemStream _readStream = null;
         private bool _cleanupRebaseConflict;
+        private int _delaySetIndex = 0;
 
         public LiveScmEditorController(ITracer tracer,
                                        IOperationLock operationLock,
@@ -52,13 +74,15 @@ namespace Kudu.Services.SourceControl
             _currentEtag = GetCurrentEtag();
         }
 
-        public override HttpResponseMessage GetItem()
+        public override async Task<HttpResponseMessage> GetItem()
         {
             // Get a lock on the repository
-            if (!_operationLock.Lock())
+            HttpResponseMessage busyResponse = await TryGetLock();
+            if (busyResponse != null)
             {
-                return Request.CreateErrorResponse(HttpStatusCode.Conflict, Resources.VfsController_Busy);
+                return busyResponse;
             }
+
             try
             {
                 // Get current commit ID as etag. If null then repository is empty. Otherwise sync master to latest
@@ -68,12 +92,13 @@ namespace Kudu.Services.SourceControl
                 }
 
                 // Get file
-                return base.GetItem();
+                return await base.GetItem();
             }
             catch (Exception e)
             {
                 Tracer.TraceError(e);
-                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, e);
+                HttpResponseMessage errorResponse = Request.CreateErrorResponse(HttpStatusCode.InternalServerError, e);
+                return errorResponse;
             }
             finally
             {
@@ -85,48 +110,45 @@ namespace Kudu.Services.SourceControl
             }
         }
 
-        public override Task<HttpResponseMessage> PutItem()
+        public override async Task<HttpResponseMessage> PutItem()
         {
             // Get a lock on the repository
-            if (!_operationLock.Lock())
+            HttpResponseMessage busyResponse = await TryGetLock();
+            if (busyResponse != null)
             {
-                HttpResponseMessage busyResponse = Request.CreateErrorResponse(HttpStatusCode.Conflict, Resources.VfsController_Busy);
-                return TaskHelpers.FromResult(busyResponse);
+                return busyResponse;
             }
+
             try
             {
                 // Update file
-                return base.PutItem()
-                    .Catch(catchInfo =>
-                     {
-                         Tracer.TraceError(catchInfo.Exception);
-                         HttpResponseMessage errorResponse = Request.CreateErrorResponse(HttpStatusCode.InternalServerError, catchInfo.Exception);
-                         return catchInfo.Handled(errorResponse);
-                     })
-                    .Finally(() =>
-                    {
-                        // If we are sending data then RepositoryItemStream will release the lock
-                        if (_readStream == null)
-                        {
-                            _operationLock.Release();
-                        }
-                    }, runSynchronously: true);
+                HttpResponseMessage response = await base.PutItem();
+
+                // If we are sending data then RepositoryItemStream will release the lock
+                if (_readStream == null)
+                {
+                    _operationLock.Release();
+                }
+
+                return response;
             }
             catch (Exception e)
             {
                 _operationLock.Release();
                 Tracer.TraceError(e);
-                return TaskHelpers.FromResult(Request.CreateErrorResponse(HttpStatusCode.InternalServerError, e));
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, e);
             }
         }
 
-        public override HttpResponseMessage DeleteItem()
+        public override async Task<HttpResponseMessage> DeleteItem()
         {
             // Get a lock on the repository
-            if (!_operationLock.Lock())
+            HttpResponseMessage busyResponse = await TryGetLock();
+            if (busyResponse != null)
             {
-                return Request.CreateErrorResponse(HttpStatusCode.Conflict, Resources.VfsController_Busy);
+                return busyResponse;
             }
+
             try
             {
                 // Get current commit ID as etag. If null then repository is empty. Otherwise sync master to latest
@@ -136,12 +158,13 @@ namespace Kudu.Services.SourceControl
                 }
 
                 // Delete file
-                return base.DeleteItem();
+                return await base.DeleteItem();
             }
             catch (Exception e)
             {
                 Tracer.TraceError(e);
-                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, e);
+                HttpResponseMessage errorResponse = Request.CreateErrorResponse(HttpStatusCode.InternalServerError, e);
+                return errorResponse;
             }
             finally
             {
@@ -149,14 +172,14 @@ namespace Kudu.Services.SourceControl
             }
         }
 
-        protected override HttpResponseMessage CreateItemGetResponse(FileSystemInfo info, string localFilePath)
+        protected override Task<HttpResponseMessage> CreateItemGetResponse(FileSystemInfo info, string localFilePath)
         {
             // Check whether we have a conditional If-None-Match request
             if (IsIfNoneMatchRequest(_currentEtag))
             {
                 HttpResponseMessage notModifiedResponse = Request.CreateResponse(HttpStatusCode.NotModified);
                 notModifiedResponse.Headers.ETag = _currentEtag;
-                return notModifiedResponse;
+                return Task.FromResult(notModifiedResponse);
             }
 
             // Check whether we have a conditional range request containing both a Range and If-Range header field
@@ -181,7 +204,7 @@ namespace Kudu.Services.SourceControl
 
                 // Set etag for the file
                 successFileResponse.Headers.ETag = _currentEtag;
-                return successFileResponse;
+                return Task.FromResult(successFileResponse);
             }
             catch (InvalidByteRangeException invalidByteRangeException)
             {
@@ -190,7 +213,7 @@ namespace Kudu.Services.SourceControl
                 Tracer.TraceError(invalidByteRangeException);
                 HttpResponseMessage invalidByteRangeResponse = Request.CreateErrorResponse(invalidByteRangeException);
                 CloseReadStream();
-                return invalidByteRangeResponse;
+                return Task.FromResult(invalidByteRangeResponse);
             }
             catch (Exception e)
             {
@@ -198,7 +221,7 @@ namespace Kudu.Services.SourceControl
                 Tracer.TraceError(e);
                 HttpResponseMessage errorResponse = Request.CreateErrorResponse(HttpStatusCode.NotFound, e);
                 CloseReadStream();
-                return errorResponse;
+                return Task.FromResult(errorResponse);
             }
         }
 
@@ -210,7 +233,7 @@ namespace Kudu.Services.SourceControl
                 HttpResponseMessage errorResponse;
                 if (!PrepareBranch(itemExists, out errorResponse))
                 {
-                    return TaskHelpers.FromResult(errorResponse);
+                    return Task.FromResult(errorResponse);
                 }
             }
             else
@@ -320,11 +343,11 @@ namespace Kudu.Services.SourceControl
                 {
                     fileStream.Close();
                 }
-                return TaskHelpers.FromResult(errorResponse);
+                return Task.FromResult(errorResponse);
             }
         }
 
-        protected override HttpResponseMessage CreateItemDeleteResponse(FileSystemInfo info, string localFilePath)
+        protected override async Task<HttpResponseMessage> CreateItemDeleteResponse(FileSystemInfo info, string localFilePath)
         {
             HttpResponseMessage response;
             if (!PrepareBranch(true, out response))
@@ -332,7 +355,7 @@ namespace Kudu.Services.SourceControl
                 return response;
             }
 
-            response = base.CreateItemDeleteResponse(info, localFilePath);
+            response = await base.CreateItemDeleteResponse(info, localFilePath);
 
             // Use to track whether our rebase applied updates from master.
             bool updateBranchIsUpToDate = false;
@@ -371,6 +394,28 @@ namespace Kudu.Services.SourceControl
             return response;
         }
 
+        private async Task<HttpResponseMessage> TryGetLock()
+        {
+            int index = Interlocked.Increment(ref _delaySetIndex);
+            int[] delaySet = _delaySets[index % _delaySets.Length];
+            for (int cnt = 0; cnt < delaySet.Length; cnt++)
+            {
+                if (_operationLock.Lock())
+                {
+                    // We got a lock and can continue
+                    return null;
+                }
+
+                // We didn't get a lock and so delay exponentially before trying again
+                await Task.Delay(delaySet[cnt]);
+            }
+
+            // If we have gone through our delays and still can't get a lock then we give up and return 503
+            HttpResponseMessage busyResponse = Request.CreateErrorResponse(HttpStatusCode.ServiceUnavailable, Resources.VfsController_Busy);
+            busyResponse.Headers.RetryAfter = new RetryConditionHeaderValue(_retryAfter);
+            return busyResponse;
+        }
+
         private bool PrepareBranch(bool itemExists, out HttpResponseMessage errorResponse)
         {
             // Existing resources require an etag to be updated or deleted.
@@ -393,7 +438,8 @@ namespace Kudu.Services.SourceControl
                     return false;
                 }
 
-                startPoint = ifMatch.Tag.Trim(_quote);
+                // If wild card match then set to current commit it
+                startPoint = ifMatch != EntityTagHeaderValue.Any ? ifMatch.Tag.Trim(_quote) : _currentEtag.Tag.Trim(_quote);
             }
 
             try
