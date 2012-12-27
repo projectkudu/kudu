@@ -57,6 +57,9 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void PushAndDeployNodeAppExpress()
         {
+            // Ensure node is installed.
+            Assert.Contains("nodejs", Environment.GetEnvironmentVariable("Path"), StringComparison.OrdinalIgnoreCase);
+
             PushAndDeployApps("https://github.com/KuduApps/Express-Template.git", "master", "Modify this template to jump-start your Node.JS Express Web Pages application", HttpStatusCode.OK, "");
         }
 
