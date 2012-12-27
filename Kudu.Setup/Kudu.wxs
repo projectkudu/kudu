@@ -97,6 +97,10 @@
         <File Id="semver.js" Source="$(var.KuduServiceBinScriptsDir)\semver.js" />
       </Component>
 
+      <Component Id="starter.cmd" Guid="{4614DB70-81C5-43B0-BC84-37364089A7D5}">
+        <File Id="starter.cmd" Source="$(var.KuduServiceBinScriptsDir)\starter.cmd" />
+      </Component>
+
     </DirectoryRef>
 
     <DirectoryRef Id="KUDU_SERVICE_BIN">
@@ -178,6 +182,7 @@
       <ComponentRef Id="Kudu.Services.Web.dll"/>
       <ComponentRef Id="selectNodeVersion.js"/>
       <ComponentRef Id="semver.js"/>
+      <ComponentRef Id="starter.cmd"/>
 
       <ComponentRef Id="Ninject.dll" />
 

@@ -5,6 +5,7 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Contracts.Settings;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Kudu.Core.Deployment.Generator
 {
@@ -17,12 +18,12 @@ namespace Kudu.Core.Deployment.Generator
         private const string MSBuildPath = "MSBUILD_PATH";
         private const string PreviousManifestPath = "PREVIOUS_MANIFEST_PATH";
         private const string NextManifestPath = "NEXT_MANIFEST_PATH";
+        private const string StarterScriptName = "starter.cmd";
 
         public ExternalCommandBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string repositoryPath)
         {
             Environment = environment;
 
-            // TODO: add all settings as environment variables
             DeploymentSettings = settings;
             RepositoryPath = repositoryPath;
             PropertyProvider = propertyProvider;
@@ -52,7 +53,7 @@ namespace Kudu.Core.Deployment.Generator
 
             // Creates an executable pointing to cmd and the working directory being
             // the repository root
-            var exe = new Executable("cmd", RepositoryPath);
+            var exe = new Executable(StarterScriptPath, RepositoryPath);
             exe.AddDeploymentSettingsAsEnvironmentVariables(DeploymentSettings);
             exe.EnvironmentVariables[SourcePath] = RepositoryPath;
             exe.EnvironmentVariables[TargetPath] = context.OutputPath;
@@ -93,7 +94,7 @@ namespace Kudu.Core.Deployment.Generator
 
             try
             {
-                exe.ExecuteWithProgressWriter(customLogger, context.Tracer, ShouldFilterOutMsBuildWarnings, "/c " + command, String.Empty);
+                exe.ExecuteWithProgressWriter(customLogger, context.Tracer, ShouldFilterOutMsBuildWarnings, command, String.Empty);
             }
             catch (CommandLineException ex)
             {
@@ -139,6 +140,14 @@ namespace Kudu.Core.Deployment.Generator
             get
             {
                 return Path.Combine(Environment.NodeModulesPath, ".bin", "kudusync.cmd");
+            }
+        }
+
+        private string StarterScriptPath
+        {
+            get
+            {
+                return Path.Combine(Environment.ScriptPath, StarterScriptName);
             }
         }
 
