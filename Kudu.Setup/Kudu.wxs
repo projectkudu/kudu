@@ -52,7 +52,6 @@
           <Directory Id="KUDU_WWWROOT" Name="wwwroot">
             <Directory Id="KUDU_SERVICE_BIN" Name="Bin">
               <Directory Id="KUDU_SERVICE_BIN_SCRIPTS" Name="Scripts" />
-              <Directory Id="KUDU_SERVICE_BIN_NODE_MODULES" Name="node_modules" />
             </Directory>
           </Directory>
         </Directory>

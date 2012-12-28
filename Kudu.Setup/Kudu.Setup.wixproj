@@ -40,7 +40,7 @@
   </ItemGroup>
   <Import Project="$(WixTargetsPath)" />
   <PropertyGroup>
-    <PreBuildEvent>"$(WIX)bin\heat" dir $(ProjectDir)\..\Kudu.Services.Web\bin\node_modules -cg NodeModules -dr KUDU_SERVICE_BIN_NODE_MODULES -gg -var var.KuduServiceBinNodeModulesDir -wixvar -out $(ProjectDir)\NodeModulesFragment.wxs</PreBuildEvent>
+    <PreBuildEvent>"$(WIX)bin\heat" dir $(ProjectDir)\..\Kudu.Services.Web\bin\node_modules -cg NodeModules -dr KUDU_SERVICE_BIN -gg -var var.KuduServiceBinNodeModulesDir -wixvar -out $(ProjectDir)\NodeModulesFragment.wxs</PreBuildEvent>
   </PropertyGroup>
   <!--
     To modify your build process, add your task inside one of the targets below and uncomment it.
