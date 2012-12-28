@@ -3,15 +3,17 @@
 pushd %1
 
 if exist %1\node_modules\azure-cli\bin\azure (
-  call npm update azure-cli
+  cmd /c npm update azure-cli
 ) else (
-  call npm install azure-cli
+  cmd /c npm install azure-cli
 )
 
+IF %ERRORLEVEL% NEQ 0 goto error
+
 if exist %1\node_modules\kudusync\bin\kudusync (
-  call npm update kudusync
+  cmd /c npm update kudusync
 ) else (
-  call npm install kudusync
+  cmd /c npm install kudusync
 )
 
 popd
