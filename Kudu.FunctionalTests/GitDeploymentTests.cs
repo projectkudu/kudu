@@ -87,7 +87,9 @@ namespace Kudu.FunctionalTests
                 // Assert
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
-                KuduAssert.VerifyLogOutput(appManager, results[0].Id, verificationLogText.Trim());
+
+                // Also validate custom script output supports unicode
+                KuduAssert.VerifyLogOutput(appManager, results[0].Id, new string[] { verificationLogText, "酷度酷度" });
             });
         }
 

@@ -52,7 +52,6 @@
           <Directory Id="KUDU_WWWROOT" Name="wwwroot">
             <Directory Id="KUDU_SERVICE_BIN" Name="Bin">
               <Directory Id="KUDU_SERVICE_BIN_SCRIPTS" Name="Scripts" />
-              <Directory Id="KUDU_SERVICE_BIN_NODE_MODULES" Name="node_modules" />
             </Directory>
           </Directory>
         </Directory>
@@ -95,6 +94,10 @@
 
       <Component Id="semver.js" Guid="{B54E4DAF-E614-4C3A-9583-97327362D1CB}">
         <File Id="semver.js" Source="$(var.KuduServiceBinScriptsDir)\semver.js" />
+      </Component>
+
+      <Component Id="starter.cmd" Guid="{4614DB70-81C5-43B0-BC84-37364089A7D5}">
+        <File Id="starter.cmd" Source="$(var.KuduServiceBinScriptsDir)\starter.cmd" />
       </Component>
 
     </DirectoryRef>
@@ -178,6 +181,7 @@
       <ComponentRef Id="Kudu.Services.Web.dll"/>
       <ComponentRef Id="selectNodeVersion.js"/>
       <ComponentRef Id="semver.js"/>
+      <ComponentRef Id="starter.cmd"/>
 
       <ComponentRef Id="Ninject.dll" />
 

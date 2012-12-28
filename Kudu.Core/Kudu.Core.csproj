@@ -148,6 +148,9 @@
     <Compile Include="Infrastructure\PathUtility.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Scripts\starter.cmd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

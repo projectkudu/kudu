@@ -14,6 +14,7 @@ namespace Kudu.Core.Deployment
         private readonly string _repositoryPath;
         private readonly string _tempPath;
         private readonly string _homePath;
+        private readonly string _scriptPath;
         private readonly IBuildPropertyProvider _propertyProvider;
         private readonly IDeploymentSettingsManager _settings;
 
@@ -23,14 +24,16 @@ namespace Kudu.Core.Deployment
         private const string PreviousManifestPath = "PREVIOUS_MANIFEST_PATH";
         private const string NextManifestPath = "NEXT_MANIFEST_PATH";
         private const string MSBuildPath = "MSBUILD_PATH";
+        private const string StarterScriptName = "starter.cmd";
 
-        public CustomBuilder(string repositoryPath, string tempPath, string command, IBuildPropertyProvider propertyProvider, string homePath, IDeploymentSettingsManager settings)
+        public CustomBuilder(string repositoryPath, string tempPath, string command, IBuildPropertyProvider propertyProvider, string homePath, string scriptPath, IDeploymentSettingsManager settings)
         {
             _repositoryPath = repositoryPath;
             _tempPath = tempPath;
             _command = command;
             _propertyProvider = propertyProvider;
             _homePath = homePath;
+            _scriptPath = scriptPath;
             _settings = settings;
         }
 
@@ -42,7 +45,7 @@ namespace Kudu.Core.Deployment
 
             // Creates an executable pointing to cmd and the working directory being
             // the repository root
-            var exe = new Executable("cmd", _repositoryPath);
+            var exe = new Executable(StarterScriptPath, _repositoryPath);
             exe.AddDeploymentSettingsAsEnvironmentVariables(_settings);
             exe.EnvironmentVariables[SourcePath] = _repositoryPath;
             exe.EnvironmentVariables[TargetPath] = context.OutputPath;
@@ -77,7 +80,7 @@ namespace Kudu.Core.Deployment
 
             try
             {
-                exe.ExecuteWithProgressWriter(customLogger, context.Tracer, ExternalCommandBuilder.ShouldFilterOutMsBuildWarnings, "/c " + _command, String.Empty);
+                exe.ExecuteWithProgressWriter(customLogger, context.Tracer, ExternalCommandBuilder.ShouldFilterOutMsBuildWarnings, _command, String.Empty);
 
                 tcs.SetResult(null);
             }
@@ -104,6 +107,14 @@ namespace Kudu.Core.Deployment
             }
 
             return tcs.Task;
+        }
+
+        private string StarterScriptPath
+        {
+            get
+            {
+                return Path.Combine(_scriptPath, StarterScriptName);
+            }
         }
     }
 }

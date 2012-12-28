@@ -30,7 +30,7 @@ namespace Kudu.Core.Deployment
             // If there's a custom deployment file then let that take over.
             if (!String.IsNullOrEmpty(configuration.Command))
             {
-                return new CustomBuilder(repositoryRoot, _environment.TempPath, configuration.Command, _propertyProvider, _environment.SiteRootPath, _settings);
+                return new CustomBuilder(repositoryRoot, _environment.TempPath, configuration.Command, _propertyProvider, _environment.SiteRootPath, _environment.ScriptPath, _settings);
             }
 
             // If the repository has an explicit pointer to a project path to be deployed
