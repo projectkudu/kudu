@@ -199,6 +199,9 @@
   <data name="Log_DeploymentAlreadyActive" xml:space="preserve">
     <value>Deployment '{0}' already active.</value>
   </data>
+  <data name="Log_DeploymentScriptGeneratorCommand" xml:space="preserve">
+    <value>Using the following command to generate deployment script: 'azure {0}'.</value>
+  </data>
   <data name="Log_DeploymentSuccessful" xml:space="preserve">
     <value>Deployment successful.</value>
   </data>

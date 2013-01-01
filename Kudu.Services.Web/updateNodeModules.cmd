@@ -3,9 +3,9 @@
 pushd %1
 
 if exist %1\node_modules\azure-cli\bin\azure (
-  cmd /c npm update azure-cli
+  cmd /c npm update https://github.com/amitapl/azure-sdk-tools-xplat/tarball/latest
 ) else (
-  cmd /c npm install azure-cli
+  cmd /c npm install https://github.com/amitapl/azure-sdk-tools-xplat/tarball/latest
 )
 
 IF %ERRORLEVEL% NEQ 0 goto error
