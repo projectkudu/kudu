@@ -106,13 +106,20 @@ namespace Kudu.FunctionalTests
                 }
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
-                // Assert
-                Assert.Equal(1, results.Count);
-                Assert.Equal(DeployStatus.Success, results[0].Status);
-                KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText, expectedResponseCode);
-                if (!String.IsNullOrEmpty(verificationLogText))
+                try
                 {
-                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, verificationLogText.Trim());
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText, expectedResponseCode);
+                    if (!String.IsNullOrEmpty(verificationLogText))
+                    {
+                        KuduAssert.VerifyLogOutput(appManager, results[0].Id, verificationLogText.Trim());
+                    }
+                }
+                finally
+                {
+                    TestTracer.TraceDeploymentLog(appManager, results[0].Id);
                 }
             });
         }
