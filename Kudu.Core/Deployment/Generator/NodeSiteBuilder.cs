@@ -12,9 +12,9 @@ namespace Kudu.Core.Deployment.Generator
         {
         }
 
-        protected override void PreBuild(DeploymentContext context)
+        protected override void PostDeployScript(DeploymentContext context)
         {
-            base.PreBuild(context);
+            base.PostDeployScript(context);
             SelectNodeVersion(context);
         }
 
@@ -27,7 +27,7 @@ namespace Kudu.Core.Deployment.Generator
             try
             {
                 string sourcePath = String.IsNullOrEmpty(ProjectPath) ? RepositoryPath : ProjectPath;
-                string log = NodeSiteEnabler.SelectNodeVersion(fileSystem, Environment.ScriptPath, sourcePath, context.Tracer);
+                string log = NodeSiteEnabler.SelectNodeVersion(fileSystem, Environment.ScriptPath, sourcePath, context.OutputPath, context.Tracer);
 
                 innerLogger.Log(log);
             }

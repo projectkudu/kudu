@@ -33,9 +33,9 @@ namespace Kudu.Core.Deployment.Generator
 
             try
             {
-                PreBuild(context);
                 GenerateScript(context, buildLogger);
                 RunCommand(context, "deploy.cmd");
+                PostDeployScript(context);
                 tcs.SetResult(null);
             }
             catch (Exception ex)
@@ -47,7 +47,7 @@ namespace Kudu.Core.Deployment.Generator
             return tcs.Task;
         }
 
-        protected virtual void PreBuild(DeploymentContext context)
+        protected virtual void PostDeployScript(DeploymentContext context)
         {
         }
 
@@ -72,6 +72,7 @@ namespace Kudu.Core.Deployment.Generator
                     scriptGenerator.SetHomePath(HomePath);
 
                     var scriptGeneratorCommand = String.Format(ScriptGeneratorCommandFormat, RepositoryPath, ScriptGeneratorCommandArguments);
+                    buildLogger.Log(Resources.Log_DeploymentScriptGeneratorCommand, scriptGeneratorCommand);
 
                     scriptGenerator.ExecuteWithProgressWriter(buildLogger, context.Tracer, _ => false, scriptGeneratorCommand);
                 }

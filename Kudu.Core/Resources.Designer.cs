@@ -245,6 +245,15 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Using the following command to generate deployment script: &apos;azure {0}&apos;..
+        /// </summary>
+        internal static string Log_DeploymentScriptGeneratorCommand {
+            get {
+                return ResourceManager.GetString("Log_DeploymentScriptGeneratorCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Deployment successful..
         /// </summary>
         internal static string Log_DeploymentSuccessful {

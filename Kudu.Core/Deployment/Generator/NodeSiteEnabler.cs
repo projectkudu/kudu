@@ -25,7 +25,7 @@ namespace Kudu.Core.Deployment.Generator
             return false;
         }
 
-        public static string SelectNodeVersion(IFileSystem fileSystem, string scriptPath, string sourcePath, ITracer tracer)
+        public static string SelectNodeVersion(IFileSystem fileSystem, string scriptPath, string sourcePath, string destinationPath, ITracer tracer)
         {
             // The node.js version selection logic is implemented in selectNodeVersion.js. 
 
@@ -35,9 +35,10 @@ namespace Kudu.Core.Deployment.Generator
             {
                 return executor.ExecuteWithConsoleOutput(
                     tracer,
-                    "\"{0}\\selectNodeVersion.js\" \"{1}\" \"{1}\"",
+                    "\"{0}\\selectNodeVersion.js\" \"{1}\" \"{2}\"",
                     scriptPath,
-                    sourcePath).Item1;
+                    sourcePath,
+                    destinationPath).Item1;
             }
             catch (Exception e)
             {
