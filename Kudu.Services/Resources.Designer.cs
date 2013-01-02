@@ -196,6 +196,15 @@ namespace Kudu.Services {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Repository could not be found..
+        /// </summary>
+        internal static string Error_RepositoryNotFound {
+            get {
+                return ResourceManager.GetString("Error_RepositoryNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The json payload is unsupported..
         /// </summary>
         internal static string Error_UnsupportedFormat {

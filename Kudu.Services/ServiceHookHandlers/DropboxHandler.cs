@@ -1,21 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Web;
 using Kudu.Contracts.Dropbox;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.SourceControl;
-using Kudu.Services.Dropbox;
 using Newtonsoft.Json.Linq;
 
-namespace Kudu.Services.GitServer.ServiceHookHandlers
+namespace Kudu.Services.ServiceHookHandlers
 {
     public class DropboxHandler : IServiceHookHandler
     {
         protected readonly ITracer _tracer;
-        protected readonly DropboxHelper _helper;
+        protected readonly DropboxHelper _dropBoxHelper;
 
         public DropboxHandler(ITracer tracer,
                               IServerRepository repository,
@@ -23,36 +20,36 @@ namespace Kudu.Services.GitServer.ServiceHookHandlers
                               IEnvironment environment)
         {
             _tracer = tracer;
-            _helper = new DropboxHelper(tracer, repository, settings, environment);
+            _dropBoxHelper = new DropboxHelper(tracer, repository, settings, environment);
         }
 
-        public bool TryGetRepositoryInfo(HttpRequest request, JObject payload, out RepositoryInfo repositoryInfo)
+        public DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
         {
-            repositoryInfo = null;
+            deploymentInfo = null;
             if (!String.IsNullOrEmpty(payload.Value<string>("NewCursor")))
             {
-                repositoryInfo = new DropboxInfo(payload);
+                deploymentInfo = new DropboxInfo(payload);
+                return DeployAction.ProcessDeployment;
             }
 
-            return repositoryInfo != null;
+            return DeployAction.UnknownPayload;
         }
 
-        public virtual void Fetch(RepositoryInfo repositoryInfo, string targetBranch)
+        public virtual void Fetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch)
         {
             // Sync with dropbox
-            DropboxInfo info = (DropboxInfo)repositoryInfo;
-
-            _helper.Sync(info.DeployInfo, targetBranch);
+            var dropboxInfo = ((DropboxInfo)deploymentInfo);
+            _dropBoxHelper.Sync(dropboxInfo.DeployInfo, targetBranch);
         }
 
-        private class DropboxInfo : RepositoryInfo
+        internal class DropboxInfo : DeploymentInfo
         {
             public DropboxInfo(JObject payload)
             {
                 Deployer = DropboxHelper.Dropbox;
-                NewRef = "dummy";
-                OldRef = "dummy";
                 DeployInfo = payload.ToObject<DropboxDeployInfo>();
+                // This ensure that the fetch handler provides an underlying Git repository.
+                RepositoryType = RepositoryType.Git;
             }
 
             public DropboxDeployInfo DeployInfo { get; set; }

@@ -120,6 +120,9 @@
   <data name="Copied" xml:space="preserve">
     <value>Copied '{0}'.</value>
   </data>
+  <data name="Deployment_UnknownValue" xml:space="preserve">
+    <value>N/A</value>
+  </data>
   <data name="Error_AmbiguousProjects" xml:space="preserve">
     <value>Unable to determine which project file to build. {0}.</value>
   </data>
@@ -132,8 +135,14 @@
   <data name="Error_FailedToLocateGit" xml:space="preserve">
     <value>Unable to locate 'git.exe'. Make sure it is installed.</value>
   </data>
+  <data name="Error_FailedToLocateHg" xml:space="preserve">
+    <value>Unable to locate 'hg.exe'. Make sure it is installed.</value>
+  </data>
   <data name="Error_FailedToLocateSsh" xml:space="preserve">
     <value>Unable to locate 'ssh.exe'. Make sure it is installed.</value>
+  </data>
+  <data name="Error_MismatchRepository" xml:space="preserve">
+    <value>Expected a '{0}' repository but found a '{1}' repository at path '{2}'.</value>
   </data>
   <data name="Error_NoLogFound" xml:space="preserve">
     <value>No log found for '{0}'.</value>

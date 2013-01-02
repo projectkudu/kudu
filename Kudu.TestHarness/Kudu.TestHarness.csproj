@@ -59,6 +59,7 @@
   <ItemGroup>
     <Compile Include="ApplicationManager.cs" />
     <Compile Include="ApplicationManagerExtensions.cs" />
+    <Compile Include="Hg.cs" />
     <Compile Include="TestTracer.cs" />
     <Compile Include="HttpUtils.cs" />
     <Compile Include="KuduUtils.cs" />

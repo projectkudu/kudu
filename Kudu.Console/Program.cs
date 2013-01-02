@@ -14,6 +14,7 @@ using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
+using Kudu.Core.SourceControl;
 
 namespace Kudu.Console
 {
@@ -63,12 +64,12 @@ namespace Kudu.Console
 
             var fs = new FileSystem();
             var buildPropertyProvider = new BuildPropertyProvider();
-            var serverRepository = new GitDeploymentRepository(env.RepositoryPath, env.SiteRootPath, traceFactory);
             var builderFactory = new SiteBuilderFactoryDispatcher(settingsManager, buildPropertyProvider, env);
 
+            var gitRepository = new GitExeRepository(env.RepositoryPath, env.SiteRootPath, traceFactory);
+
             var logger = new ConsoleLogger();
-            var deploymentManager = new DeploymentManager(serverRepository,
-                                                          builderFactory, 
+            var deploymentManager = new DeploymentManager(builderFactory, 
                                                           env, 
                                                           fs, 
                                                           traceFactory, 
@@ -87,7 +88,7 @@ namespace Kudu.Console
             {
                 try
                 {
-                    deploymentManager.Deploy(deployer);
+                    deploymentManager.Deploy(gitRepository, deployer);
                 }
                 catch
                 {
@@ -155,7 +156,7 @@ namespace Kudu.Console
             string repositoryPath = Path.Combine(siteRoot, Constants.RepositoryPath);
             string tempPath = Path.GetTempPath();
             string deploymentTempPath = Path.Combine(tempPath, Constants.RepositoryPath);
-            string binPath = new FileInfo(Process.GetCurrentProcess().MainModule.FileName).DirectoryName;
+            string binPath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
             string scriptPath = Path.Combine(binPath, Constants.ScriptsPath);
             string nodeModulesPath = Path.Combine(binPath, Constants.NodeModulesPath);
 

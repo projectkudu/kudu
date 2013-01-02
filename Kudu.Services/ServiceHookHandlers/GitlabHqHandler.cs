@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Linq;
 using System.Web;
+using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Newtonsoft.Json.Linq;
 
-namespace Kudu.Services.GitServer.ServiceHookHandlers
+namespace Kudu.Services.ServiceHookHandlers
 {
     public class GitlabHqHandler : GitHubCompatHandler
     {
@@ -12,7 +14,7 @@ namespace Kudu.Services.GitServer.ServiceHookHandlers
         {
         }
 
-        protected override RepositoryInfo GetRepositoryInfo(HttpRequest request, JObject payload)
+        protected override GitDeploymentInfo GetDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch)
         {
             var repository = payload.Value<JObject>("repository");
             var userid = payload.Value<int?>("user_id");
@@ -24,11 +26,20 @@ namespace Kudu.Services.GitServer.ServiceHookHandlers
                 return null;
             }
 
-            var info = new RepositoryInfo();
+            string newRef = payload.Value<string>("after");
+            if (IsDeleteCommit(newRef))
+            {
+                return null;
+            }
+            var commits = payload.Value<JArray>("commits");
+            var info = new GitDeploymentInfo { RepositoryType = RepositoryType.Git };
+            info.NewRef = payload.Value<string>("after");
+            info.TargetChangeset = ParseChangeSet(info.NewRef, commits);
 
             // gitlabHq format
             // { "before":"34d62c0ad9387a8b9274ad77e878e195c342772b", "after":"02652ef69da7ee3d49134a961bffcb50702661ce", "ref":"refs/heads/master", "user_id":1, "user_name":"Remco Ros", "repository":{ "name":"inspectbin", "url":"http://gitlab.proscat.nl/inspectbin", "description":null, "homepage":"http://gitlab.proscat.nl/inspectbin"  }, "commits":[ { "id":"4109312962bb269ecc3a0d7a3c82a119dcd54c8b", "message":"add uservoice", "timestamp":"2012-11-11T14:32:02+01:00", "url":"http://gitlab.proscat.nl/inspectbin/commits/4109312962bb269ecc3a0d7a3c82a119dcd54c8b", "author":{ "name":"Remco Ros", "email":"r.ros@proscat.nl" }}], "total_commits_count":12 }
             info.RepositoryUrl = repository.Value<string>("url");
+            
 
             // Currently Gitlab url's are broken.
             if (!info.RepositoryUrl.EndsWith(".git"))
@@ -55,9 +66,6 @@ namespace Kudu.Services.GitServer.ServiceHookHandlers
             {
                 return null;
             }
-            info.OldRef = payload.Value<string>("before");
-            info.NewRef = payload.Value<string>("after");
-
             info.Deployer = "GitlabHQ";
 
             // private repo, use SSH

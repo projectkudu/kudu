@@ -175,7 +175,9 @@ namespace Kudu.Core.Infrastructure
 
         internal static bool IsSourceControlFolder(string path)
         {
-            return path.StartsWith(".git", StringComparison.OrdinalIgnoreCase);
+            // TODO: Update kudu sync
+            return path.StartsWith(".git", StringComparison.OrdinalIgnoreCase) ||
+                   path.StartsWith(".hg", StringComparison.OrdinalIgnoreCase);
         }
 
         internal static bool IsSourceControlFolder(DirectoryInfoBase directoryInfo)

@@ -137,27 +137,30 @@
     <Compile Include="Diagnostics\LogStreamHandler.cs" />
     <Compile Include="Diagnostics\LogStreamManager.cs" />
     <Compile Include="Editor\VfsController.cs" />
-    <Compile Include="Dropbox\DropboxHelper.cs" />
+    <Compile Include="FetchHelpers\DropboxHelper.cs" />
     <Compile Include="GitServer\GitServerHttpHandler.cs" />
-    <Compile Include="GitServer\ServiceHookHandlers\CodebaseHqHandler.cs" />
-    <Compile Include="GitServer\ServiceHookHandlers\CodePlexHandler.cs" />
-    <Compile Include="GitServer\ServiceHookHandlers\DropboxHandler.cs" />
-    <Compile Include="GitServer\ServiceHookHandlers\GitHubCompatHandler.cs" />
-    <Compile Include="GitServer\ServiceHookHandlers\GitlabHqHandler.cs" />
-    <Compile Include="GitServer\ServiceHookHandlers\RepositoryInfo.cs" />
-    <Compile Include="GitServer\ServiceHookHandlers\IServiceHookHandler.cs" />
-    <Compile Include="GitServer\ServiceHookHandlers\BitbucketHandler.cs" />
-    <Compile Include="GitServer\ServiceHookHandlers\GitHubHandler.cs" />
+    <Compile Include="HttpRequestExtensions.cs" />
+    <Compile Include="ServiceHookHandlers\CodebaseHqHandler.cs" />
+    <Compile Include="ServiceHookHandlers\CodePlexHandler.cs" />
+    <Compile Include="ServiceHookHandlers\DropboxHandler.cs" />
+    <Compile Include="ServiceHookHandlers\GitDeploymentInfo.cs" />
+    <Compile Include="ServiceHookHandlers\GitHubCompatHandler.cs" />
+    <Compile Include="ServiceHookHandlers\GitlabHqHandler.cs" />
+    <Compile Include="ServiceHookHandlers\DeploymentInfo.cs" />
+    <Compile Include="ServiceHookHandlers\IServiceHookHandler.cs" />
+    <Compile Include="ServiceHookHandlers\BitbucketHandler.cs" />
+    <Compile Include="ServiceHookHandlers\GitHubHandler.cs" />
     <Compile Include="GitServer\UploadPackHandler.cs" />
     <Compile Include="Infrastructure\ShutdownDetector.cs" />
     <Compile Include="Infrastructure\DelegatingStream.cs" />
     <Compile Include="ByteRanges\HttpRequestMessageExtensions.cs" />
     <Compile Include="Infrastructure\MediaTypeMap.cs" />
     <Compile Include="Infrastructure\VfsControllerBase.cs" />
+    <Compile Include="ServiceHookHandlers\ServiceHookHandlerBase.cs" />
     <Compile Include="SourceControl\LiveScmEditorController.cs" />
     <Compile Include="SSHKey\SSHKeyController.cs" />
     <Compile Include="EnvironmentController.cs" />
-    <Compile Include="GitServer\FetchHandler.cs" />
+    <Compile Include="ServiceHookHandlers\FetchHandler.cs" />
     <Compile Include="GitServer\Helpers.cs" />
     <Compile Include="GitServer\InfoRefsController.cs" />
     <Compile Include="GitServer\ReceivePackHandler.cs" />
@@ -196,6 +199,7 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

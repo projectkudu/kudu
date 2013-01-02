@@ -12,7 +12,7 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.SourceControl;
 
-namespace Kudu.Services.Dropbox
+namespace Kudu.Services
 {
     public class DropboxHelper
     {

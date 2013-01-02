@@ -7,7 +7,7 @@ using Xunit;
 
 namespace Kudu.Core.Test
 {
-    public class GitRepositoryRepositoryTest
+    public class GitRepositoryTest
     {
         [Fact]
         public void IsDiffHeaderReturnsTrueForValidDiffHeaders()

@@ -70,6 +70,15 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to N/A.
+        /// </summary>
+        internal static string Deployment_UnknownValue {
+            get {
+                return ResourceManager.GetString("Deployment_UnknownValue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Unable to determine which project file to build. {0}..
         /// </summary>
         internal static string Error_AmbiguousProjects {
@@ -106,11 +115,29 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Unable to locate &apos;hg.exe&apos;. Make sure it is installed..
+        /// </summary>
+        internal static string Error_FailedToLocateHg {
+            get {
+                return ResourceManager.GetString("Error_FailedToLocateHg", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Unable to locate &apos;ssh.exe&apos;. Make sure it is installed..
         /// </summary>
         internal static string Error_FailedToLocateSsh {
             get {
                 return ResourceManager.GetString("Error_FailedToLocateSsh", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Expected a &apos;{0}&apos; repository but found a &apos;{1}&apos; repository at path &apos;{2}&apos;..
+        /// </summary>
+        internal static string Error_MismatchRepository {
+            get {
+                return ResourceManager.GetString("Error_MismatchRepository", resourceCulture);
             }
         }
         

@@ -43,6 +43,33 @@ namespace Kudu.Core.SourceControl.Git
             }
         }
 
+        public string RepositoryPath
+        {
+            get { return _gitExe.WorkingDirectory; }
+        }
+
+        public RepositoryType RepositoryType
+        {
+            get { return RepositoryType.Git; }
+        }
+
+        public bool Exists
+        {
+            get
+            {
+                return Directory.Exists(_gitExe.WorkingDirectory) &&
+                       Directory.EnumerateFileSystemEntries(_gitExe.WorkingDirectory).Any();
+            }
+        }
+
+        private string PushInfoPath
+        {
+            get
+            {
+                return Path.Combine(RepositoryPath, ".git", "pushinfo");
+            }
+        }
+
         public void Initialize(RepositoryConfiguration configuration)
         {
             var profiler = _tracerFactory.GetTracer();
@@ -189,8 +216,8 @@ namespace Kudu.Core.SourceControl.Git
             ITracer tracer = _tracerFactory.GetTracer();
             try
             {
-                _gitExe.Execute(tracer, @"remote add {0} ""{1}""", remoteAlias, remote);
-                _gitExe.Execute(tracer, @"fetch {0}", remoteAlias);
+                _gitExe.Execute(tracer, @"remote add -t {2} {0} ""{1}""", remoteAlias, remote, branchName);
+                _gitExe.Execute(tracer, @"fetch {0}", remoteAlias, branchName);
                 Update(branchName);
                 _gitExe.Execute(tracer, @"reset --hard {0}/{1}", remoteAlias, branchName);
             }
@@ -294,6 +321,18 @@ namespace Kudu.Core.SourceControl.Git
             _gitExe.Execute("update-ref refs/heads/master refs/heads/{0}", source);
         }
 
+        public void ClearLock()
+        {
+            // Delete the lock file from the .git folder
+            string lockFilePath = Path.Combine(_gitExe.WorkingDirectory, ".git", "index.lock");
+            if (File.Exists(lockFilePath))
+            {
+                ITracer tracer = _tracerFactory.GetTracer();
+                tracer.TraceWarning("Deleting left over index.lock file");
+                FileSystemHelpers.DeleteFileSafe(lockFilePath);
+            }
+        }
+
         private ChangeSetDetail MakeNewFileDiff(IEnumerable<FileStatus> statuses)
         {
             var changeSetDetail = new ChangeSetDetail();
@@ -368,6 +407,44 @@ namespace Kudu.Core.SourceControl.Git
         public void SetTraceLevel(int level)
         {
             _gitExe.SetTraceLevel(level);
+        }
+
+        public ReceiveInfo GetReceiveInfo()
+        {
+            string path = PushInfoPath;
+
+            if (!File.Exists(path))
+            {
+                return null;
+            }
+
+            string[] pushDetails = File.ReadAllText(path).Split(' ');
+
+            if (pushDetails.Length == 3)
+            {
+                string oldId = pushDetails[0];
+                string newId = pushDetails[1];
+
+                // When a branch gets deleted, the newId is an all-zero string.
+                // In those cases, we never want to do anything, so return null
+                if (newId.Trim('0').Length == 0)
+                {
+                    return null;
+                }
+
+                string reference = pushDetails[2];
+                string branch = reference.Split('/').Last().Trim();
+                string fullNewId = Resolve(branch);
+
+                return new ReceiveInfo
+                {
+                    OldId = oldId,
+                    NewId = newId,
+                    Branch = new GitBranch(fullNewId, branch, false)
+                };
+            }
+
+            return null;
         }
 
         private bool IsEmpty()

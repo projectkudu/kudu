@@ -10,34 +10,49 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
-using Kudu.Services.GitServer.ServiceHookHandlers;
+using Kudu.Core.Tracing;
+using Kudu.Services.ServiceHookHandlers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Kudu.Services.GitServer
+namespace Kudu.Services
 {
-    public class FetchHandler : GitServerHttpHandler
+    public class FetchHandler : IHttpHandler
     {
+        private readonly IDeploymentManager _deploymentManager;
         private readonly IDeploymentSettingsManager _settings;
-        private readonly RepositoryConfiguration _configuration;
         private readonly IEnvironment _environment;
         private readonly IEnumerable<IServiceHookHandler> _serviceHookHandlers;
+        private readonly IOperationLock _deploymentLock;
+        private readonly ITracer _tracer;
+        private readonly RepositoryConfiguration _configuration;
+        private readonly RepositoryFactory _repositoryFactory;
+
 
         public FetchHandler(ITracer tracer,
-                            IGitServer gitServer,
                             IDeploymentManager deploymentManager,
                             IDeploymentSettingsManager settings,
                             IOperationLock deploymentLock,
                             RepositoryConfiguration configuration,
                             IEnvironment environment,
-                            IEnumerable<IServiceHookHandler> serviceHookHandlers)
-            : base(tracer, gitServer, deploymentLock, deploymentManager)
+                            IEnumerable<IServiceHookHandler> serviceHookHandlers,
+                            RepositoryFactory repositoryFactory)
         {
+            _tracer = tracer;
+            _deploymentLock = deploymentLock;
+            _deploymentManager = deploymentManager;
             _settings = settings;
             _configuration = configuration;
             _environment = environment;
             _serviceHookHandlers = serviceHookHandlers;
+            _repositoryFactory = repositoryFactory;
+        }
+
+        public bool IsReusable
+        {
+            get { return false; }
         }
 
         private string MarkerFilePath
@@ -48,17 +63,25 @@ namespace Kudu.Services.GitServer
             }
         }
 
-        public override void ProcessRequest(HttpContext context)
+        public void ProcessRequest(HttpContext context)
         {
             using (_tracer.Step("FetchHandler"))
             {
                 context.Response.TrySkipIisCustomErrors = true;
 
-                RepositoryInfo repositoryInfo = null;
+                DeploymentInfo deployInfo = null;
+                
+                // We are going to assume that the branch details are already set by the time it gets here. This is particularly important in the mercurial case, 
+                // since Settings hardcodes the default value for Branch to be "master". Consequently, Kudu will NoOp requests for Mercurial commits.
+                string targetBranch = _settings.GetValue(SettingsKeys.Branch);
                 try
                 {
                     JObject payload = GetPayload(context.Request);
-                    repositoryInfo = GetRepositoryInfo(context.Request, payload);
+                    DeployAction action = GetRepositoryInfo(context.Request, payload, targetBranch, out deployInfo);
+                    if (action == DeployAction.NoOp)
+                    {
+                        return;
+                    }
                 }
                 catch (FormatException ex)
                 {
@@ -69,13 +92,10 @@ namespace Kudu.Services.GitServer
                     return;
                 }
 
-                string targetBranch = _settings.GetValue(SettingsKeys.Branch);
-
                 _tracer.Trace("Attempting to fetch target branch {0}", targetBranch);
-
                 _deploymentLock.LockOperation(() =>
                 {
-                    PerformDeployment(repositoryInfo, targetBranch);
+                    PerformDeployment(deployInfo, targetBranch);
                 },
                 () =>
                 {
@@ -109,7 +129,7 @@ namespace Kudu.Services.GitServer
             return FileSystemHelpers.DeleteFileSafe(MarkerFilePath);
         }
 
-        private void PerformDeployment(RepositoryInfo repositoryInfo, string targetBranch)
+        private void PerformDeployment(DeploymentInfo deploymentInfo, string targetBranch)
         {
             bool hasPendingDeployment;
 
@@ -117,21 +137,21 @@ namespace Kudu.Services.GitServer
             {
                 hasPendingDeployment = false;
 
+                var handler = deploymentInfo.Handler;
                 using (_tracer.Step("Performing fetch based deployment"))
                 {
-                    using (_deploymentManager.CreateTemporaryDeployment(Resources.FetchingChanges))
+                    _tracer.Trace("Creating deployment file for changeset {0}", deploymentInfo.TargetChangeset.Id);
+                    // TODO: Create temp deployment
+
+                    using (_deploymentManager.CreateTemporaryDeployment(Resources.ReceivingChanges, deploymentInfo.TargetChangeset, deploymentInfo.Deployer))
                     {
-                        // Configure the repository
-                        _gitServer.Initialize(_configuration);
+                        IRepository repository = _repositoryFactory.EnsureRepository(deploymentInfo.RepositoryType);
 
-                        // Setup the receive info (this is important to know if branches were deleted etc)
-                        _gitServer.SetReceiveInfo(repositoryInfo.OldRef, repositoryInfo.NewRef, targetBranch);
-
-                        // Fetch from url
-                        repositoryInfo.Handler.Fetch(repositoryInfo, targetBranch);
+                        // Fetch changes from the repository
+                        deploymentInfo.Handler.Fetch(repository, deploymentInfo, targetBranch);
 
                         // Perform the actual deployment
-                        _deploymentManager.Deploy(repositoryInfo.Deployer);
+                        _deploymentManager.Deploy(repository, deploymentInfo.TargetChangeset, deploymentInfo.Deployer, clean: false);
 
                         if (MarkerFileExists())
                         {
@@ -163,7 +183,7 @@ namespace Kudu.Services.GitServer
 
             _tracer.Trace("payload", attribs);
         }
-        
+
         private void TraceHandler(IServiceHookHandler handler)
         {
             var attribs = new Dictionary<string, string>
@@ -174,20 +194,28 @@ namespace Kudu.Services.GitServer
             _tracer.Trace("handler", attribs);
         }
 
-        private RepositoryInfo GetRepositoryInfo(HttpRequest request, JObject payload)
+        private DeployAction GetRepositoryInfo(HttpRequest request, JObject payload, string targetBranch, out DeploymentInfo info)
         {
-            RepositoryInfo info = null;
+            var httpRequestBase = new HttpRequestWrapper(request);
             foreach (var handler in _serviceHookHandlers)
             {
-                if (handler.TryGetRepositoryInfo(request, payload, out info))
+                DeployAction result = handler.TryParseDeploymentInfo(httpRequestBase, payload, targetBranch, out info);
+                if (result != DeployAction.UnknownPayload)
                 {
                     if (_tracer.TraceLevel >= TraceLevel.Verbose)
                     {
                         TraceHandler(handler);
                     }
 
-                    info.Handler = handler;
-                    return info;
+                    if (result == DeployAction.ProcessDeployment)
+                    {
+                        // Although a payload may be intended for a handler, it might not need to fetch. 
+                        // For instance, if a different branch was pushed than the one the repository is deploying, we can no-op it.
+                        Debug.Assert(info != null);
+                        info.Handler = handler;
+                    }
+
+                    return result;
                 }
             }
 
