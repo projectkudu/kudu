@@ -15,19 +15,21 @@ namespace Kudu.Core.SourceControl
     public class HgRepository : IRepository
     {
         private const string PATH_KEY = "Path";
-        private static readonly Lazy<bool> _lazyAction = new Lazy<bool>(EnsureClientInitialized);
 
         private readonly Repository _repository;
         private readonly Executable _hgExecutable;
         private readonly ITraceFactory _traceFactory;
         private readonly string _homePath;
 
+        static HgRepository()
+        {
+            EnsureClientInitialized();
+        }
+
         public HgRepository(string path, string homePath, ITraceFactory traceFactory)
         {
             _hgExecutable = new Executable(PathUtility.ResolveHgPath(), path);
 
-            // Ensure that the client path is set for the Repository instance
-            _lazyAction.Value.ToString();
             _repository = new Repository(path);
             _homePath = homePath;
             _traceFactory = traceFactory;
