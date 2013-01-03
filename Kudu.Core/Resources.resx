@@ -200,7 +200,7 @@
     <value>Building web project '{0}'.</value>
   </data>
   <data name="Log_CleaningRepository" xml:space="preserve">
-    <value>Cleaning repository.</value>
+    <value>Cleaning {0} repository.</value>
   </data>
   <data name="Log_CreatingNodeConfig" xml:space="preserve">
     <value>Deploying Web.config to enable Node.js activation.</value>

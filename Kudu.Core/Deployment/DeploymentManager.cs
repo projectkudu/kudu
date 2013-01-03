@@ -182,9 +182,9 @@ namespace Kudu.Core.Deployment
 
                 if (clean)
                 {
-                    tracer.Trace("Cleaning repository");
+                    tracer.Trace("Cleaning {0} repository", repository.RepositoryType);
 
-                    logger.Log(Resources.Log_CleaningRepository);
+                    logger.Log(Resources.Log_CleaningRepository, repository.RepositoryType);
 
                     deploymentRepository.Clean();
                 }

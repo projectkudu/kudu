@@ -122,7 +122,7 @@ namespace Kudu.FunctionalTests
 
                     Assert.True(nested.Count > 0);
 
-                    KuduAssert.VerifyLogOutput(appManager, result.Id, "Cleaning git repository");
+                    KuduAssert.VerifyLogOutput(appManager, result.Id, "Cleaning Git repository");
 
                     // Can't delete the active one
                     var ex = KuduAssert.ThrowsUnwrapped<HttpRequestException>(() => appManager.DeploymentManager.DeleteAsync(result.Id).Wait());

@@ -245,7 +245,7 @@ namespace Kudu.Core {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cleaning repository..
+        ///   Looks up a localized string similar to Cleaning {0} repository..
         /// </summary>
         internal static string Log_CleaningRepository {
             get {
