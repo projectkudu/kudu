@@ -435,10 +435,10 @@ namespace Kudu.FunctionalTests
 
                 Task<HttpResponseMessage> responseTask = null;
 
-                // Do another post in parallel a second after
+                // Do another post in parallel two seconds after
                 new Thread(() =>
                 {
-                    Thread.Sleep(1000);
+                    Thread.Sleep(2000);
 
                     // Ideally we'd push something else to github but at least this exercises the code path
                     responseTask = client.PostAsync("deploy", new FormUrlEncodedContent(post));
