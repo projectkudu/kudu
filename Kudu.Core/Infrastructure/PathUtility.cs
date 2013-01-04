@@ -6,6 +6,8 @@ namespace Kudu.Core.Infrastructure
 {
     internal static class PathUtility
     {
+        private const string ProgramFiles64bitKey = "ProgramW6432";
+
         internal static string ResolveGitPath()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
@@ -26,7 +28,7 @@ namespace Kudu.Core.Infrastructure
 
             if (!File.Exists(path))
             {
-                string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFiles);
+                string programFiles = SystemEnvironment.GetEnvironmentVariable(ProgramFiles64bitKey) ??  SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFiles);
                 path = Path.Combine(programFiles, "Mercurial", "hg.exe");
 
                 if (!File.Exists(path))

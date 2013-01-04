@@ -16,28 +16,22 @@ namespace Kudu.Core.SourceControl
     {
         private const string PATH_KEY = "Path";
 
-        private readonly Repository _repository;
+        private static readonly Lazy<bool> _ensureClientInitialized = new Lazy<bool>(EnsureClientInitialized);
         private readonly Executable _hgExecutable;
         private readonly ITraceFactory _traceFactory;
         private readonly string _homePath;
-
-        static HgRepository()
-        {
-            EnsureClientInitialized();
-        }
+        private Repository _hgRepository;
 
         public HgRepository(string path, string homePath, ITraceFactory traceFactory)
         {
             _hgExecutable = new Executable(PathUtility.ResolveHgPath(), path);
-
-            _repository = new Repository(path);
             _homePath = homePath;
             _traceFactory = traceFactory;
         }
 
         public string RepositoryPath
         {
-            get { return _repository.Path; }
+            get { return _hgExecutable.WorkingDirectory; }
         }
 
         public RepositoryType RepositoryType
@@ -49,9 +43,9 @@ namespace Kudu.Core.SourceControl
         {
             get
             {
-                string id = _repository.Identify();
+                string id = Repository.Identify();
 
-                Changeset changeSet = _repository.Log(id).SingleOrDefault();
+                Changeset changeSet = Repository.Log(id).SingleOrDefault();
                 if (changeSet != null)
                 {
                     // Get the full hash
@@ -65,20 +59,34 @@ namespace Kudu.Core.SourceControl
         {
             get
             {
-                string hgDirectory = Path.Combine(_repository.Path, ".hg");
+                string hgDirectory = Path.Combine(RepositoryPath, ".hg");
                 return Directory.Exists(hgDirectory) &&
                        Directory.EnumerateFileSystemEntries(hgDirectory).Any();
             }
         }
 
+        private Repository Repository
+        {
+            get
+            {
+                _ensureClientInitialized.Value.ToString();
+                if (_hgRepository == null)
+                {
+                    _hgRepository = new Repository(RepositoryPath);
+                }
+                return _hgRepository;
+            }
+        }
+
+
         public void Initialize(RepositoryConfiguration configuration)
         {
-            _repository.Init();
+            Repository.Init();
         }
 
         public IEnumerable<FileStatus> GetStatus()
         {
-            return from fileStatus in _repository.Status()
+            return from fileStatus in Repository.Status()
                    let path = fileStatus.Path.Replace('\\', '/')
                    select new FileStatus(path, Convert(fileStatus.State));
         }
@@ -105,7 +113,7 @@ namespace Kudu.Core.SourceControl
 
         public IEnumerable<ChangeSet> GetChanges(int index, int limit)
         {
-            int max = _repository.Tip().RevisionNumber;
+            int max = Repository.Tip().RevisionNumber;
 
             if (index > max)
             {
@@ -115,7 +123,7 @@ namespace Kudu.Core.SourceControl
             int from = max - index;
             int to = Math.Max(0, from - limit);
             var spec = RevSpec.Range(from, to);
-            return _repository.Log(spec).Select(CreateChangeSet);
+            return Repository.Log(spec).Select(CreateChangeSet);
         }
 
         public ChangeSetDetail GetDetails(string id)
@@ -135,7 +143,7 @@ namespace Kudu.Core.SourceControl
                 return null;
             }
 
-            _repository.AddRemove();
+            Repository.AddRemove();
             var detail = PopulateDetails(null, new ChangeSetDetail());
 
             foreach (var fileStatus in status)
@@ -157,12 +165,12 @@ namespace Kudu.Core.SourceControl
 
         public void AddFile(string path)
         {
-            _repository.Add(path);
+            Repository.Add(path);
         }
 
         public void RevertFile(string path)
         {
-            _repository.Remove(path);
+            Repository.Remove(path);
         }
 
         public ChangeSet Commit(string message, string authorName = "")
@@ -172,7 +180,7 @@ namespace Kudu.Core.SourceControl
                 return null;
             }
 
-            _repository.AddRemove();
+            Repository.AddRemove();
 
             var command = new CommitCommand
             {
@@ -180,7 +188,7 @@ namespace Kudu.Core.SourceControl
                 Message = message
             };
 
-            var id = _repository.Commit(command);
+            var id = Repository.Commit(command);
 
             // TODO: Figure out why is id null
             id = id ?? CurrentId;
@@ -190,12 +198,12 @@ namespace Kudu.Core.SourceControl
 
         public void Clone(string source)
         {
-            _repository.Clone(source);
+            Repository.Clone(source);
         }
 
         public void Update(string id)
         {
-            _repository.Update(id);
+            Repository.Update(id);
         }
 
         public void Update()
@@ -206,7 +214,7 @@ namespace Kudu.Core.SourceControl
         public IEnumerable<Branch> GetBranches()
         {
             string currentId = CurrentId;
-            return _repository.Branches()
+            return Repository.Branches()
                               .Select(b => ConvertToBranch(b, currentId));
         }
 
@@ -218,7 +226,7 @@ namespace Kudu.Core.SourceControl
 
         public void Push()
         {
-            _repository.Push();
+            Repository.Push();
         }
 
         public ChangeSet GetChangeSet(string id)
@@ -245,7 +253,7 @@ namespace Kudu.Core.SourceControl
         {
             // Delete the lock file from the .git folder
             // From http://stackoverflow.com/questions/12865/mercurial-stuck-waiting-for-lock
-            string lockFilePath = Path.Combine(_repository.Path, ".hg/store/lock");
+            string lockFilePath = Path.Combine(RepositoryPath, ".hg/store/lock");
             if (File.Exists(lockFilePath))
             {
                 ITracer tracer = _traceFactory.GetTracer();
@@ -286,7 +294,7 @@ namespace Kudu.Core.SourceControl
 
         private ChangeSet GetChangeSet(RevSpec id)
         {
-            var log = _repository.Log(id);
+            var log = Repository.Log(id);
             return CreateChangeSet(log.SingleOrDefault());
         }
 
@@ -302,7 +310,7 @@ namespace Kudu.Core.SourceControl
                 summaryCommand.ChangeIntroducedByRevision = id;
             }
 
-            IStringReader summaryReader = _repository.Diff(summaryCommand).AsReader();
+            IStringReader summaryReader = Repository.Diff(summaryCommand).AsReader();
 
             ParseSummary(summaryReader, detail);
 
@@ -316,7 +324,7 @@ namespace Kudu.Core.SourceControl
                 diffCommand.ChangeIntroducedByRevision = id;
             }
 
-            var diffReader = _repository.Diff(diffCommand).AsReader();
+            var diffReader = Repository.Diff(diffCommand).AsReader();
 
             GitExeRepository.ParseDiffAndPopulate(diffReader, detail);
 
@@ -375,9 +383,10 @@ namespace Kudu.Core.SourceControl
 
         private static bool EnsureClientInitialized()
         {
+            // Work around for a bug in Client.SetClientPath. It overrides the path we provide by looking up the PATH environment variable.
+            Client.CouldLocateClient.ToString();
             Client.SetClientPath(PathUtility.ResolveHgPath());
             return true;
         }
-
     }
 }

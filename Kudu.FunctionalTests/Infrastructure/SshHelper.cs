@@ -1,16 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
+using Kudu.Client.SSHKey;
 
 namespace Kudu.FunctionalTests
 {
     public static class SshHelper
     {
-        public static string PrepareSSHEnv(string siteRoot)
+        private const string SSHConfigFile = "config";
+        private const string SSHKeyFile = "id_rsa";
+
+        public static bool PrepareSSHEnv(RemoteSSHKeyManager sshManager)
         {
-            var sshPath = new DirectoryInfo(Path.Combine(siteRoot, ".ssh"));
-            return WriteSSHKeys(sshPath);
+            string sshKey = ReadManifestFile(SSHKeyFile);
+            if (!String.IsNullOrEmpty(sshKey))
+            {
+                sshManager.SetPrivateKey(sshKey);
+                return true;
+            }
+            return false;
         }
 
         public static IDictionary<string, string> PrepareSSHEnv(out string id_rsa)
@@ -31,24 +39,19 @@ namespace Kudu.FunctionalTests
             {
                 sshPath.Create();
             }
-            string id_rsa = null;
-            Assembly assembly = Assembly.GetExecutingAssembly();
-            foreach (var fileName in new string[] { "config", "id_rsa" })
-            {
-                using (var reader = new StreamReader(assembly.GetManifestResourceStream("Kudu.FunctionalTests..ssh." + fileName)))
-                {
-                    using (var writer = new StreamWriter(new FileStream(Path.Combine(sshPath.FullName, fileName), FileMode.Create, FileAccess.Write)))
-                    {
-                        string content = reader.ReadToEnd();
-                        if (fileName == "id_rsa")
-                        {
-                            id_rsa = content;
-                        }
-                        writer.Write(content);
-                    }
-                }
-            }
+            string id_rsa = ReadManifestFile(SSHKeyFile);
+            File.WriteAllText(Path.Combine(sshPath.FullName, SSHKeyFile), id_rsa);
+            File.WriteAllText(Path.Combine(sshPath.FullName, SSHConfigFile), ReadManifestFile(SSHConfigFile));
             return id_rsa;
+        }
+
+        private static string ReadManifestFile(string fileName)
+        {
+            var assembly = typeof(SshHelper).Assembly;
+            using (var reader = new StreamReader(assembly.GetManifestResourceStream("Kudu.FunctionalTests..ssh." + fileName)))
+            {
+                return reader.ReadToEnd();
+            }
         }
     }
 }

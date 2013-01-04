@@ -140,9 +140,6 @@ namespace Kudu.Services
                 var handler = deploymentInfo.Handler;
                 using (_tracer.Step("Performing fetch based deployment"))
                 {
-                    _tracer.Trace("Creating deployment file for changeset {0}", deploymentInfo.TargetChangeset.Id);
-                    // TODO: Create temp deployment
-
                     using (_deploymentManager.CreateTemporaryDeployment(Resources.ReceivingChanges, deploymentInfo.TargetChangeset, deploymentInfo.Deployer))
                     {
                         IRepository repository = _repositoryFactory.EnsureRepository(deploymentInfo.RepositoryType);

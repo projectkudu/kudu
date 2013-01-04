@@ -39,7 +39,7 @@ namespace Kudu.Services.ServiceHookHandlers
         {
             // Sync with dropbox
             var dropboxInfo = ((DropboxInfo)deploymentInfo);
-            _dropBoxHelper.Sync(dropboxInfo.DeployInfo, targetBranch);
+            deploymentInfo.TargetChangeset = _dropBoxHelper.Sync(dropboxInfo.DeployInfo, targetBranch);
         }
 
         internal class DropboxInfo : DeploymentInfo

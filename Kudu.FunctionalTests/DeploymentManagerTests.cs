@@ -275,10 +275,10 @@ namespace Kudu.FunctionalTests
 
             ApplicationManager.Run(appName, appManager =>
             {
-                string sshKey = SshHelper.PrepareSSHEnv(appManager.SiteRoot);
-                if (String.IsNullOrEmpty(sshKey))
+                if (!SshHelper.PrepareSSHEnv(appManager.SSHKeyManager))
                 {
-                    return; // SSH tests only if the key is present
+                    // Run SSH tests only if the key is present
+                    return; 
                 }
                 var client = CreateClient(appManager);
                 appManager.SettingsManager.SetValue("branch", "Test-Branch").Wait();

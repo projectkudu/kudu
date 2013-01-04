@@ -41,7 +41,7 @@ namespace Kudu.Services
             _environment = environment;
         }
 
-        public void Sync(DropboxDeployInfo info, string branch)
+        public ChangeSet Sync(DropboxDeployInfo info, string branch)
         {
             if (_settings.GetValue(CursorKey) != info.OldCursor)
             {
@@ -54,6 +54,7 @@ namespace Kudu.Services
                 _repository.Update(branch);
             }
 
+            ChangeSet changeSet;
             string prefix = "Partially"; 
             try
             {
@@ -68,12 +69,14 @@ namespace Kudu.Services
             finally
             {
                 // Commit anyway even partial change
-                _repository.Commit(prefix + " sync with dropbox at " + DateTime.UtcNow.ToString("g"), GetAuthor());
+                changeSet = _repository.Commit(prefix + " sync with dropbox at " + DateTime.UtcNow.ToString("g"), GetAuthor());
             }
 
             // Save new dropboc cursor
             _tracer.Trace("Update dropbox cursor");
             _settings.SetValue(CursorKey, info.NewCursor);
+
+            return changeSet;
         }
 
         private bool IsEmptyRepo()
