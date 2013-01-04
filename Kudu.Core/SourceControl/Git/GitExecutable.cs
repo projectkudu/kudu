@@ -1,11 +1,12 @@
-﻿using Kudu.Core.Infrastructure;
+﻿using System;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.SourceControl.Git
 {
     internal class GitExecutable : Executable
     {
-        public GitExecutable(string workingDirectory)
-            : base(PathUtility.ResolveGitPath(), workingDirectory)
+        public GitExecutable(string workingDirectory, TimeSpan idleTimeout)
+            : base(PathUtility.ResolveGitPath(), workingDirectory, idleTimeout)
         {
         }
 

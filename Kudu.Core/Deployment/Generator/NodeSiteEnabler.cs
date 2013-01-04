@@ -1,8 +1,9 @@
-﻿using Kudu.Contracts.Tracing;
-using Kudu.Core.Infrastructure;
-using System;
+﻿using System;
 using System.IO;
 using System.IO.Abstractions;
+using Kudu.Contracts.Settings;
+using Kudu.Contracts.Tracing;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment.Generator
 {
@@ -25,12 +26,12 @@ namespace Kudu.Core.Deployment.Generator
             return false;
         }
 
-        public static string SelectNodeVersion(IFileSystem fileSystem, string scriptPath, string sourcePath, string destinationPath, ITracer tracer)
+        public static string SelectNodeVersion(IFileSystem fileSystem, string scriptPath, string sourcePath, string destinationPath, IDeploymentSettingsManager settings, ITracer tracer)
         {
             // The node.js version selection logic is implemented in selectNodeVersion.js. 
 
             // run with default node.js version which is on the path
-            Executable executor = new Executable("node.exe", String.Empty);
+            Executable executor = new Executable("node.exe", String.Empty, settings.GetCommandIdleTimeout());
             try
             {
                 return executor.ExecuteWithConsoleOutput(

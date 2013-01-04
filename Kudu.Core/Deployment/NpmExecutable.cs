@@ -6,8 +6,8 @@ namespace Kudu.Core.Deployment
 {
     internal class NpmExecutable : Executable
     {
-        public NpmExecutable(string workingDirectory)
-            : base(PathUtility.ResolveNpmPath(), workingDirectory)
+        public NpmExecutable(string workingDirectory, TimeSpan idleTimeout)
+            : base(PathUtility.ResolveNpmPath(), workingDirectory, idleTimeout)
         {
             Encoding = null;
         }

@@ -1,6 +1,7 @@
 ﻿using System;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
+using Kudu.Core.Tracing;
 
 namespace Kudu.TestHarness
 {
@@ -19,7 +20,7 @@ namespace Kudu.TestHarness
         public TestRepository(string repositoryName, bool obliterateOnDispose)
         {
             _physicalPath = Git.GetRepositoryPath(repositoryName);
-            _repository = new GitExeRepository(_physicalPath);
+            _repository = new GitExeRepository(_physicalPath, null, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
             _obliterateOnDispose = obliterateOnDispose;
         }
 

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
@@ -19,14 +20,9 @@ namespace Kudu.Core.SourceControl.Git
         private readonly GitExecutable _gitExe;
         private readonly ITraceFactory _tracerFactory;
 
-        public GitExeRepository(string path)
-            : this(path, null, NullTracerFactory.Instance)
+        public GitExeRepository(string path, string homePath, IDeploymentSettingsManager settings, ITraceFactory profilerFactory)
         {
-        }
-
-        public GitExeRepository(string path, string homePath, ITraceFactory profilerFactory)
-        {
-            _gitExe = new GitExecutable(path);
+            _gitExe = new GitExecutable(path, settings.GetCommandIdleTimeout());
             _tracerFactory = profilerFactory;
 
             if (!String.IsNullOrEmpty(homePath))

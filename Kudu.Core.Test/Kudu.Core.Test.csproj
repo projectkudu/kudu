@@ -83,6 +83,7 @@
     <Compile Include="Infrastructure\VsSolutionTest.cs" />
     <Compile Include="Infrastructure\XmlUtilityFacts.cs" />
     <Compile Include="JsonSettingsFacts.cs" />
+    <Compile Include="MockDeploymentSettingsManager.cs" />
     <Compile Include="NodeSiteEnablerFacts.cs" />
     <Compile Include="FileSystemHelpersTest.cs" />
     <Compile Include="GitRepositoryTest.cs" />

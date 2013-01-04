@@ -5,6 +5,7 @@
         public const string Branch = "branch";
         public const string BuildArgs = "build_args";
         public const string TraceLevel = "trace_level";
+        public const string CommandIdleTimeout = "command_idle_timeout";
         public const string SiteBuilderFactory = "site_builder_factory";
     }
 }

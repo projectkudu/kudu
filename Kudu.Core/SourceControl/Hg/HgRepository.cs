@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
@@ -22,9 +23,9 @@ namespace Kudu.Core.SourceControl
         private readonly string _homePath;
         private Repository _hgRepository;
 
-        public HgRepository(string path, string homePath, ITraceFactory traceFactory)
+        public HgRepository(string path, string homePath, IDeploymentSettingsManager settings, ITraceFactory traceFactory)
         {
-            _hgExecutable = new Executable(PathUtility.ResolveHgPath(), path);
+            _hgExecutable = new Executable(PathUtility.ResolveHgPath(), path, settings.GetCommandIdleTimeout());
             _homePath = homePath;
             _traceFactory = traceFactory;
         }

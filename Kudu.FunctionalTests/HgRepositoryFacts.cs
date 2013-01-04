@@ -21,7 +21,7 @@ namespace Kudu.FunctionalTests
             {
                 string helloTextPath = Path.Combine(testRepository.PhysicalPath, "Hello.txt");
                 string hgFolderPath = Path.Combine(testRepository.PhysicalPath, ".hg");
-                var hgRepo = new HgRepository(testRepository.PhysicalPath, "", NullTracerFactory.Instance);
+                var hgRepo = new HgRepository(testRepository.PhysicalPath, "", new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
 
                 // Act
                 hgRepo.Clone(source);
@@ -43,7 +43,7 @@ namespace Kudu.FunctionalTests
                 // Arrange
                 string remoteRepository = "https://kudutest@bitbucket.org/kudutest/hellomercurial";
                 string helloTextPath = Path.Combine(testRepository.PhysicalPath, "Hello.txt");
-                var hgRepo = new HgRepository(testRepository.PhysicalPath, "", NullTracerFactory.Instance);
+                var hgRepo = new HgRepository(testRepository.PhysicalPath, "", new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
                 hgRepo.Initialize(configuration: null);
 
                 // Act - 1
@@ -74,7 +74,7 @@ namespace Kudu.FunctionalTests
             {
                 // Arrange
                 string helloTextPath = Path.Combine(testRepository.PhysicalPath, "Hello.txt");
-                var hgRepo = new HgRepository(testRepository.PhysicalPath, "", NullTracerFactory.Instance);
+                var hgRepo = new HgRepository(testRepository.PhysicalPath, "", new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
 
                 // Act
                 hgRepo.Initialize(configuration: null);

@@ -1,4 +1,5 @@
-﻿using Xunit;
+﻿using Kudu.Contracts.Settings;
+using Xunit;
 using Xunit.Extensions;
 
 namespace Kudu.Core.Infrastructure.Test
@@ -9,7 +10,7 @@ namespace Kudu.Core.Infrastructure.Test
         public void AddToPathAddsPathEnvironmentValueIfItDoesNotExist()
         {
             // Arrange
-            var executable = new Executable(@"x:\some.exe", @"x:\some-dir");
+            var executable = new Executable(@"x:\some.exe", @"x:\some-dir", DeploymentSettingsExtension.DefaultCommandIdleTimeout);
 
             // Act
             executable.AddToPath(@"x:\path1", @"y:\path1\path2");
@@ -28,7 +29,7 @@ namespace Kudu.Core.Infrastructure.Test
         public void AddToPathAppendsPathEnvironmentValue(string current, string[] input, string expected)
         {
             // Arrange
-            var executable = new Executable(@"x:\some.exe", @"x:\some-dir");
+            var executable = new Executable(@"x:\some.exe", @"x:\some-dir", DeploymentSettingsExtension.DefaultCommandIdleTimeout);
             executable.EnvironmentVariables["PATH"] = current;
 
             // Act

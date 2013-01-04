@@ -27,7 +27,7 @@ namespace Kudu.Core.Test
                 { @"c:\site\foo.blah", new MockFileData("some file") },
             });
 
-            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, @"c:\repo", @"c:\site", null);
+            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, @"c:\repo", @"c:\site", null, new MockDeploymentSettingsManager());
 
             Assert.True(nodeSiteEnabler.NeedNodeHandling());
 
@@ -50,7 +50,7 @@ namespace Kudu.Core.Test
                 { @"c:\repo\web.config", new MockFileData("some config") },
             });
 
-            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, @"c:\repo", @"c:\site", null);
+            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, @"c:\repo", @"c:\site", null, new MockDeploymentSettingsManager());
 
             Assert.False(nodeSiteEnabler.NeedNodeHandling());
         }
@@ -64,7 +64,7 @@ namespace Kudu.Core.Test
                 { @"c:\site\web.config", new MockFileData("some config") },
             });
 
-            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, @"c:\repo", @"c:\site", null);
+            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, @"c:\repo", @"c:\site", null, new MockDeploymentSettingsManager());
 
             Assert.True(nodeSiteEnabler.NeedNodeHandling());
 
@@ -92,7 +92,7 @@ namespace Kudu.Core.Test
                 { @"c:\site\" + nonNodeFile, new MockFileData("some file") },
             });
 
-            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, @"c:\repo", @"c:\site", null);
+            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, @"c:\repo", @"c:\site", null, new MockDeploymentSettingsManager());
 
             Assert.False(nodeSiteEnabler.NeedNodeHandling());
         }
@@ -106,7 +106,7 @@ namespace Kudu.Core.Test
                 { @"c:\site\foo.blah", new MockFileData("some file") },
             });
 
-            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, @"c:\repo", @"c:\site", null);
+            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, @"c:\repo", @"c:\site", null, new MockDeploymentSettingsManager());
 
             Assert.True(nodeSiteEnabler.NeedNodeHandling());
 
@@ -123,7 +123,7 @@ namespace Kudu.Core.Test
                 { @"c:\site\node_modules\foo.txt", new MockFileData("some file") },
             });
 
-            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, @"c:\repo", @"c:\site", null);
+            var nodeSiteEnabler = new NodeSiteEnabler(fileSystem, @"c:\repo", @"c:\site", null, new MockDeploymentSettingsManager());
 
             Assert.True(nodeSiteEnabler.NeedNodeHandling());
 

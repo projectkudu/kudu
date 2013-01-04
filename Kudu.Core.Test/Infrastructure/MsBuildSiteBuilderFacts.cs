@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Kudu.Core.Deployment;
+using Kudu.Core.Test;
 using Xunit;
 using Xunit.Extensions;
 
@@ -43,7 +44,7 @@ namespace Kudu.Core.Infrastructure.Test
         private class MsBuildSiteBuilderTest : MsBuildSiteBuilder
         {
             public MsBuildSiteBuilderTest(BuildPropertyProviderTest buildPropertyProviderTest)
-                : base(buildPropertyProviderTest, Path.GetTempPath(), Path.GetTempPath())
+                : base(new MockDeploymentSettingsManager(), buildPropertyProviderTest, Path.GetTempPath(), Path.GetTempPath())
             {
             }
 

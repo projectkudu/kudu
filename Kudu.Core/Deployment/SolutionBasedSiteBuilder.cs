@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 
 namespace Kudu.Core.Deployment
@@ -17,8 +18,8 @@ namespace Kudu.Core.Deployment
 
         public string SolutionPath { get; private set; }
 
-        public SolutionBasedSiteBuilder(IBuildPropertyProvider propertyProvider, string repositoryPath, string tempPath, string solutionPath)
-            : base(propertyProvider, repositoryPath, tempPath)
+        public SolutionBasedSiteBuilder(IBuildPropertyProvider propertyProvider, string repositoryPath, string tempPath, string solutionPath, IDeploymentSettingsManager settings)
+            : base(settings, propertyProvider, repositoryPath, tempPath)
         {
             SolutionPath = solutionPath;
         }

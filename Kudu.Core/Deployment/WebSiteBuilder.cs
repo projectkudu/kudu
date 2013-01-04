@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 
 namespace Kudu.Core.Deployment
@@ -8,8 +9,8 @@ namespace Kudu.Core.Deployment
     {
         private readonly string _projectPath;
 
-        public WebSiteBuilder(IBuildPropertyProvider propertyProvider, string sourcePath, string projectPath, string tempPath, string solutionPath)
-            : base(propertyProvider, sourcePath, tempPath, solutionPath)
+        public WebSiteBuilder(IBuildPropertyProvider propertyProvider, string sourcePath, string projectPath, string tempPath, string solutionPath, IDeploymentSettingsManager settings)
+            : base(propertyProvider, sourcePath, tempPath, solutionPath, settings)
         {
             _projectPath = projectPath;
         }

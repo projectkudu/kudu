@@ -6,6 +6,7 @@ namespace Kudu.Contracts.Settings
 {
     public static class DeploymentSettingsExtension
     {
+        public static TimeSpan DefaultCommandIdleTimeout = TimeSpan.FromSeconds(180);
         public const TraceLevel DefaultTraceLevel = TraceLevel.Off;
 
         public static TraceLevel GetTraceLevel(this IDeploymentSettingsManager settings)
@@ -29,6 +30,18 @@ namespace Kudu.Contracts.Settings
             }
 
             return DeploymentSettingsExtension.DefaultTraceLevel;
+        }
+
+        public static TimeSpan GetCommandIdleTimeout(this IDeploymentSettingsManager settings)
+        {
+            string value = settings.GetValue(SettingsKeys.CommandIdleTimeout);
+            int seconds;
+            if (!String.IsNullOrEmpty(value) && Int32.TryParse(value, out seconds))
+            {
+                return TimeSpan.FromSeconds(seconds);
+            }
+
+            return DeploymentSettingsExtension.DefaultCommandIdleTimeout;
         }
     }
 }

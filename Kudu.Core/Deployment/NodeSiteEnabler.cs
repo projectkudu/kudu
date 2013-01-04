@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 
@@ -15,17 +14,19 @@ namespace Kudu.Core.Deployment
         private string _siteFolder;
         private string _repoFolder;
         private string _scriptPath;
+        private IDeploymentSettingsManager _settings;
         private readonly string[] NodeStartFiles = new[] { "server.js", "app.js" };
         private readonly string[] NonNodeExtensions = new[] { "*.php", "*.htm", "*.html", "*.aspx", "*.cshtml" };
         private const string WebConfigFile = "web.config";
         private const string PackageJsonFile = "package.json";
 
-        public NodeSiteEnabler(IFileSystem fileSystem, string repoFolder, string siteFolder, string scriptPath)
+        public NodeSiteEnabler(IFileSystem fileSystem, string repoFolder, string siteFolder, string scriptPath, IDeploymentSettingsManager settings)
         {
             _fileSystem = fileSystem;
             _repoFolder = repoFolder;
             _siteFolder = siteFolder;
             _scriptPath = scriptPath;
+            _settings = settings;
         }
 
         public bool NeedNodeHandling()
@@ -98,7 +99,7 @@ namespace Kudu.Core.Deployment
             // The node.js version selection logic is implemented in selectNodeVersion.js. 
 
             // run with default node.js version which is on the path
-            Executable executor = new Executable("node.exe", String.Empty);
+            Executable executor = new Executable("node.exe", String.Empty, _settings.GetCommandIdleTimeout());
             try
             {
                 return executor.ExecuteWithConsoleOutput(
