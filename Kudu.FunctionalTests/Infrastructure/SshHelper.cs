@@ -15,7 +15,7 @@ namespace Kudu.FunctionalTests
             string sshKey = ReadManifestFile(SSHKeyFile);
             if (!String.IsNullOrEmpty(sshKey))
             {
-                sshManager.SetPrivateKey(sshKey);
+                sshManager.SetPrivateKey(sshKey).Wait();
                 return true;
             }
             return false;
