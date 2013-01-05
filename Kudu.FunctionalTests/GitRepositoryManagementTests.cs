@@ -24,7 +24,7 @@ namespace Kudu.FunctionalTests
             string appName = KuduUtils.GetRandomWebsiteName("PushMultiProjects");
             string verificationText = "Welcome to ASP.NET MVC!";
             string cloneUrl = "https://github.com/KuduApps/Mvc3AppWithTestProject.git";
-            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "5df86e3"))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -49,7 +49,7 @@ namespace Kudu.FunctionalTests
             string appName = KuduUtils.GetRandomWebsiteName("PushSimpleWapWithInlineCommand");
             string cloneUrl = "https://github.com/KuduApps/CustomBuildScript.git";
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "63922e0"))
             {
                 repo.WriteFile(".deployment", @"
 [config]
@@ -78,7 +78,7 @@ command = msbuild SimpleWebApplication/SimpleWebApplication.csproj /t:pipelinePr
             string appName = KuduUtils.GetRandomWebsiteName("WapWithCustomDeploymentScript");
             string cloneUrl = "https://github.com/KuduApps/CustomBuildScript.git";
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "63922e0"))
             {
                 repo.WriteFile(".deployment", @"
 [config]
@@ -108,7 +108,7 @@ command = deploy.cmd");
             string appName = KuduUtils.GetRandomWebsiteName("WapWithFailingCustomDeploymentScript");
             string cloneUrl = "https://github.com/KuduApps/CustomBuildScript.git";
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "63922e0"))
             {
                 repo.WriteFile(".deployment", @"
 [config]
@@ -139,7 +139,7 @@ command = deploy.cmd");
             string appName = KuduUtils.GetRandomWebsiteName("WarningsAsErrors");
             string cloneUrl = "https://github.com/KuduApps/WarningsAsErrors.git";
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "51b6a48"))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -167,7 +167,7 @@ command = deploy.cmd");
             string appName = KuduUtils.GetRandomWebsiteName("PushRepoWithProjNoSln");
             string verificationText = "Kudu Deployment Testing: Mvc3Application_NoSolution";
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "4e36ca3"))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -191,7 +191,7 @@ command = deploy.cmd");
             string appName = KuduUtils.GetRandomWebsiteName("PushNoDeployableProj");
             string cloneUrl = "https://github.com/KuduApps/NoDeployableProjects.git";
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "e21eb82"))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -215,7 +215,7 @@ command = deploy.cmd");
             string appName = KuduUtils.GetRandomWebsiteName("WapBuildsRelease");
             string cloneUrl = "https://github.com/KuduApps/ConditionalCompilation.git";
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "a104578"))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -239,7 +239,7 @@ command = deploy.cmd");
             string appName = KuduUtils.GetRandomWebsiteName("WebsiteWithIISExpressWorks");
             string cloneUrl = "https://github.com/KuduApps/waws.git";
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "7652a66"))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -440,7 +440,7 @@ command = deploy.cmd");
             string repositoryName = "Bakery";
             string cloneUrl = "https://github.com/KuduApps/Bakery.git";
             string appName = KuduUtils.GetRandomWebsiteName("DeleteForNonWaps");
-            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "2f29dc6"))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -476,7 +476,7 @@ command = deploy.cmd");
             string repositoryName = "HelloWorld";
             string appName = KuduUtils.GetRandomWebsiteName("FirstPushDelPrior");
             string cloneUrl = "https://github.com/KuduApps/HelloWorld.git";
-            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "1f3dfd8"))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -600,7 +600,7 @@ command = deploy.cmd");
             string cloneUrl = "https://github.com/KuduApps/Bakery.git";
             string appName = KuduUtils.GetRandomWebsiteName("PushThenClone");
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "2f29dc6"))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -658,7 +658,7 @@ command = deploy.cmd");
             string repositoryName = "HelloWorld";
             string cloneUrl = "https://github.com/KuduApps/HelloWorld.git";
             string appName = KuduUtils.GetRandomWebsiteName("GoBackDeployOld");
-            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "1f3dfd8"))
             {
                 string originalCommitId = repo.CurrentId;
 
@@ -701,7 +701,7 @@ command = deploy.cmd");
             string appName = KuduUtils.GetRandomWebsiteName("NpmInstallsPkg");
             string cloneUrl = "https://github.com/KuduApps/NpmSite.git";
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "2b29b9d"))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -724,7 +724,7 @@ command = deploy.cmd");
             string appName = KuduUtils.GetRandomWebsiteName("FailedNpm");
             string cloneUrl = "https://github.com/KuduApps/NpmSite.git";
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "2b29b9d"))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -814,7 +814,7 @@ command = node build.js
             string appName = KuduUtils.GetRandomWebsiteName("NodeConfig");
             string cloneUrl = "https://github.com/KuduApps/NodeHelloWorldNoConfig.git";
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "d8a15b6"))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -839,7 +839,7 @@ command = node build.js
             string appName = KuduUtils.GetRandomWebsiteName("RedeployNodeSite");
             string cloneUrl = "https://github.com/KuduApps/NodeHelloWorldNoConfig.git";
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "d8a15b6"))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -979,7 +979,7 @@ command = node build.js
                 return;
             }
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl, environments: environmentVariables))
+            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "4820516", environments: environmentVariables))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -1006,7 +1006,7 @@ command = node build.js
             string appName = KuduUtils.GetRandomWebsiteName("HangProcess");
             string cloneUrl = "https://github.com/KuduApps/HangProcess.git";
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "2e53ab6"))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {

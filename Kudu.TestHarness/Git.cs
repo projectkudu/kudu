@@ -85,15 +85,15 @@ namespace Kudu.TestHarness
             gitExe.Execute("add \"{0}\"", path);
         }
 
-        public static TestRepository Clone(string repositoryName, string source, IDictionary<string, string> environments = null, bool noCache = false)
+        public static TestRepository Clone(string repositoryName, string source, string commitId = null, IDictionary<string, string> environments = null, bool noCache = false)
         {
-            return OperationManager.Attempt(() => CloneInternal(repositoryName, source, environments, noCache));
+            return OperationManager.Attempt(() => CloneInternal(repositoryName, source, commitId, environments, noCache));
         }
 
-        private static TestRepository CloneInternal(string repositoryName, string source, IDictionary<string, string> environments, bool noCache)
+        private static TestRepository CloneInternal(string repositoryName, string source, string commitId, IDictionary<string, string> environments, bool noCache)
         {
             // Check if we have a cached instance of the repository available locally
-            string cachedPath = noCache ? null : CreateCachedRepo(repositoryName, source, environments);
+            string cachedPath = noCache ? null : CreateCachedRepo(repositoryName, source, commitId, environments);
 
             if (cachedPath != null)
             {
@@ -109,7 +109,7 @@ namespace Kudu.TestHarness
             return new TestRepository(repositoryPath, obliterateOnDispose: true);
         }
 
-        private static string CreateCachedRepo(string repositoryName, string source, IDictionary<string, string> environments)
+        private static string CreateCachedRepo(string repositoryName, string source, string commitId, IDictionary<string, string> environments)
         {
             string cachedPath = null;
 
@@ -129,10 +129,16 @@ namespace Kudu.TestHarness
 
                     Trace.WriteLine(String.Format("Using cached copy at location {0}", cachedPath));
 
-                    // Get it into a clean state that matches a clean clone from github
+                    // Get it into a clean state on the correct commit id
                     try
                     {
-                        gitExe.Execute("reset --hard origin/master");
+                        // If we don't have a specific commit id to go to, use origin/master
+                        if (commitId == null)
+                        {
+                            commitId = "origin/master";
+                        }
+
+                        gitExe.Execute("reset --hard " + commitId);
                     }
                     catch (Exception e)
                     {
@@ -141,6 +147,13 @@ namespace Kudu.TestHarness
                         if (e.Message.Contains("ambiguous argument 'origin/master'"))
                         {
                             gitExe.Execute("reset --hard HEAD");
+                        }
+                        else if (e.Message.Contains("unknown revision"))
+                        {
+                            // If that commit id doesn't exist, try fetching and doing the reset again
+                            // The reason we don't initially fetch is to avoid the network hit when not necessary
+                            gitExe.Execute("fetch origin");
+                            gitExe.Execute("reset --hard " + commitId);
                         }
                         else
                         {
@@ -157,6 +170,12 @@ namespace Kudu.TestHarness
                     Trace.WriteLine(String.Format("Could not find a cached copy at {0}. Cloning from source {1}.", cachedPath, source));
                     PathHelper.EnsureDirectory(cachedPath);
                     gitExe.Execute("clone \"{0}\" .", source);
+
+                    // If we have a commit id, reset to it in case it's older than the latest on our clone
+                    if (commitId != null)
+                    {
+                        gitExe.Execute("reset --hard " + commitId);
+                    }
                 }
             }
             return cachedPath;

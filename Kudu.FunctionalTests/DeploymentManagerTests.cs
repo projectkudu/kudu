@@ -55,7 +55,7 @@ namespace Kudu.FunctionalTests
             string cloneUrl = "https://github.com/KuduApps/HelloWorld.git";
             string appName = KuduUtils.GetRandomWebsiteName("DeploymentApis");
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "1f3dfd8"))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -164,7 +164,7 @@ namespace Kudu.FunctionalTests
             string cloneUrl = "https://github.com/KuduApps/HelloWorld.git";
             string appName = KuduUtils.GetRandomWebsiteName("DeleteKuduSiteCleansEverything");
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "1f3dfd8"))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {

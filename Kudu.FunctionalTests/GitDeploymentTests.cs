@@ -78,7 +78,7 @@ namespace Kudu.FunctionalTests
                 appManager.SettingsManager.SetValue("TESTED_VAR", verificationLogText).Wait();
 
                 // Act
-                using (TestRepository testRepository = Git.Clone(randomTestName, repoCloneUrl))
+                using (TestRepository testRepository = Git.Clone(randomTestName, repoCloneUrl, commitId: "66e15f2"))
                 {
                     appManager.GitDeploy(testRepository.PhysicalPath, "master");
                 }
