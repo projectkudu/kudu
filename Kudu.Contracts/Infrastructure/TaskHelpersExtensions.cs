@@ -105,7 +105,21 @@ namespace System.Threading.Tasks
             TaskCompletionSource<Task<TResult>> tcs = new TaskCompletionSource<Task<TResult>>();
 
             // this runs only if the inner task did not fault
-            task.ContinueWith(innerTask => tcs.TrySetFromTask(innerTask), TaskContinuationOptions.NotOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
+            task.ContinueWith(innerTask =>
+            {
+                if (syncContext != null)
+                {
+                    syncContext.Post(state =>
+                    {
+                        tcs.TrySetFromTask(innerTask);
+                    }, state: null);
+                }
+                else
+                {
+                    tcs.TrySetFromTask(innerTask);
+                }
+            }
+            , TaskContinuationOptions.NotOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
 
             // this runs only if the inner task faulted
             task.ContinueWith(innerTask =>

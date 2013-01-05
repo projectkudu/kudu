@@ -7,7 +7,7 @@ namespace Kudu.Contracts.Settings
     public static class DeploymentSettingsExtension
     {
         public static TimeSpan DefaultCommandIdleTimeout = TimeSpan.FromSeconds(180);
-        public const TraceLevel DefaultTraceLevel = TraceLevel.Off;
+        public const TraceLevel DefaultTraceLevel = TraceLevel.Error;
 
         public static TraceLevel GetTraceLevel(this IDeploymentSettingsManager settings)
         {
