@@ -7,5 +7,8 @@
         public const string TraceLevel = "trace_level";
         public const string CommandIdleTimeout = "command_idle_timeout";
         public const string SiteBuilderFactory = "site_builder_factory";
+        public const string GitUsername = "git.username";
+        public const string GitEmail = "git.email";
+        public const string ScmType = "ScmType";
     }
 }

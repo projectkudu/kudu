@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Core.SourceControl
 {
@@ -20,7 +19,7 @@ namespace Kudu.Core.SourceControl
         /// Initialize a new repository using the given configuration.
         /// </summary>
         /// <param name="configuration">The configuration to use.</param>
-        void Initialize(RepositoryConfiguration configuration);
+        void Initialize();
 
         IEnumerable<Branch> GetBranches();
         IEnumerable<FileStatus> GetStatus();

@@ -22,6 +22,21 @@ namespace Kudu.FunctionalTests.Infrastructure
             return (T)baseEx;
         }
 
+        public static Exception ThrowsMessage(string expected, Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception ex)
+            {
+                Assert.Contains(expected, ex.Message);
+                return ex;
+            }
+
+            throw new Exception("Not throw, expected: " + expected);
+        }
+
         public static void VerifyUrl(Uri url, ICredentials cred, params string[] contents)
         {
             VerifyUrl(url.ToString(), cred, contents);

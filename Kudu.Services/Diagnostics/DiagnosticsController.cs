@@ -50,7 +50,29 @@ namespace Kudu.Services.Performance
                     {
                         if (Directory.Exists(path))
                         {
-                            zip.AddDirectory(path, Path.GetFileName(path));
+                            if (path.EndsWith(Constants.LogFilesPath))
+                            {
+                                var dir = new DirectoryInfo(path);
+                                foreach (var info in dir.GetFileSystemInfos())
+                                {
+                                    if (info is DirectoryInfo)
+                                    {
+                                        // excluding FREB as it contains user sensitive data such as authorization header
+                                        if (!info.Name.StartsWith("W3SVC", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            zip.AddDirectory(info.FullName, Path.Combine(dir.Name, info.Name));
+                                        }
+                                    }
+                                    else
+                                    {
+                                        zip.AddFile(info.FullName, dir.Name);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                zip.AddDirectory(path, Path.GetFileName(path));
+                            }
                         }
                         else if (File.Exists(path))
                         {

@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Settings;
+using Kudu.Contracts.SourceControl;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
@@ -991,6 +994,61 @@ command = node build.js
         }
 
         [Fact]
+        public void ScmTypeTest()
+        {
+            // Arrange
+            using (var repo = Git.Clone("HelloKudu"))
+            {
+                string appName = KuduUtils.GetRandomWebsiteName("ScmTypeTest");
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Default value test
+                    try
+                    {
+                        // for private kudu, the setting is LocalGit
+                        string value = appManager.SettingsManager.GetValue(SettingsKeys.ScmType).Result;
+                        Assert.Equal("LocalGit", value);
+                    }
+                    catch (AggregateException ex)
+                    {
+                        // for public kudu, the setting does not exist
+                        Assert.Contains("404", ex.InnerExceptions[0].Message);
+                    }
+
+                    // Initial deployment
+                    GitDeploymentResult result = appManager.GitDeploy(repo.PhysicalPath);
+                    Assert.Contains("remote: Deployment successful.", result.GitTrace);
+
+                    // Disable by setting to None
+                    appManager.SettingsManager.SetValue(SettingsKeys.ScmType, ScmType.None.ToString()).Wait();
+                    KuduAssert.ThrowsMessage("The requested URL returned error: 403", () => appManager.GitDeploy(repo.PhysicalPath));
+                    var client = CreateClient(appManager);
+                    var post = new Dictionary<string, string>
+                    {
+                        { "payload", String.Empty }
+                    };
+                    HttpResponseMessage response = client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result;
+                    Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+
+                    // Enable by setting to GitHub
+                    appManager.SettingsManager.SetValue(SettingsKeys.ScmType, "GitHub").Wait();
+                    result = appManager.GitDeploy(repo.PhysicalPath);
+                    Assert.Contains("Everything up-to-date", result.GitTrace);
+                    client = CreateClient(appManager);
+                    response = client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result;
+                    Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+                    // Disable by setting to Tfs
+                    appManager.SettingsManager.SetValue(SettingsKeys.ScmType, ScmType.Tfs.ToString()).Wait();
+                    KuduAssert.ThrowsMessage("The requested URL returned error: 403", () => appManager.GitDeploy(repo.PhysicalPath));
+                    client = CreateClient(appManager);
+                    response = client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result;
+                    Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+                });
+            }
+        }
+
+        [Fact]
         public void SpecificDeploymentConfiguration()
         {
             VerifyDeploymentConfiguration("SpecificDeployConfig",
@@ -1064,6 +1122,16 @@ command = node build.js
                                           "IDoNotExist",
                                           KuduAssert.DefaultPageContent,
                                           DeployStatus.Failed);
+        }
+
+        private static HttpClient CreateClient(ApplicationManager appManager)
+        {
+            HttpClientHandler handler = HttpClientHelper.CreateClientHandler(appManager.ServiceUrl, appManager.DeploymentManager.Credentials);
+            return new HttpClient(handler)
+            {
+                BaseAddress = new Uri(appManager.ServiceUrl),
+                Timeout = TimeSpan.FromMinutes(5)
+            };
         }
 
         private void VerifyDeploymentConfiguration(string siteName, string targetProject, string expectedText, DeployStatus expectedStatus = DeployStatus.Success, string expectedLog = null)

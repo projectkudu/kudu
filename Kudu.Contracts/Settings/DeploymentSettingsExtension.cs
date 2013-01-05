@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
+using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Contracts.Settings
 {
@@ -42,6 +42,25 @@ namespace Kudu.Contracts.Settings
             }
 
             return DeploymentSettingsExtension.DefaultCommandIdleTimeout;
+        }
+
+        public static string GetGitUsername(this IDeploymentSettingsManager settings)
+        {
+            string value = settings.GetValue(SettingsKeys.GitUsername);
+            return !String.IsNullOrEmpty(value) ? value : "unknown";
+        }
+
+        public static string GetGitEmail(this IDeploymentSettingsManager settings)
+        {
+            string value = settings.GetValue(SettingsKeys.GitEmail);
+            return !String.IsNullOrEmpty(value) ? value : "unknown";
+        }
+
+        // allow git push, clone, /deploy endpoints
+        public static bool IsScmEnabled(this IDeploymentSettingsManager settings)
+        {
+            string scmType = settings.GetValue(SettingsKeys.ScmType);
+            return scmType != ScmType.None && scmType != ScmType.Tfs;
         }
     }
 }

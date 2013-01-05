@@ -20,12 +20,13 @@
 
 #endregion
 
+using System.Net;
 using System.Web;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
-using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Deployment;
-using Kudu.Services;
+using Kudu.Core.SourceControl.Git;
 
 namespace Kudu.Services.GitServer
 {
@@ -34,8 +35,9 @@ namespace Kudu.Services.GitServer
         public UploadPackHandler(ITracer tracer,
                                   IGitServer gitServer,
                                   IOperationLock deploymentLock,
-                                  IDeploymentManager deploymentManager)
-            : base(tracer, gitServer, deploymentLock, deploymentManager)
+                                  IDeploymentManager deploymentManager,
+                                  IDeploymentSettingsManager settings)
+            : base(tracer, gitServer, deploymentLock, deploymentManager, settings)
         {
         }
 
@@ -43,6 +45,13 @@ namespace Kudu.Services.GitServer
         {
             using (_tracer.Step("RpcService.UploadPackHandler"))
             {
+                if (!_settings.IsScmEnabled())
+                {
+                    context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                    context.ApplicationInstance.CompleteRequest();
+                    return;
+                }
+
                 UpdateNoCacheForResponse(context.Response);
 
                 context.Response.ContentType = "application/x-git-{0}-result".With("upload-pack");

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Web;
-using Kudu.Contracts.SourceControl;
 using Kudu.Core;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;

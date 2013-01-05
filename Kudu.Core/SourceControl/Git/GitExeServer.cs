@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
-using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
@@ -138,7 +137,7 @@ namespace Kudu.Core.SourceControl.Git
             _gitExe.Execute(tracer, input, output, @"{0} --stateless-rpc ""{1}""", serviceName, _gitExe.WorkingDirectory);
         }
 
-        public ChangeSet Initialize(RepositoryConfiguration configuration, string path)
+        public ChangeSet Initialize(string path)
         {
             if (Exists && !_initLock.IsHeld)
             {
@@ -150,7 +149,7 @@ namespace Kudu.Core.SourceControl.Git
 
             _initLock.LockOrWait(() =>
             {
-                InitializeRepository(configuration);
+                InitializeRepository();
 
                 ITracer tracer = _traceFactory.GetTracer();
                 using (tracer.Step("GitExeServer.Initialize(path)"))
@@ -175,7 +174,7 @@ namespace Kudu.Core.SourceControl.Git
             return changeSet;
         }
 
-        public bool Initialize(RepositoryConfiguration configuration)
+        public bool Initialize()
         {
             if (Exists && !_initLock.IsHeld)
             {
@@ -183,17 +182,17 @@ namespace Kudu.Core.SourceControl.Git
                 return false;
             }
 
-            _initLock.LockOrWait(() => InitializeRepository(configuration), _initTimeout);
+            _initLock.LockOrWait(() => InitializeRepository(), _initTimeout);
 
             return true;
         }
 
-        private void InitializeRepository(RepositoryConfiguration configuration)
+        private void InitializeRepository()
         {
             ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("GitExeServer.Initialize"))
             {
-                _repository.Initialize(configuration);
+                _repository.Initialize();
 
                 using (tracer.Step("Configure git server"))
                 {
