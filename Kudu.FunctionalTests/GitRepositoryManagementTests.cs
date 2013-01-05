@@ -108,7 +108,7 @@ command = deploy.cmd");
             string appName = KuduUtils.GetRandomWebsiteName("WapWithFailingCustomDeploymentScript");
             string cloneUrl = "https://github.com/KuduApps/CustomBuildScript.git";
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "63922e0"))
+            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "2c156bd"))
             {
                 repo.WriteFile(".deployment", @"
 [config]
