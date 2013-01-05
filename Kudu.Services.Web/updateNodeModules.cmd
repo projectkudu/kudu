@@ -28,7 +28,7 @@ IF %ERRORLEVEL% NEQ 0 goto error
 goto end
 
 :error
-if %counter% GEQ attempts% goto :lastError
+if %counter% GEQ %attempts% goto :lastError
 goto retry
 
 :lastError
