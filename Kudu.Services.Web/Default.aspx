@@ -86,7 +86,7 @@
         <% 
             string commitFile = MapPath("~/commit");
             string sha = File.Exists(commitFile) ? File.ReadAllText(commitFile).Trim() : null;
-            var version = typeof(AppSettings).Assembly.GetName().Version;
+            var version = typeof(Kudu.Services.Web.Tracing.TraceModule).Assembly.GetName().Version;
         %>
         
         <h1>Kudu - Build <%= version %>
