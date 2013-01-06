@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Kudu.Contracts.Settings;
-using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
@@ -19,11 +18,13 @@ namespace Kudu.Core.SourceControl.Git
     {
         private readonly GitExecutable _gitExe;
         private readonly ITraceFactory _tracerFactory;
+        private readonly IDeploymentSettingsManager _settings;
 
         public GitExeRepository(string path, string homePath, IDeploymentSettingsManager settings, ITraceFactory profilerFactory)
         {
             _gitExe = new GitExecutable(path, settings.GetCommandIdleTimeout());
             _tracerFactory = profilerFactory;
+            _settings = settings;
 
             if (!String.IsNullOrEmpty(homePath))
             {
@@ -66,7 +67,7 @@ namespace Kudu.Core.SourceControl.Git
             }
         }
 
-        public void Initialize(RepositoryConfiguration configuration)
+        public void Initialize()
         {
             var profiler = _tracerFactory.GetTracer();
             using (profiler.Step("GitExeRepository.Initialize"))
@@ -75,9 +76,9 @@ namespace Kudu.Core.SourceControl.Git
 
                 _gitExe.Execute(profiler, "config core.autocrlf true");
 
-                _gitExe.Execute(profiler, @"config user.name ""{0}""", configuration.Username);
+                _gitExe.Execute(profiler, @"config user.name ""{0}""", _settings.GetGitUsername());
 
-                _gitExe.Execute(profiler, @"config user.email ""{0}""", configuration.Email);
+                _gitExe.Execute(profiler, @"config user.email ""{0}""", _settings.GetGitEmail());
             }
         }
 

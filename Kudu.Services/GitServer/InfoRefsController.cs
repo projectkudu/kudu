@@ -25,7 +25,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Web.Http;
-using Kudu.Contracts.SourceControl;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
@@ -39,21 +39,21 @@ namespace Kudu.Services.GitServer
         private readonly IDeploymentManager _deploymentManager;
         private readonly IGitServer _gitServer;
         private readonly ITracer _tracer;
+        private readonly IDeploymentSettingsManager _settings;
         private readonly string _webRootPath;
-        private readonly RepositoryConfiguration _configuration;
 
         public InfoRefsController(
             ITracer tracer,
             IGitServer gitServer,
             IDeploymentManager deploymentManager,
-            IEnvironment environment,
-            RepositoryConfiguration configuration)
+            IDeploymentSettingsManager settings,
+            IEnvironment environment)
         {
             _gitServer = gitServer;
             _deploymentManager = deploymentManager;
             _tracer = tracer;
+            _settings = settings;
             _webRootPath = environment.WebRootPath;
-            _configuration = configuration;
         }
 
         [HttpGet]
@@ -61,6 +61,11 @@ namespace Kudu.Services.GitServer
         {
             using (_tracer.Step("InfoRefsService.Execute"))
             {
+                if (!_settings.IsGitEnabled())
+                {
+                    return Request.CreateErrorResponse(HttpStatusCode.Forbidden, Resources.Error_GitIsDisabled);
+                }
+
                 service = GetServiceType(service);
                 bool isUsingSmartProtocol = service != null;
 
@@ -97,12 +102,12 @@ namespace Kudu.Services.GitServer
                     //    _deploymentManager.CreateExistingDeployment(changeSet.Id, _configuration.Username);
                     //}
 
-                    _gitServer.Initialize(_configuration);
+                    _gitServer.Initialize();
                     _gitServer.AdvertiseUploadPack(memoryStream);
                 }
                 else if (service == "receive-pack")
                 {
-                    _gitServer.Initialize(_configuration);
+                    _gitServer.Initialize();
                     _gitServer.AdvertiseReceivePack(memoryStream);
                 }
 

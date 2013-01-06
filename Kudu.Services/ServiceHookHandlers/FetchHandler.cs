@@ -2,17 +2,15 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
 using System.Web;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
-using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
-using Kudu.Core.SourceControl.Git;
-using Kudu.Core.Tracing;
 using Kudu.Services.ServiceHookHandlers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -27,7 +25,6 @@ namespace Kudu.Services
         private readonly IEnumerable<IServiceHookHandler> _serviceHookHandlers;
         private readonly IOperationLock _deploymentLock;
         private readonly ITracer _tracer;
-        private readonly RepositoryConfiguration _configuration;
         private readonly RepositoryFactory _repositoryFactory;
 
 
@@ -35,7 +32,6 @@ namespace Kudu.Services
                             IDeploymentManager deploymentManager,
                             IDeploymentSettingsManager settings,
                             IOperationLock deploymentLock,
-                            RepositoryConfiguration configuration,
                             IEnvironment environment,
                             IEnumerable<IServiceHookHandler> serviceHookHandlers,
                             RepositoryFactory repositoryFactory)
@@ -44,7 +40,6 @@ namespace Kudu.Services
             _deploymentLock = deploymentLock;
             _deploymentManager = deploymentManager;
             _settings = settings;
-            _configuration = configuration;
             _environment = environment;
             _serviceHookHandlers = serviceHookHandlers;
             _repositoryFactory = repositoryFactory;
@@ -67,6 +62,13 @@ namespace Kudu.Services
         {
             using (_tracer.Step("FetchHandler"))
             {
+                if (!_settings.IsGitEnabled())
+                {
+                    context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                    context.ApplicationInstance.CompleteRequest();
+                    return;
+                }
+
                 context.Response.TrySkipIisCustomErrors = true;
 
                 DeploymentInfo deployInfo = null;

@@ -20,12 +20,14 @@
 
 #endregion
 
+using System.Net;
 using System.Web;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Services.Infrastructure;
-using Kudu.Core.Deployment;
 
 namespace Kudu.Services.GitServer
 {
@@ -34,8 +36,9 @@ namespace Kudu.Services.GitServer
         public ReceivePackHandler(ITracer tracer,
                                   IGitServer gitServer,
                                   IOperationLock deploymentLock,
-                                  IDeploymentManager deploymentManager)
-            : base(tracer, gitServer, deploymentLock, deploymentManager)
+                                  IDeploymentManager deploymentManager,
+                                  IDeploymentSettingsManager settings)
+            : base(tracer, gitServer, deploymentLock, deploymentManager, settings)
         {
         }
 
@@ -43,6 +46,13 @@ namespace Kudu.Services.GitServer
         {
             using (_tracer.Step("RpcService.ReceivePack"))
             {
+                if (!_settings.IsGitEnabled())
+                {
+                    context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                    context.ApplicationInstance.CompleteRequest();
+                    return;
+                }
+
                 _deploymentLock.LockOperation(() =>
                 {
                     string username = null;
