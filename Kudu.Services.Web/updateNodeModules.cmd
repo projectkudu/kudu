@@ -39,3 +39,4 @@ exit /b 1
 :end
 popd
 echo Finished successfully.
+exit /b 0
