@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
 using Kudu.Contracts.Settings;
@@ -9,6 +10,7 @@ namespace Kudu.Core.Settings
     public class DeploymentSettingsManager : IDeploymentSettingsManager
     {
         private const string DeploymentSettingsSection = "deployment";
+        private const string AppSettingPrefix = "APPSETTING_";
         private readonly ISettings _perSiteSettings;
 
         // Ideally, these default settings would live in Kudu's web.config. However, we also need them in 
@@ -27,6 +29,20 @@ namespace Kudu.Core.Settings
             foreach (string name in ConfigurationManager.AppSettings)
             {
                 _defaultSettings[name] = ConfigurationManager.AppSettings[name];
+            }
+
+            // Go through all the environment variables and process those that are meant to be app settings.
+            // In Azure, those will already have been present in ConfigurationManager.AppSettings when running
+            // in the Kudu service. But when running in kudu.exe, they wouldn't (hence the need for this code)
+            foreach (DictionaryEntry entry in System.Environment.GetEnvironmentVariables())
+            {
+                var name = (string)entry.Key;
+
+                if (name.StartsWith(AppSettingPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    name = name.Substring(AppSettingPrefix.Length);
+                    _defaultSettings[name] = (string)entry.Value;
+                }
             }
         }
 
