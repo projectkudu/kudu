@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Contracts.Settings;
+using System.IO.Abstractions;
 
 namespace Kudu.Core.Deployment.Generator
 {
@@ -25,6 +26,7 @@ namespace Kudu.Core.Deployment.Generator
             try
             {
                 RunCommand(context, _command);
+                HandleNodeSite(context);
                 tcs.SetResult(null);
             }
             catch (Exception ex)
@@ -33,6 +35,18 @@ namespace Kudu.Core.Deployment.Generator
             }
 
             return tcs.Task;
+        }
+
+        private void HandleNodeSite(DeploymentContext context)
+        {
+            var fileSystem = new FileSystem();
+            if (NodeSiteEnabler.LooksLikeNode(fileSystem, context.OutputPath))
+            {
+                // We use wwwroot as the source (and destination) since this is a custom deployment
+                // And we don't know where would the root of the site be in the source
+                // (package.json may not even exist in the source for this custom deployment scenario)
+                NodeSiteEnabler.SelectNodeVersion(fileSystem, Environment.ScriptPath, context.OutputPath, context.OutputPath, DeploymentSettings, context.Tracer);
+            }
         }
     }
 }

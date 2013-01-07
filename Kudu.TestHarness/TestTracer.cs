@@ -33,6 +33,11 @@ namespace Kudu.TestHarness
             var allEntries = entries.Concat(allDetails).ToList();
             foreach (var entry in allEntries)
             {
+                var message = entry.Message;
+                if (message != null)
+                {
+                    message = message.Replace("\n", "\n\t");
+                }
                 Trace(entry.LogTime, entry.Message);
             }
         }
