@@ -39,13 +39,31 @@ namespace Kudu.Core.Deployment.Generator
 
         private void HandleNodeSite(DeploymentContext context)
         {
-            var fileSystem = new FileSystem();
-            if (NodeSiteEnabler.LooksLikeNode(fileSystem, context.OutputPath))
+            ILogger innerLogger = null;
+
+            try
             {
-                // We use wwwroot as the source (and destination) since this is a custom deployment
-                // And we don't know where would the root of the site be in the source
-                // (package.json may not even exist in the source for this custom deployment scenario)
-                NodeSiteEnabler.SelectNodeVersion(fileSystem, Environment.ScriptPath, context.OutputPath, context.OutputPath, DeploymentSettings, context.Tracer);
+                var fileSystem = new FileSystem();
+                if (NodeSiteEnabler.LooksLikeNode(fileSystem, context.OutputPath))
+                {
+                    innerLogger = context.Logger.Log(Resources.Log_SelectNodeJsVersion);
+
+                    // We use wwwroot as the source (and destination) since this is a custom deployment
+                    // And we don't know where would the root of the site be in the source
+                    // (package.json may not even exist in the source for this custom deployment scenario)
+                    string log = NodeSiteEnabler.SelectNodeVersion(fileSystem, Environment.ScriptPath, context.OutputPath, context.OutputPath, DeploymentSettings, context.Tracer);
+
+                    innerLogger.Log(log);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (innerLogger != null)
+                {
+                    innerLogger.Log(ex);
+                }
+
+                throw;
             }
         }
     }

@@ -5,6 +5,7 @@ using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment.Generator;
 using Kudu.Core.Infrastructure;
+using System.IO.Abstractions;
 
 namespace Kudu.Core.Deployment
 {
@@ -82,6 +83,8 @@ namespace Kudu.Core.Deployment
             {
                 exe.ExecuteWithProgressWriter(customLogger, context.Tracer, ExternalCommandBuilder.ShouldFilterOutMsBuildWarnings, _command, String.Empty);
 
+                SelectNodeVersionIfRequired(context);
+
                 tcs.SetResult(null);
             }
             catch (CommandLineException ex)
@@ -107,6 +110,43 @@ namespace Kudu.Core.Deployment
             }
 
             return tcs.Task;
+        }
+
+        private void SelectNodeVersionIfRequired(DeploymentContext context)
+        {
+            var fileSystem = new FileSystem();
+            var nodeSiteEnabler = new NodeSiteEnabler(
+                 fileSystem,
+                 repoFolder: context.OutputPath,
+                 siteFolder: context.OutputPath,
+                 scriptPath: _scriptPath,
+                 settings: _settings);
+
+            ILogger innerLogger = null;
+
+            try
+            {
+                if (nodeSiteEnabler.LooksLikeNode())
+                {
+                    innerLogger = context.Logger.Log(Resources.Log_SelectNodeJsVersion);
+                    string log = nodeSiteEnabler.SelectNodeVersion(context.Tracer);
+
+                    if (!String.IsNullOrEmpty(log))
+                    {
+                        innerLogger.Log(log);
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                if (innerLogger != null)
+                {
+                    innerLogger.Log(ex);
+                }
+
+                throw;
+            }
         }
 
         private string StarterScriptPath
