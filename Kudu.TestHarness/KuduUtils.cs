@@ -77,7 +77,8 @@ namespace Kudu.TestHarness
         {
             get
             {
-                return ConfigurationManager.AppSettings["SiteReusedForAllTests"];
+                // Append the machine name to the site to avoid conflicting with other users running tests
+                return ConfigurationManager.AppSettings["SiteReusedForAllTests"] + Environment.MachineName;
             }
         }
 
