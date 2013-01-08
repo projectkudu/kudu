@@ -70,15 +70,14 @@ namespace Kudu.FunctionalTests
         public void CustomDeploymentScriptShouldHaveDeploymentSetting()
         {
             var verificationLogText = "Settings Were Set Properly";
-            var repoCloneUrl = "https://github.com/KuduApps/CustomDeploymentSettingsTest.git";
 
-            string randomTestName = KuduUtils.GetRandomWebsiteName(Path.GetFileNameWithoutExtension(repoCloneUrl));
+            string randomTestName = KuduUtils.GetRandomWebsiteName("CustomDeploymentScriptShouldHaveDeploymentSetting");
             ApplicationManager.Run(randomTestName, appManager =>
             {
                 appManager.SettingsManager.SetValue("TESTED_VAR", verificationLogText).Wait();
 
                 // Act
-                using (TestRepository testRepository = Git.Clone(randomTestName, repoCloneUrl, commitId: "66e15f2"))
+                using (TestRepository testRepository = Git.Clone("CustomDeploymentSettingsTest"))
                 {
                     appManager.GitDeploy(testRepository.PhysicalPath, "master");
                 }

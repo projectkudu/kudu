@@ -12,11 +12,9 @@ namespace Kudu.FunctionalTests
         public void TestFallbackToDefaultNodeJsVersionWithServerJsOnly()
         {
             // Arrange
-            string repositoryName = "FallbackToDefaultNodeJsVersionWithServerJsOnly";
             string appName = KuduUtils.GetRandomWebsiteName("FallbackToDefaultNodeJsVersionWithServerJsOnly");
-            string cloneUrl = "https://github.com/KuduApps/VersionPinnedNodeJsApp.git";
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "9461da6"))
+            using (var repo = Git.Clone("VersionPinnedNodeJsApp"))
             {
                 repo.DeleteFile("iisnode.yml");
                 repo.DeleteFile("package.json");
@@ -41,11 +39,9 @@ namespace Kudu.FunctionalTests
         public void TestFallbackToDefaultNodeJsVersionWithServerJsAndEmptyPackageJson()
         {
             // Arrange
-            string repositoryName = "FallbackToDefaultNodeJsVersionWithServerJs";
             string appName = KuduUtils.GetRandomWebsiteName("FallbackToDefaultNodeJsVersionWithServerJsAndEmptyPackageJson");
-            string cloneUrl = "https://github.com/KuduApps/VersionPinnedNodeJsApp.git";
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "9461da6"))
+            using (var repo = Git.Clone("VersionPinnedNodeJsApp"))
             {
                 repo.DeleteFile("iisnode.yml");
                 repo.WriteFile("package.json", @"{ ""name"" : ""foo"", ""version"": ""1.0.0"" }");
@@ -71,11 +67,9 @@ namespace Kudu.FunctionalTests
         public void TestFallbackToDefaultNodeJsVersionWithIisnodeYmlLackingNodeProcessCommandLine()
         {
             // Arrange
-            string repositoryName = "FallbackToDefaultNodeJsVersionWithIisnodeYmlLacking";
             string appName = KuduUtils.GetRandomWebsiteName("FallbackToDefaultNodeJsVersionWithIisnodeYmlLacking");
-            string cloneUrl = "https://github.com/KuduApps/VersionPinnedNodeJsApp.git";
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "9461da6"))
+            using (var repo = Git.Clone("VersionPinnedNodeJsApp"))
             {
                 repo.WriteFile("iisnode.yml", "foo: bar");
                 repo.DeleteFile("package.json");
@@ -99,11 +93,9 @@ namespace Kudu.FunctionalTests
         public void TestTurningAutomaticVersionSelectionOffWithIisnodeYmlWithNodeProcessCommandLine()
         {
             // Arrange
-            string repositoryName = "TurningAutomaticVersionSelectionOffWithIisnodeYml";
             string appName = KuduUtils.GetRandomWebsiteName("TurningAutomaticVersionSelectionOffWithIisnodeYml");
-            string cloneUrl = "https://github.com/KuduApps/VersionPinnedNodeJsApp.git";
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "9461da6"))
+            using (var repo = Git.Clone("VersionPinnedNodeJsApp"))
             {
                 repo.WriteFile("iisnode.yml", "nodeProcessCommandLine: bar");
                 Git.Commit(repo.PhysicalPath, "Changes");
@@ -126,11 +118,9 @@ namespace Kudu.FunctionalTests
         public void TestMismatchBetweenAvailableVersionsAndRequestedVersions()
         {
             // Arrange
-            string repositoryName = "TestMismatchBetweenVersions";
             string appName = KuduUtils.GetRandomWebsiteName("TestMismatchBetweenAvailableVersionsAndRequestedVersions");
-            string cloneUrl = "https://github.com/KuduApps/VersionPinnedNodeJsApp.git";
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "9461da6"))
+            using (var repo = Git.Clone("VersionPinnedNodeJsApp"))
             {
                 repo.Replace("package.json", "0.8.2", "0.1.0");
                 Git.Commit(repo.PhysicalPath, "Changes");
@@ -153,11 +143,9 @@ namespace Kudu.FunctionalTests
         public void TestPositiveMatch()
         {
             // Arrange
-            string repositoryName = "VersionPinnedNodeJsApp";
             string appName = KuduUtils.GetRandomWebsiteName("VersionPinnedNodeJsApp");
-            string cloneUrl = "https://github.com/KuduApps/VersionPinnedNodeJsApp.git";
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "9461da6"))
+            using (var repo = Git.Clone("VersionPinnedNodeJsApp"))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {

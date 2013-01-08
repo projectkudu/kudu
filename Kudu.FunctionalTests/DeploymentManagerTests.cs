@@ -51,11 +51,10 @@ namespace Kudu.FunctionalTests
         public void DeploymentApis()
         {
             // Arrange
-            string repositoryName = "DeploymentApisTest";
-            string cloneUrl = "https://github.com/KuduApps/HelloWorld.git";
+
             string appName = KuduUtils.GetRandomWebsiteName("DeploymentApis");
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "1f3dfd8"))
+            using (var repo = Git.Clone("HelloWorld"))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -160,11 +159,9 @@ namespace Kudu.FunctionalTests
         public void DeleteKuduSiteCleansEverything()
         {
             // Arrange
-            string repositoryName = "HelloWorld";
-            string cloneUrl = "https://github.com/KuduApps/HelloWorld.git";
             string appName = KuduUtils.GetRandomWebsiteName("DeleteKuduSiteCleansEverything");
 
-            using (var repo = Git.Clone(repositoryName, cloneUrl, commitId: "1f3dfd8"))
+            using (var repo = Git.Clone("HelloWorld"))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {

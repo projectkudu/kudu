@@ -85,15 +85,24 @@ namespace Kudu.TestHarness
             gitExe.Execute("add \"{0}\"", path);
         }
 
-        public static TestRepository Clone(string repositoryName, string source, string commitId = null, IDictionary<string, string> environments = null, bool noCache = false)
+        public static TestRepository Clone(string repositoryName, string source = null, IDictionary<string, string> environments = null, bool noCache = false)
         {
+            string commitId = null;
+
+            if (source == null)
+            {
+                TestRepositoryInfo repoInfo = TestRepositories.Get(repositoryName);
+                source = repoInfo.Url;
+                commitId = repoInfo.CommitId;
+            }
+
             return OperationManager.Attempt(() => CloneInternal(repositoryName, source, commitId, environments, noCache));
         }
 
         private static TestRepository CloneInternal(string repositoryName, string source, string commitId, IDictionary<string, string> environments, bool noCache)
         {
             // Check if we have a cached instance of the repository available locally
-            string cachedPath = noCache ? null : CreateCachedRepo(repositoryName, source, commitId, environments);
+            string cachedPath = noCache ? null : CreateCachedRepo(source, commitId, environments);
 
             if (cachedPath != null)
             {
@@ -109,7 +118,7 @@ namespace Kudu.TestHarness
             return new TestRepository(repositoryPath, obliterateOnDispose: true);
         }
 
-        private static string CreateCachedRepo(string repositoryName, string source, string commitId, IDictionary<string, string> environments)
+        private static string CreateCachedRepo(string source, string commitId, IDictionary<string, string> environments)
         {
             string cachedPath = null;
 
