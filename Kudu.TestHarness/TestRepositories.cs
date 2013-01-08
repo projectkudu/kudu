@@ -11,22 +11,22 @@ namespace Kudu.TestHarness
     {
         private static TestRepositoryInfo[] _repoList = new TestRepositoryInfo[]
         {
-            new TestRepositoryInfo("https://github.com/KuduApps/HelloWorld.git",                    "1f3dfd8"),
-            new TestRepositoryInfo("https://github.com/KuduApps/HelloKudu.git",                     "2370e44"),
-            new TestRepositoryInfo("https://github.com/KuduApps/VersionPinnedNodeJsApp.git",        "9461da6"),
-            new TestRepositoryInfo("https://github.com/KuduApps/CustomDeploymentSettingsTest.git",  "66e15f2"),
-            new TestRepositoryInfo("https://github.com/KuduApps/Mvc3AppWithTestProject.git",        "5df86e3"),
-            new TestRepositoryInfo("https://github.com/KuduApps/CustomBuildScript.git",             "2c156bd"),
-            new TestRepositoryInfo("https://github.com/KuduApps/WarningsAsErrors.git",              "51b6a48"),
-            new TestRepositoryInfo("https://github.com/KuduApps/Mvc3Application_NoSolution.git",    "4e36ca3"),
-            new TestRepositoryInfo("https://github.com/KuduApps/NoDeployableProjects.git",          "e21eb82"),
-            new TestRepositoryInfo("https://github.com/KuduApps/ConditionalCompilation.git",        "a104578"),
-            new TestRepositoryInfo("https://github.com/KuduApps/waws.git",                          "7652a66"),
-            new TestRepositoryInfo("https://github.com/KuduApps/Bakery.git",                        "2f29dc6"),
-            new TestRepositoryInfo("https://github.com/KuduApps/NpmSite.git",                       "2b29b9d"),
-            new TestRepositoryInfo("https://github.com/KuduApps/NodeHelloWorldNoConfig.git",        "d8a15b6"),
             new TestRepositoryInfo("git@github.com:KuduQAOrg/RepoWithPrivateSubModule.git",         "4820516"),
+            new TestRepositoryInfo("https://github.com/KuduApps/Bakery.git",                        "2f29dc6"),
+            new TestRepositoryInfo("https://github.com/KuduApps/ConditionalCompilation.git",        "a104578"),
+            new TestRepositoryInfo("https://github.com/KuduApps/CustomBuildScript.git",             "2c156bd"),
+            new TestRepositoryInfo("https://github.com/KuduApps/CustomDeploymentSettingsTest.git",  "66e15f2"),
             new TestRepositoryInfo("https://github.com/KuduApps/HangProcess.git",                   "2e53ab6"),
+            new TestRepositoryInfo("https://github.com/KuduApps/HelloKudu.git",                     "2370e44"),
+            new TestRepositoryInfo("https://github.com/KuduApps/HelloWorld.git",                    "1f3dfd8"),
+            new TestRepositoryInfo("https://github.com/KuduApps/Mvc3Application_NoSolution.git",    "4e36ca3"),
+            new TestRepositoryInfo("https://github.com/KuduApps/Mvc3AppWithTestProject.git",        "5df86e3"),
+            new TestRepositoryInfo("https://github.com/KuduApps/NodeHelloWorldNoConfig.git",        "d8a15b6"),
+            new TestRepositoryInfo("https://github.com/KuduApps/NoDeployableProjects.git",          "e21eb82"),
+            new TestRepositoryInfo("https://github.com/KuduApps/NpmSite.git",                       "2b29b9d"),
+            new TestRepositoryInfo("https://github.com/KuduApps/VersionPinnedNodeJsApp.git",        "9461da6"),
+            new TestRepositoryInfo("https://github.com/KuduApps/WarningsAsErrors.git",              "51b6a48"),
+            new TestRepositoryInfo("https://github.com/KuduApps/waws.git",                          "7652a66"),
         };
 
         private static Dictionary<string, TestRepositoryInfo> _repos;
