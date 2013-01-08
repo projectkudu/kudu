@@ -107,7 +107,7 @@ namespace Kudu.Core.Deployment
 
         internal string GetMSBuildArguments(string buildTempPath)
         {
-            string command = @"""{0}"" /nologo /verbosity:m /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""{1}"";AutoParameterizationWebConfigConnectionStrings=false;Configuration=Release";
+            string command = @"""{0}"" /nologo /verbosity:m /t:Build /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""{1}"";AutoParameterizationWebConfigConnectionStrings=false;Configuration=Release";
             string properties = GetPropertyString();
             if (!String.IsNullOrEmpty(properties))
             {

@@ -21,7 +21,7 @@ namespace Kudu.Core.Deployment.Test
             var commandLineParams = wapBuilder.GetMSBuildArguments(@"x:\temp-path\some-guid");
 
             // Assert
-            Assert.Equal(@"""x:\project-path"" /nologo /verbosity:m /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""x:\temp-path\some-guid"";AutoParameterizationWebConfigConnectionStrings=false;Configuration=Release /p:ExtensionsPath=""C:\Program Files"";flp=""Detailed"" /p:SolutionDir=""x:\solution-dir\\""", commandLineParams);
+            Assert.Equal(@"""x:\project-path"" /nologo /verbosity:m /t:Build /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""x:\temp-path\some-guid"";AutoParameterizationWebConfigConnectionStrings=false;Configuration=Release /p:ExtensionsPath=""C:\Program Files"";flp=""Detailed"" /p:SolutionDir=""x:\solution-dir\\""", commandLineParams);
         }
 
         [Fact]
@@ -38,7 +38,7 @@ namespace Kudu.Core.Deployment.Test
             var commandLineParams = wapBuilder.GetMSBuildArguments(@"x:\temp-path\some-guid");
 
             // Assert
-            Assert.Equal(@"""x:\project-path"" /nologo /verbosity:m /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""x:\temp-path\some-guid"";AutoParameterizationWebConfigConnectionStrings=false;Configuration=Release /p:ExtensionsPath=""C:\Program Files"";flp=""Detailed"" /p:SolutionDir=""x:\solution-dir\\"" /extra_arg1 /extra_arg2", commandLineParams);
+            Assert.Equal(@"""x:\project-path"" /nologo /verbosity:m /t:Build /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""x:\temp-path\some-guid"";AutoParameterizationWebConfigConnectionStrings=false;Configuration=Release /p:ExtensionsPath=""C:\Program Files"";flp=""Detailed"" /p:SolutionDir=""x:\solution-dir\\"" /extra_arg1 /extra_arg2", commandLineParams);
         }
 
         [Fact]
@@ -55,7 +55,7 @@ namespace Kudu.Core.Deployment.Test
             var commandLineParams = wapBuilder.GetMSBuildArguments(@"x:\temp-path\some-guid");
 
             // Assert
-            Assert.Equal(@"""x:\project-path"" /nologo /verbosity:m /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""x:\temp-path\some-guid"";AutoParameterizationWebConfigConnectionStrings=false;Configuration=Release /p:SolutionDir=""x:\solution-dir\\"" /extra_arg1 /extra_arg2", commandLineParams);
+            Assert.Equal(@"""x:\project-path"" /nologo /verbosity:m /t:Build /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""x:\temp-path\some-guid"";AutoParameterizationWebConfigConnectionStrings=false;Configuration=Release /p:SolutionDir=""x:\solution-dir\\"" /extra_arg1 /extra_arg2", commandLineParams);
         }
 
         [Fact]
@@ -71,7 +71,7 @@ namespace Kudu.Core.Deployment.Test
             var commandLineParams = wapBuilder.GetMSBuildArguments(@"x:\temp-path\some-guid");
 
             // Assert
-            Assert.Equal(@"""x:\project-path"" /nologo /verbosity:m /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""x:\temp-path\some-guid"";AutoParameterizationWebConfigConnectionStrings=false;Configuration=Release /p:SolutionDir=""x:\solution-dir\\""", commandLineParams);
+            Assert.Equal(@"""x:\project-path"" /nologo /verbosity:m /t:Build /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""x:\temp-path\some-guid"";AutoParameterizationWebConfigConnectionStrings=false;Configuration=Release /p:SolutionDir=""x:\solution-dir\\""", commandLineParams);
         }
 
         [Theory]
@@ -89,7 +89,7 @@ namespace Kudu.Core.Deployment.Test
             var commandLineParams = wapBuilder.GetMSBuildArguments(@"x:\temp-path\some-guid");
 
             // Assert
-            Assert.Equal(@"""x:\project-path"" /nologo /verbosity:m /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""x:\temp-path\some-guid"";AutoParameterizationWebConfigConnectionStrings=false;Configuration=Release", commandLineParams);
+            Assert.Equal(@"""x:\project-path"" /nologo /verbosity:m /t:Build /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""x:\temp-path\some-guid"";AutoParameterizationWebConfigConnectionStrings=false;Configuration=Release", commandLineParams);
         }
     }
 }

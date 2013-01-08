@@ -38,14 +38,6 @@ namespace Kudu.Core.Deployment.Generator
 
         public abstract Task Build(DeploymentContext context);
 
-        // TODO: add specific support in script for this:
-        //protected string GetMSBuildExtraArguments()
-        //{
-            //if (_settings == null) return String.Empty;
-
-            //return _settings.GetValue(SettingsKeys.BuildArgs);
-        //}
-
         protected void RunCommand(DeploymentContext context, string command)
         {
             ILogger customLogger = context.Logger.Log("Running deployment command...");

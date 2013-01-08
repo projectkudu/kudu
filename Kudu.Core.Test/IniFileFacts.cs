@@ -69,13 +69,13 @@ namespace Kudu.Core.Test
             {
                 IniLookup lookup;
 
-                IniFile.ParseValues(new[] { "[section]", "", @"command = msbuild SimpleWebApplication/SimpleWebApplication.csproj /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""%TARGET%"";AutoParameterizationWebConfigConnectionStrings=false;Configuration=Debug;SolutionDir=""%SOURCE%""" }, out lookup);
+                IniFile.ParseValues(new[] { "[section]", "", @"command = msbuild SimpleWebApplication/SimpleWebApplication.csproj /t:Build /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""%TARGET%"";AutoParameterizationWebConfigConnectionStrings=false;Configuration=Debug;SolutionDir=""%SOURCE%""" }, out lookup);
 
                 Assert.Equal(1, lookup.Count);
                 Dictionary<string, string> s1;
                 Assert.True(lookup.TryGetValue("section", out s1));
                 Assert.Equal(1, s1.Count);
-                Assert.Equal(@"msbuild SimpleWebApplication/SimpleWebApplication.csproj /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""%TARGET%"";AutoParameterizationWebConfigConnectionStrings=false;Configuration=Debug;SolutionDir=""%SOURCE%""", s1["command"]);
+                Assert.Equal(@"msbuild SimpleWebApplication/SimpleWebApplication.csproj /t:Build /t:pipelinePreDeployCopyAllFilesToOneFolder /p:_PackageTempDir=""%TARGET%"";AutoParameterizationWebConfigConnectionStrings=false;Configuration=Debug;SolutionDir=""%SOURCE%""", s1["command"]);
             }
         }
     }
