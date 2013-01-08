@@ -23,9 +23,14 @@ namespace Kudu.Core.SourceControl
         private readonly string _homePath;
         private Repository _hgRepository;
 
+        static HgRepository()
+        {
+            EnsureClientInitialized();
+        }
+
         public HgRepository(string path, string homePath, IDeploymentSettingsManager settings, ITraceFactory traceFactory)
         {
-            _hgExecutable = new Executable(PathUtility.ResolveHgPath(), path, settings.GetCommandIdleTimeout());
+            _hgExecutable = new Executable(Client.ClientPath, path, settings.GetCommandIdleTimeout());
             _homePath = homePath;
             _traceFactory = traceFactory;
         }
@@ -70,7 +75,6 @@ namespace Kudu.Core.SourceControl
         {
             get
             {
-                _ensureClientInitialized.Value.ToString();
                 if (_hgRepository == null)
                 {
                     _hgRepository = new Repository(RepositoryPath);
@@ -384,9 +388,11 @@ namespace Kudu.Core.SourceControl
 
         private static bool EnsureClientInitialized()
         {
-            // Work around for a bug in Client.SetClientPath. It overrides the path we provide by looking up the PATH environment variable.
-            Client.CouldLocateClient.ToString();
-            Client.SetClientPath(PathUtility.ResolveHgPath());
+            // If Mercurial.Net can find the location of the repository via the PATH variable, let we'll use that
+            if (!Client.CouldLocateClient)
+            {
+                Client.SetClientPath(PathUtility.ResolveHgPath());
+            }
             return true;
         }
     }
