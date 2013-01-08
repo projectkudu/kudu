@@ -228,4 +228,7 @@
   <data name="Error_GitIsDisabled" xml:space="preserve">
     <value>Git endpoints are not enabled.</value>
   </data>
+  <data name="Error_SyncDropboxTimeout" xml:space="preserve">
+    <value>Synching with Dropbox timeout after {0} seconds.</value>
+  </data>
 </root>

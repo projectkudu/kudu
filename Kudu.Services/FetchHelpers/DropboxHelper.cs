@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Kudu.Common;
 using Kudu.Contracts.Dropbox;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
@@ -29,6 +30,7 @@ namespace Kudu.Services
         private readonly IServerRepository _repository;
         private readonly IDeploymentSettingsManager _settings;
         private readonly IEnvironment _environment;
+        private readonly TimeSpan _timeout;
 
         public DropboxHelper(ITracer tracer, 
                              IServerRepository repository, 
@@ -39,6 +41,7 @@ namespace Kudu.Services
             _repository = repository;
             _settings = settings;
             _environment = environment;
+            _timeout = settings.GetCommandIdleTimeout();
         }
 
         public ChangeSet Sync(DropboxDeployInfo info, string branch)
@@ -139,27 +142,24 @@ namespace Kudu.Services
                     Task task;
                     try
                     {
-                        task = GetFileAsync(info, delta).Then(stream =>
-                        {
-                            using (stream)
-                            {
-                                SafeWriteFile(parent, path, stream, modified);
-                            }
-                        }).Catch(catchInfo =>
-                        {
-                            _tracer.TraceError(catchInfo.Exception);
-                            return catchInfo.Throw();
-                        })
-                        .Finally(() =>
+                        // Using ContinueWith instead of Then to avoid SyncContext deadlock in 4.5
+                        task = GetFileAsync(info, delta).ContinueWith(t =>
                         {
                             sem.Release();
+                            if (!t.IsFaulted && !t.IsCanceled)
+                            {
+                                using (Stream stream = t.Result)
+                                {
+                                    SafeWriteFile(parent, path, stream, modified);
+                                }
+                            }
                         });
                     }
                     catch (Exception ex)
                     {
                         sem.Release();
                         _tracer.TraceError(ex);
-                        Task.WaitAll(tasks.ToArray());
+                        Task.WaitAll(tasks.ToArray(), _timeout);
                         throw;
                     }
 
@@ -167,7 +167,10 @@ namespace Kudu.Services
                 }
             }
 
-            Task.WaitAll(tasks.ToArray());
+            if (!Task.WaitAll(tasks.ToArray(), _timeout))
+            {
+                throw new TimeoutException(RS.Format(Resources.Error_SyncDropboxTimeout, (int)_timeout.TotalSeconds));
+            }
         }
 
         private bool IsFileChanged(string parent, string path, DateTime modified)
@@ -256,11 +259,36 @@ namespace Kudu.Services
 
             var client = new HttpClient();
             client.BaseAddress = new Uri(DropboxApiContentUri);
+            client.Timeout = _timeout;
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("OAuth", sb.ToString());
-            return client.GetAsync(SandboxFilePath + delta.Path).Then(response =>
+
+            // Using ContinueWith instead of Then to avoid SyncContext deadlock in 4.5
+            TaskCompletionSource<Task<Stream>> tcs = new TaskCompletionSource<Task<Stream>>();
+            client.GetAsync(SandboxFilePath + delta.Path).ContinueWith(t =>
             {
-                return response.EnsureSuccessStatusCode().Content.ReadAsStreamAsync();
-            }).Finally(() => client.Dispose());
+                if (t.IsFaulted)
+                {
+                    _tracer.TraceError(t.Exception);
+                    tcs.TrySetException(t.Exception.InnerExceptions);
+                }
+                else if (t.IsCanceled)
+                {
+                    tcs.TrySetCanceled();
+                }
+                else
+                {
+                    try
+                    {
+                        tcs.TrySetResult(t.Result.EnsureSuccessStatusCode().Content.ReadAsStreamAsync());
+                    }
+                    catch (Exception ex)
+                    {
+                        tcs.TrySetException(ex);
+                    }
+                }
+            });
+
+            return tcs.Task.FastUnwrap();
         }
     }
 }

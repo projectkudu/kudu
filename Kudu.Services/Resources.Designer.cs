@@ -214,6 +214,15 @@ namespace Kudu.Services {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Synching with Dropbox timeout after {0} seconds..
+        /// </summary>
+        internal static string Error_SyncDropboxTimeout {
+            get {
+                return ResourceManager.GetString("Error_SyncDropboxTimeout", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The json payload is unsupported..
         /// </summary>
         internal static string Error_UnsupportedFormat {
