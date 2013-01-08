@@ -4,7 +4,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using Kudu.Contracts.Settings;
-using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
@@ -84,7 +83,7 @@ namespace Kudu.Core.SourceControl
         }
 
 
-        public void Initialize(RepositoryConfiguration configuration)
+        public void Initialize()
         {
             Repository.Init();
         }

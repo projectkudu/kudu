@@ -13,6 +13,7 @@ namespace Kudu.Services.ServiceHookHandlers
     {
         protected readonly ITracer _tracer;
         protected readonly DropboxHelper _dropBoxHelper;
+        protected readonly IDeploymentSettingsManager _settings;
 
         public DropboxHandler(ITracer tracer,
                               IServerRepository repository,
@@ -20,6 +21,7 @@ namespace Kudu.Services.ServiceHookHandlers
                               IEnvironment environment)
         {
             _tracer = tracer;
+            _settings = settings;
             _dropBoxHelper = new DropboxHelper(tracer, repository, settings, environment);
         }
 
@@ -29,6 +31,13 @@ namespace Kudu.Services.ServiceHookHandlers
             if (!String.IsNullOrEmpty(payload.Value<string>("NewCursor")))
             {
                 deploymentInfo = new DropboxInfo(payload);
+                
+                // Temporary deployment
+                string authorName = _settings.GetValue(DropboxHelper.UserNameKey) ?? _settings.GetGitUsername();
+                string authorEmail = _settings.GetValue(DropboxHelper.EmailKey) ?? _settings.GetGitEmail();
+                string message = "Syncing with dropbox at " + DateTime.UtcNow.ToString("g");
+                deploymentInfo.TargetChangeset = new ChangeSet("InProgress", authorName, authorEmail, message, DateTimeOffset.MinValue);
+
                 return DeployAction.ProcessDeployment;
             }
 
@@ -38,7 +47,7 @@ namespace Kudu.Services.ServiceHookHandlers
         public virtual void Fetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch)
         {
             // Sync with dropbox
-            var dropboxInfo = ((DropboxInfo)deploymentInfo);
+            var dropboxInfo = ((DropboxInfo)deploymentInfo);            
             deploymentInfo.TargetChangeset = _dropBoxHelper.Sync(dropboxInfo.DeployInfo, targetBranch);
         }
 

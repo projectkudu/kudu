@@ -10,7 +10,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Common;
 using Kudu.Contracts.Infrastructure;
-using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Infrastructure;
@@ -54,7 +53,6 @@ namespace Kudu.Services.SourceControl
 
         private readonly IOperationLock _operationLock;
         private readonly IRepository _repository;
-        private readonly RepositoryConfiguration _repositoryConfiguration;
 
         private EntityTagHeaderValue _currentEtag = null;
         private RepositoryItemStream _readStream = null;
@@ -64,13 +62,11 @@ namespace Kudu.Services.SourceControl
         public LiveScmEditorController(ITracer tracer,
                                        IOperationLock operationLock,
                                        IEnvironment environment,
-                                       IRepository repository,
-                                       RepositoryConfiguration configuration)
+                                       IRepository repository)
             : base(tracer, environment, environment.RepositoryPath)
         {
             _operationLock = operationLock;
             _repository = repository;
-            _repositoryConfiguration = configuration;
             _currentEtag = GetCurrentEtag();
         }
 
@@ -239,7 +235,7 @@ namespace Kudu.Services.SourceControl
             else
             {
                 // Initialize or re-initialize repository
-                _repository.Initialize(_repositoryConfiguration);
+                _repository.Initialize();
             }
 
             // Save file

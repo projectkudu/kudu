@@ -3,7 +3,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using Kudu.Contracts.Settings;
-using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
@@ -16,15 +15,13 @@ namespace Kudu.Core.SourceControl
     {
         private readonly IEnvironment _environment;
         private readonly ITraceFactory _traceFactory;
-        private readonly RepositoryConfiguration _repoConfig;
         private readonly IDeploymentSettingsManager _settings;
 
-        public RepositoryFactory(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, RepositoryConfiguration repositoryConfiguration)
+        public RepositoryFactory(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory)
         {
             _environment = environment;
             _settings = settings;
             _traceFactory = traceFactory;
-            _repoConfig = repositoryConfiguration;
         }
 
         /// <summary>
@@ -62,7 +59,7 @@ namespace Kudu.Core.SourceControl
                 var hgRepository = new HgRepository(_environment.RepositoryPath, _environment.SiteRootPath, _settings, _traceFactory);
                 if (!hgRepository.Exists)
                 {
-                    hgRepository.Initialize(_repoConfig);
+                    hgRepository.Initialize();
                 }
                 return hgRepository;
             }
@@ -75,7 +72,7 @@ namespace Kudu.Core.SourceControl
                 var gitRepository = new GitExeRepository(_environment.RepositoryPath, _environment.SiteRootPath, _settings, _traceFactory);
                 if (!gitRepository.Exists)
                 {
-                    gitRepository.Initialize(_repoConfig);
+                    gitRepository.Initialize();
                 }
                 return gitRepository;
             }

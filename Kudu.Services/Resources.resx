@@ -225,4 +225,10 @@
   <data name="LogStream_Welcome" xml:space="preserve">
     <value>{0}  Welcome, you are now connected to log-streaming service.{1}</value>
   </data>
+  <data name="Error_GitIsDisabled" xml:space="preserve">
+    <value>Git endpoints are not enabled.</value>
+  </data>
+  <data name="Error_SyncDropboxTimeout" xml:space="preserve">
+    <value>Synching with Dropbox timeout after {0} seconds.</value>
+  </data>
 </root>

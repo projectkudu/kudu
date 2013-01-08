@@ -44,7 +44,7 @@ namespace Kudu.FunctionalTests
                 string remoteRepository = "https://kudutest@bitbucket.org/kudutest/hellomercurial";
                 string helloTextPath = Path.Combine(testRepository.PhysicalPath, "Hello.txt");
                 var hgRepo = new HgRepository(testRepository.PhysicalPath, "", new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
-                hgRepo.Initialize(configuration: null);
+                hgRepo.Initialize();
 
                 // Act - 1
                 hgRepo.FetchWithoutConflict(remoteRepository, remoteAlias: null, branchName: "default");
@@ -77,7 +77,7 @@ namespace Kudu.FunctionalTests
                 var hgRepo = new HgRepository(testRepository.PhysicalPath, "", new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
 
                 // Act
-                hgRepo.Initialize(configuration: null);
+                hgRepo.Initialize();
                 File.WriteAllText(helloTextPath, "Hello world");
                 hgRepo.AddFile(helloTextPath);
                 hgRepo.Commit("First commit");
