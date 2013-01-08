@@ -62,7 +62,7 @@ namespace Kudu.Services
         {
             using (_tracer.Step("FetchHandler"))
             {
-                if (!_settings.IsGitEnabled())
+                if (!_settings.IsScmEnabled())
                 {
                     context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
                     context.ApplicationInstance.CompleteRequest();

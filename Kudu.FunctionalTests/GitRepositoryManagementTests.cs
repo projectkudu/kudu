@@ -1046,7 +1046,7 @@ command = node build.js
                     {
                         // for private kudu, the setting is LocalGit
                         string value = appManager.SettingsManager.GetValue(SettingsKeys.ScmType).Result;
-                        Assert.Equal(ScmType.LocalGit.ToString(), value);
+                        Assert.Equal("LocalGit", value);
                     }
                     catch (AggregateException ex)
                     {
@@ -1070,7 +1070,7 @@ command = node build.js
                     Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
 
                     // Enable by setting to GitHub
-                    appManager.SettingsManager.SetValue(SettingsKeys.ScmType, ScmType.GitHub.ToString()).Wait();
+                    appManager.SettingsManager.SetValue(SettingsKeys.ScmType, "GitHub").Wait();
                     result = appManager.GitDeploy(repo.PhysicalPath);
                     Assert.Contains("Everything up-to-date", result.GitTrace);
                     client = CreateClient(appManager);

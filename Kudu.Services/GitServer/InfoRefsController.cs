@@ -61,7 +61,7 @@ namespace Kudu.Services.GitServer
         {
             using (_tracer.Step("InfoRefsService.Execute"))
             {
-                if (!_settings.IsGitEnabled())
+                if (!_settings.IsScmEnabled())
                 {
                     return Request.CreateErrorResponse(HttpStatusCode.Forbidden, Resources.Error_GitIsDisabled);
                 }

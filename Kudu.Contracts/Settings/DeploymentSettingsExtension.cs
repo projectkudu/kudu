@@ -8,8 +8,6 @@ namespace Kudu.Contracts.Settings
     {
         public static TimeSpan DefaultCommandIdleTimeout = TimeSpan.FromSeconds(180);
         public const TraceLevel DefaultTraceLevel = TraceLevel.Error;
-        public const string DefaultGitUsername = "kudu";
-        public const string DefaultGitEmail = "kudu";
 
         public static TraceLevel GetTraceLevel(this IDeploymentSettingsManager settings)
         {
@@ -49,30 +47,19 @@ namespace Kudu.Contracts.Settings
         public static string GetGitUsername(this IDeploymentSettingsManager settings)
         {
             string value = settings.GetValue(SettingsKeys.GitUsername);
-            return !String.IsNullOrEmpty(value) ? value : DefaultGitUsername;
+            return !String.IsNullOrEmpty(value) ? value : "unknown";
         }
 
         public static string GetGitEmail(this IDeploymentSettingsManager settings)
         {
             string value = settings.GetValue(SettingsKeys.GitEmail);
-            return !String.IsNullOrEmpty(value) ? value : DefaultGitEmail;
-        }
-
-        public static ScmType GetScmType(this IDeploymentSettingsManager settings)
-        {
-            string value = settings.GetValue(SettingsKeys.ScmType);
-            if (String.IsNullOrEmpty(value))
-            {
-                return ScmType.Null;
-            }
-
-            return (ScmType)Enum.Parse(typeof(ScmType), value);
+            return !String.IsNullOrEmpty(value) ? value : "unknown";
         }
 
         // allow git push, clone, /deploy endpoints
-        public static bool IsGitEnabled(this IDeploymentSettingsManager settings)
+        public static bool IsScmEnabled(this IDeploymentSettingsManager settings)
         {
-            ScmType scmType = settings.GetScmType();
+            string scmType = settings.GetValue(SettingsKeys.ScmType);
             return scmType != ScmType.None && scmType != ScmType.Tfs;
         }
     }

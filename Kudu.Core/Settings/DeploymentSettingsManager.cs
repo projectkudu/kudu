@@ -18,8 +18,6 @@ namespace Kudu.Core.Settings
             { SettingsKeys.Branch, "master" },
             { SettingsKeys.TraceLevel, ((int)DeploymentSettingsExtension.DefaultTraceLevel).ToString() },
             { SettingsKeys.CommandIdleTimeout, ((int)DeploymentSettingsExtension.DefaultCommandIdleTimeout.TotalSeconds).ToString() },
-            { SettingsKeys.GitUsername, DeploymentSettingsExtension.DefaultGitUsername },
-            { SettingsKeys.GitEmail, DeploymentSettingsExtension.DefaultGitEmail },
             { SettingsKeys.BuildArgs, "" }
         };
 

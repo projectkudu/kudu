@@ -46,7 +46,7 @@ namespace Kudu.Services.GitServer
         {
             using (_tracer.Step("RpcService.ReceivePack"))
             {
-                if (!_settings.IsGitEnabled())
+                if (!_settings.IsScmEnabled())
                 {
                     context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
                     context.ApplicationInstance.CompleteRequest();

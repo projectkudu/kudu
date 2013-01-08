@@ -1,17 +1,9 @@
 ﻿
 namespace Kudu.Contracts.SourceControl
 {
-    public enum ScmType 
+    public static class ScmType 
     { 
-        Null, 
-        None, 
-        Tfs, 
-        LocalGit, 
-        GitHub, 
-        CodePlexGit, 
-        CodePlexHg, 
-        BitbucketGit, 
-        BitbucketHg, 
-        Dropbox 
+        public const string None = "None";
+        public const string Tfs = "Tfs";
     }
 }
