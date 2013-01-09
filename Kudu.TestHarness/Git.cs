@@ -255,7 +255,8 @@ namespace Kudu.TestHarness
 
             FileSystemHelpers.EnsureDirectory(repositoryPath);
 
-            var exe = new GitExecutable(repositoryPath, DeploymentSettingsExtension.DefaultCommandIdleTimeout);
+            // Use a really long idle timeout, since it's mostly meaningful when running on server, not client
+            var exe = new GitExecutable(repositoryPath, idleTimeout: TimeSpan.FromSeconds(3600));
             exe.SetTraceLevel(2);
             exe.SetHttpVerbose(true);
             exe.SetSSLNoVerify(true);
