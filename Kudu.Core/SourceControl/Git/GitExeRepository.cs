@@ -214,7 +214,7 @@ namespace Kudu.Core.SourceControl.Git
             try
             {
                 _gitExe.Execute(tracer, @"remote add -t {2} {0} ""{1}""", remoteAlias, remote, branchName);
-                _gitExe.Execute(tracer, @"fetch {0}", remoteAlias, branchName);
+                _gitExe.Execute(tracer, @"fetch {0} --progress", remoteAlias);
                 Update(branchName);
                 _gitExe.Execute(tracer, @"reset --hard {0}/{1}", remoteAlias, branchName);
             }

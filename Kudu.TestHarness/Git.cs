@@ -21,7 +21,7 @@ namespace Kudu.TestHarness
 
             if (localBranchName.Equals("master"))
             {
-                stdErr = gitExe.Execute("push {0} {1}", url, remoteBranchName).Item2;
+                stdErr = gitExe.Execute("push {0} {1} --progress", url, remoteBranchName).Item2;
 
                 // Dump out the error stream (git curl verbose)
                 Debug.WriteLine(stdErr);
@@ -29,7 +29,7 @@ namespace Kudu.TestHarness
             else
             {
                 // Dump out the error stream (git curl verbose)
-                stdErr = gitExe.Execute("push {0} {1}:{2}", url, localBranchName, remoteBranchName).Item2;
+                stdErr = gitExe.Execute("push {0} {1}:{2} --progress", url, localBranchName, remoteBranchName).Item2;
 
                 Debug.WriteLine(stdErr);
             }
