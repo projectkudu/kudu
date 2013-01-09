@@ -24,19 +24,8 @@ namespace Kudu.Core.Deployment.Generator
 
             ILogger innerLogger = context.Logger.Log(Resources.Log_SelectNodeJsVersion);
 
-            try
-            {
-                string sourcePath = String.IsNullOrEmpty(ProjectPath) ? RepositoryPath : ProjectPath;
-                string log = NodeSiteEnabler.SelectNodeVersion(fileSystem, Environment.ScriptPath, sourcePath, context.OutputPath, DeploymentSettings, context.Tracer);
-
-                innerLogger.Log(log);
-            }
-            catch (Exception ex)
-            {
-                innerLogger.Log(ex);
-
-                throw;
-            }
+            string sourcePath = String.IsNullOrEmpty(ProjectPath) ? RepositoryPath : ProjectPath;
+            NodeSiteEnabler.SelectNodeVersion(fileSystem, Environment.ScriptPath, sourcePath, context.OutputPath, DeploymentSettings, context.Tracer, innerLogger);
         }
     }
 }

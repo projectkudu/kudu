@@ -26,7 +26,7 @@ namespace Kudu.Core.Deployment.Generator
             return false;
         }
 
-        public static string SelectNodeVersion(IFileSystem fileSystem, string scriptPath, string sourcePath, string destinationPath, IDeploymentSettingsManager settings, ITracer tracer)
+        public static void SelectNodeVersion(IFileSystem fileSystem, string scriptPath, string sourcePath, string destinationPath, IDeploymentSettingsManager settings, ITracer tracer, ILogger logger)
         {
             // The node.js version selection logic is implemented in selectNodeVersion.js. 
 
@@ -34,16 +34,20 @@ namespace Kudu.Core.Deployment.Generator
             Executable executor = new Executable("node.exe", String.Empty, settings.GetCommandIdleTimeout());
             try
             {
-                return executor.ExecuteWithConsoleOutput(
+                string log = executor.ExecuteWithConsoleOutput(
                     tracer,
                     "\"{0}\\selectNodeVersion.js\" \"{1}\" \"{2}\"",
                     scriptPath,
                     sourcePath,
                     destinationPath).Item1;
+
+                logger.Log(log);
             }
             catch (Exception e)
             {
-                throw new InvalidOperationException(Resources.Error_UnableToSelectNodeVersion, e);
+                var exception = new InvalidOperationException(Resources.Error_UnableToSelectNodeVersion, e);
+                logger.Log(exception);
+                throw exception;
             }
         }
     }

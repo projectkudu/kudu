@@ -83,6 +83,7 @@ namespace Kudu.Core.Deployment
             {
                 exe.ExecuteWithProgressWriter(customLogger, context.Tracer, ExternalCommandBuilder.ShouldFilterOutMsBuildWarnings, _command, String.Empty);
 
+                // If the user deployed a node.js site, run the select node version logic on his site to use the correct node.exe
                 SelectNodeVersionIfRequired(context);
 
                 tcs.SetResult(null);
@@ -112,6 +113,10 @@ namespace Kudu.Core.Deployment
             return tcs.Task;
         }
 
+        /// <summary>
+        /// Update iisnode.yml file to use the specific node engine depandant on packages.json file (node engine setting),
+        /// This is only done for node.js sites.
+        /// </summary>
         private void SelectNodeVersionIfRequired(DeploymentContext context)
         {
             var fileSystem = new FileSystem();
