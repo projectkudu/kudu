@@ -41,7 +41,7 @@ namespace Kudu.Core.Deployment.Generator
         }
 
         /// <summary>
-        /// Update iisnode.yml file to use the specific node engine depandant on packages.json file (node engine setting),
+        /// Update iisnode.yml file to use the specific node engine dependent on packages.json file (node engine setting),
         /// This is only done for node.js sites.
         /// </summary>
         private void HandleNodeSite(DeploymentContext context)
