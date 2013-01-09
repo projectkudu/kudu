@@ -5,6 +5,7 @@ using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment.Generator;
 using Kudu.Core.Infrastructure;
+using System.IO.Abstractions;
 
 namespace Kudu.Core.Deployment
 {
@@ -82,6 +83,9 @@ namespace Kudu.Core.Deployment
             {
                 exe.ExecuteWithProgressWriter(customLogger, context.Tracer, ExternalCommandBuilder.ShouldFilterOutMsBuildWarnings, _command, String.Empty);
 
+                // If the user deployed a node.js site, run the select node version logic on his site to use the correct node.exe
+                SelectNodeVersionIfRequired(context);
+
                 tcs.SetResult(null);
             }
             catch (CommandLineException ex)
@@ -107,6 +111,41 @@ namespace Kudu.Core.Deployment
             }
 
             return tcs.Task;
+        }
+
+        /// <summary>
+        /// Update iisnode.yml file to use the specific node engine dependent on packages.json file (node engine setting),
+        /// This is only done for node.js sites.
+        /// </summary>
+        private void SelectNodeVersionIfRequired(DeploymentContext context)
+        {
+            var fileSystem = new FileSystem();
+            var nodeSiteEnabler = new NodeSiteEnabler(
+                 fileSystem,
+                 repoFolder: context.OutputPath,
+                 siteFolder: context.OutputPath,
+                 scriptPath: _scriptPath,
+                 settings: _settings);
+
+            if (nodeSiteEnabler.LooksLikeNode())
+            {
+                ILogger innerLogger = context.Logger.Log(Resources.Log_SelectNodeJsVersion);
+
+                try
+                {
+                    string log = nodeSiteEnabler.SelectNodeVersion(context.Tracer);
+
+                    if (!String.IsNullOrEmpty(log))
+                    {
+                        innerLogger.Log(log);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    innerLogger.Log(ex);
+                    throw;
+                }
+            }
         }
 
         private string StarterScriptPath

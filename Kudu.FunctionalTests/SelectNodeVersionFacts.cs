@@ -160,5 +160,30 @@ namespace Kudu.FunctionalTests
                 });
             }
         }
+
+        [Fact]
+        public void SelectNodeVersionShouldWorkWithCustomDeployment()
+        {
+            // Arrange
+            string repositoryName = "VersionPinnedNodeJsApp";
+            string appName = KuduUtils.GetRandomWebsiteName("VersionPinnedNodeJsApp");
+            string cloneUrl = "https://github.com/KuduApps/VersionPinnedNodeJsAppCustom.git";
+
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    GitDeploymentResult deployResult = appManager.GitDeploy(repo.PhysicalPath);
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, "v0.8.2");
+                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, "custom deployment success");
+                });
+            }
+        }
     }
 }

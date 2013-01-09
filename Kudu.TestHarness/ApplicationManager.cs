@@ -144,11 +144,28 @@ namespace Kudu.TestHarness
             }
             finally
             {
+                SafeTraceDeploymentLogs(appManager);
+
                 // Delete the site at the end, unless we're in site reuse mode
                 if (!KuduUtils.ReuseSameSiteForAllTests)
                 {
                     appManager.Delete();
                 }
+            }
+        }
+
+        private static void SafeTraceDeploymentLogs(ApplicationManager appManager)
+        {
+            try
+            {
+                var results = appManager.DeploymentManager.GetResultsAsync().Result;
+                foreach (var result in results)
+                {
+                    TestTracer.TraceDeploymentLog(appManager, result.Id);
+                }
+            }
+            catch
+            {
             }
         }
 
