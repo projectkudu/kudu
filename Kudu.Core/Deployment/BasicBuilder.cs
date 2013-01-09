@@ -226,30 +226,25 @@ namespace Kudu.Core.Deployment
                  scriptPath: _scriptPath,
                  settings: _settings);
 
-            ILogger innerLogger = null;
-
-            try
+            if (nodeSiteEnabler.LooksLikeNode())
             {
-                if (nodeSiteEnabler.LooksLikeNode())
+                ILogger innerLogger = context.Logger.Log(Resources.Log_SelectNodeJsVersion);
+
+                try
                 {
-                    innerLogger = context.Logger.Log(Resources.Log_SelectNodeJsVersion);
                     string log = nodeSiteEnabler.SelectNodeVersion(context.Tracer);
 
                     if (!String.IsNullOrEmpty(log))
                     {
                         innerLogger.Log(log);
                     }
-
                 }
-            }
-            catch (Exception ex)
-            {
-                if (innerLogger != null)
+                catch (Exception ex)
                 {
                     innerLogger.Log(ex);
-                }
 
-                throw;
+                    throw;
+                }
             }
         }
     }
