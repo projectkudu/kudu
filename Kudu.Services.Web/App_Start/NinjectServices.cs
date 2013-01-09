@@ -23,7 +23,7 @@ using Kudu.Services.Infrastructure;
 using Kudu.Services.Performance;
 using Kudu.Services.ServiceHookHandlers;
 using Kudu.Services.SSHKey;
-using Kudu.Services.Web.Infrastruture;
+using Kudu.Services.Web.Infrastructure;
 using Kudu.Services.Web.Services;
 using Kudu.Services.Web.Tracing;
 using Microsoft.Web.Infrastructure.DynamicModuleHelper;

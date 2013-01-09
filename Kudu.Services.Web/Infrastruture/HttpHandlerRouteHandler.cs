@@ -3,7 +3,7 @@ using System.Web;
 using System.Web.Routing;
 using Ninject;
 
-namespace Kudu.Services.Web.Infrastruture
+namespace Kudu.Services.Web.Infrastructure
 {
     public class HttpHandlerRouteHandler : IRouteHandler
     {
