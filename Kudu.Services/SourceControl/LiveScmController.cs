@@ -55,44 +55,40 @@ namespace Kudu.Services.SourceControl
         public void Delete(int deleteWebRoot = 0)
         {
             // Fail if a deployment is in progress
-            if (_deploymentLock.IsHeld)
+            _deploymentLock.LockOperation(() =>
+            {
+                using (_tracer.Step("Deleting deployment cache"))
+                {
+                    // Delete the deployment cache
+                    FileSystemHelpers.DeleteDirectorySafe(_environment.DeploymentCachePath);
+                }
+
+                using (_tracer.Step("Deleting repository"))
+                {
+                    // Delete the repository
+                    FileSystemHelpers.DeleteDirectorySafe(_environment.RepositoryPath);
+                }
+
+                using (_tracer.Step("Deleting ssh key"))
+                {
+                    // Delete the ssh key
+                    FileSystemHelpers.DeleteDirectorySafe(_environment.SSHKeyPath);
+                }
+
+                if (deleteWebRoot != 0)
+                {
+                    using (_tracer.Step("Deleting web root"))
+                    {
+                        // Delete the wwwroot folder
+                        FileSystemHelpers.DeleteDirectoryContentsSafe(_environment.WebRootPath);
+                    }
+                }
+            },
+            () =>
             {
                 HttpResponseMessage response = Request.CreateErrorResponse(HttpStatusCode.Conflict, Resources.Error_DeploymentInProgess);
                 throw new HttpResponseException(response);
-            }
-
-            using (_tracer.Step("Deleting deployment cache"))
-            {
-                // Delete the deployment cache
-                FileSystemHelpers.DeleteDirectorySafe(_environment.DeploymentCachePath);
-            }
-
-            using (_tracer.Step("Deleting repository"))
-            {
-                // Delete the repository
-                FileSystemHelpers.DeleteDirectorySafe(_environment.RepositoryPath);
-            }
-
-            using (_tracer.Step("Deleting ssh key"))
-            {
-                // Delete the ssh key
-                FileSystemHelpers.DeleteDirectorySafe(_environment.SSHKeyPath);
-            }
-
-            using (_tracer.Step("Deleting diagnostics"))
-            {
-                // Delete the repository
-                FileSystemHelpers.DeleteDirectorySafe(_environment.DiagnosticsPath);
-            }
-
-            if (deleteWebRoot != 0)
-            {
-                using (_tracer.Step("Deleting web root"))
-                {
-                    // Delete the wwwroot folder
-                    FileSystemHelpers.DeleteDirectoryContentsSafe(_environment.WebRootPath);
-                }
-            }
+            });
         }
 
         /// <summary>
