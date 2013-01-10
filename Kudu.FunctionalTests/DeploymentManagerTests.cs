@@ -430,23 +430,25 @@ namespace Kudu.FunctionalTests
                     { "payload", payload }
                 };
 
-                Task<HttpResponseMessage> responseTask = null;
+                // Start two requests at the same time, then wait for them
+                // Ideally we'd push something else to github but at least this exercises the code path
+                Task<HttpResponseMessage> responseTask1 = client.PostAsync("deploy", new FormUrlEncodedContent(post));
+                Task<HttpResponseMessage> responseTask2 = client.PostAsync("deploy", new FormUrlEncodedContent(post));
+                responseTask1.Wait();
+                responseTask2.Wait();
 
-                // Do another post in parallel two seconds after
-                new Thread(() =>
+                // One should be an OK and the other a Conflict. Which one is which can vary.
+                if (responseTask1.Result.StatusCode == HttpStatusCode.Conflict)
                 {
-                    Thread.Sleep(2000);
-
-                    // Ideally we'd push something else to github but at least this exercises the code path
-                    responseTask = client.PostAsync("deploy", new FormUrlEncodedContent(post));
-
-                }).Start();
-
-                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Wait();
+                    Assert.Equal(HttpStatusCode.OK, responseTask2.Result.StatusCode);
+                }
+                else
+                {
+                    Assert.Equal(HttpStatusCode.OK, responseTask1.Result.StatusCode);
+                    Assert.Equal(HttpStatusCode.Conflict, responseTask2.Result.StatusCode);
+                }
 
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-                Assert.NotNull(responseTask);
-                Assert.Equal(HttpStatusCode.Conflict, responseTask.Result.StatusCode);
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "Master branch");
