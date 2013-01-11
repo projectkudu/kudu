@@ -82,6 +82,13 @@ namespace Kudu.Services.SourceControl
                         // Delete the wwwroot folder
                         FileSystemHelpers.DeleteDirectoryContentsSafe(_environment.WebRootPath);
                     }
+
+                    using (_tracer.Step("Deleting diagnostics"))
+                    {
+                        // Delete the diagnostic log. This is a slight abuse of deleteWebRoot, but the
+                        // real semantic is more to reset the site to a fully clean state
+                        FileSystemHelpers.DeleteDirectorySafe(_environment.DiagnosticsPath);
+                    }
                 }
             },
             () =>
