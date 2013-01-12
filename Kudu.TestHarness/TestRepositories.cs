@@ -24,6 +24,7 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/NodeHelloWorldNoConfig.git",        "d8a15b6"),
             new TestRepositoryInfo("https://github.com/KuduApps/NoDeployableProjects.git",          "e21eb82"),
             new TestRepositoryInfo("https://github.com/KuduApps/NpmSite.git",                       "2b29b9d"),
+            new TestRepositoryInfo("https://github.com/KuduApps/LogTester.git",                     "f20ab64"),
             new TestRepositoryInfo("https://github.com/KuduApps/VersionPinnedNodeJsApp.git",        "9461da6"),
             new TestRepositoryInfo("https://github.com/KuduApps/WarningsAsErrors.git",              "51b6a48"),
             new TestRepositoryInfo("https://github.com/KuduApps/waws.git",                          "7652a66"),

@@ -16,14 +16,12 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void TestLogStreamBasic()
         {
-            string repoName = "LogTester";
-            string repoCloneUrl = "https://github.com/KuduApps/LogTester.git";
             string appName = KuduUtils.GetRandomWebsiteName("TestLogStreamBasic");
 
             ApplicationManager.Run(appName, appManager =>
             {
                 // Act
-                using (var localRepo = Git.Clone(repoName, repoCloneUrl))
+                using (var localRepo = Git.Clone("LogTester"))
                 {
                     appManager.GitDeploy(localRepo.PhysicalPath);
                 }
@@ -58,13 +56,11 @@ namespace Kudu.FunctionalTests
         public void TestLogStreamSubFolder()
         {
             string appName = KuduUtils.GetRandomWebsiteName("TestLogStreamFilter");
-            string repoName = "LogTester";
-            string repoCloneUrl = "https://github.com/KuduApps/LogTester.git";
 
             ApplicationManager.Run(appName, appManager =>
             {
                 // Act
-                using (var localRepo = Git.Clone(repoName, repoCloneUrl))
+                using (var localRepo = Git.Clone("LogTester"))
                 {
                     appManager.GitDeploy(localRepo.PhysicalPath);
                 }

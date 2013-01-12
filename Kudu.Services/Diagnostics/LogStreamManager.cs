@@ -84,6 +84,8 @@ namespace Kudu.Services.Performance
                 Initialize(path);
             }
 
+            // enable application diagnostic trace automatically if connecting to root or application path
+            // it will be turn off automatically every 24 hours
             if (_enableTrace)
             {
                 var settings = new JsonSettings(Path.Combine(_environment.DiagnosticsPath, Constants.SettingsJsonFile));
