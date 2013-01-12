@@ -119,6 +119,8 @@ namespace Kudu.Services.Web.App_Start
 
             // LogStream service
             kernel.Bind<LogStreamManager>().ToMethod(context => new LogStreamManager(Path.Combine(environment.RootPath, Constants.LogFilesPath),
+                                                                                     context.Kernel.Get<IEnvironment>(),
+                                                                                     context.Kernel.Get<IDeploymentSettingsManager>(),
                                                                                      context.Kernel.Get<ITracer>(),
                                                                                      shutdownDetector));
 

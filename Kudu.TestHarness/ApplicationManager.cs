@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using Kudu.Client;
 using Kudu.Client.Deployment;
 using Kudu.Client.Editor;
 using Kudu.Client.SourceControl;
 using Kudu.Client.SSHKey;
+using Kudu.Core.Infrastructure;
 using Kudu.SiteManagement;
 
 namespace Kudu.TestHarness
@@ -125,7 +127,10 @@ namespace Kudu.TestHarness
             var dumpPath = Path.Combine(PathHelper.TestResultsPath, applicationName, applicationName + ".zip");
             try
             {
-                action(appManager);
+                using (StartLogStream(appManager))
+                {
+                    action(appManager);
+                }
 
                 KuduUtils.DownloadDump(appManager.ServiceUrl, dumpPath);
             }
@@ -152,6 +157,38 @@ namespace Kudu.TestHarness
                     appManager.Delete();
                 }
             }
+        }
+
+        private static IDisposable StartLogStream(ApplicationManager appManager)
+        {
+            LogStreamWaitHandle waitHandle = null;
+            Task task = null;
+            if (Debugger.IsAttached)
+            {
+                // Set to verbose level
+                appManager.SettingsManager.SetValue("trace_level", "4");
+
+                RemoteLogStreamManager mgr = appManager.CreateLogStreamManager("Git");
+                waitHandle = new LogStreamWaitHandle(mgr.GetStream().Result);
+                task = Task.Factory.StartNew(() =>
+                {
+                    string line = null;
+                    var trace = new DefaultTraceListener();
+                    while ((line = waitHandle.WaitNextLine(-1)) != null)
+                    {
+                        trace.WriteLine(line);
+                    }
+                });
+            }
+
+            return new DisposableAction(() =>
+            {
+                if (waitHandle != null)
+                {
+                    waitHandle.Dispose();
+                    task.Wait();
+                }
+            });
         }
 
         private static void SafeTraceDeploymentLogs(ApplicationManager appManager)
