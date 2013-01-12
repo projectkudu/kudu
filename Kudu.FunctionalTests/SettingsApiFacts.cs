@@ -94,7 +94,10 @@ namespace Kudu.FunctionalTests
         {
             Assert.Equal("master", results[SettingsKeys.Branch]);
             Assert.Equal("", results[SettingsKeys.BuildArgs]);
-            Assert.Equal("1", results[SettingsKeys.TraceLevel]);
+            if (!System.Diagnostics.Debugger.IsAttached)
+            {
+                Assert.Equal("1", results[SettingsKeys.TraceLevel]);
+            }
 
             Assert.Equal("1", results["x"]);
             Assert.Equal("2", results["y"]);

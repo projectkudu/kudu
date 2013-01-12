@@ -16,38 +16,36 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void TestLogStreamBasic()
         {
-            string repoName = "LogTester";
-            string repoCloneUrl = "https://github.com/KuduApps/LogTester.git";
             string appName = KuduUtils.GetRandomWebsiteName("TestLogStreamBasic");
 
             ApplicationManager.Run(appName, appManager =>
             {
                 // Act
-                using (var localRepo = Git.Clone(repoName, repoCloneUrl))
+                using (var localRepo = Git.Clone("LogTester"))
                 {
                     appManager.GitDeploy(localRepo.PhysicalPath);
                 }
 
-                CreateLogDirectory(appManager.SiteUrl, @"LogFiles");
+                CreateLogDirectory(appManager.SiteUrl, @"LogFiles\TestLogStreamBasic");
 
-                using (var waitHandle = new LogStreamWaitHandle(appManager.LogStreamManager.GetStream().Result))
+                using (var waitHandle = new LogStreamWaitHandle(appManager.CreateLogStreamManager("TestLogStreamBasic").GetStream().Result))
                 {
                     string line = waitHandle.WaitNextLine(10000);
                     Assert.True(!String.IsNullOrEmpty(line) && line.Contains("Welcome"), "check welcome message: " + line);
 
                     string content = Guid.NewGuid().ToString();
-                    WriteLogText(appManager.SiteUrl, @"LogFiles\temp.txt", content);
+                    WriteLogText(appManager.SiteUrl, @"LogFiles\TestLogStreamBasic\temp.txt", content);
                     line = waitHandle.WaitNextLine(10000);
                     Assert.Equal(content, line);
 
                     content = Guid.NewGuid().ToString();
-                    WriteLogText(appManager.SiteUrl, @"LogFiles\temp.log", content);
+                    WriteLogText(appManager.SiteUrl, @"LogFiles\TestLogStreamBasic\temp.log", content);
                     line = waitHandle.WaitNextLine(10000);
                     Assert.Equal(content, line);
 
                     // write to xml file, we should not get any live stream
                     content = Guid.NewGuid().ToString();
-                    WriteLogText(appManager.SiteUrl, @"LogFiles\temp.xml", content);
+                    WriteLogText(appManager.SiteUrl, @"LogFiles\TestLogStreamBasic\temp.xml", content);
                     line = waitHandle.WaitNextLine(1000);
                     Assert.Null(line);
                 }
@@ -58,13 +56,11 @@ namespace Kudu.FunctionalTests
         public void TestLogStreamSubFolder()
         {
             string appName = KuduUtils.GetRandomWebsiteName("TestLogStreamFilter");
-            string repoName = "LogTester";
-            string repoCloneUrl = "https://github.com/KuduApps/LogTester.git";
 
             ApplicationManager.Run(appName, appManager =>
             {
                 // Act
-                using (var localRepo = Git.Clone(repoName, repoCloneUrl))
+                using (var localRepo = Git.Clone("LogTester"))
                 {
                     appManager.GitDeploy(localRepo.PhysicalPath);
                 }
@@ -72,17 +68,17 @@ namespace Kudu.FunctionalTests
                 List<LogStreamWaitHandle> waitHandles = new List<LogStreamWaitHandle>();
                 for (int i = 0; i < 2; ++i)
                 {
-                    logFiles.Add(@"LogFiles\Folder" + i + "\\temp.txt");
+                    logFiles.Add(@"LogFiles\TestLogStreamFilter\Folder" + i + "\\temp.txt");
                     //Create the directory
-                    CreateLogDirectory(appManager.SiteUrl, @"LogFiles\Folder" + i);
-                    RemoteLogStreamManager mgr = appManager.CreateLogStreamManager("folder" + i);
+                    CreateLogDirectory(appManager.SiteUrl, @"LogFiles\TestLogStreamFilter\Folder" + i);
+                    RemoteLogStreamManager mgr = appManager.CreateLogStreamManager("TestLogStreamFilter/folder" + i);
                     var waitHandle = new LogStreamWaitHandle(mgr.GetStream().Result);
                     string line = waitHandle.WaitNextLine(10000);
                     Assert.True(!string.IsNullOrEmpty(line) && line.Contains("Welcome"), "check welcome message: " + line);
                     waitHandles.Add(waitHandle);
                 }
 
-                using (LogStreamWaitHandle waitHandle = new LogStreamWaitHandle(appManager.LogStreamManager.GetStream().Result))
+                using (LogStreamWaitHandle waitHandle = new LogStreamWaitHandle(appManager.CreateLogStreamManager("TestLogStreamFilter").GetStream().Result))
                 {
                     try
                     {

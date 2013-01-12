@@ -51,6 +51,12 @@ namespace Kudu.TestHarness
                 }
                 finally
                 {
+                    lock (lines)
+                    {
+                        lines.Add(null);
+                        this.sem.Release();
+                    }
+
                     disposed.Set();
                 }
             });

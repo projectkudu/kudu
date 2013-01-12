@@ -7,15 +7,21 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Web;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
+using Kudu.Core;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Settings;
 using Kudu.Services.Infrastructure;
+
+using Environment = System.Environment;
 
 namespace Kudu.Services.Performance
 {
     public class LogStreamManager
     {
         private const string FilterQueryKey = "filter";
+        private const string AzureDriveEnabledKey = "AzureDriveEnabled";
 
         // Antares 3 mins timeout, heartbeat every mins keep alive.
         private static string[] LogFileExtensions = new string[] { ".txt", ".log", ".htm" };
@@ -24,6 +30,8 @@ namespace Kudu.Services.Performance
 
         private readonly object _thisLock = new object();
         private readonly string _logPath;
+        private readonly IDeploymentSettingsManager _settings;
+        private readonly IEnvironment _environment;
         private readonly ITracer _tracer;
         private readonly List<ProcessRequestAsyncResult> _results;
 
@@ -32,14 +40,21 @@ namespace Kudu.Services.Performance
         private Timer _heartbeat;
         private DateTime lastTraceTime = DateTime.UtcNow;
         private string _filter;
+        private bool _enableTrace;
 
         private ShutdownDetector _shutdownDetector;
         private CancellationTokenRegistration _cancellationTokenRegistration;
 
-        public LogStreamManager(string logPath, ITracer tracer, ShutdownDetector shutdownDetector)
+        public LogStreamManager(string logPath, 
+                                IEnvironment environment,
+                                IDeploymentSettingsManager settings, 
+                                ITracer tracer, 
+                                ShutdownDetector shutdownDetector)
         {
             _logPath = logPath;
             _tracer = tracer;
+            _settings = settings;
+            _environment = environment;
             _shutdownDetector = shutdownDetector;
             _results = new List<ProcessRequestAsyncResult>();
         }
@@ -67,6 +82,14 @@ namespace Kudu.Services.Performance
                 _results.Add(result);
 
                 Initialize(path);
+            }
+
+            // enable application diagnostic trace automatically if connecting to root or application path
+            // it will be turn off automatically every 24 hours
+            if (_enableTrace)
+            {
+                var settings = new JsonSettings(Path.Combine(_environment.DiagnosticsPath, Constants.SettingsJsonFile));
+                settings.SetValue(AzureDriveEnabledKey, "true");
             }
 
             return result;
@@ -235,6 +258,9 @@ namespace Kudu.Services.Performance
 
             string[] paths = context.Request.Path.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
             paths[0] = _logPath;
+
+            _enableTrace = paths.Length == 1 || String.Equals(paths[1], "Application", StringComparison.OrdinalIgnoreCase);
+
             return Path.Combine(paths);
         }
 
