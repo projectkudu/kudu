@@ -41,14 +41,14 @@ namespace Kudu.Services.SourceControl
         private readonly static TimeSpan _retryAfter = TimeSpan.FromSeconds(2);
         private readonly static int[][] _delaySets = new int[][]
         {
-            new int[] { 0, 20, 60, 30, 170, 110, 320, 1280 },
-            new int[] { 10, 30, 40, 60, 0, 30, 890, 1140 },
-            new int[] { 0, 10, 20, 100, 140, 590, 180, 1280 },
-            new int[] { 10, 20, 70, 130, 290, 510, 1150 },
-            new int[] { 0, 30, 50, 0, 110, 430, 1280 },
-            new int[] { 10, 0, 20, 40, 260, 350, 1160 },
-            new int[] { 0, 10, 0, 70, 80, 270, 1280 },
-            new int[] { 10, 30, 60, 110, 230, 190, 1170 },
+            new int[] { 0, 32, 96, 48, 272, 176, 512, 3000 },
+            new int[] { 16, 48, 64, 96, 0, 48, 1424, 1824 },
+            new int[] { 0, 16, 32, 160, 224, 944, 288, 3000 },
+            new int[] { 16, 32, 112, 208, 464, 816, 1216, 1840 },
+            new int[] { 0, 48, 80, 0, 176, 688, 80, 3000 },
+            new int[] { 16, 0, 32, 64, 416, 560, 992, 1856 },
+            new int[] { 0, 16, 0, 112, 128, 432, 1920, 3000 },
+            new int[] { 16, 48, 96, 176, 368, 304, 784, 1872 },
         };
 
         private readonly IOperationLock _operationLock;
