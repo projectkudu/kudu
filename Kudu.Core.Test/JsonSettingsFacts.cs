@@ -55,24 +55,35 @@ namespace Kudu.Core.Test
         [Fact]
         public void SetGetValueTest()
         {
-            var value = new KeyValuePair<string, string>(Guid.NewGuid().ToString(), Guid.NewGuid().ToString());
+            Random random = new Random((int)DateTime.Now.Ticks);
+            var values = new Dictionary<string, JToken>
+            {
+                { Guid.NewGuid().ToString(), Guid.NewGuid().ToString() },
+                { Guid.NewGuid().ToString(), random.Next() },
+                { Guid.NewGuid().ToString(), random.Next() % 2 == 0 }
+            };
+
             var settings = new JsonSettings(GetMockFileSystem(SettingsPath), SettingsPath);
 
-            Assert.Equal(null, settings.GetValue(value.Key));
+            foreach (KeyValuePair<string, JToken> value in values)
+            {
+                Assert.Equal(null, settings.GetValue(value.Key));
 
-            settings.SetValue(value.Key, value.Value);
+                settings.SetValue(value.Key, value.Value);
 
-            Assert.Equal(value.Value, settings.GetValue(value.Key));
+                Assert.Equal(value.Value, settings.GetValue(value.Key));
+            }
         }
 
         [Fact]
         public void SetGetValuesTest()
         {
-            var values = new Dictionary<string, string>
+            Random random = new Random((int)DateTime.Now.Ticks);
+            var values = new Dictionary<string, JToken>
             {
                 { Guid.NewGuid().ToString(), Guid.NewGuid().ToString() },
-                { Guid.NewGuid().ToString(), Guid.NewGuid().ToString() },
-                { Guid.NewGuid().ToString(), Guid.NewGuid().ToString() }
+                { Guid.NewGuid().ToString(), random.Next() },
+                { Guid.NewGuid().ToString(), random.Next() % 2 == 0 }
             };
 
             var settings = new JsonSettings(GetMockFileSystem(SettingsPath), SettingsPath);
@@ -83,7 +94,7 @@ namespace Kudu.Core.Test
 
             Assert.Equal(values.Count, settings.GetValues().Count());
 
-            foreach (KeyValuePair<string, string> value in settings.GetValues())
+            foreach (KeyValuePair<string, JToken> value in settings.GetValues())
             {
                 Assert.Equal(values[value.Key], value.Value);
             }
@@ -93,7 +104,7 @@ namespace Kudu.Core.Test
 
             settings.SetValues(values);
 
-            foreach (KeyValuePair<string, string> value in settings.GetValues())
+            foreach (KeyValuePair<string, JToken> value in settings.GetValues())
             {
                 Assert.Equal(values[value.Key], value.Value);
             }
@@ -102,7 +113,8 @@ namespace Kudu.Core.Test
         [Fact]
         public void SetGetJObjectTest()
         {
-            var values = new Dictionary<string, string>
+            Random random = new Random((int)DateTime.Now.Ticks);
+            var values = new Dictionary<string, JToken>
             {
                 { Guid.NewGuid().ToString(), null },
                 { Guid.NewGuid().ToString(), String.Empty },
@@ -110,7 +122,7 @@ namespace Kudu.Core.Test
             };
 
             JObject json = new JObject();
-            foreach (KeyValuePair<string, string> value in values)
+            foreach (KeyValuePair<string, JToken> value in values)
             {
                 json[value.Key] = value.Value;
             }
@@ -123,9 +135,9 @@ namespace Kudu.Core.Test
 
             Assert.Equal(values.Count, settings.GetValues().Count());
 
-            foreach (KeyValuePair<string, string> value in settings.GetValues())
+            foreach (KeyValuePair<string, JToken> value in settings.GetValues())
             {
-                Assert.Equal(json[value.Key].Value<string>(), value.Value);
+                Assert.Equal(json[value.Key], value.Value);
             }
         }
 

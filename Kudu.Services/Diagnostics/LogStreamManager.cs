@@ -89,7 +89,7 @@ namespace Kudu.Services.Performance
             if (_enableTrace)
             {
                 var settings = new JsonSettings(Path.Combine(_environment.DiagnosticsPath, Constants.SettingsJsonFile));
-                settings.SetValue(AzureDriveEnabledKey, "true");
+                settings.SetValue(AzureDriveEnabledKey, true);
             }
 
             return result;
