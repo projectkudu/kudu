@@ -1,6 +1,7 @@
 ﻿using System;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
+using Kudu.Core.Test;
 using Kudu.Core.Tracing;
 
 namespace Kudu.TestHarness
