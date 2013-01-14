@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using Kudu.Core.SourceControl;
+using Kudu.Core.Test;
 using Kudu.Core.Tracing;
 using Kudu.TestHarness;
 using Xunit;
