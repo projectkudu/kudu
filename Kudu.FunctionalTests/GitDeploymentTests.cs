@@ -95,25 +95,31 @@ namespace Kudu.FunctionalTests
         private static void PushAndDeployApps(string repoCloneUrl, string defaultBranchName,
                                               string verificationText, HttpStatusCode expectedResponseCode, string verificationLogText)
         {
-            string randomTestName = KuduUtils.GetRandomWebsiteName(Path.GetFileNameWithoutExtension(repoCloneUrl));
-            ApplicationManager.Run(randomTestName, appManager =>
+            using (new LatencyLogger("PushAndDeployApps - " + repoCloneUrl))
             {
-                // Act
-                using (TestRepository testRepository = Git.Clone(randomTestName, repoCloneUrl))
+                string randomTestName = KuduUtils.GetRandomWebsiteName(Path.GetFileNameWithoutExtension(repoCloneUrl));
+                ApplicationManager.Run(randomTestName, appManager =>
                 {
-                    appManager.GitDeploy(testRepository.PhysicalPath, defaultBranchName);
-                }
-                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                    // Act
+                    using (TestRepository testRepository = Git.Clone(randomTestName, repoCloneUrl))
+                    {
+                        using (new LatencyLogger("GitDeploy"))
+                        {
+                            appManager.GitDeploy(testRepository.PhysicalPath, defaultBranchName);
+                        }
+                    }
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
-                // Assert
-                Assert.Equal(1, results.Count);
-                Assert.Equal(DeployStatus.Success, results[0].Status);
-                KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText, expectedResponseCode);
-                if (!String.IsNullOrEmpty(verificationLogText))
-                {
-                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, verificationLogText.Trim());
-                }
-            });
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText, expectedResponseCode);
+                    if (!String.IsNullOrEmpty(verificationLogText))
+                    {
+                        KuduAssert.VerifyLogOutput(appManager, results[0].Id, verificationLogText.Trim());
+                    }
+                });
+            }
         }
     }
 }

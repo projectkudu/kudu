@@ -131,7 +131,7 @@ namespace Kudu.Core.Deployment.Generator
         {
             get
             {
-                return Path.Combine(Environment.NodeModulesPath, ".bin", "kudusync.cmd");
+                return Path.Combine(Environment.ScriptPath, "kudusync.cmd");
             }
         }
 
