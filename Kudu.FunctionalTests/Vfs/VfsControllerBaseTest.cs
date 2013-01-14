@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading;
 using Kudu.Client.Editor;
 using Kudu.Client.Infrastructure;
 using Xunit;
@@ -250,6 +251,10 @@ namespace Kudu.FunctionalTests
                     string content = response.Content.ReadAsStringAsync().Result;
                     Assert.True(content.StartsWith(_conflict));
                 }
+
+                // The previous conflict results in a git cleanup which at times takes time. During this interval the server responds with ServerUnavailable. 
+                // To work aroudn this, we'll simply add a bit of sleep timing. 
+                Thread.Sleep(TimeSpan.FromSeconds(3));
 
                 // Update file with fifth edit based on invalid etag
                 using (HttpRequestMessage update5 = new HttpRequestMessage())
