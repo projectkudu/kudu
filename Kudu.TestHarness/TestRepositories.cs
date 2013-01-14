@@ -16,7 +16,7 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/ConditionalCompilation.git",        "a104578"),
             new TestRepositoryInfo("https://github.com/KuduApps/CustomBuildScript.git",             "2c156bd"),
             new TestRepositoryInfo("https://github.com/KuduApps/CustomDeploymentSettingsTest.git",  "66e15f2"),
-            new TestRepositoryInfo("https://github.com/KuduApps/HangProcess.git",                   "2e53ab6"),
+            new TestRepositoryInfo("https://github.com/KuduApps/HangProcess.git",                   "dd426b2"),
             new TestRepositoryInfo("https://github.com/KuduApps/HelloKudu.git",                     "2370e44"),
             new TestRepositoryInfo("https://github.com/KuduApps/HelloWorld.git",                    "1f3dfd8"),
             new TestRepositoryInfo("https://github.com/KuduApps/Mvc3Application_NoSolution.git",    "4e36ca3"),

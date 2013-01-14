@@ -37,13 +37,13 @@ namespace Kudu.Core.Settings
             return Read().Value<string>(key);
         }
 
-        public IEnumerable<KeyValuePair<string, string>> GetValues()
+        public IEnumerable<KeyValuePair<string, JToken>> GetValues()
         {
             var dict = (IDictionary<string, JToken>)Read();
-            return dict.ToDictionary(pair => pair.Key, pair => pair.Value.Value<string>());
+            return dict.ToDictionary(pair => pair.Key, pair => pair.Value);
         }
 
-        public void SetValue(string key, string value)
+        public void SetValue(string key, JToken value)
         {
             JObject json = Read();
             json[key] = value;
@@ -55,16 +55,16 @@ namespace Kudu.Core.Settings
             JObject json = Read();
             foreach (KeyValuePair<string, JToken> pair in values)
             {
-                json[pair.Key] = pair.Value.Value<string>();
+                json[pair.Key] = pair.Value;
             }
 
             Save(json);
         }
 
-        public void SetValues(IEnumerable<KeyValuePair<string, string>> values)
+        public void SetValues(IEnumerable<KeyValuePair<string, JToken>> values)
         {
             JObject json = Read();
-            foreach (KeyValuePair<string, string> pair in values)
+            foreach (KeyValuePair<string, JToken> pair in values)
             {
                 json[pair.Key] = pair.Value;
             }

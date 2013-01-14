@@ -981,13 +981,13 @@ command = node build.js
                     // Otherwise process and its child will be terminated
                     appManager.SettingsManager.SetValue(SettingsKeys.CommandIdleTimeout, "10").Wait();
 
-                    // This HangProcess repo spew out activity at 2s, 4s, 6s and 20s respectively
+                    // This HangProcess repo spew out activity at 2s, 4s, 6s and 30s respectively
                     // we should receive the one < 10s and terminate otherwise.
                     GitDeploymentResult result = appManager.GitDeploy(repo.PhysicalPath);
                     Assert.Contains("remote: Sleep(2000)", result.GitTrace);
                     Assert.Contains("remote: Sleep(4000)", result.GitTrace);
                     Assert.Contains("remote: Sleep(6000)", result.GitTrace);
-                    Assert.DoesNotContain("remote: Sleep(20000)", result.GitTrace);
+                    Assert.DoesNotContain("remote: Sleep(30000)", result.GitTrace);
                     Assert.Contains("remote: Process 'starter.cmd' aborted due to idle timeout.", result.GitTrace);
                 });
             }
