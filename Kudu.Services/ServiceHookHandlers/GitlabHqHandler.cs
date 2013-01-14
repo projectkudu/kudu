@@ -1,19 +1,12 @@
 ﻿using System;
-using System.Linq;
 using System.Web;
 using Kudu.Core.SourceControl;
-using Kudu.Core.SourceControl.Git;
 using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.ServiceHookHandlers
 {
     public class GitlabHqHandler : GitHubCompatHandler
     {
-        public GitlabHqHandler(IGitServer gitServer)
-            : base(gitServer)
-        {
-        }
-
         protected override GitDeploymentInfo GetDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch)
         {
             var repository = payload.Value<JObject>("repository");

@@ -19,7 +19,7 @@ namespace Kudu.Services.Test
             var headers = new NameValueCollection();
             var httpRequest = new Mock<HttpRequestBase>();
             httpRequest.SetupGet(r => r.Headers).Returns(headers);
-            var handler = new GitHubHandler(Mock.Of<IGitServer>());
+            var handler = new GitHubHandler();
 
             // Act
             DeploymentInfo deploymentInfo;
@@ -37,7 +37,7 @@ namespace Kudu.Services.Test
         {
             // Arrange
             var httpRequest = GetRequest();
-            var handler = new GitHubHandler(Mock.Of<IGitServer>());
+            var handler = new GitHubHandler();
             JObject payload = JObject.Parse(payloadContent);
 
             // Act
@@ -55,7 +55,7 @@ namespace Kudu.Services.Test
             // Arrange
             string payloadContent = @"{""after"":""00000000000000000000000000000000"", ""repository"":{ ""url"":""https://github.com/KuduApps/PostCommitTest"" }, ref: ""refs/heads/master"", commits: [] }";
             var httpRequest = GetRequest();
-            var handler = new GitHubHandler(Mock.Of<IGitServer>());
+            var handler = new GitHubHandler();
             JObject payload = JObject.Parse(payloadContent);
 
             // Act
@@ -73,7 +73,7 @@ namespace Kudu.Services.Test
             // Arrange
             string payloadContent = @"{ ""repository"":{ ""url"":""https://github.com/KuduApps/PostCommitTest"" }, ref: ""refs/heads/not-master"", commits: [{""added"":[""Foo.txt""],""author"":{""email"":""prkrishn@hotmail.com"",""name"":""Pranav K"",""username"":""pranavkm""},""committer"":{""email"":""prkrishn@hotmail.com"",""name"":""Pranav K"",""username"":""pranavkm""},""distinct"":true,""id"":""f94996d67d6d5a060aaf2fcb72c333d0899549ab"",""message"":""Foo commit"",""modified"":[],""removed"":[],""timestamp"":""2012-12-17T14:32:20-08:00"",""url"":""https://github.com/KuduApps/PostCommitTest/commit/f94996d67d6d5a060aaf2fcb72c333d0899549ab""}] }";
             var httpRequest = GetRequest();
-            var handler = new GitHubHandler(Mock.Of<IGitServer>());
+            var handler = new GitHubHandler();
             JObject payload = JObject.Parse(payloadContent);
             
             // Act
@@ -92,7 +92,7 @@ namespace Kudu.Services.Test
             // Arrange
             string payloadContent = @"{""after"":""f94996d67d6d5a060aaf2fcb72c333d0899549ab"",""before"":""0000000000000000000000000000000000000000"",""commits"":[{""added"":[],""author"":{""email"":""kirthik@microsoft.com"",""name"":""Kirthi Krishnamraju"",""username"":""kirthik""},""committer"":{""email"":""kirthik@microsoft.com"",""name"":""Kirthi Krishnamraju"",""username"":""kirthik""},""distinct"":true,""id"":""18ceab5cda610374b45f6496c88615b1213a7bd8"",""message"":""in foo"",""modified"":[""MvcApplication1/Controllers/HomeController.cs""],""removed"":[],""timestamp"":""2012-08-30T17:36:29-07:00"",""url"":""https://github.com/KuduApps/PostCommitTest/commit/18ceab5cda610374b45f6496c88615b1213a7bd8""},{""added"":[""Foo.txt""],""author"":{""email"":""prkrishn@hotmail.com"",""name"":""Pranav K"",""username"":""pranavkm""},""committer"":{""email"":""prkrishn@hotmail.com"",""name"":""Pranav K"",""username"":""pranavkm""},""distinct"":true,""id"":""f94996d67d6d5a060aaf2fcb72c333d0899549ab"",""message"":""Foo commit"",""modified"":[],""removed"":[],""timestamp"":""2012-12-17T14:32:20-08:00"",""url"":""https://github.com/KuduApps/PostCommitTest/commit/f94996d67d6d5a060aaf2fcb72c333d0899549ab""}],""compare"":""https://github.com/KuduApps/PostCommitTest/compare/18ceab5cda61^...f94996d67d6d"",""created"":true,""deleted"":false,""forced"":true,""pusher"":{""email"":""prkrishn@hotmail.com"",""name"":""pranavkm""},""ref"":""refs/heads/master"",""repository"":{""private"":false,""url"":""https://github.com/KuduApps/PostCommitTest""}}";
             var httpRequest = GetRequest();
-            var handler = new GitHubHandler(Mock.Of<IGitServer>());
+            var handler = new GitHubHandler();
             JObject payload = JObject.Parse(payloadContent);
 
             // Act

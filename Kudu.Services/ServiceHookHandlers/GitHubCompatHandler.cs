@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Web;
 using Kudu.Core.SourceControl;
-using Kudu.Core.SourceControl.Git;
 using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.ServiceHookHandlers
@@ -13,13 +12,6 @@ namespace Kudu.Services.ServiceHookHandlers
     /// </summary>
     public class GitHubCompatHandler : ServiceHookHandlerBase
     {
-        protected readonly IGitServer _gitServer;
-
-        public GitHubCompatHandler(IGitServer gitServer)
-        {
-            _gitServer = gitServer;
-        }
-
         public override DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
         {
             GitDeploymentInfo gitDeploymentInfo = GetDeploymentInfo(request, payload, targetBranch);

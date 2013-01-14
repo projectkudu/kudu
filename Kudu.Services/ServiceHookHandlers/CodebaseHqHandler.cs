@@ -1,17 +1,11 @@
 ﻿using System;
 using System.Web;
-using Kudu.Core.SourceControl.Git;
 using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.ServiceHookHandlers
 {
     public class CodebaseHqHandler : GitHubCompatHandler
     {
-        public CodebaseHqHandler(IGitServer gitServer)
-            : base(gitServer)
-        {
-        }
-
         public override DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
         {
             deploymentInfo = null;
