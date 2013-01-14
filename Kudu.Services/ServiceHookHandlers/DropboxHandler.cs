@@ -30,11 +30,12 @@ namespace Kudu.Services.ServiceHookHandlers
             deploymentInfo = null;
             if (!String.IsNullOrEmpty(payload.Value<string>("NewCursor")))
             {
-                deploymentInfo = new DropboxInfo(payload);
+                var dropboxInfo = new DropboxInfo(payload);
+                deploymentInfo = dropboxInfo; 
 
                 // Temporary deployment
-                string authorName = _settings.GetValue(DropboxHelper.UserNameKey) ?? _settings.GetGitUsername();
-                string authorEmail = _settings.GetValue(DropboxHelper.EmailKey) ?? _settings.GetGitEmail();
+                string authorName = dropboxInfo.DeployInfo.UserName;
+                string authorEmail = dropboxInfo.DeployInfo.Email;
                 string message = "Syncing with dropbox at " + DateTime.UtcNow.ToString("g");
                 deploymentInfo.TargetChangeset = new ChangeSet("InProgress", authorName, authorEmail, message, DateTimeOffset.MinValue);
 

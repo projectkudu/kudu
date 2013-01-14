@@ -19,8 +19,6 @@ namespace Kudu.Services
     {
         public const string Dropbox = "dropbox";
         public const string CursorKey = "dropbox_cursor";
-        public const string UserNameKey = "dropbox_username";
-        public const string EmailKey = "dropbox_email";
 
         private const string DropboxApiContentUri = "https://api-content.dropbox.com/";
         private const string SandboxFilePath = "1/files/sandbox";
@@ -72,7 +70,7 @@ namespace Kudu.Services
             finally
             {
                 // Commit anyway even partial change
-                changeSet = _repository.Commit(prefix + " sync with dropbox at " + DateTime.UtcNow.ToString("g"), GetAuthor());
+                changeSet = _repository.Commit(prefix + " sync with dropbox at " + DateTime.UtcNow.ToString("g"), String.Format("{0} <{1}>", info.UserName, info.Email));
             }
 
             // Save new dropboc cursor
@@ -92,18 +90,6 @@ namespace Kudu.Services
             {
                 return true;
             }
-        }
-
-        private string GetAuthor()
-        {
-            string userName = _settings.GetValue(UserNameKey);
-            string email = _settings.GetValue(EmailKey);
-            if (!String.IsNullOrEmpty(userName) && !String.IsNullOrEmpty(email))
-            {
-                return String.Format("{0} <{1}>", userName, email);
-            }
-
-            return null;
         }
 
         private void ApplyChanges(DropboxDeployInfo info)

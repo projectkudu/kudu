@@ -35,16 +35,11 @@ namespace Kudu.FunctionalTests
             }
 
             AccountInfo account = GetAccountInfo(oauth);
-            DropboxDeployInfo deploy = GetDeployInfo(oauth);
+            DropboxDeployInfo deploy = GetDeployInfo(oauth, account);
 
             string appName = KuduUtils.GetRandomWebsiteName("DropboxTest");
             ApplicationManager.Run(appName, appManager =>
             {
-                appManager.SettingsManager.SetValues(
-                    new KeyValuePair<string, string>("dropbox_username", account.display_name),
-                    new KeyValuePair<string, string>("dropbox_email", account.email)
-                    ).Wait();
-
                 HttpClient client = HttpClientHelper.CreateClient(appManager.ServiceUrl, appManager.DeploymentManager.Credentials);
                 client.PostAsJsonAsync("deploy", deploy).Result.EnsureSuccessful();
 
@@ -98,7 +93,7 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        private DropboxDeployInfo GetDeployInfo(OAuthInfo oauth, string cursor = null)
+        private DropboxDeployInfo GetDeployInfo(OAuthInfo oauth, AccountInfo account, string cursor = null)
         {
             List<DropboxDeltaInfo> deltas = new List<DropboxDeltaInfo>();
             string timeStamp = GetUtcTimeStamp();
@@ -155,6 +150,8 @@ namespace Kudu.FunctionalTests
                 OldCursor = oldCursor,
                 NewCursor = newCursor,
                 Path = "/",
+                UserName = account.display_name,
+                Email = account.email,
                 Deltas = deltas
             };
         }
