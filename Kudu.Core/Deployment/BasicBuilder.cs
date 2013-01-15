@@ -193,6 +193,7 @@ namespace Kudu.Core.Deployment
                 repoFolder: _sourcePath,
                 siteFolder: context.OutputPath,
                 scriptPath: _scriptPath,
+                tempPath: _tempPath,
                 settings: _settings);
 
             // Check if need to do anythng related to Node
@@ -224,6 +225,7 @@ namespace Kudu.Core.Deployment
                  repoFolder: _sourcePath,
                  siteFolder: context.OutputPath,
                  scriptPath: _scriptPath,
+                 tempPath: _tempPath,
                  settings: _settings);
 
             if (nodeSiteEnabler.LooksLikeNode())

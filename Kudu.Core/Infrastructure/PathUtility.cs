@@ -59,6 +59,12 @@ namespace Kudu.Core.Infrastructure
             return Path.Combine(programFiles, "nodejs", "npm.cmd");
         }
 
+        internal static string ResolveNpmJsPath()
+        {
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            return Path.Combine(programFiles, "nodejs", "node_modules", "npm", "bin", "npm-cli.js");
+        }
+
         internal static string ResolveMSBuildPath()
         {
             string windir = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.Windows);

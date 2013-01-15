@@ -18,6 +18,9 @@ namespace Kudu.Core.Deployment.Generator
         private const string MSBuildPath = "MSBUILD_PATH";
         private const string PreviousManifestPath = "PREVIOUS_MANIFEST_PATH";
         private const string NextManifestPath = "NEXT_MANIFEST_PATH";
+        private const string KuduSyncCommandKey = "KUDU_SYNC_COMMAND";
+        private const string SelectNodeVersionCommandKey = "KUDU_SELECT_NODE_VERSION_COMMAND";
+        private const string NpmJsPathKey = "NPM_JS_PATH";
         private const string StarterScriptName = "starter.cmd";
 
         public ExternalCommandBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string repositoryPath)
@@ -52,7 +55,9 @@ namespace Kudu.Core.Deployment.Generator
             exe.EnvironmentVariables[MSBuildPath] = PathUtility.ResolveMSBuildPath();
             exe.EnvironmentVariables[PreviousManifestPath] = context.PreviousManifestFilePath ?? String.Empty;
             exe.EnvironmentVariables[NextManifestPath] = context.NextManifestFilePath;
-            exe.EnvironmentVariables["KUDU_SYNC_COMMAND"] = KuduSyncPath;
+            exe.EnvironmentVariables[KuduSyncCommandKey] = KuduSyncCommand;
+            exe.EnvironmentVariables[SelectNodeVersionCommandKey] = SelectNodeVersionCommand;
+            exe.EnvironmentVariables[NpmJsPathKey] = PathUtility.ResolveNpmJsPath();
 
             // Disable this for now
             // exe.EnvironmentVariables[NuGetCachePathKey] = Environment.NuGetCachePath;
@@ -127,11 +132,19 @@ namespace Kudu.Core.Deployment.Generator
             }
         }
 
-        private string KuduSyncPath
+        private string KuduSyncCommand
         {
             get
             {
                 return Path.Combine(Environment.ScriptPath, "kudusync.cmd");
+            }
+        }
+
+        private string SelectNodeVersionCommand
+        {
+            get
+            {
+                return "node \"" + Path.Combine(Environment.ScriptPath, "selectNodeVersion") + "\"";
             }
         }
 

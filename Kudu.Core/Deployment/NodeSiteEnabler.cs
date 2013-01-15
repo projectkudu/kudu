@@ -14,18 +14,20 @@ namespace Kudu.Core.Deployment
         private string _siteFolder;
         private string _repoFolder;
         private string _scriptPath;
+        private string _tempPath;
         private IDeploymentSettingsManager _settings;
         private readonly string[] NodeStartFiles = new[] { "server.js", "app.js" };
         private readonly string[] NonNodeExtensions = new[] { "*.php", "*.htm", "*.html", "*.aspx", "*.cshtml" };
         private const string WebConfigFile = "web.config";
         private const string PackageJsonFile = "package.json";
 
-        public NodeSiteEnabler(IFileSystem fileSystem, string repoFolder, string siteFolder, string scriptPath, IDeploymentSettingsManager settings)
+        public NodeSiteEnabler(IFileSystem fileSystem, string repoFolder, string siteFolder, string scriptPath, string tempPath, IDeploymentSettingsManager settings)
         {
             _fileSystem = fileSystem;
             _repoFolder = repoFolder;
             _siteFolder = siteFolder;
             _scriptPath = scriptPath;
+            _tempPath = tempPath;
             _settings = settings;
         }
 
@@ -104,10 +106,11 @@ namespace Kudu.Core.Deployment
             {
                 return executor.ExecuteWithConsoleOutput(
                     tracer,
-                    "\"{0}\\selectNodeVersion.js\" \"{1}\" \"{2}\"",
+                    "\"{0}\\selectNodeVersion.js\" \"{1}\" \"{2}\" \"{3}\"",
                     _scriptPath,
                     _repoFolder,
-                    _siteFolder).Item1;
+                    _siteFolder,
+                    _tempPath).Item1;
             }
             catch (Exception e)
             {
