@@ -5,7 +5,7 @@ namespace Kudu.TestHarness
 {
     public static class ApplicationManagerExtensions
     {
-        public static GitDeploymentResult GitDeploy(this ApplicationManager appManager, string localRepoPath, string localBranchName = "master", string remoteBranchName = "master")
+        public static GitDeploymentResult GitDeploy(this ApplicationManager appManager, string localRepoPath, string localBranchName = "master", string remoteBranchName = "master", int retries = 3)
         {
             return OperationManager.Attempt(() =>
             {
@@ -16,7 +16,7 @@ namespace Kudu.TestHarness
                 appManager.Save(traceFile, result.GitTrace);
 
                 return result;
-            });
+            }, retries);
         }
     }
 }
