@@ -1,11 +1,9 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
+﻿using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
-using Kudu.Contracts.Settings;
-using System.Collections.Generic;
-using System.Text;
+using System;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace Kudu.Core.Deployment.Generator
 {

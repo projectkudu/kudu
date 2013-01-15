@@ -1,11 +1,10 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using Kudu.Contracts.Settings;
+﻿using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment.Generator;
 using Kudu.Core.Infrastructure;
-using System.IO.Abstractions;
+using System;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace Kudu.Core.Deployment
 {
@@ -25,6 +24,9 @@ namespace Kudu.Core.Deployment
         private const string PreviousManifestPath = "PREVIOUS_MANIFEST_PATH";
         private const string NextManifestPath = "NEXT_MANIFEST_PATH";
         private const string MSBuildPath = "MSBUILD_PATH";
+        private const string KuduSyncCommandKey = "KUDU_SYNC_COMMAND";
+        private const string SelectNodeVersionCommandKey = "KUDU_SELECT_NODE_VERSION_COMMAND";
+        private const string NpmJsPathKey = "NPM_JS_PATH";
         private const string StarterScriptName = "starter.cmd";
 
         public CustomBuilder(string repositoryPath, string tempPath, string command, IBuildPropertyProvider propertyProvider, string homePath, string scriptPath, IDeploymentSettingsManager settings)
@@ -53,6 +55,9 @@ namespace Kudu.Core.Deployment
             exe.EnvironmentVariables[PreviousManifestPath] = (context.PreviousManifest != null) ? context.PreviousManifest.ManifestFilePath : String.Empty;
             exe.EnvironmentVariables[NextManifestPath] = context.ManifestWriter.ManifestFilePath;
             exe.EnvironmentVariables[MSBuildPath] = PathUtility.ResolveMSBuildPath();
+            exe.EnvironmentVariables[KuduSyncCommandKey] = KuduSyncCommand;
+            exe.EnvironmentVariables[SelectNodeVersionCommandKey] = SelectNodeVersionCommand;
+            exe.EnvironmentVariables[NpmJsPathKey] = PathUtility.ResolveNpmJsPath();
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.NuGetPackageRestoreKey] = "true";
 
             exe.SetHomePath(_homePath);
@@ -108,6 +113,22 @@ namespace Kudu.Core.Deployment
             }
 
             return tcs.Task;
+        }
+
+        private string KuduSyncCommand
+        {
+            get
+            {
+                return Path.Combine(_scriptPath, "kudusync.cmd");
+            }
+        }
+
+        private string SelectNodeVersionCommand
+        {
+            get
+            {
+                return "node \"" + Path.Combine(_scriptPath, "selectNodeVersion") + "\"";
+            }
         }
 
         private string StarterScriptPath
