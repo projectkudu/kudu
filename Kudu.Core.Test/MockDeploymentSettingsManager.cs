@@ -27,7 +27,9 @@ namespace Kudu.Core.Test
 
         public string GetValue(string key)
         {
-            return _settings[key];
+            string value;
+            _settings.TryGetValue(key, out value);
+            return value;
         }
 
         public void DeleteValue(string key)
