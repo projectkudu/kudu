@@ -32,8 +32,8 @@ if (!existsSync(interceptorJs)) {
 var repo = process.argv[2];
 var wwwroot = process.argv[3];
 var tempDir = process.argv[4];
-if (!existsSync(wwwroot) || !existsSync(repo) || !existsSync(tempDir))
-    throw new Error('Usage: node.exe selectNodeVersion.js <path_to_repo> <path_to_wwwroot> <path_to_temp>');
+if (!existsSync(wwwroot) || !existsSync(repo) || (tempDir && !existsSync(tempDir)))
+    throw new Error('Usage: node.exe selectNodeVersion.js <path_to_repo> <path_to_wwwroot> [path_to_temp]');
 
 // If the iinode.yml file does not exit in the repo but exists in wwwroot, remove it from wwwroot 
 // to prevent side-effects of previous deployments
@@ -112,5 +112,7 @@ yml += 'nodeProcessCommandLine: "' + nodeVersionPath + '"';
 fs.writeFileSync(wwwrootIisnodeYml, yml);
 
 // Save the node version in a temporary path for kudu service usage
-var tempFile = path.resolve(tempDir, '__nodeVersion.tmp');
-fs.writeFileSync(tempFile, nodeVersionPath);
+if (tempDir) {
+    var tempFile = path.resolve(tempDir, '__nodeVersion.tmp');
+    fs.writeFileSync(tempFile, nodeVersionPath);
+}
