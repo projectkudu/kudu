@@ -9,17 +9,19 @@ namespace Kudu.Core.Deployment.Generator
 {
     public abstract class ExternalCommandBuilder : ISiteBuilder
     {
-        private const string SourcePath = "DEPLOYMENT_SOURCE";
-        private const string TargetPath = "DEPLOYMENT_TARGET";
-        private const string BuildTempPath = "DEPLOYMENT_TEMP";
-        private const string ManifestPath = "MANIFEST_PATH";
-        private const string MSBuildPath = "MSBUILD_PATH";
-        private const string PreviousManifestPath = "PREVIOUS_MANIFEST_PATH";
-        private const string NextManifestPath = "NEXT_MANIFEST_PATH";
-        private const string KuduSyncCommandKey = "KUDU_SYNC_COMMAND";
-        private const string SelectNodeVersionCommandKey = "KUDU_SELECT_NODE_VERSION_COMMAND";
-        private const string NpmJsPathKey = "NPM_JS_PATH";
-        private const string StarterScriptName = "starter.cmd";
+        // TODO: Once CustomBuilder is removed, change all internals back to privates
+
+        internal const string SourcePath = "DEPLOYMENT_SOURCE";
+        internal const string TargetPath = "DEPLOYMENT_TARGET";
+        internal const string BuildTempPath = "DEPLOYMENT_TEMP";
+        internal const string ManifestPath = "MANIFEST_PATH";
+        internal const string MSBuildPath = "MSBUILD_PATH";
+        internal const string PreviousManifestPath = "PREVIOUS_MANIFEST_PATH";
+        internal const string NextManifestPath = "NEXT_MANIFEST_PATH";
+        internal const string KuduSyncCommandKey = "KUDU_SYNC_COMMAND";
+        internal const string SelectNodeVersionCommandKey = "KUDU_SELECT_NODE_VERSION_COMMAND";
+        internal const string NpmJsPathKey = "NPM_JS_PATH";
+        internal const string StarterScriptName = "starter.cmd";
 
         public ExternalCommandBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string repositoryPath)
         {
