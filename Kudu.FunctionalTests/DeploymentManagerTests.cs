@@ -198,7 +198,7 @@ namespace Kudu.FunctionalTests
                     { "payload", githubPayload }
                 };
 
-                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Wait();
+                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result.EnsureSuccessful();
 
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                 Assert.Equal(1, results.Count);
@@ -224,7 +224,7 @@ namespace Kudu.FunctionalTests
                     { "payload", bitbucketPayload }
                 };
 
-                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Wait();
+                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result.EnsureSuccessful();
 
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                 Assert.Equal(1, results.Count);
@@ -306,7 +306,7 @@ namespace Kudu.FunctionalTests
             ApplicationManager.Run(appName, appManager =>
             {
                 var client = CreateClient(appManager);
-                client.PostAsync("deploy", new StringContent(payload)).Wait();
+                client.PostAsync("deploy", new StringContent(payload)).Result.EnsureSuccessful();
 
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                 Assert.Equal(1, results.Count);
@@ -332,7 +332,7 @@ namespace Kudu.FunctionalTests
                     { "payload", payload }
                 };
 
-                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Wait();
+                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result.EnsureSuccessful();
 
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                 Assert.Equal(1, results.Count);
@@ -382,7 +382,7 @@ namespace Kudu.FunctionalTests
                     { "payload", payload }
                 };
 
-                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Wait();
+                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result.EnsureSuccessful();
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
