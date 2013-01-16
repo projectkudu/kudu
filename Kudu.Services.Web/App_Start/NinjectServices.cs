@@ -176,6 +176,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IServiceHookHandler>().To<CodebaseHqHandler>().InRequestScope();
             kernel.Bind<IServiceHookHandler>().To<GitlabHqHandler>().InRequestScope();
             kernel.Bind<IServiceHookHandler>().To<GitHubCompatHandler>().InRequestScope();
+            kernel.Bind<IServiceHookHandler>().To<KilnHgHandler>().InRequestScope();
 
             // Command executor
             kernel.Bind<ICommandExecutor>().ToMethod(context => GetCommandExecutor(environment, context))

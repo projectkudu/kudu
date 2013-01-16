@@ -62,10 +62,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\Kudu.Core.Test\MockDeploymentSettingsManager.cs">
+      <Link>MockDeploymentSettingsManager.cs</Link>
+    </Compile>
     <Compile Include="BitbucketHandlerFacts.cs" />
     <Compile Include="CodeBaseHqFacts.cs" />
     <Compile Include="GithubHandlerFacts.cs" />
     <Compile Include="Infrastructure\MediaTypeMapTest.cs" />
+    <Compile Include="KilnHgHandlerFacts.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

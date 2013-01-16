@@ -153,6 +153,7 @@
     <Compile Include="ByteRanges\HttpRequestMessageExtensions.cs" />
     <Compile Include="Infrastructure\MediaTypeMap.cs" />
     <Compile Include="Infrastructure\VfsControllerBase.cs" />
+    <Compile Include="ServiceHookHandlers\KilnHgHandler.cs" />
     <Compile Include="ServiceHookHandlers\ServiceHookHandlerBase.cs" />
     <Compile Include="SourceControl\LiveScmEditorController.cs" />
     <Compile Include="SSHKey\SSHKeyController.cs" />
