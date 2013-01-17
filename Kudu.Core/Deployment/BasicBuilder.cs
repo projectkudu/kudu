@@ -15,15 +15,13 @@ namespace Kudu.Core.Deployment
         private const string PackageJsonFile = "package.json";
 
         private readonly string _sourcePath;
-        private readonly string _tempPath;
         private readonly string _scriptPath;
         private readonly string _homePath;
         private readonly IDeploymentSettingsManager _settings;
 
-        public BasicBuilder(string sourcePath, string tempPath, string scriptPath, string homePath, IDeploymentSettingsManager settings)
+        public BasicBuilder(string sourcePath, string scriptPath, string homePath, IDeploymentSettingsManager settings)
         {
             _sourcePath = sourcePath;
-            _tempPath = tempPath;
             _scriptPath = scriptPath;
             _homePath = homePath;
             _settings = settings;

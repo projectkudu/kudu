@@ -27,9 +27,6 @@ namespace Kudu.Core.Deployment.Generator
             {
                 RunCommand(context, _command);
 
-                // If the user deployed a node.js site, run the select node version logic on his site to use the correct node.exe
-                HandleNodeSite(context);
-
                 tcs.SetResult(null);
             }
             catch (Exception ex)
@@ -38,24 +35,6 @@ namespace Kudu.Core.Deployment.Generator
             }
 
             return tcs.Task;
-        }
-
-        /// <summary>
-        /// Update iisnode.yml file to use the specific node engine dependent on packages.json file (node engine setting),
-        /// This is only done for node.js sites.
-        /// </summary>
-        private void HandleNodeSite(DeploymentContext context)
-        {
-            var fileSystem = new FileSystem();
-            if (NodeSiteEnabler.LooksLikeNode(fileSystem, context.OutputPath))
-            {
-                ILogger innerLogger = context.Logger.Log(Resources.Log_SelectNodeJsVersion);
-
-                // We use wwwroot as the source (and destination) since this is a custom deployment
-                // And we don't know where would the root of the site be in the source
-                // (package.json may not even exist in the source for this custom deployment scenario)
-                NodeSiteEnabler.SelectNodeVersion(fileSystem, Environment.ScriptPath, context.OutputPath, context.OutputPath, DeploymentSettings, context.Tracer, innerLogger);
-            }
         }
     }
 }

@@ -35,7 +35,6 @@ namespace Kudu.Core.Deployment.Generator
             {
                 GenerateScript(context, buildLogger);
                 RunCommand(context, "deploy.cmd");
-                PostDeployScript(context);
                 tcs.SetResult(null);
             }
             catch (Exception ex)
@@ -45,10 +44,6 @@ namespace Kudu.Core.Deployment.Generator
             }
 
             return tcs.Task;
-        }
-
-        protected virtual void PostDeployScript(DeploymentContext context)
-        {
         }
 
         protected abstract string ScriptGeneratorCommandArguments { get; }

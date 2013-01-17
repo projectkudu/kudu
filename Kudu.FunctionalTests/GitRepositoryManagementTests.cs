@@ -717,66 +717,26 @@ command = deploy.cmd");
             }
         }
 
-        [Fact(Skip = "Not a valid scenario")]
+        [Fact]
         public void CustomNodeScript()
         {
-            string repositoryName = "CustomNodeScript";
-            string appName = KuduUtils.GetRandomWebsiteName("CustomNodeScript");
-            string webConfig = @"
-<?xml version=""1.0"" encoding=""utf-8""?>
-<configuration>
-    <system.webServer>         
-      <handlers>
-           <add name=""iisnode"" path=""server.js"" verb=""*"" modules=""iisnode""/>
-     </handlers>
-      <rewrite>
-           <rules>
-                <rule name=""StaticContent"">
-                     <action type=""Rewrite"" url=""public{REQUEST_URI}""/>
-                </rule>
-                <rule name=""DynamicContent"">
-                     <conditions>
-                          <add input=""{REQUEST_FILENAME}"" matchType=""IsFile"" negate=""True""/>
-                     </conditions>
-                     <action type=""Rewrite"" url=""server.js""/>
-                </rule>
-           </rules>
-      </rewrite>
-    <iisnode 
-      nodeProcessCommandLine=""&quot;%programfiles(x86)%\nodejs\node.exe&quot;""
-      debuggingEnabled=""false""
-      logDirectory=""..\..\LogFiles\nodejs"" 
-      watchedFiles=""*.js;iisnode.yml;node_modules\*;views\*.jade;views\*.ejb;routes\*.js"" />
-   </system.webServer>
- </configuration>";
+            // Arrange
+            string repositoryName = "VersionPinnedNodeJsAppCustom";
+            string appName = KuduUtils.GetRandomWebsiteName("VersionPinnedNodeJsAppCustom");
 
-            var path = Git.GetRepositoryPath(repositoryName);
-
-            using (var repo = Git.Init(path))
+            using (var repo = Git.Clone(repositoryName))
             {
-                repo.WriteFile("build.js", String.Format(@"var fs = require('fs');
-console.log('Creating server.js on the fly!');
-console.log('target is ' + process.env.DEPLOYMENT_TARGET);
-fs.writeFileSync(process.env.DEPLOYMENT_TARGET + '\server.js', ""var http = require('http'); http.createServer(function (req, res) {{ res.writeHead(200, {{'Content-Type': 'text/html'}}); res.end('Hello, world! [helloworld sample; iisnode version is ' + process.env.IISNODE_VERSION + ', node version is ' + process.version + ']'); }}).listen(process.env.PORT);"");
-console.log('Done!');", webConfig));
-                repo.WriteFile(".deployment", @"
-[config]
-command = node build.js
-");
-                repo.WriteFile("web.config", webConfig);
-
-                Git.Commit(repo.PhysicalPath, "Added build.js");
-
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Act
-                    appManager.GitDeploy(repo.PhysicalPath);
+                    GitDeploymentResult deployResult = appManager.GitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    KuduAssert.VerifyUrl(appManager.SiteUrl);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, "v0.8.2");
+                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, "custom deployment success");
                 });
             }
         }
