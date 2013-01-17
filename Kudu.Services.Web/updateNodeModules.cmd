@@ -17,14 +17,6 @@ if exist %1\node_modules\azure-cli\bin\azure (
 
 IF %ERRORLEVEL% NEQ 0 goto error
 
-if exist %1\node_modules\kudusync\bin\kudusync (
-  cmd /c npm update https://github.com/projectkudu/KuduSync/tarball/win32
-) else (
-  cmd /c npm install https://github.com/projectkudu/KuduSync/tarball/win32
-)
-
-IF %ERRORLEVEL% NEQ 0 goto error
-
 goto end
 
 :error
