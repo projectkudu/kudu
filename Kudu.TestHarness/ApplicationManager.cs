@@ -124,6 +124,16 @@ namespace Kudu.TestHarness
                 appManager.VfsWebRootManager.WriteAllText("index.html", "<h1>This web site has been successfully created</h1>");
             }
 
+            const string siteBuilderFactory = "site_builder_factory";
+            if (KuduUtils.TestGeneratorSiteBuilderFactory)
+            {
+                appManager.SettingsManager.SetValue(siteBuilderFactory, "generator").Wait();
+            }
+            else
+            {
+                appManager.SettingsManager.Delete(siteBuilderFactory).Wait();
+            }
+
             var dumpPath = Path.Combine(PathHelper.TestResultsPath, applicationName, applicationName + ".zip");
             try
             {
@@ -166,7 +176,7 @@ namespace Kudu.TestHarness
             if (Debugger.IsAttached)
             {
                 // Set to verbose level
-                appManager.SettingsManager.SetValue("trace_level", "4");
+                appManager.SettingsManager.SetValue("trace_level", "4").Wait();
 
                 RemoteLogStreamManager mgr = appManager.CreateLogStreamManager("Git");
                 waitHandle = new LogStreamWaitHandle(mgr.GetStream().Result);
@@ -255,16 +265,6 @@ namespace Kudu.TestHarness
                 LiveScmVfsManager = new RemoteVfsManager(site.ServiceUrl + "scmvfs"),
                 RepositoryManager = repositoryManager,
             };
-
-            const string siteBuilderFactory = "site_builder_factory";
-            if (KuduUtils.TestGeneratorSiteBuilderFactory)
-            {
-                applicationManager.SettingsManager.SetValue(siteBuilderFactory, "generator").Wait();
-            }
-            else
-            {
-                applicationManager.SettingsManager.Delete(siteBuilderFactory).Wait();
-            }
 
             return applicationManager;
         }
