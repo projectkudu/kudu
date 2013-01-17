@@ -104,6 +104,18 @@
         <File Id="kudusync.cmd" Source="$(var.KuduServiceBinScriptsDir)\kudusync.cmd" />
       </Component>
 
+      <Component Id="KuduSync.NET.exe" Guid="{76245B70-81C5-82B0-BC84-37164ABBD7D6}">
+        <File Id="KuduSync.NET.exe" Source="$(var.KuduServiceBinScriptsDir)\KuduSync.NET.exe" />
+      </Component>
+
+      <Component Id="CommandLine.dll" Guid="{16C4DB70-81C5-42B0-B884-37164ABAD7D6}">
+        <File Id="CommandLine.dll" Source="$(var.KuduServiceBinScriptsDir)\CommandLine.dll" />
+      </Component>
+
+      <Component Id="KuduSync.System.IO.Abstractions.dll" Guid="{9614DD70-8115-42B0-BC84-37164AABD7D4}">
+        <File Id="KuduSync.System.IO.Abstractions.dll" Source="$(var.KuduServiceBinScriptsDir)\System.IO.Abstractions.dll" />
+      </Component>
+
     </DirectoryRef>
 
     <DirectoryRef Id="KUDU_SERVICE_BIN">
@@ -187,6 +199,9 @@
       <ComponentRef Id="semver.js"/>
       <ComponentRef Id="starter.cmd"/>
       <ComponentRef Id="kudusync.cmd"/>
+      <ComponentRef Id="KuduSync.NET.exe"/>
+      <ComponentRef Id="CommandLine.dll"/>
+      <ComponentRef Id="KuduSync.System.IO.Abstractions.dll"/>
 
       <ComponentRef Id="Ninject.dll" />
 
