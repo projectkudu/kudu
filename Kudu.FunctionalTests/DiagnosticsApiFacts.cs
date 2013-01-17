@@ -18,7 +18,7 @@ namespace Kudu.FunctionalTests
         public void ConstructorTest()
         {
             string repositoryName = "Mvc3Application";
-            string appName = KuduUtils.GetRandomWebsiteName("ConstructorTest");
+            string appName = "ConstructorTest";
 
             using (var repo = Git.CreateLocalRepository(repositoryName))
             {
@@ -54,7 +54,7 @@ namespace Kudu.FunctionalTests
             };
 
             string repositoryName = "Mvc3Application";
-            string appName = KuduUtils.GetRandomWebsiteName("SetGetDeleteValue");
+            string appName = "SetGetDeleteValue";
 
             using (var repo = Git.CreateLocalRepository(repositoryName))
             {

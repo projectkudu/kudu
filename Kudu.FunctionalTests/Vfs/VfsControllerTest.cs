@@ -9,7 +9,7 @@ namespace Kudu.FunctionalTests
         public void VfsIntegrationTest()
         {
             // Arrange
-            string appName = KuduUtils.GetRandomWebsiteName("VfsIntegrationTest");
+            string appName = "VfsIntegrationTest";
 
             ApplicationManager.Run(appName, appManager =>
             {

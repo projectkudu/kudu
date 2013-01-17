@@ -111,9 +111,9 @@ namespace Kudu.TestHarness
             File.WriteAllText(fullPath, content);
         }
 
-        public static void Run(string applicationName, Action<ApplicationManager> action)
+        public static void Run(string testName, Action<ApplicationManager> action)
         {
-            var appManager = CreateApplication(applicationName);
+            var appManager = CreateApplication(KuduUtils.GetRandomWebsiteName(testName));
 
             if (KuduUtils.ReuseSameSiteForAllTests)
             {
@@ -134,7 +134,7 @@ namespace Kudu.TestHarness
                 appManager.SettingsManager.Delete(siteBuilderFactory).Wait();
             }
 
-            var dumpPath = Path.Combine(PathHelper.TestResultsPath, applicationName, applicationName + ".zip");
+            var dumpPath = Path.Combine(PathHelper.TestResultsPath, testName, testName + ".zip");
             try
             {
                 using (StartLogStream(appManager))

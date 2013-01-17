@@ -37,7 +37,7 @@ namespace Kudu.FunctionalTests
             AccountInfo account = GetAccountInfo(oauth);
             DropboxDeployInfo deploy = GetDeployInfo(oauth, account);
 
-            string appName = KuduUtils.GetRandomWebsiteName("DropboxTest");
+            string appName = "DropboxTest";
             ApplicationManager.Run(appName, appManager =>
             {
                 HttpClient client = HttpClientHelper.CreateClient(appManager.ServiceUrl, appManager.DeploymentManager.Credentials);

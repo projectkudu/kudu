@@ -96,7 +96,7 @@ namespace Kudu.FunctionalTests
 
         private static TestRepository GetRepository(string source)
         {
-            string repoName = KuduUtils.GetRandomWebsiteName(Path.GetFileNameWithoutExtension(source));
+            string repoName = Path.GetFileNameWithoutExtension(source);
             string repoPath = Path.Combine(PathHelper.LocalRepositoriesDir, repoName);
 
             PathHelper.EnsureDirectory(repoPath);

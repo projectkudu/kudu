@@ -14,7 +14,7 @@ namespace Kudu.FunctionalTests
         {
             // Arrange
             string repositoryName = "Mvc3Application";
-            string appName = KuduUtils.GetRandomWebsiteName("SetValue");
+            string appName = "SetValue";
 
             using (var repo = Git.CreateLocalRepository(repositoryName))
             {
@@ -39,7 +39,7 @@ namespace Kudu.FunctionalTests
         {
             // Arrange
             string repositoryName = "Mvc3Application";
-            string appName = KuduUtils.GetRandomWebsiteName("SetValue");
+            string appName = "SetValue";
 
             using (var repo = Git.CreateLocalRepository(repositoryName))
             {
@@ -69,7 +69,7 @@ namespace Kudu.FunctionalTests
         {
             // Arrange
             string repositoryName = "Mvc3Application";
-            string appName = KuduUtils.GetRandomWebsiteName("SetValue");
+            string appName = "SetValue";
 
             using (var repo = Git.CreateLocalRepository(repositoryName))
             {
@@ -109,7 +109,7 @@ namespace Kudu.FunctionalTests
         {
             // Arrange
             string repositoryName = "Mvc3Application";
-            string appName = KuduUtils.GetRandomWebsiteName("GetNoValueThrows404");
+            string appName = "GetNoValueThrows404";
 
             using (var repo = Git.CreateLocalRepository(repositoryName))
             {

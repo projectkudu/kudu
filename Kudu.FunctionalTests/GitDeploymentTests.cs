@@ -71,7 +71,7 @@ namespace Kudu.FunctionalTests
         {
             var verificationLogText = "Settings Were Set Properly";
 
-            string randomTestName = KuduUtils.GetRandomWebsiteName("CustomDeploymentScriptShouldHaveDeploymentSetting");
+            string randomTestName = "CustomDeploymentScriptShouldHaveDeploymentSetting";
             ApplicationManager.Run(randomTestName, appManager =>
             {
                 appManager.SettingsManager.SetValue("TESTED_VAR", verificationLogText).Wait();
@@ -97,7 +97,7 @@ namespace Kudu.FunctionalTests
         {
             using (new LatencyLogger("PushAndDeployApps - " + repoCloneUrl))
             {
-                string randomTestName = KuduUtils.GetRandomWebsiteName(Path.GetFileNameWithoutExtension(repoCloneUrl));
+                string randomTestName = Path.GetFileNameWithoutExtension(repoCloneUrl);
                 ApplicationManager.Run(randomTestName, appManager =>
                 {
                     // Act

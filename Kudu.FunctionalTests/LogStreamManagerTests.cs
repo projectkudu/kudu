@@ -16,7 +16,7 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void TestLogStreamBasic()
         {
-            string appName = KuduUtils.GetRandomWebsiteName("TestLogStreamBasic");
+            string appName = "TestLogStreamBasic";
 
             ApplicationManager.Run(appName, appManager =>
             {
@@ -55,7 +55,7 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void TestLogStreamSubFolder()
         {
-            string appName = KuduUtils.GetRandomWebsiteName("TestLogStreamFilter");
+            string appName = "TestLogStreamFilter";
 
             ApplicationManager.Run(appName, appManager =>
             {
@@ -117,7 +117,7 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void TestLogStreamNotFound()
         {
-            string appName = KuduUtils.GetRandomWebsiteName("TestLogStreamNotFound");
+            string appName = "TestLogStreamNotFound";
 
             ApplicationManager.Run(appName, appManager =>
             {

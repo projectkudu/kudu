@@ -12,7 +12,7 @@ namespace Kudu.FunctionalTests
         public void TestFallbackToDefaultNodeJsVersionWithServerJsOnly()
         {
             // Arrange
-            string appName = KuduUtils.GetRandomWebsiteName("FallbackToDefaultNodeJsVersionWithServerJsOnly");
+            string appName = "FallbackToDefaultNodeJsVersionWithServerJsOnly";
 
             using (var repo = Git.Clone("VersionPinnedNodeJsApp"))
             {
@@ -39,7 +39,7 @@ namespace Kudu.FunctionalTests
         public void TestFallbackToDefaultNodeJsVersionWithServerJsAndEmptyPackageJson()
         {
             // Arrange
-            string appName = KuduUtils.GetRandomWebsiteName("FallbackToDefaultNodeJsVersionWithServerJsAndEmptyPackageJson");
+            string appName = "FallbackToDefaultNodeJsVersionWithServerJsAndEmptyPackageJson";
 
             using (var repo = Git.Clone("VersionPinnedNodeJsApp"))
             {
@@ -67,7 +67,7 @@ namespace Kudu.FunctionalTests
         public void TestFallbackToDefaultNodeJsVersionWithIisnodeYmlLackingNodeProcessCommandLine()
         {
             // Arrange
-            string appName = KuduUtils.GetRandomWebsiteName("FallbackToDefaultNodeJsVersionWithIisnodeYmlLacking");
+            string appName = "FallbackToDefaultNodeJsVersionWithIisnodeYmlLacking";
 
             using (var repo = Git.Clone("VersionPinnedNodeJsApp"))
             {
@@ -93,7 +93,7 @@ namespace Kudu.FunctionalTests
         public void TestTurningAutomaticVersionSelectionOffWithIisnodeYmlWithNodeProcessCommandLine()
         {
             // Arrange
-            string appName = KuduUtils.GetRandomWebsiteName("TurningAutomaticVersionSelectionOffWithIisnodeYml");
+            string appName = "TurningAutomaticVersionSelectionOffWithIisnodeYml";
 
             using (var repo = Git.Clone("VersionPinnedNodeJsApp"))
             {
@@ -118,7 +118,7 @@ namespace Kudu.FunctionalTests
         public void TestMismatchBetweenAvailableVersionsAndRequestedVersions()
         {
             // Arrange
-            string appName = KuduUtils.GetRandomWebsiteName("TestMismatchBetweenAvailableVersionsAndRequestedVersions");
+            string appName = "TestMismatchBetweenAvailableVersionsAndRequestedVersions";
 
             using (var repo = Git.Clone("VersionPinnedNodeJsApp"))
             {
@@ -143,7 +143,7 @@ namespace Kudu.FunctionalTests
         public void TestPositiveMatch()
         {
             // Arrange
-            string appName = KuduUtils.GetRandomWebsiteName("VersionPinnedNodeJsApp");
+            string appName = "VersionPinnedNodeJsApp";
 
             using (var repo = Git.Clone("VersionPinnedNodeJsApp"))
             {
