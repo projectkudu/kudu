@@ -8,14 +8,14 @@ namespace Kudu.Core.Infrastructure
 {
     internal static class FileSystemHelpers
     {
-        public static void DeleteDirectorySafe(string path)
+        public static void DeleteDirectorySafe(string path, bool ignoreErrors = true)
         {
-            DeleteFileSystemInfo(new DirectoryInfoWrapper(new DirectoryInfo(path)));
+            DeleteFileSystemInfo(new DirectoryInfoWrapper(new DirectoryInfo(path)), ignoreErrors);
         }
 
-        public static void DeleteDirectoryContentsSafe(string path)
+        public static void DeleteDirectoryContentsSafe(string path, bool ignoreErrors = true)
         {
-            DeleteDirectoryContentsSafe(new DirectoryInfoWrapper(new DirectoryInfo(path)));
+            DeleteDirectoryContentsSafe(new DirectoryInfoWrapper(new DirectoryInfo(path)), ignoreErrors);
         }
 
         public static void DeleteIfEmpty(string path)
@@ -69,7 +69,7 @@ namespace Kudu.Core.Infrastructure
             return false;
         }
 
-        private static void DeleteFileSystemInfo(FileSystemInfoBase fileSystemInfo)
+        private static void DeleteFileSystemInfo(FileSystemInfoBase fileSystemInfo, bool ignoreErrors)
         {
             try
             {
@@ -80,19 +80,20 @@ namespace Kudu.Core.Infrastructure
             }
             catch
             {
+                if (!ignoreErrors) throw;
             }
 
             var directoryInfo = fileSystemInfo as DirectoryInfoBase;
 
             if (directoryInfo != null)
             {
-                DeleteDirectoryContentsSafe(directoryInfo);
+                DeleteDirectoryContentsSafe(directoryInfo, ignoreErrors);
             }
 
-            DoSafeAction(fileSystemInfo.Delete);
+            DoSafeAction(fileSystemInfo.Delete, ignoreErrors);
         }
 
-        private static void DeleteDirectoryContentsSafe(DirectoryInfoBase directoryInfo)
+        private static void DeleteDirectoryContentsSafe(DirectoryInfoBase directoryInfo, bool ignoreErrors)
         {
             try
             {
@@ -100,16 +101,17 @@ namespace Kudu.Core.Infrastructure
                 {
                     foreach (var fsi in directoryInfo.GetFileSystemInfos())
                     {
-                        DeleteFileSystemInfo(fsi);
+                        DeleteFileSystemInfo(fsi, ignoreErrors);
                     }
                 }
             }
             catch
             {
+                if (!ignoreErrors) throw;
             }
         }
 
-        private static void DoSafeAction(Action action)
+        private static void DoSafeAction(Action action, bool ignoreErrors)
         {
             try
             {
@@ -117,6 +119,7 @@ namespace Kudu.Core.Infrastructure
             }
             catch
             {
+                if (!ignoreErrors) throw;
             }
         }
 
