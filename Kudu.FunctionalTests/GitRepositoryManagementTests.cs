@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -943,7 +944,7 @@ command = deploy.cmd");
             }
         }
 
-        [Fact(Skip = "need to remove SimpleSleep.exe")]
+        [Fact]
         public void HangProcessTest()
         {
             // Arrange
@@ -976,6 +977,24 @@ command = deploy.cmd");
                     Assert.Contains("remote: Sleep(6000)", trace);
                     Assert.DoesNotContain("remote: Sleep(30000)", trace);
                     Assert.Contains("remote: Process 'starter.cmd' aborted due to idle timeout.", trace);
+
+                    // in certain OS, the child process killed may not work
+                    // this only intends for public Kudu (test running on the same machine as git server).
+                    // for private Kudu, the kill child processes should take care of this.
+                    foreach (var proc in Process.GetProcessesByName("SimpleSleep"))
+                    {
+                        try 
+                        { 
+                            proc.Kill(); 
+                        }
+                        catch (Exception)
+                        {
+                            if (!proc.HasExited)
+                            {
+                                throw;
+                            }
+                        }
+                    }
                 });
             }
         }
