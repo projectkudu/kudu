@@ -92,7 +92,9 @@ namespace Kudu.Services.SourceControl
 
                     using (_tracer.Step("Deleting Logs"))
                     {
-                        FileSystemHelpers.DeleteDirectorySafe(_environment.LogFilesPath);
+                        // Cleanup the trace directories
+                        FileSystemHelpers.DeleteDirectoryContentsSafe(_environment.TracePath);
+                        FileSystemHelpers.DeleteDirectoryContentsSafe(_environment.DeploymentTracePath);
                     }
                 }
             },
