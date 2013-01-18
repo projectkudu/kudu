@@ -7,6 +7,7 @@ namespace Kudu.Contracts.Settings
     public static class DeploymentSettingsExtension
     {
         public static TimeSpan DefaultCommandIdleTimeout = TimeSpan.FromSeconds(180);
+        public static TimeSpan DefaultLogStreamTimeout = TimeSpan.FromSeconds(1800);
         public const TraceLevel DefaultTraceLevel = TraceLevel.Error;
 
         public static TraceLevel GetTraceLevel(this IDeploymentSettingsManager settings)
@@ -42,6 +43,18 @@ namespace Kudu.Contracts.Settings
             }
 
             return DeploymentSettingsExtension.DefaultCommandIdleTimeout;
+        }
+
+        public static TimeSpan GetLogStreamTimeout(this IDeploymentSettingsManager settings)
+        {
+            string value = settings.GetValue(SettingsKeys.LogStreamTimeout);
+            int seconds;
+            if (!String.IsNullOrEmpty(value) && Int32.TryParse(value, out seconds))
+            {
+                return TimeSpan.FromSeconds(seconds);
+            }
+
+            return DeploymentSettingsExtension.DefaultLogStreamTimeout;
         }
 
         public static string GetGitUsername(this IDeploymentSettingsManager settings)
