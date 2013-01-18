@@ -514,7 +514,7 @@ command = deploy.cmd");
                 Git.CheckOut(repo.PhysicalPath, "test");
                 ApplicationManager.Run(appName, appManager =>
                 {
-                    // Act
+                    // Set the branch to test and push to that branch
                     appManager.SettingsManager.SetValue("branch", "test").Wait();
                     appManager.GitDeploy(repo.PhysicalPath, "test", "test");
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
@@ -522,6 +522,23 @@ command = deploy.cmd");
                     // Assert
                     Assert.Equal(1, results.Count);
                     KuduAssert.VerifyUrl(appManager.SiteUrl, "Test branch");
+
+                    // Now push master, but without changing the deploy branch
+                    appManager.GitDeploy(repo.PhysicalPath, "master", "master");
+                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    // Here, no new deployment should have happened
+                    Assert.Equal(1, results.Count);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, "Test branch");
+
+                    // Now change deploy branch to master and do a 'Deploy Latest' (i.e. no id)
+                    appManager.SettingsManager.SetValue("branch", "master").Wait();
+                    appManager.DeploymentManager.DeployAsync(id: null).Wait();
+                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    // Now, we should have a second deployment with master bit
+                    Assert.Equal(2, results.Count);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, "Master branch");
                 });
             }
         }

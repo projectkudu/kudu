@@ -65,7 +65,7 @@ namespace Kudu.Services.Deployment
         /// </summary>
         /// <param name="id">id of the deployment to redeploy</param>
         [HttpPut]
-        public void Deploy(string id)
+        public void Deploy(string id = null)
         {
             JObject result = GetJsonContent();
 

@@ -157,6 +157,16 @@ namespace Kudu.Core.Deployment
             ITracer tracer = _traceFactory.GetTracer();
             IDisposable deployStep = null;
             var deploymentRepository = new DeploymentRepository(repository);
+
+            // If we don't get a changeset, find out what branch we should be deploying and update the repo to it
+            if (changeSet == null)
+            {
+                string targetBranch = _settings.GetValue(SettingsKeys.Branch);
+                deploymentRepository.Update(targetBranch);
+
+                changeSet = deploymentRepository.GetChangeSet(repository.CurrentId);
+            }
+
             string id = changeSet.Id;
             try
             {
