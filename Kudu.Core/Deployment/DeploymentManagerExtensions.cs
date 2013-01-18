@@ -6,7 +6,12 @@ namespace Kudu.Core.Deployment
     {
         public static void Deploy(this IDeploymentManager deploymentManager, IRepository repository, string id, string deployer, bool clean)
         {
-            ChangeSet changeSet = repository.GetChangeSet(id);
+            ChangeSet changeSet = null;
+            if (id != null)
+            {
+                changeSet = repository.GetChangeSet(id);
+            }
+
             deploymentManager.Deploy(repository, changeSet, deployer, clean);
         }
     }
