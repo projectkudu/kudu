@@ -80,8 +80,8 @@
         <File Id="Web.config" Source="$(var.KuduServiceDir)\Web.config" />
       </Component>
 
-      <Component Id="commit" Guid="{DCC5FEC1-0431-492E-9960-DC43A91D6002}">
-        <File Id="commit" Source="$(var.KuduServiceDir)\commit" />
+      <Component Id="commit.txt" Guid="{61cbce94-4a6a-47d8-b1f8-4a3d24fdf748}">
+        <File Id="commit.txt" Source="$(var.KuduServiceDir)\commit.txt" />
       </Component>
 
     </DirectoryRef>
@@ -187,7 +187,7 @@
       <ComponentRef Id="Default.aspx" />
       <ComponentRef Id="Env.aspx" />
       <ComponentRef Id="Web.config" />
-      <ComponentRef Id="commit" />
+      <ComponentRef Id="commit.txt" />
 
       <ComponentRef Id="kudu.exe"/>
       <ComponentRef Id="Kudu.Contracts.dll"/>
