@@ -219,8 +219,8 @@
   <data name="LogStream_Heartbeat" xml:space="preserve">
     <value>{0}  No new trace in the past {1} min(s).{2}</value>
   </data>
-  <data name="LogStream_Idle" xml:space="preserve">
-    <value>{0}  Stream terminated due to no new trace in the past {1} min(s).{2}</value>
+  <data name="LogStream_Timeout" xml:space="preserve">
+    <value>{0}  Stream terminated due to timeout {1} min(s).{2}</value>
   </data>
   <data name="LogStream_Welcome" xml:space="preserve">
     <value>{0}  Welcome, you are now connected to log-streaming service.{1}</value>

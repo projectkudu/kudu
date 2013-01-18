@@ -7,13 +7,14 @@ namespace Kudu.Contracts.Settings
     public static class DeploymentSettingsExtension
     {
         public static TimeSpan DefaultCommandIdleTimeout = TimeSpan.FromSeconds(180);
+        public static TimeSpan DefaultLogStreamTimeout = TimeSpan.FromSeconds(1800);
         public const TraceLevel DefaultTraceLevel = TraceLevel.Error;
 
         public static TraceLevel GetTraceLevel(this IDeploymentSettingsManager settings)
         {
             string value = settings.GetValue(SettingsKeys.TraceLevel);
             int level;
-            if (!String.IsNullOrEmpty(value) && Int32.TryParse(value, out level))
+            if (Int32.TryParse(value, out level))
             {
                 if (level <= (int)TraceLevel.Off)
                 {
@@ -36,12 +37,24 @@ namespace Kudu.Contracts.Settings
         {
             string value = settings.GetValue(SettingsKeys.CommandIdleTimeout);
             int seconds;
-            if (!String.IsNullOrEmpty(value) && Int32.TryParse(value, out seconds))
+            if (Int32.TryParse(value, out seconds))
             {
-                return TimeSpan.FromSeconds(seconds);
+                return TimeSpan.FromSeconds(seconds >= 0 ? seconds : 0);
             }
 
             return DeploymentSettingsExtension.DefaultCommandIdleTimeout;
+        }
+
+        public static TimeSpan GetLogStreamTimeout(this IDeploymentSettingsManager settings)
+        {
+            string value = settings.GetValue(SettingsKeys.LogStreamTimeout);
+            int seconds;
+            if (Int32.TryParse(value, out seconds))
+            {
+                return TimeSpan.FromSeconds(seconds >= 0 ? seconds : 0);
+            }
+
+            return DeploymentSettingsExtension.DefaultLogStreamTimeout;
         }
 
         public static string GetGitUsername(this IDeploymentSettingsManager settings)

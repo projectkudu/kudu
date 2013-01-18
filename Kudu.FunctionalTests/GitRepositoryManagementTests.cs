@@ -943,7 +943,7 @@ command = deploy.cmd");
             }
         }
 
-        [Fact]
+        [Fact(Skip = "need to remove SimpleSleep.exe")]
         public void HangProcessTest()
         {
             // Arrange

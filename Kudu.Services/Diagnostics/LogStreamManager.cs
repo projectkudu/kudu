@@ -26,7 +26,6 @@ namespace Kudu.Services.Performance
         // Antares 3 mins timeout, heartbeat every mins keep alive.
         private static string[] LogFileExtensions = new string[] { ".txt", ".log", ".htm" };
         private static TimeSpan HeartbeatInterval = TimeSpan.FromMinutes(1);
-        private static TimeSpan IdleTimeout = TimeSpan.FromMinutes(10);
 
         private readonly object _thisLock = new object();
         private readonly string _logPath;
@@ -38,7 +37,9 @@ namespace Kudu.Services.Performance
         private Dictionary<string, long> _logFiles;
         private FileSystemWatcher _watcher;
         private Timer _heartbeat;
-        private DateTime lastTraceTime = DateTime.UtcNow;
+        private DateTime _lastTraceTime = DateTime.UtcNow;
+        private DateTime _startTime = DateTime.UtcNow;
+        private TimeSpan _timeout;
         private string _filter;
         private bool _enableTrace;
 
@@ -56,6 +57,7 @@ namespace Kudu.Services.Performance
             _settings = settings;
             _environment = environment;
             _shutdownDetector = shutdownDetector;
+            _timeout = settings.GetLogStreamTimeout();
             _results = new List<ProcessRequestAsyncResult>();
         }
 
@@ -179,14 +181,15 @@ namespace Kudu.Services.Performance
             {
                 try
                 {
-                    TimeSpan ts = DateTime.UtcNow.Subtract(lastTraceTime);
-                    if (ts >= HeartbeatInterval)
+                    TimeSpan ts = DateTime.UtcNow.Subtract(_startTime);
+                    if (ts >= _timeout)
                     {
-                        if (ts >= IdleTimeout)
-                        {
-                            TerminateClient(String.Format(CultureInfo.CurrentCulture, Resources.LogStream_Idle, DateTime.UtcNow.ToString("s"), (int)ts.TotalMinutes, Environment.NewLine));
-                        }
-                        else
+                        TerminateClient(String.Format(CultureInfo.CurrentCulture, Resources.LogStream_Timeout, DateTime.UtcNow.ToString("s"), (int)ts.TotalMinutes, Environment.NewLine));
+                    }
+                    else
+                    {
+                        ts = DateTime.UtcNow.Subtract(_lastTraceTime);
+                        if (ts >= HeartbeatInterval)
                         {
                             NotifyClient(String.Format(CultureInfo.CurrentCulture, Resources.LogStream_Heartbeat, DateTime.UtcNow.ToString("s"), (int)ts.TotalMinutes, Environment.NewLine));
                         }
@@ -245,7 +248,7 @@ namespace Kudu.Services.Performance
 
                 if (lines.Count() > 0)
                 {
-                    lastTraceTime = DateTime.UtcNow;
+                    _lastTraceTime = DateTime.UtcNow;
 
                     NotifyClient(lines);
                 }

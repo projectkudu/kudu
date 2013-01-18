@@ -82,6 +82,7 @@
     <Compile Include="Infrastructure\StringReaderFacts.cs" />
     <Compile Include="Infrastructure\VsSolutionTest.cs" />
     <Compile Include="Infrastructure\XmlUtilityFacts.cs" />
+    <Compile Include="DeploymentSettingsFacts.cs" />
     <Compile Include="JsonSettingsFacts.cs" />
     <Compile Include="MockDeploymentSettingsManager.cs" />
     <Compile Include="NodeSiteEnablerFacts.cs" />
