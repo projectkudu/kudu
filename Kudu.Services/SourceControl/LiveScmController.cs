@@ -52,7 +52,7 @@ namespace Kudu.Services.SourceControl
         /// Delete the repository
         /// </summary>
         [HttpDelete]
-        public void Delete(int deleteWebRoot = 0)
+        public void Delete(int deleteWebRoot = 0, int ignoreErrors = 0)
         {
             // Fail if a deployment is in progress
             _deploymentLock.LockOperation(() =>
@@ -60,19 +60,19 @@ namespace Kudu.Services.SourceControl
                 using (_tracer.Step("Deleting deployment cache"))
                 {
                     // Delete the deployment cache
-                    FileSystemHelpers.DeleteDirectorySafe(_environment.DeploymentCachePath);
+                    FileSystemHelpers.DeleteDirectorySafe(_environment.DeploymentCachePath, ignoreErrors != 0);
                 }
 
                 using (_tracer.Step("Deleting repository"))
                 {
                     // Delete the repository
-                    FileSystemHelpers.DeleteDirectorySafe(_environment.RepositoryPath);
+                    FileSystemHelpers.DeleteDirectorySafe(_environment.RepositoryPath, ignoreErrors != 0);
                 }
 
                 using (_tracer.Step("Deleting ssh key"))
                 {
                     // Delete the ssh key
-                    FileSystemHelpers.DeleteDirectorySafe(_environment.SSHKeyPath);
+                    FileSystemHelpers.DeleteDirectorySafe(_environment.SSHKeyPath, ignoreErrors != 0);
                 }
 
                 if (deleteWebRoot != 0)
@@ -80,21 +80,21 @@ namespace Kudu.Services.SourceControl
                     using (_tracer.Step("Deleting web root"))
                     {
                         // Delete the wwwroot folder
-                        FileSystemHelpers.DeleteDirectoryContentsSafe(_environment.WebRootPath);
+                        FileSystemHelpers.DeleteDirectoryContentsSafe(_environment.WebRootPath, ignoreErrors != 0);
                     }
 
                     using (_tracer.Step("Deleting diagnostics"))
                     {
                         // Delete the diagnostic log. This is a slight abuse of deleteWebRoot, but the
                         // real semantic is more to reset the site to a fully clean state
-                        FileSystemHelpers.DeleteDirectorySafe(_environment.DiagnosticsPath);
+                        FileSystemHelpers.DeleteDirectorySafe(_environment.DiagnosticsPath, ignoreErrors != 0);
                     }
 
                     using (_tracer.Step("Deleting Logs"))
                     {
                         // Cleanup the trace directories
-                        FileSystemHelpers.DeleteDirectoryContentsSafe(_environment.TracePath);
-                        FileSystemHelpers.DeleteDirectoryContentsSafe(_environment.DeploymentTracePath);
+                        FileSystemHelpers.DeleteDirectoryContentsSafe(_environment.TracePath, ignoreErrors != 0);
+                        FileSystemHelpers.DeleteDirectoryContentsSafe(_environment.DeploymentTracePath, ignoreErrors != 0);
                     }
                 }
             },
