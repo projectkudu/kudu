@@ -268,11 +268,11 @@ namespace Kudu.Services {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}  Stream terminated due to no new trace in the past {1} min(s).{2}.
+        ///   Looks up a localized string similar to {0}  Stream terminated due to timeout {1} min(s).{2}.
         /// </summary>
-        internal static string LogStream_Idle {
+        internal static string LogStream_Timeout {
             get {
-                return ResourceManager.GetString("LogStream_Idle", resourceCulture);
+                return ResourceManager.GetString("LogStream_Timeout", resourceCulture);
             }
         }
         
