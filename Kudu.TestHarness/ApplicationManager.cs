@@ -125,9 +125,9 @@ namespace Kudu.TestHarness
             }
 
             const string siteBuilderFactory = "site_builder_factory";
-            if (KuduUtils.TestGeneratorSiteBuilderFactory)
+            if (KuduUtils.TestOriginalSiteBuilderFactory)
             {
-                appManager.SettingsManager.SetValue(siteBuilderFactory, "generator").Wait();
+                appManager.SettingsManager.SetValue(siteBuilderFactory, "original").Wait();
             }
             else
             {

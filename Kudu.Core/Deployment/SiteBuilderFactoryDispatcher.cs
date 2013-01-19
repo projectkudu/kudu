@@ -8,7 +8,7 @@ namespace Kudu.Core.Deployment
 {
     public class SiteBuilderFactoryDispatcher : ISiteBuilderFactory
     {
-        private const string Generator = "GENERATOR";
+        private static readonly string Original = "Original".ToUpperInvariant();
 
         private readonly IDeploymentSettingsManager _settingsManager;
         private readonly SiteBuilderFactory _originalSiteBuilderFactory;
@@ -32,13 +32,13 @@ namespace Kudu.Core.Deployment
             get
             {
                 var setting = _settingsManager.GetValue(SettingsKeys.SiteBuilderFactory);
-                if (!String.IsNullOrEmpty(setting) && setting.ToUpperInvariant().Trim() == Generator)
+                if (!String.IsNullOrEmpty(setting) && setting.ToUpperInvariant().Trim() == Original)
                 {
-                    return _generatorSiteBuilderFactory;
+                    return _originalSiteBuilderFactory;
                 }
                 else
                 {
-                    return _originalSiteBuilderFactory;
+                    return _generatorSiteBuilderFactory;
                 }
             }
         }
