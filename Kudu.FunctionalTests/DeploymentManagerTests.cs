@@ -343,6 +343,37 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public void PullApiTestKilnHgFormat()
+        {
+            string kilnPayload = @"{ ""commits"": [ { ""author"": ""Brian Surowiec <xtorted@optonline.net>"", ""branch"": ""default"", ""id"": ""0bbefd70c4c4213bba1e91998141f6e861cec24d"", ""message"": ""more fun text"", ""revision"": 20, ""tags"": [ ""tip"" ], ""timestamp"": ""1/16/2013 3:32:04 AM"", ""url"": ""https://13degrees.kilnhg.com/Code/Kudu-Public/Group/Site/History/d2415cbaa78e"" } ], ""pusher"": { ""accesstoken"": false, ""email"": ""xtorted@optonline.net"", ""fullName"": ""Brian Surowiec"" }, ""repository"": { ""central"": true, ""description"": """", ""id"": 113336, ""name"": ""Site"", ""url"": ""https://bitbucket.org/kudutest/hellomercurial/"" } }";
+            string appName = KuduUtils.GetRandomWebsiteName("PullApiTestKilnHgFormat");
+
+            ApplicationManager.Run(appName, appManager =>
+            {
+                var client = CreateClient(appManager);
+
+                // since we're pulling against bitbucket we need to simulate a self-hosted setup of kiln
+                appManager.SettingsManager.SetValue("kiln.domain", "bitbucket\\.org").Wait();
+                appManager.SettingsManager.SetValue("branch", "default").Wait();
+
+                var post = new Dictionary<string, string>
+                {
+                    { "payload", kilnPayload }
+                };
+
+                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result.EnsureSuccessful();
+
+                var results = appManager.DeploymentManager.GetResultsAsync()
+                                        .Result.ToList();
+
+                Assert.Equal(1, results.Count);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
+                Assert.Equal("Kiln", results[0].Deployer);
+                KuduAssert.VerifyUrl(appManager.SiteUrl + "Hello.txt", "Hello mercurial");
+            });
+        }
+
+        [Fact]
         public void PullApiTestGenericFormat()
         {
             string payload = @"{ ""oldRef"": ""0000000000000000000"", ""newRef"": ""7e2a599e2d28665047ec347ab36731c905c95e8b"", ""url"": ""https://github.com/KuduApps/SimpleWebApplication.git"", ""deployer"" : ""CodePlex"", ""branch"":""master""  }";
