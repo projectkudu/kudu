@@ -20,6 +20,9 @@ namespace Kudu.Services.ServiceHookHandlers
     /// </summary>
     public class KilnHgHandler : ServiceHookHandlerBase
     {
+        private static readonly Regex AuthorPattern = new Regex("(?<name>.*)<.*>", RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase);
+        private static readonly Regex EmailPattern = new Regex(".*<(?<email>.*@.*)>.*|(?<email>.*@.*)", RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase);
+
         private readonly IDeploymentSettingsManager _settings;
 
         public KilnHgHandler(IDeploymentSettingsManager settings)
@@ -96,25 +99,27 @@ namespace Kudu.Services.ServiceHookHandlers
                 author = "System Account";
             }
 
-            var info = new DeploymentInfo();
-
-            info.Deployer = "Kiln";
-            info.IsPrivate = !string.IsNullOrWhiteSpace(accessToken); // assume a private repo if an access token is provided
-            info.RepositoryUrl = repository.Value<string>("url");
-            info.RepositoryType = RepositoryType.Mercurial;
-
-            info.TargetChangeset = new ChangeSet(
-                id: targetCommit.Value<string>("id"),
-                authorName: ParseNameFromAuthor(author),
-                authorEmail: ParseEmailFromAuthor(author),
-                message: (targetCommit.Value<string>("message") ?? String.Empty).Trim(),
-                timestamp: new DateTimeOffset(DateTime.Parse(targetCommit.Value<string>("timestamp")), TimeSpan.Zero)
-                );
+            var info = new DeploymentInfo
+            {
+                Deployer = "Kiln",
+                IsPrivate = !String.IsNullOrWhiteSpace(accessToken), // assume a private repo if an access token is provided
+                RepositoryUrl = repository.Value<string>("url"),
+                RepositoryType = RepositoryType.Mercurial,
+                TargetChangeset = new ChangeSet(
+                    id: targetCommit.Value<string>("id"),
+                    authorName: ParseNameFromAuthor(author),
+                    authorEmail: ParseEmailFromAuthor(author),
+                    message: (targetCommit.Value<string>("message") ?? String.Empty).Trim(),
+                    timestamp: new DateTimeOffset(DateTime.Parse(targetCommit.Value<string>("timestamp")), TimeSpan.Zero)
+                    )
+            };
 
             if (info.IsPrivate)
             {
                 var uri = new UriBuilder(info.RepositoryUrl)
                 {
+                    Scheme = "https",
+                    Port = -1,
                     UserName = accessToken,
                     Password = "kudu" // kiln doesn't use the password when using an access token
                 };
@@ -133,15 +138,15 @@ namespace Kudu.Services.ServiceHookHandlers
         /// </returns>
         public static string ParseNameFromAuthor(string author)
         {
-            if (string.IsNullOrWhiteSpace(author))
+            if (String.IsNullOrWhiteSpace(author))
             {
                 return null;
             }
 
-            Match match = Regex.Match(author, "(?<name>.*)<.*>", RegexOptions.IgnoreCase);
+            Match match = AuthorPattern.Match(author);
 
             string name = match.Groups["name"].Value.Trim();
-            if (string.IsNullOrWhiteSpace(name))
+            if (String.IsNullOrWhiteSpace(name))
             {
                 return author.Trim();
             }
@@ -157,15 +162,15 @@ namespace Kudu.Services.ServiceHookHandlers
         /// </returns>
         public static string ParseEmailFromAuthor(string author)
         {
-            if (string.IsNullOrWhiteSpace(author))
+            if (String.IsNullOrWhiteSpace(author))
             {
                 return null;
             }
 
-            Match match = Regex.Match(author, ".*<(?<email>.*@.*)>.*|(?<email>.*@.*)", RegexOptions.IgnoreCase);
+            Match match = EmailPattern.Match(author);
 
             string email = match.Groups["email"].Value.Trim();
-            if (string.IsNullOrWhiteSpace(email))
+            if (String.IsNullOrWhiteSpace(email))
             {
                 return null;
             }
