@@ -14,19 +14,19 @@ namespace Kudu.Web.Infrastructure
     {
         public static Task<RepositoryInfo> GetRepositoryInfo(this IApplication application, ICredentials credentials)
         {
-            var repositoryManager = new RemoteRepositoryManager(application.ServiceUrl + "live/scm", credentials);
+            var repositoryManager = new RemoteRepositoryManager(application.ServiceUrl + "scm", credentials);
             return repositoryManager.GetRepositoryInfo();
         }
 
         public static RemoteDeploymentManager GetDeploymentManager(this IApplication application, ICredentials credentials)
         {
-            var deploymentManager = new RemoteDeploymentManager(application.ServiceUrl + "/deployments", credentials);
+            var deploymentManager = new RemoteDeploymentManager(application.ServiceUrl + "deployments", credentials);
             return deploymentManager;
         }
 
         public static RemoteDeploymentSettingsManager GetSettingsManager(this IApplication application, ICredentials credentials)
         {
-            var deploymentSettingsManager = new RemoteDeploymentSettingsManager(application.ServiceUrl + "/settings", credentials);
+            var deploymentSettingsManager = new RemoteDeploymentSettingsManager(application.ServiceUrl + "settings", credentials);
             return deploymentSettingsManager;
         }
 
