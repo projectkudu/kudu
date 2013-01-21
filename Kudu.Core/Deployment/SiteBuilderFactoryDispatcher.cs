@@ -8,7 +8,7 @@ namespace Kudu.Core.Deployment
 {
     public class SiteBuilderFactoryDispatcher : ISiteBuilderFactory
     {
-        private static readonly string Original = "Original".ToUpperInvariant();
+        private const string Original = "Original";
 
         private readonly IDeploymentSettingsManager _settingsManager;
         private readonly SiteBuilderFactory _originalSiteBuilderFactory;
@@ -31,15 +31,14 @@ namespace Kudu.Core.Deployment
         {
             get
             {
-                var setting = _settingsManager.GetValue(SettingsKeys.SiteBuilderFactory);
-                if (!String.IsNullOrEmpty(setting) && setting.ToUpperInvariant().Trim() == Original)
+                string setting = _settingsManager.GetValue(SettingsKeys.SiteBuilderFactory);
+                if (String.Equals(setting, Original, StringComparison.InvariantCultureIgnoreCase))
                 {
                     return _originalSiteBuilderFactory;
                 }
-                else
-                {
-                    return _generatorSiteBuilderFactory;
-                }
+
+                // Default
+                return _generatorSiteBuilderFactory;
             }
         }
     }
