@@ -96,18 +96,32 @@ namespace Kudu.TestHarness
             }
         }
 
-        public static bool TestGeneratorSiteBuilderFactory
+        public static bool TestOriginalSiteBuilderFactory
         {
             get
             {
                 bool retValue;
 
-                if (bool.TryParse(ConfigurationManager.AppSettings["TestGeneratorSiteBuilderFactory"], out retValue))
+                if (bool.TryParse(GetTestSetting("TestOriginalSiteBuilderFactory"), out retValue))
                 {
                     return retValue;
                 }
 
                 return false;
+            }
+        }
+
+        private static string GetTestSetting(string settingName)
+        {
+            // If value exists as an environment setting use that otherwise try to get from app settings (for usage of the ci)
+            string environmentValue = Environment.GetEnvironmentVariable(settingName);
+            if (!String.IsNullOrEmpty(environmentValue))
+            {
+                return environmentValue;
+            }
+            else
+            {
+                return ConfigurationManager.AppSettings[settingName];
             }
         }
     }
