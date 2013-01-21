@@ -187,6 +187,15 @@ namespace Kudu.Services {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Repository url &apos;{0}&apos; is invalid..
+        /// </summary>
+        internal static string Error_InvalidRepoUrl {
+            get {
+                return ResourceManager.GetString("Error_InvalidRepoUrl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Mismatch dropbox origin cursor..
         /// </summary>
         internal static string Error_MismatchDropboxCursor {

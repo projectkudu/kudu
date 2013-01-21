@@ -139,7 +139,9 @@ namespace Kudu.Services
                                     SafeWriteFile(parent, path, stream, modified);
                                 }
                             }
-                        });
+
+                            return t;
+                        }).FastUnwrap();
                     }
                     catch (Exception ex)
                     {
@@ -250,11 +252,11 @@ namespace Kudu.Services
 
             // Using ContinueWith instead of Then to avoid SyncContext deadlock in 4.5
             TaskCompletionSource<Task<Stream>> tcs = new TaskCompletionSource<Task<Stream>>();
-            client.GetAsync(SandboxFilePath + delta.Path).ContinueWith(t =>
+            client.GetAsync(SandboxFilePath + delta.Path.ToLower()).ContinueWith(t =>
             {
                 if (t.IsFaulted)
                 {
-                    _tracer.TraceError(t.Exception);
+                    _tracer.TraceError("Get '" + SandboxFilePath + delta.Path + "' failed with " + t.Exception);
                     tcs.TrySetException(t.Exception.InnerExceptions);
                 }
                 else if (t.IsCanceled)
@@ -269,6 +271,7 @@ namespace Kudu.Services
                     }
                     catch (Exception ex)
                     {
+                        _tracer.TraceError("Get '" + SandboxFilePath + delta.Path + "' failed with " + ex);
                         tcs.TrySetException(ex);
                     }
                 }

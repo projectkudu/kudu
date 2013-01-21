@@ -13,6 +13,7 @@ using Kudu.Client.Infrastructure;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
+using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace Kudu.FunctionalTests
@@ -484,6 +485,57 @@ namespace Kudu.FunctionalTests
                 Assert.Equal(DeployStatus.Success, results[0].Status);
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "Master branch");
                 Assert.Equal("CodePlex", results[0].Deployer);
+            });
+        }
+
+        [Fact]
+        public void PullApiTestSimpleFormat()
+        {
+            var payload = new JObject();
+            payload["url"] = "https://github.com/KuduApps/HelloKudu";
+            payload["format"] = "basic";
+            string appName = "HelloKudu";
+
+            ApplicationManager.Run(appName, appManager =>
+            {
+                var client = CreateClient(appManager);
+
+                client.PostAsJsonAsync("deploy", payload).Result.EnsureSuccessful();
+
+                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                Assert.Equal(1, results.Count);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
+                Assert.Equal("GitHub", results[0].Deployer);
+
+                KuduAssert.VerifyUrl(appManager.SiteUrl, "Hello Kudu");
+            });
+        }
+
+        [Fact]
+        public void PullApiTestSimpleFormatWithMercurial()
+        {
+            string payload = @"{""url"":""https://bitbucket.org/kudutest/hellomercurial/"",""format"":""basic"",""scm"":""hg""}";
+            string appName = "PullApiTestSimpleFormatWithMercurial";
+
+            ApplicationManager.Run(appName, appManager =>
+            {
+                var client = CreateClient(appManager);
+
+                appManager.SettingsManager.SetValue("branch", "default").Wait();
+
+                var post = new Dictionary<string, string>
+                {
+                    { "payload", payload }
+                };
+
+                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result.EnsureSuccessful();
+
+                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                Assert.Equal(1, results.Count);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
+                Assert.Equal("Bitbucket", results[0].Deployer);
+
+                KuduAssert.VerifyUrl(appManager.SiteUrl + "Hello.txt", "Hello mercurial");
             });
         }
 

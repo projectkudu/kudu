@@ -231,4 +231,7 @@
   <data name="Error_SyncDropboxTimeout" xml:space="preserve">
     <value>Synching with Dropbox timeout after {0} seconds.</value>
   </data>
+  <data name="Error_InvalidRepoUrl" xml:space="preserve">
+    <value>Repository url '{0}' is invalid.</value>
+  </data>
 </root>

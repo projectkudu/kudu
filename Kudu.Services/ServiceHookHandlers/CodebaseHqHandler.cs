@@ -32,10 +32,10 @@ namespace Kudu.Services.ServiceHookHandlers
             // CodebaseHq format, see http://support.codebasehq.com/kb/howtos/repository-push-commit-notifications
             var repository = payload.Value<JObject>("repository");
             var urls = repository.Value<JObject>("clone_urls");
-            info.IsPrivate = repository.Value<bool>("private");
+            var isPrivate = repository.Value<bool>("private");
             info.NewRef = payload.Value<string>("after");
 
-            if (info.IsPrivate)
+            if (isPrivate)
             {
                 info.RepositoryUrl = urls.Value<string>("ssh");
             }

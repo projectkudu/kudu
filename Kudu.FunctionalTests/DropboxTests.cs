@@ -45,6 +45,7 @@ namespace Kudu.FunctionalTests
 
                 KuduAssert.VerifyUrl(appManager.SiteUrl + "/default.html", "Hello Default!");
                 KuduAssert.VerifyUrl(appManager.SiteUrl + "/temp/temp.html", "Hello Temp!");
+                KuduAssert.VerifyUrl(appManager.SiteUrl + "/New Folder/New File.html", "Hello New File!");
             });
         }
 
@@ -110,13 +111,15 @@ namespace Kudu.FunctionalTests
 
                 foreach (EntryInfo info in delta.entries)
                 {
-                    DropboxDeltaInfo item = new DropboxDeltaInfo { Path = info.path };
+                    DropboxDeltaInfo item = new DropboxDeltaInfo();
                     if (info.metadata == null || info.metadata.is_deleted || string.IsNullOrEmpty(info.metadata.path))
                     {
+                        item.Path = info.path;
                         item.IsDeleted = true;
                     }
                     else
                     {
+                        item.Path = info.metadata.path;
                         item.IsDirectory = info.metadata.is_dir;
                         if (!item.IsDirectory)
                         {
@@ -233,9 +236,10 @@ namespace Kudu.FunctionalTests
             strb.AppendFormat("&{0}={1}", "oauth_token", oauth.Token);
             strb.AppendFormat("&{0}={1}", "oauth_version", "1.0");
 
+            Uri uri = new Uri("https://api-content.dropbox.com/1/files/sandbox" + path.ToLower());
             string data = String.Format("{0}&{1}&{2}",
                 "GET",
-                UrlEncode("https://api-content.dropbox.com/1/files/sandbox" + path),
+                UrlEncode("https://api-content.dropbox.com" + uri.AbsolutePath),
                 UrlEncode(strb.ToString()));
 
             var key = String.Format("{0}&{1}",
