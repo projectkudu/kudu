@@ -68,6 +68,7 @@
     <Compile Include="BitbucketHandlerFacts.cs" />
     <Compile Include="CodeBaseHqFacts.cs" />
     <Compile Include="CodePlexHandlerFacts.cs" />
+    <Compile Include="GenericHandlerFacts.cs" />
     <Compile Include="GithubHandlerFacts.cs" />
     <Compile Include="Infrastructure\MediaTypeMapTest.cs" />
     <Compile Include="KilnHgHandlerFacts.cs" />

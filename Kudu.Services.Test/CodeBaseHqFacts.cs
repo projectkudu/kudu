@@ -62,7 +62,6 @@ namespace Kudu.Services.Test
             Assert.Equal(DeployAction.ProcessDeployment, result);
             Assert.NotNull(deploymentInfo);
             Assert.Equal("CodebaseHQ", deploymentInfo.Deployer);
-            Assert.False(deploymentInfo.IsPrivate);
             Assert.Equal(RepositoryType.Git, deploymentInfo.RepositoryType);
             Assert.Equal("https://test.codebasehq.com/test-repositories/git1.git", deploymentInfo.RepositoryUrl);
             Assert.Equal("840daf31f4f87cb5cafd295ef75de989095f415b", deploymentInfo.TargetChangeset.Id);

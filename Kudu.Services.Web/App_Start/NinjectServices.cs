@@ -169,6 +169,7 @@ namespace Kudu.Services.Web.App_Start
                                      .InRequestScope();
 
             // Git Servicehook parsers
+            kernel.Bind<IServiceHookHandler>().To<GenericHandler>().InRequestScope();
             kernel.Bind<IServiceHookHandler>().To<GitHubHandler>().InRequestScope();
             kernel.Bind<IServiceHookHandler>().To<BitbucketHandler>().InRequestScope();
             kernel.Bind<IServiceHookHandler>().To<DropboxHandler>().InRequestScope();

@@ -42,13 +42,10 @@ namespace Kudu.Services.ServiceHookHandlers
 
             // work around missing 'private' property, if missing assume is private.
             JToken priv;
+            bool isPrivate = true;
             if (repository.TryGetValue("private", out priv))
             {
-                info.IsPrivate = priv.ToObject<bool>();
-            }
-            else
-            {
-                info.IsPrivate = true;
+                isPrivate = priv.ToObject<bool>();
             }
 
             // The format of ref is refs/something/something else
@@ -62,14 +59,13 @@ namespace Kudu.Services.ServiceHookHandlers
             info.Deployer = "GitlabHQ";
 
             // private repo, use SSH
-            if (info.IsPrivate)
+            if (isPrivate)
             {
                 Uri uri = new Uri(info.RepositoryUrl);
                 if (uri.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 {
-                    info.Host = "git@" + uri.Host;
-                    info.RepositoryUrl = info.Host + ":" + uri.AbsolutePath.TrimStart('/');
-                    info.UseSSH = true;
+                    var host = "git@" + uri.Host;
+                    info.RepositoryUrl = host + ":" + uri.AbsolutePath.TrimStart('/');
                 }
             }
 

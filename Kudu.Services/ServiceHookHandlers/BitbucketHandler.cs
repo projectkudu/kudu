@@ -47,10 +47,10 @@ namespace Kudu.Services.ServiceHookHandlers
             string server = payload.Value<string>("canon_url");     // e.g. https://bitbucket.org
             string path = repository.Value<string>("absolute_url"); // e.g. /davidebbo/testrepo/
             string scm = repository.Value<string>("scm"); // e.g. hg
+            bool isPrivate = repository.Value<bool>("is_private");
 
             // Combine them to get the full URL
             info.RepositoryUrl = server + path;
-            info.IsPrivate = repository.Value<bool>("is_private");
             info.RepositoryType = scm.Equals("hg", StringComparison.OrdinalIgnoreCase) ? RepositoryType.Mercurial : RepositoryType.Git;
 
             info.TargetChangeset = new ChangeSet(
@@ -64,7 +64,7 @@ namespace Kudu.Services.ServiceHookHandlers
             info.Deployer = request.UserAgent;
 
             // private repo, use SSH
-            if (info.IsPrivate)
+            if (isPrivate)
             {
                 var uri = new UriBuilder(info.RepositoryUrl);
                 if (uri.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase))
@@ -72,11 +72,9 @@ namespace Kudu.Services.ServiceHookHandlers
                     uri.Scheme = "ssh";
                     uri.Port = -1;
                     uri.Host = (info.RepositoryType == RepositoryType.Mercurial ? "hg@" : "git@") + uri.Host;
-                    info.Host = uri.Host;
 
                     // Private repo paths are of the format ssh://git@bitbucket.org/accountname/reponame.git
                     info.RepositoryUrl = uri.ToString();
-                    info.UseSSH = true;
                 }
             }
 

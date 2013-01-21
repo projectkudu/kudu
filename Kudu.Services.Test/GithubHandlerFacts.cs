@@ -103,7 +103,6 @@ namespace Kudu.Services.Test
             Assert.Equal(DeployAction.ProcessDeployment, result);
             Assert.NotNull(deploymentInfo);
             Assert.Equal("GitHub", deploymentInfo.Deployer);
-            Assert.False(deploymentInfo.IsPrivate);
             Assert.Equal(RepositoryType.Git, deploymentInfo.RepositoryType);
             Assert.Equal("https://github.com/KuduApps/PostCommitTest", deploymentInfo.RepositoryUrl);
             Assert.Equal("f94996d67d6d5a060aaf2fcb72c333d0899549ab", deploymentInfo.TargetChangeset.Id);

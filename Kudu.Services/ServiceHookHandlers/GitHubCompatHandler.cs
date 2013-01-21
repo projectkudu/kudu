@@ -54,7 +54,6 @@ namespace Kudu.Services.ServiceHookHandlers
             // github format
             // { repository: { url: "https//...", private: False }, ref: "", before: "", after: "" } 
             info.RepositoryUrl = repository.Value<string>("url");
-            info.IsPrivate = repository.Value<bool>("private");
             info.Deployer = GetDeployer(request);
             info.NewRef = payload.Value<string>("after");
             var commits = payload.Value<JArray>("commits");
@@ -62,14 +61,14 @@ namespace Kudu.Services.ServiceHookHandlers
             info.TargetChangeset = ParseChangeSet(info.NewRef, commits);
 
             // private repo, use SSH
-            if (info.IsPrivate)
+            bool isPrivate = repository.Value<bool>("private");
+            if (isPrivate)
             {
                 Uri uri = new Uri(info.RepositoryUrl);
                 if (uri.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 {
-                    info.Host = "git@" + uri.Host;
-                    info.RepositoryUrl = info.Host + ":" + uri.AbsolutePath.TrimStart('/');
-                    info.UseSSH = true;
+                    var host = "git@" + uri.Host;
+                    info.RepositoryUrl = host + ":" + uri.AbsolutePath.TrimStart('/');
                 }
             }
 
