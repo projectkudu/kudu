@@ -102,7 +102,6 @@ namespace Kudu.Services.ServiceHookHandlers
             var info = new DeploymentInfo
             {
                 Deployer = "Kiln",
-                IsPrivate = !String.IsNullOrWhiteSpace(accessToken), // assume a private repo if an access token is provided
                 RepositoryUrl = repository.Value<string>("url"),
                 RepositoryType = RepositoryType.Mercurial,
                 TargetChangeset = new ChangeSet(
@@ -114,7 +113,8 @@ namespace Kudu.Services.ServiceHookHandlers
                     )
             };
 
-            if (info.IsPrivate)
+            bool isPrivate = !String.IsNullOrWhiteSpace(accessToken); // assume a private repo if an access token is provided
+            if (isPrivate)
             {
                 var uri = new UriBuilder(info.RepositoryUrl)
                 {
