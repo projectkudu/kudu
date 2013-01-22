@@ -77,7 +77,7 @@ namespace Kudu.TestHarness
         {
             get
             {
-                string siteName = ConfigurationManager.AppSettings["SiteReusedForAllTests"];
+                string siteName = GetTestSetting("SiteReusedForAllTests");
                 if (String.IsNullOrEmpty(siteName))
                 {
                     return null;
