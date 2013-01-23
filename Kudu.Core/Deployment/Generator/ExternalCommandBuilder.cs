@@ -159,7 +159,7 @@ namespace Kudu.Core.Deployment.Generator
         // TODO: Remove this filter once we figure out how to run the msbuild command without getting these warnings
         internal static bool ShouldFilterOutMsBuildWarnings(string outputLine)
         {
-            return outputLine.Contains("MSB3644:") || outputLine.Contains("MSB3270:");
+            return outputLine.Contains("MSB3644:") || outputLine.Contains("MSB3270:") || outputLine.Contains("GetConsoleTitleW:") || outputLine.Contains("SetConsoleTitleW:");
         }
     }
 }
