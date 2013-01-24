@@ -1,7 +1,7 @@
 ﻿using Kudu.Contracts.Settings;
 using Kudu.Core.SourceControl.Git;
 using System;
-using System.Globalization;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace Kudu.Core.Deployment.Generator
@@ -33,12 +33,8 @@ namespace Kudu.Core.Deployment.Generator
             try
             {
                 var git = new GitExecutable(Environment.RepositoryPath, DeploymentSettings.GetCommandIdleTimeout());
-                if (!String.IsNullOrEmpty(HomePath))
-                {
-                    git.SetHomePath(HomePath);
-                }
-                var args = String.Format(CultureInfo.InvariantCulture, "clean -f {0}\\web.config", this.ProjectPath);
-                git.Execute(args);
+                string webConfigPath = Path.Combine(ProjectPath, "web.config");
+                git.Execute("clean -f " + webConfigPath);
             }
             catch (Exception ex)
             {
