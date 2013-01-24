@@ -21,6 +21,9 @@ namespace Kudu.Core.Deployment.Generator
             }
             finally
             {
+                // Since the node deployment script generates a web.config file (if not already there) on the repository,
+                // In order to clean up the repository after ourselves we remove this file (it should already be copied to wwwroot)
+                // If it's not part of the repository by using "git clean" command.
                 SafeCleanWebConfig(context);
             }
         }
