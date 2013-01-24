@@ -2,7 +2,6 @@
 using Kudu.Core.SourceControl.Git;
 using System;
 using System.Globalization;
-using System.IO.Abstractions;
 using System.Threading.Tasks;
 
 namespace Kudu.Core.Deployment.Generator
