@@ -60,7 +60,7 @@ namespace Kudu.Services.Test
 
             // Assert
             Assert.Equal(DeployAction.ProcessDeployment, result);
-            Assert.Equal("Bitbucket.org", deploymentInfo.Deployer);
+            Assert.Equal("Bitbucket", deploymentInfo.Deployer);
             Assert.Equal(RepositoryType.Mercurial, deploymentInfo.RepositoryType);
             Assert.Equal("https://bitbucket.org/kudutest/hellomercurial/", deploymentInfo.RepositoryUrl);
             Assert.Equal("pranavkm", deploymentInfo.TargetChangeset.AuthorName);
@@ -85,7 +85,7 @@ namespace Kudu.Services.Test
 
             // Assert
             Assert.Equal(DeployAction.ProcessDeployment, result);
-            Assert.Equal("Bitbucket.org", deploymentInfo.Deployer);
+            Assert.Equal("Bitbucket", deploymentInfo.Deployer);
             Assert.Equal(RepositoryType.Mercurial, deploymentInfo.RepositoryType);
             Assert.Equal("ssh://hg@bitbucket.org/kudutest/hellomercurial/", deploymentInfo.RepositoryUrl);
             Assert.Equal("pranavkm", deploymentInfo.TargetChangeset.AuthorName);
@@ -109,7 +109,7 @@ namespace Kudu.Services.Test
 
             // Assert
             Assert.Equal(DeployAction.ProcessDeployment, result);
-            Assert.Equal("Bitbucket.org", deploymentInfo.Deployer);
+            Assert.Equal("Bitbucket", deploymentInfo.Deployer);
             Assert.Equal(RepositoryType.Mercurial, deploymentInfo.RepositoryType);
             Assert.Equal("https://bitbucket.org/kudutest/hellomercurial/", deploymentInfo.RepositoryUrl);
             Assert.Equal("pranavkm", deploymentInfo.TargetChangeset.AuthorName);
@@ -133,7 +133,7 @@ namespace Kudu.Services.Test
 
             // Assert
             Assert.Equal(DeployAction.ProcessDeployment, result);
-            Assert.Equal("Bitbucket.org", deploymentInfo.Deployer);
+            Assert.Equal("Bitbucket", deploymentInfo.Deployer);
             Assert.Equal(RepositoryType.Git, deploymentInfo.RepositoryType);
             Assert.Equal("https://bitbucket.org/kudutest/mypublicrepo/", deploymentInfo.RepositoryUrl);
             Assert.Equal("Pranav K", deploymentInfo.TargetChangeset.AuthorName);
@@ -157,7 +157,7 @@ namespace Kudu.Services.Test
 
             // Assert
             Assert.Equal(DeployAction.ProcessDeployment, result);
-            Assert.Equal("Bitbucket.org", deploymentInfo.Deployer);
+            Assert.Equal("Bitbucket", deploymentInfo.Deployer);
             Assert.Equal(RepositoryType.Git, deploymentInfo.RepositoryType);
             Assert.Equal("https://bitbucket.org/kudutest/mypublicrepo/", deploymentInfo.RepositoryUrl);
             Assert.Equal("Pranav K", deploymentInfo.TargetChangeset.AuthorName);
@@ -181,7 +181,7 @@ namespace Kudu.Services.Test
 
             // Assert
             Assert.Equal(DeployAction.ProcessDeployment, result);
-            Assert.Equal("Bitbucket.org", deploymentInfo.Deployer);
+            Assert.Equal("Bitbucket", deploymentInfo.Deployer);
             Assert.Equal(RepositoryType.Git, deploymentInfo.RepositoryType);
             Assert.Equal("ssh://git@bitbucket.org/kudutest/myprivaterepo.git", deploymentInfo.RepositoryUrl);
             Assert.Equal("Pranav K", deploymentInfo.TargetChangeset.AuthorName);

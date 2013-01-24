@@ -69,6 +69,13 @@ namespace Kudu.Services
                     return;
                 }
 
+                if (!String.Equals(context.Request.HttpMethod, "POST", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                    context.ApplicationInstance.CompleteRequest();
+                    return;
+                }
+
                 context.Response.TrySkipIisCustomErrors = true;
 
                 DeploymentInfo deployInfo = null;
@@ -142,12 +149,24 @@ namespace Kudu.Services
                 var handler = deploymentInfo.Handler;
                 using (_tracer.Step("Performing fetch based deployment"))
                 {
-                    using (_deploymentManager.CreateTemporaryDeployment(Resources.ReceivingChanges, deploymentInfo.TargetChangeset, deploymentInfo.Deployer))
+                    bool useTempId = deploymentInfo.TargetChangeset == null;
+
+                    // create temporary deployment before the actual deployment item started
+                    // this allows portal ui to readily display on-going deployment (not having to wait for fetch to complete).
+                    // in addition, it captures any failure that may occurre before the actual deployment item started 
+                    string tempId = _deploymentManager.CreateTemporaryDeployment(Resources.ReceivingChanges, deploymentInfo.TargetChangeset, deploymentInfo.Deployer);
+                    ILogger innerLogger = null;
+                    try
                     {
                         IRepository repository = _repositoryFactory.EnsureRepository(deploymentInfo.RepositoryType);
+                        ILogger logger = _deploymentManager.GetLogger(tempId);
 
                         // Fetch changes from the repository
+                        innerLogger = logger.Log(Resources.FetchingChanges);
                         deploymentInfo.Handler.Fetch(repository, deploymentInfo, targetBranch);
+
+                        // set to null as Deploy() perform logger
+                        innerLogger = null;
 
                         // Perform the actual deployment
                         _deploymentManager.Deploy(repository, deploymentInfo.TargetChangeset, deploymentInfo.Deployer, clean: false);
@@ -167,6 +186,21 @@ namespace Kudu.Services
                                 _tracer.TraceError("Failed to delete marker file");
                             }
                         }
+                    }
+                    catch (Exception ex)
+                    {
+                        if (innerLogger != null)
+                        {
+                            innerLogger.Log(ex);
+                        }
+
+                        throw;
+                    }
+
+                    // deploy successful, we will cleanup if temporary deployment
+                    if (useTempId)
+                    {
+                        _deploymentManager.DeleteTemporaryDeployment(tempId);
                     }
                 }
 
