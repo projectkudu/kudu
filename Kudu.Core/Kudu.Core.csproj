@@ -132,7 +132,6 @@
     <Compile Include="Deployment\DeploymentStatusFile.cs" />
     <Compile Include="Deployment\ISiteBuilder.cs" />
     <Compile Include="Deployment\ISiteBuilderFactory.cs" />
-    <Compile Include="Deployment\ILogger.cs" />
     <Compile Include="Deployment\WapBuilder.cs" />
     <Compile Include="Deployment\WebSiteBuilder.cs" />
     <Compile Include="Deployment\XmlLogger.cs" />

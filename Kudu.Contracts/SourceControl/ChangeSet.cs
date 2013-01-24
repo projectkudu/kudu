@@ -43,6 +43,12 @@ namespace Kudu.Core.SourceControl
             private set;
         }
 
+        public bool IsTemporary
+        {
+            get;
+            set;
+        }
+
         public override string ToString()
         {
             return String.Format("{0} {1} {2} {3}", Id, Timestamp, AuthorName, Message);

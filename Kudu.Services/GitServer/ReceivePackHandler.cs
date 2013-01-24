@@ -85,7 +85,8 @@ namespace Kudu.Services.GitServer
                     UpdateNoCacheForResponse(context.Response);
 
                     context.Response.ContentType = "application/x-git-receive-pack-result";
-                    
+
+                    // This temporary deployment is for ui purposes only, it will always be deleted via finally.
                     using (_deploymentManager.CreateTemporaryDeployment(Resources.ReceivingChanges))
                     {
                         _gitServer.Receive(context.Request.GetInputStream(), context.Response.OutputStream);

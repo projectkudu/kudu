@@ -539,6 +539,32 @@ namespace Kudu.FunctionalTests
             });
         }
 
+        [Fact]
+        public void DeployHookWithInvalidHttpMethod()
+        {
+            string appName = "HelloKudu";
+
+            ApplicationManager.Run(appName, appManager =>
+            {
+                var client = CreateClient(appManager);
+
+                HttpResponseMessage response = client.GetAsync("deploy").Result;
+                Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+                response = client.DeleteAsync("deploy").Result;
+                Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+                try
+                {
+                    response = client.PutAsync("deploy").Result;
+                }
+                catch (AggregateException ex)
+                {
+                    Assert.Contains("404", ex.InnerException.Message);
+                }
+            });
+        }
+
         private static HttpClient CreateClient(ApplicationManager appManager)
         {
             HttpClientHandler handler = HttpClientHelper.CreateClientHandler(appManager.ServiceUrl, appManager.DeploymentManager.Credentials);
