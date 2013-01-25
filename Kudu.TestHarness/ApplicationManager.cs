@@ -150,13 +150,8 @@ namespace Kudu.TestHarness
             {
                 KuduUtils.DownloadDump(appManager.ServiceUrl, dumpPath);
 
-                TestTracer.Trace("Run failed - {0}", ex.Message);
+                TestTracer.Trace("Run failed with exception\n{0}", ex);
 
-                var httpResponseEx = ex as HttpUnsuccessfulRequestException;
-                if (httpResponseEx != null)
-                {
-                    TestTracer.Trace("Error response message - {0}", httpResponseEx.ResponseMessage);
-                }
                 throw;
             }
             finally
