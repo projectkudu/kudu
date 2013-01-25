@@ -91,7 +91,7 @@ namespace Kudu.Core.Deployment.Generator
 
             try
             {
-                exe.ExecuteWithProgressWriter(customLogger, context.Tracer, ShouldFilterOutMsBuildWarnings, command, String.Empty);
+                exe.ExecuteWithProgressWriter(customLogger, context.Tracer, ShouldFilterOutMsBuildWarnings, ShouldFilterOutNodeRedundantOutput, command, String.Empty);
             }
             catch (CommandLineException ex)
             {
@@ -159,7 +159,15 @@ namespace Kudu.Core.Deployment.Generator
         // TODO: Remove this filter once we figure out how to run the msbuild command without getting these warnings
         internal static bool ShouldFilterOutMsBuildWarnings(string outputLine)
         {
-            return outputLine.Contains("MSB3644:") || outputLine.Contains("MSB3270:") || outputLine.Contains("GetConsoleTitleW:") || outputLine.Contains("SetConsoleTitleW:");
+            return outputLine.Contains("MSB3644:") || outputLine.Contains("MSB3270:");
+        }
+
+        /// <summary>
+        /// Node spits out some disturbing output to the error stream when running in the Antares sandbox.
+        /// </summary>
+        internal static bool ShouldFilterOutNodeRedundantOutput(string outputLine)
+        {
+            return outputLine.Contains("GetConsoleTitleW:") || outputLine.Contains("SetConsoleTitleW:");
         }
     }
 }

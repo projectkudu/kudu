@@ -69,7 +69,7 @@ namespace Kudu.Core.Deployment.Generator
                     var scriptGeneratorCommand = String.Format(ScriptGeneratorCommandFormat, RepositoryPath, ScriptGeneratorCommandArguments);
                     buildLogger.Log(Resources.Log_DeploymentScriptGeneratorCommand, scriptGeneratorCommand);
 
-                    scriptGenerator.ExecuteWithProgressWriter(buildLogger, context.Tracer, _ => false, scriptGeneratorCommand);
+                    scriptGenerator.ExecuteWithProgressWriter(buildLogger, context.Tracer, _ => false, _ => false, scriptGeneratorCommand);
                 }
             }
             catch (CommandLineException ex)

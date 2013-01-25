@@ -75,7 +75,7 @@ namespace Kudu.Core.Deployment
 
             try
             {
-                exe.ExecuteWithProgressWriter(customLogger, context.Tracer, ExternalCommandBuilder.ShouldFilterOutMsBuildWarnings, _command, String.Empty);
+                exe.ExecuteWithProgressWriter(customLogger, context.Tracer, ExternalCommandBuilder.ShouldFilterOutMsBuildWarnings, ExternalCommandBuilder.ShouldFilterOutNodeRedundantOutput, _command, String.Empty);
 
                 tcs.SetResult(null);
             }
