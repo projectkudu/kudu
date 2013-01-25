@@ -20,15 +20,18 @@
 
 #endregion
 using System;
+using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Web.Http;
 using Kudu.Contracts.Settings;
+using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
+using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Services.Infrastructure;
 
@@ -41,19 +44,22 @@ namespace Kudu.Services.GitServer
         private readonly ITracer _tracer;
         private readonly IDeploymentSettingsManager _settings;
         private readonly string _webRootPath;
+        private readonly IRepositoryFactory _repositoryFactory;
 
         public InfoRefsController(
             ITracer tracer,
             IGitServer gitServer,
             IDeploymentManager deploymentManager,
             IDeploymentSettingsManager settings,
-            IEnvironment environment)
+            IEnvironment environment,
+            IRepositoryFactory repositoryFactory)
         {
             _gitServer = gitServer;
             _deploymentManager = deploymentManager;
             _tracer = tracer;
             _settings = settings;
             _webRootPath = environment.WebRootPath;
+            _repositoryFactory = repositoryFactory;
         }
 
         [HttpGet]
@@ -64,6 +70,13 @@ namespace Kudu.Services.GitServer
                 if (!_settings.IsScmEnabled())
                 {
                     return Request.CreateErrorResponse(HttpStatusCode.Forbidden, Resources.Error_GitIsDisabled);
+                }
+
+                // Ensure that the target directory does not have a non-Git repository.
+                IRepository repository = _repositoryFactory.GetRepository();
+                if (repository != null && repository.RepositoryType != RepositoryType.Git)
+                {
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, String.Format(CultureInfo.CurrentCulture, Resources.Error_NonGitRepositoryFound, repository.RepositoryType));
                 }
 
                 service = GetServiceType(service);

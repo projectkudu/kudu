@@ -24,8 +24,10 @@ using System.Net;
 using System.Web;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
+using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
+using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Services.Infrastructure;
 
@@ -33,23 +35,42 @@ namespace Kudu.Services.GitServer
 {
     public class ReceivePackHandler : GitServerHttpHandler
     {
+        private readonly IRepositoryFactory _repositoryFactory;
+        
         public ReceivePackHandler(ITracer tracer,
                                   IGitServer gitServer,
                                   IOperationLock deploymentLock,
                                   IDeploymentManager deploymentManager,
-                                  IDeploymentSettingsManager settings)
+                                  IDeploymentSettingsManager settings,
+                                  IRepositoryFactory repositoryFactory)
             : base(tracer, gitServer, deploymentLock, deploymentManager, settings)
         {
+            _repositoryFactory = repositoryFactory;
         }
 
-        public override void ProcessRequest(HttpContext context)
+        public override void ProcessRequestBase(HttpContextBase context)
         {
             using (_tracer.Step("RpcService.ReceivePack"))
             {
                 if (!_settings.IsScmEnabled())
                 {
                     context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
-                    context.ApplicationInstance.CompleteRequest();
+                    if (context.ApplicationInstance != null)
+                    {
+                        context.ApplicationInstance.CompleteRequest();
+                    }
+                    return;
+                }
+
+                // Ensure that the target directory does not have a non-Git repository.
+                IRepository repository = _repositoryFactory.GetRepository();
+                if (repository != null && repository.RepositoryType != RepositoryType.Git)
+                {
+                    context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                    if (context.ApplicationInstance != null)
+                    {
+                        context.ApplicationInstance.CompleteRequest();
+                    }
                     return;
                 }
 

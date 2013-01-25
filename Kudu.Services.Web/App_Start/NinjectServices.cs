@@ -8,6 +8,7 @@ using System.Web.Http;
 using System.Web.Routing;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
+using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Commands;
@@ -154,6 +155,9 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IDeploymentManager>().To<DeploymentManager>()
                                              .InRequestScope();
             kernel.Bind<ISSHKeyManager>().To<SSHKeyManager>()
+                                             .InRequestScope();
+
+            kernel.Bind<IRepositoryFactory>().To<RepositoryFactory>()
                                              .InRequestScope();
 
             // Git server

@@ -6,6 +6,7 @@ using System.Net;
 using System.Web;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
+using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
@@ -25,7 +26,7 @@ namespace Kudu.Services
         private readonly IEnumerable<IServiceHookHandler> _serviceHookHandlers;
         private readonly IOperationLock _deploymentLock;
         private readonly ITracer _tracer;
-        private readonly RepositoryFactory _repositoryFactory;
+        private readonly IRepositoryFactory _repositoryFactory;
 
 
         public FetchHandler(ITracer tracer,
@@ -34,7 +35,7 @@ namespace Kudu.Services
                             IOperationLock deploymentLock,
                             IEnvironment environment,
                             IEnumerable<IServiceHookHandler> serviceHookHandlers,
-                            RepositoryFactory repositoryFactory)
+                            IRepositoryFactory repositoryFactory)
         {
             _tracer = tracer;
             _deploymentLock = deploymentLock;
@@ -78,8 +79,9 @@ namespace Kudu.Services
                 string targetBranch = _settings.GetValue(SettingsKeys.Branch);
                 try
                 {
-                    JObject payload = GetPayload(context.Request);
-                    DeployAction action = GetRepositoryInfo(context.Request, payload, targetBranch, out deployInfo);
+                    var request = new HttpRequestWrapper(context.Request);
+                    JObject payload = GetPayload(request);
+                    DeployAction action = GetRepositoryInfo(request, payload, targetBranch, out deployInfo);
                     if (action == DeployAction.NoOp)
                     {
                         return;
@@ -193,12 +195,11 @@ namespace Kudu.Services
             _tracer.Trace("handler", attribs);
         }
 
-        private DeployAction GetRepositoryInfo(HttpRequest request, JObject payload, string targetBranch, out DeploymentInfo info)
+        private DeployAction GetRepositoryInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo info)
         {
-            var httpRequestBase = new HttpRequestWrapper(request);
             foreach (var handler in _serviceHookHandlers)
             {
-                DeployAction result = handler.TryParseDeploymentInfo(httpRequestBase, payload, targetBranch, out info);
+                DeployAction result = handler.TryParseDeploymentInfo(request, payload, targetBranch, out info);
                 if (result != DeployAction.UnknownPayload)
                 {
                     if (_tracer.TraceLevel >= TraceLevel.Verbose)
@@ -221,7 +222,7 @@ namespace Kudu.Services
             throw new FormatException(Resources.Error_UnsupportedFormat);
         }
 
-        private JObject GetPayload(HttpRequest request)
+        private JObject GetPayload(HttpRequestBase request)
         {
             JObject payload;
 

@@ -234,4 +234,7 @@
   <data name="Error_InvalidRepoUrl" xml:space="preserve">
     <value>Repository url '{0}' is invalid.</value>
   </data>
+  <data name="Error_NonGitRepositoryFound" xml:space="preserve">
+    <value>Unable to proceed with the operation. A '{0}' repository was found at the target location.</value>
+  </data>
 </root>
