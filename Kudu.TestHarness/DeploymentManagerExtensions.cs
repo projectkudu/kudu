@@ -23,7 +23,7 @@ namespace Kudu.TestHarness
 
         private static void OnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
         {
-            Debug.WriteLine(e.Exception.GetBaseException().ToString());
+            TestTracer.Trace("OnUnobservedTaskException - {0}", e.Exception.GetBaseException());
             e.SetObserved();
         }
     }
