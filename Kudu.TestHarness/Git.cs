@@ -15,26 +15,27 @@ namespace Kudu.TestHarness
     {
         public static string Push(string repositoryPath, string url, string localBranchName = "master", string remoteBranchName = "master")
         {
-            Executable gitExe = GetGitExe(repositoryPath);
-
-            string stdErr = null;
-
-            if (localBranchName.Equals("master"))
+            using (new LatencyLogger("git push " + repositoryPath))
             {
-                stdErr = GitExecute(gitExe, "push {0} {1}", url, remoteBranchName).Item2;
+                Executable gitExe = GetGitExe(repositoryPath);
+
+                string stdErr = null;
+
+                if (localBranchName.Equals("master"))
+                {
+                    stdErr = GitExecute(gitExe, "push {0} {1}", url, remoteBranchName).Item2;
+                }
+                else
+                {
+                    // Dump out the error stream (git curl verbose)
+                    stdErr = GitExecute(gitExe, "push {0} {1}:{2}", url, localBranchName, remoteBranchName).Item2;
+                }
 
                 // Dump out the error stream (git curl verbose)
-                TestTracer.Trace(stdErr);
-            }
-            else
-            {
-                // Dump out the error stream (git curl verbose)
-                stdErr = GitExecute(gitExe, "push {0} {1}:{2}", url, localBranchName, remoteBranchName).Item2;
+                TestTracer.Trace("\n------------------\ngit push output\n------------------\n{0}", stdErr);
 
-                TestTracer.Trace(stdErr);
+                return stdErr;
             }
-
-            return stdErr;
         }
 
         public static TestRepository Init(string repositoryPath)
