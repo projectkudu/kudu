@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Http;
 using System.Web.Http;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
@@ -20,12 +21,12 @@ namespace Kudu.Services.Deployment
         private readonly IDeploymentManager _deploymentManager;
         private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
-        private readonly RepositoryFactory _repositoryFactory;
+        private readonly IRepositoryFactory _repositoryFactory;
 
         public DeploymentController(ITracer tracer,
                                     IDeploymentManager deploymentManager,
                                     IOperationLock deploymentLock,
-                                    RepositoryFactory repositoryFactory)
+                                    IRepositoryFactory repositoryFactory)
         {
             _tracer = tracer;
             _deploymentManager = deploymentManager;

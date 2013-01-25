@@ -72,6 +72,7 @@
     <Compile Include="Settings\DeploymentSettingsExtension.cs" />
     <Compile Include="Settings\IDeploymentSettingsManager.cs" />
     <Compile Include="Settings\SettingsKeys.cs" />
+    <Compile Include="SourceControl\IRepositoryFactory.cs" />
     <Compile Include="SourceControl\ScmType.cs" />
     <Compile Include="SSHKey\ISSHKeyManager.cs" />
     <Compile Include="Tracing\ITracer.cs" />

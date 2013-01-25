@@ -28,7 +28,7 @@ namespace Kudu.Services.Infrastructure
             return false;
         }
 
-        public static bool TryExtractBasicAuthUser(HttpRequest request, out string username)
+        public static bool TryExtractBasicAuthUser(HttpRequestBase request, out string username)
         {
             string authorizationHeader = request.Headers[HttpAuthorizationHeader];
 

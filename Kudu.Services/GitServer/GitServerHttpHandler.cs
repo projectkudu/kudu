@@ -58,9 +58,14 @@ namespace Kudu.Services.GitServer
             }
         }
 
-        public abstract void ProcessRequest(HttpContext context);
+        public void ProcessRequest(HttpContext context)
+        {
+            ProcessRequestBase(new HttpContextWrapper(context));
+        }
 
-        protected void UpdateNoCacheForResponse(HttpResponse response)
+        public abstract void ProcessRequestBase(HttpContextBase context);
+
+        protected void UpdateNoCacheForResponse(HttpResponseBase response)
         {
             response.Buffer = false;
             response.BufferOutput = false;
