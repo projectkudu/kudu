@@ -15,32 +15,33 @@ namespace Kudu.TestHarness
     {
         public static string Push(string repositoryPath, string url, string localBranchName = "master", string remoteBranchName = "master")
         {
-            Executable gitExe = GetGitExe(repositoryPath);
-
-            string stdErr = null;
-
-            if (localBranchName.Equals("master"))
+            using (new LatencyLogger("git push " + repositoryPath))
             {
-                stdErr = gitExe.Execute("push {0} {1} --progress", url, remoteBranchName).Item2;
+                Executable gitExe = GetGitExe(repositoryPath);
+
+                string stdErr = null;
+
+                if (localBranchName.Equals("master"))
+                {
+                    stdErr = GitExecute(gitExe, "push {0} {1}", url, remoteBranchName).Item2;
+                }
+                else
+                {
+                    // Dump out the error stream (git curl verbose)
+                    stdErr = GitExecute(gitExe, "push {0} {1}:{2}", url, localBranchName, remoteBranchName).Item2;
+                }
 
                 // Dump out the error stream (git curl verbose)
-                Debug.WriteLine(stdErr);
-            }
-            else
-            {
-                // Dump out the error stream (git curl verbose)
-                stdErr = gitExe.Execute("push {0} {1}:{2} --progress", url, localBranchName, remoteBranchName).Item2;
+                TestTracer.Trace("\n------------------\ngit push output\n------------------\n{0}", stdErr);
 
-                Debug.WriteLine(stdErr);
+                return stdErr;
             }
-
-            return stdErr;
         }
 
         public static TestRepository Init(string repositoryPath)
         {
             Executable gitExe = GetGitExe(repositoryPath);
-            gitExe.Execute("init");
+            GitExecute(gitExe, "init");
 
             return new TestRepository(repositoryPath);
         }
@@ -48,19 +49,19 @@ namespace Kudu.TestHarness
         public static void Revert(string repositoryPath, string commit = "HEAD")
         {
             Executable gitExe = GetGitExe(repositoryPath);
-            gitExe.Execute("revert --no-edit \"{0}\"", commit);
+            GitExecute(gitExe, "revert --no-edit \"{0}\"", commit);
         }
 
         public static void Reset(string repositoryPath, string commit = "HEAD^")
         {
             Executable gitExe = GetGitExe(repositoryPath);
-            gitExe.Execute("reset --hard \"{0}\"", commit);
+            GitExecute(gitExe, "reset --hard \"{0}\"", commit);
         }
 
         public static void CheckOut(string repositoryPath, string branchName)
         {
             Executable gitExe = GetGitExe(repositoryPath);
-            gitExe.Execute("checkout -b {0} -t origin/{0}", branchName);
+            GitExecute(gitExe, "checkout -b {0} -t origin/{0}", branchName);
         }
 
         public static void Commit(string repositoryPath, string message)
@@ -68,21 +69,21 @@ namespace Kudu.TestHarness
             Executable gitExe = GetGitExe(repositoryPath);
             try
             {
-                gitExe.Execute("add -A", message);
-                gitExe.Execute("commit -m \"{0}\"", message);
+                GitExecute(gitExe, "add -A", message);
+                GitExecute(gitExe, "commit -m \"{0}\"", message);
             }
             catch (Exception ex)
             {
                 // Swallow exceptions on comit, since things like changing line endings
                 // show up as an error
-                Debug.WriteLine(ex.Message);
+                TestTracer.Trace("Commit failed with {0}", ex.Message);
             }
         }
 
         public static void Add(string repositoryPath, string path)
         {
             Executable gitExe = GetGitExe(repositoryPath);
-            gitExe.Execute("add \"{0}\"", path);
+            GitExecute(gitExe, "add \"{0}\"", path);
         }
 
         public static TestRepository Clone(string repositoryName, string source = null, IDictionary<string, string> environments = null, bool noCache = false)
@@ -113,7 +114,7 @@ namespace Kudu.TestHarness
             source = cachedPath ?? source;
             PathHelper.EnsureDirectory(repositoryPath);
             Executable gitExe = GetGitExe(repositoryPath, environments);
-            gitExe.Execute("clone \"{0}\" .", source);
+            GitExecute(gitExe, "clone \"{0}\" .", source);
 
             return new TestRepository(repositoryPath, obliterateOnDispose: true);
         }
@@ -136,7 +137,7 @@ namespace Kudu.TestHarness
                 if (alreadyExists)
                 {
 
-                    Trace.WriteLine(String.Format("Using cached copy at location {0}", cachedPath));
+                    TestTracer.Trace("Using cached copy at location {0}", cachedPath);
 
                     // Get it into a clean state on the correct commit id
                     try
@@ -147,7 +148,7 @@ namespace Kudu.TestHarness
                             commitId = "origin/master";
                         }
 
-                        gitExe.Execute("reset --hard " + commitId);
+                        GitExecute(gitExe, "reset --hard " + commitId);
                     }
                     catch (Exception e)
                     {
@@ -155,35 +156,35 @@ namespace Kudu.TestHarness
                         // simply reset to the HEAD. That won't undo any test commits, but at least it does some cleanup.
                         if (e.Message.Contains("ambiguous argument 'origin/master'"))
                         {
-                            gitExe.Execute("reset --hard HEAD");
+                            GitExecute(gitExe, "reset --hard HEAD");
                         }
                         else if (e.Message.Contains("unknown revision"))
                         {
                             // If that commit id doesn't exist, try fetching and doing the reset again
                             // The reason we don't initially fetch is to avoid the network hit when not necessary
-                            gitExe.Execute("fetch origin");
-                            gitExe.Execute("reset --hard " + commitId);
+                            GitExecute(gitExe, "fetch origin");
+                            GitExecute(gitExe, "reset --hard " + commitId);
                         }
                         else
                         {
                             throw;
                         }
                     }
-                    gitExe.Execute("clean -dxf");
+                    GitExecute(gitExe, "clean -dxf");
                 }
                 else
                 {
                     // Delete any leftover, ignoring errors
                     FileSystemHelpers.DeleteDirectorySafe(cachedPath);
 
-                    Trace.WriteLine(String.Format("Could not find a cached copy at {0}. Cloning from source {1}.", cachedPath, source));
+                    TestTracer.Trace("Could not find a cached copy at {0}. Cloning from source {1}.", cachedPath, source);
                     PathHelper.EnsureDirectory(cachedPath);
-                    gitExe.Execute("clone \"{0}\" .", source);
+                    GitExecute(gitExe, "clone \"{0}\" .", source);
 
                     // If we have a commit id, reset to it in case it's older than the latest on our clone
                     if (commitId != null)
                     {
-                        gitExe.Execute("reset --hard " + commitId);
+                        GitExecute(gitExe, "reset --hard " + commitId);
                     }
                 }
             }
@@ -270,6 +271,13 @@ namespace Kudu.TestHarness
             }
 
             return exe;
+        }
+
+        private static Tuple<string, string> GitExecute(Executable gitExe, string commandFormat, params object[] args)
+        {
+            var command = String.Format(commandFormat, args);
+            TestTracer.Trace("Executing: git {0}", command);
+            return gitExe.Execute(command);
         }
     }
 }

@@ -20,7 +20,7 @@ namespace Kudu.TestHarness
             if (_stopwatch != null)
             {
                 _stopwatch.Stop();
-                Trace.WriteLine(String.Format(CultureInfo.CurrentCulture, "Operation: \"{0}\" took {1:N0} ms", _operationDescription, _stopwatch.ElapsedMilliseconds));
+                TestTracer.Trace("Operation: \"{0}\" took {1:N0} ms", _operationDescription, _stopwatch.ElapsedMilliseconds);
             }
         }
     }

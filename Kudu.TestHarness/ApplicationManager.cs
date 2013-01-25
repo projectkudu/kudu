@@ -113,6 +113,8 @@ namespace Kudu.TestHarness
 
         public static void Run(string testName, Action<ApplicationManager> action)
         {
+            TestTracer.Trace("Running test - {0}", testName);
+
             var appManager = CreateApplication(KuduUtils.GetRandomWebsiteName(testName));
 
             if (KuduUtils.ReuseSameSiteForAllTests)
@@ -148,12 +150,12 @@ namespace Kudu.TestHarness
             {
                 KuduUtils.DownloadDump(appManager.ServiceUrl, dumpPath);
 
-                Debug.WriteLine(ex.Message);
+                TestTracer.Trace("Run failed - {0}", ex.Message);
 
                 var httpResponseEx = ex as HttpUnsuccessfulRequestException;
                 if (httpResponseEx != null)
                 {
-                    Debug.WriteLine(httpResponseEx.ResponseMessage);
+                    TestTracer.Trace("Error response message - {0}", httpResponseEx.ResponseMessage);
                 }
                 throw;
             }
@@ -218,6 +220,8 @@ namespace Kudu.TestHarness
 
         public static ApplicationManager CreateApplication(string applicationName)
         {
+            TestTracer.Trace("Create application - {0}", applicationName);
+
             var pathResolver = new DefaultPathResolver(PathHelper.ServiceSitePath, PathHelper.SitesPath);
             var settingsResolver = new DefaultSettingsResolver();
 
@@ -247,6 +251,8 @@ namespace Kudu.TestHarness
 
                 site = siteManager.CreateSite(applicationName);
             }
+
+            TestTracer.Trace("Using site - {0}", site.SiteUrl);
 
             string gitUrl = null;
             var repositoryManager = new RemoteRepositoryManager(site.ServiceUrl + "live/scm");

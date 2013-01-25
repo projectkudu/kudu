@@ -33,11 +33,9 @@ namespace Kudu.TestHarness
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("Failed to download dump");
-                Debug.WriteLine(ex.GetBaseException().Message);
+                TestTracer.Trace("Failed to download dump - {0}", ex.GetBaseException().Message);
             }
         }
-
 
         public static XDocument GetServerProfile(string serviceUrl, string logsTempPath, string appName, NetworkCredential credentials = null)
         {
