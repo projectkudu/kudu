@@ -41,7 +41,7 @@ namespace Kudu.Services.GitServer
         {
         }
 
-        public override void ProcessRequest(HttpContext context)
+        public override void ProcessRequestBase(HttpContextBase context)
         {
             using (_tracer.Step("RpcService.UploadPackHandler"))
             {

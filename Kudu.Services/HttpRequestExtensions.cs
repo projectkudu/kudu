@@ -6,7 +6,7 @@ namespace Kudu.Services
 {
     public static class HttpRequestExtensions
     {
-        public static Stream GetInputStream(this HttpRequest request)
+        public static Stream GetInputStream(this HttpRequestBase request)
         {
             var contentEncoding = request.Headers["Content-Encoding"];
 

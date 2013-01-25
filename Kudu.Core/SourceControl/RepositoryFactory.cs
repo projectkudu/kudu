@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using Kudu.Contracts.Settings;
+using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
@@ -11,7 +12,7 @@ using Kudu.Core.Tracing;
 namespace Kudu.Core.SourceControl
 {
     // TODO: Add unit tests via FileSystem once they add support for EnumerateFiles
-    public class RepositoryFactory
+    public class RepositoryFactory : IRepositoryFactory
     {
         private readonly IEnvironment _environment;
         private readonly ITraceFactory _traceFactory;
