@@ -4,6 +4,7 @@ using Kudu.Contracts.Dropbox;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
+using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
 using Newtonsoft.Json.Linq;
 
@@ -34,10 +35,10 @@ namespace Kudu.Services.ServiceHookHandlers
                 deploymentInfo = dropboxInfo; 
 
                 // Temporary deployment
-                string authorName = dropboxInfo.DeployInfo.UserName;
-                string authorEmail = dropboxInfo.DeployInfo.Email;
-                string message = "Syncing with dropbox at " + DateTime.UtcNow.ToString("g");
-                deploymentInfo.TargetChangeset = new ChangeSet("InProgress", authorName, authorEmail, message, DateTimeOffset.MinValue);
+                deploymentInfo.TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(
+                    authorName: dropboxInfo.DeployInfo.UserName,
+                    authorEmail: dropboxInfo.DeployInfo.Email,
+                    message: "Syncing with dropbox at " + DateTime.UtcNow.ToString("g"));
 
                 return DeployAction.ProcessDeployment;
             }

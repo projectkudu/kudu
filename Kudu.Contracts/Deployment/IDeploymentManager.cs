@@ -22,8 +22,7 @@ namespace Kudu.Core.Deployment
         /// </summary>
         /// <param name="statusText"></param>
         /// <returns></returns>
-        string CreateTemporaryDeployment(string statusText, ChangeSet changeset = null, string deployedBy = null);
-        void DeleteTemporaryDeployment(string id = null);
+        IDisposable CreateTemporaryDeployment(string statusText, ChangeSet changeset = null, string deployedBy = null);
 
         ILogger GetLogger(string id);
     }

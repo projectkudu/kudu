@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
@@ -16,7 +17,7 @@ namespace Kudu.Core.Deployment
 {
     public class DeploymentManager : IDeploymentManager
     {
-        private static Random _random = new Random(unchecked((int)DateTime.Now.Ticks));
+        private static readonly Random _random = new Random();
 
         private readonly ISiteBuilderFactory _builderFactory;
         private readonly IEnvironment _environment;
@@ -30,6 +31,7 @@ namespace Kudu.Core.Deployment
         private const string LogFile = "log.xml";
         private const string ManifestFile = "manifest";
         private const string ActiveDeploymentFile = "active";
+        private const string TemporaryDeploymentIdPrefix = "temp-";
 
         public event Action<DeployResult> StatusChanged;
 
@@ -204,7 +206,7 @@ namespace Kudu.Core.Deployment
                     deploymentRepository.Clean();
                 }
 
-                // set to null as Build() perform logger
+                // set to null as Build() below takes over logging
                 innerLogger = null;
 
                 // Perform the build deployment of this changeset
@@ -305,7 +307,7 @@ namespace Kudu.Core.Deployment
                     }
                 }
 
-                // set to null as Build() perform logger
+                // set to null as Build() below takes over logging
                 innerLogger = null;
 
                 Build(id, tracer, deployStep);
@@ -330,13 +332,12 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public string CreateTemporaryDeployment(string statusText, ChangeSet changeSet = null, string deployedBy = null)
+        public IDisposable CreateTemporaryDeployment(string statusText, ChangeSet changeSet = null, string deployedBy = null)
         {
             var tracer = _traceFactory.GetTracer();
-            string unknown = Resources.Deployment_UnknownValue;
             using (tracer.Step("Creating temporary deployment"))
             {
-                changeSet = changeSet ?? new ChangeSet("temp-" + GetRandomHexString(8), unknown, unknown, unknown, DateTimeOffset.MinValue);
+                changeSet = changeSet ?? CreateTemporaryChangeSet();
                 DeploymentStatusFile statusFile = CreateStatusFile(changeSet.Id);
                 statusFile.Id = changeSet.Id;
                 statusFile.Message = changeSet.Message;
@@ -349,7 +350,36 @@ namespace Kudu.Core.Deployment
             }
 
             // Return a handle that deletes the deployment on dispose.
-            return changeSet.Id;
+            return new DisposableAction(() =>
+            {
+                if (changeSet.IsTemporary)
+                {
+                    DeleteTemporaryDeployment(changeSet.Id);
+                }
+            });
+        }
+
+        public static ChangeSet CreateTemporaryChangeSet(string authorName = null, string authorEmail = null, string message = null)
+        {
+            string unknown = Resources.Deployment_UnknownValue;
+            return new ChangeSet(GenerateTemporaryId(), authorName ?? unknown, authorEmail ?? unknown, message ?? unknown, DateTimeOffset.MinValue)
+            {
+                IsTemporary = true
+            };
+        }
+
+        private static string GenerateTemporaryId(int lenght = 8)
+        {
+            const string HexChars = "0123456789abcdfe";
+
+            var strb = new StringBuilder();
+            strb.Append(TemporaryDeploymentIdPrefix);
+            for (int i = 0; i < lenght; ++i)
+            {
+                strb.Append(HexChars[_random.Next(HexChars.Length)]);
+            }
+
+            return strb.ToString();
         }
 
         private ILogger GetOrCreateStatusFile(ChangeSet changeSet, ITracer tracer, string deployer)
@@ -379,23 +409,10 @@ namespace Kudu.Core.Deployment
         /// <summary>
         /// Deletes the temporary deployment, will not fail if it doesn't exist.
         /// </summary>
-        public void DeleteTemporaryDeployment(string id)
+        private void DeleteTemporaryDeployment(string id)
         {
             string temporaryDeploymentPath = GetRoot(id, ensureDirectory: false);
             FileSystemHelpers.DeleteDirectorySafe(temporaryDeploymentPath);
-        }
-
-        private static string GetRandomHexString(int lenght)
-        {
-            const string HexChars = "0123456789abcdfe";
-
-            var chars = new char[lenght];
-            for (int i = 0; i < lenght; ++i)
-            {
-                chars[i] = HexChars[_random.Next(HexChars.Length)];
-            }
-
-            return new string(chars);
         }
 
         private DeployResult GetResult(string id, string activeDeploymentId, bool isDeploying)

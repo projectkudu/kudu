@@ -149,27 +149,25 @@ namespace Kudu.Services
                 var handler = deploymentInfo.Handler;
                 using (_tracer.Step("Performing fetch based deployment"))
                 {
-                    bool useTempId = deploymentInfo.TargetChangeset == null;
-
                     // create temporary deployment before the actual deployment item started
                     // this allows portal ui to readily display on-going deployment (not having to wait for fetch to complete).
-                    // in addition, it captures any failure that may occurre before the actual deployment item started 
-                    string tempId = _deploymentManager.CreateTemporaryDeployment(Resources.ReceivingChanges, deploymentInfo.TargetChangeset, deploymentInfo.Deployer);
+                    // in addition, it captures any failure that may occur before the actual deployment item started 
+                    IDisposable tempDeployment = _deploymentManager.CreateTemporaryDeployment(Resources.ReceivingChanges, deploymentInfo.TargetChangeset, deploymentInfo.Deployer);
                     ILogger innerLogger = null;
                     try
                     {
                         IRepository repository = _repositoryFactory.EnsureRepository(deploymentInfo.RepositoryType);
-                        ILogger logger = _deploymentManager.GetLogger(tempId);
+                        ILogger logger = _deploymentManager.GetLogger(deploymentInfo.TargetChangeset.Id);
 
                         // Fetch changes from the repository
                         innerLogger = logger.Log(Resources.FetchingChanges);
                         deploymentInfo.Handler.Fetch(repository, deploymentInfo, targetBranch);
 
-                        // set to null as Deploy() perform logger
+                        // set to null as Deploy() below takes over logging
                         innerLogger = null;
 
                         // Perform the actual deployment
-                        _deploymentManager.Deploy(repository, deploymentInfo.TargetChangeset, deploymentInfo.Deployer, clean: false);
+                        _deploymentManager.Deploy(repository, deploymentInfo.TargetChangeset.IsTemporary ? null : deploymentInfo.TargetChangeset, deploymentInfo.Deployer, clean: false);
 
                         if (MarkerFileExists())
                         {
@@ -197,11 +195,8 @@ namespace Kudu.Services
                         throw;
                     }
 
-                    // deploy successful, we will cleanup if temporary deployment
-                    if (useTempId)
-                    {
-                        _deploymentManager.DeleteTemporaryDeployment(tempId);
-                    }
+                    // only clean up temp deployment if successful
+                    tempDeployment.Dispose();
                 }
 
             } while (hasPendingDeployment);
