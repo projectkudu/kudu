@@ -56,7 +56,7 @@ namespace Kudu.Services
             }
 
             ChangeSet changeSet;
-            string prefix = "Partially";
+            string prefix = "Partially synced";
             try
             {
                 using (_tracer.Step("Synch with Dropbox"))
@@ -65,12 +65,12 @@ namespace Kudu.Services
                     ApplyChanges(info);
                 }
 
-                prefix = "Successfully";
+                prefix = "Synced";
             }
             finally
             {
                 // Commit anyway even partial change
-                changeSet = _repository.Commit(prefix + " sync with dropbox at " + DateTime.UtcNow.ToString("g"), String.Format("{0} <{1}>", info.UserName, info.Email));
+                changeSet = _repository.Commit(prefix + " with dropbox at " + DateTime.UtcNow.ToString("g"), String.Format("{0} <{1}>", info.UserName, info.Email));
             }
 
             // Save new dropboc cursor
@@ -101,6 +101,12 @@ namespace Kudu.Services
             foreach (DropboxDeltaInfo delta in info.Deltas)
             {
                 if (!delta.Path.StartsWith(parent, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                // Ignore .git files and folders
+                if (delta.Path.StartsWith(parent + ".git", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }

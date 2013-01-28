@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Web;
+using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
 using Newtonsoft.Json.Linq;
 
@@ -45,6 +46,7 @@ namespace Kudu.Services.ServiceHookHandlers
             deploymentInfo.RepositoryUrl = url;
             deploymentInfo.RepositoryType = is_hg ? RepositoryType.Mercurial : RepositoryType.Git;
             deploymentInfo.Deployer = GetDeployerFromUrl(url);
+            deploymentInfo.TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Fetch from " + url);
 
             return DeployAction.ProcessDeployment;
         }

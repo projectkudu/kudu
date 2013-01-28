@@ -61,7 +61,7 @@ namespace Kudu.Services.ServiceHookHandlers
                 timestamp: DateTimeOffset.Parse(targetCommit.Value<string>("utctimestamp"))
             );
 
-            info.Deployer = request.UserAgent;
+            info.Deployer = "Bitbucket";
 
             // private repo, use SSH
             if (isPrivate)
