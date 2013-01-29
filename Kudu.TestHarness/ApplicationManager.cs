@@ -130,8 +130,8 @@ namespace Kudu.TestHarness
             }, 3, 1000);
 
             MatchCollection matches = Regex.Matches(content, pattern);
-            Debug.Assert(matches.Count == 1, "Regex must match exactly once");
-            Debug.Assert(matches[0].Groups.Count == 2, "Regex must have 2 groups");
+            Debug.Assert(matches.Count == 1, "Could not find Up Time section!");
+            Debug.Assert(matches[0].Groups.Count == 2, "Could not find Up Time value!");
             return matches[0].Groups[1].Value;
         }
 
