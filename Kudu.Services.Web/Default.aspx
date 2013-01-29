@@ -124,7 +124,7 @@
                 var startTime = Kudu.Services.Web.MvcApplication.StartDateTime.ToString("g");
                 var upTime = (DateTime.UtcNow - Kudu.Services.Web.MvcApplication.StartDateTime).ToString();
             %>
-            <td><strong>Start Time (Up time)</strong></td>
+            <td><strong>Start Time (Up Time)</strong></td>
             <td><%= startTime %> (<%= upTime %>)</td>
         </tr>
     </table>

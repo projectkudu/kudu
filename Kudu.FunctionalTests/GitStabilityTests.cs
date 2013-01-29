@@ -31,5 +31,19 @@ namespace Kudu.FunctionalTests
                 }
             }
         }
+
+        [Fact]
+        public void KuduUpTimeTest()
+        {
+            ApplicationManager.Run("KuduUpTimeTest", appManager =>
+            {
+                string upTime = appManager.GetKuduUpTime();
+
+                // 1/29/2013 12:36 AM (00:39:09.1443904)
+                Assert.Contains("/", upTime);
+                Assert.Contains(":", upTime);
+                Assert.Contains(".", upTime);
+            });
+        }
     }
 }
