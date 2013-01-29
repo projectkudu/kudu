@@ -119,6 +119,13 @@
             <td><strong>Runtime Environment</strong></td>
             <td><a href="Env.aspx">View</a></td>
         </tr>
+        <tr>
+            <% 
+                var upTime = Kudu.Services.Web.MvcApplication.UpTime.ToString();
+            %>
+            <td><strong>Up Time</strong></td>
+            <td><%= upTime %></td>
+        </tr>
     </table>
 </body>
 </html>

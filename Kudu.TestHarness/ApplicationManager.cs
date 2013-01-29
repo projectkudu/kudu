@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Kudu.Client;
 using Kudu.Client.Deployment;
 using Kudu.Client.Editor;
+using Kudu.Client.Infrastructure;
 using Kudu.Client.SourceControl;
 using Kudu.Client.SSHKey;
 using Kudu.Core.Infrastructure;
@@ -111,6 +114,27 @@ namespace Kudu.TestHarness
             File.WriteAllText(fullPath, content);
         }
 
+        public string GetKuduUpTime()
+        {
+            const string pattern = "<td><strong>Up Time</strong></td>\\s*<td>(.*)</td>";
+            
+            string content = OperationManager.Attempt<string>(() =>
+            {
+                using (HttpClient client = HttpClientHelper.CreateClient(this.ServiceUrl, this.DeploymentManager.Credentials))
+                {
+                    using (HttpResponseMessage response = client.GetAsync(String.Empty).Result.EnsureSuccessStatusCode())
+                    {
+                        return response.Content.ReadAsStringAsync().Result;
+                    }
+                }
+            }, 3, 1000);
+
+            MatchCollection matches = Regex.Matches(content, pattern);
+            Debug.Assert(matches.Count == 1, "Regex must match exactly once");
+            Debug.Assert(matches[0].Groups.Count == 2, "Regex must have 2 groups");
+            return matches[0].Groups[1].Value;
+        }
+
         public static void Run(string testName, Action<ApplicationManager> action)
         {
             TestTracer.Trace("Running test - {0}", testName);
@@ -123,7 +147,7 @@ namespace Kudu.TestHarness
                 appManager.RepositoryManager.Delete(deleteWebRoot: true, ignoreErrors: true).Wait();
 
                 // Make sure we start with the correct default file as some tests expect it
-                appManager.VfsWebRootManager.WriteAllText("index.html", "<h1>This web site has been successfully created</h1>");
+                WriteIndexHtml(appManager);
             }
 
             const string siteBuilderFactory = "site_builder_factory";
@@ -163,6 +187,39 @@ namespace Kudu.TestHarness
                 {
                     appManager.Delete();
                 }
+            }
+        }
+
+        // Try to write index.html.  In case of failure with 502, we will include
+        // UpTime information with the exception.  This info will be used for furthur
+        // investigation of Bad Gateway issue.
+        private static void WriteIndexHtml(ApplicationManager appManager)
+        {
+            try
+            {
+                appManager.VfsWebRootManager.WriteAllText("index.html", "<h1>This web site has been successfully created</h1>");
+            }
+            catch (HttpRequestException ex)
+            {
+                if (ex.Message.Contains("502 (Bad Gateway)"))
+                {
+                    string upTime = null;
+                    try
+                    {
+                        upTime = appManager.GetKuduUpTime();
+                    }
+                    catch (Exception exception)
+                    {
+                        TestTracer.Trace("GetKuduUpTime failed with exception\n{0}", exception);
+                    }
+
+                    if (!String.IsNullOrEmpty(upTime))
+                    {
+                        throw new HttpRequestException(ex.Message + " Kudu Up Time: " + upTime, ex);
+                    }
+                }
+
+                throw;
             }
         }
 
