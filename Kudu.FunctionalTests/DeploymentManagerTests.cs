@@ -191,15 +191,16 @@ namespace Kudu.FunctionalTests
 
             ApplicationManager.Run(appName, appManager =>
             {
-                var client = CreateClient(appManager);
-                client.DefaultRequestHeaders.Add("X-Github-Event", "push");
-
                 var post = new Dictionary<string, string>
                 {
                     { "payload", githubPayload }
                 };
 
-                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result.EnsureSuccessful();
+                DeployPayloadHelper(appManager, client => 
+                {
+                    client.DefaultRequestHeaders.Add("X-Github-Event", "push");
+                    return client.PostAsync("deploy", new FormUrlEncodedContent(post));
+                });
 
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                 Assert.Equal(1, results.Count);
@@ -217,15 +218,16 @@ namespace Kudu.FunctionalTests
 
             ApplicationManager.Run(appName, appManager =>
             {
-                var client = CreateClient(appManager);
-                client.DefaultRequestHeaders.Add("User-Agent", "Bitbucket.org");
-
                 var post = new Dictionary<string, string>
                 {
                     { "payload", bitbucketPayload }
                 };
 
-                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result.EnsureSuccessful();
+                DeployPayloadHelper(appManager, client =>
+                {
+                    client.DefaultRequestHeaders.Add("User-Agent", "Bitbucket.org");
+                    return client.PostAsync("deploy", new FormUrlEncodedContent(post));
+                });
 
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                 Assert.Equal(1, results.Count);
@@ -255,6 +257,7 @@ namespace Kudu.FunctionalTests
                 };
 
                 client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result.EnsureSuccessful();
+
 
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                 Assert.Equal(1, results.Count);
@@ -382,13 +385,12 @@ namespace Kudu.FunctionalTests
 
             ApplicationManager.Run(appName, appManager =>
             {
-                var client = CreateClient(appManager);
                 var post = new Dictionary<string, string>
                 {
                     { "payload", payload }
                 };
 
-                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result.EnsureSuccessful();
+                DeployPayloadHelper(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(post)));
 
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                 Assert.Equal(1, results.Count);
@@ -406,7 +408,6 @@ namespace Kudu.FunctionalTests
 
             ApplicationManager.Run(appName, appManager =>
             {
-                var client = CreateClient(appManager);
                 appManager.SettingsManager.SetValue("branch", "test").Wait();
 
                 var post = new Dictionary<string, string>
@@ -414,7 +415,8 @@ namespace Kudu.FunctionalTests
                     { "payload", payload }
                 };
 
-                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result.EnsureSuccessful();
+                DeployPayloadHelper(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(post)));
+
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
@@ -432,13 +434,13 @@ namespace Kudu.FunctionalTests
             ApplicationManager.Run(appName, appManager =>
             {
                 appManager.SettingsManager.SetValue("branch", "test").Wait();
-                var client = CreateClient(appManager);
+
                 var post = new Dictionary<string, string>
                 {
                     { "payload", payload }
                 };
                 
-                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result.EnsureSuccessful();
+                DeployPayloadHelper(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(post)));
 
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                 Assert.Equal(1, results.Count);
@@ -456,7 +458,6 @@ namespace Kudu.FunctionalTests
 
             ApplicationManager.Run(appName, appManager =>
             {
-                var client = CreateClient(appManager);
                 var post = new Dictionary<string, string>
                 {
                     { "payload", payload }
@@ -464,10 +465,8 @@ namespace Kudu.FunctionalTests
 
                 // Start two requests at the same time, then wait for them
                 // Ideally we'd push something else to github but at least this exercises the code path
-                Task<HttpResponseMessage> responseTask1 = client.PostAsync("deploy", new FormUrlEncodedContent(post));
-                Task<HttpResponseMessage> responseTask2 = client.PostAsync("deploy", new FormUrlEncodedContent(post));
-                responseTask1.Wait();
-                responseTask2.Wait();
+                Task<HttpResponseMessage> responseTask1 = Task.Factory.StartNew(() => PostPayloadHelper(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(post))));
+                Task<HttpResponseMessage> responseTask2 = Task.Factory.StartNew(() => PostPayloadHelper(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(post))));
 
                 // One should be an OK and the other a Conflict. Which one is which can vary.
                 if (responseTask1.Result.StatusCode == HttpStatusCode.Conflict)
@@ -498,9 +497,7 @@ namespace Kudu.FunctionalTests
 
             ApplicationManager.Run(appName, appManager =>
             {
-                var client = CreateClient(appManager);
-
-                client.PostAsJsonAsync("deploy", payload).Result.EnsureSuccessful();
+                DeployPayloadHelper(appManager, client => client.PostAsJsonAsync("deploy", payload));
 
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                 Assert.Equal(1, results.Count);
@@ -537,6 +534,47 @@ namespace Kudu.FunctionalTests
 
                 KuduAssert.VerifyUrl(appManager.SiteUrl + "Hello.txt", "Hello mercurial");
             });
+        }
+
+        private static void DeployPayloadHelper(ApplicationManager appManager, Func<HttpClient, Task<HttpResponseMessage>> func, int retries = 3, int duration = 1000)
+        {
+            PostPayloadHelper(appManager, func, retries, duration).EnsureSuccessful().Dispose();
+        }
+
+        private static HttpResponseMessage PostPayloadHelper(ApplicationManager appManager, Func<HttpClient, Task<HttpResponseMessage>> func, int retries = 3, int duration = 1000)
+        {
+            while (retries > 0)
+            {
+                try
+                {
+                    using (HttpClient client = CreateClient(appManager))
+                    {
+                        HttpResponseMessage response = func(client).Result;
+
+                        if (response.StatusCode == HttpStatusCode.InternalServerError)
+                        {
+                            response.EnsureSuccessful();
+                        }
+
+                        return response;
+                    }
+                }
+                catch (HttpUnsuccessfulRequestException ex)
+                {
+                    if (ex.ResponseMessage.ExceptionMessage.Contains("403 while accessing https://github.com"))
+                    {
+                        if (--retries > 0)
+                        {
+                            Thread.Sleep(duration);
+                            continue;
+                        }
+                    }
+
+                    throw;
+                }
+            }
+
+            throw new InvalidOperationException("We should not reach here!");
         }
 
         private static HttpClient CreateClient(ApplicationManager appManager)

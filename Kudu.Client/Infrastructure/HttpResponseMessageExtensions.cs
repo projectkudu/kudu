@@ -19,10 +19,14 @@ namespace Kudu.Client
                 {
                     exceptionMessage = httpResponseMessage.Content.ReadAsAsync<HttpExceptionMessage>().Result;
                 }
-                catch (InvalidOperationException ex)
+                catch (InvalidOperationException)
                 {
                     // This would happen if the response type is not a Json object.
-                    throw new HttpRequestException(httpResponseMessage.Content.ReadAsStringAsync().Result, ex);
+                    exceptionMessage = new HttpExceptionMessage
+                    {
+                        ExceptionMessage = httpResponseMessage.Content.ReadAsStringAsync().Result,
+                        ExceptionType = typeof(HttpRequestException).Name
+                    };
                 }
                 exceptionMessage.StatusCode = httpResponseMessage.StatusCode;
                 exceptionMessage.ReasonPhrase = httpResponseMessage.ReasonPhrase;

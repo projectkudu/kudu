@@ -119,6 +119,14 @@
             <td><strong>Runtime Environment</strong></td>
             <td><a href="Env.aspx">View</a></td>
         </tr>
+        <tr>
+            <% 
+                var startTime = Kudu.Services.Web.MvcApplication.StartDateTime.ToString("g");
+                var upTime = (DateTime.UtcNow - Kudu.Services.Web.MvcApplication.StartDateTime).ToString();
+            %>
+            <td><strong>Start Time (Up Time)</strong></td>
+            <td><%= startTime %> (<%= upTime %>)</td>
+        </tr>
     </table>
 </body>
 </html>
