@@ -150,20 +150,19 @@ namespace Kudu.FunctionalTests
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Act
-                    repo.Replace("package.json", "0.8.2", "0.6.20");
-                    Git.Commit(repo.PhysicalPath, "Changes to 0.6.20");
-
                     GitDeploymentResult deployResult = appManager.GitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Assert.Contains("npm WARN engine NpmPackagePinnedVersion", deployResult.GitTrace);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, "v0.8.2");
 
                     // Act
-                    repo.Replace("package.json", "0.6.20", "0.8.2");
-                    Git.Commit(repo.PhysicalPath, "Changes to 0.8.2");
+                    repo.Replace("package.json", "0.8.2", "0.6.20");
+                    Git.Commit(repo.PhysicalPath, "Changes to 0.6.20");
+
+                    appManager.VfsWebRootManager.Delete("node_modules\\NpmPackagePinnedVersion\\package.json");
 
                     deployResult = appManager.GitDeploy(repo.PhysicalPath);
                     results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
@@ -171,7 +170,7 @@ namespace Kudu.FunctionalTests
                     // Assert
                     Assert.Equal(2, results.Count);
                     Assert.Equal(DeployStatus.Success, results[1].Status);
-                    KuduAssert.VerifyUrl(appManager.SiteUrl, "v0.8.2");
+                    Assert.Contains("npm WARN engine NpmPackagePinnedVersion", deployResult.GitTrace);
                 });
             }
         }
