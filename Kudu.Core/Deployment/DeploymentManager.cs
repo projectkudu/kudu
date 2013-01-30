@@ -165,7 +165,7 @@ namespace Kudu.Core.Deployment
             // If we don't get a changeset, find out what branch we should be deploying and update the repo to it
             if (changeSet == null)
             {
-                string targetBranch = _settings.GetValue(SettingsKeys.Branch);
+                string targetBranch = _settings.GetBranch();
                 deploymentRepository.Update(targetBranch);
 
                 changeSet = deploymentRepository.GetChangeSet(repository.CurrentId);
@@ -241,7 +241,7 @@ namespace Kudu.Core.Deployment
                 deployStep = tracer.Step("Deploy");
                 ReceiveInfo receiveInfo = deploymentRepository.GetReceiveInfo();
 
-                string targetBranch = _settings.GetValue(SettingsKeys.Branch);
+                string targetBranch = _settings.GetBranch();
 
                 tracer.Trace("Deploying branch '{0}'", targetBranch);
 

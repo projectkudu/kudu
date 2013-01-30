@@ -123,7 +123,7 @@ namespace Kudu.Web.Controllers
             if (ModelState.IsValid)
             {
                 var tcs = new TaskCompletionSource<ActionResult>();
-                _service.SetKuduSetting(slug, "branch", branch)
+                _service.SetKuduSetting(slug, SettingsKeys.DeploymentBranch, branch)
                                 .ContinueWith(task =>
                                 {
                                     if (task.IsFaulted)

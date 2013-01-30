@@ -76,7 +76,7 @@ namespace Kudu.Services
                 
                 // We are going to assume that the branch details are already set by the time it gets here. This is particularly important in the mercurial case, 
                 // since Settings hardcodes the default value for Branch to be "master". Consequently, Kudu will NoOp requests for Mercurial commits.
-                string targetBranch = _settings.GetValue(SettingsKeys.Branch);
+                string targetBranch = _settings.GetBranch();
                 try
                 {
                     var request = new HttpRequestWrapper(context.Request);

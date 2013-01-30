@@ -10,6 +10,11 @@ namespace Kudu.Contracts.Settings
         public static TimeSpan DefaultLogStreamTimeout = TimeSpan.FromSeconds(1800);
         public const TraceLevel DefaultTraceLevel = TraceLevel.Error;
 
+        public static string GetValue(this IDeploymentSettingsManager settings, string value)
+        {
+            return settings.GetValue(value, onlyPerSite: false);
+        }
+
         public static TraceLevel GetTraceLevel(this IDeploymentSettingsManager settings)
         {
             string value = settings.GetValue(SettingsKeys.TraceLevel);
@@ -67,6 +72,24 @@ namespace Kudu.Contracts.Settings
         {
             string value = settings.GetValue(SettingsKeys.GitEmail);
             return !String.IsNullOrEmpty(value) ? value : "unknown";
+        }
+
+        public static string GetBranch(this IDeploymentSettingsManager settings)
+        {
+            string value = settings.GetValue(SettingsKeys.Branch, onlyPerSite: true);
+            if (!String.IsNullOrEmpty(value))
+            {
+                return value;
+            }
+
+            return settings.GetValue(SettingsKeys.DeploymentBranch);
+        }
+
+        public static void SetBranch(this IDeploymentSettingsManager settings, string branchName)
+        {
+            // If we're updating branch, clear out the legacy value first
+            settings.DeleteValue(SettingsKeys.Branch);
+            settings.SetValue(SettingsKeys.DeploymentBranch, branchName);
         }
 
         // allow /deploy endpoint

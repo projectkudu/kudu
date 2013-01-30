@@ -76,6 +76,7 @@
     <Compile Include="CodePlexHandlerFacts.cs" />
     <Compile Include="GenericHandlerFacts.cs" />
     <Compile Include="GithubHandlerFacts.cs" />
+    <Compile Include="InfoRefsControllerFacts.cs" />
     <Compile Include="Infrastructure\MediaTypeMapTest.cs" />
     <Compile Include="KilnHgHandlerFacts.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
