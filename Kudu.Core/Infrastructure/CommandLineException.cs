@@ -26,5 +26,14 @@ namespace Kudu.Core.Infrastructure
         public int ExitCode { get; set; }
         public string Output { get; set; }
         public string Error { get; set; }
+
+        public override string ToString()
+        {
+            return String.Format("ExitCode: {0}, Output: {1}, Error: {2}, {3}", 
+                this.ExitCode,
+                this.Output,
+                this.Error,
+                base.ToString());
+        }
     }
 }

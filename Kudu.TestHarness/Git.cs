@@ -73,7 +73,7 @@ namespace Kudu.TestHarness
             {
                 // Swallow exceptions on comit, since things like changing line endings
                 // show up as an error
-                TestTracer.Trace("Commit failed with {0}", ex.Message);
+                TestTracer.Trace("Commit failed with {0}", ex);
             }
 
             // Verify that the commit did go thru

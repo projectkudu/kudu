@@ -1150,7 +1150,8 @@ command = deploy.cmd");
                 {
                     string deploymentFile = Path.Combine(repo.PhysicalPath, @".deployment");
                     File.WriteAllText(deploymentFile, String.Format(@"[config]
-project = {0}", targetProject));
+project = {0}
+", targetProject));
                     Git.Commit(repo.PhysicalPath, "Updated configuration " + Guid.NewGuid());
 
                     // Act
