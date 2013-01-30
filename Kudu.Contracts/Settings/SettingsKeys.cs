@@ -2,7 +2,12 @@
 {
     public static class SettingsKeys
     {
-        public const string Branch = "branch";
+        /// <remarks>
+        /// Legacy value that is superseded by DeploymentBranch
+        /// </remarks>
+        internal const string Branch = "branch";
+
+        public const string DeploymentBranch = "deployment_branch";
         public const string BuildArgs = "build_args";
         public const string TraceLevel = "trace_level";
         public const string CommandIdleTimeout = "command_idle_timeout";

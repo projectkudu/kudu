@@ -29,7 +29,7 @@ namespace Kudu.Core.Deployment.Test
         {
             // Arrange
             var settings = new Mock<IDeploymentSettingsManager>();
-            settings.Setup(s => s.GetValue(SettingsKeys.BuildArgs)).Returns("/extra_arg1 /extra_arg2");
+            settings.Setup(s => s.GetValue(SettingsKeys.BuildArgs, false)).Returns("/extra_arg1 /extra_arg2");
             var buildPropertyProvider = new Mock<IBuildPropertyProvider>();
             buildPropertyProvider.Setup(s => s.GetProperties()).Returns(new Dictionary<string, string> { { "ExtensionsPath", @"C:\Program Files" }, { "flp", "Detailed" } });
             var wapBuilder = new WapBuilder(settings.Object, buildPropertyProvider.Object, @"x:\source-path", @"x:\project-path", @"x:\temp-path", @"x:\solution-dir\sol-path");
@@ -46,7 +46,7 @@ namespace Kudu.Core.Deployment.Test
         {
             // Arrange
             var settings = new Mock<IDeploymentSettingsManager>();
-            settings.Setup(s => s.GetValue(SettingsKeys.BuildArgs)).Returns("/extra_arg1 /extra_arg2");
+            settings.Setup(s => s.GetValue(SettingsKeys.BuildArgs, false)).Returns("/extra_arg1 /extra_arg2");
             var buildPropertyProvider = new Mock<IBuildPropertyProvider>();
             buildPropertyProvider.Setup(s => s.GetProperties()).Returns(new Dictionary<string, string>(0));
             var wapBuilder = new WapBuilder(settings.Object, buildPropertyProvider.Object, @"x:\source-path", @"x:\project-path", @"x:\temp-path", @"x:\solution-dir\sol-path");

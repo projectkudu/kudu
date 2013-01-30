@@ -92,7 +92,7 @@ namespace Kudu.FunctionalTests
 
         private static void CheckSettings(NameValueCollection results)
         {
-            Assert.Equal("master", results[SettingsKeys.Branch]);
+            Assert.Equal("master", results["deployment_branch"]);
             Assert.Equal("", results[SettingsKeys.BuildArgs]);
             if (!System.Diagnostics.Debugger.IsAttached)
             {

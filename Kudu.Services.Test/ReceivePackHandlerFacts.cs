@@ -1,5 +1,4 @@
-﻿using System;
-using System.Web;
+﻿using System.Web;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
@@ -20,7 +19,7 @@ namespace Kudu.Services.Test
         {
             // Arrange
             var settings = new Mock<IDeploymentSettingsManager>(MockBehavior.Strict);
-            settings.Setup(s => s.GetValue("ScmType")).Returns("None");
+            settings.Setup(s => s.GetValue("ScmType", false)).Returns("None");
 
             var response = Mock.Of<HttpResponseBase>();
             var context = new Mock<HttpContextBase>();
@@ -40,7 +39,7 @@ namespace Kudu.Services.Test
         {
             // Arrange
             var settings = new Mock<IDeploymentSettingsManager>(MockBehavior.Strict);
-            settings.Setup(s => s.GetValue("ScmType")).Returns("Git");
+            settings.Setup(s => s.GetValue("ScmType", false)).Returns("Git");
 
             var response = Mock.Of<HttpResponseBase>();
             var context = new Mock<HttpContextBase>();
