@@ -21,7 +21,7 @@ namespace Kudu.Services.Test
         {
             // Arrange
             var settings = new Mock<IDeploymentSettingsManager>(MockBehavior.Strict);
-            settings.Setup(s => s.GetValue("ScmType")).Returns("None");
+            settings.Setup(s => s.GetValue("ScmType", false)).Returns("None");
 
             var request = new HttpRequestMessage();
             InfoRefsController controller = CreateController(settings: settings.Object);
@@ -39,7 +39,7 @@ namespace Kudu.Services.Test
         {
             // Arrange
             var settings = new Mock<IDeploymentSettingsManager>(MockBehavior.Strict);
-            settings.Setup(s => s.GetValue("ScmType")).Returns("Git");
+            settings.Setup(s => s.GetValue("ScmType", false)).Returns("Git");
 
             var exception = new Exception();
             var repositoryFactory = new Mock<IRepositoryFactory>(MockBehavior.Strict);

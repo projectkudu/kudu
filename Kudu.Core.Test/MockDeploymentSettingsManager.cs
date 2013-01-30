@@ -7,7 +7,7 @@ namespace Kudu.Core.Test
     public class MockDeploymentSettingsManager : IDeploymentSettingsManager
     {
         private static Dictionary<string, string> _defaultSettings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-            { SettingsKeys.Branch, "master" },
+            { SettingsKeys.DeploymentBranch, "master" },
             { SettingsKeys.TraceLevel, ((int)DeploymentSettingsExtension.DefaultTraceLevel).ToString() },
             { SettingsKeys.CommandIdleTimeout, ((int)DeploymentSettingsExtension.DefaultCommandIdleTimeout.TotalSeconds).ToString() },
             { SettingsKeys.BuildArgs, "" }
@@ -25,7 +25,7 @@ namespace Kudu.Core.Test
             return _settings;
         }
 
-        public string GetValue(string key)
+        public string GetValue(string key, bool preventUnification = false)
         {
             string value;
             _settings.TryGetValue(key, out value);

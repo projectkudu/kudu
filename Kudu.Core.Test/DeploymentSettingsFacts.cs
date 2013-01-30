@@ -2,13 +2,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Web;
 using Kudu.Contracts.Settings;
-using Kudu.Core.SourceControl;
-using Kudu.Core.SourceControl.Git;
-using Kudu.Services.ServiceHookHandlers;
+using Kudu.Core.Settings;
 using Moq;
-using Newtonsoft.Json.Linq;
+using XmlSettings;
 using Xunit;
 using Xunit.Extensions;
 
@@ -47,6 +44,90 @@ namespace Kudu.Core.Test
 
             // Assert
             Assert.Equal(expected, settings.GetTraceLevel());
+        }
+
+        [Fact]
+        public void GetBranchUsesPersistedBranchValueIfAvailable()
+        {
+            // Arrange
+            var settings = new Mock<ISettings>();
+            settings.Setup(s => s.GetValue("deployment", "branch")).Returns("my-branch");
+            var deploymentSettings = new DeploymentSettingsManager(settings.Object, new Dictionary<string, string>());
+
+            // Act
+            string branch = deploymentSettings.GetBranch();
+
+            // Assert
+            Assert.Equal("my-branch", branch);
+        }
+
+        [Fact]
+        public void GetBranchUsesDeploymentBranchIfLegacyValueIsUnavailable()
+        {
+            // Arrange
+            var settings = new Mock<ISettings>();
+            settings.Setup(s => s.GetValue("deployment", "deployment_branch")).Returns("my-branch");
+            var deploymentSettings = new DeploymentSettingsManager(settings.Object, new Dictionary<string, string>());
+
+            // Act
+            string branch = deploymentSettings.GetBranch();
+
+            // Assert
+            Assert.Equal("my-branch", branch);
+        }
+
+        [Fact]
+        public void GetBranchUsesLegacyBranchValueIfDeploymentBranchIsOnlyAvailableAsPartOfEnvironment()
+        {
+            // Arrange
+            var settings = new Mock<ISettings>();
+            var defaultSettings = new Dictionary<string, string> 
+            {
+                { "deployment_branch", "my-deployment-branch" }
+            };
+            settings.Setup(s => s.GetValue("deployment", "branch")).Returns("my-branch");
+            var deploymentSettings = new DeploymentSettingsManager(settings.Object, defaultSettings);
+
+            // Act
+            string branch = deploymentSettings.GetBranch();
+
+            // Assert
+            Assert.Equal("my-branch", branch);
+        }
+
+        [Fact]
+        public void GetBranchDoesNotUnifyValuesWithLegacyKey()
+        {
+            // Arrange
+            var settings = Mock.Of<ISettings>();
+            var defaultSettings = new Dictionary<string, string> 
+            {
+                { "deployment_branch", "my-deployment-branch" },
+                { "branch", "my-legacy-branch" }
+            };
+            var deploymentSettings = new DeploymentSettingsManager(settings, defaultSettings);
+
+            // Act
+            string branch = deploymentSettings.GetBranch();
+
+            // Assert
+            Assert.Equal("my-deployment-branch", branch);
+        }
+
+        [Fact]
+        public void SetBranchClearsLegacyKeyIfPresent()
+        {
+            // Arrange
+            var settings = new Mock<ISettings>(MockBehavior.Strict);
+            settings.Setup(s => s.DeleteValue("deployment", "branch")).Returns(true).Verifiable();
+            settings.Setup(s => s.SetValue("deployment", "deployment_branch", "my-branch")).Verifiable();
+            var deploymentSettings = new DeploymentSettingsManager(settings.Object, new Dictionary<string, string>());
+
+            // Act
+            deploymentSettings.SetBranch("my-branch");
+
+            // Assert
+            settings.Verify();
         }
 
         class CommandIdleTimeoutData : SettingsData

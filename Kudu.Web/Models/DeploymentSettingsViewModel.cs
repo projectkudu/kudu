@@ -8,7 +8,7 @@ namespace Kudu.Web.Models
     public class DeploymentSettingsViewModel
     {
         // these keys are not allowed to be added as a custom property, this is validated by the controller
-        public static readonly string[] ReservedSettingKeys = new[] { SettingsKeys.Branch, SettingsKeys.BuildArgs };
+        public static readonly string[] ReservedSettingKeys = new[] { SettingsKeys.DeploymentBranch, SettingsKeys.BuildArgs };
         
         public string Branch { get; set; }
 
@@ -28,7 +28,7 @@ namespace Kudu.Web.Models
             {
                 foreach (var key in kuduSettings.AllKeys)
                 {
-                    if (SettingsKeys.Branch.Equals(key))
+                    if (SettingsKeys.DeploymentBranch.Equals(key))
                     {
                         Branch = kuduSettings.Get(key);
                         continue;
