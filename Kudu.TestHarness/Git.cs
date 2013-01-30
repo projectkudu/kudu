@@ -31,9 +31,6 @@ namespace Kudu.TestHarness
                     stdErr = GitExecute(gitExe, "push {0} {1}:{2}", url, localBranchName, remoteBranchName).Item2;
                 }
 
-                // Dump out the error stream (git curl verbose)
-                TestTracer.Trace("\n------------------\ngit push output\n------------------\n{0}", stdErr);
-
                 return stdErr;
             }
         }
@@ -77,6 +74,13 @@ namespace Kudu.TestHarness
                 // Swallow exceptions on comit, since things like changing line endings
                 // show up as an error
                 TestTracer.Trace("Commit failed with {0}", ex.Message);
+            }
+
+            // Verify that the commit did go thru
+            string lastCommitMessage = GitExecute(gitExe, "log --oneline -1").Item1;
+            if (lastCommitMessage == null || !lastCommitMessage.Contains(message))
+            {
+                throw new InvalidOperationException(String.Format("Mismatched commit message '{0}' != '{1}'", lastCommitMessage, message));
             }
         }
 
@@ -277,7 +281,10 @@ namespace Kudu.TestHarness
         {
             var command = String.Format(commandFormat, args);
             TestTracer.Trace("Executing: git {0}", command);
-            return gitExe.Execute(command);
+            Tuple<string, string> result = gitExe.Execute(command);
+            TestTracer.Trace("  stdout: {0}", result.Item1);
+            TestTracer.Trace("  stderr: {0}", result.Item2);
+            return result;
         }
     }
 }

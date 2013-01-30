@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
@@ -37,14 +38,13 @@ namespace Kudu.FunctionalTests
         {
             ApplicationManager.Run("KuduUpTimeTest", appManager =>
             {
-                string upTime = appManager.GetKuduUpTime();
+                TimeSpan upTime = TimeSpan.Parse(appManager.GetKuduUpTime());
 
-                // 00:39:09.1443904
-                Assert.Contains(":", upTime);
+                TestTracer.Trace("UpTime: {0}", upTime);
 
                 // some time the upTime is 00:00:00 (TimeSpan.Zero!).
                 // Need to do more investigation.
-                // Assert.Contains(".", upTime);
+                // Assert.NotEqual<TimeSpan>(TimeSpan.Zero, upTime);
             });
         }
     }
