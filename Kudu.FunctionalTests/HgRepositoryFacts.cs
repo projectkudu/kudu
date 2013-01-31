@@ -15,7 +15,7 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void HgExecutableClonesRepository()
         {
-            const string expectedId = "42c0d799763d7acbe4312d000f771ec0afa0d6ab";
+            const string expectedId = "e2ff43634d31a70383142a4b3940baff8b6386ee";
             const string source = "https://kudutest@bitbucket.org/kudutest/hellomercurial";
             // Arrange
             using (TestRepository testRepository = GetRepository(source))
@@ -51,8 +51,8 @@ namespace Kudu.FunctionalTests
                 hgRepo.FetchWithoutConflict(remoteRepository, remoteAlias: null, branchName: "default");
                 
                 // Assert - 1
-                Assert.Equal("Hello mercurial", File.ReadAllText(helloTextPath));
-                Assert.Equal("42c0d799763d7acbe4312d000f771ec0afa0d6ab", hgRepo.CurrentId);
+                Assert.Equal("Hello mercurial!", File.ReadAllText(helloTextPath));
+                Assert.Equal("e2ff43634d31a70383142a4b3940baff8b6386ee", hgRepo.CurrentId);
 
                 // Act - 2
                 // Make uncommitted changes
