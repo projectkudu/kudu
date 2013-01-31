@@ -67,11 +67,6 @@ namespace Kudu.Services.GitServer
         {
             using (_tracer.Step("InfoRefsService.Execute"))
             {
-                if (!_settings.IsScmEnabled())
-                {
-                    return Request.CreateErrorResponse(HttpStatusCode.Forbidden, Resources.Error_GitIsDisabled);
-                }
-
                 // Ensure that the target directory does not have a non-Git repository.
                 IRepository repository = _repositoryFactory.GetRepository();
                 if (repository != null && repository.RepositoryType != RepositoryType.Git)

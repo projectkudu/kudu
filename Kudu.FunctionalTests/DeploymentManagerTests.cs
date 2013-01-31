@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 using Kudu.Client;
 using Kudu.Client.Deployment;
 using Kudu.Client.Infrastructure;
+using Kudu.Contracts.Settings;
+using Kudu.Contracts.SourceControl;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
@@ -537,6 +539,29 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public void PullApiTestSimpleFormatWithScmTypeNone()
+        {
+            var payload = new JObject();
+            payload["url"] = "https://github.com/KuduApps/HelloKudu";
+            payload["format"] = "basic";
+            string appName = "HelloKudu";
+
+            ApplicationManager.Run(appName, appManager =>
+            {
+                appManager.SettingsManager.SetValue(SettingsKeys.ScmType, ScmType.None.ToString()).Wait();
+
+                DeployPayloadHelper(appManager, client => client.PostAsJsonAsync("deploy", payload));
+
+                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                Assert.Equal(1, results.Count);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
+                Assert.Equal("GitHub", results[0].Deployer);
+
+                KuduAssert.VerifyUrl(appManager.SiteUrl, "Hello Kudu");
+            });
+        }
+
+        [Fact]
         public void DeployHookWithInvalidHttpMethod()
         {
             string appName = "HelloKudu";
@@ -587,8 +612,11 @@ namespace Kudu.FunctionalTests
                 }
                 catch (HttpUnsuccessfulRequestException ex)
                 {
-                    if (ex.ResponseMessage.ExceptionMessage.Contains("403 while accessing https://github.com"))
+                    if (ex.ResponseMessage.ExceptionMessage.Contains("403 while accessing https://github.com")
+                     || ex.ResponseMessage.ExceptionMessage.Contains("Unknown SSL protocol error in connection to github.com"))
                     {
+                        TestTracer.Trace("Retry due to github flakiness");
+
                         if (--retries > 0)
                         {
                             Thread.Sleep(duration);

@@ -45,13 +45,6 @@ namespace Kudu.Services.GitServer
         {
             using (_tracer.Step("RpcService.UploadPackHandler"))
             {
-                if (!_settings.IsScmEnabled())
-                {
-                    context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
-                    context.ApplicationInstance.CompleteRequest();
-                    return;
-                }
-
                 UpdateNoCacheForResponse(context.Response);
 
                 context.Response.ContentType = "application/x-git-{0}-result".With("upload-pack");

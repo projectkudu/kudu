@@ -63,13 +63,6 @@ namespace Kudu.Services
         {
             using (_tracer.Step("FetchHandler"))
             {
-                if (!_settings.IsScmEnabled())
-                {
-                    context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
-                    context.ApplicationInstance.CompleteRequest();
-                    return;
-                }
-
                 if (!String.Equals(context.Request.HttpMethod, "POST", StringComparison.OrdinalIgnoreCase))
                 {
                     context.Response.StatusCode = (int)HttpStatusCode.NotFound;
@@ -91,6 +84,18 @@ namespace Kudu.Services
                     DeployAction action = GetRepositoryInfo(request, payload, targetBranch, out deployInfo);
                     if (action == DeployAction.NoOp)
                     {
+                        return;
+                    }
+
+                    // If Scm is not enabled, we will reject all but one payload for GenericHandler
+                    // This is to block the unintended CI with Scm providers like GitHub
+                    // Since Generic payload can only be done by user action, we loosely allow
+                    // that and assume users know what they are doing.  Same applies to git
+                    // push/clone endpoint.
+                    if (!_settings.IsScmEnabled() && !(deployInfo.Handler is GenericHandler || deployInfo.Handler is DropboxHandler))
+                    {
+                        context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                        context.ApplicationInstance.CompleteRequest();
                         return;
                     }
                 }

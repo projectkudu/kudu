@@ -69,7 +69,7 @@ namespace Kudu.Contracts.Settings
             return !String.IsNullOrEmpty(value) ? value : "unknown";
         }
 
-        // allow git push, clone, /deploy endpoints
+        // allow /deploy endpoint
         public static bool IsScmEnabled(this IDeploymentSettingsManager settings)
         {
             string scmType = settings.GetValue(SettingsKeys.ScmType);

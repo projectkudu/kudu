@@ -52,16 +52,6 @@ namespace Kudu.Services.GitServer
         {
             using (_tracer.Step("RpcService.ReceivePack"))
             {
-                if (!_settings.IsScmEnabled())
-                {
-                    context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
-                    if (context.ApplicationInstance != null)
-                    {
-                        context.ApplicationInstance.CompleteRequest();
-                    }
-                    return;
-                }
-
                 // Ensure that the target directory does not have a non-Git repository.
                 IRepository repository = _repositoryFactory.GetRepository();
                 if (repository != null && repository.RepositoryType != RepositoryType.Git)
