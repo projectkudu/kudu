@@ -38,7 +38,7 @@ namespace Kudu.Services.ServiceHookHandlers
                 deploymentInfo.TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(
                     authorName: dropboxInfo.DeployInfo.UserName,
                     authorEmail: dropboxInfo.DeployInfo.Email,
-                    message: "Syncing with dropbox at " + DateTime.UtcNow.ToString("g"));
+                    message: "Syncing with Dropbox");
 
                 return DeployAction.ProcessDeployment;
             }

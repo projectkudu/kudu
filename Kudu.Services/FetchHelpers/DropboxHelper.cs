@@ -17,7 +17,7 @@ namespace Kudu.Services
 {
     public class DropboxHelper
     {
-        public const string Dropbox = "dropbox";
+        public const string Dropbox = "Dropbox";
         public const string CursorKey = "dropbox_cursor";
 
         private const string DropboxApiContentUri = "https://api-content.dropbox.com/";
@@ -70,7 +70,7 @@ namespace Kudu.Services
             finally
             {
                 // Commit anyway even partial change
-                changeSet = _repository.Commit(prefix + " with dropbox at " + DateTime.UtcNow.ToString("g"), String.Format("{0} <{1}>", info.UserName, info.Email));
+                changeSet = _repository.Commit(prefix + " with Dropbox", String.Format("{0} <{1}>", info.UserName, info.Email));
             }
 
             // Save new dropboc cursor
