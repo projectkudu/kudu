@@ -613,7 +613,8 @@ namespace Kudu.FunctionalTests
                 catch (HttpUnsuccessfulRequestException ex)
                 {
                     if (ex.ResponseMessage.ExceptionMessage.Contains("403 while accessing https://github.com")
-                     || ex.ResponseMessage.ExceptionMessage.Contains("Unknown SSL protocol error in connection to github.com"))
+                     || ex.ResponseMessage.ExceptionMessage.Contains("Unknown SSL protocol error in connection to github.com")
+                     || ex.ResponseMessage.ExceptionMessage.Contains("fatal: The remote end hung up unexpectedly"))
                     {
                         TestTracer.Trace("Retry due to github flakiness");
 
