@@ -17,6 +17,7 @@ namespace Kudu.Services.ServiceHookHandlers
                 return DeployAction.UnknownPayload;
             }
 
+            // { url: "", branch: "", deployer: "", oldRef: "", newRef: "", scmType: "Git" } 
             string newRef = payload.Value<string>("newRef");
             string scm = payload.Value<string>("scmType");
             string branch = payload.Value<string>("branch");
@@ -28,25 +29,14 @@ namespace Kudu.Services.ServiceHookHandlers
                 TargetChangeset = new ChangeSet(newRef, authorName: null, authorEmail: null, message: null, timestamp: DateTimeOffset.Now)
             };
 
-            if ("Mercurial".Equals(scm, StringComparison.OrdinalIgnoreCase))
-            {
-                // { url: "", branch: "", deployer: "", scmType: "Mercurial" }
-                deploymentInfo.RepositoryType = RepositoryType.Mercurial;
-                // TODO: Figure out what happens when you delete the branch and handle that.
-                return targetBranch.Equals(branch, StringComparison.OrdinalIgnoreCase) ? DeployAction.ProcessDeployment : DeployAction.NoOp;
-            }
-            else
-            {
-                // Look for the generic format
-                // { url: "", branch: "", deployer: "", oldRef: "", newRef: "", scmType: "Git" } 
-                
-                
-                deploymentInfo.RepositoryType = RepositoryType.Git;
-                
-                // Ignore the deployment request (a) if the target branch does not match the deployed branch or (b) if the newRef is all zero (deleted changesets)
-                return (deploymentInfo.IsValid() && (!targetBranch.Equals(branch, StringComparison.OrdinalIgnoreCase) || newRef.All(c => c == '0'))) ? 
-                        DeployAction.NoOp : DeployAction.ProcessDeployment;
-            }
+            deploymentInfo.RepositoryType = ("Mercurial".Equals(scm, StringComparison.OrdinalIgnoreCase)) ? RepositoryType.Mercurial : RepositoryType.Git;
+
+            // Ignore the deployment request 
+            // (a) if the target branch does not exist (null or empty string). This happens during test hook
+            // (b) if the target branch does not have the same name as the deployed branch
+            // (c) if the newRef is all zero (deleted changesets)
+            return (String.IsNullOrEmpty(branch) || targetBranch.Equals(branch, StringComparison.OrdinalIgnoreCase)) && newRef.Any(c => c != '0') ?
+                   DeployAction.ProcessDeployment : DeployAction.NoOp;
         }
     }
 }

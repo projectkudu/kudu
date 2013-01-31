@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web;
+﻿using System.Web;
 using Kudu.Core.SourceControl;
 using Kudu.Services.ServiceHookHandlers;
 using Moq;
@@ -127,6 +122,24 @@ namespace Kudu.Services.Test
 
             // Assert
             Assert.Equal(DeployAction.NoOp, result);
+        }
+        
+        [Theory]
+        [InlineData(@"{ ""deployer"": ""codeplex"", ""newRef"": ""34bb60effd75"", ""oldRef"": ""000000000000"", ""scmType"": ""Git"", ""url"": ""https://git01.codeplex.com/mvc4application"" }")]
+        [InlineData(@"{ ""deployer"": ""codeplex"", ""newRef"": ""8172e1304f9c"", ""oldRef"": ""000000000000"", ""scmType"": ""c"", ""url"": ""https://hg.codeplex.com/merctest2"" }")]
+        public void CodePlexHandlerParsesInitialPayloadThatDoesNotHaveBranchInfo(string payloadContent)
+        {
+            // Arrange
+            var httpRequest = new Mock<HttpRequestBase>();
+            var handler = new CodePlexHandler();
+            JObject payload = JObject.Parse(payloadContent);
+
+            // Act
+            DeploymentInfo deploymentInfo;
+            DeployAction result = handler.TryParseDeploymentInfo(httpRequest.Object, payload: payload, targetBranch: "production", deploymentInfo: out deploymentInfo);
+
+            // Assert
+            Assert.Equal(DeployAction.ProcessDeployment, result);
         }
     }
 }
