@@ -8,11 +8,11 @@ namespace Kudu.TestHarness
     {
         private static readonly string _tempPath = Path.Combine(Path.GetPathRoot(Directory.GetCurrentDirectory()), "Kudu-Test-Files"); 
         private static readonly string _localRepositoriesDir = Path.Combine(_tempPath, "TestRepositories", Path.GetRandomFileName());
-        private static readonly string _repositoryCachePath = ConfigurationManager.AppSettings["repositoryCachePath"] ?? Path.Combine(_tempPath, "RepositoryCache");
+        private static readonly string _repositoryCachePath = KuduUtils.GetTestSetting("repositoryCachePath") ?? Path.Combine(_tempPath, "RepositoryCache");
 
         // Hard code the path to the services site (makes it easier to debug)
-        internal static readonly string ServiceSitePath = ConfigurationManager.AppSettings["serviceSitePath"] ?? Path.GetFullPath(@"..\..\..\Kudu.Services.Web");
-        internal static readonly string SitesPath = ConfigurationManager.AppSettings["sitesPath"] ?? Path.Combine(_tempPath, "KuduApps");
+        internal static readonly string ServiceSitePath = KuduUtils.GetTestSetting("serviceSitePath") ?? Path.GetFullPath(@"..\..\..\Kudu.Services.Web");
+        internal static readonly string SitesPath = KuduUtils.GetTestSetting("sitesPath") ?? Path.Combine(_tempPath, "KuduApps");
 
         // Test paths
         internal static readonly string TestsRootPath = Path.Combine(Directory.GetCurrentDirectory(), "Tests");

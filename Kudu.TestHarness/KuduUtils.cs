@@ -109,7 +109,7 @@ namespace Kudu.TestHarness
             }
         }
 
-        private static string GetTestSetting(string settingName)
+        public static string GetTestSetting(string settingName)
         {
             // If value exists as an environment setting use that otherwise try to get from app settings (for usage of the ci)
             string environmentValue = Environment.GetEnvironmentVariable(settingName);
