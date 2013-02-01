@@ -779,6 +779,9 @@ command = deploy.cmd");
 
                     // Make sure a web.config file got created at deployment time
                     Assert.True(appManager.VfsWebRootManager.Exists("web.config"));
+
+                    // Make sure the web.config file doesn't exist on the repository after the deployment finished
+                    Assert.False(appManager.VfsManager.Exists("site\\repository\\web.config"));
                 });
             }
         }
