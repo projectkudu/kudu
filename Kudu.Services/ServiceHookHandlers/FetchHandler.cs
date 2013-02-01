@@ -168,7 +168,7 @@ namespace Kudu.Services
 
                         // Fetch changes from the repository
                         innerLogger = logger.Log(Resources.FetchingChanges);
-                        deploymentInfo.Handler.Fetch(repository, deploymentInfo, targetBranch);
+                        deploymentInfo.Handler.Fetch(repository, deploymentInfo, targetBranch, innerLogger);
 
                         // set to null as Deploy() below takes over logging
                         innerLogger = null;
