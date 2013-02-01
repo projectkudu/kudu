@@ -46,11 +46,11 @@ namespace Kudu.Services.ServiceHookHandlers
             return DeployAction.UnknownPayload;
         }
 
-        public virtual void Fetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch)
+        public virtual void Fetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch, ILogger logger)
         {
             // Sync with dropbox
             var dropboxInfo = ((DropboxInfo)deploymentInfo);
-            deploymentInfo.TargetChangeset = _dropBoxHelper.Sync(dropboxInfo.DeployInfo, targetBranch);
+            deploymentInfo.TargetChangeset = _dropBoxHelper.Sync(dropboxInfo.DeployInfo, targetBranch, logger);
         }
 
         internal class DropboxInfo : DeploymentInfo

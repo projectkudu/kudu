@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -11,6 +12,7 @@ using Kudu.Contracts.Dropbox;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
+using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
 
 namespace Kudu.Services
@@ -30,6 +32,8 @@ namespace Kudu.Services
         private readonly IEnvironment _environment;
         private readonly TimeSpan _timeout;
 
+        private ILogger _logger;
+
         public DropboxHelper(ITracer tracer,
                              IServerRepository repository,
                              IDeploymentSettingsManager settings,
@@ -42,8 +46,10 @@ namespace Kudu.Services
             _timeout = settings.GetCommandIdleTimeout();
         }
 
-        public ChangeSet Sync(DropboxDeployInfo info, string branch)
+        public ChangeSet Sync(DropboxDeployInfo info, string branch, ILogger logger)
         {
+            _logger = logger;
+
             if (_settings.GetValue(CursorKey) != info.OldCursor)
             {
                 throw new InvalidOperationException(Resources.Error_MismatchDropboxCursor);
@@ -74,7 +80,7 @@ namespace Kudu.Services
             }
 
             // Save new dropboc cursor
-            _tracer.Trace("Update dropbox cursor");
+            LogInfo("Update dropbox cursor");
             _settings.SetValue(CursorKey, info.NewCursor);
 
             return changeSet;
@@ -125,7 +131,7 @@ namespace Kudu.Services
                     DateTime modified = DateTime.Parse(delta.Modified).ToUniversalTime();
                     if (!IsFileChanged(parent, path, modified))
                     {
-                        _tracer.Trace("file unchanged {0}", path);
+                        LogInfo("file unchanged {0}", path);
                         continue;
                     }
 
@@ -140,9 +146,9 @@ namespace Kudu.Services
                             sem.Release();
                             if (!t.IsFaulted && !t.IsCanceled)
                             {
-                                using (Stream stream = t.Result)
+                                using (StreamInfo streamInfo = t.Result)
                                 {
-                                    SafeWriteFile(parent, path, stream, modified);
+                                    SafeWriteFile(parent, path, streamInfo.Stream, modified);
                                 }
                             }
 
@@ -152,7 +158,7 @@ namespace Kudu.Services
                     catch (Exception ex)
                     {
                         sem.Release();
-                        _tracer.TraceError(ex);
+                        LogError("{0}", ex);
                         Task.WaitAll(tasks.ToArray(), _timeout);
                         throw;
                     }
@@ -179,12 +185,12 @@ namespace Kudu.Services
             if (File.Exists(fullPath))
             {
                 File.Delete(fullPath);
-                _tracer.Trace("del " + path);
+                LogInfo("del " + path);
             }
             else if (Directory.Exists(fullPath))
             {
                 Directory.Delete(fullPath, recursive: true);
-                _tracer.Trace("rmdir /s " + path);
+                LogInfo("rmdir /s " + path);
             }
         }
 
@@ -194,13 +200,13 @@ namespace Kudu.Services
             if (File.Exists(fullPath))
             {
                 File.Delete(fullPath);
-                _tracer.Trace("del " + path);
+                LogInfo("del " + path);
             }
 
             if (!Directory.Exists(fullPath))
             {
                 Directory.CreateDirectory(fullPath);
-                _tracer.Trace("mkdir " + path);
+                LogInfo("mkdir " + path);
             }
         }
 
@@ -210,13 +216,13 @@ namespace Kudu.Services
             if (Directory.Exists(fullPath))
             {
                 Directory.Delete(fullPath, true);
-                _tracer.Trace("rmdir /s " + path);
+                LogInfo("rmdir /s " + path);
             }
 
             using (FileStream fs = new FileStream(fullPath, FileMode.Create, FileAccess.Write))
             {
                 stream.CopyTo(fs);
-                _tracer.Trace("write {0,6} bytes to {1}", fs.Length, path);
+                LogInfo("write {0,6} bytes to {1}", fs.Length, path);
             }
 
             File.SetLastWriteTimeUtc(fullPath, modified);
@@ -228,7 +234,7 @@ namespace Kudu.Services
             return Path.Combine(_environment.RepositoryPath, relativePath);
         }
 
-        private Task<Stream> GetFileAsync(DropboxDeployInfo info, DropboxDeltaInfo delta)
+        private Task<StreamInfo> GetFileAsync(DropboxDeployInfo info, DropboxDeltaInfo delta)
         {
             var parameters = new Dictionary<string, string>
             {
@@ -257,12 +263,12 @@ namespace Kudu.Services
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("OAuth", sb.ToString());
 
             // Using ContinueWith instead of Then to avoid SyncContext deadlock in 4.5
-            TaskCompletionSource<Task<Stream>> tcs = new TaskCompletionSource<Task<Stream>>();
+            var tcs = new TaskCompletionSource<Task<StreamInfo>>();
             client.GetAsync(SandboxFilePath + delta.Path.ToLower()).ContinueWith(t =>
             {
                 if (t.IsFaulted)
                 {
-                    _tracer.TraceError("Get '" + SandboxFilePath + delta.Path + "' failed with " + t.Exception);
+                    LogError("Get '" + SandboxFilePath + delta.Path + "' failed with " + t.Exception);
                     tcs.TrySetException(t.Exception.InnerExceptions);
                 }
                 else if (t.IsCanceled)
@@ -273,17 +279,93 @@ namespace Kudu.Services
                 {
                     try
                     {
-                        tcs.TrySetResult(t.Result.EnsureSuccessStatusCode().Content.ReadAsStreamAsync());
+                        HttpResponseMessage response = t.Result.EnsureSuccessStatusCode(); 
+                        tcs.TrySetResult(GetStreamInfo(client, response, delta.Path));
                     }
                     catch (Exception ex)
                     {
-                        _tracer.TraceError("Get '" + SandboxFilePath + delta.Path + "' failed with " + ex);
+                        LogError("Get '" + SandboxFilePath + delta.Path + "' failed with " + ex);
                         tcs.TrySetException(ex);
                     }
                 }
             });
 
             return tcs.Task.FastUnwrap();
+        }
+
+        private void LogInfo(string value, params object[] args)
+        {
+            string message = String.Format(CultureInfo.CurrentCulture, value, args);
+            _logger.Log(message);
+            _tracer.Trace(message);
+        }
+
+        private void LogError(string value, params object[] args)
+        {
+            string message = String.Format(CultureInfo.CurrentCulture, value, args);
+            _logger.Log(message, LogEntryType.Error);
+            _tracer.TraceError(message);
+        }
+
+        private Task<StreamInfo> GetStreamInfo(HttpClient client, HttpResponseMessage response, string path)
+        {
+            var tcs = new TaskCompletionSource<StreamInfo>();
+
+            response.Content.ReadAsStreamAsync().ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    LogError("Get '" + SandboxFilePath + path + "' failed with " + t.Exception);
+                    tcs.TrySetException(t.Exception.InnerExceptions);
+                }
+                else if (t.IsCanceled)
+                {
+                    tcs.TrySetCanceled();
+                }
+                else
+                {
+                    try
+                    {
+                        tcs.TrySetResult(new StreamInfo(client, response, t.Result));
+                    }
+                    catch (Exception ex)
+                    {
+                        LogError("Get '" + SandboxFilePath + path + "' failed with " + ex);
+                        tcs.TrySetException(ex);
+                    }
+                }
+            });
+
+            return tcs.Task;
+        }
+
+        class StreamInfo : IDisposable
+        {
+            private readonly HttpClient _client;
+            private readonly HttpResponseMessage _response;
+            private readonly Stream _stream;
+
+            public StreamInfo(HttpClient client, HttpResponseMessage response, Stream stream)
+            {
+                _client = client;
+                _response = response;
+                _stream = stream;
+            }
+
+            public Stream Stream
+            {
+                get { return this._stream; }
+            }
+
+            public void Dispose()
+            {
+                // optimize codes for success
+                // we don't do nested try/finally to handle failure dispose
+                // we let GC take care of that
+                _stream.Dispose();
+                _response.Dispose();
+                _client.Dispose();
+            }
         }
     }
 }
