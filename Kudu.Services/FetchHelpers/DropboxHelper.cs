@@ -296,7 +296,6 @@ namespace Kudu.Services
         private void LogInfo(string value, params object[] args)
         {
             string message = String.Format(CultureInfo.CurrentCulture, value, args);
-            _logger.Log(message);
             _tracer.Trace(message);
         }
 
