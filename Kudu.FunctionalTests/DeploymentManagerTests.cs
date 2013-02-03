@@ -589,6 +589,12 @@ namespace Kudu.FunctionalTests
                 Assert.True(details.Count > 0, "must have at one log detail entry.");
                 Assert.Contains("unable to create file symfony", details[0].Message);
                 Assert.Equal(LogEntryType.Error, details[0].Type);
+
+                // Must not have entry with "An unknown error has occurred"
+                foreach (var detail in details)
+                {
+                    Assert.False(detail.Message.Contains("An unknown error has occurred"), "Must not contain unknow error!");
+                }
             });
         }
 
