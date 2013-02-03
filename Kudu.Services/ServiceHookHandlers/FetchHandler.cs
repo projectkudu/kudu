@@ -199,6 +199,8 @@ namespace Kudu.Services
                             innerLogger.Log(ex);
                         }
 
+                        _deploymentManager.MarkFailed(deploymentInfo.TargetChangeset.Id);
+
                         throw;
                     }
 

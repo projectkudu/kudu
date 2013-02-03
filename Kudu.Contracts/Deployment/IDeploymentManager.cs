@@ -25,5 +25,6 @@ namespace Kudu.Core.Deployment
         IDisposable CreateTemporaryDeployment(string statusText, ChangeSet changeset = null, string deployedBy = null);
 
         ILogger GetLogger(string id);
+        void MarkFailed(string id);
     }
 }

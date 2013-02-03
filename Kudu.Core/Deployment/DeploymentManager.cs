@@ -219,6 +219,8 @@ namespace Kudu.Core.Deployment
                     innerLogger.Log(ex);
                 }
 
+                MarkFailed(id);
+
                 tracer.TraceError(ex);
 
                 if (deployStep != null)
@@ -236,6 +238,7 @@ namespace Kudu.Core.Deployment
             IDisposable deployStep = null;
             ILogger innerLogger = null;
             var deploymentRepository = new DeploymentRepository(repository);
+            string id = null;
             try
             {
                 deployStep = tracer.Step("Deploy");
@@ -265,7 +268,7 @@ namespace Kudu.Core.Deployment
                 }
 
                 // Get the pushed branch's id
-                string id = receiveInfo.Branch.Id;
+                id = receiveInfo.Branch.Id;
                 // If nothing changed then do nothing
                 if (IsActive(id))
                 {
@@ -317,6 +320,11 @@ namespace Kudu.Core.Deployment
                 if (innerLogger != null)
                 {
                     innerLogger.Log(ex);
+                }
+
+                if (!String.IsNullOrEmpty(id))
+                {
+                    MarkFailed(id);
                 }
 
                 _globalLogger.Log(ex);
@@ -494,8 +502,6 @@ namespace Kudu.Core.Deployment
 
                     MarkFailed(currentStatus);
 
-                    ReportStatus(id);
-
                     deployStep.Dispose();
 
                     return;
@@ -542,8 +548,6 @@ namespace Kudu.Core.Deployment
 
                            MarkFailed(currentStatus);
 
-                           ReportStatus(id);
-
                            // End the deploy step
                            deployStep.Dispose();
 
@@ -565,6 +569,15 @@ namespace Kudu.Core.Deployment
             }
         }
 
+        public void MarkFailed(string id)
+        {
+            DeploymentStatusFile statusFile = OpenStatusFile(id);
+            if (statusFile != null)
+            {
+                MarkFailed(statusFile);
+            }
+        }
+
         private void MarkFailed(DeploymentStatusFile currentStatus)
         {
             if (currentStatus == null)
@@ -577,6 +590,8 @@ namespace Kudu.Core.Deployment
             currentStatus.StatusText = String.Empty;
             currentStatus.EndTime = DateTime.Now;
             currentStatus.Save(_fileSystem);
+
+            ReportStatus(currentStatus.Id);
         }
 
         private IEnumerable<DeployResult> EnumerateResults()

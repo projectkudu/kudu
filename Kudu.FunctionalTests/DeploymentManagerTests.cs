@@ -560,6 +560,39 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public void PullApiTestRepoWithLongPath()
+        {
+            var payload = new JObject();
+            payload["url"] = "https://github.com/suwatch/RepoWithLongPath.git";
+            payload["format"] = "basic";
+            string appName = "RepoWithLongPath";
+
+            ApplicationManager.Run(appName, appManager =>
+            {
+                var exception = Assert.Throws<HttpUnsuccessfulRequestException>(() =>
+                {
+                    DeployPayloadHelper(appManager, client => client.PostAsJsonAsync("deploy", payload));
+                });
+
+                Assert.Contains("unable to create file symfony", exception.Message);
+
+                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                Assert.Equal(1, results.Count);
+                Assert.Equal(DeployStatus.Failed, results[0].Status);
+
+                var entries = appManager.DeploymentManager.GetLogEntriesAsync(results[0].Id).Result.ToList();
+                Assert.Equal(1, entries.Count);
+                Assert.Equal("Fetching changes.", entries[0].Message);
+                Assert.Equal(LogEntryType.Error, entries[0].Type);
+
+                var details = appManager.DeploymentManager.GetLogEntryDetailsAsync(results[0].Id, entries[0].Id).Result.ToList();
+                Assert.True(details.Count > 0, "must have at one log detail entry.");
+                Assert.Contains("unable to create file symfony", details[0].Message);
+                Assert.Equal(LogEntryType.Error, details[0].Type);
+            });
+        }
+
+        [Fact]
         public void DeployHookWithInvalidHttpMethod()
         {
             string appName = "HelloKudu";
