@@ -1,0 +1,4 @@
+#!/bin/sh
+"$0.NET.exe" "$@"
+ret=$?
+exit $ret

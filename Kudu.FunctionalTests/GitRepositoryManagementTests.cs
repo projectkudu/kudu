@@ -16,6 +16,7 @@ using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
 using Newtonsoft.Json.Linq;
 using Xunit;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.FunctionalTests
 {
@@ -756,6 +757,36 @@ command = deploy.cmd");
                     Assert.Equal(DeployStatus.Success, results[0].Status);
                     KuduAssert.VerifyUrl(appManager.SiteUrl, "v0.8.2");
                     KuduAssert.VerifyLogOutput(appManager, results[0].Id, "custom deployment success");
+                });
+            }
+        }
+
+        [Fact]
+        public void CustomBashCliGeneratedScript()
+        {
+            // Arrange
+            string repositoryName = "NodeInnerSubDir";
+            string appName = "NodeInnerSubDir";
+
+            using (var repo = Git.Clone(repositoryName))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    var azureCliPath = Path.Combine(Environment.CurrentDirectory, "..\\..\\..\\Kudu.Services.Web\\bin\\node_modules\\azure-cli\\bin\\azure.js");
+                    TestTracer.Trace("Generating bash script");
+                    Node.Execute(repo.PhysicalPath, "{0} site deploymentscript --node --sitePath subdir -y --scriptType bash", azureCliPath);
+
+                    Git.Commit(repo.PhysicalPath, "Added deploy.sh");
+
+                    GitDeploymentResult deployResult = appManager.GitDeploy(repo.PhysicalPath);
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, "Hello, world2!");
+                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, "Running custom deployment command", "bash deploy.sh");
                 });
             }
         }

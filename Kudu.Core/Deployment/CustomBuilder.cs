@@ -108,7 +108,7 @@ namespace Kudu.Core.Deployment
         {
             get
             {
-                return Path.Combine(_scriptPath, "kudusync.cmd");
+                return Path.Combine(_scriptPath, "kudusync");
             }
         }
 
