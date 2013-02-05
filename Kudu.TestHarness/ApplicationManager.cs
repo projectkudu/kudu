@@ -307,7 +307,7 @@ namespace Kudu.TestHarness
             TestTracer.Trace("Using site - {0}", site.SiteUrl);
 
             string gitUrl = null;
-            var repositoryManager = new RemoteRepositoryManager(site.ServiceUrl + "live/scm");
+            var repositoryManager = new RemoteRepositoryManager(site.ServiceUrl + "scm");
             var repositoryInfo = repositoryManager.GetRepositoryInfo().Result;
             gitUrl = repositoryInfo.GitUrl.ToString();
             var applicationManager = new ApplicationManager(siteManager, site, applicationName, gitUrl, settingsResolver)
