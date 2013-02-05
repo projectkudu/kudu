@@ -653,7 +653,15 @@ namespace Kudu.FunctionalTests
                      || ex.ResponseMessage.ExceptionMessage.Contains("Unknown SSL protocol error in connection to github.com")
                      || ex.ResponseMessage.ExceptionMessage.Contains("fatal: The remote end hung up unexpectedly"))
                     {
-                        TestTracer.Trace("Retry due to github flakiness");
+                        TestTracer.Trace("Retry due to github flakiness, removing the failed deployment result if it exists");
+
+                        var deploymentResults = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                        var lastDeploymentResult = deploymentResults.LastOrDefault();
+                        if (lastDeploymentResult != null && lastDeploymentResult.Status != DeployStatus.Success)
+                        {
+                            TestTracer.Trace("Found result to remove - {0}", lastDeploymentResult.Id);
+                            appManager.DeploymentManager.DeleteAsync(lastDeploymentResult.Id).Wait();
+                        }
 
                         if (--retries > 0)
                         {
