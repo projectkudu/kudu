@@ -18,8 +18,8 @@ namespace Kudu.Core.Deployment.Generator
         internal const string MSBuildPath = "MSBUILD_PATH";
         internal const string PreviousManifestPath = "PREVIOUS_MANIFEST_PATH";
         internal const string NextManifestPath = "NEXT_MANIFEST_PATH";
-        internal const string KuduSyncCommandKey = "KUDU_SYNC_COMMAND";
-        internal const string SelectNodeVersionCommandKey = "KUDU_SELECT_NODE_VERSION_COMMAND";
+        internal const string KuduSyncCommandKey = "KUDU_SYNC_CMD";
+        internal const string SelectNodeVersionCommandKey = "KUDU_SELECT_NODE_VERSION_CMD";
         internal const string NpmJsPathKey = "NPM_JS_PATH";
         internal const string StarterScriptName = "starter.cmd";
 
@@ -136,7 +136,7 @@ namespace Kudu.Core.Deployment.Generator
         {
             get
             {
-                return Path.Combine(Environment.ScriptPath, "kudusync.cmd");
+                return Path.Combine(Environment.ScriptPath, "kudusync");
             }
         }
 

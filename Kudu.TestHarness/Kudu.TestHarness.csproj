@@ -62,6 +62,8 @@
     </Compile>
     <Compile Include="ApplicationManager.cs" />
     <Compile Include="ApplicationManagerExtensions.cs" />
+    <Compile Include="Npm.cs" />
+    <Compile Include="Node.cs" />
     <Compile Include="LatencyLogger.cs" />
     <Compile Include="TestRepositories.cs" />
     <Compile Include="TestTracer.cs" />
