@@ -767,19 +767,27 @@ command = deploy.cmd");
             // Arrange
             string repositoryName = "NodeInnerSubDir";
             string appName = "NodeInnerSubDir";
+            string azureCli = "azure-cli";
 
             using (var repo = Git.Clone(repositoryName))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Act
-                    var azureCliPath = Path.Combine(Environment.CurrentDirectory, "..\\..\\..\\Kudu.Services.Web\\bin\\node_modules\\azure-cli\\bin\\azure.js");
+                    TestTracer.Trace("Test azure-cli which exists in public npm registry");
+
+                    var azureCliCachedPath = Path.Combine(PathHelper.RepositoryCachePath, azureCli);
+                    PathHelper.EnsureDirectory(azureCliCachedPath);
+
+                    Npm.Install(azureCli, azureCliCachedPath);
+
+                    var azureCliPath = Path.Combine(azureCliCachedPath, "node_modules\\azure-cli\\bin\\azure.js");
                     TestTracer.Trace("Generating bash script");
                     Node.Execute(repo.PhysicalPath, "{0} site deploymentscript --node --sitePath subdir -y --scriptType bash", azureCliPath);
 
-                    Git.Commit(repo.PhysicalPath, "Added deploy.sh");
+                    Git.Commit(repo.PhysicalPath, "Updated deploy.sh");
 
-                    GitDeploymentResult deployResult = appManager.GitDeploy(repo.PhysicalPath);
+                    var deployResult = appManager.GitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
@@ -787,6 +795,7 @@ command = deploy.cmd");
                     Assert.Equal(DeployStatus.Success, results[0].Status);
                     KuduAssert.VerifyUrl(appManager.SiteUrl, "Hello, world2!");
                     KuduAssert.VerifyLogOutput(appManager, results[0].Id, "Running custom deployment command", "bash deploy.sh");
+
                 });
             }
         }
