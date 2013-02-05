@@ -16,5 +16,10 @@ namespace Kudu.TestHarness
                 TestTracer.Trace("  stderr: {0}", result.Item2);
             }
         }
+
+        public static void InstallWithRetry(string packageToInstall, string installToPath)
+        {
+            OperationManager.Attempt(() => Install(packageToInstall, installToPath));
+        }
     }
 }

@@ -14,6 +14,7 @@ namespace Kudu.TestHarness
             using (new LatencyLogger(NodeExe + " " + command))
             {
                 var exe = new Executable(NodeExe, workingDirectory, idleTimeout: TimeSpan.FromSeconds(3600));
+                exe.SetHomePath(Environment.GetEnvironmentVariable("USERPROFILE"));
                 var result = exe.Execute(command);
 
                 TestTracer.Trace("  stdout: {0}", result.Item1);

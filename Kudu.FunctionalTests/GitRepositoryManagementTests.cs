@@ -779,7 +779,7 @@ command = deploy.cmd");
                     var azureCliCachedPath = Path.Combine(PathHelper.RepositoryCachePath, azureCli);
                     PathHelper.EnsureDirectory(azureCliCachedPath);
 
-                    Npm.Install(azureCli, azureCliCachedPath);
+                    Npm.InstallWithRetry(azureCli, azureCliCachedPath);
 
                     var azureCliPath = Path.Combine(azureCliCachedPath, "node_modules\\azure-cli\\bin\\azure.js");
                     TestTracer.Trace("Generating bash script");
