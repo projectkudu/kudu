@@ -794,7 +794,9 @@ command = deploy.cmd");
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
                     KuduAssert.VerifyUrl(appManager.SiteUrl, "Hello, world2!");
-                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, "Running custom deployment command", "bash deploy.sh");
+
+                    var bashLogOutput = KuduUtils.TestOriginalSiteBuilderFactory ? String.Empty : "bash deploy.sh";
+                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, "Running custom deployment command", bashLogOutput);
 
                 });
             }
