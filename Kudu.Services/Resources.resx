@@ -237,4 +237,19 @@
   <data name="Error_NonGitRepositoryFound" xml:space="preserve">
     <value>Unable to proceed with the operation. A '{0}' repository was found at the target location.</value>
   </data>
+  <data name="Dropbox_Synchronized" xml:space="preserve">
+    <value>Synchronized {0} changes from Dropbox.</value>
+  </data>
+  <data name="Dropbox_SynchronizedWithFailure" xml:space="preserve">
+    <value>Synchronized {0} of {1} changes from Dropbox with {2} failures.</value>
+  </data>
+  <data name="Dropbox_Synchronizing" xml:space="preserve">
+    <value>Synchronizing {0} changes from Dropbox.</value>
+  </data>
+  <data name="Dropbox_SynchronizingProgress" xml:space="preserve">
+    <value>Synchronizing {0}% of {1} changes from Dropbox.</value>
+  </data>
+  <data name="Dropbox_SynchronizingProgressWithFailure" xml:space="preserve">
+    <value>Synchronizing {0}% of {1} changes from Dropbox with {2} failures.</value>
+  </data>
 </root>

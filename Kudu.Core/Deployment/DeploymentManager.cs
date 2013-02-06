@@ -594,6 +594,34 @@ namespace Kudu.Core.Deployment
             ReportStatus(currentStatus.Id);
         }
 
+        public void UpdateMessage(string id, string message)
+        {
+            DeploymentStatusFile statusFile = OpenStatusFile(id);
+            if (statusFile != null)
+            {
+                statusFile.Message = message;
+                statusFile.Save(_fileSystem);
+            }
+        }
+
+        public void MarkSuccess(string id)
+        {
+            DeploymentStatusFile statusFile = OpenStatusFile(id);
+
+            if (statusFile != null)
+            {
+                // Write the active deployment file
+                MarkActive(id);
+
+                statusFile.Complete = true;
+                statusFile.Status = DeployStatus.Success;
+                statusFile.StatusText = String.Empty;
+                statusFile.EndTime = DateTime.Now;
+                statusFile.LastSuccessEndTime = statusFile.EndTime;
+                statusFile.Save(_fileSystem);
+            }
+        }
+
         private IEnumerable<DeployResult> EnumerateResults()
         {
             if (!_fileSystem.Directory.Exists(_environment.DeploymentCachePath))
