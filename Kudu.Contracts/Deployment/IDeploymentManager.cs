@@ -24,7 +24,12 @@ namespace Kudu.Core.Deployment
         /// <returns></returns>
         IDisposable CreateTemporaryDeployment(string statusText, ChangeSet changeset = null, string deployedBy = null);
 
+        // TODO, suwatch: we need a separate IDeploymentStatusManager to interact 
+        // with Deploy Status file.   Currently all logics baked into DeploymentManager 
+        // and pollute the interface.  Too much churn for S20.  Just patching it now.
         ILogger GetLogger(string id);
         void MarkFailed(string id);
+        void UpdateMessage(string id, string message);
+        void MarkSuccess(string id);
     }
 }

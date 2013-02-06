@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -14,6 +15,7 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
+using Kudu.Services.ServiceHookHandlers;
 
 namespace Kudu.Services
 {
@@ -25,30 +27,47 @@ namespace Kudu.Services
         private const string DropboxApiContentUri = "https://api-content.dropbox.com/";
         private const string SandboxFilePath = "1/files/sandbox";
         private const int MaxConcurrentRequests = 5;
+        private const int MaxRetries = 2;
 
         private readonly ITracer _tracer;
         private readonly IServerRepository _repository;
+        private readonly IDeploymentManager _manager;
         private readonly IDeploymentSettingsManager _settings;
         private readonly IEnvironment _environment;
         private readonly TimeSpan _timeout;
 
         private ILogger _logger;
 
+        // stats
+        private int _successCount;
+        private int _fileCount;
+        private int _failedCount;
+        private int _retriedCount;
+
         public DropboxHelper(ITracer tracer,
                              IServerRepository repository,
+                             IDeploymentManager manager,
                              IDeploymentSettingsManager settings,
                              IEnvironment environment)
         {
             _tracer = tracer;
             _repository = repository;
+            _manager = manager;
             _settings = settings;
             _environment = environment;
             _timeout = settings.GetCommandIdleTimeout();
         }
 
-        public ChangeSet Sync(DropboxDeployInfo info, string branch, ILogger logger)
+        internal ChangeSet Sync(DropboxHandler.DropboxInfo deploymentInfo, string branch, ILogger logger)
         {
+            DropboxDeployInfo info = deploymentInfo.DeployInfo;
+
             _logger = logger;
+
+            _successCount = 0;
+            _fileCount = 0;
+            _failedCount = 0;
+            _retriedCount = 0;
 
             if (_settings.GetValue(CursorKey) != info.OldCursor)
             {
@@ -62,21 +81,39 @@ namespace Kudu.Services
             }
 
             ChangeSet changeSet;
-            string prefix = "Partially synced";
+            string message = null;
             try
             {
                 using (_tracer.Step("Synch with Dropbox"))
                 {
                     // Sync dropbox => repository directory
-                    ApplyChanges(info);
+                    ApplyChanges(deploymentInfo);
                 }
 
-                prefix = "Synced";
+                message = String.Format(CultureInfo.CurrentCulture,
+                            Resources.Dropbox_Synchronized,
+                            deploymentInfo.DeployInfo.Deltas.Count());
+            }
+            catch (Exception)
+            {
+                message = String.Format(CultureInfo.CurrentCulture,
+                            Resources.Dropbox_SynchronizedWithFailure,
+                            _successCount,
+                            deploymentInfo.DeployInfo.Deltas.Count(),
+                            _failedCount);
+
+                throw;
             }
             finally
             {
+                _logger.Log(message);
+
+                _logger.Log(String.Format("{0} downloaded files, {1} successful retries.", _fileCount, _retriedCount));
+
                 // Commit anyway even partial change
-                changeSet = _repository.Commit(prefix + " with Dropbox", String.Format("{0} <{1}>", info.UserName, info.Email));
+                changeSet = _repository.Commit(message, String.Format("{0} <{1}>", info.UserName, info.Email));
+
+                _manager.UpdateMessage(deploymentInfo.TargetChangeset.Id, message);
             }
 
             // Save new dropboc cursor
@@ -98,22 +135,27 @@ namespace Kudu.Services
             }
         }
 
-        private void ApplyChanges(DropboxDeployInfo info)
+        private void ApplyChanges(DropboxHandler.DropboxInfo deploymentInfo)
         {
+            DropboxDeployInfo info = deploymentInfo.DeployInfo;
             Semaphore sem = new Semaphore(MaxConcurrentRequests, MaxConcurrentRequests);
             List<Task> tasks = new List<Task>();
             string parent = info.Path.TrimEnd('/') + '/';
+            DateTime updateMessageTime = DateTime.Now;
+            int totals = info.Deltas.Count();
 
             foreach (DropboxDeltaInfo delta in info.Deltas)
             {
                 if (!delta.Path.StartsWith(parent, StringComparison.OrdinalIgnoreCase))
                 {
+                    Interlocked.Increment(ref _successCount);
                     continue;
                 }
 
                 // Ignore .git files and folders
                 if (delta.Path.StartsWith(parent + ".git", StringComparison.OrdinalIgnoreCase))
                 {
+                    Interlocked.Increment(ref _successCount);
                     continue;
                 }
 
@@ -121,10 +163,12 @@ namespace Kudu.Services
                 if (delta.IsDeleted)
                 {
                     SafeDelete(parent, path);
+                    Interlocked.Increment(ref _successCount);
                 }
                 else if (delta.IsDirectory)
                 {
                     SafeCreateDir(parent, path);
+                    Interlocked.Increment(ref _successCount);
                 }
                 else
                 {
@@ -132,6 +176,7 @@ namespace Kudu.Services
                     if (!IsFileChanged(parent, path, modified))
                     {
                         LogInfo("file unchanged {0}", path);
+                        Interlocked.Increment(ref _successCount);
                         continue;
                     }
 
@@ -150,6 +195,28 @@ namespace Kudu.Services
                                 {
                                     SafeWriteFile(parent, path, streamInfo.Stream, modified);
                                 }
+
+                                Interlocked.Increment(ref _successCount);
+                                Interlocked.Increment(ref _fileCount);
+                            }
+                            else
+                            {
+                                Interlocked.Increment(ref _failedCount);
+                            }
+
+                            if (DateTime.Now.Subtract(updateMessageTime) > TimeSpan.FromSeconds(5))
+                            {
+                                lock (_manager)
+                                {
+                                    _manager.UpdateMessage(deploymentInfo.TargetChangeset.Id,
+                                        String.Format(CultureInfo.CurrentUICulture, 
+                                            _failedCount == 0 ? Resources.Dropbox_SynchronizingProgress : Resources.Dropbox_SynchronizingProgressWithFailure,
+                                            ((_successCount + _failedCount) * 100) / totals,
+                                            totals,
+                                            _failedCount));
+                                }
+
+                                updateMessageTime = DateTime.Now;
                             }
 
                             return t;
@@ -234,7 +301,7 @@ namespace Kudu.Services
             return Path.Combine(_environment.RepositoryPath, relativePath);
         }
 
-        private Task<StreamInfo> GetFileAsync(DropboxDeployInfo info, DropboxDeltaInfo delta)
+        private Task<StreamInfo> GetFileAsync(DropboxDeployInfo info, DropboxDeltaInfo delta, int retries = MaxRetries)
         {
             var parameters = new Dictionary<string, string>
             {
@@ -268,19 +335,51 @@ namespace Kudu.Services
             {
                 if (t.IsFaulted)
                 {
-                    LogError("Get '" + SandboxFilePath + delta.Path + "' failed with " + t.Exception);
-                    tcs.TrySetException(t.Exception.InnerExceptions);
+                    if (retries <= 0)
+                    {
+                        LogError("Get '" + SandboxFilePath + delta.Path + "' failed with " + t.Exception);
+                        tcs.TrySetException(t.Exception.InnerExceptions);
+                    }
+                    else
+                    {
+                        // First retry is 1s, second retry is 20s assuming rate-limit
+                        Thread.Sleep(retries == 1 ? 20000 : 1000);
+
+                        tcs.TrySetResult(GetFileAsync(info, delta, retries - 1));
+                    }
+
+                    client.Dispose();
                 }
                 else if (t.IsCanceled)
                 {
                     tcs.TrySetCanceled();
+                    client.Dispose();
                 }
                 else
                 {
                     try
                     {
-                        HttpResponseMessage response = t.Result.EnsureSuccessStatusCode(); 
-                        tcs.TrySetResult(GetStreamInfo(client, response, delta.Path));
+                        HttpResponseMessage response = t.Result;
+                        if ((int)response.StatusCode < 500 || retries <= 0)
+                        {
+                            response.EnsureSuccessStatusCode();
+                            tcs.TrySetResult(GetStreamInfo(client, response, delta.Path));
+                            if (retries < MaxRetries)
+                            {
+                                // Success due to retried
+                                Interlocked.Increment(ref _retriedCount);
+                            }
+                        }
+                        else
+                        {
+                            // First retry is 1s, second retry is 20s assuming rate-limit
+                            Thread.Sleep(retries == 1 ? 20000 : 1000);
+
+                            tcs.TrySetResult(GetFileAsync(info, delta, retries - 1));
+
+                            response.Dispose();
+                            client.Dispose();
+                        }
                     }
                     catch (Exception ex)
                     {

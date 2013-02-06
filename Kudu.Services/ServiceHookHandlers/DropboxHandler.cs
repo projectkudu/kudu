@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Globalization;
+using System.Linq;
 using System.Web;
 using Kudu.Contracts.Dropbox;
 using Kudu.Contracts.Settings;
@@ -18,12 +20,13 @@ namespace Kudu.Services.ServiceHookHandlers
 
         public DropboxHandler(ITracer tracer,
                               IServerRepository repository,
+                              IDeploymentManager manager,
                               IDeploymentSettingsManager settings,
                               IEnvironment environment)
         {
             _tracer = tracer;
             _settings = settings;
-            _dropBoxHelper = new DropboxHelper(tracer, repository, settings, environment);
+            _dropBoxHelper = new DropboxHelper(tracer, repository, manager, settings, environment);
         }
 
         public DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
@@ -38,7 +41,8 @@ namespace Kudu.Services.ServiceHookHandlers
                 deploymentInfo.TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(
                     authorName: dropboxInfo.DeployInfo.UserName,
                     authorEmail: dropboxInfo.DeployInfo.Email,
-                    message: "Syncing with Dropbox");
+                    message: String.Format(CultureInfo.CurrentUICulture, Resources.Dropbox_Synchronizing, dropboxInfo.DeployInfo.Deltas.Count())
+                );
 
                 return DeployAction.ProcessDeployment;
             }
@@ -50,7 +54,7 @@ namespace Kudu.Services.ServiceHookHandlers
         {
             // Sync with dropbox
             var dropboxInfo = ((DropboxInfo)deploymentInfo);
-            deploymentInfo.TargetChangeset = _dropBoxHelper.Sync(dropboxInfo.DeployInfo, targetBranch, logger);
+            deploymentInfo.TargetChangeset = _dropBoxHelper.Sync(dropboxInfo, targetBranch, logger);
         }
 
         internal class DropboxInfo : DeploymentInfo
