@@ -35,7 +35,7 @@ namespace Kudu.FunctionalTests
             }
 
             AccountInfo account = GetAccountInfo(oauth);
-            DropboxDeployInfo deploy = GetDeployInfo(oauth, account);
+            DropboxDeployInfo deploy = GetDeployInfo("/BasicTest", oauth, account);
 
             string appName = "DropboxTest";
             ApplicationManager.Run(appName, appManager =>
@@ -46,6 +46,27 @@ namespace Kudu.FunctionalTests
                 KuduAssert.VerifyUrl(appManager.SiteUrl + "/default.html", "Hello Default!");
                 KuduAssert.VerifyUrl(appManager.SiteUrl + "/temp/temp.html", "Hello Temp!");
                 KuduAssert.VerifyUrl(appManager.SiteUrl + "/New Folder/New File.html", "Hello New File!");
+            });
+        }
+
+        [Fact]
+        public void TestDropboxSpecialChars()
+        {
+            OAuthInfo oauth = GetOAuthInfo();
+            if (oauth == null)
+            {
+                // only run in private kudu
+                return;
+            }
+
+            AccountInfo account = GetAccountInfo(oauth);
+            DropboxDeployInfo deploy = GetDeployInfo("/SpecialCharsTest", oauth, account);
+
+            string appName = "SpecialCharsTest";
+            ApplicationManager.Run(appName, appManager =>
+            {
+                HttpClient client = HttpClientHelper.CreateClient(appManager.ServiceUrl, appManager.DeploymentManager.Credentials);
+                client.PostAsJsonAsync("deploy", deploy).Result.EnsureSuccessful();
             });
         }
 
@@ -94,7 +115,7 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        private DropboxDeployInfo GetDeployInfo(OAuthInfo oauth, AccountInfo account, string cursor = null)
+        private DropboxDeployInfo GetDeployInfo(string path, OAuthInfo oauth, AccountInfo account, string cursor = null)
         {
             List<DropboxDeltaInfo> deltas = new List<DropboxDeltaInfo>();
             string timeStamp = GetUtcTimeStamp();
@@ -112,6 +133,12 @@ namespace Kudu.FunctionalTests
                 foreach (EntryInfo info in delta.entries)
                 {
                     DropboxDeltaInfo item = new DropboxDeltaInfo();
+
+                    if (!info.metadata.path.StartsWith(path))
+                    {
+                        continue;
+                    }
+
                     if (info.metadata == null || info.metadata.is_deleted || string.IsNullOrEmpty(info.metadata.path))
                     {
                         item.Path = info.path;
@@ -136,6 +163,8 @@ namespace Kudu.FunctionalTests
                 {
                     break;
                 }
+
+                cursor = newCursor;
             }
 
             if (deltas.Count == 0)
@@ -152,7 +181,7 @@ namespace Kudu.FunctionalTests
                 SignatureMethod = "HMAC-SHA1",
                 OldCursor = oldCursor,
                 NewCursor = newCursor,
-                Path = "/",
+                Path = path,
                 UserName = account.display_name,
                 Email = account.email,
                 Deltas = deltas
@@ -236,10 +265,9 @@ namespace Kudu.FunctionalTests
             strb.AppendFormat("&{0}={1}", "oauth_token", oauth.Token);
             strb.AppendFormat("&{0}={1}", "oauth_version", "1.0");
 
-            Uri uri = new Uri("https://api-content.dropbox.com/1/files/sandbox" + path.ToLower());
             string data = String.Format("{0}&{1}&{2}",
                 "GET",
-                UrlEncode("https://api-content.dropbox.com" + uri.AbsolutePath),
+                UrlEncode("https://api-content.dropbox.com/1/files/sandbox" + DropboxPathEncode(path.ToLower())),
                 UrlEncode(strb.ToString()));
 
             var key = String.Format("{0}&{1}",
@@ -250,6 +278,29 @@ namespace Kudu.FunctionalTests
             hmacSha1.Key = Encoding.ASCII.GetBytes(key);
             byte[] hashBytes = hmacSha1.ComputeHash(Encoding.ASCII.GetBytes(data));
             return Convert.ToBase64String(hashBytes);
+        }
+
+        private static string DropboxPathEncode(string path)
+        {
+            const string DropboxPathUnreservedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_./";
+
+            StringBuilder result = new StringBuilder();
+            foreach (char symbol in path)
+            {
+                if (DropboxPathUnreservedChars.IndexOf(symbol) != -1)
+                {
+                    result.Append(symbol);
+                }
+                else
+                {
+                    byte[] bytes = Encoding.UTF8.GetBytes(new char[] { symbol });
+                    foreach (byte b in bytes)
+                    {
+                        result.AppendFormat("%{0:X2}", b);
+                    }
+                }
+            }
+            return result.ToString();
         }
 
         private string UrlEncode(string str)
