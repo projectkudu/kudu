@@ -110,10 +110,10 @@ namespace Kudu.Services
 
                 _logger.Log(String.Format("{0} downloaded files, {1} successful retries.", _fileCount, _retriedCount));
 
+                _manager.UpdateMessage(deploymentInfo.TargetChangeset.Id, message);
+
                 // Commit anyway even partial change
                 changeSet = _repository.Commit(message, String.Format("{0} <{1}>", info.UserName, info.Email));
-
-                _manager.UpdateMessage(deploymentInfo.TargetChangeset.Id, message);
             }
 
             // Save new dropboc cursor
@@ -339,11 +339,12 @@ namespace Kudu.Services
                     {
                         if (retries <= 0)
                         {
-                            LogError("Get '" + SandboxFilePath + delta.Path + "' failed with " + t.Exception);
+                            LogError("Get(" + retries + ") '" + SandboxFilePath + delta.Path + "' failed with " + t.Exception);
                             tcs.TrySetException(t.Exception.InnerExceptions);
                         }
                         else
                         {
+                            LogError("Retry(" + retries + ") '" + SandboxFilePath + delta.Path + "' failed with " + t.Exception);
                             tcs.TrySetResult(RetryGetFileAsync(info, delta, retries));
                         }
                     }
@@ -376,6 +377,7 @@ namespace Kudu.Services
                             {
                                 using (response)
                                 {
+                                    LogError("Retry(" + retries + ") '" + SandboxFilePath + delta.Path + "' failed with " + (int)response.StatusCode);
                                     tcs.TrySetResult(RetryGetFileAsync(info, delta, retries));
                                 }
                             }
@@ -383,7 +385,7 @@ namespace Kudu.Services
                     }
                     catch (Exception ex)
                     {
-                        LogError("Get '" + SandboxFilePath + delta.Path + "' failed with " + ex);
+                        LogError("Get(" + retries + ") '" + SandboxFilePath + delta.Path + "' failed with " + ex);
                         tcs.TrySetException(ex);
                     }
                 }
