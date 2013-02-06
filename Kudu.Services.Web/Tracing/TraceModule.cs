@@ -39,6 +39,12 @@ namespace Kudu.Services.Web.Tracing
                     { "type", "request" }
                 };
 
+                // Add an attribute containing the process, AppDomain and Thread ids to help debugging
+                attribs.Add("pid", String.Format("{0},{1},{2}",
+                    Process.GetCurrentProcess().Id,
+                    AppDomain.CurrentDomain.Id.ToString(),
+                    System.Threading.Thread.CurrentThread.ManagedThreadId));
+
                 AddTraceLevel(httpContext, attribs);
 
                 foreach (string key in httpContext.Request.Headers)
