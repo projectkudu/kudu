@@ -173,22 +173,26 @@ namespace Kudu.Services
                         // set to null as Deploy() below takes over logging
                         innerLogger = null;
 
-                        // Perform the actual deployment
-                        _deploymentManager.Deploy(repository, deploymentInfo.TargetChangeset.IsTemporary ? null : deploymentInfo.TargetChangeset, deploymentInfo.Deployer, clean: false);
-
-                        if (MarkerFileExists())
+                        // In case the commit or perhaps fetch do no-op.
+                        if (deploymentInfo.TargetChangeset != null)
                         {
-                            _tracer.Trace("Pending deployment marker file exists");
+                            // Perform the actual deployment
+                            _deploymentManager.Deploy(repository, deploymentInfo.TargetChangeset.IsTemporary ? null : deploymentInfo.TargetChangeset, deploymentInfo.Deployer, clean: false);
 
-                            hasPendingDeployment = DeleteMarkerFile();
+                            if (MarkerFileExists())
+                            {
+                                _tracer.Trace("Pending deployment marker file exists");
 
-                            if (hasPendingDeployment)
-                            {
-                                _tracer.Trace("Deleted marker file");
-                            }
-                            else
-                            {
-                                _tracer.TraceError("Failed to delete marker file");
+                                hasPendingDeployment = DeleteMarkerFile();
+
+                                if (hasPendingDeployment)
+                                {
+                                    _tracer.Trace("Deleted marker file");
+                                }
+                                else
+                                {
+                                    _tracer.TraceError("Failed to delete marker file");
+                                }
                             }
                         }
                     }
@@ -199,7 +203,11 @@ namespace Kudu.Services
                             innerLogger.Log(ex);
                         }
 
-                        _deploymentManager.MarkFailed(deploymentInfo.TargetChangeset.Id);
+                        // In case the commit or perhaps fetch do no-op.
+                        if (deploymentInfo.TargetChangeset != null)
+                        {
+                            _deploymentManager.MarkFailed(deploymentInfo.TargetChangeset.Id);
+                        }
 
                         throw;
                     }
