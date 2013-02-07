@@ -64,12 +64,14 @@ namespace Kudu.Core.Deployment.Generator
                 using (context.Tracer.Step("Generating deployment script"))
                 {
                     var scriptGenerator = new Executable(DeploymentScriptGeneratorToolPath, RepositoryPath, DeploymentSettings.GetCommandIdleTimeout());
-                    scriptGenerator.SetHomePath(HomePath);
+
+                    // Set home path to the user profile so cache directories created by azure-cli are created there
+                    scriptGenerator.SetHomePath(System.Environment.GetEnvironmentVariable("APPDATA"));
 
                     var scriptGeneratorCommand = String.Format(ScriptGeneratorCommandFormat, RepositoryPath, ScriptGeneratorCommandArguments);
                     buildLogger.Log(Resources.Log_DeploymentScriptGeneratorCommand, scriptGeneratorCommand);
 
-                    scriptGenerator.ExecuteWithProgressWriter(buildLogger, context.Tracer, _ => false, scriptGeneratorCommand);
+                    scriptGenerator.ExecuteWithProgressWriter(buildLogger, context.Tracer, _ => false, _ => false, scriptGeneratorCommand);
                 }
             }
             catch (CommandLineException ex)

@@ -225,7 +225,7 @@ namespace Kudu.Core.Infrastructure
                            args);
         }
 
-        public Tuple<string, string> ExecuteWithProgressWriter(ILogger logger, ITracer tracer, Func<string, bool> shouldFilterOut, string arguments, params object[] args)
+        public Tuple<string, string> ExecuteWithProgressWriter(ILogger logger, ITracer tracer, Func<string, bool> shouldFilterOutOutput, Func<string, bool> shouldFilterOutError, string arguments, params object[] args)
         {
             using (var writer = new ProgressWriter())
             {
@@ -234,7 +234,7 @@ namespace Kudu.Core.Infrastructure
                 return Execute(tracer,
                                output =>
                                {
-                                   if (shouldFilterOut(output))
+                                   if (shouldFilterOutOutput(output))
                                    {
                                        return false;
                                    }
@@ -245,6 +245,11 @@ namespace Kudu.Core.Infrastructure
                                },
                                error =>
                                {
+                                   if (shouldFilterOutError(error))
+                                   {
+                                       return false;
+                                   }
+
                                    writer.WriteErrorLine(error);
                                    logger.Log(error, LogEntryType.Error);
                                    return true;
@@ -255,9 +260,9 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        public Tuple<string, string> ExecuteWithProgressWriter(ITracer tracer, Func<string, bool> shouldFilterOut, string arguments, params object[] args)
+        public Tuple<string, string> ExecuteWithProgressWriter(ITracer tracer, Func<string, bool> shouldFilterOut, Func<string, bool> shouldFilterOutError, string arguments, params object[] args)
         {
-            return ExecuteWithProgressWriter(new NullLogger(), tracer, shouldFilterOut, arguments, args);
+            return ExecuteWithProgressWriter(new NullLogger(), tracer, shouldFilterOut, shouldFilterOutError, arguments, args);
         }
 
         public Tuple<string, string> Execute(ITracer tracer, Func<string, bool> onWriteOutput, Func<string, bool> onWriteError, Encoding encoding, string arguments, params object[] args)
