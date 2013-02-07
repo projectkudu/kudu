@@ -123,6 +123,10 @@
       <Project>{5320177C-725A-44BD-8FA6-F88D9725B46C}</Project>
       <Name>Kudu.Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Kudu.Services\Kudu.Services.csproj">
+      <Project>{d163e227-9eb6-4619-ad37-d8eef831aef0}</Project>
+      <Name>Kudu.Services</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Kudu.SiteManagement\Kudu.SiteManagement.csproj">
       <Project>{D5669C1D-3408-4CEE-8C1B-D86D03D27EE2}</Project>
       <Name>Kudu.SiteManagement</Name>

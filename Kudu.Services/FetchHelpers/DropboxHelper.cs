@@ -28,6 +28,7 @@ namespace Kudu.Services
         private const string SandboxFilePath = "1/files/sandbox";
         private const int MaxConcurrentRequests = 5;
         private const int MaxRetries = 2;
+        private const int MaxFilesPerSecs = 9; // Dropbox rate-limit at 600/min or 10/s
 
         private readonly ITracer _tracer;
         private readonly IServerRepository _repository;
@@ -143,6 +144,7 @@ namespace Kudu.Services
             string parent = info.Path.TrimEnd('/') + '/';
             DateTime updateMessageTime = DateTime.Now;
             int totals = info.Deltas.Count();
+            var rateLimiter = new RateLimiter(MaxFilesPerSecs * 10, TimeSpan.FromSeconds(10));
 
             foreach (DropboxDeltaInfo delta in info.Deltas)
             {
@@ -188,6 +190,8 @@ namespace Kudu.Services
                         // Using ContinueWith instead of Then to avoid SyncContext deadlock in 4.5
                         task = GetFileAsync(info, delta).ContinueWith(t =>
                         {
+                            rateLimiter.Throtte();
+
                             sem.Release();
                             if (!t.IsFaulted && !t.IsCanceled)
                             {
@@ -473,6 +477,46 @@ namespace Kudu.Services
                 _stream.Dispose();
                 _response.Dispose();
                 _client.Dispose();
+            }
+        }
+
+        public class RateLimiter
+        {
+            private readonly object _thisLock = new object();
+            private readonly int _limit;
+            private readonly TimeSpan _interval;
+
+            private int _current = 0;
+            private DateTime _last = DateTime.Now;
+
+            public RateLimiter(int limit, TimeSpan interval)
+            {
+                _limit = limit;
+                _interval = interval;
+            }
+
+            public void Throtte()
+            {
+                lock (_thisLock)
+                {
+                    _current++;
+                    if (_current > _limit)
+                    {
+                        DateTime now = DateTime.Now;
+                        TimeSpan ts = now - _last;
+                        if (ts < _interval)
+                        {
+                            Thread.Sleep(_interval - ts);
+                            _last = DateTime.Now;
+                        }
+                        else
+                        {
+                            _last = now;
+                        }
+
+                        _current = 0;
+                    }
+                }
             }
         }
     }
