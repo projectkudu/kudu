@@ -13,6 +13,7 @@ using Kudu.Client;
 using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Dropbox;
 using Kudu.FunctionalTests.Infrastructure;
+using Kudu.Services;
 using Kudu.TestHarness;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -68,6 +69,27 @@ namespace Kudu.FunctionalTests
                 HttpClient client = HttpClientHelper.CreateClient(appManager.ServiceUrl, appManager.DeploymentManager.Credentials);
                 client.PostAsJsonAsync("deploy", deploy).Result.EnsureSuccessful();
             });
+        }
+
+        [Fact]
+        public void TestDropboxRateLimiter()
+        {
+            // Set the limit to 60/sec, let it run for 5s
+            // Expected count around 300 give or take.
+            var rateLimiter = new DropboxHelper.RateLimiter(60, TimeSpan.FromSeconds(1));
+            var start = DateTime.Now;
+            int total = 0;
+            while (DateTime.Now - start <= TimeSpan.FromSeconds(5))
+            {
+                rateLimiter.Throtte();
+                ++total;
+            }
+
+            TestTracer.Trace("total = {0}", total);
+
+            // For robustness, allow wider range
+            Assert.True(total >= 240, total + " should be >= 240");
+            Assert.True(total <= 360, total + " should be <= 360");
         }
 
         private OAuthInfo GetOAuthInfo()
