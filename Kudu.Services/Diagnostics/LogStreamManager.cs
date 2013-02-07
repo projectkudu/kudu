@@ -23,7 +23,7 @@ namespace Kudu.Services.Performance
         private const string FilterQueryKey = "filter";
         private const string AzureDriveEnabledKey = "AzureDriveEnabled";
 
-        // Antares 3 mins timeout, heartbeat every mins keep alive.
+        // Azure 3 mins timeout, heartbeat every mins keep alive.
         private static string[] LogFileExtensions = new string[] { ".txt", ".log", ".htm" };
         private static TimeSpan HeartbeatInterval = TimeSpan.FromMinutes(1);
 
