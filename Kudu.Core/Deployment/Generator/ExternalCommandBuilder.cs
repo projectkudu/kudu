@@ -163,7 +163,7 @@ namespace Kudu.Core.Deployment.Generator
         }
 
         /// <summary>
-        /// Node spits out some disturbing output to the error stream when running in the Antares sandbox.
+        /// Node spits out some disturbing output to the error stream when running in Azure
         /// </summary>
         internal static bool ShouldFilterOutNodeRedundantOutput(string outputLine)
         {

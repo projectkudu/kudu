@@ -65,7 +65,7 @@ namespace Kudu.Core.Deployment.Generator
                 {
                     var scriptGenerator = new Executable(DeploymentScriptGeneratorToolPath, RepositoryPath, DeploymentSettings.GetCommandIdleTimeout());
 
-                    // Set home path to the user profile so cahc directories created by azure-cli are created there
+                    // Set home path to the user profile so cache directories created by azure-cli are created there
                     scriptGenerator.SetHomePath(System.Environment.GetEnvironmentVariable("APPDATA"));
 
                     var scriptGeneratorCommand = String.Format(ScriptGeneratorCommandFormat, RepositoryPath, ScriptGeneratorCommandArguments);
