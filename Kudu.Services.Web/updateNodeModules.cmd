@@ -10,9 +10,9 @@ set /a counter+=1
 echo Attempt %counter% out of %attempts%
 
 if exist %1\node_modules\azure-cli\bin\azure (
-  cmd /c npm update https://github.com/amitapl/azure-sdk-tools-xplat/tarball/kudu
+  cmd /c npm update https://github.com/amitapl/azure-sdk-tools-xplat/tarball/kudu_s20
 ) else (
-  cmd /c npm install https://github.com/amitapl/azure-sdk-tools-xplat/tarball/kudu
+  cmd /c npm install https://github.com/amitapl/azure-sdk-tools-xplat/tarball/kudu_s20
 )
 
 IF %ERRORLEVEL% NEQ 0 goto error
