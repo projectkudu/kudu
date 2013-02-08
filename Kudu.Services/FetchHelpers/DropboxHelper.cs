@@ -335,7 +335,7 @@ namespace Kudu.Services
 
             // Using ContinueWith instead of Then to avoid SyncContext deadlock in 4.5
             var tcs = new TaskCompletionSource<Task<StreamInfo>>();
-            client.GetAsync(SandboxFilePath + delta.Path.ToLower()).ContinueWith(t =>
+            client.GetAsync(SandboxFilePath + DropboxPathEncode(delta.Path.ToLower())).ContinueWith(t =>
             {
                 if (t.IsFaulted)
                 {
@@ -404,6 +404,31 @@ namespace Kudu.Services
             Thread.Sleep(retries == 1 ? 20000 : 1000);
 
             return GetFileAsync(info, delta, retries - 1);
+        }
+
+        // Ported from http://nuget.org/packages/Spring.Social.Dropbox/
+        private static string DropboxPathEncode(string path)
+        {
+            const string DropboxPathUnreservedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_./";
+
+            StringBuilder result = new StringBuilder();
+            foreach (char symbol in path)
+            {
+                if (DropboxPathUnreservedChars.IndexOf(symbol) != -1)
+                {
+                    result.Append(symbol);
+                }
+                else
+                {
+                    byte[] bytes = Encoding.UTF8.GetBytes(new char[] { symbol });
+                    foreach (byte b in bytes)
+                    {
+                        result.AppendFormat("%{0:X2}", b);
+                    }
+                }
+            }
+
+            return result.ToString();
         }
 
         private void LogInfo(string value, params object[] args)

@@ -72,6 +72,27 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public void TestDropboxSpecialFolderChars()
+        {
+            OAuthInfo oauth = GetOAuthInfo();
+            if (oauth == null)
+            {
+                // only run in private kudu
+                return;
+            }
+
+            AccountInfo account = GetAccountInfo(oauth);
+            DropboxDeployInfo deploy = GetDeployInfo("/!@#$faiztest$#!@", oauth, account);
+
+            string appName = "SpecialCharsTest";
+            ApplicationManager.Run(appName, appManager =>
+            {
+                HttpClient client = HttpClientHelper.CreateClient(appManager.ServiceUrl, appManager.DeploymentManager.Credentials);
+                client.PostAsJsonAsync("deploy", deploy).Result.EnsureSuccessful();
+            });
+        }
+
+        [Fact]
         public void TestDropboxRateLimiter()
         {
             // Set the limit to 60/sec, let it run for 5s
