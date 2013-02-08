@@ -309,7 +309,7 @@ namespace Kudu.Services.Web.App_Start
                 throw new HttpResponseException(HttpStatusCode.NotFound);
             }
 
-            return new CommandExecutor(environment.RootPath);
+            return new CommandExecutor(environment.RootPath, environment, context.Kernel.Get<IDeploymentSettingsManager>());
         }
 
         private static string GetSettingsPath(IEnvironment environment)

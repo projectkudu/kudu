@@ -12,6 +12,7 @@ using Kudu.Client.SourceControl;
 using Kudu.Client.SSHKey;
 using Kudu.Core.Infrastructure;
 using Kudu.SiteManagement;
+using Kudu.Core.Commands;
 
 namespace Kudu.TestHarness
 {
@@ -86,6 +87,12 @@ namespace Kudu.TestHarness
         }
 
         public RemoteVfsManager LiveScmVfsManager
+        {
+            get;
+            private set;
+        }
+
+        public RemoteCommandExecutor CommandExecutor
         {
             get;
             private set;
@@ -321,6 +328,7 @@ namespace Kudu.TestHarness
                 VfsManager = new RemoteVfsManager(site.ServiceUrl + "vfs"),
                 VfsWebRootManager = new RemoteVfsManager(site.ServiceUrl + "vfs/site/wwwroot"),
                 LiveScmVfsManager = new RemoteVfsManager(site.ServiceUrl + "scmvfs"),
+                CommandExecutor = new RemoteCommandExecutor(site.ServiceUrl + "command"),
                 RepositoryManager = repositoryManager,
             };
 

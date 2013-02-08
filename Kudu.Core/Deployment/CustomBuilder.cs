@@ -39,14 +39,14 @@ namespace Kudu.Core.Deployment
             // the repository root
             var exe = new Executable(StarterScriptPath, _repositoryPath, _settings.GetCommandIdleTimeout());
             exe.AddDeploymentSettingsAsEnvironmentVariables(_settings);
-            exe.EnvironmentVariables[ExternalCommandBuilder.SourcePath] = _repositoryPath;
-            exe.EnvironmentVariables[ExternalCommandBuilder.TargetPath] = context.OutputPath;
+            exe.EnvironmentVariables[ExternalCommandFactory.SourcePath] = _repositoryPath;
+            exe.EnvironmentVariables[ExternalCommandFactory.TargetPath] = context.OutputPath;
             exe.EnvironmentVariables[ExternalCommandBuilder.PreviousManifestPath] = (context.PreviousManifest != null) ? context.PreviousManifest.ManifestFilePath : String.Empty;
             exe.EnvironmentVariables[ExternalCommandBuilder.NextManifestPath] = context.ManifestWriter.ManifestFilePath;
-            exe.EnvironmentVariables[ExternalCommandBuilder.MSBuildPath] = PathUtility.ResolveMSBuildPath();
-            exe.EnvironmentVariables[ExternalCommandBuilder.KuduSyncCommandKey] = KuduSyncCommand;
-            exe.EnvironmentVariables[ExternalCommandBuilder.SelectNodeVersionCommandKey] = SelectNodeVersionCommand;
-            exe.EnvironmentVariables[ExternalCommandBuilder.NpmJsPathKey] = PathUtility.ResolveNpmJsPath();
+            exe.EnvironmentVariables[ExternalCommandFactory.MSBuildPath] = PathUtility.ResolveMSBuildPath();
+            exe.EnvironmentVariables[ExternalCommandFactory.KuduSyncCommandKey] = KuduSyncCommand;
+            exe.EnvironmentVariables[ExternalCommandFactory.SelectNodeVersionCommandKey] = SelectNodeVersionCommand;
+            exe.EnvironmentVariables[ExternalCommandFactory.NpmJsPathKey] = PathUtility.ResolveNpmJsPath();
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.NuGetPackageRestoreKey] = "true";
 
             exe.SetHomePath(_homePath);
@@ -75,7 +75,7 @@ namespace Kudu.Core.Deployment
 
             try
             {
-                exe.ExecuteWithProgressWriter(customLogger, context.Tracer, ExternalCommandBuilder.ShouldFilterOutMsBuildWarnings, ExternalCommandBuilder.ShouldFilterOutNodeRedundantOutput, _command, String.Empty);
+                exe.ExecuteWithProgressWriter(customLogger, context.Tracer, ExternalCommandFactory.ShouldFilterOutMsBuildWarnings, ExternalCommandFactory.ShouldFilterOutNodeRedundantOutput, _command, String.Empty);
 
                 tcs.SetResult(null);
             }
@@ -124,7 +124,7 @@ namespace Kudu.Core.Deployment
         {
             get
             {
-                return Path.Combine(_scriptPath, ExternalCommandBuilder.StarterScriptName);
+                return Path.Combine(_scriptPath, ExternalCommandFactory.StarterScriptName);
             }
         }
     }

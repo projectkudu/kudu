@@ -70,6 +70,7 @@
     </Compile>
     <Compile Include="Commands\CommandExecutor.cs" />
     <Compile Include="Deployment\CascadeLogger.cs" />
+    <Compile Include="Deployment\Generator\ExternalCommandFactory.cs" />
     <Compile Include="Deployment\SiteBuilderFactoryDispatcher.cs" />
     <Compile Include="Deployment\Generator\BasicBuilder.cs" />
     <Compile Include="Deployment\Generator\BaseBasicBuilder.cs" />

@@ -351,7 +351,7 @@ namespace Kudu.Core.Infrastructure
         }
 #endif
 
-        private Process CreateProcess(string arguments, object[] args)
+        internal Process CreateProcess(string arguments, object[] args)
         {
             var psi = new ProcessStartInfo
             {

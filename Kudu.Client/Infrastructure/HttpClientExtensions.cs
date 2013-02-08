@@ -74,5 +74,16 @@ namespace Kudu.Client.Infrastructure
                 return result.EnsureSuccessful();
             });
         }
+
+        public static Task<TOutput> PostJsonAsync<TInput, TOutput>(this HttpClient client, string url, TInput param)
+        {
+            return client.PostAsJsonAsync(url, param).Then(result =>
+            {
+                return result.EnsureSuccessful().Content.ReadAsStringAsync().Then(content =>
+                {
+                    return JsonConvert.DeserializeObject<TOutput>(content);
+                });
+            });
+        }
     }
 }
