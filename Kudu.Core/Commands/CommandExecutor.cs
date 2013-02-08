@@ -1,23 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Kudu.Contracts.Settings;
+using Kudu.Core.Deployment.Generator;
+using Kudu.Core.Infrastructure;
+using System;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Abstractions;
-using System.Linq;
 using System.Text;
-using System.Threading;
-using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Commands
 {
     public class CommandExecutor : ICommandExecutor
     {
-        private readonly string _rootDirectory;
         private Process _executingProcess;
+        private IEnvironment _environment;
+        private string _rootDirectory;
+        private ExternalCommandFactory _externalCommandFactory;
 
-        public CommandExecutor(string rootDirectory)
+        public CommandExecutor(string repositoryPath, IEnvironment environment, IDeploymentSettingsManager settings)
         {
-            _rootDirectory = rootDirectory;
+            _rootDirectory = repositoryPath;
+            _environment = environment;
+            _externalCommandFactory = new ExternalCommandFactory(environment, settings, repositoryPath);
         }
 
         public event Action<CommandEvent> CommandEvent;
@@ -81,28 +83,8 @@ namespace Kudu.Core.Commands
                 workingDirectory = Path.Combine(_rootDirectory, relativeWorkingDirectory);
             }
 
-            _executingProcess = new Process();
-            _executingProcess.StartInfo.FileName = "cmd";
-            _executingProcess.StartInfo.WorkingDirectory = workingDirectory;
-            _executingProcess.StartInfo.Arguments = "/c " + command;
-            _executingProcess.StartInfo.CreateNoWindow = true;
-            _executingProcess.StartInfo.UseShellExecute = false;
-            _executingProcess.StartInfo.RedirectStandardInput = true;
-            _executingProcess.StartInfo.RedirectStandardOutput = true;
-            _executingProcess.StartInfo.RedirectStandardError = true;
-            _executingProcess.StartInfo.StandardOutputEncoding = Encoding.UTF8;
-            _executingProcess.StartInfo.StandardErrorEncoding = Encoding.UTF8;
-            _executingProcess.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            _executingProcess.StartInfo.ErrorDialog = false;
-            var pathEnv = _executingProcess.StartInfo.EnvironmentVariables["PATH"];
-            if (!pathEnv.EndsWith(";"))
-            {
-                pathEnv += ";";
-            }
-            pathEnv += Path.GetDirectoryName(PathUtility.ResolveGitPath());
-            pathEnv += ";";
-            pathEnv += Path.GetDirectoryName(PathUtility.ResolveMSBuildPath());
-            _executingProcess.StartInfo.EnvironmentVariables["PATH"] = pathEnv;
+            Executable exe = _externalCommandFactory.BuildExternalCommandExecutable(workingDirectory, _environment.WebRootPath);
+            _executingProcess = exe.CreateProcess(command, new object[0]);
 
             var commandEvent = CommandEvent;
 

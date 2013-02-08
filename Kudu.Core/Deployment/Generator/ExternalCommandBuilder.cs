@@ -11,17 +11,12 @@ namespace Kudu.Core.Deployment.Generator
     {
         // TODO: Once CustomBuilder is removed, change all internals back to privates
 
-        internal const string SourcePath = "DEPLOYMENT_SOURCE";
-        internal const string TargetPath = "DEPLOYMENT_TARGET";
         internal const string BuildTempPath = "DEPLOYMENT_TEMP";
         internal const string ManifestPath = "MANIFEST_PATH";
-        internal const string MSBuildPath = "MSBUILD_PATH";
         internal const string PreviousManifestPath = "PREVIOUS_MANIFEST_PATH";
         internal const string NextManifestPath = "NEXT_MANIFEST_PATH";
-        internal const string KuduSyncCommandKey = "KUDU_SYNC_CMD";
-        internal const string SelectNodeVersionCommandKey = "KUDU_SELECT_NODE_VERSION_CMD";
-        internal const string NpmJsPathKey = "NPM_JS_PATH";
-        internal const string StarterScriptName = "starter.cmd";
+
+        private ExternalCommandFactory _externalCommandFactory;
 
         public ExternalCommandBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string repositoryPath)
         {
@@ -31,6 +26,8 @@ namespace Kudu.Core.Deployment.Generator
             RepositoryPath = repositoryPath;
             PropertyProvider = propertyProvider;
             HomePath = environment.SiteRootPath;
+
+            _externalCommandFactory = new ExternalCommandFactory(environment, settings, repositoryPath);
         }
 
         protected IEnvironment Environment { get; private set; }
@@ -48,24 +45,9 @@ namespace Kudu.Core.Deployment.Generator
 
             // Creates an executable pointing to cmd and the working directory being
             // the repository root
-            var exe = new Executable(StarterScriptPath, RepositoryPath, DeploymentSettings.GetCommandIdleTimeout());
-            exe.AddDeploymentSettingsAsEnvironmentVariables(DeploymentSettings);
-            exe.EnvironmentVariables[SourcePath] = RepositoryPath;
-            exe.EnvironmentVariables[TargetPath] = context.OutputPath;
-            exe.EnvironmentVariables[MSBuildPath] = PathUtility.ResolveMSBuildPath();
+            var exe = _externalCommandFactory.BuildExternalCommandExecutable(RepositoryPath, context.OutputPath);
             exe.EnvironmentVariables[PreviousManifestPath] = context.PreviousManifestFilePath ?? String.Empty;
             exe.EnvironmentVariables[NextManifestPath] = context.NextManifestFilePath;
-            exe.EnvironmentVariables[KuduSyncCommandKey] = KuduSyncCommand;
-            exe.EnvironmentVariables[SelectNodeVersionCommandKey] = SelectNodeVersionCommand;
-            exe.EnvironmentVariables[NpmJsPathKey] = PathUtility.ResolveNpmJsPath();
-
-            // Disable this for now
-            // exe.EnvironmentVariables[NuGetCachePathKey] = Environment.NuGetCachePath;
-
-            // NuGet.exe 1.8 will require an environment variable to make package restore work
-            exe.EnvironmentVariables[WellKnownEnvironmentVariables.NuGetPackageRestoreKey] = "true";
-
-            exe.SetHomePath(HomePath);
 
             // Create a directory for the script output temporary artifacts
             string buildTempPath = Path.Combine(Environment.TempPath, Guid.NewGuid().ToString());
@@ -78,20 +60,9 @@ namespace Kudu.Core.Deployment.Generator
                 exe.EnvironmentVariables[property.Key] = property.Value;
             }
 
-            // Set the path so we can add more variables
-            exe.EnvironmentVariables["PATH"] = System.Environment.GetEnvironmentVariable("PATH");
-
-            // Add the msbuild path and git path to the %PATH% so more tools are available
-            var toolsPaths = new[] {
-                Path.GetDirectoryName(PathUtility.ResolveMSBuildPath()),
-                Path.GetDirectoryName(PathUtility.ResolveGitPath())
-            };
-
-            exe.AddToPath(toolsPaths);
-
             try
             {
-                exe.ExecuteWithProgressWriter(customLogger, context.Tracer, ShouldFilterOutMsBuildWarnings, ShouldFilterOutNodeRedundantOutput, command, String.Empty);
+                exe.ExecuteWithProgressWriter(customLogger, context.Tracer, ExternalCommandFactory.ShouldFilterOutMsBuildWarnings, ExternalCommandFactory.ShouldFilterOutNodeRedundantOutput, command, String.Empty);
             }
             catch (CommandLineException ex)
             {
@@ -130,44 +101,6 @@ namespace Kudu.Core.Deployment.Generator
                     tracer.TraceError(ex);
                 }
             }
-        }
-
-        private string KuduSyncCommand
-        {
-            get
-            {
-                return Path.Combine(Environment.ScriptPath, "kudusync");
-            }
-        }
-
-        private string SelectNodeVersionCommand
-        {
-            get
-            {
-                return "node \"" + Path.Combine(Environment.ScriptPath, "selectNodeVersion") + "\"";
-            }
-        }
-
-        private string StarterScriptPath
-        {
-            get
-            {
-                return Path.Combine(Environment.ScriptPath, StarterScriptName);
-            }
-        }
-
-        // TODO: Remove this filter once we figure out how to run the msbuild command without getting these warnings
-        internal static bool ShouldFilterOutMsBuildWarnings(string outputLine)
-        {
-            return outputLine.Contains("MSB3644:") || outputLine.Contains("MSB3270:");
-        }
-
-        /// <summary>
-        /// Node spits out some disturbing output to the error stream when running in Azure
-        /// </summary>
-        internal static bool ShouldFilterOutNodeRedundantOutput(string outputLine)
-        {
-            return outputLine.Contains("GetConsoleTitleW:") || outputLine.Contains("SetConsoleTitleW:");
         }
     }
 }

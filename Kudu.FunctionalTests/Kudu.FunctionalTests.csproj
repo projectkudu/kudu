@@ -78,6 +78,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CommandExecutorTests.cs" />
     <Compile Include="DeploymentManagerTests.cs" />
     <Compile Include="DiagnosticsApiFacts.cs" />
     <Compile Include="DropboxTests.cs" />
