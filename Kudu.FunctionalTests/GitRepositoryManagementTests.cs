@@ -514,17 +514,17 @@ command = deploy.cmd");
             string cloneUrl = "https://github.com/KuduApps/RepoWithMultipleBranches.git";
             using (var repo = Git.Clone(repositoryName, cloneUrl, noCache: true))
             {
-                Git.CheckOut(repo.PhysicalPath, "test");
+                Git.CheckOut(repo.PhysicalPath, "foo/bar");
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Set the branch to test and push to that branch
-                    appManager.SettingsManager.SetValue("branch", "test").Wait();
-                    appManager.GitDeploy(repo.PhysicalPath, "test", "test");
+                    appManager.SettingsManager.SetValue("branch", "foo/bar").Wait();
+                    appManager.GitDeploy(repo.PhysicalPath, "foo/bar", "foo/bar");
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
                     Assert.Equal(1, results.Count);
-                    KuduAssert.VerifyUrl(appManager.SiteUrl, "Test branch");
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, "foo/bar branch");
 
                     // Now push master, but without changing the deploy branch
                     appManager.GitDeploy(repo.PhysicalPath, "master", "master");
@@ -532,7 +532,7 @@ command = deploy.cmd");
 
                     // Here, no new deployment should have happened
                     Assert.Equal(1, results.Count);
-                    KuduAssert.VerifyUrl(appManager.SiteUrl, "Test branch");
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, "foo/bar branch");
 
                     // Now change deploy branch to master and do a 'Deploy Latest' (i.e. no id)
                     appManager.SettingsManager.SetValue("branch", "master").Wait();
