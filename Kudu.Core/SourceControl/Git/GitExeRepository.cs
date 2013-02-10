@@ -430,7 +430,12 @@ namespace Kudu.Core.SourceControl.Git
                 }
 
                 string reference = pushDetails[2];
-                string branch = reference.Split('/').Last().Trim();
+
+                // The reference looks like refs/heads/master or refs/heads/foo/bar. Trim the refs/heads/ prefix.
+                string branchNamePrefix = "refs/heads/";
+                System.Diagnostics.Debug.Assert(reference.StartsWith(branchNamePrefix, StringComparison.OrdinalIgnoreCase));
+                string branch = reference.Substring(branchNamePrefix.Length).Trim();
+
                 string fullNewId = Resolve(branch);
 
                 return new ReceiveInfo
