@@ -92,6 +92,12 @@ namespace Kudu.TestHarness
             private set;
         }
 
+        public RemoteZipManager ZipManager
+        {
+            get;
+            private set;
+        }
+
         public RemoteCommandExecutor CommandExecutor
         {
             get;
@@ -328,6 +334,7 @@ namespace Kudu.TestHarness
                 VfsManager = new RemoteVfsManager(site.ServiceUrl + "vfs"),
                 VfsWebRootManager = new RemoteVfsManager(site.ServiceUrl + "vfs/site/wwwroot"),
                 LiveScmVfsManager = new RemoteVfsManager(site.ServiceUrl + "scmvfs"),
+                ZipManager = new RemoteZipManager(site.ServiceUrl + "zip"),
                 CommandExecutor = new RemoteCommandExecutor(site.ServiceUrl + "command"),
                 RepositoryManager = repositoryManager,
             };

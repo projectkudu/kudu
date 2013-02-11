@@ -64,10 +64,7 @@ namespace Kudu.Services.Infrastructure
                 }
                 else
                 {
-                    // Enumerate directory
-                    IEnumerable<VfsStatEntry> directory = GetDirectoryResponse(info, localFilePath);
-                    HttpResponseMessage successDirectoryResponse = Request.CreateResponse<IEnumerable<VfsStatEntry>>(HttpStatusCode.OK, directory);
-                    return Task.FromResult(successDirectoryResponse);
+                    return CreateDirectoryGetResponse(info, localFilePath);
                 }
             }
             else
@@ -96,9 +93,7 @@ namespace Kudu.Services.Infrastructure
 
             if (itemExists && (info.Attributes & FileAttributes.Directory) != 0)
             {
-                HttpResponseMessage conflictDirectoryResponse = Request.CreateErrorResponse(
-                    HttpStatusCode.Conflict, Resources.VfsController_CannotUpdateDirectory);
-                return Task.FromResult(conflictDirectoryResponse);
+                return CreateDirectoryPutResponse(info, localFilePath);
             }
             else
             {
@@ -171,7 +166,22 @@ namespace Kudu.Services.Infrastructure
 
         protected MediaTypeMap MediaTypeMap { get; private set; }
 
+        protected virtual Task<HttpResponseMessage> CreateDirectoryGetResponse(DirectoryInfo info, string localFilePath)
+        {
+            // Enumerate directory
+            IEnumerable<VfsStatEntry> directory = GetDirectoryResponse(info, localFilePath);
+            HttpResponseMessage successDirectoryResponse = Request.CreateResponse<IEnumerable<VfsStatEntry>>(HttpStatusCode.OK, directory);
+            return Task.FromResult(successDirectoryResponse);
+        }
+
         protected abstract Task<HttpResponseMessage> CreateItemGetResponse(FileSystemInfo info, string localFilePath);
+
+        protected virtual Task<HttpResponseMessage> CreateDirectoryPutResponse(DirectoryInfo info, string localFilePath)
+        {
+            HttpResponseMessage conflictDirectoryResponse = Request.CreateErrorResponse(
+                HttpStatusCode.Conflict, Resources.VfsController_CannotUpdateDirectory);
+            return Task.FromResult(conflictDirectoryResponse);
+        }
 
         protected abstract Task<HttpResponseMessage> CreateItemPutResponse(FileSystemInfo info, string localFilePath, bool itemExists);
 
