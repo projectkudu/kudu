@@ -29,7 +29,7 @@ namespace Kudu.Core.Deployment
 
         public static DeploymentStatusFile Open(IFileSystem fileSystem, string path)
         {
-            XDocument document;
+            XDocument document = null;
 
             try
             {
@@ -38,10 +38,14 @@ namespace Kudu.Core.Deployment
                     return null;
                 }
 
-                using (var stream = fileSystem.File.OpenRead(path))
+                // Retry to make it robust incase of failure
+                OperationManager.Attempt(() =>
                 {
-                    document = XDocument.Load(stream);
-                }
+                    using (var stream = fileSystem.File.OpenRead(path))
+                    {
+                        document = XDocument.Load(stream);
+                    }
+                });
             }
             catch
             {
