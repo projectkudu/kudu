@@ -64,7 +64,7 @@ namespace Kudu.Core.Deployment.Generator
             {
                 exe.ExecuteWithProgressWriter(customLogger, context.Tracer, ExternalCommandFactory.ShouldFilterOutMsBuildWarnings, ExternalCommandFactory.ShouldFilterOutNodeRedundantOutput, command, String.Empty);
             }
-            catch (CommandLineException ex)
+            catch (Exception ex)
             {
                 context.Tracer.TraceError(ex);
 
@@ -73,12 +73,7 @@ namespace Kudu.Core.Deployment.Generator
                 // msbuild has already been captured.
                 context.GlobalLogger.LogError();
 
-                // Add the output stream and the error stream to the log for better
-                // debugging
-                customLogger.Log(ex.Output, LogEntryType.Error);
-                customLogger.Log(ex.Error, LogEntryType.Error);
-
-                throw new CommandLineException(ex.Message, ex);
+                throw;
             }
             finally
             {

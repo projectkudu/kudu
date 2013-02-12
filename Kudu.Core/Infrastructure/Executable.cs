@@ -227,36 +227,56 @@ namespace Kudu.Core.Infrastructure
 
         public Tuple<string, string> ExecuteWithProgressWriter(ILogger logger, ITracer tracer, Func<string, bool> shouldFilterOutOutput, Func<string, bool> shouldFilterOutError, string arguments, params object[] args)
         {
-            using (var writer = new ProgressWriter())
+            try
             {
-                writer.Start();
+                using (var writer = new ProgressWriter())
+                {
+                    writer.Start();
 
-                return Execute(tracer,
-                               output =>
-                               {
-                                   if (shouldFilterOutOutput(output))
+                    return Execute(tracer,
+                                   output =>
                                    {
-                                       return false;
-                                   }
+                                       if (shouldFilterOutOutput(output))
+                                       {
+                                           return false;
+                                       }
 
-                                   writer.WriteOutLine(output);
-                                   logger.Log(output);
-                                   return true;
-                               },
-                               error =>
-                               {
-                                   if (shouldFilterOutError(error))
+                                       writer.WriteOutLine(output);
+                                       logger.Log(output);
+                                       return true;
+                                   },
+                                   error =>
                                    {
-                                       return false;
-                                   }
+                                       if (shouldFilterOutError(error))
+                                       {
+                                           return false;
+                                       }
 
-                                   writer.WriteErrorLine(error);
-                                   logger.Log(error, LogEntryType.Error);
-                                   return true;
-                               },
-                               Console.OutputEncoding,
-                               arguments,
-                               args);
+                                       writer.WriteErrorLine(error);
+                                       logger.Log(error, LogEntryType.Error);
+                                       return true;
+                                   },
+                                   Console.OutputEncoding,
+                                   arguments,
+                                   args);
+                }
+            }
+            catch (CommandLineException exception)
+            {
+                // in case of failure without stderr, we log error explicitly
+                if (String.IsNullOrEmpty(exception.Error))
+                {
+                    logger.Log(exception);
+                }
+
+                throw;
+            }
+            catch (Exception exception)
+            {
+                // in case of other failure, we log error explicitly
+                logger.Log(exception);
+
+                throw;
             }
         }
 

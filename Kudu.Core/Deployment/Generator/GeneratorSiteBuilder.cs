@@ -39,7 +39,6 @@ namespace Kudu.Core.Deployment.Generator
             }
             catch (Exception ex)
             {
-                buildLogger.Log(ex);
                 tcs.SetException(ex);
             }
 
@@ -74,7 +73,7 @@ namespace Kudu.Core.Deployment.Generator
                     scriptGenerator.ExecuteWithProgressWriter(buildLogger, context.Tracer, _ => false, _ => false, scriptGeneratorCommand);
                 }
             }
-            catch (CommandLineException ex)
+            catch (Exception ex)
             {
                 context.Tracer.TraceError(ex);
 
@@ -82,11 +81,6 @@ namespace Kudu.Core.Deployment.Generator
                 // The reason we don't log the real exception is because the 'live output' running
                 // msbuild has already been captured.
                 context.GlobalLogger.LogError();
-
-                // Add the output stream and the error stream to the log for better
-                // debugging
-                buildLogger.Log(ex.Output, LogEntryType.Error);
-                buildLogger.Log(ex.Error, LogEntryType.Error);
 
                 throw;
             }
