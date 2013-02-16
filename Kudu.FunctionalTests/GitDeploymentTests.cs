@@ -34,6 +34,12 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public void PushAndDeployWebApiApp()
+        {
+            PushAndDeployApps("https://github.com/KuduApps/Dev11_Net45_Mvc4_WebAPI.git", "master", "HelloWorld", HttpStatusCode.OK, "", "api/values", "POST", "\"HelloWorld\"");
+        }
+
+        [Fact]
         public void PushAndDeployAspNetAppWebSiteInSolution()
         {
             PushAndDeployApps("https://github.com/KuduApps/WebSiteInSolution.git", "master", "SomeDummyLibrary.Class1", HttpStatusCode.OK, "");
@@ -93,7 +99,8 @@ namespace Kudu.FunctionalTests
         }
 
         private static void PushAndDeployApps(string repoCloneUrl, string defaultBranchName,
-                                              string verificationText, HttpStatusCode expectedResponseCode, string verificationLogText)
+                                              string verificationText, HttpStatusCode expectedResponseCode, string verificationLogText,
+                                              string resourcePath = "", string httpMethod = "GET", string jsonPayload = "")
         {
             using (new LatencyLogger("PushAndDeployApps - " + repoCloneUrl))
             {
@@ -113,7 +120,8 @@ namespace Kudu.FunctionalTests
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    KuduAssert.VerifyUrl(appManager.SiteUrl, verificationText, expectedResponseCode);
+                    var url = new Uri(new Uri(appManager.SiteUrl), resourcePath);
+                    KuduAssert.VerifyUrl(url.ToString(), verificationText, expectedResponseCode, httpMethod, jsonPayload);
                     if (!String.IsNullOrEmpty(verificationLogText))
                     {
                         KuduAssert.VerifyLogOutput(appManager, results[0].Id, verificationLogText.Trim());

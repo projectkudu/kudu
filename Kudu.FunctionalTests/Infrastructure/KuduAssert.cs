@@ -2,7 +2,10 @@
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Formatting;
 using System.Net.Http.Headers;
+using System.Text;
+using System.Threading.Tasks;
 using Kudu.Client;
 using Kudu.Client.Infrastructure;
 using Kudu.TestHarness;
@@ -58,11 +61,19 @@ namespace Kudu.FunctionalTests.Infrastructure
             }
         }
 
-        public static void VerifyUrl(string url, string content = null, HttpStatusCode statusCode = HttpStatusCode.OK)
+        public static void VerifyUrl(string url, string content = null, HttpStatusCode statusCode = HttpStatusCode.OK, string httpMethod = "GET", string jsonPayload = "")
         {
             var client = new HttpClient();
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Kudu-Test", "1.0"));
-            var response = client.GetAsync(url).Result;
+            HttpResponseMessage response = null;
+            if (String.Equals(httpMethod, "POST"))
+            {
+                response = client.PostAsync(url, new StringContent(jsonPayload, Encoding.UTF8, "application/json")).Result;                
+            }
+            else
+            {
+                response = client.GetAsync(url).Result;
+            }
             string responseBody = response.Content.ReadAsStringAsync().Result;
 
             Assert.True(statusCode == response.StatusCode,
