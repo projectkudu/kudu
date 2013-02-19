@@ -191,11 +191,6 @@ namespace Kudu.Core.SourceControl.Git
             }
         }
 
-        internal void Clone(string source)
-        {
-            _gitExe.Execute(@"clone ""{0}"" .", source);
-        }
-
         public void Clean()
         {
             // two f to remove submodule (dir with git).
