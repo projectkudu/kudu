@@ -7,6 +7,8 @@ namespace Kudu.Core.Infrastructure
 {
     internal static class XmlUtility
     {
+        // Based on http://stackoverflow.com/questions/157646/best-way-to-encode-text-data-for-xml/732135#732135
+        //          http://github.com/mkropat/.NET-Snippets/blob/master/XmlTextEncoder.cs
         public static string Sanitize(string xml)
         {
             if (xml == null)
