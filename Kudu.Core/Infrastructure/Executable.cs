@@ -227,7 +227,6 @@ namespace Kudu.Core.Infrastructure
 
         public Tuple<string, string> ExecuteWithProgressWriter(ILogger logger, ITracer tracer, string arguments, params object[] args)
         {
-            object locker = new object();
             try
             {
                 using (var writer = new ProgressWriter())
@@ -237,20 +236,14 @@ namespace Kudu.Core.Infrastructure
                     return Execute(tracer,
                                    output =>
                                    {
-                                       lock (locker)
-                                       {
-                                           writer.WriteOutLine(output);
-                                           logger.Log(output);
-                                       }
+                                       writer.WriteOutLine(output);
+                                       logger.Log(output);
                                        return true;
                                    },
                                    error =>
                                    {
-                                       lock (locker)
-                                       {
-                                           writer.WriteErrorLine(error);
-                                           logger.Log(error, LogEntryType.Error);
-                                       }
+                                       writer.WriteErrorLine(error);
+                                       logger.Log(error, LogEntryType.Error);
                                        return true;
                                    },
                                    Console.OutputEncoding,
@@ -321,11 +314,6 @@ namespace Kudu.Core.Infrastructure
 
                 process.BeginErrorReadLine();
                 process.BeginOutputReadLine();
-
-                using (var inputStream = process.StandardInput)
-                {
-                    inputStream.Write(new char[] { (char)0, (char)0x3 });
-                }
 
                 try
                 {
