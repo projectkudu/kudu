@@ -41,7 +41,7 @@ namespace Kudu.Core.Deployment
 
         public virtual string ExecuteMSBuild(ITracer tracer, string arguments, params object[] args)
         {
-            return _msbuildExe.ExecuteWithProgressWriter(tracer, ExternalCommandFactory.ShouldFilterOutMsBuildWarnings, _ => false, arguments, args).Item1;
+            return _msbuildExe.ExecuteWithProgressWriter(tracer, arguments, args).Item1;
         }
 
         public abstract Task Build(DeploymentContext context);
