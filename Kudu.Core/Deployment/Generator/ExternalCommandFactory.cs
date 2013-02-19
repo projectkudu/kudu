@@ -86,19 +86,5 @@ namespace Kudu.Core.Deployment.Generator
                 return Path.Combine(_environment.ScriptPath, StarterScriptName);
             }
         }
-
-        // TODO: Remove this filter once we figure out how to run the msbuild command without getting these warnings
-        internal static bool ShouldFilterOutMsBuildWarnings(string outputLine)
-        {
-            return outputLine.Contains("MSB3644:") || outputLine.Contains("MSB3270:");
-        }
-
-        /// <summary>
-        /// Node spits out some disturbing output to the error stream when running in Azure
-        /// </summary>
-        internal static bool ShouldFilterOutNodeRedundantOutput(string outputLine)
-        {
-            return outputLine.Contains("GetConsoleTitleW:") || outputLine.Contains("SetConsoleTitleW:");
-        }
     }
 }

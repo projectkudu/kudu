@@ -62,7 +62,7 @@ namespace Kudu.Core.Deployment.Generator
 
             try
             {
-                exe.ExecuteWithProgressWriter(customLogger, context.Tracer, ExternalCommandFactory.ShouldFilterOutMsBuildWarnings, ExternalCommandFactory.ShouldFilterOutNodeRedundantOutput, command, String.Empty);
+                exe.ExecuteWithProgressWriter(customLogger, context.Tracer, command, String.Empty);
             }
             catch (Exception ex)
             {
