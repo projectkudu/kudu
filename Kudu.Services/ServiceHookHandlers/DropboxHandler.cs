@@ -19,14 +19,13 @@ namespace Kudu.Services.ServiceHookHandlers
         protected readonly IDeploymentSettingsManager _settings;
 
         public DropboxHandler(ITracer tracer,
-                              IServerRepository repository,
                               IDeploymentManager manager,
                               IDeploymentSettingsManager settings,
                               IEnvironment environment)
         {
             _tracer = tracer;
             _settings = settings;
-            _dropBoxHelper = new DropboxHelper(tracer, repository, manager, settings, environment);
+            _dropBoxHelper = new DropboxHelper(tracer, manager, settings, environment);
         }
 
         public DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
@@ -54,7 +53,7 @@ namespace Kudu.Services.ServiceHookHandlers
         {
             // Sync with dropbox
             var dropboxInfo = ((DropboxInfo)deploymentInfo);
-            deploymentInfo.TargetChangeset = _dropBoxHelper.Sync(dropboxInfo, targetBranch, logger);
+            deploymentInfo.TargetChangeset = _dropBoxHelper.Sync(dropboxInfo, targetBranch, logger, repository);
         }
 
         internal class DropboxInfo : DeploymentInfo
