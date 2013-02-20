@@ -31,7 +31,6 @@ namespace Kudu.Services
         private const int MaxFilesPerSecs = 9; // Dropbox rate-limit at 600/min or 10/s
 
         private readonly ITracer _tracer;
-        private readonly IServerRepository _repository;
         private readonly IDeploymentManager _manager;
         private readonly IDeploymentSettingsManager _settings;
         private readonly IEnvironment _environment;
@@ -46,20 +45,18 @@ namespace Kudu.Services
         private int _retriedCount;
 
         public DropboxHelper(ITracer tracer,
-                             IServerRepository repository,
                              IDeploymentManager manager,
                              IDeploymentSettingsManager settings,
                              IEnvironment environment)
         {
             _tracer = tracer;
-            _repository = repository;
             _manager = manager;
             _settings = settings;
             _environment = environment;
             _timeout = settings.GetCommandIdleTimeout();
         }
 
-        internal ChangeSet Sync(DropboxHandler.DropboxInfo deploymentInfo, string branch, ILogger logger)
+        internal ChangeSet Sync(DropboxHandler.DropboxInfo deploymentInfo, string branch, ILogger logger, IRepository repository)
         {
             DropboxDeployInfo info = deploymentInfo.DeployInfo;
 
@@ -75,10 +72,10 @@ namespace Kudu.Services
                 throw new InvalidOperationException(Resources.Error_MismatchDropboxCursor);
             }
 
-            if (!IsEmptyRepo())
+            if (!repository.IsEmpty())
             {
                 // git checkout --force <branch>
-                _repository.Update(branch);
+                repository.Update(branch);
             }
 
             ChangeSet changeSet;
@@ -114,7 +111,7 @@ namespace Kudu.Services
                 _manager.UpdateMessage(deploymentInfo.TargetChangeset.Id, message);
 
                 // Commit anyway even partial change
-                changeSet = _repository.Commit(message, String.Format("{0} <{1}>", info.UserName, info.Email));
+                changeSet = repository.Commit(message, String.Format("{0} <{1}>", info.UserName, info.Email));
             }
 
             // Save new dropboc cursor
@@ -122,18 +119,6 @@ namespace Kudu.Services
             _settings.SetValue(CursorKey, info.NewCursor);
 
             return changeSet;
-        }
-
-        private bool IsEmptyRepo()
-        {
-            try
-            {
-                return string.IsNullOrEmpty(_repository.CurrentId);
-            }
-            catch (Exception)
-            {
-                return true;
-            }
         }
 
         private void ApplyChanges(DropboxHandler.DropboxInfo deploymentInfo)
