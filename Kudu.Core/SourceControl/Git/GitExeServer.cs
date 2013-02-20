@@ -11,7 +11,7 @@ using Kudu.Core.Tracing;
 
 namespace Kudu.Core.SourceControl.Git
 {
-    public class GitExeServer : IGitServer, IServerRepository
+    public class GitExeServer : IGitServer
     {
         private readonly GitExecutable _gitExe;
         private readonly ITraceFactory _traceFactory;
@@ -38,19 +38,6 @@ namespace Kudu.Core.SourceControl.Git
             _gitExe.EnvironmentVariables[KnownEnvironment.DEPLOYER] = "";
         }
 
-        public string CurrentId
-        {
-            get
-            {
-                return _repository.CurrentId;
-            }
-        }
-
-        public RepositoryType RepositoryType
-        {
-            get { return RepositoryType.Mercurial; }
-        }
-
         private string PostReceiveHookPath
         {
             get
@@ -67,26 +54,10 @@ namespace Kudu.Core.SourceControl.Git
             }
         }
 
-        public void Clean()
-        {
-            _repository.Clean();
-        }
-
-        public void FetchWithoutConflict(string remote, string remoteAlias, string branchName)
-        {
-            _repository.FetchWithoutConflict(remote, remoteAlias, branchName);
-        }
-
-        public bool Exists
-        {
-            get
-            {
-                return _repository.Exists;
-            }
-        }
-
         public void AdvertiseReceivePack(Stream output)
         {
+            Initialize();
+
             ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("GitExeServer.AdvertiseReceivePack"))
             {
@@ -96,6 +67,8 @@ namespace Kudu.Core.SourceControl.Git
 
         public void AdvertiseUploadPack(Stream output)
         {
+            Initialize();
+
             ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("GitExeServer.AdvertiseUploadPack"))
             {
@@ -137,46 +110,9 @@ namespace Kudu.Core.SourceControl.Git
             _gitExe.Execute(tracer, input, output, @"{0} --stateless-rpc ""{1}""", serviceName, _gitExe.WorkingDirectory);
         }
 
-        public ChangeSet Initialize(string path)
+        private bool Initialize()
         {
-            if (Exists && !_initLock.IsHeld)
-            {
-                // Repository already exists and there's nothing happening then do nothing
-                return null;
-            }
-
-            ChangeSet changeSet = null;
-
-            _initLock.LockOrWait(() =>
-            {
-                InitializeRepository();
-
-                ITracer tracer = _traceFactory.GetTracer();
-                using (tracer.Step("GitExeServer.Initialize(path)"))
-                {
-                    tracer.Trace("Initializing repository from path", new Dictionary<string, string>
-                    {
-                        { "path", path }
-                    });
-
-                    using (tracer.Step("Copying files into repository"))
-                    {
-                        // Copy all of the files into the repository
-                        FileSystemHelpers.Copy(path, _gitExe.WorkingDirectory);
-                    }
-
-                    // Make the initial commit
-                    changeSet = _repository.Commit("Initial commit");
-                }
-            },
-            _initTimeout);
-
-            return changeSet;
-        }
-
-        public bool Initialize()
-        {
-            if (Exists && !_initLock.IsHeld)
+            if (_repository.Exists && !_initLock.IsHeld)
             {
                 // Repository already exists and there's nothing happening then do nothing
                 return false;
@@ -214,24 +150,9 @@ echo $i > pushinfo
             }
         }
 
-        public RepositoryType GetRepositoryType()
-        {
-            return RepositoryType.Git;
-        }
-
         public void SetDeployer(string deployer)
         {
             _gitExe.EnvironmentVariables[KnownEnvironment.DEPLOYER] = deployer;
-        }
-
-        public ChangeSet Commit(string message, string authorName)
-        {
-            return _repository.Commit(message, authorName);
-        }
-
-        public void Update(string id)
-        {
-            _repository.Update(id);
         }
 
         /// <summary>

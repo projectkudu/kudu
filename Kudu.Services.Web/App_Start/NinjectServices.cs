@@ -134,15 +134,6 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<ISiteBuilderFactory>().To<SiteBuilderFactoryDispatcher>()
                                              .InRequestScope();
 
-            kernel.Bind<IServerRepository>().ToMethod(context => new GitExeServer(environment.RepositoryPath,
-                                                                                  environment.SiteRootPath,
-                                                                                  initLock,
-                                                                                  GetRequestTraceFile(environment, context.Kernel),
-                                                                                  context.Kernel.Get<IDeploymentEnvironment>(),
-                                                                                  context.Kernel.Get<IDeploymentSettingsManager>(),
-                                                                                  context.Kernel.Get<ITraceFactory>()))
-                                            .InRequestScope();
-
             kernel.Bind<ILogger>().ToMethod(context => GetLogger(environment, context.Kernel))
                                              .InRequestScope();
 
