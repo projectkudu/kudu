@@ -13,7 +13,7 @@ namespace Kudu.Services.SourceControl
 {
     public class LiveScmController : ApiController
     {
-        private readonly IServerRepository _repository;
+        private readonly IRepository _repository;
         private readonly IServerConfiguration _serverConfiguration;
         private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
@@ -22,7 +22,7 @@ namespace Kudu.Services.SourceControl
         public LiveScmController(ITracer tracer,
                                  IOperationLock deploymentLock,
                                  IEnvironment environment,
-                                 IServerRepository repository,
+                                 IRepository repository,
                                  IServerConfiguration serverConfiguration)
         {
             _tracer = tracer;
@@ -43,7 +43,7 @@ namespace Kudu.Services.SourceControl
             var baseUri = new Uri(request.RequestUri.GetComponents(UriComponents.SchemeAndServer, UriFormat.Unescaped));
             return new RepositoryInfo
             {
-                Type = _repository.GetRepositoryType(),
+                Type = _repository.RepositoryType,
                 GitUrl = UriHelper.MakeRelative(baseUri, _serverConfiguration.GitServerRoot),
             };
         }
