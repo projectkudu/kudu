@@ -147,6 +147,11 @@ namespace Kudu.Core.Infrastructure
             return false;
         }
 
+        public char Peek()
+        {
+            return Current;
+        }
+
         public bool Peek(string value)
         {
             if (Done)

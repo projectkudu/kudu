@@ -1,10 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 
 namespace Kudu.Core.Infrastructure
 {
     internal static class XmlUtility
     {
+        // Based on http://stackoverflow.com/questions/157646/best-way-to-encode-text-data-for-xml/732135#732135
+        //          http://github.com/mkropat/.NET-Snippets/blob/master/XmlTextEncoder.cs
         public static string Sanitize(string xml)
         {
             if (xml == null)
@@ -14,11 +18,24 @@ namespace Kudu.Core.Infrastructure
 
             var buffer = new StringBuilder(xml.Length);
 
-            foreach (char c in xml)
+            var stringReader = new StringReader(xml);
+
+            while (!stringReader.Done)
             {
+                char c = stringReader.Read();
+
                 if (IsLegalXmlChar(c))
                 {
+                    // Allow if the Unicode codepoint is legal in XML
                     buffer.Append(c);
+                }
+                else if (char.IsHighSurrogate(c) &&
+                         !stringReader.Done &&
+                         char.IsLowSurrogate(stringReader.Peek()))
+                {
+                    // Allow well-formed surrogate pairs
+                    buffer.Append(c);
+                    buffer.Append(stringReader.Read());
                 }
             }
 
@@ -32,9 +49,11 @@ namespace Kudu.Core.Infrastructure
                  character == 0x9 /* == '\t' == 9   */          ||
                  character == 0xA /* == '\n' == 10  */          ||
                  character == 0xD /* == '\r' == 13  */          ||
-                (character >= 0x20 && character <= 0xD7FF) ||
-                (character >= 0xE000 && character <= 0xFFFD) ||
-                (character >= 0x10000 && character <= 0x10FFFF)
+                (character >= 0x20 && character <= 0x7E)        ||
+                 character == 0x85                              ||
+                (character >= 0x100 && character <= 0xD7FF)     ||
+                (character >= 0xE000 && character <= 0xFFFD)    ||
+                 character >= 0x10000
             );
         }
     }
