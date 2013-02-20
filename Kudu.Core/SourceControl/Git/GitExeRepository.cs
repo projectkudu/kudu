@@ -209,7 +209,19 @@ namespace Kudu.Core.SourceControl.Git
             try
             {
                 _gitExe.Execute(tracer, @"remote add -t {2} {0} ""{1}""", remoteAlias, remote, branchName);
-                _gitExe.Execute(tracer, @"fetch {0} --progress", remoteAlias);
+
+                // If it's the initial fetch, we do a shallow fetch so that we omit all the history, keeping
+                // our repo small. In subsequent fetches, we can't use the --depth flag as that would further
+                // trim the repo, preventing us from redeploying old deployments
+                if (this.IsEmpty())
+                {
+                    _gitExe.Execute(tracer, @"fetch {0} --progress --depth 1", remoteAlias);
+                }
+                else
+                {
+                    _gitExe.Execute(tracer, @"fetch {0} --progress", remoteAlias);
+                }
+
                 Update(branchName);
                 _gitExe.Execute(tracer, @"reset --hard {0}/{1}", remoteAlias, branchName);
             }
