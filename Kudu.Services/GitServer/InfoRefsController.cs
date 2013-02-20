@@ -100,22 +100,10 @@ namespace Kudu.Services.GitServer
 
                 if (service == "upload-pack")
                 {
-                    //// Initialize the repository from the deployment files (if this is the first commit)
-                    //ChangeSet changeSet = _gitServer.Initialize(_configuration, _webRootPath);
-                    //_gitServer.AdvertiseUploadPack(memoryStream);
-
-                    //// If we just created the repo, make a 'pseudo' deployment for the initial commit
-                    //if (changeSet != null)
-                    //{
-                    //    _deploymentManager.CreateExistingDeployment(changeSet.Id, _configuration.Username);
-                    //}
-
-                    _gitServer.Initialize();
                     _gitServer.AdvertiseUploadPack(memoryStream);
                 }
                 else if (service == "receive-pack")
                 {
-                    _gitServer.Initialize();
                     _gitServer.AdvertiseReceivePack(memoryStream);
                 }
 

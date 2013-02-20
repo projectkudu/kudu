@@ -56,6 +56,8 @@ namespace Kudu.Core.SourceControl.Git
 
         public void AdvertiseReceivePack(Stream output)
         {
+            Initialize();
+
             ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("GitExeServer.AdvertiseReceivePack"))
             {
@@ -65,6 +67,8 @@ namespace Kudu.Core.SourceControl.Git
 
         public void AdvertiseUploadPack(Stream output)
         {
+            Initialize();
+
             ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("GitExeServer.AdvertiseUploadPack"))
             {
@@ -106,7 +110,7 @@ namespace Kudu.Core.SourceControl.Git
             _gitExe.Execute(tracer, input, output, @"{0} --stateless-rpc ""{1}""", serviceName, _gitExe.WorkingDirectory);
         }
 
-        public bool Initialize()
+        private bool Initialize()
         {
             if (_repository.Exists && !_initLock.IsHeld)
             {
