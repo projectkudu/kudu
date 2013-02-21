@@ -6,8 +6,6 @@ namespace Kudu.Core.Deployment
 {
     public interface IDeploymentManager
     {
-        event Action<DeployResult> StatusChanged;
-
         IEnumerable<DeployResult> GetResults();
         DeployResult GetResult(string id);
         IEnumerable<LogEntry> GetLogEntries(string id);

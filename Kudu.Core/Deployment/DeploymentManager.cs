@@ -33,8 +33,6 @@ namespace Kudu.Core.Deployment
         private const string ActiveDeploymentFile = "active";
         private const string TemporaryDeploymentIdPrefix = "temp-";
 
-        public event Action<DeployResult> StatusChanged;
-
         public DeploymentManager(ISiteBuilderFactory builderFactory,
                                  IEnvironment environment,
                                  IFileSystem fileSystem,
@@ -262,7 +260,6 @@ namespace Kudu.Core.Deployment
                         _globalLogger.Log(Resources.Log_UnexpectedBranchPushed, receiveInfo.Branch.Name, targetBranch);
                     }
 
-                    ReportCompleted();
                     deployStep.Dispose();
                     return;
                 }
@@ -276,7 +273,6 @@ namespace Kudu.Core.Deployment
 
                     _globalLogger.Log(Resources.Log_DeploymentAlreadyActive, id);
 
-                    ReportCompleted();
                     deployStep.Dispose();
                     return;
                 }
@@ -335,8 +331,6 @@ namespace Kudu.Core.Deployment
                 {
                     deployStep.Dispose();
                 }
-
-                ReportCompleted();
             }
         }
 
@@ -746,22 +740,6 @@ namespace Kudu.Core.Deployment
                     Id = id,
                     Status = DeployStatus.Pending
                 };
-            }
-
-            if (StatusChanged != null)
-            {
-                StatusChanged(result);
-            }
-        }
-
-        private void ReportCompleted()
-        {
-            if (StatusChanged != null)
-            {
-                StatusChanged(new DeployResult
-                {
-                    Complete = true
-                });
             }
         }
 
