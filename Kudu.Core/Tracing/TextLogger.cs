@@ -56,7 +56,7 @@ namespace Kudu.Core.Tracing
                 }
             }
 
-            private string GetIndentation(int count)
+            private static string GetIndentation(int count)
             {
                 return new String(' ', count * 2);
             }

@@ -451,7 +451,7 @@ namespace Kudu.Core.Deployment
         {
             if (String.IsNullOrEmpty(id))
             {
-                throw new ArgumentException();
+                throw new ArgumentException("The id parameter is null or empty", "id");
             }
 
             ILogger logger = null;
@@ -723,7 +723,7 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        private string TrimId(string id)
+        private static string TrimId(string id)
         {
             return id.Substring(0, 10);
         }

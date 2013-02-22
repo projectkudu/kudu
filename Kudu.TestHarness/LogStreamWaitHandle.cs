@@ -66,6 +66,8 @@ namespace Kudu.TestHarness
         {
             this.stream.Close();
             this.disposed.WaitOne(10000);
+            this.disposed.Dispose();
+            this.sem.Dispose();
         }
 
         public string WaitNextLine(int millisecs)

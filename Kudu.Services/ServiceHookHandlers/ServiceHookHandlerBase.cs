@@ -14,7 +14,7 @@ namespace Kudu.Services.ServiceHookHandlers
             repository.FetchWithoutConflict(deploymentInfo.RepositoryUrl, "external", targetBranch);
         }
 
-        protected string GetDeployerFromUrl(string url)
+        protected static string GetDeployerFromUrl(string url)
         {
             string host;
             Uri uri;
@@ -29,8 +29,8 @@ namespace Kudu.Services.ServiceHookHandlers
             else
             {
                 // extract host from git@host:user/repo
-                int at = url.IndexOf("@");
-                int colon = url.IndexOf(":");
+                int at = url.IndexOf("@", StringComparison.Ordinal);
+                int colon = url.IndexOf(":", StringComparison.Ordinal);
                 if (at <= 0 || colon <= 0 || at >= colon)
                 {
                     throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_InvalidRepoUrl, url));

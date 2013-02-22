@@ -142,7 +142,6 @@
     <Compile Include="Environment.cs" />
     <Compile Include="Infrastructure\FileSystemHelpers.cs" />
     <Compile Include="Deployment\LoggerExtensions.cs" />
-    <Compile Include="Infrastructure\NativeMethods.cs" />
     <Compile Include="Infrastructure\ParserHelpers.cs" />
     <Compile Include="Infrastructure\ReflectionUtility.cs" />
     <Compile Include="Infrastructure\StringReader.cs" />

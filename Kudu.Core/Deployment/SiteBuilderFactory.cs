@@ -92,7 +92,6 @@ namespace Kudu.Core.Deployment
             return new WebSiteBuilder(_propertyProvider,
                                       repositoryRoot,
                                       project.AbsolutePath,
-                                      _environment.TempPath,
                                       solution.Path,
                                       _settings);
         }
@@ -140,7 +139,6 @@ namespace Kudu.Core.Deployment
                     return new WebSiteBuilder(_propertyProvider,
                                               repositoryRoot,
                                               targetPath,
-                                              _environment.TempPath,
                                               solutions[0].Path,
                                               _settings);
                 }

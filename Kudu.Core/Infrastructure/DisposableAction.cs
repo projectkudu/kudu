@@ -4,7 +4,7 @@ namespace Kudu.Core.Infrastructure
 {
     internal class DisposableAction : IDisposable
     {
-        internal static IDisposable Noop = new DisposableAction(() => { });
+        internal static readonly IDisposable Noop = new DisposableAction(() => { });
 
         private readonly Action _action;
         public DisposableAction(Action action)

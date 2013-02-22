@@ -43,20 +43,6 @@ namespace Kudu.Services.Web.Tracing
             }
         }
 
-        internal static ILogger CurrentRequestLogger
-        {
-            get
-            {
-                var httpContext = HttpContext.Current;
-                if (httpContext == null)
-                {
-                    return null;
-                }
-
-                return httpContext.Items[_loggerKey] as ILogger;
-            }
-        }
-
         public static void SetTraceFactory(Func<ITracer> traceFactory, Func<ILogger> loggerFactory)
         {
             _traceFactory = traceFactory;

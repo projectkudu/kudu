@@ -89,7 +89,6 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IServerConfiguration>().ToConstant(serverConfiguration);
             kernel.Bind<IFileSystem>().To<FileSystem>().InSingletonScope();
 
-            string sdkPath = Path.Combine(HttpRuntime.AppDomainAppPath, SdkRootDirectory);
             kernel.Bind<IBuildPropertyProvider>().ToConstant(new BuildPropertyProvider());
 
             System.Func<ITracer> createTracerThunk = () => GetTracer(environment, kernel);
@@ -157,7 +156,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.RepositoryPath,
                                                                            environment.SiteRootPath,
                                                                            initLock,
-                                                                           GetRequestTraceFile(environment, context.Kernel),
+                                                                           GetRequestTraceFile(context.Kernel),
                                                                            context.Kernel.Get<IDeploymentEnvironment>(),
                                                                            context.Kernel.Get<IDeploymentSettingsManager>(),
                                                                            context.Kernel.Get<ITraceFactory>()))
@@ -286,7 +285,7 @@ namespace Kudu.Services.Web.App_Start
             return NullLogger.Instance;
         }
 
-        private static string GetRequestTraceFile(IEnvironment environment, IKernel kernel)
+        private static string GetRequestTraceFile(IKernel kernel)
         {
             TraceLevel level = kernel.Get<IDeploymentSettingsManager>().GetTraceLevel();
             if (level > TraceLevel.Off)
@@ -322,7 +321,6 @@ namespace Kudu.Services.Web.App_Start
             string sshKeyPath = Path.Combine(siteRoot, Constants.SSHKeyPath);
             string repositoryPath = Path.Combine(siteRoot, Constants.RepositoryPath);
             string tempPath = Path.GetTempPath();
-            string deploymentTempPath = Path.Combine(tempPath, Constants.RepositoryPath);
             string scriptPath = Path.Combine(HttpRuntime.BinDirectory, Constants.ScriptsPath);
             string nodeModulesPath = Path.Combine(HttpRuntime.BinDirectory, Constants.NodeModulesPath);
 
@@ -338,20 +336,6 @@ namespace Kudu.Services.Web.App_Start
                                    sshKeyPath,
                                    scriptPath,
                                    nodeModulesPath);
-        }
-
-        private class DeploymentManagerFactory : IDeploymentManagerFactory
-        {
-            private readonly System.Func<IDeploymentManager> _factory;
-            public DeploymentManagerFactory(System.Func<IDeploymentManager> factory)
-            {
-                _factory = factory;
-            }
-
-            public IDeploymentManager CreateDeploymentManager()
-            {
-                return _factory();
-            }
         }
     }
 }

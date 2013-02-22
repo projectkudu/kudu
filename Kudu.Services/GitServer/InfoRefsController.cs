@@ -39,26 +39,17 @@ namespace Kudu.Services.GitServer
 {    
     public class InfoRefsController : ApiController
     {
-        private readonly IDeploymentManager _deploymentManager;
         private readonly IGitServer _gitServer;
         private readonly ITracer _tracer;
-        private readonly IDeploymentSettingsManager _settings;
-        private readonly string _webRootPath;
         private readonly IRepositoryFactory _repositoryFactory;
 
         public InfoRefsController(
             ITracer tracer,
             IGitServer gitServer,
-            IDeploymentManager deploymentManager,
-            IDeploymentSettingsManager settings,
-            IEnvironment environment,
             IRepositoryFactory repositoryFactory)
         {
             _gitServer = gitServer;
-            _deploymentManager = deploymentManager;
             _tracer = tracer;
-            _settings = settings;
-            _webRootPath = environment.WebRootPath;
             _repositoryFactory = repositoryFactory;
         }
 
@@ -93,39 +84,40 @@ namespace Kudu.Services.GitServer
         {
             using (_tracer.Step("InfoRefsService.SmartInfoRefs"))
             {
-                var memoryStream = new MemoryStream();
-
-                memoryStream.PktWrite("# service=git-{0}\n", service);
-                memoryStream.PktFlush();
-
-                if (service == "upload-pack")
+                using (var memoryStream = new MemoryStream())
                 {
-                    _gitServer.AdvertiseUploadPack(memoryStream);
+                    memoryStream.PktWrite("# service=git-{0}\n", service);
+                    memoryStream.PktFlush();
+
+                    if (service == "upload-pack")
+                    {
+                        _gitServer.AdvertiseUploadPack(memoryStream);
+                    }
+                    else if (service == "receive-pack")
+                    {
+                        _gitServer.AdvertiseReceivePack(memoryStream);
+                    }
+
+                    _tracer.Trace("Writing {0} bytes", memoryStream.Length);
+
+                    HttpContent content = memoryStream.AsContent();
+
+                    content.Headers.ContentType =
+                        new MediaTypeHeaderValue("application/x-git-{0}-advertisement".With(service));
+                    // Explicitly set the charset to empty string
+                    // We do this as certain git clients (jgit) require it to be empty.
+                    // If we don't set it, then it defaults to utf-8, which breaks jgit's logic for detecting smart http
+                    content.Headers.ContentType.CharSet = "";
+
+                    var responseMessage = new HttpResponseMessage();
+                    responseMessage.Content = content;
+                    responseMessage.WriteNoCache();
+                    return responseMessage;
                 }
-                else if (service == "receive-pack")
-                {
-                    _gitServer.AdvertiseReceivePack(memoryStream);
-                }
-
-                _tracer.Trace("Writing {0} bytes", memoryStream.Length);
-
-                HttpContent content = memoryStream.AsContent();
-
-                content.Headers.ContentType =
-                    new MediaTypeHeaderValue("application/x-git-{0}-advertisement".With(service));
-                // Explicitly set the charset to empty string
-                // We do this as certain git clients (jgit) require it to be empty.
-                // If we don't set it, then it defaults to utf-8, which breaks jgit's logic for detecting smart http
-                content.Headers.ContentType.CharSet = "";
-
-                var responseMessage = new HttpResponseMessage();
-                responseMessage.Content = content;
-                responseMessage.WriteNoCache();
-                return responseMessage;
             }
         }
 
-        protected string GetServiceType(string service)
+        protected static string GetServiceType(string service)
         {
             if (String.IsNullOrWhiteSpace(service))
             {

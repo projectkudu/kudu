@@ -8,7 +8,7 @@ namespace Kudu.Core.Tracing
 {
     public class NullTracer : ITracer
     {
-        public static ITracer Instance = new NullTracer();
+        public static readonly ITracer Instance = new NullTracer();
 
         private NullTracer()
         {

@@ -50,7 +50,7 @@ namespace Kudu.Services.Performance
                     {
                         if (Directory.Exists(path))
                         {
-                            if (path.EndsWith(Constants.LogFilesPath))
+                            if (path.EndsWith(Constants.LogFilesPath, StringComparison.Ordinal))
                             {
                                 var dir = new DirectoryInfo(path);
                                 foreach (var info in dir.GetFileSystemInfos())

@@ -32,7 +32,7 @@ namespace Kudu.Core.Deployment
             get
             {
                 string setting = _settingsManager.GetValue(SettingsKeys.SiteBuilderFactory);
-                if (String.Equals(setting, Original, StringComparison.InvariantCultureIgnoreCase))
+                if (String.Equals(setting, Original, StringComparison.OrdinalIgnoreCase))
                 {
                     return _originalSiteBuilderFactory;
                 }

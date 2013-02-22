@@ -11,7 +11,7 @@ namespace Kudu.Core.Infrastructure
             string pathEnv;
             exe.EnvironmentVariables.TryGetValue("PATH", out pathEnv);
             pathEnv = pathEnv ?? String.Empty;
-            if (pathEnv.Length > 0 && !pathEnv.EndsWith(";"))
+            if (pathEnv.Length > 0 && !pathEnv.EndsWith(";", StringComparison.OrdinalIgnoreCase))
             {
                 pathEnv += ";";
             }

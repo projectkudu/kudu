@@ -14,17 +14,13 @@ namespace Kudu.Services.ServiceHookHandlers
 {
     public class DropboxHandler : IServiceHookHandler
     {
-        protected readonly ITracer _tracer;
-        protected readonly DropboxHelper _dropBoxHelper;
-        protected readonly IDeploymentSettingsManager _settings;
+        private readonly DropboxHelper _dropBoxHelper;
 
         public DropboxHandler(ITracer tracer,
                               IDeploymentManager manager,
                               IDeploymentSettingsManager settings,
                               IEnvironment environment)
         {
-            _tracer = tracer;
-            _settings = settings;
             _dropBoxHelper = new DropboxHelper(tracer, manager, settings, environment);
         }
 

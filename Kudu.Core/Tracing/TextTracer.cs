@@ -148,13 +148,13 @@ namespace Kudu.Core.Tracing
                 }
             }
 
-            private TraceLevel GetTraceLevel(string type, IDictionary<string, string> attributes)
+            private static TraceLevel GetTraceLevel(string type, IDictionary<string, string> attributes)
             {
-                if (IsError(type, attributes))
+                if (IsError(type))
                 {
                     return TraceLevel.Error;
                 }
-                else if (IsInfo(type, attributes))
+                else if (IsInfo(attributes))
                 {
                     return TraceLevel.Info;
                 }
@@ -164,13 +164,13 @@ namespace Kudu.Core.Tracing
                 }
             }
 
-            private bool IsError(string type, IDictionary<string, string> attributes)
+            private static bool IsError(string type)
             {
                 return type == "error";
             }
 
             // we don't include "error" in info as caller must be checking for that already
-            private bool IsInfo(string type, IDictionary<string, string> attributes)
+            private static bool IsInfo(IDictionary<string, string> attributes)
             {
                 string value;
                 if (attributes.TryGetValue("traceLevel", out value))
@@ -181,13 +181,13 @@ namespace Kudu.Core.Tracing
                 return false;
             }
 
-            private string GetIndentation(int count)
+            private static string GetIndentation(int count)
             {
                 return new String(' ', count * 2);
             }
 
             // Known filtered traces
-            private bool FilterTrace(IDictionary<string, string> attributes, out IDictionary<string, string> filters)
+            private static bool FilterTrace(IDictionary<string, string> attributes, out IDictionary<string, string> filters)
             {
                 filters = attributes;
                 string type;

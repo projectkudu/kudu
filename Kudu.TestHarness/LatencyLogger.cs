@@ -17,10 +17,19 @@ namespace Kudu.TestHarness
 
         public void Dispose()
         {
-            if (_stopwatch != null)
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
             {
-                _stopwatch.Stop();
-                TestTracer.Trace("Operation: \"{0}\" took {1:N0} ms", _operationDescription, _stopwatch.ElapsedMilliseconds);
+                if (_stopwatch != null)
+                {
+                    _stopwatch.Stop();
+                    TestTracer.Trace("Operation: \"{0}\" took {1:N0} ms", _operationDescription, _stopwatch.ElapsedMilliseconds);
+                }
             }
         }
     }

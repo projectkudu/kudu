@@ -13,7 +13,7 @@ namespace Kudu.Core.Deployment.Generator
     {
         private const string ScriptGeneratorCommandFormat = "site deploymentscript -y --no-dot-deployment -r \"{0}\" {1}";
 
-        public GeneratorSiteBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string repositoryPath)
+        protected GeneratorSiteBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string repositoryPath)
             : base(environment, settings, propertyProvider, repositoryPath)
         {
         }
@@ -51,7 +51,7 @@ namespace Kudu.Core.Deployment.Generator
         /// Due to node issue, an argument cannot end with \ followed by a " (\"),
         /// This causes the arguments to be parsed incorrectly.
         /// </summary>
-        protected string CleanPath(string path)
+        protected static string CleanPath(string path)
         {
             return path != null ? path.TrimEnd('\\') : null;
         }

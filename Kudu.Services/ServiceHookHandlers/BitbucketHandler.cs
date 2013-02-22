@@ -17,14 +17,14 @@ namespace Kudu.Services.ServiceHookHandlers
             if (request.UserAgent != null &&
                 request.UserAgent.StartsWith("Bitbucket", StringComparison.OrdinalIgnoreCase))
             {
-                deploymentInfo = GetDeploymentInfo(request, payload, targetBranch);
+                deploymentInfo = GetDeploymentInfo(payload, targetBranch);
                 return deploymentInfo == null ? DeployAction.NoOp : DeployAction.ProcessDeployment;
             }
 
             return DeployAction.UnknownPayload;
         }
 
-        protected DeploymentInfo GetDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch)
+        protected static DeploymentInfo GetDeploymentInfo(JObject payload, string targetBranch)
         {
             // bitbucket format
             // { repository: { absolute_url: "/a/b", is_private: true }, canon_url: "https//..." } 

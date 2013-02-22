@@ -16,7 +16,7 @@ namespace Kudu.Core.Deployment
         private readonly string _solutionPath;
 
         public WapBuilder(IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string sourcePath, string projectPath, string tempPath, string solutionPath)
-            : base(settings, propertyProvider, sourcePath, tempPath)
+            : base(settings, propertyProvider, sourcePath)
         {
             _projectPath = projectPath;
             _tempPath = tempPath;
@@ -131,7 +131,7 @@ namespace Kudu.Core.Deployment
             return command;
         }
 
-        private void CleanBuild(ITracer tracer, string buildTempPath)
+        private static void CleanBuild(ITracer tracer, string buildTempPath)
         {
             using (tracer.Step("Cleaning up temp files"))
             {

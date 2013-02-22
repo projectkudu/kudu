@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -13,7 +14,7 @@ namespace Kudu.Web.Infrastructure
                 return value;
             }
 
-            string str = RemoveAccent(value).ToLower();
+            string str = RemoveAccent(value).ToLower(CultureInfo.InvariantCulture);
 
             str = Regex.Replace(str, @"[^a-z0-9\s-]", ""); // invalid chars           
             str = Regex.Replace(str, @"\s+", " ").Trim(); // convert multiple spaces into one space   

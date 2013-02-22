@@ -8,7 +8,7 @@ namespace Kudu.Core.Deployment.Generator
     {
         private readonly string _commandArgument;
 
-        public BaseBasicBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string repositoryPath, string projectPath, string commandArgument)
+        protected BaseBasicBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string repositoryPath, string projectPath, string commandArgument)
             : base(environment, settings, propertyProvider, repositoryPath)
         {
             ProjectPath = CleanPath(projectPath);

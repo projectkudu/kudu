@@ -155,7 +155,6 @@ namespace Kudu.Console
             string sshKeyPath = Path.Combine(siteRoot, Constants.SSHKeyPath);
             string repositoryPath = Path.Combine(siteRoot, Constants.RepositoryPath);
             string tempPath = Path.GetTempPath();
-            string deploymentTempPath = Path.Combine(tempPath, Constants.RepositoryPath);
             string binPath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
             string scriptPath = Path.Combine(binPath, Constants.ScriptsPath);
             string nodeModulesPath = Path.Combine(binPath, Constants.NodeModulesPath);

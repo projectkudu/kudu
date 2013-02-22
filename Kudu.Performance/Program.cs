@@ -54,13 +54,13 @@ namespace Kudu.Performance
             }
 
             Console.WriteLine();
-            Console.WriteLine("===============Repository===============", applicationName);
+            Console.WriteLine("===============Repository===============");
             Console.WriteLine("{0} files", fileCount);
             Console.WriteLine(".git folder size: {0}", FormatBytes(gitDirectorySizeBytes));
             Console.WriteLine("folder size: {0}", FormatBytes(directorySizeBytes));
             Console.WriteLine();
 
-            Console.WriteLine("===============Deployment===============", applicationName);
+            Console.WriteLine("===============Deployment===============");
             Console.WriteLine("Time to push : {0:0.000}s", sw.Elapsed.TotalSeconds);
             var profilePath = Path.Combine("profiles", applicationName + ".profile.xml");
             Directory.CreateDirectory(Path.GetDirectoryName(profilePath));

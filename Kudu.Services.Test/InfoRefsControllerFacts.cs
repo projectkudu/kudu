@@ -45,12 +45,7 @@ namespace Kudu.Services.Test
                                                     IDeploymentSettingsManager settings = null,
                                                     IRepositoryFactory repositoryFactory = null)
         {
-            return new InfoRefsController(Mock.Of<ITracer>(),
-                                          gitServer ?? Mock.Of<IGitServer>(),
-                                          deploymentManager ?? Mock.Of<IDeploymentManager>(),
-                                          settings ?? Mock.Of<IDeploymentSettingsManager>(),
-                                          Mock.Of<IEnvironment>(),
-                                          repositoryFactory ?? Mock.Of<IRepositoryFactory>());
+            return new InfoRefsController(Mock.Of<ITracer>(), gitServer ?? Mock.Of<IGitServer>(), repositoryFactory ?? Mock.Of<IRepositoryFactory>());
         }
     }
 }

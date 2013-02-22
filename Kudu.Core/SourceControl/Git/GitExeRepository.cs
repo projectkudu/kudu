@@ -506,10 +506,10 @@ namespace Kudu.Core.SourceControl.Git
 
         private static bool IsCommitHeader(string value)
         {
-            return value.StartsWith("commit ");
+            return value.StartsWith("commit ", StringComparison.OrdinalIgnoreCase);
         }
 
-        private ChangeSetDetail ParseShow(IStringReader reader, bool includeChangeSet = true)
+        private static ChangeSetDetail ParseShow(IStringReader reader, bool includeChangeSet = true)
         {
             ChangeSetDetail detail = null;
             if (includeChangeSet)
@@ -638,7 +638,7 @@ namespace Kudu.Core.SourceControl.Git
 
         internal static bool IsDiffHeader(string line)
         {
-            return line.StartsWith("diff --git", StringComparison.InvariantCulture);
+            return line.StartsWith("diff --git", StringComparison.Ordinal);
         }
 
         internal static FileDiff ParseDiffChunk(IStringReader reader, ref ChangeSetDetail merge)
@@ -667,16 +667,16 @@ namespace Kudu.Core.SourceControl.Git
                     continue;
                 }
 
-                bool isDiffRange = line.StartsWith("@@");
+                bool isDiffRange = line.StartsWith("@@", StringComparison.Ordinal);
                 ChangeType? changeType = null;
 
-                if (line.StartsWith("+"))
+                if (line.StartsWith("+", StringComparison.Ordinal))
                 {
                     changeType = ChangeType.Added;
                     currentRight = ++rightCounter;
                     currentLeft = null;
                 }
-                else if (line.StartsWith("-"))
+                else if (line.StartsWith("-", StringComparison.Ordinal))
                 {
                     changeType = ChangeType.Deleted;
                     currentLeft = ++leftCounter;
@@ -729,12 +729,12 @@ namespace Kudu.Core.SourceControl.Git
             while (!reader.Done)
             {
                 string line = reader.ReadLine();
-                if (line.StartsWith("@@"))
+                if (line.StartsWith("@@", StringComparison.Ordinal))
                 {
                     reader.PutBack(line.Length);
                     break;
                 }
-                else if (line.StartsWith("GIT binary patch"))
+                else if (line.StartsWith("GIT binary patch", StringComparison.Ordinal))
                 {
                     binary = true;
                 }
@@ -763,7 +763,7 @@ namespace Kudu.Core.SourceControl.Git
         internal static string ParseFileName(string diffHeader)
         {
             // Get rid of the diff header (git --diff)
-            diffHeader = diffHeader.TrimEnd().Substring(diffHeader.IndexOf("a/"));
+            diffHeader = diffHeader.TrimEnd().Substring(diffHeader.IndexOf("a/", StringComparison.Ordinal));
 
             // the format is always a/{file name} b/{file name}
             int mid = diffHeader.Length / 2;

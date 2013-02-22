@@ -13,9 +13,8 @@ namespace Kudu.Core.Deployment
         private readonly Executable _msbuildExe;
         private readonly IDeploymentSettingsManager _settings;
         private readonly IBuildPropertyProvider _propertyProvider;
-        private readonly string _tempPath;
 
-        public MsBuildSiteBuilder(IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string workingDirectory, string tempPath)
+        protected MsBuildSiteBuilder(IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string workingDirectory)
         {
             _settings = settings;
             _propertyProvider = propertyProvider;
@@ -23,8 +22,6 @@ namespace Kudu.Core.Deployment
 
             // NuGet.exe 1.8 will require an environment variable to make package restore work
             _msbuildExe.EnvironmentVariables[WellKnownEnvironmentVariables.NuGetPackageRestoreKey] = "true";
-
-            _tempPath = tempPath;
         }
 
         protected string GetPropertyString()

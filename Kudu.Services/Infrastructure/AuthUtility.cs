@@ -44,7 +44,7 @@ namespace Kudu.Services.Infrastructure
             }
 
             string verifiedAuthorizationHeader = authorizationHeader.Trim();
-            if (verifiedAuthorizationHeader.IndexOf(HttpBasicSchemeName) != 0)
+            if (verifiedAuthorizationHeader.IndexOf(HttpBasicSchemeName, StringComparison.Ordinal) != 0)
             {
                 return false;
             }
