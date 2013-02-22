@@ -142,7 +142,7 @@ namespace Kudu.Services {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Synchronized {0} changes from Dropbox..
+        ///   Looks up a localized string similar to Synchronized {0} change(s) from Dropbox..
         /// </summary>
         internal static string Dropbox_Synchronized {
             get {
@@ -151,7 +151,7 @@ namespace Kudu.Services {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Synchronized {0} of {1} changes from Dropbox with {2} failures..
+        ///   Looks up a localized string similar to Synchronized {0} of {1} change(s) from Dropbox with {2} failure(s)..
         /// </summary>
         internal static string Dropbox_SynchronizedWithFailure {
             get {
@@ -160,7 +160,7 @@ namespace Kudu.Services {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Synchronizing {0} changes from Dropbox..
+        ///   Looks up a localized string similar to Synchronizing {0} change(s) from Dropbox..
         /// </summary>
         internal static string Dropbox_Synchronizing {
             get {
@@ -169,7 +169,7 @@ namespace Kudu.Services {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Synchronizing {0}% of {1} changes from Dropbox..
+        ///   Looks up a localized string similar to Synchronizing {0}% of {1} change(s) from Dropbox..
         /// </summary>
         internal static string Dropbox_SynchronizingProgress {
             get {
@@ -178,7 +178,7 @@ namespace Kudu.Services {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Synchronizing {0}% of {1} changes from Dropbox with {2} failures..
+        ///   Looks up a localized string similar to Synchronizing {0}% of {1} change(s) from Dropbox with {2} failure(s)..
         /// </summary>
         internal static string Dropbox_SynchronizingProgressWithFailure {
             get {
