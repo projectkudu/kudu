@@ -39,7 +39,8 @@ namespace Kudu.SiteManagement
                 // The app pool is the app name
                 return iis.Sites.Where(x => x.Name.StartsWith("kudu_", StringComparison.OrdinalIgnoreCase))
                                 .Select(x => x.Applications[0].ApplicationPoolName)
-                                .Distinct();
+                                .Distinct()
+                                .ToList();
             }
         }
 

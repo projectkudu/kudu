@@ -16,74 +16,73 @@ namespace Kudu.Client.Infrastructure
             return JsonConvert.DeserializeObject<T>(content);
         }
 
-        public static Task<T> GetJsonAsync<T>(this HttpClient client, string url)
+        public static async Task<T> GetJsonAsync<T>(this HttpClient client, string url)
         {
-            return client.GetAsync(url).Then(result =>
-            {
-                return result.EnsureSuccessful().Content.ReadAsStringAsync().Then(content =>
-                {
-                    return JsonConvert.DeserializeObject<T>(content);
-                });
-            });
+            HttpResponseMessage result = await client.GetAsync(url);
+
+            string content = await result.EnsureSuccessful().Content.ReadAsStringAsync();
+
+            return JsonConvert.DeserializeObject<T>(content);
         }
 
-        public static Task<HttpResponseMessage> PostAsync(this HttpClient client)
+        public static async Task<HttpResponseMessage> PostAsync(this HttpClient client)
         {
-            return client.PostAsync(String.Empty, new StringContent(String.Empty)).Then(result =>
+            using (var stringContent = new StringContent(String.Empty))
             {
+                HttpResponseMessage result = await client.PostAsync(String.Empty, stringContent);
                 return result.EnsureSuccessful();
-            });
+            }
         }
 
-        public static Task<HttpResponseMessage> PostAsync(this HttpClient client, string requestUri)
+        public static async Task<HttpResponseMessage> PostAsync(this HttpClient client, string requestUri)
         {
-            return client.PostAsync(requestUri, new StringContent(String.Empty)).Then(result =>
+            using (var stringContent = new StringContent(String.Empty))
             {
+                HttpResponseMessage result = await client.PostAsync(requestUri, stringContent);
                 return result.EnsureSuccessful();
-            });
+            }
         }
 
-        public static Task<HttpResponseMessage> PutAsync(this HttpClient client, string requestUri)
+        public static async Task<HttpResponseMessage> PutAsync(this HttpClient client, string requestUri)
         {
-            return client.PutAsync(requestUri, new StringContent(String.Empty)).Then(result =>
+            using (var stringContent = new StringContent(String.Empty))
             {
+                HttpResponseMessage result = await client.PutAsync(requestUri, stringContent);
                 return result.EnsureSuccessful();
-            });
+            }
         }
 
-        public static Task<HttpResponseMessage> PutAsync(this HttpClient client, string requestUri, params KeyValuePair<string, string>[] items)
+        public static async Task<HttpResponseMessage> PutAsync(this HttpClient client, string requestUri, params KeyValuePair<string, string>[] items)
         {
-            return client.PutAsync(requestUri, HttpClientHelper.CreateJsonContent(items)).Then(result =>
+            using (var jsonContent = HttpClientHelper.CreateJsonContent(items))
             {
+                HttpResponseMessage result = await client.PutAsync(requestUri, jsonContent);
                 return result.EnsureSuccessful();
-            });
+            }
         }
 
-        public static Task<HttpResponseMessage> DeleteSafeAsync(this HttpClient client, string requestUri)
+        public static async Task<HttpResponseMessage> DeleteSafeAsync(this HttpClient client, string requestUri)
         {
-            return client.DeleteAsync(requestUri).Then(result =>
+            HttpResponseMessage result = await client.DeleteAsync(requestUri);
+            return result.EnsureSuccessful();
+        }
+
+        public static async Task<HttpResponseMessage> PostAsync(this HttpClient client, string url, KeyValuePair<string, string> param)
+        {
+            using (var jsonContent = HttpClientHelper.CreateJsonContent(param))
             {
+                HttpResponseMessage result = await client.PostAsync(url, jsonContent);
                 return result.EnsureSuccessful();
-            });
+            }
         }
 
-        public static Task<HttpResponseMessage> PostAsync(this HttpClient client, string url, KeyValuePair<string, string> param)
+        public static async Task<TOutput> PostJsonAsync<TInput, TOutput>(this HttpClient client, string url, TInput param)
         {
-            return client.PostAsync(url, HttpClientHelper.CreateJsonContent(param)).Then(result =>
-            {
-                return result.EnsureSuccessful();
-            });
-        }
+            HttpResponseMessage result = await client.PostAsJsonAsync(url, param);
 
-        public static Task<TOutput> PostJsonAsync<TInput, TOutput>(this HttpClient client, string url, TInput param)
-        {
-            return client.PostAsJsonAsync(url, param).Then(result =>
-            {
-                return result.EnsureSuccessful().Content.ReadAsStringAsync().Then(content =>
-                {
-                    return JsonConvert.DeserializeObject<TOutput>(content);
-                });
-            });
+            string content = await result.EnsureSuccessful().Content.ReadAsStringAsync();
+
+            return JsonConvert.DeserializeObject<TOutput>(content);
         }
     }
 }
