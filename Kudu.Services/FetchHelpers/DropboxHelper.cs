@@ -139,10 +139,11 @@ namespace Kudu.Services
                     continue;
                 }
 
-                // Ignore .git files and folders
-                if (delta.Path.StartsWith(parent + ".git", StringComparison.OrdinalIgnoreCase))
+                // Ignore .git and .hg files and folders
+                string pathWithSlash = delta.Path + "/";
+                if (pathWithSlash.StartsWith(parent + ".git/", StringComparison.OrdinalIgnoreCase) ||
+                    pathWithSlash.StartsWith(parent + ".hg/", StringComparison.OrdinalIgnoreCase))
                 {
-                    Interlocked.Increment(ref _successCount);
                     continue;
                 }
 
