@@ -73,7 +73,8 @@ namespace Kudu.Console
                                                           env, 
                                                           fs, 
                                                           traceFactory, 
-                                                          settingsManager, 
+                                                          settingsManager,
+                                                          new DeploymentStatusManager(env, fs),
                                                           deploymentLock,
                                                           GetLogger(env, level, logger));
 

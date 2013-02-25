@@ -12,6 +12,7 @@ namespace Kudu.Core.Tracing
     public class TextTracer : ITracer
     {
         private readonly LogFileHelper _logFile;
+        private readonly TraceLevel _level;
         private int _depth;
 
         public TextTracer(string path, TraceLevel level)
@@ -21,7 +22,8 @@ namespace Kudu.Core.Tracing
 
         public TextTracer(IFileSystem fileSystem, string path, TraceLevel level, int depth = 0)
         {
-            _logFile = new LogFileHelper(fileSystem, path, level);
+            _logFile = new LogFileHelper(this, fileSystem, path);
+            _level = level;
             _depth = depth;
 
             // Initialize cleanup timer
@@ -30,7 +32,7 @@ namespace Kudu.Core.Tracing
 
         public TraceLevel TraceLevel
         {
-            get { return _logFile.TraceLevel; }
+            get { return _level; }
         }
 
         public IDisposable Step(string title, IDictionary<string, string> attributes)
@@ -59,21 +61,16 @@ namespace Kudu.Core.Tracing
 
         private class LogFileHelper
         {
+            private readonly ITracer _tracer;
             private readonly IFileSystem _fileSystem;
             private readonly string _logFile;
-            private readonly TraceLevel _level;
             private Stopwatch _stopWatch;
 
-            public LogFileHelper(IFileSystem fileSystem, string logFile, TraceLevel level)
+            public LogFileHelper(ITracer tracer, IFileSystem fileSystem, string logFile)
             {
+                _tracer = tracer;
                 _fileSystem = fileSystem;
                 _logFile = logFile;
-                _level = level;
-            }
-
-            public TraceLevel TraceLevel
-            {
-                get { return _level; }
             }
 
             public void WriteLine(string value, IDictionary<string, string> attributes, int depth, bool end = false)
@@ -87,7 +84,7 @@ namespace Kudu.Core.Tracing
                     CleanupHelper.AddFile(_logFile);
                 }
 
-                if (_level < GetTraceLevel(type, attributes))
+                if (!_tracer.ShouldTrace(attributes))
                 {
                     return;
                 }
@@ -146,39 +143,6 @@ namespace Kudu.Core.Tracing
                 {
                     writer.WriteLine(strb.ToString());
                 }
-            }
-
-            private static TraceLevel GetTraceLevel(string type, IDictionary<string, string> attributes)
-            {
-                if (IsError(type))
-                {
-                    return TraceLevel.Error;
-                }
-                else if (IsInfo(attributes))
-                {
-                    return TraceLevel.Info;
-                }
-                else
-                {
-                    return TraceLevel.Verbose;
-                }
-            }
-
-            private static bool IsError(string type)
-            {
-                return type == "error";
-            }
-
-            // we don't include "error" in info as caller must be checking for that already
-            private static bool IsInfo(IDictionary<string, string> attributes)
-            {
-                string value;
-                if (attributes.TryGetValue("traceLevel", out value))
-                {
-                    return Int32.Parse(value) <= (int)TraceLevel.Info;
-                }
-
-                return false;
             }
 
             private static string GetIndentation(int count)

@@ -61,6 +61,7 @@ namespace Kudu.Core.Tracing
 
         public IDisposable Step(string title, IDictionary<string, string> attributes)
         {
+            var shouldTrace = this.ShouldTrace(attributes);
             var newStep = new TraceStep(title);
             var newStepElement = new XElement("step", new XAttribute("title", title),
                                                       new XAttribute("date", DateTime.UtcNow.ToString("MM/dd H:mm:ss")));
@@ -99,23 +100,26 @@ namespace Kudu.Core.Tracing
                     TraceStep current = _currentSteps.Pop();
                     XElement stepElement = _elements.Pop();
 
-                    stepElement.Add(new XAttribute("elapsed", current.ElapsedMilliseconds));
+                    if (shouldTrace || stepElement.HasElements)
+                    {
+                        stepElement.Add(new XAttribute("elapsed", current.ElapsedMilliseconds));
 
-                    if (_elements.Count > 0)
-                    {
-                        XElement parent = _elements.Peek();
-                        parent.Add(stepElement);
-                    }
-                    else
-                    {
-                        // Add this element to the list
-                        Save(stepElement);
-                    }
+                        if (_elements.Count > 0)
+                        {
+                            XElement parent = _elements.Peek();
+                            parent.Add(stepElement);
+                        }
+                        else
+                        {
+                            // Add this element to the list
+                            Save(stepElement);
+                        }
 
-                    if (_currentSteps.Count > 0)
-                    {
-                        TraceStep parent = _currentSteps.Peek();
-                        parent.Children.Add(current);
+                        if (_currentSteps.Count > 0)
+                        {
+                            TraceStep parent = _currentSteps.Peek();
+                            parent.Children.Add(current);
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -141,6 +145,11 @@ namespace Kudu.Core.Tracing
 
         public void Trace(string value, IDictionary<string, string> attributes)
         {
+            if (!this.ShouldTrace(attributes))
+            {
+                return;
+            }
+
             // Add a fake step
             using (Step(value, attributes)) { }
         }

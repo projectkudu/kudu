@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Client;
@@ -128,6 +129,119 @@ namespace Kudu.FunctionalTests
                     var ex = KuduAssert.ThrowsUnwrapped<HttpRequestException>(() => appManager.DeploymentManager.DeleteAsync(result.Id).Wait());
                     Assert.Equal("Response status code does not indicate success: 409 (Conflict).", ex.Message);
                 });
+            }
+        }
+
+        [Fact]
+        public void DeploymentODataQuery()
+        {
+            string appName = "ODataQuery";
+
+            using (var repo = Git.Clone("HelloWorld"))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    appManager.GitDeploy(repo.PhysicalPath);
+
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    Assert.True(results[0].Current);
+
+                    repo.WriteFile("HelloWorld.txt", "This is a test");
+                    Git.Commit(repo.PhysicalPath, "Another commit");
+                    appManager.GitDeploy(repo.PhysicalPath);
+                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                    Assert.Equal(2, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    Assert.True(results[0].Current);
+                    Assert.Equal(DeployStatus.Success, results[1].Status);
+                    Assert.False(results[1].Current);
+
+                    // oldest to newest
+                    results = appManager.DeploymentManager.Client.GetJsonAsync<IEnumerable<DeployResult>>("?$orderby=ReceivedTime asc").Result.ToList();
+                    Assert.Equal(2, results.Count);
+                    Assert.False(results[0].Current);
+                    Assert.True(results[1].Current);
+
+                    // top one
+                    results = appManager.DeploymentManager.Client.GetJsonAsync<IEnumerable<DeployResult>>("?$top=1").Result.ToList();
+                    Assert.Equal(1, results.Count);
+
+                    // only non-active
+                    results = appManager.DeploymentManager.Client.GetJsonAsync<IEnumerable<DeployResult>>("?$filter=Current ne true").Result.ToList();
+                    Assert.Equal(1, results.Count);
+                    Assert.False(results[0].Current);
+                });
+            }
+        }
+
+        [Fact]
+        public void DeploymentVerifyEtag()
+        {
+            string appName = "VerifyEtag";
+
+            using (var repo = Git.Clone("HelloWorld"))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    EntityTagHeaderValue etag = null;
+                    EntityTagHeaderValue etagWithQuery = null;
+
+                    // no etag
+                    etag = VerifyEtag(appManager, "/deployments", null, HttpStatusCode.OK);
+                    etagWithQuery = VerifyEtag(appManager, "/deployments/?$top=1", null, HttpStatusCode.OK);
+                    Assert.NotEqual(etag, etagWithQuery);
+
+                    // match etag
+                    etag = VerifyEtag(appManager, "/deployments", etag, HttpStatusCode.NotModified);
+                    etagWithQuery = VerifyEtag(appManager, "/deployments/?$top=1", etagWithQuery, HttpStatusCode.NotModified);
+                    Assert.NotEqual(etag, etagWithQuery);
+
+                    appManager.GitDeploy(repo.PhysicalPath);
+
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    Assert.True(results[0].Current);
+
+                    // mismatch etag
+                    etag = VerifyEtag(appManager, "/deployments", etag, HttpStatusCode.OK);
+                    etagWithQuery = VerifyEtag(appManager, "/deployments/?$top=1", etagWithQuery, HttpStatusCode.OK);
+                    Assert.NotEqual(etag, etagWithQuery);
+
+                    // match etag
+                    etag = VerifyEtag(appManager, "/deployments", etag, HttpStatusCode.NotModified);
+                    etagWithQuery = VerifyEtag(appManager, "/deployments/?$top=1", etagWithQuery, HttpStatusCode.NotModified);
+                    Assert.NotEqual(etag, etagWithQuery);
+                });
+            }
+        }
+
+        private EntityTagHeaderValue VerifyEtag(ApplicationManager appManager, string uri, EntityTagHeaderValue input, HttpStatusCode statusCode)
+        {
+            using (var request = new HttpRequestMessage(HttpMethod.Get, uri))
+            {
+                if (input != null)
+                {
+                    request.Headers.IfNoneMatch.Add(input);
+                }
+
+                using (var response = appManager.DeploymentManager.Client.SendAsync(request).Result)
+                {
+                    Assert.Equal(statusCode, response.StatusCode);
+                    Assert.NotNull(response.Headers.ETag);
+                    if (response.StatusCode == HttpStatusCode.NotModified)
+                    {
+                        Assert.Equal(input, response.Headers.ETag);
+                    }
+                    else
+                    {
+                        Assert.NotEqual(input, response.Headers.ETag);
+                    }
+
+                    return response.Headers.ETag;
+                }
             }
         }
 

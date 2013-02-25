@@ -17,11 +17,11 @@ namespace Kudu.Services.ServiceHookHandlers
         private readonly DropboxHelper _dropBoxHelper;
 
         public DropboxHandler(ITracer tracer,
-                              IDeploymentManager manager,
+                              IDeploymentStatusManager status,
                               IDeploymentSettingsManager settings,
                               IEnvironment environment)
         {
-            _dropBoxHelper = new DropboxHelper(tracer, manager, settings, environment);
+            _dropBoxHelper = new DropboxHelper(tracer, status, settings, environment);
         }
 
         public DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)

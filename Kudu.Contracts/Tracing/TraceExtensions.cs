@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Kudu.Contracts.Tracing
 {
@@ -51,6 +52,58 @@ namespace Kudu.Contracts.Tracing
                 { "type", "warning" },
                 { "text", String.Format(message, args) }
             });
+        }
+
+        public static bool ShouldTrace(this ITracer tracer, IDictionary<string, string> attributes)
+        {
+            return tracer.TraceLevel >= TraceLevel.Verbose || tracer.TraceLevel >= tracer.GetTraceLevel(attributes);
+        }
+
+        public static TraceLevel GetTraceLevel(this ITracer tracer, IDictionary<string, string> attributes)
+        {
+            string type;
+            attributes.TryGetValue("type", out type);
+
+            if (IsError(type, attributes))
+            {
+                return TraceLevel.Error;
+            }
+            else if (IsInfo(type, attributes))
+            {
+                return TraceLevel.Info;
+            }
+            else
+            {
+                return TraceLevel.Verbose;
+            }
+        }
+
+        private static bool IsError(string type, IDictionary<string, string> attributes)
+        {
+            if (type == "error")
+            {
+                return true;
+            }
+
+            string value;
+            if (attributes.TryGetValue("traceLevel", out value))
+            {
+                return Int32.Parse(value) <= (int)TraceLevel.Error;
+            }
+
+            return false;
+        }
+
+        // we don't include "error" in info as caller must be checking for that already
+        private static bool IsInfo(string type, IDictionary<string, string> attributes)
+        {
+            string value;
+            if (attributes.TryGetValue("traceLevel", out value))
+            {
+                return Int32.Parse(value) <= (int)TraceLevel.Info;
+            }
+
+            return false;
         }
     }
 }
