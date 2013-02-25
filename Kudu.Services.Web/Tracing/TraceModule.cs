@@ -102,7 +102,14 @@ namespace Kudu.Services.Web.Tracing
                     { "statusText", httpContext.Response.StatusDescription }
                 };
 
-                AddTraceLevel(httpContext, attribs);
+                if (httpContext.Response.StatusCode >= 400)
+                {
+                    attribs["traceLevel"] = ((int)TraceLevel.Error).ToString();
+                }
+                else
+                {
+                    AddTraceLevel(httpContext, attribs);
+                }
 
                 foreach (string key in httpContext.Response.Headers)
                 {

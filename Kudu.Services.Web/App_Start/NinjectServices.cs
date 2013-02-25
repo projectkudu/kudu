@@ -129,6 +129,8 @@ namespace Kudu.Services.Web.App_Start
                                              .InRequestScope();
             kernel.Bind<IDeploymentSettingsManager>().To<DeploymentSettingsManager>()
                                              .InRequestScope();
+            kernel.Bind<IDeploymentStatusManager>().To<DeploymentStatusManager>()
+                                             .InRequestScope();
 
             kernel.Bind<ISiteBuilderFactory>().To<SiteBuilderFactoryDispatcher>()
                                              .InRequestScope();

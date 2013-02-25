@@ -22,6 +22,7 @@ namespace Kudu.Services
     {
         private readonly IDeploymentManager _deploymentManager;
         private readonly IDeploymentSettingsManager _settings;
+        private readonly IDeploymentStatusManager _status;
         private readonly IEnvironment _environment;
         private readonly IEnumerable<IServiceHookHandler> _serviceHookHandlers;
         private readonly IOperationLock _deploymentLock;
@@ -32,6 +33,7 @@ namespace Kudu.Services
         public FetchHandler(ITracer tracer,
                             IDeploymentManager deploymentManager,
                             IDeploymentSettingsManager settings,
+                            IDeploymentStatusManager status,
                             IOperationLock deploymentLock,
                             IEnvironment environment,
                             IEnumerable<IServiceHookHandler> serviceHookHandlers,
@@ -41,6 +43,7 @@ namespace Kudu.Services
             _deploymentLock = deploymentLock;
             _deploymentManager = deploymentManager;
             _settings = settings;
+            _status = status;
             _environment = environment;
             _serviceHookHandlers = serviceHookHandlers;
             _repositoryFactory = repositoryFactory;
@@ -207,7 +210,11 @@ namespace Kudu.Services
                         // In case the commit or perhaps fetch do no-op.
                         if (deploymentInfo.TargetChangeset != null)
                         {
-                            _deploymentManager.MarkFailed(deploymentInfo.TargetChangeset.Id);
+                            IDeploymentStatusFile statusFile = _status.Open(deploymentInfo.TargetChangeset.Id);
+                            if (statusFile != null)
+                            {
+                                statusFile.MarkFailed();
+                            }
                         }
 
                         throw;

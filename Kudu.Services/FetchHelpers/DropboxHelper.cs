@@ -31,7 +31,7 @@ namespace Kudu.Services
         private const int MaxFilesPerSecs = 9; // Dropbox rate-limit at 600/min or 10/s
 
         private readonly ITracer _tracer;
-        private readonly IDeploymentManager _manager;
+        private readonly IDeploymentStatusManager _status;
         private readonly IDeploymentSettingsManager _settings;
         private readonly IEnvironment _environment;
         private readonly TimeSpan _timeout;
@@ -45,12 +45,12 @@ namespace Kudu.Services
         private int _retriedCount;
 
         public DropboxHelper(ITracer tracer,
-                             IDeploymentManager manager,
+                             IDeploymentStatusManager status,
                              IDeploymentSettingsManager settings,
                              IEnvironment environment)
         {
             _tracer = tracer;
-            _manager = manager;
+            _status = status;
             _settings = settings;
             _environment = environment;
             _timeout = settings.GetCommandIdleTimeout();
@@ -108,7 +108,7 @@ namespace Kudu.Services
 
                 _logger.Log(String.Format("{0} downloaded files, {1} successful retries.", _fileCount, _retriedCount));
 
-                _manager.UpdateMessage(deploymentInfo.TargetChangeset.Id, message);
+                _status.Open(deploymentInfo.TargetChangeset.Id).UpdateMessage(message);
 
                 // Commit anyway even partial change
                 changeSet = repository.Commit(message, String.Format("{0} <{1}>", info.UserName, info.Email));
@@ -196,9 +196,9 @@ namespace Kudu.Services
 
                             if (DateTime.Now.Subtract(updateMessageTime) > TimeSpan.FromSeconds(5))
                             {
-                                lock (_manager)
+                                lock (_status)
                                 {
-                                    _manager.UpdateMessage(deploymentInfo.TargetChangeset.Id,
+                                    _status.Open(deploymentInfo.TargetChangeset.Id).UpdateMessage(
                                         String.Format(CultureInfo.CurrentUICulture, 
                                             _failedCount == 0 ? Resources.Dropbox_SynchronizingProgress : Resources.Dropbox_SynchronizingProgressWithFailure,
                                             ((_successCount + _failedCount) * 100) / totals,

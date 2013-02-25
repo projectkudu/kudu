@@ -29,6 +29,9 @@ namespace Kudu.Core.Deployment
         [DataMember(Name = "message")]
         public string Message { get; set; }
 
+        [DataMember(Name = "progress")]
+        public string Progress { get; set; }
+
         [DataMember(Name = "received_time")]
         public DateTime ReceivedTime { get; set; }
 
@@ -46,6 +49,9 @@ namespace Kudu.Core.Deployment
 
         [DataMember(Name = "active")]
         public bool Current { get; set; }
+
+        [DataMember(Name = "is_temp")]
+        public bool IsTemporary { get; set; }
 
         [DataMember(Name = "url")]
         public Uri Url { get; set; }

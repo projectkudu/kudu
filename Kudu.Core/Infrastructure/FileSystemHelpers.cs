@@ -71,12 +71,14 @@ namespace Kudu.Core.Infrastructure
 
         private static void DeleteFileSystemInfo(FileSystemInfoBase fileSystemInfo, bool ignoreErrors)
         {
+            if (!fileSystemInfo.Exists)
+            {
+                return;
+            }
+
             try
             {
-                if (fileSystemInfo.Exists)
-                {
-                    fileSystemInfo.Attributes = FileAttributes.Normal;
-                }
+                fileSystemInfo.Attributes = FileAttributes.Normal;
             }
             catch
             {

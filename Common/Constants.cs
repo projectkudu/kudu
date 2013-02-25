@@ -17,6 +17,7 @@ namespace Kudu
         public const string LogFilesPath = @"LogFiles";
         public const string TracePath = LogFilesPath + @"\Git\trace";
         public const string DeploySettingsPath = "settings.xml";
+        public const string ActiveDeploymentFile = "active";
         public const string TraceFile = "trace.xml";
         public const string ScriptsPath = "scripts";
         public const string NodeModulesPath = "node_modules";

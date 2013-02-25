@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Web.Http;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.SourceControl;
@@ -19,17 +20,20 @@ namespace Kudu.Services.Deployment
     public class DeploymentController : ApiController
     {
         private readonly IDeploymentManager _deploymentManager;
+        private readonly IDeploymentStatusManager _status;
         private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
         private readonly IRepositoryFactory _repositoryFactory;
 
         public DeploymentController(ITracer tracer,
                                     IDeploymentManager deploymentManager,
+                                    IDeploymentStatusManager status,
                                     IOperationLock deploymentLock,
                                     IRepositoryFactory repositoryFactory)
         {
             _tracer = tracer;
             _deploymentManager = deploymentManager;
+            _status = status;
             _deploymentLock = deploymentLock;
             _repositoryFactory = repositoryFactory;
         }
@@ -109,12 +113,27 @@ namespace Kudu.Services.Deployment
         /// <returns></returns>
         [HttpGet]
         [Queryable]
-        public IQueryable<DeployResult> GetDeployResults()
+        public HttpResponseMessage GetDeployResults()
         {
-            using (_tracer.Step("DeploymentService.GetDeployResults"))
+            HttpResponseMessage response;
+            EntityTagHeaderValue currentEtag = GetCurrentEtag(Request);
+
+            if (EtagEquals(Request, currentEtag))
             {
-                return GetResults(Request).AsQueryable();
+                response = Request.CreateResponse(HttpStatusCode.NotModified);
             }
+            else
+            {
+                using (_tracer.Step("DeploymentService.GetDeployResults"))
+                {
+                    response = Request.CreateResponse(HttpStatusCode.OK, GetResults(Request).AsQueryable());
+                }
+            }
+
+            // return etag
+            response.Headers.ETag = currentEtag;
+
+            return response;
         }
 
         /// <summary>
@@ -194,6 +213,17 @@ namespace Kudu.Services.Deployment
 
                 return result;
             }
+        }
+
+        private EntityTagHeaderValue GetCurrentEtag(HttpRequestMessage request)
+        {
+            return new EntityTagHeaderValue(String.Format("\"{0:x}\"", request.RequestUri.PathAndQuery.GetHashCode()  ^ _status.LastModifiedTime.Ticks));
+        }
+
+        private bool EtagEquals(HttpRequestMessage request, EntityTagHeaderValue currentEtag)
+        {
+            return Request.Headers.IfNoneMatch != null &&
+                Request.Headers.IfNoneMatch.Any(etag => currentEtag.Equals(etag));
         }
 
         private IEnumerable<DeployResult> GetResults(HttpRequestMessage request)

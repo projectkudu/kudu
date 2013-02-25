@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Kudu.Contracts.Tracing
 {
@@ -51,6 +52,38 @@ namespace Kudu.Contracts.Tracing
                 { "type", "warning" },
                 { "text", String.Format(message, args) }
             });
+        }
+
+        public static bool ShouldTrace(this ITracer tracer, IDictionary<string, string> attributes)
+        {
+            return tracer.TraceLevel >= TraceLevel.Verbose || tracer.TraceLevel >= tracer.GetTraceLevel(attributes);
+        }
+
+        public static TraceLevel GetTraceLevel(this ITracer tracer, IDictionary<string, string> attributes)
+        {
+            string type;
+            attributes.TryGetValue("type", out type);
+
+            if (type == "error")
+            {
+                return TraceLevel.Error;
+            }
+
+            string value;
+            if (attributes.TryGetValue("traceLevel", out value))
+            {
+                var traceLevel = Int32.Parse(value);
+                if (traceLevel <= (int)TraceLevel.Error)
+                {
+                    return TraceLevel.Error;
+                }
+                else if (traceLevel <= (int)TraceLevel.Info)
+                {
+                    return TraceLevel.Info;
+                }
+            }
+
+            return TraceLevel.Verbose;
         }
     }
 }
