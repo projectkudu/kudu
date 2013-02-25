@@ -12,7 +12,7 @@ namespace Kudu.Core.Deployment
         private static readonly string[] _projectFileExtensions = new[] { ".csproj", ".vbproj" };
         private static readonly List<string> _emptyList = Enumerable.Empty<string>().ToList();
 
-        public static void CopyWithManifest(string sourcePath, string destinationPath, IDeploymentManifestReader previousManifest, bool skipOldFiles = true)
+        public static void CopyWithManifest(string sourcePath, string destinationPath, IDeploymentManifestReader previousManifest)
         {
             sourcePath = Path.GetFullPath(sourcePath);
             destinationPath = Path.GetFullPath(destinationPath);

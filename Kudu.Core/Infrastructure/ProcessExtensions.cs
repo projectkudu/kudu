@@ -105,10 +105,12 @@ namespace Kudu.Core.Infrastructure
             for (var index = 0; index < processesByName.Length; index++)
             {
                 processIndexedName = index == 0 ? processName : processName + "#" + index;
-                var processId = new PerformanceCounter("Process", "ID Process", processIndexedName);
-                if ((int)processId.NextValue() == pid)
+                using (var processId = new PerformanceCounter("Process", "ID Process", processIndexedName))
                 {
-                    return processIndexedName;
+                    if ((int)processId.NextValue() == pid)
+                    {
+                        return processIndexedName;
+                    }
                 }
             }
 
@@ -117,8 +119,10 @@ namespace Kudu.Core.Infrastructure
 
         private static int FindPidFromIndexedProcessName(string indexedProcessName)
         {
-            var parentId = new PerformanceCounter("Process", "Creating Process ID", indexedProcessName);
-            return (int)parentId.NextValue();
+            using (var parentId = new PerformanceCounter("Process", "Creating Process ID", indexedProcessName))
+            {
+                return (int)parentId.NextValue();
+            }
         }
     }
 }

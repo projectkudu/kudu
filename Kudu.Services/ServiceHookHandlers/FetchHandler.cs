@@ -153,7 +153,6 @@ namespace Kudu.Services
             {
                 hasPendingDeployment = false;
 
-                var handler = deploymentInfo.Handler;
                 using (_tracer.Step("Performing fetch based deployment"))
                 {
                     // create temporary deployment before the actual deployment item started

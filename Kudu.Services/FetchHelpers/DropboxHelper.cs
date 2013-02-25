@@ -321,7 +321,7 @@ namespace Kudu.Services
 
             // Using ContinueWith instead of Then to avoid SyncContext deadlock in 4.5
             var tcs = new TaskCompletionSource<Task<StreamInfo>>();
-            client.GetAsync(SandboxFilePath + DropboxPathEncode(delta.Path.ToLower())).ContinueWith(t =>
+            client.GetAsync(SandboxFilePath + DropboxPathEncode(delta.Path.ToLower(CultureInfo.CurrentCulture))).ContinueWith(t =>
             {
                 if (t.IsFaulted)
                 {

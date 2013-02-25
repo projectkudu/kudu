@@ -34,37 +34,41 @@ namespace Kudu.SiteManagement
 
         public IEnumerable<string> GetSites()
         {
-            var iis = new IIS.ServerManager();
-            // The app pool is the app name
-            return iis.Sites.Where(x => x.Name.StartsWith("kudu_"))
-                            .Select(x => x.Applications[0].ApplicationPoolName)
-                            .Distinct();
+            using (var iis = new IIS.ServerManager())
+            {
+                // The app pool is the app name
+                return iis.Sites.Where(x => x.Name.StartsWith("kudu_", StringComparison.OrdinalIgnoreCase))
+                                .Select(x => x.Applications[0].ApplicationPoolName)
+                                .Distinct()
+                                .ToList();
+            }
         }
 
         public Site GetSite(string applicationName)
         {
-            var iis = new IIS.ServerManager();
-            var mainSiteName = GetLiveSite(applicationName);
-            var serviceSiteName = GetServiceSite(applicationName);
-            var devSiteName = GetDevSite(applicationName);
-
-            IIS.Site mainSite = iis.Sites[mainSiteName];
-
-            if (mainSite == null)
+            using (var iis = new IIS.ServerManager())
             {
-                return null;
+                var mainSiteName = GetLiveSite(applicationName);
+                var serviceSiteName = GetServiceSite(applicationName);
+
+                IIS.Site mainSite = iis.Sites[mainSiteName];
+
+                if (mainSite == null)
+                {
+                    return null;
+                }
+
+                IIS.Site serviceSite = iis.Sites[serviceSiteName];
+                // IIS.Site devSite = iis.Sites[devSiteName];
+
+                var site = new Site();
+                site.ServiceUrl = GetSiteUrl(serviceSite);
+                site.SiteUrls = GetSiteUrls(mainSite);
+                return site;
             }
-
-            IIS.Site serviceSite = iis.Sites[serviceSiteName];
-            IIS.Site devSite = iis.Sites[devSiteName];
-
-            var site = new Site();
-            site.ServiceUrl = GetSiteUrl(serviceSite);
-            site.SiteUrls = GetSiteUrls(mainSite);
-            return site;
         }
 
-        private string GetSiteUrl(IIS.Site site)
+        private static string GetSiteUrl(IIS.Site site)
         {
             var urls = GetSiteUrls(site);
 
@@ -78,7 +82,7 @@ namespace Kudu.SiteManagement
             }
         }
 
-        private List<string> GetSiteUrls(IIS.Site site)
+        private static List<string> GetSiteUrls(IIS.Site site)
         {
             var urls = new List<string>();
 
@@ -104,28 +108,28 @@ namespace Kudu.SiteManagement
 
         public Site CreateSite(string applicationName)
         {
-            var iis = new IIS.ServerManager();
-
-            try
+            using (var iis = new IIS.ServerManager())
             {
-                // Determine the host header values
-                List<string> siteBindings = GetDefaultBindings(applicationName, _settingsResolver.SitesBaseUrl);
-                List<string> serviceSiteBindings = GetDefaultBindings(applicationName, _settingsResolver.ServiceSitesBaseUrl);
+                try
+                {
+                    // Determine the host header values
+                    List<string> siteBindings = GetDefaultBindings(applicationName, _settingsResolver.SitesBaseUrl);
+                    List<string> serviceSiteBindings = GetDefaultBindings(applicationName, _settingsResolver.ServiceSitesBaseUrl);
 
-                // Create the service site for this site
-                string serviceSiteName = GetServiceSite(applicationName);
-                var serviceSite = CreateSite(iis, applicationName, serviceSiteName, _pathResolver.ServiceSitePath, serviceSiteBindings);
+                    // Create the service site for this site
+                    string serviceSiteName = GetServiceSite(applicationName);
+                    var serviceSite = CreateSite(iis, applicationName, serviceSiteName, _pathResolver.ServiceSitePath, serviceSiteBindings);
 
-                IIS.Binding serviceSiteBinding = EnsureBinding(serviceSite.Bindings);
-                int serviceSitePort = serviceSiteBinding.EndPoint.Port;
+                    IIS.Binding serviceSiteBinding = EnsureBinding(serviceSite.Bindings);
+                    int serviceSitePort = serviceSiteBinding.EndPoint.Port;
 
-                // Create the main site
-                string siteName = GetLiveSite(applicationName);
-                string siteRoot = _pathResolver.GetLiveSitePath(applicationName);
-                string webRoot = Path.Combine(siteRoot, Constants.WebRoot);
+                    // Create the main site
+                    string siteName = GetLiveSite(applicationName);
+                    string siteRoot = _pathResolver.GetLiveSitePath(applicationName);
+                    string webRoot = Path.Combine(siteRoot, Constants.WebRoot);
 
-                FileSystemHelpers.EnsureDirectory(webRoot);
-                File.WriteAllText(Path.Combine(webRoot, "index.html"), @"<html> 
+                    FileSystemHelpers.EnsureDirectory(webRoot);
+                    File.WriteAllText(Path.Combine(webRoot, "index.html"), @"<html> 
 <head>
 <title>This web site has been successfully created</title>
 <style type=""text/css"">
@@ -138,103 +142,104 @@ namespace Kudu.SiteManagement
 </body> 
 </html>");
 
-                var site = CreateSite(iis, applicationName, siteName, webRoot, siteBindings);
+                    var site = CreateSite(iis, applicationName, siteName, webRoot, siteBindings);
 
-                IIS.Binding iisBinding = EnsureBinding(site.Bindings);
-                int sitePort = iisBinding.EndPoint.Port;
+                    // Map a path called app to the site root under the service site
+                    MapServiceSitePath(iis, applicationName, Constants.MappedSite, siteRoot);
 
-                // Map a path called app to the site root under the service site
-                MapServiceSitePath(iis, applicationName, Constants.MappedSite, siteRoot);
+                    // Commit the changes to iis
+                    iis.CommitChanges();
 
-                // Commit the changes to iis
-                iis.CommitChanges();
+                    // Give IIS some time to create the site and map the path
+                    // REVIEW: Should we poll the site's state?
+                    Thread.Sleep(1000);
 
-                // Give IIS some time to create the site and map the path
-                // REVIEW: Should we poll the site's state?
-                Thread.Sleep(1000);
+                    var siteUrls = new List<string>();
+                    foreach (var url in site.Bindings)
+                    {
+                        siteUrls.Add(String.Format("http://{0}:{1}/", String.IsNullOrEmpty(url.Host) ? "localhost" : url.Host, url.EndPoint.Port));
+                    }
 
-                var siteUrls = new List<string>();
-                foreach (var url in site.Bindings)
-                {
-                    siteUrls.Add(String.Format("http://{0}:{1}/", String.IsNullOrEmpty(url.Host) ? "localhost" : url.Host, url.EndPoint.Port));
+                    return new Site
+                    {
+                        ServiceUrl = String.Format("http://localhost:{0}/", serviceSitePort),
+                        SiteUrls = siteUrls
+                    };
                 }
-
-                return new Site
+                catch
                 {
-                    ServiceUrl = String.Format("http://localhost:{0}/", serviceSitePort),
-                    SiteUrls = siteUrls
-                };
-            }
-            catch
-            {
-                DeleteSite(applicationName);
-                throw;
+                    DeleteSite(applicationName);
+                    throw;
+                }
             }
         }
 
         public void DeleteSite(string applicationName)
         {
-            var iis = new IIS.ServerManager();
-
-            // Get the app pool for this application
-            string appPoolName = GetAppPool(applicationName);
-            IIS.ApplicationPool kuduPool = iis.ApplicationPools[appPoolName];
-
-            if (kuduPool == null)
+            using (var iis = new IIS.ServerManager())
             {
-                // If there's no app pool then do nothing
-                return;
-            }
+                // Get the app pool for this application
+                string appPoolName = GetAppPool(applicationName);
+                IIS.ApplicationPool kuduPool = iis.ApplicationPools[appPoolName];
 
-            DeleteSite(iis, GetLiveSite(applicationName));
-            DeleteSite(iis, GetDevSite(applicationName));
-            // Don't delete the physical files for the service site
-            DeleteSite(iis, GetServiceSite(applicationName), deletePhysicalFiles: false);
+                if (kuduPool == null)
+                {
+                    // If there's no app pool then do nothing
+                    return;
+                }
 
-            iis.CommitChanges();
+                DeleteSite(iis, GetLiveSite(applicationName));
+                DeleteSite(iis, GetDevSite(applicationName));
+                // Don't delete the physical files for the service site
+                DeleteSite(iis, GetServiceSite(applicationName), deletePhysicalFiles: false);
 
-            string appPath = _pathResolver.GetApplicationPath(applicationName);
-            var sitePath = _pathResolver.GetLiveSitePath(applicationName);
-
-            try
-            {
-                DeleteSafe(sitePath);
-                DeleteSafe(appPath);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.ToString());
-            }
-            finally
-            {
-                // Remove the app pool and commit changes
-                iis.ApplicationPools.Remove(iis.ApplicationPools[appPoolName]);
                 iis.CommitChanges();
 
-                // Clear out the app pool user profile directory if it exists
-                string userDir = Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile).TrimEnd(Path.DirectorySeparatorChar));
-                string appPoolDirectory = Path.Combine(userDir, appPoolName);
-                DeleteSafe(appPoolDirectory);
+                string appPath = _pathResolver.GetApplicationPath(applicationName);
+                var sitePath = _pathResolver.GetLiveSitePath(applicationName);
+
+                try
+                {
+                    DeleteSafe(sitePath);
+                    DeleteSafe(appPath);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.ToString());
+                }
+                finally
+                {
+                    // Remove the app pool and commit changes
+                    iis.ApplicationPools.Remove(iis.ApplicationPools[appPoolName]);
+                    iis.CommitChanges();
+
+                    // Clear out the app pool user profile directory if it exists
+                    string userDir = Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile).TrimEnd(Path.DirectorySeparatorChar));
+                    string appPoolDirectory = Path.Combine(userDir, appPoolName);
+                    DeleteSafe(appPoolDirectory);
+                }
             }
         }
 
         public void SetSiteWebRoot(string applicationName, string siteRoot)
         {
-            var iis = new IIS.ServerManager();
-            string siteName = GetDevSite(applicationName);
-
-            IIS.Site site = iis.Sites[siteName];
-            if (site != null)
+            using (var iis = new IIS.ServerManager())
             {
-                string sitePath = _pathResolver.GetLiveSitePath(applicationName);
-                string webRoot = Path.Combine(sitePath, Constants.WebRoot, siteRoot);
+                string siteName = GetDevSite(applicationName);
 
-                // Change the web root
-                site.Applications[0].VirtualDirectories[0].PhysicalPath = webRoot;
+                IIS.Site site = iis.Sites[siteName];
+                if (site != null)
+                {
+                    string sitePath = _pathResolver.GetLiveSitePath(applicationName);
+                    string webRoot = Path.Combine(sitePath, Constants.WebRoot, siteRoot);
 
-                iis.CommitChanges();
+                    // Change the web root
+                    site.Applications[0].VirtualDirectories[0].PhysicalPath = webRoot;
 
-                Thread.Sleep(1000);
+                    iis.CommitChanges();
+
+                    Thread.Sleep(1000);
+                }
             }
         }
 
@@ -253,7 +258,7 @@ namespace Kudu.SiteManagement
             site.Applications.Add(path, siteRoot);
         }
 
-        private IIS.ApplicationPool EnsureAppPool(IIS.ServerManager iis, string appName)
+        private static IIS.ApplicationPool EnsureAppPool(IIS.ServerManager iis, string appName)
         {
             string appPoolName = GetAppPool(appName);
             var kuduAppPool = iis.ApplicationPools[appPoolName];
@@ -272,7 +277,7 @@ namespace Kudu.SiteManagement
             return kuduAppPool;
         }
 
-        private IIS.Binding EnsureBinding(IIS.BindingCollection siteBindings)
+        private static IIS.Binding EnsureBinding(IIS.BindingCollection siteBindings)
         {
             if (siteBindings == null)
             {
@@ -289,7 +294,7 @@ namespace Kudu.SiteManagement
             return iisBinding;
         }
 
-        private List<String> GetDefaultBindings(string applicationName, string baseUrl)
+        private static List<String> GetDefaultBindings(string applicationName, string baseUrl)
         {
             var siteBindings = new List<string>();
             if (!String.IsNullOrWhiteSpace(baseUrl))
@@ -301,7 +306,7 @@ namespace Kudu.SiteManagement
         }
 
         //TODO this is duplicated in HgServer.cs, though out of sync in functionality.
-        private int GetRandomPort(IIS.ServerManager iis)
+        private static int GetRandomPort(IIS.ServerManager iis)
         {
             int randomPort = portNumberGenRnd.Next(1025, 65535);
             while (!IsAvailable(randomPort, iis))
@@ -313,7 +318,7 @@ namespace Kudu.SiteManagement
         }
 
         //TODO this is duplicated in HgServer.cs, though out of sync in functionality.
-        private bool IsAvailable(int port, IIS.ServerManager iis)
+        private static bool IsAvailable(int port, IIS.ServerManager iis)
         {
             var tcpConnections = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpConnections();
             foreach (var connectionInfo in tcpConnections)
@@ -329,22 +334,6 @@ namespace Kudu.SiteManagement
                 foreach (var binding in iisSite.Bindings)
                 {
                     if (binding.EndPoint != null && binding.EndPoint.Port == port)
-                    {
-                        return false;
-                    }
-                }
-            }
-
-            return true;
-        }
-
-        private bool IsUrlAvailable(string url, IIS.ServerManager iis)
-        {
-            foreach (var iisSite in iis.Sites)
-            {
-                foreach (var binding in iisSite.Bindings)
-                {
-                    if (binding.Host != null && binding.Host.Equals(url, StringComparison.CurrentCultureIgnoreCase))
                     {
                         return false;
                     }
@@ -383,7 +372,7 @@ namespace Kudu.SiteManagement
             return site;
         }
 
-        private string CreateBindingInformation(string applicationName, string baseUrl, string defaultIp = "*", string defaultPort = "80")
+        private static string CreateBindingInformation(string applicationName, string baseUrl, string defaultIp = "*", string defaultPort = "80")
         {
             // Creates the 'bindingInformation' parameter for IIS.ServerManager.Sites.Add()
             // Accepts baseUrl in 3 formats: hostname, hostname:port and ip:port:hostname
@@ -415,7 +404,7 @@ namespace Kudu.SiteManagement
             return String.Format("{0}:{1}:{2}", ip, port, applicationName + "." + host);
         }
 
-        private void DeleteSite(IIS.ServerManager iis, string siteName, bool deletePhysicalFiles = true)
+        private static void DeleteSite(IIS.ServerManager iis, string siteName, bool deletePhysicalFiles = true)
         {
             var site = iis.Sites[siteName];
             if (site != null)

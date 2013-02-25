@@ -246,7 +246,7 @@ namespace Kudu.Services.Infrastructure
         /// another request comes in and changes the file between when the <see cref="FileSystemInfo"/> was
         /// obtained and the file opened exclusively.
         /// </summary>
-        protected Stream GetFileReadStream(string localFilePath, FileSystemInfo validate = null)
+        protected static Stream GetFileReadStream(string localFilePath, FileSystemInfo validate = null)
         {
             Contract.Assert(localFilePath != null);
 
@@ -266,7 +266,7 @@ namespace Kudu.Services.Infrastructure
         /// another request comes in and changes the file between when the <see cref="FileSystemInfo"/> was
         /// obtained and the file opened exclusively.
         /// </summary>
-        protected Stream GetFileWriteStream(string localFilePath, bool fileExists, FileSystemInfo validate = null)
+        protected static Stream GetFileWriteStream(string localFilePath, bool fileExists, FileSystemInfo validate = null)
         {
             Contract.Assert(localFilePath != null);
 
@@ -291,7 +291,7 @@ namespace Kudu.Services.Infrastructure
         /// to conclusively verify that a file hasn't changed and so it avoids certain race conditions.
         /// The stream is never actually used other than for "locking" the file.
         /// </summary>
-        private Stream GetFileDeleteStream(string localFilePath, FileSystemInfo validate = null)
+        private static Stream GetFileDeleteStream(string localFilePath, FileSystemInfo validate = null)
         {
             Contract.Assert(localFilePath != null);
 
@@ -304,7 +304,7 @@ namespace Kudu.Services.Infrastructure
             return fStream;
         }
 
-        private void ValidateFileSystemInfo(string localFilePath, FileSystemInfo validate)
+        private static void ValidateFileSystemInfo(string localFilePath, FileSystemInfo validate)
         {
             Contract.Assert(localFilePath != null);
             Contract.Assert(validate != null);

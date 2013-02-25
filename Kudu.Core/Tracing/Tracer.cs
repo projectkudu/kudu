@@ -145,7 +145,7 @@ namespace Kudu.Core.Tracing
             using (Step(value, attributes)) { }
         }
 
-        private void EnsureSize(XDocument document)
+        private static void EnsureSize(XDocument document)
         {
             try
             {

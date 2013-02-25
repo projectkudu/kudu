@@ -18,7 +18,7 @@ namespace Kudu.Core.Deployment.Generator
 
         private ExternalCommandFactory _externalCommandFactory;
 
-        public ExternalCommandBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string repositoryPath)
+        protected ExternalCommandBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string repositoryPath)
         {
             Environment = environment;
 
@@ -83,7 +83,7 @@ namespace Kudu.Core.Deployment.Generator
             }
         }
 
-        private void CleanBuild(ITracer tracer, string buildTempPath)
+        private static void CleanBuild(ITracer tracer, string buildTempPath)
         {
             using (tracer.Step("Cleaning up temp files"))
             {

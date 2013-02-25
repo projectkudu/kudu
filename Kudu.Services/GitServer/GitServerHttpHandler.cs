@@ -37,7 +37,7 @@ namespace Kudu.Services.GitServer
         protected readonly IDeploymentManager _deploymentManager;
         protected readonly IDeploymentSettingsManager _settings;
 
-        public GitServerHttpHandler(ITracer tracer, 
+        protected GitServerHttpHandler(ITracer tracer, 
                                     IGitServer gitServer, 
                                     IOperationLock deploymentLock, 
                                     IDeploymentManager deploymentManager,
@@ -65,7 +65,7 @@ namespace Kudu.Services.GitServer
 
         public abstract void ProcessRequestBase(HttpContextBase context);
 
-        protected void UpdateNoCacheForResponse(HttpResponseBase response)
+        protected static void UpdateNoCacheForResponse(HttpResponseBase response)
         {
             response.Buffer = false;
             response.BufferOutput = false;

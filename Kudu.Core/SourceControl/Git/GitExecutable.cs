@@ -33,7 +33,7 @@ namespace Kudu.Core.SourceControl.Git
         }
 
 
-        private class KnownVariables
+        private static class KnownVariables
         {
             public const string GIT_CURL_VERBOSE = "GIT_CURL_VERBOSE";
             public const string GIT_TRACE = "GIT_TRACE";

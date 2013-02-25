@@ -18,13 +18,22 @@ namespace Kudu.Services.Web.Services
 
         public void Dispose()
         {
-            IDisposable disposable = _resolver as IDisposable;
-            if (disposable != null)
-            {
-                disposable.Dispose();
-            }
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
-            _resolver = null;
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                IDisposable disposable = _resolver as IDisposable;
+                if (disposable != null)
+                {
+                    disposable.Dispose();
+                }
+
+                _resolver = null;
+            }
         }
 
         public object GetService(Type serviceType)
@@ -61,6 +70,18 @@ namespace Kudu.Services.Web.Services
         public IDependencyScope BeginScope()
         {
             return new NinjectDependencyScope(_kernel.BeginBlock());
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (_kernel != null)
+                {
+                    _kernel.Dispose();
+                }
+            }
+            base.Dispose(disposing);
         }
     }
 }

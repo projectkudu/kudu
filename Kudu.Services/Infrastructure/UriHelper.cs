@@ -19,7 +19,7 @@ namespace Kudu.Services.Infrastructure
 
         private static string EnsureTrailingSlash(string url)
         {
-            if (url.EndsWith("/"))
+            if (url.EndsWith("/", StringComparison.Ordinal))
             {
                 return url;
             }

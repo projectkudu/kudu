@@ -120,7 +120,7 @@ namespace Kudu.Services.Web.Tracing
             };
         }
 
-        private void AddTraceLevel(HttpContext httpContext, Dictionary<string, string> attribs)
+        private static void AddTraceLevel(HttpContext httpContext, Dictionary<string, string> attribs)
         {
             if (!httpContext.Request.RawUrl.StartsWith("/logstream", StringComparison.OrdinalIgnoreCase) &&
                 !httpContext.Request.RawUrl.StartsWith("/deployments", StringComparison.OrdinalIgnoreCase))

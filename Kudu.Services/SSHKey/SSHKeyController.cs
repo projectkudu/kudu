@@ -16,17 +16,14 @@ namespace Kudu.Services.SSHKey
 
         private readonly ITracer _tracer;
         private readonly ISSHKeyManager _sshKeyManager;
-        private readonly IFileSystem _fileSystem;
         private readonly IOperationLock _sshKeyLock;
 
-        public SSHKeyController(ITracer tracer, ISSHKeyManager sshKeyManager, IFileSystem fileSystem, IOperationLock sshKeyLock)
+        public SSHKeyController(ITracer tracer, ISSHKeyManager sshKeyManager, IOperationLock sshKeyLock)
         {
             _tracer = tracer;
             _sshKeyManager = sshKeyManager;
-            _fileSystem = fileSystem;
             _sshKeyLock = sshKeyLock;
         }
-
         
         /// <summary>
         /// Set the private key. The supported key format is privacy enhanced mail (PEM)

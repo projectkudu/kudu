@@ -2,7 +2,7 @@
 {
     public abstract class Branch
     {
-        public Branch(string id, string name, bool active)
+        protected Branch(string id, string name, bool active)
         {
             Id = id;
             Name = name;

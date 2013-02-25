@@ -18,8 +18,8 @@ namespace Kudu.Core.Deployment
 
         public string SolutionPath { get; private set; }
 
-        public SolutionBasedSiteBuilder(IBuildPropertyProvider propertyProvider, string repositoryPath, string tempPath, string solutionPath, IDeploymentSettingsManager settings)
-            : base(settings, propertyProvider, repositoryPath, tempPath)
+        protected SolutionBasedSiteBuilder(IBuildPropertyProvider propertyProvider, string repositoryPath, string solutionPath, IDeploymentSettingsManager settings)
+            : base(settings, propertyProvider, repositoryPath)
         {
             SolutionPath = solutionPath;
         }

@@ -35,7 +35,7 @@ namespace Kudu.Services.ServiceHookHandlers
             
 
             // Currently Gitlab url's are broken.
-            if (!info.RepositoryUrl.EndsWith(".git"))
+            if (!info.RepositoryUrl.EndsWith(".git", StringComparison.Ordinal))
             {
                 info.RepositoryUrl += ".git";
             }

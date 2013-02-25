@@ -44,7 +44,7 @@ namespace Kudu.Core.Infrastructure.Test
         private class MsBuildSiteBuilderTest : MsBuildSiteBuilder
         {
             public MsBuildSiteBuilderTest(BuildPropertyProviderTest buildPropertyProviderTest)
-                : base(new MockDeploymentSettingsManager(), buildPropertyProviderTest, Path.GetTempPath(), Path.GetTempPath())
+                : base(new MockDeploymentSettingsManager(), buildPropertyProviderTest, Path.GetTempPath())
             {
             }
 

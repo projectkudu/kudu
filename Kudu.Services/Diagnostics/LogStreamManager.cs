@@ -29,7 +29,6 @@ namespace Kudu.Services.Performance
 
         private readonly object _thisLock = new object();
         private readonly string _logPath;
-        private readonly IDeploymentSettingsManager _settings;
         private readonly IEnvironment _environment;
         private readonly ITracer _tracer;
         private readonly List<ProcessRequestAsyncResult> _results;
@@ -54,7 +53,6 @@ namespace Kudu.Services.Performance
         {
             _logPath = logPath;
             _tracer = tracer;
-            _settings = settings;
             _environment = environment;
             _shutdownDetector = shutdownDetector;
             _timeout = settings.GetLogStreamTimeout();
@@ -170,7 +168,7 @@ namespace Kudu.Services.Performance
             _logFiles = null;
         }
 
-        private void WriteInitialMessage(HttpContext context)
+        private static void WriteInitialMessage(HttpContext context)
         {
             context.Response.Write(String.Format(CultureInfo.CurrentCulture, Resources.LogStream_Welcome, DateTime.UtcNow.ToString("s"), Environment.NewLine));
         }
@@ -267,7 +265,7 @@ namespace Kudu.Services.Performance
             return Path.Combine(paths);
         }
 
-        private bool MatchFilters(string fileName)
+        private static bool MatchFilters(string fileName)
         {
             if (!string.IsNullOrEmpty(fileName))
             {
@@ -370,18 +368,17 @@ namespace Kudu.Services.Performance
                     }
 
                     List<string> changes = new List<string>();
-                    using (StreamReader reader = new StreamReader(fs))
-                    {
-                        while (!reader.EndOfStream)
-                        {
-                            string line = ReadLine(reader);
-                            if (String.IsNullOrEmpty(_filter) || line.IndexOf(_filter, StringComparison.OrdinalIgnoreCase) >= 0)
-                            {
-                                changes.Add(line);
-                            }
 
-                            offset += line.Length;
+                    StreamReader reader = new StreamReader(fs);
+                    while (!reader.EndOfStream)
+                    {
+                        string line = ReadLine(reader);
+                        if (String.IsNullOrEmpty(_filter) || line.IndexOf(_filter, StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            changes.Add(line);
                         }
+
+                        offset += line.Length;
                     }
 
                     // Adjust offset and return changes
@@ -467,7 +464,7 @@ namespace Kudu.Services.Performance
         // this returns the result with preserved new line chars.
         // without this, logstream can only guess whether it is '\n' or '\r\n' which is 
         // subjective to each log providers/files.
-        private string ReadLine(StreamReader reader)
+        private static string ReadLine(StreamReader reader)
         {
             var strb = new StringBuilder();
             int val;

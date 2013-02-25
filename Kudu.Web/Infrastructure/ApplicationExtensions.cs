@@ -7,6 +7,7 @@ using Kudu.Client.Infrastructure;
 using Kudu.Client.SourceControl;
 using Kudu.Core.SourceControl;
 using Kudu.Web.Models;
+using System.IO;
 
 namespace Kudu.Web.Infrastructure
 {
@@ -30,18 +31,19 @@ namespace Kudu.Web.Infrastructure
             return deploymentSettingsManager;
         }
 
-        public static Task<XDocument> DownloadTrace(this IApplication application, ICredentials credentials)
+        public static async Task<XDocument> DownloadTrace(this IApplication application, ICredentials credentials)
         {
-            var clientHandler = HttpClientHelper.CreateClientHandler(application.ServiceUrl, credentials);
-            var client = new HttpClient(clientHandler);
-
-            return client.GetAsync(application.ServiceUrl + "dump").Then(response =>
+            using (var clientHandler = HttpClientHelper.CreateClientHandler(application.ServiceUrl, credentials))
             {
-                return response.EnsureSuccessStatusCode().Content.ReadAsStreamAsync().Then(stream =>
+                using (var client = new HttpClient(clientHandler))
                 {
+                    HttpResponseMessage response = await client.GetAsync(application.ServiceUrl + "dump");
+
+                    Stream stream = await response.EnsureSuccessStatusCode().Content.ReadAsStreamAsync();
+
                     return ZipHelper.ExtractTrace(stream);
-                });
-            });
+                }
+            }
         }
     }
 }

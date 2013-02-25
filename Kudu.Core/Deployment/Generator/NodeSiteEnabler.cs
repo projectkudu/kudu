@@ -7,7 +7,7 @@ using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment.Generator
 {
-    public class NodeSiteEnabler
+    public static class NodeSiteEnabler
     {
         private static readonly string[] NodeStartFiles = new[] { "server.js", "app.js" };
 

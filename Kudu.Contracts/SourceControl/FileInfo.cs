@@ -18,7 +18,7 @@ namespace Kudu.Core.SourceControl
 
         public override string ToString()
         {
-            return String.Format("{0} {1} (+), {1} (-)", Status, Insertions, Deletions);
+            return String.Format("{0} {1} (+), {2} (-)", Status, Insertions, Deletions);
         }
     }
 }

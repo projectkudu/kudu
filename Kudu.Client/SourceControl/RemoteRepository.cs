@@ -30,9 +30,12 @@ namespace Kudu.Client.SourceControl
 
         public void Initialize()
         {
-            Client.PostAsync("init", new StringContent(String.Empty))
-                  .Result
-                  .EnsureSuccessful();
+            using (var stringContent = new StringContent(String.Empty))
+            {
+                Client.PostAsync("init", stringContent)
+                      .Result
+                      .EnsureSuccessful();
+            }
         }
 
         public IEnumerable<Branch> GetBranches()
@@ -73,48 +76,66 @@ namespace Kudu.Client.SourceControl
 
         public void AddFile(string path)
         {
-            Client.PostAsync("add", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("path", path)))
-                  .Result
-                  .EnsureSuccessful();
+            using (var jsonContent = HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("path", path)))
+            {
+                Client.PostAsync("add", jsonContent)
+                      .Result
+                      .EnsureSuccessful();
+            }
         }
 
         public void RevertFile(string path)
         {
-            Client.PostAsync("remove", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("path", path)))
-                  .Result
-                  .EnsureSuccessful();
+            using (var jsonContent = HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("path", path)))
+            {
+                Client.PostAsync("remove", jsonContent)
+                      .Result
+                      .EnsureSuccessful();
+            }
         }
 
         public ChangeSet Commit(string message, string authorName)
         {
-            string json = Client.PostAsync("commit", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("name", authorName), new KeyValuePair<string, string>("message", message)))
-                                .Result
-                                .EnsureSuccessful()
-                                .Content.ReadAsStringAsync()
-                                .Result;
+            using (var jsonContent = HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("name", authorName), new KeyValuePair<string, string>("message", message)))
+            {
+                string json = Client.PostAsync("commit", jsonContent)
+                                    .Result
+                                    .EnsureSuccessful()
+                                    .Content.ReadAsStringAsync()
+                                    .Result;
 
-            return JsonConvert.DeserializeObject<ChangeSet>(json);
+                return JsonConvert.DeserializeObject<ChangeSet>(json);
+            }
         }
 
         public void Push()
         {
-            Client.PostAsync("push", new StringContent(String.Empty))
-                  .Result
-                  .EnsureSuccessful();
+            using (var stringContent = new StringContent(String.Empty))
+            {
+                Client.PostAsync("push", stringContent)
+                      .Result
+                      .EnsureSuccessful();
+            }
         }
 
         public void Update(string id)
         {
-            Client.PostAsync("update", HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("id", id)))
-                  .Result
-                  .EnsureSuccessful();
+            using (var jsonContent = HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("id", id)))
+            {
+                Client.PostAsync("update", jsonContent)
+                      .Result
+                      .EnsureSuccessful();
+            }
         }
 
         public void Update()
         {
-            Client.PostAsync("update", new StringContent(String.Empty))
-                  .Result
-                  .EnsureSuccessful();
+            using (var stringContent = new StringContent(String.Empty))
+            {
+                Client.PostAsync("update", stringContent)
+                      .Result
+                      .EnsureSuccessful();
+            }
         }
     }
 }

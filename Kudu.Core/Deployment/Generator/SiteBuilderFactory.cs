@@ -101,7 +101,7 @@ namespace Kudu.Core.Deployment.Generator
 
         private ISiteBuilder ResolveNonAspProject(string repositoryRoot, string projectPath)
         {
-            if (IsNodeSite(projectPath ?? repositoryRoot, _environment))
+            if (IsNodeSite(projectPath ?? repositoryRoot))
             {
                 return new NodeSiteBuilder(_environment, _settings, _propertyProvider, repositoryRoot, projectPath);
             }
@@ -111,7 +111,7 @@ namespace Kudu.Core.Deployment.Generator
             }
         }
 
-        private bool IsNodeSite(string projectPath, IEnvironment environment)
+        private static bool IsNodeSite(string projectPath)
         {
             return NodeSiteEnabler.LooksLikeNode(new FileSystem(), projectPath);
         }

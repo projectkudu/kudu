@@ -97,7 +97,7 @@ namespace Kudu.Services.ServiceHookHandlers
             return "External Provider";
         }
 
-        protected bool IsDeleteCommit(string newRef)
+        protected static bool IsDeleteCommit(string newRef)
         {
             return newRef.All(c => c == '0');
         }

@@ -27,22 +27,21 @@ namespace Kudu.Web.Controllers
             base.OnActionExecuting(filterContext);
         }
 
-        public Task<ActionResult> Index(string slug)
+        public async Task<ActionResult> Index(string slug)
         {
-            return GetSettingsViewModel(slug).Then(model =>
-            {
-                if (model != null)
-                {
-                    return (ActionResult)View(model);
-                }
+            var model = await GetSettingsViewModel(slug);
 
-                return HttpNotFound();
-            });
+            if (model != null)
+            {
+                return (ActionResult)View(model);
+            }
+
+            return HttpNotFound();
         }
 
         [HttpPost]
         [ActionName("new-app-setting")]
-        public Task<ActionResult> CreateAppSetting(string slug, string key, string value)
+        public async Task<ActionResult> CreateAppSetting(string slug, string key, string value)
         {
             try
             {
@@ -59,25 +58,24 @@ namespace Kudu.Web.Controllers
                 {
                     _service.SetAppSetting(slug, key, value);
 
-                    return RedirectToActionAsync("Index", new { slug });
+                    return RedirectToAction("Index", new { slug });
                 }
             }
             catch
             {
             }
 
-            return GetSettingsViewModel(slug).Then(model =>
-            {
-                ViewBag.Key = key;
-                ViewBag.Value = value;
+            var model = await GetSettingsViewModel(slug);
 
-                return (ActionResult)View("index", model);
-            });
+            ViewBag.Key = key;
+            ViewBag.Value = value;
+
+            return (ActionResult)View("index", model);
         }
 
         [HttpPost]
         [ActionName("new-connection-string")]
-        public Task<ActionResult> CreateConnectionString(string slug, string name, string connectionString)
+        public async Task<ActionResult> CreateConnectionString(string slug, string name, string connectionString)
         {
             try
             {
@@ -94,26 +92,25 @@ namespace Kudu.Web.Controllers
                 {
                     _service.SetConnectionString(slug, name, connectionString);
 
-                    return RedirectToActionAsync("Index", new { slug });
+                    return RedirectToAction("Index", new { slug });
                 }
             }
             catch
             {
             }
 
-            return GetSettingsViewModel(slug).Then(model =>
-            {
-                ViewBag.appName = slug;
-                ViewBag.Name = name;
-                ViewBag.ConnectionString = connectionString;
+            var model = await GetSettingsViewModel(slug);
 
-                return (ActionResult)View("index", model);
-            });
+            ViewBag.appName = slug;
+            ViewBag.Name = name;
+            ViewBag.ConnectionString = connectionString;
+
+            return (ActionResult)View("index", model);
         }
 
         [HttpPost]
         [ActionName("new-branch")]
-        public Task<ActionResult> SetBranch(string slug, string branch)
+        public async Task<ActionResult> SetBranch(string slug, string branch)
         {
             if (String.IsNullOrEmpty(branch))
             {
@@ -122,67 +119,41 @@ namespace Kudu.Web.Controllers
 
             if (ModelState.IsValid)
             {
-                var tcs = new TaskCompletionSource<ActionResult>();
-                _service.SetKuduSetting(slug, SettingsKeys.DeploymentBranch, branch)
-                                .ContinueWith(task =>
-                                {
-                                    if (task.IsFaulted)
-                                    {
-                                        tcs.SetException(task.Exception.InnerExceptions);
-                                    }
-                                    else
-                                    {
-                                        tcs.SetResult(RedirectToAction("Index", new { slug }));
-                                    }
-                                });
+                await _service.SetKuduSetting(slug, SettingsKeys.DeploymentBranch, branch);
 
-                return tcs.Task;
+                return RedirectToAction("Index", new { slug });
             }
 
-            return GetSettingsViewModel(slug).Then(model =>
-            {
-                ViewBag.appName = slug;
-                ViewBag.branch = branch;
+            var model = await GetSettingsViewModel(slug);
 
-                return (ActionResult)View("index", model);
-            });
+            ViewBag.appName = slug;
+            ViewBag.branch = branch;
+
+            return (ActionResult)View("index", model);
         }
 
         [HttpPost]
         [ActionName("set-buildargs")]
-        public Task<ActionResult> SetBuildArgs(string slug, string buildargs)
+        public async Task<ActionResult> SetBuildArgs(string slug, string buildargs)
         {
             if (buildargs != null)
             {
-                var tcs = new TaskCompletionSource<ActionResult>();
-                _service.SetKuduSetting(slug, SettingsKeys.BuildArgs, buildargs)
-                               .ContinueWith(task =>
-                               {
-                                   if (task.IsFaulted)
-                                   {
-                                       tcs.SetException(task.Exception.InnerExceptions);
-                                   }
-                                   else
-                                   {
-                                       tcs.SetResult(RedirectToAction("Index", new { slug }));
-                                   }
-                               });
+                await _service.SetKuduSetting(slug, SettingsKeys.BuildArgs, buildargs);
 
-                return tcs.Task;
+                return RedirectToAction("Index", new { slug });
             }
 
-            return GetSettingsViewModel(slug).Then(model =>
-            {
-                ViewBag.appName = slug;
-                ViewBag.buildargs = buildargs;
+            var model = await GetSettingsViewModel(slug);
 
-                return (ActionResult)View("index", model);
-            });
+            ViewBag.appName = slug;
+            ViewBag.buildargs = buildargs;
+
+            return (ActionResult)View("index", model);
         }
 
         [HttpPost]
         [ActionName("set-customproperties")]
-        public Task<ActionResult> SetCustomProperties(string slug, IDictionary<string, string> settings)
+        public async Task<ActionResult> SetCustomProperties(string slug, IDictionary<string, string> settings)
         {
             if (settings != null && settings.Count > 0)
             {
@@ -204,35 +175,21 @@ namespace Kudu.Web.Controllers
 
                 if (ModelState.IsValid)
                 {
-                    var tcs = new TaskCompletionSource<ActionResult>();
-                    _service.SetKuduSettings(slug, settings.ToArray())
-                                   .ContinueWith(task =>
-                                   {
-                                       if (task.IsFaulted)
-                                       {
-                                           tcs.SetException(task.Exception.InnerExceptions);
-                                       }
-                                       else
-                                       {
-                                           tcs.SetResult(RedirectToAction("Index", new { slug }));
-                                       }
-                                   });
-
-                    return tcs.Task;
+                    await _service.SetKuduSettings(slug, settings.ToArray());
+                    return RedirectToAction("Index", new { slug });
                 }
             }
 
-            return GetSettingsViewModel(slug).Then(model =>
-            {
-                model.KuduSettings.SiteSettings = settings;
+            var model = await GetSettingsViewModel(slug);
 
-                return (ActionResult)View("index", model);
-            });
+            model.KuduSettings.SiteSettings = settings;
+
+            return (ActionResult)View("index", model);
         }
 
         [HttpPost]
         [ActionName("add-customproperty")]
-        public Task<ActionResult> AddCustomProperty(string slug, string key, string value)
+        public async Task<ActionResult> AddCustomProperty(string slug, string key, string value)
         {
             if (String.IsNullOrWhiteSpace(key))
             {
@@ -251,22 +208,22 @@ namespace Kudu.Web.Controllers
 
             if (ModelState.IsValid)
             {
-                _service.SetKuduSetting(slug, key, value);
-                return RedirectToActionAsync("Index", new { slug });
+                await _service.SetKuduSetting(slug, key, value);
+
+                return RedirectToAction("Index", new { slug });
             }
 
-            return GetSettingsViewModel(slug).Then(model =>
-            {
-                ViewBag.Key = key;
-                ViewBag.Value = value;
+            var model = await GetSettingsViewModel(slug);
 
-                return (ActionResult)View("index", model);
-            });
+            ViewBag.Key = key;
+            ViewBag.Value = value;
+
+            return (ActionResult)View("index", model);
         }
 
         [HttpPost]
         [ActionName("remove-customproperty")]
-        public Task<ActionResult> RemoveCustomProperty(string slug, string key)
+        public async Task<ActionResult> RemoveCustomProperty(string slug, string key)
         {
             if (String.IsNullOrEmpty(key))
             {
@@ -275,17 +232,16 @@ namespace Kudu.Web.Controllers
 
             if (ModelState.IsValid)
             {
-                _service.RemoveKuduSetting(slug, key);
+                await _service.RemoveKuduSetting(slug, key);
 
-                return RedirectToActionAsync("Index", new { slug });
+                return RedirectToAction("Index", new { slug });
             }
 
-            return GetSettingsViewModel(slug).Then(model =>
-            {
-                ViewBag.Key = key;
+            var model = await GetSettingsViewModel(slug);
 
-                return (ActionResult)View("index", model);
-            });
+            ViewBag.Key = key;
+
+            return (ActionResult)View("index", model);
         }
 
         [HttpPost]
@@ -306,44 +262,29 @@ namespace Kudu.Web.Controllers
             return RedirectToAction("Index", new { slug });
         }
 
-        private Task<SettingsViewModel> GetSettingsViewModel(string name)
+        private async Task<SettingsViewModel> GetSettingsViewModel(string name)
         {
             ViewBag.slug = name;
             ViewBag.appName = name;
 
             try
             {
-                return _service.GetSettings(name).ContinueWith(task =>
+                ISettings settings = await _service.GetSettings(name);
+
+                return new SettingsViewModel
                 {
-                    if (task.IsFaulted)
-                    {
-                        // Read it
-                        var ex = task.Exception;
-
-                        return new SettingsViewModel
-                        {
-                            Enabled = false
-                        };
-                    }
-
-                    return new SettingsViewModel
-                    {
-                        AppSettings = task.Result.AppSettings,
-                        ConnectionStrings = task.Result.ConnectionStrings,
-                        KuduSettings = new DeploymentSettingsViewModel(task.Result.KuduSettings),
-                        Enabled = true
-                    };
-                });
+                    AppSettings = settings.AppSettings,
+                    ConnectionStrings = settings.ConnectionStrings,
+                    KuduSettings = new DeploymentSettingsViewModel(settings.KuduSettings),
+                    Enabled = true
+                };
             }
             catch
             {
-                var tcs = new TaskCompletionSource<SettingsViewModel>();
-                tcs.SetResult(new SettingsViewModel
+                return new SettingsViewModel
                 {
                     Enabled = false
-                });
-
-                return tcs.Task;
+                };
             }
         }
     }

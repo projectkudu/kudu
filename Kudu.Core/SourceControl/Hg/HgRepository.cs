@@ -16,7 +16,6 @@ namespace Kudu.Core.SourceControl
     {
         private const string PATH_KEY = "Path";
 
-        private static readonly Lazy<bool> _ensureClientInitialized = new Lazy<bool>(EnsureClientInitialized);
         private readonly Executable _hgExecutable;
         private readonly ITraceFactory _traceFactory;
         private readonly string _homePath;
