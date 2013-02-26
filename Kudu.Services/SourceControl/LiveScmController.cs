@@ -1,13 +1,14 @@
-﻿using System;
-using System.Net;
-using System.Net.Http;
-using System.Web.Http;
-using Kudu.Contracts.Infrastructure;
+﻿using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
+using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Services.Infrastructure;
+using System;
+using System.Net;
+using System.Net.Http;
+using System.Web.Http;
 
 namespace Kudu.Services.SourceControl
 {
@@ -18,18 +19,21 @@ namespace Kudu.Services.SourceControl
         private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
         private readonly IEnvironment _environment;
+        private readonly IDeploymentManager _deploymentManager;
 
         public LiveScmController(ITracer tracer,
                                  IOperationLock deploymentLock,
                                  IEnvironment environment,
                                  IRepository repository,
-                                 IServerConfiguration serverConfiguration)
+                                 IServerConfiguration serverConfiguration,
+                                 IDeploymentManager deploymentManager)
         {
             _tracer = tracer;
             _deploymentLock = deploymentLock;
             _environment = environment;
             _repository = repository;
             _serverConfiguration = serverConfiguration;
+            _deploymentManager = deploymentManager;
         }
 
         /// <summary>
@@ -57,12 +61,6 @@ namespace Kudu.Services.SourceControl
             // Fail if a deployment is in progress
             _deploymentLock.LockOperation(() =>
             {
-                using (_tracer.Step("Deleting deployment cache"))
-                {
-                    // Delete the deployment cache
-                    FileSystemHelpers.DeleteDirectorySafe(_environment.DeploymentCachePath, ignoreErrors != 0);
-                }
-
                 using (_tracer.Step("Deleting repository"))
                 {
                     // Delete the repository
@@ -96,6 +94,24 @@ namespace Kudu.Services.SourceControl
                         FileSystemHelpers.DeleteDirectoryContentsSafe(_environment.TracePath, ignoreErrors != 0);
                         FileSystemHelpers.DeleteDirectoryContentsSafe(_environment.DeploymentTracePath, ignoreErrors != 0);
                     }
+                }
+                else
+                {
+                    try
+                    {
+                        _deploymentManager.CleanWwwRoot();
+                    }
+                    catch (Exception ex)
+                    {
+                        // Ignore exceptions here as a failure to clean wwwroot should fail the action
+                        _tracer.TraceError(ex);
+                    }
+                }
+
+                using (_tracer.Step("Deleting deployment cache"))
+                {
+                    // Delete the deployment cache
+                    FileSystemHelpers.DeleteDirectorySafe(_environment.DeploymentCachePath, ignoreErrors != 0);
                 }
             },
             () =>

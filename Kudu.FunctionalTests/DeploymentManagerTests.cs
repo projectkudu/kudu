@@ -271,28 +271,45 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void DeleteKuduSiteCleansEverything()
+        public void DeleteKuduSiteCleansProperly()
         {
-            // Arrange
-            string appName = "DeleteKuduSiteCleansEverything";
+            string appName = "DeleteKuduSiteCleansProperly";
 
             using (var repo = Git.Clone("HelloWorld"))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
-                    // Act
+                    // Deploy HelloWorld repository
                     appManager.GitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
-                    // Assert
+                    // Verify deployed properly
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
                     Assert.NotNull(results[0].LastSuccessEndTime);
 
+                    // Verify default.htm file from HelloWorld exists
+                    string defaultHtmContent = appManager.VfsWebRootManager.ReadAllText("default.htm");
+                    Assert.False(String.IsNullOrEmpty(defaultHtmContent));
+
+                    // Add file to wwwroot not through deployment/repository
+                    string extraFileName = "extra.file";
+                    appManager.VfsWebRootManager.WriteAllText(extraFileName, "extra content");
+
+                    // Delete repository without removing wwwroot
                     appManager.RepositoryManager.Delete().Wait();
                     results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
+                    // Verify deployments were cleaned
                     Assert.Equal(0, results.Count);
+
+                    // Verify extra.file was not cleaned
+                    string extraFileNameContent = appManager.VfsWebRootManager.ReadAllText(extraFileName);
+                    Assert.False(String.IsNullOrEmpty(extraFileNameContent));
+
+                    // Verify default.htm was cleaned
+                    defaultHtmContent = appManager.VfsWebRootManager.ReadAllText("default.htm");
+                    Assert.True(String.IsNullOrEmpty(defaultHtmContent));
                 });
             }
         }

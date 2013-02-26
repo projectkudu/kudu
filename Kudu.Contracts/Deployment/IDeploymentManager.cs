@@ -14,7 +14,9 @@ namespace Kudu.Core.Deployment
         void Delete(string id);
         void Deploy(IRepository repository, ChangeSet changeSet, string deployer, bool clean);
         void Deploy(IRepository repository, string deployer);
-        
+
+        void CleanWwwRoot();
+
         /// <summary>
         /// Creates a temporary deployment that is used as a placeholder until changeset details are available.
         /// </summary>
