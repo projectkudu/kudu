@@ -184,6 +184,9 @@
     <Content Include="Scripts\kudusync">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Scripts\firstDeploymentManifest">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Kudu.Contracts\Kudu.Contracts.csproj">

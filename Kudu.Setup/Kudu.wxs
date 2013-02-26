@@ -112,6 +112,10 @@
         <File Id="KuduSync.NET.exe" Source="$(var.KuduServiceBinScriptsDir)\KuduSync.NET.exe" />
       </Component>
 
+      <Component Id="firstDeploymentManifest" Guid="{26257B70-81C5-82D0-DCA4-37164AB117D8}">
+        <File Id="firstDeploymentManifest" Source="$(var.KuduServiceBinScriptsDir)\firstDeploymentManifest" />
+      </Component>
+
       <Component Id="CommandLine.dll" Guid="{16C4DB70-81C5-42B0-B884-37164ABAD7D6}">
         <File Id="CommandLine.dll" Source="$(var.KuduServiceBinScriptsDir)\CommandLine.dll" />
       </Component>
@@ -205,6 +209,7 @@
       <ComponentRef Id="kudusync.cmd"/>
       <ComponentRef Id="kudusync"/>
       <ComponentRef Id="KuduSync.NET.exe"/>
+      <ComponentRef Id="firstDeploymentManifest"/>
       <ComponentRef Id="CommandLine.dll"/>
       <ComponentRef Id="KuduSync.System.IO.Abstractions.dll"/>
 

@@ -514,16 +514,15 @@ namespace Kudu.Core.Deployment
 
                 context.NextManifestFilePath = context.ManifestWriter.ManifestFilePath;
 
-                if (context.PreviousManifest != null)
+                if (context.PreviousManifest == null)
                 {
-                    context.PreviousManifestFilePath = context.PreviousManifest.ManifestFilePath;
+                    // In the first deployment we want the wwwroot directory to be cleaned, we do that using a manifest file
+                    // That has the expected content of a clean deployment (only one file: hostingstart.html)
+                    // This will result in KuduSync cleaning this file.
+                    context.PreviousManifest = new DeploymentManifest(Path.Combine(_environment.ScriptPath, Constants.FirstDeploymentManifestFileName));
                 }
-                else
-                {
-                    // In this case it is the first deployment (no active deployment)
-                    // So we remove all files from wwwroot
-                    FileSystemHelpers.DeleteDirectoryContentsSafe(context.OutputPath);
-                }
+
+                context.PreviousManifestFilePath = context.PreviousManifest.ManifestFilePath;
 
                 builder.Build(context)
                        .Then(() =>

@@ -21,6 +21,7 @@ namespace Kudu
         public const string TraceFile = "trace.xml";
         public const string ScriptsPath = "scripts";
         public const string NodeModulesPath = "node_modules";
+        public const string FirstDeploymentManifestFileName = "firstDeploymentManifest";
 
         // Kudu trace text file related
         public const string DeploymentTracePath = LogFilesPath + @"\Git\deployment";
