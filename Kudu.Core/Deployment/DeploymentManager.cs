@@ -531,7 +531,7 @@ namespace Kudu.Core.Deployment
                            buildStep.Dispose();
 
                            // Run post deployment steps
-                           FinishDeployment(id, tracer, deployStep);
+                           FinishDeployment(id, deployStep);
                        })
                        .Catch(ex =>
                        {
@@ -615,7 +615,7 @@ namespace Kudu.Core.Deployment
         /// - Marks the active deployment
         /// - Sets the complete flag
         /// </summary>
-        private void FinishDeployment(string id, ITracer tracer, IDisposable deployStep)
+        private void FinishDeployment(string id, IDisposable deployStep)
         {
             using (deployStep)
             {

@@ -56,10 +56,10 @@ namespace Kudu.Contracts.Tracing
 
         public static bool ShouldTrace(this ITracer tracer, IDictionary<string, string> attributes)
         {
-            return tracer.TraceLevel >= TraceLevel.Verbose || tracer.TraceLevel >= tracer.GetTraceLevel(attributes);
+            return tracer.TraceLevel >= TraceLevel.Verbose || tracer.TraceLevel >= GetTraceLevel(attributes);
         }
 
-        public static TraceLevel GetTraceLevel(this ITracer tracer, IDictionary<string, string> attributes)
+        private static TraceLevel GetTraceLevel(IDictionary<string, string> attributes)
         {
             string type;
             attributes.TryGetValue("type", out type);
