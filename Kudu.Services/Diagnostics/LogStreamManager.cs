@@ -15,10 +15,11 @@ using Kudu.Core.Settings;
 using Kudu.Services.Infrastructure;
 
 using Environment = System.Environment;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Kudu.Services.Performance
 {
-    public class LogStreamManager
+    public class LogStreamManager : IDisposable
     {
         private const string FilterQueryKey = "filter";
         private const string AzureDriveEnabledKey = "AzureDriveEnabled";
@@ -490,6 +491,20 @@ namespace Kudu.Services.Performance
             return strb.ToString();
         }
 
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                Reset();
+            }
+        }
+
         class ProcessRequestAsyncResult : IAsyncResult
         {
             private HttpContext _context;
@@ -511,6 +526,7 @@ namespace Kudu.Services.Performance
                 _context.Response.StatusCode = 200;
             }
 
+            [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", MessageId = "result", Justification = "By design")]
             public static void End(IAsyncResult result)
             {
                 // no-op
