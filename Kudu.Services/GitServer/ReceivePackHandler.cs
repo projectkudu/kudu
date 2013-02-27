@@ -50,7 +50,7 @@ namespace Kudu.Services.GitServer
 
         public override void ProcessRequestBase(HttpContextBase context)
         {
-            using (_tracer.Step("RpcService.ReceivePack"))
+            using (Tracer.Step("RpcService.ReceivePack"))
             {
                 // Ensure that the target directory does not have a non-Git repository.
                 IRepository repository = _repositoryFactory.GetRepository();
@@ -64,12 +64,12 @@ namespace Kudu.Services.GitServer
                     return;
                 }
 
-                _deploymentLock.LockOperation(() =>
+                DeploymentLock.LockOperation(() =>
                 {
                     string username = null;
                     if (AuthUtility.TryExtractBasicAuthUser(context.Request, out username))
                     {
-                        _gitServer.SetDeployer(username);
+                        GitServer.SetDeployer(username);
                     }
 
                     UpdateNoCacheForResponse(context.Response);
@@ -77,9 +77,9 @@ namespace Kudu.Services.GitServer
                     context.Response.ContentType = "application/x-git-receive-pack-result";
 
                     // This temporary deployment is for ui purposes only, it will always be deleted via finally.
-                    using (_deploymentManager.CreateTemporaryDeployment(Resources.ReceivingChanges))
+                    using (DeploymentManager.CreateTemporaryDeployment(Resources.ReceivingChanges))
                     {
-                        _gitServer.Receive(context.Request.GetInputStream(), context.Response.OutputStream);
+                        GitServer.Receive(context.Request.GetInputStream(), context.Response.OutputStream);
                     }
                 },
                 () =>

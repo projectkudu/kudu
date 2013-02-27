@@ -31,11 +31,11 @@ namespace Kudu.Services.GitServer
 {
     public abstract class GitServerHttpHandler : IHttpHandler
     {
-        protected readonly IGitServer _gitServer;
-        protected readonly ITracer _tracer;
-        protected readonly IOperationLock _deploymentLock;
-        protected readonly IDeploymentManager _deploymentManager;
-        protected readonly IDeploymentSettingsManager _settings;
+        protected IGitServer GitServer { get; private set; }
+        protected ITracer Tracer { get; private set; }
+        protected IOperationLock DeploymentLock { get; private set; }
+        protected IDeploymentManager DeploymentManager { get; private set; }
+        protected IDeploymentSettingsManager Settings { get; private set; }
 
         protected GitServerHttpHandler(ITracer tracer, 
                                     IGitServer gitServer, 
@@ -43,11 +43,11 @@ namespace Kudu.Services.GitServer
                                     IDeploymentManager deploymentManager,
                                     IDeploymentSettingsManager settings)
         {
-            _gitServer = gitServer;
-            _tracer = tracer;
-            _deploymentLock = deploymentLock;
-            _deploymentManager = deploymentManager;
-            _settings = settings;
+            GitServer = gitServer;
+            Tracer = tracer;
+            DeploymentLock = deploymentLock;
+            DeploymentManager = deploymentManager;
+            Settings = settings;
         }
 
         public virtual bool IsReusable

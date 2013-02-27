@@ -7,6 +7,7 @@ using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.SSHKey;
 using Newtonsoft.Json.Linq;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Kudu.Services.SSHKey
 {
@@ -29,6 +30,7 @@ namespace Kudu.Services.SSHKey
         /// Set the private key. The supported key format is privacy enhanced mail (PEM)
         /// </summary>
         [HttpPut]
+        [SuppressMessage("Microsoft.Usage", "CA2208:InstantiateArgumentExceptionsCorrectly", Justification = "By design")]
         public void SetPrivateKey()
         {
             string key;

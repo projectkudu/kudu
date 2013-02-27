@@ -5,6 +5,7 @@ using System.Net.Http;
 using Kudu.Client.Infrastructure;
 using Kudu.Core.SourceControl;
 using Newtonsoft.Json;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Kudu.Client.SourceControl
 {
@@ -63,6 +64,8 @@ namespace Kudu.Client.SourceControl
             return Client.GetJson<ChangeSetDetail>("details/" + id);
         }
 
+        [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "By design")]
+        [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", MessageId = "id", Justification = "By design")]
         public ChangeSet GetChangeSet(string id)
         {
             // Not used by client apis as yet
