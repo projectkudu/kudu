@@ -271,28 +271,46 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void DeleteKuduSiteCleansEverything()
+        public void DeleteKuduSiteCleansProperly()
         {
-            // Arrange
-            string appName = "DeleteKuduSiteCleansEverything";
+            string appName = "DeleteKuduSiteCleansProperly";
+            string defaultHtmFile = "default.htm";
 
             using (var repo = Git.Clone("HelloWorld"))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
-                    // Act
+                    // Deploy HelloWorld repository
                     appManager.GitDeploy(repo.PhysicalPath);
                     var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
-                    // Assert
+                    // Verify deployed properly
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
                     Assert.NotNull(results[0].LastSuccessEndTime);
 
+                    // Verify default.htm file from HelloWorld exists
+                    bool defaultHtmExists = appManager.VfsWebRootManager.Exists(defaultHtmFile);
+                    Assert.True(defaultHtmExists, defaultHtmFile + " doesn't exist");
+
+                    // Add file to wwwroot not through deployment/repository
+                    string extraFileName = "extra.file";
+                    appManager.VfsWebRootManager.WriteAllText(extraFileName, "extra content");
+
+                    // Delete repository without removing wwwroot
                     appManager.RepositoryManager.Delete().Wait();
                     results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
+                    // Verify deployments were cleaned
                     Assert.Equal(0, results.Count);
+
+                    // Verify extra.file was not cleaned
+                    bool extraFileExists = appManager.VfsWebRootManager.Exists(extraFileName);
+                    Assert.True(extraFileExists, extraFileName + " doesn't exist");
+
+                    // Verify default.htm was cleaned
+                    defaultHtmExists = appManager.VfsWebRootManager.Exists(defaultHtmFile);
+                    Assert.False(defaultHtmExists, defaultHtmFile + " exists");
                 });
             }
         }

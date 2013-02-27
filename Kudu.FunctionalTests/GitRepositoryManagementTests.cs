@@ -457,19 +457,15 @@ command = deploy.cmd");
         }
 
         [Fact]
-        public void FirstPushDeletesPriorContent()
+        public void FirstPushDeletesHostingStartHtmlFile()
         {
             string appName = "FirstPushDelPrior";
             using (var repo = Git.Clone("HelloWorld"))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
-                    appManager.VfsWebRootManager.WriteAllText("foo.txt", "This is a test file");
-                    string url = appManager.SiteUrl + "foo.txt";
-
-                    Thread.Sleep(200);
-
-                    KuduAssert.VerifyUrl(url, "This is a test file");
+                    string url = appManager.SiteUrl + "hostingstart.html";
+                    KuduAssert.VerifyUrl(url, "<h1>This web site has been successfully created</h1>");
 
                     // Act
                     appManager.GitDeploy(repo.PhysicalPath);

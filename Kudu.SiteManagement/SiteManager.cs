@@ -7,11 +7,14 @@ using System.Net.NetworkInformation;
 using System.Threading;
 using Kudu.Core.Infrastructure;
 using IIS = Microsoft.Web.Administration;
+using Microsoft.Web.Administration;
 
 namespace Kudu.SiteManagement
 {
     public class SiteManager : ISiteManager
     {
+        private const string HostingStartHtml = "hostingstart.html";
+
         private static Random portNumberGenRnd = new Random((int)DateTime.Now.Ticks);
 
         private readonly IPathResolver _pathResolver;
@@ -129,7 +132,7 @@ namespace Kudu.SiteManagement
                     string webRoot = Path.Combine(siteRoot, Constants.WebRoot);
 
                     FileSystemHelpers.EnsureDirectory(webRoot);
-                    File.WriteAllText(Path.Combine(webRoot, "index.html"), @"<html> 
+                    File.WriteAllText(Path.Combine(webRoot, HostingStartHtml), @"<html> 
 <head>
 <title>This web site has been successfully created</title>
 <style type=""text/css"">
@@ -347,6 +350,8 @@ namespace Kudu.SiteManagement
         {
             var pool = EnsureAppPool(iis, applicationName);
 
+            EnsureDefaultDocument(iis);
+
             IIS.Site site;
 
             if (siteBindings != null && siteBindings.Count > 0)
@@ -370,6 +375,31 @@ namespace Kudu.SiteManagement
             }
 
             return site;
+        }
+
+        private static void EnsureDefaultDocument(IIS.ServerManager iis)
+        {
+            Configuration applicationHostConfiguration = iis.GetApplicationHostConfiguration();
+            ConfigurationSection defaultDocumentSection = applicationHostConfiguration.GetSection("system.webServer/defaultDocument");
+
+            ConfigurationElementCollection filesCollection = defaultDocumentSection.GetCollection("files");
+
+            if (!filesCollection.Any(ConfigurationElementContainsHostingStart))
+            {
+                ConfigurationElement addElement = filesCollection.CreateElement("add");
+
+                addElement["value"] = HostingStartHtml;
+                filesCollection.Add(addElement);
+
+                iis.CommitChanges();
+            }
+        }
+
+        private static bool ConfigurationElementContainsHostingStart(ConfigurationElement configurationElement)
+        {
+            object valueAttribute = configurationElement["value"];
+
+            return valueAttribute != null && String.Equals(HostingStartHtml, valueAttribute.ToString(), StringComparison.OrdinalIgnoreCase);
         }
 
         private static string CreateBindingInformation(string applicationName, string baseUrl, string defaultIp = "*", string defaultPort = "80")
