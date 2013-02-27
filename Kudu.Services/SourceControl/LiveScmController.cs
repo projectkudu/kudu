@@ -1,14 +1,14 @@
-﻿using Kudu.Contracts.Infrastructure;
+﻿using System;
+using System.Net;
+using System.Net.Http;
+using System.Web.Http;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Services.Infrastructure;
-using System;
-using System.Net;
-using System.Net.Http;
-using System.Web.Http;
 
 namespace Kudu.Services.SourceControl
 {
@@ -103,7 +103,7 @@ namespace Kudu.Services.SourceControl
                     }
                     catch (Exception ex)
                     {
-                        // Ignore exceptions here as a failure to clean wwwroot should fail the action
+                        // Ignore exceptions here as a failure to clean wwwroot shouldn't fail the action
                         _tracer.TraceError(ex);
                     }
                 }

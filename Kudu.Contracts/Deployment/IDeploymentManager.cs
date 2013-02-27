@@ -15,6 +15,10 @@ namespace Kudu.Core.Deployment
         void Deploy(IRepository repository, ChangeSet changeSet, string deployer, bool clean);
         void Deploy(IRepository repository, string deployer);
 
+        /// <summary>
+        /// Removes the files from the last deployment from wwwroot
+        /// Will not remove any file that was added in any other way (during runtime or using direct ftp for example)
+        /// </summary>
         void CleanWwwRoot();
 
         /// <summary>

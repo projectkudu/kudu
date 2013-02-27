@@ -274,6 +274,7 @@ namespace Kudu.FunctionalTests
         public void DeleteKuduSiteCleansProperly()
         {
             string appName = "DeleteKuduSiteCleansProperly";
+            string defaultHtmFile = "default.htm";
 
             using (var repo = Git.Clone("HelloWorld"))
             {
@@ -289,8 +290,8 @@ namespace Kudu.FunctionalTests
                     Assert.NotNull(results[0].LastSuccessEndTime);
 
                     // Verify default.htm file from HelloWorld exists
-                    string defaultHtmContent = appManager.VfsWebRootManager.ReadAllText("default.htm");
-                    Assert.False(String.IsNullOrEmpty(defaultHtmContent));
+                    bool defaultHtmExists = appManager.VfsWebRootManager.Exists(defaultHtmFile);
+                    Assert.True(defaultHtmExists, defaultHtmFile + " doesn't exist");
 
                     // Add file to wwwroot not through deployment/repository
                     string extraFileName = "extra.file";
@@ -304,12 +305,12 @@ namespace Kudu.FunctionalTests
                     Assert.Equal(0, results.Count);
 
                     // Verify extra.file was not cleaned
-                    string extraFileNameContent = appManager.VfsWebRootManager.ReadAllText(extraFileName);
-                    Assert.False(String.IsNullOrEmpty(extraFileNameContent));
+                    bool extraFileExists = appManager.VfsWebRootManager.Exists(extraFileName);
+                    Assert.True(extraFileExists, extraFileName + " doesn't exist");
 
                     // Verify default.htm was cleaned
-                    defaultHtmContent = appManager.VfsWebRootManager.ReadAllText("default.htm");
-                    Assert.True(String.IsNullOrEmpty(defaultHtmContent));
+                    defaultHtmExists = appManager.VfsWebRootManager.Exists(defaultHtmFile);
+                    Assert.False(defaultHtmExists, defaultHtmFile + " exists");
                 });
             }
         }
