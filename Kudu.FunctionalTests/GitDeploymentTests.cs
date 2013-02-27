@@ -36,7 +36,7 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void PushAndDeployWebApiApp()
         {
-            PushAndDeployApps("https://github.com/KuduApps/Dev11_Net45_Mvc4_WebAPI.git", "master", "HelloWorld", HttpStatusCode.OK, "", "api/values", "POST", "\"HelloWorld\"");
+            PushAndDeployApps("https://github.com/KuduApps/Dev11_Net45_Mvc4_WebAPI.git", "master", "HelloWorld", HttpStatusCode.OK, "", resourcePath: "api/values", httpMethod: "POST", jsonPayload: "\"HelloWorld\"");
         }
 
         [Fact]
