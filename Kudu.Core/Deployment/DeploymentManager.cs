@@ -51,19 +51,6 @@ namespace Kudu.Core.Deployment
             _status = status;
         }
 
-        private string ActiveDeploymentId
-        {
-            get
-            {
-                string path = GetActiveDeploymentFilePath();
-                if (_fileSystem.File.Exists(path))
-                {
-                    return OperationManager.Attempt<string>(() => _fileSystem.File.ReadAllText(path));
-                }
-                return null;
-            }
-        }
-
         private bool IsDeploying
         {
             get
@@ -83,7 +70,7 @@ namespace Kudu.Core.Deployment
 
         public DeployResult GetResult(string id)
         {
-            return GetResult(id, ActiveDeploymentId, IsDeploying);
+            return GetResult(id, _status.ActiveDeploymentId, IsDeploying);
         }
 
         public IEnumerable<LogEntry> GetLogEntries(string id)
@@ -580,7 +567,7 @@ namespace Kudu.Core.Deployment
                 yield break;
             }
 
-            string activeDeploymentId = ActiveDeploymentId;
+            string activeDeploymentId = _status.ActiveDeploymentId;
             bool isDeploying = IsDeploying;
 
             foreach (var id in _fileSystem.Directory.GetDirectories(_environment.DeploymentCachePath))
@@ -639,10 +626,7 @@ namespace Kudu.Core.Deployment
                 IDeploymentStatusFile currentStatus = _status.Open(id);
                 currentStatus.MarkSuccess();
 
-                OperationManager.Attempt(() =>
-                {
-                    _fileSystem.File.WriteAllText(GetActiveDeploymentFilePath(), id);
-                });
+                _status.ActiveDeploymentId = id;
             }
         }
 
@@ -665,7 +649,7 @@ namespace Kudu.Core.Deployment
 
         private IDeploymentManifestReader GetActiveDeploymentManifestReader()
         {
-            string id = ActiveDeploymentId;
+            string id = _status.ActiveDeploymentId;
 
             if (String.IsNullOrEmpty(id))
             {
@@ -697,14 +681,9 @@ namespace Kudu.Core.Deployment
             return path;
         }
 
-        private string GetActiveDeploymentFilePath()
-        {
-            return Path.Combine(_environment.DeploymentCachePath, Constants.ActiveDeploymentFile);
-        }
-
         private bool IsActive(string id)
         {
-            return id.Equals(ActiveDeploymentId, StringComparison.OrdinalIgnoreCase);
+            return id.Equals(_status.ActiveDeploymentId, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

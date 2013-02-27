@@ -64,46 +64,26 @@ namespace Kudu.Contracts.Tracing
             string type;
             attributes.TryGetValue("type", out type);
 
-            if (IsError(type, attributes))
+            if (type == "error")
             {
                 return TraceLevel.Error;
             }
-            else if (IsInfo(type, attributes))
-            {
-                return TraceLevel.Info;
-            }
-            else
-            {
-                return TraceLevel.Verbose;
-            }
-        }
-
-        private static bool IsError(string type, IDictionary<string, string> attributes)
-        {
-            if (type == "error")
-            {
-                return true;
-            }
 
             string value;
             if (attributes.TryGetValue("traceLevel", out value))
             {
-                return Int32.Parse(value) <= (int)TraceLevel.Error;
+                var traceLevel = Int32.Parse(value);
+                if (traceLevel <= (int)TraceLevel.Error)
+                {
+                    return TraceLevel.Error;
+                }
+                else if (traceLevel <= (int)TraceLevel.Info)
+                {
+                    return TraceLevel.Info;
+                }
             }
 
-            return false;
-        }
-
-        // we don't include "error" in info as caller must be checking for that already
-        private static bool IsInfo(string type, IDictionary<string, string> attributes)
-        {
-            string value;
-            if (attributes.TryGetValue("traceLevel", out value))
-            {
-                return Int32.Parse(value) <= (int)TraceLevel.Info;
-            }
-
-            return false;
+            return TraceLevel.Verbose;
         }
     }
 }

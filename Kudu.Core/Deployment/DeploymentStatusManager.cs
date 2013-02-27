@@ -29,6 +29,27 @@ namespace Kudu.Core.Deployment
             return DeploymentStatusFile.Open(id, _fileSystem, _environment);
         }
 
+        public string ActiveDeploymentId
+        {
+            get
+            {
+                if (_fileSystem.File.Exists(_activeFile))
+                {
+                    return OperationManager.Attempt<string>(() => _fileSystem.File.ReadAllText(_activeFile));
+                }
+
+                return null;
+            }
+            set
+            {
+                OperationManager.Attempt(() =>
+                {
+                    _fileSystem.File.WriteAllText(_activeFile, value);
+                });
+            }
+        }
+
+
         public DateTime LastModifiedTime
         {
             get

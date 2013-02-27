@@ -23,7 +23,7 @@ namespace Kudu.Core.Deployment
                 statusFile.UpdateProgress(value);
             }
 
-            // No need to wrapp this as we only support top-level progress
+            // No need to wrap this as we only support top-level progress
             return _innerLogger.Log(value, type);
         }
     }

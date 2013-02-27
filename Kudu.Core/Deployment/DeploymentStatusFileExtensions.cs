@@ -41,10 +41,18 @@ namespace Kudu.Core.Deployment
             statusFile.Save();
         }
 
+        // best effort
         public static void UpdateProgress(this IDeploymentStatusFile statusFile, string progress)
         {
-            statusFile.Progress = progress;
-            statusFile.Save();
+            try
+            {
+                statusFile.Progress = progress;
+                statusFile.Save();
+            }
+            catch
+            {
+                // no-op
+            }
         }
     }
 }

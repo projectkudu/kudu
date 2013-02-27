@@ -7,6 +7,8 @@ namespace Kudu.Core.Deployment
         IDeploymentStatusFile Create(string id);
         IDeploymentStatusFile Open(string id);
 
+        string ActiveDeploymentId { get; set; }
+
         DateTime LastModifiedTime { get; }
     }
 }
