@@ -262,7 +262,7 @@ namespace Kudu.Core.Infrastructure
                                    error =>
                                    {
                                        writer.WriteErrorLine(error);
-                                       logger.Log(error, LogEntryType.Error);
+                                       logger.Log(error, LogEntryType.Warning);
                                        return true;
                                    },
                                    Console.OutputEncoding,
