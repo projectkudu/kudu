@@ -142,6 +142,15 @@ namespace Kudu.Services {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Committing {0} change(s) from Dropbox..
+        /// </summary>
+        internal static string Dropbox_Committing {
+            get {
+                return ResourceManager.GetString("Dropbox_Committing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Synchronized {0} change(s) from Dropbox..
         /// </summary>
         internal static string Dropbox_Synchronized {

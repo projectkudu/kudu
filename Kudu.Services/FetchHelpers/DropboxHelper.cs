@@ -110,6 +110,8 @@ namespace Kudu.Services
 
                 _status.Open(deploymentInfo.TargetChangeset.Id).UpdateMessage(message);
 
+                _status.Open(deploymentInfo.TargetChangeset.Id).UpdateProgress(String.Format(CultureInfo.CurrentCulture, Resources.Dropbox_Committing, _successCount));
+
                 // Commit anyway even partial change
                 changeSet = repository.Commit(message, String.Format("{0} <{1}>", info.UserName, info.Email));
             }
@@ -198,7 +200,7 @@ namespace Kudu.Services
                             {
                                 lock (_status)
                                 {
-                                    _status.Open(deploymentInfo.TargetChangeset.Id).UpdateMessage(
+                                    _status.Open(deploymentInfo.TargetChangeset.Id).UpdateProgress(
                                         String.Format(CultureInfo.CurrentUICulture, 
                                             _failedCount == 0 ? Resources.Dropbox_SynchronizingProgress : Resources.Dropbox_SynchronizingProgressWithFailure,
                                             ((_successCount + _failedCount) * 100) / totals,

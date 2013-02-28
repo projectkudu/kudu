@@ -252,4 +252,7 @@
   <data name="Dropbox_SynchronizingProgressWithFailure" xml:space="preserve">
     <value>Synchronizing {0}% of {1} change(s) from Dropbox with {2} failure(s).</value>
   </data>
+  <data name="Dropbox_Committing" xml:space="preserve">
+    <value>Committing {0} change(s) from Dropbox.</value>
+  </data>
 </root>
