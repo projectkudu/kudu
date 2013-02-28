@@ -15,6 +15,7 @@ namespace Kudu.Services.ByteRanges
     [SuppressMessage("Microsoft.Design", "CA1032:ImplementStandardExceptionConstructors", Justification = "The ContentRange is a required parameter.")]
     internal class InvalidByteRangeException : Exception
     {
+        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Constructor part of best practices for exceptions")]
         public InvalidByteRangeException(ContentRangeHeaderValue contentRange)
         {
             Initialize(contentRange);
@@ -26,12 +27,14 @@ namespace Kudu.Services.ByteRanges
             Initialize(contentRange);
         }
 
+        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Constructor part of best practices for exceptions")]
         public InvalidByteRangeException(ContentRangeHeaderValue contentRange, string message, Exception innerException)
             : base(message, innerException)
         {
             Initialize(contentRange);
         }
 
+        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Constructor part of best practices for exceptions")]
         public InvalidByteRangeException(ContentRangeHeaderValue contentRange, SerializationInfo info, StreamingContext context)
             : base(info, context)
         {

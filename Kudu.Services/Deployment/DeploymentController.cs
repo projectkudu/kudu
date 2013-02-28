@@ -220,10 +220,10 @@ namespace Kudu.Services.Deployment
             return new EntityTagHeaderValue(String.Format("\"{0:x}\"", request.RequestUri.PathAndQuery.GetHashCode()  ^ _status.LastModifiedTime.Ticks));
         }
 
-        private bool EtagEquals(HttpRequestMessage request, EntityTagHeaderValue currentEtag)
+        private static bool EtagEquals(HttpRequestMessage request, EntityTagHeaderValue currentEtag)
         {
-            return Request.Headers.IfNoneMatch != null &&
-                Request.Headers.IfNoneMatch.Any(etag => currentEtag.Equals(etag));
+            return request.Headers.IfNoneMatch != null &&
+                request.Headers.IfNoneMatch.Any(etag => currentEtag.Equals(etag));
         }
 
         private IEnumerable<DeployResult> GetResults(HttpRequestMessage request)

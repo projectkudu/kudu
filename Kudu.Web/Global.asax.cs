@@ -2,6 +2,7 @@
 using System.Web.Mvc;
 using System.Web.Routing;
 using Kudu.Web.Models;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Kudu.Web
 {
@@ -59,6 +60,7 @@ namespace Kudu.Web
             );
         }
 
+        [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "By design")]
         protected void Application_Start()
         {
             AreaRegistration.RegisterAllAreas();

@@ -43,13 +43,13 @@ namespace Kudu.Services.GitServer
 
         public override void ProcessRequestBase(HttpContextBase context)
         {
-            using (_tracer.Step("RpcService.UploadPackHandler"))
+            using (Tracer.Step("RpcService.UploadPackHandler"))
             {
                 UpdateNoCacheForResponse(context.Response);
 
                 context.Response.ContentType = "application/x-git-{0}-result".With("upload-pack");
 
-                _gitServer.Upload(context.Request.GetInputStream(), context.Response.OutputStream);
+                GitServer.Upload(context.Request.GetInputStream(), context.Response.OutputStream);
             }
         }
     }
