@@ -260,8 +260,17 @@ namespace Kudu.Services.Performance
 
             string[] paths = context.Request.Path.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
             paths[0] = _logPath;
+            _enableTrace = paths.Length == 1;
 
-            _enableTrace = paths.Length == 1 || String.Equals(paths[1], "Application", StringComparison.OrdinalIgnoreCase);
+            if (paths.Length > 1)
+            {
+                bool isApplication = String.Equals(paths[1], "Application", StringComparison.OrdinalIgnoreCase);
+                if (isApplication)
+                {
+                    _enableTrace = true;
+                    FileSystemHelpers.EnsureDirectory(Path.Combine(_logPath, paths[1]));
+                }
+            }
 
             return Path.Combine(paths);
         }
