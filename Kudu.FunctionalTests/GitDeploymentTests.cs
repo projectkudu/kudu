@@ -57,7 +57,6 @@ namespace Kudu.FunctionalTests
             PushAndDeployApps("https://github.com/KuduApps/AppWithPostBuildEvent.git", "master", "Hello Kudu", HttpStatusCode.OK, "Deployment successful");
         }
 
-
         // Node apps
 
         [Fact]
@@ -77,6 +76,7 @@ namespace Kudu.FunctionalTests
 
             PushAndDeployApps("https://github.com/KuduApps/MvcApplicationEFSqlCompact.git", "master", "Reggae", HttpStatusCode.OK, "");
         }
+
         // Other apps
 
         [Fact]
@@ -105,6 +105,13 @@ namespace Kudu.FunctionalTests
             });
         }
 
+        [Fact]
+        public void PushAndDeployMVCAppWithLatestNuget()
+        {
+            PushAndDeployApps("https://github.com/KuduApps/MVCAppWithLatestNuget.git", "master", "MVCAppWithLatestNuget", HttpStatusCode.OK, "Deployment successful");
+        }
+
+        //Common code
         private static void PushAndDeployApps(string repoCloneUrl, string defaultBranchName,
                                               string verificationText, HttpStatusCode expectedResponseCode, string verificationLogText,
                                               string resourcePath = "", string httpMethod = "GET", string jsonPayload = "")
