@@ -141,11 +141,17 @@
   <data name="Error_FailedToLocateSsh" xml:space="preserve">
     <value>Unable to locate 'ssh.exe'. Make sure it is installed.</value>
   </data>
+  <data name="Error_KeyAlreadyExists" xml:space="preserve">
+    <value>Cannot set key. A key pair already exists on disk. To generate a new key set 'forceCreate' to true.</value>
+  </data>
   <data name="Error_MismatchRepository" xml:space="preserve">
     <value>Expected a '{0}' repository but found a '{1}' repository at path '{2}'.</value>
   </data>
   <data name="Error_NoLogFound" xml:space="preserve">
     <value>No log found for '{0}'.</value>
+  </data>
+  <data name="Error_PrivateKeyAlreadyExists" xml:space="preserve">
+    <value>Private Key already exists</value>
   </data>
   <data name="Error_ProcessAborted" xml:space="preserve">
     <value>Process '{0}' aborted due to idle timeout.</value>

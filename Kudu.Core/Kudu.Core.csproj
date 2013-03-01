@@ -116,6 +116,8 @@
     <Compile Include="SourceControl\DeploymentRepository.cs" />
     <Compile Include="SourceControl\RepositoryExtensions.cs" />
     <Compile Include="SourceControl\RepositoryFactory.cs" />
+    <Compile Include="SSHKey\PEMEncoder.cs" />
+    <Compile Include="SSHKey\SSHEncoding.cs" />
     <Compile Include="SSHKey\SSHKeyManager.cs" />
     <Compile Include="Tracing\CascadeTracer.cs" />
     <Compile Include="Tracing\ITraceFactory.cs" />
