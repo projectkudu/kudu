@@ -72,14 +72,20 @@ namespace Kudu.TestHarness
 
         public string WaitNextLine(int millisecs)
         {
-            if (this.sem.WaitOne(millisecs))
+            try
             {
-                lock (lines)
+                if (this.sem.WaitOne(millisecs))
                 {
-                    string result = lines[0];
-                    lines.RemoveAt(0);
-                    return result;
+                    lock (lines)
+                    {
+                        string result = lines[0];
+                        lines.RemoveAt(0);
+                        return result;
+                    }
                 }
+            }
+            catch (ObjectDisposedException)
+            {
             }
 
             return null;
