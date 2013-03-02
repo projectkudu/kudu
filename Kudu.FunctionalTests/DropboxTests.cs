@@ -2,16 +2,19 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Web;
 using Kudu.Client;
 using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Dropbox;
+using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.Services;
 using Kudu.TestHarness;
@@ -111,6 +114,44 @@ namespace Kudu.FunctionalTests
             // For robustness, allow wider range
             Assert.True(total >= 240, total + " should be >= 240");
             Assert.True(total <= 360, total + " should be <= 360");
+        }
+
+        [Fact]
+        public void TestDropboxConcurrent()
+        {
+            OAuthInfo oauth = GetOAuthInfo();
+            if (oauth == null)
+            {
+                // only run in private kudu
+                return;
+            }
+
+            AccountInfo account = GetAccountInfo(oauth);
+            DropboxDeployInfo deploy = GetDeployInfo("/BasicTest", oauth, account);
+
+            string appName = "DropboxTest";
+            ApplicationManager.Run(appName, appManager =>
+            {
+                HttpClient client = HttpClientHelper.CreateClient(appManager.ServiceUrl, appManager.DeploymentManager.Credentials);
+                var tasks = new Task<HttpResponseMessage>[]
+                {
+                    client.PostAsJsonAsync("deploy", deploy),
+                    client.PostAsJsonAsync("deploy", deploy)
+                };
+
+                Task.WaitAll(tasks);
+
+                var success = tasks[0].Result.IsSuccessStatusCode ? tasks[0].Result : tasks[1].Result;
+                var failure = !Object.ReferenceEquals(success, tasks[0].Result) ? tasks[0].Result : tasks[1].Result;
+
+                success.EnsureSuccessful();
+                Assert.Equal(HttpStatusCode.Conflict, failure.StatusCode);
+
+                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                Assert.Equal(1, results.Count);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
+                Assert.Equal("Dropbox", results[0].Deployer);
+            });
         }
 
         private OAuthInfo GetOAuthInfo()

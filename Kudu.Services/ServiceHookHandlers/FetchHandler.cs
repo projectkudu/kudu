@@ -181,22 +181,24 @@ namespace Kudu.Services
                         if (deploymentInfo.TargetChangeset != null)
                         {
                             // Perform the actual deployment
-                            _deploymentManager.Deploy(repository, deploymentInfo.TargetChangeset.IsTemporary ? null : deploymentInfo.TargetChangeset, deploymentInfo.Deployer, clean: false);
+                            _deploymentManager.Deploy(repository, null, deploymentInfo.Deployer, clean: false);
+                        }
 
-                            if (MarkerFileExists())
+                        if (MarkerFileExists())
+                        {
+                            _tracer.Trace("Pending deployment marker file exists");
+
+                            hasPendingDeployment = DeleteMarkerFile();
+
+                            if (hasPendingDeployment)
                             {
-                                _tracer.Trace("Pending deployment marker file exists");
+                                _tracer.Trace("Deleted marker file");
 
-                                hasPendingDeployment = DeleteMarkerFile();
-
-                                if (hasPendingDeployment)
-                                {
-                                    _tracer.Trace("Deleted marker file");
-                                }
-                                else
-                                {
-                                    _tracer.TraceError("Failed to delete marker file");
-                                }
+                                hasPendingDeployment = deploymentInfo.IsReusable;
+                            }
+                            else
+                            {
+                                _tracer.TraceError("Failed to delete marker file");
                             }
                         }
                     }
