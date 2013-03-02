@@ -338,7 +338,7 @@ namespace Kudu.Core.Deployment
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step("Creating temporary deployment"))
             {
-                changeSet = changeSet ?? CreateTemporaryChangeSet();
+                changeSet = changeSet != null && changeSet.IsTemporary ? changeSet : CreateTemporaryChangeSet();
                 IDeploymentStatusFile statusFile = _status.Create(changeSet.Id);
                 statusFile.Id = changeSet.Id;
                 statusFile.Message = changeSet.Message;

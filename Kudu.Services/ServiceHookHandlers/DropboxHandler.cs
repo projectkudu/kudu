@@ -60,6 +60,7 @@ namespace Kudu.Services.ServiceHookHandlers
                 DeployInfo = payload.ToObject<DropboxDeployInfo>();
                 // This ensure that the fetch handler provides an underlying Git repository.
                 RepositoryType = RepositoryType.Git;
+                IsReusable = false;
             }
 
             public DropboxDeployInfo DeployInfo { get; set; }

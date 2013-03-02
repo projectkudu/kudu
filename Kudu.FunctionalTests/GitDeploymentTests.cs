@@ -18,43 +18,43 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void PushAndDeployAspNetAppOrchard()
         {
-            PushAndDeployApps("https://github.com/KuduApps/Orchard.git", "master", "Welcome to Orchard", HttpStatusCode.OK, "");
+            PushAndDeployApps("Orchard", "master", "Welcome to Orchard", HttpStatusCode.OK, "");
         }
 
         [Fact]
         public void PushAndDeployAspNetAppProjectWithNoSolution()
         {
-            PushAndDeployApps("https://github.com/KuduApps/ProjectWithNoSolution.git", "master", "Project without solution", HttpStatusCode.OK, "");
+            PushAndDeployApps("ProjectWithNoSolution", "master", "Project without solution", HttpStatusCode.OK, "");
         }
 
         [Fact]
         public void PushAndDeployAspNetAppHiddenFoldersAndFiles()
         {
-            PushAndDeployApps("https://github.com/KuduApps/HiddenFoldersAndFiles.git", "master", "Hello World", HttpStatusCode.OK, "");
+            PushAndDeployApps("HiddenFoldersAndFiles", "master", "Hello World", HttpStatusCode.OK, "");
         }
 
         [Fact]
         public void PushAndDeployWebApiApp()
         {
-            PushAndDeployApps("https://github.com/KuduApps/Dev11_Net45_Mvc4_WebAPI.git", "master", "HelloWorld", HttpStatusCode.OK, "", resourcePath: "api/values", httpMethod: "POST", jsonPayload: "\"HelloWorld\"");
+            PushAndDeployApps("Dev11_Net45_Mvc4_WebAPI", "master", "HelloWorld", HttpStatusCode.OK, "", resourcePath: "api/values", httpMethod: "POST", jsonPayload: "\"HelloWorld\"");
         }
 
         [Fact]
         public void PushAndDeployAspNetAppWebSiteInSolution()
         {
-            PushAndDeployApps("https://github.com/KuduApps/WebSiteInSolution.git", "master", "SomeDummyLibrary.Class1", HttpStatusCode.OK, "");
+            PushAndDeployApps("WebSiteInSolution", "master", "SomeDummyLibrary.Class1", HttpStatusCode.OK, "");
         }
 
         [Fact]
         public void PushAndDeployAspNetAppKuduGlob()
         {
-            PushAndDeployApps("https://github.com/KuduApps/kuduglob.git", "master", "ASP.NET MVC", HttpStatusCode.OK, "酷度");
+            PushAndDeployApps("kuduglob", "master", "ASP.NET MVC", HttpStatusCode.OK, "酷度");
         }
 
         [Fact]
         public void PushAndDeployAspNetAppAppWithPostBuildEvent()
         {
-            PushAndDeployApps("https://github.com/KuduApps/AppWithPostBuildEvent.git", "master", "Hello Kudu", HttpStatusCode.OK, "Deployment successful");
+            PushAndDeployApps("AppWithPostBuildEvent", "master", "Hello Kudu", HttpStatusCode.OK, "Deployment successful");
         }
 
         // Node apps
@@ -65,7 +65,7 @@ namespace Kudu.FunctionalTests
             // Ensure node is installed.
             Assert.Contains("nodejs", Environment.GetEnvironmentVariable("Path"), StringComparison.OrdinalIgnoreCase);
 
-            PushAndDeployApps("https://github.com/KuduApps/Express-Template.git", "master", "Modify this template to jump-start your Node.JS Express Web Pages application", HttpStatusCode.OK, "");
+            PushAndDeployApps("Express-Template", "master", "Modify this template to jump-start your Node.JS Express Web Pages application", HttpStatusCode.OK, "");
         }
 
         //Entity Framework 4.5 MVC Project with SQL Compact DB (.sdf file) 
@@ -73,8 +73,7 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void PushAndDeployEFMVC45AppSqlCompactMAPEIA()
         {
-
-            PushAndDeployApps("https://github.com/KuduApps/MvcApplicationEFSqlCompact.git", "master", "Reggae", HttpStatusCode.OK, "");
+            PushAndDeployApps("MvcApplicationEFSqlCompact", "master", "Reggae", HttpStatusCode.OK, "");
         }
 
         // Other apps
@@ -108,7 +107,7 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void PushAndDeployMVCAppWithLatestNuget()
         {
-            PushAndDeployApps("https://github.com/KuduApps/MVCAppWithLatestNuget.git", "master", "MVCAppWithLatestNuget", HttpStatusCode.OK, "Deployment successful");
+            PushAndDeployApps("MVCAppWithLatestNuget", "master", "MVCAppWithLatestNuget", HttpStatusCode.OK, "Deployment successful");
         }
 
         //Common code
@@ -118,11 +117,17 @@ namespace Kudu.FunctionalTests
         {
             using (new LatencyLogger("PushAndDeployApps - " + repoCloneUrl))
             {
-                string randomTestName = Path.GetFileNameWithoutExtension(repoCloneUrl);
+                Uri uri;
+                if (!Uri.TryCreate(repoCloneUrl, UriKind.Absolute, out uri))
+                {
+                    uri = null;
+                }
+
+                string randomTestName = uri != null ? Path.GetFileNameWithoutExtension(repoCloneUrl) : repoCloneUrl;
                 ApplicationManager.Run(randomTestName, appManager =>
                 {
                     // Act
-                    using (TestRepository testRepository = Git.Clone(randomTestName, repoCloneUrl))
+                    using (TestRepository testRepository = Git.Clone(randomTestName, uri != null ? repoCloneUrl : null))
                     {
                         using (new LatencyLogger("GitDeploy"))
                         {
