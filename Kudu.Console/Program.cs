@@ -1,20 +1,22 @@
-﻿using Kudu.Console.Services;
+﻿using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Diagnostics;
+using System.IO;
+using System.IO.Abstractions;
+using Kudu.Console.Services;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
+using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Tracing;
 using Kudu.Services;
-using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Diagnostics;
-using System.IO;
-using System.IO.Abstractions;
-using Kudu.Core.SourceControl;
+using XmlSettings;
 
 namespace Kudu.Console
 {
@@ -44,32 +46,32 @@ namespace Kudu.Console
 
             System.Environment.SetEnvironmentVariable("GIT_DIR", null, System.EnvironmentVariableTarget.Process);
 
-            var appRoot = args[0];
-            var wapTargets = args[1];
+            string appRoot = args[0];
+            string wapTargets = args[1];
             string deployer = args.Length == 2 ? null : args[2];
 
             IEnvironment env = GetEnvironment(appRoot);
-            var settings = new XmlSettings.Settings(GetSettingsPath(env));
-            var settingsManager = new DeploymentSettingsManager(settings);
+            ISettings settings = new XmlSettings.Settings(GetSettingsPath(env));
+            IDeploymentSettingsManager settingsManager = new DeploymentSettingsManager(settings);
 
             // Setup the trace
             TraceLevel level = settingsManager.GetTraceLevel();
-            var tracer = GetTracer(env, level);
-            var traceFactory = new TracerFactory(() => tracer);
+            ITracer tracer = GetTracer(env, level);
+            ITraceFactory traceFactory = new TracerFactory(() => tracer);
 
             // Calculate the lock path
             string lockPath = Path.Combine(env.SiteRootPath, Constants.LockPath);
             string deploymentLockPath = Path.Combine(lockPath, Constants.DeploymentLockFile);
-            var deploymentLock = new LockFile(traceFactory, deploymentLockPath);
+            IOperationLock deploymentLock = new LockFile(traceFactory, deploymentLockPath);
 
-            var fs = new FileSystem();
-            var buildPropertyProvider = new BuildPropertyProvider();
-            var builderFactory = new SiteBuilderFactoryDispatcher(settingsManager, buildPropertyProvider, env);
+            IFileSystem fs = new FileSystem();
+            IBuildPropertyProvider buildPropertyProvider = new BuildPropertyProvider();
+            ISiteBuilderFactory builderFactory = new SiteBuilderFactoryDispatcher(settingsManager, buildPropertyProvider, env);
 
-            var gitRepository = new GitExeRepository(env.RepositoryPath, env.SiteRootPath, settingsManager, traceFactory);
+            IRepository gitRepository = new GitExeRepository(env.RepositoryPath, env.SiteRootPath, settingsManager, traceFactory);
 
             var logger = new ConsoleLogger();
-            var deploymentManager = new DeploymentManager(builderFactory, 
+            IDeploymentManager deploymentManager = new DeploymentManager(builderFactory,
                                                           env, 
                                                           fs, 
                                                           traceFactory, 
