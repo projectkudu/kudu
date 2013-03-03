@@ -36,12 +36,6 @@ namespace Kudu.Core.SourceControl
         void Push();
         void FetchWithoutConflict(string remote, string remoteAlias, string branchName);
 
-        /// <summary>
-        /// Returns details about changesets being pushed to the repository.
-        /// </summary>
-        /// <returns></returns>
-        ReceiveInfo GetReceiveInfo();
-
         void Clean();
 
         /// <summary>

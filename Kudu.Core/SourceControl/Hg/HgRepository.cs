@@ -265,11 +265,6 @@ namespace Kudu.Core.SourceControl
             }
         }
 
-        public ReceiveInfo GetReceiveInfo()
-        {
-            throw new NotSupportedException();
-        }
-
         public void CreateOrResetBranch(string branchName, string startPoint)
         {
             throw new NotSupportedException();

@@ -40,10 +40,5 @@ namespace Kudu.Core.SourceControl
             _repository.ClearLock();
             _repository.UpdateSubmodules();
         }
-
-        public ReceiveInfo GetReceiveInfo()
-        {
-            return _repository.GetReceiveInfo();
-        }
     }
 }

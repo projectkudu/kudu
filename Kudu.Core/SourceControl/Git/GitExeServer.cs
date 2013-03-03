@@ -46,14 +46,6 @@ namespace Kudu.Core.SourceControl.Git
             }
         }
 
-        private string PushInfoPath
-        {
-            get
-            {
-                return Path.Combine(_gitExe.WorkingDirectory, ".git", "pushinfo");
-            }
-        }
-
         public void AdvertiseReceivePack(Stream output)
         {
             Initialize();
@@ -76,19 +68,13 @@ namespace Kudu.Core.SourceControl.Git
             }
         }
 
-        public bool Receive(Stream inputStream, Stream outputStream)
+        public void Receive(Stream inputStream, Stream outputStream)
         {
             ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("GitExeServer.Receive"))
             {
-                // Remove the push info path
-                FileSystemHelpers.DeleteFileSafe(PushInfoPath);
-
                 ServiceRpc(tracer, "receive-pack", inputStream, outputStream);
             }
-
-            // If out file was written to disk then the push is complete
-            return File.Exists(PushInfoPath);
         }
 
         public void Upload(Stream inputStream, Stream outputStream)
