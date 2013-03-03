@@ -7,7 +7,7 @@ namespace Kudu.Core.SourceControl.Git
         void SetDeployer(string deployer);
         void AdvertiseUploadPack(Stream output);
         void AdvertiseReceivePack(Stream output);
-        bool Receive(Stream inputStream, Stream outputStream);
+        void Receive(Stream inputStream, Stream outputStream);
         void Upload(Stream inputStream, Stream outputStream);
     }
 }

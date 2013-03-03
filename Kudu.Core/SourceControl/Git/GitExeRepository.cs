@@ -59,14 +59,6 @@ namespace Kudu.Core.SourceControl.Git
             }
         }
 
-        private string PushInfoPath
-        {
-            get
-            {
-                return Path.Combine(RepositoryPath, ".git", "pushinfo");
-            }
-        }
-
         public void Initialize()
         {
             var profiler = _tracerFactory.GetTracer();
@@ -411,49 +403,6 @@ namespace Kudu.Core.SourceControl.Git
         public void SetTraceLevel(int level)
         {
             _gitExe.SetTraceLevel(level);
-        }
-
-        public ReceiveInfo GetReceiveInfo()
-        {
-            string path = PushInfoPath;
-
-            if (!File.Exists(path))
-            {
-                return null;
-            }
-
-            string[] pushDetails = File.ReadAllText(path).Split(' ');
-
-            if (pushDetails.Length == 3)
-            {
-                string oldId = pushDetails[0];
-                string newId = pushDetails[1];
-
-                // When a branch gets deleted, the newId is an all-zero string.
-                // In those cases, we never want to do anything, so return null
-                if (newId.Trim('0').Length == 0)
-                {
-                    return null;
-                }
-
-                string reference = pushDetails[2];
-
-                // The reference looks like refs/heads/master or refs/heads/foo/bar. Trim the refs/heads/ prefix.
-                string branchNamePrefix = "refs/heads/";
-                System.Diagnostics.Debug.Assert(reference.StartsWith(branchNamePrefix, StringComparison.OrdinalIgnoreCase));
-                string branch = reference.Substring(branchNamePrefix.Length).Trim();
-
-                string fullNewId = Resolve(branch);
-
-                return new ReceiveInfo
-                {
-                    OldId = oldId,
-                    NewId = newId,
-                    Branch = new GitBranch(fullNewId, branch, false)
-                };
-            }
-
-            return null;
         }
 
         private bool IsEmpty()

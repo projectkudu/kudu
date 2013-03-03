@@ -13,7 +13,6 @@ namespace Kudu.Core.Deployment
 
         void Delete(string id);
         void Deploy(IRepository repository, ChangeSet changeSet, string deployer, bool clean);
-        void Deploy(IRepository repository, string deployer);
 
         /// <summary>
         /// Removes the files from the last deployment from wwwroot

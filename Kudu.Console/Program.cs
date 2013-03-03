@@ -91,7 +91,7 @@ namespace Kudu.Console
             {
                 try
                 {
-                    deploymentManager.Deploy(gitRepository, deployer);
+                    deploymentManager.Deploy(gitRepository, changeSet: null, deployer: deployer, clean: false);
                 }
                 catch
                 {
