@@ -12,6 +12,7 @@ using Kudu.Common;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
+using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Services.ByteRanges;
@@ -51,6 +52,7 @@ namespace Kudu.Services.SourceControl
             new int[] { 16, 48, 96, 176, 368, 304, 784, 1872 },
         };
 
+        private readonly IDeploymentManager _deploymentManager;
         private readonly IOperationLock _operationLock;
         private readonly IRepository _repository;
 
@@ -60,11 +62,13 @@ namespace Kudu.Services.SourceControl
         private int _delaySetIndex = 0;
 
         public LiveScmEditorController(ITracer tracer,
+                                       IDeploymentManager deploymentManager,
                                        IOperationLock operationLock,
                                        IEnvironment environment,
                                        IRepository repository)
             : base(tracer, environment, environment.RepositoryPath)
         {
+            _deploymentManager = deploymentManager;
             _operationLock = operationLock;
             _repository = repository;
             _currentEtag = GetCurrentEtag();
@@ -271,6 +275,9 @@ namespace Kudu.Services.SourceControl
 
                                 // Switch content back to master
                                 _repository.UpdateRef(VfsUpdateBranch);
+
+                                // Deploy update
+                                _deploymentManager.Deploy(_repository, deployer: string.Empty);
                             }
                             catch (CommandLineException commandLineException)
                             {
@@ -366,6 +373,9 @@ namespace Kudu.Services.SourceControl
 
                 // Switch content back to master
                 _repository.UpdateRef(VfsUpdateBranch);
+
+                // Deploy update
+                _deploymentManager.Deploy(_repository, deployer: string.Empty);
             }
             catch (CommandLineException commandLineException)
             {
