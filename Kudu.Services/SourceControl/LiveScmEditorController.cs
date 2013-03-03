@@ -275,9 +275,6 @@ namespace Kudu.Services.SourceControl
 
                                 // Switch content back to master
                                 _repository.UpdateRef(VfsUpdateBranch);
-
-                                // Deploy update
-                                _deploymentManager.Deploy(_repository, deployer: string.Empty);
                             }
                             catch (CommandLineException commandLineException)
                             {
@@ -315,6 +312,12 @@ namespace Kudu.Services.SourceControl
                         else
                         {
                             successFileResponse = Request.CreateResponse(HttpStatusCode.Created);
+                        }
+
+                        // If repository was updated then trigger a deployment to live site
+                        if (!updateBranchIsUpToDate)
+                        {
+                            DeployChanges();
                         }
 
                         // Set updated etag for the file
@@ -373,9 +376,6 @@ namespace Kudu.Services.SourceControl
 
                 // Switch content back to master
                 _repository.UpdateRef(VfsUpdateBranch);
-
-                // Deploy update
-                _deploymentManager.Deploy(_repository, deployer: string.Empty);
             }
             catch (CommandLineException commandLineException)
             {
@@ -394,6 +394,12 @@ namespace Kudu.Services.SourceControl
                 // The rebase resulted in a conflict.
                 HttpResponseMessage conflictResponse = Request.CreateErrorResponse(HttpStatusCode.Conflict, commandLineException);
                 return conflictResponse;
+            }
+
+            // If repository was updated then trigger a deployment to live site
+            if (!updateBranchIsUpToDate)
+            {
+                DeployChanges();
             }
 
             // Delete succeeded
@@ -489,6 +495,11 @@ namespace Kudu.Services.SourceControl
                 _readStream.Close();
                 _readStream = null;
             }
+        }
+
+        private void DeployChanges()
+        {
+            _deploymentManager.Deploy(_repository, changeSet: null, deployer: string.Empty, clean: false);
         }
 
         private static EntityTagHeaderValue CreateEtag(string tag)
