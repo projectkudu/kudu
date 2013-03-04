@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO.Abstractions;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
@@ -68,6 +67,27 @@ namespace Kudu.Services.SSHKey
                         throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, ex));
                     }
                 }, TimeSpan.FromSeconds(5));
+            }
+        }
+
+        [HttpPost]
+        public string GetPublicKey(bool forceCreate = false)
+        {
+            using (_tracer.Step("SSHKeyController.GetPublicKey"))
+            {
+                string key = null;
+                _sshKeyLock.LockOrWait(() =>
+                {
+                    try
+                    {
+                        key = _sshKeyManager.GetOrCreateKey(forceCreate);
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, ex));
+                    }
+                }, TimeSpan.FromSeconds(5));
+                return key;
             }
         }
 
