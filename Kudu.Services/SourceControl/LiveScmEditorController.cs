@@ -12,6 +12,7 @@ using Kudu.Common;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
+using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Services.ByteRanges;
@@ -51,6 +52,7 @@ namespace Kudu.Services.SourceControl
             new int[] { 16, 48, 96, 176, 368, 304, 784, 1872 },
         };
 
+        private readonly IDeploymentManager _deploymentManager;
         private readonly IOperationLock _operationLock;
         private readonly IRepository _repository;
 
@@ -60,11 +62,13 @@ namespace Kudu.Services.SourceControl
         private int _delaySetIndex = 0;
 
         public LiveScmEditorController(ITracer tracer,
+                                       IDeploymentManager deploymentManager,
                                        IOperationLock operationLock,
                                        IEnvironment environment,
                                        IRepository repository)
             : base(tracer, environment, environment.RepositoryPath)
         {
+            _deploymentManager = deploymentManager;
             _operationLock = operationLock;
             _repository = repository;
             _currentEtag = GetCurrentEtag();
@@ -310,6 +314,12 @@ namespace Kudu.Services.SourceControl
                             successFileResponse = Request.CreateResponse(HttpStatusCode.Created);
                         }
 
+                        // If repository was updated then trigger a deployment to live site
+                        if (!updateBranchIsUpToDate)
+                        {
+                            DeployChanges();
+                        }
+
                         // Set updated etag for the file
                         successFileResponse.Headers.ETag = CreateEtag(_repository.CurrentId);
                         return successFileResponse;
@@ -384,6 +394,12 @@ namespace Kudu.Services.SourceControl
                 // The rebase resulted in a conflict.
                 HttpResponseMessage conflictResponse = Request.CreateErrorResponse(HttpStatusCode.Conflict, commandLineException);
                 return conflictResponse;
+            }
+
+            // If repository was updated then trigger a deployment to live site
+            if (!updateBranchIsUpToDate)
+            {
+                DeployChanges();
             }
 
             // Delete succeeded
@@ -479,6 +495,11 @@ namespace Kudu.Services.SourceControl
                 _readStream.Close();
                 _readStream = null;
             }
+        }
+
+        private void DeployChanges()
+        {
+            _deploymentManager.Deploy(_repository, changeSet: null, deployer: string.Empty, clean: false);
         }
 
         private static EntityTagHeaderValue CreateEtag(string tag)
