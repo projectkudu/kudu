@@ -45,7 +45,9 @@
     </Target>
     
     <Target Name="RunAll" DependsOnTargets="UpdateVersion; Build; RunTests; BuildSites" />
-    
+
+    <Target Name="BuildForFxCop" DependsOnTargets="Build; BuildSites" />
+
     <Target Name="CreateOutputPath">
         <MakeDir Directories="$(ArtifactsPath)" Condition="!Exists('$(ArtifactsPath)')" />
         <MakeDir Directories="$(TestResultsPath)" Condition="!Exists('$(TestResultsPath)')" />
