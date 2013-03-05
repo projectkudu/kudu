@@ -146,15 +146,15 @@ namespace Kudu.Core.Deployment
             ITracer tracer = _traceFactory.GetTracer();
             IDisposable deployStep = null;
             ILogger innerLogger = null;
+            string targetBranch = null;
             var deploymentRepository = new DeploymentRepository(repository);
 
-            // If we don't get a changeset, find out what branch we should be deploying and update the repo to it
+            // If we don't get a changeset, find out what branch we should be deploying and get the commit ID from it
             if (changeSet == null)
             {
-                string targetBranch = _settings.GetBranch();
-                deploymentRepository.Update(targetBranch);
+                targetBranch = _settings.GetBranch();
 
-                changeSet = deploymentRepository.GetChangeSet(repository.CurrentId);
+                changeSet = deploymentRepository.GetChangeSet(targetBranch);
             }
 
             string id = changeSet.Id;
@@ -174,7 +174,7 @@ namespace Kudu.Core.Deployment
 
                 using (tracer.Step("Updating to specific changeset"))
                 {
-                    innerLogger = logger.Log(Resources.Log_UpdatingBranch, id);
+                    innerLogger = logger.Log(Resources.Log_UpdatingBranch, targetBranch ?? id);
 
                     // Update to the the specific changeset
                     deploymentRepository.Update(id);
