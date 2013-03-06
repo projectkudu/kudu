@@ -456,6 +456,12 @@ namespace Kudu.Core.Infrastructure
                         };
                     }
                 }
+
+                // Once we are here, the process has terminated.  This extra WaitForExit with -1 timeout
+                // will ensure in-memory Output buffer is flushed, from reflection, this.output.WaitUtilEOF().  
+                // If we don't do this, the leftover output will write concurrently to the logger 
+                // with the main thread corrupting the log xml.  
+                process.WaitForExit();
             }
         }
 #else
