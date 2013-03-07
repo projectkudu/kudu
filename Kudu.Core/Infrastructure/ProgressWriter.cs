@@ -11,16 +11,13 @@ namespace Kudu.Core.Infrastructure
 
         private DateTime _lastWriteTime;
 
-        public void Start()
+        public ProgressWriter()
         {
-            if (_progressThread == null)
-            {
-                // Set the last write time and initialize progress thread
-                _lastWriteTime = DateTime.Now;
-                _running = true;
-                _progressThread = new Thread(UpdateWriterState);
-                _progressThread.Start();
-            }
+            // Set the last write time and initialize progress thread
+            _lastWriteTime = DateTime.Now;
+            _running = true;
+            _progressThread = new Thread(UpdateWriterState);
+            _progressThread.Start();
         }
 
         public void WriteOutLine(string value)
