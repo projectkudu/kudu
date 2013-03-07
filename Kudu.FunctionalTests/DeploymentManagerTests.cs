@@ -527,8 +527,14 @@ namespace Kudu.FunctionalTests
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
+                Assert.Equal("davidebbo", results[0].Author);
+                Assert.Equal("david.ebbo@microsoft.com", results[0].AuthorEmail);
+                Assert.Equal("Settings as content file", results[0].Message.Trim());
+                Assert.Equal("ea1c6d7ea669c816dd5f86206f7b47b228fdcacd", results[0].Id);
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "Welcome to ASP.NET!");
                 Assert.Equal("CodePlex", results[0].Deployer);
+
+                // Verify the deployment status
             });
         }
 

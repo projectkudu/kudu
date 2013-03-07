@@ -279,7 +279,7 @@ namespace Kudu.Core.Deployment
             return strb.ToString();
         }
 
-        private IDeploymentStatusFile GetOrCreateStatusFile(ChangeSet changeSet, ITracer tracer, string deployer)
+        internal IDeploymentStatusFile GetOrCreateStatusFile(ChangeSet changeSet, ITracer tracer, string deployer)
         {
             string id = changeSet.Id;
 
@@ -291,12 +291,12 @@ namespace Kudu.Core.Deployment
                 {
                     // Create the status file and store information about the commit
                     statusFile = _status.Create(id);
-                    statusFile.Message = changeSet.Message;
-                    statusFile.Author = changeSet.AuthorName;
-                    statusFile.Deployer = deployer;
-                    statusFile.AuthorEmail = changeSet.AuthorEmail;
-                    statusFile.Save();
                 }
+                statusFile.Message = changeSet.Message;
+                statusFile.Author = changeSet.AuthorName;
+                statusFile.Deployer = deployer;
+                statusFile.AuthorEmail = changeSet.AuthorEmail;
+                statusFile.Save();
 
                 return statusFile;
             }
