@@ -22,7 +22,9 @@ namespace Kudu.Core.SourceControl.Git
 
         public GitExeServer(string path, string homePath, IOperationLock initLock, string logFileEnv, IDeploymentEnvironment deploymentEnvironment, IDeploymentSettingsManager settings, ITraceFactory traceFactory)
         {
-            _gitExe = new GitExecutable(path, settings.GetCommandIdleTimeout());
+            // Server git operations like receive-pack can take a long time for large repros, without any data flowing.
+            // So use a long 30 minute timeout here instead of the much shorter default.
+            _gitExe = new GitExecutable(path, TimeSpan.FromSeconds(60 * 30));
             _gitExe.SetHomePath(homePath);
             _traceFactory = traceFactory;
             _repository = new GitExeRepository(path, homePath, settings, traceFactory);
