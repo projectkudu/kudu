@@ -192,15 +192,18 @@ namespace Kudu.Services.Web.App_Start
             GlobalConfiguration.Configuration.DependencyResolver = new NinjectWebApiDependencyResolver(kernel);
 
             // Git Service
+            routes.MapHttpRoute("git-info-refs-root", "info/refs", new { controller = "InfoRefs", action = "Execute" });
             routes.MapHttpRoute("git-info-refs", configuration.GitServerRoot + "/info/refs", new { controller = "InfoRefs", action = "Execute" });
 
             // Push url
+            routes.MapHandler<ReceivePackHandler>(kernel, "git-receive-pack-root", "git-receive-pack");
             routes.MapHandler<ReceivePackHandler>(kernel, "git-receive-pack", configuration.GitServerRoot + "/git-receive-pack");
 
             // Fetch Hook
             routes.MapHandler<FetchHandler>(kernel, "fetch", "deploy");
 
             // Clone url
+            routes.MapHandler<UploadPackHandler>(kernel, "git-upload-pack-root", "git-upload-pack");
             routes.MapHandler<UploadPackHandler>(kernel, "git-upload-pack", configuration.GitServerRoot + "/git-upload-pack");
 
             // Scm (deployment repository)
