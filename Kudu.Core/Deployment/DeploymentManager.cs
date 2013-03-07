@@ -176,8 +176,11 @@ namespace Kudu.Core.Deployment
                 {
                     innerLogger = logger.Log(Resources.Log_UpdatingBranch, targetBranch ?? id);
 
-                    // Update to the the specific changeset
-                    deploymentRepository.Update(id);
+                    using (var writer = new ProgressWriter())
+                    {
+                        // Update to the the specific changeset
+                        deploymentRepository.Update(id);
+                    }
                 }
 
                 using (tracer.Step("Updating submodules"))

@@ -155,8 +155,6 @@ namespace Kudu.Core.Deployment
 
                     using (var writer = new ProgressWriter())
                     {
-                        writer.Start();
-
                         // Run install on the output directory
                         log = npm.Install(context.Tracer, writer);
                     }

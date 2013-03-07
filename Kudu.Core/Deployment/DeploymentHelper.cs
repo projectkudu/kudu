@@ -19,8 +19,6 @@ namespace Kudu.Core.Deployment
 
             using (var progressWriter = new ProgressWriter())
             {
-                progressWriter.Start();
-
                 if (previousManifest != null)
                 {
                     var previousFiles = new HashSet<string>(previousManifest.GetPaths(), StringComparer.OrdinalIgnoreCase);

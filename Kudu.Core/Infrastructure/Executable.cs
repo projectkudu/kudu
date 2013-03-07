@@ -250,8 +250,6 @@ namespace Kudu.Core.Infrastructure
             {
                 using (var writer = new ProgressWriter())
                 {
-                    writer.Start();
-
                     return Execute(tracer,
                                    output =>
                                    {
