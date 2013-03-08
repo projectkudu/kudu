@@ -6,6 +6,8 @@ namespace Kudu.Contracts.Tracing
 {
     public static class TraceExtensions
     {
+        public const string AlwaysTrace = "alwaysTrace";
+
         private static readonly Dictionary<string, string> _empty = new Dictionary<string, string>();
 
         public static IDisposable Step(this ITracer tracer, string message)
@@ -56,7 +58,7 @@ namespace Kudu.Contracts.Tracing
 
         public static bool ShouldTrace(this ITracer tracer, IDictionary<string, string> attributes)
         {
-            return tracer.TraceLevel >= TraceLevel.Verbose || tracer.TraceLevel >= GetTraceLevel(attributes);
+            return tracer.TraceLevel >= TraceLevel.Verbose || tracer.TraceLevel >= GetTraceLevel(attributes) || attributes.ContainsKey(AlwaysTrace);
         }
 
         private static TraceLevel GetTraceLevel(IDictionary<string, string> attributes)
