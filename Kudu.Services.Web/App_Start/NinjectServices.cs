@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
@@ -29,6 +30,7 @@ using Kudu.Services.Web.Services;
 using Kudu.Services.Web.Tracing;
 using Ninject;
 using Ninject.Activation;
+using Ninject.Web.Common;
 using XmlSettings;
 
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Start")]
@@ -43,13 +45,16 @@ namespace Kudu.Services.Web.App_Start
         /// </summary>
         private const string SdkRootDirectory = "msbuild";
 
+        private static readonly Bootstrapper _bootstrapper = new Bootstrapper();
+
         /// <summary>
         /// Starts the application
         /// </summary>
         public static void Start()
         {
-            HttpApplication.RegisterModule(typeof(OnePerRequestModule));
-            CreateKernel();
+            HttpApplication.RegisterModule(typeof(OnePerRequestHttpModule));
+            HttpApplication.RegisterModule(typeof(NinjectHttpModule));
+            _bootstrapper.Initialize(CreateKernel);
         }
 
         /// <summary>
@@ -57,6 +62,7 @@ namespace Kudu.Services.Web.App_Start
         /// </summary>
         public static void Stop()
         {
+            _bootstrapper.ShutDown();
         }
 
         /// <summary>
@@ -66,9 +72,10 @@ namespace Kudu.Services.Web.App_Start
         private static IKernel CreateKernel()
         {
             var kernel = new StandardKernel();
+            kernel.Bind<Func<IKernel>>().ToMethod(ctx => () => new Bootstrapper().Kernel);
+            kernel.Bind<IHttpModule>().To<HttpApplicationInitializationHttpModule>();
 
             RegisterServices(kernel);
-
             return kernel;
         }
 
