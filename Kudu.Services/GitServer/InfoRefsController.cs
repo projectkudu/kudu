@@ -54,7 +54,7 @@ namespace Kudu.Services.GitServer
         }
 
         [HttpGet]
-        public HttpResponseMessage Execute(string service)
+        public HttpResponseMessage Execute(string service = null)
         {
             using (_tracer.Step("InfoRefsService.Execute"))
             {
