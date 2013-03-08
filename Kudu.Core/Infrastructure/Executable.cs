@@ -459,7 +459,7 @@ namespace Kudu.Core.Infrastructure
                 // will ensure in-memory Output buffer is flushed, from reflection, this.output.WaitUtilEOF().  
                 // If we don't do this, the leftover output will write concurrently to the logger 
                 // with the main thread corrupting the log xml.  
-                process.WaitForExit();
+                process.WaitForExit(-1);
             }
         }
 #else
