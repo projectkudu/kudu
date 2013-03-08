@@ -1,3 +1,4 @@
+using System;
 using System.Configuration;
 using System.IO;
 using System.Web;
@@ -6,7 +7,7 @@ using Kudu.SiteManagement;
 using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
 using Ninject;
-using Ninject.Web.Mvc;
+using Ninject.Web.Common;
 
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Web.App_Start.Startup), "Start")]
 [assembly: WebActivator.ApplicationShutdownMethodAttribute(typeof(Kudu.Web.App_Start.Startup), "Stop")]
@@ -15,17 +16,16 @@ namespace Kudu.Web.App_Start
 {
     public static class Startup
     {
-        private static readonly Bootstrapper bootstrapper = new Bootstrapper();
+        private static readonly Bootstrapper _bootstrapper = new Bootstrapper();
 
         /// <summary>
         /// Starts the application
         /// </summary>
         public static void Start()
         {
-            // Resolver for mvc3
-            HttpApplication.RegisterModule(typeof(OnePerRequestModule));
-            HttpApplication.RegisterModule(typeof(HttpApplicationInitializationModule));
-            bootstrapper.Initialize(CreateKernel);
+            HttpApplication.RegisterModule(typeof(OnePerRequestHttpModule));
+            HttpApplication.RegisterModule(typeof(NinjectHttpModule));
+            _bootstrapper.Initialize(CreateKernel);
         }
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace Kudu.Web.App_Start
         /// </summary>
         public static void Stop()
         {
-            bootstrapper.ShutDown();
+            _bootstrapper.ShutDown();
         }
 
         /// <summary>
@@ -43,6 +43,9 @@ namespace Kudu.Web.App_Start
         private static IKernel CreateKernel()
         {
             var kernel = new StandardKernel();
+            kernel.Bind<Func<IKernel>>().ToMethod(ctx => () => new Bootstrapper().Kernel);
+            kernel.Bind<IHttpModule>().To<HttpApplicationInitializationHttpModule>();
+
             RegisterServices(kernel);
             return kernel;
         }
