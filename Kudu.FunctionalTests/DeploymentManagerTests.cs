@@ -133,50 +133,6 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void DeploymentODataQuery()
-        {
-            string appName = "ODataQuery";
-
-            using (var repo = Git.Clone("HelloWorld"))
-            {
-                ApplicationManager.Run(appName, appManager =>
-                {
-                    appManager.GitDeploy(repo.PhysicalPath);
-
-                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-                    Assert.Equal(1, results.Count);
-                    Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Assert.True(results[0].Current);
-
-                    repo.WriteFile("HelloWorld.txt", "This is a test");
-                    Git.Commit(repo.PhysicalPath, "Another commit");
-                    appManager.GitDeploy(repo.PhysicalPath);
-                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-                    Assert.Equal(2, results.Count);
-                    Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Assert.True(results[0].Current);
-                    Assert.Equal(DeployStatus.Success, results[1].Status);
-                    Assert.False(results[1].Current);
-
-                    // oldest to newest
-                    results = appManager.DeploymentManager.Client.GetJsonAsync<IEnumerable<DeployResult>>("?$orderby=ReceivedTime asc").Result.ToList();
-                    Assert.Equal(2, results.Count);
-                    Assert.False(results[0].Current);
-                    Assert.True(results[1].Current);
-
-                    // top one
-                    results = appManager.DeploymentManager.Client.GetJsonAsync<IEnumerable<DeployResult>>("?$top=1").Result.ToList();
-                    Assert.Equal(1, results.Count);
-
-                    // only non-active
-                    results = appManager.DeploymentManager.Client.GetJsonAsync<IEnumerable<DeployResult>>("?$filter=Current ne true").Result.ToList();
-                    Assert.Equal(1, results.Count);
-                    Assert.False(results[0].Current);
-                });
-            }
-        }
-
-        [Fact]
         public void DeploymentVerifyEtag()
         {
             string appName = "VerifyEtag";

@@ -821,7 +821,7 @@ command = deploy.cmd");
         }
 
         [Fact]
-        public void GetResultsWithMaxItemsAndExcludeFailed()
+        public void GetResults()
         {
             // Arrange
             string repositoryName = "Mvc3Application";
@@ -866,24 +866,6 @@ command = deploy.cmd");
                     Assert.Equal(DeployStatus.Success, results[1].Status);
                     Assert.Equal(DeployStatus.Success, results[2].Status);
                     KuduAssert.VerifyUrl(appManager.SiteUrl, "Welcome to ASP.NET MVC! - Change2");
-
-                    // Test maxItems = 2
-                    results = appManager.DeploymentManager.GetResultsAsync(maxItems: 2).Result.ToList();
-                    Assert.Equal(2, results.Count);
-                    Assert.Equal(DeployStatus.Failed, results[0].Status);
-                    Assert.Equal(DeployStatus.Success, results[1].Status);
-
-                    // Test excludeFailed = true
-                    results = appManager.DeploymentManager.GetResultsAsync(excludeFailed: true).Result.ToList();
-                    Assert.Equal(2, results.Count);
-                    Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Assert.Equal(DeployStatus.Success, results[1].Status);
-
-                    // Test maxItems = 1, excludeFailed = true
-                    results = appManager.DeploymentManager.GetResultsAsync(maxItems: 1, excludeFailed: true).Result.ToList();
-                    Assert.Equal(1, results.Count);
-                    Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Assert.True(results[0].Current);
                 });
             }
         }

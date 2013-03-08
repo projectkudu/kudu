@@ -64,7 +64,7 @@ namespace Kudu.Core.Deployment
             ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("DeploymentManager.GetResults"))
             {
-                return EnumerateResults().ToList();
+                return EnumerateResults();
             }
         }
 
