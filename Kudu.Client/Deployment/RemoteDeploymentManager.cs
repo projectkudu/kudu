@@ -15,19 +15,9 @@ namespace Kudu.Client.Deployment
         {
         }
 
-        public Task<IEnumerable<DeployResult>> GetResultsAsync(int? maxItems = null, bool excludeFailed = false)
+        public Task<IEnumerable<DeployResult>> GetResultsAsync()
         {
-            string url = "?$orderby=ReceivedTime desc";
-            if (maxItems != null && maxItems >= 0)
-            {
-                url += String.Format("&$top={0}", maxItems);
-            }
-            if (excludeFailed)
-            {
-                url += "&$filter=LastSuccessEndTime ne null";
-            }
-
-            return Client.GetJsonAsync<IEnumerable<DeployResult>>(url);
+            return Client.GetJsonAsync<IEnumerable<DeployResult>>("");
         }
 
         public Task<DeployResult> GetResultAsync(string id)

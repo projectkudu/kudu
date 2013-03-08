@@ -112,7 +112,6 @@ namespace Kudu.Services.Deployment
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        [Queryable]
         public HttpResponseMessage GetDeployResults()
         {
             HttpResponseMessage response;
@@ -126,7 +125,11 @@ namespace Kudu.Services.Deployment
             {
                 using (_tracer.Step("DeploymentService.GetDeployResults"))
                 {
-                    response = Request.CreateResponse(HttpStatusCode.OK, GetResults(Request).AsQueryable());
+                    // Order the results by date (newest first). Previously, we supported OData to allow
+                    // arbitrary queries, but that was way overkill and brought in too many large binaries.
+                    IEnumerable<DeployResult> results = GetResults(Request).OrderByDescending(t => t.ReceivedTime);
+
+                    response = Request.CreateResponse(HttpStatusCode.OK, results);
                 }
             }
 
