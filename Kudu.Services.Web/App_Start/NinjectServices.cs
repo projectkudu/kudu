@@ -27,7 +27,6 @@ using Kudu.Services.SSHKey;
 using Kudu.Services.Web.Infrastructure;
 using Kudu.Services.Web.Services;
 using Kudu.Services.Web.Tracing;
-using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 using Ninject;
 using Ninject.Activation;
 using XmlSettings;
@@ -49,7 +48,7 @@ namespace Kudu.Services.Web.App_Start
         /// </summary>
         public static void Start()
         {
-            DynamicModuleUtility.RegisterModule(typeof(OnePerRequestModule));
+            HttpApplication.RegisterModule(typeof(OnePerRequestModule));
             CreateKernel();
         }
 

@@ -5,7 +5,6 @@ using Kudu.Client.Infrastructure;
 using Kudu.SiteManagement;
 using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
-using Microsoft.Web.Infrastructure.DynamicModuleHelper;
 using Ninject;
 using Ninject.Web.Mvc;
 
@@ -24,8 +23,8 @@ namespace Kudu.Web.App_Start
         public static void Start()
         {
             // Resolver for mvc3
-            DynamicModuleUtility.RegisterModule(typeof(OnePerRequestModule));
-            DynamicModuleUtility.RegisterModule(typeof(HttpApplicationInitializationModule));
+            HttpApplication.RegisterModule(typeof(OnePerRequestModule));
+            HttpApplication.RegisterModule(typeof(HttpApplicationInitializationModule));
             bootstrapper.Initialize(CreateKernel);
         }
 
