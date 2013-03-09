@@ -1,6 +1,6 @@
 ﻿using System.IO;
+using System.IO.Compression;
 using System.Web;
-using Ionic.Zlib;
 
 namespace Kudu.Services
 {

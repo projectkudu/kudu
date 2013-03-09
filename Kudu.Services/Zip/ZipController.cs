@@ -1,9 +1,11 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.IO.Abstractions;
+using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using Ionic.Zip;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Services.Infrastructure;
@@ -22,28 +24,25 @@ namespace Kudu.Services.Deployment
         protected override Task<HttpResponseMessage> CreateDirectoryGetResponse(DirectoryInfo info, string localFilePath)
         {
             HttpResponseMessage response = Request.CreateResponse();
-            using (var zip = new ZipFile())
+            using (var ms = new MemoryStream())
             {
-                foreach (FileSystemInfo fileSysInfo in info.EnumerateFileSystemInfos())
+                using (var zip = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
                 {
-                    bool isDirectory = (fileSysInfo.Attributes & FileAttributes.Directory) != 0;
-
-                    if (isDirectory)
+                    foreach (FileSystemInfo fileSysInfo in info.EnumerateFileSystemInfos())
                     {
-                        zip.AddDirectory(fileSysInfo.FullName, fileSysInfo.Name);
-                    }
-                    else
-                    {
-                        // Add it at the root of the zip
-                        zip.AddFile(fileSysInfo.FullName, "/");
+                        DirectoryInfo directoryInfo = fileSysInfo as DirectoryInfo;
+                        if (directoryInfo != null)
+                        {
+                            zip.AddDirectory(new DirectoryInfoWrapper(directoryInfo), fileSysInfo.Name);
+                        }
+                        else
+                        {
+                            // Add it at the root of the zip
+                            zip.AddFile(fileSysInfo.FullName, String.Empty);
+                        }
                     }
                 }
-
-                using (var ms = new MemoryStream())
-                {
-                    zip.Save(ms);
-                    response.Content = ms.AsContent();
-                }
+                response.Content = ms.AsContent();
             }
 
             response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
@@ -64,12 +63,13 @@ namespace Kudu.Services.Deployment
 
         protected override async Task<HttpResponseMessage> CreateDirectoryPutResponse(DirectoryInfo info, string localFilePath)
         {
-            using (var zipFile = ZipFile.Read(await Request.Content.ReadAsStreamAsync()))
+            using (var stream = await Request.Content.ReadAsStreamAsync())
             {
                 // The unzipping is done over the existing folder, without first removing existing files.
                 // Hence it's more of a PATCH than a PUT. We should consider supporting both with the right semantic.
                 // Though a true PUT at the root would be scary as it would wipe all existing files!
-                zipFile.ExtractAll(localFilePath, ExtractExistingFileAction.OverwriteSilently);
+                var zipArchive = new ZipArchive(stream, ZipArchiveMode.Read);
+                zipArchive.Extract(new FileSystem(), localFilePath);
             }
 
             return Request.CreateResponse(HttpStatusCode.OK);
