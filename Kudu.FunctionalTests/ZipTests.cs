@@ -1,5 +1,5 @@
 ﻿using System.IO;
-using Ionic.Zip;
+using System.IO.Compression;
 using Kudu.TestHarness;
 using Xunit;
 
@@ -14,7 +14,7 @@ namespace Kudu.FunctionalTests
             {
                 string tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
                 Directory.CreateDirectory(tempDirectory);
-                string tempZipPath = Path.GetTempFileName();
+                string tempZipPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
                 try
                 {
@@ -22,9 +22,9 @@ namespace Kudu.FunctionalTests
                     appManager.VfsWebRootManager.WriteAllText("foo.txt", "Hello zip");
 
                     // Make sure it's part of the zip we get
-                    using (var zipFile = ZipFile.Read(appManager.ZipManager.GetZipStream("site")))
+                    using (var zipFile = new ZipArchive(appManager.ZipManager.GetZipStream("site")))
                     {
-                        zipFile.ExtractAll(tempDirectory);
+                        zipFile.ExtractToDirectory(tempDirectory);
 
                         string settings = File.ReadAllText(Path.Combine(tempDirectory, "wwwroot", "foo.txt"));
                         Assert.Contains("Hello zip", settings);
@@ -33,11 +33,7 @@ namespace Kudu.FunctionalTests
                     string barFile = Path.Combine(tempDirectory, "wwwroot", "bar.txt");
                     File.WriteAllText(barFile, "Kudu zip");
 
-                    using (var zipFile2 = new ZipFile())
-                    {
-                        zipFile2.AddDirectory(tempDirectory);
-                        zipFile2.Save(tempZipPath);
-                    }
+                    ZipFile.CreateFromDirectory(tempDirectory, tempZipPath);
 
                     // Upload a zip with an additional file
                     appManager.ZipManager.PutZipFile("site", tempZipPath);

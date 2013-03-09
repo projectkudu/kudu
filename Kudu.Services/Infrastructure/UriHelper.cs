@@ -17,7 +17,7 @@ namespace Kudu.Services.Infrastructure
             return new Uri(baseUri, relativeUri);
         }
 
-        private static string EnsureTrailingSlash(string url)
+        internal static string EnsureTrailingSlash(string url)
         {
             if (url.EndsWith("/", StringComparison.Ordinal))
             {

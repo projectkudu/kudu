@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Linq;
 using System.IO;
 using System.IO.Abstractions;
+using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Web.Http;
-using Ionic.Zip;
 using Kudu.Core;
 using Kudu.Core.Settings;
 using Kudu.Services.Infrastructure;
@@ -44,50 +45,60 @@ namespace Kudu.Services.Performance
             lock (_lockObj)
             {
                 HttpResponseMessage response = Request.CreateResponse();
-                using (var zip = new ZipFile())
-                {
-                    foreach (var path in _paths)
-                    {
-                        if (Directory.Exists(path))
-                        {
-                            if (path.EndsWith(Constants.LogFilesPath, StringComparison.Ordinal))
-                            {
-                                var dir = new DirectoryInfo(path);
-                                foreach (var info in dir.GetFileSystemInfos())
-                                {
-                                    if (info is DirectoryInfo)
-                                    {
-                                        // excluding FREB as it contains user sensitive data such as authorization header
-                                        if (!info.Name.StartsWith("W3SVC", StringComparison.OrdinalIgnoreCase))
-                                        {
-                                            zip.AddDirectory(info.FullName, Path.Combine(dir.Name, info.Name));
-                                        }
-                                    }
-                                    else
-                                    {
-                                        zip.AddFile(info.FullName, dir.Name);
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                zip.AddDirectory(path, Path.GetFileName(path));
-                            }
-                        }
-                        else if (File.Exists(path))
-                        {
-                            zip.AddFile(path, String.Empty);
-                        }
-                    }
 
-                    var ms = new MemoryStream();
-                    zip.Save(ms);
-                    response.Content = ms.AsContent();
+
+                using (var stream = new MemoryStream())
+                {
+                    using (var zip = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: true))
+                    {
+                        AddFilesToZip(zip);
+                        
+                    }
+                    response.Content = stream.AsContent();
                 }
+
                 response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
                 response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
                 response.Content.Headers.ContentDisposition.FileName = String.Format("dump-{0:MM-dd-H:mm:ss}.zip", DateTime.UtcNow);
                 return response;
+            }
+        }
+
+        private void AddFilesToZip(ZipArchive zip)
+        {
+            foreach (var path in _paths)
+            {
+                if (Directory.Exists(path))
+                {
+                    var dir = new DirectoryInfo(path);
+                    if (path.EndsWith(Constants.LogFilesPath, StringComparison.Ordinal))
+                    {
+                        foreach (var info in dir.GetFileSystemInfos())
+                        {
+                            var directoryInfo = info as DirectoryInfo;
+                            if (directoryInfo != null)
+                            {
+                                // excluding FREB as it contains user sensitive data such as authorization header
+                                if (!info.Name.StartsWith("W3SVC", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    zip.AddDirectory(directoryInfo, Path.Combine(dir.Name, info.Name));
+                                }
+                            }
+                            else
+                            {
+                                zip.AddFile((FileInfo)info, dir.Name);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        zip.AddDirectory(dir, Path.GetFileName(path));
+                    }
+                }
+                else if (File.Exists(path))
+                {
+                    zip.AddFile(path, String.Empty);
+                }
             }
         }
 
