@@ -28,6 +28,7 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/Mvc3Application_NoSolution.git",    "4e36ca3"),
             new TestRepositoryInfo("https://github.com/KuduApps/Mvc3AppWithTestProject.git",        "5df86e3"),
             new TestRepositoryInfo("https://github.com/KuduApps/MvcApplicationEFSqlCompact.git",    "c2fa9c0"),
+            new TestRepositoryInfo("https://github.com/KuduApps/MVCAppWithFSharp.git",              "d293855"),
             new TestRepositoryInfo("https://github.com/KuduApps/MVCAppWithLatestNuget.git",         "44462af"),
             new TestRepositoryInfo("https://github.com/KuduApps/NodeHelloWorldNoConfig.git",        "d8a15b6"),
             new TestRepositoryInfo("https://github.com/KuduApps/NodeInnerSubDir.git",               "58f93f8"),
