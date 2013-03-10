@@ -110,6 +110,12 @@ namespace Kudu.FunctionalTests
             PushAndDeployApps("MVCAppWithLatestNuget", "master", "MVCAppWithLatestNuget", HttpStatusCode.OK, "Deployment successful");
         }
 
+        [Fact]
+        public void PushAndDeployMVCAppWithFSharp()
+        {
+            PushAndDeployApps("MVCAppWithFSharp", "master", "F# + ASP.NET MVC = Cool!", HttpStatusCode.OK, "Deployment successful");
+        }
+
         //Common code
         private static void PushAndDeployApps(string repoCloneUrl, string defaultBranchName,
                                               string verificationText, HttpStatusCode expectedResponseCode, string verificationLogText,
