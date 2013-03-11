@@ -148,7 +148,24 @@ namespace Kudu.TestHarness
             return matches[0].Groups[1].Value;
         }
 
+        private static bool TestFailureOccurred = false;
         public static void Run(string testName, Action<ApplicationManager> action)
+        {
+            // If StopAfterFirstTestFailure is set, don't do anything after the first failure
+            if (KuduUtils.StopAfterFirstTestFailure && TestFailureOccurred) return;
+
+            try
+            {
+                RunNoCatch(testName, action);
+            }
+            catch
+            {
+                TestFailureOccurred = true;
+                throw;
+            }
+        }
+
+        public static void RunNoCatch(string testName, Action<ApplicationManager> action)
         {
             TestTracer.Trace("Running test - {0}", testName);
 
