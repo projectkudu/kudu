@@ -28,7 +28,7 @@ namespace Kudu.FunctionalTests
                         Assert.Equal(1, results.Count);
                         Assert.Equal(DeployStatus.Success, results[0].Status);
                         KuduAssert.VerifyUrl(appManager.SiteUrl, "Hello Kudu");
-                    }); 
+                    });
                 }
             }
         }
@@ -45,6 +45,19 @@ namespace Kudu.FunctionalTests
                 // some time the upTime is 00:00:00 (TimeSpan.Zero!).
                 // Need to do more investigation.
                 // Assert.NotEqual<TimeSpan>(TimeSpan.Zero, upTime);
+            });
+        }
+
+        [Fact]
+        public void KuduStartupRequestTest()
+        {
+            ApplicationManager.Run("KuduStartupRequestTest", appManager =>
+            {
+                // read the trace file
+                var traces = appManager.VfsManager.ReadAllText("LogFiles/Git/trace/trace.xml");
+
+                // verify
+                Assert.Contains("Startup Request", traces);
             });
         }
     }
