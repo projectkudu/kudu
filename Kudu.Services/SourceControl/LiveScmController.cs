@@ -87,13 +87,6 @@ namespace Kudu.Services.SourceControl
                         // real semantic is more to reset the site to a fully clean state
                         FileSystemHelpers.DeleteDirectorySafe(_environment.DiagnosticsPath, ignoreErrors != 0);
                     }
-
-                    using (_tracer.Step("Deleting Logs"))
-                    {
-                        // Cleanup the trace directories
-                        FileSystemHelpers.DeleteDirectoryContentsSafe(_environment.TracePath, ignoreErrors != 0);
-                        FileSystemHelpers.DeleteDirectoryContentsSafe(_environment.DeploymentTracePath, ignoreErrors != 0);
-                    }
                 }
                 else
                 {
