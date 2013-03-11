@@ -98,15 +98,28 @@ namespace Kudu.TestHarness
         {
             get
             {
-                bool retValue;
-
-                if (bool.TryParse(GetTestSetting("TestOriginalSiteBuilderFactory"), out retValue))
-                {
-                    return retValue;
-                }
-
-                return false;
+                return GetBooleanTestSetting("TestOriginalSiteBuilderFactory");
             }
+        }
+
+        public static bool StopAfterFirstTestFailure
+        {
+            get
+            {
+                return GetBooleanTestSetting("StopAfterFirstTestFailure");
+            }
+        }
+
+        public static bool GetBooleanTestSetting(string settingName)
+        {
+            bool retValue;
+
+            if (bool.TryParse(GetTestSetting(settingName), out retValue))
+            {
+                return retValue;
+            }
+
+            return false;
         }
 
         public static string GetTestSetting(string settingName)
