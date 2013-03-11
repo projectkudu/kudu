@@ -14,7 +14,7 @@ namespace Kudu.Core.Tracing
     public class Tracer : ITracer
     {
         // TODO: Make this configurable
-        private const int MaxLogEntries = 1000;
+        private const int MaxLogEntries = 100;
 
         private readonly Stack<TraceStep> _currentSteps = new Stack<TraceStep>();
         private readonly List<TraceStep> _steps = new List<TraceStep>();
@@ -164,26 +164,12 @@ namespace Kudu.Core.Tracing
                 // but just in case something went wrong, we're going to try to fix it this time around
                 int trim = entries.Count - MaxLogEntries + 1;
 
-                if (trim <= 0)
+                if (trim >= 0)
                 {
-                    return;
-                }
-
-                // Search for all skippable requests first
-                var filteredEntries = entries.Take(MaxLogEntries / 2)
-                                             .Where(Skippable)
-                                             .ToList();
-
-                // If we didn't find skippable entries just remove the oldest
-                if (filteredEntries.Count == 0)
-                {
-                    // If there's none just use the full list
-                    filteredEntries = entries;
-                }
-
-                foreach (var e in filteredEntries.Take(trim))
-                {
-                    e.Remove();
+                    foreach (var e in entries.Take(trim))
+                    {
+                        e.Remove();
+                    }
                 }
             }
             catch (Exception ex)
@@ -191,17 +177,6 @@ namespace Kudu.Core.Tracing
                 // Something went wrong so just continue
                 Debug.WriteLine(ex.Message);
             }
-        }
-
-        private static bool Skippable(XElement e)
-        {
-            // Git requests have type git="true"
-            bool isGit = e.Attribute("git") != null;
-
-            // The only top level exe is kudu
-            bool isKudu = e.Attribute("type") != null && e.Attribute("path") != null;
-
-            return !isGit && !isKudu;
         }
 
         private XDocument GetDocument()
