@@ -14,7 +14,7 @@ namespace Kudu.Core.Tracing
     public class Tracer : ITracer
     {
         // TODO: Make this configurable
-        private const int MaxLogEntries = 100;
+        private const int MaxLogEntries = 200;
 
         private readonly Stack<TraceStep> _currentSteps = new Stack<TraceStep>();
         private readonly List<TraceStep> _steps = new List<TraceStep>();
