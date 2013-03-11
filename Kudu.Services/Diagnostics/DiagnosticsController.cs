@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.IO.Abstractions;
 using System.IO.Compression;
@@ -40,12 +40,12 @@ namespace Kudu.Services.Performance
         /// </summary>
         /// <returns></returns>
         [HttpGet]
+        [SuppressMessage("Microsoft.Usage", "CA2202", Justification = "The ZipArchive is instantiated in a way that the stream is not closed on dispose")]
         public HttpResponseMessage GetLog()
         {
             lock (_lockObj)
             {
                 HttpResponseMessage response = Request.CreateResponse();
-
 
                 using (var stream = new MemoryStream())
                 {

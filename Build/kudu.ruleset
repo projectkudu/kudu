@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <RuleSet Name="Rules for Kudu" ToolsVersion="11.0">
-  <IncludeAll Action="Warning" />
+  <IncludeAll Action="Error" />
   <Rules AnalyzerId="Microsoft.Analyzers.ManagedCodeAnalysis" RuleNamespace="Microsoft.Rules.Managed">
     <Rule Id="CA1002" Action="None" />
     <Rule Id="CA1004" Action="None" />
@@ -39,6 +39,7 @@
     <Rule Id="CA2000" Action="None" />
     <Rule Id="CA2104" Action="None" />
     <Rule Id="CA2105" Action="None" />
+    <Rule Id="CA2122" Action="None" />
     <Rule Id="CA2204" Action="None" />
     <Rule Id="CA2210" Action="None" />
     <Rule Id="CA2227" Action="None" />

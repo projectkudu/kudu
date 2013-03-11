@@ -14,72 +14,101 @@ namespace Kudu.Services.Web.Tracing
 
         public void Init(HttpApplication app)
         {
-            app.BeginRequest += (sender, e) =>
+            app.BeginRequest += OnBeginRequest;
+            app.Error += OnError;
+            app.EndRequest += OnEndRequest;
+        }
+
+        private static void OnBeginRequest(object sender, EventArgs e)
+        {
+            var httpContext = ((HttpApplication)sender).Context;
+
+            var tracer = TraceStartup(httpContext);
+
+            // Skip certain paths
+            if (httpContext.Request.RawUrl.EndsWith("favicon.ico", StringComparison.OrdinalIgnoreCase) ||
+                httpContext.Request.Path.StartsWith("/dump", StringComparison.OrdinalIgnoreCase) ||
+                httpContext.Request.RawUrl == "/")
             {
-                var httpContext = ((HttpApplication)sender).Context;
+                return;
+            }
 
-                var tracer = TraceStartup(httpContext);
+            tracer = tracer ?? TraceServices.CreateRequestTracer(httpContext);
 
-                // Skip certain paths
-                if (httpContext.Request.RawUrl.EndsWith("favicon.ico", StringComparison.OrdinalIgnoreCase) ||
-                    httpContext.Request.Path.StartsWith("/dump", StringComparison.OrdinalIgnoreCase) ||
-                    httpContext.Request.RawUrl == "/")
+            if (tracer == null || tracer.TraceLevel <= TraceLevel.Off)
+            {
+                return;
+            }
+
+            var attribs = GetTraceAttributes(httpContext);
+
+            AddTraceLevel(httpContext, attribs);
+
+            foreach (string key in httpContext.Request.Headers)
+            {
+                if (!key.Equals("Authorization", StringComparison.OrdinalIgnoreCase))
                 {
-                    return;
+                    attribs["h_" + key] = httpContext.Request.Headers[key];
                 }
+            }
 
-                tracer = tracer ?? TraceServices.CreateRequestTracer(httpContext);
+            if (httpContext.Request.RawUrl.Contains(".git") ||
+                httpContext.Request.RawUrl.EndsWith("/deploy", StringComparison.OrdinalIgnoreCase))
+            {
+                // Mark git requests specially
+                attribs.Add("git", "true");
+            }
 
-                if (tracer == null || tracer.TraceLevel <= TraceLevel.Off)
+            httpContext.Items[_stepKey] = tracer.Step("Incoming Request", attribs);
+        }
+
+        private static void OnEndRequest(object sender, EventArgs e)
+        {
+            var httpContext = ((HttpApplication)sender).Context;
+            var tracer = TraceServices.GetRequestTracer(httpContext);
+
+            if (tracer == null || tracer.TraceLevel <= TraceLevel.Off)
+            {
+                return;
+            }
+
+            var attribs = new Dictionary<string, string>
                 {
-                    return;
-                }
+                    { "type", "response" },
+                    { "statusCode", httpContext.Response.StatusCode.ToString() },
+                    { "statusText", httpContext.Response.StatusDescription }
+                };
 
-                var attribs = GetTraceAttributes(httpContext);
-
+            if (httpContext.Response.StatusCode >= 400)
+            {
+                attribs["traceLevel"] = ((int)TraceLevel.Error).ToString();
+            }
+            else
+            {
                 AddTraceLevel(httpContext, attribs);
+            }
 
-                foreach (string key in httpContext.Request.Headers)
-                {
-                    if (!key.Equals("Authorization", StringComparison.OrdinalIgnoreCase))
-                    {
-                        attribs["h_" + key] = httpContext.Request.Headers[key];
-                    }
-                }
-
-                if (httpContext.Request.RawUrl.Contains(".git") ||
-                    httpContext.Request.RawUrl.EndsWith("/deploy", StringComparison.OrdinalIgnoreCase))
-                {
-                    // Mark git requests specially
-                    attribs.Add("git", "true");
-                }
-
-                httpContext.Items[_stepKey] = tracer.Step("Incoming Request", attribs);
-            };
-
-            app.Error += (sender, e) =>
+            foreach (string key in httpContext.Response.Headers)
             {
-                try
-                {
-                    var httpContext = ((HttpApplication)sender).Context;
-                    var tracer = TraceServices.GetRequestTracer(httpContext);
+                attribs["h_" + key] = httpContext.Response.Headers[key];
+            }
 
-                    if (tracer == null || tracer.TraceLevel <= TraceLevel.Off)
-                    {
-                        return;
-                    }
+            tracer.Trace("Outgoing response", attribs);
 
-                    tracer.TraceError(app.Server.GetLastError());
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine(ex.Message);
-                }
-            };
+            var requestStep = (IDisposable)httpContext.Items[_stepKey];
 
-            app.EndRequest += (sender, e) =>
+            if (requestStep != null)
             {
-                var httpContext = ((HttpApplication)sender).Context;
+                requestStep.Dispose();
+            }
+        }
+
+        private static void OnError(object sender, EventArgs e)
+        {
+            try
+            {
+                HttpApplication app = (HttpApplication)sender;
+                var httpContext = app.Context;
                 var tracer = TraceServices.GetRequestTracer(httpContext);
 
                 if (tracer == null || tracer.TraceLevel <= TraceLevel.Off)
@@ -87,37 +116,14 @@ namespace Kudu.Services.Web.Tracing
                     return;
                 }
 
-                var attribs = new Dictionary<string, string>
-                {
-                    { "type", "response" },
-                    { "statusCode", httpContext.Response.StatusCode.ToString() },
-                    { "statusText", httpContext.Response.StatusDescription }
-                };
-
-                if (httpContext.Response.StatusCode >= 400)
-                {
-                    attribs["traceLevel"] = ((int)TraceLevel.Error).ToString();
-                }
-                else
-                {
-                    AddTraceLevel(httpContext, attribs);
-                }
-
-                foreach (string key in httpContext.Response.Headers)
-                {
-                    attribs["h_" + key] = httpContext.Response.Headers[key];
-                }
-
-                tracer.Trace("Outgoing response", attribs);
-
-                var requestStep = (IDisposable)httpContext.Items[_stepKey];
-
-                if (requestStep != null)
-                {
-                    requestStep.Dispose();
-                }
-            };
+                tracer.TraceError(app.Server.GetLastError());
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
         }
+
 
         private static void AddTraceLevel(HttpContext httpContext, Dictionary<string, string> attribs)
         {

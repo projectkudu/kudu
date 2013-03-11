@@ -13,13 +13,11 @@
         <ClientSiteTargetPath Condition="$(ClientSiteTargetPath) == ''">$(ArtifactsPath)\KuduWeb</ClientSiteTargetPath>
         <ClientSiteProject>$(ProjectRoot)\Kudu.Web\Kudu.Web.csproj</ClientSiteProject>
         <TestResultsPath>$(ArtifactsPath)\TestResults</TestResultsPath>
-        <SetupTargetPath>$(ArtifactsPath)\msi</SetupTargetPath>
-        <SignedTargetPath>$(ArtifactsPath)\signed</SignedTargetPath>
     </PropertyGroup>
     
     <PropertyGroup>
-        <MajorVersion>0</MajorVersion>
-        <MinorVersion>7</MinorVersion>
+        <MajorVersion>1</MajorVersion>
+        <MinorVersion>21</MinorVersion>
         <!-- Ensure that we come up with a new version every 65535 years -->
         <VersionStartYear>2012</VersionStartYear>
         
@@ -34,19 +32,13 @@
             <Find>\d+\.\d+\.\d+\.\d+</Find>
             <ReplaceWith>$(Version)</ReplaceWith>
         </RegexTransform>
-        <RegexTransform Include="$(ProjectRoot)\Kudu.Setup\Kudu.wxs">
-            <Find><![CDATA[KuduProductVersion = "\d+\.\d+\.\d+\.\d+"]]></Find>
-            <ReplaceWith><![CDATA[KuduProductVersion = "$(Version)"]]></ReplaceWith>
-        </RegexTransform>
     </ItemGroup>
     
     <Target Name="UpdateVersion" Condition="'$(BUILD_NUMBER)' != ''">
         <RegexTransform Items="@(RegexTransform)" />
     </Target>
     
-    <Target Name="RunAll" DependsOnTargets="UpdateVersion; Build; RunTests; BuildSites" />
-
-    <Target Name="BuildForFxCop" DependsOnTargets="Build; BuildSites" />
+    <Target Name="RunAll" DependsOnTargets="UpdateVersion; Build; ReportFxCopResults; RunTests; BuildSites" />
 
     <Target Name="CreateOutputPath">
         <MakeDir Directories="$(ArtifactsPath)" Condition="!Exists('$(ArtifactsPath)')" />
@@ -91,25 +83,13 @@
     <Target Name="Build" DependsOnTargets="CreateOutputPath">
         <MSBuild Projects="$(ProjectRoot)\kudu.sln" 
                  Targets="Build" 
-                 Properties="Configuration=$(Configuration);" />
+                 Properties="Configuration=$(Configuration);RunCodeAnalysis=true;CodeAnalysisAdditionalOptions=/assemblyCompareMode:StrongNameIgnoringVersion" />
     </Target>
     
-    <Target Name="BuildSetup" DependsOnTargets="RunAll">
-        <MSBuild Projects="$(ProjectRoot)\Kudu.Setup.sln" 
-                 Targets="Build"
-                 Properties="OutputPath=$(SetupTargetPath);
-                             Configuration=$(Configuration);" />
-    </Target>
-    
-    <Target Name="BuildSignedClient" Condition="$(KeyFile) != '' And Exists('$(KeyFile)')">
+    <Target Name="ReportFxCopResults" Condition=" '$(TEAMCITY_VERSION)' != '' ">
         <ItemGroup>
-            <Projects Include="$(ProjectRoot)\Kudu.Contracts\Kudu.Contracts.csproj" />
-            <Projects Include="$(ProjectRoot)\Kudu.Client\Kudu.Client.csproj" />
+            <FxCopOutputItems Include="$(ProjectRoot)\**\*.CodeAnalysisLog.xml" />
         </ItemGroup>
-        <MakeDir Directories="$(SignedTargetPath)" Condition="!Exists('$(SignedTargetPath)')" />
-        <Message Text="Using Keyfile $(KeyFile)" Importance="High" />
-        <MSBuild Projects="%(Projects.Identity)" 
-                 Targets="Rebuild" 
-                 Properties="Configuration=$(Configuration);KeyFile=$(KeyFile);OutputPath=$(SignedTargetPath)" />
+        <Message Text="##teamcity[importData type='FxCop' path='%(FxCopOutputItems.Identity)']" />
     </Target>
 </Project>
