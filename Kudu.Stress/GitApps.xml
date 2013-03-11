@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<GitApplications xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <GitApplication Name="AspNetWebApplication"  GitUrl="https://github.com/kudustress/AspNetWebApplication.git" FirstCommitID="34d56bf3250b03c857ef8d89448e315215d3d479" SecondCommitID="0e05d7968128fd4f289686ee24bac5d2529ae655" Content="Welcome to ASP.NET!" FileToModify="AspNetWebApplication\1.txt"/>
+  <GitApplication Name="GalleryServerProWeb"  GitUrl="https://github.com/kudustress/GalleryServerProWeb.git" FirstCommitID="77bdb9dbfa5278d2428e0bdd60f42507666c08a6" SecondCommitID="e0f6aab952a1d839171fadb3d53a282014248e62" Content="Media Gallery" FileToModify="1.txt"/>
+  <GitApplication Name="JabbR"  GitUrl="https://github.com/kudustress/JabbR.git" FirstCommitID="97f1478352cba2e587e4e94587feed469dbc7820" SecondCommitID="8e2d757f7eb9456ea1b9a6eeefc3680ce1e85e06" Content="JabbR" FileToModify="1.txt"/>
+</GitApplications>

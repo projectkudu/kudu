@@ -32,6 +32,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.Console", "Kudu.Consol
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.Services.Test", "Kudu.Services.Test\Kudu.Services.Test.csproj", "{5DEE4A10-5CA1-484D-B7A3-64C972EA2546}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.Stress", "Kudu.Stress\Kudu.Stress.csproj", "{108774AC-560E-4E59-A602-80C9CBA906AE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -172,6 +174,16 @@ Global
 		{5DEE4A10-5CA1-484D-B7A3-64C972EA2546}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{5DEE4A10-5CA1-484D-B7A3-64C972EA2546}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{5DEE4A10-5CA1-484D-B7A3-64C972EA2546}.Release|x86.ActiveCfg = Release|Any CPU
+		{108774AC-560E-4E59-A602-80C9CBA906AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{108774AC-560E-4E59-A602-80C9CBA906AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{108774AC-560E-4E59-A602-80C9CBA906AE}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{108774AC-560E-4E59-A602-80C9CBA906AE}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{108774AC-560E-4E59-A602-80C9CBA906AE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{108774AC-560E-4E59-A602-80C9CBA906AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{108774AC-560E-4E59-A602-80C9CBA906AE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{108774AC-560E-4E59-A602-80C9CBA906AE}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{108774AC-560E-4E59-A602-80C9CBA906AE}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{108774AC-560E-4E59-A602-80C9CBA906AE}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -182,5 +194,6 @@ Global
 		{E08D0497-2553-4DF0-9FE4-4D6F75CB80C4} = {FA1EA7CE-E6A4-4E55-AD76-6B43572A9092}
 		{ACF3450A-8062-48D5-9C9D-8486261F290F} = {FA1EA7CE-E6A4-4E55-AD76-6B43572A9092}
 		{5DEE4A10-5CA1-484D-B7A3-64C972EA2546} = {FA1EA7CE-E6A4-4E55-AD76-6B43572A9092}
+		{108774AC-560E-4E59-A602-80C9CBA906AE} = {FA1EA7CE-E6A4-4E55-AD76-6B43572A9092}
 	EndGlobalSection
 EndGlobal
