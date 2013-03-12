@@ -82,6 +82,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CommandExecutorTests.cs" />
+    <Compile Include="GitRepositoryFacts.cs" />
     <Compile Include="ZipTests.cs" />
     <Compile Include="DeploymentManagerTests.cs" />
     <Compile Include="DiagnosticsApiFacts.cs" />
@@ -108,7 +109,6 @@
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
-    <None Include="ZippedRepositories\Bakery10.zip" />
     <None Include="ZippedRepositories\Mvc3Application.zip" />
     <None Include="ZippedRepositories\Mvc3Application_NoSolution.zip" />
   </ItemGroup>

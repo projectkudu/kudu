@@ -207,7 +207,21 @@ namespace Kudu.Core.SourceControl.Git
                 // trim the repo, preventing us from redeploying old deployments
                 if (this.IsEmpty())
                 {
-                    _gitExe.Execute(tracer, @"fetch {0} --progress --depth 1", remoteAlias);
+                    try
+                    {
+                        _gitExe.Execute(tracer, @"fetch {0} --progress --depth 1", remoteAlias);
+                    }
+                    catch (CommandLineException exception)
+                    {
+                        // Check if the fetch failed because the remote repository hasn't been set up as yet.
+                        string emptyRepoErrorMessage = "fatal: Couldn't find remote ref";
+                        string exceptionMessage = exception.Message ?? String.Empty;
+                        if (exception.ExitCode == 128 && exceptionMessage.StartsWith(emptyRepoErrorMessage, StringComparison.OrdinalIgnoreCase))
+                        {
+                            throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_UnableToFetch, branchName), exception);
+                        }
+                        throw;
+                    }
                 }
                 else
                 {

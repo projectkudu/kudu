@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Kudu.Core.SourceControl;
@@ -94,8 +95,26 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        private static TestRepository GetRepository(string source)
+        [Fact]
+        public void FetchWithoutConflictOnEmptyRepoReturnsFalse()
         {
+            using (TestRepository testRepository = GetRepository())
+            {
+                // Arrange
+                var hgRepo = new HgRepository(testRepository.PhysicalPath, "", new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+
+                // Act
+                hgRepo.Initialize();
+                var ex = Assert.Throws<InvalidOperationException>(() => hgRepo.FetchWithoutConflict("https://bitbucket.org/kudutest/emptyhgrepo", "test", "default"));
+
+                // Assert
+                Assert.Equal("Could not fetch remote branch 'default'. Verify that the branch exists in the repository.", ex.Message);
+            }
+        }
+
+        private static TestRepository GetRepository(string source = null)
+        {
+            source = source ?? Path.GetRandomFileName();
             string repoName = Path.GetFileNameWithoutExtension(source);
             string repoPath = Path.Combine(PathHelper.LocalRepositoriesDir, repoName);
 

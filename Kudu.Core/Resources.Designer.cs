@@ -214,6 +214,15 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Could not fetch remote branch &apos;{0}&apos;. Verify that the branch exists in the repository..
+        /// </summary>
+        internal static string Error_UnableToFetch {
+            get {
+                return ResourceManager.GetString("Error_UnableToFetch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Unable to select node.js version to run the application with..
         /// </summary>
         internal static string Error_UnableToSelectNodeVersion {
