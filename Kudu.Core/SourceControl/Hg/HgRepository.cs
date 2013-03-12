@@ -248,7 +248,20 @@ namespace Kudu.Core.SourceControl
             _hgExecutable.EnvironmentVariables[PATH_KEY] = currentPath;
 
             ITracer tracer = _traceFactory.GetTracer();
-            _hgExecutable.Execute(tracer, "pull {0} --branch {1}", remote, branchName, PathUtility.ResolveSSHPath());
+
+            try
+            {
+                _hgExecutable.Execute(tracer, "pull {0} --branch {1}", remote, branchName, PathUtility.ResolveSSHPath());
+            }
+            catch (CommandLineException exception)
+            {
+                string emptyRepoErrorMessage = String.Format(CultureInfo.InvariantCulture, "abort: unknown branch '{0}'!", branchName);
+                string exceptionMessage = (exception.Message ?? String.Empty).TrimEnd();
+                if (exception.ExitCode == 255 && emptyRepoErrorMessage.Equals(exceptionMessage, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_UnableToFetch, branchName), exception);
+                }
+            }
             _hgExecutable.Execute(tracer, "update --clean {0}", branchName);
         }
 

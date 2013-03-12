@@ -34,6 +34,10 @@ namespace Kudu.Core.SourceControl
         void Update(string id);
         void Update();
         void Push();
+
+        /// <summary>
+        /// Attempts to fetch from the remote repository without resulting in any merge conflicts.
+        /// </summary>
         void FetchWithoutConflict(string remote, string remoteAlias, string branchName);
 
         void Clean();
