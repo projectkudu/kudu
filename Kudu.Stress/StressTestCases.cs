@@ -31,7 +31,7 @@ namespace Kudu.Stress
         public string VerificationContent;
     }
 
-    [TestClass]
+    //[TestClass]
     public class StressTestCases
     {
         static ConcurrentDictionary<string, TestArtifacts> testArtifactStore = new ConcurrentDictionary<string, TestArtifacts>();
