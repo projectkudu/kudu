@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Kudu.Client.Editor;
 using Kudu.Client.Infrastructure;
 using Xunit;
@@ -31,11 +32,18 @@ namespace Kudu.FunctionalTests
 
         private bool _testConflictingUpdates;
 
-        public VfsControllerBaseTest(RemoteVfsManager client, bool testConflictingUpdates)
+        public VfsControllerBaseTest(RemoteVfsManager client, bool testConflictingUpdates, RemoteVfsManager deploymentClient = null)
         {
             KuduClient = client;
             Client = client.Client;
             BaseAddress = Client.BaseAddress.GetComponents(UriComponents.HttpRequestUrl, UriFormat.Unescaped).TrimEnd(_segmentDelimiters);
+
+            if (deploymentClient != null)
+            {
+                DeploymentClient = deploymentClient.Client;
+                DeploymentBaseAddress = DeploymentClient.BaseAddress.GetComponents(UriComponents.HttpRequestUrl, UriFormat.Unescaped).TrimEnd(_segmentDelimiters);
+            }
+
             _testConflictingUpdates = testConflictingUpdates;
         }
 
@@ -45,7 +53,11 @@ namespace Kudu.FunctionalTests
 
         protected HttpClient Client { get; private set; }
 
-        public void RunIntegrationTest()
+        protected HttpClient DeploymentClient { get; private set; }
+
+        protected string DeploymentBaseAddress { get; private set; }
+
+        public async Task RunIntegrationTest()
         {
             string dir = Guid.NewGuid().ToString("N");
             string dirAddress = BaseAddress + _segmentDelimiter + dir;
@@ -55,29 +67,32 @@ namespace Kudu.FunctionalTests
             string fileAddress = dirAddressWithTerminatingSlash + file;
             string fileAddressWithTerminatingSlash = fileAddress + _segmentDelimiter;
 
+            string deploymentFileAddress = DeploymentClient != null ? DeploymentBaseAddress + _segmentDelimiter + dir + _segmentDelimiter + file : null;
+
             HttpResponseMessage response;
 
             // Check not found file responses
-            response = Client.GetAsync(dirAddress).Result;
+            response = await Client.GetAsync(dirAddress);
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
 
-            response = Client.GetAsync(dirAddressWithTerminatingSlash).Result;
+            response = await Client.GetAsync(dirAddressWithTerminatingSlash);
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
 
-            response = Client.GetAsync(fileAddress).Result;
+            response = await Client.GetAsync(fileAddress);
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
 
-            response = Client.GetAsync(fileAddressWithTerminatingSlash).Result;
+            response = await Client.GetAsync(fileAddressWithTerminatingSlash);
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
 
             // Check create file results in 201 response with etag
-            response = Client.PutAsync(fileAddress, CreateUploadContent(_fileContent0)).Result;
+            response = await Client.PutAsync(fileAddress, CreateUploadContent(_fileContent0));
+            await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent0);
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
             EntityTagHeaderValue originalEtag = response.Headers.ETag;
             Assert.NotNull(originalEtag);
 
             // Check that we get a 200 (OK) on created file with the correct etag
-            response = Client.GetAsync(fileAddress).Result;
+            response = await Client.GetAsync(fileAddress);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.Equal(originalEtag, response.Headers.ETag);
             Assert.Equal(_fileMediaType, response.Content.Headers.ContentType);
@@ -87,7 +102,7 @@ namespace Kudu.FunctionalTests
             {
                 headReq.Method = HttpMethod.Head;
                 headReq.RequestUri = new Uri(fileAddress);
-                response = Client.SendAsync(headReq).Result;
+                response = await Client.SendAsync(headReq);
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 Assert.Equal(originalEtag, response.Headers.ETag);
                 Assert.Equal(_fileMediaType, response.Content.Headers.ContentType);
@@ -98,7 +113,7 @@ namespace Kudu.FunctionalTests
             {
                 ifNoneMatchReq.RequestUri = new Uri(fileAddress);
                 ifNoneMatchReq.Headers.IfNoneMatch.Add(originalEtag);
-                response = Client.SendAsync(ifNoneMatchReq).Result;
+                response = await Client.SendAsync(ifNoneMatchReq);
                 Assert.Equal(HttpStatusCode.NotModified, response.StatusCode);
                 Assert.Equal(originalEtag, response.Headers.ETag);
             }
@@ -108,7 +123,7 @@ namespace Kudu.FunctionalTests
             {
                 ifNoneMatchReqBadEtag.RequestUri = new Uri(fileAddress);
                 ifNoneMatchReqBadEtag.Headers.IfNoneMatch.Add(new EntityTagHeaderValue("\"NotMatching\""));
-                response = Client.SendAsync(ifNoneMatchReqBadEtag).Result;
+                response = await Client.SendAsync(ifNoneMatchReqBadEtag);
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 Assert.Equal(originalEtag, response.Headers.ETag);
             }
@@ -119,7 +134,7 @@ namespace Kudu.FunctionalTests
                 ifRangeReq.RequestUri = new Uri(fileAddress);
                 ifRangeReq.Headers.IfRange = new RangeConditionHeaderValue(originalEtag);
                 ifRangeReq.Headers.Range = new RangeHeaderValue(0, 0) { Unit = "bytes" };
-                response = Client.SendAsync(ifRangeReq).Result;
+                response = await Client.SendAsync(ifRangeReq);
                 Assert.Equal(HttpStatusCode.PartialContent, response.StatusCode);
                 Assert.Equal(originalEtag, response.Headers.ETag);
                 Assert.Equal(1, response.Content.Headers.ContentLength);
@@ -131,7 +146,7 @@ namespace Kudu.FunctionalTests
             {
                 ifRangeReqNoRange.RequestUri = new Uri(fileAddress);
                 ifRangeReqNoRange.Headers.IfRange = new RangeConditionHeaderValue(originalEtag);
-                response = Client.SendAsync(ifRangeReqNoRange).Result;
+                response = await Client.SendAsync(ifRangeReqNoRange);
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 Assert.Equal(originalEtag, response.Headers.ETag);
             }
@@ -143,17 +158,17 @@ namespace Kudu.FunctionalTests
                 ifRangeReqBadRange.RequestUri = new Uri(fileAddress);
                 ifRangeReqBadRange.Headers.IfRange = new RangeConditionHeaderValue(originalEtag);
                 ifRangeReqBadRange.Headers.Range = new RangeHeaderValue(100, 100) { Unit = "bytes" };
-                response = Client.SendAsync(ifRangeReqBadRange).Result;
+                response = await Client.SendAsync(ifRangeReqBadRange);
                 Assert.Equal(HttpStatusCode.RequestedRangeNotSatisfiable, response.StatusCode);
                 Assert.Equal(_fileContentRange, response.Content.Headers.ContentRange);
             }
 
             // Check that we get a root directory view
-            response = Client.GetAsync(BaseAddress).Result;
+            response = await Client.GetAsync(BaseAddress);
             Assert.Equal(_dirMediaType, response.Content.Headers.ContentType);
 
             // Check that we get a directory view from folder
-            response = Client.GetAsync(dirAddress).Result;
+            response = await Client.GetAsync(dirAddress);
             Assert.Equal(_dirMediaType, response.Content.Headers.ContentType);
 
             // Check various redirects between files and folders
@@ -162,32 +177,32 @@ namespace Kudu.FunctionalTests
             using (HttpClient redirectClient = HttpClientHelper.CreateClient(BaseAddress, KuduClient.Credentials, redirectHandler))
             {
                 // Ensure that requests to root without slash is redirected to one with slash
-                response = redirectClient.GetAsync(BaseAddress).Result;
+                response = await redirectClient.GetAsync(BaseAddress);
                 Assert.Equal(HttpStatusCode.TemporaryRedirect, response.StatusCode);
                 Assert.Equal(BaseAddress + _segmentDelimiter, response.Headers.Location.AbsoluteUri);
 
                 // Ensure that requests to directory without slash is redirected to one with slash
-                response = redirectClient.GetAsync(dirAddress).Result;
+                response = await redirectClient.GetAsync(dirAddress);
                 Assert.Equal(HttpStatusCode.TemporaryRedirect, response.StatusCode);
                 Assert.Equal(dirAddressWithTerminatingSlash, response.Headers.Location.AbsoluteUri);
 
                 // Ensure that requests to file with slash is redirected to one without slash
-                response = redirectClient.GetAsync(fileAddressWithTerminatingSlash).Result;
+                response = await redirectClient.GetAsync(fileAddressWithTerminatingSlash);
                 Assert.Equal(HttpStatusCode.TemporaryRedirect, response.StatusCode);
                 Assert.Equal(fileAddress, response.Headers.Location.AbsoluteUri);
             }
 
             // Check that 2nd create attempt fails
-            response = Client.PutAsync(fileAddress, CreateUploadContent(_fileContent0)).Result;
+            response = await Client.PutAsync(fileAddress, CreateUploadContent(_fileContent0));
             Assert.Equal(HttpStatusCode.PreconditionFailed, response.StatusCode);
             Assert.Equal(originalEtag, response.Headers.ETag);
 
             // Check that we can't update a directory
-            response = Client.PutAsync(dirAddress, CreateUploadContent(_fileContent0)).Result;
+            response = await Client.PutAsync(dirAddress, CreateUploadContent(_fileContent0));
             Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
 
             // Check that we can't delete a non-empty directory
-            response = Client.DeleteAsync(dirAddress).Result;
+            response = await Client.DeleteAsync(dirAddress);
             Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
 
             EntityTagHeaderValue updatedEtag;
@@ -200,21 +215,27 @@ namespace Kudu.FunctionalTests
                     update1.RequestUri = new Uri(fileAddress);
                     update1.Headers.IfMatch.Add(originalEtag);
                     update1.Content = CreateUploadContent(_fileContent1);
-                    response = Client.SendAsync(update1).Result;
+
+                    response = await Client.SendAsync(update1);
+                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent1);
+
                     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
                     Assert.NotNull(response.Headers.ETag);
                     Assert.NotEqual(originalEtag, response.Headers.ETag);
                     updatedEtag = response.Headers.ETag;
                 }
 
-                // Update file with second edit based on original etag (non-conflicting)
+                // Update file with second edit based on original etag (non-conflicting merge)
                 using (HttpRequestMessage update2 = new HttpRequestMessage())
                 {
                     update2.Method = HttpMethod.Put;
                     update2.RequestUri = new Uri(fileAddress);
                     update2.Headers.IfMatch.Add(originalEtag);
                     update2.Content = CreateUploadContent(_fileContent2);
-                    response = Client.SendAsync(update2).Result;
+
+                    response = await Client.SendAsync(update2);
+                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent3);
+
                     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                     Assert.NotNull(response.Headers.ETag);
                     Assert.NotEqual(updatedEtag, response.Headers.ETag);
@@ -222,14 +243,17 @@ namespace Kudu.FunctionalTests
                     updatedEtag = response.Headers.ETag;
                 }
 
-                // Update file with third edit based on original etag (non-conflicting)
+                // Update file with third edit based on original etag (non-conflicting merge)
                 using (HttpRequestMessage update3 = new HttpRequestMessage())
                 {
                     update3.Method = HttpMethod.Put;
                     update3.RequestUri = new Uri(fileAddress);
                     update3.Headers.IfMatch.Add(originalEtag);
                     update3.Content = CreateUploadContent(_fileContent3);
-                    response = Client.SendAsync(update3).Result;
+
+                    response = await Client.SendAsync(update3);
+                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent3);
+
                     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                     Assert.NotNull(response.Headers.ETag);
                     Assert.Equal(updatedEtag, response.Headers.ETag);
@@ -244,11 +268,14 @@ namespace Kudu.FunctionalTests
                     update4.RequestUri = new Uri(fileAddress);
                     update4.Headers.IfMatch.Add(originalEtag);
                     update4.Content = CreateUploadContent(_fileContent4);
-                    response = Client.SendAsync(update4).Result;
+
+                    response = await Client.SendAsync(update4);
+                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent3);
+
                     Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
                     Assert.Equal(_conflictMediaType, response.Content.Headers.ContentType);
                     Assert.Null(response.Headers.ETag);
-                    string content = response.Content.ReadAsStringAsync().Result;
+                    string content = await response.Content.ReadAsStringAsync();
                     Assert.True(content.StartsWith(_conflict));
                 }
 
@@ -263,7 +290,10 @@ namespace Kudu.FunctionalTests
                     update5.RequestUri = new Uri(fileAddress);
                     update5.Headers.IfMatch.Add(new EntityTagHeaderValue("\"invalidetag\""));
                     update5.Content = CreateUploadContent(_fileContent1);
-                    response = Client.SendAsync(update5).Result;
+
+                    response = await Client.SendAsync(update5);
+                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent3);
+
                     Assert.Equal(HttpStatusCode.PreconditionFailed, response.StatusCode);
                     Assert.Equal(updatedEtag, response.Headers.ETag);
                 }
@@ -275,7 +305,10 @@ namespace Kudu.FunctionalTests
                     update6.RequestUri = new Uri(fileAddress);
                     update6.Headers.IfMatch.Add(EntityTagHeaderValue.Any);
                     update6.Content = CreateUploadContent(_fileContent1);
-                    response = Client.SendAsync(update6).Result;
+
+                    response = await Client.SendAsync(update6);
+                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent1);
+
                     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
                     Assert.NotNull(response.Headers.ETag);
                     Assert.NotEqual(originalEtag, response.Headers.ETag);
@@ -288,7 +321,10 @@ namespace Kudu.FunctionalTests
                     deleteRequest.Method = HttpMethod.Delete;
                     deleteRequest.RequestUri = new Uri(fileAddress);
                     deleteRequest.Headers.IfMatch.Add(new EntityTagHeaderValue("\"invalidetag\""));
-                    response = Client.SendAsync(deleteRequest).Result;
+
+                    response = await Client.SendAsync(deleteRequest);
+                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent1);
+
                     Assert.Equal(HttpStatusCode.PreconditionFailed, response.StatusCode);
                     Assert.Equal(updatedEtag, response.Headers.ETag);
                 }
@@ -299,7 +335,10 @@ namespace Kudu.FunctionalTests
                     deleteRequest.Method = HttpMethod.Delete;
                     deleteRequest.RequestUri = new Uri(fileAddress);
                     deleteRequest.Headers.IfMatch.Add(originalEtag);
-                    response = Client.SendAsync(deleteRequest).Result;
+
+                    response = await Client.SendAsync(deleteRequest);
+                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent1);
+
                     Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
                 }
 
@@ -309,7 +348,10 @@ namespace Kudu.FunctionalTests
                     deleteRequest.Method = HttpMethod.Delete;
                     deleteRequest.RequestUri = new Uri(fileAddress);
                     deleteRequest.Headers.IfMatch.Add(updatedEtag);
-                    response = Client.SendAsync(deleteRequest).Result;
+
+                    response = await Client.SendAsync(deleteRequest);
+                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.NotFound, null);
+
                     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 }
 
@@ -319,13 +361,12 @@ namespace Kudu.FunctionalTests
                     deleteRequest.Method = HttpMethod.Delete;
                     deleteRequest.RequestUri = new Uri(fileAddress);
                     deleteRequest.Headers.IfMatch.Add(updatedEtag);
-                    response = Client.SendAsync(deleteRequest).Result;
+
+                    response = await Client.SendAsync(deleteRequest);
+                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.NotFound, null);
+
                     Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
                 }
-
-                // Check that we can delete an empty directory
-                response = Client.DeleteAsync(dirAddress).Result;
-                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             }
             else
             {
@@ -336,7 +377,7 @@ namespace Kudu.FunctionalTests
                     updateRequest.RequestUri = new Uri(fileAddress);
                     updateRequest.Headers.IfMatch.Add(originalEtag);
                     updateRequest.Content = CreateUploadContent(_fileContent1);
-                    response = Client.SendAsync(updateRequest).Result;
+                    response = await Client.SendAsync(updateRequest);
                     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
                     Assert.NotNull(response.Headers.ETag);
                     Assert.NotEqual(originalEtag, response.Headers.ETag);
@@ -350,7 +391,7 @@ namespace Kudu.FunctionalTests
                     updateRequest.RequestUri = new Uri(fileAddress);
                     updateRequest.Headers.IfMatch.Add(originalEtag);
                     updateRequest.Content = CreateUploadContent(_fileContent2);
-                    response = Client.SendAsync(updateRequest).Result;
+                    response = await Client.SendAsync(updateRequest);
                     Assert.Equal(HttpStatusCode.PreconditionFailed, response.StatusCode);
                     Assert.Equal(updatedEtag, response.Headers.ETag);
                 }
@@ -362,7 +403,7 @@ namespace Kudu.FunctionalTests
                     updateRequest.RequestUri = new Uri(fileAddress);
                     updateRequest.Headers.IfMatch.Add(new EntityTagHeaderValue("\"invalidetag\""));
                     updateRequest.Content = CreateUploadContent(_fileContent1);
-                    response = Client.SendAsync(updateRequest).Result;
+                    response = await Client.SendAsync(updateRequest);
                     Assert.Equal(HttpStatusCode.PreconditionFailed, response.StatusCode);
                     Assert.Equal(updatedEtag, response.Headers.ETag);
                 }
@@ -374,7 +415,7 @@ namespace Kudu.FunctionalTests
                     updateRequest.RequestUri = new Uri(fileAddress);
                     updateRequest.Headers.IfMatch.Add(EntityTagHeaderValue.Any);
                     updateRequest.Content = CreateUploadContent(_fileContent1);
-                    response = Client.SendAsync(updateRequest).Result;
+                    response = await Client.SendAsync(updateRequest);
                     Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
                     Assert.NotNull(response.Headers.ETag);
                     Assert.NotEqual(originalEtag, response.Headers.ETag);
@@ -387,7 +428,7 @@ namespace Kudu.FunctionalTests
                     deleteRequest.Method = HttpMethod.Delete;
                     deleteRequest.RequestUri = new Uri(fileAddress);
                     deleteRequest.Headers.IfMatch.Add(new EntityTagHeaderValue("\"invalidetag\""));
-                    response = Client.SendAsync(deleteRequest).Result;
+                    response = await Client.SendAsync(deleteRequest);
                     Assert.Equal(HttpStatusCode.PreconditionFailed, response.StatusCode);
                     Assert.Equal(updatedEtag, response.Headers.ETag);
                 }
@@ -398,7 +439,7 @@ namespace Kudu.FunctionalTests
                     deleteRequest.Method = HttpMethod.Delete;
                     deleteRequest.RequestUri = new Uri(fileAddress);
                     deleteRequest.Headers.IfMatch.Add(updatedEtag);
-                    response = Client.SendAsync(deleteRequest).Result;
+                    response = await Client.SendAsync(deleteRequest);
                     Assert.Equal(HttpStatusCode.OK, response.StatusCode);
                 }
 
@@ -408,13 +449,27 @@ namespace Kudu.FunctionalTests
                     deleteRequest.Method = HttpMethod.Delete;
                     deleteRequest.RequestUri = new Uri(fileAddress);
                     deleteRequest.Headers.IfMatch.Add(updatedEtag);
-                    response = Client.SendAsync(deleteRequest).Result;
+                    response = await Client.SendAsync(deleteRequest);
                     Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
                 }
 
                 // Check that we can delete an empty directory
-                response = Client.DeleteAsync(dirAddress).Result;
+                response = await Client.DeleteAsync(dirAddress);
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            }
+        }
+
+        private async Task VerifyDeployment(string address, HttpStatusCode expectedStatus, byte[] expectedContent)
+        {
+            if (address != null)
+            {
+                HttpResponseMessage response = await DeploymentClient.GetAsync(address);
+                Assert.Equal(expectedStatus, response.StatusCode);
+                if (expectedContent != null)
+                {
+                    byte[] actualContent = await response.Content.ReadAsByteArrayAsync();
+                    Assert.Equal(expectedContent, actualContent);
+                }
             }
         }
 

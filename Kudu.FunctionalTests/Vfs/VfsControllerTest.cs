@@ -16,7 +16,7 @@ namespace Kudu.FunctionalTests
                 VfsControllerBaseTest suite = new VfsControllerBaseTest(appManager.VfsManager, testConflictingUpdates: false);
 
                 // Act + Assert
-                suite.RunIntegrationTest();
+                suite.RunIntegrationTest().Wait();
             });
         }
     }

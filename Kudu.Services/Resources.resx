@@ -255,4 +255,7 @@
   <data name="Dropbox_Committing" xml:space="preserve">
     <value>Committing {0} change(s) from Dropbox.</value>
   </data>
+  <data name="VfsScmController_DeploymentError" xml:space="preserve">
+    <value>Deployment failed with status: '{0}'. Please retry operation.</value>
+  </data>
 </root>

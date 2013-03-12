@@ -42,14 +42,15 @@ namespace Kudu.Services.SourceControl
         private readonly static TimeSpan _retryAfter = TimeSpan.FromSeconds(2);
         private readonly static int[][] _delaySets = new int[][]
         {
-            new int[] { 0, 32, 96, 48, 272, 176, 512, 3000 },
-            new int[] { 16, 48, 64, 96, 0, 48, 1424, 1824 },
-            new int[] { 0, 16, 32, 160, 224, 944, 288, 3000 },
-            new int[] { 16, 32, 112, 208, 464, 816, 1216, 1840 },
-            new int[] { 0, 48, 80, 0, 176, 688, 80, 3000 },
-            new int[] { 16, 0, 32, 64, 416, 560, 992, 1856 },
-            new int[] { 0, 16, 0, 112, 128, 432, 1920, 3000 },
-            new int[] { 16, 48, 96, 176, 368, 304, 784, 1872 },
+            new int[] { 16, 32, 96, 80, 32, 928, 1488, 3936 },
+            new int[] { 0, 16, 32, 160, 224, 944, 288, 3888 },
+            new int[] { 16, 0, 32, 192, 496, 672, 1280, 3952 },
+            new int[] { 0, 48, 80, 0, 176, 688, 804, 3904 },
+            new int[] { 0, 32, 96, 48, 272, 176, 512, 3872 },
+            new int[] { 16, 48, 80, 32, 448, 416, 1056, 3968 },
+            new int[] { 0, 16, 0, 112, 128, 432, 1920, 3920 },
+            new int[] { 16, 16, 0, 144, 400, 160, 848, 3984 },
+            new int[] { 0, 0, 48, 224, 80, 160, 1696, 3920 },
         };
 
         private readonly IDeploymentManager _deploymentManager;
@@ -317,7 +318,13 @@ namespace Kudu.Services.SourceControl
                         // If repository was updated then trigger a deployment to live site
                         if (!updateBranchIsUpToDate)
                         {
-                            DeployChanges();
+                            DeployResult result = DeployChanges();
+                            if (result != null && result.Status != DeployStatus.Success)
+                            {
+                                HttpResponseMessage deploymentErrorResponse =
+                                    Request.CreateErrorResponse(HttpStatusCode.InternalServerError, RS.Format(Resources.VfsScmController_DeploymentError, result.StatusText));
+                                return deploymentErrorResponse;
+                            }
                         }
 
                         // Set updated etag for the file
@@ -363,16 +370,13 @@ namespace Kudu.Services.SourceControl
 
             response = await base.CreateItemDeleteResponse(info, localFilePath);
 
-            // Use to track whether our rebase applied updates from master.
-            bool updateBranchIsUpToDate = false;
-
             // Commit to local branch
             _repository.Commit(String.Format("Committing delete from request {0}", Request.RequestUri), authorName: null);
 
             try
             {
                 // Rebase to get updates from master while checking whether we get a conflict
-                updateBranchIsUpToDate = _repository.Rebase(MasterBranch);
+                _repository.Rebase(MasterBranch);
 
                 // Switch content back to master
                 _repository.UpdateRef(VfsUpdateBranch);
@@ -396,10 +400,13 @@ namespace Kudu.Services.SourceControl
                 return conflictResponse;
             }
 
-            // If repository was updated then trigger a deployment to live site
-            if (!updateBranchIsUpToDate)
+            // Deploy changes
+            DeployResult result = DeployChanges();
+            if (result != null && result.Status != DeployStatus.Success)
             {
-                DeployChanges();
+                HttpResponseMessage deploymentErrorResponse =
+                    Request.CreateErrorResponse(HttpStatusCode.InternalServerError, RS.Format(Resources.VfsScmController_DeploymentError, result.StatusText));
+                return deploymentErrorResponse;
             }
 
             // Delete succeeded
@@ -456,6 +463,9 @@ namespace Kudu.Services.SourceControl
 
             try
             {
+                // Clear out any un-staged files
+                _repository.Clean();
+
                 // Create or reset branch for this upload at the given starting point (commit ID)
                 _repository.CreateOrResetBranch(VfsUpdateBranch, startPoint);
             }
@@ -497,9 +507,19 @@ namespace Kudu.Services.SourceControl
             }
         }
 
-        private void DeployChanges()
+        private DeployResult DeployChanges()
         {
-            _deploymentManager.Deploy(_repository, changeSet: null, deployer: string.Empty, clean: false);
+            try
+            {
+                _deploymentManager.Deploy(_repository, changeSet: null, deployer: string.Empty, clean: true);
+            }
+            catch (Exception e)
+            {
+                Tracer.TraceError(e);
+            }
+
+            // Inspect deployment for errors
+            return _deploymentManager.GetResult(_repository.CurrentId);
         }
 
         private static EntityTagHeaderValue CreateEtag(string tag)
