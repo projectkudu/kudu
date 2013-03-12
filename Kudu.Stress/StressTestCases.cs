@@ -35,7 +35,7 @@ namespace Kudu.Stress
     public class StressTestCases
     {
         static ConcurrentDictionary<string, TestArtifacts> testArtifactStore = new ConcurrentDictionary<string, TestArtifacts>();
-        static object inititalizationLockObj = new object();
+        static object initializationLockObj = new object();
 
         // default the app beign tested to AspNetWebApplication"
         public GitApplication TestApplication = new GitApplication()
@@ -123,7 +123,7 @@ namespace Kudu.Stress
         {
             if (!testArtifactStore.ContainsKey(testName))
             {
-                lock (inititalizationLockObj)
+                lock (initializationLockObj)
                 {
                     if (!testArtifactStore.ContainsKey(testName))
                     {

@@ -42,7 +42,8 @@ namespace Kudu.Stress
             Dictionary<string, GitApplication> appsList = ReadGitAppsList();
             if (!appsList.ContainsKey(appName))
             {
-                throw new ApplicationException("Test Error:  Invalid appname '" + appName + "' specified.  Unable to continue");
+                Console.WriteLine ("Unable to continue. Invalid appname '" + appName + "' specified.");
+                return;
             }
 
             StressTestCases testCases = new StressTestCases();
@@ -73,7 +74,9 @@ namespace Kudu.Stress
                             LogIterationResult(true, scenarioName, iterationCount, "test passed");
                             break;
                         default:
-                            throw new ApplicationException("Invalid scenario name:  " + scenarioName);
+                            Console.WriteLine ("Unable to continue. Invalid scenario name specified:  " + scenarioName);
+                            Environment.Exit(1);
+                            break;
                     }
                     testsPassed ++;
                 }

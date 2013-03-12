@@ -47,15 +47,15 @@ namespace Kudu.Stress
 
                 if (memoryusage > memorythreshold)
                 {
-                    throw new ApplicationException(string.Format("w3wp Counter Threshold Exceeded: Private Bytes:  {0} ,  Threshold: {1}", memoryusage, memorythreshold));
+                    throw new ApplicationException(string.Format("W3wp.exe resource threshold exceeded: Private Bytes:  {0} ,  Threshold: {1}", memoryusage, memorythreshold));
                 }
                 if (handleCount > handleCountThreshold)
                 {
-                    throw new ApplicationException(string.Format("w3wp Counter Threshold Exceeded: Handle Count:  {0} ,  Threshold: {1}", memoryusage, handleCountThreshold));
+                    throw new ApplicationException(string.Format("W3wp.exe resource threshold exceeded: Handle Count:  {0} ,  Threshold: {1}", memoryusage, handleCountThreshold));
                 }
                 if (threadCount > threadCountThreshold)
                 {
-                    throw new ApplicationException(string.Format("w3wp Counter Threshold Exceeded: Thread Count:  {0} ,  Threshold: {1}", threadCount, threadCountThreshold));
+                    throw new ApplicationException(string.Format("W3wp.exe resource threshold exceeded: Thread Count:  {0} ,  Threshold: {1}", threadCount, threadCountThreshold));
                 }
             }
             catch (Exception ex)
@@ -76,7 +76,7 @@ namespace Kudu.Stress
                     return workerProcess.ProcessId ;
                 }
             }
-            throw new ApplicationException ("Error accessing Process Perfmon Counters for w3wp.exe:  No Worker Process found for Stress app");
+            throw new ApplicationException ("Error accessing process info for w3wp.exe:  No Worker Process found for stress web app in IIS");
         }
 
 
