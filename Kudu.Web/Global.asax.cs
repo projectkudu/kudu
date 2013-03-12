@@ -21,6 +21,11 @@ namespace Kudu.Web
                             "deployments/{slug}",
                             new { controller = "Deployments", action = "Index" });
 
+            routes.MapRoute("TriggerFetch",
+                            "deployments/{slug}/trigger-fetch",
+                            new { controller = "Deployments", action = "TriggerFetch" },
+                            new { verb = new HttpMethodConstraint("POST") });
+
             routes.MapRoute("Deploy",
                             "deployments/{slug}/deploy/{id}",
                             new { controller = "Deployments", action = "Deploy" });

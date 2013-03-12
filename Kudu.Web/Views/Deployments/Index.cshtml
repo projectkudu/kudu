@@ -11,12 +11,23 @@
   <input type="input" id="clone-url" name="name" value="@Model.GitUrl" readonly="readonly" />
 </form>
 
+<form method="post" class="well form-inline" action="@Url.Action("TriggerFetch", new { slug = ViewBag.slug })" id="triggerForm">
+    <fieldset>
+        <legend>Trigger deployment</legend>
+        <label class="control-label">
+            <strong>Repository Url</strong>
+            <input type="text" name="repositoryUrl" data-val="true" data-val-required="*" />
+        </label>
+        @Html.DropDownList("repositoryType", new[] { new SelectListItem { Text = RepositoryType.Git.ToString() }, new SelectListItem { Text = RepositoryType.Mercurial.ToString() } })
+        <button type="submit" class="btn" data-loading-text="Fetching...">Go</button>
+    </fieldset>
+</form>
+
 @if (Model.Deployments.Count == 0)
 {
     <p class="alert alert-info">You haven't pushed anything to this repository yet.</p>
     return;
 }
-
 
 <table class="table">
     <thead>
@@ -101,3 +112,18 @@
         }
     </tbody>
 </table>
+
+<script>
+$(function () {
+    var triggerForm = $("#triggerForm");
+    triggerForm.submit(function () {
+        triggerForm.find(".btn").button("loading");
+        $.post(this.action, triggerForm.serialize())
+         .always(function () {
+             location.reload(false);
+         });
+        
+        return false;
+    });
+});
+</script>

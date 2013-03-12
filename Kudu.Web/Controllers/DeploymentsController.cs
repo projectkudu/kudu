@@ -1,10 +1,15 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using System.Web.Mvc;
+using Kudu.Client;
 using Kudu.Client.Deployment;
 using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.SourceControl;
+using Kudu.Core.Deployment;
+using Kudu.Core.SourceControl;
 using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
 using Mvc.Async;
@@ -30,34 +35,57 @@ namespace Kudu.Web.Controllers
             base.OnActionExecuting(filterContext);
         }
 
-        public Task<ActionResult> Index(string slug)
+        public async Task<ActionResult> Index(string slug)
         {
             IApplication application = _applicationService.GetApplication(slug);
 
             if (application == null)
             {
-                return HttpNotFoundAsync();
+                return HttpNotFound();
             }
 
             ICredentials credentials = _credentialProvider.GetCredentials();
             RemoteDeploymentManager deploymentManager = application.GetDeploymentManager(credentials);
 
-            // TODO: Do this in parallel
-            return deploymentManager.GetResultsAsync().Then(results =>
+            Task<IEnumerable<DeployResult>> deployResults = deploymentManager.GetResultsAsync();
+            Task<RepositoryInfo> repositoryInfo = application.GetRepositoryInfo(credentials);
+
+            await Task.WhenAll(deployResults, repositoryInfo);
+
+            var appViewModel = new ApplicationViewModel(application)
             {
-                return application.GetRepositoryInfo(credentials).Then(repositoryInfo =>
-                {
-                    var appViewModel = new ApplicationViewModel(application);
-                    appViewModel.RepositoryInfo = repositoryInfo;
-                    appViewModel.Deployments = results.ToList();
+                RepositoryInfo = repositoryInfo.Result,
+                Deployments = deployResults.Result.ToList()
+            };
 
-                    ViewBag.slug = slug;
-                    ViewBag.appName = appViewModel.Name;
+            ViewBag.slug = slug;
+            ViewBag.appName = appViewModel.Name;
 
-                    return (ActionResult)View(appViewModel);
-                });
-            });
+            return View(appViewModel);
+        }
 
+        [HttpPost]
+        public async Task<ActionResult> TriggerFetch(string slug, string repositoryUrl, RepositoryType repositoryType)
+        {
+            IApplication application = _applicationService.GetApplication(slug);
+
+            if (application == null)
+            {
+                return HttpNotFound();
+            }
+
+            ICredentials credentials = _credentialProvider.GetCredentials();
+            RemoteFetchManager fetchManager = application.GetFetchManager(credentials);
+
+            try
+            {
+                await fetchManager.TriggerFetch(repositoryUrl, repositoryType);
+            }
+            catch (HttpUnsuccessfulRequestException)
+            {
+                // Ignore any failures in triggering the deployment
+            }
+            return new EmptyResult();
         }
 
         public Task<ActionResult> Deploy(string slug, string id, bool? clean)
