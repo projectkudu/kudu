@@ -67,9 +67,9 @@ namespace Kudu.Client.Infrastructure
             return result.EnsureSuccessful();
         }
 
-        public static async Task<HttpResponseMessage> PostAsync(this HttpClient client, string url, KeyValuePair<string, string> param)
+        public static async Task<HttpResponseMessage> PostAsync(this HttpClient client, string url, params KeyValuePair<string, string>[] items)
         {
-            using (var jsonContent = HttpClientHelper.CreateJsonContent(param))
+            using (var jsonContent = HttpClientHelper.CreateJsonContent(items))
             {
                 HttpResponseMessage result = await client.PostAsync(url, jsonContent);
                 return result.EnsureSuccessful();

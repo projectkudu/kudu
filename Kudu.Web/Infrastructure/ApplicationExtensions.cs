@@ -25,6 +25,11 @@ namespace Kudu.Web.Infrastructure
             return deploymentManager;
         }
 
+        public static RemoteFetchManager GetFetchManager(this IApplication application, ICredentials credentials)
+        {
+            return new RemoteFetchManager(application.ServiceUrl + "deploy", credentials);
+        }
+
         public static RemoteDeploymentSettingsManager GetSettingsManager(this IApplication application, ICredentials credentials)
         {
             var deploymentSettingsManager = new RemoteDeploymentSettingsManager(application.ServiceUrl + "settings", credentials);
