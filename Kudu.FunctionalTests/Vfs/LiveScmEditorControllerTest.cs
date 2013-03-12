@@ -13,10 +13,10 @@ namespace Kudu.FunctionalTests
 
             ApplicationManager.Run(appName, appManager =>
             {
-                VfsControllerBaseTest suite = new VfsControllerBaseTest(appManager.LiveScmVfsManager, testConflictingUpdates: true);
+                VfsControllerBaseTest suite = new VfsControllerBaseTest(appManager.LiveScmVfsManager, testConflictingUpdates: true, deploymentClient: appManager.LiveScmVfsManager);
 
                 // Act + Assert
-                suite.RunIntegrationTest();
+                suite.RunIntegrationTest().Wait();
             });
         }
     }
