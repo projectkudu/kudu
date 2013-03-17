@@ -169,7 +169,7 @@ namespace Kudu.Services.Infrastructure
         protected virtual Task<HttpResponseMessage> CreateDirectoryGetResponse(DirectoryInfo info, string localFilePath)
         {
             // Enumerate directory
-            IEnumerable<VfsStatEntry> directory = GetDirectoryResponse(info, localFilePath);
+            IEnumerable<VfsStatEntry> directory = GetDirectoryResponse(info);
             HttpResponseMessage successDirectoryResponse = Request.CreateResponse<IEnumerable<VfsStatEntry>>(HttpStatusCode.OK, directory);
             return Task.FromResult(successDirectoryResponse);
         }
@@ -338,10 +338,9 @@ namespace Kudu.Services.Infrastructure
             return result;
         }
 
-        private IEnumerable<VfsStatEntry> GetDirectoryResponse(DirectoryInfo info, string localFilePath)
+        private IEnumerable<VfsStatEntry> GetDirectoryResponse(DirectoryInfo info)
         {
             Contract.Assert(info != null);
-            Contract.Assert(localFilePath != null);
 
             string baseAddress = Request.RequestUri.AbsoluteUri;
             foreach (FileSystemInfo fileSysInfo in info.EnumerateFileSystemInfos(DirectoryEnumerationSearchPattern, SearchOption.TopDirectoryOnly))
