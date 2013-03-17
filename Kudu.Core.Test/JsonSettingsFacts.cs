@@ -113,7 +113,6 @@ namespace Kudu.Core.Test
         [Fact]
         public void SetGetJObjectTest()
         {
-            Random random = new Random((int)DateTime.Now.Ticks);
             var values = new Dictionary<string, JToken>
             {
                 { Guid.NewGuid().ToString(), null },
