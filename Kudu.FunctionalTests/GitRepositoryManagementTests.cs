@@ -800,6 +800,9 @@ command = deploy.cmd");
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
 
+                    var log1 = GetLog(appManager, results[0].Id);
+                    Assert.Contains("Using the following command to generate deployment script", log1);
+
                     string id = results[0].Id;
 
                     repo.Replace("server.js", "world", "world2");
@@ -813,9 +816,15 @@ command = deploy.cmd");
 
                     appManager.DeploymentManager.DeployAsync(id).Wait();
                     results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
                     Assert.Equal(2, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
                     Assert.Equal(DeployStatus.Success, results[1].Status);
+
+                    var log2 = GetLog(appManager, results[0].Id);
+                    var log3 = GetLog(appManager, results[0].Id);
+                    Assert.Contains("Using cached version of deployment script", log2);
+                    Assert.Contains("Using cached version of deployment script", log3);
                 });
             }
         }
@@ -1112,6 +1121,15 @@ command = deploy.cmd");
                 BaseAddress = new Uri(appManager.ServiceUrl),
                 Timeout = TimeSpan.FromMinutes(5)
             };
+        }
+
+        private static string GetLog(ApplicationManager appManager, string resultId)
+        {
+            var entries = appManager.DeploymentManager.GetLogEntriesAsync(resultId).Result;
+            var allDetails = entries.Where(e => e.DetailsUrl != null)
+                                    .SelectMany(e => appManager.DeploymentManager.GetLogEntryDetailsAsync(resultId, e.Id).Result);
+            var allEntries = entries.Concat(allDetails);
+            return String.Join("\n", allEntries.Select(entry => entry.Message));
         }
 
         private void VerifyDeploymentConfiguration(string siteName, string targetProject, string expectedText, DeployStatus expectedStatus = DeployStatus.Success, string expectedLog = null)

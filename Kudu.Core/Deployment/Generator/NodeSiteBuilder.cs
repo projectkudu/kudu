@@ -1,8 +1,9 @@
-﻿using Kudu.Contracts.Settings;
-using Kudu.Core.SourceControl.Git;
-using System;
+﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using Kudu.Contracts.Settings;
+using Kudu.Contracts.Tracing;
+using Kudu.Core.SourceControl.Git;
 
 namespace Kudu.Core.Deployment.Generator
 {
@@ -34,11 +35,17 @@ namespace Kudu.Core.Deployment.Generator
             {
                 var git = new GitExecutable(Environment.RepositoryPath, DeploymentSettings.GetCommandIdleTimeout());
                 string webConfigPath = Path.Combine(ProjectPath, "web.config");
+
+                if (!string.IsNullOrEmpty(HomePath))
+                {
+                    git.SetHomePath(HomePath);
+                }
+
                 git.Execute("clean -f " + webConfigPath);
             }
             catch (Exception ex)
             {
-                context.Logger.Log(ex);
+                context.Tracer.TraceError(ex);
             }
         }
     }

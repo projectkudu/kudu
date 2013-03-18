@@ -223,6 +223,9 @@
   <data name="Log_DeploymentScriptGeneratorCommand" xml:space="preserve">
     <value>Using the following command to generate deployment script: 'azure {0}'.</value>
   </data>
+  <data name="Log_DeploymentScriptGeneratorUsingCache" xml:space="preserve">
+    <value>Using cached version of deployment script (command: 'azure {0}').</value>
+  </data>
   <data name="Log_DeploymentSuccessful" xml:space="preserve">
     <value>Deployment successful.</value>
   </data>
