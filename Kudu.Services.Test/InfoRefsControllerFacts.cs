@@ -23,7 +23,6 @@ namespace Kudu.Services.Test
             var settings = new Mock<IDeploymentSettingsManager>(MockBehavior.Strict);
             settings.Setup(s => s.GetValue("ScmType", false)).Returns("Git");
 
-            var exception = new Exception();
             var repositoryFactory = new Mock<IRepositoryFactory>(MockBehavior.Strict);
             var repository = new Mock<IRepository>();
             repository.SetupGet(r => r.RepositoryType).Returns(RepositoryType.Mercurial);
