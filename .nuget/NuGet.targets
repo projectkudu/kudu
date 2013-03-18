@@ -18,7 +18,6 @@
    
    <ItemGroup Condition=" '$(PackageSources)' == '' ">
        <!-- Package sources used to restore packages. By default will used the registered sources under %APPDATA%\NuGet\NuGet.Config -->
-       <PackageSource Include="http://www.myget.org/F/aspnetwebstacknightly/" />
        <PackageSource Include="https://nuget.org/api/v2/" />
    </ItemGroup>
 
@@ -73,7 +72,7 @@
        This effectively acts as a lock that makes sure that the download operation will only happen once and all
        parallel builds will have to wait for it to complete.
        -->
-       <MsBuild Targets="_DownloadNuGet" Projects="$(MSBuildThisFileFullPath)" Properties="Configuration=NOT_IMPORTANT" />
+       <MsBuild Targets="_DownloadNuGet" Projects="$(MSBuildThisFileFullPath)" Properties="Configuration=NOT_IMPORTANT;Platform=NOT_IMPORTANT" />
    </Target>
 
    <Target Name="_DownloadNuGet">
