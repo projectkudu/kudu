@@ -3,5 +3,6 @@
   <Import Project="Kudu.targets" />
   <PropertyGroup>
     <CodeAnalysisRuleSet>$(KuduBuildPath)kuduTest.ruleset</CodeAnalysisRuleSet>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
 </Project>
