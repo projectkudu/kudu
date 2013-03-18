@@ -57,7 +57,6 @@ namespace Kudu.Services.Test
 
             // Assert
             zip.Dispose();
-            File.WriteAllBytes(@"d:\foo.zip", stream.ToArray());
             zip = new ZipArchive(ReOpen(stream));
             Assert.Equal(5, zip.Entries.Count);
             AssertZipEntry(zip, "log.txt", "log content");
