@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
+using System.Linq;
 
 namespace Kudu.Core.Deployment.Generator
 {
@@ -11,7 +12,9 @@ namespace Kudu.Core.Deployment.Generator
     {
         private const string ScriptGeneratorCommandFormat = "site deploymentscript -y --no-dot-deployment -r \"{0}\" {1}";
         private const string DeploymentScriptFileName = "deploy.cmd";
-        private const string DeploymentCommandArgumentsFileName = "deploymentCommandArguments";
+        private const string DeploymentCommandCacheKeyFileName = "deploymentCacheKey";
+
+        private static Lazy<string> KuduVersion = new Lazy<string>(() => typeof(GeneratorSiteBuilder).Assembly.GetName().Version.ToString());
 
         protected GeneratorSiteBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string repositoryPath)
             : base(environment, settings, propertyProvider, repositoryPath)
@@ -107,8 +110,11 @@ namespace Kudu.Core.Deployment.Generator
                 OperationManager.Attempt(() =>
                     File.Copy(Path.Combine(RepositoryPath, DeploymentScriptFileName), cachedDeploymentScriptPath, overwrite: true));
 
-                string cachedDeploymentCommandArgumentsPath = Path.Combine(nextDeploymentPath, DeploymentCommandArgumentsFileName);
-                File.WriteAllText(cachedDeploymentCommandArgumentsPath, scriptGeneratorCommand);
+                string cachedKeyFilePath = Path.Combine(nextDeploymentPath, DeploymentCommandCacheKeyFileName);
+
+                // Cache key contains the current kudu version and the command arguments for the deployment script generator
+                string[] cacheKeyFileContent = new string[] { KuduVersion.Value, scriptGeneratorCommand };
+                File.WriteAllLines(cachedKeyFilePath, cacheKeyFileContent);
 
                 context.Tracer.Trace("Saved cached version of the deployment script under: {0}", cachedDeploymentScriptPath);
             }
@@ -129,17 +135,25 @@ namespace Kudu.Core.Deployment.Generator
                 }
 
                 string previousDeploymentPath = Path.GetDirectoryName(context.PreviousManifestFilePath);
-                string cachedDeploymentCommandArgumentsPath = Path.Combine(previousDeploymentPath, DeploymentCommandArgumentsFileName);
+                string cacheKeyFilePath = Path.Combine(previousDeploymentPath, DeploymentCommandCacheKeyFileName);
                 string cachedDeploymentScriptPath = Path.Combine(previousDeploymentPath, DeploymentScriptFileName);
 
                 try
                 {
-                    if (!File.Exists(cachedDeploymentCommandArgumentsPath))
+                    if (!File.Exists(cacheKeyFilePath))
                     {
                         return false;
                     }
 
-                    string cachedDeploymentCommandArguments = File.ReadAllText(cachedDeploymentCommandArgumentsPath).Trim();
+                    string[] cacheKeyFileContent = File.ReadAllLines(cacheKeyFilePath).Where(line => !String.IsNullOrEmpty(line)).ToArray();
+
+                    // Make sure the cache key file contains exacly 2 lines and the first one is the same as the current running kudu version
+                    if (cacheKeyFileContent.Length != 2 || cacheKeyFileContent[0] != KuduVersion.Value)
+                    {
+                        return false;
+                    }
+
+                    string cachedDeploymentCommandArguments = cacheKeyFileContent[1];
 
                     // If we use the same deployment script generator command
                     if (scriptGeneratorCommand == cachedDeploymentCommandArguments)
