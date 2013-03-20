@@ -7,9 +7,11 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Kudu.Console</RootNamespace>
     <AssemblyName>kudu</AssemblyName>
+    <Platform>x86</Platform>
     <PlatformTarget>x86</PlatformTarget>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' OR '$(Configuration)|$(Platform)' == 'Release|x86' " />
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.configuration" />

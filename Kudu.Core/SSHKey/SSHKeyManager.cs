@@ -102,6 +102,7 @@ namespace Kudu.Core.SSHKey
                 if (rsa != null)
                 {
                     rsa.PersistKeyInCsp = false;
+                    rsa.Dispose();
                 }
             }
         }

@@ -59,9 +59,11 @@
           <Output TaskParameter="Include" ItemName="NodeModulesFiles" />
         </CreateItem>
 
-        <Copy SourceFiles="@(NodeModulesFiles)" DestinationFiles="@(NodeModulesFiles->'$(ServiceSiteTargetPath)\bin\node_modules\%(RecursiveDir)%(Filename)%(Extension)')" />
+        <Copy SourceFiles="@(NodeModulesFiles)" DestinationFiles="@(NodeModulesFiles->'$(ServiceSiteTargetPath)\bin\node_modules\%(RecursiveDir)%(Filename)%(Extension)')" 
+                SkipUnchangedFiles="true" />
 
-        <Copy SourceFiles="$(ProjectRoot)\Kudu.Services.Web\bin\kudu.exe" DestinationFolder="$(ServiceSiteTargetPath)\bin" />
+        <Copy SourceFiles="$(ProjectRoot)\Kudu.Services.Web\bin\kudu.exe" DestinationFolder="$(ServiceSiteTargetPath)\bin" 
+                SkipUnchangedFiles="true" />
               
         <MSBuild Projects="$(ClientSiteProject)" 
                  Targets="pipelinePreDeployCopyAllFilesToOneFolder" 
@@ -82,7 +84,7 @@
     
     <Target Name="Build" DependsOnTargets="CreateOutputPath">
         <MSBuild Projects="$(ProjectRoot)\kudu.sln" 
-                 Targets="Build" 
+                 Targets="Build"
                  Properties="Configuration=$(Configuration);RunCodeAnalysis=true;CodeAnalysisAdditionalOptions=/assemblyCompareMode:StrongNameIgnoringVersion" />
     </Target>
     
@@ -90,6 +92,7 @@
         <ItemGroup>
             <FxCopOutputItems Include="$(ProjectRoot)\**\*.CodeAnalysisLog.xml" />
         </ItemGroup>
-        <Message Text="##teamcity[importData type='FxCop' path='%(FxCopOutputItems.Identity)']" />
+        <Message Text="##teamcity[importData type='FxCop' path='%(FxCopOutputItems.Identity)']" 
+                     Condition="@(FxCopOutputItems) != '' "/>
     </Target>
 </Project>
