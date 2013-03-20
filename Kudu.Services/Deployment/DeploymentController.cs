@@ -125,10 +125,7 @@ namespace Kudu.Services.Deployment
             {
                 using (_tracer.Step("DeploymentService.GetDeployResults"))
                 {
-                    // Order the results by date (newest first). Previously, we supported OData to allow
-                    // arbitrary queries, but that was way overkill and brought in too many large binaries.
-                    IEnumerable<DeployResult> results = GetResults(Request).OrderByDescending(t => t.ReceivedTime);
-
+                    IEnumerable<DeployResult> results = GetResults(Request);
                     response = Request.CreateResponse(HttpStatusCode.OK, results);
                 }
             }

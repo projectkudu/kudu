@@ -2,6 +2,7 @@
 using System.IO;
 using System.IO.Abstractions;
 using System.Xml.Linq;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 
@@ -17,12 +18,14 @@ namespace Kudu.Core.Deployment
         private readonly string _activeFile;
         private readonly string _statusFile;
         private readonly IFileSystem _fileSystem;
+        private readonly IOperationLock _statusLock;
 
-        private DeploymentStatusFile(string id, IEnvironment environment, IFileSystem fileSystem, XDocument document = null)
+        private DeploymentStatusFile(string id, IEnvironment environment, IFileSystem fileSystem, IOperationLock statusLock, XDocument document = null)
         {
             _activeFile = Path.Combine(environment.DeploymentCachePath, Constants.ActiveDeploymentFile);
             _statusFile = Path.Combine(environment.DeploymentCachePath, id, StatusFile);
             _fileSystem = fileSystem;
+            _statusLock = statusLock;
 
             Id = id;
 
@@ -32,46 +35,38 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public static DeploymentStatusFile Create(string id, IFileSystem fileSystem, IEnvironment environment)
+        public static DeploymentStatusFile Create(string id, IFileSystem fileSystem, IEnvironment environment, IOperationLock statusLock)
         {
             string path = Path.Combine(environment.DeploymentCachePath, id);
 
             FileSystemHelpers.EnsureDirectory(fileSystem, path);
 
-            return new DeploymentStatusFile(id, environment, fileSystem)
+            return new DeploymentStatusFile(id, environment, fileSystem, statusLock)
             {
                 StartTime = DateTime.Now,
                 ReceivedTime = DateTime.Now
             };
         }
 
-        public static DeploymentStatusFile Open(string id, IFileSystem fileSystem, IEnvironment environment)
+        public static DeploymentStatusFile Open(string id, IFileSystem fileSystem, IEnvironment environment, IOperationLock statusLock)
         {
-            string path = Path.Combine(environment.DeploymentCachePath, id, StatusFile);
-            XDocument document = null;
-
-            try
+            return statusLock.LockOperation(() =>
             {
+                string path = Path.Combine(environment.DeploymentCachePath, id, StatusFile);
+                XDocument document = null;
+
                 if (!fileSystem.File.Exists(path))
                 {
                     return null;
                 }
 
-                // Retry to make it robust incase of failure
-                OperationManager.Attempt(() =>
+                using (var stream = fileSystem.File.OpenRead(path))
                 {
-                    using (var stream = fileSystem.File.OpenRead(path))
-                    {
-                        document = XDocument.Load(stream);
-                    }
-                });
-            }
-            catch
-            {
-                return null;
-            }
+                    document = XDocument.Load(stream);
+                }
 
-            return new DeploymentStatusFile(id, environment, fileSystem, document);
+                return new DeploymentStatusFile(id, environment, fileSystem, statusLock, document);
+            }, DeploymentStatusManager.LockTimeout);
         }
 
         private void Initialize(XDocument document)
@@ -158,17 +153,13 @@ namespace Kudu.Core.Deployment
                     new XElement("is_temp", IsTemporary.ToString())
                 ));
 
-            // Retry saves to the file to make it robust incase of failure
-            OperationManager.Attempt(() =>
+            _statusLock.LockOperation(() =>
             {
                 using (Stream stream = _fileSystem.File.Create(_statusFile))
                 {
                     document.Save(stream);
                 }
-            });
 
-            OperationManager.Attempt(() =>
-            {
                 // Used for ETAG
                 if (_fileSystem.File.Exists(_activeFile))
                 {
@@ -178,7 +169,7 @@ namespace Kudu.Core.Deployment
                 {
                     _fileSystem.File.WriteAllText(_activeFile, String.Empty);
                 }
-            });
+            }, DeploymentStatusManager.LockTimeout);
         }
 
         private static string GetOptionalElementValue(XElement element, string localName, string namespaceName = null)

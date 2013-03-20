@@ -110,14 +110,17 @@ namespace Kudu.Services.Web.App_Start
             // Setup the deployment lock
             string lockPath = Path.Combine(environment.SiteRootPath, Constants.LockPath);
             string deploymentLockPath = Path.Combine(lockPath, Constants.DeploymentLockFile);
+            string statusLockPath = Path.Combine(lockPath, Constants.StatusLockFile);
             string sshKeyLockPath = Path.Combine(lockPath, Constants.SSHKeyLockFile);
             string initLockPath = Path.Combine(lockPath, Constants.InitLockFile);
 
             var deploymentLock = new LockFile(kernel.Get<ITraceFactory>(), deploymentLockPath);
+            var statusLock = new LockFile(kernel.Get<ITraceFactory>(), statusLockPath);
             var initLock = new LockFile(kernel.Get<ITraceFactory>(), initLockPath);
             var sshKeyLock = new LockFile(kernel.Get<ITraceFactory>(), sshKeyLockPath);
 
             kernel.Bind<IOperationLock>().ToConstant(sshKeyLock).WhenInjectedInto<SSHKeyController>();
+            kernel.Bind<IOperationLock>().ToConstant(statusLock).WhenInjectedInto<DeploymentStatusManager>();
             kernel.Bind<IOperationLock>().ToConstant(deploymentLock);
 
             var shutdownDetector = new ShutdownDetector();

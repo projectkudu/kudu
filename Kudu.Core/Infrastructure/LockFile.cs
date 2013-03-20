@@ -65,7 +65,6 @@ namespace Kudu.Core.Infrastructure
 
                 if (Interlocked.Exchange(ref _lockStream, new FileStream(_path, FileMode.Create, FileAccess.Write, FileShare.None)) == null)
                 {
-                    TraceLock("Aquired Lock");
                     _lockStream.WriteByte(0);
                     return true;
                 }
@@ -73,7 +72,6 @@ namespace Kudu.Core.Infrastructure
             }
             catch
             {
-                TraceLock("Aquire Lock failed");
                 return false;
             }
         }
@@ -89,8 +87,6 @@ namespace Kudu.Core.Infrastructure
             {
                 _lockStream.Close();
                 File.Delete(_path);
-
-                TraceLock("Lock released");
 
                 try
                 {
@@ -116,8 +112,6 @@ namespace Kudu.Core.Infrastructure
 
         public bool Wait(TimeSpan timeout)
         {
-            TraceLock("Waiting on lock");
-
             // Poll the file system every second
             var interval = TimeSpan.FromSeconds(1);
             var elapsed = TimeSpan.Zero;
@@ -128,17 +122,15 @@ namespace Kudu.Core.Infrastructure
             // as there's a race condition when setting up the notification
             while (IsHeld)
             {
-                Thread.Sleep(interval);
-                elapsed += interval;
-
                 if (elapsed >= timeout)
                 {
                     timedout = true;
                     break;
                 }
-            }
 
-            TraceLock("Waiting complete");
+                Thread.Sleep(interval);
+                elapsed += interval;
+            }
 
             return timedout;
         }

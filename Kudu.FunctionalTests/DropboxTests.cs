@@ -45,7 +45,7 @@ namespace Kudu.FunctionalTests
             ApplicationManager.Run(appName, appManager =>
             {
                 HttpClient client = HttpClientHelper.CreateClient(appManager.ServiceUrl, appManager.DeploymentManager.Credentials);
-                client.PostAsJsonAsync("deploy", deploy).Result.EnsureSuccessful();
+                client.PostAsJsonAsync("deploy?scmType=Dropbox", deploy).Result.EnsureSuccessful();
 
                 KuduAssert.VerifyUrl(appManager.SiteUrl + "/default.html", "Hello Default!");
                 KuduAssert.VerifyUrl(appManager.SiteUrl + "/temp/temp.html", "Hello Temp!");
@@ -70,7 +70,7 @@ namespace Kudu.FunctionalTests
             ApplicationManager.Run(appName, appManager =>
             {
                 HttpClient client = HttpClientHelper.CreateClient(appManager.ServiceUrl, appManager.DeploymentManager.Credentials);
-                client.PostAsJsonAsync("deploy", deploy).Result.EnsureSuccessful();
+                client.PostAsJsonAsync("deploy?scmType=Dropbox", deploy).Result.EnsureSuccessful();
             });
         }
 
@@ -91,7 +91,7 @@ namespace Kudu.FunctionalTests
             ApplicationManager.Run(appName, appManager =>
             {
                 HttpClient client = HttpClientHelper.CreateClient(appManager.ServiceUrl, appManager.DeploymentManager.Credentials);
-                client.PostAsJsonAsync("deploy", deploy).Result.EnsureSuccessful();
+                client.PostAsJsonAsync("deploy?scmType=Dropbox", deploy).Result.EnsureSuccessful();
             });
         }
 

@@ -68,8 +68,10 @@
     <Compile Include="FileSystemHelpersTest.cs" />
     <Compile Include="GitRepositoryTest.cs" />
     <Compile Include="IniFileFacts.cs" />
+    <Compile Include="OperationLockTests.cs" />
     <Compile Include="PathUtilityFacts.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PurgeDeploymentsTests.cs" />
     <Compile Include="SSHKeyManagerFacts.cs" />
   </ItemGroup>
   <ItemGroup>
