@@ -127,12 +127,6 @@ namespace Kudu.Core.Deployment.Generator
 
         private bool UseCachedDeploymentScript(string scriptGeneratorCommand, DeploymentContext context)
         {
-                if (string.IsNullOrEmpty(scriptGeneratorCommand))
-                {
-                    // No previous deployment script generator command arguments means no previous deployment script
-                    return false;
-                }
-
                 string cacheKeyFilePath = Path.Combine(Environment.DeploymentCachePath, DeploymentCommandCacheKeyFileName);
                 string cachedDeploymentScriptPath = Path.Combine(Environment.DeploymentCachePath, DeploymentScriptFileName);
 

@@ -822,7 +822,7 @@ command = deploy.cmd");
                     Assert.Equal(DeployStatus.Success, results[1].Status);
 
                     var log2 = GetLog(appManager, results[0].Id);
-                    var log3 = GetLog(appManager, results[0].Id);
+                    var log3 = GetLog(appManager, results[1].Id);
                     Assert.Contains("Using cached version of deployment script", log2);
                     Assert.Contains("Using cached version of deployment script", log3);
                 });
