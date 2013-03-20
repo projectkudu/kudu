@@ -31,6 +31,7 @@ namespace Kudu.Core.Deployment
         private const string LogFile = "log.xml";
         private const string ManifestFile = "manifest";
         private const string TemporaryDeploymentIdPrefix = "temp-";
+        public const int MaxSuccessDeploymentResults = 10;
 
         public DeploymentManager(ISiteBuilderFactory builderFactory,
                                  IEnvironment environment,
@@ -64,7 +65,13 @@ namespace Kudu.Core.Deployment
             ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("DeploymentManager.GetResults"))
             {
-                return EnumerateResults();
+                // Order the results by date (newest first). Previously, we supported OData to allow
+                // arbitrary queries, but that was way overkill and brought in too many large binaries.
+                IEnumerable<DeployResult> results = EnumerateResults().OrderByDescending(t => t.ReceivedTime);
+
+                results = PurgeDeployments(results);
+
+                return results;
             }
         }
 
@@ -137,7 +144,7 @@ namespace Kudu.Core.Deployment
                     throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_UnableToDeleteDeploymentActive, id));
                 }
 
-                _fileSystem.Directory.Delete(path, true);
+                _status.Delete(id);
             }
         }
 
@@ -251,7 +258,7 @@ namespace Kudu.Core.Deployment
             {
                 if (changeSet.IsTemporary)
                 {
-                    DeleteTemporaryDeployment(changeSet.Id);
+                    _status.Delete(changeSet.Id);
                 }
             });
         }
@@ -263,6 +270,107 @@ namespace Kudu.Core.Deployment
             {
                 IsTemporary = true
             };
+        }
+
+        // since the expensive part (reading all files) is done,
+        // we opt for simplicity rather than performance when purging.
+        private IEnumerable<DeployResult> PurgeDeployments(IEnumerable<DeployResult> results)
+        {
+            if (results.Any())
+            {
+                var toDelete = new List<DeployResult>();
+                toDelete.AddRange(GetPurgeTemporaryDeployments(results));
+                toDelete.AddRange(GetPurgeFailedDeployments(results));
+                toDelete.AddRange(this.GetPurgeObsoleteDeployments(results));
+
+                if (toDelete.Any())
+                {
+                    var tracer = _traceFactory.GetTracer();
+                    using (tracer.Step("Purge deployment items"))
+                    {
+                        foreach (DeployResult delete in toDelete)
+                        {
+                            _status.Delete(delete.Id);
+
+                            tracer.Trace("Remove {0}, {1}, received at {2}", 
+                                         delete.Id.Substring(0, Math.Min(delete.Id.Length, 9)), 
+                                         delete.Status, 
+                                         delete.ReceivedTime);
+                        }
+                    }
+
+                    results = results.Where(r => !toDelete.Any(i => i.Id == r.Id));
+                }
+            }
+
+            return results;
+        }
+
+        private static IEnumerable<DeployResult> GetPurgeTemporaryDeployments(IEnumerable<DeployResult> results)
+        {
+            var toDelete = new List<DeployResult>();
+
+            // more than one pending/building, remove all temporary pending
+            var pendings = results.Where(r => r.Status != DeployStatus.Failed && r.Status != DeployStatus.Success);
+            if (pendings.Count() > 1)
+            {
+                if (pendings.Any(r => !r.IsTemporary))
+                {
+                    // if there is non-temporary, remove all pending temporary
+                    toDelete.AddRange(pendings.Where(r => r.IsTemporary));
+                }
+                else
+                {
+                    if (pendings.First().Id == results.First().Id)
+                    {
+                        pendings = pendings.Skip(1);
+                    }
+
+                    // if first item is not pending temporary, remove all pending temporary
+                    toDelete.AddRange(pendings);
+                }
+            }
+
+            return toDelete;
+        }
+
+        private static IEnumerable<DeployResult> GetPurgeFailedDeployments(IEnumerable<DeployResult> results)
+        {
+            var toDelete = new List<DeployResult>();
+
+            // if one or more fail that never succeeded, only keep latest first one.
+            var fails = results.Where(r => r.Status == DeployStatus.Failed && r.LastSuccessEndTime == null);
+            if (fails.Any())
+            {
+                if (fails.First().Id == results.First().Id)
+                {
+                    fails = fails.Skip(1);
+                }
+
+                toDelete.AddRange(fails);
+            }
+
+            return toDelete;
+        }
+
+        private IEnumerable<DeployResult> GetPurgeObsoleteDeployments(IEnumerable<DeployResult> results)
+        {
+            var toDelete = new List<DeployResult>();
+
+            // limit number of ever-success items
+            // the assumption is user will no longer be interested on these items
+            var succeed = results.Where(r => r.LastSuccessEndTime != null);
+            if (succeed.Count() > MaxSuccessDeploymentResults)
+            {
+                // always maintain active and inprogress item
+                var activeId = _status.ActiveDeploymentId;
+                var purge = succeed.Skip(MaxSuccessDeploymentResults).Where(r =>
+                    r.Id != activeId && (r.Status == DeployStatus.Failed || r.Status == DeployStatus.Success));
+
+                toDelete.AddRange(purge);
+            }
+
+            return toDelete;
         }
 
         private static string GenerateTemporaryId(int lenght = 8)
@@ -300,15 +408,6 @@ namespace Kudu.Core.Deployment
 
                 return statusFile;
             }
-        }
-
-        /// <summary>
-        /// Deletes the temporary deployment, will not fail if it doesn't exist.
-        /// </summary>
-        private void DeleteTemporaryDeployment(string id)
-        {
-            string temporaryDeploymentPath = GetRoot(id, ensureDirectory: false);
-            FileSystemHelpers.DeleteDirectorySafe(temporaryDeploymentPath);
         }
 
         private DeployResult GetResult(string id, string activeDeploymentId, bool isDeploying)

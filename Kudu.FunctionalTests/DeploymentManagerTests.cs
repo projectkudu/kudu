@@ -287,7 +287,7 @@ namespace Kudu.FunctionalTests
                 DeployPayloadHelper(appManager, client => 
                 {
                     client.DefaultRequestHeaders.Add("X-Github-Event", "push");
-                    return client.PostAsync("deploy", new FormUrlEncodedContent(post));
+                    return client.PostAsync("deploy?scmType=GitHub", new FormUrlEncodedContent(post));
                 });
 
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
@@ -314,7 +314,7 @@ namespace Kudu.FunctionalTests
                 DeployPayloadHelper(appManager, client =>
                 {
                     client.DefaultRequestHeaders.Add("User-Agent", "Bitbucket.org");
-                    return client.PostAsync("deploy", new FormUrlEncodedContent(post));
+                    return client.PostAsync("deploy?scmType=BitbucketGit", new FormUrlEncodedContent(post));
                 });
 
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
@@ -344,7 +344,7 @@ namespace Kudu.FunctionalTests
                     { "payload", bitbucketPayload }
                 };
 
-                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result.EnsureSuccessful();
+                client.PostAsync("deploy?scmType=BitbucketHg", new FormUrlEncodedContent(post)).Result.EnsureSuccessful();
 
 
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
@@ -378,7 +378,7 @@ namespace Kudu.FunctionalTests
                     { "payload", bitbucketPayload }
                 };
 
-                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result.EnsureSuccessful();
+                client.PostAsync("deploy?scmType=BitbucketHg", new FormUrlEncodedContent(post)).Result.EnsureSuccessful();
 
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                 Assert.Equal(1, results.Count);

@@ -1,51 +1,79 @@
 ﻿using System;
+using System.Globalization;
 using System.IO;
 using System.IO.Abstractions;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment
 {
     public class DeploymentStatusManager : IDeploymentStatusManager
     {
+        public static readonly TimeSpan LockTimeout = TimeSpan.FromSeconds(60); 
+
         private readonly IEnvironment _environment;
+        private readonly IOperationLock _statusLock;
         private readonly IFileSystem _fileSystem;
         private readonly string _activeFile;
 
         public DeploymentStatusManager(IEnvironment environment,
-                                       IFileSystem fileSystem)
+                                       IFileSystem fileSystem,
+                                       IOperationLock statusLock)
         {
             _environment = environment;
             _fileSystem = fileSystem;
+            _statusLock = statusLock;
             _activeFile = Path.Combine(environment.DeploymentCachePath, Constants.ActiveDeploymentFile);
         }
 
         public IDeploymentStatusFile Create(string id)
         {
-            return DeploymentStatusFile.Create(id, _fileSystem, _environment);
+            return DeploymentStatusFile.Create(id, _fileSystem, _environment, _statusLock);
         }
 
         public IDeploymentStatusFile Open(string id)
         {
-            return DeploymentStatusFile.Open(id, _fileSystem, _environment);
+            return DeploymentStatusFile.Open(id, _fileSystem, _environment, _statusLock);
+        }
+
+        public void Delete(string id)
+        {
+            string path = Path.Combine(_environment.DeploymentCachePath, id);
+
+            _statusLock.LockOperation(() =>
+            {
+                if (_fileSystem.Directory.Exists(path))
+                {
+                    _fileSystem.Directory.Delete(path, recursive: true);
+                }
+            }, LockTimeout);
+        }
+
+        public IOperationLock Lock
+        {
+            get { return _statusLock; }
         }
 
         public string ActiveDeploymentId
         {
             get
             {
-                if (_fileSystem.File.Exists(_activeFile))
+                return _statusLock.LockOperation(() =>
                 {
-                    return OperationManager.Attempt<string>(() => _fileSystem.File.ReadAllText(_activeFile));
-                }
+                    if (_fileSystem.File.Exists(_activeFile))
+                    {
+                        return _fileSystem.File.ReadAllText(_activeFile);
+                    }
 
-                return null;
+                    return null;
+                }, LockTimeout);
             }
             set
             {
-                OperationManager.Attempt(() =>
+                _statusLock.LockOperation(() =>
                 {
                     _fileSystem.File.WriteAllText(_activeFile, value);
-                });
+                }, LockTimeout);
             }
         }
 
@@ -54,14 +82,17 @@ namespace Kudu.Core.Deployment
         {
             get
             {
-                if (_fileSystem.File.Exists(_activeFile))
+                return _statusLock.LockOperation(() =>
                 {
-                    return _fileSystem.File.GetLastWriteTimeUtc(_activeFile);
-                }
-                else
-                {
-                    return DateTime.MinValue;
-                }
+                    if (_fileSystem.File.Exists(_activeFile))
+                    {
+                        return _fileSystem.File.GetLastWriteTimeUtc(_activeFile);
+                    }
+                    else
+                    {
+                        return DateTime.MinValue;
+                    }
+                }, LockTimeout);
             }
         }
     }
