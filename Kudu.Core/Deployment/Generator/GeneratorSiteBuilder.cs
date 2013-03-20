@@ -73,18 +73,18 @@ namespace Kudu.Core.Deployment.Generator
                     var scriptGeneratorCommand = String.Format(ScriptGeneratorCommandFormat, RepositoryPath, ScriptGeneratorCommandArguments);
 
                     bool cacheUsed = UseCachedDeploymentScript(scriptGeneratorCommand, context);
-
                     if (!cacheUsed)
                     {
                         buildLogger.Log(Resources.Log_DeploymentScriptGeneratorCommand, scriptGeneratorCommand);
+
                         scriptGenerator.ExecuteWithProgressWriter(buildLogger, context.Tracer, scriptGeneratorCommand);
+
+                        CacheDeploymentScript(scriptGeneratorCommand, context);
                     }
                     else
                     {
                         buildLogger.Log(Resources.Log_DeploymentScriptGeneratorUsingCache, scriptGeneratorCommand);
                     }
-
-                    CacheDeploymentScript(scriptGeneratorCommand, context);
                 }
             }
             catch (Exception ex)
@@ -102,26 +102,25 @@ namespace Kudu.Core.Deployment.Generator
 
         private void CacheDeploymentScript(string scriptGeneratorCommand, DeploymentContext context)
         {
-            string nextDeploymentPath = Path.GetDirectoryName(context.NextManifestFilePath);
-            string cachedDeploymentScriptPath = Path.Combine(nextDeploymentPath, DeploymentScriptFileName);
+            string cachedDeploymentScriptPath = Path.Combine(Environment.DeploymentCachePath, DeploymentScriptFileName);
 
             try
             {
                 OperationManager.Attempt(() =>
                     File.Copy(Path.Combine(RepositoryPath, DeploymentScriptFileName), cachedDeploymentScriptPath, overwrite: true));
 
-                string cachedKeyFilePath = Path.Combine(nextDeploymentPath, DeploymentCommandCacheKeyFileName);
+                string cachedKeyFilePath = Path.Combine(Environment.DeploymentCachePath, DeploymentCommandCacheKeyFileName);
 
                 // Cache key contains the current kudu version and the command arguments for the deployment script generator
                 string[] cacheKeyFileContent = new string[] { KuduVersion.Value, scriptGeneratorCommand };
                 File.WriteAllLines(cachedKeyFilePath, cacheKeyFileContent);
 
-                context.Tracer.Trace("Saved cached version of the deployment script under: {0}", cachedDeploymentScriptPath);
+                context.Tracer.Trace("Saved cached version of the deployment script for command {0}", scriptGeneratorCommand);
             }
             catch (Exception ex)
             {
                 // Do not fail the deployment on failure to save to cache but log the failure
-                context.Tracer.Trace("Failed to save cached version of the deployment script under {0}, for command {1}", cachedDeploymentScriptPath, scriptGeneratorCommand);
+                context.Tracer.Trace("Failed to save cached version of the deployment script for command {0}", scriptGeneratorCommand);
                 context.Tracer.TraceError(ex);
             }
         }
@@ -134,9 +133,8 @@ namespace Kudu.Core.Deployment.Generator
                     return false;
                 }
 
-                string previousDeploymentPath = Path.GetDirectoryName(context.PreviousManifestFilePath);
-                string cacheKeyFilePath = Path.Combine(previousDeploymentPath, DeploymentCommandCacheKeyFileName);
-                string cachedDeploymentScriptPath = Path.Combine(previousDeploymentPath, DeploymentScriptFileName);
+                string cacheKeyFilePath = Path.Combine(Environment.DeploymentCachePath, DeploymentCommandCacheKeyFileName);
+                string cachedDeploymentScriptPath = Path.Combine(Environment.DeploymentCachePath, DeploymentScriptFileName);
 
                 try
                 {
@@ -165,7 +163,7 @@ namespace Kudu.Core.Deployment.Generator
                             OperationManager.Attempt(() =>
                                 File.Copy(cachedDeploymentScriptPath, Path.Combine(RepositoryPath, DeploymentScriptFileName), overwrite: true));
 
-                            context.Tracer.Trace("Using cached version of the deployment script from: {0}", cachedDeploymentScriptPath);
+                            context.Tracer.Trace("Using cached version of the deployment script for command: {0}", scriptGeneratorCommand);
 
                             return true;
                         }
@@ -176,7 +174,7 @@ namespace Kudu.Core.Deployment.Generator
                 catch (Exception ex)
                 {
                     // Do not fail the deployment on failure to use cache but log the failure
-                    context.Tracer.Trace("Failed to use cached version of the deployment script found under: {0}", cachedDeploymentScriptPath);
+                    context.Tracer.Trace("Failed to use cached version of the deployment script for command: {0}", scriptGeneratorCommand);
                     context.Tracer.TraceError(ex);
                     return false;
                 }
