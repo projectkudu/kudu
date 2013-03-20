@@ -36,7 +36,7 @@ namespace Kudu.Core.Deployment.Generator
                 var git = new GitExecutable(Environment.RepositoryPath, DeploymentSettings.GetCommandIdleTimeout());
                 string webConfigPath = Path.Combine(ProjectPath, "web.config");
 
-                if (!string.IsNullOrEmpty(HomePath))
+                if (!String.IsNullOrEmpty(HomePath))
                 {
                     git.SetHomePath(HomePath);
                 }

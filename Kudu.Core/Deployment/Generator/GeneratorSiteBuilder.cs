@@ -1,10 +1,10 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
-using System.Linq;
 
 namespace Kudu.Core.Deployment.Generator
 {
@@ -14,7 +14,7 @@ namespace Kudu.Core.Deployment.Generator
         private const string DeploymentScriptFileName = "deploy.cmd";
         private const string DeploymentCommandCacheKeyFileName = "deploymentCacheKey";
 
-        private static Lazy<string> KuduVersion = new Lazy<string>(() => typeof(GeneratorSiteBuilder).Assembly.GetName().Version.ToString());
+        private static readonly string KuduVersion = typeof(GeneratorSiteBuilder).Assembly.GetName().Version.ToString();
 
         protected GeneratorSiteBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string repositoryPath)
             : base(environment, settings, propertyProvider, repositoryPath)
@@ -112,7 +112,7 @@ namespace Kudu.Core.Deployment.Generator
                 string cachedKeyFilePath = Path.Combine(Environment.DeploymentCachePath, DeploymentCommandCacheKeyFileName);
 
                 // Cache key contains the current kudu version and the command arguments for the deployment script generator
-                string[] cacheKeyFileContent = new string[] { KuduVersion.Value, scriptGeneratorCommand };
+                string[] cacheKeyFileContent = new string[] { KuduVersion, scriptGeneratorCommand };
                 File.WriteAllLines(cachedKeyFilePath, cacheKeyFileContent);
 
                 context.Tracer.Trace("Saved cached version of the deployment script for command {0}", scriptGeneratorCommand);
@@ -140,7 +140,7 @@ namespace Kudu.Core.Deployment.Generator
                     string[] cacheKeyFileContent = File.ReadAllLines(cacheKeyFilePath).Where(line => !String.IsNullOrEmpty(line)).ToArray();
 
                     // Make sure the cache key file contains exacly 2 lines and the first one is the same as the current running kudu version
-                    if (cacheKeyFileContent.Length != 2 || cacheKeyFileContent[0] != KuduVersion.Value)
+                    if (cacheKeyFileContent.Length != 2 || cacheKeyFileContent[0] != KuduVersion)
                     {
                         return false;
                     }
