@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.Threading.Tasks;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
 
@@ -9,10 +10,11 @@ namespace Kudu.Services.ServiceHookHandlers
     {
         public abstract DeployAction TryParseDeploymentInfo(System.Web.HttpRequestBase request, Newtonsoft.Json.Linq.JObject payload, string targetBranch, out DeploymentInfo deploymentInfo);
 
-        public void Fetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch, ILogger logger)
+        public Task Fetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch, ILogger logger)
         {
             repository.ClearLock();
             repository.FetchWithoutConflict(deploymentInfo.RepositoryUrl, targetBranch);
+            return TaskHelpers.Completed();
         }
 
         protected static string GetDeployerFromUrl(string url)
