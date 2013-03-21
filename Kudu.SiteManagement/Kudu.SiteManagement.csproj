@@ -16,9 +16,7 @@
     <DefineConstants>TRACE;SITEMANAGEMENT</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.Web.Administration, Version=7.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\..\..\Windows\System32\inetsrv\Microsoft.Web.Administration.dll</HintPath>
-    </Reference>
+    <Reference Include="Microsoft.Web.Administration, Version=7.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.IO.Abstractions, Version=1.4.0.37, Culture=neutral, PublicKeyToken=d480b5b72fb413da, processorArchitecture=MSIL">
