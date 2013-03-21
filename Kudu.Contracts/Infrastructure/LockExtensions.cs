@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Kudu.Contracts.Infrastructure
 {
@@ -11,6 +12,14 @@ namespace Kudu.Contracts.Infrastructure
                                          Action operation,
                                          TimeSpan timeout)
         {
+            Task<bool> result = TryLockOperationAsync(lockObj, () => { operation(); return TaskHelpers.Completed(); }, timeout);
+            return result.Result;
+        }
+
+        public static async Task<bool> TryLockOperationAsync(this IOperationLock lockObj,
+                                               Func<Task> operation,
+                                               TimeSpan timeout)
+        {
             var interval = TimeSpan.FromMilliseconds(250);
             var elapsed = TimeSpan.Zero;
 
@@ -21,13 +30,13 @@ namespace Kudu.Contracts.Infrastructure
                     return false;
                 }
 
-                Thread.Sleep(interval);
+                await Task.Delay(interval);
                 elapsed += interval;
             }
 
             try
             {
-                operation();
+                await operation();
                 return true;
             }
             finally

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Kudu.Contracts.Dropbox
 {
@@ -25,6 +24,6 @@ namespace Kudu.Contracts.Dropbox
 
         public string Email { get; set; }
 
-        public IEnumerable<DropboxDeltaInfo> Deltas { get; set; }
+        public IList<DropboxDeltaInfo> Deltas { get; set; }
     }
 }

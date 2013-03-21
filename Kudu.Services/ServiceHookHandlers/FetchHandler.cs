@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
+using System.Threading.Tasks;
 using System.Web;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
@@ -18,7 +19,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services
 {
-    public class FetchHandler : IHttpHandler
+    public class FetchHandler : HttpTaskAsyncHandler
     {
         private readonly IDeploymentManager _deploymentManager;
         private readonly IDeploymentSettingsManager _settings;
@@ -48,11 +49,6 @@ namespace Kudu.Services
             _repositoryFactory = repositoryFactory;
         }
 
-        public bool IsReusable
-        {
-            get { return false; }
-        }
-
         private string MarkerFilePath
         {
             get
@@ -61,7 +57,7 @@ namespace Kudu.Services
             }
         }
 
-        public void ProcessRequest(HttpContext context)
+        public override async Task ProcessRequestAsync(HttpContext context)
         {
             using (_tracer.Step("FetchHandler"))
             {
@@ -75,7 +71,7 @@ namespace Kudu.Services
                 context.Response.TrySkipIisCustomErrors = true;
 
                 DeploymentInfo deployInfo = null;
-                
+
                 // We are going to assume that the branch details are already set by the time it gets here. This is particularly important in the mercurial case, 
                 // since Settings hardcodes the default value for Branch to be "master". Consequently, Kudu will NoOp requests for Mercurial commits.
                 string targetBranch = _settings.GetBranch();
@@ -111,9 +107,9 @@ namespace Kudu.Services
                 }
 
                 _tracer.Trace("Attempting to fetch target branch {0}", targetBranch);
-                bool acquired = _deploymentLock.TryLockOperation(() =>
+                bool acquired = await _deploymentLock.TryLockOperationAsync(async () =>
                 {
-                    PerformDeployment(deployInfo);
+                    await PerformDeployment(deployInfo);
                 }, TimeSpan.Zero);
 
                 if (!acquired)
@@ -148,7 +144,7 @@ namespace Kudu.Services
             return FileSystemHelpers.DeleteFileSafe(MarkerFilePath);
         }
 
-        private void PerformDeployment(DeploymentInfo deploymentInfo)
+        private async Task PerformDeployment(DeploymentInfo deploymentInfo)
         {
             bool hasPendingDeployment;
 
@@ -181,7 +177,7 @@ namespace Kudu.Services
 
                         try
                         {
-                            deploymentInfo.Handler.Fetch(repository, deploymentInfo, targetBranch, innerLogger);
+                            await deploymentInfo.Handler.Fetch(repository, deploymentInfo, targetBranch, innerLogger);
                         }
                         catch (BranchNotFoundException)
                         {
