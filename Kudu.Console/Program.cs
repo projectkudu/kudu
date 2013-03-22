@@ -62,7 +62,9 @@ namespace Kudu.Console
             // Calculate the lock path
             string lockPath = Path.Combine(env.SiteRootPath, Constants.LockPath);
             string deploymentLockPath = Path.Combine(lockPath, Constants.DeploymentLockFile);
+            string statusLockPath = Path.Combine(lockPath, Constants.StatusLockFile);
             IOperationLock deploymentLock = new LockFile(traceFactory, deploymentLockPath);
+            IOperationLock statusLock = new LockFile(traceFactory, statusLockPath);
 
             IFileSystem fs = new FileSystem();
             IBuildPropertyProvider buildPropertyProvider = new BuildPropertyProvider();
@@ -76,7 +78,7 @@ namespace Kudu.Console
                                                           fs, 
                                                           traceFactory, 
                                                           settingsManager,
-                                                          new DeploymentStatusManager(env, fs),
+                                                          new DeploymentStatusManager(env, fs, statusLock),
                                                           deploymentLock,
                                                           GetLogger(env, level, logger));
 

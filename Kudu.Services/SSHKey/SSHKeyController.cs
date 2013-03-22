@@ -7,12 +7,14 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core.SSHKey;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 
 namespace Kudu.Services.SSHKey
 {
     public class SSHKeyController : ApiController
     {
         private const string KeyParameterName = "key";
+        private const int LockTimeoutSecs = 5;
 
         private readonly ITracer _tracer;
         private readonly ISSHKeyManager _sshKeyManager;
@@ -52,7 +54,8 @@ namespace Kudu.Services.SSHKey
 
             using (_tracer.Step("SSHKeyController.SetPrivateKey"))
             {
-                _sshKeyLock.LockOrWait(() =>
+                // This is not what we want
+                bool success = _sshKeyLock.TryLockOperation(() =>
                 {
                     try
                     {
@@ -66,7 +69,14 @@ namespace Kudu.Services.SSHKey
                     {
                         throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, ex));
                     }
-                }, TimeSpan.FromSeconds(5));
+                }, TimeSpan.FromSeconds(LockTimeoutSecs));
+
+                if (!success)
+                {
+                    throw new HttpResponseException(Request.CreateErrorResponse(
+                        HttpStatusCode.Conflict,
+                        String.Format(CultureInfo.CurrentCulture, Resources.Error_OperationLockTimeout, LockTimeoutSecs)));
+                }
             }
         }
 
@@ -76,7 +86,7 @@ namespace Kudu.Services.SSHKey
             using (_tracer.Step("SSHKeyController.GetPublicKey"))
             {
                 string key = null;
-                _sshKeyLock.LockOrWait(() =>
+                bool success = _sshKeyLock.TryLockOperation(() =>
                 {
                     try
                     {
@@ -86,7 +96,15 @@ namespace Kudu.Services.SSHKey
                     {
                         throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, ex));
                     }
-                }, TimeSpan.FromSeconds(5));
+                }, TimeSpan.FromSeconds(LockTimeoutSecs));
+
+                if (!success)
+                {
+                    throw new HttpResponseException(Request.CreateErrorResponse(
+                        HttpStatusCode.Conflict,
+                        String.Format(CultureInfo.CurrentCulture, Resources.Error_OperationLockTimeout, LockTimeoutSecs)));
+                }
+
                 return key;
             }
         }

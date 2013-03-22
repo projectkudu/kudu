@@ -128,14 +128,14 @@ namespace Kudu.Core.Infrastructure
             // as there's a race condition when setting up the notification
             while (IsHeld)
             {
-                Thread.Sleep(interval);
-                elapsed += interval;
-
                 if (elapsed >= timeout)
                 {
                     timedout = true;
                     break;
                 }
+
+                Thread.Sleep(interval);
+                elapsed += interval;
             }
 
             TraceLock("Waiting complete");
