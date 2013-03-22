@@ -8,13 +8,13 @@
         internal const string Branch = "branch";
 
         public const string DeploymentBranch = "deployment_branch";
-        public const string BuildArgs = "build_args";
-        public const string TraceLevel = "trace_level";
-        public const string CommandIdleTimeout = "command_idle_timeout";
-        public const string LogStreamTimeout = "logstream_timeout";
-        public const string SiteBuilderFactory = "site_builder_factory";
-        public const string GitUsername = "git.username";
-        public const string GitEmail = "git.email";
+        public const string BuildArgs = "SCM_BUILD_ARGS";
+        public const string TraceLevel = "SCM_TRACE_LEVEL";
+        public const string CommandIdleTimeout = "SCM_COMMAND_IDLE_TIMEOUT";
+        public const string LogStreamTimeout = "SCM_LOGSTREAM_TIMEOUT";
+        public const string SiteBuilderFactory = "SCM_SITE_BUILDER_FACTORY";
+        public const string GitUsername = "SCM_GIT_USERNAME";
+        public const string GitEmail = "SCM_GIT_EMAIL";
         public const string ScmType = "ScmType";
     }
 }
