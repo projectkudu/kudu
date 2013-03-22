@@ -200,32 +200,32 @@ namespace Kudu.Core.SourceControl.Git
             ITracer tracer = _tracerFactory.GetTracer();
             try
             {
+                TryDeleteRemote(remoteAlias, tracer);
                 _gitExe.Execute(tracer, @"remote add -t {2} {0} ""{1}""", remoteAlias, remote, branchName);
 
-                // If it's the initial fetch, we do a shallow fetch so that we omit all the history, keeping
-                // our repo small. In subsequent fetches, we can't use the --depth flag as that would further
-                // trim the repo, preventing us from redeploying old deployments
-                if (this.IsEmpty())
+                string fetchCommand = @"fetch {0} --progress";
+                if (this.IsEmpty() && _settings.AllowShallowClones())
                 {
-                    try
-                    {
-                        _gitExe.Execute(tracer, @"fetch {0} --progress --depth 1", remoteAlias);
-                    }
-                    catch (CommandLineException exception)
-                    {
-                        // Check if the fetch failed because the remote repository hasn't been set up as yet.
-                        string emptyRepoErrorMessage = "fatal: Couldn't find remote ref";
-                        string exceptionMessage = exception.Message ?? String.Empty;
-                        if (exception.ExitCode == 128 && exceptionMessage.StartsWith(emptyRepoErrorMessage, StringComparison.OrdinalIgnoreCase))
-                        {
-                            throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_UnableToFetch, branchName), exception);
-                        }
-                        throw;
-                    }
+                    // If it's the initial fetch and the setting allows it, we do a shallow fetch so that we omit all the history, keeping
+                    // our repo small. In subsequent fetches, we can't use the --depth flag as that would further
+                    // trim the repo, preventing us from redeploying old deployments
+                    fetchCommand += " --depth 1";
                 }
-                else
+
+                try
                 {
-                    _gitExe.Execute(tracer, @"fetch {0} --progress", remoteAlias);
+                    _gitExe.Execute(tracer, fetchCommand, remoteAlias);
+                }
+                catch (CommandLineException exception)
+                {
+                    // Check if the fetch failed because the remote repository hasn't been set up as yet.
+                    string emptyRepoErrorMessage = "fatal: Couldn't find remote ref";
+                    string exceptionMessage = exception.Message ?? String.Empty;
+                    if (exception.ExitCode == 128 && exceptionMessage.StartsWith(emptyRepoErrorMessage, StringComparison.OrdinalIgnoreCase))
+                    {
+                        throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_UnableToFetch, branchName), exception);
+                    }
+                    throw;
                 }
 
                 Update(branchName);
@@ -233,12 +233,17 @@ namespace Kudu.Core.SourceControl.Git
             }
             finally
             {
-                try
-                {
-                    _gitExe.Execute(tracer, @"remote rm {0}", remoteAlias);
-                }
-                catch { }
+                TryDeleteRemote(remoteAlias, tracer);
             }
+        }
+
+        private void TryDeleteRemote(string remoteAlias, ITracer tracer)
+        {
+            try
+            {
+                _gitExe.Execute(tracer, @"remote rm {0}", remoteAlias);
+            }
+            catch { }
         }
 
         public void Update(string id)
