@@ -270,6 +270,12 @@ namespace Kudu.Services.Performance
                     _enableTrace = true;
                     FileSystemHelpers.EnsureDirectory(Path.Combine(_logPath, paths[1]));
                 }
+
+                bool isHttp = String.Equals(paths[1], "http", StringComparison.OrdinalIgnoreCase);
+                if (isHttp)
+                {
+                    FileSystemHelpers.EnsureDirectory(Path.Combine(_logPath, paths[1]));
+                }
             }
 
             return Path.Combine(paths);
