@@ -222,30 +222,29 @@ echo $i > pushinfo
             {
                 TryUpdateRemote(remote, remoteAlias, branchName, tracer);
 
-                // If it's the initial fetch, we do a shallow fetch so that we omit all the history, keeping
-                // our repo small. In subsequent fetches, we can't use the --depth flag as that would further
-                // trim the repo, preventing us from redeploying old deployments
-                if (this.IsEmpty())
+                string fetchCommand = @"fetch {0} --progress";
+                if (this.IsEmpty() && _settings.AllowShallowClones())
                 {
-                    try
-                    {
-                        _gitExe.Execute(tracer, @"fetch {0} --progress --depth 1", remoteAlias);
-                    }
-                    catch (CommandLineException exception)
-                    {
-                        // Check if the fetch failed because the remote repository hasn't been set up as yet.
-                        string emptyRepoErrorMessage = "fatal: Couldn't find remote ref";
-                        string exceptionMessage = exception.Message ?? String.Empty;
-                        if (exception.ExitCode == 128 && exceptionMessage.StartsWith(emptyRepoErrorMessage, StringComparison.OrdinalIgnoreCase))
-                        {
-                            throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_UnableToFetch, branchName), exception);
-                        }
-                        throw;
-                    }
+                    // If it's the initial fetch and the setting allows it, we do a shallow fetch so that we omit all the history, keeping
+                    // our repo small. In subsequent fetches, we can't use the --depth flag as that would further
+                    // trim the repo, preventing us from redeploying old deployments
+                    fetchCommand += " --depth 1";
                 }
-                else
+
+                try
                 {
-                    _gitExe.Execute(tracer, @"fetch {0} --progress", remoteAlias);
+                    _gitExe.Execute(tracer, fetchCommand, remoteAlias);
+                }
+                catch (CommandLineException exception)
+                {
+                    // Check if the fetch failed because the remote repository hasn't been set up as yet.
+                    string emptyRepoErrorMessage = "fatal: Couldn't find remote ref";
+                    string exceptionMessage = exception.Message ?? String.Empty;
+                    if (exceptionMessage.StartsWith(emptyRepoErrorMessage, StringComparison.OrdinalIgnoreCase))
+                    {
+                        throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_UnableToFetch, branchName), exception);
+                    }
+                    throw;
                 }
 
                 Update(branchName);
@@ -441,18 +440,23 @@ echo $i > pushinfo
             return String.IsNullOrWhiteSpace(_gitExe.Execute("branch").Item1);
         }
 
+        private void AddRemote(string remote, string remoteAlias, string branchName, ITracer tracer)
+        {
+            _gitExe.Execute(tracer, @"remote add -t {2} {0} ""{1}""", remoteAlias, remote, branchName);
+        }
+
         private void TryUpdateRemote(string remote, string remoteAlias, string branchName, ITracer tracer)
         {
             try
             {
                 // Try adding a remote. In the event this fails, it might be the result of the previous remote deletion failing. 
                 // In this case, delete and re-add it.
-                _gitExe.Execute(tracer, @"remote add -t {2} {0} ""{1}""", remoteAlias, remote, branchName);
+                AddRemote(remote, remoteAlias, branchName, tracer);
             }
             catch
             {
                 TryDeleteRemote(remoteAlias, tracer);
-                _gitExe.Execute(tracer, @"remote add -t {2} {0} ""{1}""", remoteAlias, remote, branchName);
+                AddRemote(remote, remoteAlias, branchName, tracer);
             }
         }
 

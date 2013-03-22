@@ -16,5 +16,6 @@
         public const string GitUsername = "SCM_GIT_USERNAME";
         public const string GitEmail = "SCM_GIT_EMAIL";
         public const string ScmType = "ScmType";
+        public const string UseShallowClone = "SCM_USE_SHALLOW_CLONE";
     }
 }

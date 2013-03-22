@@ -292,8 +292,9 @@ namespace Kudu.FunctionalTests
 
                 var resultsTask = appManager.DeploymentManager.GetResultsAsync();
                 var sshKeyTask = appManager.SSHKeyManager.GetPublicKey();
+                var traceTask = KuduAssert.VerifyTraceAsync(appManager, "arguments=\"fetch external --progress\"");
 
-                await Task.WhenAll(resultsTask, sshKeyTask);
+                await Task.WhenAll(resultsTask, sshKeyTask, traceTask);
 
                 var results = resultsTask.Result.ToList();
                 Assert.Equal(1, results.Count);
@@ -306,17 +307,19 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void PullApiTestBitbucketFormat()
+        public async Task PullApiTestBitbucketFormat()
         {
             string bitbucketPayload = @"{ ""canon_url"": ""https://github.com"", ""commits"": [ { ""author"": ""davidebbo"", ""branch"": ""master"", ""files"": [ { ""file"": ""Mvc3Application/Views/Home/Index.cshtml"", ""type"": ""modified"" } ], ""message"": ""Blah2\n"", ""node"": ""e550351c5188"", ""parents"": [ ""297fcc65308c"" ], ""raw_author"": ""davidebbo <david.ebbo@microsoft.com>"", ""raw_node"": ""ea1c6d7ea669c816dd5f86206f7b47b228fdcacd"", ""revision"": null, ""size"": -1, ""timestamp"": ""2012-09-20 03:11:20"", ""utctimestamp"": ""2012-09-20 01:11:20+00:00"" } ], ""repository"": { ""absolute_url"": ""/KuduApps/SimpleWebApplication"", ""fork"": false, ""is_private"": false, ""name"": ""Mvc3Application"", ""owner"": ""davidebbo"", ""scm"": ""git"", ""slug"": ""mvc3application"", ""website"": """" }, ""user"": ""davidebbo"" }";
             string appName = "PullApiTestBitbucketFormat";
 
-            ApplicationManager.Run(appName, appManager =>
+            await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 var post = new Dictionary<string, string>
                 {
                     { "payload", bitbucketPayload }
                 };
+
+                appManager.SettingsManager.SetValue(SettingsKeys.UseShallowClone, "true").Wait();
 
                 DeployPayloadHelper(appManager, client =>
                 {
@@ -324,12 +327,16 @@ namespace Kudu.FunctionalTests
                     return client.PostAsync("deploy?scmType=BitbucketGit", new FormUrlEncodedContent(post));
                 });
 
-                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                var resultsTask = appManager.DeploymentManager.GetResultsAsync();
+                var traceTask = KuduAssert.VerifyTraceAsync(appManager, "arguments=\"fetch external --progress --depth 1\"");
+                var verifyUrl = KuduAssert.VerifyUrlAsync(appManager.SiteUrl, "Welcome to ASP.NET!");
+
+                await Task.WhenAll(resultsTask, traceTask, verifyUrl);
+
+                var results = resultsTask.Result.ToList();
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
                 Assert.True(results[0].Deployer.StartsWith("Bitbucket"));
-
-                KuduAssert.VerifyUrl(appManager.SiteUrl, "Welcome to ASP.NET!");
             });
         }
 

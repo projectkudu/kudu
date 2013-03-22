@@ -2,6 +2,7 @@
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Threading.Tasks;
 using Kudu.Client.Infrastructure;
 
 namespace Kudu.Client.Editor
@@ -13,19 +14,25 @@ namespace Kudu.Client.Editor
         {
         }
 
+        public async Task<string> ReadAllTextAsync(string path)
+        {
+            using (HttpResponseMessage response = await Client.GetAsync(path))
+            {
+                if (response.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return null;
+                }
+
+                return await response
+                                .EnsureSuccessful()
+                                .Content
+                                .ReadAsStringAsync();
+            }
+        }
+
         public string ReadAllText(string path)
         {
-            HttpResponseMessage response = Client.GetAsync(path).Result;
-            if (response.StatusCode == HttpStatusCode.NotFound)
-            {
-                return null;
-            }
-
-            return response
-                .EnsureSuccessful()
-                .Content
-                .ReadAsStringAsync()
-                .Result;
+            return ReadAllTextAsync(path).Result;
         }
 
         public bool Exists(string path)

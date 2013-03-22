@@ -63,26 +63,48 @@ namespace Kudu.FunctionalTests.Infrastructure
 
         public static void VerifyUrl(string url, string content = null, HttpStatusCode statusCode = HttpStatusCode.OK, string httpMethod = "GET", string jsonPayload = "")
         {
-            var client = new HttpClient();
-            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Kudu-Test", "1.0"));
-            HttpResponseMessage response = null;
-            if (String.Equals(httpMethod, "POST"))
-            {
-                response = client.PostAsync(url, new StringContent(jsonPayload, Encoding.UTF8, "application/json")).Result;                
-            }
-            else
-            {
-                response = client.GetAsync(url).Result;
-            }
-            string responseBody = response.Content.ReadAsStringAsync().Result;
+            VerifyUrlAsync(url, content, statusCode, httpMethod, jsonPayload).Wait();
+        }
 
-            Assert.True(statusCode == response.StatusCode,
-                String.Format("For {0}, Expected Status Code: {1} Actual Status Code: {2}. \r\n Response: {3}", url, statusCode, response.StatusCode, responseBody));
-
-            if (content != null)
+        public static async Task VerifyUrlAsync(string url, string content = null, HttpStatusCode statusCode = HttpStatusCode.OK, string httpMethod = "GET", string jsonPayload = "")
+        {
+            using (var client = new HttpClient())
             {
-                Assert.Contains(content, responseBody, StringComparison.Ordinal);
+                client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Kudu-Test", "1.0"));
+                HttpResponseMessage response = null;
+                if (String.Equals(httpMethod, "POST"))
+                {
+                    response = await client.PostAsync(url, new StringContent(jsonPayload, Encoding.UTF8, "application/json"));
+                }
+                else
+                {
+                    response = await client.GetAsync(url);
+                }
+                string responseBody = await response.Content.ReadAsStringAsync();
+
+                Assert.True(statusCode == response.StatusCode,
+                    String.Format("For {0}, Expected Status Code: {1} Actual Status Code: {2}. \r\n Response: {3}", url, statusCode, response.StatusCode, responseBody));
+
+                if (content != null)
+                {
+                    Assert.Contains(content, responseBody, StringComparison.Ordinal);
+                }
             }
+        }
+
+        /// <summary>
+        /// Verifies if a text appears in the trace file.
+        /// </summary>
+        public static async Task VerifyTraceAsync(ApplicationManager manager, string text)
+        {
+            string trace = await manager.VfsManager.ReadAllTextAsync("LogFiles/Git/trace/trace.xml");
+            
+            // Since our trace files accumulates traces from multiple tests, we'll identify the start of the current test by looking for the call to delete the web root
+            // and then look for the text starting at that point
+            int index = trace.LastIndexOf("/scm/?deleteWebRoot=1", StringComparison.OrdinalIgnoreCase);
+            index = Math.Max(0, index);
+
+            Assert.Contains(text, trace.Substring(index));
         }
 
         public static void VerifyLogOutput(ApplicationManager appManager, string id, params string[] expectedMatches)

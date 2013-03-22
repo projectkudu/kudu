@@ -130,6 +130,46 @@ namespace Kudu.Core.Test
             settings.Verify();
         }
 
+        [Theory]
+        [InlineData("1")]
+        [InlineData("true")]
+        [InlineData("TRUE")]
+        public void AllowShallowClonesReturnsTrueForTrueLikeValues(string value)
+        {
+            // Arrange
+            var settings = new Mock<ISettings>(MockBehavior.Strict);
+            settings.Setup(s => s.GetValue("deployment", "SCM_USE_SHALLOW_CLONE")).Returns(value);
+            var deploymentSettings = new DeploymentSettingsManager(settings.Object, new Dictionary<string, string>());
+
+            // Act
+            bool result = deploymentSettings.AllowShallowClones();
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("2")]
+        [InlineData("12")]
+        [InlineData("true-NOT!")]
+        [InlineData("false")]
+        [InlineData("enabled")]
+        public void AllowShallowClonesReturnsFalseForNonTrueLikeValues(string value)
+        {
+            // Arrange
+            var settings = new Mock<ISettings>(MockBehavior.Strict);
+            settings.Setup(s => s.GetValue("deployment", "SCM_USE_SHALLOW_CLONE")).Returns(value);
+            var deploymentSettings = new DeploymentSettingsManager(settings.Object, new Dictionary<string, string>());
+
+            // Act
+            bool result = deploymentSettings.AllowShallowClones();
+
+            // Assert
+            Assert.False(result);
+        }
+
         class CommandIdleTimeoutData : SettingsData
         {
             protected override object DefaultValue
