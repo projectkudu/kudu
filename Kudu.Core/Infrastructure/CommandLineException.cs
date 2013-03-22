@@ -1,25 +1,12 @@
 ﻿using System;
-using System.Runtime.Serialization;
+using System.Globalization;
 
 namespace Kudu.Core.Infrastructure
 {
-    [Serializable]
     public class CommandLineException : Exception
     {
-        public CommandLineException() { }
-
-        public CommandLineException(string message)
-            : base(message)
-        {
-        }
-
-        public CommandLineException(string message, Exception inner)
-            : base(message, inner)
-        {
-        }
-
-        protected CommandLineException(SerializationInfo info, StreamingContext context)
-            : base(info, context)
+        public CommandLineException(string executablePath, string arguments, string message)
+            : base(String.Format(CultureInfo.InvariantCulture, "{0}{1}{2} {3}", message, System.Environment.NewLine, executablePath, arguments))
         {
         }
 
@@ -29,7 +16,7 @@ namespace Kudu.Core.Infrastructure
 
         public override string ToString()
         {
-            return String.Format("ExitCode: {0}, Output: {1}, Error: {2}, {3}", 
+            return String.Format(CultureInfo.InvariantCulture, "ExitCode: {0}, Output: {1}, Error: {2}, {3}", 
                 this.ExitCode,
                 this.Output,
                 this.Error,

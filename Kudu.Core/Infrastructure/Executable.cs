@@ -124,7 +124,7 @@ namespace Kudu.Core.Infrastructure
                 {
                     string text = String.IsNullOrEmpty(error) ? output : error;
 
-                    throw new CommandLineException(text)
+                    throw new CommandLineException(Path, process.StartInfo.Arguments, text)
                     {
                         ExitCode = process.ExitCode,
                         Output = output,
@@ -215,7 +215,7 @@ namespace Kudu.Core.Infrastructure
 
                 if (process.ExitCode != 0)
                 {
-                    throw new CommandLineException(error)
+                    throw new CommandLineException(Path, process.StartInfo.Arguments, error)
                     {
                         ExitCode = process.ExitCode,
                         Error = error
@@ -357,7 +357,7 @@ namespace Kudu.Core.Infrastructure
                 {
                     string text = String.IsNullOrEmpty(error) ? output : error;
 
-                    throw new CommandLineException(text)
+                    throw new CommandLineException(Path, process.StartInfo.Arguments, text)
                     {
                         ExitCode = process.ExitCode,
                         Output = output,
@@ -446,7 +446,7 @@ namespace Kudu.Core.Infrastructure
                     {
                         process.Kill(true, _tracer);
                         string message = String.Format(Resources.Error_ProcessAborted, _processName);
-                        throw new CommandLineException(message)
+                        throw new CommandLineException(process.StartInfo.FileName, process.StartInfo.Arguments, message)
                         {
                             ExitCode = -1,
                             Output = message,
