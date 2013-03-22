@@ -200,7 +200,7 @@ namespace Kudu.Core.SourceControl.Git
             ITracer tracer = _tracerFactory.GetTracer();
             try
             {
-                _gitExe.Execute(tracer, @"remote add -t {2} {0} ""{1}""", remoteAlias, remote, branchName);
+                TryUpdateRemote(remote, remoteAlias, branchName, tracer);
 
                 // If it's the initial fetch, we do a shallow fetch so that we omit all the history, keeping
                 // our repo small. In subsequent fetches, we can't use the --depth flag as that would further
@@ -233,11 +233,7 @@ namespace Kudu.Core.SourceControl.Git
             }
             finally
             {
-                try
-                {
-                    _gitExe.Execute(tracer, @"remote rm {0}", remoteAlias);
-                }
-                catch { }
+                TryDeleteRemote(remoteAlias, tracer);
             }
         }
 
@@ -423,6 +419,30 @@ namespace Kudu.Core.SourceControl.Git
         {
             // REVIEW: Is this reliable
             return String.IsNullOrWhiteSpace(_gitExe.Execute("branch").Item1);
+        }
+
+        private void TryUpdateRemote(string remote, string remoteAlias, string branchName, ITracer tracer)
+        {
+            try
+            {
+                // Try adding a remote. In the event this fails, it might be the result of the previous remote deletion failing. 
+                // In this case, delete and re-add it.
+                _gitExe.Execute(tracer, @"remote add -t {2} {0} ""{1}""", remoteAlias, remote, branchName);
+            }
+            catch
+            {
+                TryDeleteRemote(remoteAlias, tracer);
+                _gitExe.Execute(tracer, @"remote add -t {2} {0} ""{1}""", remoteAlias, remote, branchName);
+            }
+        }
+
+        private void TryDeleteRemote(string remoteAlias, ITracer tracer)
+        {
+            try
+            {
+                _gitExe.Execute(tracer, @"remote rm {0}", remoteAlias);
+            }
+            catch { }
         }
 
         private IEnumerable<ChangeSet> Log(string command = "log --all", params object[] args)
