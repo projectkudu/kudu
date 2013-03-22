@@ -261,6 +261,7 @@ namespace Kudu.Core.SourceControl
                 {
                     throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_UnableToFetch, branchName), exception);
                 }
+                throw;
             }
             _hgExecutable.Execute(tracer, "update --clean {0}", branchName);
         }
