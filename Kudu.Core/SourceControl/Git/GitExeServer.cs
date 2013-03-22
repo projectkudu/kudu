@@ -49,14 +49,6 @@ namespace Kudu.Core.SourceControl.Git
             _gitExe.EnvironmentVariables[KnownEnvironment.DEPLOYER] = "";
         }
 
-        private string PostReceiveHookPath
-        {
-            get
-            {
-                return Path.Combine(_gitExe.WorkingDirectory, ".git", "hooks", "post-receive");
-            }
-        }
-
         public void AdvertiseReceivePack(Stream output)
         {
             Initialize();
@@ -132,41 +124,12 @@ namespace Kudu.Core.SourceControl.Git
                     // Allow getting pushes even though we're not bare
                     _gitExe.Execute(tracer, "config receive.denyCurrentBranch ignore");
                 }
-
-                using (tracer.Step("Setup post receive hook"))
-                {
-                    FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(PostReceiveHookPath));
-
-                    string content = @"#!/bin/sh
-read i
-echo $i > pushinfo
-" + KnownEnvironment.KUDUCOMMAND + "\n";
-
-                    File.WriteAllText(PostReceiveHookPath, content);
-                }
             }
         }
 
         public void SetDeployer(string deployer)
         {
             _gitExe.EnvironmentVariables[KnownEnvironment.DEPLOYER] = deployer;
-        }
-
-        /// <summary>
-        /// Environment variables used for the post receive hook
-        /// </summary>
-        private static class KnownEnvironment
-        {
-            public const string EXEPATH = "KUDU_EXE";
-            public const string APPPATH = "KUDU_APPPATH";
-            public const string MSBUILD = "KUDU_MSBUILD";
-            public const string DEPLOYER = "KUDU_DEPLOYER";
-
-            // Command to launch the post receive hook
-            public static string KUDUCOMMAND = "\"$" + EXEPATH + "\" " +
-                                               "\"$" + APPPATH + "\" " +
-                                               "\"$" + MSBUILD + "\" " +
-                                               "\"$" + DEPLOYER + "\"";
         }
     }
 }
