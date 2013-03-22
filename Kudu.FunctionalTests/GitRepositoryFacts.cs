@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Kudu.FunctionalTests
 {
-    class GitRepositoryFacts
+    public class GitRepositoryFacts
     {
         [Fact]
         public void FetchWithoutConflictOnEmptyRepoReturnsFalse()

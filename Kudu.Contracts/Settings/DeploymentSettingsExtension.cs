@@ -92,11 +92,24 @@ namespace Kudu.Contracts.Settings
             settings.SetValue(SettingsKeys.DeploymentBranch, branchName);
         }
 
+        /// <summary>
+        /// Determines if Kudu should perform shallow clones (--depth 1) when attempting to perform the first fetch from a remote Git repository. 
+        /// </summary>
+        public static bool AllowShallowClones(this IDeploymentSettingsManager settings)
+        {
+            return IsSet(settings.GetValue(SettingsKeys.UseShallowClone));
+        }
+
         // allow /deploy endpoint
         public static bool IsScmEnabled(this IDeploymentSettingsManager settings)
         {
             string scmType = settings.GetValue(SettingsKeys.ScmType);
             return scmType != ScmType.None && scmType != ScmType.Tfs;
+        }
+
+        private static bool IsSet(string value)
+        {
+            return value != null && (value == "1" || value.Equals(Boolean.TrueString, StringComparison.OrdinalIgnoreCase));
         }
     }
 }
