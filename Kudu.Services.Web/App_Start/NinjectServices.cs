@@ -196,6 +196,7 @@ namespace Kudu.Services.Web.App_Start
             var jsonFormatter = new JsonMediaTypeFormatter();
             GlobalConfiguration.Configuration.Formatters.Add(jsonFormatter);
             GlobalConfiguration.Configuration.DependencyResolver = new NinjectWebApiDependencyResolver(kernel);
+            GlobalConfiguration.Configuration.Filters.Add(new TraceExceptionFilterAttribute());
 
             // Git Service
             routes.MapHttpRoute("git-info-refs-root", "info/refs", new { controller = "InfoRefs", action = "Execute" });
