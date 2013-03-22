@@ -86,6 +86,7 @@
     <Compile Include="Settings\DeploymentSettingsManager.cs" />
     <Compile Include="Settings\JsonSettings.cs" />
     <Compile Include="SourceControl\DeploymentRepository.cs" />
+    <Compile Include="SourceControl\Git\KnownEnvironment.cs" />
     <Compile Include="SourceControl\RepositoryExtensions.cs" />
     <Compile Include="SourceControl\RepositoryFactory.cs" />
     <Compile Include="SSHKey\PEMEncoder.cs" />

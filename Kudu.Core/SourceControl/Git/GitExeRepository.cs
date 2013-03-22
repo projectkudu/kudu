@@ -59,6 +59,14 @@ namespace Kudu.Core.SourceControl.Git
             }
         }
 
+        private string PostReceiveHookPath
+        {
+            get
+            {
+                return Path.Combine(_gitExe.WorkingDirectory, ".git", "hooks", "post-receive");
+            }
+        }
+
         public void Initialize()
         {
             var profiler = _tracerFactory.GetTracer();
@@ -71,6 +79,18 @@ namespace Kudu.Core.SourceControl.Git
                 _gitExe.Execute(profiler, @"config user.name ""{0}""", _settings.GetGitUsername());
 
                 _gitExe.Execute(profiler, @"config user.email ""{0}""", _settings.GetGitEmail());
+
+                using (profiler.Step("Setup post receive hook"))
+                {
+                    FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(PostReceiveHookPath));
+
+                    string content = @"#!/bin/sh
+read i
+echo $i > pushinfo
+" + KnownEnvironment.KUDUCOMMAND + "\n";
+
+                    File.WriteAllText(PostReceiveHookPath, content);
+                }
             }
         }
 
