@@ -257,7 +257,7 @@ namespace Kudu.Core.SourceControl
             {
                 string emptyRepoErrorMessage = String.Format(CultureInfo.InvariantCulture, "abort: unknown branch '{0}'!", branchName);
                 string exceptionMessage = (exception.Message ?? String.Empty).TrimEnd();
-                if (exception.ExitCode == 255 && emptyRepoErrorMessage.Equals(exceptionMessage, StringComparison.OrdinalIgnoreCase))
+                if (exception.ExitCode == 255 && exceptionMessage.StartsWith(emptyRepoErrorMessage, StringComparison.OrdinalIgnoreCase))
                 {
                     throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_UnableToFetch, branchName), exception);
                 }
