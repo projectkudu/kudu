@@ -1,7 +1,9 @@
 ﻿using System;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -67,7 +69,13 @@ namespace Kudu.FunctionalTests
             string fileAddress = dirAddressWithTerminatingSlash + file;
             string fileAddressWithTerminatingSlash = fileAddress + _segmentDelimiter;
 
-            string deploymentFileAddress = DeploymentClient != null ? DeploymentBaseAddress + _segmentDelimiter + dir + _segmentDelimiter + file : null;
+            string deploymentFileAddress = null;
+            string customDeploymentFileAddress = null;
+            if (DeploymentClient != null)
+            {
+                deploymentFileAddress = string.Format("{0}{1}site{1}wwwroot{1}{2}{1}{3}", DeploymentBaseAddress, _segmentDelimiter, dir, file);
+                customDeploymentFileAddress = string.Format("{0}{1}site{1}wwwroot{1}test{1}{2}{1}{3}", DeploymentBaseAddress, _segmentDelimiter, dir, file);
+            }
 
             HttpResponseMessage response;
 
@@ -315,6 +323,30 @@ namespace Kudu.FunctionalTests
                     updatedEtag = response.Headers.ETag;
                 }
 
+                // Check that custom deployment script works
+                using (HttpRequestMessage update7 = new HttpRequestMessage())
+                {
+                    // Upload custom deployment scripts
+                    updatedEtag = await UploadCustomDeploymentScripts();
+
+                    // Upload content and validate that it gets deployed
+                    update7.Method = HttpMethod.Put;
+                    update7.RequestUri = new Uri(fileAddress);
+                    update7.Headers.IfMatch.Add(updatedEtag);
+                    update7.Content = CreateUploadContent(_fileContent2);
+
+                    response = await Client.SendAsync(update7);
+                    await VerifyDeployment(customDeploymentFileAddress, HttpStatusCode.OK, _fileContent2);
+
+                    Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+                    Assert.NotNull(response.Headers.ETag);
+                    Assert.NotEqual(originalEtag, response.Headers.ETag);
+                    updatedEtag = response.Headers.ETag;
+
+                    // Remove custom deployment scripts
+                    updatedEtag = await RemoveCustomDeploymentScripts();
+                }
+
                 // Check that delete with invalid etag fails
                 using (HttpRequestMessage deleteRequest = new HttpRequestMessage())
                 {
@@ -323,7 +355,7 @@ namespace Kudu.FunctionalTests
                     deleteRequest.Headers.IfMatch.Add(new EntityTagHeaderValue("\"invalidetag\""));
 
                     response = await Client.SendAsync(deleteRequest);
-                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent1);
+                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent2);
 
                     Assert.Equal(HttpStatusCode.PreconditionFailed, response.StatusCode);
                     Assert.Equal(updatedEtag, response.Headers.ETag);
@@ -337,7 +369,7 @@ namespace Kudu.FunctionalTests
                     deleteRequest.Headers.IfMatch.Add(originalEtag);
 
                     response = await Client.SendAsync(deleteRequest);
-                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent1);
+                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent2);
 
                     Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
                 }
@@ -456,6 +488,61 @@ namespace Kudu.FunctionalTests
                 // Check that we can delete an empty directory
                 response = await Client.DeleteAsync(dirAddress);
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            }
+        }
+
+        private async Task<EntityTagHeaderValue> UploadCustomDeploymentScripts()
+        {
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            string prefix = typeof(VfsControllerBaseTest).Namespace;
+
+            // Upload a custom deploy script sitting outside the repository
+            using (Stream resourceStream = assembly.GetManifestResourceStream(prefix + ".Vfs.CustomDeploy.cmd"))
+            {
+                Uri customDeployment = new Uri(DeploymentBaseAddress + _segmentDelimiter + "/site/customdeploy.cmd");
+                HttpRequestMessage request = new HttpRequestMessage();
+                request.Method = HttpMethod.Put;
+                request.RequestUri = customDeployment;
+                request.Headers.IfMatch.Add(EntityTagHeaderValue.Any);
+                request.Content = new StreamContent(resourceStream);
+                HttpResponseMessage response = await DeploymentClient.SendAsync(request);
+                Assert.True(response.IsSuccessStatusCode);
+            }
+
+            // Upload a custom .deployment file referencing the custom deploy script
+            using (Stream resourceStream = assembly.GetManifestResourceStream(prefix + ".Vfs.DotDeployment.txt"))
+            {
+                StreamContent content = new StreamContent(resourceStream);
+                Uri dotDeployment = new Uri(BaseAddress + _segmentDelimiter + ".deployment");
+                HttpResponseMessage response = await Client.PutAsync(dotDeployment, content);
+                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+                return response.Headers.ETag;
+            }
+        }
+
+        private async Task<EntityTagHeaderValue> RemoveCustomDeploymentScripts()
+        {
+            // Delete custom deploy script sitting outside the repository
+            using (HttpRequestMessage request = new HttpRequestMessage())
+            {
+                Uri customDeployment = new Uri(DeploymentBaseAddress + _segmentDelimiter + "/site/customdeploy.cmd");
+                request.Method = HttpMethod.Delete;
+                request.RequestUri = customDeployment;
+                request.Headers.IfMatch.Add(EntityTagHeaderValue.Any);
+                HttpResponseMessage response = await DeploymentClient.SendAsync(request);
+                Assert.True(response.IsSuccessStatusCode);
+            }
+
+            // Delete custom .deployment file referencing the custom deploy script
+            using (HttpRequestMessage request = new HttpRequestMessage())
+            {
+                Uri dotDeployment = new Uri(BaseAddress + _segmentDelimiter + ".deployment");
+                request.Method = HttpMethod.Delete;
+                request.RequestUri = dotDeployment;
+                request.Headers.IfMatch.Add(EntityTagHeaderValue.Any);
+                HttpResponseMessage response = await Client.SendAsync(request);
+                Assert.True(response.IsSuccessStatusCode);
+                return response.Headers.ETag;
             }
         }
 
