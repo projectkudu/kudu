@@ -45,12 +45,11 @@ namespace Kudu.Services.SourceControl
             new int[] { 16, 32, 96, 80, 32, 928, 1488, 3936 },
             new int[] { 0, 16, 32, 160, 224, 944, 288, 3888 },
             new int[] { 16, 0, 32, 192, 496, 672, 1280, 3952 },
-            new int[] { 0, 48, 80, 0, 176, 688, 804, 3904 },
             new int[] { 0, 32, 96, 48, 272, 176, 512, 3872 },
             new int[] { 16, 48, 80, 32, 448, 416, 1056, 3968 },
             new int[] { 0, 16, 0, 112, 128, 432, 1920, 3920 },
             new int[] { 16, 16, 0, 144, 400, 160, 848, 3984 },
-            new int[] { 0, 0, 48, 224, 80, 160, 1696, 3920 },
+            new int[] { 0, 48, 80, 0, 176, 688, 804, 3904 },
         };
 
         private readonly IDeploymentManager _deploymentManager;
@@ -315,16 +314,13 @@ namespace Kudu.Services.SourceControl
                             successFileResponse = Request.CreateResponse(HttpStatusCode.Created);
                         }
 
-                        // If repository was updated then trigger a deployment to live site
-                        if (!updateBranchIsUpToDate)
+                        // Deploy changes
+                        DeployResult result = DeployChanges();
+                        if (result != null && result.Status != DeployStatus.Success)
                         {
-                            DeployResult result = DeployChanges();
-                            if (result != null && result.Status != DeployStatus.Success)
-                            {
-                                HttpResponseMessage deploymentErrorResponse =
-                                    Request.CreateErrorResponse(HttpStatusCode.InternalServerError, RS.Format(Resources.VfsScmController_DeploymentError, result.StatusText));
-                                return deploymentErrorResponse;
-                            }
+                            HttpResponseMessage deploymentErrorResponse =
+                                Request.CreateErrorResponse(HttpStatusCode.InternalServerError, RS.Format(Resources.VfsScmController_DeploymentError, result.StatusText));
+                            return deploymentErrorResponse;
                         }
 
                         // Set updated etag for the file
@@ -409,7 +405,9 @@ namespace Kudu.Services.SourceControl
                 return deploymentErrorResponse;
             }
 
-            // Delete succeeded
+            // Delete succeeded. We add the etag as is has been updated as a result of the delete
+            // This allows a client to keep track of the latest etag even for deletes.
+            response.Headers.ETag = CreateEtag(_repository.CurrentId);
             return response;
         }
 
