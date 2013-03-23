@@ -42,6 +42,9 @@
     <Compile Include="..\Kudu.Core\Infrastructure\DisposableAction.cs">
       <Link>DisposableAction.cs</Link>
     </Compile>
+    <Compile Include="..\Kudu.Core\Infrastructure\IExecutable.cs">
+      <Link>IExecutable.cs</Link>
+    </Compile>
     <Compile Include="..\Kudu.Core\Infrastructure\Executable.cs">
       <Link>Executable.cs</Link>
     </Compile>

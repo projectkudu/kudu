@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Test;
 using Kudu.Core.Tracing;
@@ -112,6 +113,24 @@ namespace Kudu.FunctionalTests
             }
         }
 
+        [Fact]
+        public void FetchWithoutConflictMessageMatchesEmbeddedErrorString()
+        {
+            // This test verifies if the embedded string matches the exception message mercurial throws.
+            using (TestRepository testRepository = CreateRecoveryRepo())
+            {
+                // Arrange
+                var executable = HgRepository.GetHgExecutable(testRepository.PhysicalPath, TimeSpan.FromMinutes(1));
+
+                // Act
+                var ex = Assert.Throws<CommandLineException>(() => executable.Execute(NullTracer.Instance, "pull https://bitbucket.org/kudutest/hellomercurial"));
+
+                // Assert
+                Assert.Contains("abort: abandoned transaction found - run hg recover!", ex.Message);
+                
+            }
+        }
+
         private static TestRepository GetRepository(string source = null)
         {
             source = source ?? Path.GetRandomFileName();
@@ -120,6 +139,32 @@ namespace Kudu.FunctionalTests
 
             PathHelper.EnsureDirectory(repoPath);
             return new TestRepository(repoPath, obliterateOnDispose: true);
+        }
+
+        private static TestRepository CreateRecoveryRepo()
+        {
+            var repository = GetRepository();
+            string hgPath = Path.Combine(repository.PhysicalPath, ".hg");
+
+            WriteManifestFile(@"Kudu.FunctionalTests.Test_Files.Hg.requires", Path.Combine(hgPath, "requires"));
+            WriteManifestFile(@"Kudu.FunctionalTests.Test_Files.Hg.journal", Path.Combine(hgPath, "store", "journal"));
+
+            return repository;
+        }
+
+        private static void WriteManifestFile(string manifestResourceName, string path)
+        {
+            string dir = Path.GetDirectoryName(path);
+            if (!Directory.Exists(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+            var assembly =  typeof(HgRepositoryFacts).Assembly;
+            using (Stream outStream = File.OpenWrite(path),
+                          inStream  = assembly.GetManifestResourceStream(manifestResourceName))
+            {
+                inStream.CopyTo(outStream);
+            }
         }
     }
 }

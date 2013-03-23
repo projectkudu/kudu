@@ -9,11 +9,13 @@ using System.Text;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Tracing;
 using Kudu.Core.Deployment;
+#else
+using Kudu.SiteManagement;
 #endif
 
 namespace Kudu.Core.Infrastructure
 {
-    internal class Executable
+    internal class Executable : Kudu.Core.Infrastructure.IExecutable
     {
         [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
         public Executable(string path, string workingDirectory, TimeSpan idleTimeout)

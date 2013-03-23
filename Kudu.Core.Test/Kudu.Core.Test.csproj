@@ -54,6 +54,7 @@
     <Compile Include="AuthUtilityFacts.cs" />
     <Compile Include="Deployment\DeploymentManagerFacts.cs" />
     <Compile Include="Deployment\WapBuilderFacts.cs" />
+    <Compile Include="HgRepositoryFacts.cs" />
     <Compile Include="Infrastructure\MsBuildSiteBuilderFacts.cs" />
     <Compile Include="Infrastructure\DisposableActionFacts.cs" />
     <Compile Include="Infrastructure\ExecutableExtensionFacts.cs" />

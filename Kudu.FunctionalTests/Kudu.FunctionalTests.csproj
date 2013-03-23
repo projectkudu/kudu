@@ -84,6 +84,8 @@
     </None>
     <EmbeddedResource Include="Vfs\CustomDeploy.cmd" />
     <EmbeddedResource Include="Vfs\DotDeployment.txt" />
+    <EmbeddedResource Include="Test-Files\Hg\journal" />
+    <EmbeddedResource Include="Test-Files\Hg\requires" />
     <None Include="ZippedRepositories\Mvc3Application.zip" />
     <None Include="ZippedRepositories\Mvc3Application_NoSolution.zip" />
   </ItemGroup>
