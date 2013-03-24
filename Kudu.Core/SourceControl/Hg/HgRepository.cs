@@ -16,7 +16,7 @@ namespace Kudu.Core.SourceControl
     {
         private const string PATH_KEY = "Path";
 
-        private readonly Executable _hgExecutable;
+        private readonly IExecutable _hgExecutable;
         private readonly ITraceFactory _traceFactory;
         private readonly string _homePath;
         private Repository _hgRepository;
@@ -27,8 +27,13 @@ namespace Kudu.Core.SourceControl
         }
 
         public HgRepository(string path, string homePath, IDeploymentSettingsManager settings, ITraceFactory traceFactory)
+            : this(new Executable(Client.ClientPath, path, settings.GetCommandIdleTimeout()), homePath, traceFactory)
         {
-            _hgExecutable = new Executable(Client.ClientPath, path, settings.GetCommandIdleTimeout());
+        }
+
+        internal HgRepository(IExecutable executable, string homePath, ITraceFactory traceFactory)
+        {
+            _hgExecutable = executable;
             _homePath = homePath;
             _traceFactory = traceFactory;
         }
@@ -249,17 +254,28 @@ namespace Kudu.Core.SourceControl
 
             ITracer tracer = _traceFactory.GetTracer();
 
+            bool retried = false;
+
+            fetch:
             try
             {
-                _hgExecutable.Execute(tracer, "pull {0} --branch {1}", remote, branchName, PathUtility.ResolveSSHPath());
+                _hgExecutable.Execute(tracer, "pull {0} --branch {1} --noninteractive", remote, branchName, PathUtility.ResolveSSHPath());
             }
             catch (CommandLineException exception)
             {
                 string emptyRepoErrorMessage = String.Format(CultureInfo.InvariantCulture, "abort: unknown branch '{0}'!", branchName);
+                string recoverRequiredMessage = "abort: abandoned transaction found - run hg recover!";
+
                 string exceptionMessage = (exception.Message ?? String.Empty).TrimEnd();
                 if (exception.ExitCode == 255 && exceptionMessage.StartsWith(emptyRepoErrorMessage, StringComparison.OrdinalIgnoreCase))
                 {
                     throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_UnableToFetch, branchName), exception);
+                }
+                else if (!retried && exception.ExitCode == 255 && exceptionMessage.IndexOf(recoverRequiredMessage, StringComparison.OrdinalIgnoreCase) != -1)
+                {
+                    retried = true;
+                    _hgExecutable.Execute(tracer, "recover");
+                    goto fetch;
                 }
                 throw;
             }
