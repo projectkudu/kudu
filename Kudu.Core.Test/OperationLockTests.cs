@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
-using Moq;
 using Xunit;
 using Xunit.Extensions;
 
@@ -17,7 +16,7 @@ namespace Kudu.Core.Test
         public void LockBasicTest(bool isHeld, int expected)
         {
             // Mock
-            var lockObj = MockOperationLock(isHeld);
+            var lockObj = new MockOperationLock(isHeld);
             var actual = 0;
 
             // Test
@@ -32,7 +31,7 @@ namespace Kudu.Core.Test
         public void LockMultipleTest()
         {
             // Mock
-            var lockObj = MockOperationLock();
+            var lockObj = new MockOperationLock();
             var actual = 0;
             var threads = 5;
             var tasks = new List<Task>();
@@ -65,7 +64,7 @@ namespace Kudu.Core.Test
         public void LockTimeoutTest()
         {
             // Mock
-            var lockObj = MockOperationLock();
+            var lockObj = new MockOperationLock();
             var actual = 0;
             var threads = 2;
             var tasks = new List<Task<bool>>();
@@ -98,7 +97,7 @@ namespace Kudu.Core.Test
         public void LockBasicWithResultTest(bool isHeld, int expected)
         {
             // Mock
-            var lockObj = MockOperationLock(isHeld);
+            var lockObj = new MockOperationLock(isHeld);
             var actual = 0;
 
             if (isHeld)
@@ -116,24 +115,36 @@ namespace Kudu.Core.Test
             Assert.Equal(expected, actual);
         }
 
-        public IOperationLock MockOperationLock(bool isHeld = false)
+        public class MockOperationLock : IOperationLock
         {
-            var locked = isHeld ? 1 : 0;
-            var lockObj = new Mock<IOperationLock>();
+            private int _locked;
 
-            lockObj.Setup(l => l.IsHeld)
-                   .Returns(() => locked != 0);
-            lockObj.Setup(l => l.Lock())
-                   .Returns(() => 0 == Interlocked.CompareExchange(ref locked, 1, 0));
-            lockObj.Setup(l => l.Release())
-                   .Returns(() =>
-                    {
-                        Assert.Equal(1, locked);
-                        locked = 0;
-                        return true;
-                    });
+            public MockOperationLock(bool isHeld = false)
+            {
+                _locked = isHeld ? 1 : 0;
+            }
 
-            return lockObj.Object;
+            public bool IsHeld
+            {
+                get { return _locked != 0; }
+            }
+
+            public bool Lock()
+            {
+                return Interlocked.CompareExchange(ref _locked, 1, 0) == 0;
+            }
+
+            public bool Release()
+            {
+                Assert.Equal(1, _locked);
+                _locked = 0;
+                return true;
+            }
+
+            public bool Wait(TimeSpan timeOut)
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }
