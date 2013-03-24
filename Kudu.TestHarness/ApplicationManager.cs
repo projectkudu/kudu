@@ -180,7 +180,7 @@ namespace Kudu.TestHarness
                 WriteIndexHtml(appManager);
             }
 
-            const string siteBuilderFactory = "site_builder_factory";
+            const string siteBuilderFactory = "SCM_SITE_BUILDER_FACTORY";
             if (KuduUtils.TestOriginalSiteBuilderFactory)
             {
                 appManager.SettingsManager.SetValue(siteBuilderFactory, "original").Wait();
