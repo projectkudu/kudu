@@ -154,14 +154,13 @@ namespace Kudu.Core.Deployment
             IDisposable deployStep = null;
             ILogger innerLogger = null;
             string targetBranch = null;
-            var deploymentRepository = new DeploymentRepository(repository);
 
             // If we don't get a changeset, find out what branch we should be deploying and get the commit ID from it
             if (changeSet == null)
             {
                 targetBranch = _settings.GetBranch();
 
-                changeSet = deploymentRepository.GetChangeSet(targetBranch);
+                changeSet = repository.GetChangeSet(targetBranch);
             }
 
             string id = changeSet.Id;
@@ -186,15 +185,16 @@ namespace Kudu.Core.Deployment
                     using (var writer = new ProgressWriter())
                     {
                         // Update to the the specific changeset
-                        deploymentRepository.Update(id);
+                        repository.ClearLock();
+                        repository.Update(id);
                     }
                 }
 
                 using (tracer.Step("Updating submodules"))
                 {
                     innerLogger = logger.Log(Resources.Log_UpdatingSubmodules);
-                    
-                    deploymentRepository.UpdateSubmodules();
+
+                    repository.UpdateSubmodules();
                 }
 
                 if (clean)
@@ -203,7 +203,7 @@ namespace Kudu.Core.Deployment
 
                     innerLogger = logger.Log(Resources.Log_CleaningRepository, repository.RepositoryType);
 
-                    deploymentRepository.Clean();
+                    repository.Clean();
                 }
 
                 // set to null as Build() below takes over logging
