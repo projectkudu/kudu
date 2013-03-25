@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Globalization;
 using System.Security.Cryptography;
 
 namespace Kudu.Core.SSHKey
@@ -13,7 +12,9 @@ namespace Kudu.Core.SSHKey
         /// <summary>
         /// Get a SSH key in PEM encoded format
         /// </summary>
-        internal static string GetString(RSAParameters param)
+        /// <param name="rsa">rsa public key</param>
+        /// <returns>SSH encoding string</returns>
+        public static string GetString(RSAParameters param)
         {
             int length = sshHeader.Length + 4 + param.Exponent.Length + 4 + param.Modulus.Length;
             if ((param.Exponent[0] & 0x80) != 0)
@@ -29,12 +30,12 @@ namespace Kudu.Core.SSHKey
             int offset = 0;
             byte[] bytes = new byte[length];
             Array.Copy(sshHeader, 0, bytes, 0, sshHeader.Length);
-            offset += sshHeader.Length +
-                      SshEncodeBuffer(param.Exponent, bytes, offset) +
-                      SshEncodeBuffer(param.Modulus, bytes, offset);
+            offset += sshHeader.Length;
+            offset += SshEncodeBuffer(param.Exponent, bytes, offset);
+            offset += SshEncodeBuffer(param.Modulus, bytes, offset);
 
             Debug.Assert(offset == bytes.Length, "length mush match");
-            return String.Format(CultureInfo.InvariantCulture, "{0} {1}", SSHPrefix, Convert.ToBase64String(bytes, 0, offset));
+            return string.Format("{0} {1}", SSHPrefix, Convert.ToBase64String(bytes, 0, offset));
         }
 
         private static int SshEncodeBuffer(byte[] input, byte[] encoded, int offset)

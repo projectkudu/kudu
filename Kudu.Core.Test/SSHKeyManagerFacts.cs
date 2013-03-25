@@ -171,8 +171,12 @@ namespace Kudu.Core.SSHKey.Test
             string keyOnDisk = null;
             var fileBase = new Mock<FileBase>(MockBehavior.Strict);
             fileBase.Setup(s => s.WriteAllText(sshPath + "\\id_rsa.pub", It.IsAny<string>()))
-                   .Callback((string name, string value) => { keyOnDisk = value; }).Verifiable();
-            fileBase.Setup(s => s.WriteAllText(sshPath + "\\id_rsa", It.IsAny<string>())).Verifiable();
+                   .Callback((string name, string value) => { keyOnDisk = value; })
+                   .Verifiable();
+            fileBase.Setup(s => s.WriteAllText(sshPath + "\\id_rsa", It.IsAny<string>()))
+                    .Verifiable();
+            fileBase.Setup(s => s.WriteAllText(sshPath + @"\config", "HOST *\r\n  StrictHostKeyChecking no"))
+                    .Verifiable();
 
             var fileSystem = new Mock<IFileSystem>(MockBehavior.Strict);
             fileSystem.SetupGet(f => f.File).Returns(fileBase.Object);
@@ -194,15 +198,15 @@ namespace Kudu.Core.SSHKey.Test
         public void GetSSHEncodedStringEncodesPublicKey()
         {
             // Arrange
-            var privateKey = new RSAParameters
+            var publicKey = new RSAParameters
             {
                 Exponent = new byte[] { 1, 0, 1 },
-                Modulus = Convert.FromBase64String("xqVRF/QIx/bAGbzkY+pVPAQ/BP1WPZ6hbWUZTryLS3OJ+rLJmWTe27xhoo/suTEUr6yOaUVeSxTg00Lvwsi1qsd1pMcZtjsB8CHkhdnsp7WxqGYIy0il9DdCMy6mv8Z80Jf0t8wahop6Klb5wRKJpxjIyIEIgxUwWuMpBuSwuH0="),
+                Modulus = Convert.FromBase64String("u91Db5QwvFrtAFVuuDZQP/a4fZ12uVYYz2P8zit/A1u+o0d2ueN7orMcrkzmulfchYG64aBdjMN8JxKIeJTIbwXIq/LVLcQKq/BrPvu6HLhFFT7ZnrmHMbytHNnfJzG6MxjgIe0k2CHPsrCre20TPPZ+c3coW6PK3MHaS/cG80y1cS+FFU2HWKSlonRKgG4COcaRX8wdM1OLU2pph9tREG5frFLpqGwpdn9z4z8zEL/Wwgf26dsBSbFnU52DYjltjJKnV+B2eKiUd1u5izFFjuDyrLaRUZORF1sW4EO3jXlDpJdKtdQGqzJd6x0xCdUce0117sSAcHOilGi+n00y+Q==")
             };
-            string expected = "ssh-rsa AAAAgQDGpVEX9AjH9sAZvORj6lU8BD8E/VY9nqFtZRlOvItLc4n6ssmZZN7bvGGij+y5MRSvrI5pRV5LFODTQu/CyLWqx3Wkxxm2OwHwIeSF2eyntbGoZgjLSKX0N0IzLqa/xnzQl/S3zBqGinoqVvnBEomnGMjIgQiDFTBa4ykG5LC4fQAAAAAAAAAAAAAAAAAAAAAAAA==";
+            string expected = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC73UNvlDC8Wu0AVW64NlA/9rh9nXa5VhjPY/zOK38DW76jR3a543uisxyuTOa6V9yFgbrhoF2Mw3wnEoh4lMhvBcir8tUtxAqr8Gs++7ocuEUVPtmeuYcxvK0c2d8nMbozGOAh7STYIc+ysKt7bRM89n5zdyhbo8rcwdpL9wbzTLVxL4UVTYdYpKWidEqAbgI5xpFfzB0zU4tTammH21EQbl+sUumobCl2f3PjPzMQv9bCB/bp2wFJsWdTnYNiOW2MkqdX4HZ4qJR3W7mLMUWO4PKstpFRk5EXWxbgQ7eNeUOkl0q11AarMl3rHTEJ1Rx7TXXuxIBwc6KUaL6fTTL5";
 
             // Act
-            string output = SSHEncoding.GetString(privateKey);
+            string output = SSHEncoding.GetString(publicKey);
 
             // Assert
             Assert.Equal(expected, output);

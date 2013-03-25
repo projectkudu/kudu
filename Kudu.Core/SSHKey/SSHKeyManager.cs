@@ -95,6 +95,8 @@ namespace Kudu.Core.SSHKey
                 _fileSystem.File.WriteAllText(_id_rsa, privateKey);
                 _fileSystem.File.WriteAllText(_id_rsaPub, publicKey);
 
+                _fileSystem.File.WriteAllText(_config, ConfigContent);
+
                 return publicKey;
             }
             finally
