@@ -75,6 +75,7 @@ namespace Kudu.Services
             if (!repository.IsEmpty())
             {
                 // git checkout --force <branch>
+                repository.ClearLock();
                 repository.Update(branch);
             }
 
@@ -113,6 +114,7 @@ namespace Kudu.Services
                 _status.Open(deploymentInfo.TargetChangeset.Id).UpdateProgress(String.Format(CultureInfo.CurrentCulture, Resources.Dropbox_Committing, _successCount));
 
                 // Commit anyway even partial change
+                repository.ClearLock();
                 changeSet = repository.Commit(message, String.Format("{0} <{1}>", info.UserName, info.Email));
             }
 
