@@ -67,7 +67,7 @@ if (!existsSync(wwwroot) || !existsSync(repo) || (tempDir && !existsSync(tempDir
     throw new Error('Usage: node.exe selectNodeVersion.js <path_to_repo> <path_to_wwwroot> [path_to_temp]');
 
 // If the web.config file does not exit in the repo, use a default one that is specific for node on IIS in Azure
-createIisNodeWebConfigIfNeeded(repo);
+createIisNodeWebConfigIfNeeded(wwwroot);
 
 // If the iinode.yml file does not exit in the repo but exists in wwwroot, remove it from wwwroot 
 // to prevent side-effects of previous deployments
