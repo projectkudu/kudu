@@ -415,7 +415,7 @@ namespace Kudu.Services.SourceControl
         {
             int index = Interlocked.Increment(ref _delaySetIndex);
             int[] delaySet = _delaySets[index % _delaySets.Length];
-            for (int cnt = 0; cnt < delaySet.Length; cnt++)
+            for (int cnt = 0; cnt <= delaySet.Length; cnt++)
             {
                 if (_operationLock.Lock())
                 {
@@ -424,10 +424,15 @@ namespace Kudu.Services.SourceControl
                 }
 
                 // We didn't get a lock and so delay exponentially before trying again
-                await Task.Delay(delaySet[cnt]);
+                if (cnt < delaySet.Length)
+                {
+                    await Task.Delay(delaySet[cnt]);
+                }
             }
 
             // If we have gone through our delays and still can't get a lock then we give up and return 503
+            Tracer.TraceError(String.Format("TryGetLock could not get a lock for {0} request on {1} after {2} exponential backoff attempts. Giving up.", 
+                Request.Method, Request.RequestUri.AbsoluteUri, delaySet.Length));
             HttpResponseMessage busyResponse = Request.CreateErrorResponse(HttpStatusCode.ServiceUnavailable, Resources.VfsController_Busy);
             busyResponse.Headers.RetryAfter = new RetryConditionHeaderValue(_retryAfter);
             return busyResponse;
