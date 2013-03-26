@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
@@ -6,8 +8,6 @@ using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.SSHKey;
 using Newtonsoft.Json.Linq;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 
 namespace Kudu.Services.SSHKey
 {
@@ -80,7 +80,6 @@ namespace Kudu.Services.SSHKey
             }
         }
 
-        [HttpPost]
         public string GetPublicKey(bool forceCreate = false)
         {
             using (_tracer.Step("SSHKeyController.GetPublicKey"))
@@ -90,7 +89,7 @@ namespace Kudu.Services.SSHKey
                 {
                     try
                     {
-                        key = _sshKeyManager.GetOrCreateKey(forceCreate);
+                        key = forceCreate ? _sshKeyManager.CreateKey() : _sshKeyManager.GetKey();
                     }
                     catch (InvalidOperationException ex)
                     {

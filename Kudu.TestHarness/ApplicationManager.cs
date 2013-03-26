@@ -151,12 +151,25 @@ namespace Kudu.TestHarness
         private static bool TestFailureOccurred = false;
         public static void Run(string testName, Action<ApplicationManager> action)
         {
-            // If StopAfterFirstTestFailure is set, don't do anything after the first failure
-            if (KuduUtils.StopAfterFirstTestFailure && TestFailureOccurred) return;
+            Func<ApplicationManager, Task> asyncAction = (appManager) =>
+            {
+                action(appManager);
+                return TaskHelpers.Completed();
+            };
+
+            RunAsync(testName, asyncAction).Wait();
+        }
+
+        public static async Task RunAsync(string testName, Func<ApplicationManager, Task> action)
+        {
+            if (KuduUtils.StopAfterFirstTestFailure && TestFailureOccurred)
+            {
+                return;
+            }
 
             try
             {
-                RunNoCatch(testName, action);
+                await RunNoCatch(testName, action);
             }
             catch
             {
@@ -165,7 +178,7 @@ namespace Kudu.TestHarness
             }
         }
 
-        public static void RunNoCatch(string testName, Action<ApplicationManager> action)
+        public static async Task RunNoCatch(string testName, Func<ApplicationManager, Task> action)
         {
             TestTracer.Trace("Running test - {0}", testName);
 
@@ -195,7 +208,7 @@ namespace Kudu.TestHarness
             {
                 using (StartLogStream(appManager))
                 {
-                    action(appManager);
+                    await action(appManager);
                 }
 
                 KuduUtils.DownloadDump(appManager.ServiceUrl, dumpPath);

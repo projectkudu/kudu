@@ -23,12 +23,9 @@ namespace Kudu.Client.SSHKey
             return Client.PutAsync(String.Empty, param);
         }
 
-        public async Task<string> GetPublicKey(string key)
+        public Task<string> GetPublicKey()
         {
-            var param = new KeyValuePair<string, string>("key", key);
-            string publicKey = await Client.PostJsonAsync<KeyValuePair<string, string>, string>(String.Empty, param);
-
-            return publicKey;
+            return Client.GetJsonAsync<string>("");
         }
     }
 }

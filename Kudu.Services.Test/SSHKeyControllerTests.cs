@@ -15,7 +15,7 @@ namespace Kudu.Services.Test
             // Arrange
             var sshKeyManager = new Mock<ISSHKeyManager>(MockBehavior.Strict);
             string expected = "public-key";
-            sshKeyManager.Setup(s => s.GetOrCreateKey(It.Is<bool>(v => !v))).Returns(expected).Verifiable();
+            sshKeyManager.Setup(s => s.GetKey()).Returns(expected).Verifiable();
             var tracer = Mock.Of<ITracer>();
             var operationLock = new Mock<IOperationLock>();
             operationLock.Setup(l => l.Lock()).Returns(true);
@@ -30,12 +30,12 @@ namespace Kudu.Services.Test
         }
 
         [Fact]
-        public void GetPublicKeyForcesRecreateIfParameterIsSet()
+        public void CreatePublicKeyForcesRecreateIfParameterIsSet()
         {
             // Arrange
             var sshKeyManager = new Mock<ISSHKeyManager>(MockBehavior.Strict);
             string expected = "public-key";
-            sshKeyManager.Setup(s => s.GetOrCreateKey(It.Is<bool>(v => v))).Returns(expected).Verifiable();
+            sshKeyManager.Setup(s => s.CreateKey()).Returns(expected).Verifiable();
             var tracer = Mock.Of<ITracer>();
             var operationLock = new Mock<IOperationLock>();
             operationLock.Setup(l => l.Lock()).Returns(true);

@@ -73,6 +73,7 @@
     <Compile Include="PathUtilityFacts.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PurgeDeploymentsTests.cs" />
+    <Compile Include="RepositoryFactoryFacts.cs" />
     <Compile Include="SSHKeyManagerFacts.cs" />
   </ItemGroup>
   <ItemGroup>

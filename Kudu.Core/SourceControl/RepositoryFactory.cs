@@ -7,6 +7,7 @@ using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
+using Kudu.Core.SSHKey;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.SourceControl
@@ -17,18 +18,20 @@ namespace Kudu.Core.SourceControl
         private readonly IEnvironment _environment;
         private readonly ITraceFactory _traceFactory;
         private readonly IDeploymentSettingsManager _settings;
+        private readonly ISSHKeyManager _sshKeyManager;
 
-        public RepositoryFactory(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory)
+        public RepositoryFactory(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, ISSHKeyManager sshKeyManager)
         {
             _environment = environment;
             _settings = settings;
             _traceFactory = traceFactory;
+            _sshKeyManager = sshKeyManager;
         }
 
         /// <summary>
         /// Hieruistically guesses if there's a Mercurial repository at the repositoryPath
         /// </summary>
-        private bool IsHgRepository
+        public virtual bool IsHgRepository
         {
             get
             {
@@ -38,18 +41,19 @@ namespace Kudu.Core.SourceControl
             }
         }
 
-        private bool IsGitRepository
+        public virtual bool IsGitRepository
         {
             get
             {
                 string gitRepoFiles = Path.Combine(_environment.RepositoryPath, ".git");
                 return Directory.Exists(gitRepoFiles) &&
-                       Directory.GetFiles(gitRepoFiles).Length > 0;
+                       Directory.EnumerateFiles(gitRepoFiles).Any();
             }
         }
 
         public IRepository EnsureRepository(RepositoryType repositoryType)
         {
+            IRepository repository;
             if (repositoryType == RepositoryType.Mercurial)
             {
                 if (IsGitRepository)
@@ -57,12 +61,7 @@ namespace Kudu.Core.SourceControl
                     throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_MismatchRepository, repositoryType, RepositoryType.Git, _environment.RepositoryPath));
                 }
                 FileSystemHelpers.EnsureDirectory(_environment.RepositoryPath);
-                var hgRepository = new HgRepository(_environment.RepositoryPath, _environment.SiteRootPath, _settings, _traceFactory);
-                if (!hgRepository.Exists)
-                {
-                    hgRepository.Initialize();
-                }
-                return hgRepository;
+                repository = new HgRepository(_environment.RepositoryPath, _environment.SiteRootPath, _settings, _traceFactory);
             }
             else 
             {
@@ -70,13 +69,16 @@ namespace Kudu.Core.SourceControl
                 {
                     throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_MismatchRepository, repositoryType, RepositoryType.Mercurial, _environment.RepositoryPath));
                 }
-                var gitRepository = new GitExeRepository(_environment.RepositoryPath, _environment.SiteRootPath, _settings, _traceFactory);
-                if (!gitRepository.Exists)
-                {
-                    gitRepository.Initialize();
-                }
-                return gitRepository;
+                repository = new GitExeRepository(_environment.RepositoryPath, _environment.SiteRootPath, _settings, _traceFactory);
             }
+
+            if (!repository.Exists)
+            {
+                repository.Initialize();
+                // Attempt to create a key pair when creating a repository. This would allow for fetching SSH-based repository urls to work.
+                _sshKeyManager.GetKey();
+            }
+            return repository;
         }
 
         public IRepository GetRepository()
