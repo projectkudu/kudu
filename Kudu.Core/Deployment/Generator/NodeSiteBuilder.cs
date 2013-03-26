@@ -16,37 +16,7 @@ namespace Kudu.Core.Deployment.Generator
 
         public override Task Build(DeploymentContext context)
         {
-            try
-            {
-                return base.Build(context);
-            }
-            finally
-            {
-                // Since the node deployment script generates a web.config file (if not already there) on the repository,
-                // In order to clean up the repository after ourselves we remove this file (it should already be copied to wwwroot)
-                // If it's not part of the repository by using "git clean" command.
-                SafeCleanWebConfig(context);
-            }
-        }
-
-        private void SafeCleanWebConfig(DeploymentContext context)
-        {
-            try
-            {
-                var git = new GitExecutable(Environment.RepositoryPath, DeploymentSettings.GetCommandIdleTimeout());
-                string webConfigPath = Path.Combine(ProjectPath, "web.config");
-
-                if (!String.IsNullOrEmpty(HomePath))
-                {
-                    git.SetHomePath(HomePath);
-                }
-
-                git.Execute("clean -f " + webConfigPath);
-            }
-            catch (Exception ex)
-            {
-                context.Tracer.TraceError(ex);
-            }
+            return base.Build(context);
         }
     }
 }
