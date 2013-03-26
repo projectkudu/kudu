@@ -26,7 +26,7 @@ var createIisNodeWebConfigIfNeeded = function (sitePath) {
     webConfigContent =
         webConfigContent.replace(/{NodeStartFile}/g, nodeStartFilePath);
 
-    fs.writeFileSync(webConfig, webConfigContent, 'utf8');
+    fs.writeFileSync(webConfigPath, webConfigContent, 'utf8');
   }
 }
 
