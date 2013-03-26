@@ -18,13 +18,13 @@ var createIisNodeWebConfigIfNeeded = function (sitePath) {
   if (!fs.existsSync(webConfigPath)) {
     var nodeStartFilePath = getNodeStartFile(sitePath);
     if (!nodeStartFilePath) {
-      throw new Error('Missing server.js/app.js file which is required for a node.js site');
+      console.log('Missing server.js/app.js files, web.config is not generated');
+      return;
     }
 
     var iisNodeConfigTemplatePath = path.join(__dirname, 'iisnode.config.template');
     var webConfigContent = fs.readFileSync(iisNodeConfigTemplatePath, 'utf8');
-    webConfigContent =
-        webConfigContent.replace(/{NodeStartFile}/g, nodeStartFilePath);
+    webConfigContent = webConfigContent.replace(/{NodeStartFile}/g, nodeStartFilePath);
 
     fs.writeFileSync(webConfigPath, webConfigContent, 'utf8');
   }
