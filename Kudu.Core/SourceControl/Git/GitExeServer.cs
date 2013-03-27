@@ -22,7 +22,7 @@ namespace Kudu.Core.SourceControl.Git
 
         // Server git operations like receive-pack can take a long time for large repros, without any data flowing.
         // So use a long 30 minute timeout here instead of the much shorter default.
-        private static readonly TimeSpan _gitMinTimeout = TimeSpan.FromMinutes(30);
+        private static readonly TimeSpan _gitMinTimeout = Constants.MaxAllowedExecutionTime;
 
         public GitExeServer(string path, string homePath, IOperationLock initLock, string logFileEnv, IDeploymentEnvironment deploymentEnvironment, IDeploymentSettingsManager settings, ITraceFactory traceFactory)
         {

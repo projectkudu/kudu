@@ -44,6 +44,15 @@ namespace Kudu.Core.Infrastructure
             return Enumerable.Empty<Process>();
         }
 
+        /// <summary>
+        /// Calculates the sum of TotalProcessorTime for the current process and all its children.
+        /// </summary>
+        public static long GetTotalProcessorTime(this Process process)
+        {
+            return new[] { process }.Concat(process.GetChildren())
+                                    .Sum(p => p.TotalProcessorTime.Ticks);
+        }
+
         private static Process SafeGetProcessById(int pid)
         {
             try

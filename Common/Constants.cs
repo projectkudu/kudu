@@ -1,3 +1,4 @@
+using System;
 namespace Kudu 
 {
     public static class Constants 
@@ -31,5 +32,12 @@ namespace Kudu
 
         public const string DiagnosticsPath = @"diagnostics";
         public const string SettingsJsonFile = @"settings.json";
+
+        private static readonly TimeSpan _maxAllowedExectionTime = TimeSpan.FromMinutes(30);
+
+        public static TimeSpan MaxAllowedExecutionTime
+        {
+            get { return _maxAllowedExectionTime; }
+        }
     }
 }
