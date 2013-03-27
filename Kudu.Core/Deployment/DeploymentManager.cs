@@ -525,6 +525,8 @@ namespace Kudu.Core.Deployment
                            // End the build step
                            buildStep.Dispose();
 
+                           TryTouchWebConfig(context);
+
                            // Run post deployment steps
                            FinishDeployment(id, deployStep);
                        })
@@ -621,6 +623,23 @@ namespace Kudu.Core.Deployment
                 currentStatus.MarkSuccess();
 
                 _status.ActiveDeploymentId = id;
+            }
+        }
+
+        private static void TryTouchWebConfig(DeploymentContext context)
+        {
+            try
+            {
+                // Touch web.config
+                string webConfigPath = Path.Combine(context.OutputPath, "web.config");
+                if (File.Exists(webConfigPath))
+                {
+                    File.SetLastWriteTimeUtc(webConfigPath, DateTime.UtcNow);
+                }
+            }
+            catch (Exception ex)
+            {
+                context.Tracer.TraceError(ex);
             }
         }
 
