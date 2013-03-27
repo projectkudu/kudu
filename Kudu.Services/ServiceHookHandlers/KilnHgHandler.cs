@@ -104,6 +104,7 @@ namespace Kudu.Services.ServiceHookHandlers
                 Deployer = "Kiln",
                 RepositoryUrl = repository.Value<string>("url"),
                 RepositoryType = RepositoryType.Mercurial,
+                IsContinuous = true,
                 TargetChangeset = new ChangeSet(
                     id: targetCommit.Value<string>("id"),
                     authorName: ParseNameFromAuthor(author),

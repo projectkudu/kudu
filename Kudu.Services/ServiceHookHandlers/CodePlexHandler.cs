@@ -26,6 +26,7 @@ namespace Kudu.Services.ServiceHookHandlers
             {
                 RepositoryUrl = payload.Value<string>("url"),
                 Deployer = "CodePlex",
+                IsContinuous = true,
                 TargetChangeset = new ChangeSet(newRef, authorName: null, authorEmail: null, message: null, timestamp: DateTimeOffset.Now)
             };
 

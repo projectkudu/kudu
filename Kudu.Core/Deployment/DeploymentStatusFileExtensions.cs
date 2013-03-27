@@ -46,8 +46,15 @@ namespace Kudu.Core.Deployment
         {
             try
             {
-                statusFile.Progress = progress;
-                statusFile.Save();
+                // it is unexpected to UpdateProgress while not in Pending/Deploying/Building state
+                // instead of throwing, we simply make it more robust by checking status
+                if (statusFile.Status == DeployStatus.Pending ||
+                    statusFile.Status == DeployStatus.Deploying ||
+                    statusFile.Status == DeployStatus.Building)
+                {
+                    statusFile.Progress = progress;
+                    statusFile.Save();
+                }
             }
             catch
             {
