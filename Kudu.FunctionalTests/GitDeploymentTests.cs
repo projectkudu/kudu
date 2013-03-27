@@ -88,6 +88,9 @@ namespace Kudu.FunctionalTests
             {
                 appManager.SettingsManager.SetValue("TESTED_VAR", verificationLogText).Wait();
 
+                // Use a custom location for the .deployment file
+                appManager.SettingsManager.SetValue("SCM_DEPLOYMENT_FILE", @"sub\sub2\MyCustomIniFile.txt").Wait();
+
                 // Act
                 using (TestRepository testRepository = Git.Clone("CustomDeploymentSettingsTest"))
                 {
@@ -100,7 +103,7 @@ namespace Kudu.FunctionalTests
                 Assert.Equal(DeployStatus.Success, results[0].Status);
 
                 // Also validate custom script output supports unicode
-                KuduAssert.VerifyLogOutput(appManager, results[0].Id, new string[] { verificationLogText, "酷度酷度" });
+                KuduAssert.VerifyLogOutput(appManager, results[0].Id, new string[] { verificationLogText, "酷度酷度2" });
             });
         }
 
