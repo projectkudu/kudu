@@ -411,8 +411,7 @@ namespace Kudu.FunctionalTests
 
             ApplicationManager.Run(appName, appManager =>
             {
-                var client = CreateClient(appManager);
-                client.PostAsync("deploy", new StringContent(payload)).Result.EnsureSuccessful();
+                DeployPayloadHelper(appManager, client => client.PostAsync("deploy", new StringContent(payload)));
 
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                 Assert.Equal(1, results.Count);
@@ -430,15 +429,16 @@ namespace Kudu.FunctionalTests
 
             ApplicationManager.Run(appName, appManager =>
             {
-                var client = CreateClient(appManager);
-                client.DefaultRequestHeaders.Add("User-Agent", "Codebasehq.com");
-
                 var post = new Dictionary<string, string>
                 {
                     { "payload", payload }
                 };
 
-                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result.EnsureSuccessful();
+                DeployPayloadHelper(appManager, client =>
+                {
+                    client.DefaultRequestHeaders.Add("User-Agent", "Codebasehq.com");
+                    return client.PostAsync("deploy", new FormUrlEncodedContent(post));
+                });
 
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                 Assert.Equal(1, results.Count);

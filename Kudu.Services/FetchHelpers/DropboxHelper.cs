@@ -423,14 +423,20 @@ namespace Kudu.Services
         private void LogInfo(string value, params object[] args)
         {
             string message = String.Format(CultureInfo.CurrentCulture, value, args);
-            _tracer.Trace(message);
+            lock (_tracer)
+            {
+                _tracer.Trace(message);
+            }
         }
 
         private void LogError(string value, params object[] args)
         {
             string message = String.Format(CultureInfo.CurrentCulture, value, args);
-            _logger.Log(message, LogEntryType.Error);
-            _tracer.TraceError(message);
+            lock (_tracer)
+            {
+                _logger.Log(message, LogEntryType.Error);
+                _tracer.TraceError(message);
+            }
         }
 
         private Task<StreamInfo> GetStreamInfo(HttpClient client, HttpResponseMessage response, string path)

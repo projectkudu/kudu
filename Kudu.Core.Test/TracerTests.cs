@@ -26,7 +26,6 @@ namespace Kudu.Core.Test
             var path = @"x:\git\trace\trace.xml";
             var fs = GetMockFileSystem();
             var traceLock = new MockOperationLock();
-            var tracer = new Tracer(fs, path, TraceLevel.Verbose, traceLock);
             var threads = 5;
             var tasks = new List<Task>(threads);
             var total = 0;
@@ -37,6 +36,8 @@ namespace Kudu.Core.Test
             {
                 tasks.Add(Task.Factory.StartNew(() =>
                 {
+                    var tracer = new Tracer(fs, path, TraceLevel.Verbose, traceLock);
+
                     for (int j = 0; j < 50; ++j)
                     {
                         tracer.Trace(Guid.NewGuid().ToString(), new Dictionary<string, string>());
