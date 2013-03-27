@@ -43,6 +43,16 @@ namespace Kudu.Core.Deployment
             _statusLock.LockOperation(() =>
             {
                 FileSystemHelpers.DeleteDirectorySafe(path, ignoreErrors: true);
+
+                // Used for ETAG
+                if (_fileSystem.File.Exists(_activeFile))
+                {
+                    _fileSystem.File.SetLastWriteTimeUtc(_activeFile, DateTime.UtcNow);
+                }
+                else
+                {
+                    _fileSystem.File.WriteAllText(_activeFile, String.Empty);
+                }
             }, LockTimeout);
         }
 

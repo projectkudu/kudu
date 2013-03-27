@@ -235,7 +235,7 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public IDisposable CreateTemporaryDeployment(string statusText, ChangeSet changeSet = null, string deployedBy = null)
+        public IDisposable CreateTemporaryDeployment(string statusText, out ChangeSet tempChangeSet, ChangeSet changeSet = null, string deployedBy = null)
         {
             var tracer = _traceFactory.GetTracer();
             using (tracer.Step("Creating temporary deployment"))
@@ -252,6 +252,8 @@ namespace Kudu.Core.Deployment
                 statusFile.IsTemporary = changeSet.IsTemporary;
                 statusFile.Save();
             }
+
+            tempChangeSet = changeSet;
 
             // Return a handle that deletes the deployment on dispose.
             return new DisposableAction(() =>

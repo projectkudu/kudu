@@ -43,7 +43,7 @@ namespace Kudu.Services.ServiceHookHandlers
                 return null;
             }
 
-            var info = new DeploymentInfo();
+            var info = new DeploymentInfo { IsContinuous = true };
             string server = payload.Value<string>("canon_url");     // e.g. https://bitbucket.org
             string path = repository.Value<string>("absolute_url"); // e.g. /davidebbo/testrepo/
             string scm = repository.Value<string>("scm"); // e.g. hg
@@ -77,8 +77,6 @@ namespace Kudu.Services.ServiceHookHandlers
                     info.RepositoryUrl = uri.ToString();
                 }
             }
-
-            // Identity the latest commit 
 
             return info;
         }

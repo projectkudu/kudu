@@ -15,6 +15,8 @@ namespace Kudu.Services.ServiceHookHandlers
         public string Deployer { get; set; }
         public ChangeSet TargetChangeset { get; set; }
         public bool IsReusable { get; set; }
+        // indicating that this is a CI triggered by SCM provider 
+        public bool IsContinuous { get; set; }
         public IServiceHookHandler Handler { get; set; }
 
         public bool IsValid()

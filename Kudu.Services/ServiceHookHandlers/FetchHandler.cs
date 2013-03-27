@@ -161,11 +161,17 @@ namespace Kudu.Services
                     // create temporary deployment before the actual deployment item started
                     // this allows portal ui to readily display on-going deployment (not having to wait for fetch to complete).
                     // in addition, it captures any failure that may occur before the actual deployment item started 
-                    IDisposable tempDeployment = _deploymentManager.CreateTemporaryDeployment(Resources.ReceivingChanges, deploymentInfo.TargetChangeset, deploymentInfo.Deployer);
+                    ChangeSet tempChangeSet;
+                    IDisposable tempDeployment = _deploymentManager.CreateTemporaryDeployment(
+                                                    Resources.ReceivingChanges,
+                                                    out tempChangeSet,
+                                                    deploymentInfo.TargetChangeset,
+                                                    deploymentInfo.Deployer);
+
                     ILogger innerLogger = null;
                     try
                     {
-                        ILogger logger = _deploymentManager.GetLogger(deploymentInfo.TargetChangeset.Id);
+                        ILogger logger = _deploymentManager.GetLogger(tempChangeSet.Id);
 
                         // Fetch changes from the repository
                         innerLogger = logger.Log(Resources.FetchingChanges);
@@ -178,7 +184,7 @@ namespace Kudu.Services
                         innerLogger = null;
 
                         // In case the commit or perhaps fetch do no-op.
-                        if (deploymentInfo.TargetChangeset != null)
+                        if (deploymentInfo.TargetChangeset != null && ShouldDeploy(repository, deploymentInfo, targetBranch))
                         {
                             // Perform the actual deployment
                             _deploymentManager.Deploy(repository, null, deploymentInfo.Deployer, clean: false);
@@ -227,6 +233,19 @@ namespace Kudu.Services
                 }
 
             } while (hasPendingDeployment);
+        }
+
+        // For continuous integration, we will only build/deploy if fetch new changes
+        // The immediate goal is to address duplicated /deploy requests from Bitbucket (retry if taken > 20s)
+        private bool ShouldDeploy(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch)
+        {
+            if (deploymentInfo.IsContinuous)
+            {
+                ChangeSet changeSet = repository.GetChangeSet(targetBranch);
+                return !String.Equals(_status.ActiveDeploymentId, changeSet.Id, StringComparison.OrdinalIgnoreCase);
+            }
+
+            return true;
         }
 
         private void TracePayload(JObject json)
