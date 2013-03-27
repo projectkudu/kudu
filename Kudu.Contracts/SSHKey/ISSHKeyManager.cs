@@ -9,15 +9,15 @@ namespace Kudu.Core.SSHKey
         void SetPrivateKey(string key);
         
         /// <summary>
-        /// Reads an exisiting public key or generates a new key pair and returns it.
+        /// Reads an exisiting public key or generates a new key pair.
         /// </summary>
-        /// <returns></returns>
-        string GetKey();
+        /// <param name="ensurePublicKey">Determines if a public key should be generated if it doesn't already exist</param>
+        string GetPublicKey(bool ensurePublicKey);
         
         /// <summary>
-        /// Create a new key pair overwritting any existing key files on disk.
+        /// Deletes the key pair
         /// </summary>
         /// <returns></returns>
-        string CreateKey();
+        void DeleteKeyPair();
     }
 }

@@ -47,9 +47,6 @@ namespace Kudu.Core.SSHKey
             ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("SSHKeyManager.SetPrivateKey"))
             {
-                RSAParameters publicKeyParameters = PEMEncoding.ExtractPublicKey(key);
-                string publicKey = SSHEncoding.GetString(publicKeyParameters);
-
                 FileSystemHelpers.EnsureDirectory(_fileSystem, _sshPath);
 
                 // bypass service key checking prompt (StrictHostKeyChecking=no).
@@ -58,14 +55,15 @@ namespace Kudu.Core.SSHKey
                 // This overrides if file exists
                 _fileSystem.File.WriteAllText(_id_rsa, key);
 
-                _fileSystem.File.WriteAllText(_id_rsaPub, publicKey);
+                // Delete existing public key
+                FileSystemHelpers.DeleteFileSafe(_fileSystem, _id_rsaPub);
             }
         }
 
         /// <summary>
         /// Gets an existing created public key or creates a new one and returns the public key
         /// </summary>
-        public string GetKey()
+        public string GetPublicKey(bool ensurePublicKey)
         {
             ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("SSHKeyManager.GetKey"))
@@ -76,28 +74,30 @@ namespace Kudu.Core.SSHKey
                     // If a public key exists, return it.
                     return _fileSystem.File.ReadAllText(_id_rsaPub);
                 }
-
-                if (_fileSystem.File.Exists(_id_rsa))
+                else if (ensurePublicKey)
                 {
-                    tracer.Trace("Private key exists without public key.");
-                    // If a private key exists without a public key, extract the public key to disk and return it.
-                    // This might occur in back-compat scenarios where we've an existing private key from pre S21 scenarios.
-                    string privateKey = _fileSystem.File.ReadAllText(_id_rsa);
-                    RSAParameters publicKeyParameters = PEMEncoding.ExtractPublicKey(privateKey);
-
-                    string publicKey = SSHEncoding.GetString(publicKeyParameters);
-                    _fileSystem.File.WriteAllText(_id_rsaPub, publicKey);
-
-                    return publicKey;
+                    tracer.Trace("Creating key pair.");
+                    return CreateKeyPair();
                 }
 
-                tracer.Trace("Generating SSH key pair.");
-                // Neither exists. Proceed to create a new key-pair.
-                return CreateKey();
+                // A public key does not exist but we weren't asked to create it. 
+                return null;
             }
         }
 
-        public string CreateKey()
+        public void DeleteKeyPair()
+        {
+            ITracer tracer = _traceFactory.GetTracer();
+            using (tracer.Step("SSHKeyManager.GetKey"))
+            {
+                // Delete public key
+                FileSystemHelpers.DeleteFileSafe(_fileSystem, _id_rsaPub);
+
+                FileSystemHelpers.DeleteFileSafe(_fileSystem, _id_rsa);
+            }
+        }
+
+        private string CreateKeyPair()
         {
             ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("SSHKeyManager.CreateKey"))

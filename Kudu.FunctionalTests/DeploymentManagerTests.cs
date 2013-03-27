@@ -291,18 +291,15 @@ namespace Kudu.FunctionalTests
                 });
 
                 var resultsTask = appManager.DeploymentManager.GetResultsAsync();
-                var sshKeyTask = appManager.SSHKeyManager.GetPublicKey();
                 var traceTask = KuduAssert.VerifyTraceAsync(appManager, "arguments=\"fetch external --progress\"");
 
-                await Task.WhenAll(resultsTask, sshKeyTask, traceTask);
+                await Task.WhenAll(resultsTask, traceTask);
 
                 var results = resultsTask.Result.ToList();
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
                 Assert.Equal("GitHub", results[0].Deployer);
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "Welcome to ASP.NET!");
-
-                Assert.True(sshKeyTask.Result.StartsWith("ssh-rsa"));
             });
         }
 

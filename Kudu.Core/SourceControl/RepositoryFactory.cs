@@ -75,8 +75,6 @@ namespace Kudu.Core.SourceControl
             if (!repository.Exists)
             {
                 repository.Initialize();
-                // Attempt to create a key pair when creating a repository. This would allow for fetching SSH-based repository urls to work.
-                _sshKeyManager.GetKey();
             }
             return repository;
         }
@@ -84,15 +82,15 @@ namespace Kudu.Core.SourceControl
         public IRepository GetRepository()
         {
             ITracer tracer = _traceFactory.GetTracer();
-            if (IsHgRepository)
-            {
-                tracer.Trace("Found mercurial repository at {0}", _environment.RepositoryPath);
-                return new HgRepository(_environment.RepositoryPath, _environment.SiteRootPath, _settings, _traceFactory);
-            }
-            else if (IsGitRepository)
+            if (IsGitRepository)
             {
                 tracer.Trace("Assuming git repository at {0}", _environment.RepositoryPath);
                 return new GitExeRepository(_environment.RepositoryPath, _environment.SiteRootPath, _settings, _traceFactory);
+            } 
+            else if (IsHgRepository)
+            {
+                tracer.Trace("Found mercurial repository at {0}", _environment.RepositoryPath);
+                return new HgRepository(_environment.RepositoryPath, _environment.SiteRootPath, _settings, _traceFactory);
             }
             return null;
         }
