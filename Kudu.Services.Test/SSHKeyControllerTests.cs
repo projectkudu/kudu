@@ -1,9 +1,11 @@
 ﻿using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.SSHKey;
+using Kudu.Services.Infrastructure;
 using Kudu.Services.SSHKey;
 using Moq;
 using Xunit;
+using Xunit.Extensions;
 
 namespace Kudu.Services.Test
 {
@@ -15,7 +17,9 @@ namespace Kudu.Services.Test
             // Arrange
             var sshKeyManager = new Mock<ISSHKeyManager>(MockBehavior.Strict);
             string expected = "public-key";
-            sshKeyManager.Setup(s => s.GetKey()).Returns(expected).Verifiable();
+            sshKeyManager.Setup(s => s.GetPublicKey(false))
+                         .Returns(expected)
+                         .Verifiable();
             var tracer = Mock.Of<ITracer>();
             var operationLock = new Mock<IOperationLock>();
             operationLock.Setup(l => l.Lock()).Returns(true);
@@ -29,20 +33,24 @@ namespace Kudu.Services.Test
             Assert.Equal(expected, actual);
         }
 
-        [Fact]
-        public void CreatePublicKeyForcesRecreateIfParameterIsSet()
+        [Theory]
+        [InlineData("1")]
+        [InlineData("true")]
+        public void CreatePublicKeyForcesRecreateIfParameterIsSet(string ensurePublicKey)
         {
             // Arrange
             var sshKeyManager = new Mock<ISSHKeyManager>(MockBehavior.Strict);
             string expected = "public-key";
-            sshKeyManager.Setup(s => s.CreateKey()).Returns(expected).Verifiable();
+            sshKeyManager.Setup(s => s.GetPublicKey(true))
+                         .Returns(expected)
+                         .Verifiable();
             var tracer = Mock.Of<ITracer>();
             var operationLock = new Mock<IOperationLock>();
             operationLock.Setup(l => l.Lock()).Returns(true);
             var controller = new SSHKeyController(tracer, sshKeyManager.Object, operationLock.Object);
 
             // Act
-            string actual = controller.GetPublicKey(forceCreate: true);
+            string actual = controller.GetPublicKey(ensurePublicKey);
 
             // Assert
             sshKeyManager.Verify();

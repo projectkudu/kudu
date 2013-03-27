@@ -80,8 +80,10 @@ namespace Kudu.Services.SSHKey
             }
         }
 
-        public string GetPublicKey(bool forceCreate = false)
+        public string GetPublicKey(string ensurePublicKey = null)
         {
+            bool ensurePublicKeyValue = StringUtils.IsTrueLike(ensurePublicKey);
+
             using (_tracer.Step("SSHKeyController.GetPublicKey"))
             {
                 string key = null;
@@ -89,7 +91,7 @@ namespace Kudu.Services.SSHKey
                 {
                     try
                     {
-                        key = forceCreate ? _sshKeyManager.CreateKey() : _sshKeyManager.GetKey();
+                        key = _sshKeyManager.GetPublicKey(ensurePublicKeyValue) ?? String.Empty;
                     }
                     catch (InvalidOperationException ex)
                     {
@@ -105,6 +107,32 @@ namespace Kudu.Services.SSHKey
                 }
 
                 return key;
+            }
+        }
+
+        [HttpDelete]
+        public void DeleteKeyPair()
+        {
+            using (_tracer.Step("SSHKeyController.GetPublicKey"))
+            {
+                bool success = _sshKeyLock.TryLockOperation(() =>
+                {
+                    try
+                    {
+                        _sshKeyManager.DeleteKeyPair();
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, ex));
+                    }
+                }, TimeSpan.FromSeconds(LockTimeoutSecs));
+
+                if (!success)
+                {
+                    throw new HttpResponseException(Request.CreateErrorResponse(
+                        HttpStatusCode.Conflict,
+                        String.Format(CultureInfo.CurrentCulture, Resources.Error_OperationLockTimeout, LockTimeoutSecs)));
+                }
             }
         }
 

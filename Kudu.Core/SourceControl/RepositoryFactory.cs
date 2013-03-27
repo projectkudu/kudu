@@ -7,7 +7,6 @@ using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
-using Kudu.Core.SSHKey;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.SourceControl
@@ -18,14 +17,12 @@ namespace Kudu.Core.SourceControl
         private readonly IEnvironment _environment;
         private readonly ITraceFactory _traceFactory;
         private readonly IDeploymentSettingsManager _settings;
-        private readonly ISSHKeyManager _sshKeyManager;
 
-        public RepositoryFactory(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, ISSHKeyManager sshKeyManager)
+        public RepositoryFactory(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory)
         {
             _environment = environment;
             _settings = settings;
             _traceFactory = traceFactory;
-            _sshKeyManager = sshKeyManager;
         }
 
         /// <summary>
@@ -75,8 +72,6 @@ namespace Kudu.Core.SourceControl
             if (!repository.Exists)
             {
                 repository.Initialize();
-                // Attempt to create a key pair when creating a repository. This would allow for fetching SSH-based repository urls to work.
-                _sshKeyManager.GetKey();
             }
             return repository;
         }
@@ -84,15 +79,15 @@ namespace Kudu.Core.SourceControl
         public IRepository GetRepository()
         {
             ITracer tracer = _traceFactory.GetTracer();
-            if (IsHgRepository)
-            {
-                tracer.Trace("Found mercurial repository at {0}", _environment.RepositoryPath);
-                return new HgRepository(_environment.RepositoryPath, _environment.SiteRootPath, _settings, _traceFactory);
-            }
-            else if (IsGitRepository)
+            if (IsGitRepository)
             {
                 tracer.Trace("Assuming git repository at {0}", _environment.RepositoryPath);
                 return new GitExeRepository(_environment.RepositoryPath, _environment.SiteRootPath, _settings, _traceFactory);
+            } 
+            else if (IsHgRepository)
+            {
+                tracer.Trace("Found mercurial repository at {0}", _environment.RepositoryPath);
+                return new HgRepository(_environment.RepositoryPath, _environment.SiteRootPath, _settings, _traceFactory);
             }
             return null;
         }

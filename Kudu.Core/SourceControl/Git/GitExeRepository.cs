@@ -91,6 +91,12 @@ echo $i > pushinfo
 
                     File.WriteAllText(PostReceiveHookPath, content);
                 }
+
+                using (profiler.Step("Configure git server"))
+                {
+                    // Allow getting pushes even though we're not bare
+                    _gitExe.Execute(profiler, "config receive.denyCurrentBranch ignore");
+                }
             }
         }
 

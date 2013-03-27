@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Contracts.Settings
@@ -97,7 +98,7 @@ namespace Kudu.Contracts.Settings
         /// </summary>
         public static bool AllowShallowClones(this IDeploymentSettingsManager settings)
         {
-            return IsSet(settings.GetValue(SettingsKeys.UseShallowClone));
+            return StringUtils.IsTrueLike(settings.GetValue(SettingsKeys.UseShallowClone));
         }
 
         // allow /deploy endpoint
@@ -105,11 +106,6 @@ namespace Kudu.Contracts.Settings
         {
             string scmType = settings.GetValue(SettingsKeys.ScmType);
             return scmType != ScmType.None && scmType != ScmType.Tfs;
-        }
-
-        private static bool IsSet(string value)
-        {
-            return value != null && (value == "1" || value.Equals(Boolean.TrueString, StringComparison.OrdinalIgnoreCase));
         }
     }
 }

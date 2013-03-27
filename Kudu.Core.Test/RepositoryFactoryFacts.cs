@@ -17,7 +17,7 @@ namespace Kudu.Core.Test
         public void EnsuringGitRepositoryThrowsIfDifferentRepositoryAlreadyExists(RepositoryType repoType, bool isGit, bool isMercurial, string message)
         {
             // Arrange
-            var repoFactory = new Mock<RepositoryFactory>(Mock.Of<IEnvironment>(), Mock.Of<IDeploymentSettingsManager>(), Mock.Of<ITraceFactory>(), Mock.Of<ISSHKeyManager>()) { CallBase = true };
+            var repoFactory = new Mock<RepositoryFactory>(Mock.Of<IEnvironment>(), Mock.Of<IDeploymentSettingsManager>(), Mock.Of<ITraceFactory>()) { CallBase = true };
             repoFactory.SetupGet(f => f.IsGitRepository)
                        .Returns(isGit);
             repoFactory.SetupGet(f => f.IsHgRepository)
