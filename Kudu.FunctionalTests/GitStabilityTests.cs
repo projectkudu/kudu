@@ -47,18 +47,5 @@ namespace Kudu.FunctionalTests
                 // Assert.NotEqual<TimeSpan>(TimeSpan.Zero, upTime);
             });
         }
-
-        [Fact]
-        public void KuduStartupRequestTest()
-        {
-            ApplicationManager.Run("KuduStartupRequestTest", appManager =>
-            {
-                // read the trace file
-                var traces = appManager.VfsManager.ReadAllText("LogFiles/Git/trace/trace.xml");
-
-                // verify
-                Assert.Contains("Startup Request", traces);
-            });
-        }
     }
 }
