@@ -116,7 +116,9 @@ namespace Kudu.Console
         {
             if (level > TraceLevel.Off)
             {
-                var tracer = new Tracer(Path.Combine(env.TracePath, Constants.TraceFile), level);
+                string traceLockPath = Path.Combine(env.TracePath, Constants.TraceLockFile);
+                var traceLock = new LockFile(NullTracerFactory.Instance, traceLockPath);
+                var tracer = new Tracer(Path.Combine(env.TracePath, Constants.TraceFile), level, traceLock);
                 string logFile = System.Environment.GetEnvironmentVariable(Constants.TraceFileEnvKey);
                 if (!String.IsNullOrEmpty(logFile))
                 {

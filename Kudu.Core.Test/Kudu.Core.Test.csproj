@@ -75,6 +75,7 @@
     <Compile Include="PurgeDeploymentsTests.cs" />
     <Compile Include="RepositoryFactoryFacts.cs" />
     <Compile Include="SSHKeyManagerFacts.cs" />
+    <Compile Include="TracerTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Kudu.Contracts\Kudu.Contracts.csproj">

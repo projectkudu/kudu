@@ -6,6 +6,7 @@ using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Xml.Linq;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 
@@ -14,7 +15,7 @@ namespace Kudu.Core.Tracing
     public class Tracer : ITracer
     {
         // TODO: Make this configurable
-        private const int MaxLogEntries = 200;
+        public const int MaxLogEntries = 200;
 
         private readonly Stack<TraceStep> _currentSteps = new Stack<TraceStep>();
         private readonly List<TraceStep> _steps = new List<TraceStep>();
@@ -23,27 +24,22 @@ namespace Kudu.Core.Tracing
         private readonly string _path;
         private readonly IFileSystem _fileSystem;
         private readonly TraceLevel _level;
+        private readonly IOperationLock _traceLock;
 
         private const string TraceRoot = "trace";
 
-        private static readonly ConcurrentDictionary<string, object> _pathLocks = new ConcurrentDictionary<string, object>();
-
-        public Tracer(string path, TraceLevel level)
-            : this(new FileSystem(), path, level)
+        public Tracer(string path, TraceLevel level, IOperationLock traceLock)
+            : this(new FileSystem(), path, level, traceLock)
         {
 
         }
 
-        public Tracer(IFileSystem fileSystem, string path, TraceLevel level)
+        public Tracer(IFileSystem fileSystem, string path, TraceLevel level, IOperationLock traceLock)
         {
             _fileSystem = fileSystem;
             _path = path;
             _level = level;
-
-            if (!_pathLocks.ContainsKey(path))
-            {
-                _pathLocks.TryAdd(path, new object());
-            }
+            _traceLock = traceLock;
         }
 
         public TraceLevel TraceLevel
@@ -61,7 +57,6 @@ namespace Kudu.Core.Tracing
 
         public IDisposable Step(string title, IDictionary<string, string> attributes)
         {
-            var shouldTrace = this.ShouldTrace(attributes);
             var newStep = new TraceStep(title);
             var newStepElement = new XElement("step", new XAttribute("title", title),
                                                       new XAttribute("date", DateTime.UtcNow.ToString("MM/dd H:mm:ss")));
@@ -100,26 +95,23 @@ namespace Kudu.Core.Tracing
                     TraceStep current = _currentSteps.Pop();
                     XElement stepElement = _elements.Pop();
 
-                    if (shouldTrace || stepElement.HasElements)
+                    stepElement.Add(new XAttribute("elapsed", current.ElapsedMilliseconds));
+
+                    if (_elements.Count > 0)
                     {
-                        stepElement.Add(new XAttribute("elapsed", current.ElapsedMilliseconds));
+                        XElement parent = _elements.Peek();
+                        parent.Add(stepElement);
+                    }
+                    else if (ShouldTrace(stepElement.LastNode as XElement))
+                    {
+                        // Add this element to the list
+                        Save(stepElement);
+                    }
 
-                        if (_elements.Count > 0)
-                        {
-                            XElement parent = _elements.Peek();
-                            parent.Add(stepElement);
-                        }
-                        else
-                        {
-                            // Add this element to the list
-                            Save(stepElement);
-                        }
-
-                        if (_currentSteps.Count > 0)
-                        {
-                            TraceStep parent = _currentSteps.Peek();
-                            parent.Children.Add(current);
-                        }
+                    if (_currentSteps.Count > 0)
+                    {
+                        TraceStep parent = _currentSteps.Peek();
+                        parent.Children.Add(current);
                     }
                 }
                 catch (Exception ex)
@@ -129,9 +121,35 @@ namespace Kudu.Core.Tracing
             });
         }
 
+        private bool ShouldTrace(XElement element)
+        {
+            // if traceLevel is off, never trace anything
+            // we should not be here in the first place
+            if (this.TraceLevel <= TraceLevel.Off)
+            {
+                return false;
+            }
+
+            // if traceLevel is verbose or no last child, always trace
+            // No last child indicates this is not a request-related trace
+            if (this.TraceLevel >= TraceLevel.Verbose || element == null)
+            {
+                return true;
+            }
+
+            // only trace if not NotModified
+            var statusCode = element.Attributes("statusCode").FirstOrDefault();
+            if (statusCode == null || statusCode.Value != "304")
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         private void Save(XElement stepElement)
         {
-            lock (_pathLocks[_path])
+            _traceLock.LockOperation(() =>
             {
                 XDocument document = GetDocument();
 
@@ -139,17 +157,17 @@ namespace Kudu.Core.Tracing
                 EnsureSize(document);
 
                 document.Root.Add(stepElement);
-                document.Save(_path);
-            }
+
+                using (var stream = _fileSystem.File.Open(_path, FileMode.Create, FileAccess.Write, FileShare.Read))
+                {
+                    document.Save(stream);
+                }
+
+            }, TimeSpan.FromMinutes(1));
         }
 
         public void Trace(string value, IDictionary<string, string> attributes)
         {
-            if (!this.ShouldTrace(attributes))
-            {
-                return;
-            }
-
             // Add a fake step
             using (Step(value, attributes)) { }
         }

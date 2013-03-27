@@ -54,6 +54,13 @@ namespace Kudu.Services.Web.Tracing
             return httpContext.Items[_traceKey] as ITracer;
         }
 
+        internal static void RemoveRequestTracer(HttpContext httpContext)
+        {
+            httpContext.Items.Remove(_traceKey);
+            httpContext.Items.Remove(_loggerKey);
+            httpContext.Items.Remove(_traceFileKey);
+        }
+
         internal static ITracer CreateRequestTracer(HttpContext httpContext)
         {
             var tracer = (ITracer)httpContext.Items[_traceKey];
