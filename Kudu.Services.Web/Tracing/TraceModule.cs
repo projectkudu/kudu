@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Web;
 using Kudu.Contracts.Tracing;
@@ -11,6 +13,12 @@ namespace Kudu.Services.Web.Tracing
     {
         private static readonly object _stepKey = new object();
         private static int _traceStartup;
+        private static DateTime _lastRequestDateTime;
+
+        public static TimeSpan LastRequestTime
+        {
+            get { return DateTime.UtcNow - _lastRequestDateTime; }
+        }
 
         public void Init(HttpApplication app)
         {
@@ -21,6 +29,8 @@ namespace Kudu.Services.Web.Tracing
 
         private static void OnBeginRequest(object sender, EventArgs e)
         {
+            _lastRequestDateTime = DateTime.UtcNow;
+
             var httpContext = ((HttpApplication)sender).Context;
 
             var tracer = TraceStartup(httpContext);
@@ -30,6 +40,8 @@ namespace Kudu.Services.Web.Tracing
                 httpContext.Request.Path.StartsWith("/dump", StringComparison.OrdinalIgnoreCase) ||
                 httpContext.Request.RawUrl == "/")
             {
+                TraceServices.RemoveRequestTracer(httpContext);
+
                 return;
             }
 
@@ -50,13 +62,6 @@ namespace Kudu.Services.Web.Tracing
                 {
                     attribs["h_" + key] = httpContext.Request.Headers[key];
                 }
-            }
-
-            if (httpContext.Request.RawUrl.Contains(".git") ||
-                httpContext.Request.RawUrl.EndsWith("/deploy", StringComparison.OrdinalIgnoreCase))
-            {
-                // Mark git requests specially
-                attribs.Add("git", "true");
             }
 
             httpContext.Items[_stepKey] = tracer.Step("Incoming Request", attribs);
@@ -149,6 +154,16 @@ namespace Kudu.Services.Web.Tracing
 
                     // force always trace
                     attribs[TraceExtensions.AlwaysTrace] = "1";
+
+                    // Dump environment variables
+                    foreach (DictionaryEntry entry in Environment.GetEnvironmentVariables())
+                    {
+                        var key = (string)entry.Key;
+                        if (key.StartsWith("SCM", StringComparison.OrdinalIgnoreCase))
+                        {
+                            attribs[key] = (string)entry.Value;
+                        }
+                    }
 
                     tracer.Trace("Startup Request", attribs);
                 }

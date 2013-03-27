@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
 using System.Net;
 using System.Net.Http.Formatting;
+using System.Threading;
 using System.Web;
 using System.Web.Http;
 using System.Web.Routing;
@@ -47,6 +49,8 @@ namespace Kudu.Services.Web.App_Start
 
         private static readonly Bootstrapper _bootstrapper = new Bootstrapper();
 
+        private static event Action Shutdown;
+
         /// <summary>
         /// Starts the application
         /// </summary>
@@ -62,6 +66,11 @@ namespace Kudu.Services.Web.App_Start
         /// </summary>
         public static void Stop()
         {
+            if (Shutdown != null)
+            {
+                Shutdown();
+            }
+
             _bootstrapper.ShutDown();
         }
 
@@ -125,6 +134,11 @@ namespace Kudu.Services.Web.App_Start
 
             var shutdownDetector = new ShutdownDetector();
             shutdownDetector.Initialize();
+            
+            // Trace shutdown event
+            // Cannot use shutdownDetector.Token.Register because of race condition
+            // with NinjectServices.Stop via WebActivator.ApplicationShutdownMethodAttribute
+            Shutdown += () => TraceShutdown(environment, kernel);
 
             // LogStream service
             kernel.Bind<LogStreamManager>().ToMethod(context => new LogStreamManager(Path.Combine(environment.RootPath, Constants.LogFilesPath),
@@ -282,10 +296,37 @@ namespace Kudu.Services.Web.App_Start
             {
                 string tracePath = Path.Combine(environment.TracePath, Constants.TraceFile);
                 string textPath = Path.Combine(environment.TracePath, TraceServices.CurrentRequestTraceFile);
-                return new CascadeTracer(new Tracer(tracePath, level), new TextTracer(textPath, level));
+                string traceLockPath = Path.Combine(environment.TracePath, Constants.TraceLockFile);
+                var traceLock = new LockFile(NullTracerFactory.Instance, traceLockPath);
+                return new CascadeTracer(new Tracer(tracePath, level, traceLock), new TextTracer(textPath, level));
             }
 
             return NullTracer.Instance;
+        }
+
+        private static void TraceShutdown(IEnvironment environment, IKernel kernel)
+        {
+            TraceLevel level = kernel.Get<IDeploymentSettingsManager>().GetTraceLevel();
+            if (level > TraceLevel.Off)
+            {
+                string tracePath = Path.Combine(environment.TracePath, Constants.TraceFile);
+                string traceLockPath = Path.Combine(environment.TracePath, Constants.TraceLockFile);
+                var traceLock = new LockFile(NullTracerFactory.Instance, traceLockPath);
+                ITracer tracer = new Tracer(tracePath, level, traceLock);
+                var attribs = new Dictionary<string, string>();
+
+                // Add an attribute containing the process, AppDomain and Thread ids to help debugging
+                attribs.Add("pid", String.Format("{0},{1},{2}",
+                    Process.GetCurrentProcess().Id,
+                    AppDomain.CurrentDomain.Id.ToString(),
+                    System.Threading.Thread.CurrentThread.ManagedThreadId));
+
+                attribs.Add("uptime", MvcApplication.UpTime.ToString());
+
+                attribs.Add("lastrequesttime", TraceModule.LastRequestTime.ToString());
+
+                tracer.Trace("Process Shutdown", attribs);
+            }
         }
 
         private static ILogger GetLogger(IEnvironment environment, IKernel kernel)
