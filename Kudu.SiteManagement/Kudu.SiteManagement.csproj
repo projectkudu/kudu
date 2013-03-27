@@ -55,6 +55,7 @@
       <Link>OperationManager.cs</Link>
     </Compile>
     <Compile Include="DefaultSettingsResolver.cs" />
+    <Compile Include="IdleManager.cs" />
     <Compile Include="ISettingsResolver.cs" />
     <Compile Include="DefaultPathResolver.cs" />
     <Compile Include="IISExtensions.cs" />

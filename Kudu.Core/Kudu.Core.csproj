@@ -73,10 +73,13 @@
     <Compile Include="Deployment\NpmExecutable.cs" />
     <Compile Include="Deployment\NullLogger.cs" />
     <Compile Include="Deployment\WellKnownEnvironmentVariables.cs" />
+    <Compile Include="Infrastructure\IdleManager.cs" />
     <Compile Include="Infrastructure\CommandLineException.cs" />
     <Compile Include="Infrastructure\ExecutableExtensions.cs" />
     <Compile Include="Infrastructure\IExecutable.cs" />
+    <Compile Include="Infrastructure\IProcess.cs" />
     <Compile Include="Infrastructure\ProcessExtensions.cs" />
+    <Compile Include="Infrastructure\ProcessWrapper.cs" />
     <Compile Include="Infrastructure\ProgressWriter.cs" />
     <Compile Include="Infrastructure\DisposableAction.cs" />
     <Compile Include="Infrastructure\IniFile.cs" />

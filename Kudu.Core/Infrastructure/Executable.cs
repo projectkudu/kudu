@@ -84,9 +84,9 @@ namespace Kudu.Core.Infrastructure
                 process.Start();
 
 #if !SITEMANAGEMENT
-                var idleManager = new IdleManager(Path, IdleTimeout, tracer);
+                var idleManager = new Kudu.Core.Infrastructure.IdleManager(IdleTimeout, tracer);
 #else
-                var idleManager = new IdleManager();
+                var idleManager = new Kudu.SiteManagement.IdleManager();
 #endif
                 Func<StreamReader, string> reader = (StreamReader streamReader) =>
                 {
@@ -150,7 +150,7 @@ namespace Kudu.Core.Infrastructure
                 var process = CreateProcess(arguments, args);
                 process.Start();
 
-                var idleManager = new IdleManager(Path, IdleTimeout, tracer);
+                var idleManager = new IdleManager(IdleTimeout, tracer);
                 Func<StreamReader, string> reader = (StreamReader streamReader) => streamReader.ReadToEnd();
                 Action<Stream, Stream, bool> copyStream = (Stream from, Stream to, bool closeAfterCopy) =>
                 {
@@ -306,7 +306,7 @@ namespace Kudu.Core.Infrastructure
                 var errorBuffer = new StringBuilder();
                 var outputBuffer = new StringBuilder();
 
-                var idleManager = new IdleManager(Path, IdleTimeout, tracer);
+                var idleManager = new IdleManager(IdleTimeout, tracer);
                 process.OutputDataReceived += (sender, e) =>
                 {
                     idleManager.UpdateActivity();
@@ -417,72 +417,5 @@ namespace Kudu.Core.Infrastructure
 
             return process;
         }
-
-#if !SITEMANAGEMENT
-        class IdleManager
-        {
-            private static int WaitInterval = 5000;
-            private readonly string _processName;
-            private readonly TimeSpan _idleTimeout;
-            private readonly ITracer _tracer;
-            private DateTime _lastActivity;
-
-            public IdleManager(string path, TimeSpan idleTimeout, ITracer tracer)
-            {
-                _processName = new FileInfo(path).Name;
-                _idleTimeout = idleTimeout;
-                _tracer = tracer;
-                _lastActivity = DateTime.UtcNow;
-            }
-
-            public void UpdateActivity()
-            {
-                _lastActivity = DateTime.UtcNow;
-            }
-
-            public void WaitForExit(Process process)
-            {
-                while (!process.WaitForExit(WaitInterval))
-                {
-                    if (DateTime.UtcNow > _lastActivity.Add(_idleTimeout))
-                    {
-                        process.Kill(true, _tracer);
-                        string message = String.Format(Resources.Error_ProcessAborted, _processName);
-                        throw new CommandLineException(process.StartInfo.FileName, process.StartInfo.Arguments, message)
-                        {
-                            ExitCode = -1,
-                            Output = message,
-                            Error = message
-                        };
-                    }
-                }
-
-                // Once we are here, the process has terminated.  This extra WaitForExit with -1 timeout
-                // will ensure in-memory Output buffer is flushed, from reflection, this.output.WaitUtilEOF().  
-                // If we don't do this, the leftover output will write concurrently to the logger 
-                // with the main thread corrupting the log xml.  
-                process.WaitForExit(-1);
-            }
-        }
-#else
-        class IdleManager
-        {
-            public IdleManager()
-            {
-            }
-
-            [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "By design")]
-            public void UpdateActivity()
-            {
-            }
-
-            [SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "By design")]
-            [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
-            public void WaitForExit(Process process)
-            {
-                process.WaitForExit();
-            }
-        }
-#endif
     }
 }
