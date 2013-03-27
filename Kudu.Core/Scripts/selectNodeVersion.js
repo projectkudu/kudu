@@ -1,6 +1,8 @@
 ﻿var path = require('path')
     , fs = require('fs');
 
+var existsSync = fs.existsSync || path.existsSync;
+
 var flushAndExit = function (code) {
     var exiting;
     process.on('exit', function () {
@@ -15,7 +17,7 @@ var flushAndExit = function (code) {
 var createIisNodeWebConfigIfNeeded = function (sitePath) {
   var webConfigPath = path.join(sitePath, 'web.config');
 
-  if (!fs.existsSync(webConfigPath)) {
+  if (!existsSync(webConfigPath)) {
     var nodeStartFilePath = getNodeStartFile(sitePath);
     if (!nodeStartFilePath) {
       console.log('Missing server.js/app.js files, web.config is not generated');
@@ -35,7 +37,7 @@ var getNodeStartFile = function (sitePath) {
 
   for (var i in nodeStartFiles) {
     var nodeStartFilePath = path.join(sitePath, nodeStartFiles[i]);
-    if (fs.existsSync(nodeStartFilePath)) {
+    if (existsSync(nodeStartFilePath)) {
       return nodeStartFiles[i];
     }
   }
@@ -44,8 +46,6 @@ var getNodeStartFile = function (sitePath) {
 }
 
 // Determine the installation location of node.js and iisnode
-
-var existsSync = fs.existsSync || path.existsSync;
 
 var nodejsDir = path.resolve(process.env['programfiles(x86)'] || process.env['programfiles'], 'nodejs');
 if (!existsSync(nodejsDir))
