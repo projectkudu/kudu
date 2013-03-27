@@ -431,8 +431,8 @@ namespace Kudu.Services.SourceControl
             }
 
             // If we have gone through our delays and still can't get a lock then we give up and return 503
-            Tracer.TraceError(String.Format("TryGetLock could not get a lock for {0} request on {1} after {2} exponential backoff attempts. Giving up.", 
-                Request.Method, Request.RequestUri.AbsoluteUri, delaySet.Length));
+            Tracer.TraceError(String.Format("TryGetLock could not get a lock for {0} request on {1} after {2} exponential backoff attempts. Giving up.",
+                Request.Method, Request.RequestUri.AbsolutePath, delaySet.Length));
             HttpResponseMessage busyResponse = Request.CreateErrorResponse(HttpStatusCode.ServiceUnavailable, Resources.VfsController_Busy);
             busyResponse.Headers.RetryAfter = new RetryConditionHeaderValue(_retryAfter);
             return busyResponse;
