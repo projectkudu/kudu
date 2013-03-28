@@ -125,7 +125,7 @@ namespace Kudu.Services.Deployment
             {
                 using (_tracer.Step("DeploymentService.GetDeployResults"))
                 {
-                    IEnumerable<DeployResult> results = GetResults(Request);
+                    IEnumerable<DeployResult> results = GetResults(Request).ToList();
                     response = Request.CreateResponse(HttpStatusCode.OK, results);
                 }
             }

@@ -331,7 +331,7 @@ namespace Kudu.Services {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}{1}  Error has occured and stream is terminated. {2}{0}.
+        ///   Looks up a localized string similar to {0}{1}  Error has occurred and stream is terminated. {2}{0}.
         /// </summary>
         internal static string LogStream_Error {
             get {

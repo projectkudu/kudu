@@ -214,7 +214,7 @@
     <value>{0}{1}  The application was terminated.{0}</value>
   </data>
   <data name="LogStream_Error" xml:space="preserve">
-    <value>{0}{1}  Error has occured and stream is terminated. {2}{0}</value>
+    <value>{0}{1}  Error has occurred and stream is terminated. {2}{0}</value>
   </data>
   <data name="LogStream_Heartbeat" xml:space="preserve">
     <value>{0}  No new trace in the past {1} min(s).{2}</value>
