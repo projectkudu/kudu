@@ -125,13 +125,7 @@ namespace Kudu.Core.SourceControl.Git
             ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("GitExeServer.Initialize"))
             {
-                IRepository repository = _repositoryFactory.EnsureRepository(RepositoryType.Git);
-
-                using (tracer.Step("Configure git server"))
-                {
-                    // Allow getting pushes even though we're not bare
-                    _gitExe.Execute(tracer, "config receive.denyCurrentBranch ignore");
-                }
+                _repositoryFactory.EnsureRepository(RepositoryType.Git);
             }
         }
 
