@@ -1,30 +1,36 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
+using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
-using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.SourceControl.Git
 {
     public class GitExeServer : IGitServer
     {
-        private readonly GitExecutable _gitExe;
-        private readonly ITraceFactory _traceFactory;
-        private readonly GitExeRepository _repository;
-        private readonly IOperationLock _initLock;
-
         private static readonly TimeSpan _initTimeout = TimeSpan.FromMinutes(8);
 
         // Server git operations like receive-pack can take a long time for large repros, without any data flowing.
         // So use a long 30 minute timeout here instead of the much shorter default.
         private static readonly TimeSpan _gitMinTimeout = TimeSpan.FromMinutes(30);
 
-        public GitExeServer(string path, string homePath, IOperationLock initLock, string logFileEnv, IDeploymentEnvironment deploymentEnvironment, IDeploymentSettingsManager settings, ITraceFactory traceFactory)
+        private readonly GitExecutable _gitExe;
+        private readonly ITraceFactory _traceFactory;
+        private readonly IOperationLock _initLock;
+        private readonly IRepositoryFactory _repositoryFactory;
+
+        public GitExeServer(string path, 
+                            string homePath, 
+                            IOperationLock initLock, 
+                            string logFileEnv,
+                            IRepositoryFactory repositoryFactory,
+                            IDeploymentEnvironment deploymentEnvironment, 
+                            IDeploymentSettingsManager settings, 
+                            ITraceFactory traceFactory)
         {
             // Honor settings if longer
             var gitTimeout = settings.GetCommandIdleTimeout();
@@ -36,8 +42,8 @@ namespace Kudu.Core.SourceControl.Git
             _gitExe = new GitExecutable(path, gitTimeout);
             _gitExe.SetHomePath(homePath);
             _traceFactory = traceFactory;
-            _repository = new GitExeRepository(path, homePath, settings, traceFactory);
             _initLock = initLock;
+            _repositoryFactory = repositoryFactory;
 
             // Transfer logFileEnv => git.exe => kudu.exe, this represent per-request tracefile
             _gitExe.EnvironmentVariables[Constants.TraceFileEnvKey] = logFileEnv;
@@ -101,9 +107,11 @@ namespace Kudu.Core.SourceControl.Git
 
         private bool Initialize()
         {
-            if (_repository.Exists && !_initLock.IsHeld)
+            IRepository repository = _repositoryFactory.GetRepository();
+            if (repository != null && !_initLock.IsHeld)
             {
                 // Repository already exists and there's nothing happening then do nothing
+                Debug.Assert(repository.RepositoryType == RepositoryType.Git, "Should be a higher order check that we're not affecting an existing Mercurial repo");
                 return false;
             }
 
@@ -117,7 +125,7 @@ namespace Kudu.Core.SourceControl.Git
             ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("GitExeServer.Initialize"))
             {
-                _repository.Initialize();
+                IRepository repository = _repositoryFactory.EnsureRepository(RepositoryType.Git);
 
                 using (tracer.Step("Configure git server"))
                 {

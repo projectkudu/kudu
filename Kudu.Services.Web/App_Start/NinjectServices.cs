@@ -182,6 +182,7 @@ namespace Kudu.Services.Web.App_Start
                                                                            environment.SiteRootPath,
                                                                            initLock,
                                                                            GetRequestTraceFile(context.Kernel),
+                                                                           context.Kernel.Get<IRepositoryFactory>(),
                                                                            context.Kernel.Get<IDeploymentEnvironment>(),
                                                                            context.Kernel.Get<IDeploymentSettingsManager>(),
                                                                            context.Kernel.Get<ITraceFactory>()))
@@ -268,6 +269,7 @@ namespace Kudu.Services.Web.App_Start
             // SSHKey
             routes.MapHttpRoute("get-sshkey", "sshkey", new { controller = "SSHKey", action = "GetPublicKey" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("put-sshkey", "sshkey", new { controller = "SSHKey", action = "SetPrivateKey" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRoute("delete-sshkey", "sshkey", new { controller = "SSHKey", action = "DeleteKeyPair" }, new { verb = new HttpMethodConstraint("DELETE") });
 
             // Environment
             routes.MapHttpRoute("get-env", "environment", new { controller = "Environment", action = "Get" }, new { verb = new HttpMethodConstraint("GET") });

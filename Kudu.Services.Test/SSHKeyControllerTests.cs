@@ -15,7 +15,9 @@ namespace Kudu.Services.Test
             // Arrange
             var sshKeyManager = new Mock<ISSHKeyManager>(MockBehavior.Strict);
             string expected = "public-key";
-            sshKeyManager.Setup(s => s.GetKey()).Returns(expected).Verifiable();
+            sshKeyManager.Setup(s => s.GetPublicKey(false))
+                         .Returns(expected)
+                         .Verifiable();
             var tracer = Mock.Of<ITracer>();
             var operationLock = new Mock<IOperationLock>();
             operationLock.Setup(l => l.Lock()).Returns(true);
@@ -35,14 +37,16 @@ namespace Kudu.Services.Test
             // Arrange
             var sshKeyManager = new Mock<ISSHKeyManager>(MockBehavior.Strict);
             string expected = "public-key";
-            sshKeyManager.Setup(s => s.CreateKey()).Returns(expected).Verifiable();
+            sshKeyManager.Setup(s => s.GetPublicKey(true))
+                         .Returns(expected)
+                         .Verifiable();
             var tracer = Mock.Of<ITracer>();
             var operationLock = new Mock<IOperationLock>();
             operationLock.Setup(l => l.Lock()).Returns(true);
             var controller = new SSHKeyController(tracer, sshKeyManager.Object, operationLock.Object);
 
             // Act
-            string actual = controller.GetPublicKey(forceCreate: true);
+            string actual = controller.GetPublicKey(ensurePublicKey: true);
 
             // Assert
             sshKeyManager.Verify();
