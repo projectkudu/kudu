@@ -968,7 +968,7 @@ command = deploy.cmd");
                     Assert.Contains("remote: Sleep(4000)", trace);
                     Assert.Contains("remote: Sleep(6000)", trace);
                     Assert.DoesNotContain("remote: Sleep(30000)", trace);
-                    Assert.Contains("remote: Process 'starter.cmd' aborted due to idle timeout.", trace);
+                    Assert.Contains("remote: Command 'starter.cmd simplesleep.exe ...' aborted due to idle timeout after", trace);
 
                     // in certain OS, the child process killed may not work
                     // this only intends for public Kudu (test running on the same machine as git server).
