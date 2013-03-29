@@ -94,11 +94,17 @@ namespace Kudu.Core.Infrastructure
                     continue;
                 }
 
-                int parentId = FindPidFromIndexedProcessName(indexedProcessName);
-                List<int> children = null;
-                if (!tree.TryGetValue(parentId, out children))
+                int? parentId = FindPidFromIndexedProcessName(indexedProcessName);
+                if (!parentId.HasValue)
                 {
-                    tree[parentId] = children = new List<int>();
+                    // We encountered an unauthorized access exception when trying to use perf counters when the account Kudu AppDomain is executing in doesn't have sufficient privileges. 
+                    // Skip when this happens.
+                    continue;
+                }
+                List<int> children = null;
+                if (!tree.TryGetValue(parentId.Value, out children))
+                {
+                    tree[parentId.Value] = children = new List<int>();
                 }
 
                 children.Add(proc.Key);
@@ -114,24 +120,35 @@ namespace Kudu.Core.Infrastructure
             for (var index = 0; index < processesByName.Length; index++)
             {
                 processIndexedName = index == 0 ? processName : processName + "#" + index;
-                using (var processId = new PerformanceCounter("Process", "ID Process", processIndexedName))
+                int? processId = SafeGetPerfCounter("Process", "ID Process", processIndexedName);
+                if (processId.HasValue && processId.Value == pid)
                 {
-                    if ((int)processId.NextValue() == pid)
-                    {
-                        return processIndexedName;
-                    }
+                    return processIndexedName;
                 }
             }
 
             return processIndexedName;
         }
 
-        private static int FindPidFromIndexedProcessName(string indexedProcessName)
+        private static int? FindPidFromIndexedProcessName(string indexedProcessName)
         {
-            using (var parentId = new PerformanceCounter("Process", "Creating Process ID", indexedProcessName))
+            return SafeGetPerfCounter("Process", "Creating Process ID", indexedProcessName);
+        }
+
+        private static int? SafeGetPerfCounter(string category, string counterName, string key)
+        {
+            try
             {
-                return (int)parentId.NextValue();
+                using (var counter = new PerformanceCounter(category, counterName, key, readOnly: true))
+                {
+                    return (int)counter.NextValue();
+                }
             }
+            catch (UnauthorizedAccessException)
+            {
+
+            }
+            return null;
         }
     }
 }
