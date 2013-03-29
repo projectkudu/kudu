@@ -12,10 +12,10 @@ namespace Kudu.Services
 
             if (contentEncoding != null && contentEncoding.Contains("gzip"))
             {
-                return new GZipStream(request.InputStream, CompressionMode.Decompress);
+                return new GZipStream(request.GetBufferlessInputStream(), CompressionMode.Decompress);
             }
 
-            return request.InputStream;
+            return request.GetBufferlessInputStream();
         }
     }
 }
