@@ -15,6 +15,7 @@
         public const string SiteBuilderFactory = "SCM_SITE_BUILDER_FACTORY";
         public const string GitUsername = "SCM_GIT_USERNAME";
         public const string GitEmail = "SCM_GIT_EMAIL";
+        public const string DeploymentFile = "SCM_DEPLOYMENT_FILE";
         public const string ScmType = "ScmType";
         public const string UseShallowClone = "SCM_USE_SHALLOW_CLONE";
     }

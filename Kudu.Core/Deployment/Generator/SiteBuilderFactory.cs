@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.IO.Abstractions;
 using System.Linq;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
-using System.IO.Abstractions;
-using System.Diagnostics;
 
 namespace Kudu.Core.Deployment.Generator
 {
@@ -27,7 +26,7 @@ namespace Kudu.Core.Deployment.Generator
         public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger)
         {
             string repositoryRoot = _environment.RepositoryPath;
-            var configuration = new DeploymentConfiguration(repositoryRoot);
+            var configuration = new DeploymentConfiguration(_settings, repositoryRoot);
 
             // If there's a custom deployment file then let that take over.
             if (!String.IsNullOrEmpty(configuration.Command))

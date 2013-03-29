@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Kudu.Contracts.Settings;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment
@@ -10,10 +11,12 @@ namespace Kudu.Core.Deployment
         private readonly IniFile _iniFile;
         private readonly string _path;
 
-        public DeploymentConfiguration(string path)
+        public DeploymentConfiguration(IDeploymentSettingsManager settings, string path)
         {
             _path = path;
-            _iniFile = new IniFile(Path.Combine(path, DeployConfigFile));
+
+            string deploymentFile = settings.GetValue(SettingsKeys.DeploymentFile) ?? DeployConfigFile;
+            _iniFile = new IniFile(Path.Combine(path, deploymentFile));
         }
 
         public string ProjectPath
