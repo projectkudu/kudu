@@ -472,7 +472,11 @@ namespace Kudu.Core.Deployment
 
                 try
                 {
-                    builder = _builderFactory.CreateBuilder(tracer, innerLogger);
+                    using (tracer.Step("Determining deployment builder"))
+                    {
+                        builder = _builderFactory.CreateBuilder(tracer, innerLogger);
+                        tracer.Trace("Builder is {0}", builder.GetType().Name);
+                    }
                 }
                 catch (Exception ex)
                 {

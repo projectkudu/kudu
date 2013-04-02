@@ -13,11 +13,6 @@ namespace Kudu.Core.SourceControl.Git
     public class GitExeServer : IGitServer
     {
         private static readonly TimeSpan _initTimeout = TimeSpan.FromMinutes(8);
-
-        // Server git operations like receive-pack can take a long time for large repros, without any data flowing.
-        // So use a long 30 minute timeout here instead of the much shorter default.
-        private static readonly TimeSpan _gitMinTimeout = Constants.MaxAllowedExecutionTime;
-
         private readonly GitExecutable _gitExe;
         private readonly ITraceFactory _traceFactory;
         private readonly IOperationLock _initLock;
@@ -32,14 +27,7 @@ namespace Kudu.Core.SourceControl.Git
                             IDeploymentSettingsManager settings, 
                             ITraceFactory traceFactory)
         {
-            // Honor settings if longer
-            var gitTimeout = settings.GetCommandIdleTimeout();
-            if (gitTimeout < _gitMinTimeout)
-            {
-                gitTimeout = _gitMinTimeout;
-            }
-
-            _gitExe = new GitExecutable(path, gitTimeout);
+            _gitExe = new GitExecutable(path, settings.GetCommandIdleTimeout());
             _gitExe.SetHomePath(homePath);
             _traceFactory = traceFactory;
             _initLock = initLock;

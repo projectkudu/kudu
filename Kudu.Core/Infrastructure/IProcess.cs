@@ -42,6 +42,6 @@ namespace Kudu.Core.Infrastructure
         /// Gets the TotalProcessTime for the process tree in milliseconds
         /// </summary>
         /// <see cref="http://msdn.microsoft.com/en-us/library/system.diagnostics.process.totalprocessortime.aspx"/>
-        long GetTotalProcessorTime();
+        TimeSpan GetTotalProcessorTime(ITracer tracer);
     }
 }

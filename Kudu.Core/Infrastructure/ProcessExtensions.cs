@@ -35,22 +35,46 @@ namespace Kudu.Core.Infrastructure
         {
             int pid = process.Id;
             Dictionary<int, List<int>> tree = GetProcessTree();
-            List<int> children = new List<int>();
+            return GetChildren(pid, tree).Select(cid => SafeGetProcessById(cid)).Where(p => p != null);
+        }
+
+        // recursively get children.
+        // return depth-first (leaf child first).
+        private static IEnumerable<int> GetChildren(int pid, Dictionary<int, List<int>> tree)
+        {
+            List<int> children;
             if (tree.TryGetValue(pid, out children))
             {
-                return children.Select(cid => SafeGetProcessById(cid)).Where(p => p != null);
+                List<int> result = new List<int>();
+                foreach (int id in children)
+                {
+                    result.AddRange(GetChildren(id, tree));
+                    result.Add(id);
+                }
+                return result;
             }
-
-            return Enumerable.Empty<Process>();
+            return Enumerable.Empty<int>();
         }
 
         /// <summary>
         /// Calculates the sum of TotalProcessorTime for the current process and all its children.
         /// </summary>
-        public static long GetTotalProcessorTime(this Process process)
+        public static TimeSpan GetTotalProcessorTime(this Process process, ITracer tracer)
         {
-            return new[] { process }.Concat(process.GetChildren())
-                                    .Sum(p => p.TotalProcessorTime.Ticks);
+            try
+            {
+                var processes = process.GetChildren().Concat(new[] { process }).Select(p => new { Name = p.ProcessName, Id = p.Id, Cpu = p.TotalProcessorTime });
+                var totalTime = TimeSpan.FromTicks(processes.Sum(p => p.Cpu.Ticks));
+                var info = String.Join("+", processes.Select(p => String.Format("{0}({1},{2:0.000}s)", p.Name, p.Id, p.Cpu.TotalSeconds)).ToArray());
+                tracer.Trace("Cpu: {0}=total({1:0.000}s)", info, totalTime.TotalSeconds);
+                return totalTime;
+            }
+            catch (Exception ex)
+            {
+                tracer.TraceError(ex);
+            }
+
+            return process.TotalProcessorTime;
         }
 
         private static Process SafeGetProcessById(int pid)
@@ -71,8 +95,9 @@ namespace Kudu.Core.Infrastructure
             try
             {
                 string processName = process.ProcessName;
+                int pid = process.Id;
                 process.Kill();
-                tracer.Trace("Abort Process '{0}'.", processName);
+                tracer.Trace("Abort Process '{0}({1})'.", processName, pid);
             }
             catch (Exception)
             {
@@ -137,18 +162,10 @@ namespace Kudu.Core.Infrastructure
 
         private static int? SafeGetPerfCounter(string category, string counterName, string key)
         {
-            try
+            using (var counter = new PerformanceCounter(category, counterName, key, readOnly: true))
             {
-                using (var counter = new PerformanceCounter(category, counterName, key, readOnly: true))
-                {
-                    return (int)counter.NextValue();
-                }
+                return (int)counter.NextValue();
             }
-            catch (UnauthorizedAccessException)
-            {
-
-            }
-            return null;
         }
     }
 }

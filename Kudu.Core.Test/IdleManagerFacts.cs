@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Threading;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Moq;
@@ -12,13 +15,19 @@ namespace Kudu.Core.Test
         public void WaitForExitWaitsForEOFPriorToExiting()
         {
             // Arrange
+            var idleTimeout = DeploymentSettingsExtension.DefaultCommandIdleTimeout;
+            var tracer = new Mock<ITracer>(MockBehavior.Strict);
+            var idleManager = new IdleManager(idleTimeout, tracer.Object);
             var process = new Mock<IProcess>(MockBehavior.Strict);
-            process.Setup(f => f.WaitForExit(It.IsAny<TimeSpan>()))
+
+            // Setup
+            process.SetupGet(f => f.Name)
+                   .Returns("Test-Process");
+            process.Setup(f => f.WaitForExit(idleTimeout))
                    .Returns(true)
                    .Verifiable();
             process.Setup(f => f.WaitUntilEOF())
                    .Verifiable();
-            var idleManager = new IdleManager(TimeSpan.FromSeconds(5), Mock.Of<ITracer>());
 
             // Act
             idleManager.WaitForExit(process.Object);
@@ -28,31 +37,32 @@ namespace Kudu.Core.Test
         }
 
         [Fact]
-        public void WaitForExitPollsAllowsExecutableToContinueAfterTimeoutIfItIsBusy()
+        public void WaitForExitPollsAllowsExecutableToContinueAfterTimeoutIfIOActivity()
         {
             // Arrange
-            TimeSpan idleTimeout = TimeSpan.FromMinutes(10);
-            IdleManager idleManager = new IdleManager(idleTimeout, Mock.Of<ITracer>());
+            var idleTimeout = TimeSpan.Zero;
+            var tracer = new Mock<ITracer>(MockBehavior.Strict);
+            var idleManager = new IdleManager(idleTimeout, tracer.Object);
             var process = new Mock<IProcess>(MockBehavior.Strict);
+
+            // Setup
+            int num = 10;
+            process.SetupGet(f => f.Name)
+                   .Returns("Test-Process");
             process.Setup(f => f.WaitForExit(idleTimeout))
-                   .Returns(false)
-                   .Verifiable();
-            int num = 0;
-            process.Setup(f => f.WaitForExit(TimeSpan.FromSeconds(10)))
                    .Returns(() =>
                     {
-                        if (num++ == 3)
+                        if (--num == 0)
                         {
                             return true;
                         }
                         else
                         {
+                            Thread.Sleep(10);
                             idleManager.UpdateActivity();
                             return false;
                         }
                     });
-            process.Setup(f => f.GetTotalProcessorTime())
-                   .Returns(num);
             process.Setup(f => f.WaitUntilEOF())
                    .Verifiable();
 
@@ -61,67 +71,99 @@ namespace Kudu.Core.Test
 
             // Assert
             process.Verify();
+            Assert.Equal(0, num);
         }
 
         [Fact]
-        public void WaitForExitPollsAllowsExecutableToContinueAsLongAsItIsPerformingSomeCPUOrUpdating()
+        public void WaitForExitPollsAllowsExecutableToContinueAfterTimeoutIfCpuActivity()
         {
             // Arrange
-            TimeSpan idleTimeout = TimeSpan.FromMinutes(10);
-            IdleManager idleManager = new IdleManager(idleTimeout, Mock.Of<ITracer>());
+            var idleTimeout = TimeSpan.MaxValue;
+            var tracer = new Mock<ITracer>(MockBehavior.Strict);
+            var idleManager = new IdleManager(idleTimeout, tracer.Object);
             var process = new Mock<IProcess>(MockBehavior.Strict);
+
+            // Setup
+            int num = 10, cpu = 0;
+            process.SetupGet(f => f.Name)
+                   .Returns("Test-Process");
             process.Setup(f => f.WaitForExit(idleTimeout))
-                   .Returns(false);
-            int num = 0, cpu = 0;
-            process.Setup(f => f.WaitForExit(TimeSpan.FromSeconds(10)))
-                   .Returns(() =>
-                   {
-                       if (num++ == 10)
-                       {
-                           return true;
-                       }
-                       else if (num % 2 == 0)
-                       {
-                           idleManager.UpdateActivity();
-                       }
-                       else
-                       {
-                           cpu++;
-                       }
-                       return false;
-                   });
-            process.Setup(f => f.GetTotalProcessorTime())
-                   .Returns(cpu);
+                   .Returns(() => --num == 0);
+            process.Setup(f => f.GetTotalProcessorTime(It.IsAny<ITracer>()))
+                   .Returns(() => TimeSpan.FromSeconds(++cpu))
+                   .Verifiable();
             process.Setup(f => f.WaitUntilEOF())
                    .Verifiable();
+            tracer.Setup(t => t.Trace(It.IsAny<string>(), It.IsAny<IDictionary<string, string>>()))
+                  .Verifiable();
 
             // Act
             idleManager.WaitForExit(process.Object);
 
             // Assert
             process.Verify();
+            Assert.Equal(0, num);
+        }
+
+        [Fact]
+        public void WaitForExitPollsAllowsExecutableToContinueAfterTimeoutIfCpuOrIOActivity()
+        {
+            // Arrange
+            var idleTimeout = TimeSpan.Zero;
+            var tracer = new Mock<ITracer>(MockBehavior.Strict);
+            var idleManager = new IdleManager(idleTimeout, tracer.Object);
+            var process = new Mock<IProcess>(MockBehavior.Strict);
+
+            // Setup
+            int num = 10;
+            process.SetupGet(f => f.Name)
+                   .Returns("Test-Process");
+            process.Setup(f => f.WaitForExit(idleTimeout))
+                   .Returns(() => --num == 0);
+            process.Setup(f => f.GetTotalProcessorTime(It.IsAny<ITracer>()))
+                   .Returns(() => 
+                   {
+                       Thread.Sleep(10);
+                       idleManager.UpdateActivity(); 
+                       return TimeSpan.FromSeconds(5); 
+                   })
+                   .Verifiable();
+            process.Setup(f => f.WaitUntilEOF())
+                   .Verifiable();
+            tracer.Setup(t => t.Trace(It.IsAny<string>(), It.IsAny<IDictionary<string, string>>()))
+                  .Verifiable();
+
+            // Act
+            idleManager.WaitForExit(process.Object);
+
+            // Assert
+            process.Verify();
+            Assert.Equal(0, num);
         }
 
         [Fact]
         public void WaitForExitPollsKillsProcessIfProcessorTimeDoesNotChangeAndNotUpdated()
         {
             // Arrange
-            var tracer = Mock.Of<ITracer>();
-            var idleTimeout = TimeSpan.FromMinutes(10);
-            IdleManager idleManager = new IdleManager(idleTimeout, tracer, DateTime.UtcNow.AddMinutes(-1));
+            var tracer = new Mock<ITracer>(MockBehavior.Strict);
+            DateTime startTime = DateTime.UtcNow;
+            TimeSpan idleTimeout = TimeSpan.FromSeconds(1);
+            var idleManager = new IdleManager(idleTimeout, tracer.Object);
             var process = new Mock<IProcess>(MockBehavior.Strict);
+
+            // Setup
             process.SetupGet(f => f.Name)
                    .Returns("Test-Process");
             process.SetupGet(f => f.Arguments)
                    .Returns("");
             process.Setup(f => f.WaitForExit(idleTimeout))
-                   .Returns(false);
-            process.Setup(f => f.WaitForExit(TimeSpan.FromSeconds(10)))
-                   .Returns(false);
-            process.Setup(f => f.GetTotalProcessorTime())
-                   .Returns(5);
-            process.Setup(f => f.Kill(tracer))
+                   .Returns(() => { Thread.Sleep(10); return false; });
+            process.Setup(f => f.GetTotalProcessorTime(It.IsAny<ITracer>()))
+                   .Returns(TimeSpan.Zero);
+            process.Setup(f => f.Kill(tracer.Object))
                    .Verifiable();
+            tracer.Setup(t => t.Trace(It.IsAny<string>(), It.IsAny<IDictionary<string, string>>()))
+                  .Verifiable();
 
             // Act
             var ex = Assert.Throws<CommandLineException>(() => idleManager.WaitForExit(process.Object));
@@ -129,63 +171,8 @@ namespace Kudu.Core.Test
             // Assert
             process.Verify();
 
-            Assert.Contains("Command 'Test-Process ' aborted due to idle timeout after", ex.Message);
-        }
-
-        [Fact]
-        public void WaitForExitPollsKillsProcessIfItUpdatesActivityForOver30Minutes()
-        {
-            // Arrange
-            var tracer = Mock.Of<ITracer>();
-            IdleManager idleManager = new IdleManager(TimeSpan.FromMinutes(10), tracer);
-            var process = new Mock<IProcess>(MockBehavior.Strict);
-            process.SetupGet(f => f.Name)
-                   .Returns("Test-Process");
-            process.SetupGet(f => f.Arguments)
-                   .Returns("");
-            process.Setup(f => f.WaitForExit(It.IsAny<TimeSpan>()))
-                   .Callback(() => idleManager.UpdateActivity())
-                   .Returns(false);
-            process.Setup(f => f.GetTotalProcessorTime())
-                   .Returns(5);
-            process.Setup(f => f.Kill(tracer))
-                   .Verifiable();
-
-            // Act
-            var ex = Assert.Throws<CommandLineException>(() => idleManager.WaitForExit(process.Object));
-
-            // Assert
-            process.Verify();
-
-            Assert.Equal("Command 'Test-Process ' aborted due to idle timeout after '1800' seconds.\r\nTest-Process", ex.Message.TrimEnd());
-        }
-
-        [Fact]
-        public void WaitForExitPollsKillsProcessIfItIsCosntantlyUsingCPUForOver30Minutes()
-        {
-            // Arrange
-            var tracer = Mock.Of<ITracer>();
-            IdleManager idleManager = new IdleManager(TimeSpan.FromMinutes(10), tracer);
-            var process = new Mock<IProcess>(MockBehavior.Strict);
-            long i = 0;
-            process.SetupGet(f => f.Name)
-                   .Returns("Test-Process");
-            process.SetupGet(f => f.Arguments)
-                   .Returns("");
-            process.Setup(f => f.WaitForExit(It.IsAny<TimeSpan>()))
-                   .Returns(false);
-            process.Setup(f => f.GetTotalProcessorTime())
-                   .Returns(() => ++i);
-            process.Setup(f => f.Kill(tracer))
-                   .Verifiable();
-
-            // Act
-            var ex = Assert.Throws<CommandLineException>(() => idleManager.WaitForExit(process.Object));
-
-            // Assert
-            process.Verify();
-
-            Assert.Equal("Command 'Test-Process ' aborted due to idle timeout after '1800' seconds.\r\nTest-Process", ex.Message.TrimEnd());
+            //Assert.True(DateTime.UtcNow - startTime >= idleTimeout);
+            Assert.Contains("Command 'Test-Process ' aborted due to no output and CPU activity for", ex.Message);
         }
     }
 }

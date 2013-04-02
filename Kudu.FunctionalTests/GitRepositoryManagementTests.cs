@@ -975,8 +975,8 @@ command = deploy.cmd");
                     Assert.Contains("remote: Sleep(2000)", trace);
                     Assert.Contains("remote: Sleep(4000)", trace);
                     Assert.Contains("remote: Sleep(6000)", trace);
-                    Assert.DoesNotContain("remote: Sleep(30000)", trace);
-                    Assert.Contains("remote: Command 'starter.cmd simplesleep.exe ...' aborted due to idle timeout after", trace);
+                    Assert.DoesNotContain("remote: Sleep(60000)", trace);
+                    Assert.Contains("remote: Command 'starter.cmd simplesleep.exe ...' aborted due to no output and CPU activity for", trace);
 
                     // in certain OS, the child process killed may not work
                     // this only intends for public Kudu (test running on the same machine as git server).
@@ -995,6 +995,39 @@ command = deploy.cmd");
                             }
                         }
                     }
+                });
+            }
+        }
+
+        [Fact]
+        public void WaitForUserInputProcessTest()
+        {
+            // Arrange
+            string appName = "WaitForUserInput";
+
+            using (var repo = Git.Clone("WaitForUserInput"))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    // Set IdleTimeout to 10s meaning there must be activity every 10s
+                    // Otherwise process and its child will be terminated
+                    appManager.SettingsManager.SetValue(SettingsKeys.CommandIdleTimeout, "10").Wait();
+
+                    // This WaitForUserInput do set /P waiting for input
+                    string trace = null;
+                    try
+                    {
+                        GitDeploymentResult result = appManager.GitDeploy(repo.PhysicalPath, retries: 1);
+                        trace = result.GitTrace;
+                    }
+                    catch (Exception ex)
+                    {
+                        trace = ex.ToString();
+                    }
+
+                    Assert.Contains("remote: Insert your input:", trace);
+                    Assert.Contains("remote: Command 'starter.cmd waitforinput.ba ...' aborted due to no output and CPU activity for", trace);
                 });
             }
         }

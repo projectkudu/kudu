@@ -158,10 +158,22 @@ namespace Kudu.Core.Infrastructure
                     {
                         byte[] bytes = new byte[1024];
                         int read = 0;
+                        bool writeError = false;
                         while ((read = from.Read(bytes, 0, bytes.Length)) != 0)
                         {
                             idleManager.UpdateActivity();
-                            to.Write(bytes, 0, read);
+                            try
+                            {
+                                if (!writeError)
+                                {
+                                    to.Write(bytes, 0, read);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                writeError = true;
+                                tracer.TraceError(ex);
+                            }
                         }
 
                         idleManager.UpdateActivity();

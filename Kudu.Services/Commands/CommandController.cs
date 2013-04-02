@@ -1,8 +1,12 @@
-﻿using System.Net;
+﻿using System;
+using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Commands;
+using Kudu.Core.Infrastructure;
 using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.Commands
@@ -10,10 +14,12 @@ namespace Kudu.Services.Commands
     public class CommandController : ApiController
     {
         private readonly ICommandExecutor _commandExecutor;
+        private readonly ITracer _tracer;
 
-        public CommandController(ICommandExecutor commandExecutor)
+        public CommandController(ICommandExecutor commandExecutor, ITracer tracer)
         {
             _commandExecutor = commandExecutor;
+            _tracer = tracer;
         }
 
         /// <summary>
@@ -31,8 +37,24 @@ namespace Kudu.Services.Commands
 
             string command = input.Value<string>("command");
             string workingDirectory = input.Value<string>("dir");
-            CommandResult result = _commandExecutor.ExecuteCommand(command, workingDirectory);
-            return Request.CreateResponse(HttpStatusCode.OK, result);
+            using (_tracer.Step("Executing " + command, new Dictionary<string, string> { { "CWD", workingDirectory } }))
+            {
+                try
+                {
+                    CommandResult result = _commandExecutor.ExecuteCommand(command, workingDirectory);
+                    return Request.CreateResponse(HttpStatusCode.OK, result);
+                }
+                catch (CommandLineException ex)
+                {
+                    _tracer.TraceError(ex);
+                    return Request.CreateResponse(HttpStatusCode.OK, new CommandResult { Error = ex.Error, ExitCode = ex.ExitCode });
+                }
+                catch (Exception ex)
+                {
+                    _tracer.TraceError(ex);
+                    return Request.CreateResponse(HttpStatusCode.OK, new CommandResult { Error = ex.ToString(), ExitCode = -1 });
+                }
+            }
         }
     }
 }

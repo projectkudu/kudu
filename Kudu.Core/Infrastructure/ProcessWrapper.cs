@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using Kudu.Contracts.Tracing;
 
 namespace Kudu.Core.Infrastructure
 {
@@ -34,14 +35,14 @@ namespace Kudu.Core.Infrastructure
             return _process.WaitForExit((int)timeSpan.TotalMilliseconds);
         }
 
-        public void Kill(Contracts.Tracing.ITracer tracer)
+        public void Kill(ITracer tracer)
         {
             _process.Kill(includesChildren: true, tracer: tracer);
         }
 
-        public long GetTotalProcessorTime()
+        public TimeSpan GetTotalProcessorTime(ITracer tracer)
         {
-            return _process.GetTotalProcessorTime();
+            return _process.GetTotalProcessorTime(tracer);
         }
     }
 }

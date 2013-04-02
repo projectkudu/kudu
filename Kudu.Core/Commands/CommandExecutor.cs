@@ -5,6 +5,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using Kudu.Contracts.Tracing;
 
 namespace Kudu.Core.Commands
 {
@@ -14,18 +15,23 @@ namespace Kudu.Core.Commands
         private IEnvironment _environment;
         private string _rootDirectory;
         private ExternalCommandFactory _externalCommandFactory;
+        private readonly IDeploymentSettingsManager _settings;
+        private readonly ITracer _tracer;
 
-        public CommandExecutor(string repositoryPath, IEnvironment environment, IDeploymentSettingsManager settings)
+        public CommandExecutor(string repositoryPath, IEnvironment environment, IDeploymentSettingsManager settings, ITracer tracer)
         {
             _rootDirectory = repositoryPath;
             _environment = environment;
             _externalCommandFactory = new ExternalCommandFactory(environment, settings, repositoryPath);
+            _settings = settings;
+            _tracer = tracer;
         }
 
         public event Action<CommandEvent> CommandEvent;
 
         public CommandResult ExecuteCommand(string command, string workingDirectory)
         {
+            var idleManager = new IdleManager(_settings.GetCommandIdleTimeout(), _tracer);
             var result = new CommandResult();
 
             int exitCode = 0;
@@ -34,6 +40,7 @@ namespace Kudu.Core.Commands
 
             Action<CommandEvent> handler = args =>
             {
+                idleManager.UpdateActivity();
                 switch (args.EventType)
                 {
                     case CommandEventType.Output:
@@ -62,7 +69,7 @@ namespace Kudu.Core.Commands
                 CommandEvent -= handler;
             }
 
-            _executingProcess.WaitForExit();
+            idleManager.WaitForExit(_executingProcess);
 
             result.Output = outputBuilder.ToString();
             result.Error = errorBuilder.ToString();
@@ -141,7 +148,7 @@ namespace Kudu.Core.Commands
                 {
                     _executingProcess.CancelErrorRead();
                     _executingProcess.CancelOutputRead();
-                    _executingProcess.Kill();
+                    _executingProcess.Kill(true, _tracer);
                 }
             }
             catch

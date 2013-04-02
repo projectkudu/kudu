@@ -154,7 +154,7 @@
     <value>Private Key already exists</value>
   </data>
   <data name="Error_ProcessAborted" xml:space="preserve">
-    <value>Command '{0}' aborted due to idle timeout after '{1}' seconds.</value>
+    <value>Command '{0}' aborted due to no output and CPU activity for {1:0} seconds.  You may increase {2} setting to solve the issue.</value>
   </data>
   <data name="Error_ProjectDoesNotExist" xml:space="preserve">
     <value>The specified project '{0}' is not valid. It needs to point to either a csproj/vbproj file or to a directory.</value>
