@@ -661,53 +661,6 @@ namespace Kudu.Core.Deployment
             return new ProgressLogger(id, _status, new CascadeLogger(xmlLogger, _globalLogger));
         }
 
-        public void CleanWwwRoot()
-        {
-            var tracer = _traceFactory.GetTracer();
-            using (tracer.Step("Cleaning wwwroot"))
-            {
-                string activeDeploymentId = _status.ActiveDeploymentId;
-
-                // Clean only required if there is an actual deployment (active deployment id is not null)
-                if (activeDeploymentId != null)
-                {
-                    string emptyTempPath = Path.Combine(_environment.TempPath, Guid.NewGuid().ToString());
-
-                    try
-                    {
-                        // Create an empty temporary directory
-                        FileSystemHelpers.EnsureDirectory(emptyTempPath);
-
-                        string from = emptyTempPath;
-                        string to = _environment.WebRootPath;
-                        string previousManifest = GetDeploymentManifestPath(activeDeploymentId);
-                        string nextManifest = Path.Combine(emptyTempPath, "manifest");
-
-                        // Run kudu sync from the empty directory to wwwroot using the current manifest
-                        // This will cause all previously deployed files to be removed from wwwroot
-                        var exe = new Executable(Path.Combine(_environment.ScriptPath, "kudusync.cmd"), emptyTempPath, _settings.GetCommandIdleTimeout());
-                        Tuple<string, string> result = exe.Execute(tracer, "-f {0} -t {1} -p {2} -n {3} -v 50", from, to, previousManifest, nextManifest);
-
-                        if (!String.IsNullOrEmpty(result.Item1))
-                        {
-                            tracer.Trace("Process output: {0}", result.Item1);
-                        }
-                        if (!String.IsNullOrEmpty(result.Item2))
-                        {
-                            tracer.Trace("Process error: {0}", result.Item2);
-                        }
-                    }
-                    finally
-                    {
-                        FileSystemHelpers.DeleteDirectorySafe(emptyTempPath);
-                    }
-                }
-                else
-                {
-                    tracer.Trace("No active deployment to clean");
-                }
-            }
-        }
         private IDeploymentManifestWriter GetDeploymentManifestWriter(string id)
         {
             return new DeploymentManifest(GetDeploymentManifestPath(id));

@@ -264,9 +264,26 @@ namespace Kudu.FunctionalTests
                     bool extraFileExists = appManager.VfsWebRootManager.Exists(extraFileName);
                     Assert.True(extraFileExists, extraFileName + " doesn't exist");
 
-                    // Verify default.htm was cleaned
+                    // Verify default.htm was not cleaned
                     defaultHtmExists = appManager.VfsWebRootManager.Exists(defaultHtmFile);
-                    Assert.False(defaultHtmExists, defaultHtmFile + " exists");
+                    Assert.True(defaultHtmExists, defaultHtmFile + " doesn't exist");
+
+                    // Redeploy HelloWorld repository
+                    appManager.GitDeploy(repo.PhysicalPath);
+                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    // Verify deployed properly
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    Assert.NotNull(results[0].LastSuccessEndTime);
+
+                    // Verify default.htm file from HelloWorld exists
+                    defaultHtmExists = appManager.VfsWebRootManager.Exists(defaultHtmFile);
+                    Assert.True(defaultHtmExists, defaultHtmFile + " doesn't exist");
+
+                    // Verify extra.file there
+                    extraFileExists = appManager.VfsWebRootManager.Exists(extraFileName);
+                    Assert.True(extraFileExists, extraFileName + " doesn't exist");
                 });
             }
         }
