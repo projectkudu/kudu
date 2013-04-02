@@ -19,21 +19,18 @@ namespace Kudu.Services.SourceControl
         private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
         private readonly IEnvironment _environment;
-        private readonly IDeploymentManager _deploymentManager;
 
         public LiveScmController(ITracer tracer,
                                  IOperationLock deploymentLock,
                                  IEnvironment environment,
                                  IRepository repository,
-                                 IServerConfiguration serverConfiguration,
-                                 IDeploymentManager deploymentManager)
+                                 IServerConfiguration serverConfiguration)
         {
             _tracer = tracer;
             _deploymentLock = deploymentLock;
             _environment = environment;
             _repository = repository;
             _serverConfiguration = serverConfiguration;
-            _deploymentManager = deploymentManager;
         }
 
         /// <summary>
