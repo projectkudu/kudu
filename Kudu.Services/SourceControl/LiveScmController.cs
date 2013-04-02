@@ -88,18 +88,6 @@ namespace Kudu.Services.SourceControl
                         FileSystemHelpers.DeleteDirectorySafe(_environment.DiagnosticsPath, ignoreErrors != 0);
                     }
                 }
-                else
-                {
-                    try
-                    {
-                        _deploymentManager.CleanWwwRoot();
-                    }
-                    catch (Exception ex)
-                    {
-                        // Ignore exceptions here as a failure to clean wwwroot shouldn't fail the action
-                        _tracer.TraceError(ex);
-                    }
-                }
 
                 using (_tracer.Step("Deleting deployment cache"))
                 {

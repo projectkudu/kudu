@@ -708,6 +708,7 @@ namespace Kudu.Core.Deployment
                 }
             }
         }
+
         private IDeploymentManifestWriter GetDeploymentManifestWriter(string id)
         {
             return new DeploymentManifest(GetDeploymentManifestPath(id));
