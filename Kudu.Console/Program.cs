@@ -95,11 +95,11 @@ namespace Kudu.Console
                 {
                     deploymentManager.Deploy(gitRepository, changeSet: null, deployer: deployer, clean: false);
                 }
-                catch
+                catch (Exception e)
                 {
+                    System.Console.Error.WriteLine(e.Message);
                     System.Console.Error.WriteLine(Resources.Log_DeploymentError);
-
-                    throw;
+                    return 1;
                 }
             }
 
