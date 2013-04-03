@@ -7,6 +7,7 @@ namespace Kudu.Contracts.Tracing
     public static class TraceExtensions
     {
         public const string AlwaysTrace = "alwaysTrace";
+        public const string TraceLevelKey = "traceLevel";
 
         private static readonly Dictionary<string, string> _empty = new Dictionary<string, string>();
 
@@ -61,6 +62,12 @@ namespace Kudu.Contracts.Tracing
             return tracer.TraceLevel >= TraceLevel.Verbose || tracer.TraceLevel >= GetTraceLevel(attributes) || attributes.ContainsKey(AlwaysTrace);
         }
 
+        // Some attributes only carry control information and are not meant for display
+        public static bool IsNonDisplayableAttribute(string key)
+        {
+            return key == AlwaysTrace || key == TraceLevelKey;
+        }
+
         private static TraceLevel GetTraceLevel(IDictionary<string, string> attributes)
         {
             string type;
@@ -72,7 +79,7 @@ namespace Kudu.Contracts.Tracing
             }
 
             string value;
-            if (attributes.TryGetValue("traceLevel", out value))
+            if (attributes.TryGetValue(TraceLevelKey, out value))
             {
                 var traceLevel = Int32.Parse(value);
                 if (traceLevel <= (int)TraceLevel.Error)

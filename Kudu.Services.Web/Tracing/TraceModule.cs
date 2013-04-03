@@ -86,7 +86,7 @@ namespace Kudu.Services.Web.Tracing
 
             if (httpContext.Response.StatusCode >= 400)
             {
-                attribs["traceLevel"] = ((int)TraceLevel.Error).ToString();
+                attribs[TraceExtensions.TraceLevelKey] = ((int)TraceLevel.Error).ToString();
             }
             else
             {
@@ -135,7 +135,7 @@ namespace Kudu.Services.Web.Tracing
             if (!httpContext.Request.RawUrl.StartsWith("/logstream", StringComparison.OrdinalIgnoreCase) &&
                 !httpContext.Request.RawUrl.StartsWith("/deployments", StringComparison.OrdinalIgnoreCase))
             {
-                attribs["traceLevel"] = ((int)TraceLevel.Info).ToString();
+                attribs[TraceExtensions.TraceLevelKey] = ((int)TraceLevel.Info).ToString();
             }
         }
 
