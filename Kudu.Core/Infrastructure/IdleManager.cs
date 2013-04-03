@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 
@@ -12,11 +13,13 @@ namespace Kudu.Core.Infrastructure
         private readonly TimeSpan _idleTimeout;
         private readonly ITracer _tracer;
         private DateTime _lastActivity;
+        private Stream _output;
 
-        public IdleManager(TimeSpan idleTimeout, ITracer tracer)
+        public IdleManager(TimeSpan idleTimeout, ITracer tracer, Stream output = null)
         {
             _idleTimeout = idleTimeout;
             _tracer = tracer;
+            _output = output;
             _lastActivity = DateTime.UtcNow;
         }
 
@@ -37,7 +40,7 @@ namespace Kudu.Core.Infrastructure
             DateTime lastCpuActivity = _lastActivity;
             TimeSpan previousCpuUsage = _initialCpuUsage;
 
-            while (!process.WaitForExit(_idleTimeout))
+            while (!process.WaitForExit(TimeSpan.FromSeconds(1)))
             {
                 // there is IO activity, continue to wait.
                 if (lastActivity != _lastActivity)
@@ -48,10 +51,23 @@ namespace Kudu.Core.Infrastructure
                     continue;
                 }
 
-                // No output activity in the past WaitIntervalTimeSpan
+                // Check how long it's been since the last IO activity
                 TimeSpan idleTime = DateTime.UtcNow - lastActivity;
 
+                // If less than the timeout, do nothing
+                if (idleTime < _idleTimeout) continue;
+
+                // Write progress to prevent client timeouts
+                WriteProgress();
+
                 // There wasn't any IO activity. Check if we had any CPU activity
+
+                // Check how long it's been since the last CPU activity
+                TimeSpan cpuIdleTime = DateTime.UtcNow - lastCpuActivity;
+
+                // If less than the timeout, do nothing
+                if (cpuIdleTime < _idleTimeout) continue;
+
                 TimeSpan currentCpuUsage = process.GetTotalProcessorTime(_tracer);
 
                 _tracer.Trace("{0}: no io activity for {1:0}s, prev-cpu={2:0.000}s, current-cpu={3:0.000}s", 
@@ -71,10 +87,35 @@ namespace Kudu.Core.Infrastructure
                 // It's likely that the process is idling waiting for user input. Kill it
                 process.Kill(_tracer);
 
-                throw CreateIdleTimeoutException(process, DateTime.UtcNow - lastCpuActivity); 
+                throw CreateIdleTimeoutException(process, cpuIdleTime);
             }
 
             process.WaitUntilEOF();
+        }
+
+        private static byte[] progressLine = { (byte)'0', (byte)'0', (byte)'0', (byte)'6', 0x2, (byte)'.' };
+
+        private void WriteProgress()
+        {
+            if (_output != null)
+            {
+                try
+                {
+                    // To output progress, we need to use git's progress sideband. Needs to look like:
+                    //      0006[0x2].
+                    // Where [0x2] is just an ASCII 2 char, and is the marker for the progress sideband
+                    // 0006 is the line length.
+                    _output.Write(progressLine, 0, progressLine.Length);
+                    _output.Flush();
+                }
+                catch (Exception e)
+                {
+                    // To be defensive, if anything goes wrong during progress writing, so trying
+                    _output = null;
+
+                    _tracer.Trace("Failed to write progress in IdleManager. {0}", e.Message);
+                }
+            }
         }
 
         private static Exception CreateIdleTimeoutException(IProcess process, TimeSpan totalWaitDuration)

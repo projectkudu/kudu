@@ -150,7 +150,7 @@ namespace Kudu.Core.Infrastructure
                 var process = CreateProcess(arguments, args);
                 process.Start();
 
-                var idleManager = new IdleManager(IdleTimeout, tracer);
+                var idleManager = new IdleManager(IdleTimeout, tracer, output);
                 Func<StreamReader, string> reader = (StreamReader streamReader) => streamReader.ReadToEnd();
                 Action<Stream, Stream, bool> copyStream = (Stream from, Stream to, bool closeAfterCopy) =>
                 {
