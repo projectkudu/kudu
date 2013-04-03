@@ -41,10 +41,11 @@ namespace Kudu.Core.Deployment
 
             FileSystemHelpers.EnsureDirectory(fileSystem, path);
 
+            DateTime utcNow = DateTime.UtcNow;
             return new DeploymentStatusFile(id, environment, fileSystem, statusLock)
             {
-                StartTime = DateTime.Now,
-                ReceivedTime = DateTime.Now
+                StartTime = utcNow,
+                ReceivedTime = utcNow
             };
         }
 
@@ -95,9 +96,6 @@ namespace Kudu.Core.Deployment
                 Boolean.TryParse(isTemporaryValue, out isTemporary);
             }
 
-            DateTime startTime;
-            DateTime.TryParse(startTimeValue, out startTime);
-
             Id = document.Root.Element("id").Value;
             Author = GetOptionalElementValue(document.Root, "author");
             Deployer = GetOptionalElementValue(document.Root, "deployer");
@@ -106,8 +104,8 @@ namespace Kudu.Core.Deployment
             Progress = GetOptionalElementValue(document.Root, "progress");
             Status = status;
             StatusText = document.Root.Element("statusText").Value;
-            StartTime = startTime;
-            ReceivedTime = String.IsNullOrEmpty(receivedTimeValue) ? startTime : DateTime.Parse(receivedTimeValue);
+            StartTime = ParseDateTime(startTimeValue).Value;
+            ReceivedTime = ParseDateTime(receivedTimeValue).Value;
             EndTime = ParseDateTime(endTimeValue);
             LastSuccessEndTime = ParseDateTime(lastSuccessEndTimeValue);
             Complete = complete;
@@ -188,7 +186,7 @@ namespace Kudu.Core.Deployment
         
         private static DateTime? ParseDateTime(string value)
         {
-            return !String.IsNullOrEmpty(value) ? DateTime.Parse(value) : (DateTime?)null;
+            return !String.IsNullOrEmpty(value) ? DateTime.Parse(value).ToUniversalTime() : (DateTime?)null;
         }
     }
 }

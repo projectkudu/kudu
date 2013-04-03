@@ -112,11 +112,12 @@ namespace Kudu.Services
                 }
 
                 _tracer.Trace("Attempting to fetch target branch {0}", targetBranch);
-                _deploymentLock.LockOperation(() =>
+                bool acquired = _deploymentLock.TryLockOperation(() =>
                 {
                     PerformDeployment(deployInfo, targetBranch);
-                },
-                () =>
+                }, TimeSpan.Zero);
+
+                if (!acquired)
                 {
                     // Create a marker file that indicates if there's another deployment to pull
                     // because there was a deployment in progress.
@@ -129,7 +130,7 @@ namespace Kudu.Services
 
                     context.Response.StatusCode = 409;
                     context.ApplicationInstance.CompleteRequest();
-                });
+                }
             }
         }
 

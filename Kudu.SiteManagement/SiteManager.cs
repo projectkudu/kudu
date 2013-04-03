@@ -15,7 +15,7 @@ namespace Kudu.SiteManagement
     {
         private const string HostingStartHtml = "hostingstart.html";
 
-        private static Random portNumberGenRnd = new Random((int)DateTime.Now.Ticks);
+        private static Random portNumberGenRnd = new Random((int)DateTime.UtcNow.Ticks);
 
         private readonly IPathResolver _pathResolver;
         private readonly bool _traceFailedRequests;

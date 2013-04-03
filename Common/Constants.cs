@@ -10,7 +10,6 @@ namespace Kudu
         public const string LockPath = "locks";
         public const string DeploymentLockFile = "deployments.lock";
         public const string StatusLockFile = "status.lock";
-        public const string InitLockFile = "init.lock";
         public const string SSHKeyLockFile = "sshkey.lock";
         public const string SSHKeyPath = ".ssh";
         public const string TraceLockFile = "trace.lock";

@@ -239,7 +239,7 @@ echo $i > pushinfo
 
                 try
                 {
-                    _gitExe.Execute(tracer, fetchCommand, remoteAlias);
+                    GitFetchWithRetry(() => _gitExe.Execute(tracer, fetchCommand, remoteAlias));
                 }
                 catch (CommandLineException exception)
                 {
@@ -281,7 +281,7 @@ echo $i > pushinfo
             if (File.Exists(Path.Combine(_gitExe.WorkingDirectory, ".gitmodules")))
             {
                 ITracer tracer = _tracerFactory.GetTracer();
-                _gitExe.Execute(tracer, "submodule update --init --recursive");
+                GitFetchWithRetry(() => _gitExe.Execute(tracer, "submodule update --init --recursive"));
             }
         }
 
@@ -515,6 +515,22 @@ echo $i > pushinfo
                     file.Status = ConvertStatus(status);
                 }
             }
+        }
+
+        internal T GitFetchWithRetry<T>(Func<T> func)
+        {
+            // 3 retries with 1s interval
+            return OperationManager.Attempt(func, delayBeforeRetry: 1000, shouldRetry: ex =>
+            {
+                // From CIT experience, this is most common flakiness issue with github.com
+                if (ex.Message.Contains("Unknown SSL protocol error in connection"))
+                {
+                    _tracerFactory.GetTracer().Trace("Retry due to {0}", ex.Message);
+                    return true;
+                }
+
+                return false;
+            });
         }
 
         private static bool IsCommitHeader(string value)

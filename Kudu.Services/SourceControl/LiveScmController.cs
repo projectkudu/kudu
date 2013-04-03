@@ -56,7 +56,7 @@ namespace Kudu.Services.SourceControl
         public void Delete(int deleteWebRoot = 0, int ignoreErrors = 0)
         {
             // Fail if a deployment is in progress
-            _deploymentLock.LockOperation(() =>
+            bool acquired = _deploymentLock.TryLockOperation(() =>
             {
                 using (_tracer.Step("Deleting repository"))
                 {
@@ -91,12 +91,13 @@ namespace Kudu.Services.SourceControl
                     // Delete the deployment cache
                     FileSystemHelpers.DeleteDirectorySafe(_environment.DeploymentCachePath, ignoreErrors != 0);
                 }
-            },
-            () =>
+            }, TimeSpan.Zero);
+
+            if (!acquired)
             {
                 HttpResponseMessage response = Request.CreateErrorResponse(HttpStatusCode.Conflict, Resources.Error_DeploymentInProgess);
                 throw new HttpResponseException(response);
-            });
+            }
         }
 
         /// <summary>

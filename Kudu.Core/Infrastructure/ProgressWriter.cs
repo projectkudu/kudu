@@ -14,7 +14,7 @@ namespace Kudu.Core.Infrastructure
         public ProgressWriter()
         {
             // Set the last write time and initialize progress thread
-            _lastWriteTime = DateTime.Now;
+            _lastWriteTime = DateTime.UtcNow;
             _running = true;
             _progressThread = new Thread(UpdateWriterState);
             _progressThread.Start();
@@ -36,7 +36,7 @@ namespace Kudu.Core.Infrastructure
 
         private void OnBeforeWrite()
         {
-            _lastWriteTime = DateTime.Now;
+            _lastWriteTime = DateTime.UtcNow;
 
             if (_writingProgress)
             {
@@ -55,7 +55,7 @@ namespace Kudu.Core.Infrastructure
                 if (!_writingProgress)
                 {
                     // If 5 seconds elapsed since the last write then switch into progress writing state
-                    var elapsed = DateTime.Now - _lastWriteTime;
+                    var elapsed = DateTime.UtcNow - _lastWriteTime;
 
                     if (elapsed.TotalSeconds >= 5)
                     {

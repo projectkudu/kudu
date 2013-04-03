@@ -20,6 +20,7 @@
 
 #endregion
 
+using System;
 using System.Net;
 using System.Web;
 using Kudu.Contracts.Infrastructure;
@@ -64,7 +65,7 @@ namespace Kudu.Services.GitServer
                     return;
                 }
 
-                DeploymentLock.LockOperation(() =>
+                bool acquired = DeploymentLock.TryLockOperation(() =>
                 {
                     string username = null;
                     if (AuthUtility.TryExtractBasicAuthUser(context.Request, out username))
@@ -82,12 +83,13 @@ namespace Kudu.Services.GitServer
                     {
                         GitServer.Receive(context.Request.GetInputStream(), context.Response.OutputStream);
                     }
-                },
-                () =>
+                }, TimeSpan.Zero);
+
+                if (!acquired)
                 {
                     context.Response.StatusCode = 409;
                     context.ApplicationInstance.CompleteRequest();
-                });
+                }
             }
         }
     }

@@ -17,7 +17,7 @@ namespace Kudu.Core.Infrastructure
             }, retries, delayBeforeRetry);
         }
 
-        public static T Attempt<T>(Func<T> action, int retries = DefaultRetries, int delayBeforeRetry = DefaultDelayBeforeRetry)
+        public static T Attempt<T>(Func<T> action, int retries = DefaultRetries, int delayBeforeRetry = DefaultDelayBeforeRetry, Func<Exception, bool> shouldRetry = null)
         {
             T result = default(T);
 
@@ -28,8 +28,13 @@ namespace Kudu.Core.Infrastructure
                     result = action();
                     break;
                 }
-                catch
+                catch (Exception ex)
                 {
+                    if (shouldRetry != null && !shouldRetry(ex))
+                    {
+                        throw;
+                    }
+
                     retries--;
                     if (retries == 0)
                     {

@@ -7,7 +7,7 @@ namespace Kudu.Core.Infrastructure
 {
     internal class IdleManager
     {
-        private static TimeSpan _initialCpuUsage = TimeSpan.FromSeconds(-1);
+        private static readonly TimeSpan _initialCpuUsage = TimeSpan.FromSeconds(-1);
 
         private readonly TimeSpan _idleTimeout;
         private readonly ITracer _tracer;

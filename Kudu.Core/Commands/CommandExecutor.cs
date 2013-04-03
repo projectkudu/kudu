@@ -148,7 +148,7 @@ namespace Kudu.Core.Commands
                 {
                     _executingProcess.CancelErrorRead();
                     _executingProcess.CancelOutputRead();
-                    _executingProcess.Kill(true, _tracer);
+                    _executingProcess.Kill(includesChildren: true, tracer: _tracer);
                 }
             }
             catch

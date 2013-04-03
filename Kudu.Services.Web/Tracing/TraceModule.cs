@@ -11,9 +11,15 @@ namespace Kudu.Services.Web.Tracing
 {
     public class TraceModule : IHttpModule
     {
+        private static readonly DateTime _startDateTime = DateTime.UtcNow;
         private static readonly object _stepKey = new object();
         private static int _traceStartup;
         private static DateTime _lastRequestDateTime;
+
+        public static TimeSpan UpTime
+        {
+            get { return DateTime.UtcNow - _startDateTime; }
+        }
 
         public static TimeSpan LastRequestTime
         {

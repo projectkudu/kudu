@@ -1,9 +1,17 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Kudu.Contracts.Settings;
+using Kudu.Contracts.SourceControl;
+using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
+using Kudu.Core.Tracing;
+using Moq;
 using Xunit;
+using Xunit.Extensions;
 
 namespace Kudu.Core.Test
 {
@@ -199,6 +207,82 @@ index 0000000..261a6bf
             Assert.Equal("foo/bar/lib/a.dll", fileNameWithSlashB);
             Assert.Equal("Folder b/blah.txt", ambiguous);
             Assert.Equal(" b ", moreAmbiguous);
+        }
+
+        [Theory]
+        [InlineData(null, 1)]
+        [InlineData("This is non-retryable exception", 1)]
+        [InlineData("Unknown SSL protocol error in connection to github.com:443", 3)]
+        public void GitExecuteWithRetryTest(string message, int expect)
+        {
+            // Mock
+            var settings = new Mock<IDeploymentSettingsManager>();
+            var trace = new Mock<ITraceFactory>();
+            var repository = new GitExeRepository("", "", settings.Object, trace.Object);
+            Exception exception = null;
+            var actual = 0;
+
+            // Setup
+            trace.Setup(t => t.GetTracer())
+                 .Returns(() => NullTracer.Instance);
+
+            // Test
+            try
+            {
+                repository.GitFetchWithRetry(() =>
+                {
+                    ++actual;
+                    if (message == null)
+                    {
+                        return true;
+                    }
+
+                    throw new Exception(message);
+                });
+            }
+            catch (Exception ex)
+            {
+                exception = ex;
+            }
+
+            // Assert
+            Assert.Equal(expect, actual);
+            Assert.Equal(message, (exception == null) ? null : exception.Message);
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void RepositoryConcurrentInitialize(bool initialized)
+        {
+            // Mock
+            var initLock = new OperationLockTests.MockOperationLock();
+            var factory = new Mock<IRepositoryFactory>(MockBehavior.Strict);
+            var env = new Mock<IDeploymentEnvironment>();
+            var settings = new Mock<IDeploymentSettingsManager>();
+            var trace = new Mock<ITraceFactory>();
+            IRepository repository = initialized ? new Mock<IRepository>().Object : null;
+            var server = new GitExeServer("", "", initLock, null, factory.Object, env.Object, settings.Object, trace.Object);
+
+            // Setup
+            trace.Setup(t => t.GetTracer())
+                 .Returns(() => NullTracer.Instance);
+            factory.Setup(f => f.GetRepository())
+                   .Returns(() => repository);
+            factory.Setup(f => f.EnsureRepository(RepositoryType.Git))
+                   .Returns(() => 
+                    {
+                        Thread.Sleep(100);
+                        Assert.Null(repository);
+                        return repository = new Mock<IRepository>().Object;
+                    });
+
+            // Test
+            Parallel.For(0, 5, i => server.Initialize());
+
+            // Assert
+            factory.Verify(f => f.EnsureRepository(RepositoryType.Git), initialized ? Times.Never() : Times.Once());
+            Assert.NotNull(repository);
         }
 
         private void AssertFile(ChangeSetDetail detail, string path, int? insertions = null, int? deletions = null, bool binary = false)

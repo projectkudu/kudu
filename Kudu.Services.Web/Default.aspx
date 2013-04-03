@@ -121,7 +121,7 @@
         </tr>
         <tr>
             <% 
-                var upTime = Kudu.Services.Web.MvcApplication.UpTime.ToString();
+                var upTime = Kudu.Services.Web.Tracing.TraceModule.UpTime.ToString();
             %>
             <td><strong>Up Time</strong></td>
             <td><%= upTime %></td>

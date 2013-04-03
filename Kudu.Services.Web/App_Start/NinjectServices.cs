@@ -121,11 +121,9 @@ namespace Kudu.Services.Web.App_Start
             string deploymentLockPath = Path.Combine(lockPath, Constants.DeploymentLockFile);
             string statusLockPath = Path.Combine(lockPath, Constants.StatusLockFile);
             string sshKeyLockPath = Path.Combine(lockPath, Constants.SSHKeyLockFile);
-            string initLockPath = Path.Combine(lockPath, Constants.InitLockFile);
 
             var deploymentLock = new LockFile(kernel.Get<ITraceFactory>(), deploymentLockPath);
             var statusLock = new LockFile(kernel.Get<ITraceFactory>(), statusLockPath);
-            var initLock = new LockFile(kernel.Get<ITraceFactory>(), initLockPath);
             var sshKeyLock = new LockFile(kernel.Get<ITraceFactory>(), sshKeyLockPath);
 
             kernel.Bind<IOperationLock>().ToConstant(sshKeyLock).WhenInjectedInto<SSHKeyController>();
@@ -180,7 +178,7 @@ namespace Kudu.Services.Web.App_Start
 
             kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.RepositoryPath,
                                                                            environment.SiteRootPath,
-                                                                           initLock,
+                                                                           deploymentLock,
                                                                            GetRequestTraceFile(context.Kernel),
                                                                            context.Kernel.Get<IRepositoryFactory>(),
                                                                            context.Kernel.Get<IDeploymentEnvironment>(),
@@ -323,7 +321,7 @@ namespace Kudu.Services.Web.App_Start
                     AppDomain.CurrentDomain.Id.ToString(),
                     System.Threading.Thread.CurrentThread.ManagedThreadId));
 
-                attribs.Add("uptime", MvcApplication.UpTime.ToString());
+                attribs.Add("uptime", TraceModule.UpTime.ToString());
 
                 attribs.Add("lastrequesttime", TraceModule.LastRequestTime.ToString());
 

@@ -93,19 +93,20 @@ namespace Kudu.Core.SourceControl.Git
             _gitExe.Execute(tracer, input, output, @"{0} --stateless-rpc ""{1}""", serviceName, _gitExe.WorkingDirectory);
         }
 
-        private bool Initialize()
+        internal void Initialize()
         {
             IRepository repository = _repositoryFactory.GetRepository();
-            if (repository != null && !_initLock.IsHeld)
+            if (repository == null)
             {
-                // Repository already exists and there's nothing happening then do nothing
-                Debug.Assert(repository.RepositoryType == RepositoryType.Git, "Should be a higher order check that we're not affecting an existing Mercurial repo");
-                return false;
+                _initLock.LockOperation(() =>
+                {
+                    repository = _repositoryFactory.GetRepository();
+                    if (repository == null)
+                    {
+                        InitializeRepository();
+                    }
+                }, _initTimeout);
             }
-
-            _initLock.LockOrWait(() => InitializeRepository(), _initTimeout);
-
-            return true;
         }
 
         private void InitializeRepository()

@@ -23,7 +23,7 @@ namespace Kudu.Core.Deployment
         {
             value = XmlUtility.Sanitize(value);
             var xmlLogEntry = new XElement("entry",
-                                           new XAttribute("time", DateTime.Now),
+                                           new XAttribute("time", DateTime.UtcNow),
                                            new XAttribute("id", Guid.NewGuid()),
                                            new XAttribute("type", (int)type),
                                            new XElement("message", value));
@@ -47,7 +47,7 @@ namespace Kudu.Core.Deployment
             }
 
             return from e in document.Root.Elements("entry")
-                   let time = DateTime.Parse(e.Attribute("time").Value)
+                   let time = DateTime.Parse(e.Attribute("time").Value).ToUniversalTime()
                    let type = (LogEntryType)Int32.Parse(e.Attribute("type").Value)
                    select new LogEntry(time, e.Attribute("id").Value, e.Element("message").Value, type);
         }
@@ -61,7 +61,7 @@ namespace Kudu.Core.Deployment
             }
 
             return from e in document.Root.Elements("entry").Where(s => s.Attribute("id").Value == entryId).First().Elements("entry")
-                   let time = DateTime.Parse(e.Attribute("time").Value)
+                   let time = DateTime.Parse(e.Attribute("time").Value).ToUniversalTime()
                    let type = (LogEntryType)Int32.Parse(e.Attribute("type").Value)
                    select new LogEntry(time, e.Attribute("id").Value, e.Element("message").Value, type);
         }
@@ -114,7 +114,7 @@ namespace Kudu.Core.Deployment
             {
                 value = XmlUtility.Sanitize(value);
                 var xmlLogEntry = new XElement("entry",
-                                               new XAttribute("time", DateTime.Now),
+                                               new XAttribute("time", DateTime.UtcNow),
                                                new XAttribute("id", Guid.NewGuid()),
                                                new XAttribute("type", (int)type),
                                                new XElement("message", value));

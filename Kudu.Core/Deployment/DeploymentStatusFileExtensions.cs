@@ -9,7 +9,7 @@ namespace Kudu.Core.Deployment
             statusFile.Complete = true;
             statusFile.Status = DeployStatus.Failed;
             statusFile.StatusText = String.Empty;
-            statusFile.EndTime = DateTime.Now;
+            statusFile.EndTime = DateTime.UtcNow;
             statusFile.Progress = String.Empty;
             statusFile.Save();
         }
@@ -19,7 +19,7 @@ namespace Kudu.Core.Deployment
             statusFile.Complete = true;
             statusFile.Status = DeployStatus.Success;
             statusFile.StatusText = String.Empty;
-            statusFile.EndTime = DateTime.Now;
+            statusFile.EndTime = DateTime.UtcNow;
             statusFile.LastSuccessEndTime = statusFile.EndTime;
             statusFile.Progress = String.Empty;
             statusFile.Save();

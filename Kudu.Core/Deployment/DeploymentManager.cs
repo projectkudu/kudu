@@ -463,7 +463,7 @@ namespace Kudu.Core.Deployment
 
                 currentStatus = _status.Open(id);
                 currentStatus.Complete = false;
-                currentStatus.StartTime = DateTime.Now;
+                currentStatus.StartTime = DateTime.UtcNow;
                 currentStatus.Status = DeployStatus.Building;
                 currentStatus.StatusText = String.Format(CultureInfo.CurrentCulture, Resources.Status_BuildingAndDeploying, id);
                 currentStatus.Save();

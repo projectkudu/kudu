@@ -130,7 +130,7 @@ namespace Kudu.Services
             Semaphore sem = new Semaphore(MaxConcurrentRequests, MaxConcurrentRequests);
             List<Task> tasks = new List<Task>();
             string parent = info.Path.TrimEnd('/') + '/';
-            DateTime updateMessageTime = DateTime.Now;
+            DateTime updateMessageTime = DateTime.UtcNow;
             int totals = info.Deltas.Count();
             var rateLimiter = new RateLimiter(MaxFilesPerSecs * 10, TimeSpan.FromSeconds(10));
 
@@ -197,7 +197,7 @@ namespace Kudu.Services
                                 Interlocked.Increment(ref _failedCount);
                             }
 
-                            if (DateTime.Now.Subtract(updateMessageTime) > TimeSpan.FromSeconds(5))
+                            if (DateTime.UtcNow.Subtract(updateMessageTime) > TimeSpan.FromSeconds(5))
                             {
                                 lock (_status)
                                 {
@@ -209,7 +209,7 @@ namespace Kudu.Services
                                             _failedCount));
                                 }
 
-                                updateMessageTime = DateTime.Now;
+                                updateMessageTime = DateTime.UtcNow;
                             }
 
                             return t;
@@ -507,7 +507,7 @@ namespace Kudu.Services
             private readonly TimeSpan _interval;
 
             private int _current = 0;
-            private DateTime _last = DateTime.Now;
+            private DateTime _last = DateTime.UtcNow;
 
             public RateLimiter(int limit, TimeSpan interval)
             {
@@ -522,12 +522,12 @@ namespace Kudu.Services
                     _current++;
                     if (_current > _limit)
                     {
-                        DateTime now = DateTime.Now;
+                        DateTime now = DateTime.UtcNow;
                         TimeSpan ts = now - _last;
                         if (ts < _interval)
                         {
                             Thread.Sleep(_interval - ts);
-                            _last = DateTime.Now;
+                            _last = DateTime.UtcNow;
                         }
                         else
                         {

@@ -10,12 +10,13 @@ namespace Kudu.Services.Infrastructure
     {
         public static void LockHttpOperation(this IOperationLock lockObj, Action action)
         {
-            lockObj.LockOperation(action, () =>
+            bool acquired = lockObj.TryLockOperation(action, TimeSpan.Zero);
+            if (!acquired)
             {
                 var response = new HttpResponseMessage(HttpStatusCode.Conflict);
                 response.Content = new StringContent(Resources.Error_DeploymentInProgess);
                 throw new HttpResponseException(response);
-            });
+            }
         }
     }
 }
