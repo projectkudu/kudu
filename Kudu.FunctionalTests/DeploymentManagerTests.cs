@@ -575,37 +575,60 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void PullApiTestConsecutivePushesGetQueued()
         {
-            string payload = @"{ ""oldRef"": ""0000000000000000000"", ""newRef"": ""1ef30333deac14b99ac4bc93453cf4232ae88c24"", ""url"": ""https://github.com/KuduApps/RepoWithMultipleBranches.git"", ""deployer"" : ""CodePlex"", branch: ""master"" }";
+            List<DeployResult> results;
+            string payloadMaster = @"{ ""newRef"": ""1ef30333deac14b99ac4bc93453cf4232ae88c24"", ""url"": ""https://github.com/KuduApps/RepoWithMultipleBranches.git"", ""deployer"" : ""CodePlex"", branch: ""master"" }";
+            string payloadTest = @"{ ""url"": ""https://github.com/KuduApps/RepoWithMultipleBranches.git"", ""deployer"" : ""CodePlex"", branch: ""test"", newRef: ""ad21595c668f3de813463df17c04a3b23065fedc"" }";
             string appName = "PullApiTestPushesGetQueued";
 
             ApplicationManager.Run(appName, appManager =>
             {
-                var post = new Dictionary<string, string>
+                var postMaster = new Dictionary<string, string>
                 {
-                    { "payload", payload }
+                    { "payload", payloadMaster }
                 };
 
-                // Start two requests at the same time, then wait for them
-                // Ideally we'd push something else to github but at least this exercises the code path
-                Task<HttpResponseMessage> responseTask1 = Task.Factory.StartNew(() => PostPayloadHelper(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(post))));
-                Task<HttpResponseMessage> responseTask2 = Task.Factory.StartNew(() => PostPayloadHelper(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(post))));
-
-                // One should be an OK and the other a Conflict. Which one is which can vary.
-                if (responseTask1.Result.StatusCode == HttpStatusCode.Conflict)
+                var postTest = new Dictionary<string, string>
                 {
-                    Assert.Equal(HttpStatusCode.OK, responseTask2.Result.StatusCode);
-                }
-                else
-                {
-                    Assert.Equal(HttpStatusCode.OK, responseTask1.Result.StatusCode);
-                    Assert.Equal(HttpStatusCode.Conflict, responseTask2.Result.StatusCode);
-                }
+                    { "payload", payloadTest }
+                };
 
-                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-                Assert.Equal(1, results.Count);
+                // Start the first fetch request for the master branch
+                Task<HttpResponseMessage> responseTask1 = Task.Factory.StartNew(() => PostPayloadHelper(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(postMaster))));
+
+                // Wait for the first deployment to start
+                bool deploying = false;
+                int breakLoop = 0;
+                do
+                {
+                    Thread.Sleep(100);
+
+                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                    deploying =
+                        results != null &&
+                        results.Any();
+
+                    if (breakLoop > 200)
+                    {
+                        Assert.True(false, "No deployment result in pending state");
+                    }
+                }
+                while (!deploying);
+
+                // Change branch and start second fetch request for test branch
+                appManager.SettingsManager.SetValue("branch", "test").Wait();
+                Task<HttpResponseMessage> responseTask2 = Task.Factory.StartNew(() => PostPayloadHelper(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(postTest))));
+
+                Assert.Equal(HttpStatusCode.OK, responseTask1.Result.StatusCode);
+                Assert.Equal(HttpStatusCode.Conflict, responseTask2.Result.StatusCode);
+
+                KuduAssert.VerifyUrl(appManager.SiteUrl, "Test branch");
+
+                results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                Assert.Equal(2, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
-                KuduAssert.VerifyUrl(appManager.SiteUrl, "Master branch");
-                Assert.Equal("CodePlex", results[0].Deployer);
+                Assert.Equal(DeployStatus.Success, results[1].Status);
+                Assert.Equal("CodePlex", results[1].Deployer);
+                Assert.Equal("CodePlex", results[1].Deployer);
             });
         }
 
