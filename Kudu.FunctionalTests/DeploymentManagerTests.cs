@@ -50,7 +50,7 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void DeploymentApis()
+        public async Task DeploymentApis()
         {
             // Arrange
 
@@ -58,10 +58,10 @@ namespace Kudu.FunctionalTests
 
             using (var repo = Git.Clone("HelloWorld"))
             {
-                ApplicationManager.Run(appName, appManager =>
+                await ApplicationManager.RunAsync(appName, async appManager =>
                 {
                     appManager.GitDeploy(repo.PhysicalPath);
-                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                    var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
 
                     Assert.Equal(1, results.Count);
                     var result = results[0];
@@ -77,7 +77,7 @@ namespace Kudu.FunctionalTests
                     KuduAssert.VerifyUrl(result.Url, cred);
                     KuduAssert.VerifyUrl(result.LogUrl, cred);
 
-                    var resultAgain = appManager.DeploymentManager.GetResultAsync(result.Id).Result;
+                    var resultAgain = await appManager.DeploymentManager.GetResultAsync(result.Id);
                     Assert.Equal("davidebbo", resultAgain.Author);
                     Assert.Equal("david.ebbo@microsoft.com", resultAgain.AuthorEmail);
                     Assert.True(resultAgain.Current);
@@ -90,14 +90,14 @@ namespace Kudu.FunctionalTests
                     repo.WriteFile("HelloWorld.txt", "This is a test");
                     Git.Commit(repo.PhysicalPath, "Another commit");
                     appManager.GitDeploy(repo.PhysicalPath);
-                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                    results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
                     Assert.Equal(2, results.Count);
                     string oldId = results[1].Id;
 
                     // Delete one
-                    appManager.DeploymentManager.DeleteAsync(oldId).Wait();
+                    await appManager.DeploymentManager.DeleteAsync(oldId);
 
-                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                    results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
 
                     Assert.Equal(1, results.Count);
                     Assert.NotEqual(oldId, results[0].Id);
@@ -105,12 +105,12 @@ namespace Kudu.FunctionalTests
                     result = results[0];
 
                     // Redeploy
-                    appManager.DeploymentManager.DeployAsync(result.Id).Wait();
+                    await appManager.DeploymentManager.DeployAsync(result.Id);
 
                     // Clean deploy
-                    appManager.DeploymentManager.DeployAsync(result.Id, clean: true).Wait();
+                    await appManager.DeploymentManager.DeployAsync(result.Id, clean: true);
 
-                    var entries = appManager.DeploymentManager.GetLogEntriesAsync(result.Id).Result.ToList();
+                    var entries = (await appManager.DeploymentManager.GetLogEntriesAsync(result.Id)).ToList();
 
                     Assert.True(entries.Count > 0);
 
@@ -119,7 +119,7 @@ namespace Kudu.FunctionalTests
 
                     var entryWithDetails = entries.First(e => e.DetailsUrl != null);
 
-                    var nested = appManager.DeploymentManager.GetLogEntryDetailsAsync(result.Id, entryWithDetails.Id).Result.ToList();
+                    var nested = (await appManager.DeploymentManager.GetLogEntryDetailsAsync(result.Id, entryWithDetails.Id)).ToList();
 
                     Assert.True(nested.Count > 0);
 
@@ -133,17 +133,29 @@ namespace Kudu.FunctionalTests
                     // And verify git repository is not identified
                     appManager.VfsManager.Delete("site\\repository\\.git\\HEAD");
 
-                    Exception notFoundException = null;
-                    appManager.DeploymentManager.DeployAsync(null).Catch(
-                        catchInfo =>
-                        {
-                            notFoundException = catchInfo.Exception;
-                            return catchInfo.Handled();
-                        }).Wait();
+                    HttpRequestException notFoundException = null;
+                    try
+                    {
+                        await appManager.DeploymentManager.DeployAsync(null);
+                    }
+                    catch (HttpRequestException httpRequestException)
+                    {
+                        notFoundException = httpRequestException;
+                    }
 
+                    // Expect a not found failure as no repository is found (since the git repository is now corrupted)
                     Assert.True(notFoundException != null, "Not found exception was not thrown");
-                    Assert.IsType<HttpRequestException>(notFoundException);
                     Assert.Equal("Response status code does not indicate success: 404 (Not Found).", notFoundException.Message);
+
+                    // Another got push should reinitialize the git repository
+                    appManager.GitDeploy(repo.PhysicalPath);
+
+                    results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+
+                    // Make sure running this again doesn't throw an exception
+                    await appManager.DeploymentManager.DeployAsync(null);
                 });
             }
         }
@@ -814,7 +826,7 @@ namespace Kudu.FunctionalTests
                     if (ex.ResponseMessage.ExceptionMessage.Contains("403 while accessing https://github.com")
                      || ex.ResponseMessage.ExceptionMessage.Contains("fatal: The remote end hung up unexpectedly"))
                     {
-                        TestTracer.Trace("Retry due to github flakiness, removing the failed deployment result if it exists");
+                        TestTracer.Trace("Retry due to github flakiness, removing the failed deployment result if it exists\nFailure: {0}", ex.ResponseMessage.ExceptionMessage);
 
                         var deploymentResults = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                         var lastDeploymentResult = deploymentResults.LastOrDefault();
