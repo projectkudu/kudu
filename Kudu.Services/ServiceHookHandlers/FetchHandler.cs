@@ -29,7 +29,6 @@ namespace Kudu.Services
         private readonly ITracer _tracer;
         private readonly IRepositoryFactory _repositoryFactory;
 
-
         public FetchHandler(ITracer tracer,
                             IDeploymentManager deploymentManager,
                             IDeploymentSettingsManager settings,
@@ -114,14 +113,14 @@ namespace Kudu.Services
                 _tracer.Trace("Attempting to fetch target branch {0}", targetBranch);
                 bool acquired = _deploymentLock.TryLockOperation(() =>
                 {
-                    PerformDeployment(deployInfo, targetBranch);
+                    PerformDeployment(deployInfo);
                 }, TimeSpan.Zero);
 
                 if (!acquired)
                 {
                     // Create a marker file that indicates if there's another deployment to pull
                     // because there was a deployment in progress.
-                    using (_tracer.Step("Creating pending deployment maker file"))
+                    using (_tracer.Step("Creating pending deployment marker file"))
                     {
                         // REVIEW: This makes the assumption that the repository url is the same.
                         // If it isn't the result would be buggy either way.
@@ -149,12 +148,13 @@ namespace Kudu.Services
             return FileSystemHelpers.DeleteFileSafe(MarkerFilePath);
         }
 
-        private void PerformDeployment(DeploymentInfo deploymentInfo, string targetBranch)
+        private void PerformDeployment(DeploymentInfo deploymentInfo)
         {
             bool hasPendingDeployment;
 
             do
             {
+                string targetBranch = _settings.GetBranch();
                 hasPendingDeployment = false;
 
                 using (_tracer.Step("Performing fetch based deployment"))
@@ -188,7 +188,8 @@ namespace Kudu.Services
                         if (deploymentInfo.TargetChangeset != null && ShouldDeploy(repository, deploymentInfo, targetBranch))
                         {
                             // Perform the actual deployment
-                            _deploymentManager.Deploy(repository, null, deploymentInfo.Deployer, clean: false);
+                            var changeSet = repository.GetChangeSet(targetBranch);
+                            _deploymentManager.Deploy(repository, changeSet, deploymentInfo.Deployer, clean: false);
                         }
 
                         if (MarkerFileExists())
