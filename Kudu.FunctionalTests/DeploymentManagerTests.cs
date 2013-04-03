@@ -607,6 +607,7 @@ namespace Kudu.FunctionalTests
                         results != null &&
                         results.Any();
 
+                    breakLoop++;
                     if (breakLoop > 200)
                     {
                         Assert.True(false, "No deployment result in pending state");
