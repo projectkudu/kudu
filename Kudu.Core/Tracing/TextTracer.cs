@@ -120,6 +120,8 @@ namespace Kudu.Core.Tracing
                     {
                         foreach (KeyValuePair<string, string> pair in attributes)
                         {
+                            if (TraceExtensions.IsNonDisplayableAttribute(pair.Key)) continue;
+
                             strb.AppendFormat(", {0}: {1}", pair.Key, pair.Value);
                         }
                     }

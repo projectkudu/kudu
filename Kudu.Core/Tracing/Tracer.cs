@@ -63,6 +63,8 @@ namespace Kudu.Core.Tracing
 
             foreach (var pair in attributes)
             {
+                if (TraceExtensions.IsNonDisplayableAttribute(pair.Key)) continue;
+
                 string safeValue = XmlUtility.Sanitize(pair.Value);
                 newStepElement.Add(new XAttribute(pair.Key, safeValue));
             }
