@@ -17,12 +17,14 @@ namespace Kudu.Core.SourceControl
         private readonly IEnvironment _environment;
         private readonly ITraceFactory _traceFactory;
         private readonly IDeploymentSettingsManager _settings;
+        private readonly GitExecutable _gitExe;
 
         public RepositoryFactory(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory)
         {
             _environment = environment;
             _settings = settings;
             _traceFactory = traceFactory;
+            _gitExe = new GitExecutable(_environment.RepositoryPath, _settings.GetCommandIdleTimeout());
         }
 
         /// <summary>
@@ -42,6 +44,25 @@ namespace Kudu.Core.SourceControl
         {
             get
             {
+                try
+                {
+                    _gitExe.Execute("rev-parse --git-dir");
+                    // If no exception, git repository directory found
+                    return true;
+                }
+                catch (CommandLineException ex)
+                {
+                    if (ex.Error != null && ex.Error.StartsWith("fatal: Not a git repository (or any of the parent directories)", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return false;
+                    }
+
+                    ITracer tracer = _traceFactory.GetTracer();
+                    tracer.TraceError(ex);
+                }
+
+                // Failed to determine whether a git repository directory exists, falling back to original logic
+                // Checkit existence of .git directory
                 string gitRepoFiles = Path.Combine(_environment.RepositoryPath, ".git");
                 return Directory.Exists(gitRepoFiles) &&
                        Directory.EnumerateFiles(gitRepoFiles).Any();

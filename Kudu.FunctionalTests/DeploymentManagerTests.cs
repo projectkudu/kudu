@@ -128,6 +128,22 @@ namespace Kudu.FunctionalTests
                     // Can't delete the active one
                     var ex = KuduAssert.ThrowsUnwrapped<HttpRequestException>(() => appManager.DeploymentManager.DeleteAsync(result.Id).Wait());
                     Assert.Equal("Response status code does not indicate success: 409 (Conflict).", ex.Message);
+
+                    // Corrupt git repository by removing HEAD file from it
+                    // And verify git repository is not identified
+                    appManager.VfsManager.Delete("site\\repository\\.git\\HEAD");
+
+                    Exception notFoundException = null;
+                    appManager.DeploymentManager.DeployAsync(null).Catch(
+                        catchInfo =>
+                        {
+                            notFoundException = catchInfo.Exception;
+                            return catchInfo.Handled();
+                        }).Wait();
+
+                    Assert.True(notFoundException != null, "Not found exception was not thrown");
+                    Assert.IsType<HttpRequestException>(notFoundException);
+                    Assert.Equal("Response status code does not indicate success: 404 (Not Found).", notFoundException.Message);
                 });
             }
         }
