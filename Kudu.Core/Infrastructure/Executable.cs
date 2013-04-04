@@ -113,11 +113,7 @@ namespace Kudu.Core.Infrastructure
                 string error = reader.EndInvoke(errorReader);
 
 #if !SITEMANAGEMENT
-                tracer.Trace("Process dump", new Dictionary<string, string>
-                {
-                    { "exitCode", process.ExitCode.ToString() },
-                    { "type", "processOutput" }
-                });
+                tracer.TraceProcessExitCode(process);
 #endif
 
                 // Sometimes, we get an exit code of 1 even when the command succeeds (e.g. with 'git reset .').
@@ -221,11 +217,7 @@ namespace Kudu.Core.Infrastructure
 
                 string error = reader.EndInvoke(errorReader);
 
-                tracer.Trace("Process dump", new Dictionary<string, string>
-                {
-                    { "exitCode", process.ExitCode.ToString() },
-                    { "type", "processOutput" }
-                });
+                tracer.TraceProcessExitCode(process);
 
                 if (process.ExitCode != 0)
                 {
@@ -358,11 +350,7 @@ namespace Kudu.Core.Infrastructure
                     throw;
                 }
 
-                tracer.Trace("Process dump", new Dictionary<string, string>
-                {
-                    { "exitCode", process.ExitCode.ToString() },
-                    { "type", "processOutput" }
-                });
+                tracer.TraceProcessExitCode(process);
 
                 string output = outputBuffer.ToString().Trim();
                 string error = errorBuffer.ToString().Trim();
