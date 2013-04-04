@@ -54,6 +54,27 @@ namespace Kudu.Core.SourceControl.Git
         {
             get
             {
+                try
+                {
+                    _gitExe.Execute("rev-parse --git-dir");
+                    // If no exception, git repository directory found
+                    return true;
+                }
+                catch (CommandLineException ex)
+                {
+                    if (ex.Error != null && (
+                        ex.Error.StartsWith("fatal: Not a git repository (or any of the parent directories)", StringComparison.OrdinalIgnoreCase) ||
+                        ex.Error.StartsWith("fatal: Cannot change to", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        return false;
+                    }
+
+                    ITracer tracer = _tracerFactory.GetTracer();
+                    tracer.TraceError(ex);
+                }
+
+                // Failed to determine whether a git repository directory exists, falling back to original logic
+                // Checkit existence of .git directory
                 return Directory.Exists(_gitExe.WorkingDirectory) &&
                        Directory.EnumerateFileSystemEntries(_gitExe.WorkingDirectory).Any();
             }

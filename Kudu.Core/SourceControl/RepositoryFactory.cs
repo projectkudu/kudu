@@ -42,9 +42,8 @@ namespace Kudu.Core.SourceControl
         {
             get
             {
-                string gitRepoFiles = Path.Combine(_environment.RepositoryPath, ".git");
-                return Directory.Exists(gitRepoFiles) &&
-                       Directory.EnumerateFiles(gitRepoFiles).Any();
+                var gitExeRepository = new GitExeRepository(_environment.RepositoryPath, _environment.SiteRootPath, _settings, _traceFactory);
+                return gitExeRepository.Exists;
             }
         }
 
