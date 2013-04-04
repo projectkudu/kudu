@@ -45,6 +45,79 @@ namespace Kudu.FunctionalTests
             }
         }
 
+        [Fact]
+        public void GitRepoDoesntExistBeforeInitialize()
+        {
+            using (TestRepository testRepository = GetRepository())
+            {
+                var gitRepo = new GitExeRepository(testRepository.PhysicalPath, "", new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                Assert.False(gitRepo.Exists, "git repository shouldn't exist yet");
+            }
+        }
+
+        [Fact]
+        public void GitRepoExistsAfterInitialize()
+        {
+            using (TestRepository testRepository = GetRepository())
+            {
+                var gitRepo = new GitExeRepository(testRepository.PhysicalPath, "", new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                gitRepo.Initialize();
+                Assert.True(gitRepo.Exists, "git repository should exist");
+            }
+        }
+
+        [Fact]
+        public void GitRepoDoesntExistIfCorrupted()
+        {
+            using (TestRepository testRepository = GetRepository())
+            {
+                var gitRepo = new GitExeRepository(testRepository.PhysicalPath, "", new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+
+                gitRepo.Initialize();
+                Assert.True(gitRepo.Exists, "git repository should exist");
+
+                string gitHeadPath = Path.Combine(testRepository.PhysicalPath, ".git", "HEAD");
+                File.Delete(gitHeadPath);
+                Assert.False(gitRepo.Exists, "git repository shouldn't exist");
+            }
+        }
+
+        [Fact]
+        public void GitRepoExistIfCorruptedThenInitializedAgain()
+        {
+            using (TestRepository testRepository = GetRepository())
+            {
+                var gitRepo = new GitExeRepository(testRepository.PhysicalPath, "", new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+
+                gitRepo.Initialize();
+                Assert.True(gitRepo.Exists, "git repository should exist");
+
+                string gitHeadPath = Path.Combine(testRepository.PhysicalPath, ".git", "HEAD");
+                File.Delete(gitHeadPath);
+                Assert.False(gitRepo.Exists, "git repository shouldn't exist");
+
+                gitRepo.Initialize();
+                Assert.True(gitRepo.Exists, "git repository should exist");
+            }
+        }
+
+        [Fact]
+        public void GitRepoDoesntExistIfGitRepoOnlyOnParentDirectory()
+        {
+            using (TestRepository testRepository = GetRepository())
+            {
+                // Create a repository
+                var gitRepo = new GitExeRepository(testRepository.PhysicalPath, "", new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                gitRepo.Initialize();
+
+                // Checkout for existence in subdirectory
+                var testedPath = Path.Combine(testRepository.PhysicalPath, "subdirectory");
+                Directory.CreateDirectory(testedPath);
+                gitRepo = new GitExeRepository(testedPath, "", new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                Assert.False(gitRepo.Exists, "git repository shouldn't exist yet");
+            }
+        }
+
         private static TestRepository GetRepository(string source = null)
         {
             source = source ?? Path.GetRandomFileName();
