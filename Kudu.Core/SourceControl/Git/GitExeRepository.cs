@@ -56,9 +56,10 @@ namespace Kudu.Core.SourceControl.Git
             {
                 try
                 {
-                    _gitExe.Execute("rev-parse --git-dir");
-                    // If no exception, git repository directory found
-                    return true;
+                    string output = _gitExe.Execute("rev-parse --git-dir").Item1;
+                    // If no exception and the output is .git (not a full directory to .git which means somewhere there's a git repository which is a parent of this directory)
+                    // Then git repository directory found
+                    return String.Equals(output.Trim(), ".git", StringComparison.OrdinalIgnoreCase);
                 }
                 catch (CommandLineException ex)
                 {
