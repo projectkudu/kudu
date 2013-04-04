@@ -12,7 +12,7 @@ namespace Kudu.TestHarness
     public class KuduUtils
     {
         private const int MinSiteNameIndex = 1;
-        private const int MaxSiteNameIndex = 10;
+        private const int MaxSiteNameIndex = 5;
 
         public static void DownloadDump(string serviceUrl, string zippedLogsPath, NetworkCredential credentials = null)
         {
