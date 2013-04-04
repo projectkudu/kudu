@@ -67,7 +67,7 @@ namespace Kudu.Core.Deployment
             {
                 // Order the results by date (newest first). Previously, we supported OData to allow
                 // arbitrary queries, but that was way overkill and brought in too many large binaries.
-                IEnumerable<DeployResult> results = EnumerateResults().OrderByDescending(t => t.ReceivedTime);
+                IEnumerable<DeployResult> results = EnumerateResults().OrderByDescending(t => t.ReceivedTime).ToList();
 
                 results = PurgeDeployments(results);
 

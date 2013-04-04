@@ -263,6 +263,7 @@ index 0000000..261a6bf
             var trace = new Mock<ITraceFactory>();
             IRepository repository = initialized ? new Mock<IRepository>().Object : null;
             var server = new GitExeServer("", "", initLock, null, factory.Object, env.Object, settings.Object, trace.Object);
+            var calls = 0;
 
             // Setup
             trace.Setup(t => t.GetTracer())
@@ -272,6 +273,7 @@ index 0000000..261a6bf
             factory.Setup(f => f.EnsureRepository(RepositoryType.Git))
                    .Returns(() => 
                     {
+                        ++calls;
                         Thread.Sleep(100);
                         Assert.Null(repository);
                         return repository = new Mock<IRepository>().Object;
@@ -281,8 +283,8 @@ index 0000000..261a6bf
             Parallel.For(0, 5, i => server.Initialize());
 
             // Assert
-            factory.Verify(f => f.EnsureRepository(RepositoryType.Git), initialized ? Times.Never() : Times.Once());
             Assert.NotNull(repository);
+            Assert.Equal(initialized ? 0 : 1, calls);
         }
 
         private void AssertFile(ChangeSetDetail detail, string path, int? insertions = null, int? deletions = null, bool binary = false)
