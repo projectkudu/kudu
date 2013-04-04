@@ -62,6 +62,21 @@ namespace Kudu.Contracts.Tracing
             return tracer.TraceLevel >= TraceLevel.Verbose || tracer.TraceLevel >= GetTraceLevel(attributes) || attributes.ContainsKey(AlwaysTrace);
         }
 
+        public static void TraceProcessExitCode(this ITracer tracer, Process process)
+        {
+            int exitCode = process.ExitCode;
+
+            // Don't trace success exit code, which needlessly pollute the trace
+            if (exitCode != 0)
+            {
+                tracer.Trace("Process dump", new Dictionary<string, string>
+                {
+                    { "exitCode", process.ExitCode.ToString() },
+                    { "type", "processOutput" }
+                });
+            }
+        }
+
         // Some attributes only carry control information and are not meant for display
         public static bool IsNonDisplayableAttribute(string key)
         {
@@ -94,5 +109,6 @@ namespace Kudu.Contracts.Tracing
 
             return TraceLevel.Verbose;
         }
+
     }
 }
