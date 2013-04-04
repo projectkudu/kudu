@@ -148,7 +148,6 @@ namespace Kudu.TestHarness
             return matches[0].Groups[1].Value;
         }
 
-        private static bool TestFailureOccurred = false;
         public static void Run(string testName, Action<ApplicationManager> action)
         {
             Func<ApplicationManager, Task> asyncAction = (appManager) =>
@@ -162,7 +161,7 @@ namespace Kudu.TestHarness
 
         public static async Task RunAsync(string testName, Func<ApplicationManager, Task> action)
         {
-            if (KuduUtils.StopAfterFirstTestFailure && TestFailureOccurred)
+            if (KuduUtils.StopAfterFirstTestFailure && KuduUtils.TestFailureOccurred)
             {
                 return;
             }
@@ -173,7 +172,7 @@ namespace Kudu.TestHarness
             }
             catch
             {
-                TestFailureOccurred = true;
+                KuduUtils.ReportTestFailure();
                 throw;
             }
         }

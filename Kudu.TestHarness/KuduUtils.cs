@@ -11,6 +11,9 @@ namespace Kudu.TestHarness
 {
     public class KuduUtils
     {
+        private const int MinSiteNameIndex = 1;
+        private const int MaxSiteNameIndex = 5;
+
         public static void DownloadDump(string serviceUrl, string zippedLogsPath, NetworkCredential credentials = null)
         {
             try
@@ -71,6 +74,30 @@ namespace Kudu.TestHarness
             }
         }
 
+        private static int SiteNameIndex = MinSiteNameIndex;
+
+        public static void ReportTestFailure()
+        {
+            if (ReuseSameSiteForAllTests)
+            {
+                TestTracer.Trace("Test failed, name of site used for test is '{0}'", SiteReusedForAllTests);
+            }
+
+            // Make sure no more than max number of sites are created per test run.
+            if (SiteNameIndex < MaxSiteNameIndex)
+            {
+                SiteNameIndex++;
+            }
+        }
+
+        public static bool TestFailureOccurred
+        {
+            get
+            {
+                return SiteNameIndex > MinSiteNameIndex;
+            }
+        }
+
         public static string SiteReusedForAllTests
         {
             get
@@ -82,7 +109,7 @@ namespace Kudu.TestHarness
                 }
 
                 // Append the machine name to the site to avoid conflicting with other users running tests
-                return siteName + Environment.MachineName;
+                return String.Format("{0}{1}-{2}", siteName, Environment.MachineName, SiteNameIndex);
             }
         }
 
