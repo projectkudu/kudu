@@ -23,7 +23,7 @@ namespace Kudu.Core.Test
             // Setup
             process.SetupGet(f => f.Name)
                    .Returns("Test-Process");
-            process.Setup(f => f.WaitForExit(idleTimeout))
+            process.Setup(f => f.WaitForExit(It.IsAny<TimeSpan>()))
                    .Returns(true)
                    .Verifiable();
             process.Setup(f => f.WaitUntilEOF())
@@ -40,7 +40,7 @@ namespace Kudu.Core.Test
         public void WaitForExitPollsAllowsExecutableToContinueAfterTimeoutIfIOActivity()
         {
             // Arrange
-            var idleTimeout = TimeSpan.Zero;
+            var idleTimeout = TimeSpan.MinValue;
             var tracer = new Mock<ITracer>(MockBehavior.Strict);
             var idleManager = new IdleManager(idleTimeout, tracer.Object);
             var process = new Mock<IProcess>(MockBehavior.Strict);
@@ -49,7 +49,7 @@ namespace Kudu.Core.Test
             int num = 10;
             process.SetupGet(f => f.Name)
                    .Returns("Test-Process");
-            process.Setup(f => f.WaitForExit(idleTimeout))
+            process.Setup(f => f.WaitForExit(It.IsAny<TimeSpan>()))
                    .Returns(() =>
                     {
                         if (--num == 0)
@@ -78,7 +78,7 @@ namespace Kudu.Core.Test
         public void WaitForExitPollsAllowsExecutableToContinueAfterTimeoutIfCpuActivity()
         {
             // Arrange
-            var idleTimeout = TimeSpan.MaxValue;
+            var idleTimeout = TimeSpan.MinValue;
             var tracer = new Mock<ITracer>(MockBehavior.Strict);
             var idleManager = new IdleManager(idleTimeout, tracer.Object);
             var process = new Mock<IProcess>(MockBehavior.Strict);
@@ -87,7 +87,7 @@ namespace Kudu.Core.Test
             int num = 10, cpu = 0;
             process.SetupGet(f => f.Name)
                    .Returns("Test-Process");
-            process.Setup(f => f.WaitForExit(idleTimeout))
+            process.Setup(f => f.WaitForExit(It.IsAny<TimeSpan>()))
                    .Returns(() => --num == 0);
             process.Setup(f => f.GetTotalProcessorTime(It.IsAny<ITracer>()))
                    .Returns(() => TimeSpan.FromSeconds(++cpu))
@@ -109,7 +109,7 @@ namespace Kudu.Core.Test
         public void WaitForExitPollsAllowsExecutableToContinueAfterTimeoutIfCpuOrIOActivity()
         {
             // Arrange
-            var idleTimeout = TimeSpan.Zero;
+            var idleTimeout = TimeSpan.MinValue;
             var tracer = new Mock<ITracer>(MockBehavior.Strict);
             var idleManager = new IdleManager(idleTimeout, tracer.Object);
             var process = new Mock<IProcess>(MockBehavior.Strict);
@@ -118,7 +118,7 @@ namespace Kudu.Core.Test
             int num = 10;
             process.SetupGet(f => f.Name)
                    .Returns("Test-Process");
-            process.Setup(f => f.WaitForExit(idleTimeout))
+            process.Setup(f => f.WaitForExit(It.IsAny<TimeSpan>()))
                    .Returns(() => --num == 0);
             process.Setup(f => f.GetTotalProcessorTime(It.IsAny<ITracer>()))
                    .Returns(() => 
@@ -147,7 +147,7 @@ namespace Kudu.Core.Test
             // Arrange
             var tracer = new Mock<ITracer>(MockBehavior.Strict);
             DateTime startTime = DateTime.UtcNow;
-            TimeSpan idleTimeout = TimeSpan.FromSeconds(1);
+            TimeSpan idleTimeout = TimeSpan.FromMilliseconds(100);
             var idleManager = new IdleManager(idleTimeout, tracer.Object);
             var process = new Mock<IProcess>(MockBehavior.Strict);
 
@@ -156,7 +156,7 @@ namespace Kudu.Core.Test
                    .Returns("Test-Process");
             process.SetupGet(f => f.Arguments)
                    .Returns("");
-            process.Setup(f => f.WaitForExit(idleTimeout))
+            process.Setup(f => f.WaitForExit(It.IsAny<TimeSpan>()))
                    .Returns(() => { Thread.Sleep(10); return false; });
             process.Setup(f => f.GetTotalProcessorTime(It.IsAny<ITracer>()))
                    .Returns(TimeSpan.Zero);
@@ -171,7 +171,7 @@ namespace Kudu.Core.Test
             // Assert
             process.Verify();
 
-            //Assert.True(DateTime.UtcNow - startTime >= idleTimeout);
+            Assert.True(DateTime.UtcNow - startTime >= idleTimeout);
             Assert.Contains("Command 'Test-Process ' aborted due to no output and CPU activity for", ex.Message);
         }
     }
