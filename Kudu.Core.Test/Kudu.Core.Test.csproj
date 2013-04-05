@@ -70,6 +70,7 @@
     <Compile Include="FileSystemHelpersTest.cs" />
     <Compile Include="GitRepositoryTest.cs" />
     <Compile Include="IniFileFacts.cs" />
+    <Compile Include="LockFileTests.cs" />
     <Compile Include="OperationLockTests.cs" />
     <Compile Include="PathUtilityFacts.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

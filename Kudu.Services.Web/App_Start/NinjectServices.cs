@@ -122,9 +122,10 @@ namespace Kudu.Services.Web.App_Start
             string statusLockPath = Path.Combine(lockPath, Constants.StatusLockFile);
             string sshKeyLockPath = Path.Combine(lockPath, Constants.SSHKeyLockFile);
 
-            var deploymentLock = new LockFile(kernel.Get<ITraceFactory>(), deploymentLockPath);
-            var statusLock = new LockFile(kernel.Get<ITraceFactory>(), statusLockPath);
-            var sshKeyLock = new LockFile(kernel.Get<ITraceFactory>(), sshKeyLockPath);
+            var fileSystem = new FileSystem();
+            var deploymentLock = new LockFile(deploymentLockPath, kernel.Get<ITraceFactory>(), fileSystem);
+            var statusLock = new LockFile(statusLockPath, kernel.Get<ITraceFactory>(), fileSystem);
+            var sshKeyLock = new LockFile(sshKeyLockPath, kernel.Get<ITraceFactory>(), fileSystem);
 
             kernel.Bind<IOperationLock>().ToConstant(sshKeyLock).WhenInjectedInto<SSHKeyController>();
             kernel.Bind<IOperationLock>().ToConstant(statusLock).WhenInjectedInto<DeploymentStatusManager>();
@@ -297,7 +298,7 @@ namespace Kudu.Services.Web.App_Start
                 string tracePath = Path.Combine(environment.TracePath, Constants.TraceFile);
                 string textPath = Path.Combine(environment.TracePath, TraceServices.CurrentRequestTraceFile);
                 string traceLockPath = Path.Combine(environment.TracePath, Constants.TraceLockFile);
-                var traceLock = new LockFile(NullTracerFactory.Instance, traceLockPath);
+                var traceLock = new LockFile(traceLockPath);
                 return new CascadeTracer(new Tracer(tracePath, level, traceLock), new TextTracer(textPath, level));
             }
 
@@ -311,7 +312,7 @@ namespace Kudu.Services.Web.App_Start
             {
                 string tracePath = Path.Combine(environment.TracePath, Constants.TraceFile);
                 string traceLockPath = Path.Combine(environment.TracePath, Constants.TraceLockFile);
-                var traceLock = new LockFile(NullTracerFactory.Instance, traceLockPath);
+                var traceLock = new LockFile(traceLockPath);
                 ITracer tracer = new Tracer(tracePath, level, traceLock);
                 var attribs = new Dictionary<string, string>();
 
