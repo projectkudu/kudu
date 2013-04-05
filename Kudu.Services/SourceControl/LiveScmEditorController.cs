@@ -506,7 +506,6 @@ namespace Kudu.Services.SourceControl
             if (_readStream != null)
             {
                 _readStream.Close();
-                _readStream = null;
             }
         }
 
@@ -543,6 +542,7 @@ namespace Kudu.Services.SourceControl
         private class RepositoryItemStream : DelegatingStream
         {
             private LiveScmEditorController _controller;
+            private bool _disposed;
 
             internal RepositoryItemStream(LiveScmEditorController controller, Stream innerStream)
                 : base(innerStream)
@@ -556,33 +556,37 @@ namespace Kudu.Services.SourceControl
 
             public override void Close()
             {
-                try
+                if (!_disposed)
                 {
-                    // Close the underlying stream
-                    base.Close();
-
-                    // Check to see if we have to undo an outstanding rebase. This will remove the conflicted
-                    // data and revert back to what the commit looked like.
-                    if (_controller._cleanupRebaseConflict)
+                    try
                     {
-                        try
+                        // Close the underlying stream
+                        base.Close();
+
+                        // Check to see if we have to undo an outstanding rebase. This will remove the conflicted
+                        // data and revert back to what the commit looked like.
+                        if (_controller._cleanupRebaseConflict)
                         {
-                            _controller._repository.RebaseAbort();
-                        }
-                        finally
-                        {
-                            _controller._repository.Update();
+                            try
+                            {
+                                _controller._repository.RebaseAbort();
+                            }
+                            finally
+                            {
+                                _controller._repository.Update();
+                            }
                         }
                     }
-                }
-                catch (Exception e)
-                {
-                    _controller.Tracer.TraceError(e);
-                }
-                finally
-                {
-                    // We are now completely done with this work item and can move on to the next one.
-                    _controller._operationLock.Release();
+                    catch (Exception e)
+                    {
+                        _controller.Tracer.TraceError(e);
+                    }
+                    finally
+                    {
+                        // We are now completely done with this work item and can move on to the next one.
+                        _controller._operationLock.Release();
+                        _disposed = true;
+                    }
                 }
             }
         }
