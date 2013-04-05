@@ -81,6 +81,9 @@ namespace Kudu.Core.Infrastructure
 
         public void Release()
         {
+            // Normally, this should never be null here, but currently some LiveScmEditorController code calls Release() incorrectly
+            if (_lockStream == null) return;
+
             var temp = _lockStream;
             _lockStream = null;
             temp.Close();
