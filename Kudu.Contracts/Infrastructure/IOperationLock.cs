@@ -6,7 +6,6 @@ namespace Kudu.Contracts.Infrastructure
     {
         bool IsHeld { get; }
         bool Lock();
-        bool Release();
-        bool Wait(TimeSpan timeOut);
+        void Release();
     }
 }
