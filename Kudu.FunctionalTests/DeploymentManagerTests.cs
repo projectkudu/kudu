@@ -22,29 +22,29 @@ namespace Kudu.FunctionalTests
     public class DeploymentManagerTests
     {
         [Fact]
-        public void DeploymentApisReturn404IfDeploymentIdDoesntExist()
+        public async Task DeploymentApisReturn404IfDeploymentIdDoesntExist()
         {
             string appName = "Rtn404IfDeployIdNotExist";
 
-            ApplicationManager.Run(appName, appManager =>
+            await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 string id = "foo";
-                var ex = KuduAssert.ThrowsUnwrapped<HttpRequestException>(() => appManager.DeploymentManager.DeleteAsync(id).Wait());
+                var ex = await KuduAssert.ThrowsAsync<HttpRequestException>(() => appManager.DeploymentManager.DeleteAsync(id));
                 Assert.Equal("Response status code does not indicate success: 404 (Not Found).", ex.Message);
 
-                ex = KuduAssert.ThrowsUnwrapped<HttpRequestException>(() => appManager.DeploymentManager.DeployAsync(id).Wait());
+                ex = await KuduAssert.ThrowsAsync<HttpRequestException>(() => appManager.DeploymentManager.DeployAsync(id));
                 Assert.Equal("Response status code does not indicate success: 404 (Not Found).", ex.Message);
 
-                ex = KuduAssert.ThrowsUnwrapped<HttpRequestException>(() => appManager.DeploymentManager.DeployAsync(id, clean: true).Wait());
+                ex = await KuduAssert.ThrowsAsync<HttpRequestException>(() => appManager.DeploymentManager.DeployAsync(id, clean: true));
                 Assert.Equal("Response status code does not indicate success: 404 (Not Found).", ex.Message);
 
-                ex = KuduAssert.ThrowsUnwrapped<HttpRequestException>(() => appManager.DeploymentManager.GetLogEntriesAsync(id).Wait());
+                ex = await KuduAssert.ThrowsAsync<HttpRequestException>(() => appManager.DeploymentManager.GetLogEntriesAsync(id));
                 Assert.Equal("Response status code does not indicate success: 404 (Not Found).", ex.Message);
 
-                ex = KuduAssert.ThrowsUnwrapped<HttpRequestException>(() => appManager.DeploymentManager.GetResultAsync(id).Wait());
+                ex = await KuduAssert.ThrowsAsync<HttpRequestException>(() => appManager.DeploymentManager.GetResultAsync(id));
                 Assert.Equal("Response status code does not indicate success: 404 (Not Found).", ex.Message);
 
-                ex = KuduAssert.ThrowsUnwrapped<HttpRequestException>(() => appManager.DeploymentManager.GetLogEntryDetailsAsync(id, "fakeId").Wait());
+                ex = await KuduAssert.ThrowsAsync<HttpRequestException>(() => appManager.DeploymentManager.GetLogEntryDetailsAsync(id, "fakeId"));
                 Assert.Equal("Response status code does not indicate success: 404 (Not Found).", ex.Message);
             });
         }
@@ -126,7 +126,7 @@ namespace Kudu.FunctionalTests
                     KuduAssert.VerifyLogOutput(appManager, result.Id, "Cleaning Git repository");
 
                     // Can't delete the active one
-                    var ex = KuduAssert.ThrowsUnwrapped<HttpRequestException>(() => appManager.DeploymentManager.DeleteAsync(result.Id).Wait());
+                    var ex = await KuduAssert.ThrowsAsync<HttpRequestException>(() => appManager.DeploymentManager.DeleteAsync(result.Id));
                     Assert.Equal("Response status code does not indicate success: 409 (Conflict).", ex.Message);
 
                     // Corrupt git repository by removing HEAD file from it
@@ -161,48 +161,48 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void DeploymentVerifyEtag()
+        public async Task DeploymentVerifyEtag()
         {
             string appName = "VerifyEtag";
 
             using (var repo = Git.Clone("HelloWorld"))
             {
-                ApplicationManager.Run(appName, appManager =>
+                await ApplicationManager.RunAsync(appName, async appManager =>
                 {
                     EntityTagHeaderValue etag = null;
                     EntityTagHeaderValue etagWithQuery = null;
 
                     // no etag
-                    etag = VerifyEtag(appManager, "/deployments", null, HttpStatusCode.OK);
-                    etagWithQuery = VerifyEtag(appManager, "/deployments/?$top=1", null, HttpStatusCode.OK);
+                    etag = await VerifyEtagAsync(appManager, "/deployments", null, HttpStatusCode.OK);
+                    etagWithQuery = await VerifyEtagAsync(appManager, "/deployments/?$top=1", null, HttpStatusCode.OK);
                     Assert.NotEqual(etag, etagWithQuery);
 
                     // match etag
-                    etag = VerifyEtag(appManager, "/deployments", etag, HttpStatusCode.NotModified);
-                    etagWithQuery = VerifyEtag(appManager, "/deployments/?$top=1", etagWithQuery, HttpStatusCode.NotModified);
+                    etag = await VerifyEtagAsync(appManager, "/deployments", etag, HttpStatusCode.NotModified);
+                    etagWithQuery = await VerifyEtagAsync(appManager, "/deployments/?$top=1", etagWithQuery, HttpStatusCode.NotModified);
                     Assert.NotEqual(etag, etagWithQuery);
 
                     appManager.GitDeploy(repo.PhysicalPath);
 
-                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                    var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
                     Assert.True(results[0].Current);
 
                     // mismatch etag
-                    etag = VerifyEtag(appManager, "/deployments", etag, HttpStatusCode.OK);
-                    etagWithQuery = VerifyEtag(appManager, "/deployments/?$top=1", etagWithQuery, HttpStatusCode.OK);
+                    etag = await VerifyEtagAsync(appManager, "/deployments", etag, HttpStatusCode.OK);
+                    etagWithQuery = await VerifyEtagAsync(appManager, "/deployments/?$top=1", etagWithQuery, HttpStatusCode.OK);
                     Assert.NotEqual(etag, etagWithQuery);
 
                     // match etag
-                    etag = VerifyEtag(appManager, "/deployments", etag, HttpStatusCode.NotModified);
-                    etagWithQuery = VerifyEtag(appManager, "/deployments/?$top=1", etagWithQuery, HttpStatusCode.NotModified);
+                    etag = await VerifyEtagAsync(appManager, "/deployments", etag, HttpStatusCode.NotModified);
+                    etagWithQuery = await VerifyEtagAsync(appManager, "/deployments/?$top=1", etagWithQuery, HttpStatusCode.NotModified);
                     Assert.NotEqual(etag, etagWithQuery);
                 });
             }
         }
 
-        private EntityTagHeaderValue VerifyEtag(ApplicationManager appManager, string uri, EntityTagHeaderValue input, HttpStatusCode statusCode)
+        private async Task<EntityTagHeaderValue> VerifyEtagAsync(ApplicationManager appManager, string uri, EntityTagHeaderValue input, HttpStatusCode statusCode)
         {
             using (var request = new HttpRequestMessage(HttpMethod.Get, uri))
             {
@@ -211,7 +211,7 @@ namespace Kudu.FunctionalTests
                     request.Headers.IfNoneMatch.Add(input);
                 }
 
-                using (var response = appManager.DeploymentManager.Client.SendAsync(request).Result)
+                using (var response = await appManager.DeploymentManager.Client.SendAsync(request))
                 {
                     Assert.Equal(statusCode, response.StatusCode);
                     Assert.NotNull(response.Headers.ETag);
@@ -230,7 +230,7 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void DeploymentManagerExtensibility()
+        public async Task DeploymentManagerExtensibility()
         {
             // Arrange
             string repositoryName = "Mvc3Application";
@@ -238,7 +238,7 @@ namespace Kudu.FunctionalTests
 
             using (var repo = Git.CreateLocalRepository(repositoryName))
             {
-                ApplicationManager.Run(appName, appManager =>
+                await ApplicationManager.RunAsync(appName, async appManager =>
                 {
                     var handler = new FakeMessageHandler()
                     {
@@ -246,7 +246,7 @@ namespace Kudu.FunctionalTests
                     };
 
                     var manager = new RemoteDeploymentManager(appManager.DeploymentManager.ServiceUrl, appManager.DeploymentManager.Credentials, handler);
-                    var results = manager.GetResultsAsync().Result.ToList();
+                    var results = (await manager.GetResultsAsync()).ToList();
 
                     Assert.Equal(0, results.Count);
                     Assert.NotNull(handler.Url);
@@ -255,18 +255,18 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void DeleteKuduSiteCleansProperly()
+        public async Task DeleteKuduSiteCleansProperly()
         {
             string appName = "DeleteKuduSiteCleansProperly";
             string defaultHtmFile = "default.htm";
 
             using (var repo = Git.Clone("HelloWorld"))
             {
-                ApplicationManager.Run(appName, appManager =>
+                await ApplicationManager.RunAsync(appName, async appManager =>
                 {
                     // Deploy HelloWorld repository
                     appManager.GitDeploy(repo.PhysicalPath);
-                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                    var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
 
                     // Verify deployed properly
                     Assert.Equal(1, results.Count);
@@ -282,8 +282,8 @@ namespace Kudu.FunctionalTests
                     appManager.VfsWebRootManager.WriteAllText(extraFileName, "extra content");
 
                     // Delete repository without removing wwwroot
-                    appManager.RepositoryManager.Delete().Wait();
-                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                    await appManager.RepositoryManager.Delete();
+                    results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
 
                     // Verify deployments were cleaned
                     Assert.Equal(0, results.Count);
@@ -298,7 +298,7 @@ namespace Kudu.FunctionalTests
 
                     // Redeploy HelloWorld repository
                     appManager.GitDeploy(repo.PhysicalPath);
-                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                    results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
 
                     // Verify deployed properly
                     Assert.Equal(1, results.Count);
@@ -329,18 +329,15 @@ namespace Kudu.FunctionalTests
                     { "payload", githubPayload }
                 };
 
-                DeployPayloadHelper(appManager, client => 
+                await DeployPayloadHelperAsync(appManager, client => 
                 {
                     client.DefaultRequestHeaders.Add("X-Github-Event", "push");
                     return client.PostAsync("deploy?scmType=GitHub", new FormUrlEncodedContent(post));
                 });
 
-                var resultsTask = appManager.DeploymentManager.GetResultsAsync();
-                var traceTask = KuduAssert.VerifyTraceAsync(appManager, "arguments=\"fetch external --progress\"");
+                var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
+                await KuduAssert.VerifyTraceAsync(appManager, "arguments=\"fetch external --progress\"");
 
-                await Task.WhenAll(resultsTask, traceTask);
-
-                var results = resultsTask.Result.ToList();
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
                 Assert.Equal("GitHub", results[0].Deployer);
@@ -361,9 +358,9 @@ namespace Kudu.FunctionalTests
                     { "payload", bitbucketPayload }
                 };
 
-                appManager.SettingsManager.SetValue(SettingsKeys.UseShallowClone, "true").Wait();
+                await appManager.SettingsManager.SetValue(SettingsKeys.UseShallowClone, "true");
 
-                DeployPayloadHelper(appManager, client =>
+                await DeployPayloadHelperAsync(appManager, client =>
                 {
                     client.DefaultRequestHeaders.Add("User-Agent", "Bitbucket.org");
                     return client.PostAsync("deploy?scmType=BitbucketGit", new FormUrlEncodedContent(post));
@@ -375,7 +372,7 @@ namespace Kudu.FunctionalTests
 
                 await Task.WhenAll(resultsTask, traceTask, verifyUrl);
 
-                var results = resultsTask.Result.ToList();
+                var results = (await resultsTask).ToList();
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
                 Assert.True(results[0].Deployer.StartsWith("Bitbucket"));
@@ -383,16 +380,16 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void PullApiTestBitbucketFormatWithMercurial()
+        public async Task PullApiTestBitbucketFormatWithMercurial()
         {
             string bitbucketPayload = @"{""canon_url"":""https://bitbucket.org"",""commits"":[{""author"":""pranavkm"",""branch"":""default"",""files"":[{""file"":""Hello.txt"",""type"":""modified""}],""message"":""Some more changes"",""node"":""0bbefd70c4c4"",""parents"":[""3cb8bf8aec0a""],""raw_author"":""Pranav <pranavkm@outlook.com>"",""raw_node"":""0bbefd70c4c4213bba1e91998141f6e861cec24d"",""revision"":4,""size"":-1,""timestamp"":""2012-12-17 19:41:28"",""utctimestamp"":""2012-12-17 18:41:28+00:00""}],""repository"":{""absolute_url"":""/kudutest/hellomercurial/"",""fork"":false,""is_private"":false,""name"":""HelloMercurial"",""owner"":""kudutest"",""scm"":""hg"",""slug"":""hellomercurial"",""website"":""""},""user"":""kudutest""}";
             string appName = "PullApiTestBitbucketFormatWithMercurial";
 
-            ApplicationManager.Run(appName, appManager =>
+            await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 var client = CreateClient(appManager);
 
-                appManager.SettingsManager.SetValue("branch", "default").Wait();
+                await appManager.SettingsManager.SetValue("branch", "default");
                 
                 client.DefaultRequestHeaders.Add("User-Agent", "Bitbucket.org");
                 var post = new Dictionary<string, string>
@@ -400,10 +397,10 @@ namespace Kudu.FunctionalTests
                     { "payload", bitbucketPayload }
                 };
 
-                client.PostAsync("deploy?scmType=BitbucketHg", new FormUrlEncodedContent(post)).Result.EnsureSuccessful();
+                (await client.PostAsync("deploy?scmType=BitbucketHg", new FormUrlEncodedContent(post))).EnsureSuccessful();
 
 
-                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
                 Assert.True(results[0].Deployer.StartsWith("Bitbucket"));
@@ -413,12 +410,12 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void PullApiTestBitbucketFormatWithPrivateMercurialRepository()
+        public async Task PullApiTestBitbucketFormatWithPrivateMercurialRepository()
         {
             string bitbucketPayload = @"{ ""canon_url"": ""https://bitbucket.org"", ""commits"": [ { ""author"": ""pranavkm"", ""branch"": ""Test-Branch"", ""files"": [ { ""file"": ""Hello.txt"", ""type"": ""modified"" } ], ""message"": ""Hello Mercurial! change"", ""node"": ""ee26963f2e54"", ""parents"": [ ""16ea3237dbcd"" ], ""raw_author"": ""Pranav <pranavkm@outlook.com>"", ""raw_node"": ""ee26963f2e54b9db5c0cd160600b29c4f7a7eff7"", ""revision"": 10, ""size"": -1, ""timestamp"": ""2012-12-24 18:22:14"", ""utctimestamp"": ""2012-12-24 17:22:14+00:00"" } ], ""repository"": { ""absolute_url"": ""/kudutest/privatemercurial/"", ""fork"": false, ""is_private"": true, ""name"": ""PrivateMercurial"", ""owner"": ""kudutest"", ""scm"": ""hg"", ""slug"": ""privatemercurial"", ""website"": """" }, ""user"": ""kudutest"" }";
             string appName = "PullApiTestBitbucketFormatWithMercurial";
 
-            ApplicationManager.Run(appName, appManager =>
+            await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 if (!SshHelper.PrepareSSHEnv(appManager.SSHKeyManager))
                 {
@@ -426,7 +423,7 @@ namespace Kudu.FunctionalTests
                     return; 
                 }
                 var client = CreateClient(appManager);
-                appManager.SettingsManager.SetValue("branch", "Test-Branch").Wait();
+                await appManager.SettingsManager.SetValue("branch", "Test-Branch");
 
                 client.DefaultRequestHeaders.Add("User-Agent", "Bitbucket.org");
                 var post = new Dictionary<string, string>
@@ -434,9 +431,9 @@ namespace Kudu.FunctionalTests
                     { "payload", bitbucketPayload }
                 };
 
-                client.PostAsync("deploy?scmType=BitbucketHg", new FormUrlEncodedContent(post)).Result.EnsureSuccessful();
+                (await client.PostAsync("deploy?scmType=BitbucketHg", new FormUrlEncodedContent(post))).EnsureSuccessful();
 
-                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
                 Assert.True(results[0].Deployer.StartsWith("Bitbucket"));
@@ -446,16 +443,16 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void PullApiTestGitlabHQFormat()
+        public async Task PullApiTestGitlabHQFormat()
         {
             string payload = @"{ ""before"":""7e2a599e2d28665047ec347ab36731c905c95e8b"", ""after"":""ea1c6d7ea669c816dd5f86206f7b47b228fdcacd"", ""ref"":""refs/heads/master"", ""user_id"":1, ""user_name"":""Remco Ros"", ""commits"":[ { ""id"":""ea1c6d7ea669c816dd5f86206f7b47b228fdcacd"", ""message"":""Settings as content file"", ""timestamp"":""2012-11-11T14:32:02+01:00"", ""url"":""http://gitlab.proscat.nl/inspectbin/commits/4109312962bb269ecc3a0d7a3c82a119dcd54c8b"", ""author"":{ ""name"":""Remco Ros"", ""email"":""r.ros@proscat.nl"" }}], ""repository"":{ ""name"":""testing"", ""private"":false, ""url"":""https://github.com/KuduApps/SimpleWebApplication"", ""description"":null, ""homepage"":""https://github.com/KuduApps/SimpleWebApplication"" }}";
             string appName = "PullApiTestGitlabHQFormat";
 
-            ApplicationManager.Run(appName, appManager =>
+            await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                DeployPayloadHelper(appManager, client => client.PostAsync("deploy", new StringContent(payload)));
+                await DeployPayloadHelperAsync(appManager, client => client.PostAsync("deploy", new StringContent(payload)));
 
-                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
                 Assert.Equal("GitlabHQ", results[0].Deployer);
@@ -464,25 +461,25 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void PullApiTestCodebaseFormat()
+        public async Task PullApiTestCodebaseFormat()
         {
             string payload = @"{ ""before"":""7e2a599e2d28665047ec347ab36731c905c95e8b"", ""after"":""ea1c6d7ea669c816dd5f86206f7b47b228fdcacd"", ""ref"":""refs/heads/master"", ""repository"":{ ""name"":""testing"", ""public_access"":true, ""url"":""http://test.codebasehq.com/projects/test-repositories/repositories/git1"", ""clone_urls"": {""ssh"": ""git@codebasehq.com:test/test-repositories/git1.git"", ""http"": ""https://github.com/KuduApps/SimpleWebApplication""}}}";
             string appName = "PullApiTestCodebaseFormat";
 
-            ApplicationManager.Run(appName, appManager =>
+            await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 var post = new Dictionary<string, string>
                 {
                     { "payload", payload }
                 };
 
-                DeployPayloadHelper(appManager, client =>
+                await DeployPayloadHelperAsync(appManager, client =>
                 {
                     client.DefaultRequestHeaders.Add("User-Agent", "Codebasehq.com");
                     return client.PostAsync("deploy", new FormUrlEncodedContent(post));
                 });
 
-                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
                 Assert.Equal("CodebaseHQ", results[0].Deployer);
@@ -491,28 +488,27 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void PullApiTestKilnHgFormat()
+        public async Task PullApiTestKilnHgFormat()
         {
             string kilnPayload = @"{ ""commits"": [ { ""author"": ""Brian Surowiec <xtorted@optonline.net>"", ""branch"": ""default"", ""id"": ""0bbefd70c4c4213bba1e91998141f6e861cec24d"", ""message"": ""more fun text"", ""revision"": 20, ""tags"": [ ""tip"" ], ""timestamp"": ""1/16/2013 3:32:04 AM"", ""url"": ""https://13degrees.kilnhg.com/Code/Kudu-Public/Group/Site/History/d2415cbaa78e"" } ], ""pusher"": { ""accesstoken"": false, ""email"": ""xtorted@optonline.net"", ""fullName"": ""Brian Surowiec"" }, ""repository"": { ""central"": true, ""description"": """", ""id"": 113336, ""name"": ""Site"", ""url"": ""https://bitbucket.org/kudutest/hellomercurial/"" } }";
             string appName = KuduUtils.GetRandomWebsiteName("PullApiTestKilnHgFormat");
 
-            ApplicationManager.Run(appName, appManager =>
+            await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 var client = CreateClient(appManager);
 
                 // since we're pulling against bitbucket we need to simulate a self-hosted setup of kiln
-                appManager.SettingsManager.SetValue("kiln.domain", "bitbucket\\.org").Wait();
-                appManager.SettingsManager.SetValue("branch", "default").Wait();
+                await appManager.SettingsManager.SetValue("kiln.domain", "bitbucket\\.org");
+                await appManager.SettingsManager.SetValue("branch", "default");
 
                 var post = new Dictionary<string, string>
                 {
                     { "payload", kilnPayload }
                 };
 
-                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result.EnsureSuccessful();
+                (await client.PostAsync("deploy", new FormUrlEncodedContent(post))).EnsureSuccessful();
 
-                var results = appManager.DeploymentManager.GetResultsAsync()
-                                        .Result.ToList();
+                var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
 
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
@@ -522,21 +518,21 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void PullApiTestGenericFormat()
+        public async Task PullApiTestGenericFormat()
         {
             string payload = @"{ ""oldRef"": ""0000000000000000000"", ""newRef"": ""ea1c6d7ea669c816dd5f86206f7b47b228fdcacd"", ""url"": ""https://github.com/KuduApps/SimpleWebApplication.git"", ""deployer"" : ""CodePlex"", ""branch"":""master""  }";
             string appName = "PullApiTestGenericFormat";
 
-            ApplicationManager.Run(appName, appManager =>
+            await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 var post = new Dictionary<string, string>
                 {
                     { "payload", payload }
                 };
 
-                DeployPayloadHelper(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(post)));
+                await DeployPayloadHelperAsync(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(post)));
 
-                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
                 Assert.Equal("davidebbo", results[0].Author);
@@ -551,23 +547,23 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void PullApiTestGenericFormatCustomBranch()
+        public async Task PullApiTestGenericFormatCustomBranch()
         {
             string payload = @"{ ""oldRef"": ""0000000000000000000"", ""newRef"": ""ad21595c668f3de813463df17c04a3b23065fedc"", ""url"": ""https://github.com/KuduApps/RepoWithMultipleBranches.git"", ""deployer"" : ""CodePlex"", branch: ""test"" }";
             string appName = "PullApiTestGenericCustomBranch";
 
-            ApplicationManager.Run(appName, appManager =>
+            await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                appManager.SettingsManager.SetValue("branch", "test").Wait();
+                await appManager.SettingsManager.SetValue("branch", "test");
 
                 var post = new Dictionary<string, string>
                 {
                     { "payload", payload }
                 };
 
-                DeployPayloadHelper(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(post)));
+                await DeployPayloadHelperAsync(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(post)));
 
-                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "Test branch");
@@ -576,23 +572,23 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void DeployingBranchThatExists()
+        public async Task DeployingBranchThatExists()
         {
             string payload = @"{ ""url"": ""https://github.com/KuduApps/RepoWithMultipleBranches.git"", ""deployer"" : ""CodePlex"", branch: ""test"", newRef: ""ad21595c668f3de813463df17c04a3b23065fedc"" }";
             string appName = "DeployingBranchThatExists";
 
-            ApplicationManager.Run(appName, appManager =>
+            await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                appManager.SettingsManager.SetValue("branch", "test").Wait();
+                await appManager.SettingsManager.SetValue("branch", "test");
 
                 var post = new Dictionary<string, string>
                 {
                     { "payload", payload }
                 };
                 
-                DeployPayloadHelper(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(post)));
+                await DeployPayloadHelperAsync(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(post)));
 
-                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "Test branch");
@@ -630,15 +626,15 @@ namespace Kudu.FunctionalTests
                 await WaitForAnyDeploymentAsync(appManager);
 
                 // Change branch and start second fetch request for test branch
-                appManager.SettingsManager.SetValue("branch", "test").Wait();
+                await appManager.SettingsManager.SetValue("branch", "test");
                 responseTask2 = PostPayloadHelperAsync(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(postTest)));
 
-                await responseTask1;
+                HttpResponseMessage responseResult1 = await responseTask1;
 
-                await responseTask2;
+                HttpResponseMessage responseResult2 = await responseTask2;
 
-                Assert.Equal(HttpStatusCode.OK, responseTask1.Result.StatusCode);
-                Assert.Equal(HttpStatusCode.Conflict, responseTask2.Result.StatusCode);
+                Assert.Equal(HttpStatusCode.OK, responseResult1.StatusCode);
+                Assert.Equal(HttpStatusCode.Conflict, responseResult2.StatusCode);
 
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "Test branch");
 
@@ -652,19 +648,19 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void PullApiTestSimpleFormatMultiBranchWithUpdates()
+        public async Task PullApiTestSimpleFormatMultiBranchWithUpdates()
         {
             var payload = new JObject();
             payload["url"] = "https://github.com/KuduApps/HelloKudu";
             payload["format"] = "basic";
             string appName = "HelloKudu";
 
-            ApplicationManager.Run(appName, appManager =>
+            await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 // Fetch master branch from first repo
-                DeployPayloadHelper(appManager, client => client.PostAsJsonAsync("deploy", payload));
+                await DeployPayloadHelperAsync(appManager, client => client.PostAsJsonAsync("deploy", payload));
 
-                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
                 Assert.Equal("GitHub", results[0].Deployer);
@@ -672,44 +668,44 @@ namespace Kudu.FunctionalTests
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "<h1>Hello Kudu</h1>");
 
                 // Switch to foo branch from first repo
-                appManager.SettingsManager.SetValue("branch", "foo").Wait();
-                DeployPayloadHelper(appManager, client => client.PostAsJsonAsync("deploy", payload));
+                await appManager.SettingsManager.SetValue("branch", "foo");
+                await DeployPayloadHelperAsync(appManager, client => client.PostAsJsonAsync("deploy", payload));
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "<h1>Hello Kudu - foo</h1>");
 
                 // Fetch master branch from second repo to simulate update. It has one more commit over first repo
                 payload["url"] = "https://github.com/KuduApps/HelloKudu2";
-                appManager.SettingsManager.SetValue("branch", "master").Wait();
-                DeployPayloadHelper(appManager, client => client.PostAsJsonAsync("deploy", payload));
+                await appManager.SettingsManager.SetValue("branch", "master");
+                await DeployPayloadHelperAsync(appManager, client => client.PostAsJsonAsync("deploy", payload));
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "<h1>Hello again Kudu</h1>");
 
                 // Fetch foo branch from second repo to simulate update. It has a different commit that cannot be
                 // fast-forwarded from the foo branch in the first repo
-                appManager.SettingsManager.SetValue("branch", "foo").Wait();
-                DeployPayloadHelper(appManager, client => client.PostAsJsonAsync("deploy", payload));
+                await appManager.SettingsManager.SetValue("branch", "foo");
+                await DeployPayloadHelperAsync(appManager, client => client.PostAsJsonAsync("deploy", payload));
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "<h1>Hi Kudu foo</h1>");
             });
         }
 
         [Fact]
-        public void PullApiTestSimpleFormatWithMercurial()
+        public async Task PullApiTestSimpleFormatWithMercurial()
         {
             string payload = @"{""url"":""https://bitbucket.org/kudutest/hellomercurial/"",""format"":""basic"",""scm"":""hg""}";
             string appName = "PullApiTestSimpleFormatWithMercurial";
 
-            ApplicationManager.Run(appName, appManager =>
+            await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 var client = CreateClient(appManager);
 
-                appManager.SettingsManager.SetValue("branch", "default").Wait();
+                await appManager.SettingsManager.SetValue("branch", "default");
 
                 var post = new Dictionary<string, string>
                 {
                     { "payload", payload }
                 };
 
-                client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result.EnsureSuccessful();
+                (await client.PostAsync("deploy", new FormUrlEncodedContent(post))).EnsureSuccessful();
 
-                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
                 Assert.Equal("Bitbucket", results[0].Deployer);
@@ -719,20 +715,20 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void PullApiTestSimpleFormatWithScmTypeNone()
+        public async Task PullApiTestSimpleFormatWithScmTypeNone()
         {
             var payload = new JObject();
             payload["url"] = "https://github.com/KuduApps/HelloKudu";
             payload["format"] = "basic";
             string appName = "HelloKudu";
 
-            ApplicationManager.Run(appName, appManager =>
+            await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                appManager.SettingsManager.SetValue(SettingsKeys.ScmType, ScmType.None.ToString()).Wait();
+                await appManager.SettingsManager.SetValue(SettingsKeys.ScmType, ScmType.None.ToString());
 
-                DeployPayloadHelper(appManager, client => client.PostAsJsonAsync("deploy", payload));
+                await DeployPayloadHelperAsync(appManager, client => client.PostAsJsonAsync("deploy", payload));
 
-                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
                 Assert.Equal("GitHub", results[0].Deployer);
@@ -781,27 +777,27 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void DeployHookWithInvalidHttpMethod()
+        public async Task DeployHookWithInvalidHttpMethod()
         {
             string appName = "HelloKudu";
 
-            ApplicationManager.Run(appName, appManager =>
+            await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 var client = CreateClient(appManager);
 
-                HttpResponseMessage response = client.GetAsync("deploy").Result;
+                HttpResponseMessage response = await client.GetAsync("deploy");
                 Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
 
-                response = client.DeleteAsync("deploy").Result;
+                response = await client.DeleteAsync("deploy");
                 Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
 
                 try
                 {
-                    response = client.PutAsync("deploy").Result;
+                    response = await client.PutAsync("deploy");
                 }
-                catch (AggregateException ex)
+                catch (HttpRequestException ex)
                 {
-                    Assert.Contains("404", ex.InnerException.Message);
+                    Assert.Contains("404", ex.Message);
                 }
             });
         }
@@ -828,9 +824,9 @@ namespace Kudu.FunctionalTests
             while (!deploying);
         }
 
-        private static void DeployPayloadHelper(ApplicationManager appManager, Func<HttpClient, Task<HttpResponseMessage>> func)
+        private static async Task DeployPayloadHelperAsync(ApplicationManager appManager, Func<HttpClient, Task<HttpResponseMessage>> func)
         {
-            PostPayloadHelper(appManager, func).EnsureSuccessful().Dispose();
+            (await PostPayloadHelperAsync(appManager, func)).EnsureSuccessful().Dispose();
         }
 
         private static async Task<HttpResponseMessage> PostPayloadHelperAsync(ApplicationManager appManager, Func<HttpClient, Task<HttpResponseMessage>> func)
@@ -846,11 +842,6 @@ namespace Kudu.FunctionalTests
 
                 return response;
             }
-        }
-
-        private static HttpResponseMessage PostPayloadHelper(ApplicationManager appManager, Func<HttpClient, Task<HttpResponseMessage>> func)
-        {
-            return PostPayloadHelperAsync(appManager, func).Result;
         }
 
         private static HttpClient CreateClient(ApplicationManager appManager)
