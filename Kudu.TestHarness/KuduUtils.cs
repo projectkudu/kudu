@@ -12,7 +12,7 @@ namespace Kudu.TestHarness
     public class KuduUtils
     {
         private const int MinSiteNameIndex = 1;
-        private const int MaxSiteNameIndex = 5;
+        private const int DefaultMaxSiteNameIndex = 5;
 
         public static void DownloadDump(string serviceUrl, string zippedLogsPath, NetworkCredential credentials = null)
         {
@@ -110,6 +110,22 @@ namespace Kudu.TestHarness
 
                 // Append the machine name to the site to avoid conflicting with other users running tests
                 return String.Format("{0}{1}-{2}", siteName, Environment.MachineName, SiteNameIndex);
+            }
+        }
+
+        public static int MaxSiteNameIndex
+        {
+            get
+            {
+                string maxSiteNameIndex = GetTestSetting("MaxSiteNameIndex");
+                try
+                {
+                    return int.Parse(maxSiteNameIndex);
+                }
+                catch
+                {
+                    return DefaultMaxSiteNameIndex;
+                }
             }
         }
 
