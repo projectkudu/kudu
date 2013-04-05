@@ -601,14 +601,14 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void PullApiTestConsecutivePushesGetQueued()
+        public async Task PullApiTestConsecutivePushesGetQueued()
         {
             List<DeployResult> results;
             string payloadMaster = @"{ ""newRef"": ""1ef30333deac14b99ac4bc93453cf4232ae88c24"", ""url"": ""https://github.com/KuduApps/RepoWithMultipleBranches.git"", ""deployer"" : ""CodePlex"", branch: ""master"" }";
             string payloadTest = @"{ ""url"": ""https://github.com/KuduApps/RepoWithMultipleBranches.git"", ""deployer"" : ""CodePlex"", branch: ""test"", newRef: ""ad21595c668f3de813463df17c04a3b23065fedc"" }";
             string appName = "PullApiTestPushesGetQueued";
 
-            ApplicationManager.Run(appName, appManager =>
+            await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 var postMaster = new Dictionary<string, string>
                 {
@@ -620,32 +620,51 @@ namespace Kudu.FunctionalTests
                     { "payload", payloadTest }
                 };
 
-                // Start the first fetch request for the master branch
-                Task<HttpResponseMessage> responseTask1 = Task.Factory.StartNew(() => PostPayloadHelper(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(postMaster))));
+                Task<HttpResponseMessage> responseTask1 = null;
+                Task<HttpResponseMessage> responseTask2 = null;
 
-                // Wait for the first deployment to start
-                bool deploying = false;
-                int breakLoop = 0;
-                do
-                {
-                    Thread.Sleep(100);
-
-                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-                    deploying =
-                        results != null &&
-                        results.Any();
-
-                    breakLoop++;
-                    if (breakLoop > 200)
+                // Retry the entire scenario as one request fails (due to github flakiness) requires the entire scenario to start-over
+                await RetryOnTemporaryHttpErrors(
+                    async () =>
                     {
-                        Assert.True(false, "No deployment result in pending state");
-                    }
-                }
-                while (!deploying);
+                        // Start the first fetch request for the master branch
+                        responseTask1 = PostPayloadOnceAsync(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(postMaster)));
 
-                // Change branch and start second fetch request for test branch
-                appManager.SettingsManager.SetValue("branch", "test").Wait();
-                Task<HttpResponseMessage> responseTask2 = Task.Factory.StartNew(() => PostPayloadHelper(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(postTest))));
+                        // Wait for the first deployment to start
+                        await WaitForAnyDeploymentAsync(appManager);
+
+                        // Change branch and start second fetch request for test branch
+                        appManager.SettingsManager.SetValue("branch", "test").Wait();
+                        responseTask2 = PostPayloadOnceAsync(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(postTest)));
+
+                        await responseTask1;
+
+                        await responseTask2;
+                    },
+                    () =>
+                    {
+                        // On failure return to initial state by restoring the deployment branch to master
+                        // And removing all existing deployments
+
+                        // Make sure we don't have any pending tasks
+                        try
+                        {
+                            Task.WaitAll(responseTask1, responseTask2);
+                        }
+                        catch
+                        {
+                            // Ignore any exceptions
+                        }
+
+                        appManager.SettingsManager.SetValue("branch", "master").Wait();
+
+                        var deploymentResults = appManager.DeploymentManager.GetResultsAsync().Result;
+                        foreach (var deploymentResult in deploymentResults)
+                        {
+                            TestTracer.Trace("Found result to remove - {0}", deploymentResult.Id);
+                            appManager.DeploymentManager.DeleteAsync(deploymentResult.Id).Wait();
+                        }
+                    });
 
                 Assert.Equal(HttpStatusCode.OK, responseTask1.Result.StatusCode);
                 Assert.Equal(HttpStatusCode.Conflict, responseTask2.Result.StatusCode);
@@ -752,32 +771,32 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void PullApiTestRepoWithLongPath()
+        public async Task PullApiTestRepoWithLongPath()
         {
             var payload = new JObject();
             payload["url"] = "https://github.com/suwatch/RepoWithLongPath.git";
             payload["format"] = "basic";
             string appName = "RepoWithLongPath";
 
-            ApplicationManager.Run(appName, appManager =>
+            await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                var exception = Assert.Throws<HttpUnsuccessfulRequestException>(() =>
+                var exception = await KuduAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(async () =>
                 {
-                    DeployPayloadHelper(appManager, client => client.PostAsJsonAsync("deploy", payload));
+                    await PostPayloadOnceAsync(appManager, client => client.PostAsJsonAsync("deploy", payload));
                 });
 
                 Assert.Contains("unable to create file symfony", exception.Message);
 
-                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Failed, results[0].Status);
 
-                var entries = appManager.DeploymentManager.GetLogEntriesAsync(results[0].Id).Result.ToList();
+                var entries = (await appManager.DeploymentManager.GetLogEntriesAsync(results[0].Id)).ToList();
                 Assert.Equal(1, entries.Count);
                 Assert.Equal("Fetching changes.", entries[0].Message);
                 Assert.Equal(LogEntryType.Error, entries[0].Type);
 
-                var details = appManager.DeploymentManager.GetLogEntryDetailsAsync(results[0].Id, entries[0].Id).Result.ToList();
+                var details = (await appManager.DeploymentManager.GetLogEntryDetailsAsync(results[0].Id, entries[0].Id)).ToList();
                 Assert.True(details.Count > 0, "must have at one log detail entry.");
                 Assert.Contains("unable to create file symfony", details[0].Message);
                 Assert.Equal(LogEntryType.Error, details[0].Type);
@@ -816,46 +835,99 @@ namespace Kudu.FunctionalTests
             });
         }
 
+        private async Task WaitForAnyDeploymentAsync(ApplicationManager appManager)
+        {
+            bool deploying = false;
+            int breakLoop = 0;
+            do
+            {
+                Thread.Sleep(100);
+
+                var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
+                deploying =
+                    results != null &&
+                    results.Any();
+
+                breakLoop++;
+                if (breakLoop > 200)
+                {
+                    Assert.True(false, "No deployment result in pending state");
+                }
+            }
+            while (!deploying);
+        }
+
         private static void DeployPayloadHelper(ApplicationManager appManager, Func<HttpClient, Task<HttpResponseMessage>> func, int retries = 3, int duration = 1000)
         {
             PostPayloadHelper(appManager, func, retries, duration).EnsureSuccessful().Dispose();
         }
 
+        private static async Task<HttpResponseMessage> PostPayloadOnceAsync(ApplicationManager appManager, Func<HttpClient, Task<HttpResponseMessage>> func)
+        {
+            using (HttpClient client = CreateClient(appManager))
+            {
+                HttpResponseMessage response = await func(client);
+
+                if (response.StatusCode == HttpStatusCode.InternalServerError)
+                {
+                    response.EnsureSuccessful();
+                }
+
+                return response;
+            }
+        }
+
         private static HttpResponseMessage PostPayloadHelper(ApplicationManager appManager, Func<HttpClient, Task<HttpResponseMessage>> func, int retries = 3, int duration = 1000)
         {
-            while (retries > 0)
-            {
-                try
+            HttpResponseMessage response = null;
+
+            RetryOnTemporaryHttpErrors(
+                // Retry action
+                async () =>
                 {
                     using (HttpClient client = CreateClient(appManager))
                     {
-                        HttpResponseMessage response = func(client).Result;
-
-                        if (response.StatusCode == HttpStatusCode.InternalServerError)
-                        {
-                            response.EnsureSuccessful();
-                        }
-
-                        return response;
+                        response = await PostPayloadOnceAsync(appManager, func);
                     }
+                },
+                // Cleanup action
+                () =>
+                {
+                    TestTracer.Trace("Removing the failed deployment result if it exists");
+
+                    var deploymentResults = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                    var lastDeploymentResult = deploymentResults.LastOrDefault();
+                    if (lastDeploymentResult != null && lastDeploymentResult.Status != DeployStatus.Success)
+                    {
+                        TestTracer.Trace("Found result to remove - {0}", lastDeploymentResult.Id);
+                        appManager.DeploymentManager.DeleteAsync(lastDeploymentResult.Id).Wait();
+                    }
+                },
+                retries,
+                duration).Wait();
+
+            return response;
+        }
+
+        private static async Task RetryOnTemporaryHttpErrors(Func<Task> asyncAction, Action cleanupBeforeRetry, int retries = 3, int duration = 1000)
+        {
+            while (retries >= 0)
+            {
+                try
+                {
+                    await asyncAction();
+                    return;
                 }
                 catch (HttpUnsuccessfulRequestException ex)
                 {
-                    if (ex.ResponseMessage.ExceptionMessage.Contains("403 while accessing https://github.com")
-                     || ex.ResponseMessage.ExceptionMessage.Contains("fatal: The remote end hung up unexpectedly"))
+                    if (--retries >= 0)
                     {
-                        TestTracer.Trace("Retry due to github flakiness, removing the failed deployment result if it exists\nFailure: {0}", ex.ResponseMessage.ExceptionMessage);
-
-                        var deploymentResults = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-                        var lastDeploymentResult = deploymentResults.LastOrDefault();
-                        if (lastDeploymentResult != null && lastDeploymentResult.Status != DeployStatus.Success)
+                        if (ex.ResponseMessage.ExceptionMessage.Contains("403 while accessing https://github.com")
+                         || ex.ResponseMessage.ExceptionMessage.Contains("fatal: The remote end hung up unexpectedly"))
                         {
-                            TestTracer.Trace("Found result to remove - {0}", lastDeploymentResult.Id);
-                            appManager.DeploymentManager.DeleteAsync(lastDeploymentResult.Id).Wait();
-                        }
+                            TestTracer.Trace("Retry due to github flakiness\nFailure: {0}", ex.ResponseMessage.ExceptionMessage);
+                            cleanupBeforeRetry();
 
-                        if (--retries > 0)
-                        {
                             Thread.Sleep(duration);
                             continue;
                         }

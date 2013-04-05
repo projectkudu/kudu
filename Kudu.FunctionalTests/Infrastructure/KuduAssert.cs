@@ -116,5 +116,27 @@ namespace Kudu.FunctionalTests.Infrastructure
             var allEntries = entries.Concat(allDetails).ToList();
             Assert.True(expectedMatches.All(match => allEntries.Any(e => e.Message.Contains(match))));
         }
+
+        public static async Task<TException> ThrowsAsync<TException>(Func<Task> func) where TException : Exception
+        {
+            Exception actualException = null;
+            try
+            {
+                await func();
+            }
+            catch (Exception ex)
+            {
+                actualException = ex;
+            }
+
+            return Assert.Throws<TException>(
+                () =>
+                {
+                    if (actualException != null)
+                    {
+                        throw actualException;
+                    }
+                });
+        }
     }
 }
