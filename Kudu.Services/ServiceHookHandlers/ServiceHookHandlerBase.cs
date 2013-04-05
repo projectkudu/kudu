@@ -12,7 +12,7 @@ namespace Kudu.Services.ServiceHookHandlers
         public void Fetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch, ILogger logger)
         {
             repository.ClearLock();
-            repository.FetchWithoutConflict(deploymentInfo.RepositoryUrl, "external", targetBranch);
+            repository.FetchWithoutConflict(deploymentInfo.RepositoryUrl, targetBranch);
         }
 
         protected static string GetDeployerFromUrl(string url)

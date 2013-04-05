@@ -242,7 +242,8 @@ namespace Kudu.Core.SourceControl
             return GetChangeSet((RevSpec)id);
         }
 
-        public void FetchWithoutConflict(string remote, string remoteAlias, string branchName)
+        private const string remoteAlias = "external";
+        public void FetchWithoutConflict(string remote, string branchName)
         {
             // To get ssh to work with hg, we need to ensure ssh.exe exists in the path and the HOME environment variable is set.
             // NOTE: Although hge.exe accepts the path to ssh.exe via a --ssh parameter, it cannot handle any whitespace

@@ -148,7 +148,7 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public void Deploy(IRepository repository, ChangeSet changeSet, string deployer, bool clean)
+        public void Deploy(IRepository repository, ChangeSet changeSet, string deployer, bool clean, bool needFileUpdate)
         {
             ITracer tracer = _traceFactory.GetTracer();
             IDisposable deployStep = null;
@@ -178,15 +178,18 @@ namespace Kudu.Core.Deployment
 
                 ILogger logger = GetLogger(changeSet.Id);
 
-                using (tracer.Step("Updating to specific changeset"))
+                if (needFileUpdate)
                 {
-                    innerLogger = logger.Log(Resources.Log_UpdatingBranch, targetBranch ?? id);
-
-                    using (var writer = new ProgressWriter())
+                    using (tracer.Step("Updating to specific changeset"))
                     {
-                        // Update to the the specific changeset
-                        repository.ClearLock();
-                        repository.Update(id);
+                        innerLogger = logger.Log(Resources.Log_UpdatingBranch, targetBranch ?? id);
+
+                        using (var writer = new ProgressWriter())
+                        {
+                            // Update to the the specific changeset
+                            repository.ClearLock();
+                            repository.Update(id);
+                        }
                     }
                 }
 

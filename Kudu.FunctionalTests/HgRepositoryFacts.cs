@@ -50,7 +50,7 @@ namespace Kudu.FunctionalTests
                 hgRepo.Initialize();
 
                 // Act - 1
-                hgRepo.FetchWithoutConflict(remoteRepository, remoteAlias: null, branchName: "default");
+                hgRepo.FetchWithoutConflict(remoteRepository, branchName: "default");
                 
                 // Assert - 1
                 Assert.Equal("Hello mercurial!", File.ReadAllText(helloTextPath));
@@ -61,7 +61,7 @@ namespace Kudu.FunctionalTests
                 File.WriteAllText(helloTextPath, "uncommitted changes");
 
                 // Act - 2
-                hgRepo.FetchWithoutConflict(remoteRepository, remoteAlias: null, branchName: "test");
+                hgRepo.FetchWithoutConflict(remoteRepository, branchName: "test");
 
                 // Assert - 2
                 Assert.Equal("This is a commit from test", File.ReadAllText(helloTextPath));
@@ -106,7 +106,7 @@ namespace Kudu.FunctionalTests
 
                 // Act
                 hgRepo.Initialize();
-                var ex = Assert.Throws<InvalidOperationException>(() => hgRepo.FetchWithoutConflict("https://bitbucket.org/kudutest/emptyhgrepo", "test", "default"));
+                var ex = Assert.Throws<InvalidOperationException>(() => hgRepo.FetchWithoutConflict("https://bitbucket.org/kudutest/emptyhgrepo", "default"));
 
                 // Assert
                 Assert.Contains("Could not fetch remote branch 'default'. Verify that the branch exists in the repository.", ex.Message);

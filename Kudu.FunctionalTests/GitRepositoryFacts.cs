@@ -38,7 +38,7 @@ namespace Kudu.FunctionalTests
 
                 // Act
                 gitRepo.Initialize();
-                var ex = Assert.Throws<InvalidOperationException>(() => gitRepo.FetchWithoutConflict("https://github.com/KuduApps/EmptyGitRepo.git", "test", "master"));
+                var ex = Assert.Throws<InvalidOperationException>(() => gitRepo.FetchWithoutConflict("https://github.com/KuduApps/EmptyGitRepo.git", "master"));
 
                 // Assert
                 Assert.Equal("Could not fetch remote branch 'master'. Verify that the branch exists in the repository.", ex.Message);

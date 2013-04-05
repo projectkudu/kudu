@@ -84,7 +84,7 @@ namespace Kudu.Core.Test
             var hgRepository = new HgRepository(executable.Object, @"x:\some-path", Mock.Of<ITraceFactory>());
 
             // Act and Assert
-            Assert.Throws<CommandLineException>(() => hgRepository.FetchWithoutConflict("https://some-remote", "external", "default"));
+            Assert.Throws<CommandLineException>(() => hgRepository.FetchWithoutConflict("https://some-remote", "default"));
             executable.Verify(e => e.Execute(It.IsAny<ITracer>(), "pull {0} --branch {1} --noninteractive", It.IsAny<object[]>()), Times.Exactly(2));
             executable.Verify(e => e.Execute(It.IsAny<ITracer>(), "recover", It.IsAny<object[]>()), Times.Once());
         }
@@ -105,7 +105,7 @@ namespace Kudu.Core.Test
             var hgRepository = new HgRepository(executable.Object, @"x:\some-path", Mock.Of<ITraceFactory>());
 
             // Act
-            hgRepository.FetchWithoutConflict("https://some-remote", "external", "default");
+            hgRepository.FetchWithoutConflict("https://some-remote", "default");
 
             // Assert
             executable.Verify(e => e.Execute(It.IsAny<ITracer>(), "pull {0} --branch {1} --noninteractive", It.IsAny<object[]>()), Times.Once());
