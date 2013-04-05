@@ -601,14 +601,14 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void PullApiTestConsecutivePushesGetQueued()
+        public async Task PullApiTestConsecutivePushesGetQueued()
         {
             List<DeployResult> results;
             string payloadMaster = @"{ ""newRef"": ""1ef30333deac14b99ac4bc93453cf4232ae88c24"", ""url"": ""https://github.com/KuduApps/RepoWithMultipleBranches.git"", ""deployer"" : ""CodePlex"", branch: ""master"" }";
             string payloadTest = @"{ ""url"": ""https://github.com/KuduApps/RepoWithMultipleBranches.git"", ""deployer"" : ""CodePlex"", branch: ""test"", newRef: ""ad21595c668f3de813463df17c04a3b23065fedc"" }";
             string appName = "PullApiTestPushesGetQueued";
 
-            ApplicationManager.Run(appName, appManager =>
+            await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 var postMaster = new Dictionary<string, string>
                 {
@@ -620,39 +620,29 @@ namespace Kudu.FunctionalTests
                     { "payload", payloadTest }
                 };
 
+                Task<HttpResponseMessage> responseTask1 = null;
+                Task<HttpResponseMessage> responseTask2 = null;
+
                 // Start the first fetch request for the master branch
-                Task<HttpResponseMessage> responseTask1 = Task.Factory.StartNew(() => PostPayloadHelper(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(postMaster))));
+                responseTask1 = PostPayloadHelperAsync(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(postMaster)));
 
                 // Wait for the first deployment to start
-                bool deploying = false;
-                int breakLoop = 0;
-                do
-                {
-                    Thread.Sleep(100);
-
-                    results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-                    deploying =
-                        results != null &&
-                        results.Any();
-
-                    breakLoop++;
-                    if (breakLoop > 200)
-                    {
-                        Assert.True(false, "No deployment result in pending state");
-                    }
-                }
-                while (!deploying);
+                await WaitForAnyDeploymentAsync(appManager);
 
                 // Change branch and start second fetch request for test branch
                 appManager.SettingsManager.SetValue("branch", "test").Wait();
-                Task<HttpResponseMessage> responseTask2 = Task.Factory.StartNew(() => PostPayloadHelper(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(postTest))));
+                responseTask2 = PostPayloadHelperAsync(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(postTest)));
+
+                await responseTask1;
+
+                await responseTask2;
 
                 Assert.Equal(HttpStatusCode.OK, responseTask1.Result.StatusCode);
                 Assert.Equal(HttpStatusCode.Conflict, responseTask2.Result.StatusCode);
 
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "Test branch");
 
-                results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
                 Assert.Equal(2, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
                 Assert.Equal(DeployStatus.Success, results[1].Status);
@@ -752,32 +742,32 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void PullApiTestRepoWithLongPath()
+        public async Task PullApiTestRepoWithLongPath()
         {
             var payload = new JObject();
             payload["url"] = "https://github.com/suwatch/RepoWithLongPath.git";
             payload["format"] = "basic";
             string appName = "RepoWithLongPath";
 
-            ApplicationManager.Run(appName, appManager =>
+            await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                var exception = Assert.Throws<HttpUnsuccessfulRequestException>(() =>
+                var exception = await KuduAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(async () =>
                 {
-                    DeployPayloadHelper(appManager, client => client.PostAsJsonAsync("deploy", payload));
+                    await PostPayloadHelperAsync(appManager, client => client.PostAsJsonAsync("deploy", payload));
                 });
 
                 Assert.Contains("unable to create file symfony", exception.Message);
 
-                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+                var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Failed, results[0].Status);
 
-                var entries = appManager.DeploymentManager.GetLogEntriesAsync(results[0].Id).Result.ToList();
+                var entries = (await appManager.DeploymentManager.GetLogEntriesAsync(results[0].Id)).ToList();
                 Assert.Equal(1, entries.Count);
                 Assert.Equal("Fetching changes.", entries[0].Message);
                 Assert.Equal(LogEntryType.Error, entries[0].Type);
 
-                var details = appManager.DeploymentManager.GetLogEntryDetailsAsync(results[0].Id, entries[0].Id).Result.ToList();
+                var details = (await appManager.DeploymentManager.GetLogEntryDetailsAsync(results[0].Id, entries[0].Id)).ToList();
                 Assert.True(details.Count > 0, "must have at one log detail entry.");
                 Assert.Contains("unable to create file symfony", details[0].Message);
                 Assert.Equal(LogEntryType.Error, details[0].Type);
@@ -816,56 +806,51 @@ namespace Kudu.FunctionalTests
             });
         }
 
-        private static void DeployPayloadHelper(ApplicationManager appManager, Func<HttpClient, Task<HttpResponseMessage>> func, int retries = 3, int duration = 1000)
+        private async Task WaitForAnyDeploymentAsync(ApplicationManager appManager)
         {
-            PostPayloadHelper(appManager, func, retries, duration).EnsureSuccessful().Dispose();
-        }
-
-        private static HttpResponseMessage PostPayloadHelper(ApplicationManager appManager, Func<HttpClient, Task<HttpResponseMessage>> func, int retries = 3, int duration = 1000)
-        {
-            while (retries > 0)
+            bool deploying = false;
+            int breakLoop = 0;
+            do
             {
-                try
+                Thread.Sleep(100);
+
+                var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
+                deploying =
+                    results != null &&
+                    results.Any();
+
+                breakLoop++;
+                if (breakLoop > 200)
                 {
-                    using (HttpClient client = CreateClient(appManager))
-                    {
-                        HttpResponseMessage response = func(client).Result;
-
-                        if (response.StatusCode == HttpStatusCode.InternalServerError)
-                        {
-                            response.EnsureSuccessful();
-                        }
-
-                        return response;
-                    }
-                }
-                catch (HttpUnsuccessfulRequestException ex)
-                {
-                    if (ex.ResponseMessage.ExceptionMessage.Contains("403 while accessing https://github.com")
-                     || ex.ResponseMessage.ExceptionMessage.Contains("fatal: The remote end hung up unexpectedly"))
-                    {
-                        TestTracer.Trace("Retry due to github flakiness, removing the failed deployment result if it exists\nFailure: {0}", ex.ResponseMessage.ExceptionMessage);
-
-                        var deploymentResults = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
-                        var lastDeploymentResult = deploymentResults.LastOrDefault();
-                        if (lastDeploymentResult != null && lastDeploymentResult.Status != DeployStatus.Success)
-                        {
-                            TestTracer.Trace("Found result to remove - {0}", lastDeploymentResult.Id);
-                            appManager.DeploymentManager.DeleteAsync(lastDeploymentResult.Id).Wait();
-                        }
-
-                        if (--retries > 0)
-                        {
-                            Thread.Sleep(duration);
-                            continue;
-                        }
-                    }
-
-                    throw;
+                    Assert.True(false, "No deployment result in pending state");
                 }
             }
+            while (!deploying);
+        }
 
-            throw new InvalidOperationException("We should not reach here!");
+        private static void DeployPayloadHelper(ApplicationManager appManager, Func<HttpClient, Task<HttpResponseMessage>> func)
+        {
+            PostPayloadHelper(appManager, func).EnsureSuccessful().Dispose();
+        }
+
+        private static async Task<HttpResponseMessage> PostPayloadHelperAsync(ApplicationManager appManager, Func<HttpClient, Task<HttpResponseMessage>> func)
+        {
+            using (HttpClient client = CreateClient(appManager))
+            {
+                HttpResponseMessage response = await func(client);
+
+                if (response.StatusCode == HttpStatusCode.InternalServerError)
+                {
+                    response.EnsureSuccessful();
+                }
+
+                return response;
+            }
+        }
+
+        private static HttpResponseMessage PostPayloadHelper(ApplicationManager appManager, Func<HttpClient, Task<HttpResponseMessage>> func)
+        {
+            return PostPayloadHelperAsync(appManager, func).Result;
         }
 
         private static HttpClient CreateClient(ApplicationManager appManager)

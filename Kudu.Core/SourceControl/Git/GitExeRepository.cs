@@ -16,6 +16,15 @@ namespace Kudu.Core.SourceControl.Git
     /// </summary>
     public class GitExeRepository : IRepository
     {
+        // From CIT experience, this is most common flakiness issue with github.com
+        private static readonly string[] RetriableFetchFailures =
+        {
+            "Unknown SSL protocol error in connection",
+            "The requested URL returned error: 403 while accessing",
+            "fatal: HTTP request failed",
+            "fatal: The remote end hung up unexpectedly"
+        };
+
         private readonly GitExecutable _gitExe;
         private readonly ITraceFactory _tracerFactory;
         private readonly IDeploymentSettingsManager _settings;
@@ -549,10 +558,10 @@ echo $i > pushinfo
             // 3 retries with 1s interval
             return OperationManager.Attempt(func, delayBeforeRetry: 1000, shouldRetry: ex =>
             {
-                // From CIT experience, this is most common flakiness issue with github.com
-                if (ex.Message.Contains("Unknown SSL protocol error in connection"))
+                string error = ex.Message;
+                if (RetriableFetchFailures.Any(retriableFailureMessage => error.Contains(retriableFailureMessage)))
                 {
-                    _tracerFactory.GetTracer().Trace("Retry due to {0}", ex.Message);
+                    _tracerFactory.GetTracer().Trace("Retry due to {0}", error);
                     return true;
                 }
 

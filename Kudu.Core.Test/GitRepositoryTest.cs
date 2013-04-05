@@ -213,6 +213,9 @@ index 0000000..261a6bf
         [InlineData(null, 1)]
         [InlineData("This is non-retryable exception", 1)]
         [InlineData("Unknown SSL protocol error in connection to github.com:443", 3)]
+        [InlineData("error: The requested URL returned error: 403 while accessing https://github.com/KuduApps/EmptyGitRepo.git/info/refs", 3)]
+        [InlineData("fatal: HTTP request failed", 3)]
+        [InlineData("fatal: The remote end hung up unexpectedly", 3)]
         public void GitExecuteWithRetryTest(string message, int expect)
         {
             // Mock
