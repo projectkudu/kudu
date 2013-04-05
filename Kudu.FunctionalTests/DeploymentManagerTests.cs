@@ -662,7 +662,7 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void PullApiTestSimpleFormat()
+        public void PullApiTestSimpleFormatMultiBranchWithUpdates()
         {
             var payload = new JObject();
             payload["url"] = "https://github.com/KuduApps/HelloKudu";
@@ -671,6 +671,7 @@ namespace Kudu.FunctionalTests
 
             ApplicationManager.Run(appName, appManager =>
             {
+                // Fetch master branch from first repo
                 DeployPayloadHelper(appManager, client => client.PostAsJsonAsync("deploy", payload));
 
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
@@ -678,7 +679,24 @@ namespace Kudu.FunctionalTests
                 Assert.Equal(DeployStatus.Success, results[0].Status);
                 Assert.Equal("GitHub", results[0].Deployer);
 
-                KuduAssert.VerifyUrl(appManager.SiteUrl, "Hello Kudu");
+                KuduAssert.VerifyUrl(appManager.SiteUrl, "<h1>Hello Kudu</h1>");
+
+                // Switch to foo branch from first repo
+                appManager.SettingsManager.SetValue("branch", "foo").Wait();
+                DeployPayloadHelper(appManager, client => client.PostAsJsonAsync("deploy", payload));
+                KuduAssert.VerifyUrl(appManager.SiteUrl, "<h1>Hello Kudu - foo</h1>");
+
+                // Fetch master branch from second repo to simulate update. It has one more commit over first repo
+                payload["url"] = "https://github.com/KuduApps/HelloKudu2";
+                appManager.SettingsManager.SetValue("branch", "master").Wait();
+                DeployPayloadHelper(appManager, client => client.PostAsJsonAsync("deploy", payload));
+                KuduAssert.VerifyUrl(appManager.SiteUrl, "<h1>Hello again Kudu</h1>");
+
+                // Fetch foo branch from second repo to simulate update. It has a different commit that cannot be
+                // fast-forwarded from the foo branch in the first repo
+                appManager.SettingsManager.SetValue("branch", "foo").Wait();
+                DeployPayloadHelper(appManager, client => client.PostAsJsonAsync("deploy", payload));
+                KuduAssert.VerifyUrl(appManager.SiteUrl, "<h1>Hi Kudu foo</h1>");
             });
         }
 

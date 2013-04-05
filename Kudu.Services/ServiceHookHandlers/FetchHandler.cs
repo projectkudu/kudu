@@ -189,7 +189,9 @@ namespace Kudu.Services
                         {
                             // Perform the actual deployment
                             var changeSet = repository.GetChangeSet(targetBranch);
-                            _deploymentManager.Deploy(repository, changeSet, deploymentInfo.Deployer, clean: false);
+
+                            // Here, we don't need to update the working files, since we know Fetch left them in the correct state
+                            _deploymentManager.Deploy(repository, changeSet, deploymentInfo.Deployer, clean: false, needFileUpdate: false);
                         }
 
                         if (MarkerFileExists())

@@ -243,7 +243,8 @@ echo $i > pushinfo
             _gitExe.Execute(@"push origin master");
         }
 
-        public void FetchWithoutConflict(string remote, string remoteAlias, string branchName)
+        private const string remoteAlias = "external";
+        public void FetchWithoutConflict(string remote, string branchName)
         {
             ITracer tracer = _tracerFactory.GetTracer();
             try
@@ -275,8 +276,12 @@ echo $i > pushinfo
                     throw;
                 }
 
+                // Set our branch to point to the remote branch we just fetched. This is a trivial branch pointer
+                // operation that doesn't touch any working files
+                _gitExe.Execute(tracer, @"update-ref refs/heads/{1} {0}/{1}", remoteAlias, branchName);
+
+                // Now checkout out our branch, which points to the right place
                 Update(branchName);
-                _gitExe.Execute(tracer, @"reset --hard {0}/{1}", remoteAlias, branchName);
             }
             finally
             {
