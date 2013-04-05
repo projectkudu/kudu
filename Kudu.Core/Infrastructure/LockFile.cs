@@ -28,8 +28,6 @@ namespace Kudu.Core.Infrastructure
             _path = Path.GetFullPath(path);
             _traceFactory = traceFactory;
             _fileSystem = fileSystem;
-
-            FileSystemHelpers.EnsureDirectory(fileSystem, Path.GetDirectoryName(path));
         }
 
         public bool IsHeld
@@ -67,6 +65,8 @@ namespace Kudu.Core.Infrastructure
         {
             try
             {
+                FileSystemHelpers.EnsureDirectory(_fileSystem, Path.GetDirectoryName(_path));
+
                 _lockStream = _fileSystem.File.Open(_path, FileMode.Create, FileAccess.Write, FileShare.None);
 
                 return true;
