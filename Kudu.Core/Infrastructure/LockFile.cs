@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Threading;
+using System.IO.Abstractions;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Tracing;
@@ -14,15 +13,23 @@ namespace Kudu.Core.Infrastructure
     public class LockFile : IOperationLock
     {
         private readonly string _path;
-        private readonly string _directory;
-        private Stream _lockStream;
         private readonly ITraceFactory _traceFactory;
+        private readonly IFileSystem _fileSystem;
 
-        public LockFile(ITraceFactory traceFactory, string path)
+        private Stream _lockStream;
+
+        public LockFile(string path)
+            : this(path, NullTracerFactory.Instance, new FileSystem())
         {
-            _traceFactory = traceFactory;
+        }
+
+        public LockFile(string path, ITraceFactory traceFactory, IFileSystem fileSystem)
+        {
             _path = Path.GetFullPath(path);
-            _directory = Path.GetDirectoryName(_path);
+            _traceFactory = traceFactory;
+            _fileSystem = fileSystem;
+
+            FileSystemHelpers.EnsureDirectory(fileSystem, Path.GetDirectoryName(path));
         }
 
         public bool IsHeld
@@ -30,7 +37,7 @@ namespace Kudu.Core.Infrastructure
             get
             {
                 // If there's no file then there's no process holding onto it
-                if (!File.Exists(_path))
+                if (!_fileSystem.File.Exists(_path))
                 {
                     return false;
                 }
@@ -39,21 +46,20 @@ namespace Kudu.Core.Infrastructure
                 {
                     // If there is a file, lets see if someone has an open handle to it, or if it's
                     // just hanging there for no reason
-                    using (new FileStream(_path, FileMode.Open, FileAccess.Write, FileShare.None))
-                    {
-                        try
-                        {
-                            // Nobody is here, so delete the turd file
-                            File.Delete(_path);
-                        }
-                        catch { }
-                        return false;
-                    }
+                    using (_fileSystem.File.Open(_path, FileMode.Open, FileAccess.Write, FileShare.None)) { }
                 }
-                catch(IOException)
+                catch (Exception ex)
                 {
+                    TraceIfUnknown(ex);
+                    
                     return true;
                 }
+
+                // cleanup inactive lock file.  technically, it is not needed
+                // we just want to see the lock folder is clean, if no active lock.
+                DeleteFileSafe();
+
+                return false;
             }
         }
 
@@ -61,87 +67,50 @@ namespace Kudu.Core.Infrastructure
         {
             try
             {
-                FileSystemHelpers.EnsureDirectory(_directory);
-
-                if (Interlocked.Exchange(ref _lockStream, new FileStream(_path, FileMode.Create, FileAccess.Write, FileShare.None)) == null)
-                {
-                    _lockStream.WriteByte(0);
-                    return true;
-                }
-                return false;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        public bool Release()
-        {
-            if (_lockStream == null)
-            {
-                return false;
-            }
-
-            try
-            {
-                _lockStream.Close();
-                File.Delete(_path);
-
-                try
-                {
-                    FileSystemHelpers.DeleteIfEmpty(_directory);
-                }
-                catch
-                {
-                    // Doesn't matter if this fails, we're just trying to be tidy
-                }
+                _lockStream = _fileSystem.File.Open(_path, FileMode.Create, FileAccess.Write, FileShare.None);
 
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
-                TraceLock("Lock release failed");
+                TraceIfUnknown(ex);
+
                 return false;
             }
-            finally
+        }
+
+        public void Release()
+        {
+            var temp = _lockStream;
+            _lockStream = null;
+            temp.Close();
+
+            // cleanup inactive lock file.  technically, it is not needed
+            // we just want to see the lock folder is clean, if no active lock.
+            DeleteFileSafe();
+        }
+
+        // we cannot use FileSystemHelpers.DeleteFileSafe.
+        // it does not handled IOException due to 'file in used'.
+        private void DeleteFileSafe()
+        {
+            try
             {
-                Interlocked.Exchange(ref _lockStream, null);
+                _fileSystem.File.Delete(_path);
+            }
+            catch (Exception ex)
+            {
+                TraceIfUnknown(ex);
             }
         }
 
-        public bool Wait(TimeSpan timeout)
+        private void TraceIfUnknown(Exception ex)
         {
-            // Poll the file system every second
-            var interval = TimeSpan.FromSeconds(1);
-            var elapsed = TimeSpan.Zero;
-
-            bool timedout = false;
-
-            // This is less efficient than a file change nofitication but more reliable
-            // as there's a race condition when setting up the notification
-            while (IsHeld)
+            if (!(ex is IOException) && !(ex is UnauthorizedAccessException))
             {
-                if (elapsed >= timeout)
-                {
-                    timedout = true;
-                    break;
-                }
-
-                Thread.Sleep(interval);
-                elapsed += interval;
+                // trace unexpected exception
+                _traceFactory.GetTracer().TraceError(ex);
             }
-
-            return timedout;
-        }
-
-        private void TraceLock(string message)
-        {
-            ITracer tracer = _traceFactory.GetTracer();
-            tracer.Trace(message, new Dictionary<string, string>
-            {
-                { "type", "lock" }
-            });
         }
     }
 }

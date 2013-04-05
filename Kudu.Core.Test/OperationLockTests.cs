@@ -134,16 +134,10 @@ namespace Kudu.Core.Test
                 return Interlocked.CompareExchange(ref _locked, 1, 0) == 0;
             }
 
-            public bool Release()
+            public void Release()
             {
                 Assert.Equal(1, _locked);
                 _locked = 0;
-                return true;
-            }
-
-            public bool Wait(TimeSpan timeOut)
-            {
-                throw new NotImplementedException();
             }
         }
     }
