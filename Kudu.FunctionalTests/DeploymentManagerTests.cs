@@ -623,7 +623,7 @@ namespace Kudu.FunctionalTests
                 responseTask1 = PostPayloadHelperAsync(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(postMaster)));
 
                 // Wait for the first deployment to start
-                await WaitForAnyDeploymentAsync(appManager);
+                Thread.Sleep(500);
 
                 // Change branch and start second fetch request for test branch
                 await appManager.SettingsManager.SetValue("branch", "test");
@@ -800,28 +800,6 @@ namespace Kudu.FunctionalTests
                     Assert.Contains("404", ex.Message);
                 }
             });
-        }
-
-        private async Task WaitForAnyDeploymentAsync(ApplicationManager appManager)
-        {
-            bool deploying = false;
-            int breakLoop = 0;
-            do
-            {
-                Thread.Sleep(100);
-
-                var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
-                deploying =
-                    results != null &&
-                    results.Any();
-
-                breakLoop++;
-                if (breakLoop > 200)
-                {
-                    Assert.True(false, "No deployment result in pending state");
-                }
-            }
-            while (!deploying);
         }
 
         private static async Task DeployPayloadHelperAsync(ApplicationManager appManager, Func<HttpClient, Task<HttpResponseMessage>> func)
