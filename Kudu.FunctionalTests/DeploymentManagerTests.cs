@@ -623,7 +623,7 @@ namespace Kudu.FunctionalTests
                 responseTask1 = PostPayloadHelperAsync(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(postMaster)));
 
                 // Wait for the first deployment to start
-                Thread.Sleep(500);
+                await WaitForAnyBuildingDeploymentAsync(appManager);
 
                 // Change branch and start second fetch request for test branch
                 await appManager.SettingsManager.SetValue("branch", "test");
@@ -830,6 +830,28 @@ namespace Kudu.FunctionalTests
                 BaseAddress = new Uri(appManager.ServiceUrl),
                 Timeout = TimeSpan.FromMinutes(5)
             };
+        }
+
+        private async Task WaitForAnyBuildingDeploymentAsync(ApplicationManager appManager)
+        {
+            bool deploying = false;
+            int breakLoop = 0;
+            do
+            {
+                Thread.Sleep(100);
+
+                var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
+                deploying =
+                    results != null &&
+                    results.Any(r => r.Status == DeployStatus.Building);
+
+                breakLoop++;
+                if (breakLoop > 200)
+                {
+                    Assert.True(false, "No deployment result in pending state");
+                }
+            }
+            while (!deploying);
         }
 
         private class FakeMessageHandler : DelegatingHandler
