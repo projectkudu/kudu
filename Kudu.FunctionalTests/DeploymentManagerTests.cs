@@ -16,6 +16,7 @@ using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
 using Newtonsoft.Json.Linq;
 using Xunit;
+using Xunit.Extensions;
 
 namespace Kudu.FunctionalTests
 {
@@ -322,14 +323,14 @@ namespace Kudu.FunctionalTests
             string githubPayload = @"{ ""after"": ""ea1c6d7ea669c816dd5f86206f7b47b228fdcacd"", ""before"": ""7e2a599e2d28665047ec347ab36731c905c95e8b"",  ""commits"": [ { ""added"": [], ""author"": { ""email"": ""prkrishn@hotmail.com"", ""name"": ""Pranav K"", ""username"": ""pranavkm"" }, ""id"": ""43acf30efa8339103e2bed5c6da1379614b00572"", ""message"": ""Changes from master again"", ""modified"": [ ""Hello.txt"" ], ""timestamp"": ""2012-12-17T17:32:15-08:00"" } ], ""compare"": ""https://github.com/KuduApps/GitHookTest/compare/7e2a599e2d28...7e2a599e2d28"", ""created"": false, ""deleted"": false, ""forced"": false, ""head_commit"": { ""added"": [ "".gitignore"", ""SimpleWebApplication.sln"", ""SimpleWebApplication/About.aspx"", ""SimpleWebApplication/About.aspx.cs"", ""SimpleWebApplication/About.aspx.designer.cs"", ""SimpleWebApplication/Account/ChangePassword.aspx"", ""SimpleWebApplication/Account/ChangePassword.aspx.cs"", ""SimpleWebApplication/Account/ChangePassword.aspx.designer.cs"", ""SimpleWebApplication/Account/ChangePasswordSuccess.aspx"", ""SimpleWebApplication/Account/ChangePasswordSuccess.aspx.cs"", ""SimpleWebApplication/Account/ChangePasswordSuccess.aspx.designer.cs"", ""SimpleWebApplication/Account/Login.aspx"", ""SimpleWebApplication/Account/Login.aspx.cs"", ""SimpleWebApplication/Account/Login.aspx.designer.cs"", ""SimpleWebApplication/Account/Register.aspx"", ""SimpleWebApplication/Account/Register.aspx.cs"", ""SimpleWebApplication/Account/Register.aspx.designer.cs"", ""SimpleWebApplication/Account/Web.config"", ""SimpleWebApplication/Default.aspx"", ""SimpleWebApplication/Default.aspx.cs"", ""SimpleWebApplication/Default.aspx.designer.cs"", ""SimpleWebApplication/Global.asax"", ""SimpleWebApplication/Global.asax.cs"", ""SimpleWebApplication/Properties/AssemblyInfo.cs"", ""SimpleWebApplication/Scripts/jquery-1.4.1-vsdoc.js"", ""SimpleWebApplication/Scripts/jquery-1.4.1.js"", ""SimpleWebApplication/Scripts/jquery-1.4.1.min.js"", ""SimpleWebApplication/SimpleWebApplication.csproj"", ""SimpleWebApplication/Site.Master"", ""SimpleWebApplication/Site.Master.cs"", ""SimpleWebApplication/Site.Master.designer.cs"", ""SimpleWebApplication/Styles/Site.css"", ""SimpleWebApplication/Web.Debug.config"", ""SimpleWebApplication/Web.Release.config"", ""SimpleWebApplication/Web.config"" ], ""author"": { ""email"": ""david.ebbo@microsoft.com"", ""name"": ""davidebbo"", ""username"": ""davidebbo"" }, ""committer"": { ""email"": ""david.ebbo@microsoft.com"", ""name"": ""davidebbo"", ""username"": ""davidebbo"" }, ""distinct"": false, ""id"": ""7e2a599e2d28665047ec347ab36731c905c95e8b"", ""message"": ""Initial"", ""modified"": [], ""removed"": [], ""timestamp"": ""2011-11-21T23:07:42-08:00"", ""url"": ""https://github.com/KuduApps/GitHookTest/commit/7e2a599e2d28665047ec347ab36731c905c95e8b"" }, ""pusher"": { ""name"": ""none"" }, ""ref"": ""refs/heads/master"", ""repository"": { ""created_at"": ""2012-06-28T00:07:55-07:00"", ""description"": """", ""fork"": false, ""forks"": 1, ""has_downloads"": true, ""has_issues"": true, ""has_wiki"": true, ""language"": ""ASP"", ""name"": ""GitHookTest"", ""open_issues"": 0, ""organization"": ""KuduApps"", ""owner"": { ""email"": ""kuduapps@hotmail.com"", ""name"": ""KuduApps"" }, ""private"": false, ""pushed_at"": ""2012-06-28T00:11:48-07:00"", ""size"": 188, ""url"": ""https://github.com/KuduApps/SimpleWebApplication"", ""watchers"": 1 } }";
             string appName = "PullApiTestGitHubFormat";
 
-            await ApplicationManager.RunAsync(appName, async appManager => 
+            await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 var post = new Dictionary<string, string>
                 {
                     { "payload", githubPayload }
                 };
 
-                await DeployPayloadHelperAsync(appManager, client => 
+                await DeployPayloadHelperAsync(appManager, client =>
                 {
                     client.DefaultRequestHeaders.Add("X-Github-Event", "push");
                     return client.PostAsync("deploy?scmType=GitHub", new FormUrlEncodedContent(post));
@@ -390,7 +391,7 @@ namespace Kudu.FunctionalTests
                 var client = CreateClient(appManager);
 
                 await appManager.SettingsManager.SetValue("branch", "default");
-                
+
                 client.DefaultRequestHeaders.Add("User-Agent", "Bitbucket.org");
                 var post = new Dictionary<string, string>
                 {
@@ -420,7 +421,7 @@ namespace Kudu.FunctionalTests
                 if (!SshHelper.PrepareSSHEnv(appManager.SSHKeyManager))
                 {
                     // Run SSH tests only if the key is present
-                    return; 
+                    return;
                 }
                 var client = CreateClient(appManager);
                 await appManager.SettingsManager.SetValue("branch", "Test-Branch");
@@ -585,7 +586,7 @@ namespace Kudu.FunctionalTests
                 {
                     { "payload", payload }
                 };
-                
+
                 await DeployPayloadHelperAsync(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(post)));
 
                 var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
@@ -800,6 +801,101 @@ namespace Kudu.FunctionalTests
                     Assert.Contains("404", ex.Message);
                 }
             });
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("hg")]
+        public async Task PullApiTestRepoInvalidUrl(string scm)
+        {
+            Random random = new Random();
+            string appName = "RepoInvalidUrl";
+
+            await ApplicationManager.RunAsync(appName, async appManager =>
+            {
+                // Speed up IdleTimeout to 5s
+                await appManager.SettingsManager.SetValue(SettingsKeys.CommandIdleTimeout, "5");
+
+                await appManager.SSHKeyManager.GetPublicKey(ensurePublicKey: true);
+
+                // Run per each scm in random order.
+                foreach (var info in GetRepoInvalidInfos().Where(r => r.Scm == scm).OrderBy(r => random.Next()))
+                {
+                    TestTracer.Trace("Scenario: " + info);
+
+                    // Test
+                    var exception = await KuduAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(async () =>
+                    {
+                        await PostPayloadHelperAsync(appManager, client => client.PostAsJsonAsync("deploy", info.Payload));
+                    });
+
+                    // Assert
+                    KuduAssert.Match(info.Expect, exception.Message, info.ToString());
+                }
+            });
+        }
+
+        private static IEnumerable<RepoInvalidInfo> GetRepoInvalidInfos()
+        {
+            yield return new RepoInvalidInfo("InvalidUrl", "Repository url 'InvalidUrl' is invalid.", null);
+            yield return new RepoInvalidInfo("InvalidUrl", "Repository url 'InvalidUrl' is invalid.", null);
+            yield return new RepoInvalidInfo(".", "Repository url '.' is invalid.", null);
+            yield return new RepoInvalidInfo("http://google.com/", "fatal: http://google.com/info/refs.* not found", null);
+            yield return new RepoInvalidInfo("http://google.com/", "abort: 'http://www.google.com/' does not appear to be an hg repository", "hg");
+            yield return new RepoInvalidInfo("InvalidScheme://abcdefghigkl.com/", "fatal: Unable to find remote helper for 'InvalidScheme'", null);
+            yield return new RepoInvalidInfo("InvalidScheme://abcdefghigkl.com/", "abort: repository InvalidScheme://abcdefghigkl.com/ not found", "hg");
+            yield return new RepoInvalidInfo("http://abcdefghigkl.com/", "Couldn't resolve host 'abcdefghigkl.com'", null);
+            yield return new RepoInvalidInfo("http://abcdefghigkl.com/", "abort: error: getaddrinfo failed.*hg.exe pull", "hg");
+            yield return new RepoInvalidInfo("https://abcdefghigkl.com/", "Couldn't resolve host 'abcdefghigkl.com'", null);
+            yield return new RepoInvalidInfo("https://abcdefghigkl.com/", "abort: error: getaddrinfo failed.*hg.exe pull", "hg");
+            yield return new RepoInvalidInfo("git@abcdefghigkl.com:Invalid/Invalid.git", "ssh: abcdefghigkl.com: no address associated with name", null);
+            yield return new RepoInvalidInfo("ssh://hg@abcdefghigkl.com/Invalid/Invalid.git", "abort: no suitable response from remote hg.*hg.exe pull", "hg");
+            yield return new RepoInvalidInfo("git@github.com:Invalid/Invalid.git", "Permission denied [(]publickey[)]", null);
+            yield return new RepoInvalidInfo("git@bitbucket.org:Invalid/Invalid.git", "Permission denied [(]publickey[)]", null);
+            yield return new RepoInvalidInfo("ssh://hg@bitbucket.org/Invalid/Invalid", "hg.exe pull ssh:.*aborted due to no output and CPU activity|no suitable response from remote hg.*hg.exe pull", "hg");
+            yield return new RepoInvalidInfo("git@github.com:KuduApps/Invalid.git", "Permission denied [(]publickey[)]", null);
+            yield return new RepoInvalidInfo("git@bitbucket.org:kudutest/Invalid.git", "Permission denied [(]publickey[)]", null);
+            yield return new RepoInvalidInfo("ssh://hg@bitbucket.org/kudutest/Invalid", "hg.exe pull ssh:.*aborted due to no output and CPU activity|no suitable response from remote hg.*hg.exe pull", "hg");
+            yield return new RepoInvalidInfo("git@github.com:KuduApps/HelloKudu.git", "Permission denied [(]publickey[)]", null);
+            yield return new RepoInvalidInfo("git@bitbucket.org:kudutest/jeanprivate.git", "Permission denied [(]publickey[)]", null);
+            yield return new RepoInvalidInfo("ssh://hg@bitbucket.org/kudutest/hellomercurial", "hg.exe pull ssh://hg.*aborted due to no output and CPU activity|no suitable response from remote hg.*hg.exe pull", "hg");
+            yield return new RepoInvalidInfo("https://github.com/KuduApps/HelloKudu.git", "abort: HTTP Error 406: Not Acceptable.*hg.exe pull https://github.com/KuduApps/HelloKudu.git", "hg");
+            yield return new RepoInvalidInfo("https://bitbucket.org/kudutest/hellomercurial/", "fatal: https://bitbucket.org/kudutest/hellomercurial/info/refs.* not found", null);
+            yield return new RepoInvalidInfo("https://github.com/Invalid/Invalid.git", "fatal: Authentication failed.*git.exe fetch", null);
+            yield return new RepoInvalidInfo("https://github.com/KuduQAOrg/Invalid.git", "fatal: Authentication failed.*git.exe fetch", null);
+            yield return new RepoInvalidInfo("https://github.com/KuduQAOrg/PrivateSubModule.git", "fatal: Authentication failed.*git.exe fetch", null);
+            yield return new RepoInvalidInfo("https://KuduQAOrg@github.com/KuduQAOrg/PrivateSubModule.git", "fatal: Authentication failed.*git.exe fetch", null);
+            yield return new RepoInvalidInfo("https://wrongusr@github.com/KuduQAOrg/PrivateSubModule.git", "fatal: Authentication failed.*git.exe fetch", null);
+            yield return new RepoInvalidInfo("https://KuduQAOrg:wrongpwd@github.com/KuduQAOrg/PrivateSubModule.git", "fatal: Authentication failed.*git.exe fetch external", null);
+            yield return new RepoInvalidInfo("https://bitbucket.org/Invalid/Invalid.git", "fatal: https://bitbucket.org/Invalid/Invalid.git/info/refs.* not found", null);
+            yield return new RepoInvalidInfo("https://bitbucket.org/kudutest/Invalid.git", "fatal: https://bitbucket.org/kudutest/Invalid.git/info/refs.* not found", null);
+            yield return new RepoInvalidInfo("https://bitbucket.org/kudutest/jeanprivate.git", "fatal: Authentication failed.*git.exe fetch", null);
+            yield return new RepoInvalidInfo("https://kudutest@bitbucket.org/kudutest/jeanprivate.git", "fatal: Authentication failed.*git.exe fetch", null);
+            yield return new RepoInvalidInfo("https://wrongusr@bitbucket.org/kudutest/jeanprivate.git", "fatal: Authentication failed.*git.exe fetch", null);
+            yield return new RepoInvalidInfo("https://kudutest:wrongpwd@bitbucket.org/kudutest/jeanprivate.git", "fatal: Authentication failed.*git.exe fetch external", null);
+        }
+
+        public class RepoInvalidInfo
+        {
+            public RepoInvalidInfo(string url, string expect, string scm)
+            {
+                this.Url = url;
+                this.Expect = expect;
+                this.Scm = scm;
+                this.Payload = new JObject();
+                this.Payload["url"] = url;
+                this.Payload["format"] = "basic";
+                if (!String.IsNullOrEmpty(scm))
+                {
+                    this.Payload["scm"] = scm;
+                }
+            }
+
+            public string Url { get; set; }
+            public string Expect { get; set; }
+            public string Scm { get; set; }
+            public JObject Payload { get; set; }
+            public override string ToString() { return String.Format("RepoInvalidInfo(url: \"{0},\" expect: \"{1}\", scm: \"{2}\")", this.Url, this.Expect, this.Scm); }
         }
 
         private static async Task DeployPayloadHelperAsync(ApplicationManager appManager, Func<HttpClient, Task<HttpResponseMessage>> func)

@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Net.Http.Formatting;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Kudu.Client;
 using Kudu.Client.Infrastructure;
@@ -115,6 +116,11 @@ namespace Kudu.FunctionalTests.Infrastructure
                                     .SelectMany(e => appManager.DeploymentManager.GetLogEntryDetailsAsync(id, e.Id).Result).ToList();
             var allEntries = entries.Concat(allDetails).ToList();
             Assert.True(expectedMatches.All(match => allEntries.Any(e => e.Message.Contains(match))));
+        }
+
+        public static void Match(string pattern, string actual, string message = null)
+        {
+            Assert.True(Regex.IsMatch(actual, pattern), String.Format("{0}\r\npattern: {1}\r\nactual: {2}\r\n", message, pattern, actual));
         }
 
         public static async Task<TException> ThrowsAsync<TException>(Func<Task> func) where TException : Exception

@@ -23,9 +23,9 @@ namespace Kudu.Client.SSHKey
             return Client.PutAsync(String.Empty, param);
         }
 
-        public Task<string> GetPublicKey()
+        public Task<string> GetPublicKey(bool ensurePublicKey = false)
         {
-            return Client.GetJsonAsync<string>("");
+            return Client.GetJsonAsync<string>(ensurePublicKey ?  "?ensurePublicKey=1" : String.Empty);
         }
     }
 }

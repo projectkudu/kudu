@@ -98,6 +98,14 @@ namespace Kudu.Core.SourceControl.Git
             }
         }
 
+        private string GitCredentialHookPath
+        {
+            get
+            {
+                return Path.Combine(_gitExe.WorkingDirectory, ".git", "hooks", "git-credential-invalid.sh");
+            }
+        }
+
         public void Initialize()
         {
             var profiler = _tracerFactory.GetTracer();
@@ -127,6 +135,23 @@ echo $i > pushinfo
                 {
                     // Allow getting pushes even though we're not bare
                     _gitExe.Execute(profiler, "config receive.denyCurrentBranch ignore");
+                }
+
+                // Server env does not support interactive cred prompt; hence, we intercept any credential provision
+                // for git fetch/clone with http/https scheme and return random invalid u/p forcing 'fatal: Authentication failed.'
+                using (profiler.Step("Configure git-credential"))
+                {
+                    FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(GitCredentialHookPath));
+
+                    string content = @"#!/bin/sh
+if [ " + "\"$1\" = \"get\"" + @" ]; then
+      echo username=dummyUser
+      echo password=dummyPassword
+fi" + "\n";
+
+                    File.WriteAllText(GitCredentialHookPath, content);
+
+                    _gitExe.Execute(profiler, "config credential.helper !'{0}'", GitCredentialHookPath);
                 }
             }
         }
