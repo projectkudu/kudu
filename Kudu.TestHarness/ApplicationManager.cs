@@ -181,7 +181,7 @@ namespace Kudu.TestHarness
         {
             TestTracer.Trace("Running test - {0}", testName);
 
-            var appManager = CreateApplication(KuduUtils.GetRandomWebsiteName(testName));
+            var appManager = CreateApplication(KuduUtils.GetRandomWebsiteName(testName), testName);
 
             if (KuduUtils.ReuseSameSiteForAllTests)
             {
@@ -312,8 +312,11 @@ namespace Kudu.TestHarness
             }
         }
 
-        public static ApplicationManager CreateApplication(string applicationName)
+        public static ApplicationManager CreateApplication(string applicationName, string testName = null)
         {
+            // Default the test name to the app name
+            testName = testName ?? applicationName;
+
             TestTracer.Trace("Create application - {0}", applicationName);
 
             var pathResolver = new DefaultPathResolver(PathHelper.ServiceSitePath, PathHelper.SitesPath);
