@@ -191,7 +191,7 @@ namespace Kudu.Services.Infrastructure
             Stream fileStream = null;
             try
             {
-                fileStream = GetFileDeleteStream(localFilePath, validate: info);
+                fileStream = GetFileDeleteStream(localFilePath);
                 File.Delete(localFilePath);
                 HttpResponseMessage successResponse = Request.CreateResponse(HttpStatusCode.OK);
                 return Task.FromResult(successResponse);
@@ -240,33 +240,20 @@ namespace Kudu.Services.Infrastructure
         }
 
         /// <summary>
-        /// Provides a common way for opening a file stream for shared reading from a file. In addition,
-        /// if <paramref name="validate"/> is passed then validate that the file has not changed since the 
-        /// <see cref="FileSystemInfo"/> was obtained. This check can prevent a class of race conditions where
-        /// another request comes in and changes the file between when the <see cref="FileSystemInfo"/> was
-        /// obtained and the file opened exclusively.
+        /// Provides a common way for opening a file stream for shared reading from a file.
         /// </summary>
-        protected static Stream GetFileReadStream(string localFilePath, FileSystemInfo validate = null)
+        protected static Stream GetFileReadStream(string localFilePath)
         {
             Contract.Assert(localFilePath != null);
 
             // Open file exclusively for read-sharing
-            FileStream fStream = new FileStream(localFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, BufferSize, useAsync: true);
-            if (validate != null)
-            {
-                ValidateFileSystemInfo(localFilePath, validate);
-            }
-            return fStream;
+            return new FileStream(localFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, BufferSize, useAsync: true);
         }
 
         /// <summary>
-        /// Provides a common way for opening a file stream for writing exclusively to a file. In addition,
-        /// if <paramref name="validate"/> is passed then validate that the file has not changed since the 
-        /// <see cref="FileSystemInfo"/> was obtained. This check can prevent a class of race conditions where
-        /// another request comes in and changes the file between when the <see cref="FileSystemInfo"/> was
-        /// obtained and the file opened exclusively.
+        /// Provides a common way for opening a file stream for writing exclusively to a file. 
         /// </summary>
-        protected static Stream GetFileWriteStream(string localFilePath, bool fileExists, FileSystemInfo validate = null)
+        protected static Stream GetFileWriteStream(string localFilePath, bool fileExists)
         {
             Contract.Assert(localFilePath != null);
 
@@ -277,42 +264,18 @@ namespace Kudu.Services.Infrastructure
             }
 
             // Open file exclusively for write without any sharing
-            FileStream fStream = new FileStream(localFilePath, FileMode.Create, FileAccess.Write, FileShare.None, BufferSize, useAsync: true);
-            if (fileExists && validate != null)
-            {
-                ValidateFileSystemInfo(localFilePath, validate);
-            }
-            return fStream;
+            return new FileStream(localFilePath, FileMode.Create, FileAccess.Write, FileShare.None, BufferSize, useAsync: true);
         }
 
         /// <summary>
-        /// Provides a common way for opening a file stream for exclusively deleting the file. While 
-        /// creating a stream may seem like a strange way to preparing a file for deletion, it allows us 
-        /// to conclusively verify that a file hasn't changed and so it avoids certain race conditions.
-        /// The stream is never actually used other than for "locking" the file.
+        /// Provides a common way for opening a file stream for exclusively deleting the file. 
         /// </summary>
-        private static Stream GetFileDeleteStream(string localFilePath, FileSystemInfo validate = null)
+        private static Stream GetFileDeleteStream(string localFilePath)
         {
             Contract.Assert(localFilePath != null);
 
             // Open file exclusively for delete sharing only
-            FileStream fStream = new FileStream(localFilePath, FileMode.Open, FileAccess.Read, FileShare.Delete);
-            if (validate != null)
-            {
-                ValidateFileSystemInfo(localFilePath, validate);
-            }
-            return fStream;
-        }
-
-        private static void ValidateFileSystemInfo(string localFilePath, FileSystemInfo validate)
-        {
-            Contract.Assert(localFilePath != null);
-            Contract.Assert(validate != null);
-            FileSystemInfo fInfo = new FileInfo(localFilePath);
-            if (fInfo.CreationTimeUtc != validate.CreationTimeUtc || fInfo.LastWriteTimeUtc != fInfo.LastWriteTimeUtc)
-            {
-                throw new InvalidOperationException(Resources.VfsController_fileChanged);
-            }
+            return new FileStream(localFilePath, FileMode.Open, FileAccess.Read, FileShare.Delete);
         }
 
         private string GetLocalFilePath()
