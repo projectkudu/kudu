@@ -219,16 +219,12 @@ namespace Kudu.Services.Editor
         }
 
         /// <summary>
-        /// Create unique etag based on the creation time and last modified type in UTC
+        /// Create unique etag based on the last modified UTC time
         /// </summary>
-        private static EntityTagHeaderValue CreateEntityTag(FileSystemInfo sysInfo)
+        public static EntityTagHeaderValue CreateEntityTag(FileSystemInfo sysInfo)
         {
             Contract.Assert(sysInfo != null);
-            byte[] cTimeBytes = BitConverter.GetBytes(sysInfo.CreationTimeUtc.Ticks);
-            byte[] lTimeBytes = BitConverter.GetBytes(sysInfo.LastWriteTimeUtc.Ticks);
-            byte[] etag = new byte[16];
-            Buffer.BlockCopy(cTimeBytes, 0, etag, 0, cTimeBytes.Length);
-            Buffer.BlockCopy(lTimeBytes, 0, etag, cTimeBytes.Length, lTimeBytes.Length);
+            byte[] etag = BitConverter.GetBytes(sysInfo.LastWriteTimeUtc.Ticks);
 
             StringBuilder result = new StringBuilder();
             result.Append("\"");
