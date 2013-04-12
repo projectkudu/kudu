@@ -44,7 +44,7 @@ namespace Kudu.Services.Editor
             Stream fileStream = null;
             try
             {
-                fileStream = GetFileReadStream(localFilePath, validate: info);
+                fileStream = GetFileReadStream(localFilePath);
                 MediaTypeHeaderValue mediaType = MediaTypeMap.GetMediaType(info.Extension);
                 HttpResponseMessage successFileResponse = Request.CreateResponse(isRangeRequest ? HttpStatusCode.PartialContent : HttpStatusCode.OK);
 
@@ -126,7 +126,7 @@ namespace Kudu.Services.Editor
             Stream fileStream = null;
             try
             {
-                fileStream = GetFileWriteStream(localFilePath, fileExists: itemExists, validate: info);
+                fileStream = GetFileWriteStream(localFilePath, fileExists: itemExists);
                 return Request.Content.CopyToAsync(fileStream)
                     .Then(() =>
                     {
