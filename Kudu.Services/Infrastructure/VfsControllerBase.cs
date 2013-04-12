@@ -251,12 +251,7 @@ namespace Kudu.Services.Infrastructure
             Contract.Assert(localFilePath != null);
 
             // Open file exclusively for read-sharing
-            FileStream fStream = new FileStream(localFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, BufferSize, useAsync: true);
-            if (validate != null)
-            {
-                ValidateFileSystemInfo(localFilePath, validate);
-            }
-            return fStream;
+            return new FileStream(localFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, BufferSize, useAsync: true);
         }
 
         /// <summary>
@@ -277,12 +272,7 @@ namespace Kudu.Services.Infrastructure
             }
 
             // Open file exclusively for write without any sharing
-            FileStream fStream = new FileStream(localFilePath, FileMode.Create, FileAccess.Write, FileShare.None, BufferSize, useAsync: true);
-            if (fileExists && validate != null)
-            {
-                ValidateFileSystemInfo(localFilePath, validate);
-            }
-            return fStream;
+            return new FileStream(localFilePath, FileMode.Create, FileAccess.Write, FileShare.None, BufferSize, useAsync: true);
         }
 
         /// <summary>
@@ -296,23 +286,7 @@ namespace Kudu.Services.Infrastructure
             Contract.Assert(localFilePath != null);
 
             // Open file exclusively for delete sharing only
-            FileStream fStream = new FileStream(localFilePath, FileMode.Open, FileAccess.Read, FileShare.Delete);
-            if (validate != null)
-            {
-                ValidateFileSystemInfo(localFilePath, validate);
-            }
-            return fStream;
-        }
-
-        private static void ValidateFileSystemInfo(string localFilePath, FileSystemInfo validate)
-        {
-            Contract.Assert(localFilePath != null);
-            Contract.Assert(validate != null);
-            FileSystemInfo fInfo = new FileInfo(localFilePath);
-            if (fInfo.CreationTimeUtc != validate.CreationTimeUtc || fInfo.LastWriteTimeUtc != fInfo.LastWriteTimeUtc)
-            {
-                throw new InvalidOperationException(Resources.VfsController_fileChanged);
-            }
+            return new FileStream(localFilePath, FileMode.Open, FileAccess.Read, FileShare.Delete);
         }
 
         private string GetLocalFilePath()
