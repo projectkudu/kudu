@@ -66,7 +66,7 @@ namespace Kudu.Services.Web.Tracing
             {
                 if (!key.Equals("Authorization", StringComparison.OrdinalIgnoreCase))
                 {
-                    attribs["h_" + key] = httpContext.Request.Headers[key];
+                    attribs[key] = httpContext.Request.Headers[key];
                 }
             }
 
@@ -101,7 +101,7 @@ namespace Kudu.Services.Web.Tracing
 
             foreach (string key in httpContext.Response.Headers)
             {
-                attribs["h_" + key] = httpContext.Response.Headers[key];
+                attribs[key] = httpContext.Response.Headers[key];
             }
 
             tracer.Trace("Outgoing response", attribs);
