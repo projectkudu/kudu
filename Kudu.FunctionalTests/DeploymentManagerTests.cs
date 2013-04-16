@@ -337,7 +337,6 @@ namespace Kudu.FunctionalTests
                 });
 
                 var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
-                await KuduAssert.VerifyTraceAsync(appManager, "arguments=\"fetch external --progress\"");
 
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
@@ -368,10 +367,9 @@ namespace Kudu.FunctionalTests
                 });
 
                 var resultsTask = appManager.DeploymentManager.GetResultsAsync();
-                var traceTask = KuduAssert.VerifyTraceAsync(appManager, "arguments=\"fetch external --progress --depth 1\"");
                 var verifyUrl = KuduAssert.VerifyUrlAsync(appManager.SiteUrl, "Welcome to ASP.NET!");
 
-                await Task.WhenAll(resultsTask, traceTask, verifyUrl);
+                await Task.WhenAll(resultsTask, verifyUrl);
 
                 var results = (await resultsTask).ToList();
                 Assert.Equal(1, results.Count);
@@ -779,7 +777,7 @@ namespace Kudu.FunctionalTests
 
         [Theory]
         [InlineData("https://github.com/KuduApps/EmptyGitRepo", null)]
-        [InlineData("https://bitbucket.org/kudutest/hgemptyrepo", "hg")]
+        [InlineData("https://bitbucket.org/kudutest/emptyhgrepo", "hg")]
         public async Task PullApiTestEmptyRepo(string url, string scm)
         {
             var payload = new JObject();
@@ -837,8 +835,8 @@ namespace Kudu.FunctionalTests
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                // Speed up IdleTimeout to 5s
-                await appManager.SettingsManager.SetValue(SettingsKeys.CommandIdleTimeout, "5");
+                // Speed up IdleTimeout to 10s
+                await appManager.SettingsManager.SetValue(SettingsKeys.CommandIdleTimeout, "10");
 
                 await appManager.SSHKeyManager.GetPublicKey(ensurePublicKey: true);
 

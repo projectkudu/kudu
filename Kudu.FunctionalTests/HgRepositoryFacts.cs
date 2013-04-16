@@ -106,10 +106,7 @@ namespace Kudu.FunctionalTests
 
                 // Act
                 hgRepo.Initialize();
-                var ex = Assert.Throws<InvalidOperationException>(() => hgRepo.FetchWithoutConflict("https://bitbucket.org/kudutest/emptyhgrepo", "default"));
-
-                // Assert
-                Assert.Contains("Could not fetch remote branch 'default'. Verify that the branch exists in the repository.", ex.Message);
+                Assert.Throws<BranchNotFoundException>(() => hgRepo.FetchWithoutConflict("https://bitbucket.org/kudutest/emptyhgrepo", "default"));
             }
         }
 
