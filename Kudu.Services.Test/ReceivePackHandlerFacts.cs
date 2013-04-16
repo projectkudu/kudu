@@ -48,7 +48,6 @@ namespace Kudu.Services.Test
                                           gitServer ?? Mock.Of<IGitServer>(),
                                           Mock.Of<IOperationLock>(),
                                           deploymentManager ?? Mock.Of<IDeploymentManager>(),
-                                          settings ?? Mock.Of<IDeploymentSettingsManager>(),
                                           repositoryFactory ?? Mock.Of<IRepositoryFactory>());
         }
     }

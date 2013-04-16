@@ -35,9 +35,8 @@ namespace Kudu.Services.GitServer
         public UploadPackHandler(ITracer tracer,
                                   IGitServer gitServer,
                                   IOperationLock deploymentLock,
-                                  IDeploymentManager deploymentManager,
-                                  IDeploymentSettingsManager settings)
-            : base(tracer, gitServer, deploymentLock, deploymentManager, settings)
+                                  IDeploymentManager deploymentManager)
+            : base(tracer, gitServer, deploymentLock, deploymentManager)
         {
         }
 

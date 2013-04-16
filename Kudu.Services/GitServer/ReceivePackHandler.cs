@@ -42,9 +42,8 @@ namespace Kudu.Services.GitServer
                                   IGitServer gitServer,
                                   IOperationLock deploymentLock,
                                   IDeploymentManager deploymentManager,
-                                  IDeploymentSettingsManager settings,
                                   IRepositoryFactory repositoryFactory)
-            : base(tracer, gitServer, deploymentLock, deploymentManager, settings)
+            : base(tracer, gitServer, deploymentLock, deploymentManager)
         {
             _repositoryFactory = repositoryFactory;
         }

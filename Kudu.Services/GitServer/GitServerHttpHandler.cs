@@ -35,19 +35,16 @@ namespace Kudu.Services.GitServer
         protected ITracer Tracer { get; private set; }
         protected IOperationLock DeploymentLock { get; private set; }
         protected IDeploymentManager DeploymentManager { get; private set; }
-        protected IDeploymentSettingsManager Settings { get; private set; }
 
         protected GitServerHttpHandler(ITracer tracer, 
                                     IGitServer gitServer, 
                                     IOperationLock deploymentLock, 
-                                    IDeploymentManager deploymentManager,
-                                    IDeploymentSettingsManager settings)
+                                    IDeploymentManager deploymentManager)
         {
             GitServer = gitServer;
             Tracer = tracer;
             DeploymentLock = deploymentLock;
             DeploymentManager = deploymentManager;
-            Settings = settings;
         }
 
         public virtual bool IsReusable
