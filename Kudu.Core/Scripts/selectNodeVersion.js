@@ -14,11 +14,15 @@ var flushAndExit = function (code) {
     });
 };
 
-var createIisNodeWebConfigIfNeeded = function (sitePath) {
-  var webConfigPath = path.join(sitePath, 'web.config');
-
-  if (!existsSync(webConfigPath)) {
-    var nodeStartFilePath = getNodeStartFile(sitePath);
+var createIisNodeWebConfigIfNeeded = function (repoPath, wwwrootPath) {
+  // Check web.config existence in repository while generate it if it's not there in wwwroot
+  var webConfigSourcePath = path.join(repoPath, 'web.config');
+  var webConfigTargetPath = path.join(wwwrootPath, 'web.config');
+  console.log(webConfigSourcePath);
+  console.log(webConfigTargetPath);
+  console.log(existsSync(webConfigSourcePath));
+  if (!existsSync(webConfigSourcePath)) {
+    var nodeStartFilePath = getNodeStartFile(repoPath);
     if (!nodeStartFilePath) {
       console.log('Missing server.js/app.js files, web.config is not generated');
       return;
@@ -28,7 +32,7 @@ var createIisNodeWebConfigIfNeeded = function (sitePath) {
     var webConfigContent = fs.readFileSync(iisNodeConfigTemplatePath, 'utf8');
     webConfigContent = webConfigContent.replace(/{NodeStartFile}/g, nodeStartFilePath);
 
-    fs.writeFileSync(webConfigPath, webConfigContent, 'utf8');
+    fs.writeFileSync(webConfigTargetPath, webConfigContent, 'utf8');
   }
 }
 
@@ -67,7 +71,7 @@ if (!existsSync(wwwroot) || !existsSync(repo) || (tempDir && !existsSync(tempDir
     throw new Error('Usage: node.exe selectNodeVersion.js <path_to_repo> <path_to_wwwroot> [path_to_temp]');
 
 // If the web.config file does not exit in the repo, use a default one that is specific for node on IIS in Azure
-createIisNodeWebConfigIfNeeded(wwwroot);
+createIisNodeWebConfigIfNeeded(repo, wwwroot);
 
 // If the iinode.yml file does not exit in the repo but exists in wwwroot, remove it from wwwroot 
 // to prevent side-effects of previous deployments
