@@ -264,13 +264,13 @@ namespace Kudu.Core.SourceControl
             }
             catch (CommandLineException exception)
             {
-                string emptyRepoErrorMessage = String.Format(CultureInfo.InvariantCulture, "abort: unknown branch '{0}'!", branchName);
+                string branchNotFoundMessage = String.Format(CultureInfo.InvariantCulture, "abort: unknown branch '{0}'!", branchName);
                 string recoverRequiredMessage = "abort: abandoned transaction found - run hg recover!";
 
                 string exceptionMessage = (exception.Message ?? String.Empty).TrimEnd();
-                if (exceptionMessage.StartsWith(emptyRepoErrorMessage, StringComparison.OrdinalIgnoreCase))
+                if (exceptionMessage.StartsWith(branchNotFoundMessage, StringComparison.OrdinalIgnoreCase))
                 {
-                    throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_UnableToFetch, branchName), exception);
+                    throw new BranchNotFoundException(branchName, exception);
                 }
                 else if (!retried && exceptionMessage.IndexOf(recoverRequiredMessage, StringComparison.OrdinalIgnoreCase) != -1)
                 {

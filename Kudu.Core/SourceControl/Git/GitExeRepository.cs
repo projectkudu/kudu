@@ -301,11 +301,11 @@ fi" + "\n";
                 catch (CommandLineException exception)
                 {
                     // Check if the fetch failed because the remote repository hasn't been set up as yet.
-                    string emptyRepoErrorMessage = "fatal: Couldn't find remote ref";
+                    string branchNotFoundMessage = "fatal: Couldn't find remote ref";
                     string exceptionMessage = exception.Message ?? String.Empty;
-                    if (exceptionMessage.StartsWith(emptyRepoErrorMessage, StringComparison.OrdinalIgnoreCase))
+                    if (exceptionMessage.StartsWith(branchNotFoundMessage, StringComparison.OrdinalIgnoreCase))
                     {
-                        throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_UnableToFetch, branchName), exception);
+                        throw new BranchNotFoundException(branchName, exception);
                     }
                     throw;
                 }
