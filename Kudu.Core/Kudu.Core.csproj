@@ -58,7 +58,7 @@
     <Compile Include="Deployment\Generator\NodeSiteEnabler.cs" />
     <Compile Include="Deployment\Generator\SiteBuilderFactory.cs" />
     <Compile Include="Deployment\CustomBuilder.cs" />
-    <Compile Include="Deployment\DeploymentConfiguration.cs" />
+    <Compile Include="Settings\DeploymentSettingsProvider.cs" />
     <Compile Include="Deployment\DeploymentContext.cs" />
     <Compile Include="Deployment\DeploymentHelper.cs" />
     <Compile Include="Deployment\DeploymentManagerExtensions.cs" />
@@ -88,8 +88,13 @@
     <Compile Include="Infrastructure\OperationManager.cs" />
     <Compile Include="Infrastructure\VsHelper.cs" />
     <Compile Include="Infrastructure\XmlUtility.cs" />
+    <Compile Include="Settings\EnvironmentSettingsProvider.cs" />
+    <Compile Include="Settings\DefaultSettingsProvider.cs" />
+    <Compile Include="Settings\PerSiteSettingsProvider.cs" />
+    <Compile Include="Settings\BasicSettingsProvider.cs" />
     <Compile Include="Settings\DeploymentSettingsManager.cs" />
     <Compile Include="Settings\JsonSettings.cs" />
+    <Compile Include="Settings\SettingsProvidersPriority.cs" />
     <Compile Include="SourceControl\Git\KnownEnvironment.cs" />
     <Compile Include="SourceControl\RepositoryExtensions.cs" />
     <Compile Include="SourceControl\RepositoryFactory.cs" />

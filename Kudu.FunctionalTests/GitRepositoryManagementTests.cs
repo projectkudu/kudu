@@ -99,7 +99,6 @@ command = deploy.cmd");
             }
         }
 
-
         [Fact]
         public void PushSimpleWapWithFailingCustomDeploymentScript()
         {
@@ -123,8 +122,39 @@ command = deploy.cmd");
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Failed, results[0].Status);
-                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, ">bogus");
-                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, "'bogus' is not recognized as an internal or external command");
+                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, ">bogus", "'bogus' is not recognized as an internal or external command");
+                });
+            }
+        }
+
+        [Fact]
+        public async Task CommandSettingOverridesDotDeploymentFile()
+        {
+            // Arrange
+            string appName = "CommandSettingOverridesDotDeploymentFile";
+
+            using (var repo = Git.Clone("CustomBuildScript"))
+            {
+                repo.WriteFile(".deployment", @"
+[config]
+command = deploy.cmd
+project = myproject");
+                repo.WriteFile("deploy.cmd", "bogus");
+                Git.Commit(repo.PhysicalPath, "Updated the deploy file.");
+
+                await ApplicationManager.RunAsync(appName, async appManager =>
+                {
+                    // Act
+                    await appManager.SettingsManager.SetValue("COMMAND", "echo test from CommandSettingOverridesDotDeploymentFile & set project");
+
+                    GitDeploymentResult deployResult = appManager.GitDeploy(repo.PhysicalPath);
+                    var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    KuduAssert.VerifyLogOutput(appManager, results[0].Id, "test from CommandSettingOverridesDotDeploymentFile", "myproject");
+                    KuduAssert.VerifyLogOutputWithUnexpected(appManager, results[0].Id, ">bogus", "'bogus' is not recognized as an internal or external command");
                 });
             }
         }

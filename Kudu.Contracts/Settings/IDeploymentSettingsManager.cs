@@ -15,5 +15,7 @@ namespace Kudu.Contracts.Settings
         /// <returns></returns>
         string GetValue(string key, bool onlyPerSite);
         void DeleteValue(string key);
+
+        IEnumerable<ISettingsProvider> SettingsProviders { get; }
     }
 }

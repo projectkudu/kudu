@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Settings;
 
 namespace Kudu.Core.Deployment
 {
@@ -111,7 +112,7 @@ namespace Kudu.Core.Deployment
             foreach (var sourceFile in sourceFilesLookup.Values)
             {
                 // Skip the .deployment file
-                if (sourceFile.Name.Equals(DeploymentConfiguration.DeployConfigFile, StringComparison.OrdinalIgnoreCase))
+                if (sourceFile.Name.Equals(DeploymentSettingsProvider.DeployConfigFile, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
