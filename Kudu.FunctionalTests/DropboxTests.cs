@@ -21,6 +21,7 @@ using Kudu.TestHarness;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Xunit;
+using Xunit.Extensions;
 
 namespace Kudu.FunctionalTests
 {
@@ -95,25 +96,22 @@ namespace Kudu.FunctionalTests
             });
         }
 
-        [Fact]
-        public void TestDropboxRateLimiter()
+        [Theory]
+        [InlineData(60, 300)]
+        public void TestDropboxRateLimiter(int limit, int total)
         {
-            // Set the limit to 60/sec, let it run for 5s
-            // Expected count around 300 give or take.
-            var rateLimiter = new DropboxHelper.RateLimiter(60, TimeSpan.FromSeconds(1));
+            var interval = 1;
+            var rateLimiter = new DropboxHelper.RateLimiter(limit, TimeSpan.FromSeconds(interval));
+            var duration = TimeSpan.FromSeconds(total / limit - interval);
             var start = DateTime.Now;
-            int total = 0;
-            while (DateTime.Now - start <= TimeSpan.FromSeconds(5))
+            while (--total > 0)
             {
                 rateLimiter.Throtte();
-                ++total;
             }
 
-            TestTracer.Trace("total = {0}", total);
-
-            // For robustness, allow wider range
-            Assert.True(total >= 240, total + " should be >= 240");
-            Assert.True(total <= 360, total + " should be <= 360");
+            // Assert
+            var end = DateTime.Now;
+            Assert.True((end - start) >= duration, (end - start) + "<" + duration);
         }
 
         [Fact]
