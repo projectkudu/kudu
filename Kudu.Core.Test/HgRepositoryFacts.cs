@@ -16,7 +16,7 @@ namespace Kudu.Core.Test
         [Fact]
         public void ConvertThrowsIfFileStateIsInvalid()
         {
-           // Arrange
+            // Arrange
             FileState fileState = (FileState)12;
 
             // Act and Assert
@@ -80,7 +80,7 @@ namespace Kudu.Core.Test
             executable.Setup(e => e.Execute(It.IsAny<ITracer>(), "recover"))
                       .Verifiable();
 
-            
+
             var hgRepository = new HgRepository(executable.Object, @"x:\some-path", Mock.Of<ITraceFactory>());
 
             // Act and Assert
@@ -111,5 +111,20 @@ namespace Kudu.Core.Test
             executable.Verify(e => e.Execute(It.IsAny<ITracer>(), "pull {0} --branch {1} --noninteractive", It.IsAny<object[]>()), Times.Once());
             executable.Verify(e => e.Execute(It.IsAny<ITracer>(), "recover", It.IsAny<object[]>()), Times.Never());
         }
-   }
+
+        [Fact]
+        public void FetchWithoutConflictOnHgEmptyRepo()
+        {
+            // Arrange
+            var executable = new Mock<IExecutable>();
+            executable.Setup(e => e.EnvironmentVariables).Returns(new Dictionary<string, string>());
+            executable.Setup(e => e.Execute(It.IsAny<ITracer>(), "pull {0} --branch {1} --noninteractive", It.IsAny<object[]>()))
+                      .Callback((ITracer tracer, string arguments, object[] args) => { throw new CommandLineException("hg.exe", "pull", "abort: unknown branch 'default'!"); });
+
+            var hgRepository = new HgRepository(executable.Object, @"x:\some-path", Mock.Of<ITraceFactory>());
+
+            // Act
+            Assert.Throws<BranchNotFoundException>(() => hgRepository.FetchWithoutConflict("https://some-remote", "default"));
+        }
+    }
 }

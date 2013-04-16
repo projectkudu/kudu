@@ -97,6 +97,15 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Could not fetch remote branch &apos;{0}&apos;. Verify that the branch exists in the repository..
+        /// </summary>
+        internal static string Error_BranchNotFound {
+            get {
+                return ResourceManager.GetString("Error_BranchNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Unable to deploy &apos;{0}&apos;. No deployment found..
         /// </summary>
         internal static string Error_DeployNotFound {
@@ -210,15 +219,6 @@ namespace Kudu.Core {
         internal static string Error_UnableToDeleteNoDeploymentFound {
             get {
                 return ResourceManager.GetString("Error_UnableToDeleteNoDeploymentFound", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Could not fetch remote branch &apos;{0}&apos;. Verify that the branch exists in the repository..
-        /// </summary>
-        internal static string Error_UnableToFetch {
-            get {
-                return ResourceManager.GetString("Error_UnableToFetch", resourceCulture);
             }
         }
         

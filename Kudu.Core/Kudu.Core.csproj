@@ -74,6 +74,7 @@
     <Compile Include="Deployment\NullLogger.cs" />
     <Compile Include="Deployment\WellKnownEnvironmentVariables.cs" />
     <Compile Include="Infrastructure\IdleManager.cs" />
+    <Compile Include="Infrastructure\BranchNotFoundException.cs" />
     <Compile Include="Infrastructure\CommandLineException.cs" />
     <Compile Include="Infrastructure\ExecutableExtensions.cs" />
     <Compile Include="Infrastructure\IExecutable.cs" />

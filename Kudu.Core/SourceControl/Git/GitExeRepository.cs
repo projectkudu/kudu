@@ -305,7 +305,7 @@ fi" + "\n";
                     string exceptionMessage = exception.Message ?? String.Empty;
                     if (exceptionMessage.StartsWith(emptyRepoErrorMessage, StringComparison.OrdinalIgnoreCase))
                     {
-                        throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_UnableToFetch, branchName), exception);
+                        throw new BranchNotFoundException(branchName, exception);
                     }
                     throw;
                 }

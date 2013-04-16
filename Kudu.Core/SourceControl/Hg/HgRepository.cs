@@ -270,7 +270,7 @@ namespace Kudu.Core.SourceControl
                 string exceptionMessage = (exception.Message ?? String.Empty).TrimEnd();
                 if (exceptionMessage.StartsWith(emptyRepoErrorMessage, StringComparison.OrdinalIgnoreCase))
                 {
-                    throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_UnableToFetch, branchName), exception);
+                    throw new BranchNotFoundException(branchName, exception);
                 }
                 else if (!retried && exceptionMessage.IndexOf(recoverRequiredMessage, StringComparison.OrdinalIgnoreCase) != -1)
                 {

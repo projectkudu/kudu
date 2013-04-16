@@ -168,7 +168,7 @@
   <data name="Error_UnableToDeleteNoDeploymentFound" xml:space="preserve">
     <value>Unable to delete '{0}'. No deployment found.</value>
   </data>
-  <data name="Error_UnableToFetch" xml:space="preserve">
+  <data name="Error_BranchNotFound" xml:space="preserve">
     <value>Could not fetch remote branch '{0}'. Verify that the branch exists in the repository.</value>
   </data>
   <data name="Error_UnableToSelectNodeVersion" xml:space="preserve">

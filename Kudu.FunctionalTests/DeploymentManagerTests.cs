@@ -742,7 +742,7 @@ namespace Kudu.FunctionalTests
         public async Task PullApiTestRepoWithLongPath()
         {
             var payload = new JObject();
-            payload["url"] = "https://github.com/suwatch/RepoWithLongPath.git";
+            payload["url"] = "https://github.com/KuduApps/RepoWithLongPath.git";
             payload["format"] = "basic";
             string appName = "RepoWithLongPath";
 
@@ -774,6 +774,30 @@ namespace Kudu.FunctionalTests
                 {
                     Assert.False(detail.Message.Contains("An unknown error has occurred"), "Must not contain unknow error!");
                 }
+            });
+        }
+
+        [Theory]
+        [InlineData("https://github.com/KuduApps/EmptyGitRepo", null)]
+        [InlineData("https://bitbucket.org/kudutest/hgemptyrepo", "hg")]
+        public async Task PullApiTestEmptyRepo(string url, string scm)
+        {
+            var payload = new JObject();
+            payload["url"] = url;
+            payload["format"] = "basic";
+            if (!String.IsNullOrEmpty(scm))
+            {
+                payload["scm"] = scm;
+            }
+
+            string appName = "PullApiTestGitEmptyRepo";
+            await ApplicationManager.RunAsync(appName, async appManager =>
+            {
+                // Fetch master branch from first repo
+                await DeployPayloadHelperAsync(appManager, client => client.PostAsJsonAsync("deploy", payload));
+
+                var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
+                Assert.Equal(0, results.Count);
             });
         }
 

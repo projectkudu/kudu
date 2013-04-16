@@ -179,7 +179,15 @@ namespace Kudu.Services
 
                         IRepository repository = _repositoryFactory.EnsureRepository(deploymentInfo.RepositoryType);
 
-                        deploymentInfo.Handler.Fetch(repository, deploymentInfo, targetBranch, innerLogger);
+                        try
+                        {
+                            deploymentInfo.Handler.Fetch(repository, deploymentInfo, targetBranch, innerLogger);
+                        }
+                        catch (BranchNotFoundException)
+                        {
+                            // mark no deployment is needed
+                            deploymentInfo.TargetChangeset = null;
+                        }
 
                         // set to null as Deploy() below takes over logging
                         innerLogger = null;
