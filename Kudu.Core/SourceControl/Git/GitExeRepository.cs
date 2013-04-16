@@ -70,11 +70,12 @@ namespace Kudu.Core.SourceControl.Git
                     // Then git repository directory found
                     return String.Equals(output.Trim(), ".git", StringComparison.OrdinalIgnoreCase);
                 }
-                catch (CommandLineException ex)
+                catch (Exception ex)
                 {
-                    if (ex.Error != null && (
-                        ex.Error.StartsWith("fatal: Not a git repository (or any of the parent directories)", StringComparison.OrdinalIgnoreCase) ||
-                        ex.Error.StartsWith("fatal: Cannot change to", StringComparison.OrdinalIgnoreCase)))
+                    CommandLineException commandLineException = ex as CommandLineException;
+                    if (commandLineException != null && commandLineException.Error != null && (
+                        commandLineException.Error.StartsWith("fatal: Not a git repository (or any of the parent directories)", StringComparison.OrdinalIgnoreCase) ||
+                        commandLineException.Error.StartsWith("fatal: Cannot change to", StringComparison.OrdinalIgnoreCase)))
                     {
                         return false;
                     }
