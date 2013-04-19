@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -9,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Kudu.Client;
 using Kudu.Client.Infrastructure;
+using Kudu.Core.Deployment;
 using Kudu.TestHarness;
 using Xunit;
 
@@ -110,12 +112,24 @@ namespace Kudu.FunctionalTests.Infrastructure
 
         public static void VerifyLogOutput(ApplicationManager appManager, string id, params string[] expectedMatches)
         {
+            var allEntries = GetLogEntries(appManager, id);
+            Assert.True(expectedMatches.All(match => allEntries.Any(e => e.Message.Contains(match))));
+        }
+
+        public static void VerifyLogOutputWithUnexpected(ApplicationManager appManager, string id, params string[] unexpectedMatches)
+        {
+            var allEntries = GetLogEntries(appManager, id);
+            Assert.True(unexpectedMatches.All(match => allEntries.All(e => !e.Message.Contains(match))));
+        }
+
+        private static List<LogEntry> GetLogEntries(ApplicationManager appManager, string id)
+        {
             var entries = appManager.DeploymentManager.GetLogEntriesAsync(id).Result.ToList();
             Assert.True(entries.Count > 0);
             var allDetails = entries.Where(e => e.DetailsUrl != null)
                                     .SelectMany(e => appManager.DeploymentManager.GetLogEntryDetailsAsync(id, e.Id).Result).ToList();
             var allEntries = entries.Concat(allDetails).ToList();
-            Assert.True(expectedMatches.All(match => allEntries.Any(e => e.Message.Contains(match))));
+            return allEntries;
         }
 
         public static void Match(string pattern, string actual, string message = null)

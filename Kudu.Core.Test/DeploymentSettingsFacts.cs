@@ -13,6 +13,8 @@ namespace Kudu.Core.Test
 {
     public class DeploymentSettingFacts
     {
+        private static readonly ISettingsProvider DefaultSettingsProvider = new DefaultSettingsProvider();
+
         [Theory, ClassData(typeof(CommandIdleTimeoutData))]
         public void CommandIdleTimeoutTests(string value, int expected)
         {
@@ -52,7 +54,7 @@ namespace Kudu.Core.Test
             // Arrange
             var settings = new Mock<ISettings>();
             settings.Setup(s => s.GetValue("deployment", "branch")).Returns("my-branch");
-            var deploymentSettings = new DeploymentSettingsManager(settings.Object, new Dictionary<string, string>());
+            var deploymentSettings = new DeploymentSettingsManager(settings.Object, DefaultSettingsProvider);
 
             // Act
             string branch = deploymentSettings.GetBranch();
@@ -67,7 +69,7 @@ namespace Kudu.Core.Test
             // Arrange
             var settings = new Mock<ISettings>();
             settings.Setup(s => s.GetValue("deployment", "deployment_branch")).Returns("my-branch");
-            var deploymentSettings = new DeploymentSettingsManager(settings.Object, new Dictionary<string, string>());
+            var deploymentSettings = new DeploymentSettingsManager(settings.Object, DefaultSettingsProvider);
 
             // Act
             string branch = deploymentSettings.GetBranch();
@@ -81,12 +83,12 @@ namespace Kudu.Core.Test
         {
             // Arrange
             var settings = new Mock<ISettings>();
-            var defaultSettings = new Dictionary<string, string> 
+            var defaultSettings = new Dictionary<string, string>
             {
                 { "deployment_branch", "my-deployment-branch" }
             };
             settings.Setup(s => s.GetValue("deployment", "branch")).Returns("my-branch");
-            var deploymentSettings = new DeploymentSettingsManager(settings.Object, defaultSettings);
+            var deploymentSettings = new DeploymentSettingsManager(settings.Object, BuildSettingsProviders(defaultSettings));
 
             // Act
             string branch = deploymentSettings.GetBranch();
@@ -100,12 +102,12 @@ namespace Kudu.Core.Test
         {
             // Arrange
             var settings = Mock.Of<ISettings>();
-            var defaultSettings = new Dictionary<string, string> 
+            var defaultSettings = new Dictionary<string, string>
             {
                 { "deployment_branch", "my-deployment-branch" },
                 { "branch", "my-legacy-branch" }
             };
-            var deploymentSettings = new DeploymentSettingsManager(settings, defaultSettings);
+            var deploymentSettings = new DeploymentSettingsManager(settings, BuildSettingsProviders(defaultSettings));
 
             // Act
             string branch = deploymentSettings.GetBranch();
@@ -121,7 +123,7 @@ namespace Kudu.Core.Test
             var settings = new Mock<ISettings>(MockBehavior.Strict);
             settings.Setup(s => s.DeleteValue("deployment", "branch")).Returns(true).Verifiable();
             settings.Setup(s => s.SetValue("deployment", "deployment_branch", "my-branch")).Verifiable();
-            var deploymentSettings = new DeploymentSettingsManager(settings.Object, new Dictionary<string, string>());
+            var deploymentSettings = new DeploymentSettingsManager(settings.Object, DefaultSettingsProvider);
 
             // Act
             deploymentSettings.SetBranch("my-branch");
@@ -139,7 +141,7 @@ namespace Kudu.Core.Test
             // Arrange
             var settings = new Mock<ISettings>(MockBehavior.Strict);
             settings.Setup(s => s.GetValue("deployment", "SCM_USE_SHALLOW_CLONE")).Returns(value);
-            var deploymentSettings = new DeploymentSettingsManager(settings.Object, new Dictionary<string, string>());
+            var deploymentSettings = new DeploymentSettingsManager(settings.Object, DefaultSettingsProvider);
 
             // Act
             bool result = deploymentSettings.AllowShallowClones();
@@ -161,7 +163,7 @@ namespace Kudu.Core.Test
             // Arrange
             var settings = new Mock<ISettings>(MockBehavior.Strict);
             settings.Setup(s => s.GetValue("deployment", "SCM_USE_SHALLOW_CLONE")).Returns(value);
-            var deploymentSettings = new DeploymentSettingsManager(settings.Object, new Dictionary<string, string>());
+            var deploymentSettings = new DeploymentSettingsManager(settings.Object, DefaultSettingsProvider);
 
             // Act
             bool result = deploymentSettings.AllowShallowClones();
@@ -170,7 +172,14 @@ namespace Kudu.Core.Test
             Assert.False(result);
         }
 
-        class CommandIdleTimeoutData : SettingsData
+        private static ISettingsProvider[] BuildSettingsProviders(Dictionary<string, string> defaultSettings)
+        {
+            var testProvider = new BasicSettingsProvider(defaultSettings, SettingsProvidersPriority.Default);
+            var settingsProviders = new ISettingsProvider[] { testProvider };
+            return settingsProviders;
+        }
+
+        private class CommandIdleTimeoutData : SettingsData
         {
             protected override object DefaultValue
             {
@@ -178,7 +187,7 @@ namespace Kudu.Core.Test
             }
         }
 
-        class LogStreamTimeoutData : SettingsData
+        private class LogStreamTimeoutData : SettingsData
         {
             protected override object DefaultValue
             {
@@ -186,7 +195,7 @@ namespace Kudu.Core.Test
             }
         }
 
-        class TraceLevelData : SettingsData
+        private class TraceLevelData : SettingsData
         {
             protected override object DefaultValue
             {
@@ -194,12 +203,12 @@ namespace Kudu.Core.Test
             }
         }
 
-        abstract class SettingsData : IEnumerable<object[]>
+        private abstract class SettingsData : IEnumerable<object[]>
         {
             protected abstract object DefaultValue { get; }
 
             public IEnumerator<object[]> GetEnumerator()
-            { 
+            {
                 yield return new object[] { "0", 0 };
                 yield return new object[] { "-0", 0 };
                 yield return new object[] { "4", 4 };
@@ -211,8 +220,8 @@ namespace Kudu.Core.Test
             }
 
             IEnumerator IEnumerable.GetEnumerator()
-            { 
-                return GetEnumerator(); 
+            {
+                return GetEnumerator();
             }
         }
     }

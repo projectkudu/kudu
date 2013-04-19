@@ -6,6 +6,7 @@ using System.Linq;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Settings;
 
 namespace Kudu.Core.Deployment
 {
@@ -25,24 +26,28 @@ namespace Kudu.Core.Deployment
         public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger)
         {
             string repositoryRoot = _environment.RepositoryPath;
-            var configuration = new DeploymentConfiguration(repositoryRoot);
+            var perDeploymentSettings = DeploymentSettingsManager.BuildPerDeploymentSettingsManager(repositoryRoot, _settings);
 
             // If there's a custom deployment file then let that take over.
-            if (!String.IsNullOrEmpty(configuration.Command))
+            var command = perDeploymentSettings.GetValue(SettingsKeys.Command);
+            if (!String.IsNullOrEmpty(command))
             {
-                return new CustomBuilder(repositoryRoot, _environment.TempPath, configuration.Command, _propertyProvider, _environment.SiteRootPath, _environment.ScriptPath, _settings);
+                return new CustomBuilder(repositoryRoot, _environment.TempPath, command, _propertyProvider, _environment.SiteRootPath, _environment.ScriptPath, perDeploymentSettings);
             }
 
             // If the repository has an explicit pointer to a project path to be deployed
             // then use it.
-            string targetProjectPath = configuration.ProjectPath;
+            var targetProjectPath = perDeploymentSettings.GetValue(SettingsKeys.Project);
             if (!String.IsNullOrEmpty(targetProjectPath))
             {
                 tracer.Trace("Found .deployment file in repository");
 
+                targetProjectPath = Path.GetFullPath(Path.Combine(repositoryRoot, targetProjectPath.TrimStart('/', '\\')));
+
                 // Try to resolve the project
                 return ResolveProject(repositoryRoot,
                                       targetProjectPath,
+                                      perDeploymentSettings,
                                       tryWebSiteProject: true,
                                       searchOption: SearchOption.TopDirectoryOnly);
             }
@@ -53,6 +58,7 @@ namespace Kudu.Core.Deployment
             if (!solutions.Any())
             {
                 return ResolveProject(repositoryRoot,
+                                      perDeploymentSettings,
                                       searchOption: SearchOption.AllDirectories);
             }
 
@@ -67,7 +73,7 @@ namespace Kudu.Core.Deployment
             VsSolution solution = solutions[0];
 
             // We need to determine what project to deploy so get a list of all web projects and
-            // figure out with some heuristic, which one to deploy. 
+            // figure out with some heuristic, which one to deploy.
 
             // TODO: Pick only 1 and throw if there's more than one
             VsSolutionProject project = solution.Projects.Where(p => p.IsWap || p.IsWebSite).FirstOrDefault();
@@ -76,12 +82,12 @@ namespace Kudu.Core.Deployment
             {
                 logger.Log(Resources.Log_NoDeployableProjects, solution.Path);
 
-                return new BasicBuilder(repositoryRoot, _environment.ScriptPath, _environment.SiteRootPath, _settings);
+                return new BasicBuilder(repositoryRoot, _environment.ScriptPath, _environment.SiteRootPath, perDeploymentSettings);
             }
 
             if (project.IsWap)
             {
-                return new WapBuilder(_settings,
+                return new WapBuilder(perDeploymentSettings,
                                       _propertyProvider,
                                       repositoryRoot,
                                       project.AbsolutePath,
@@ -93,19 +99,19 @@ namespace Kudu.Core.Deployment
                                       repositoryRoot,
                                       project.AbsolutePath,
                                       solution.Path,
-                                      _settings);
+                                      perDeploymentSettings);
         }
 
-        private ISiteBuilder ResolveProject(string repositoryRoot, bool tryWebSiteProject = false, SearchOption searchOption = SearchOption.AllDirectories)
+        private ISiteBuilder ResolveProject(string repositoryRoot, IDeploymentSettingsManager perDeploymentSettings, bool tryWebSiteProject = false, SearchOption searchOption = SearchOption.AllDirectories)
         {
-            return ResolveProject(repositoryRoot, repositoryRoot, tryWebSiteProject, searchOption, specificConfiguration: false);
+            return ResolveProject(repositoryRoot, repositoryRoot, perDeploymentSettings, tryWebSiteProject, searchOption, specificConfiguration: false);
         }
 
-        private ISiteBuilder ResolveProject(string repositoryRoot, string targetPath, bool tryWebSiteProject, SearchOption searchOption = SearchOption.AllDirectories, bool specificConfiguration = true)
+        private ISiteBuilder ResolveProject(string repositoryRoot, string targetPath, IDeploymentSettingsManager perDeploymentSettings, bool tryWebSiteProject, SearchOption searchOption = SearchOption.AllDirectories, bool specificConfiguration = true)
         {
             if (DeploymentHelper.IsProject(targetPath))
             {
-                return DetermineProject(repositoryRoot, targetPath);
+                return DetermineProject(repositoryRoot, targetPath, perDeploymentSettings);
             }
 
             // Check for loose projects
@@ -119,7 +125,7 @@ namespace Kudu.Core.Deployment
             }
             else if (projects.Count == 1)
             {
-                return DetermineProject(repositoryRoot, projects[0]);
+                return DetermineProject(repositoryRoot, projects[0], perDeploymentSettings);
             }
 
             if (tryWebSiteProject)
@@ -140,7 +146,7 @@ namespace Kudu.Core.Deployment
                                               repositoryRoot,
                                               targetPath,
                                               solutions[0].Path,
-                                              _settings);
+                                              perDeploymentSettings);
                 }
             }
 
@@ -154,10 +160,10 @@ namespace Kudu.Core.Deployment
             }
 
             // If there's none then use the basic builder (the site is xcopy deployable)
-            return new BasicBuilder(targetPath, _environment.ScriptPath, _environment.SiteRootPath, _settings);
+            return new BasicBuilder(targetPath, _environment.ScriptPath, _environment.SiteRootPath, perDeploymentSettings);
         }
 
-        private ISiteBuilder DetermineProject(string repositoryRoot, string targetPath)
+        private ISiteBuilder DetermineProject(string repositoryRoot, string targetPath, IDeploymentSettingsManager perDeploymentSettings)
         {
             if (!DeploymentHelper.IsDeployableProject(targetPath))
             {
@@ -170,7 +176,7 @@ namespace Kudu.Core.Deployment
                 var solution = VsHelper.FindContainingSolution(repositoryRoot, targetPath);
                 string solutionPath = solution != null ? solution.Path : null;
 
-                return new WapBuilder(_settings,
+                return new WapBuilder(perDeploymentSettings,
                                      _propertyProvider,
                                       repositoryRoot,
                                       targetPath,

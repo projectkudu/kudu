@@ -17,5 +17,7 @@
         public const string GitEmail = "SCM_GIT_EMAIL";
         public const string ScmType = "ScmType";
         public const string UseShallowClone = "SCM_USE_SHALLOW_CLONE";
+        public const string Command = "COMMAND";
+        public const string Project = "PROJECT";
     }
 }

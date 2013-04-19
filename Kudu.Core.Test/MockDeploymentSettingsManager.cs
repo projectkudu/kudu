@@ -36,5 +36,10 @@ namespace Kudu.Core.Test
         {
             _settings.Remove(key);
         }
+
+        public IEnumerable<ISettingsProvider> SettingsProviders
+        {
+            get { return new ISettingsProvider[0]; }
+        }
     }
 }
