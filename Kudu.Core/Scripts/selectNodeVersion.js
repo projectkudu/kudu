@@ -15,36 +15,36 @@ var flushAndExit = function (code) {
 };
 
 var createIisNodeWebConfigIfNeeded = function (repoPath, wwwrootPath) {
-  // Check web.config existence in repository while generate it if it's not there in wwwroot
-  var webConfigSourcePath = path.join(repoPath, 'web.config');
-  var webConfigTargetPath = path.join(wwwrootPath, 'web.config');
+    // Check web.config existence in repository while generate it if it's not there in wwwroot
+    var webConfigSourcePath = path.join(repoPath, 'web.config');
+    var webConfigTargetPath = path.join(wwwrootPath, 'web.config');
 
-  if (!existsSync(webConfigSourcePath)) {
-    var nodeStartFilePath = getNodeStartFile(repoPath);
-    if (!nodeStartFilePath) {
-      console.log('Missing server.js/app.js files, web.config is not generated');
-      return;
+    if (!existsSync(webConfigSourcePath)) {
+        var nodeStartFilePath = getNodeStartFile(repoPath);
+        if (!nodeStartFilePath) {
+            console.log('Missing server.js/app.js files, web.config is not generated');
+            return;
+        }
+
+        var iisNodeConfigTemplatePath = path.join(__dirname, 'iisnode.config.template');
+        var webConfigContent = fs.readFileSync(iisNodeConfigTemplatePath, 'utf8');
+        webConfigContent = webConfigContent.replace(/{NodeStartFile}/g, nodeStartFilePath);
+
+        fs.writeFileSync(webConfigTargetPath, webConfigContent, 'utf8');
     }
-
-    var iisNodeConfigTemplatePath = path.join(__dirname, 'iisnode.config.template');
-    var webConfigContent = fs.readFileSync(iisNodeConfigTemplatePath, 'utf8');
-    webConfigContent = webConfigContent.replace(/{NodeStartFile}/g, nodeStartFilePath);
-
-    fs.writeFileSync(webConfigTargetPath, webConfigContent, 'utf8');
-  }
 }
 
 var getNodeStartFile = function (sitePath) {
-  var nodeStartFiles = ['server.js', 'app.js'];
+    var nodeStartFiles = ['server.js', 'app.js'];
 
-  for (var i in nodeStartFiles) {
-    var nodeStartFilePath = path.join(sitePath, nodeStartFiles[i]);
-    if (existsSync(nodeStartFilePath)) {
-      return nodeStartFiles[i];
+    for (var i in nodeStartFiles) {
+        var nodeStartFilePath = path.join(sitePath, nodeStartFiles[i]);
+        if (existsSync(nodeStartFilePath)) {
+            return nodeStartFiles[i];
+        }
     }
-  }
 
-  return null;
+    return null;
 }
 
 // Determine the installation location of node.js and iisnode
