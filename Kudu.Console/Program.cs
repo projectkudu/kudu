@@ -68,7 +68,7 @@ namespace Kudu.Console
             IOperationLock statusLock = new LockFile(statusLockPath, traceFactory, fileSystem);
 
             IBuildPropertyProvider buildPropertyProvider = new BuildPropertyProvider();
-            ISiteBuilderFactory builderFactory = new SiteBuilderFactoryDispatcher(settingsManager, buildPropertyProvider, env);
+            ISiteBuilderFactory builderFactory = new SiteBuilderFactoryDispatcher(buildPropertyProvider, env);
 
             IRepository gitRepository = new GitExeRepository(env.RepositoryPath, env.SiteRootPath, settingsManager, traceFactory);
 

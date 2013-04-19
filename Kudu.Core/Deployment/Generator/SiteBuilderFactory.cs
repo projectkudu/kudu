@@ -14,32 +14,29 @@ namespace Kudu.Core.Deployment.Generator
 {
     public class SiteBuilderFactory : ISiteBuilderFactory
     {
-        private readonly IDeploymentSettingsManager _settings;
         private readonly IEnvironment _environment;
         private readonly IBuildPropertyProvider _propertyProvider;
 
-        public SiteBuilderFactory(IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, IEnvironment environment)
+        public SiteBuilderFactory(IBuildPropertyProvider propertyProvider, IEnvironment environment)
         {
-            _settings = settings;
             _propertyProvider = propertyProvider;
             _environment = environment;
         }
 
-        public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger)
+        public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger, IDeploymentSettingsManager settings)
         {
             string repositoryRoot = _environment.RepositoryPath;
-            var perDeploymentSettings = DeploymentSettingsManager.BuildPerDeploymentSettingsManager(repositoryRoot, _settings);
 
             // If there's a custom deployment file then let that take over.
-            var command = perDeploymentSettings.GetValue(SettingsKeys.Command);
+            var command = settings.GetValue(SettingsKeys.Command);
             if (!String.IsNullOrEmpty(command))
             {
-                return new CustomBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, command);
+                return new CustomBuilder(_environment, settings, _propertyProvider, repositoryRoot, command);
             }
 
             // If the repository has an explicit pointer to a project path to be deployed
             // then use it.
-            string targetProjectPath = perDeploymentSettings.GetValue(SettingsKeys.Project);
+            string targetProjectPath = settings.GetValue(SettingsKeys.Project);
             if (!String.IsNullOrEmpty(targetProjectPath))
             {
                 tracer.Trace("Found .deployment file in repository");
@@ -49,7 +46,7 @@ namespace Kudu.Core.Deployment.Generator
                 // Try to resolve the project
                 return ResolveProject(repositoryRoot,
                                       targetProjectPath,
-                                      perDeploymentSettings,
+                                      settings,
                                       tryWebSiteProject: true,
                                       searchOption: SearchOption.TopDirectoryOnly);
             }
@@ -60,7 +57,7 @@ namespace Kudu.Core.Deployment.Generator
             if (!solutions.Any())
             {
                 return ResolveProject(repositoryRoot,
-                                      perDeploymentSettings,
+                                      settings,
                                       searchOption: SearchOption.AllDirectories);
             }
 
@@ -84,13 +81,13 @@ namespace Kudu.Core.Deployment.Generator
             {
                 logger.Log(Resources.Log_NoDeployableProjects, solution.Path);
 
-                return ResolveNonAspProject(repositoryRoot, null, perDeploymentSettings);
+                return ResolveNonAspProject(repositoryRoot, null, settings);
             }
 
             if (project.IsWap)
             {
                 return new WapBuilder(_environment,
-                                      perDeploymentSettings,
+                                      settings,
                                       _propertyProvider,
                                       repositoryRoot,
                                       project.AbsolutePath,
@@ -98,7 +95,7 @@ namespace Kudu.Core.Deployment.Generator
             }
 
             return new WebSiteBuilder(_environment,
-                                      perDeploymentSettings,
+                                      settings,
                                       _propertyProvider,
                                       repositoryRoot,
                                       project.AbsolutePath,
