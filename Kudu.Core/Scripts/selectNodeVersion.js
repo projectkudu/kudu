@@ -18,9 +18,7 @@ var createIisNodeWebConfigIfNeeded = function (repoPath, wwwrootPath) {
   // Check web.config existence in repository while generate it if it's not there in wwwroot
   var webConfigSourcePath = path.join(repoPath, 'web.config');
   var webConfigTargetPath = path.join(wwwrootPath, 'web.config');
-  console.log(webConfigSourcePath);
-  console.log(webConfigTargetPath);
-  console.log(existsSync(webConfigSourcePath));
+
   if (!existsSync(webConfigSourcePath)) {
     var nodeStartFilePath = getNodeStartFile(repoPath);
     if (!nodeStartFilePath) {
