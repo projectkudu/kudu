@@ -10,36 +10,30 @@ namespace Kudu.Core.Deployment
     {
         private const string Original = "Original";
 
-        private readonly IDeploymentSettingsManager _settingsManager;
         private readonly SiteBuilderFactory _originalSiteBuilderFactory;
         private readonly Generator.SiteBuilderFactory _generatorSiteBuilderFactory;
 
-        public SiteBuilderFactoryDispatcher(IDeploymentSettingsManager settingsManager, IBuildPropertyProvider propertyProvider, IEnvironment environment)
+        public SiteBuilderFactoryDispatcher(IBuildPropertyProvider propertyProvider, IEnvironment environment)
         {
-            _settingsManager = settingsManager;
-
-            _originalSiteBuilderFactory = new SiteBuilderFactory(settingsManager, propertyProvider, environment);
-            _generatorSiteBuilderFactory = new Generator.SiteBuilderFactory(settingsManager, propertyProvider, environment);
+            _originalSiteBuilderFactory = new SiteBuilderFactory(propertyProvider, environment);
+            _generatorSiteBuilderFactory = new Generator.SiteBuilderFactory(propertyProvider, environment);
         }
 
-        public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger)
+        public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger, IDeploymentSettingsManager settingsManager)
         {
-            return CurrentSiteBuilderFactory.CreateBuilder(tracer, logger);
+            return GetCurrentSiteBuilderFactory(settingsManager).CreateBuilder(tracer, logger, settingsManager);
         }
 
-        private ISiteBuilderFactory CurrentSiteBuilderFactory
+        private ISiteBuilderFactory GetCurrentSiteBuilderFactory(IDeploymentSettingsManager settingsManager)
         {
-            get
+            string setting = settingsManager.GetValue(SettingsKeys.SiteBuilderFactory);
+            if (String.Equals(setting, Original, StringComparison.OrdinalIgnoreCase))
             {
-                string setting = _settingsManager.GetValue(SettingsKeys.SiteBuilderFactory);
-                if (String.Equals(setting, Original, StringComparison.OrdinalIgnoreCase))
-                {
-                    return _originalSiteBuilderFactory;
-                }
-
-                // Default
-                return _generatorSiteBuilderFactory;
+                return _originalSiteBuilderFactory;
             }
+
+            // Default
+            return _generatorSiteBuilderFactory;
         }
     }
 }

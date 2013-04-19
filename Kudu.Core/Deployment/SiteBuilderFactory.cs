@@ -12,32 +12,29 @@ namespace Kudu.Core.Deployment
 {
     public class SiteBuilderFactory : ISiteBuilderFactory
     {
-        private readonly IDeploymentSettingsManager _settings;
         private readonly IEnvironment _environment;
         private readonly IBuildPropertyProvider _propertyProvider;
 
-        public SiteBuilderFactory(IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, IEnvironment environment)
+        public SiteBuilderFactory(IBuildPropertyProvider propertyProvider, IEnvironment environment)
         {
-            _settings = settings;
             _propertyProvider = propertyProvider;
             _environment = environment;
         }
 
-        public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger)
+        public ISiteBuilder CreateBuilder(ITracer tracer, ILogger logger, IDeploymentSettingsManager settings)
         {
             string repositoryRoot = _environment.RepositoryPath;
-            var perDeploymentSettings = DeploymentSettingsManager.BuildPerDeploymentSettingsManager(repositoryRoot, _settings);
 
             // If there's a custom deployment file then let that take over.
-            var command = perDeploymentSettings.GetValue(SettingsKeys.Command);
+            var command = settings.GetValue(SettingsKeys.Command);
             if (!String.IsNullOrEmpty(command))
             {
-                return new CustomBuilder(repositoryRoot, _environment.TempPath, command, _propertyProvider, _environment.SiteRootPath, _environment.ScriptPath, perDeploymentSettings);
+                return new CustomBuilder(repositoryRoot, _environment.TempPath, command, _propertyProvider, _environment.SiteRootPath, _environment.ScriptPath, settings);
             }
 
             // If the repository has an explicit pointer to a project path to be deployed
             // then use it.
-            var targetProjectPath = perDeploymentSettings.GetValue(SettingsKeys.Project);
+            var targetProjectPath = settings.GetValue(SettingsKeys.Project);
             if (!String.IsNullOrEmpty(targetProjectPath))
             {
                 tracer.Trace("Found .deployment file in repository");
@@ -47,7 +44,7 @@ namespace Kudu.Core.Deployment
                 // Try to resolve the project
                 return ResolveProject(repositoryRoot,
                                       targetProjectPath,
-                                      perDeploymentSettings,
+                                      settings,
                                       tryWebSiteProject: true,
                                       searchOption: SearchOption.TopDirectoryOnly);
             }
@@ -58,7 +55,7 @@ namespace Kudu.Core.Deployment
             if (!solutions.Any())
             {
                 return ResolveProject(repositoryRoot,
-                                      perDeploymentSettings,
+                                      settings,
                                       searchOption: SearchOption.AllDirectories);
             }
 
@@ -82,12 +79,12 @@ namespace Kudu.Core.Deployment
             {
                 logger.Log(Resources.Log_NoDeployableProjects, solution.Path);
 
-                return new BasicBuilder(repositoryRoot, _environment.ScriptPath, _environment.SiteRootPath, perDeploymentSettings);
+                return new BasicBuilder(repositoryRoot, _environment.ScriptPath, _environment.SiteRootPath, settings);
             }
 
             if (project.IsWap)
             {
-                return new WapBuilder(perDeploymentSettings,
+                return new WapBuilder(settings,
                                       _propertyProvider,
                                       repositoryRoot,
                                       project.AbsolutePath,
@@ -99,7 +96,7 @@ namespace Kudu.Core.Deployment
                                       repositoryRoot,
                                       project.AbsolutePath,
                                       solution.Path,
-                                      perDeploymentSettings);
+                                      settings);
         }
 
         private ISiteBuilder ResolveProject(string repositoryRoot, IDeploymentSettingsManager perDeploymentSettings, bool tryWebSiteProject = false, SearchOption searchOption = SearchOption.AllDirectories)
