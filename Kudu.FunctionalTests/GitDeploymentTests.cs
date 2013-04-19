@@ -68,6 +68,12 @@ namespace Kudu.FunctionalTests
             PushAndDeployApps("Express-Template", "master", "Modify this template to jump-start your Node.JS Express Web Pages application", HttpStatusCode.OK, "");
         }
 
+        [Fact]
+        public void PushAndDeployHtml5WithAppJs()
+        {
+            PushAndDeployApps("Html5Test", "master", "html5", HttpStatusCode.OK, String.Empty);
+        }
+
         //Entity Framework 4.5 MVC Project with SQL Compact DB (.sdf file) 
         //and Metadata Artifact Processing set to 'Embed in Assembly'
         [Fact]
