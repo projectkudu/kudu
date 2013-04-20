@@ -111,6 +111,23 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public void UpdatedTargetPathShouldChangeDeploymentDestination()
+        {
+            ApplicationManager.Run("UpdatedTargetPathShouldChangeDeploymentDestination", appManager =>
+            {
+                using (TestRepository testRepository = Git.Clone("TargetPathTest"))
+                {
+                    appManager.GitDeploy(testRepository.PhysicalPath, "master");
+                }
+                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                Assert.Equal(1, results.Count);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
+                KuduAssert.VerifyUrl(appManager.SiteUrl + "myTarget/index.html", "Target Path Test");
+            });
+        }
+
+        [Fact]
         public void PushAndDeployMVCAppWithLatestNuget()
         {
             PushAndDeployApps("MVCAppWithLatestNuget", "master", "MVCAppWithLatestNuget", HttpStatusCode.OK, "Deployment successful");

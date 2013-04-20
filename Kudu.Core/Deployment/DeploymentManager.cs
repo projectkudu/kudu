@@ -517,7 +517,7 @@ namespace Kudu.Core.Deployment
                     Tracer = tracer,
                     Logger = logger,
                     GlobalLogger = _globalLogger,
-                    OutputPath = _environment.WebRootPath,
+                    OutputPath = GetOutputPath(_environment, perDeploymentSettings),
                 };
 
                 context.NextManifestFilePath = context.ManifestWriter.ManifestFilePath;
@@ -567,6 +567,18 @@ namespace Kudu.Core.Deployment
 
                 deployStep.Dispose();
             }
+        }
+
+        private static string GetOutputPath(IEnvironment environment, IDeploymentSettingsManager perDeploymentSettings)
+        {
+            string targetPath = perDeploymentSettings.GetValue(SettingsKeys.TargetPath);
+
+            if (!String.IsNullOrEmpty(targetPath))
+            {
+                return Path.Combine(environment.WebRootPath, targetPath);
+            }
+
+            return environment.WebRootPath;
         }
 
         private IEnumerable<DeployResult> EnumerateResults()

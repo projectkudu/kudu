@@ -10,6 +10,7 @@ namespace Kudu.Core.Deployment.Generator
 
         internal const string SourcePath = "DEPLOYMENT_SOURCE";
         internal const string TargetPath = "DEPLOYMENT_TARGET";
+        internal const string WebRootPath = "WEBROOT_PATH";
         internal const string MSBuildPath = "MSBUILD_PATH";
         internal const string KuduSyncCommandKey = "KUDU_SYNC_CMD";
         internal const string SelectNodeVersionCommandKey = "KUDU_SELECT_NODE_VERSION_CMD";
@@ -36,6 +37,7 @@ namespace Kudu.Core.Deployment.Generator
             exe.AddDeploymentSettingsAsEnvironmentVariables(_deploymentSettings);
             exe.EnvironmentVariables[SourcePath] = _repositoryPath;
             exe.EnvironmentVariables[TargetPath] = deploymentTargetPath;
+            exe.EnvironmentVariables[WebRootPath] = _environment.WebRootPath;
             exe.EnvironmentVariables[MSBuildPath] = PathUtility.ResolveMSBuildPath();
             exe.EnvironmentVariables[KuduSyncCommandKey] = KuduSyncCommand;
             exe.EnvironmentVariables[SelectNodeVersionCommandKey] = SelectNodeVersionCommand;

@@ -19,5 +19,6 @@
         public const string UseShallowClone = "SCM_USE_SHALLOW_CLONE";
         public const string Command = "COMMAND";
         public const string Project = "PROJECT";
+        public const string TargetPath = "SCM_TARGET_PATH";
     }
 }
