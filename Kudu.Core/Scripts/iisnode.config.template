@@ -1,21 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <configuration>
-    <system.webServer>         
-      <handlers>
-           <add name="iisnode" path="{NodeStartFile}" verb="*" modules="iisnode"/>
-     </handlers>
-      <rewrite>
-           <rules>
-                <rule name="StaticContent">
-                     <action type="Rewrite" url="public{REQUEST_URI}"/>
-                </rule>
-                <rule name="DynamicContent">
-                     <conditions>
-                          <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="True"/>
-                     </conditions>
-                     <action type="Rewrite" url="{NodeStartFile}"/>
-                </rule>
-           </rules>
-      </rewrite>
-   </system.webServer>
- </configuration>
+  <system.webServer>
+    <webSocket enabled="false" />
+    <handlers>
+      <add name="iisnode" path="{NodeStartFile}" verb="*" modules="iisnode"/>
+    </handlers>
+    <rewrite>
+      <rules>
+        <rule name="StaticContent">
+          <action type="Rewrite" url="public{REQUEST_URI}"/>
+        </rule>
+        <rule name="DynamicContent">
+          <conditions>
+            <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="True"/>
+          </conditions>
+          <action type="Rewrite" url="{NodeStartFile}"/>
+        </rule>
+      </rules>
+    </rewrite>
+  </system.webServer>
+</configuration>

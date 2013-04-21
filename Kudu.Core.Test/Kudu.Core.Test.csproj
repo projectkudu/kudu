@@ -52,6 +52,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AuthUtilityFacts.cs" />
+    <Compile Include="Deployment\NodeSiteEnablerTests.cs" />
     <Compile Include="Deployment\DeploymentManagerFacts.cs" />
     <Compile Include="Deployment\WapBuilderFacts.cs" />
     <Compile Include="HgRepositoryFacts.cs" />

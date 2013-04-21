@@ -14,35 +14,37 @@ var flushAndExit = function (code) {
     });
 };
 
-var createIisNodeWebConfigIfNeeded = function (sitePath) {
-  var webConfigPath = path.join(sitePath, 'web.config');
+var createIisNodeWebConfigIfNeeded = function (repoPath, wwwrootPath) {
+    // Check if web.config exists in the 'repository', if not generate it in 'wwwroot'
+    var webConfigRepoPath = path.join(repoPath, 'web.config');
+    var webConfigWwwRootPath = path.join(wwwrootPath, 'web.config');
 
-  if (!existsSync(webConfigPath)) {
-    var nodeStartFilePath = getNodeStartFile(sitePath);
-    if (!nodeStartFilePath) {
-      console.log('Missing server.js/app.js files, web.config is not generated');
-      return;
+    if (!existsSync(webConfigRepoPath)) {
+        var nodeStartFilePath = getNodeStartFile(repoPath);
+        if (!nodeStartFilePath) {
+            console.log('Missing server.js/app.js files, web.config is not generated');
+            return;
+        }
+
+        var iisNodeConfigTemplatePath = path.join(__dirname, 'iisnode.config.template');
+        var webConfigContent = fs.readFileSync(iisNodeConfigTemplatePath, 'utf8');
+        webConfigContent = webConfigContent.replace(/{NodeStartFile}/g, nodeStartFilePath);
+
+        fs.writeFileSync(webConfigWwwRootPath, webConfigContent, 'utf8');
     }
-
-    var iisNodeConfigTemplatePath = path.join(__dirname, 'iisnode.config.template');
-    var webConfigContent = fs.readFileSync(iisNodeConfigTemplatePath, 'utf8');
-    webConfigContent = webConfigContent.replace(/{NodeStartFile}/g, nodeStartFilePath);
-
-    fs.writeFileSync(webConfigPath, webConfigContent, 'utf8');
-  }
 }
 
 var getNodeStartFile = function (sitePath) {
-  var nodeStartFiles = ['server.js', 'app.js'];
+    var nodeStartFiles = ['server.js', 'app.js'];
 
-  for (var i in nodeStartFiles) {
-    var nodeStartFilePath = path.join(sitePath, nodeStartFiles[i]);
-    if (existsSync(nodeStartFilePath)) {
-      return nodeStartFiles[i];
+    for (var i in nodeStartFiles) {
+        var nodeStartFilePath = path.join(sitePath, nodeStartFiles[i]);
+        if (existsSync(nodeStartFilePath)) {
+            return nodeStartFiles[i];
+        }
     }
-  }
 
-  return null;
+    return null;
 }
 
 // Determine the installation location of node.js and iisnode
@@ -67,7 +69,7 @@ if (!existsSync(wwwroot) || !existsSync(repo) || (tempDir && !existsSync(tempDir
     throw new Error('Usage: node.exe selectNodeVersion.js <path_to_repo> <path_to_wwwroot> [path_to_temp]');
 
 // If the web.config file does not exit in the repo, use a default one that is specific for node on IIS in Azure
-createIisNodeWebConfigIfNeeded(wwwroot);
+createIisNodeWebConfigIfNeeded(repo, wwwroot);
 
 // If the iinode.yml file does not exit in the repo but exists in wwwroot, remove it from wwwroot 
 // to prevent side-effects of previous deployments

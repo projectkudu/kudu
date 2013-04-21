@@ -41,6 +41,7 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/WarningsAsErrors.git",              "51b6a48"),
             new TestRepositoryInfo("https://github.com/KuduApps/waws.git",                          "7652a66"),
             new TestRepositoryInfo("https://github.com/KuduApps/WebSiteInSolution.git",             "12d3e66"),
+            new TestRepositoryInfo("https://github.com/KuduApps/Html5Test.git",                     "7262300"),
         };
 
         private static Dictionary<string, TestRepositoryInfo> _repos;
