@@ -10,6 +10,7 @@ using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
 
@@ -473,11 +474,14 @@ namespace Kudu.Core.Deployment
 
                 ISiteBuilder builder = null;
 
+                string repositoryRoot = _environment.RepositoryPath;
+                var perDeploymentSettings = DeploymentSettingsManager.BuildPerDeploymentSettingsManager(repositoryRoot, _settings);
+
                 try
                 {
                     using (tracer.Step("Determining deployment builder"))
                     {
-                        builder = _builderFactory.CreateBuilder(tracer, innerLogger);
+                        builder = _builderFactory.CreateBuilder(tracer, innerLogger, perDeploymentSettings);
                         tracer.Trace("Builder is {0}", builder.GetType().Name);
                     }
                 }
@@ -513,7 +517,7 @@ namespace Kudu.Core.Deployment
                     Tracer = tracer,
                     Logger = logger,
                     GlobalLogger = _globalLogger,
-                    OutputPath = _environment.WebRootPath,
+                    OutputPath = GetOutputPath(_environment, perDeploymentSettings),
                 };
 
                 context.NextManifestFilePath = context.ManifestWriter.ManifestFilePath;
@@ -563,6 +567,19 @@ namespace Kudu.Core.Deployment
 
                 deployStep.Dispose();
             }
+        }
+
+        private static string GetOutputPath(IEnvironment environment, IDeploymentSettingsManager perDeploymentSettings)
+        {
+            string targetPath = perDeploymentSettings.GetValue(SettingsKeys.TargetPath);
+
+            if (!String.IsNullOrEmpty(targetPath))
+            {
+                targetPath = targetPath.Trim('\\', '/');
+                return Path.GetFullPath(Path.Combine(environment.WebRootPath, targetPath));
+            }
+
+            return environment.WebRootPath;
         }
 
         private IEnumerable<DeployResult> EnumerateResults()
