@@ -575,7 +575,8 @@ namespace Kudu.Core.Deployment
 
             if (!String.IsNullOrEmpty(targetPath))
             {
-                return Path.Combine(environment.WebRootPath, targetPath);
+                targetPath = targetPath.Trim('\\', '/');
+                return Path.GetFullPath(Path.Combine(environment.WebRootPath, targetPath));
             }
 
             return environment.WebRootPath;
