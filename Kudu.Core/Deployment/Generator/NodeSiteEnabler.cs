@@ -18,7 +18,7 @@ namespace Kudu.Core.Deployment.Generator
 
         public static bool LooksLikeNode(IFileSystem fileSystem, string siteFolder)
         {
-            bool foundNodeDetectionFile = false;
+            bool potentiallyLooksLikeNode = false;
 
             // Check if any of the known start pages exist
             foreach (var nodeDetectionFile in NodeDetectionFiles)
@@ -26,12 +26,12 @@ namespace Kudu.Core.Deployment.Generator
                 string fullPath = Path.Combine(siteFolder, nodeDetectionFile);
                 if (fileSystem.File.Exists(fullPath))
                 {
-                    foundNodeDetectionFile = true;
+                    potentiallyLooksLikeNode = true;
                     break;
                 }
             }
 
-            if (foundNodeDetectionFile)
+            if (potentiallyLooksLikeNode)
             {
                 // Check if any of the known iis start pages exist
                 // If so, then it is not a node.js web site

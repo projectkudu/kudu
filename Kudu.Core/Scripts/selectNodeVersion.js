@@ -15,11 +15,11 @@ var flushAndExit = function (code) {
 };
 
 var createIisNodeWebConfigIfNeeded = function (repoPath, wwwrootPath) {
-    // Check web.config existence in repository while generate it if it's not there in wwwroot
-    var webConfigSourcePath = path.join(repoPath, 'web.config');
-    var webConfigTargetPath = path.join(wwwrootPath, 'web.config');
+    // Check if web.config exists in the 'repository', if not generate it in 'wwwroot'
+    var webConfigRepoPath = path.join(repoPath, 'web.config');
+    var webConfigWwwRootPath = path.join(wwwrootPath, 'web.config');
 
-    if (!existsSync(webConfigSourcePath)) {
+    if (!existsSync(webConfigRepoPath)) {
         var nodeStartFilePath = getNodeStartFile(repoPath);
         if (!nodeStartFilePath) {
             console.log('Missing server.js/app.js files, web.config is not generated');
@@ -30,7 +30,7 @@ var createIisNodeWebConfigIfNeeded = function (repoPath, wwwrootPath) {
         var webConfigContent = fs.readFileSync(iisNodeConfigTemplatePath, 'utf8');
         webConfigContent = webConfigContent.replace(/{NodeStartFile}/g, nodeStartFilePath);
 
-        fs.writeFileSync(webConfigTargetPath, webConfigContent, 'utf8');
+        fs.writeFileSync(webConfigWwwRootPath, webConfigContent, 'utf8');
     }
 }
 
