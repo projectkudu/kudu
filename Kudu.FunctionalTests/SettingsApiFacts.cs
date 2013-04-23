@@ -1,5 +1,8 @@
 ﻿using System.Collections.Specialized;
+using System.IO;
 using System.Net.Http;
+using System.Threading.Tasks;
+using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
@@ -122,6 +125,26 @@ namespace Kudu.FunctionalTests
                     Assert.Equal("Response status code does not indicate success: 404 (Not Found).", ex.Message);
                 });
             }
+        }
+
+        [Fact]
+        public async Task KuduVersionTest()
+        {
+            string appName = "KuduVersionTest";
+            
+            await ApplicationManager.RunAsync(appName, async appManager => 
+            {
+                // Arrange
+                var id = Git.Id(Directory.GetCurrentDirectory());
+                var client = HttpClientHelper.CreateClient(appManager.ServiceUrl, appManager.SettingsManager.Credentials);
+                client.DefaultRequestHeaders.Accept.Clear();
+
+                // Act
+                string clientId = await client.GetStringAsync("commit.txt");
+
+                // Assert
+                Assert.Equal(id, clientId.TrimEnd());
+            });
         }
     }
 }

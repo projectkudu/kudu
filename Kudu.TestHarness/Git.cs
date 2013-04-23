@@ -35,6 +35,12 @@ namespace Kudu.TestHarness
             }
         }
 
+        public static string Id(string repositoryPath)
+        {
+            Executable gitExe = GetGitExe(repositoryPath);
+            return GitExecute(gitExe, "rev-parse {0}", "HEAD").Item1.Trim();
+        }
+
         public static TestRepository Init(string repositoryPath)
         {
             Executable gitExe = GetGitExe(repositoryPath);
