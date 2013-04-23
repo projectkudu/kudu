@@ -1,4 +1,5 @@
 @echo off
+setlocal enabledelayedexpansion 
 
 pushd %1
 
@@ -17,11 +18,13 @@ if exist node_modules\azure-cli\bin\azure (
 
 IF %ERRORLEVEL% NEQ 0 goto error
 
-set long_unrequired_directory=node_modules\azure-cli\node_modules\azure\node_modules\request\node_modules\form-data\node_modules\combined-stream\node_modules\delayed-stream\test
-if exist %long_unrequired_directory% (
-  rmdir /s /q %long_unrequired_directory%
-  IF %ERRORLEVEL% NEQ 0 goto error
+pushd node_modules
+
+for /r %%X IN (test) DO (
+  rmdir /s /q %%X 2>nul
 )
+
+popd
 
 goto end
 
