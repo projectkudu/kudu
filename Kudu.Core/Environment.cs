@@ -9,7 +9,8 @@ namespace Kudu.Core
     {
         private readonly IFileSystem _fileSystem;
         private readonly string _webRootPath;
-        private readonly string _deployCachePath;
+        private readonly string _deploymentsPath;
+        private readonly string _deploymentToolsPath;
         private readonly string _diagnosticsPath;
         private readonly string _sshKeyPath;
         private readonly string _tempPath;
@@ -27,7 +28,7 @@ namespace Kudu.Core
                 string tempPath,
                 string repositoryPath,
                 string webRootPath,
-                string deployCachePath,
+                string deploymentsPath,
                 string diagnosticsPath,
                 string sshKeyPath,
                 string scriptPath,
@@ -48,7 +49,8 @@ namespace Kudu.Core
             _tempPath = tempPath;
             _repositoryPath = repositoryPath;
             _webRootPath = webRootPath;
-            _deployCachePath = deployCachePath;
+            _deploymentsPath = deploymentsPath;
+            _deploymentToolsPath = Path.Combine(_deploymentsPath, Constants.DeploymentToolsPath);
             _diagnosticsPath = diagnosticsPath;
             _sshKeyPath = sshKeyPath;
             _scriptPath = scriptPath;
@@ -62,8 +64,7 @@ namespace Kudu.Core
         {
             get
             {
-                FileSystemHelpers.EnsureDirectory(_fileSystem, _repositoryPath);
-                return _repositoryPath;
+                return FileSystemHelpers.EnsureDirectory(_fileSystem, _repositoryPath);
             }
         }
 
@@ -71,17 +72,23 @@ namespace Kudu.Core
         {
             get
             {
-                FileSystemHelpers.EnsureDirectory(_fileSystem, _webRootPath);
-                return _webRootPath;
+                return FileSystemHelpers.EnsureDirectory(_fileSystem, _webRootPath);
             }
         }
 
-        public string DeploymentCachePath
+        public string DeploymentsPath
         {
             get
             {
-                FileSystemHelpers.EnsureDirectory(_fileSystem, _deployCachePath);
-                return _deployCachePath;
+                return FileSystemHelpers.EnsureDirectory(_fileSystem, _deploymentsPath);
+            }
+        }
+
+        public string DeploymentToolsPath
+        {
+            get
+            {
+                return FileSystemHelpers.EnsureDirectory(_fileSystem, _deploymentToolsPath);
             }
         }
 
@@ -89,8 +96,7 @@ namespace Kudu.Core
         {
             get
             {
-                FileSystemHelpers.EnsureDirectory(_fileSystem, _diagnosticsPath);
-                return _diagnosticsPath;
+                return FileSystemHelpers.EnsureDirectory(_fileSystem, _diagnosticsPath);
             }
         }
 
@@ -98,8 +104,7 @@ namespace Kudu.Core
         {
             get
             {
-                FileSystemHelpers.EnsureDirectory(_fileSystem, _sshKeyPath);
-                return _sshKeyPath;
+                return FileSystemHelpers.EnsureDirectory(_fileSystem, _sshKeyPath);
             }
         }
 
@@ -151,8 +156,7 @@ namespace Kudu.Core
         {
             get
             {
-                FileSystemHelpers.EnsureDirectory(_fileSystem, _tracePath);
-                return _tracePath;
+                return FileSystemHelpers.EnsureDirectory(_fileSystem, _tracePath);
             }
         }
 
@@ -160,8 +164,7 @@ namespace Kudu.Core
         {
             get
             {
-                FileSystemHelpers.EnsureDirectory(_fileSystem, _deploymentTracePath);
-                return _deploymentTracePath;
+                return FileSystemHelpers.EnsureDirectory(_fileSystem, _deploymentTracePath);
             }
         }
     }

@@ -1,10 +1,7 @@
 ﻿using System;
 using System.IO.Abstractions;
-using Kudu.Services.Web;
 using Moq;
 using Xunit;
-
-using SystemEnvironment = System.Environment;
 
 namespace Kudu.Core.Test
 {
@@ -86,10 +83,10 @@ namespace Kudu.Core.Test
             var mockFileSystem = new Mock<IFileSystem>();
             mockFileSystem.Setup(s => s.Directory).Returns(directory.Object);
 
-            var environment = CreateEnvironment(mockFileSystem.Object, deployCachePath: deployCachePath);
+            var environment = CreateEnvironment(mockFileSystem.Object, deploymentsPath: deployCachePath);
 
             // Act
-            string output = environment.DeploymentCachePath;
+            string output = environment.DeploymentsPath;
 
             // Assert
             Assert.Equal(deployCachePath, output);
@@ -125,7 +122,7 @@ namespace Kudu.Core.Test
             string tempPath = null,
             string repositoryPath = null,
             string webRootPath = null,
-            string deployCachePath = null,
+            string deploymentsPath = ".",
             string diagnosticsPath = null,
             string sshKeyPath = null,
             string scriptPath = null,
@@ -141,7 +138,7 @@ namespace Kudu.Core.Test
                     tempPath,
                     repositoryPath,
                     webRootPath,
-                    deployCachePath,
+                    deploymentsPath,
                     diagnosticsPath,
                     sshKeyPath,
                     scriptPath,

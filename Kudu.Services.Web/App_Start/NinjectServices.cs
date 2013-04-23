@@ -365,7 +365,7 @@ namespace Kudu.Services.Web.App_Start
 
         private static string GetSettingsPath(IEnvironment environment)
         {
-            return Path.Combine(environment.DeploymentCachePath, Constants.DeploySettingsPath);
+            return Path.Combine(environment.DeploymentsPath, Constants.DeploySettingsPath);
         }
 
         private static IEnvironment GetEnvironment()

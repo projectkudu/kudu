@@ -10,7 +10,7 @@ namespace Kudu.Core.Deployment.Generator
 {
     public abstract class GeneratorSiteBuilder : ExternalCommandBuilder
     {
-        private const string ScriptGeneratorCommandFormat = "site deploymentscript -y --no-dot-deployment -r \"{0}\" {1}";
+        private const string ScriptGeneratorCommandFormat = "site deploymentscript -y --no-dot-deployment -r \"{0}\" -o \"{1}\" {2}";
         private const string DeploymentScriptFileName = "deploy.cmd";
         private const string DeploymentCommandCacheKeyFileName = "deploymentCacheKey";
 
@@ -37,7 +37,8 @@ namespace Kudu.Core.Deployment.Generator
             try
             {
                 GenerateScript(context, buildLogger);
-                RunCommand(context, DeploymentScriptFileName);
+                string deploymentScriptPath = Path.GetFullPath(Path.Combine(Environment.DeploymentToolsPath, DeploymentScriptFileName));
+                RunCommand(context, deploymentScriptPath);
                 tcs.SetResult(null);
             }
             catch (Exception ex)
@@ -70,7 +71,7 @@ namespace Kudu.Core.Deployment.Generator
                     // Set home path to the user profile so cache directories created by azure-cli are created there
                     scriptGenerator.SetHomePath(System.Environment.GetEnvironmentVariable("APPDATA"));
 
-                    var scriptGeneratorCommand = String.Format(ScriptGeneratorCommandFormat, RepositoryPath, ScriptGeneratorCommandArguments);
+                    var scriptGeneratorCommand = String.Format(ScriptGeneratorCommandFormat, RepositoryPath, Environment.DeploymentToolsPath, ScriptGeneratorCommandArguments);
 
                     bool cacheUsed = UseCachedDeploymentScript(scriptGeneratorCommand, context);
                     if (!cacheUsed)
@@ -102,14 +103,11 @@ namespace Kudu.Core.Deployment.Generator
 
         private void CacheDeploymentScript(string scriptGeneratorCommand, DeploymentContext context)
         {
-            string cachedDeploymentScriptPath = Path.Combine(Environment.DeploymentCachePath, DeploymentScriptFileName);
+            string deploymentScriptPath = Path.Combine(Environment.DeploymentToolsPath, DeploymentScriptFileName);
 
             try
             {
-                OperationManager.Attempt(() =>
-                    File.Copy(Path.Combine(RepositoryPath, DeploymentScriptFileName), cachedDeploymentScriptPath, overwrite: true));
-
-                string cachedKeyFilePath = Path.Combine(Environment.DeploymentCachePath, DeploymentCommandCacheKeyFileName);
+                string cachedKeyFilePath = Path.Combine(Environment.DeploymentToolsPath, DeploymentCommandCacheKeyFileName);
 
                 // Cache key contains the current kudu version and the command arguments for the deployment script generator
                 string[] cacheKeyFileContent = new string[] { KuduVersion, scriptGeneratorCommand };
@@ -127,51 +125,47 @@ namespace Kudu.Core.Deployment.Generator
 
         private bool UseCachedDeploymentScript(string scriptGeneratorCommand, DeploymentContext context)
         {
-                string cacheKeyFilePath = Path.Combine(Environment.DeploymentCachePath, DeploymentCommandCacheKeyFileName);
-                string cachedDeploymentScriptPath = Path.Combine(Environment.DeploymentCachePath, DeploymentScriptFileName);
+            string cacheKeyFilePath = Path.Combine(Environment.DeploymentToolsPath, DeploymentCommandCacheKeyFileName);
+            string deploymentScriptPath = Path.Combine(Environment.DeploymentToolsPath, DeploymentScriptFileName);
 
-                try
+            try
+            {
+                if (!File.Exists(cacheKeyFilePath))
                 {
-                    if (!File.Exists(cacheKeyFilePath))
-                    {
-                        return false;
-                    }
-
-                    string[] cacheKeyFileContent = File.ReadAllLines(cacheKeyFilePath).Where(line => !String.IsNullOrEmpty(line)).ToArray();
-
-                    // Make sure the cache key file contains exacly 2 lines and the first one is the same as the current running kudu version
-                    if (cacheKeyFileContent.Length != 2 || cacheKeyFileContent[0] != KuduVersion)
-                    {
-                        return false;
-                    }
-
-                    string cachedDeploymentCommandArguments = cacheKeyFileContent[1];
-
-                    // If we use the same deployment script generator command
-                    if (scriptGeneratorCommand == cachedDeploymentCommandArguments)
-                    {
-                        // And if there is a cached deployment script from previous deployment
-                        if (File.Exists(cachedDeploymentScriptPath))
-                        {
-                            // Use the cached deployment script
-                            OperationManager.Attempt(() =>
-                                File.Copy(cachedDeploymentScriptPath, Path.Combine(RepositoryPath, DeploymentScriptFileName), overwrite: true));
-
-                            context.Tracer.Trace("Using cached version of the deployment script for command: {0}", scriptGeneratorCommand);
-
-                            return true;
-                        }
-                    }
-
                     return false;
                 }
-                catch (Exception ex)
+
+                string[] cacheKeyFileContent = File.ReadAllLines(cacheKeyFilePath).Where(line => !String.IsNullOrEmpty(line)).ToArray();
+
+                // Make sure the cache key file contains exacly 2 lines and the first one is the same as the current running kudu version
+                if (cacheKeyFileContent.Length != 2 || cacheKeyFileContent[0] != KuduVersion)
                 {
-                    // Do not fail the deployment on failure to use cache but log the failure
-                    context.Tracer.Trace("Failed to use cached version of the deployment script for command: {0}", scriptGeneratorCommand);
-                    context.Tracer.TraceError(ex);
                     return false;
                 }
+
+                string cachedDeploymentCommandArguments = cacheKeyFileContent[1];
+
+                // If we use the same deployment script generator command
+                if (scriptGeneratorCommand == cachedDeploymentCommandArguments)
+                {
+                    // And if there is a cached deployment script from previous deployment
+                    if (File.Exists(deploymentScriptPath))
+                    {
+                        context.Tracer.Trace("Using cached version of the deployment script for command: {0}", scriptGeneratorCommand);
+
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                // Do not fail the deployment on failure to use cache but log the failure
+                context.Tracer.Trace("Failed to use cached version of the deployment script for command: {0}", scriptGeneratorCommand);
+                context.Tracer.TraceError(ex);
+                return false;
+            }
         }
 
         private string DeploymentScriptGeneratorToolPath

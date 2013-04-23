@@ -584,7 +584,7 @@ namespace Kudu.Core.Deployment
 
         private IEnumerable<DeployResult> EnumerateResults()
         {
-            if (!_fileSystem.Directory.Exists(_environment.DeploymentCachePath))
+            if (!_fileSystem.Directory.Exists(_environment.DeploymentsPath))
             {
                 yield break;
             }
@@ -592,7 +592,7 @@ namespace Kudu.Core.Deployment
             string activeDeploymentId = _status.ActiveDeploymentId;
             bool isDeploying = IsDeploying;
 
-            foreach (var id in _fileSystem.Directory.GetDirectories(_environment.DeploymentCachePath))
+            foreach (var id in _fileSystem.Directory.GetDirectories(_environment.DeploymentsPath))
             {
                 DeployResult result = GetResult(id, activeDeploymentId, isDeploying);
 
@@ -710,7 +710,7 @@ namespace Kudu.Core.Deployment
 
         private string GetRoot(string id, bool ensureDirectory = true)
         {
-            string path = Path.Combine(_environment.DeploymentCachePath, id);
+            string path = Path.Combine(_environment.DeploymentsPath, id);
 
             if (ensureDirectory)
             {

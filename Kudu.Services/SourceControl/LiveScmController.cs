@@ -89,7 +89,7 @@ namespace Kudu.Services.SourceControl
                 using (_tracer.Step("Deleting deployment cache"))
                 {
                     // Delete the deployment cache
-                    FileSystemHelpers.DeleteDirectorySafe(_environment.DeploymentCachePath, ignoreErrors != 0);
+                    FileSystemHelpers.DeleteDirectorySafe(_environment.DeploymentsPath, ignoreErrors != 0);
                 }
             }, TimeSpan.Zero);
 
