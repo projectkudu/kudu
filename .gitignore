@@ -22,3 +22,4 @@ msbuild.log
 _app/
 *.ncrunchsolution
 nuget.exe
+Kudu.Services.Web/commit.txt
