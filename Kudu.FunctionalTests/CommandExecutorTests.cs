@@ -9,7 +9,7 @@ namespace Kudu.FunctionalTests
     public class CommandExecutorTests
     {
         [Fact]
-        public void CommandExecutorEnvironmentSetCorrectly()
+        public void CommandExecutorTest()
         {
             // Arrange
             string appName = "CommandExecuterEnvironmentSetCorrectly";
@@ -57,6 +57,11 @@ namespace Kudu.FunctionalTests
 
                 commandTestSettings = new CommandTestSettings("echo %EnableNuGetPackageRestore%");
                 commandTestSettings.ExpectedResult.Output = "true";
+                tests.Add(commandTestSettings);
+
+                // Make sure that we are able to launch Powershell
+                commandTestSettings = new CommandTestSettings("powershell get-process");
+                commandTestSettings.ExpectedResult.Output = "Handles";
                 tests.Add(commandTestSettings);
 
                 foreach (CommandTestSettings test in tests)
