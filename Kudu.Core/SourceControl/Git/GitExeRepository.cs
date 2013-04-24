@@ -63,6 +63,13 @@ namespace Kudu.Core.SourceControl.Git
         {
             get
             {
+                // The last thing we do in Initialize is create the post-receive hook, so if it's not there,
+                // treat the repo as incomplete, so that we'll fully initialize it again.
+                if (!File.Exists(PostReceiveHookPath))
+                {
+                    return false;
+                }
+
                 try
                 {
                     string output = _gitExe.Execute("rev-parse --git-dir").Item1;
@@ -72,22 +79,12 @@ namespace Kudu.Core.SourceControl.Git
                 }
                 catch (Exception ex)
                 {
-                    CommandLineException commandLineException = ex as CommandLineException;
-                    if (commandLineException != null && commandLineException.Error != null && (
-                        commandLineException.Error.StartsWith("fatal: Not a git repository (or any of the parent directories)", StringComparison.OrdinalIgnoreCase) ||
-                        commandLineException.Error.StartsWith("fatal: Cannot change to", StringComparison.OrdinalIgnoreCase)))
-                    {
-                        return false;
-                    }
-
                     ITracer tracer = _tracerFactory.GetTracer();
                     tracer.TraceError(ex);
-                }
 
-                // Failed to determine whether a git repository directory exists, falling back to original logic
-                // Checkit existence of .git directory
-                return Directory.Exists(_gitExe.WorkingDirectory) &&
-                       Directory.EnumerateFileSystemEntries(_gitExe.WorkingDirectory).Any();
+                    // If rev-parse fails for any reason, treat the repo as invalid
+                    return false;
+                }
             }
         }
 
@@ -120,18 +117,6 @@ namespace Kudu.Core.SourceControl.Git
 
                 _gitExe.Execute(profiler, @"config user.email ""{0}""", _settings.GetGitEmail());
 
-                using (profiler.Step("Setup post receive hook"))
-                {
-                    FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(PostReceiveHookPath));
-
-                    string content = @"#!/bin/sh
-read i
-echo $i > pushinfo
-" + KnownEnvironment.KUDUCOMMAND + "\n";
-
-                    File.WriteAllText(PostReceiveHookPath, content);
-                }
-
                 using (profiler.Step("Configure git server"))
                 {
                     // Allow getting pushes even though we're not bare
@@ -154,6 +139,21 @@ fi" + "\n";
 
                     _gitExe.Execute(profiler, "config credential.helper !'{0}'", GitCredentialHookPath);
                 }
+
+                using (profiler.Step("Setup post receive hook"))
+                {
+                    FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(PostReceiveHookPath));
+
+                    string content = @"#!/bin/sh
+read i
+echo $i > pushinfo
+" + KnownEnvironment.KUDUCOMMAND + "\n";
+
+                    File.WriteAllText(PostReceiveHookPath, content);
+                }
+
+                // NOTE: don't add any new init steps after creating the post receive hook,
+                // as it's also used to mark that Init was fully executed
             }
         }
 
