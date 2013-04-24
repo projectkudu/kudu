@@ -22,8 +22,8 @@ namespace Kudu.Core.Deployment
 
         private DeploymentStatusFile(string id, IEnvironment environment, IFileSystem fileSystem, IOperationLock statusLock, XDocument document = null)
         {
-            _activeFile = Path.Combine(environment.DeploymentCachePath, Constants.ActiveDeploymentFile);
-            _statusFile = Path.Combine(environment.DeploymentCachePath, id, StatusFile);
+            _activeFile = Path.Combine(environment.DeploymentsPath, Constants.ActiveDeploymentFile);
+            _statusFile = Path.Combine(environment.DeploymentsPath, id, StatusFile);
             _fileSystem = fileSystem;
             _statusLock = statusLock;
 
@@ -37,7 +37,7 @@ namespace Kudu.Core.Deployment
 
         public static DeploymentStatusFile Create(string id, IFileSystem fileSystem, IEnvironment environment, IOperationLock statusLock)
         {
-            string path = Path.Combine(environment.DeploymentCachePath, id);
+            string path = Path.Combine(environment.DeploymentsPath, id);
 
             FileSystemHelpers.EnsureDirectory(fileSystem, path);
 
@@ -53,7 +53,7 @@ namespace Kudu.Core.Deployment
         {
             return statusLock.LockOperation(() =>
             {
-                string path = Path.Combine(environment.DeploymentCachePath, id, StatusFile);
+                string path = Path.Combine(environment.DeploymentsPath, id, StatusFile);
                 XDocument document = null;
 
                 if (!fileSystem.File.Exists(path))

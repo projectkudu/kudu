@@ -57,7 +57,7 @@ namespace Kudu.Services
         {
             get
             {
-                return Path.Combine(_environment.DeploymentCachePath, "pending");
+                return Path.Combine(_environment.DeploymentsPath, "pending");
             }
         }
 

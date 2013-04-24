@@ -1,7 +1,8 @@
 using System;
-namespace Kudu 
+
+namespace Kudu
 {
-    public static class Constants 
+    public static class Constants
     {
         public const string WebRoot = "wwwroot";
         public const string MappedSite = "/_app";
@@ -16,6 +17,7 @@ namespace Kudu
         public const string NpmDebugLogFile = "npm-debug.log";
 
         public const string DeploymentCachePath = "deployments";
+        public const string DeploymentToolsPath = "tools";
         public const string LogFilesPath = @"LogFiles";
         public const string TracePath = LogFilesPath + @"\Git\trace";
         public const string DeploySettingsPath = "settings.xml";
@@ -27,6 +29,7 @@ namespace Kudu
 
         // Kudu trace text file related
         public const string DeploymentTracePath = LogFilesPath + @"\Git\deployment";
+
         public const string TraceFileFormat = "{0}-{1}.txt";
         public const string TraceFileEnvKey = "KUDU_TRACE_FILE";
 
