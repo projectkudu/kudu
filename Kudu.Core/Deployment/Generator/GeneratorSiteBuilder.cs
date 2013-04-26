@@ -103,8 +103,6 @@ namespace Kudu.Core.Deployment.Generator
 
         private void CacheDeploymentScript(string scriptGeneratorCommand, DeploymentContext context)
         {
-            string deploymentScriptPath = Path.Combine(Environment.DeploymentToolsPath, DeploymentScriptFileName);
-
             try
             {
                 string cachedKeyFilePath = Path.Combine(Environment.DeploymentToolsPath, DeploymentCommandCacheKeyFileName);
