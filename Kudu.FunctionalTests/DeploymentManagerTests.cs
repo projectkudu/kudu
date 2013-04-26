@@ -398,7 +398,6 @@ namespace Kudu.FunctionalTests
 
                 (await client.PostAsync("deploy?scmType=BitbucketHg", new FormUrlEncodedContent(post))).EnsureSuccessful();
 
-
                 var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
@@ -618,7 +617,12 @@ namespace Kudu.FunctionalTests
                 Task<HttpResponseMessage> responseTask1 = null;
                 Task<HttpResponseMessage> responseTask2 = null;
 
+                // Set custom command to make deployment last longer (10 seconds) so we'll be able to start the second deployment
+                // Safely knowing the first one is still going on
+                await appManager.SettingsManager.SetValue("COMMAND", "sleep 10 & xcopy /y %DEPLOYMENT_SOURCE%\\index.html %DEPLOYMENT_TARGET%\\");
+
                 // Start the first fetch request for the master branch
+                TestTracer.Trace("Making first deployment request");
                 responseTask1 = PostPayloadHelperAsync(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(postMaster)));
 
                 // Wait for the first deployment to start
@@ -626,6 +630,9 @@ namespace Kudu.FunctionalTests
 
                 // Change branch and start second fetch request for test branch
                 await appManager.SettingsManager.SetValue("branch", "test");
+                await appManager.SettingsManager.Delete("COMMAND");
+
+                TestTracer.Trace("Making second deployment request");
                 responseTask2 = PostPayloadHelperAsync(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(postTest)));
 
                 HttpResponseMessage responseResult1 = await responseTask1;
