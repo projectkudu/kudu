@@ -842,9 +842,6 @@ namespace Kudu.FunctionalTests
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                // Speed up IdleTimeout to 10s
-                await appManager.SettingsManager.SetValue(SettingsKeys.CommandIdleTimeout, "10");
-
                 await appManager.SSHKeyManager.GetPublicKey(ensurePublicKey: true);
 
                 // Run per each scm in random order.
@@ -881,13 +878,10 @@ namespace Kudu.FunctionalTests
             yield return new RepoInvalidInfo("ssh://hg@abcdefghigkl.com/Invalid/Invalid.git", "abort: no suitable response from remote hg.*hg.exe pull", "hg");
             yield return new RepoInvalidInfo("git@github.com:Invalid/Invalid.git", "Permission denied [(]publickey[)]", null);
             yield return new RepoInvalidInfo("git@bitbucket.org:Invalid/Invalid.git", "Permission denied [(]publickey[)]", null);
-            yield return new RepoInvalidInfo("ssh://hg@bitbucket.org/Invalid/Invalid", "hg.exe pull ssh:.*aborted due to no output and CPU activity|no suitable response from remote hg.*hg.exe pull", "hg");
             yield return new RepoInvalidInfo("git@github.com:KuduApps/Invalid.git", "Permission denied [(]publickey[)]", null);
             yield return new RepoInvalidInfo("git@bitbucket.org:kudutest/Invalid.git", "Permission denied [(]publickey[)]", null);
-            yield return new RepoInvalidInfo("ssh://hg@bitbucket.org/kudutest/Invalid", "hg.exe pull ssh:.*aborted due to no output and CPU activity|no suitable response from remote hg.*hg.exe pull", "hg");
             yield return new RepoInvalidInfo("git@github.com:KuduApps/HelloKudu.git", "Permission denied [(]publickey[)]", null);
             yield return new RepoInvalidInfo("git@bitbucket.org:kudutest/jeanprivate.git", "Permission denied [(]publickey[)]", null);
-            yield return new RepoInvalidInfo("ssh://hg@bitbucket.org/kudutest/hellomercurial", "hg.exe pull ssh://hg.*aborted due to no output and CPU activity|no suitable response from remote hg.*hg.exe pull", "hg");
             yield return new RepoInvalidInfo("https://github.com/KuduApps/HelloKudu.git", "abort: HTTP Error 406: Not Acceptable.*hg.exe pull https://github.com/KuduApps/HelloKudu.git", "hg");
             yield return new RepoInvalidInfo("https://bitbucket.org/kudutest/hellomercurial/", "fatal: https://bitbucket.org/kudutest/hellomercurial/info/refs.* not found", null);
             yield return new RepoInvalidInfo("https://github.com/Invalid/Invalid.git", "fatal: Authentication failed.*git.exe fetch", null);
