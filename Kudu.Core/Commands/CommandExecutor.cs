@@ -1,4 +1,5 @@
 ﻿using Kudu.Contracts.Settings;
+using Kudu.Core.Deployment;
 using Kudu.Core.Deployment.Generator;
 using Kudu.Core.Infrastructure;
 using System;
@@ -90,7 +91,7 @@ namespace Kudu.Core.Commands
                 workingDirectory = Path.Combine(_rootDirectory, relativeWorkingDirectory);
             }
 
-            Executable exe = _externalCommandFactory.BuildExternalCommandExecutable(workingDirectory, _environment.WebRootPath);
+            Executable exe = _externalCommandFactory.BuildExternalCommandExecutable(workingDirectory, _environment.WebRootPath, NullLogger.Instance);
             _executingProcess = exe.CreateProcess(command, new object[0]);
 
             var commandEvent = CommandEvent;

@@ -45,7 +45,7 @@ namespace Kudu.Core.Deployment.Generator
 
             // Creates an executable pointing to cmd and the working directory being
             // the repository root
-            var exe = _externalCommandFactory.BuildExternalCommandExecutable(RepositoryPath, context.OutputPath);
+            var exe = _externalCommandFactory.BuildExternalCommandExecutable(RepositoryPath, context.OutputPath, customLogger);
             exe.EnvironmentVariables[PreviousManifestPath] = context.PreviousManifestFilePath ?? String.Empty;
             exe.EnvironmentVariables[NextManifestPath] = context.NextManifestFilePath;
 

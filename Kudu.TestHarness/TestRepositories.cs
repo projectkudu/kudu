@@ -16,7 +16,7 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/Bakery.git",                        "2f29dc6"),
             new TestRepositoryInfo("https://github.com/KuduApps/ConditionalCompilation.git",        "a104578"),
             new TestRepositoryInfo("https://github.com/KuduApps/CustomBuildScript.git",             "2c156bd"),
-            new TestRepositoryInfo("https://github.com/KuduApps/CustomDeploymentSettingsTest.git",  "66e15f2"),
+            new TestRepositoryInfo("https://github.com/KuduApps/CustomDeploymentSettingsTest.git",  "bc0ce04"),
             new TestRepositoryInfo("https://github.com/KuduApps/Dev11_Net45_Mvc4_WebAPI.git",       "bb9e6b4"),
             new TestRepositoryInfo("https://github.com/KuduApps/Express-Template.git",              "0878ac7"),
             new TestRepositoryInfo("https://github.com/KuduApps/HangProcess.git",                   "e1c6c52"),
@@ -41,7 +41,8 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/WarningsAsErrors.git",              "51b6a48"),
             new TestRepositoryInfo("https://github.com/KuduApps/waws.git",                          "7652a66"),
             new TestRepositoryInfo("https://github.com/KuduApps/WebSiteInSolution.git",             "12d3e66"),
-            new TestRepositoryInfo("https://github.com/KuduApps/Html5Test.git",                     "7262300"),            new TestRepositoryInfo("https://github.com/KuduApps/TargetPathTest.git",                "7446104"),
+            new TestRepositoryInfo("https://github.com/KuduApps/Html5Test.git",                     "7262300"),
+            new TestRepositoryInfo("https://github.com/KuduApps/TargetPathTest.git",                "7446104"),
         };
 
         private static Dictionary<string, TestRepositoryInfo> _repos;

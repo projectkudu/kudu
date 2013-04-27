@@ -1,6 +1,7 @@
 ﻿using Kudu.Contracts.Settings;
 using Kudu.Core.Infrastructure;
 using System.IO;
+using Kudu.Contracts.Tracing;
 
 namespace Kudu.Core.Deployment.Generator
 {
@@ -20,28 +21,27 @@ namespace Kudu.Core.Deployment.Generator
         private IEnvironment _environment;
         private IDeploymentSettingsManager _deploymentSettings;
         private string _repositoryPath;
-
+    
         public ExternalCommandFactory(IEnvironment environment, IDeploymentSettingsManager settings, string repositoryPath)
         {
             _environment = environment;
-
             _deploymentSettings = settings;
             _repositoryPath = repositoryPath;
         }
 
-        public Executable BuildExternalCommandExecutable(string workingDirectory, string deploymentTargetPath)
+        public Executable BuildExternalCommandExecutable(string workingDirectory, string deploymentTargetPath, ILogger logger)
         {
             // Creates an executable pointing to cmd and the working directory being
             // the repository root
             var exe = new Executable(StarterScriptPath, workingDirectory, _deploymentSettings.GetCommandIdleTimeout());
             exe.AddDeploymentSettingsAsEnvironmentVariables(_deploymentSettings);
-            exe.EnvironmentVariables[SourcePath] = _repositoryPath;
-            exe.EnvironmentVariables[TargetPath] = deploymentTargetPath;
-            exe.EnvironmentVariables[WebRootPath] = _environment.WebRootPath;
-            exe.EnvironmentVariables[MSBuildPath] = PathUtility.ResolveMSBuildPath();
-            exe.EnvironmentVariables[KuduSyncCommandKey] = KuduSyncCommand;
-            exe.EnvironmentVariables[SelectNodeVersionCommandKey] = SelectNodeVersionCommand;
-            exe.EnvironmentVariables[NpmJsPathKey] = PathUtility.ResolveNpmJsPath();
+            UpdateToDefaultIfNotSet(exe, SourcePath, _repositoryPath, logger);
+            UpdateToDefaultIfNotSet(exe, TargetPath, deploymentTargetPath, logger);
+            UpdateToDefaultIfNotSet(exe, WebRootPath, _environment.WebRootPath, logger);
+            UpdateToDefaultIfNotSet(exe, MSBuildPath, PathUtility.ResolveMSBuildPath(), logger);
+            UpdateToDefaultIfNotSet(exe, KuduSyncCommandKey, KuduSyncCommand, logger);
+            UpdateToDefaultIfNotSet(exe, SelectNodeVersionCommandKey, SelectNodeVersionCommand, logger);
+            UpdateToDefaultIfNotSet(exe, NpmJsPathKey, PathUtility.ResolveNpmJsPath(), logger);
 
             // Disable this for now
             // exe.EnvironmentVariables[NuGetCachePathKey] = Environment.NuGetCachePath;
@@ -88,5 +88,20 @@ namespace Kudu.Core.Deployment.Generator
                 return Path.Combine(_environment.ScriptPath, StarterScriptName);
             }
         }
+
+        private void UpdateToDefaultIfNotSet(Executable exe, string key, string defaultValue, ILogger logger)
+        {
+            var value = _deploymentSettings.GetValue(key);
+            if (string.IsNullOrEmpty(value))
+            {
+                exe.EnvironmentVariables[key] = defaultValue;
+            }
+            else
+            {
+                logger.Log("Using custom deployment setting for {0} custom value is '{1}'.", key, value);
+                exe.EnvironmentVariables[key] = value;
+            }
+        }
+
     }
 }
