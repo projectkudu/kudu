@@ -11,28 +11,32 @@ namespace Kudu.Client
         /// </summary>
         public static HttpResponseMessage EnsureSuccessful(this HttpResponseMessage httpResponseMessage)
         {
-            if (httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError)
+            // check whether it is successful status code.   if not, we will attempt to read the content and
+            // include it as part of the exception message.
+            if (!httpResponseMessage.IsSuccessStatusCode)
             {
-                // For 500, we serialize the exception message on the server. 
-                HttpExceptionMessage exceptionMessage;
+                HttpExceptionMessage exceptionMessage = null;
                 try
                 {
-                    exceptionMessage = httpResponseMessage.Content.ReadAsAsync<HttpExceptionMessage>().Result;
-                }
-                catch (InvalidOperationException)
-                {
-                    // This would happen if the response type is not a Json object.
                     exceptionMessage = new HttpExceptionMessage
                     {
+                        StatusCode = httpResponseMessage.StatusCode,
+                        ReasonPhrase = httpResponseMessage.ReasonPhrase,
                         ExceptionMessage = httpResponseMessage.Content.ReadAsStringAsync().Result,
                         ExceptionType = typeof(HttpRequestException).Name
                     };
                 }
-                exceptionMessage.StatusCode = httpResponseMessage.StatusCode;
-                exceptionMessage.ReasonPhrase = httpResponseMessage.ReasonPhrase;
+                catch (Exception)
+                {
+                    // ignore error from reading content.
+                }
 
-                throw new HttpUnsuccessfulRequestException(exceptionMessage);
+                if (exceptionMessage != null)
+                {
+                    throw new HttpUnsuccessfulRequestException(exceptionMessage);
+                }
             }
+
             return httpResponseMessage.EnsureSuccessStatusCode();
         }
     }

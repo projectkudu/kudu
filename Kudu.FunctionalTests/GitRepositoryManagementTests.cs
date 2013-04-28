@@ -17,6 +17,7 @@ using Kudu.TestHarness;
 using Newtonsoft.Json.Linq;
 using Xunit;
 using Kudu.Core.Infrastructure;
+using Kudu.Client;
 
 namespace Kudu.FunctionalTests
 {
@@ -1082,7 +1083,8 @@ project = myproject");
                 catch (AggregateException ex)
                 {
                     // for public kudu, the setting does not exist
-                    Assert.Contains("404", ex.InnerExceptions[0].Message);
+                    var notFoundException = ex.InnerExceptions.OfType<HttpUnsuccessfulRequestException>().First();
+                    Assert.Equal(HttpStatusCode.NotFound, notFoundException.ResponseMessage.StatusCode);
                 }
 
                 // Disable by setting to None

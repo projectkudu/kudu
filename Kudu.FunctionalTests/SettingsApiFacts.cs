@@ -1,7 +1,9 @@
 ﻿using System.Collections.Specialized;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Kudu.Client;
 using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.FunctionalTests.Infrastructure;
@@ -59,10 +61,10 @@ namespace Kudu.FunctionalTests
                     appManager.SettingsManager.Delete("x").Wait();
 
                     // Act
-                    var ex = KuduAssert.ThrowsUnwrapped<HttpRequestException>(() => appManager.SettingsManager.GetValue("x").Wait());
+                    var ex = KuduAssert.ThrowsUnwrapped<HttpUnsuccessfulRequestException>(() => appManager.SettingsManager.GetValue("x").Wait());
 
                     // Assert
-                    Assert.Equal("Response status code does not indicate success: 404 (Not Found).", ex.Message);
+                    Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
                 });
             }
         }
@@ -119,10 +121,10 @@ namespace Kudu.FunctionalTests
                 ApplicationManager.Run(appName, appManager =>
                 {
                     // Act
-                    var ex = KuduAssert.ThrowsUnwrapped<HttpRequestException>(() => appManager.SettingsManager.GetValue("x").Wait());
+                    var ex = KuduAssert.ThrowsUnwrapped<HttpUnsuccessfulRequestException>(() => appManager.SettingsManager.GetValue("x").Wait());
 
                     // Assert
-                    Assert.Equal("Response status code does not indicate success: 404 (Not Found).", ex.Message);
+                    Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
                 });
             }
         }

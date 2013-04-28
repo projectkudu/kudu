@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using Kudu.Client;
 using Kudu.Client.Infrastructure;
@@ -36,8 +37,8 @@ namespace Kudu.FunctionalTests
 
                     using (HttpClient client = HttpClientHelper.CreateClient(appManager.ServiceUrl, appManager.DeploymentManager.Credentials))
                     {
-                        var ex = Assert.Throws<HttpRequestException>(() => client.GetAsync("diagnostics/settings/trace_level").Result.EnsureSuccessful());
-                        Assert.Contains("404", ex.Message);
+                        var ex = Assert.Throws<HttpUnsuccessfulRequestException>(() => client.GetAsync("diagnostics/settings/trace_level").Result.EnsureSuccessful());
+                        Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
                     }
                 });
             }
@@ -125,8 +126,8 @@ namespace Kudu.FunctionalTests
                     }
                     else
                     {
-                        var ex = Assert.Throws<HttpRequestException>(() => client.GetAsync("diagnostics/settings/" + value.Key).Result.EnsureSuccessful());
-                        Assert.Contains("404", ex.Message);
+                        var ex = Assert.Throws<HttpUnsuccessfulRequestException>(() => client.GetAsync("diagnostics/settings/" + value.Key).Result.EnsureSuccessful());
+                        Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
                     }
                 }
             }
