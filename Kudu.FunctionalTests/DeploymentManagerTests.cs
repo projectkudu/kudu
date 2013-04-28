@@ -30,23 +30,23 @@ namespace Kudu.FunctionalTests
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 string id = "foo";
-                var ex = await KuduAssert.ThrowsAsync<HttpRequestException>(() => appManager.DeploymentManager.DeleteAsync(id));
-                Assert.Equal("Response status code does not indicate success: 404 (Not Found).", ex.Message);
+                var ex = await KuduAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.DeleteAsync(id));
+                Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
 
-                ex = await KuduAssert.ThrowsAsync<HttpRequestException>(() => appManager.DeploymentManager.DeployAsync(id));
-                Assert.Equal("Response status code does not indicate success: 404 (Not Found).", ex.Message);
+                ex = await KuduAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.DeployAsync(id));
+                Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
 
-                ex = await KuduAssert.ThrowsAsync<HttpRequestException>(() => appManager.DeploymentManager.DeployAsync(id, clean: true));
-                Assert.Equal("Response status code does not indicate success: 404 (Not Found).", ex.Message);
+                ex = await KuduAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.DeployAsync(id, clean: true));
+                Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
 
-                ex = await KuduAssert.ThrowsAsync<HttpRequestException>(() => appManager.DeploymentManager.GetLogEntriesAsync(id));
-                Assert.Equal("Response status code does not indicate success: 404 (Not Found).", ex.Message);
+                ex = await KuduAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.GetLogEntriesAsync(id));
+                Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
 
-                ex = await KuduAssert.ThrowsAsync<HttpRequestException>(() => appManager.DeploymentManager.GetResultAsync(id));
-                Assert.Equal("Response status code does not indicate success: 404 (Not Found).", ex.Message);
+                ex = await KuduAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.GetResultAsync(id));
+                Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
 
-                ex = await KuduAssert.ThrowsAsync<HttpRequestException>(() => appManager.DeploymentManager.GetLogEntryDetailsAsync(id, "fakeId"));
-                Assert.Equal("Response status code does not indicate success: 404 (Not Found).", ex.Message);
+                ex = await KuduAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.GetLogEntryDetailsAsync(id, "fakeId"));
+                Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
             });
         }
 
@@ -127,26 +127,17 @@ namespace Kudu.FunctionalTests
                     KuduAssert.VerifyLogOutput(appManager, result.Id, "Cleaning Git repository");
 
                     // Can't delete the active one
-                    var ex = await KuduAssert.ThrowsAsync<HttpRequestException>(() => appManager.DeploymentManager.DeleteAsync(result.Id));
-                    Assert.Equal("Response status code does not indicate success: 409 (Conflict).", ex.Message);
+                    var ex = await KuduAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.DeleteAsync(result.Id));
+                    Assert.Equal(HttpStatusCode.Conflict, ex.ResponseMessage.StatusCode);
 
                     // Corrupt git repository by removing HEAD file from it
                     // And verify git repository is not identified
                     appManager.VfsManager.Delete("site\\repository\\.git\\HEAD");
 
-                    HttpRequestException notFoundException = null;
-                    try
-                    {
-                        await appManager.DeploymentManager.DeployAsync(null);
-                    }
-                    catch (HttpRequestException httpRequestException)
-                    {
-                        notFoundException = httpRequestException;
-                    }
+                    var notFoundException = await KuduAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.DeployAsync(null));
 
                     // Expect a not found failure as no repository is found (since the git repository is now corrupted)
-                    Assert.True(notFoundException != null, "Not found exception was not thrown");
-                    Assert.Equal("Response status code does not indicate success: 404 (Not Found).", notFoundException.Message);
+                    Assert.Equal(HttpStatusCode.NotFound, notFoundException.ResponseMessage.StatusCode);
 
                     // Another got push should reinitialize the git repository
                     appManager.GitDeploy(repo.PhysicalPath);
