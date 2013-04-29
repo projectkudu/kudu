@@ -87,12 +87,23 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void CustomDeploymentScriptShouldHaveDeploymentSetting()
         {
-            var verificationLogText = "Settings Were Set Properly";
 
+            // use a fresh guid so its impossible to accidently see the right output just by chance.
+            var guidtext = Guid.NewGuid().ToString();
+            var unicodeText = "酷度酷度";
+            var normalVar = "TESTED_VAR";
+            var normalVarText = "Settings Were Set Properly" + guidtext;
+            var kuduSetVar = "KUDU_SYNC_CMD";
+            var kuduSetVarText = "Fake Kudu Sync " + guidtext;
+            var expectedLogFeedback =
+                String.Format("Using custom deployment setting for {0} custom value is '{1}'.", 
+                    kuduSetVar, kuduSetVarText);
+  
             string randomTestName = "CustomDeploymentScriptShouldHaveDeploymentSetting";
             ApplicationManager.Run(randomTestName, appManager =>
             {
-                appManager.SettingsManager.SetValue("TESTED_VAR", verificationLogText).Wait();
+                appManager.SettingsManager.SetValue(normalVar, normalVarText).Wait();
+                appManager.SettingsManager.SetValue(kuduSetVar, kuduSetVarText).Wait();
 
                 // Act
                 using (TestRepository testRepository = Git.Clone("CustomDeploymentSettingsTest"))
@@ -106,10 +117,14 @@ namespace Kudu.FunctionalTests
                 Assert.Equal(DeployStatus.Success, results[0].Status);
 
                 // Also validate custom script output supports unicode
-                KuduAssert.VerifyLogOutput(appManager, results[0].Id, new string[] { verificationLogText, "酷度酷度" });
+                string[] expectedStrings = {
+                    unicodeText,
+                    normalVar + "=" + normalVarText,
+                    kuduSetVar + "=" + kuduSetVarText,
+                    expectedLogFeedback };
+                KuduAssert.VerifyLogOutput(appManager, results[0].Id, expectedStrings);
             });
         }
-
         [Fact]
         public void UpdatedTargetPathShouldChangeDeploymentDestination()
         {

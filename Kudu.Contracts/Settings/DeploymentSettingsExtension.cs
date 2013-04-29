@@ -11,9 +11,9 @@ namespace Kudu.Contracts.Settings
         public static readonly TimeSpan DefaultLogStreamTimeout = TimeSpan.FromMinutes(30);
         public const TraceLevel DefaultTraceLevel = TraceLevel.Error;
 
-        public static string GetValue(this IDeploymentSettingsManager settings, string value)
+        public static string GetValue(this IDeploymentSettingsManager settings, string key)
         {
-            return settings.GetValue(value, onlyPerSite: false);
+            return settings.GetValue(key, onlyPerSite: false);
         }
 
         public static TraceLevel GetTraceLevel(this IDeploymentSettingsManager settings)
