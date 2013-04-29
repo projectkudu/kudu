@@ -1,12 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Threading.Tasks;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
 using Xunit;
+using Xunit.Extensions;
 
 namespace Kudu.FunctionalTests
 {
@@ -15,70 +16,70 @@ namespace Kudu.FunctionalTests
         // ASP.NET apps
 
         [Fact]
-        public async Task PushAndDeployAspNetAppOrchard()
+        public void PushAndDeployAspNetAppOrchard()
         {
-            await PushAndDeployApps("Orchard", "master", "Welcome to Orchard", HttpStatusCode.OK, "");
+            PushAndDeployApps("Orchard", "master", "Welcome to Orchard", HttpStatusCode.OK, "");
         }
 
         [Fact]
-        public async Task PushAndDeployAspNetAppProjectWithNoSolution()
+        public void PushAndDeployAspNetAppProjectWithNoSolution()
         {
-            await PushAndDeployApps("ProjectWithNoSolution", "master", "Project without solution", HttpStatusCode.OK, "");
+            PushAndDeployApps("ProjectWithNoSolution", "master", "Project without solution", HttpStatusCode.OK, "");
         }
 
         [Fact]
-        public async Task PushAndDeployAspNetAppHiddenFoldersAndFiles()
+        public void PushAndDeployAspNetAppHiddenFoldersAndFiles()
         {
-            await PushAndDeployApps("HiddenFoldersAndFiles", "master", "Hello World", HttpStatusCode.OK, "");
+            PushAndDeployApps("HiddenFoldersAndFiles", "master", "Hello World", HttpStatusCode.OK, "");
         }
 
         [Fact]
-        public async Task PushAndDeployWebApiApp()
+        public void PushAndDeployWebApiApp()
         {
-            await PushAndDeployApps("Dev11_Net45_Mvc4_WebAPI", "master", "HelloWorld", HttpStatusCode.OK, "", resourcePath: "api/values", httpMethod: "POST", jsonPayload: "\"HelloWorld\"");
+            PushAndDeployApps("Dev11_Net45_Mvc4_WebAPI", "master", "HelloWorld", HttpStatusCode.OK, "", resourcePath: "api/values", httpMethod: "POST", jsonPayload: "\"HelloWorld\"");
         }
 
         [Fact]
-        public async Task PushAndDeployAspNetAppWebSiteInSolution()
+        public void PushAndDeployAspNetAppWebSiteInSolution()
         {
-            await PushAndDeployApps("WebSiteInSolution", "master", "SomeDummyLibrary.Class1", HttpStatusCode.OK, "");
+            PushAndDeployApps("WebSiteInSolution", "master", "SomeDummyLibrary.Class1", HttpStatusCode.OK, "");
         }
 
         [Fact]
-        public async Task PushAndDeployAspNetAppKuduGlob()
+        public void PushAndDeployAspNetAppKuduGlob()
         {
-            await PushAndDeployApps("kuduglob", "master", "ASP.NET MVC", HttpStatusCode.OK, "酷度");
+            PushAndDeployApps("kuduglob", "master", "ASP.NET MVC", HttpStatusCode.OK, "酷度");
         }
 
         [Fact]
-        public async Task PushAndDeployAspNetAppAppWithPostBuildEvent()
+        public void PushAndDeployAspNetAppAppWithPostBuildEvent()
         {
-            await PushAndDeployApps("AppWithPostBuildEvent", "master", "Hello Kudu", HttpStatusCode.OK, "Deployment successful");
+            PushAndDeployApps("AppWithPostBuildEvent", "master", "Hello Kudu", HttpStatusCode.OK, "Deployment successful");
         }
 
         // Node apps
 
         [Fact]
-        public async Task PushAndDeployNodeAppExpress()
+        public void PushAndDeployNodeAppExpress()
         {
             // Ensure node is installed.
             Assert.Contains("nodejs", Environment.GetEnvironmentVariable("Path"), StringComparison.OrdinalIgnoreCase);
 
-            await PushAndDeployApps("Express-Template", "master", "Modify this template to jump-start your Node.JS Express Web Pages application", HttpStatusCode.OK, "");
+            PushAndDeployApps("Express-Template", "master", "Modify this template to jump-start your Node.JS Express Web Pages application", HttpStatusCode.OK, "");
         }
 
         [Fact]
-        public async Task PushAndDeployHtml5WithAppJs()
+        public void PushAndDeployHtml5WithAppJs()
         {
-            await PushAndDeployApps("Html5Test", "master", "html5", HttpStatusCode.OK, String.Empty);
+            PushAndDeployApps("Html5Test", "master", "html5", HttpStatusCode.OK, String.Empty);
         }
 
         //Entity Framework 4.5 MVC Project with SQL Compact DB (.sdf file) 
         //and Metadata Artifact Processing set to 'Embed in Assembly'
         [Fact]
-        public async Task PushAndDeployEFMVC45AppSqlCompactMAPEIA()
+        public void PushAndDeployEFMVC45AppSqlCompactMAPEIA()
         {
-            await PushAndDeployApps("MvcApplicationEFSqlCompact", "master", "Reggae", HttpStatusCode.OK, "");
+            PushAndDeployApps("MvcApplicationEFSqlCompact", "master", "Reggae", HttpStatusCode.OK, "");
         }
 
         // Other apps
@@ -110,23 +111,34 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public async Task UpdatedTargetPathShouldChangeDeploymentDestination()
+        public void UpdatedTargetPathShouldChangeDeploymentDestination()
         {
-            await PushAndDeployApps("TargetPathTest", "master", "Target Path Test", HttpStatusCode.OK, verificationLogText: null, resourcePath: "myTarget/index.html");
+            ApplicationManager.Run("UpdatedTargetPathShouldChangeDeploymentDestination", appManager =>
+            {
+                using (TestRepository testRepository = Git.Clone("TargetPathTest"))
+                {
+                    appManager.GitDeploy(testRepository.PhysicalPath, "master");
+                }
+                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                Assert.Equal(1, results.Count);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
+                KuduAssert.VerifyUrl(appManager.SiteUrl + "myTarget/index.html", "Target Path Test");
+            });
         }
 
         [Fact]
-        public async Task PushAndDeployMVCAppWithLatestNuget()
+        public void PushAndDeployMVCAppWithLatestNuget()
         {
-            await PushAndDeployApps("MVCAppWithLatestNuget", "master", "MVCAppWithLatestNuget", HttpStatusCode.OK, "Deployment successful");
+            PushAndDeployApps("MVCAppWithLatestNuget", "master", "MVCAppWithLatestNuget", HttpStatusCode.OK, "Deployment successful");
         }
 
         //Common code
-        private static async Task PushAndDeployApps(string repoCloneUrl, string defaultBranchName,
+        private static void PushAndDeployApps(string repoCloneUrl, string defaultBranchName,
                                               string verificationText, HttpStatusCode expectedResponseCode, string verificationLogText,
                                               string resourcePath = "", string httpMethod = "GET", string jsonPayload = "")
         {
-            using (new LatencyLogger("await PushAndDeployApps - " + repoCloneUrl))
+            using (new LatencyLogger("PushAndDeployApps - " + repoCloneUrl))
             {
                 Uri uri;
                 if (!Uri.TryCreate(repoCloneUrl, UriKind.Absolute, out uri))
@@ -135,7 +147,7 @@ namespace Kudu.FunctionalTests
                 }
 
                 string randomTestName = uri != null ? Path.GetFileNameWithoutExtension(repoCloneUrl) : repoCloneUrl;
-                await ApplicationManager.RunAsync(randomTestName, async appManager =>
+                ApplicationManager.Run(randomTestName, appManager =>
                 {
                     // Act
                     using (TestRepository testRepository = Git.Clone(randomTestName, uri != null ? repoCloneUrl : null))
@@ -145,17 +157,13 @@ namespace Kudu.FunctionalTests
                             appManager.GitDeploy(testRepository.PhysicalPath, defaultBranchName);
                         }
                     }
-                    var resultsTask = appManager.DeploymentManager.GetResultsAsync();
-                    var url = new Uri(new Uri(appManager.SiteUrl), resourcePath);
-                    Task verifyUrlTask = KuduAssert.VerifyUrlAsync(url.ToString(), verificationText, expectedResponseCode, httpMethod, jsonPayload);
-
-                    await Task.WhenAll(resultsTask, verifyUrlTask);
-                    var results = resultsTask.Result.ToList();
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
 
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    
+                    var url = new Uri(new Uri(appManager.SiteUrl), resourcePath);
+                    KuduAssert.VerifyUrl(url.ToString(), verificationText, expectedResponseCode, httpMethod, jsonPayload);
                     if (!String.IsNullOrEmpty(verificationLogText))
                     {
                         KuduAssert.VerifyLogOutput(appManager, results[0].Id, verificationLogText.Trim());
