@@ -102,7 +102,7 @@ namespace Kudu.FunctionalTests
         {
             var interval = 1;
             var rateLimiter = new DropboxHelper.RateLimiter(limit, TimeSpan.FromSeconds(interval));
-            var duration = TimeSpan.FromSeconds(total / limit - interval);
+            var duration = TimeSpan.FromSeconds(total / limit - interval - 0.5);
             var start = DateTime.Now;
             while (--total > 0)
             {
