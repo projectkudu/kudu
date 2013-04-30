@@ -1,10 +1,10 @@
-﻿using Kudu.Contracts.Settings;
+﻿using System;
+using System.IO;
+using System.Threading.Tasks;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment.Generator;
 using Kudu.Core.Infrastructure;
-using System;
-using System.IO;
-using System.Threading.Tasks;
 
 namespace Kudu.Core.Deployment
 {
@@ -38,7 +38,6 @@ namespace Kudu.Core.Deployment
             // Creates an executable pointing to cmd and the working directory being
             // the repository root
             var exe = new Executable(StarterScriptPath, _repositoryPath, _settings.GetCommandIdleTimeout());
-            exe.AddDeploymentSettingsAsEnvironmentVariables(_settings);
             exe.EnvironmentVariables[ExternalCommandFactory.SourcePath] = _repositoryPath;
             exe.EnvironmentVariables[ExternalCommandFactory.TargetPath] = context.OutputPath;
             exe.EnvironmentVariables[ExternalCommandBuilder.PreviousManifestPath] = (context.PreviousManifest != null) ? context.PreviousManifest.ManifestFilePath : String.Empty;
@@ -48,6 +47,7 @@ namespace Kudu.Core.Deployment
             exe.EnvironmentVariables[ExternalCommandFactory.SelectNodeVersionCommandKey] = SelectNodeVersionCommand;
             exe.EnvironmentVariables[ExternalCommandFactory.NpmJsPathKey] = PathUtility.ResolveNpmJsPath();
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.NuGetPackageRestoreKey] = "true";
+            exe.AddDeploymentSettingsAsEnvironmentVariables(_settings);
 
             exe.SetHomePath(_homePath);
 
