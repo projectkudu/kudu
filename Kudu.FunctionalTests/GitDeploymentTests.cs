@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
@@ -63,7 +64,7 @@ namespace Kudu.FunctionalTests
         public void PushAndDeployNodeAppExpress()
         {
             // Ensure node is installed.
-            Assert.Contains("nodejs", Environment.GetEnvironmentVariable("Path"), StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("nodejs", System.Environment.GetEnvironmentVariable("Path"), StringComparison.OrdinalIgnoreCase);
 
             PushAndDeployApps("Express-Template", "master", "Modify this template to jump-start your Node.JS Express Web Pages application", HttpStatusCode.OK, "");
         }
@@ -94,6 +95,10 @@ namespace Kudu.FunctionalTests
             var normalVarText = "Settings Were Set Properly" + guidtext;
             var kuduSetVar = "KUDU_SYNC_CMD";
             var kuduSetVarText = "Fake Kudu Sync " + guidtext;
+            var expectedLogFeedback =
+                KuduUtils.TestOriginalSiteBuilderFactory ?
+                    String.Empty :
+                    "Using custom deployment setting for {0} custom value is '{1}'.".FormatCurrentCulture(kuduSetVar, kuduSetVarText);
 
             string randomTestName = "CustomDeploymentScriptShouldHaveDeploymentSetting";
             ApplicationManager.Run(randomTestName, appManager =>
@@ -116,7 +121,8 @@ namespace Kudu.FunctionalTests
                 string[] expectedStrings = {
                     unicodeText,
                     normalVar + "=" + normalVarText,
-                    kuduSetVar + "=" + kuduSetVarText };
+                    kuduSetVar + "=" + kuduSetVarText,
+                    expectedLogFeedback };
                 KuduAssert.VerifyLogOutput(appManager, results[0].Id, expectedStrings);
             });
         }
