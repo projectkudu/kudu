@@ -74,7 +74,7 @@ namespace Kudu.FunctionalTests
             PushAndDeployApps("Html5Test", "master", "html5", HttpStatusCode.OK, String.Empty);
         }
 
-        //Entity Framework 4.5 MVC Project with SQL Compact DB (.sdf file) 
+        //Entity Framework 4.5 MVC Project with SQL Compact DB (.sdf file)
         //and Metadata Artifact Processing set to 'Embed in Assembly'
         [Fact]
         public void PushAndDeployEFMVC45AppSqlCompactMAPEIA()
@@ -87,7 +87,6 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void CustomDeploymentScriptShouldHaveDeploymentSetting()
         {
-
             // use a fresh guid so its impossible to accidently see the right output just by chance.
             var guidtext = Guid.NewGuid().ToString();
             var unicodeText = "酷度酷度";
@@ -95,10 +94,7 @@ namespace Kudu.FunctionalTests
             var normalVarText = "Settings Were Set Properly" + guidtext;
             var kuduSetVar = "KUDU_SYNC_CMD";
             var kuduSetVarText = "Fake Kudu Sync " + guidtext;
-            var expectedLogFeedback =
-                String.Format("Using custom deployment setting for {0} custom value is '{1}'.", 
-                    kuduSetVar, kuduSetVarText);
-  
+
             string randomTestName = "CustomDeploymentScriptShouldHaveDeploymentSetting";
             ApplicationManager.Run(randomTestName, appManager =>
             {
@@ -120,11 +116,11 @@ namespace Kudu.FunctionalTests
                 string[] expectedStrings = {
                     unicodeText,
                     normalVar + "=" + normalVarText,
-                    kuduSetVar + "=" + kuduSetVarText,
-                    expectedLogFeedback };
+                    kuduSetVar + "=" + kuduSetVarText };
                 KuduAssert.VerifyLogOutput(appManager, results[0].Id, expectedStrings);
             });
         }
+
         [Fact]
         public void UpdatedTargetPathShouldChangeDeploymentDestination()
         {

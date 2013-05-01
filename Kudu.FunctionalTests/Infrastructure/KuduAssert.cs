@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Kudu.Client;
 using Kudu.Client.Infrastructure;
+using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.TestHarness;
 using Xunit;
@@ -101,7 +102,7 @@ namespace Kudu.FunctionalTests.Infrastructure
         public static async Task VerifyTraceAsync(ApplicationManager manager, string text)
         {
             string trace = await manager.VfsManager.ReadAllTextAsync("LogFiles/Git/trace/trace.xml");
-            
+
             // Since our trace files accumulates traces from multiple tests, we'll identify the start of the current test by looking for the call to delete the web root
             // and then look for the text starting at that point
             int index = trace.LastIndexOf("/scm/?deleteWebRoot=1", StringComparison.OrdinalIgnoreCase);
@@ -113,7 +114,10 @@ namespace Kudu.FunctionalTests.Infrastructure
         public static void VerifyLogOutput(ApplicationManager appManager, string id, params string[] expectedMatches)
         {
             var allEntries = GetLogEntries(appManager, id);
-            Assert.True(expectedMatches.All(match => allEntries.Any(e => e.Message.Contains(match))));
+            foreach (var expectedMatch in expectedMatches)
+            {
+                Assert.True(allEntries.Any(e => e.Message.Contains(expectedMatch)), "Didn't find '{0}' in log output".FormatInvariant(expectedMatch));
+            }
         }
 
         public static void VerifyLogOutputWithUnexpected(ApplicationManager appManager, string id, params string[] unexpectedMatches)
