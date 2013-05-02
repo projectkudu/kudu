@@ -154,15 +154,15 @@
     <Content Include="Scripts\kudusync.cmd">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\packages\KuduSync.NET.0.1.7\tools\KuduSync.NET.exe">
+    <Content Include="..\packages\KuduSync.NET.0.1.8\tools\KuduSync.NET.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>Scripts\KuduSync.NET.exe</Link>
     </Content>
-    <Content Include="..\packages\KuduSync.NET.0.1.7\tools\CommandLine.dll">
+    <Content Include="..\packages\KuduSync.NET.0.1.8\tools\CommandLine.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>Scripts\CommandLine.dll</Link>
     </Content>
-    <Content Include="..\packages\KuduSync.NET.0.1.7\tools\System.IO.Abstractions.dll">
+    <Content Include="..\packages\KuduSync.NET.0.1.8\tools\System.IO.Abstractions.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>Scripts\System.IO.Abstractions.dll</Link>
     </Content>
