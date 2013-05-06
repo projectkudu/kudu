@@ -144,8 +144,8 @@ namespace Kudu.Services
 
                 // Ignore .git and .hg files and folders
                 string pathWithSlash = delta.Path + "/";
-                if (pathWithSlash.StartsWith(parent + ".git/", StringComparison.OrdinalIgnoreCase) ||
-                    pathWithSlash.StartsWith(parent + ".hg/", StringComparison.OrdinalIgnoreCase))
+                if (pathWithSlash.IndexOf("/.git/", StringComparison.OrdinalIgnoreCase) != -1 ||
+                    pathWithSlash.IndexOf("/.hg/", StringComparison.OrdinalIgnoreCase) != -1)
                 {
                     continue;
                 }
