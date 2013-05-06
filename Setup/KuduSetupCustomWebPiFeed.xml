@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <version>1.0.0</version>
+  <title>Feed to setup Kudu for various scenarios.</title>
+  <updated>2013-5-06T01:00:00Z</updated>
+  <author>
+    <name>Kudu Team</name>
+    <uri>https://github.com/projectkudu</uri>
+  </author>
+  <id>KuduSetupCustomWebPiFeed.xml</id>
+  <entry>
+    <productId>KuduDevSetup</productId>
+    <metadata>
+      <title>Kudu Development Prerequisites</title>
+      <summary>You only need this if you are modifying or testing Kudu.</summary>
+      <version>1.0.0</version>
+      <author>
+        <name>Kudu Team</name>
+        <uri>https://github.com/projectkudu</uri>
+      </author>
+      <published>2013-5-06T01:00:00Z</published>
+    </metadata>
+    <dependency>
+      <and>
+        <dependnecy>
+          <productId>msysgitWM</productId>
+        </dependnecy>
+        <dependency>
+          <productId>IIS7</productId>
+        </dependency>
+        <dependency>
+          <productId>IISManagementConsole</productId>
+        </dependency>
+        <dependency>
+          <productId>NetFxExtensibility45</productId>
+        </dependency>
+        <dependency>
+          <productId>ASPNET45</productId>
+        </dependency>
+        <dependency>
+          <productId>StaticContent</productId>
+        </dependency>
+        <dependency>
+          <productId>iisnode</productId>
+        </dependency>
+        <dependency>
+          <productId>NodeJS_0_8_2</productId>
+        </dependency>
+        <dependency>
+          <productId>UrlRewrite2</productId>
+        </dependency>
+      </and>
+    </dependency>
+    <installers>
+      <installer>
+        <!-- installer Id should be unique for every SampleProduct installer -->
+        <id>1</id>
+        <!-- language of installer is English -->
+        <languageId>en</languageId>
+
+        <!-- how should WebPI install your product? -->
+        <installCommands>
+          <cmdline>
+            <exe>%windir%\system32\cmd.exe</exe>
+            <commandLineArguments>/C echo noop</commandLineArguments>
+          </cmdline>
+        </installCommands>
+      </installer>
+    </installers>
+  </entry>
+</feed>
