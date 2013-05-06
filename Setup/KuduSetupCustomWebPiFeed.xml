@@ -1,0 +1,215 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <version>1.0.0</version>
+  <title>Feed to setup Kudu for various scenarios.</title>
+  <updated>2013-5-06T01:00:00Z</updated>
+  <author>
+    <name>Kudu Team</name>
+    <uri>https://github.com/projectkudu</uri>
+  </author>
+  <id>KuduSetupCustomWebPiFeed.xml</id>
+  <entry>
+    <productId>KuduDevSetup</productId>
+    <metadata>
+      <title>Kudu Development Prerequisites</title>
+      <summary>You only need this if you are modifying or testing Kudu.</summary>
+      <version>1.0.0</version>
+      <author>
+        <name>Kudu Team</name>
+        <uri>https://github.com/projectkudu</uri>
+      </author>
+      <published>2013-5-06T01:00:00Z</published>
+    </metadata>
+    <dependency>
+      <and>
+        <dependency>
+          <productId>msysgit_1_8_0</productId>
+        </dependency>
+        <dependency>
+          <productId>Hg_2_4_2</productId>
+        </dependency>
+        <!--
+          This entry is from the main feed and installs Node 0.6.2.0 and 0.8.2 side by side
+          It does all the steps including the "painful" step.
+         -->
+        <dependency>
+          <productId>NodeJS_0_8_2</productId>
+        </dependency>
+        <dependency>
+          <productId>iisnode</productId>
+        </dependency>
+        <dependency>
+          <productId>StaticContent</productId>
+        </dependency>
+        <dependency>
+          <productId>DefaultDocument</productId>
+        </dependency>
+        <dependency>
+          <productId>DirectoryBrowse</productId>
+        </dependency>
+        <dependency>
+          <productId>HTTPErrors</productId>
+        </dependency>
+        <dependency>
+          <productId>HTTPLogging</productId>
+        </dependency>
+        <dependency>
+          <productId>IISManagementConsole</productId>
+        </dependency>
+        <dependency>
+          <productId>NetFxExtensibility45</productId>
+        </dependency>
+        <dependency>
+          <productId>ASPNET45</productId>
+        </dependency>
+        <dependency>
+          <productId>UrlRewrite2</productId>
+        </dependency>
+      </and>
+    </dependency>
+    <installers>
+      <installer>
+        <!-- installer Id should be unique for every SampleProduct installer -->
+        <id>1</id>
+        <!-- language of installer is English -->
+        <languageId>en</languageId>
+
+        <!-- how should WebPI install your product? -->
+        <installCommands>
+          <cmdline>
+            <exe>%windir%\system32\cmd.exe</exe>
+            <commandLineArguments>/C echo noop</commandLineArguments>
+          </cmdline>
+        </installCommands>
+      </installer>
+    </installers>
+  </entry>
+  <!-- entry for MSysGIT  locked to a known version -->
+  <entry>
+    <productId>msysgit_1_8_0</productId>
+    <metadata>
+      <title>Git for Windows (x86)</title>
+      <id>http://msysgit.googlecode.com/files/Git-1.8.0-preview20120201.exe</id>
+      <version>1.8.0</version>
+      <updated>2013-01-11</updated>
+      <published>2013-01-11</published>
+      <summary>Git for Windows (x86)</summary>
+      <longSummary>Git is a powerful distributed Source Code Management tool.</longSummary>
+      <link href="http://code.google.com/p/msysgit/" />
+      <searchExclude />
+      <author>
+        <name>msysgit</name>
+        <uri>http://code.google.com/p/msysgit/</uri>
+      </author>
+      <images>
+        <icon>http://www.microsoft.com/web/media/gallery/apps-screenshots/git32x32.png</icon>
+      </images>
+    </metadata>
+    <discoveryHint>
+      <or>
+        <discoveryHint>
+          <registry>
+            <keyPath>HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Git_is1</keyPath>
+            <valueName>MajorVersion</valueName>
+            <valueValue>1</valueValue>
+            <valueName>MinorVersion</valueName>
+            <valueValue>8</valueValue>
+          </registry>
+        </discoveryHint>
+        <discoveryHint>
+          <registry>
+            <keyPath>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Git_is1</keyPath>
+            <valueName>MajorVersion</valueName>
+            <valueValue>1</valueValue>
+            <valueName>MinorVersion</valueName>
+            <valueValue>8</valueValue>
+          </registry>
+        </discoveryHint>
+      </or>
+    </discoveryHint>
+    <installers>
+      <installer>
+        <id>1</id>
+        <languageId>en</languageId>
+        <osList>
+          <os>
+            <minimumVersion>
+              <osMajorVersion>6</osMajorVersion>
+              <osMinorVersion>0</osMinorVersion>
+            </minimumVersion>
+          </os>
+        </osList>
+        <installerFile>
+          <fileSize>13957</fileSize>
+          <installerURL>http://msysgit.googlecode.com/files/Git-1.8.0-preview20121022.exe</installerURL>
+          <sha1>012424f08c5fb9da9cbdab56123f00d6805f8ffc</sha1>
+        </installerFile>
+        <installCommands>
+          <cmdLine>
+            <exe>%InstallerFile%</exe>
+            <commandLineArguments>/VERYSILENT /SP- /SUPPRESSMSGBOXES</commandLineArguments>
+          </cmdLine>
+        </installCommands>
+      </installer>
+    </installers>
+  </entry>
+  <!-- entry for mercurial locked to a known version -->
+  <entry>
+    <productId>Hg_2_4_2</productId>
+    <metadata>
+      <title>Mercurial for Windows (x86)</title>
+      <id>http://mercurial.selenic.com/release/windows/mercurial-2.4.2-x86.msi</id>
+      <version>2.4.2</version>
+      <updated>2013-05-06</updated>
+      <published>2013-05-06</published>
+      <summary>Mercurial for Windows (x86)</summary>
+      <longSummary>Mercurial source control managementMercurial is a free, distributed source control management tool.</longSummary>
+      <link href="http://mercurial.selenic.com/" />
+      <author>
+        <name>mercurial</name>
+        <uri>http://mercurial.selenic.com/</uri>
+      </author>
+    </metadata>
+    <discoveryHint>
+      <or>
+        <discoveryHint>
+          <file>
+            <filePath>%programfiles%\Mercurial\hg.exe</filePath>
+            <minimumVersion>2.4.2.0</minimumVersion>
+          </file>
+        </discoveryHint>
+        <discoveryHint>
+          <file>
+            <filePath>%programfiles(x86)%\Mercurial\hg.exe</filePath>
+            <minimumVersion>2.4.2.0</minimumVersion>
+          </file>
+        </discoveryHint>
+      </or>
+    </discoveryHint>
+    <installers>
+      <installer>
+        <id>1</id>
+        <languageId>en</languageId>
+        <osList>
+          <os>
+            <minimumVersion>
+              <osMajorVersion>6</osMajorVersion>
+              <osMinorVersion>0</osMinorVersion>
+            </minimumVersion>
+          </os>
+        </osList>
+        <installerFile>
+          <fileSize>6082560</fileSize>
+          <installerURL>http://mercurial.selenic.com/release/windows/mercurial-2.4.2-x86.msi</installerURL>
+          <sha1>b7a6829ac3b51836bc0f051f619418664a46133f</sha1>
+        </installerFile>
+        <installCommands>
+          <msiInstall>
+            <msi>%InstallerFile%</msi>
+            <commandLineArguments>/quiet /norestart</commandLineArguments>
+          </msiInstall>
+        </installCommands>
+      </installer>
+    </installers>
+  </entry>
+</feed>
