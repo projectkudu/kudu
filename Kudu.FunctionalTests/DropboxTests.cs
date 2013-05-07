@@ -27,10 +27,10 @@ namespace Kudu.FunctionalTests
 {
     public class DropboxTests
     {
-        static Random _random = new Random(unchecked((int)DateTime.Now.Ticks));
+        private static readonly Random _random = new Random(unchecked((int)DateTime.Now.Ticks));
 
         [Fact]
-        public void TestDropboxBasic()
+        public async Task TestDropboxBasic()
         {
             OAuthInfo oauth = GetOAuthInfo();
             if (oauth == null)
@@ -43,14 +43,17 @@ namespace Kudu.FunctionalTests
             DropboxDeployInfo deploy = GetDeployInfo("/BasicTest", oauth, account);
 
             string appName = "DropboxTest";
-            ApplicationManager.Run(appName, appManager =>
+            await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 HttpClient client = HttpClientHelper.CreateClient(appManager.ServiceUrl, appManager.DeploymentManager.Credentials);
-                client.PostAsJsonAsync("deploy?scmType=Dropbox", deploy).Result.EnsureSuccessful();
+                var result = await client.PostAsJsonAsync("deploy?scmType=Dropbox", deploy);
+                result.EnsureSuccessful();
 
-                KuduAssert.VerifyUrl(appManager.SiteUrl + "/default.html", "Hello Default!");
-                KuduAssert.VerifyUrl(appManager.SiteUrl + "/temp/temp.html", "Hello Temp!");
-                KuduAssert.VerifyUrl(appManager.SiteUrl + "/New Folder/New File.html", "Hello New File!");
+                await Task.WhenAll(
+                    KuduAssert.VerifyUrlAsync(appManager.SiteUrl + "/default.html", "Hello Default!"),
+                    KuduAssert.VerifyUrlAsync(appManager.SiteUrl + "/temp/temp.html", "Hello Temp!"),
+                    KuduAssert.VerifyUrlAsync(appManager.SiteUrl + "/New Folder/New File.html", "Hello New File!")
+                );
             });
         }
 

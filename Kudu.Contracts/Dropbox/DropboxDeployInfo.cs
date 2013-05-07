@@ -25,6 +25,6 @@ namespace Kudu.Contracts.Dropbox
 
         public string Email { get; set; }
 
-        public IEnumerable<DropboxDeltaInfo> Deltas { get; set; }
+        public ICollection<DropboxDeltaInfo> Deltas { get; set; }
     }
 }

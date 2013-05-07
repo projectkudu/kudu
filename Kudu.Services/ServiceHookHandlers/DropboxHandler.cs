@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Globalization;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web;
 using Kudu.Contracts.Dropbox;
 using Kudu.Contracts.Settings;
@@ -45,11 +46,11 @@ namespace Kudu.Services.ServiceHookHandlers
             return DeployAction.UnknownPayload;
         }
 
-        public virtual void Fetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch, ILogger logger)
+        public virtual async Task Fetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch, ILogger logger)
         {
-            // Sync with dropbox
-            var dropboxInfo = ((DropboxInfo)deploymentInfo);
-            deploymentInfo.TargetChangeset = _dropBoxHelper.Sync(dropboxInfo, targetBranch, logger, repository);
+            // (A)sync with dropbox
+            var dropboxInfo = (DropboxInfo)deploymentInfo;
+            deploymentInfo.TargetChangeset = await _dropBoxHelper.Sync(dropboxInfo, targetBranch, logger, repository);
         }
 
         internal class DropboxInfo : DeploymentInfo
