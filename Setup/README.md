@@ -8,11 +8,11 @@ Simply run the script as Admin, and accept the EULAs. Reboots are suppressed, so
 it probably a good idea to reboot after the install completes.
 
 ## Known Issues
-There still a few manual steps required in order to run the functional tests. What is
+There still are a few manual steps required in order to run the functional tests. What is
 missing is getting VS2010 project files and XUnit. This has not been
 tested on anything but Windows 8 and Server 2012 x64. You may run into issues
-on other OSes architectures. If so feel free to report them.
+on other OSes architectures, if you do please report them.
 
-On a computer without .NET 3.5 installed it the custom feed may enable .NET3.5
-this is not a hard dependency as far as we know, but a consequence of using
-some of the standard WebPI product dependencies to enable .NET4.5 extensibility.
+On a computer without .NET 3.5 installed the custom feed may enable .NET3.5
+this is not a hard dependency of Kudu, but a consequence of using
+some of the standard WebPI product dependencies to enable .NET4.5 extensibility for IIS.
