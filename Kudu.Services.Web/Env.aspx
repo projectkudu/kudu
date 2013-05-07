@@ -96,6 +96,13 @@
             <li><%: entry.Key %> = <%: entry.Value %></li>
         <% } %>
         </ul>
+
+        <h2>HTTP headers</h2>
+        <ul class="fixed-width">
+        <% foreach (string name in Request.Headers) { %>
+            <li><%: name  %>=<%: Request.Headers[name] %></li>
+        <% } %>
+        </ul>
     </div>
 </body>
 </html>
