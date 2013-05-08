@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.IO.Abstractions;
 using System.Linq;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
-using System.IO.Abstractions;
-using System.Diagnostics;
 using Kudu.Core.Settings;
 
 namespace Kudu.Core.Deployment.Generator
@@ -39,7 +39,7 @@ namespace Kudu.Core.Deployment.Generator
             string targetProjectPath = settings.GetValue(SettingsKeys.Project);
             if (!String.IsNullOrEmpty(targetProjectPath))
             {
-                tracer.Trace("Found .deployment file in repository");
+                tracer.Trace("Specific project was specified: " + targetProjectPath);
 
                 targetProjectPath = Path.GetFullPath(Path.Combine(repositoryRoot, targetProjectPath.TrimStart('/', '\\')));
 
@@ -72,7 +72,7 @@ namespace Kudu.Core.Deployment.Generator
             VsSolution solution = solutions[0];
 
             // We need to determine what project to deploy so get a list of all web projects and
-            // figure out with some heuristic, which one to deploy. 
+            // figure out with some heuristic, which one to deploy.
 
             // TODO: Pick only 1 and throw if there's more than one
             VsSolutionProject project = solution.Projects.Where(p => p.IsWap || p.IsWebSite).FirstOrDefault();

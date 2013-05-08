@@ -37,7 +37,7 @@ namespace Kudu.Core.Deployment
             var targetProjectPath = settings.GetValue(SettingsKeys.Project);
             if (!String.IsNullOrEmpty(targetProjectPath))
             {
-                tracer.Trace("Found .deployment file in repository");
+                tracer.Trace("Specific project was specified: " + targetProjectPath);
 
                 targetProjectPath = Path.GetFullPath(Path.Combine(repositoryRoot, targetProjectPath.TrimStart('/', '\\')));
 
