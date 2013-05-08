@@ -140,7 +140,7 @@ namespace Kudu.TestHarness
                 cachedPath = Path.Combine(PathHelper.RepositoryCachePath, repoName);
 
                 // Check for the actually .git folder, in case some bogus parent exists but is not an actual repo
-                bool alreadyExists = Directory.Exists(Path.Combine(cachedPath, ".git"));
+                bool alreadyExists = Directory.Exists(Path.Combine(cachedPath, ".git")) && IsGitRepo(cachedPath);
 
                 Executable gitExe = GetGitExe(cachedPath, environments);
 
@@ -291,6 +291,21 @@ namespace Kudu.TestHarness
             TestTracer.Trace("  stdout: {0}", result.Item1);
             TestTracer.Trace("  stderr: {0}", result.Item2);
             return result;
+        }
+
+        private static bool IsGitRepo(string cachedPath)
+        {
+            try
+            {
+                // Attempt to read the HEAD commit id. If this works, 
+                // it should give us enough confidence that the clone worked.
+                return Git.Id(cachedPath) != null;
+            }
+            catch
+            {
+                
+            }
+            return false;
         }
     }
 }
