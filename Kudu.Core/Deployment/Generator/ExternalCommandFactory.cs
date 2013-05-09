@@ -1,7 +1,7 @@
-﻿using Kudu.Contracts.Settings;
-using Kudu.Core.Infrastructure;
-using System.IO;
+﻿using System.IO;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment.Generator
 {
@@ -21,7 +21,7 @@ namespace Kudu.Core.Deployment.Generator
         private IEnvironment _environment;
         private IDeploymentSettingsManager _deploymentSettings;
         private string _repositoryPath;
-    
+
         public ExternalCommandFactory(IEnvironment environment, IDeploymentSettingsManager settings, string repositoryPath)
         {
             _environment = environment;
@@ -57,7 +57,8 @@ namespace Kudu.Core.Deployment.Generator
             // Add the msbuild path and git path to the %PATH% so more tools are available
             var toolsPaths = new[] {
                 Path.GetDirectoryName(PathUtility.ResolveMSBuildPath()),
-                Path.GetDirectoryName(PathUtility.ResolveGitPath())
+                Path.GetDirectoryName(PathUtility.ResolveGitPath()),
+                Path.GetDirectoryName(PathUtility.ResolveVsTestPath())
             };
 
             exe.AddToPath(toolsPaths);
@@ -102,6 +103,5 @@ namespace Kudu.Core.Deployment.Generator
                 exe.EnvironmentVariables[key] = value;
             }
         }
-
     }
 }

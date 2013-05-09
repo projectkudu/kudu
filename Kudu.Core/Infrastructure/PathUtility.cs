@@ -28,12 +28,12 @@ namespace Kudu.Core.Infrastructure
 
             if (!File.Exists(path))
             {
-                string programFiles = SystemEnvironment.GetEnvironmentVariable(ProgramFiles64bitKey) ??  SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFiles);
+                string programFiles = SystemEnvironment.GetEnvironmentVariable(ProgramFiles64bitKey) ?? SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFiles);
                 path = Path.Combine(programFiles, "Mercurial", "hg.exe");
 
                 if (!File.Exists(path))
                 {
-                    throw new InvalidOperationException(Resources.Error_FailedToLocateHg); 
+                    throw new InvalidOperationException(Resources.Error_FailedToLocateHg);
                 }
             }
 
@@ -52,7 +52,7 @@ namespace Kudu.Core.Infrastructure
 
             return path;
         }
-        
+
         internal static string ResolveNpmPath()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
@@ -69,6 +69,12 @@ namespace Kudu.Core.Infrastructure
         {
             string windir = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.Windows);
             return Path.Combine(windir, @"Microsoft.NET", "Framework", "v4.0.30319", "MSBuild.exe");
+        }
+
+        internal static string ResolveVsTestPath()
+        {
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            return Path.Combine(programFiles, "Microsoft Visual Studio 11.0", "Common7", "IDE", "CommonExtensions", "Microsoft", "TestWindow");
         }
 
         internal static string NormalizePath(string path)
