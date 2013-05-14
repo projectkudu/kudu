@@ -6,14 +6,36 @@ namespace Kudu.Contracts.Infrastructure
 {
     public static class LockExtensions
     {
+        private static readonly TimeSpan _sleepInterval = TimeSpan.FromMilliseconds(250);
+
         // try acquire lock and then execute the operation
         // return true if lock acquired and operation executed
         public static bool TryLockOperation(this IOperationLock lockObj,
                                          Action operation,
                                          TimeSpan timeout)
         {
-            Task<bool> result = TryLockOperationAsync(lockObj, () => { operation(); return TaskHelpers.Completed(); }, timeout);
-            return result.Result;
+            var elapsed = TimeSpan.Zero;
+
+            while (!lockObj.Lock())
+            {
+                if (elapsed >= timeout)
+                {
+                    return false;
+                }
+
+                Thread.Sleep(_sleepInterval);
+                elapsed += _sleepInterval;
+            }
+
+            try
+            {
+                operation();
+                return true;
+            }
+            finally
+            {
+                lockObj.Release();
+            }
         }
 
         public static async Task<bool> TryLockOperationAsync(this IOperationLock lockObj,
@@ -30,8 +52,8 @@ namespace Kudu.Contracts.Infrastructure
                     return false;
                 }
 
-                await Task.Delay(interval);
-                elapsed += interval;
+                await Task.Delay(_sleepInterval);
+                elapsed += _sleepInterval;
             }
 
             try
