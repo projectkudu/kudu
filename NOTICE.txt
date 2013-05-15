@@ -22,12 +22,6 @@ Website:      http://code.google.com/p/elmah/
 Copyright:    Copyright (c) 2004-9 Atif Aziz. All rights reserved
 License:      Apache 2.0
 
-Entity Framework
------
-Website:    http://msdn.microsoft.com/en-us/data/ef
-Copyright:  Copyright (c) Microsoft Corporation.  All rights reserved.
-License:    http://go.microsoft.com/fwlink/?LinkId=224682 
-
 git-dot-aspx
 -----
 Website:      https://github.com/JeremySkinner/git-dot-aspx
@@ -56,12 +50,6 @@ jQuery Templates
 -----
 Website:      https://github.com/jquery/jquery-tmpl
 Copyright:    Copyright 2010, John Resig
-License:      MIT
-
-jQuery timeago
------
-Website:      http://timeago.yarp.com/
-Copyright:    Copyright © 2008-2011 Ryan McGeary (@rmm5t)
 License:      MIT
 
 jQuery UI (Core, Widget, Datepicker)
@@ -99,24 +87,6 @@ NuGet
 Website:      http://nuget.codeplex.com
 Copyright:    Copyright 2010-2011 Outercurve Foundation
 License:      Apache Software Foundation License 2.0
-
-Sammy
------
-Website:      http://sammyjs.org/
-Copyright:    Copyright (c) 2008 Aaron Quint, Quirkey NYC, LLC
-License:      Custom - https://github.com/quirkey/sammy/blob/master/LICENSE
-
-SignalR
------
-Website:      https://github.com/SignalR/SignalR
-Copyright:    Copyright (c) 2011 David Fowler & Damian Edwards
-License:      MIT
-
-SQL Server Compact
------
-Website:    http://www.microsoft.com 
-Copyright:  Copyright (c) Microsoft Corporation.  All rights reserved.
-License:    http://www.microsoft.com/web/webpi/eula/SQLCE_EULA_ENU.rtf
 
 WebActivator
 -----
