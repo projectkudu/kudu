@@ -123,7 +123,8 @@ namespace Kudu.Services
                         CreateMarkerFile();
                     }
 
-                    context.Response.StatusCode = 409;
+                    // Return a http 202: the request has been accepted for processing, but the processing has not been completed.
+                    context.Response.StatusCode = 202;
                     context.ApplicationInstance.CompleteRequest();
                 }
             }

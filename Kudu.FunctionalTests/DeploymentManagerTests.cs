@@ -631,7 +631,7 @@ namespace Kudu.FunctionalTests
                 HttpResponseMessage responseResult2 = await responseTask2;
 
                 Assert.Equal(HttpStatusCode.OK, responseResult1.StatusCode);
-                Assert.Equal(HttpStatusCode.Conflict, responseResult2.StatusCode);
+                Assert.Equal(HttpStatusCode.Accepted, responseResult2.StatusCode);
 
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "Test branch");
 
