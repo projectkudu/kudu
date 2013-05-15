@@ -5,5 +5,6 @@ namespace Kudu.Contracts.SourceControl
     { 
         public const string None = "None";
         public const string Tfs = "Tfs";
+        public const string TfsGit = "TfsGit";
     }
 }

@@ -1064,7 +1064,7 @@ project = myproject");
         }
 
         [Fact]
-        public void HookForbiddenForScmTypeNone()
+        public void HookForbiddenForSomeScmTypes()
         {
             string bitbucketPayload = @"{ ""canon_url"": ""https://github.com"", ""commits"": [ { ""author"": ""davidebbo"", ""branch"": ""master"", ""files"": [ { ""file"": ""Mvc3Application/Views/Home/Index.cshtml"", ""type"": ""modified"" } ], ""message"": ""Blah2\n"", ""node"": ""e550351c5188"", ""parents"": [ ""297fcc65308c"" ], ""raw_author"": ""davidebbo <david.ebbo@microsoft.com>"", ""raw_node"": ""ea1c6d7ea669c816dd5f86206f7b47b228fdcacd"", ""revision"": null, ""size"": -1, ""timestamp"": ""2012-09-20 03:11:20"", ""utctimestamp"": ""2012-09-20 01:11:20+00:00"" } ], ""repository"": { ""absolute_url"": ""/KuduApps/SimpleWebApplication"", ""fork"": false, ""is_private"": false, ""name"": ""Mvc3Application"", ""owner"": ""davidebbo"", ""scm"": ""git"", ""slug"": ""mvc3application"", ""website"": """" }, ""user"": ""davidebbo"" }";
             string githubPayload = @"{ ""after"": ""7e2a599e2d28665047ec347ab36731c905c95e8b"", ""before"": ""7e2a599e2d28665047ec347ab36731c905c95e8b"",  ""commits"": [ { ""added"": [], ""author"": { ""email"": ""prkrishn@hotmail.com"", ""name"": ""Pranav K"", ""username"": ""pranavkm"" }, ""id"": ""43acf30efa8339103e2bed5c6da1379614b00572"", ""message"": ""Changes from master again"", ""modified"": [ ""Hello.txt"" ], ""timestamp"": ""2012-12-17T17:32:15-08:00"" } ], ""compare"": ""https://github.com/KuduApps/GitHookTest/compare/7e2a599e2d28...7e2a599e2d28"", ""created"": false, ""deleted"": false, ""forced"": false, ""head_commit"": { ""added"": [ "".gitignore"", ""SimpleWebApplication.sln"", ""SimpleWebApplication/About.aspx"", ""SimpleWebApplication/About.aspx.cs"", ""SimpleWebApplication/About.aspx.designer.cs"", ""SimpleWebApplication/Account/ChangePassword.aspx"", ""SimpleWebApplication/Account/ChangePassword.aspx.cs"", ""SimpleWebApplication/Account/ChangePassword.aspx.designer.cs"", ""SimpleWebApplication/Account/ChangePasswordSuccess.aspx"", ""SimpleWebApplication/Account/ChangePasswordSuccess.aspx.cs"", ""SimpleWebApplication/Account/ChangePasswordSuccess.aspx.designer.cs"", ""SimpleWebApplication/Account/Login.aspx"", ""SimpleWebApplication/Account/Login.aspx.cs"", ""SimpleWebApplication/Account/Login.aspx.designer.cs"", ""SimpleWebApplication/Account/Register.aspx"", ""SimpleWebApplication/Account/Register.aspx.cs"", ""SimpleWebApplication/Account/Register.aspx.designer.cs"", ""SimpleWebApplication/Account/Web.config"", ""SimpleWebApplication/Default.aspx"", ""SimpleWebApplication/Default.aspx.cs"", ""SimpleWebApplication/Default.aspx.designer.cs"", ""SimpleWebApplication/Global.asax"", ""SimpleWebApplication/Global.asax.cs"", ""SimpleWebApplication/Properties/AssemblyInfo.cs"", ""SimpleWebApplication/Scripts/jquery-1.4.1-vsdoc.js"", ""SimpleWebApplication/Scripts/jquery-1.4.1.js"", ""SimpleWebApplication/Scripts/jquery-1.4.1.min.js"", ""SimpleWebApplication/SimpleWebApplication.csproj"", ""SimpleWebApplication/Site.Master"", ""SimpleWebApplication/Site.Master.cs"", ""SimpleWebApplication/Site.Master.designer.cs"", ""SimpleWebApplication/Styles/Site.css"", ""SimpleWebApplication/Web.Debug.config"", ""SimpleWebApplication/Web.Release.config"", ""SimpleWebApplication/Web.config"" ], ""author"": { ""email"": ""david.ebbo@microsoft.com"", ""name"": ""davidebbo"", ""username"": ""davidebbo"" }, ""committer"": { ""email"": ""david.ebbo@microsoft.com"", ""name"": ""davidebbo"", ""username"": ""davidebbo"" }, ""distinct"": false, ""id"": ""7e2a599e2d28665047ec347ab36731c905c95e8b"", ""message"": ""Initial"", ""modified"": [], ""removed"": [], ""timestamp"": ""2011-11-21T23:07:42-08:00"", ""url"": ""https://github.com/KuduApps/GitHookTest/commit/7e2a599e2d28665047ec347ab36731c905c95e8b"" }, ""pusher"": { ""name"": ""none"" }, ""ref"": ""refs/heads/master"", ""repository"": { ""created_at"": ""2012-06-28T00:07:55-07:00"", ""description"": """", ""fork"": false, ""forks"": 1, ""has_downloads"": true, ""has_issues"": true, ""has_wiki"": true, ""language"": ""ASP"", ""name"": ""GitHookTest"", ""open_issues"": 0, ""organization"": ""KuduApps"", ""owner"": { ""email"": ""kuduapps@hotmail.com"", ""name"": ""KuduApps"" }, ""private"": false, ""pushed_at"": ""2012-06-28T00:11:48-07:00"", ""size"": 188, ""url"": ""https://github.com/KuduApps/SimpleWebApplication"", ""watchers"": 1 } }";
@@ -1087,27 +1087,27 @@ project = myproject");
                     Assert.Equal(HttpStatusCode.NotFound, notFoundException.ResponseMessage.StatusCode);
                 }
 
-                // Disable by setting to None
-                appManager.SettingsManager.SetValue(SettingsKeys.ScmType, ScmType.None.ToString()).Wait();
-                var client = CreateClient(appManager);
-                var post = new Dictionary<string, string>
-                {
-                    { "payload", githubPayload }
-                };
-                HttpResponseMessage response = client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result;
-                Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-
-                // Disable by setting to Tfs
-                appManager.SettingsManager.SetValue(SettingsKeys.ScmType, ScmType.Tfs.ToString()).Wait();
-                post = new Dictionary<string, string>
-                {
-                    { "payload", bitbucketPayload }
-                };
-                client = CreateClient(appManager);
-                client.DefaultRequestHeaders.Add("User-Agent", "Bitbucket.org");
-                response = client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result;
-                Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+                // Make sure it's disabled for None and Tfs* ScmTypes
+                EnsureDeployDisabled(appManager, ScmType.None, null, githubPayload);
+                EnsureDeployDisabled(appManager, ScmType.Tfs, "Bitbucket.org", bitbucketPayload);
+                EnsureDeployDisabled(appManager, ScmType.TfsGit, "Bitbucket.org", bitbucketPayload);
             });
+        }
+
+        private void EnsureDeployDisabled(ApplicationManager appManager, string scmType, string userAgent, string payload)
+        {
+            appManager.SettingsManager.SetValue(SettingsKeys.ScmType, scmType).Wait();
+            HttpClient client = CreateClient(appManager);
+            var post = new Dictionary<string, string>
+            {
+                { "payload", payload }
+            };
+            if (userAgent != null)
+            {
+                client.DefaultRequestHeaders.Add("User-Agent", userAgent);
+            }
+            HttpResponseMessage response = client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result;
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         }
 
         [Fact]

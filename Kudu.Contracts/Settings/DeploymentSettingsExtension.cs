@@ -105,7 +105,7 @@ namespace Kudu.Contracts.Settings
         public static bool IsScmEnabled(this IDeploymentSettingsManager settings)
         {
             string scmType = settings.GetValue(SettingsKeys.ScmType);
-            return scmType != ScmType.None && scmType != ScmType.Tfs;
+            return scmType != ScmType.None && scmType != ScmType.Tfs && scmType != ScmType.TfsGit;
         }
     }
 }
