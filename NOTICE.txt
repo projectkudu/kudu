@@ -64,6 +64,12 @@ Website:      http://json.codeplex.com/
 Copyright:    Copyright (c) 2007 James Newton-King
 License:      MIT
 
+Mercurial.NET
+-----
+Website:      https://mercurialnet.codeplex.com/
+Copyright:    Copyright (c) 2010-2011, Lasse V. Karlsen
+License:      BSD
+
 Microsoft Web Infrastructure
 -----
 Website:    http://www.asp.net/
