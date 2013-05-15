@@ -83,7 +83,7 @@
 </head>
 <body>
     <div>
-        <% 
+        <%
             string commitFile = MapPath("~/commit.txt");
             string sha = File.Exists(commitFile) ? File.ReadAllText(commitFile).Trim() : null;
             var version = typeof(Kudu.Services.Web.Tracing.TraceModule).Assembly.GetName().Version;
@@ -100,32 +100,38 @@
 
     <table>
         <tr>
-            <td><strong>Live Site</strong></td>
-            <td class="path"><%= MapPath("_app") %></td>
-        </tr>
-        <tr>
-            <td><strong>Temp</strong></td>
-            <td class="path"> <%= Path.GetTempPath() %></td>
-        </tr>
-        <tr>
-            <td><strong>Diagnostics Dump</strong></td>
-            <td><a href="dump">Download</a></td>
-        </tr>
-        <tr>
-            <td><strong>Diagnostics Log</strong></td>
-            <td><a href="logstream">Stream</a></td>
-        </tr>
-        <tr>
-            <td><strong>Runtime Environment</strong></td>
-            <td><a href="Env.aspx">View</a></td>
-        </tr>
-        <tr>
-            <% 
+            <%
                 var upTime = Kudu.Services.Web.Tracing.TraceModule.UpTime.ToString();
             %>
             <td><strong>Up Time</strong></td>
             <td><%= upTime %></td>
         </tr>
+        <tr>
+            <td><strong>Live Site</strong></td>
+            <td class="path"><%= MapPath("_app") %></td>
+        </tr>
+        <tr>
+            <td><strong>Temp</strong></td>
+            <td class="path"><%= Path.GetTempPath() %></td>
+        </tr>
+        <tr>
+            <td><strong>Runtime Environment</strong></td>
+            <td><a href="Env.aspx">View</a></td>
+        </tr>
+
+        <tr>
+            <td><strong>Diagnostic Dump</strong></td>
+            <td><a href="dump">Download</a></td>
+        </tr>
+        <tr>
+            <td><strong>Diagnostic Console</strong></td>
+            <td><a href="KuduExec">Launch</a>&nbsp;&nbsp;This is an experimental feature.</td>
+        </tr>
+        <tr>
+            <td><strong>Diagnostic Log Stream</strong></td>
+            <td><a href="logstream">Stream</a>&nbsp;&nbsp;If no log events are being generated the page may not load.</td>
+        </tr>
+
     </table>
 </body>
 </html>
