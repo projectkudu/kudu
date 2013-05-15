@@ -1,0 +1,46 @@
+﻿body {
+    font-family: sans-serif;
+}
+
+span.code {
+     font-family: monospace;
+      font-size: 12pt;
+}
+
+div.console {
+    font-size: 12pt;
+    white-space: pre;
+    font-family: monospace;
+    height:inherit;
+    padding: 0.5em;
+}
+
+div.console div.jquery-console-inner {
+    padding: 0.1em;
+    overflow: auto;
+    margin-left:auto;
+    margin-right:auto;
+    width:95%;
+    height:inherit;
+    background-color: black;
+    color: white;
+}
+
+div.console div.jquery-console-focus span.jquery-console-cursor {
+    background: white;
+    color: black;
+}
+
+div.console div.jquery-console-message-error {
+    color: red;
+}
+
+div.console div.jquery-console-message-value {
+    color: white;
+}
+
+div.console div.jquery-console-message-type {
+    color: white;
+}
+
+

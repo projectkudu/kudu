@@ -1,0 +1,19 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Kudu Remote Execution Console</title>
+    <link rel="stylesheet" type="text/css" href="KuduWebExec.css" />
+</head>
+<body>
+    <div id="KuduExecConsole"></div>
+    <p>
+        This is an experimental feature. If the console becomes unresponsive for more than 30 seconds try Ctrl-C or refresh the page.
+        Output from a command is only returned once a command has exited, so running interactive commands like <span class="code">powershell.exe</span>
+        is <b>not</b> supported and will hang the console. However, <span class="code">powershell.exe -Command Get-Process</span> will work.
+    </p>
+    <script src="https://ajax.aspnetcdn.com/ajax/jquery/jquery-1.9.1.min.js" type="text/javascript"></script>
+    <script src="jquery-console/jquery.console.js" type="text/javascript"></script>
+    <script src="KuduExecWeb.js" type="text/javascript"></script>
+</body>
+</html>

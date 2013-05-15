@@ -58,6 +58,12 @@ Website:      http://docs.jquery.com/UI
 Copyright:    Copyright (c) 2010 lib/jquery.ui/AUTHORS.txt (http://jqueryui.com/about)
 License:      MIT
 
+jQuery jquery-console
+-----
+Website:      https://github.com/chrisdone/jquery-console
+Copyright:    Copyright 2010 Chris Done, Simon David Pratt
+License:      http://github.com/chrisdone/jquery-console/blob/master/README
+
 Json.NET
 -----
 Website:      http://json.codeplex.com/
