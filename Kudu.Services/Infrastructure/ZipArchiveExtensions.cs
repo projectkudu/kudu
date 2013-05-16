@@ -76,7 +76,7 @@ namespace Kudu.Services
                     }
 
                     using (Stream zipStream = entry.Open(),
-                                  fileStream = fileInfo.OpenWrite())
+                                  fileStream = fileInfo.Open(FileMode.Create, FileAccess.Write))
                     {
                         zipStream.CopyTo(fileStream);
                     }

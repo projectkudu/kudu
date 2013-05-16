@@ -157,7 +157,7 @@ namespace Kudu.FunctionalTests
                 Directory.CreateDirectory(dir);
             }
             var assembly =  typeof(HgRepositoryFacts).Assembly;
-            using (Stream outStream = File.OpenWrite(path),
+            using (Stream outStream = File.Open(path, FileMode.Create, FileAccess.Write),
                           inStream  = assembly.GetManifestResourceStream(manifestResourceName))
             {
                 inStream.CopyTo(outStream);
