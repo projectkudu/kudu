@@ -27,7 +27,7 @@ namespace Kudu.TestHarness
                 {
                     using (Stream stream = result.Content.ReadAsStreamAsync().Result)
                     {
-                        using (FileStream fs = File.OpenWrite(zippedLogsPath))
+                        using (FileStream fs = File.Open(zippedLogsPath, FileMode.Create, FileAccess.Write))
                         {
                             stream.CopyTo(fs);
                         }
