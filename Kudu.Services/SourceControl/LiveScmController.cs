@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
@@ -60,8 +61,19 @@ namespace Kudu.Services.SourceControl
             {
                 using (_tracer.Step("Deleting repository"))
                 {
-                    // Delete the repository
-                    FileSystemHelpers.DeleteDirectorySafe(_environment.RepositoryPath, ignoreErrors != 0);
+                    string repositoryPath = Path.Combine(_environment.SiteRootPath, Constants.RepositoryPath);
+                    if (String.Equals(repositoryPath, _environment.RepositoryPath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Delete the repository
+                        FileSystemHelpers.DeleteDirectorySafe(_environment.RepositoryPath, ignoreErrors != 0);
+                    }
+                    else
+                    {
+                        // Just delete .git folder
+                        FileSystemHelpers.DeleteDirectorySafe(Path.Combine(_environment.RepositoryPath, ".git"), ignoreErrors != 0);
+
+                        FileSystemHelpers.DeleteDirectorySafe(Path.Combine(_environment.RepositoryPath, ".hg"), ignoreErrors != 0);
+                    }
                 }
 
                 using (_tracer.Step("Deleting ssh key"))

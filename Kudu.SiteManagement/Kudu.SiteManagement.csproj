@@ -28,6 +28,14 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <ProjectReference Include="..\Kudu.Client\Kudu.Client.csproj">
+      <Project>{222E740B-EF14-4976-A9DC-C12CF57A46A2}</Project>
+      <Name>Kudu.Client</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Kudu.Contracts\Kudu.Contracts.csproj">
+      <Project>{EC0ED988-2C60-4F31-A434-645E048BFD95}</Project>
+      <Name>Kudu.Contracts</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\Common\CommonAssemblyInfo.cs">

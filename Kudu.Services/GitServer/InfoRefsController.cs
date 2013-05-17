@@ -22,15 +22,16 @@
 using System;
 using System.Globalization;
 using System.IO;
+using System.IO.Abstractions;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Web.Http;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
-using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Services.Infrastructure;
@@ -39,18 +40,16 @@ namespace Kudu.Services.GitServer
 {    
     public class InfoRefsController : ApiController
     {
-        private readonly IGitServer _gitServer;
         private readonly ITracer _tracer;
         private readonly IRepositoryFactory _repositoryFactory;
+        private readonly Func<Type, object> _getInstance;
 
-        public InfoRefsController(
-            ITracer tracer,
-            IGitServer gitServer,
-            IRepositoryFactory repositoryFactory)
+        // Delay ninject binding
+        public InfoRefsController(Func<Type, object> getInstance)
         {
-            _gitServer = gitServer;
-            _tracer = tracer;
-            _repositoryFactory = repositoryFactory;
+            _getInstance = getInstance;
+            _repositoryFactory = GetInstance<IRepositoryFactory>();
+            _tracer = GetInstance<ITracer>();
         }
 
         [HttpGet]
@@ -91,11 +90,15 @@ namespace Kudu.Services.GitServer
 
                     if (service == "upload-pack")
                     {
-                        _gitServer.AdvertiseUploadPack(memoryStream);
+                        InitialCommitIfNecessary();
+
+                        var gitServer = GetInstance<IGitServer>();
+                        gitServer.AdvertiseUploadPack(memoryStream);
                     }
                     else if (service == "receive-pack")
                     {
-                        _gitServer.AdvertiseReceivePack(memoryStream);
+                        var gitServer = GetInstance<IGitServer>();
+                        gitServer.AdvertiseReceivePack(memoryStream);
                     }
 
                     _tracer.Trace("Writing {0} bytes", memoryStream.Length);
@@ -125,6 +128,94 @@ namespace Kudu.Services.GitServer
             }
 
             return service.Replace("git-", "");
+        }
+
+        private T GetInstance<T>()
+        {
+            return (T)_getInstance(typeof(T));
+        }
+
+        public void InitialCommitIfNecessary()
+        {
+            var settings = GetInstance<IDeploymentSettingsManager>();
+
+            // only support if LocalGit
+            if (settings.GetValue(SettingsKeys.ScmType) != ScmType.LocalGit)
+            {
+                return;
+            }
+
+            // get repository for the WebRoot
+            var initLock = GetInstance<IOperationLock>();
+            initLock.LockOperation(() =>
+            {
+                IRepository repository = _repositoryFactory.GetRepository();
+
+                // if repository exists, no needs to do anything
+                if (repository != null)
+                {
+                    return;
+                }
+
+                var repositoryPath = settings.GetValue(SettingsKeys.RepositoryPath);
+
+                // if repository settings is defined, it's already been taken care.
+                if (!String.IsNullOrEmpty(repositoryPath))
+                {
+                    return;
+                }
+
+                var env = GetInstance<IEnvironment>();
+                // it is default webroot content, do nothing
+                if (IsDefaultWebRootContent(env.WebRootPath))
+                {
+                    return;
+                }
+
+                // Set repo path to WebRoot
+                var previous = env.RepositoryPath;
+                env.RepositoryPath = Path.Combine(env.SiteRootPath, Constants.WebRoot);
+
+                repository = _repositoryFactory.GetRepository();
+                if (repository != null)
+                {
+                    env.RepositoryPath = previous;
+                    return;
+                }
+
+                // do initial commit
+                repository = _repositoryFactory.EnsureRepository(RepositoryType.Git);
+                repository.Commit("Initial Commit", authorName: null);
+
+                // persist the new repo path
+                settings.SetValue(SettingsKeys.RepositoryPath, Constants.WebRoot);
+
+            }, GitExeServer.InitTimeout);
+        }
+
+        public bool IsDefaultWebRootContent(string webroot)
+        {
+            var fileSystem = GetInstance<IFileSystem>();
+            if (!fileSystem.Directory.Exists(webroot))
+            {
+                // degenerated
+                return true;
+            }
+
+            var entries = fileSystem.Directory.GetFileSystemEntries(webroot);
+            if (entries.Length == 0)
+            {
+                // degenerated
+                return true;
+            }
+
+            if (entries.Length == 1 && fileSystem.File.Exists(entries[0]))
+            {
+                string hoststarthtml = Path.Combine(webroot, Constants.HostingStartHtml);
+                return String.Equals(entries[0], hoststarthtml, StringComparison.OrdinalIgnoreCase);
+            }
+
+            return false;
         }
     }
 }

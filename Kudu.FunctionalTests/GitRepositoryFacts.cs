@@ -17,7 +17,7 @@ namespace Kudu.FunctionalTests
             using (TestRepository testRepository = GetRepository())
             {
                 // Arrange
-                var gitRepo = new GitExeRepository(testRepository.PhysicalPath, "", new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                var gitRepo = new GitExeRepository(testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
                 string postCommitHookPath = Path.Combine(testRepository.PhysicalPath, ".git", "hooks", "post-receive");
                 string expected = "#!/bin/sh\r\nread i\r\necho $i > pushinfo\r\n\"$KUDU_EXE\" \"$KUDU_APPPATH\" \"$KUDU_MSBUILD\" \"$KUDU_DEPLOYER\"\n";
 
@@ -35,7 +35,7 @@ namespace Kudu.FunctionalTests
             using (TestRepository testRepository = GetRepository())
             {
                 // Arrange
-                var gitRepo = new GitExeRepository(testRepository.PhysicalPath, "", new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                var gitRepo = new GitExeRepository(testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
 
                 // Act
                 gitRepo.Initialize();
@@ -48,7 +48,7 @@ namespace Kudu.FunctionalTests
         {
             using (TestRepository testRepository = GetRepository())
             {
-                var gitRepo = new GitExeRepository(testRepository.PhysicalPath, "", new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                var gitRepo = new GitExeRepository(testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
                 Assert.False(gitRepo.Exists, "git repository shouldn't exist yet");
             }
         }
@@ -58,7 +58,7 @@ namespace Kudu.FunctionalTests
         {
             using (TestRepository testRepository = GetRepository())
             {
-                var gitRepo = new GitExeRepository(testRepository.PhysicalPath, "", new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                var gitRepo = new GitExeRepository(testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
                 gitRepo.Initialize();
                 Assert.True(gitRepo.Exists, "git repository should exist");
             }
@@ -69,7 +69,7 @@ namespace Kudu.FunctionalTests
         {
             using (TestRepository testRepository = GetRepository())
             {
-                var gitRepo = new GitExeRepository(testRepository.PhysicalPath, "", new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                var gitRepo = new GitExeRepository(testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
 
                 gitRepo.Initialize();
                 Assert.True(gitRepo.Exists, "git repository should exist");
@@ -85,7 +85,7 @@ namespace Kudu.FunctionalTests
         {
             using (TestRepository testRepository = GetRepository())
             {
-                var gitRepo = new GitExeRepository(testRepository.PhysicalPath, "", new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                var gitRepo = new GitExeRepository(testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
 
                 gitRepo.Initialize();
                 Assert.True(gitRepo.Exists, "git repository should exist");
@@ -105,13 +105,14 @@ namespace Kudu.FunctionalTests
             using (TestRepository testRepository = GetRepository())
             {
                 // Create a repository
-                var gitRepo = new GitExeRepository(testRepository.PhysicalPath, "", new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                var gitRepo = new GitExeRepository(testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
                 gitRepo.Initialize();
 
                 // Checkout for existence in subdirectory
                 var testedPath = Path.Combine(testRepository.PhysicalPath, "subdirectory");
                 Directory.CreateDirectory(testedPath);
-                gitRepo = new GitExeRepository(testedPath, "", new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                var environment = new TestEnvironment { RepositoryPath = testedPath };
+                gitRepo = new GitExeRepository(environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
                 Assert.False(gitRepo.Exists, "git repository shouldn't exist yet");
             }
         }

@@ -54,6 +54,9 @@ namespace Kudu.Console
             ISettings settings = new XmlSettings.Settings(GetSettingsPath(env));
             IDeploymentSettingsManager settingsManager = new DeploymentSettingsManager(settings);
 
+            // Adjust repo path
+            env.RepositoryPath = Path.Combine(env.SiteRootPath, settingsManager.GetRepositoryPath());
+
             // Setup the trace
             IFileSystem fileSystem = new FileSystem();
             TraceLevel level = settingsManager.GetTraceLevel();
@@ -70,7 +73,7 @@ namespace Kudu.Console
             IBuildPropertyProvider buildPropertyProvider = new BuildPropertyProvider();
             ISiteBuilderFactory builderFactory = new SiteBuilderFactoryDispatcher(buildPropertyProvider, env);
 
-            IRepository gitRepository = new GitExeRepository(env.RepositoryPath, env.SiteRootPath, settingsManager, traceFactory);
+            IRepository gitRepository = new GitExeRepository(env, settingsManager, traceFactory);
 
             var logger = new ConsoleLogger();
             IDeploymentManager deploymentManager = new DeploymentManager(builderFactory,

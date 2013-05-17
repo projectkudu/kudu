@@ -151,6 +151,7 @@
     <Compile Include="Security\BlockLocalhostModule.cs" />
     <Compile Include="Services\DeploymentEnvironment.cs" />
     <Compile Include="Services\NinjectWebApiDependencyResolver.cs" />
+    <Compile Include="Services\NinjectHttpApplicationPlugin.cs" />
     <Compile Include="Tracing\TraceExceptionFilterAttribute.cs" />
     <Compile Include="Tracing\TraceModule.cs" />
     <Compile Include="Tracing\TraceServices.cs" />

@@ -4,7 +4,7 @@
     {
         string RootPath { get; }                // e.g. /
         string SiteRootPath { get; }            // e.g. /site
-        string RepositoryPath { get; }          // e.g. /site/repository
+        string RepositoryPath { get; set; }     // e.g. /site/repository
         string WebRootPath { get; }             // e.g. /site/wwwroot
         string DeploymentsPath { get; }         // e.g. /site/deployments
         string DeploymentToolsPath { get; }     // e.g. /site/deployments/tools

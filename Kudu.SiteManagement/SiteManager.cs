@@ -8,6 +8,9 @@ using System.Threading;
 using Kudu.Core.Infrastructure;
 using IIS = Microsoft.Web.Administration;
 using Microsoft.Web.Administration;
+using Kudu.Client.Deployment;
+using Kudu.Contracts.Settings;
+using Kudu.Contracts.SourceControl;
 
 namespace Kudu.SiteManagement
 {
@@ -157,6 +160,11 @@ namespace Kudu.SiteManagement
                     // REVIEW: Should we poll the site's state?
                     Thread.Sleep(1000);
 
+                    // Set initial ScmType state to LocalGit
+                    var serviceUrl = String.Format("http://localhost:{0}/", serviceSitePort);
+                    var settings = new RemoteDeploymentSettingsManager(serviceUrl + "settings");
+                    settings.SetValue(SettingsKeys.ScmType, ScmType.LocalGit).Wait();
+
                     var siteUrls = new List<string>();
                     foreach (var url in site.Bindings)
                     {
@@ -165,7 +173,7 @@ namespace Kudu.SiteManagement
 
                     return new Site
                     {
-                        ServiceUrl = String.Format("http://localhost:{0}/", serviceSitePort),
+                        ServiceUrl = serviceUrl,
                         SiteUrls = siteUrls
                     };
                 }

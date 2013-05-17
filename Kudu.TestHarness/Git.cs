@@ -201,6 +201,18 @@ namespace Kudu.TestHarness
             return cachedPath;
         }
 
+        public static string CloneToLocal(string cloneUri, string path = null)
+        {
+            string repositoryPath = path ?? Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            Directory.CreateDirectory(repositoryPath);
+            var exe = new GitExecutable(repositoryPath, idleTimeout: TimeSpan.FromSeconds(3600));
+            exe.SetTraceLevel(2);
+            exe.SetHttpVerbose(true);
+            exe.SetSSLNoVerify(true);
+            GitExecute(exe, "clone \"{0}\" .", cloneUri);
+            return repositoryPath;
+        }
+
         public static GitDeploymentResult GitDeploy(string kuduServiceUrl, string localRepoPath, string remoteRepoUrl, string localBranchName, string remoteBranchName)
         {
             var deploymentManager = new RemoteDeploymentManager(kuduServiceUrl + "deployments"); 
