@@ -39,6 +39,7 @@
     <Compile Include="Npm.cs" />
     <Compile Include="Node.cs" />
     <Compile Include="LatencyLogger.cs" />
+    <Compile Include="TestEnvironment.cs" />
     <Compile Include="TestRepositories.cs" />
     <Compile Include="TestTracer.cs" />
     <Compile Include="HttpUtils.cs" />

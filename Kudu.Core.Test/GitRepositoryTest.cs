@@ -221,7 +221,8 @@ index 0000000..261a6bf
             // Mock
             var settings = new Mock<IDeploymentSettingsManager>();
             var trace = new Mock<ITraceFactory>();
-            var repository = new GitExeRepository("", "", settings.Object, trace.Object);
+
+            var repository = new GitExeRepository(Mock.Of<IEnvironment>(), settings.Object, trace.Object);
             Exception exception = null;
             var actual = 0;
 
@@ -264,8 +265,15 @@ index 0000000..261a6bf
             var env = new Mock<IDeploymentEnvironment>();
             var settings = new Mock<IDeploymentSettingsManager>();
             var trace = new Mock<ITraceFactory>();
+
+            var environment = new Mock<IEnvironment>();
+            environment.SetupGet(e => e.RepositoryPath)
+                       .Returns(String.Empty);
+            environment.SetupGet(e => e.SiteRootPath)
+                       .Returns(String.Empty);
+
             IRepository repository = initialized ? new Mock<IRepository>().Object : null;
-            var server = new GitExeServer("", "", initLock, null, factory.Object, env.Object, settings.Object, trace.Object);
+            var server = new GitExeServer(environment.Object, initLock, null, factory.Object, env.Object, settings.Object, trace.Object);
             var calls = 0;
 
             // Setup

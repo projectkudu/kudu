@@ -83,6 +83,7 @@ namespace Kudu.Services.Web.App_Start
             var kernel = new StandardKernel();
             kernel.Bind<Func<IKernel>>().ToMethod(ctx => () => new Bootstrapper().Kernel);
             kernel.Bind<IHttpModule>().To<HttpApplicationInitializationHttpModule>();
+            kernel.Components.Add<INinjectHttpApplicationPlugin, NinjectHttpApplicationPlugin>();
 
             RegisterServices(kernel);
             return kernel;
@@ -98,9 +99,12 @@ namespace Kudu.Services.Web.App_Start
 
             IEnvironment environment = GetEnvironment();
 
+            // Per request environment
+            kernel.Bind<IEnvironment>().ToMethod(context => GetEnvironment(context.Kernel.Get<IDeploymentSettingsManager>()))
+                                             .InRequestScope();
+
             // General
             kernel.Bind<HttpContextBase>().ToMethod(context => new HttpContextWrapper(HttpContext.Current));
-            kernel.Bind<IEnvironment>().ToConstant(environment);
             kernel.Bind<IServerConfiguration>().ToConstant(serverConfiguration);
             kernel.Bind<IFileSystem>().To<FileSystem>().InSingletonScope();
 
@@ -146,6 +150,9 @@ namespace Kudu.Services.Web.App_Start
                                                                                      context.Kernel.Get<ITracer>(),
                                                                                      shutdownDetector));
 
+            kernel.Bind<InfoRefsController>().ToMethod(context => new InfoRefsController(t => context.Kernel.Get(t)))
+                                             .InRequestScope();
+
             // Deployment Service
             kernel.Bind<ISettings>().ToMethod(context => new XmlSettings.Settings(GetSettingsPath(environment)))
                                              .InRequestScope();
@@ -160,8 +167,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<ILogger>().ToMethod(context => GetLogger(environment, context.Kernel))
                                              .InRequestScope();
 
-            kernel.Bind<IRepository>().ToMethod(context => new GitExeRepository(environment.RepositoryPath,
-                                                                                environment.SiteRootPath,
+            kernel.Bind<IRepository>().ToMethod(context => new GitExeRepository(context.Kernel.Get<IEnvironment>(),
                                                                                 context.Kernel.Get<IDeploymentSettingsManager>(),
                                                                                 context.Kernel.Get<ITraceFactory>()))
                                                 .InRequestScope();
@@ -177,8 +183,7 @@ namespace Kudu.Services.Web.App_Start
             // Git server
             kernel.Bind<IDeploymentEnvironment>().To<DeploymentEnvrionment>();
 
-            kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(environment.RepositoryPath,
-                                                                           environment.SiteRootPath,
+            kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(context.Kernel.Get<IEnvironment>(),
                                                                            deploymentLock,
                                                                            GetRequestTraceFile(context.Kernel),
                                                                            context.Kernel.Get<IRepositoryFactory>(),
@@ -368,7 +373,7 @@ namespace Kudu.Services.Web.App_Start
             return Path.Combine(environment.DeploymentsPath, Constants.DeploySettingsPath);
         }
 
-        private static IEnvironment GetEnvironment()
+        private static IEnvironment GetEnvironment(IDeploymentSettingsManager settings = null)
         {
             string siteRoot = PathResolver.ResolveSiteRootPath();
             string root = Path.GetFullPath(Path.Combine(siteRoot, ".."));
@@ -376,7 +381,7 @@ namespace Kudu.Services.Web.App_Start
             string deployCachePath = Path.Combine(siteRoot, Constants.DeploymentCachePath);
             string diagnosticsPath = Path.Combine(siteRoot, Constants.DiagnosticsPath);
             string sshKeyPath = Path.Combine(siteRoot, Constants.SSHKeyPath);
-            string repositoryPath = Path.Combine(siteRoot, Constants.RepositoryPath);
+            string repositoryPath = Path.Combine(siteRoot, settings == null ? Constants.RepositoryPath : settings.GetRepositoryPath());
             string tempPath = Path.GetTempPath();
             string scriptPath = Path.Combine(HttpRuntime.BinDirectory, Constants.ScriptsPath);
             string nodeModulesPath = Path.Combine(HttpRuntime.BinDirectory, Constants.NodeModulesPath);

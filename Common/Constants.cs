@@ -36,6 +36,8 @@ namespace Kudu
         public const string DiagnosticsPath = @"diagnostics";
         public const string SettingsJsonFile = @"settings.json";
 
+        public const string HostingStartHtml = "hostingstart.html";
+
         private static readonly TimeSpan _maxAllowedExectionTime = TimeSpan.FromMinutes(30);
 
         public static TimeSpan MaxAllowedExecutionTime

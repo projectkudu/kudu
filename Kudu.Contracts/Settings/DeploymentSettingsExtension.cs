@@ -10,6 +10,7 @@ namespace Kudu.Contracts.Settings
         public static readonly TimeSpan DefaultCommandIdleTimeout = TimeSpan.FromMinutes(1);
         public static readonly TimeSpan DefaultLogStreamTimeout = TimeSpan.FromMinutes(30);
         public const TraceLevel DefaultTraceLevel = TraceLevel.Error;
+        public const string DefaultRepositoryPath = "repository";
 
         public static string GetValue(this IDeploymentSettingsManager settings, string key)
         {
@@ -106,6 +107,12 @@ namespace Kudu.Contracts.Settings
         {
             string scmType = settings.GetValue(SettingsKeys.ScmType);
             return scmType != ScmType.None && scmType != ScmType.Tfs && scmType != ScmType.TfsGit;
+        }
+
+        public static string GetRepositoryPath(this IDeploymentSettingsManager settings)
+        {
+            string repositoryPath = settings.GetValue(SettingsKeys.RepositoryPath);
+            return !String.IsNullOrEmpty(repositoryPath) ? repositoryPath : DefaultRepositoryPath;
         }
     }
 }

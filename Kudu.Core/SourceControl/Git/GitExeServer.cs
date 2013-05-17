@@ -12,14 +12,13 @@ namespace Kudu.Core.SourceControl.Git
 {
     public class GitExeServer : IGitServer
     {
-        private static readonly TimeSpan _initTimeout = TimeSpan.FromMinutes(8);
+        public static readonly TimeSpan InitTimeout = TimeSpan.FromMinutes(8);
         private readonly GitExecutable _gitExe;
         private readonly ITraceFactory _traceFactory;
         private readonly IOperationLock _initLock;
         private readonly IRepositoryFactory _repositoryFactory;
 
-        public GitExeServer(string path, 
-                            string homePath, 
+        public GitExeServer(IEnvironment environment,
                             IOperationLock initLock, 
                             string logFileEnv,
                             IRepositoryFactory repositoryFactory,
@@ -27,8 +26,8 @@ namespace Kudu.Core.SourceControl.Git
                             IDeploymentSettingsManager settings, 
                             ITraceFactory traceFactory)
         {
-            _gitExe = new GitExecutable(path, settings.GetCommandIdleTimeout());
-            _gitExe.SetHomePath(homePath);
+            _gitExe = new GitExecutable(environment.RepositoryPath, settings.GetCommandIdleTimeout());
+            _gitExe.SetHomePath(environment.SiteRootPath);
             _traceFactory = traceFactory;
             _initLock = initLock;
             _repositoryFactory = repositoryFactory;
@@ -105,7 +104,7 @@ namespace Kudu.Core.SourceControl.Git
                     {
                         InitializeRepository();
                     }
-                }, _initTimeout);
+                }, InitTimeout);
             }
         }
 

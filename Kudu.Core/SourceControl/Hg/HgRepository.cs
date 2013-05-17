@@ -89,7 +89,27 @@ namespace Kudu.Core.SourceControl
 
         public void Initialize()
         {
-            Repository.Init();
+            ITracer tracer = _traceFactory.GetTracer();
+
+            using (tracer.Step("HgRepository.Initialize"))
+            {
+                Repository.Init();
+
+                // to disallow browsing to this folder in case of in-place repo
+                using (tracer.Step("Create deny users for .hg folder"))
+                {
+                    string content = "<?xml version=\"1.0\"" + @"?>
+<configuration>
+  <system.web>
+    <authorization>
+      <deny users=" + "\"*\"" + @"/>
+    </authorization>
+  </system.web>
+<configuration>";
+
+                    File.WriteAllText(Path.Combine(RepositoryPath, ".hg", "web.config"), content);
+                }
+            }
         }
 
         public IEnumerable<FileStatus> GetStatus()

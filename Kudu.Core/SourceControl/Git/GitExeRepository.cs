@@ -29,15 +29,15 @@ namespace Kudu.Core.SourceControl.Git
         private readonly ITraceFactory _tracerFactory;
         private readonly IDeploymentSettingsManager _settings;
 
-        public GitExeRepository(string path, string homePath, IDeploymentSettingsManager settings, ITraceFactory profilerFactory)
+        public GitExeRepository(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory profilerFactory)
         {
-            _gitExe = new GitExecutable(path, settings.GetCommandIdleTimeout());
+            _gitExe = new GitExecutable(environment.RepositoryPath, settings.GetCommandIdleTimeout());
             _tracerFactory = profilerFactory;
             _settings = settings;
 
-            if (!String.IsNullOrEmpty(homePath))
+            if (!String.IsNullOrEmpty(environment.SiteRootPath))
             {
-                _gitExe.SetHomePath(homePath);
+                _gitExe.SetHomePath(environment.SiteRootPath);
             }
         }
 
@@ -121,6 +121,21 @@ namespace Kudu.Core.SourceControl.Git
                 {
                     // Allow getting pushes even though we're not bare
                     _gitExe.Execute(profiler, "config receive.denyCurrentBranch ignore");
+                }
+
+                // to disallow browsing to this folder in case of in-place repo
+                using (profiler.Step("Create deny users for .git folder"))
+                {
+                    string content = "<?xml version=\"1.0\"" + @"?>
+<configuration>
+  <system.web>
+    <authorization>
+      <deny users=" + "\"*\"" + @"/>
+    </authorization>
+  </system.web>
+<configuration>";
+
+                    File.WriteAllText(Path.Combine(_gitExe.WorkingDirectory, ".git", "web.config"), content);
                 }
 
                 // Server env does not support interactive cred prompt; hence, we intercept any credential provision
