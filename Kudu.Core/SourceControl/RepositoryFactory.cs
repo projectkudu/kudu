@@ -42,7 +42,7 @@ namespace Kudu.Core.SourceControl
         {
             get
             {
-                var gitExeRepository = new GitExeRepository(_environment.RepositoryPath, _environment.SiteRootPath, _settings, _traceFactory);
+                var gitExeRepository = new GitExeRepository(_environment, _settings, _traceFactory);
                 return gitExeRepository.Exists;
             }
         }
@@ -65,7 +65,7 @@ namespace Kudu.Core.SourceControl
                 {
                     throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_MismatchRepository, repositoryType, RepositoryType.Mercurial, _environment.RepositoryPath));
                 }
-                repository = new GitExeRepository(_environment.RepositoryPath, _environment.SiteRootPath, _settings, _traceFactory);
+                repository = new GitExeRepository(_environment, _settings, _traceFactory);
             }
 
             if (!repository.Exists)
@@ -81,7 +81,7 @@ namespace Kudu.Core.SourceControl
             if (IsGitRepository)
             {
                 tracer.Trace("Assuming git repository at {0}", _environment.RepositoryPath);
-                return new GitExeRepository(_environment.RepositoryPath, _environment.SiteRootPath, _settings, _traceFactory);
+                return new GitExeRepository(_environment, _settings, _traceFactory);
             } 
             else if (IsHgRepository)
             {

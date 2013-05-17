@@ -16,7 +16,7 @@ namespace Kudu.Core
         private readonly string _tempPath;
         private readonly string _scriptPath;
         private readonly string _nodeModulesPath;
-        private readonly string _repositoryPath;
+        private string _repositoryPath;
         private readonly string _logFilesPath;
         private readonly string _tracePath;
         private readonly string _deploymentTracePath;
@@ -65,6 +65,10 @@ namespace Kudu.Core
             get
             {
                 return FileSystemHelpers.EnsureDirectory(_fileSystem, _repositoryPath);
+            }
+            set
+            {
+                _repositoryPath = value;
             }
         }
 
