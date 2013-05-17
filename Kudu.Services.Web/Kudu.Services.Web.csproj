@@ -260,6 +260,9 @@
     <Exec Command="$(ProjectDir)\updateNodeModules.cmd $(TargetDir)" />
     <Exec Command="&quot;$(MSBuildProgramFiles32)\Git\bin\git.exe&quot; rev-parse HEAD &gt; $(MsBuildProjectDirectory)\commit.txt" />
   </Target>
+  <Target Name="BeforeBuild">
+    <Copy SourceFiles="$(SolutionDir)\Kudu.Console\bin\$(ConfigurationName)\kudu.exe" DestinationFolder="$(TargetDir)" />
+  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

@@ -15,6 +15,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.Services", "Kudu.Services\Kudu.Services.csproj", "{D163E227-9EB6-4619-AD37-D8EEF831AEF0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.Services.Web", "Kudu.Services.Web\Kudu.Services.Web.csproj", "{6295D938-63FD-4C26-AE00-B32776CC689E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E2B0EE28-8C96-497A-AB08-605B9FD841E9} = {E2B0EE28-8C96-497A-AB08-605B9FD841E9}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.Client", "Kudu.Client\Kudu.Client.csproj", "{222E740B-EF14-4976-A9DC-C12CF57A46A2}"
 EndProject
