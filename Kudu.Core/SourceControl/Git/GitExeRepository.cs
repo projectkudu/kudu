@@ -113,6 +113,9 @@ namespace Kudu.Core.SourceControl.Git
 
                 _gitExe.Execute(profiler, "config core.autocrlf true");
 
+                // This speeds up git operations like 'git checkout', especially on slow drives like in Azure
+                _gitExe.Execute(profiler, "config core.preloadindex true");
+
                 _gitExe.Execute(profiler, @"config user.name ""{0}""", _settings.GetGitUsername());
 
                 _gitExe.Execute(profiler, @"config user.email ""{0}""", _settings.GetGitEmail());
