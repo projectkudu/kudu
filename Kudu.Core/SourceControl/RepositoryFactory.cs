@@ -47,6 +47,16 @@ namespace Kudu.Core.SourceControl
             }
         }
 
+        public virtual bool IsCustomGitRepository
+        {
+            get
+            {
+                var gitExeRepository = new GitExeRepository(_environment, _settings, _traceFactory);
+                gitExeRepository.SkipPostReciveHookCheck = true;
+                return gitExeRepository.Exists;
+            }
+        }
+
         public IRepository EnsureRepository(RepositoryType repositoryType)
         {
             IRepository repository;
@@ -87,6 +97,19 @@ namespace Kudu.Core.SourceControl
             {
                 tracer.Trace("Found mercurial repository at {0}", _environment.RepositoryPath);
                 return new HgRepository(_environment.RepositoryPath, _environment.SiteRootPath, _settings, _traceFactory);
+            }
+            return null;
+        }
+
+        public IRepository GetCustomRepository()
+        {
+            ITracer tracer = _traceFactory.GetTracer();
+            if (IsCustomGitRepository)
+            {
+                tracer.Trace("Assuming custom git repository at {0}", _environment.RepositoryPath);
+                var ret = new GitExeRepository(_environment, _settings, _traceFactory);
+                ret.SkipPostReciveHookCheck = true;
+                return ret;
             }
             return null;
         }

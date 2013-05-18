@@ -55,6 +55,7 @@
     <Compile Include="BitbucketHandlerFacts.cs" />
     <Compile Include="CodeBaseHqFacts.cs" />
     <Compile Include="CodePlexHandlerFacts.cs" />
+    <Compile Include="CustomGitRepositoryHandlerFacts.cs" />
     <Compile Include="FileInfoBase.cs" />
     <Compile Include="GenericHandlerFacts.cs" />
     <Compile Include="GithubHandlerFacts.cs" />

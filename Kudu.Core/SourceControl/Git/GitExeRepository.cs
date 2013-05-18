@@ -34,7 +34,7 @@ namespace Kudu.Core.SourceControl.Git
             _gitExe = new GitExecutable(environment.RepositoryPath, settings.GetCommandIdleTimeout());
             _tracerFactory = profilerFactory;
             _settings = settings;
-
+            SkipPostReciveHookCheck = false;
             if (!String.IsNullOrEmpty(environment.SiteRootPath))
             {
                 _gitExe.SetHomePath(environment.SiteRootPath);
@@ -59,13 +59,19 @@ namespace Kudu.Core.SourceControl.Git
             get { return RepositoryType.Git; }
         }
 
+        public bool SkipPostReciveHookCheck
+        {
+            get; set;
+        }
+
         public bool Exists
         {
             get
             {
+
                 // The last thing we do in Initialize is create the post-receive hook, so if it's not there,
                 // treat the repo as incomplete, so that we'll fully initialize it again.
-                if (!File.Exists(PostReceiveHookPath))
+                if (!SkipPostReciveHookCheck && !File.Exists(PostReceiveHookPath))
                 {
                     return false;
                 }
