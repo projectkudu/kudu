@@ -153,6 +153,9 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<InfoRefsController>().ToMethod(context => new InfoRefsController(t => context.Kernel.Get(t)))
                                              .InRequestScope();
 
+            kernel.Bind<CustomGitRepositoryHandler>().ToMethod(context => new CustomGitRepositoryHandler(t => context.Kernel.Get(t)))
+                                                     .InRequestScope();
+
             // Deployment Service
             kernel.Bind<ISettings>().ToMethod(context => new XmlSettings.Settings(GetSettingsPath(environment)))
                                              .InRequestScope();
@@ -293,6 +296,10 @@ namespace Kudu.Services.Web.App_Start
 
             // LogStream
             routes.MapHandler<LogStreamHandler>(kernel, "logstream", "logstream/{*path}");
+
+            // Custom GIT repositories
+            routes.MapHandler<CustomGitRepositoryHandler>(kernel, "git-custom-repository", "git/{*path}");
+
         }
 
         private static ITracer GetTracer(IEnvironment environment, IKernel kernel)

@@ -62,7 +62,7 @@ namespace Kudu.Services.GitServer
 
         public abstract void ProcessRequestBase(HttpContextBase context);
 
-        protected static void UpdateNoCacheForResponse(HttpResponseBase response)
+        public static void UpdateNoCacheForResponse(HttpResponseBase response)
         {
             response.Buffer = false;
             response.BufferOutput = false;
