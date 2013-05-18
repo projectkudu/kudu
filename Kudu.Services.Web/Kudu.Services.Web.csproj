@@ -101,21 +101,26 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Areas\HelpPage\HelpPage.css" />
+    <Content Include="Content\Images\ajax-loader.gif" />
+    <Content Include="Content\Images\download.png" />
+    <Content Include="Content\Images\folder.png" />
+    <Content Include="Content\Images\folder_add.png" />
+    <Content Include="Content\Images\folder_delete.png" />
+    <Content Include="Content\Images\folder_page.png" />
+    <Content Include="Content\Images\file.png" />
+    <Content Include="Content\Images\file_delete.png" />
+    <Content Include="Content\Styles\FileBrowser.css" />
     <Content Include="Env.aspx" />
     <Content Include="Default.aspx" />
+    <Content Include="KuduExec\index.html" />
     <Content Include="Global.asax" />
-    <Content Include="KuduExec\index.html">
+    <Content Include="Content\Scripts\jquery-console\jquery.console.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="KuduExec\jquery-console\jquery.console.js">
+    <Content Include="Content\Scripts\KuduExec.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="KuduExec\KuduExecWeb.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="KuduExec\KuduWebExec.css">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <Content Include="Content\Scripts\FileBrowser.js" />
     <Content Include="Web.config">
       <SubType>Designer</SubType>
     </Content>
@@ -217,8 +222,9 @@
     <Content Include="Areas\HelpPage\Views\_ViewStart.cshtml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="KuduExec\jquery-console\README" />
+    <Content Include="Content\Scripts\jquery-console\README" />
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
@@ -232,7 +238,7 @@
         <WebProjectProperties>
           <UseIIS>False</UseIIS>
           <AutoAssignPort>True</AutoAssignPort>
-          <DevelopmentServerPort>12553</DevelopmentServerPort>
+          <DevelopmentServerPort>40997</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>
           <IISUrl>http://localhost:13073/</IISUrl>
           <NTLMAuthentication>False</NTLMAuthentication>

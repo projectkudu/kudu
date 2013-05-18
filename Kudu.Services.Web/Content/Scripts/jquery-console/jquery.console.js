@@ -66,7 +66,9 @@
             // tab
             18: doNothing,
             // tab
-            9: doComplete
+            9: doComplete,
+            // escape
+            27: deleteFromStart,
         };
         var ctrlCodes = {
             // C-a
@@ -158,20 +160,10 @@
         // Reset terminal
         extern.reset = function(){
             var welcome = (typeof config.welcomeMessage != 'undefined');
-            inner.parent().fadeOut(function(){
-                inner.find('div').each(function(){
-                    if (!welcome) {
-                        $(this).remove();
-            } else {
-            welcome = false;
-            }
-                });
-                newPromptBox();
-                inner.parent().fadeIn(function(){
-                    inner.addClass('jquery-console-focus');
-                    typer.focus();
-                });
-            });
+            inner.find('div').remove();
+            newPromptBox();
+            inner.addClass('jquery-console-focus');
+            typer.focus();
         };
 
         ////////////////////////////////////////////////////////////////////////
@@ -395,6 +387,13 @@
                 updatePromptDisplay();
             }
         };
+
+        function deleteFromStart() {
+            if (moveColumn(-column)) {
+                while (deleteCharAtPos());
+                updatePromptDisplay();
+            }
+        }
 
         function deleteNextWord() {
             // A word is defined within this context as a series of alphanumeric
@@ -620,6 +619,9 @@
         function doComplete() {
             if(typeof config.completeHandle == 'function') {
                 var completions = config.completeHandle(promptText);
+                if (!completions) {
+                    return;
+                }
                 var len = completions.length;
                 if (len === 1) {
                     extern.promptText(promptText + completions[0]);
