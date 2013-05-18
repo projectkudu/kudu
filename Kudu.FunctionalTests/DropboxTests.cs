@@ -101,7 +101,7 @@ namespace Kudu.FunctionalTests
 
         [Theory]
         [InlineData(60, 300)]
-        public void TestDropboxRateLimiter(int limit, int total)
+        public async Task TestDropboxRateLimiter(int limit, int total)
         {
             var interval = 1;
             var rateLimiter = new DropboxHelper.RateLimiter(limit, TimeSpan.FromSeconds(interval));
@@ -109,7 +109,7 @@ namespace Kudu.FunctionalTests
             var start = DateTime.Now;
             while (--total > 0)
             {
-                rateLimiter.Throtte();
+                await rateLimiter.ThrottleAsync();
             }
 
             // Assert
