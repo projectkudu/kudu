@@ -1,0 +1,75 @@
+﻿<!DOCTYPE html>
+
+<html>
+<head>
+    <title>File Browser</title>
+    <link rel="stylesheet" type="text/css" href="/content/styles/filebrowser.css" />
+    <link rel="stylesheet" type="text/css" href="/content/styles/kuduexec.css" />
+</head>
+<body>
+    <div id="fileList">
+        <div class="spinner">
+            <img data-bind="visible: processing()" src="/Content/Images/ajax-loader.gif" title="Please wait" />
+        </div>
+        <div id="operations">
+            <span data-bind="visible: selected().parent">
+                <a href="#" data-bind="click: selected().selectParent, attr: { title: selected().parent && ('Up to ' + selected().parent.name()) }">...</a> /  
+            </span>
+            <span data-bind="text: selected().name()"></span>
+
+            <img src="/content/images/folder_add.png" title="Add Folder" data-bind="click: selected().addFolder" id="createFolder"/>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th scope="col"></th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Modifed</th>
+                    <th scope="col">Size</th>
+                </tr>
+            </thead>
+            <tbody data-bind="foreach: selected().children()">
+                <tr>
+                    <td class="actions">
+                        <div data-bind="visible: !editing()">
+                            <a data-bind="attr: { href: url() }" target="_blank">
+                                <img src="/content/images/download.png" alt="Download" title="Download" />
+                            </a>
+                            <a href="#" data-bind="click: deleteItem">
+                                <img data-bind="attr: { src: '/content/images/' + (isDirectory() ? 'folder_delete.png' : 'file_delete.png') }" alt="Delete" title="Delete" />
+                            </a>
+                        </div>
+                    </td>
+                    <td class="name">
+                        <span data-bind="if: isDirectory()">
+                            <img src="/content/images/folder.png" alt="Folder" />
+                            
+                            <a href="#" data-bind="click: selectNode, text: name, visible: !editing()" target="_blank"></a>
+                            <input type="text" data-bind="value: name, valueUpdate: 'afterKeyDown', visible: editing()" />
+                        </span>
+                        <span data-bind="if: !isDirectory()">
+                            <img src="/content/images/file.png" alt="File" />
+                            <span data-bind="text: name"></span>
+                        </span>
+
+                    </td>
+                    <td data-bind="text: modifiedTime" class="date"></td>
+                    <td data-bind="text: size" class="size"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="KuduExecConsole" class="left-aligned"></div>
+
+    <script src="http://ajax.aspnetcdn.com/ajax/jquery/jquery-1.9.1.min.js"></script>
+    <script src="http://ajax.aspnetcdn.com/ajax/knockout/knockout-2.2.1.js"></script>
+    <script src="/content/scripts/kuduexec.js"></script>
+    <script src="/content/scripts/filebrowser.js"></script>
+    <script src="/content/scripts/jquery-console/jquery.console.js"></script>
+    <footer>
+        Icons from <a href="http://www.fatcow.com/free-icons">Fat Cow</a>
+    </footer>
+</body>
+
+</html>

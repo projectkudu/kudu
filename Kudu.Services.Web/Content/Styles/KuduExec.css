@@ -26,6 +26,10 @@ div.console div.jquery-console-inner {
     color: white;
 }
 
+    .left-aligned div.console div.jquery-console-inner {
+        margin: 0;
+    }
+
 div.console div.jquery-console-focus span.jquery-console-cursor {
     background: white;
     color: black;
@@ -42,5 +46,3 @@ div.console div.jquery-console-message-value {
 div.console div.jquery-console-message-type {
     color: white;
 }
-
-
