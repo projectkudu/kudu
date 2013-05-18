@@ -146,7 +146,7 @@ namespace Kudu.FunctionalTests
                 var failure = !Object.ReferenceEquals(success, tasks[0].Result) ? tasks[0].Result : tasks[1].Result;
 
                 success.EnsureSuccessful();
-                Assert.Equal(HttpStatusCode.Conflict, failure.StatusCode);
+                Assert.Equal(HttpStatusCode.Accepted, failure.StatusCode);
 
                 var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
                 Assert.Equal(1, results.Count);
