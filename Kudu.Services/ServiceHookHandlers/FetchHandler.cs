@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Abstractions;
 using System.Net;
 using System.Threading.Tasks;
 using System.Web;
@@ -24,11 +25,12 @@ namespace Kudu.Services
         private readonly IDeploymentManager _deploymentManager;
         private readonly IDeploymentSettingsManager _settings;
         private readonly IDeploymentStatusManager _status;
-        private readonly IEnvironment _environment;
         private readonly IEnumerable<IServiceHookHandler> _serviceHookHandlers;
         private readonly IOperationLock _deploymentLock;
         private readonly ITracer _tracer;
         private readonly IRepositoryFactory _repositoryFactory;
+        private readonly IFileSystem _fileSystem;
+        private readonly string _markerFilePath;
 
         public FetchHandler(ITracer tracer,
                             IDeploymentManager deploymentManager,
@@ -37,23 +39,31 @@ namespace Kudu.Services
                             IOperationLock deploymentLock,
                             IEnvironment environment,
                             IEnumerable<IServiceHookHandler> serviceHookHandlers,
-                            IRepositoryFactory repositoryFactory)
+                            IRepositoryFactory repositoryFactory,
+                            IFileSystem fileSystem)
         {
             _tracer = tracer;
             _deploymentLock = deploymentLock;
             _deploymentManager = deploymentManager;
             _settings = settings;
             _status = status;
-            _environment = environment;
             _serviceHookHandlers = serviceHookHandlers;
             _repositoryFactory = repositoryFactory;
-        }
+            _fileSystem = fileSystem;
+            _markerFilePath = Path.Combine(environment.DeploymentsPath, "pending");
 
-        private string MarkerFilePath
-        {
-            get
+            // Prefer marker creation in ctor to delay create when needed.
+            // This is to keep the code simple and avoid creation synchronization.
+            if (!_fileSystem.File.Exists(_markerFilePath))
             {
-                return Path.Combine(_environment.DeploymentsPath, "pending");
+                try
+                {
+                    _fileSystem.File.WriteAllText(_markerFilePath, String.Empty);
+                }
+                catch (Exception ex)
+                {
+                    tracer.TraceError(ex);
+                }
             }
         }
 
@@ -116,43 +126,31 @@ namespace Kudu.Services
                 {
                     // Create a marker file that indicates if there's another deployment to pull
                     // because there was a deployment in progress.
-                    using (_tracer.Step("Creating pending deployment marker file"))
+                    using (_tracer.Step("Update pending deployment marker file"))
                     {
                         // REVIEW: This makes the assumption that the repository url is the same.
                         // If it isn't the result would be buggy either way.
-                        CreateMarkerFile();
+                        _fileSystem.File.SetLastWriteTimeUtc(_markerFilePath, DateTime.UtcNow);
                     }
 
                     // Return a http 202: the request has been accepted for processing, but the processing has not been completed.
-                    context.Response.StatusCode = 202;
+                    context.Response.StatusCode = (int)HttpStatusCode.Accepted;
                     context.ApplicationInstance.CompleteRequest();
                 }
             }
         }
 
-        private void CreateMarkerFile()
+        public async Task PerformDeployment(DeploymentInfo deploymentInfo)
         {
-            File.WriteAllText(MarkerFilePath, String.Empty);
-        }
-
-        private bool MarkerFileExists()
-        {
-            return File.Exists(MarkerFilePath);
-        }
-
-        private bool DeleteMarkerFile()
-        {
-            return FileSystemHelpers.DeleteFileSafe(MarkerFilePath);
-        }
-
-        private async Task PerformDeployment(DeploymentInfo deploymentInfo)
-        {
-            bool hasPendingDeployment;
+            DateTime currentMarkerFileUTC;
+            DateTime nextMarkerFileUTC = _fileSystem.File.GetLastWriteTimeUtc(_markerFilePath);
 
             do
             {
+                // save the current marker
+                currentMarkerFileUTC = nextMarkerFileUTC;
+
                 string targetBranch = _settings.GetBranch();
-                hasPendingDeployment = false;
 
                 using (_tracer.Step("Performing fetch based deployment"))
                 {
@@ -198,24 +196,6 @@ namespace Kudu.Services
                             // Here, we don't need to update the working files, since we know Fetch left them in the correct state
                             _deploymentManager.Deploy(repository, changeSet, deploymentInfo.Deployer, clean: false, needFileUpdate: false);
                         }
-
-                        if (MarkerFileExists())
-                        {
-                            _tracer.Trace("Pending deployment marker file exists");
-
-                            hasPendingDeployment = DeleteMarkerFile();
-
-                            if (hasPendingDeployment)
-                            {
-                                _tracer.Trace("Deleted marker file");
-
-                                hasPendingDeployment = deploymentInfo.IsReusable;
-                            }
-                            else
-                            {
-                                _tracer.TraceError("Failed to delete marker file");
-                            }
-                        }
                     }
                     catch (Exception ex)
                     {
@@ -241,7 +221,10 @@ namespace Kudu.Services
                     tempDeployment.Dispose();
                 }
 
-            } while (hasPendingDeployment);
+                // check marker file and, if changed (meaning new /deploy request), redeploy.
+                nextMarkerFileUTC = _fileSystem.File.GetLastWriteTimeUtc(_markerFilePath);
+
+            } while (deploymentInfo.IsReusable && currentMarkerFileUTC != nextMarkerFileUTC);
         }
 
         // For continuous integration, we will only build/deploy if fetch new changes

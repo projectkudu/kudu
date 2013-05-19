@@ -67,7 +67,7 @@ namespace Kudu.FunctionalTests
                     }
                     finally
                     {
-                        SafeExecute(() => File.Delete(repositoryPath));
+                        SafeExecute(() => Directory.Delete(repositoryPath, recursive: true));
                     }
                 });
             }
