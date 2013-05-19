@@ -26,6 +26,9 @@ namespace Kudu.FunctionalTests
 
                 await ApplicationManager.RunAsync(scenario.Name, async appManager =>
                 {
+                    // moodle takes 5 mins to zip deploy (< 100s default timeout).
+                    // appManager.ZipManager.Client.Timeout = TimeSpan.FromMinutes(10);
+
                     // deploy zip file using /zip
                     appManager.ZipManager.PutZipFile("site/wwwroot", zipFile);
 
@@ -81,6 +84,9 @@ namespace Kudu.FunctionalTests
                 // only run in private kudu
                 //yield return new object[] { new HelloKuduScenario() };
                 //yield return new object[] { new BakeryAppScenario() };
+
+                // big site
+                //yield return new object[] { new MoodleAppScenario() };
             }
         }
 
@@ -229,6 +235,32 @@ namespace Kudu.FunctionalTests
             public void ChangeVerify(string siteUrl)
             {
                 KuduAssert.VerifyUrl(siteUrl, "Welcome to Fifth Coffee");
+            }
+        }
+
+        public class MoodleAppScenario : IScenario
+        {
+            public string Name
+            {
+                get { return "MoodleApp"; }
+            }
+
+            public void DeployVerify(string siteUrl)
+            {
+                KuduAssert.VerifyUrl(siteUrl + "install.php", "Choose a language");
+            }
+
+            public void ApplyChange(string path)
+            {
+                string installPHP = Path.Combine(path, @"install\lang\en\install.php");
+                Assert.True(File.Exists(installPHP));
+                string text = File.ReadAllText(installPHP);
+                File.WriteAllText(installPHP, text.Replace("Choose a language", "Choose a NEW language"));
+            }
+
+            public void ChangeVerify(string siteUrl)
+            {
+                KuduAssert.VerifyUrl(siteUrl, "Choose a NEW language");
             }
         }
     }

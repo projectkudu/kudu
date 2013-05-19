@@ -43,7 +43,7 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/WebSiteInSolution.git",             "12d3e66"),
             new TestRepositoryInfo("https://github.com/KuduApps/Html5Test.git",                     "7262300"),
             new TestRepositoryInfo("https://github.com/KuduApps/TargetPathTest.git",                "7446104"),
-            new TestRepositoryInfo("https://github.com/KuduApps/WebDeploySamples.git",              "9e19a8d"),
+            new TestRepositoryInfo("https://github.com/KuduApps/WebDeploySamples.git",              "ee3a42b"),
         };
 
         private static Dictionary<string, TestRepositoryInfo> _repos;
