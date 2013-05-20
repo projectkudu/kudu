@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.IO.Abstractions;
 using System.Net;
 using System.Net.Http.Formatting;
-using System.Threading;
 using System.Web;
 using System.Web.Http;
 using System.Web.Routing;
@@ -93,6 +93,7 @@ namespace Kudu.Services.Web.App_Start
         /// Load your modules or register your services here!
         /// </summary>
         /// <param name="kernel">The kernel.</param>
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "")]
         private static void RegisterServices(IKernel kernel)
         {
             var serverConfiguration = new ServerConfiguration();

@@ -48,7 +48,7 @@ namespace Kudu.Services.Test
             string localRelPath = "";
             var uri = new Uri("http://igored/" + requestPath, UriKind.Absolute);
             GitServerRequestType requestType = GitServerRequestType.Unknown;
-            var ret = handler.TryParseUri(uri, out localRelPath, out requestType);
+            var ret = CustomGitRepositoryHandler.TryParseUri(uri, out localRelPath, out requestType);
             Assert.True(ret);
             Assert.Equal(expectedRequestType, requestType);
             Assert.Equal(expectedLocaRellPath, localRelPath);
@@ -67,12 +67,11 @@ namespace Kudu.Services.Test
         [InlineData("git/info/refs?invalid")]
         public void CustomGitRepositoryHandlerParseInvalidRequestUri(string requestPath)
         {
-            var handler = CreateHandler();
             var localRelPath = "";
             var uri = new Uri("http://igored" + requestPath, UriKind.Absolute);
             var requestType = GitServerRequestType.Unknown;
 
-            var ret = handler.TryParseUri(uri, out localRelPath, out requestType);
+            var ret = CustomGitRepositoryHandler.TryParseUri(uri, out localRelPath, out requestType);
             Assert.False(ret);
             Assert.Equal(GitServerRequestType.Unknown, requestType);
             Assert.Null(localRelPath);
@@ -155,7 +154,7 @@ namespace Kudu.Services.Test
 
         [Theory]
         [PropertyData("RequestScenarios")]
-        public void CustomGitRepositoryHandler(IScenario scenario)
+        public void CustomGitRepositoryHandlerBasic(IScenario scenario)
         {
             var headers = new System.Collections.Specialized.NameValueCollection();
             var request = new Mock<HttpRequestBase>();

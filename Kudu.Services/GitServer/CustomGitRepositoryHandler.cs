@@ -101,7 +101,7 @@ namespace Kudu.Services.GitServer
         //  GET Git/{repositorypath}/info/refs
         // POST Git/{repostiorypath}/git-receive-pack
         // POST Git/{repostiorypath}/git-upload-pack
-        public bool TryParseUri(Uri url, out string repoRelLocalPath, out GitServerRequestType requestType)
+        public static bool TryParseUri(Uri url, out string repoRelLocalPath, out GitServerRequestType requestType)
         {
             repoRelLocalPath = null;
             requestType = GitServerRequestType.Unknown;
@@ -119,7 +119,7 @@ namespace Kudu.Services.GitServer
             var lastPathElt = pathElts[pathElts.Length - 1];
             var nextToLastPathElt = pathElts[pathElts.Length - 2];
 
-            if (!firstPathElt.Equals("git", StringComparison.InvariantCultureIgnoreCase))
+            if (!firstPathElt.Equals("git", StringComparison.OrdinalIgnoreCase))
             {
                 return false;
             }
