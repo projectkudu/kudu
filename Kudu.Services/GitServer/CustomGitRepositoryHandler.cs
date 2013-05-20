@@ -1,13 +1,12 @@
-﻿using Kudu.Contracts.SourceControl;
+﻿using System;
+using System.IO;
+using System.Net;
+using System.Web;
+using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
-using System;
-using System.IO;
-using System.IO.Abstractions;
-using System.Net;
-using System.Web;
 
 namespace Kudu.Services.GitServer
 {
@@ -17,8 +16,8 @@ namespace Kudu.Services.GitServer
         {
             Unknown,
             AdvertiseUploadPack,
-            AdvertiseRecievePack,
-            RecievePack,
+            AdvertiseReceivePack,
+            ReceivePack,
             UploadPack,
             LegacyInfoRef,
         };
@@ -47,9 +46,9 @@ namespace Kudu.Services.GitServer
                 string repoRelFilePath;
 
                 _tracer.Trace("Parsing request uri {0}", context.Request.Url.AbsoluteUri);
-                if(!TryParseUri(context.Request.Url, out repoRelFilePath, out requestType))
+                if (!TryParseUri(context.Request.Url, out repoRelFilePath, out requestType))
                 {
-                    context.Response.StatusCode =  (int)HttpStatusCode.BadRequest;
+                    context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
                     context.Response.End();
                     return;
                 }
@@ -62,32 +61,28 @@ namespace Kudu.Services.GitServer
                 switch (requestType)
                 {
                     case GitServerRequestType.AdvertiseUploadPack:
+                        using (_tracer.Step("CustomGitServerController.AdvertiseUploadPack"))
                         {
-                            using (_tracer.Step("CustomGitServerController.AdvertiseUploadPack"))
+                            if (RepositoryExists(context))
                             {
-                                if (RepositoryExists(context))
-                                {
-                                    var gitServer = GetInstance<IGitServer>();
-                                    GitServerHttpHandler.UpdateNoCacheForResponse(context.Response);
-                                    context.Response.ContentType = "application/x-git-upload-pack-advertisement";
-                                    context.Response.StatusCode = (int)HttpStatusCode.OK;
-                                    context.Response.OutputStream.PktWrite("# service=git-upload-pack\n");
-                                    context.Response.OutputStream.PktFlush();
-                                    gitServer.AdvertiseUploadPack(context.Response.OutputStream);
-                                    context.Response.End();
-                                }
+                                var gitServer = GetInstance<IGitServer>();
+                                GitServerHttpHandler.UpdateNoCacheForResponse(context.Response);
+                                context.Response.ContentType = "application/x-git-upload-pack-advertisement";
+                                context.Response.StatusCode = (int)HttpStatusCode.OK;
+                                context.Response.OutputStream.PktWrite("# service=git-upload-pack\n");
+                                context.Response.OutputStream.PktFlush();
+                                gitServer.AdvertiseUploadPack(context.Response.OutputStream);
+                                context.Response.End();
                             }
                         }
                         break;
                     case GitServerRequestType.UploadPack:
+                        if (RepositoryExists(context))
                         {
-                            if (RepositoryExists(context))
-                            {
-                                UploadPackHandler uploadPackHandler = GetInstance<UploadPackHandler>();
-                                context.Response.StatusCode = (int)HttpStatusCode.OK;
-                                uploadPackHandler.ProcessRequestBase(context);
-                                context.Response.End();
-                            }
+                            UploadPackHandler uploadPackHandler = GetInstance<UploadPackHandler>();
+                            context.Response.StatusCode = (int)HttpStatusCode.OK;
+                            uploadPackHandler.ProcessRequestBase(context);
+                            context.Response.End();
                         }
                         break;
                     default:
@@ -95,6 +90,7 @@ namespace Kudu.Services.GitServer
                         context.Response.End();
                         break;
                 }
+
                 return;
             }
         }
@@ -144,7 +140,7 @@ namespace Kudu.Services.GitServer
                 }
                 else if (serviceValue != null && serviceValue.Equals("git-receive-pack", StringComparison.OrdinalIgnoreCase))
                 {
-                    requestType = GitServerRequestType.AdvertiseRecievePack;
+                    requestType = GitServerRequestType.AdvertiseReceivePack;
                 }
                 else
                 {
@@ -154,7 +150,7 @@ namespace Kudu.Services.GitServer
             else if (lastPathElt.Equals("git-receive-pack", StringComparison.OrdinalIgnoreCase))
             {
                 repoPathEltEnd = pathElts.Length - 1;
-                requestType = GitServerRequestType.RecievePack;
+                requestType = GitServerRequestType.ReceivePack;
             }
             else if (lastPathElt.Equals("git-upload-pack", StringComparison.OrdinalIgnoreCase))
             {
@@ -196,7 +192,5 @@ namespace Kudu.Services.GitServer
         {
             return (T)_getInstance(typeof(T));
         }
-
     }
 }
-

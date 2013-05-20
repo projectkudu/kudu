@@ -1,4 +1,8 @@
-﻿using Kudu.Contracts.Infrastructure;
+﻿using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Web;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
@@ -7,13 +11,10 @@ using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Services.GitServer;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Web;
 using Xunit;
 using Xunit.Extensions;
 using GitServerRequestType = Kudu.Services.GitServer.CustomGitRepositoryHandler.GitServerRequestType;
+
 namespace Kudu.Services.Test
 {
     public class CustomGitRepositoryHandlerFacts
@@ -21,22 +22,22 @@ namespace Kudu.Services.Test
 
         [Theory]
         // all requests scenarios with empty path (boundary)
-        [InlineData("git/info/refs?service=git-upload-pack","",GitServerRequestType.AdvertiseUploadPack)]
-        [InlineData("git/info/refs?service=git-receive-pack", "", GitServerRequestType.AdvertiseRecievePack)]
+        [InlineData("git/info/refs?service=git-upload-pack", "", GitServerRequestType.AdvertiseUploadPack)]
+        [InlineData("git/info/refs?service=git-receive-pack", "", GitServerRequestType.AdvertiseReceivePack)]
         [InlineData("git/info/refs", "", GitServerRequestType.LegacyInfoRef)]
-        [InlineData("git/git-receive-pack", "", GitServerRequestType.RecievePack)]
+        [InlineData("git/git-receive-pack", "", GitServerRequestType.ReceivePack)]
         [InlineData("git/git-upload-pack", "", GitServerRequestType.UploadPack)]
         // all requests scenarios with non-empty path
         [InlineData("git/a/info/refs?service=git-upload-pack", @"a", GitServerRequestType.AdvertiseUploadPack)]
-        [InlineData("git/a/b/info/refs?service=git-receive-pack", @"a\b", GitServerRequestType.AdvertiseRecievePack)]
+        [InlineData("git/a/b/info/refs?service=git-receive-pack", @"a\b", GitServerRequestType.AdvertiseReceivePack)]
         [InlineData("git/a/b/c%20d/info/refs", @"a\b\c d", GitServerRequestType.LegacyInfoRef)]
-        [InlineData("git/c%3A/a/b/git-receive-pack", @"c:\a\b", GitServerRequestType.RecievePack)]
+        [InlineData("git/c%3A/a/b/git-receive-pack", @"c:\a\b", GitServerRequestType.ReceivePack)]
         [InlineData("git/c%3A%5Ca%5Cb%5Cc%20d/git-upload-pack", @"c:\a\b\c d", GitServerRequestType.UploadPack)]
-         // all requests scenarios with input variations that should be accept preserved
+        // all requests scenarios with input variations that should be accept preserved
         [InlineData("Git/A//info/refs?service=git-upload-Pack&ignored", @"A", GitServerRequestType.AdvertiseUploadPack)]
-        [InlineData("Git/a/B///info/refs?Service=git-receive-pack&ignored", @"a\B", GitServerRequestType.AdvertiseRecievePack)]
+        [InlineData("Git/a/B///info/refs?Service=git-receive-pack&ignored", @"a\B", GitServerRequestType.AdvertiseReceivePack)]
         [InlineData("Git///a/b/C%20d/Info///Refs", @"a\b\C d", GitServerRequestType.LegacyInfoRef)]
-        [InlineData("Git/C%3A/a/b/Git-receive-pack?ignored&ignored", @"C:\a\b", GitServerRequestType.RecievePack)]
+        [InlineData("Git/C%3A/a/b/Git-receive-pack?ignored&ignored", @"C:\a\b", GitServerRequestType.ReceivePack)]
         [InlineData("Git/c%3A%5Ca%5C%5Cb%5Cc%20D//Git-upload-pack?ignored&ignored", @"c:\a\\b\c D", GitServerRequestType.UploadPack)]
         public void CustomGitRepositoryHandlerParseValidRequestUri(
             string requestPath,
@@ -199,11 +200,12 @@ namespace Kudu.Services.Test
             public GitServerRequestType RequestType { get; set; }
 
             public bool RepositoryExists { get { return true; } }
-            public Uri RequestUri {
+            public Uri RequestUri
+            {
                 get
                 {
                     var suffix = "";
-                    switch(RequestType)
+                    switch (RequestType)
                     {
                         case GitServerRequestType.UploadPack:
                             suffix = "git-upload-pack";
