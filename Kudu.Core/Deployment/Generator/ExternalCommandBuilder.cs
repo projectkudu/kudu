@@ -1,20 +1,15 @@
-﻿using Kudu.Contracts.Settings;
-using Kudu.Contracts.Tracing;
-using Kudu.Core.Infrastructure;
-using System;
+﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using Kudu.Contracts.Settings;
+using Kudu.Contracts.Tracing;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment.Generator
 {
     public abstract class ExternalCommandBuilder : ISiteBuilder
     {
         // TODO: Once CustomBuilder is removed, change all internals back to privates
-
-        internal const string BuildTempPath = "DEPLOYMENT_TEMP";
-        internal const string ManifestPath = "MANIFEST_PATH";
-        internal const string PreviousManifestPath = "PREVIOUS_MANIFEST_PATH";
-        internal const string NextManifestPath = "NEXT_MANIFEST_PATH";
 
         private ExternalCommandFactory _externalCommandFactory;
 
@@ -31,9 +26,13 @@ namespace Kudu.Core.Deployment.Generator
         }
 
         protected IEnvironment Environment { get; private set; }
+
         protected IDeploymentSettingsManager DeploymentSettings { get; private set; }
+
         protected string RepositoryPath { get; private set; }
+
         protected IBuildPropertyProvider PropertyProvider { get; private set; }
+
         protected string HomePath { get; private set; }
 
         public abstract Task Build(DeploymentContext context);
@@ -46,13 +45,13 @@ namespace Kudu.Core.Deployment.Generator
             // Creates an executable pointing to cmd and the working directory being
             // the repository root
             var exe = _externalCommandFactory.BuildExternalCommandExecutable(RepositoryPath, context.OutputPath, customLogger);
-            exe.EnvironmentVariables[PreviousManifestPath] = context.PreviousManifestFilePath ?? String.Empty;
-            exe.EnvironmentVariables[NextManifestPath] = context.NextManifestFilePath;
+            exe.EnvironmentVariables[WellKnownEnvironmentVariables.PreviousManifestPath] = context.PreviousManifestFilePath ?? String.Empty;
+            exe.EnvironmentVariables[WellKnownEnvironmentVariables.NextManifestPath] = context.NextManifestFilePath;
 
             // Create a directory for the script output temporary artifacts
             string buildTempPath = Path.Combine(Environment.TempPath, Guid.NewGuid().ToString());
             FileSystemHelpers.EnsureDirectory(buildTempPath);
-            exe.EnvironmentVariables[BuildTempPath] = buildTempPath;
+            exe.EnvironmentVariables[WellKnownEnvironmentVariables.BuildTempPath] = buildTempPath;
 
             // Populate the enviornment with the build propeties
             foreach (var property in PropertyProvider.GetProperties())
