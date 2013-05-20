@@ -110,6 +110,12 @@ namespace Kudu.TestHarness
             private set;
         }
 
+        public string GetCustomGitUrl(string path)
+        {
+            // Return a custom git url, e.g. http://kuduservice/git/foo/bar
+            return GitUrl.Substring(0, GitUrl.LastIndexOf("/")) + "/git/" + path;
+        }
+
         private void Delete()
         {
             // Don't delete the site if we're supposed to reuse it
