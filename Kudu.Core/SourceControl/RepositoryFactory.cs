@@ -52,7 +52,7 @@ namespace Kudu.Core.SourceControl
             get
             {
                 var gitExeRepository = new GitExeRepository(_environment, _settings, _traceFactory);
-                gitExeRepository.SkipPostReciveHookCheck = true;
+                gitExeRepository.SkipPostReceiveHookCheck = true;
                 return gitExeRepository.Exists;
             }
         }
@@ -108,7 +108,7 @@ namespace Kudu.Core.SourceControl
             {
                 tracer.Trace("Assuming custom git repository at {0}", _environment.RepositoryPath);
                 var ret = new GitExeRepository(_environment, _settings, _traceFactory);
-                ret.SkipPostReciveHookCheck = true;
+                ret.SkipPostReceiveHookCheck = true;
                 return ret;
             }
             return null;

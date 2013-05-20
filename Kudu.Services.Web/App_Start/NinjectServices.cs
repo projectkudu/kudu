@@ -238,6 +238,9 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHandler<UploadPackHandler>(kernel, "git-upload-pack-root", "git-upload-pack");
             routes.MapHandler<UploadPackHandler>(kernel, "git-upload-pack", configuration.GitServerRoot + "/git-upload-pack");
 
+            // Custom GIT repositories, which can be served from any directory that has a git repo
+            routes.MapHandler<CustomGitRepositoryHandler>(kernel, "git-custom-repository", "git/{*path}");
+
             // Scm (deployment repository)
             routes.MapHttpRoute("scm-info", "scm/info", new { controller = "LiveScm", action = "GetRepositoryInfo" });
             routes.MapHttpRoute("scm-clean", "scm/clean", new { controller = "LiveScm", action = "Clean" });
@@ -296,10 +299,6 @@ namespace Kudu.Services.Web.App_Start
 
             // LogStream
             routes.MapHandler<LogStreamHandler>(kernel, "logstream", "logstream/{*path}");
-
-            // Custom GIT repositories
-            routes.MapHandler<CustomGitRepositoryHandler>(kernel, "git-custom-repository", "git/{*path}");
-
         }
 
         private static ITracer GetTracer(IEnvironment environment, IKernel kernel)
