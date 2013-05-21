@@ -47,6 +47,12 @@ namespace Kudu.Core.Deployment
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.SelectNodeVersionCommandKey] = SelectNodeVersionCommand;
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.NpmJsPathKey] = PathUtility.ResolveNpmJsPath();
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.NuGetPackageRestoreKey] = "true";
+
+            if (String.Equals(Path.GetFullPath(_repositoryPath), Path.GetFullPath(context.OutputPath), StringComparison.OrdinalIgnoreCase))
+            {
+                exe.EnvironmentVariables[WellKnownEnvironmentVariables.InPlaceDeployment] = "1";
+            }
+
             exe.AddDeploymentSettingsAsEnvironmentVariables(_settings);
 
             exe.SetHomePath(_homePath);

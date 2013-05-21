@@ -53,7 +53,7 @@ namespace Kudu.Core.Deployment.Generator
             FileSystemHelpers.EnsureDirectory(buildTempPath);
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.BuildTempPath] = buildTempPath;
 
-            // Populate the enviornment with the build propeties
+            // Populate the environment with the build properties
             foreach (var property in PropertyProvider.GetProperties())
             {
                 exe.EnvironmentVariables[property.Key] = property.Value;
