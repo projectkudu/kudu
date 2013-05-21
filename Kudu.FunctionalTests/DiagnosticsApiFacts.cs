@@ -4,8 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using Kudu.Client;
 using Kudu.Client.Infrastructure;
+using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -42,6 +44,48 @@ namespace Kudu.FunctionalTests
                     }
                 });
             }
+        }
+
+        [Fact]
+        public async Task ProcessApiTests()
+        {
+            string appName = "ProcessApiTests";
+
+            await ApplicationManager.RunAsync(appName, async appManager =>
+            {
+                // Test current process
+                var process = await appManager.ProcessManager.GetCurrentProcessAsync();
+                int currentId = process.Id;
+                DateTime startTime = process.StartTime;
+                Assert.NotNull(process);
+                Assert.Contains("w3wp", process.Name);
+                Assert.Contains("/diagnostics/processes/" + currentId, process.Href.AbsoluteUri);
+
+                // Test get process by id
+                process = await appManager.ProcessManager.GetProcessAsync(currentId);
+                Assert.NotNull(process);
+                Assert.Contains("w3wp", process.Name);
+                Assert.Contains("/diagnostics/processes/" + currentId, process.Href.AbsoluteUri);
+
+                // Test process list
+                var processes = await appManager.ProcessManager.GetProcessesAsync();
+                Assert.True(processes.Count() >= 1);
+                Assert.True(processes.Any(p => p.Id == currentId));
+
+                // Test minidump
+                //var stream = new MemoryStream();
+                //using (var minidump = await appManager.ProcessManager.MiniDump())
+                //{
+                //    Assert.NotNull(minidump);
+                //    await minidump.CopyToAsync(stream);
+                //}
+                //Assert.True(stream.Length > 0);
+
+                // Test kill process
+                await KuduAssert.ThrowsUnwrappedAsync<HttpRequestException>(() => appManager.ProcessManager.KillProcessAsync(currentId));
+                process = await appManager.ProcessManager.GetCurrentProcessAsync();
+                Assert.NotEqual(startTime, process.StartTime);
+            });
         }
 
         [Fact]

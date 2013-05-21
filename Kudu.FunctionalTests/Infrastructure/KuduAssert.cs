@@ -29,6 +29,21 @@ namespace Kudu.FunctionalTests.Infrastructure
             return (T)baseEx;
         }
 
+        public static async Task<T> ThrowsUnwrappedAsync<T>(Func<Task> action) where T : Exception
+        {
+            try
+            {
+                await action();
+            }
+            catch (Exception ex)
+            {
+                Assert.IsAssignableFrom<T>(ex);
+                return (T)ex;
+            }
+
+            throw new Exception("Not throw, expected: " + typeof(T).Name);
+        }
+
         public static Exception ThrowsMessage(string expected, Action action)
         {
             try
