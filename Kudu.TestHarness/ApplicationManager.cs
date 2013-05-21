@@ -4,15 +4,14 @@ using System.IO;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Kudu.Client;
 using Kudu.Client.Deployment;
+using Kudu.Client.Diagnostics;
 using Kudu.Client.Editor;
 using Kudu.Client.Infrastructure;
 using Kudu.Client.SourceControl;
 using Kudu.Client.SSHKey;
 using Kudu.Core.Infrastructure;
 using Kudu.SiteManagement;
-using Kudu.Core.Commands;
 
 namespace Kudu.TestHarness
 {
@@ -99,6 +98,12 @@ namespace Kudu.TestHarness
         }
 
         public RemoteCommandExecutor CommandExecutor
+        {
+            get;
+            private set;
+        }
+
+        public RemoteProcessManager ProcessManager
         {
             get;
             private set;
@@ -374,6 +379,7 @@ namespace Kudu.TestHarness
                 LiveScmVfsManager = new RemoteVfsManager(site.ServiceUrl + "scmvfs"),
                 ZipManager = new RemoteZipManager(site.ServiceUrl + "zip"),
                 CommandExecutor = new RemoteCommandExecutor(site.ServiceUrl + "command"),
+                ProcessManager = new RemoteProcessManager(site.ServiceUrl + "diagnostics/processes"),
                 RepositoryManager = repositoryManager,
             };
 

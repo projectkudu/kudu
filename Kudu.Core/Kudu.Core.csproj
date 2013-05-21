@@ -80,6 +80,7 @@
     <Compile Include="Infrastructure\ExecutableExtensions.cs" />
     <Compile Include="Infrastructure\IExecutable.cs" />
     <Compile Include="Infrastructure\IProcess.cs" />
+    <Compile Include="Infrastructure\MiniDumpNativeMethods.cs" />
     <Compile Include="Infrastructure\ProcessExtensions.cs" />
     <Compile Include="Infrastructure\ProcessWrapper.cs" />
     <Compile Include="Infrastructure\ProgressWriter.cs" />
