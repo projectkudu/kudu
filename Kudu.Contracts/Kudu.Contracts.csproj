@@ -36,6 +36,7 @@
     <Compile Include="Deployment\ILogger.cs" />
     <Compile Include="Deployment\LogEntry.cs" />
     <Compile Include="Deployment\LogEntryType.cs" />
+    <Compile Include="Diagnostics\ProcessInfo.cs" />
     <Compile Include="Dropbox\DropboxDeltaInfo.cs" />
     <Compile Include="Dropbox\DropboxDeployInfo.cs" />
     <Compile Include="Editor\VfsStatEntry.cs" />

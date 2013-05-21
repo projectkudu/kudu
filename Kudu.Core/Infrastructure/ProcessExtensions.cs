@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
+using System.IO.Abstractions;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Kudu.Contracts.Tracing;
 
 namespace Kudu.Core.Infrastructure
@@ -31,16 +35,16 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        public static IEnumerable<Process> GetChildren(this Process process)
+        public static IEnumerable<Process> GetChildren(this Process process, bool recursive = true)
         {
             int pid = process.Id;
             Dictionary<int, List<int>> tree = GetProcessTree();
-            return GetChildren(pid, tree).Select(cid => SafeGetProcessById(cid)).Where(p => p != null);
+            return GetChildren(pid, tree, recursive).Select(cid => SafeGetProcessById(cid)).Where(p => p != null);
         }
 
         // recursively get children.
         // return depth-first (leaf child first).
-        private static IEnumerable<int> GetChildren(int pid, Dictionary<int, List<int>> tree)
+        private static IEnumerable<int> GetChildren(int pid, Dictionary<int, List<int>> tree, bool recursive)
         {
             List<int> children;
             if (tree.TryGetValue(pid, out children))
@@ -48,7 +52,10 @@ namespace Kudu.Core.Infrastructure
                 List<int> result = new List<int>();
                 foreach (int id in children)
                 {
-                    result.AddRange(GetChildren(id, tree));
+                    if (recursive)
+                    {
+                        result.AddRange(GetChildren(id, tree, recursive));
+                    }
                     result.Add(id);
                 }
                 return result;
@@ -75,6 +82,57 @@ namespace Kudu.Core.Infrastructure
             }
 
             return process.TotalProcessorTime;
+        }
+
+        /// <summary>
+        /// Get parent id.
+        /// </summary>
+        public static int GetParentId(this Process process)
+        {
+            string indexedProcessName = FindIndexedProcessName(process.Id, process.ProcessName);
+            if (String.IsNullOrEmpty(indexedProcessName))
+            {
+                return 0;
+            }
+
+            int? parentId = FindPidFromIndexedProcessName(indexedProcessName);
+            if (!parentId.HasValue)
+            {
+                return 0;
+            }
+
+            return parentId.Value;
+        }
+
+        /// <summary>
+        /// Get private working set.
+        /// </summary>
+        public static long GetPrivateWorkingSet(this Process process)
+        {
+            string indexedProcessName = FindIndexedProcessName(process.Id, process.ProcessName);
+            if (String.IsNullOrEmpty(indexedProcessName))
+            {
+                return -1;
+            }
+
+            var value = SafeGetPerfCounter("Process", "Working Set - Private", indexedProcessName);
+            if (!value.HasValue)
+            {
+                return -1;
+            }
+
+            return value.Value;
+        }
+
+        public static void MiniDump(this Process process, string dumpFile, MINIDUMP_TYPE dumpType)
+        {
+            using (var fs = new FileStream(dumpFile, FileMode.Create, FileAccess.ReadWrite, FileShare.None))
+            {
+                if (!MiniDumpNativeMethods.MiniDumpWriteDump(process.Handle, (uint)process.Id, fs.SafeFileHandle, dumpType, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero))
+                {
+                    throw new Win32Exception(Marshal.GetLastWin32Error());
+                }
+            }
         }
 
         private static Process SafeGetProcessById(int pid)
