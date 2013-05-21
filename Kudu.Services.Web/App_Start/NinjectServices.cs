@@ -300,6 +300,12 @@ namespace Kudu.Services.Web.App_Start
 
             // LogStream
             routes.MapHandler<LogStreamHandler>(kernel, "logstream", "logstream/{*path}");
+
+            // Processes
+            routes.MapHttpRoute("all-processes", "diagnostics/processes", new { controller = "Process", action = "GetAllProcesses" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("one-process-get", "diagnostics/processes/{id}", new { controller = "Process", action = "GetProcess" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("one-process-delete", "diagnostics/processes/{id}", new { controller = "Process", action = "KillProcess" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpRoute("one-process-dump", "diagnostics/processes/{id}/dump", new { controller = "Process", action = "MiniDump" }, new { verb = new HttpMethodConstraint("GET") });
         }
 
         private static ITracer GetTracer(IEnvironment environment, IKernel kernel)
