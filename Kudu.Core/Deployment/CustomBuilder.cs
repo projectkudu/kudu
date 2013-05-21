@@ -38,15 +38,21 @@ namespace Kudu.Core.Deployment
             // Creates an executable pointing to cmd and the working directory being
             // the repository root
             var exe = new Executable(StarterScriptPath, _repositoryPath, _settings.GetCommandIdleTimeout());
-            exe.EnvironmentVariables[ExternalCommandFactory.SourcePath] = _repositoryPath;
-            exe.EnvironmentVariables[ExternalCommandFactory.TargetPath] = context.OutputPath;
-            exe.EnvironmentVariables[ExternalCommandBuilder.PreviousManifestPath] = (context.PreviousManifest != null) ? context.PreviousManifest.ManifestFilePath : String.Empty;
-            exe.EnvironmentVariables[ExternalCommandBuilder.NextManifestPath] = context.ManifestWriter.ManifestFilePath;
-            exe.EnvironmentVariables[ExternalCommandFactory.MSBuildPath] = PathUtility.ResolveMSBuildPath();
-            exe.EnvironmentVariables[ExternalCommandFactory.KuduSyncCommandKey] = KuduSyncCommand;
-            exe.EnvironmentVariables[ExternalCommandFactory.SelectNodeVersionCommandKey] = SelectNodeVersionCommand;
-            exe.EnvironmentVariables[ExternalCommandFactory.NpmJsPathKey] = PathUtility.ResolveNpmJsPath();
+            exe.EnvironmentVariables[WellKnownEnvironmentVariables.SourcePath] = _repositoryPath;
+            exe.EnvironmentVariables[WellKnownEnvironmentVariables.TargetPath] = context.OutputPath;
+            exe.EnvironmentVariables[WellKnownEnvironmentVariables.PreviousManifestPath] = (context.PreviousManifest != null) ? context.PreviousManifest.ManifestFilePath : String.Empty;
+            exe.EnvironmentVariables[WellKnownEnvironmentVariables.NextManifestPath] = context.ManifestWriter.ManifestFilePath;
+            exe.EnvironmentVariables[WellKnownEnvironmentVariables.MSBuildPath] = PathUtility.ResolveMSBuildPath();
+            exe.EnvironmentVariables[WellKnownEnvironmentVariables.KuduSyncCommandKey] = KuduSyncCommand;
+            exe.EnvironmentVariables[WellKnownEnvironmentVariables.SelectNodeVersionCommandKey] = SelectNodeVersionCommand;
+            exe.EnvironmentVariables[WellKnownEnvironmentVariables.NpmJsPathKey] = PathUtility.ResolveNpmJsPath();
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.NuGetPackageRestoreKey] = "true";
+
+            if (String.Equals(Path.GetFullPath(_repositoryPath), Path.GetFullPath(context.OutputPath), StringComparison.OrdinalIgnoreCase))
+            {
+                exe.EnvironmentVariables[WellKnownEnvironmentVariables.InPlaceDeployment] = "1";
+            }
+
             exe.AddDeploymentSettingsAsEnvironmentVariables(_settings);
 
             exe.SetHomePath(_homePath);
@@ -54,7 +60,7 @@ namespace Kudu.Core.Deployment
             // Create a directory for the script output temporary artifacts
             string buildTempPath = Path.Combine(_tempPath, Guid.NewGuid().ToString());
             FileSystemHelpers.EnsureDirectory(buildTempPath);
-            exe.EnvironmentVariables[ExternalCommandBuilder.BuildTempPath] = buildTempPath;
+            exe.EnvironmentVariables[WellKnownEnvironmentVariables.BuildTempPath] = buildTempPath;
 
             // Populate the enviornment with the build propeties
             foreach (var property in _propertyProvider.GetProperties())
