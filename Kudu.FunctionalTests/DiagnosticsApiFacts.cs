@@ -83,6 +83,7 @@ namespace Kudu.FunctionalTests
 
                 // Test kill process
                 await KuduAssert.ThrowsUnwrappedAsync<HttpRequestException>(() => appManager.ProcessManager.KillProcessAsync(currentId));
+                HttpUtils.WaitForSite(appManager.SiteUrl, delayBeforeRetry: 10000);
                 process = await appManager.ProcessManager.GetCurrentProcessAsync();
                 Assert.NotEqual(startTime, process.StartTime);
             });
