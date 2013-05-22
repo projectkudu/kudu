@@ -17,13 +17,13 @@ namespace Kudu.FunctionalTests
     class LargeRepoTests
     {
 
-        [Theory]
-        //[InlineData("https://github.com/KuduApps/moodle", "master","http://docs.moodle.org/en/Installing_Moodle", "3a8c4380", "README.txt")]
+        [Theory(Skip = "Long Running Test. Run on your local system after removing this attribute")]
+        [InlineData("https://github.com/KuduApps/moodle", "master","http://docs.moodle.org/en/Installing_Moodle", "3a8c4380", "README.txt")]
         [InlineData("https://github.com/KuduApps/LargeStaticSite", "master", "Tsagaan Agui", "5fab40d", "Mongolia.html")]
-        //[InlineData("https://github.com/KuduApps/Kentico", "master", "Database Setup", "0dcdbef", "cmsinstall/install.aspx")]
-        //[InlineData("https://kudutest@bitbucket.org/kudutest/moodlegit.git", "master", "http://docs.moodle.org/en/Installing_Moodle", "3a8c4380", "README.txt")]
+        [InlineData("https://github.com/KuduApps/Kentico", "master", "Database Setup", "0dcdbef", "cmsinstall/install.aspx")]
+        [InlineData("https://kudutest@bitbucket.org/kudutest/moodlegit.git", "master", "http://docs.moodle.org/en/Installing_Moodle", "3a8c4380", "README.txt")]
         [InlineData("https://kudutest@bitbucket.org/kudutest/largestaticsitegit.git", "master", "Tsagaan Agui", "5fab40d", "Mongolia.html")]
-        //[InlineData("https://kudutest@bitbucket.org/kudutest/kenticogit.git", "master", "Database Setup", "0dcdbef", "cmsinstall/install.aspx")]
+        [InlineData("https://kudutest@bitbucket.org/kudutest/kenticogit.git", "master", "Database Setup", "0dcdbef", "cmsinstall/install.aspx")]
         public void DeployLargeRepo(string repoCloneUrl, string defaultBranchName, string verificationText, string commitId, string resourcePath)
         {
 
@@ -31,9 +31,9 @@ namespace Kudu.FunctionalTests
 
         }
 
-        [Theory]
-        //[InlineData("/Moodle", "Moodle","http://docs.moodle.org/en/Installing_Moodle", "README.txt")]
-        //[InlineData("/Kentico", "Kentico", "Database Setup", "cmsinstall/install.aspx")]
+        [Theory(Skip = "Long Running Test. Run on your local system after removing this attribute")]
+        [InlineData("/Moodle", "Moodle","http://docs.moodle.org/en/Installing_Moodle", "README.txt")]
+        [InlineData("/Kentico", "Kentico", "Database Setup", "cmsinstall/install.aspx")]
         [InlineData("/LargeStaticSite", "LargeStaticSite", "Tsagaan Agui", "Mongolia.html")]
         public void DeployLargeRepoFromDropbox(string repoPath, string appName, string verificationText, string resourcePath)
         {
