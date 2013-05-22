@@ -151,9 +151,9 @@ namespace Kudu.FunctionalTests
         }
 
         //Common code
-        private static void PushAndDeployApps(string repoCloneUrl, string defaultBranchName,
+        internal static void PushAndDeployApps(string repoCloneUrl, string defaultBranchName,
                                               string verificationText, HttpStatusCode expectedResponseCode, string verificationLogText,
-                                              string resourcePath = "", string httpMethod = "GET", string jsonPayload = "")
+                                              string resourcePath = "", string httpMethod = "GET", string jsonPayload = "", bool deleteSCM = false)
         {
             using (new LatencyLogger("PushAndDeployApps - " + repoCloneUrl))
             {
@@ -184,6 +184,13 @@ namespace Kudu.FunctionalTests
                     if (!String.IsNullOrEmpty(verificationLogText))
                     {
                         KuduAssert.VerifyLogOutput(appManager, results[0].Id, verificationLogText.Trim());
+                    }
+                    if (deleteSCM)
+                    {
+                        using (new LatencyLogger("SCMAndWebDelete"))
+                        {
+                            appManager.RepositoryManager.Delete(deleteWebRoot: false, ignoreErrors: false).Wait();
+                        }
                     }
                 });
             }
