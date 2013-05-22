@@ -219,7 +219,7 @@ namespace Kudu.FunctionalTests
                 {
                     DropboxDeltaInfo item = new DropboxDeltaInfo();
 
-                    if (!info.metadata.path.StartsWith(path))
+                    if (info.metadata != null && !info.metadata.path.StartsWith(path))
                     {
                         continue;
                     }
