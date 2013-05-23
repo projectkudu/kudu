@@ -18,7 +18,7 @@ namespace Kudu.SiteManagement
     {
         private const string HostingStartHtml = "hostingstart.html";
 
-        private static Random portNumberGenRnd = new Random((int)DateTime.UtcNow.Ticks);
+        private readonly static Random portNumberGenRnd = new Random((int)DateTime.UtcNow.Ticks);
 
         private readonly IPathResolver _pathResolver;
         private readonly bool _traceFailedRequests;
@@ -68,7 +68,7 @@ namespace Kudu.SiteManagement
                 // IIS.Site devSite = iis.Sites[devSiteName];
 
                 var site = new Site();
-                site.ServiceUrl = GetSiteUrl(serviceSite);
+                site.ServiceUrls = GetSiteUrls(serviceSite);
                 site.SiteUrls = GetSiteUrls(mainSite);
                 return site;
             }
@@ -126,9 +126,6 @@ namespace Kudu.SiteManagement
                     string serviceSiteName = GetServiceSite(applicationName);
                     var serviceSite = CreateSite(iis, applicationName, serviceSiteName, _pathResolver.ServiceSitePath, serviceSiteBindings);
 
-                    IIS.Binding serviceSiteBinding = EnsureBinding(serviceSite.Bindings);
-                    int serviceSitePort = serviceSiteBinding.EndPoint.Port;
-
                     // Create the main site
                     string siteName = GetLiveSite(applicationName);
                     string siteRoot = _pathResolver.GetLiveSitePath(applicationName);
@@ -161,8 +158,13 @@ namespace Kudu.SiteManagement
                     Thread.Sleep(1000);
 
                     // Set initial ScmType state to LocalGit
-                    var serviceUrl = String.Format("http://localhost:{0}/", serviceSitePort);
-                    var settings = new RemoteDeploymentSettingsManager(serviceUrl + "settings");
+                    var serviceUrls = new List<string>();
+                    foreach (var url in serviceSite.Bindings)
+                    {
+                        serviceUrls.Add(String.Format("http://{0}:{1}/", String.IsNullOrEmpty(url.Host) ? "localhost" : url.Host, url.EndPoint.Port));
+                    }
+
+                    var settings = new RemoteDeploymentSettingsManager(serviceUrls.First() + "settings");
                     settings.SetValue(SettingsKeys.ScmType, ScmType.LocalGit).Wait();
 
                     var siteUrls = new List<string>();
@@ -173,7 +175,7 @@ namespace Kudu.SiteManagement
 
                     return new Site
                     {
-                        ServiceUrl = serviceUrl,
+                        ServiceUrls = serviceUrls,
                         SiteUrls = siteUrls
                     };
                 }
@@ -251,6 +253,93 @@ namespace Kudu.SiteManagement
 
                     Thread.Sleep(1000);
                 }
+            }
+        }
+
+        public bool AddSiteBinding(string applicationName, string siteBinding, SiteType siteType)
+        {
+            IIS.Site site;
+
+            if (!siteBinding.StartsWith("http://"))
+            {
+                siteBinding = "http://" + siteBinding;
+            }
+
+            var uri = new Uri(siteBinding);
+            
+            try
+            {
+                using (var iis = new IIS.ServerManager())
+                {
+                    if (!IsAvailable(uri.Host, uri.Port, iis))
+                    {
+                        return false;
+                    }
+
+                    if (siteType == SiteType.Live)
+                    {
+                        site = iis.Sites[GetLiveSite(applicationName)];
+                    }
+                    else
+                    {
+                        site = iis.Sites[GetServiceSite(applicationName)];
+                    }
+
+                    if (site != null)
+                    {
+                        site.Bindings.Add("*:" + uri.Port + ":" + uri.Host, "http");
+                        iis.CommitChanges();
+
+                        Thread.Sleep(1000);
+                    }
+                }
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public bool RemoveSiteBinding(string applicationName, string siteBinding, SiteType siteType)
+        {
+            IIS.Site site;
+
+            try
+            {
+                using (var iis = new IIS.ServerManager())
+                {
+                    if (siteType == SiteType.Live)
+                    {
+                        site = iis.Sites[GetLiveSite(applicationName)];
+                    }
+                    else
+                    {
+                        site = iis.Sites[GetServiceSite(applicationName)];
+                    }
+
+                    if (site != null)
+                    {
+                        var uri = new Uri(siteBinding);
+                        var binding = site.Bindings.FirstOrDefault(x => x.Host.Equals(uri.Host) 
+                                && x.EndPoint.Port.Equals(uri.Port)
+                                && x.Protocol.Equals(uri.Scheme));
+
+                        if (binding != null)
+                        {
+                            site.Bindings.Remove(binding);
+                            iis.CommitChanges();
+
+                            Thread.Sleep(1000);
+                        }
+                    }
+                }
+
+                return true;
+            }
+            catch
+            {
+                return false;
             }
         }
 
@@ -345,6 +434,22 @@ namespace Kudu.SiteManagement
                 foreach (var binding in iisSite.Bindings)
                 {
                     if (binding.EndPoint != null && binding.EndPoint.Port == port)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        private static bool IsAvailable(string host, int port, IIS.ServerManager iis)
+        {
+            foreach (var iisSite in iis.Sites)
+            {
+                foreach (var binding in iisSite.Bindings)
+                {
+                    if (binding.EndPoint != null && binding.EndPoint.Port == port && binding.Host == host)
                     {
                         return false;
                     }

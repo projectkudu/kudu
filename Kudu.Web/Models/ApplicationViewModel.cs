@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
+using Kudu.SiteManagement;
 
 namespace Kudu.Web.Models
 {
@@ -11,12 +12,14 @@ namespace Kudu.Web.Models
         {
         }
 
-        public ApplicationViewModel(IApplication application)
+        public ApplicationViewModel(IApplication application, ISettingsResolver settingsResolver)
         {
             Name = application.Name;
             SiteUrl = application.SiteUrl;
             SiteUrls = application.SiteUrls;
             ServiceUrl = application.ServiceUrl;
+            ServiceUrls = application.ServiceUrls;
+            CustomHostNames = settingsResolver.CustomHostNames;
         }
 
         [Required]
@@ -24,7 +27,8 @@ namespace Kudu.Web.Models
         public string SiteUrl { get; set; }
         public IEnumerable<string> SiteUrls { get; set; }
         public string ServiceUrl { get; set; }
-
+        public IEnumerable<string> ServiceUrls { get; set; }
+        public bool CustomHostNames { get; private set; }
         public RepositoryInfo RepositoryInfo { get; set; }
         
         public string GitUrl

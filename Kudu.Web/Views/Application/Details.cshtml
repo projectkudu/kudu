@@ -9,26 +9,146 @@
 }
 
 <form class="well form-inline">
-  <label class="control-label"><strong>GIT URL</strong></label>
-  <input type="input" id="clone-url" name="name" value="@Model.GitUrl" readonly="readonly" />
+    <label class="control-label"><strong>GIT URL</strong></label>
+    <input type="input" id="clone-url" name="name" value="@Model.GitUrl" readonly="readonly" />
 </form>
 
 <div class="well">
     <div class="control-group">
         <label class="control-label"><strong>Application URL</strong></label>
         <div class="controls">
-        <a href="@Model.SiteUrl" target="_blank">@Model.SiteUrl</a>
-        <p class="help-block">This is the link to your website.</p>
+            <a href="@Model.SiteUrl" target="_blank">@Model.SiteUrl</a>
+            <p class="help-block">This is the link to your website.</p>
         </div>
     </div>
     <div class="control-group">
         <label class="control-label"><strong>Service URL</strong></label>
         <div class="controls">
-        <a href="@Model.ServiceUrl" target="_blank">@Model.ServiceUrl</a>
-        <p class="help-block">This is the link to the kudu service.</p>
+            <a href="@Model.ServiceUrl" target="_blank">@Model.ServiceUrl</a>
+            <p class="help-block">This is the link to the kudu service.</p>
         </div>
     </div>
 </div>
+
+@if (Model.CustomHostNames)
+{
+    <div class="well">
+        <div class="control-group">
+            <label class="control-label"><strong>Custom Application Site Bindings</strong></label>
+            <p class="help-block">
+            Specify additional site bindings for the service site.  Can be of the format 'hostname', 'hostname:port', 'example.org' or 'example.org:port'.
+        </p>
+            <p class="help-block">
+                Protocol is limited to http only and all bindings entered will be set to http.
+            </p>
+
+            @if (Model.SiteUrls.Any())
+            {
+
+                <table id="custom-site-bindings" class="table">
+                    <tr>
+                        <th>Protocol</th>
+                        <th>Hostname</th>
+                        <th>Port</th>
+                        <th></th>
+                    </tr>
+                    @foreach (string siteBinding in Model.SiteUrls.Skip(1))
+                    {
+                        var uri = new Uri(siteBinding);
+                        
+                        <tr>
+                            <td>@uri.Scheme</td>
+                            <td>@uri.Host</td>
+                            <td>@uri.Port</td>
+                            <td class="actions">
+                                <button type="button" class="btn btn-primary" onclick=" removeBinding('@siteBinding', '#removesitebinding') ">Remove</button>
+                            </td>
+                        </tr>
+                    }
+
+                </table>
+                
+                    using (Html.BeginForm("remove-custom-site-binding", "Application", new { slug = Model.Name.GenerateSlug() }, FormMethod.Post, new { id = "remove-site-binding-form" }))
+                    {
+                    @Html.Hidden("siteBinding", "", new { id = "removesitebinding" })
+                    }
+
+            }
+            
+            @using (Html.BeginForm("add-custom-site-binding", "Application", new { slug = Model.Name.GenerateSlug() }, FormMethod.Post, new { @class = "form-inline" }))
+            {
+                <label class="control-label"><strong>Add application site binding</strong></label>           
+                @Html.ValidationSummary()
+                <span>http://</span> @Html.TextBox("siteBinding", "", new { placeholder = "example.org" })
+                <button id="add_sitebinding" type="submit" class="btn btn-primary">Add binding</button>
+            }
+
+        </div>
+    </div>
+    
+    <div class="well">
+        <div class="control-group">
+            <label class="control-label"><strong>Custom Service Site Bindings</strong></label>
+            
+            <p class="help-block">
+            Specify additional site bindings for the service site.  Can be of the format 'hostname', 'hostname:port', 'example.org' or 'example.org:port'.
+        </p>
+            <p class="help-block">
+            Protocol is limited to http only and all bindings entered will be set to http.
+            </p>
+
+            @if (Model.ServiceUrls.Any())
+            {
+
+                <table id="custom-site-bindings" class="table">
+                    <tr>
+                        <th>Protocol</th>
+                        <th>Hostname</th>
+                        <th>Port</th>
+                        <th></th>
+                    </tr>
+                    @foreach (string siteBinding in Model.ServiceUrls.Skip(1))
+                    {
+                        var uri = new Uri(siteBinding);
+                        
+                        <tr>
+                            <td>@uri.Scheme</td>
+                            <td>@uri.Host</td>
+                            <td>@uri.Port</td>
+                            <td class="actions">
+                                <button type="button" class="btn btn-primary" onclick=" removeBinding('@siteBinding', '#removeservicebinding') ">Remove</button>
+                            </td>
+                        </tr>
+                    }
+
+                </table>
+                
+                using (Html.BeginForm("remove-service-site-binding", "Application", new { slug = Model.Name.GenerateSlug() }, FormMethod.Post, new { id = "remove-site-binding-form" }))
+                {
+                    @Html.Hidden("siteBinding", "", new { id = "removeservicebinding" })
+                }
+
+            }
+            
+            @using (Html.BeginForm("add-service-site-binding", "Application", new { slug = Model.Name.GenerateSlug() }, FormMethod.Post, new { @class = "form-inline" }))
+            {
+                <label class="control-label"><strong>Add service site binding</strong></label>           
+                @Html.ValidationSummary()
+                <span>http://</span> @Html.TextBox("siteBinding", "", new { placeholder = "example.org" })
+                <button id="add_sitebinding" type="submit" class="btn btn-primary">Add binding</button>
+            }
+
+        </div>
+    </div>
+    
+    <script type="text/javascript">
+        function removeBinding(binding, element) {
+            if (confirm('Remove the following site binding: ' + binding)) {
+                $(element).val(binding).closest('form').submit();
+            }
+        }
+    </script>
+}
 
 @using (Html.BeginForm("Delete", "Application", new { slug = Model.Name.GenerateSlug() }))
 { 
