@@ -208,11 +208,12 @@ namespace Kudu.Services
                             await sem.WaitAsync();
                             try
                             {
-                                rateLimiter.Throtte();
-                                await ProcessFileAsyncCore(info, delta, parent, path, modified);
+                                await rateLimiter.ThrottleAsync();
+                                await ProcessFileAsync(info, delta, parent, path, modified);
                             }
                             finally
                             {
+                                Interlocked.Increment(ref _fileCount);
                                 sem.Release();
                             }
                         });
@@ -290,38 +291,18 @@ namespace Kudu.Services
             return Path.Combine(_environment.RepositoryPath, relativePath);
         }
 
-        private async Task ProcessFileAsyncCore(DropboxDeployInfo info, DropboxDeltaInfo delta, string parent, string path, DateTime lastModifiedUtc)
+        private async Task ProcessFileAsync(DropboxDeployInfo info, DropboxDeltaInfo delta, string parent, string path, DateTime lastModifiedUtc)
         {
-            var parameters = new Dictionary<string, string>
-            {
-                { "oauth_consumer_key", info.ConsumerKey },
-                { "oauth_signature_method", info.SignatureMethod },
-                { "oauth_timestamp", info.TimeStamp },
-                { "oauth_nonce", delta.Nonce },
-                { "oauth_version", info.OAuthVersion },
-                { "oauth_token", info.Token },
-                { "oauth_signature", delta.Signature }
-            };
-
-            var sb = new StringBuilder();
-            foreach (var key in parameters.Keys)
-            {
-                if (sb.Length != 0)
-                {
-                    sb.Append(',');
-                }
-                sb.AppendFormat("{0}=\"{1}\"", key, parameters[key]);
-            }
+            var oauthHeader = GetOAuthHeader(info, delta);
 
             int retries = MaxRetries;
-
             while (retries >= 0)
             {
                 retries--;
 
                 using (var client = new HttpClient { BaseAddress = new Uri(DropboxApiContentUri), Timeout = _timeout })
                 {
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("OAuth", sb.ToString());
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("OAuth", oauthHeader);
                     try
                     {
                         string requestPath = SandboxFilePath + DropboxPathEncode(delta.Path.ToLowerInvariant());
@@ -348,19 +329,37 @@ namespace Kudu.Services
                             LogError("Get({0}) '{1}'failed with {2}", MaxRetries - retries - 1, SandboxFilePath + delta.Path, ex.Message);
                             break;
                         }
-                        else
-                        {
-                            // First retry is 1s, second retry is 20s assuming rate-limit
-                            Thread.Sleep(retries == 1 ? TimeSpan.FromSeconds(20) : TimeSpan.FromSeconds(1));
-                            continue;
-                        }
                     }
-                    finally
-                    {
-                        Interlocked.Increment(ref _fileCount);
-                    }
+
+                    // First retry is 1s, second retry is 20s assuming rate-limit
+                    await Task.Delay(retries == 1 ? TimeSpan.FromSeconds(20) : TimeSpan.FromSeconds(1));
                 }
             }
+        }
+
+        private static string GetOAuthHeader(DropboxDeployInfo info, DropboxDeltaInfo delta)
+        {
+            var parameters = new Dictionary<string, string>
+            {
+                { "oauth_consumer_key", info.ConsumerKey },
+                { "oauth_signature_method", info.SignatureMethod },
+                { "oauth_timestamp", info.TimeStamp },
+                { "oauth_nonce", delta.Nonce },
+                { "oauth_version", info.OAuthVersion },
+                { "oauth_token", info.Token },
+                { "oauth_signature", delta.Signature }
+            };
+
+            var sb = new StringBuilder();
+            foreach (var item in parameters)
+            {
+                if (sb.Length != 0)
+                {
+                    sb.Append(',');
+                }
+                sb.AppendFormat("{0}=\"{1}\"", item.Key, item.Value);
+            }
+            return sb.ToString();
         }
 
         // Ported from https://github.com/SpringSource/spring-net-social-dropbox/blob/master/src/Spring.Social.Dropbox/Social/Dropbox/Api/Impl/DropboxTemplate.cs#L1713
@@ -407,12 +406,11 @@ namespace Kudu.Services
             }
         }
 
-        public class RateLimiter
+        public sealed class RateLimiter : IDisposable
         {
-            private readonly object _thisLock = new object();
             private readonly int _limit;
             private readonly TimeSpan _interval;
-
+            private readonly SemaphoreSlim _semaphore;
             private int _current = 0;
             private DateTime _last = DateTime.UtcNow;
 
@@ -420,30 +418,48 @@ namespace Kudu.Services
             {
                 _limit = limit;
                 _interval = interval;
+                _semaphore = new SemaphoreSlim(1, 1);
             }
 
-            public void Throtte()
+            public async Task ThrottleAsync()
             {
-                lock (_thisLock)
+                await _semaphore.WaitAsync();
+                try
                 {
-                    _current++;
-                    if (_current > _limit)
-                    {
-                        DateTime now = DateTime.UtcNow;
-                        TimeSpan ts = now - _last;
-                        if (ts < _interval)
-                        {
-                            Thread.Sleep(_interval - ts);
-                            _last = DateTime.UtcNow;
-                        }
-                        else
-                        {
-                            _last = now;
-                        }
-
-                        _current = 0;
-                    }
+                    await ThrottleCore();
                 }
+                finally
+                {
+                    _semaphore.Release();
+                }
+            }
+
+            private async Task ThrottleCore()
+            {
+                _current++;
+                if (_current > _limit)
+                {
+                    DateTime now = DateTime.UtcNow;
+                    TimeSpan ts = now - _last;
+                    TimeSpan waitDuration = _interval - ts;
+
+                    if (waitDuration.Ticks > 0)
+                    {
+                        await Task.Delay(waitDuration);
+                        _last = DateTime.UtcNow;
+                    }
+                    else
+                    {
+                        _last = now;
+                    }
+
+                    _current = 0;
+                }
+            }
+
+            public void Dispose()
+            {
+                _semaphore.Dispose();
             }
         }
     }
