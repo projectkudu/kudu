@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.IO.Abstractions;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -11,6 +12,7 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Diagnostics;
 using Kudu.Core.Infrastructure;
+using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.Performance
 {
@@ -18,11 +20,15 @@ namespace Kudu.Services.Performance
     {
         private readonly ITracer _tracer;
         private readonly IEnvironment _environment;
+        private readonly IFileSystem _fileSystem;
 
-        public ProcessController(ITracer tracer, IEnvironment environment)
+        public ProcessController(ITracer tracer,
+                                 IEnvironment environment,
+                                 IFileSystem fileSystem)
         {
             _tracer = tracer;
             _environment = environment;
+            _fileSystem = fileSystem;
         }
 
         [HttpGet]
@@ -63,14 +69,22 @@ namespace Kudu.Services.Performance
                 var process = GetProcessById(id);
 
                 string dumpFile = Path.Combine(_environment.TempPath, "minidump.dmp");
-                FileSystemHelpers.DeleteFileSafe(dumpFile);
+                FileSystemHelpers.DeleteFileSafe(_fileSystem, dumpFile);
 
-                _tracer.Trace("MiniDump pid={0}, name={1}, file={2}", process.Id, process.ProcessName, dumpFile);
-                process.MiniDump(dumpFile, (MINIDUMP_TYPE)dumpType);
-                _tracer.Trace("MiniDump size={0}", new FileInfo(dumpFile).Length);
+                try
+                {
+                    _tracer.Trace("MiniDump pid={0}, name={1}, file={2}", process.Id, process.ProcessName, dumpFile);
+                    process.MiniDump(dumpFile, (MINIDUMP_TYPE)dumpType);
+                    _tracer.Trace("MiniDump size={0}", new FileInfo(dumpFile).Length);
+                }
+                catch
+                {
+                    FileSystemHelpers.DeleteFileSafe(_fileSystem, dumpFile);
+                    throw;
+                }
 
                 HttpResponseMessage response = Request.CreateResponse();
-                response.Content = new StreamContent(File.OpenRead(dumpFile));
+                response.Content = new StreamContent(MiniDumpStream.OpenRead(dumpFile, _fileSystem));
                 response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
                 response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
                 response.Content.Headers.ContentDisposition.FileName = String.Format("{0}-{1:MM-dd-H:mm:ss}.dmp", process.ProcessName, DateTime.UtcNow);
@@ -131,9 +145,16 @@ namespace Kudu.Services.Performance
             return info;
         }
 
-        private static Process GetProcessById(int id)
+        private Process GetProcessById(int id)
         {
-            return id <= 0 ? Process.GetCurrentProcess() : Process.GetProcessById(id);
+            try
+            {
+                return id <= 0 ? Process.GetCurrentProcess() : Process.GetProcessById(id);
+            }
+            catch (ArgumentException ex)
+            {
+                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, ex.Message));
+            }
         }
 
         private T SafeGetValue<T>(Func<T> func, T defaultValue)
@@ -148,6 +169,36 @@ namespace Kudu.Services.Performance
             }
 
             return defaultValue;
+        }
+
+        public class MiniDumpStream : DelegatingStream
+        {
+            private readonly string _path;
+            private readonly IFileSystem _fileSystem;
+
+            private MiniDumpStream(string path, IFileSystem fileSystem)
+                : base(fileSystem.File.OpenRead(path))
+            {
+                _path = path;
+                _fileSystem = fileSystem;
+            }
+
+            protected override void Dispose(bool disposing)
+            {
+                try
+                {
+                    base.Dispose(disposing);
+                }
+                finally
+                {
+                    FileSystemHelpers.DeleteFileSafe(_fileSystem, _path);
+                }
+            }
+
+            public static Stream OpenRead(string path, IFileSystem fileSystem)
+            {
+                return new MiniDumpStream(path, fileSystem);
+            }
         }
     }
 }
