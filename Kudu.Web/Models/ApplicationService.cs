@@ -54,8 +54,52 @@ namespace Kudu.Web.Models
             {
                 Name = name,
                 SiteUrls = site.SiteUrls,
-                ServiceUrl = site.ServiceUrl
+                ServiceUrls = site.ServiceUrls
             };
+        }
+
+        public bool AddLiveSiteBinding(string name, string siteBinding)
+        {
+            var application = GetApplication(name);
+            if (application == null)
+            {
+                return false;
+            }
+
+            return _siteManager.AddSiteBinding(name, siteBinding, SiteType.Live);
+        }
+
+        public bool RemoveLiveSiteBinding(string name, string siteBinding)
+        {
+            var application = GetApplication(name);
+            if (application == null)
+            {
+                return false;
+            }
+
+            return _siteManager.RemoveSiteBinding(name, siteBinding, SiteType.Live);
+        }
+
+        public bool AddServiceSiteBinding(string name, string siteBinding)
+        {
+            var application = GetApplication(name);
+            if (application == null)
+            {
+                return false;
+            }
+
+            return _siteManager.AddSiteBinding(name, siteBinding, SiteType.Service);
+        }
+
+        public bool RemoveServiceSiteBinding(string name, string siteBinding)
+        {
+            var application = GetApplication(name);
+            if (application == null)
+            {
+                return false;
+            }
+
+            return _siteManager.RemoveSiteBinding(name, siteBinding, SiteType.Service);
         }
     }
 

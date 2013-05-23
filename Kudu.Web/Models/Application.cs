@@ -11,7 +11,13 @@ namespace Kudu.Web.Models
         }
 
         public string Name { get; set; }
-        public string ServiceUrl { get; set; }
+        public string ServiceUrl
+        {
+            get
+            {
+                return ServiceUrls[0];
+            }
+        }
         public string SiteUrl
         {
             get
@@ -20,5 +26,6 @@ namespace Kudu.Web.Models
             }
         }
         public IList<string> SiteUrls { get; set; }
+        public IList<string> ServiceUrls { get; set; }
     }
 }

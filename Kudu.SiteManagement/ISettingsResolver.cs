@@ -5,5 +5,7 @@
         string SitesBaseUrl { get; }
         
         string ServiceSitesBaseUrl { get; }
+
+        bool CustomHostNames { get; }
     }
 }

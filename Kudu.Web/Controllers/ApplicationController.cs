@@ -4,6 +4,7 @@ using System.Net;
 using System.Threading.Tasks;
 using System.Web.Mvc;
 using Kudu.Client.Infrastructure;
+using Kudu.SiteManagement;
 using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
 
@@ -14,14 +15,17 @@ namespace Kudu.Web.Controllers
         private readonly IApplicationService _applicationService;
         private readonly KuduEnvironment _environment;
         private readonly ICredentialProvider _credentialProvider;
+        private readonly ISettingsResolver _settingsResolver;
 
         public ApplicationController(IApplicationService applicationService,
                                      ICredentialProvider credentialProvider,
-                                     KuduEnvironment environment)
+                                     KuduEnvironment environment,
+                                     ISettingsResolver settingsResolver)
         {
             _applicationService = applicationService;
             _credentialProvider = credentialProvider;
             _environment = environment;
+            _settingsResolver = settingsResolver;
         }
 
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
@@ -50,8 +54,7 @@ namespace Kudu.Web.Controllers
 
             ICredentials credentials = _credentialProvider.GetCredentials();
             var repositoryInfo = await application.GetRepositoryInfo(credentials);
-            
-            var appViewModel = new ApplicationViewModel(application);
+            var appViewModel = new ApplicationViewModel(application, _settingsResolver);
             appViewModel.RepositoryInfo = repositoryInfo;
 
             ViewBag.slug = slug;
@@ -118,6 +121,132 @@ namespace Kudu.Web.Controllers
         public ActionResult Develop(string slug)
         {
             return RedirectToAction("Details", new { slug });
+        }
+
+        [HttpPost]
+        [ActionName("add-custom-site-binding")]
+        public async Task<ActionResult> AddCustomSiteBinding(string slug, string siteBinding)
+        {
+            IApplication application = _applicationService.GetApplication(slug);
+
+            if (application == null)
+            {
+                return HttpNotFound();
+            }
+
+            _applicationService.AddLiveSiteBinding(slug, siteBinding);
+
+            // Refresh the application to get the updated bindings
+            application = _applicationService.GetApplication(slug);
+
+            ICredentials credentials = _credentialProvider.GetCredentials();
+            var repositoryInfo = await application.GetRepositoryInfo(credentials);
+            var appViewModel = new ApplicationViewModel(application, _settingsResolver);
+            appViewModel.RepositoryInfo = repositoryInfo;
+
+            ViewBag.slug = slug;
+            ViewBag.tab = "settings";
+            ViewBag.appName = appViewModel.Name;
+            ViewBag.siteBinding = String.Empty;
+
+            ModelState.Clear();
+
+            return View("Details", appViewModel);
+        }
+
+        [HttpPost]
+        [ActionName("remove-custom-site-binding")]
+        public async Task<ActionResult> RemoveCustomSiteBinding(string slug, string siteBinding)
+        {
+            IApplication application = _applicationService.GetApplication(slug);
+
+            if (application == null)
+            {
+                return HttpNotFound();
+            }
+
+            _applicationService.RemoveLiveSiteBinding(slug, siteBinding);
+
+            // Refresh the application to get the updated bindings
+            application = _applicationService.GetApplication(slug);
+
+
+            ICredentials credentials = _credentialProvider.GetCredentials();
+            var repositoryInfo = await application.GetRepositoryInfo(credentials);
+            var appViewModel = new ApplicationViewModel(application, _settingsResolver);
+            appViewModel.RepositoryInfo = repositoryInfo;
+
+            ViewBag.slug = slug;
+            ViewBag.tab = "settings";
+            ViewBag.appName = appViewModel.Name;
+            ViewBag.siteBinding = String.Empty;
+
+            ModelState.Clear();
+
+            return View("Details", appViewModel);
+        }
+
+        [HttpPost]
+        [ActionName("add-service-site-binding")]
+        public async Task<ActionResult> AddServiceSiteBinding(string slug, string siteBinding)
+        {
+            IApplication application = _applicationService.GetApplication(slug);
+
+            if (application == null)
+            {
+                return HttpNotFound();
+            }
+
+            _applicationService.AddServiceSiteBinding(slug, siteBinding);
+
+            // Refresh the application to get the updated bindings
+            application = _applicationService.GetApplication(slug);
+
+            ICredentials credentials = _credentialProvider.GetCredentials();
+            var repositoryInfo = await application.GetRepositoryInfo(credentials);
+            var appViewModel = new ApplicationViewModel(application, _settingsResolver);
+            appViewModel.RepositoryInfo = repositoryInfo;
+
+            ViewBag.slug = slug;
+            ViewBag.tab = "settings";
+            ViewBag.appName = appViewModel.Name;
+            ViewBag.siteBinding = String.Empty;
+
+            ModelState.Clear();
+
+            return View("Details", appViewModel);
+        }
+
+        [HttpPost]
+        [ActionName("remove-service-site-binding")]
+        public async Task<ActionResult> RemoveServiceSiteBinding(string slug, string siteBinding)
+        {
+            IApplication application = _applicationService.GetApplication(slug);
+
+            if (application == null)
+            {
+                return HttpNotFound();
+            }
+
+            _applicationService.RemoveServiceSiteBinding(slug, siteBinding);
+
+            // Refresh the application to get the updated bindings
+            application = _applicationService.GetApplication(slug);
+
+
+            ICredentials credentials = _credentialProvider.GetCredentials();
+            var repositoryInfo = await application.GetRepositoryInfo(credentials);
+            var appViewModel = new ApplicationViewModel(application, _settingsResolver);
+            appViewModel.RepositoryInfo = repositoryInfo;
+
+            ViewBag.slug = slug;
+            ViewBag.tab = "settings";
+            ViewBag.appName = appViewModel.Name;
+            ViewBag.siteBinding = String.Empty;
+
+            ModelState.Clear();
+
+            return View("Details", appViewModel);
         }
     }
 }

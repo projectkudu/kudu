@@ -72,6 +72,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Site.cs" />
     <Compile Include="SiteManager.cs" />
+    <Compile Include="SiteType.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
