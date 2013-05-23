@@ -3,7 +3,7 @@ using System.IO;
 
 namespace Kudu.Services.Infrastructure
 {
-    internal abstract class DelegatingStream : Stream
+    public abstract class DelegatingStream : Stream
     {
         private Stream _innerStream;
 

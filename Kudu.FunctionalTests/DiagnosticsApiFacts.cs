@@ -67,19 +67,24 @@ namespace Kudu.FunctionalTests
                 Assert.Contains("w3wp", process.Name);
                 Assert.Contains("/diagnostics/processes/" + currentId, process.Href.AbsoluteUri);
 
+                // Test get not running process id
+                var notfound = await KuduAssert.ThrowsUnwrappedAsync<HttpUnsuccessfulRequestException>(() => appManager.ProcessManager.GetProcessAsync(99999));
+                Assert.Equal(HttpStatusCode.NotFound, notfound.ResponseMessage.StatusCode);
+                Assert.Contains("is not running", notfound.ResponseMessage.ExceptionMessage);
+
                 // Test process list
                 var processes = await appManager.ProcessManager.GetProcessesAsync();
                 Assert.True(processes.Count() >= 1);
                 Assert.True(processes.Any(p => p.Id == currentId));
 
                 // Test minidump
-                //var stream = new MemoryStream();
-                //using (var minidump = await appManager.ProcessManager.MiniDump())
-                //{
-                //    Assert.NotNull(minidump);
-                //    await minidump.CopyToAsync(stream);
-                //}
-                //Assert.True(stream.Length > 0);
+                var stream = new MemoryStream();
+                using (var minidump = await appManager.ProcessManager.MiniDump())
+                {
+                    Assert.NotNull(minidump);
+                    await minidump.CopyToAsync(stream);
+                }
+                Assert.True(stream.Length > 0);
 
                 // Test kill process
                 await KuduAssert.ThrowsUnwrappedAsync<HttpRequestException>(() => appManager.ProcessManager.KillProcessAsync(currentId));
