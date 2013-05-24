@@ -16,7 +16,7 @@ namespace Kudu.FunctionalTests
 {
     class LargeRepoTests
     {
-        private static readonly bool isTeamCity = !String.IsNullOrEmpty(Environment.GetEnvironmentVariable("TEAMCITY_VERSION"));
+        private static readonly bool shouldRunLargeRepoTests = !String.IsNullOrEmpty(Environment.GetEnvironmentVariable("RUN_LARGE_REPO_TESTS"));
 
         [Theory]
         [InlineData("https://github.com/kudutest1/moodle.git", "master", "http://docs.moodle.org/en/Installing_Moodle", "3a8c4380", "README.txt")]
@@ -27,7 +27,7 @@ namespace Kudu.FunctionalTests
         [InlineData("https://bitbucket.org/kudutest3/largestaticsitegit.git", "master", "Tsagaan Agui", "5fab40d", "Mongolia.html")]
         public void DeployLargeRepo(string repoCloneUrl, string defaultBranchName, string verificationText, string commitId, string resourcePath)
         {
-            if (!isTeamCity)
+            if (!shouldRunLargeRepoTests)
             {
                 return;
             }
@@ -41,7 +41,7 @@ namespace Kudu.FunctionalTests
         [InlineData("/LargeStaticSite", "LargeStaticSite", "Tsagaan Agui", "Mongolia.html")]
         public void DeployLargeRepoFromDropbox(string repoPath, string appName, string verificationText, string resourcePath)
         {
-            if (!isTeamCity)
+            if (!shouldRunLargeRepoTests)
             {
                 return;
             }
