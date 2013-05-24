@@ -149,7 +149,7 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public void Deploy(IRepository repository, ChangeSet changeSet, string deployer, bool clean, bool needFileUpdate)
+        public async Task Deploy(IRepository repository, ChangeSet changeSet, string deployer, bool clean, bool needFileUpdate)
         {
             ITracer tracer = _traceFactory.GetTracer();
             IDisposable deployStep = null;
@@ -214,7 +214,7 @@ namespace Kudu.Core.Deployment
                 innerLogger = null;
 
                 // Perform the build deployment of this changeset
-                Build(id, tracer, deployStep);
+                await Build(id, tracer, deployStep);
             }
             catch (Exception ex)
             {
@@ -449,7 +449,7 @@ namespace Kudu.Core.Deployment
         /// <summary>
         /// Builds and deploys a particular changeset. Puts all build artifacts in a deployments/{id}
         /// </summary>
-        private void Build(string id, ITracer tracer, IDisposable deployStep)
+        private async Task Build(string id, ITracer tracer, IDisposable deployStep)
         {
             if (String.IsNullOrEmpty(id))
             {
@@ -458,7 +458,6 @@ namespace Kudu.Core.Deployment
 
             ILogger logger = null;
             IDeploymentStatusFile currentStatus = null;
-            IDisposable buildStep = null;
 
             try
             {
@@ -508,8 +507,6 @@ namespace Kudu.Core.Deployment
                     return;
                 }
 
-                buildStep = tracer.Step("Building");
-
                 var context = new DeploymentContext
                 {
                     ManifestWriter = GetDeploymentManifestWriter(id),
@@ -532,38 +529,31 @@ namespace Kudu.Core.Deployment
 
                 context.PreviousManifestFilePath = context.PreviousManifest.ManifestFilePath;
 
-                builder.Build(context)
-                       .Then(() =>
-                       {
-                           // End the build step
-                           buildStep.Dispose();
+                using (tracer.Step("Building"))
+                {
+                    try
+                    {
+                        await builder.Build(context);
 
-                           TryTouchWebConfig(context);
+                        TryTouchWebConfig(context);
 
-                           // Run post deployment steps
-                           FinishDeployment(id, deployStep);
-                       })
-                       .Catch(ex =>
-                       {
-                           // End the build step
-                           buildStep.Dispose();
+                        // Run post deployment steps
+                        FinishDeployment(id, deployStep);
+                    }
+                    catch
+                    {
+                        currentStatus.MarkFailed();
 
-                           currentStatus.MarkFailed();
+                        // End the deploy step
+                        deployStep.Dispose();
 
-                           // End the deploy step
-                           deployStep.Dispose();
-
-                           return ex.Handled();
-                       });
+                        return;
+                    }
+                }
             }
             catch (Exception ex)
             {
                 tracer.TraceError(ex);
-
-                if (buildStep != null)
-                {
-                    buildStep.Dispose();
-                }
 
                 deployStep.Dispose();
             }

@@ -15,6 +15,7 @@ namespace Kudu.Core.SourceControl
     public class HgRepository : IRepository
     {
         private const string PATH_KEY = "Path";
+        private const string RemoteAlias = "external";
 
         private readonly IExecutable _hgExecutable;
         private readonly ITraceFactory _traceFactory;
@@ -262,7 +263,6 @@ namespace Kudu.Core.SourceControl
             return GetChangeSet((RevSpec)id);
         }
 
-        private const string remoteAlias = "external";
         public void FetchWithoutConflict(string remote, string branchName)
         {
             // To get ssh to work with hg, we need to ensure ssh.exe exists in the path and the HOME environment variable is set.

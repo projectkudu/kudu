@@ -45,8 +45,6 @@
     <Compile Include="Infrastructure\LockExtensions.cs" />
     <Compile Include="Infrastructure\RS.cs" />
     <Compile Include="Infrastructure\StringUtils.cs" />
-    <Compile Include="Infrastructure\TaskHelpers.cs" />
-    <Compile Include="Infrastructure\TaskHelpersExtensions.cs" />
     <Compile Include="Settings\ISettingsProvider.cs" />
     <Compile Include="Settings\DeploymentSettingsExtension.cs" />
     <Compile Include="Settings\IDeploymentSettingsManager.cs" />

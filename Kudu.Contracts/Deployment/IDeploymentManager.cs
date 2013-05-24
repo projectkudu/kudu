@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Kudu.Core.SourceControl;
 
 namespace Kudu.Core.Deployment
@@ -12,7 +13,7 @@ namespace Kudu.Core.Deployment
         IEnumerable<LogEntry> GetLogEntryDetails(string id, string logId);
 
         void Delete(string id);
-        void Deploy(IRepository repository, ChangeSet changeSet, string deployer, bool clean, bool needFileUpdate = true);
+        Task Deploy(IRepository repository, ChangeSet changeSet, string deployer, bool clean, bool needFileUpdate = true);
 
         /// <summary>
         /// Creates a temporary deployment that is used as a placeholder until changeset details are available.

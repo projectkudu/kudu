@@ -130,7 +130,7 @@ namespace Kudu.Services.Test
         {
             var handler = new Mock<IServiceHookHandler>();
             handler.Setup(h => h.Fetch(It.IsAny<IRepository>(), It.IsAny<DeploymentInfo>(), It.IsAny<string>(), It.IsAny<ILogger>()))
-                   .Returns(TaskHelpers.Completed());
+                   .Returns(Task.FromResult(0));
             return handler;
         }
 
@@ -189,9 +189,10 @@ namespace Kudu.Services.Test
                 throw new NotImplementedException();
             }
 
-            public void Deploy(IRepository repository, ChangeSet changeSet, string deployer, bool clean, bool needFileUpdate = true)
+            public Task Deploy(IRepository repository, ChangeSet changeSet, string deployer, bool clean, bool needFileUpdate = true)
             {
                 ++DeployCount;
+                return Task.FromResult(1);
             }
 
             public IDisposable CreateTemporaryDeployment(string statusText, out ChangeSet tempChangeSet, ChangeSet changeset = null, string deployedBy = null)

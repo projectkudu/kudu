@@ -164,7 +164,7 @@ namespace Kudu.TestHarness
             Func<ApplicationManager, Task> asyncAction = (appManager) =>
             {
                 action(appManager);
-                return TaskHelpers.Completed();
+                return Task.FromResult(0);
             };
 
             RunAsync(testName, asyncAction).Wait();

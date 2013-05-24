@@ -87,7 +87,7 @@ namespace Kudu.Services.Editor
             }
         }
 
-        protected override Task<HttpResponseMessage> CreateItemPutResponse(FileSystemInfo info, string localFilePath, bool itemExists)
+        protected override async Task<HttpResponseMessage> CreateItemPutResponse(FileSystemInfo info, string localFilePath, bool itemExists)
         {
             // Check that we have a matching conditional If-Match request for existing resources
             if (itemExists)
@@ -100,7 +100,7 @@ namespace Kudu.Services.Editor
                 {
                     HttpResponseMessage missingIfMatchResponse = Request.CreateErrorResponse(
                         HttpStatusCode.PreconditionFailed, Resources.VfsController_MissingIfMatch);
-                    return Task.FromResult(missingIfMatchResponse);
+                    return missingIfMatchResponse;
                 }
 
                 bool isMatch = false;
@@ -118,46 +118,39 @@ namespace Kudu.Services.Editor
                     HttpResponseMessage conflictFileResponse = Request.CreateErrorResponse(
                         HttpStatusCode.PreconditionFailed, Resources.VfsController_EtagMismatch);
                     conflictFileResponse.Headers.ETag = currentEtag;
-                    return Task.FromResult(conflictFileResponse);
+                    return conflictFileResponse;
                 }
             }
 
             // Save file
-            Stream fileStream = null;
+            
             try
             {
-                fileStream = GetFileWriteStream(localFilePath, fileExists: itemExists);
-                return Request.Content.CopyToAsync(fileStream)
-                    .Then(() =>
+                using (Stream fileStream = GetFileWriteStream(localFilePath, fileExists: itemExists))
+                {
+                    try
                     {
-                        // Successfully saved the file
-                        fileStream.Close();
-                        fileStream = null;
-
-                        // Return either 204 No Content or 201 Created response
-                        HttpResponseMessage successFileResponse =
-                            Request.CreateResponse(itemExists ? HttpStatusCode.NoContent : HttpStatusCode.Created);
-
-                        // Set updated etag for the file
-                        successFileResponse.Headers.ETag = GetUpdatedEtag(localFilePath);
-                        return successFileResponse;
-                    })
-                    .Catch((catchInfo) =>
+                        await Request.Content.CopyToAsync(fileStream);
+                    } catch (Exception ex)
                     {
-                        Tracer.TraceError(catchInfo.Exception);
+                        Tracer.TraceError(ex);
                         HttpResponseMessage conflictResponse = Request.CreateErrorResponse(
                             HttpStatusCode.Conflict,
                             RS.Format(Resources.VfsController_WriteConflict, localFilePath),
-                            catchInfo.Exception);
+                            ex);
 
-                        if (fileStream != null)
-                        {
-                            fileStream.Close();
-                        }
+                        return conflictResponse;
+                    }
 
-                        return catchInfo.Handled(conflictResponse);
-                    });
+                    // Return either 204 No Content or 201 Created response
+                    HttpResponseMessage successFileResponse =
+                        Request.CreateResponse(itemExists ? HttpStatusCode.NoContent : HttpStatusCode.Created);
 
+                    // Set updated etag for the file
+                    successFileResponse.Headers.ETag = GetUpdatedEtag(localFilePath);
+                    return successFileResponse;
+                }
+                
             }
             catch (Exception e)
             {
@@ -165,11 +158,8 @@ namespace Kudu.Services.Editor
                 HttpResponseMessage errorResponse =
                     Request.CreateErrorResponse(HttpStatusCode.Conflict,
                     RS.Format(Resources.VfsController_WriteConflict, localFilePath), e);
-                if (fileStream != null)
-                {
-                    fileStream.Close();
-                }
-                return Task.FromResult(errorResponse);
+                
+                return errorResponse;
             }
         }
 
