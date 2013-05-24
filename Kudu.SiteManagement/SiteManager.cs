@@ -162,8 +162,9 @@ namespace Kudu.SiteManagement
 
                     // Set initial ScmType state to LocalGit
                     var serviceUrl = String.Format("http://localhost:{0}/", serviceSitePort);
-                    var settings = new RemoteDeploymentSettingsManager(serviceUrl + "settings");
-                    settings.SetValue(SettingsKeys.ScmType, ScmType.LocalGit).Wait();
+                    // TODO, suwatch: https://github.com/projectkudu/kudu/issues/627
+                    //var settings = new RemoteDeploymentSettingsManager(serviceUrl + "settings");
+                    //settings.SetValue(SettingsKeys.ScmType, ScmType.LocalGit).Wait();
 
                     var siteUrls = new List<string>();
                     foreach (var url in site.Bindings)
