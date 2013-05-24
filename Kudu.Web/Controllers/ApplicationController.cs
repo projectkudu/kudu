@@ -142,24 +142,7 @@ namespace Kudu.Web.Controllers
 
             _applicationService.AddLiveSiteBinding(slug, siteBinding);
 
-            // Refresh the application to get the updated bindings
-            application = _applicationService.GetApplication(slug);
-
-            ICredentials credentials = _credentialProvider.GetCredentials();
-            return application.GetRepositoryInfo(credentials).Then(repositoryInfo =>
-            {
-                var appViewModel = new ApplicationViewModel(application, _settingsResolver);
-                appViewModel.RepositoryInfo = repositoryInfo;
-
-                ViewBag.slug = slug;
-                ViewBag.tab = "settings";
-                ViewBag.appName = appViewModel.Name;
-                ViewBag.siteBinding = String.Empty;
-
-                ModelState.Clear();
-
-                return (ActionResult)View("Details", appViewModel);
-            });
+            return GetApplicationView("settings", "Details", slug);
         }
 
         [HttpPost]
@@ -175,25 +158,7 @@ namespace Kudu.Web.Controllers
 
             _applicationService.RemoveLiveSiteBinding(slug, siteBinding);
 
-            // Refresh the application to get the updated bindings
-            application = _applicationService.GetApplication(slug);
-
-
-            ICredentials credentials = _credentialProvider.GetCredentials();
-            return application.GetRepositoryInfo(credentials).Then(repositoryInfo =>
-            {
-                var appViewModel = new ApplicationViewModel(application, _settingsResolver);
-                appViewModel.RepositoryInfo = repositoryInfo;
-
-                ViewBag.slug = slug;
-                ViewBag.tab = "settings";
-                ViewBag.appName = appViewModel.Name;
-                ViewBag.siteBinding = String.Empty;
-
-                ModelState.Clear();
-
-                return (ActionResult)View("Details", appViewModel);
-            });
+            return GetApplicationView("settings", "Details", slug);
         }
 
         [HttpPost]
@@ -209,24 +174,7 @@ namespace Kudu.Web.Controllers
 
             _applicationService.AddServiceSiteBinding(slug, siteBinding);
 
-            // Refresh the application to get the updated bindings
-            application = _applicationService.GetApplication(slug);
-
-            ICredentials credentials = _credentialProvider.GetCredentials();
-            return application.GetRepositoryInfo(credentials).Then(repositoryInfo =>
-            {
-                var appViewModel = new ApplicationViewModel(application, _settingsResolver);
-                appViewModel.RepositoryInfo = repositoryInfo;
-
-                ViewBag.slug = slug;
-                ViewBag.tab = "settings";
-                ViewBag.appName = appViewModel.Name;
-                ViewBag.siteBinding = String.Empty;
-
-                ModelState.Clear();
-
-                return (ActionResult)View("Details", appViewModel);
-            });
+            return GetApplicationView("settings", "Details", slug);
         }
 
         [HttpPost]
@@ -242,9 +190,12 @@ namespace Kudu.Web.Controllers
 
             _applicationService.RemoveServiceSiteBinding(slug, siteBinding);
 
-            // Refresh the application to get the updated bindings
-            application = _applicationService.GetApplication(slug);
+            return GetApplicationView("settings", "Details", slug);
+        }
 
+        private Task<ActionResult> GetApplicationView(string tab, string viewName, string slug)
+        {
+            var application = _applicationService.GetApplication(slug);
 
             ICredentials credentials = _credentialProvider.GetCredentials();
             return application.GetRepositoryInfo(credentials).Then(repositoryInfo =>
@@ -253,13 +204,13 @@ namespace Kudu.Web.Controllers
                 appViewModel.RepositoryInfo = repositoryInfo;
 
                 ViewBag.slug = slug;
-                ViewBag.tab = "settings";
+                ViewBag.tab = tab;
                 ViewBag.appName = appViewModel.Name;
                 ViewBag.siteBinding = String.Empty;
-                
+
                 ModelState.Clear();
 
-                return (ActionResult)View("Details", appViewModel);
+                return (ActionResult)View(viewName, appViewModel);
             });
         }
 
