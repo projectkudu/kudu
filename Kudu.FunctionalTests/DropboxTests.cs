@@ -155,10 +155,10 @@ namespace Kudu.FunctionalTests
             });
         }
 
-        internal OAuthInfo GetOAuthInfo()
+        internal OAuthInfo GetOAuthInfo(string appname = "")
         {
             Assembly assembly = Assembly.GetExecutingAssembly();
-            using (var reader = new JsonTextReader(new StreamReader(assembly.GetManifestResourceStream("Kudu.FunctionalTests.dropbox.oauth.json"))))
+            using (var reader = new JsonTextReader(new StreamReader(assembly.GetManifestResourceStream(String.Concat( "Kudu.FunctionalTests.dropbox.", appname, "oauth.json")))))
             {
                 JsonSerializer serializer = new JsonSerializer();
                 return serializer.Deserialize<OAuthInfo>(reader);

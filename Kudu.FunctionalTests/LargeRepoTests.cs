@@ -16,32 +16,40 @@ namespace Kudu.FunctionalTests
 {
     class LargeRepoTests
     {
+        private static readonly bool isTeamCity = !String.IsNullOrEmpty(Environment.GetEnvironmentVariable("TEAMCITY_VERSION"));
 
-        [Theory(Skip = "Long Running Test. Run on your local system after removing this attribute")]
-        [InlineData("https://github.com/KuduApps/moodle", "master","http://docs.moodle.org/en/Installing_Moodle", "3a8c4380", "README.txt")]
-        [InlineData("https://github.com/KuduApps/LargeStaticSite", "master", "Tsagaan Agui", "5fab40d", "Mongolia.html")]
-        [InlineData("https://github.com/KuduApps/Kentico", "master", "Database Setup", "0dcdbef", "cmsinstall/install.aspx")]
-        [InlineData("https://kudutest@bitbucket.org/kudutest/moodlegit.git", "master", "http://docs.moodle.org/en/Installing_Moodle", "3a8c4380", "README.txt")]
-        [InlineData("https://kudutest@bitbucket.org/kudutest/largestaticsitegit.git", "master", "Tsagaan Agui", "5fab40d", "Mongolia.html")]
-        [InlineData("https://kudutest@bitbucket.org/kudutest/kenticogit.git", "master", "Database Setup", "0dcdbef", "cmsinstall/install.aspx")]
+        [Theory]
+        [InlineData("https://github.com/kudutest1/moodle.git", "master", "http://docs.moodle.org/en/Installing_Moodle", "3a8c4380", "README.txt")]
+        [InlineData("https://github.com/kudutest2/Kentico.git", "master", "Database Setup", "0dcdbef", "cmsinstall/install.aspx")]
+        [InlineData("https://github.com/kudutest3/LargeStaticSite.git", "master", "Tsagaan Agui", "5fab40d", "Mongolia.html")]
+        [InlineData("https://bitbucket.org/kudutest1/moodlegit.git", "master", "http://docs.moodle.org/en/Installing_Moodle", "3a8c4380", "README.txt")]
+        [InlineData("https://bitbucket.org/kudutest2/kenticogit.git", "master", "Database Setup", "0dcdbef", "cmsinstall/install.aspx")]
+        [InlineData("https://bitbucket.org/kudutest3/largestaticsitegit.git", "master", "Tsagaan Agui", "5fab40d", "Mongolia.html")]
         public void DeployLargeRepo(string repoCloneUrl, string defaultBranchName, string verificationText, string commitId, string resourcePath)
         {
-
+            if (!isTeamCity)
+            {
+                return;
+            }
             GitDeploymentTests.PushAndDeployApps(repoCloneUrl, defaultBranchName, verificationText, HttpStatusCode.OK, commitId, resourcePath, "", "", true);
 
         }
 
-        [Theory(Skip = "Long Running Test. Run on your local system after removing this attribute")]
-        [InlineData("/Moodle", "Moodle","http://docs.moodle.org/en/Installing_Moodle", "README.txt")]
+        [Theory]
+        [InlineData("/moodle", "Moodle","http://docs.moodle.org/en/Installing_Moodle", "README.txt")]
         [InlineData("/Kentico", "Kentico", "Database Setup", "cmsinstall/install.aspx")]
         [InlineData("/LargeStaticSite", "LargeStaticSite", "Tsagaan Agui", "Mongolia.html")]
         public void DeployLargeRepoFromDropbox(string repoPath, string appName, string verificationText, string resourcePath)
         {
+            if (!isTeamCity)
+            {
+                return;
+            }
             using (new LatencyLogger("PushAndDeployApps - " + appName))
             {
                 var db = new DropboxTests();
                 {
-                    DropboxTests.OAuthInfo oauth = db.GetOAuthInfo();
+                    DropboxTests.OAuthInfo oauth = db.GetOAuthInfo(appName);
 
                     if (oauth == null)
                     {
@@ -79,7 +87,7 @@ namespace Kudu.FunctionalTests
                             } while ((results[0]).Status != DeployStatus.Success && (results[0]).Status != DeployStatus.Failed);
                         }
 
-                        KuduAssert.VerifyUrlAsync(appManager.SiteUrl + resourcePath, verificationText).Wait();
+                        KuduAssert.VerifyUrl(appManager.SiteUrl + resourcePath, verificationText);
                         using (new LatencyLogger("DropboxScmDelete - " + appName))
                         {
                             appManager.RepositoryManager.Delete(deleteWebRoot: false, ignoreErrors: false).Wait();
