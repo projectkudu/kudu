@@ -9,7 +9,13 @@ namespace Kudu.SiteManagement
         {
             SiteUrls = new List<string>();
         }
-        public string ServiceUrl { get; set; }
+        public string ServiceUrl
+        {
+            get
+            {
+                return ServiceUrls.FirstOrDefault();
+            }
+        }
         public string SiteUrl
         {
             get
@@ -18,5 +24,6 @@ namespace Kudu.SiteManagement
             }
         }
         public IList<string> SiteUrls { get; set; }
+        public IList<string> ServiceUrls { get; set; }
     }
 }

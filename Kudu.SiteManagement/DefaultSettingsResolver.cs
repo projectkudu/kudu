@@ -8,13 +8,14 @@ namespace Kudu.SiteManagement
     {
         private readonly string _sitesBaseUrl;
         private readonly string _serviceSitesBaseUrl;
+        private readonly bool _customHostNames;
 
         public DefaultSettingsResolver()
-            : this(sitesBaseUrl: null, serviceSitesBaseUrl: null)
+            : this(sitesBaseUrl: null, serviceSitesBaseUrl: null, enableCustomHostNames: null)
         {
         }
 
-        public DefaultSettingsResolver(string sitesBaseUrl, string serviceSitesBaseUrl)
+        public DefaultSettingsResolver(string sitesBaseUrl, string serviceSitesBaseUrl, string enableCustomHostNames)
         {
             // Ensure the base url is normalised to not have a leading dot,
             // we will add this on later when joining the application name up
@@ -34,6 +35,11 @@ namespace Kudu.SiteManagement
                     throw new ArgumentException("serviceSitesBaseUrl cannot be the same as sitesBaseUrl.");
                 }
             }
+
+            if (enableCustomHostNames == null || !Boolean.TryParse(enableCustomHostNames, out _customHostNames))
+            {
+                _customHostNames = false;
+            }
         }
 
         public string SitesBaseUrl
@@ -50,6 +56,14 @@ namespace Kudu.SiteManagement
             {
                 return _serviceSitesBaseUrl;
             }            
+        }
+
+        public bool CustomHostNames
+        {
+            get
+            {
+                return _customHostNames;
+            }
         }
     }
 }

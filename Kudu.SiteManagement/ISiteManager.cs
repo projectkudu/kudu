@@ -9,5 +9,7 @@ namespace Kudu.SiteManagement
         Site CreateSite(string applicationName);
         void DeleteSite(string applicationName);
         void SetSiteWebRoot(string applicationName, string siteRoot);
+        bool AddSiteBinding(string applicationName, string siteBinding, SiteType siteType);
+        bool RemoveSiteBinding(string applicationName, string siteBinding, SiteType siteType);
     }
 }
