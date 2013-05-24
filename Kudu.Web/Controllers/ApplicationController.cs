@@ -43,25 +43,9 @@ namespace Kudu.Web.Controllers
             return View(applications);
         }
 
-        public async Task<ActionResult> Details(string slug)
+        public Task<ActionResult> Details(string slug)
         {
-            IApplication application = _applicationService.GetApplication(slug);
-
-            if (application == null)
-            {
-                return HttpNotFound();
-            }
-
-            ICredentials credentials = _credentialProvider.GetCredentials();
-            var repositoryInfo = await application.GetRepositoryInfo(credentials);
-            var appViewModel = new ApplicationViewModel(application, _settingsResolver);
-            appViewModel.RepositoryInfo = repositoryInfo;
-
-            ViewBag.slug = slug;
-            ViewBag.tab = "settings";
-            ViewBag.appName = appViewModel.Name;
-
-            return View(appViewModel);
+            return GetApplicationView("settings", "Details", slug);
         }
 
         [HttpGet]
@@ -136,22 +120,7 @@ namespace Kudu.Web.Controllers
 
             _applicationService.AddLiveSiteBinding(slug, siteBinding);
 
-            // Refresh the application to get the updated bindings
-            application = _applicationService.GetApplication(slug);
-
-            ICredentials credentials = _credentialProvider.GetCredentials();
-            var repositoryInfo = await application.GetRepositoryInfo(credentials);
-            var appViewModel = new ApplicationViewModel(application, _settingsResolver);
-            appViewModel.RepositoryInfo = repositoryInfo;
-
-            ViewBag.slug = slug;
-            ViewBag.tab = "settings";
-            ViewBag.appName = appViewModel.Name;
-            ViewBag.siteBinding = String.Empty;
-
-            ModelState.Clear();
-
-            return View("Details", appViewModel);
+            return await GetApplicationView("settings", "Details", slug);
         }
 
         [HttpPost]
@@ -167,23 +136,7 @@ namespace Kudu.Web.Controllers
 
             _applicationService.RemoveLiveSiteBinding(slug, siteBinding);
 
-            // Refresh the application to get the updated bindings
-            application = _applicationService.GetApplication(slug);
-
-
-            ICredentials credentials = _credentialProvider.GetCredentials();
-            var repositoryInfo = await application.GetRepositoryInfo(credentials);
-            var appViewModel = new ApplicationViewModel(application, _settingsResolver);
-            appViewModel.RepositoryInfo = repositoryInfo;
-
-            ViewBag.slug = slug;
-            ViewBag.tab = "settings";
-            ViewBag.appName = appViewModel.Name;
-            ViewBag.siteBinding = String.Empty;
-
-            ModelState.Clear();
-
-            return View("Details", appViewModel);
+            return await GetApplicationView("settings", "Details", slug);
         }
 
         [HttpPost]
@@ -199,22 +152,7 @@ namespace Kudu.Web.Controllers
 
             _applicationService.AddServiceSiteBinding(slug, siteBinding);
 
-            // Refresh the application to get the updated bindings
-            application = _applicationService.GetApplication(slug);
-
-            ICredentials credentials = _credentialProvider.GetCredentials();
-            var repositoryInfo = await application.GetRepositoryInfo(credentials);
-            var appViewModel = new ApplicationViewModel(application, _settingsResolver);
-            appViewModel.RepositoryInfo = repositoryInfo;
-
-            ViewBag.slug = slug;
-            ViewBag.tab = "settings";
-            ViewBag.appName = appViewModel.Name;
-            ViewBag.siteBinding = String.Empty;
-
-            ModelState.Clear();
-
-            return View("Details", appViewModel);
+            return await GetApplicationView("settings", "Details", slug);
         }
 
         [HttpPost]
@@ -230,9 +168,12 @@ namespace Kudu.Web.Controllers
 
             _applicationService.RemoveServiceSiteBinding(slug, siteBinding);
 
-            // Refresh the application to get the updated bindings
-            application = _applicationService.GetApplication(slug);
+            return await GetApplicationView("settings", "Details", slug);
+        }
 
+        private async Task<ActionResult> GetApplicationView(string tab, string viewName, string slug)
+        {
+            var application = _applicationService.GetApplication(slug);
 
             ICredentials credentials = _credentialProvider.GetCredentials();
             var repositoryInfo = await application.GetRepositoryInfo(credentials);
@@ -240,13 +181,13 @@ namespace Kudu.Web.Controllers
             appViewModel.RepositoryInfo = repositoryInfo;
 
             ViewBag.slug = slug;
-            ViewBag.tab = "settings";
+            ViewBag.tab = tab;
             ViewBag.appName = appViewModel.Name;
             ViewBag.siteBinding = String.Empty;
 
             ModelState.Clear();
 
-            return View("Details", appViewModel);
+            return View(viewName, appViewModel);
         }
     }
 }
