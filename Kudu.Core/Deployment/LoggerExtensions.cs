@@ -31,7 +31,7 @@ namespace Kudu.Core.Deployment
             return logger.Log(String.Empty, LogEntryType.Error);
         }
 
-        public static void LogUnexpetedError(this ILogger logger)
+        public static void LogUnexpectedError(this ILogger logger)
         {
             if (logger == null)
             {

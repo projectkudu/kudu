@@ -4,14 +4,12 @@ using System.Net;
 using System.Threading.Tasks;
 using System.Web.Mvc;
 using Kudu.Client.Infrastructure;
-using Kudu.Contracts.Infrastructure;
 using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
-using Mvc.Async;
 
 namespace Kudu.Web.Controllers
 {
-    public class ApplicationController : TaskAsyncController
+    public class ApplicationController : Controller
     {
         private readonly IApplicationService _applicationService;
         private readonly KuduEnvironment _environment;
@@ -41,27 +39,26 @@ namespace Kudu.Web.Controllers
             return View(applications);
         }
 
-        public Task<ActionResult> Details(string slug)
+        public async Task<ActionResult> Details(string slug)
         {
             IApplication application = _applicationService.GetApplication(slug);
 
             if (application == null)
             {
-                return HttpNotFoundAsync();
+                return HttpNotFound();
             }
 
             ICredentials credentials = _credentialProvider.GetCredentials();
-            return application.GetRepositoryInfo(credentials).Then(repositoryInfo =>
-            {
-                var appViewModel = new ApplicationViewModel(application);
-                appViewModel.RepositoryInfo = repositoryInfo;
+            var repositoryInfo = await application.GetRepositoryInfo(credentials);
+            
+            var appViewModel = new ApplicationViewModel(application);
+            appViewModel.RepositoryInfo = repositoryInfo;
 
-                ViewBag.slug = slug;
-                ViewBag.tab = "settings";
-                ViewBag.appName = appViewModel.Name;
+            ViewBag.slug = slug;
+            ViewBag.tab = "settings";
+            ViewBag.appName = appViewModel.Name;
 
-                return (ActionResult)View(appViewModel);
-            });
+            return View(appViewModel);
         }
 
         [HttpGet]
@@ -104,20 +101,18 @@ namespace Kudu.Web.Controllers
             return HttpNotFound();
         }
 
-        public Task<ActionResult> Trace(string slug)
+        public async Task<ActionResult> Trace(string slug)
         {
             IApplication application = _applicationService.GetApplication(slug);
 
             if (application == null)
             {
-                return HttpNotFoundAsync();
+                return HttpNotFound();
             }
 
             ICredentials credentials = _credentialProvider.GetCredentials();
-            return application.DownloadTrace(credentials).Then(document =>
-            {
-                return (ActionResult)View(document);
-            });
+            var document = await application.DownloadTrace(credentials);
+            return View(document);
         }
 
         public ActionResult Develop(string slug)

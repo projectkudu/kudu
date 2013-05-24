@@ -6,17 +6,14 @@ using System.Web.Mvc;
 using Kudu.Client;
 using Kudu.Client.Deployment;
 using Kudu.Client.Infrastructure;
-using Kudu.Contracts.Infrastructure;
-using Kudu.Contracts.SourceControl;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
 using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
-using Mvc.Async;
 
 namespace Kudu.Web.Controllers
 {
-    public class DeploymentsController : TaskAsyncController
+    public class DeploymentsController : Controller
     {
         private readonly IApplicationService _applicationService;
         private readonly ICredentialProvider _credentialProvider;
@@ -88,67 +85,60 @@ namespace Kudu.Web.Controllers
             return new EmptyResult();
         }
 
-        public Task<ActionResult> Deploy(string slug, string id, bool? clean)
+        public async Task<ActionResult> Deploy(string slug, string id, bool? clean)
         {
             IApplication application = _applicationService.GetApplication(slug);
 
             if (application == null)
             {
-                return HttpNotFoundAsync();
+                return HttpNotFound();
             }
 
             ICredentials credentials = _credentialProvider.GetCredentials();
             RemoteDeploymentManager deploymentManager = application.GetDeploymentManager(credentials);
 
-            return deploymentManager.DeployAsync(id, clean ?? false)
-                                    .ContinueWith(task =>
-                                    {
-                                        return (ActionResult)RedirectToAction("Index", new { slug });
-                                    });
+            await deploymentManager.DeployAsync(id, clean: clean ?? false);
+            return RedirectToAction("Index", new { slug });
         }
 
-        public Task<ActionResult> Log(string slug, string id)
+        public async Task<ActionResult> Log(string slug, string id)
         {
             IApplication application = _applicationService.GetApplication(slug);
 
             if (application == null)
             {
-                return HttpNotFoundAsync();
+                return HttpNotFound();
             }
 
             ICredentials credentials = _credentialProvider.GetCredentials();
             RemoteDeploymentManager deploymentManager = application.GetDeploymentManager(credentials);
 
-            return deploymentManager.GetLogEntriesAsync(id).Then(entries =>
-            {
-                ViewBag.slug = slug;
-                ViewBag.appName = application.Name;
-                ViewBag.id = id;
+            IEnumerable<LogEntry> entries = await deploymentManager.GetLogEntriesAsync(id);
 
-                return (ActionResult)View(entries);
-            });
+            ViewBag.slug = slug;
+            ViewBag.appName = application.Name;
+            ViewBag.id = id;
+            return View(entries);
         }
 
-        public Task<ActionResult> Details(string slug, string id, string logId)
+        public async Task<ActionResult> Details(string slug, string id, string logId)
         {
             IApplication application = _applicationService.GetApplication(slug);
             if (application == null)
             {
-                return HttpNotFoundAsync();
+                return HttpNotFound();
             }
 
             ICredentials credentials = _credentialProvider.GetCredentials();
             RemoteDeploymentManager deploymentManager = application.GetDeploymentManager(credentials);
+            IEnumerable<LogEntry> entries = await deploymentManager.GetLogEntryDetailsAsync(id, logId);
+            
+            ViewBag.slug = slug;
+            ViewBag.appName = application.Name;
+            ViewBag.id = id;
+            ViewBag.verbose = true;
 
-            return deploymentManager.GetLogEntryDetailsAsync(id, logId).Then(entries =>
-            {
-                ViewBag.slug = slug;
-                ViewBag.appName = application.Name;
-                ViewBag.id = id;
-                ViewBag.verbose = true;
-
-                return (ActionResult)View("Log", entries);
-            });
+            return View("Log", entries);
         }
     }
 }

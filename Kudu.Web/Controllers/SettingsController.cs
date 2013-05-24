@@ -1,17 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Web.Mvc;
-using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Web.Models;
-using Mvc.Async;
 
 namespace Kudu.Web.Controllers
 {
-    public class SettingsController : TaskAsyncController
+    public class SettingsController : Controller
     {
         private readonly ISettingsService _service;
 

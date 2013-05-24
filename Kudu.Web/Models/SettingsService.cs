@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Net;
 using System.Threading.Tasks;
 using Kudu.Client.Deployment;
 using Kudu.Client.Infrastructure;
-using Kudu.Contracts.Infrastructure;
 using Kudu.Web.Infrastructure;
 
 namespace Kudu.Web.Models
@@ -19,13 +19,11 @@ namespace Kudu.Web.Models
             _credentialProvider = credentialProvider;
         }
 
-        public Task<ISettings> GetSettings(string siteName)
+        public async Task<ISettings> GetSettings(string siteName)
         {
-            return GetSettingsManager(siteName).GetValues()
-                                               .Then(values => (ISettings) new Settings
-                                                   {
-                                                       KuduSettings = values
-                                                   });
+            var settingsManager = GetSettingsManager(siteName);
+            NameValueCollection values = await settingsManager.GetValues();
+            return new Settings { KuduSettings = values };
         }
 
         public void SetConnectionString(string siteName, string name, string connectionString)

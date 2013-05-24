@@ -225,7 +225,7 @@ namespace Kudu.Services.SourceControl
             }
         }
 
-        protected override Task<HttpResponseMessage> CreateItemPutResponse(FileSystemInfo info, string localFilePath, bool itemExists)
+        protected override async Task<HttpResponseMessage> CreateItemPutResponse(FileSystemInfo info, string localFilePath, bool itemExists)
         {
             // If repository is empty then there is no commit id and no master branch so we don't create any branch; we just init the repo.
             if (_currentEtag != null)
@@ -233,7 +233,7 @@ namespace Kudu.Services.SourceControl
                 HttpResponseMessage errorResponse;
                 if (!PrepareBranch(itemExists, out errorResponse))
                 {
-                    return Task.FromResult(errorResponse);
+                    return errorResponse;
                 }
             }
             else
@@ -243,116 +243,104 @@ namespace Kudu.Services.SourceControl
             }
 
             // Save file
-            Stream fileStream = null;
             try
             {
-                fileStream = GetFileWriteStream(localFilePath, fileExists: itemExists);
-                return Request.Content.CopyToAsync(fileStream)
-                    .Then(() =>
+                using (Stream fileStream = GetFileWriteStream(localFilePath, fileExists: itemExists))
+                {
+                    try
                     {
-                        // Successfully saved the file
-                        fileStream.Close();
-                        fileStream = null;
-
-                        // Use to track whether our rebase applied updates from master.
-                        bool updateBranchIsUpToDate = false;
-
-                        // Commit to local branch
-                        ChangeSet commitResult = _repository.Commit(String.Format("Committing update from request {0}", Request.RequestUri), authorName: null);
-                        if (commitResult == null)
-                        {
-                            HttpResponseMessage noChangeResponse = Request.CreateResponse(HttpStatusCode.NoContent);
-                            noChangeResponse.Headers.ETag = CreateEtag(_repository.CurrentId);
-                            return noChangeResponse;
-                        }
-
-                        if (_currentEtag != null)
-                        {
-                            try
-                            {
-                                // Rebase to get updates from master while checking whether we get a conflict
-                                updateBranchIsUpToDate = _repository.Rebase(MasterBranch);
-
-                                // Switch content back to master
-                                _repository.UpdateRef(VfsUpdateBranch);
-                            }
-                            catch (CommandLineException commandLineException)
-                            {
-                                Tracer.TraceError(commandLineException);
-
-                                // The rebase resulted in a conflict. We send the conflicted version to the client so that the user
-                                // can see the conflicts and resubmit.
-                                _cleanupRebaseConflict = true;
-                                HttpResponseMessage conflictResponse = Request.CreateResponse(HttpStatusCode.Conflict);
-                                _readStream = new RepositoryItemStream(this, GetFileReadStream(localFilePath));
-                                conflictResponse.Content = new StreamContent(_readStream, BufferSize);
-                                conflictResponse.Content.Headers.ContentType = _conflictMediaType;
-                                return conflictResponse;
-                            }
-                        }
-
-                        // If item does not already exist then we return 201 Created. Otherwise, as a successful commit could result 
-                        // in a non-conflicting merge we send back the committed version so that a client
-                        // can get the latest bits. This means we use a 200 OK response instead of a 204 response.
-                        HttpResponseMessage successFileResponse = null;
-                        if (itemExists)
-                        {
-                            if (updateBranchIsUpToDate)
-                            {
-                                successFileResponse = Request.CreateResponse(HttpStatusCode.NoContent);
-                            }
-                            else
-                            {
-                                successFileResponse = Request.CreateResponse(HttpStatusCode.OK);
-                                _readStream = new RepositoryItemStream(this, GetFileReadStream(localFilePath));
-                                successFileResponse.Content = new StreamContent(_readStream, BufferSize);
-                                successFileResponse.Content.Headers.ContentType = MediaTypeMap.GetMediaType(info.Extension);
-                            }
-                        }
-                        else
-                        {
-                            successFileResponse = Request.CreateResponse(HttpStatusCode.Created);
-                        }
-
-                        // Deploy changes
-                        DeployResult result = DeployChanges();
-                        if (result != null && result.Status != DeployStatus.Success)
-                        {
-                            HttpResponseMessage deploymentErrorResponse =
-                                Request.CreateErrorResponse(HttpStatusCode.InternalServerError, RS.Format(Resources.VfsScmController_DeploymentError, result.StatusText));
-                            return deploymentErrorResponse;
-                        }
-
-                        // Set updated etag for the file
-                        successFileResponse.Headers.ETag = CreateEtag(_repository.CurrentId);
-                        return successFileResponse;
-                    }, runSynchronously: true)
-                    .Catch((catchInfo) =>
+                        await Request.Content.CopyToAsync(fileStream);
+                    }
+                    catch (Exception ex)
                     {
-                        Tracer.TraceError(catchInfo.Exception);
+                        Tracer.TraceError(ex);
                         HttpResponseMessage conflictResponse = Request.CreateErrorResponse(
                             HttpStatusCode.Conflict, RS.Format(Resources.VfsController_WriteConflict, localFilePath),
-                            catchInfo.Exception);
+                            ex);
+                        return conflictResponse;
+                    }
+                }
+                
 
-                        if (fileStream != null)
-                        {
-                            fileStream.Close();
-                        }
+                // Use to track whether our rebase applied updates from master.
+                bool updateBranchIsUpToDate = false;
 
-                        return catchInfo.Handled(conflictResponse);
-                    });
+                // Commit to local branch
+                ChangeSet commitResult = _repository.Commit(String.Format("Committing update from request {0}", Request.RequestUri), authorName: null);
+                if (commitResult == null)
+                {
+                    HttpResponseMessage noChangeResponse = Request.CreateResponse(HttpStatusCode.NoContent);
+                    noChangeResponse.Headers.ETag = CreateEtag(_repository.CurrentId);
+                    return noChangeResponse;
+                }
 
+                if (_currentEtag != null)
+                {
+                    try
+                    {
+                        // Rebase to get updates from master while checking whether we get a conflict
+                        updateBranchIsUpToDate = _repository.Rebase(MasterBranch);
+
+                        // Switch content back to master
+                        _repository.UpdateRef(VfsUpdateBranch);
+                    }
+                    catch (CommandLineException commandLineException)
+                    {
+                        Tracer.TraceError(commandLineException);
+
+                        // The rebase resulted in a conflict. We send the conflicted version to the client so that the user
+                        // can see the conflicts and resubmit.
+                        _cleanupRebaseConflict = true;
+                        HttpResponseMessage conflictResponse = Request.CreateResponse(HttpStatusCode.Conflict);
+                        _readStream = new RepositoryItemStream(this, GetFileReadStream(localFilePath));
+                        conflictResponse.Content = new StreamContent(_readStream, BufferSize);
+                        conflictResponse.Content.Headers.ContentType = _conflictMediaType;
+                        return conflictResponse;
+                    }
+                }
+
+                // If item does not already exist then we return 201 Created. Otherwise, as a successful commit could result 
+                // in a non-conflicting merge we send back the committed version so that a client
+                // can get the latest bits. This means we use a 200 OK response instead of a 204 response.
+                HttpResponseMessage successFileResponse = null;
+                if (itemExists)
+                {
+                    if (updateBranchIsUpToDate)
+                    {
+                        successFileResponse = Request.CreateResponse(HttpStatusCode.NoContent);
+                    }
+                    else
+                    {
+                        successFileResponse = Request.CreateResponse(HttpStatusCode.OK);
+                        _readStream = new RepositoryItemStream(this, GetFileReadStream(localFilePath));
+                        successFileResponse.Content = new StreamContent(_readStream, BufferSize);
+                        successFileResponse.Content.Headers.ContentType = MediaTypeMap.GetMediaType(info.Extension);
+                    }
+                }
+                else
+                {
+                    successFileResponse = Request.CreateResponse(HttpStatusCode.Created);
+                }
+
+                // Deploy changes
+                DeployResult result = DeployChanges();
+                if (result != null && result.Status != DeployStatus.Success)
+                {
+                    HttpResponseMessage deploymentErrorResponse =
+                        Request.CreateErrorResponse(HttpStatusCode.InternalServerError, RS.Format(Resources.VfsScmController_DeploymentError, result.StatusText));
+                    return deploymentErrorResponse;
+                }
+
+                // Set updated etag for the file
+                successFileResponse.Headers.ETag = CreateEtag(_repository.CurrentId);
+                return successFileResponse;
             }
             catch (Exception e)
             {
                 Tracer.TraceError(e);
                 HttpResponseMessage errorResponse = Request.CreateErrorResponse(HttpStatusCode.Conflict,
                     RS.Format(Resources.VfsController_WriteConflict, localFilePath), e);
-                if (fileStream != null)
-                {
-                    fileStream.Close();
-                }
-                return Task.FromResult(errorResponse);
+                return errorResponse;
             }
         }
 
