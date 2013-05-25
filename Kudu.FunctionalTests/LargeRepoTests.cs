@@ -21,10 +21,8 @@ namespace Kudu.FunctionalTests
         [Theory]
         [InlineData("https://github.com/kudutest1/moodle.git", "master", "http://docs.moodle.org/en/Installing_Moodle", "3a8c4380", "README.txt")]
         [InlineData("https://github.com/kudutest2/Kentico.git", "master", "Database Setup", "0dcdbef", "cmsinstall/install.aspx")]
-        [InlineData("https://github.com/kudutest3/LargeStaticSite.git", "master", "Tsagaan Agui", "5fab40d", "Mongolia.html")]
         [InlineData("https://bitbucket.org/kudutest1/moodlegit.git", "master", "http://docs.moodle.org/en/Installing_Moodle", "3a8c4380", "README.txt")]
         [InlineData("https://bitbucket.org/kudutest2/kenticogit.git", "master", "Database Setup", "0dcdbef", "cmsinstall/install.aspx")]
-        [InlineData("https://bitbucket.org/kudutest3/largestaticsitegit.git", "master", "Tsagaan Agui", "5fab40d", "Mongolia.html")]
         public void DeployLargeRepo(string repoCloneUrl, string defaultBranchName, string verificationText, string commitId, string resourcePath)
         {
             if (!shouldRunLargeRepoTests)
@@ -38,7 +36,6 @@ namespace Kudu.FunctionalTests
         [Theory]
         [InlineData("/moodle", "Moodle","http://docs.moodle.org/en/Installing_Moodle", "README.txt")]
         [InlineData("/Kentico", "Kentico", "Database Setup", "cmsinstall/install.aspx")]
-        [InlineData("/LargeStaticSite", "LargeStaticSite", "Tsagaan Agui", "Mongolia.html")]
         public void DeployLargeRepoFromDropbox(string repoPath, string appName, string verificationText, string resourcePath)
         {
             if (!shouldRunLargeRepoTests)
