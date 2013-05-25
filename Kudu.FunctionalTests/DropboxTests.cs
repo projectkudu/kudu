@@ -142,7 +142,11 @@ namespace Kudu.FunctionalTests
 
                 Task.WaitAll(tasks);
 
-                var success = tasks[0].Result.IsSuccessStatusCode ? tasks[0].Result : tasks[1].Result;
+                // both 200 and 202 is success
+                tasks[0].Result.EnsureSuccessful();
+                tasks[1].Result.EnsureSuccessful();
+
+                var success = (tasks[0].Result.StatusCode == HttpStatusCode.OK) ? tasks[0].Result : tasks[1].Result;
                 var failure = !Object.ReferenceEquals(success, tasks[0].Result) ? tasks[0].Result : tasks[1].Result;
 
                 success.EnsureSuccessful();
