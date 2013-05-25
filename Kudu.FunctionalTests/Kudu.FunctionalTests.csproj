@@ -58,6 +58,7 @@
     <Compile Include="CustomGitTests.cs" />
     <Compile Include="GitRepositoryFacts.cs" />
     <Compile Include="InitialCloneTests.cs" />
+    <Compile Include="LargeRepoTests.cs" />
     <Compile Include="ZipTests.cs" />
     <Compile Include="DeploymentManagerTests.cs" />
     <Compile Include="DiagnosticsApiFacts.cs" />
@@ -81,6 +82,8 @@
     <EmbeddedResource Include=".ssh\id_rsa" />
     <None Include="App.config" />
     <EmbeddedResource Include="dropbox\oauth.json" />
+    <EmbeddedResource Include="dropbox\Kenticooauth.json" />
+    <EmbeddedResource Include="dropbox\Moodleoauth.json" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>

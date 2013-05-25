@@ -155,17 +155,17 @@ namespace Kudu.FunctionalTests
             });
         }
 
-        private OAuthInfo GetOAuthInfo()
+        internal OAuthInfo GetOAuthInfo(string appname = "")
         {
             Assembly assembly = Assembly.GetExecutingAssembly();
-            using (var reader = new JsonTextReader(new StreamReader(assembly.GetManifestResourceStream("Kudu.FunctionalTests.dropbox.oauth.json"))))
+            using (var reader = new JsonTextReader(new StreamReader(assembly.GetManifestResourceStream(String.Concat( "Kudu.FunctionalTests.dropbox.", appname, "oauth.json")))))
             {
                 JsonSerializer serializer = new JsonSerializer();
                 return serializer.Deserialize<OAuthInfo>(reader);
             }
         }
 
-        private AccountInfo GetAccountInfo(OAuthInfo oauth)
+        internal AccountInfo GetAccountInfo(OAuthInfo oauth)
         {
             var uri = new Uri("https://api.dropbox.com/1/account/info");
             var client = GetDropboxClient(HttpMethod.Get, uri, oauth);
@@ -200,7 +200,7 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        private DropboxDeployInfo GetDeployInfo(string path, OAuthInfo oauth, AccountInfo account, string cursor = null)
+        internal DropboxDeployInfo GetDeployInfo(string path, OAuthInfo oauth, AccountInfo account, string cursor = null)
         {
             List<DropboxDeltaInfo> deltas = new List<DropboxDeltaInfo>();
             string timeStamp = GetUtcTimeStamp();
@@ -219,7 +219,7 @@ namespace Kudu.FunctionalTests
                 {
                     DropboxDeltaInfo item = new DropboxDeltaInfo();
 
-                    if (!info.metadata.path.StartsWith(path))
+                    if (info.metadata != null && !info.metadata.path.StartsWith(path))
                     {
                         continue;
                     }
