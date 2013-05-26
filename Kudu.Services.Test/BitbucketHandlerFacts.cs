@@ -190,7 +190,7 @@ namespace Kudu.Services.Test
         }
 
         [Fact]
-        public void BitbucketReturnsNoOpForDeleteOperations()
+        public void BitbucketDoesNotReturnNoOpForDeleteOperations()
         {
             // Arrange
             string payloadContent = @"{ ""canon_url"": ""https://bitbucket.org"", ""commits"": [], ""repository"": { ""absolute_url"": ""/kudutest/myprivaterepo/"", ""fork"": false, ""is_private"": false, ""name"": ""MyprivateRepo"", ""owner"": ""kudutest"", ""scm"": ""git"", ""slug"": ""myprivaterepo"", ""website"": """" }, ""user"": ""kudutest"" }";
@@ -204,8 +204,13 @@ namespace Kudu.Services.Test
             DeployAction result = bitbucketHandler.TryParseDeploymentInfo(httpRequest.Object, payload: JObject.Parse(payloadContent), targetBranch: "master", deploymentInfo: out deploymentInfo);
 
             // Assert
-            Assert.Equal(DeployAction.NoOp, result);
-            Assert.Null(deploymentInfo);
+            Assert.Equal(DeployAction.ProcessDeployment, result);
+            Assert.Equal("Bitbucket", deploymentInfo.Deployer);
+            Assert.Equal(RepositoryType.Git, deploymentInfo.RepositoryType);
+            Assert.Equal("https://bitbucket.org/kudutest/myprivaterepo/", deploymentInfo.RepositoryUrl);
+            Assert.Empty(deploymentInfo.TargetChangeset.Id);
+            Assert.Null(deploymentInfo.TargetChangeset.AuthorName);
+            Assert.Null(deploymentInfo.TargetChangeset.Message);
         }
     }
 }
