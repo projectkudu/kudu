@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
@@ -28,6 +29,7 @@ namespace Kudu.Core.Deployment
         private readonly ILogger _globalLogger;
         private readonly IDeploymentSettingsManager _settings;
         private readonly IDeploymentStatusManager _status;
+        private readonly IWebHooksManager _hooksManager;
 
         private const string LogFile = "log.xml";
         private const string ManifestFile = "manifest";
@@ -41,7 +43,8 @@ namespace Kudu.Core.Deployment
                                  IDeploymentSettingsManager settings,
                                  IDeploymentStatusManager status,
                                  IOperationLock deploymentLock,
-                                 ILogger globalLogger)
+                                 ILogger globalLogger,
+                                 IWebHooksManager hooksManager)
         {
             _builderFactory = builderFactory;
             _environment = environment;
@@ -51,6 +54,7 @@ namespace Kudu.Core.Deployment
             _globalLogger = globalLogger ?? NullLogger.Instance;
             _settings = settings;
             _status = status;
+            _hooksManager = hooksManager;
         }
 
         private bool IsDeploying
@@ -151,6 +155,7 @@ namespace Kudu.Core.Deployment
 
         public async Task Deploy(IRepository repository, ChangeSet changeSet, string deployer, bool clean, bool needFileUpdate)
         {
+            Exception exception = null;
             ITracer tracer = _traceFactory.GetTracer();
             IDisposable deployStep = null;
             ILogger innerLogger = null;
@@ -219,6 +224,8 @@ namespace Kudu.Core.Deployment
             }
             catch (Exception ex)
             {
+                exception = ex;
+
                 if (innerLogger != null)
                 {
                     innerLogger.Log(ex);
@@ -235,8 +242,18 @@ namespace Kudu.Core.Deployment
                 {
                     deployStep.Dispose();
                 }
+            }
 
-                throw;
+            // Reload status file with latest updates
+            statusFile = _status.Open(id);
+            if (statusFile != null)
+            {
+                await _hooksManager.PublishPostDeploymentAsync(statusFile);
+            }
+
+            if (exception != null)
+            {
+                throw new DeploymentFailedException(exception);
             }
         }
 

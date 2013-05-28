@@ -38,6 +38,7 @@
     <Compile Include="Diagnostics\RemoteProcessManager.cs" />
     <Compile Include="Diagnostics\RemoteLogStreamManager.cs" />
     <Compile Include="Editor\RemoteVfsManager.cs" />
+    <Compile Include="Hooks\RemoteWebHooksManager.cs" />
     <Compile Include="Infrastructure\BasicAuthCredentialProvider.cs" />
     <Compile Include="Infrastructure\HttpResponseMessageExtensions.cs" />
     <Compile Include="Infrastructure\HttpClientExtensions.cs" />

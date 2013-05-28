@@ -133,6 +133,15 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The hooks address received - &apos;{0}&apos; is invalid..
+        /// </summary>
+        internal static string Error_InvalidHookAddress {
+            get {
+                return ResourceManager.GetString("Error_InvalidHookAddress", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Expected a &apos;{0}&apos; repository but found a &apos;{1}&apos; repository at path &apos;{2}&apos;..
         /// </summary>
         internal static string Error_MismatchRepository {

@@ -55,6 +55,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CommandExecutorTests.cs" />
+    <Compile Include="WebHooksTests.cs" />
     <Compile Include="CustomGitTests.cs" />
     <Compile Include="GitRepositoryFacts.cs" />
     <Compile Include="InitialCloneTests.cs" />

@@ -11,6 +11,7 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Deployment.Generator;
+using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
@@ -21,9 +22,9 @@ using XmlSettings;
 
 namespace Kudu.Console
 {
-    class Program
+    internal class Program
     {
-        static int Main(string[] args)
+        private static int Main(string[] args)
         {
             // Turn flag on in app.config to wait for debugger on launch
             if (ConfigurationManager.AppSettings["WaitForDebuggerOnStart"] == "true")
@@ -68,23 +69,28 @@ namespace Kudu.Console
             string lockPath = Path.Combine(env.SiteRootPath, Constants.LockPath);
             string deploymentLockPath = Path.Combine(lockPath, Constants.DeploymentLockFile);
             string statusLockPath = Path.Combine(lockPath, Constants.StatusLockFile);
+            string hooksLockPath = Path.Combine(lockPath, Constants.HooksLockFile);
+
             IOperationLock deploymentLock = new LockFile(deploymentLockPath, traceFactory, fileSystem);
             IOperationLock statusLock = new LockFile(statusLockPath, traceFactory, fileSystem);
+            IOperationLock hooksLock = new LockFile(hooksLockPath, traceFactory, fileSystem);
 
             IBuildPropertyProvider buildPropertyProvider = new BuildPropertyProvider();
             ISiteBuilderFactory builderFactory = new SiteBuilderFactory(buildPropertyProvider, env);
 
             IRepository gitRepository = new GitExeRepository(env, settingsManager, traceFactory);
 
+            IWebHooksManager hooksManager = new WebHooksManager(tracer, env, hooksLock, fileSystem);
             var logger = new ConsoleLogger();
             IDeploymentManager deploymentManager = new DeploymentManager(builderFactory,
-                                                          env, 
-                                                          fileSystem, 
-                                                          traceFactory, 
+                                                          env,
+                                                          fileSystem,
+                                                          traceFactory,
                                                           settingsManager,
                                                           new DeploymentStatusManager(env, fileSystem, statusLock),
                                                           deploymentLock,
-                                                          GetLogger(env, level, logger));
+                                                          GetLogger(env, level, logger),
+                                                          hooksManager);
 
             var step = tracer.Step("Executing external process", new Dictionary<string, string>
             {

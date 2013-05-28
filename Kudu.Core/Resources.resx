@@ -198,4 +198,7 @@
   <data name="Status_BuildingAndDeploying" xml:space="preserve">
     <value>Building and Deploying '{0}'.</value>
   </data>
+  <data name="Error_InvalidHookAddress" xml:space="preserve">
+    <value>The hooks address received - '{0}' is invalid.</value>
+  </data>
 </root>

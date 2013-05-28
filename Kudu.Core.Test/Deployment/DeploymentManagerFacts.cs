@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO.Abstractions;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
+using Kudu.Core.Hooks;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
 using Moq;
@@ -65,7 +62,6 @@ namespace Kudu.Core.Test.Deployment
         {
             public string Id { get; set; }
 
-
             public DeployStatus Status { get; set; }
 
             public string StatusText { get; set; }
@@ -100,17 +96,16 @@ namespace Kudu.Core.Test.Deployment
             }
         }
 
-
-
         private static DeploymentManager CreateDeploymentManager(
-                                 ISiteBuilderFactory builderFactory= null,
-                                 IEnvironment environment= null,
-                                 IFileSystem fileSystem= null,
-                                 ITraceFactory traceFactory= null,
-                                 IDeploymentSettingsManager settings= null,
-                                 IDeploymentStatusManager status= null,
-                                 IOperationLock deploymentLock= null,
-                                 ILogger globalLogger = null)
+                                 ISiteBuilderFactory builderFactory = null,
+                                 IEnvironment environment = null,
+                                 IFileSystem fileSystem = null,
+                                 ITraceFactory traceFactory = null,
+                                 IDeploymentSettingsManager settings = null,
+                                 IDeploymentStatusManager status = null,
+                                 IOperationLock deploymentLock = null,
+                                 ILogger globalLogger = null,
+                                 IWebHooksManager hooksManager = null)
         {
             builderFactory = builderFactory ?? Mock.Of<ISiteBuilderFactory>();
             environment = environment ?? Mock.Of<IEnvironment>();
@@ -121,7 +116,7 @@ namespace Kudu.Core.Test.Deployment
             deploymentLock = deploymentLock ?? Mock.Of<IOperationLock>();
             globalLogger = globalLogger ?? Mock.Of<ILogger>();
 
-            return new DeploymentManager(builderFactory, environment, fileSystem, traceFactory, settings, status, deploymentLock, globalLogger);
+            return new DeploymentManager(builderFactory, environment, fileSystem, traceFactory, settings, status, deploymentLock, globalLogger, hooksManager);
         }
     }
 }

@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
-using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
 using Kudu.Core.Tracing;
@@ -61,7 +57,7 @@ namespace Kudu.Core.Test
             var status = new Mock<IDeploymentStatusManager>();
             var trace = new Mock<ITraceFactory>();
             var tracer = new Mock<ITracer>();
-            var manager = new DeploymentManager(null, null, null, trace.Object, null, status.Object, null, null);
+            var manager = new DeploymentManager(null, null, null, trace.Object, null, status.Object, null, null, null);
 
             // Setup
             status.Setup(s => s.ActiveDeploymentId)

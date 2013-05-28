@@ -7,8 +7,12 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Kudu.Contracts</RootNamespace>
     <AssemblyName>Kudu.Contracts</AssemblyName>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\packages\Newtonsoft.Json.4.5.11\lib\net40\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
@@ -29,6 +33,7 @@
     <Compile Include="Commands\CommandEventType.cs" />
     <Compile Include="Commands\CommandResult.cs" />
     <Compile Include="Commands\ICommandExecutor.cs" />
+    <Compile Include="Deployment\DeploymentFailedException.cs" />
     <Compile Include="Deployment\DeployResult.cs" />
     <Compile Include="Deployment\DeployStatus.cs" />
     <Compile Include="Deployment\IDeploymentEnvironment.cs" />
@@ -43,6 +48,9 @@
     <Compile Include="Dropbox\DropboxDeltaInfo.cs" />
     <Compile Include="Dropbox\DropboxDeployInfo.cs" />
     <Compile Include="Editor\VfsStatEntry.cs" />
+    <Compile Include="Hooks\WebHook.cs" />
+    <Compile Include="Hooks\HooksEventType.cs" />
+    <Compile Include="Hooks\IWebHooksManager.cs" />
     <Compile Include="IEnvironment.cs" />
     <Compile Include="Infrastructure\IOperationLock.cs" />
     <Compile Include="Infrastructure\LockExtensions.cs" />
@@ -77,6 +85,9 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(SolutionDir)\Build\Kudu.imports" Condition="$(KeyFile) != ''" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

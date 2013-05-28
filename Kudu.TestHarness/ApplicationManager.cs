@@ -109,6 +109,12 @@ namespace Kudu.TestHarness
             private set;
         }
 
+        public RemoteWebHooksManager WebHooksManager
+        {
+            get;
+            private set;
+        }
+
         public string GitUrl
         {
             get;
@@ -141,7 +147,7 @@ namespace Kudu.TestHarness
         public string GetKuduUpTime()
         {
             const string pattern = "<td><strong>Up Time</strong></td>\\s*<td>(.*)</td>";
-            
+
             string content = OperationManager.Attempt<string>(() =>
             {
                 using (HttpClient client = HttpClientHelper.CreateClient(this.ServiceUrl, this.DeploymentManager.Credentials))
@@ -344,7 +350,6 @@ namespace Kudu.TestHarness
                 }
                 catch (Exception)
                 {
-
                 }
 
                 site = await siteManager.CreateSiteAsync(applicationName);
@@ -370,6 +375,7 @@ namespace Kudu.TestHarness
                 ZipManager = new RemoteZipManager(site.ServiceUrl + "zip"),
                 CommandExecutor = new RemoteCommandExecutor(site.ServiceUrl + "command"),
                 ProcessManager = new RemoteProcessManager(site.ServiceUrl + "diagnostics/processes"),
+                WebHooksManager = new RemoteWebHooksManager(site.ServiceUrl + "hooks"),
                 RepositoryManager = repositoryManager,
             };
 
