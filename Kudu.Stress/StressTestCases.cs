@@ -128,7 +128,7 @@ namespace Kudu.Stress
                     if (!testArtifactStore.ContainsKey(testName))
                     {
                         // create site & start w3wp.exe with a request
-                        ApplicationManager stressAppManager = ApplicationManager.CreateApplication(testName);
+                        ApplicationManager stressAppManager = ApplicationManager.CreateApplicationAsync(testName).Result;
                         Uri siteUri;
                         Uri.TryCreate(new Uri(stressAppManager.SiteUrl), "hostingstart.html", out siteUri);
                         StressUtils.VerifySite(siteUri.AbsoluteUri, "successfully");
