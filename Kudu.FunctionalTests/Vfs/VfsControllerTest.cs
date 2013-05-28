@@ -1,4 +1,5 @@
-﻿using Kudu.TestHarness;
+﻿using System.Threading.Tasks;
+using Kudu.TestHarness;
 using Xunit;
 
 namespace Kudu.FunctionalTests
@@ -6,17 +7,17 @@ namespace Kudu.FunctionalTests
     public class VfsControllerTest
     {
         [Fact]
-        public void VfsIntegrationTest()
+        public async Task VfsIntegrationTest()
         {
             // Arrange
             string appName = "VfsIntegrationTest";
 
-            ApplicationManager.Run(appName, appManager =>
+            await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 VfsControllerBaseTest suite = new VfsControllerBaseTest(appManager.VfsManager, testConflictingUpdates: false);
 
                 // Act + Assert
-                suite.RunIntegrationTest().Wait();
+                await suite.RunIntegrationTest();
             });
         }
     }

@@ -141,15 +141,15 @@ namespace Kudu.Services.Editor
 
                         return conflictResponse;
                     }
-
-                    // Return either 204 No Content or 201 Created response
-                    HttpResponseMessage successFileResponse =
-                        Request.CreateResponse(itemExists ? HttpStatusCode.NoContent : HttpStatusCode.Created);
-
-                    // Set updated etag for the file
-                    successFileResponse.Headers.ETag = GetUpdatedEtag(localFilePath);
-                    return successFileResponse;
                 }
+
+                // Return either 204 No Content or 201 Created response
+                HttpResponseMessage successFileResponse =
+                    Request.CreateResponse(itemExists ? HttpStatusCode.NoContent : HttpStatusCode.Created);
+
+                // Set updated etag for the file
+                successFileResponse.Headers.ETag = GetUpdatedEtag(localFilePath);
+                return successFileResponse;
                 
             }
             catch (Exception e)
