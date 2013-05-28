@@ -16,6 +16,7 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Commands;
 using Kudu.Core.Deployment;
+using Kudu.Core.Deployment.Generator;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
@@ -165,7 +166,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IDeploymentStatusManager>().To<DeploymentStatusManager>()
                                              .InRequestScope();
 
-            kernel.Bind<ISiteBuilderFactory>().To<SiteBuilderFactoryDispatcher>()
+            kernel.Bind<ISiteBuilderFactory>().To<SiteBuilderFactory>()
                                              .InRequestScope();
 
             kernel.Bind<ILogger>().ToMethod(context => GetLogger(environment, context.Kernel))

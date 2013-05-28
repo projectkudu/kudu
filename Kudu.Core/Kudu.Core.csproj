@@ -48,7 +48,6 @@
     <Compile Include="Deployment\DeploymentStatusManager.cs" />
     <Compile Include="Deployment\Generator\ExternalCommandFactory.cs" />
     <Compile Include="Deployment\ProgressLogger.cs" />
-    <Compile Include="Deployment\SiteBuilderFactoryDispatcher.cs" />
     <Compile Include="Deployment\Generator\BasicBuilder.cs" />
     <Compile Include="Deployment\Generator\BaseBasicBuilder.cs" />
     <Compile Include="Deployment\Generator\CustomBuilder.cs" />
@@ -57,7 +56,6 @@
     <Compile Include="Deployment\Generator\NodeSiteBuilder.cs" />
     <Compile Include="Deployment\Generator\NodeSiteEnabler.cs" />
     <Compile Include="Deployment\Generator\SiteBuilderFactory.cs" />
-    <Compile Include="Deployment\CustomBuilder.cs" />
     <Compile Include="Infrastructure\StringExtensions.cs" />
     <Compile Include="Settings\DeploymentSettingsProvider.cs" />
     <Compile Include="Deployment\DeploymentContext.cs" />
@@ -69,8 +67,6 @@
     <Compile Include="Deployment\IDeploymentManifestReader.cs" />
     <Compile Include="Deployment\IDeploymentManifestWriter.cs" />
     <Compile Include="Deployment\ManifestWriterExtensions.cs" />
-    <Compile Include="Deployment\MsBuildSiteBuilder.cs" />
-    <Compile Include="Deployment\NodeSiteEnabler.cs" />
     <Compile Include="Deployment\NpmExecutable.cs" />
     <Compile Include="Deployment\NullLogger.cs" />
     <Compile Include="Deployment\WellKnownEnvironmentVariables.cs" />
@@ -112,21 +108,16 @@
     <Compile Include="Tracing\Tracer.cs" />
     <Compile Include="Tracing\TracerFactory.cs" />
     <Compile Include="Tracing\TraceStep.cs" />
-    <Compile Include="Deployment\BasicBuilder.cs" />
     <Compile Include="Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="Deployment\IBuildPropertyProvider.cs" />
-    <Compile Include="Deployment\SolutionBasedSiteBuilder.cs" />
-    <Compile Include="Deployment\SiteBuilderFactory.cs" />
     <Compile Include="Deployment\DeploymentManager.cs" />
     <Compile Include="Deployment\DeploymentStatusFile.cs" />
     <Compile Include="Deployment\ISiteBuilder.cs" />
     <Compile Include="Deployment\ISiteBuilderFactory.cs" />
-    <Compile Include="Deployment\WapBuilder.cs" />
-    <Compile Include="Deployment\WebSiteBuilder.cs" />
     <Compile Include="Deployment\XmlLogger.cs" />
     <Compile Include="Environment.cs" />
     <Compile Include="Infrastructure\FileSystemHelpers.cs" />

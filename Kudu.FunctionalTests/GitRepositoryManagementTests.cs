@@ -831,12 +831,8 @@ project = myproject");
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
 
-                    if (!KuduUtils.TestOriginalSiteBuilderFactory)
-                    {
-                        // Only relevant for new generator deployment logic
-                        var log1 = GetLog(appManager, results[0].Id);
-                        Assert.Contains("Using the following command to generate deployment script", log1);
-                    }
+                    var log1 = GetLog(appManager, results[0].Id);
+                    Assert.Contains("Using the following command to generate deployment script", log1);
 
                     string id = results[0].Id;
 
@@ -856,14 +852,10 @@ project = myproject");
                     Assert.Equal(DeployStatus.Success, results[0].Status);
                     Assert.Equal(DeployStatus.Success, results[1].Status);
 
-                    if (!KuduUtils.TestOriginalSiteBuilderFactory)
-                    {
-                        // Only relevant for new generator deployment logic
-                        var log2 = GetLog(appManager, results[0].Id);
-                        var log3 = GetLog(appManager, results[1].Id);
-                        Assert.Contains("Using cached version of deployment script", log2);
-                        Assert.Contains("Using cached version of deployment script", log3);
-                    }
+                    var log2 = GetLog(appManager, results[0].Id);
+                    var log3 = GetLog(appManager, results[1].Id);
+                    Assert.Contains("Using cached version of deployment script", log2);
+                    Assert.Contains("Using cached version of deployment script", log3);
                 });
             }
         }
