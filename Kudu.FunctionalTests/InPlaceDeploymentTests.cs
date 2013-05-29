@@ -30,7 +30,7 @@ namespace Kudu.FunctionalTests
                     Assert.DoesNotContain("KuduSync", result.GitTrace);
 
                     // Repository path should not exist
-                    Assert.False(appManager.VfsManager.Exists(@"site\repository"));
+                    Assert.False(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should not have site\repository\.git folder");
 
                     // Validate builder
                     Assert.Contains(scenario.BuilderTrace, result.GitTrace);
