@@ -10,7 +10,7 @@ namespace Kudu.Core.Deployment.Generator
 {
     public abstract class GeneratorSiteBuilder : ExternalCommandBuilder
     {
-        private const string ScriptGeneratorCommandFormat = "site deploymentscript -y --no-dot-deployment -r \"{0}\" -o \"{1}\" {2}";
+        private const string ScriptGeneratorCommandFormat = "-y --no-dot-deployment -r \"{0}\" -o \"{1}\" {2}";
         private const string DeploymentScriptFileName = "deploy.cmd";
         private const string DeploymentCommandCacheKeyFileName = "deploymentCacheKey";
 
@@ -170,7 +170,7 @@ namespace Kudu.Core.Deployment.Generator
         {
             get
             {
-                return Path.Combine(Environment.NodeModulesPath, ".bin", "azure.cmd");
+                return Path.Combine(Environment.NodeModulesPath, ".bin", "kuduscript.cmd");
             }
         }
     }

@@ -221,7 +221,7 @@
     <value>Deployment '{0}' already active.</value>
   </data>
   <data name="Log_DeploymentScriptGeneratorCommand" xml:space="preserve">
-    <value>Using the following command to generate deployment script: 'azure {0}'.</value>
+    <value>Using the following command to generate deployment script: 'azure site deploymentscript {0}'.</value>
   </data>
   <data name="Log_DeploymentScriptGeneratorUsingCache" xml:space="preserve">
     <value>Using cached version of deployment script (command: 'azure {0}').</value>
