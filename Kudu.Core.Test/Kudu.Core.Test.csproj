@@ -62,10 +62,8 @@
     <Compile Include="AuthUtilityFacts.cs" />
     <Compile Include="Deployment\NodeSiteEnablerTests.cs" />
     <Compile Include="Deployment\DeploymentManagerFacts.cs" />
-    <Compile Include="Deployment\WapBuilderFacts.cs" />
     <Compile Include="HgRepositoryFacts.cs" />
     <Compile Include="IdleManagerFacts.cs" />
-    <Compile Include="Infrastructure\MsBuildSiteBuilderFacts.cs" />
     <Compile Include="Infrastructure\DisposableActionFacts.cs" />
     <Compile Include="Infrastructure\ExecutableExtensionFacts.cs" />
     <Compile Include="Infrastructure\OperationManagerFacts.cs" />
@@ -75,7 +73,6 @@
     <Compile Include="DeploymentSettingsFacts.cs" />
     <Compile Include="JsonSettingsFacts.cs" />
     <Compile Include="MockDeploymentSettingsManager.cs" />
-    <Compile Include="NodeSiteEnablerFacts.cs" />
     <Compile Include="FileSystemHelpersTest.cs" />
     <Compile Include="GitRepositoryTest.cs" />
     <Compile Include="IniFileFacts.cs" />

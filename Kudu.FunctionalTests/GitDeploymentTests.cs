@@ -95,10 +95,7 @@ namespace Kudu.FunctionalTests
             var normalVarText = "Settings Were Set Properly" + guidtext;
             var kuduSetVar = "KUDU_SYNC_CMD";
             var kuduSetVarText = "Fake Kudu Sync " + guidtext;
-            var expectedLogFeedback =
-                KuduUtils.TestOriginalSiteBuilderFactory ?
-                    String.Empty :
-                    "Using custom deployment setting for {0} custom value is '{1}'.".FormatCurrentCulture(kuduSetVar, kuduSetVarText);
+            var expectedLogFeedback = "Using custom deployment setting for {0} custom value is '{1}'.".FormatCurrentCulture(kuduSetVar, kuduSetVarText);
 
             string randomTestName = "CustomDeploymentScriptShouldHaveDeploymentSetting";
             ApplicationManager.Run(randomTestName, appManager =>

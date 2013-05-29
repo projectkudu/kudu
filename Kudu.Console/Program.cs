@@ -10,6 +10,7 @@ using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
+using Kudu.Core.Deployment.Generator;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
@@ -71,7 +72,7 @@ namespace Kudu.Console
             IOperationLock statusLock = new LockFile(statusLockPath, traceFactory, fileSystem);
 
             IBuildPropertyProvider buildPropertyProvider = new BuildPropertyProvider();
-            ISiteBuilderFactory builderFactory = new SiteBuilderFactoryDispatcher(buildPropertyProvider, env);
+            ISiteBuilderFactory builderFactory = new SiteBuilderFactory(buildPropertyProvider, env);
 
             IRepository gitRepository = new GitExeRepository(env, settingsManager, traceFactory);
 

@@ -203,16 +203,6 @@ namespace Kudu.TestHarness
                 WriteIndexHtml(appManager);
             }
 
-            const string siteBuilderFactory = "SCM_SITE_BUILDER_FACTORY";
-            if (KuduUtils.TestOriginalSiteBuilderFactory)
-            {
-                appManager.SettingsManager.SetValue(siteBuilderFactory, "original").Wait();
-            }
-            else
-            {
-                appManager.SettingsManager.Delete(siteBuilderFactory).Wait();
-            }
-
             var dumpPath = Path.Combine(PathHelper.TestResultsPath, testName, testName + ".zip");
             try
             {

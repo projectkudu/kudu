@@ -137,14 +137,6 @@ namespace Kudu.TestHarness
             }
         }
 
-        public static bool TestOriginalSiteBuilderFactory
-        {
-            get
-            {
-                return GetBooleanTestSetting("TestOriginalSiteBuilderFactory");
-            }
-        }
-
         public static bool StopAfterFirstTestFailure
         {
             get
