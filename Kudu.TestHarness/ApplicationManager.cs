@@ -228,7 +228,7 @@ namespace Kudu.TestHarness
                 // Delete the site at the end, unless we're in site reuse mode
                 if (!KuduUtils.ReuseSameSiteForAllTests)
                 {
-                    appManager.Delete();
+                    appManager.Delete().Wait();
                 }
             }
         }
