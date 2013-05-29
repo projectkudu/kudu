@@ -58,6 +58,7 @@
     <Compile Include="CustomGitTests.cs" />
     <Compile Include="GitRepositoryFacts.cs" />
     <Compile Include="InitialCloneTests.cs" />
+    <Compile Include="InPlaceDeploymentTests.cs" />
     <Compile Include="ZipTests.cs" />
     <Compile Include="DeploymentManagerTests.cs" />
     <Compile Include="DiagnosticsApiFacts.cs" />
