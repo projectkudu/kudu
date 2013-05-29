@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -80,7 +81,7 @@ namespace Kudu.Services
                 repository.Update(branch);
             }
 
-            ChangeSet changeSet;
+            ChangeSet changeSet = null;
             string message = null;
             try
             {
@@ -92,14 +93,14 @@ namespace Kudu.Services
 
                 message = String.Format(CultureInfo.CurrentCulture,
                             Resources.Dropbox_Synchronized,
-                            deploymentInfo.DeployInfo.Deltas.Count());
+                            deploymentInfo.DeployInfo.Deltas.Count);
             }
             catch (Exception)
             {
                 message = String.Format(CultureInfo.CurrentCulture,
                             Resources.Dropbox_SynchronizedWithFailure,
                             _successCount,
-                            deploymentInfo.DeployInfo.Deltas.Count(),
+                            deploymentInfo.DeployInfo.Deltas.Count,
                             _failedCount);
 
                 throw;
@@ -115,7 +116,12 @@ namespace Kudu.Services
                 statusFile.UpdateProgress(String.Format(CultureInfo.CurrentCulture, Resources.Dropbox_Committing, _successCount));
 
                 // Commit anyway even partial change
-                changeSet = repository.Commit(message, String.Format("{0} <{1}>", info.UserName, info.Email));
+                if (repository.Commit(message, String.Format("{0} <{1}>", info.UserName, info.Email)))
+                {
+                    // We know this is backed by a git repository, so we can get away using the HEAD refspec 
+                    Debug.Assert(repository.RepositoryType == RepositoryType.Git);
+                    changeSet = repository.GetChangeSet("HEAD");
+                }
             }
 
             // Save new dropboc cursor

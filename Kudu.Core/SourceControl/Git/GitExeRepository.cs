@@ -248,7 +248,7 @@ echo $i > pushinfo
             }
         }
 
-        public ChangeSet Commit(string message, string authorName = null)
+        public bool Commit(string message, string authorName = null)
         {
             ITracer tracer = _tracerFactory.GetTracer();
 
@@ -270,21 +270,16 @@ echo $i > pushinfo
                 // No pending changes
                 if (output.Contains("working directory clean"))
                 {
-                    return null;
+                    return false;
                 }
 
-                string newCommit = _gitExe.Execute(tracer, "show HEAD").Item1;
-
-                using (tracer.Step("Parsing commit information"))
-                {
-                    return ParseCommit(newCommit.AsReader());
-                }
+                return true;
             }
             catch (Exception e)
             {
                 if (e.Message.Contains("nothing to commit"))
                 {
-                    return null;
+                    return false;
                 }
                 throw;
             }

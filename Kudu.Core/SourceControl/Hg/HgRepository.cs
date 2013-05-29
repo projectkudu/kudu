@@ -202,11 +202,11 @@ namespace Kudu.Core.SourceControl
             Repository.Remove(path);
         }
 
-        public ChangeSet Commit(string message, string authorName = "")
+        public bool Commit(string message, string authorName = "")
         {
             if (!GetStatus().Any())
             {
-                return null;
+                return false;
             }
 
             Repository.AddRemove();
@@ -218,11 +218,7 @@ namespace Kudu.Core.SourceControl
             };
 
             var id = Repository.Commit(command);
-
-            // TODO: Figure out why is id null
-            id = id ?? CurrentId;
-
-            return GetChangeSet(id);
+            return id != null;
         }
 
         public void Clone(string source)
