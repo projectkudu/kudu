@@ -68,13 +68,13 @@ namespace Kudu.Web.Controllers
         }
 
         [HttpPost]
-        public ActionResult Create(string name)
+        public async Task<ActionResult> Create(string name)
         {
             string slug = name.GenerateSlug();
 
             try
             {
-                _applicationService.AddApplication(slug);
+                await _applicationService.AddApplication(slug);
 
                 return RedirectToAction("Details", new { slug });
             }
@@ -91,9 +91,9 @@ namespace Kudu.Web.Controllers
         }
 
         [HttpPost]
-        public ActionResult Delete(string slug)
+        public async Task<ActionResult> Delete(string slug)
         {
-            if (_applicationService.DeleteApplication(slug))
+            if (await _applicationService.DeleteApplication(slug))
             {
                 return RedirectToAction("Index");
             }

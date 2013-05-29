@@ -121,12 +121,12 @@ namespace Kudu.TestHarness
             return GitUrl.Substring(0, GitUrl.LastIndexOf("/")) + "/git/" + path;
         }
 
-        private void Delete()
+        private async Task Delete()
         {
             // Don't delete the site if we're supposed to reuse it
             if (!KuduUtils.ReuseSameSiteForAllTests)
             {
-                _siteManager.DeleteSite(_appName);
+                await _siteManager.DeleteSiteAsync(_appName);
             }
         }
 
@@ -192,7 +192,7 @@ namespace Kudu.TestHarness
         {
             TestTracer.Trace("Running test - {0}", testName);
 
-            var appManager = CreateApplication(KuduUtils.GetRandomWebsiteName(testName), testName);
+            var appManager = await CreateApplication(KuduUtils.GetRandomWebsiteName(testName), testName);
 
             if (KuduUtils.ReuseSameSiteForAllTests)
             {
@@ -313,7 +313,7 @@ namespace Kudu.TestHarness
             }
         }
 
-        public static ApplicationManager CreateApplication(string applicationName, string testName = null)
+        public static async Task<ApplicationManager> CreateApplication(string applicationName, string testName = null)
         {
             // Default the test name to the app name
             testName = testName ?? applicationName;
@@ -333,21 +333,21 @@ namespace Kudu.TestHarness
                 site = siteManager.GetSite(applicationName);
                 if (site == null)
                 {
-                    site = siteManager.CreateSite(applicationName);
+                    site = await siteManager.CreateSiteAsync(applicationName);
                 }
             }
             else
             {
                 try
                 {
-                    siteManager.DeleteSite(applicationName);
+                    await siteManager.DeleteSiteAsync(applicationName);
                 }
                 catch (Exception)
                 {
 
                 }
 
-                site = siteManager.CreateSite(applicationName);
+                site = await siteManager.CreateSiteAsync(applicationName);
             }
 
             TestTracer.Trace("Using site - {0}", site.SiteUrl);

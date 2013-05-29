@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Kudu.SiteManagement
 {
@@ -6,8 +7,8 @@ namespace Kudu.SiteManagement
     {
         IEnumerable<string> GetSites();
         Site GetSite(string applicationName);
-        Site CreateSite(string applicationName);
-        void DeleteSite(string applicationName);
+        Task<Site> CreateSiteAsync(string applicationName);
+        Task DeleteSiteAsync(string applicationName);
         void SetSiteWebRoot(string applicationName, string siteRoot);
     }
 }

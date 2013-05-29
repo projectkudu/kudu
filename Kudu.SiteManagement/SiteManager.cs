@@ -4,13 +4,13 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.NetworkInformation;
-using System.Threading;
-using Kudu.Core.Infrastructure;
-using IIS = Microsoft.Web.Administration;
-using Microsoft.Web.Administration;
+using System.Threading.Tasks;
 using Kudu.Client.Deployment;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
+using Kudu.Core.Infrastructure;
+using Microsoft.Web.Administration;
+using IIS = Microsoft.Web.Administration;
 
 namespace Kudu.SiteManagement
 {
@@ -112,7 +112,7 @@ namespace Kudu.SiteManagement
             return urls;
         }
 
-        public Site CreateSite(string applicationName)
+        public async Task<Site> CreateSiteAsync(string applicationName)
         {
             using (var iis = new IIS.ServerManager())
             {
@@ -124,7 +124,7 @@ namespace Kudu.SiteManagement
 
                     // Create the service site for this site
                     string serviceSiteName = GetServiceSite(applicationName);
-                    var serviceSite = CreateSite(iis, applicationName, serviceSiteName, _pathResolver.ServiceSitePath, serviceSiteBindings);
+                    var serviceSite = await CreateSiteAsync(iis, applicationName, serviceSiteName, _pathResolver.ServiceSitePath, serviceSiteBindings);
 
                     IIS.Binding serviceSiteBinding = EnsureBinding(serviceSite.Bindings);
                     int serviceSitePort = serviceSiteBinding.EndPoint.Port;
@@ -148,7 +148,7 @@ namespace Kudu.SiteManagement
 </body> 
 </html>");
 
-                    var site = CreateSite(iis, applicationName, siteName, webRoot, siteBindings);
+                    var site = await CreateSiteAsync(iis, applicationName, siteName, webRoot, siteBindings);
 
                     // Map a path called app to the site root under the service site
                     MapServiceSitePath(iis, applicationName, Constants.MappedSite, siteRoot);
@@ -156,15 +156,14 @@ namespace Kudu.SiteManagement
                     // Commit the changes to iis
                     iis.CommitChanges();
 
-                    // Give IIS some time to create the site and map the path
-                    // REVIEW: Should we poll the site's state?
-                    Thread.Sleep(1000);
+                    // Wait for the site to start
+                    await site.WaitForState(ObjectState.Started);
 
                     // Set initial ScmType state to LocalGit
                     var serviceUrl = String.Format("http://localhost:{0}/", serviceSitePort);
-                    // TODO, suwatch: https://github.com/projectkudu/kudu/issues/627
-                    //var settings = new RemoteDeploymentSettingsManager(serviceUrl + "settings");
-                    //settings.SetValue(SettingsKeys.ScmType, ScmType.LocalGit).Wait();
+                    
+                    var settings = new RemoteDeploymentSettingsManager(serviceUrl + "settings");
+                    await settings.SetValue(SettingsKeys.ScmType, ScmType.LocalGit);
 
                     var siteUrls = new List<string>();
                     foreach (var url in site.Bindings)
@@ -180,13 +179,13 @@ namespace Kudu.SiteManagement
                 }
                 catch
                 {
-                    DeleteSite(applicationName);
+                    DeleteSiteAsync(applicationName).Wait();
                     throw;
                 }
             }
         }
 
-        public void DeleteSite(string applicationName)
+        public async Task DeleteSiteAsync(string applicationName)
         {
             using (var iis = new IIS.ServerManager())
             {
@@ -200,10 +199,12 @@ namespace Kudu.SiteManagement
                     return;
                 }
 
-                DeleteSite(iis, GetLiveSite(applicationName));
-                DeleteSite(iis, GetDevSite(applicationName));
-                // Don't delete the physical files for the service site
-                DeleteSite(iis, GetServiceSite(applicationName), deletePhysicalFiles: false);
+                await Task.WhenAll(
+                    DeleteSiteAsync(iis, GetLiveSite(applicationName)),
+                    DeleteSiteAsync(iis, GetDevSite(applicationName)),
+                    // Don't delete the physical files for the service site
+                    DeleteSiteAsync(iis, GetServiceSite(applicationName), deletePhysicalFiles: false)
+                );
 
                 iis.CommitChanges();
 
@@ -249,8 +250,6 @@ namespace Kudu.SiteManagement
                     site.Applications[0].VirtualDirectories[0].PhysicalPath = webRoot;
 
                     iis.CommitChanges();
-
-                    Thread.Sleep(1000);
                 }
             }
         }
@@ -270,7 +269,7 @@ namespace Kudu.SiteManagement
             site.Applications.Add(path, siteRoot);
         }
 
-        private static IIS.ApplicationPool EnsureAppPool(IIS.ServerManager iis, string appName)
+        private static async Task<IIS.ApplicationPool> EnsureAppPool(IIS.ServerManager iis, string appName)
         {
             string appPoolName = GetAppPool(appName);
             var kuduAppPool = iis.ApplicationPools[appPoolName];
@@ -283,7 +282,7 @@ namespace Kudu.SiteManagement
                 kuduAppPool.ManagedRuntimeVersion = "v4.0";
                 kuduAppPool.AutoStart = true;
                 kuduAppPool.ProcessModel.LoadUserProfile = true;
-                kuduAppPool.WaitForState(IIS.ObjectState.Started);
+                await kuduAppPool.WaitForState(IIS.ObjectState.Started);
             }
 
             return kuduAppPool;
@@ -317,7 +316,6 @@ namespace Kudu.SiteManagement
             return siteBindings;
         }
 
-        //TODO this is duplicated in HgServer.cs, though out of sync in functionality.
         private static int GetRandomPort(IIS.ServerManager iis)
         {
             int randomPort = portNumberGenRnd.Next(1025, 65535);
@@ -329,7 +327,6 @@ namespace Kudu.SiteManagement
             return randomPort;
         }
 
-        //TODO this is duplicated in HgServer.cs, though out of sync in functionality.
         private static bool IsAvailable(int port, IIS.ServerManager iis)
         {
             var tcpConnections = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpConnections();
@@ -355,9 +352,9 @@ namespace Kudu.SiteManagement
             return true;
         }
 
-        private IIS.Site CreateSite(IIS.ServerManager iis, string applicationName, string siteName, string siteRoot, List<string> siteBindings)
+        private async Task<IIS.Site> CreateSiteAsync(IIS.ServerManager iis, string applicationName, string siteName, string siteRoot, List<string> siteBindings)
         {
-            var pool = EnsureAppPool(iis, applicationName);
+            var pool = await EnsureAppPool(iis, applicationName);
 
             EnsureDefaultDocument(iis);
 
@@ -443,12 +440,12 @@ namespace Kudu.SiteManagement
             return String.Format("{0}:{1}:{2}", ip, port, applicationName + "." + host);
         }
 
-        private static void DeleteSite(IIS.ServerManager iis, string siteName, bool deletePhysicalFiles = true)
+        private static async Task DeleteSiteAsync(IIS.ServerManager iis, string siteName, bool deletePhysicalFiles = true)
         {
             var site = iis.Sites[siteName];
             if (site != null)
             {
-                site.StopAndWait();
+                await site.StopAndWait();
                 if (deletePhysicalFiles)
                 {
                     string physicalPath = site.Applications[0].VirtualDirectories[0].PhysicalPath;

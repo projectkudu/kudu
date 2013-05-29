@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Kudu.SiteManagement;
 
 namespace Kudu.Web.Models
@@ -14,17 +15,17 @@ namespace Kudu.Web.Models
             _siteManager = siteManager;
         }
 
-        public void AddApplication(string name)
+        public Task AddApplication(string name)
         {
             if (GetApplications().Any(x => x == name))
             {
                 throw new SiteExistsException();
             }
 
-            _siteManager.CreateSite(name);
+            return _siteManager.CreateSiteAsync(name);
         }
 
-        public bool DeleteApplication(string name)
+        public async Task<bool> DeleteApplication(string name)
         {
             var application = GetApplication(name);
             if (application == null)
@@ -32,7 +33,7 @@ namespace Kudu.Web.Models
                 return false;
             }
 
-            _siteManager.DeleteSite(name);
+            await _siteManager.DeleteSiteAsync(name);
             return true;
         }
 
@@ -44,6 +45,10 @@ namespace Kudu.Web.Models
         public IApplication GetApplication(string name)
         {
             var site = _siteManager.GetSite(name);
+            if (site == null)
+            {
+                throw new SiteNotFoundException();
+            }
 
             return new Application
             {
