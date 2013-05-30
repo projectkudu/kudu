@@ -266,8 +266,8 @@ namespace Kudu.Services.SourceControl
                 bool updateBranchIsUpToDate = false;
 
                 // Commit to local branch
-                ChangeSet commitResult = _repository.Commit(String.Format("Committing update from request {0}", Request.RequestUri), authorName: null);
-                if (commitResult == null)
+                bool commitResult = _repository.Commit(String.Format("Committing update from request {0}", Request.RequestUri), authorName: null);
+                if (!commitResult)
                 {
                     HttpResponseMessage noChangeResponse = Request.CreateResponse(HttpStatusCode.NoContent);
                     noChangeResponse.Headers.ETag = CreateEtag(_repository.CurrentId);
