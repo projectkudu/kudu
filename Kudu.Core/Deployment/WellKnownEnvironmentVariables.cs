@@ -11,7 +11,6 @@
         public const string SelectNodeVersionCommandKey = "KUDU_SELECT_NODE_VERSION_CMD";
         public const string NpmJsPathKey = "NPM_JS_PATH";
         public const string BuildTempPath = "DEPLOYMENT_TEMP";
-        public const string ManifestPath = "MANIFEST_PATH";
         public const string PreviousManifestPath = "PREVIOUS_MANIFEST_PATH";
         public const string NextManifestPath = "NEXT_MANIFEST_PATH";
         public const string InPlaceDeployment = "IN_PLACE_DEPLOYMENT";

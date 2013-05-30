@@ -4,9 +4,6 @@ namespace Kudu.Core.Deployment
 {
     public class DeploymentContext
     {
-        public IDeploymentManifestReader PreviousManifest { get; set; }
-        public IDeploymentManifestWriter ManifestWriter { get; set; }
-
         /// <summary>
         /// Path to the previous manifest file.
         /// </summary>

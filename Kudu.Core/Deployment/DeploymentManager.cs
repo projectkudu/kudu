@@ -509,25 +509,21 @@ namespace Kudu.Core.Deployment
 
                 var context = new DeploymentContext
                 {
-                    ManifestWriter = GetDeploymentManifestWriter(id),
-                    PreviousManifest = GetActiveDeploymentManifestReader(),
+                    NextManifestFilePath = GetDeploymentManifestPath(id),
+                    PreviousManifestFilePath = GetActiveDeploymentManifestPath(),
                     Tracer = tracer,
                     Logger = logger,
                     GlobalLogger = _globalLogger,
                     OutputPath = GetOutputPath(_environment, perDeploymentSettings),
                 };
 
-                context.NextManifestFilePath = context.ManifestWriter.ManifestFilePath;
-
-                if (context.PreviousManifest == null)
+                if (context.PreviousManifestFilePath == null)
                 {
                     // In the first deployment we want the wwwroot directory to be cleaned, we do that using a manifest file
                     // That has the expected content of a clean deployment (only one file: hostingstart.html)
                     // This will result in KuduSync cleaning this file.
-                    context.PreviousManifest = new DeploymentManifest(Path.Combine(_environment.ScriptPath, Constants.FirstDeploymentManifestFileName));
+                    context.PreviousManifestFilePath = Path.Combine(_environment.ScriptPath, Constants.FirstDeploymentManifestFileName);
                 }
-
-                context.PreviousManifestFilePath = context.PreviousManifest.ManifestFilePath;
 
                 using (tracer.Step("Building"))
                 {
@@ -673,12 +669,7 @@ namespace Kudu.Core.Deployment
             return new ProgressLogger(id, _status, new CascadeLogger(xmlLogger, _globalLogger));
         }
 
-        private IDeploymentManifestWriter GetDeploymentManifestWriter(string id)
-        {
-            return new DeploymentManifest(GetDeploymentManifestPath(id));
-        }
-
-        private IDeploymentManifestReader GetActiveDeploymentManifestReader()
+        private string GetActiveDeploymentManifestPath()
         {
             string id = _status.ActiveDeploymentId;
 
@@ -687,7 +678,7 @@ namespace Kudu.Core.Deployment
                 return null;
             }
 
-            return new DeploymentManifest(GetDeploymentManifestPath(id));
+            return GetDeploymentManifestPath(id);
         }
 
         private string GetDeploymentManifestPath(string id)
