@@ -190,7 +190,7 @@ echo $i > pushinfo
 
         public ChangeSet GetChangeSet(string id)
         {
-            string showCommit = _gitExe.Execute("show {0} -m --name-status", id).Item1;
+            string showCommit = _gitExe.Execute("log -n 1 {0}", id).Item1;
             var commitReader = showCommit.AsReader();
             return ParseCommit(commitReader);
         }
@@ -388,25 +388,6 @@ echo $i > pushinfo
                 _gitExe.Execute(tracer, @"remote rm {0}", remoteAlias);
             }
             catch { }
-        }
-
-        private IEnumerable<ChangeSet> Log(string command = "log --all", params object[] args)
-        {
-            if (IsEmpty())
-            {
-                return Enumerable.Empty<ChangeSet>();
-            }
-
-            string log = _gitExe.Execute(command, args).Item1;
-            return ParseCommits(log.AsReader());
-        }
-
-        private IEnumerable<ChangeSet> ParseCommits(IStringReader reader)
-        {
-            while (!reader.Done)
-            {
-                yield return ParseCommit(reader);
-            }
         }
 
         internal T GitFetchWithRetry<T>(Func<T> func)

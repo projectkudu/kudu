@@ -1,11 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Test;
 using Kudu.Core.Tracing;
 using Kudu.TestHarness;
 using Xunit;
+using Xunit.Extensions;
 
 namespace Kudu.FunctionalTests
 {
@@ -116,6 +119,37 @@ namespace Kudu.FunctionalTests
                 Assert.False(gitRepo.Exists, "git repository shouldn't exist yet");
             }
         }
+
+        [Theory]
+        [PropertyData("ParseCommitData")]
+        public void GitRepoParsesCommitDetails(string id, ChangeSet expectedChangeset)
+        {
+            using (var testRepository = Git.Clone("Mvc3Application_NoSolution"))
+            {
+                // Arrange
+                var gitRepo = new GitExeRepository(testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+
+                // Act
+                var changeset = gitRepo.GetChangeSet(id);
+
+                // Assert
+                Assert.Equal(expectedChangeset.Id, changeset.Id);
+                Assert.Equal(expectedChangeset.AuthorName, changeset.AuthorName);
+                Assert.Equal(expectedChangeset.AuthorEmail, changeset.AuthorEmail);
+                Assert.Equal(expectedChangeset.Message, changeset.Message.Trim());
+                Assert.Equal(expectedChangeset.Timestamp, changeset.Timestamp);
+            }
+        }
+
+        public static IEnumerable<object[]> ParseCommitData
+        {
+            get
+            {
+                yield return new object[] { "HEAD", new ChangeSet("4e36ca31aa30ea08a5e5d38c65652a020d48e1d0", "Raquel Almeida", "raquel_soares@msn.com", "Chaning Index view", new DateTimeOffset(2011, 11, 23, 10, 30, 16, TimeSpan.FromHours(-8))) };
+                yield return new object[] { "89d70221f6a86d4243af3df7a8c80e65a29429af", new ChangeSet("89d70221f6a86d4243af3df7a8c80e65a29429af", "Raquel Almeida", "raquel_soares@msn.com", "Initial commit", new DateTimeOffset(2011, 11, 23, 10, 02, 34, TimeSpan.FromHours(-8))) };
+            }
+        }
+
 
         private static TestRepository GetRepository(string source = null)
         {
