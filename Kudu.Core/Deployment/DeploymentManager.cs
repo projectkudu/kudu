@@ -179,6 +179,8 @@ namespace Kudu.Core.Deployment
 
                 ILogger logger = GetLogger(changeSet.Id);
 
+                repository.ClearLock();
+
                 if (needFileUpdate)
                 {
                     using (tracer.Step("Updating to specific changeset"))
@@ -188,7 +190,6 @@ namespace Kudu.Core.Deployment
                         using (var writer = new ProgressWriter())
                         {
                             // Update to the the specific changeset
-                            repository.ClearLock();
                             repository.Update(id);
                         }
                     }

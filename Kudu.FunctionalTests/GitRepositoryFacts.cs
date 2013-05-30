@@ -150,6 +150,34 @@ namespace Kudu.FunctionalTests
             }
         }
 
+        [Fact]
+        public void GitClearLockRemovesHeadAndIndexLocks()
+        {
+            using (var testRepo = GetRepository())
+            {
+                // Arrange
+                Git.Init(testRepo.PhysicalPath);
+                string fileToWrite = Path.Combine(testRepo.PhysicalPath, "some file.txt");
+                File.WriteAllText(Path.Combine(testRepo.PhysicalPath, ".git", "index.lock"), "");
+                File.WriteAllText(Path.Combine(testRepo.PhysicalPath, ".git", "HEAD.lock"), "");
+                File.WriteAllText(fileToWrite, "Hello world");
+                var env = new TestEnvironment
+                {
+                    RepositoryPath = testRepo.PhysicalPath
+                };
+                var gitRepo = new GitExeRepository(env, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+
+
+                // Assert - 1
+                var ex = Assert.Throws<CommandLineException>(() => Git.Add(testRepo.PhysicalPath, fileToWrite));
+                Assert.Contains(".git/index.lock': File exists.", ex.Message);
+                
+                // Act - 2
+                gitRepo.ClearLock();
+                Git.Add(testRepo.PhysicalPath, fileToWrite);
+            }
+
+        }
 
         private static TestRepository GetRepository(string source = null)
         {
@@ -159,6 +187,11 @@ namespace Kudu.FunctionalTests
 
             PathHelper.EnsureDirectory(repoPath);
             return new TestRepository(repoPath, obliterateOnDispose: true);
+        }
+
+        public void Dispose()
+        {
+            throw new NotImplementedException();
         }
     }
 }
