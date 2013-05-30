@@ -16,6 +16,8 @@ namespace Kudu.Core.SourceControl.Git
     /// </summary>
     public class GitExeRepository : IRepository
     {
+        private const string RemoteAlias = "external";
+
         // From CIT experience, this is most common flakiness issue with github.com
         private static readonly string[] RetriableFetchFailures =
         {
@@ -186,17 +188,6 @@ echo $i > pushinfo
             return _gitExe.Execute("rev-parse {0}", id).Item1.Trim();
         }
 
-        public IEnumerable<FileStatus> GetStatus()
-        {
-            string status = _gitExe.Execute("status --porcelain").Item1;
-            return ParseStatus(status.AsReader());
-        }
-
-        public IEnumerable<ChangeSet> GetChanges()
-        {
-            return Log();
-        }
-
         public ChangeSet GetChangeSet(string id)
         {
             string showCommit = _gitExe.Execute("show {0} -m --name-status", id).Item1;
@@ -204,48 +195,9 @@ echo $i > pushinfo
             return ParseCommit(commitReader);
         }
 
-        public IEnumerable<ChangeSet> GetChanges(int index, int limit)
-        {
-            return Log("log --all --skip {0} -n {1}", index, limit);
-        }
-
         public void AddFile(string path)
         {
             _gitExe.Execute("add {0}", path);
-        }
-
-        public void RevertFile(string path)
-        {
-            if (IsEmpty())
-            {
-                _gitExe.Execute("rm --cached \"{0}\"", path);
-            }
-            else
-            {
-                try
-                {
-                    _gitExe.Execute("reset HEAD \"{0}\"", path);
-                }
-                catch
-                {
-                    // This command returns a non zero exit code even when it succeeds
-                }
-            }
-
-            // Now get the status of the file
-            var fileStatuses = GetStatus().ToDictionary(fs => fs.Path, fs => fs.Status);
-
-            ChangeType status;
-            if (fileStatuses.TryGetValue(path, out status) && status != ChangeType.Untracked)
-            {
-                _gitExe.Execute("checkout -- \"{0}\"", path);
-            }
-            else
-            {
-                // If the file is untracked, delete it
-                string fullPath = Path.Combine(_gitExe.WorkingDirectory, path);
-                File.Delete(fullPath);
-            }
         }
 
         public bool Commit(string message, string authorName = null)
@@ -297,13 +249,12 @@ echo $i > pushinfo
             _gitExe.Execute(@"push origin master");
         }
 
-        private const string remoteAlias = "external";
         public void FetchWithoutConflict(string remote, string branchName)
         {
             ITracer tracer = _tracerFactory.GetTracer();
             try
             {
-                TryUpdateRemote(remote, remoteAlias, branchName, tracer);
+                TryUpdateRemote(remote, RemoteAlias, branchName, tracer);
 
                 string fetchCommand = @"fetch {0} --progress";
                 if (this.IsEmpty() && _settings.AllowShallowClones())
@@ -316,7 +267,7 @@ echo $i > pushinfo
 
                 try
                 {
-                    GitFetchWithRetry(() => _gitExe.Execute(tracer, fetchCommand, remoteAlias));
+                    GitFetchWithRetry(() => _gitExe.Execute(tracer, fetchCommand, RemoteAlias));
                 }
                 catch (CommandLineException exception)
                 {
@@ -332,14 +283,14 @@ echo $i > pushinfo
 
                 // Set our branch to point to the remote branch we just fetched. This is a trivial branch pointer
                 // operation that doesn't touch any working files
-                _gitExe.Execute(tracer, @"update-ref refs/heads/{1} {0}/{1}", remoteAlias, branchName);
+                _gitExe.Execute(tracer, @"update-ref refs/heads/{1} {0}/{1}", RemoteAlias, branchName);
 
                 // Now checkout out our branch, which points to the right place
                 Update(branchName);
             }
             finally
             {
-                TryDeleteRemote(remoteAlias, tracer);
+                TryDeleteRemote(RemoteAlias, tracer);
             }
         }
 
@@ -364,52 +315,6 @@ echo $i > pushinfo
                 ITracer tracer = _tracerFactory.GetTracer();
                 GitFetchWithRetry(() => _gitExe.Execute(tracer, "submodule update --init --recursive"));
             }
-        }
-
-        public ChangeSetDetail GetDetails(string id)
-        {
-            string show = _gitExe.Execute("show {0} -m -p --numstat --shortstat", id).Item1;
-            var detail = ParseShow(show.AsReader());
-
-            string showStatus = _gitExe.Execute("show {0} -m --name-status --format=\"%H\"", id).Item1;
-            var statusReader = showStatus.AsReader();
-
-            // Skip the commit details
-            statusReader.ReadLine();
-            statusReader.SkipWhitespace();
-            PopulateStatus(statusReader, detail);
-
-            return detail;
-        }
-
-        public ChangeSetDetail GetWorkingChanges()
-        {
-            // Add everything so we can see a diff of the current changes            
-            var statuses = GetStatus().ToList();
-
-            if (!statuses.Any())
-            {
-                return null;
-            }
-
-            if (IsEmpty())
-            {
-                return MakeNewFileDiff(statuses);
-            }
-
-            string diff = _gitExe.Execute("diff --no-ext-diff -p --numstat --shortstat head").Item1;
-            var detail = ParseShow(diff.AsReader(), includeChangeSet: false);
-
-            foreach (var fileStatus in statuses)
-            {
-                FileInfo fileInfo;
-                if (detail.Files.TryGetValue(fileStatus.Path, out fileInfo))
-                {
-                    fileInfo.Status = fileStatus.Status;
-                }
-            }
-
-            return detail;
         }
 
         public void CreateOrResetBranch(string branchName, string startPoint)
@@ -442,77 +347,6 @@ echo $i > pushinfo
                 ITracer tracer = _tracerFactory.GetTracer();
                 tracer.TraceWarning("Deleting left over index.lock file");
                 FileSystemHelpers.DeleteFileSafe(lockFilePath);
-            }
-        }
-
-        private ChangeSetDetail MakeNewFileDiff(IEnumerable<FileStatus> statuses)
-        {
-            var changeSetDetail = new ChangeSetDetail();
-            foreach (var fileStatus in statuses)
-            {
-                var fileInfo = new FileInfo
-                {
-                    Status = fileStatus.Status
-                };
-                foreach (var diff in CreateDiffLines(fileStatus.Path))
-                {
-                    fileInfo.DiffLines.Add(diff);
-                }
-                changeSetDetail.Files[fileStatus.Path] = fileInfo;
-                changeSetDetail.FilesChanged++;
-                changeSetDetail.Insertions += fileInfo.DiffLines.Count;
-            }
-            return changeSetDetail;
-        }
-
-        private IEnumerable<LineDiff> CreateDiffLines(string path)
-        {
-            if (Directory.Exists(path))
-            {
-                return Enumerable.Empty<LineDiff>();
-            }
-
-            // TODO: Detect binary files
-            path = Path.Combine(_gitExe.WorkingDirectory, path);
-            var diff = new List<LineDiff>();
-            string[] lines = File.ReadAllLines(path);
-            foreach (var line in lines)
-            {
-                diff.Add(new LineDiff(ChangeType.Added, "+" + line));
-            }
-            return diff;
-        }
-
-        public IEnumerable<Branch> GetBranches()
-        {
-            if (IsEmpty())
-            {
-                yield break;
-            }
-
-            string branches = _gitExe.Execute("branch").Item1;
-            var reader = branches.AsReader();
-            string currentId = CurrentId;
-
-            var branchNames = new List<string>();
-            while (!reader.Done)
-            {
-                // * branchname
-                var lineReader = reader.ReadLine().AsReader();
-                lineReader.ReadUntilWhitespace();
-                lineReader.SkipWhitespace();
-                string branchName = lineReader.ReadToEnd();
-                if (branchName.Contains("(no branch)"))
-                {
-                    continue;
-                }
-                branchNames.Add(branchName.Trim());
-            }
-
-            foreach (var branchName in branchNames)
-            {
-                string id = _gitExe.Execute("rev-parse {0}", branchName).Item1.Trim();
-                yield return new GitBranch(id, branchName, currentId == id);
             }
         }
 
@@ -575,29 +409,6 @@ echo $i > pushinfo
             }
         }
 
-        internal static void PopulateStatus(IStringReader reader, ChangeSetDetail detail)
-        {
-            while (!reader.Done)
-            {
-                string line = reader.ReadLine();
-                // Status lines contain tabs
-                if (!line.Contains("\t"))
-                {
-                    continue;
-                }
-                var lineReader = line.AsReader();
-                string status = lineReader.ReadUntilWhitespace();
-                lineReader.SkipWhitespace();
-                string name = lineReader.ReadToEnd().TrimEnd();
-                lineReader.SkipWhitespace();
-                FileInfo file;
-                if (detail.Files.TryGetValue(name, out file))
-                {
-                    file.Status = ConvertStatus(status);
-                }
-            }
-        }
-
         internal T GitFetchWithRetry<T>(Func<T> func)
         {
             // 3 retries with 1s interval
@@ -612,273 +423,6 @@ echo $i > pushinfo
 
                 return false;
             });
-        }
-
-        private static bool IsCommitHeader(string value)
-        {
-            return value.StartsWith("commit ", StringComparison.OrdinalIgnoreCase);
-        }
-
-        private static ChangeSetDetail ParseShow(IStringReader reader, bool includeChangeSet = true)
-        {
-            ChangeSetDetail detail = null;
-            if (includeChangeSet)
-            {
-                detail = ParseCommitAndSummary(reader);
-            }
-            else
-            {
-                detail = new ChangeSetDetail();
-                ParseSummary(reader, detail);
-            }
-
-            ParseDiffAndPopulate(reader, detail);
-
-            return detail;
-        }
-
-        internal static void ParseDiffAndPopulate(IStringReader reader, ChangeSetDetail detail)
-        {
-            foreach (var diff in ParseDiff(reader))
-            {
-                FileInfo stats;
-                if (!detail.Files.TryGetValue(diff.FileName, out stats))
-                {
-                    stats = new FileInfo();
-                    detail.Files.Add(diff.FileName, stats);
-                }
-
-                // Set the binary flag if any of the files are binary
-                bool binary = diff.Binary || stats.Binary;
-                stats.Binary = binary;
-                diff.Binary = binary;
-
-                foreach (var line in diff.Lines)
-                {
-                    stats.DiffLines.Add(line);
-                }
-            }
-        }
-
-        internal static ChangeSetDetail ParseCommitAndSummary(IStringReader reader)
-        {
-            // Parse the changeset
-            ChangeSet changeSet = ParseCommit(reader);
-
-            var detail = new ChangeSetDetail(changeSet);
-
-            ParseSummary(reader, detail);
-
-            return detail;
-        }
-
-        internal static void ParseSummary(IStringReader reader, ChangeSetDetail detail)
-        {
-            reader.SkipWhitespace();
-
-            while (!reader.Done)
-            {
-                string line = reader.ReadLine();
-
-                if (ParserHelpers.IsSingleNewLine(line))
-                {
-                    break;
-                }
-                else if (line.Contains('\t'))
-                {
-                    // n	n	path
-                    string[] parts = line.Split('\t');
-                    int insertions;
-                    Int32.TryParse(parts[0], out insertions);
-                    int deletions;
-                    Int32.TryParse(parts[1], out deletions);
-                    string path = parts[2].TrimEnd();
-
-                    detail.Files[path] = new FileInfo
-                    {
-                        Insertions = insertions,
-                        Deletions = deletions,
-                        Binary = parts[0] == "-" && parts[1] == "-"
-                    };
-                }
-                else
-                {
-                    // n files changed, n insertions(+), n deletions(-)
-                    ParserHelpers.ParseSummaryFooter(line, detail);
-                }
-            }
-        }
-
-        internal static IEnumerable<FileDiff> ParseDiff(IStringReader reader)
-        {
-            var builder = new StringBuilder();
-
-            // If this was a merge change set then we'll parse the details out of the
-            // first diff
-            ChangeSetDetail merge = null;
-
-            do
-            {
-                string line = reader.ReadLine();
-
-                // If we see a new diff header then process the previous diff if any
-                if ((reader.Done || IsDiffHeader(line)) && builder.Length > 0)
-                {
-                    if (reader.Done)
-                    {
-                        builder.Append(line);
-                    }
-                    string diffChunk = builder.ToString();
-                    FileDiff diff = ParseDiffChunk(diffChunk.AsReader(), ref merge);
-
-                    if (diff != null)
-                    {
-                        yield return diff;
-                    }
-
-                    builder.Clear();
-                }
-
-                if (!reader.Done)
-                {
-                    builder.Append(line);
-                }
-            } while (!reader.Done);
-        }
-
-        internal static bool IsDiffHeader(string line)
-        {
-            return line.StartsWith("diff --git", StringComparison.Ordinal);
-        }
-
-        internal static FileDiff ParseDiffChunk(IStringReader reader, ref ChangeSetDetail merge)
-        {
-            var diff = ParseDiffHeader(reader, merge);
-
-            if (diff == null)
-            {
-                return null;
-            }
-
-            // Current diff range
-            DiffRange currentRange = null;
-            int? leftCounter = null;
-            int? rightCounter = null;
-
-            // Parse the file diff
-            while (!reader.Done)
-            {
-                int? currentLeft = null;
-                int? currentRight = null;
-                string line = reader.ReadLine();
-
-                if (line.Equals(@"\ No newline at end of file", StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                bool isDiffRange = line.StartsWith("@@", StringComparison.Ordinal);
-                ChangeType? changeType = null;
-
-                if (line.StartsWith("+", StringComparison.Ordinal))
-                {
-                    changeType = ChangeType.Added;
-                    currentRight = ++rightCounter;
-                    currentLeft = null;
-                }
-                else if (line.StartsWith("-", StringComparison.Ordinal))
-                {
-                    changeType = ChangeType.Deleted;
-                    currentLeft = ++leftCounter;
-                    currentRight = null;
-                }
-                else if (IsCommitHeader(line))
-                {
-                    reader.PutBack(line.Length);
-                    merge = ParseCommitAndSummary(reader);
-                }
-                else
-                {
-                    if (!isDiffRange)
-                    {
-                        currentLeft = ++leftCounter;
-                        currentRight = ++rightCounter;
-                    }
-                    changeType = ChangeType.None;
-                }
-
-                if (changeType != null)
-                {
-                    var lineDiff = new LineDiff(changeType.Value, line);
-                    if (!isDiffRange)
-                    {
-                        lineDiff.LeftLine = currentLeft;
-                        lineDiff.RightLine = currentRight;
-                    }
-
-                    diff.Lines.Add(lineDiff);
-                }
-
-                if (isDiffRange)
-                {
-                    // Parse the new diff range
-                    currentRange = DiffRange.Parse(line.AsReader());
-                    leftCounter = currentRange.LeftFrom - 1;
-                    rightCounter = currentRange.RightFrom - 1;
-                }
-            }
-
-            return diff;
-        }
-
-        private static FileDiff ParseDiffHeader(IStringReader reader, ChangeSetDetail merge)
-        {
-            string fileName = ParseFileName(reader.ReadLine());
-            bool binary = false;
-
-            while (!reader.Done)
-            {
-                string line = reader.ReadLine();
-                if (line.StartsWith("@@", StringComparison.Ordinal))
-                {
-                    reader.PutBack(line.Length);
-                    break;
-                }
-                else if (line.StartsWith("GIT binary patch", StringComparison.Ordinal))
-                {
-                    binary = true;
-                }
-            }
-
-            if (binary)
-            {
-                // Skip binary files
-                reader.ReadToEnd();
-            }
-
-            var diff = new FileDiff(fileName)
-            {
-                Binary = binary
-            };
-
-            // Skip files from merged changesets
-            if (merge != null && merge.Files.ContainsKey(fileName))
-            {
-                return null;
-            }
-
-            return diff;
-        }
-
-        internal static string ParseFileName(string diffHeader)
-        {
-            // Get rid of the diff header (git --diff)
-            diffHeader = diffHeader.TrimEnd().Substring(diffHeader.IndexOf("a/", StringComparison.Ordinal));
-
-            // the format is always a/{file name} b/{file name}
-            int mid = diffHeader.Length / 2;
-
-            return diffHeader.Substring(0, mid).Substring(2);
         }
 
         internal static ChangeSet ParseCommit(IStringReader reader)
@@ -939,83 +483,6 @@ echo $i > pushinfo
 
             string message = messageBuilder.ToString();
             return new ChangeSet(id, author, email, message, DateTimeOffset.ParseExact(date, "ddd MMM d HH:mm:ss yyyy zzz", CultureInfo.InvariantCulture));
-        }
-
-        internal static IEnumerable<FileStatus> ParseStatus(IStringReader reader)
-        {
-            reader.SkipWhitespace();
-
-            while (!reader.Done)
-            {
-                var subReader = reader.ReadLine().AsReader();
-                string status = subReader.ReadUntilWhitespace().Trim();
-                string path = subReader.ReadLine().Trim();
-                yield return new FileStatus(path, ConvertStatus(status));
-                reader.SkipWhitespace();
-            }
-        }
-
-        internal static ChangeType ConvertStatus(string status)
-        {
-            switch (status)
-            {
-                case "A":
-                case "AM":
-                    return ChangeType.Added;
-                case "M":
-                case "MM":
-                    return ChangeType.Modified;
-                case "AD":
-                case "D":
-                    return ChangeType.Deleted;
-                case "R":
-                    return ChangeType.Renamed;
-                case "??":
-                    return ChangeType.Untracked;
-                default:
-                    break;
-            }
-
-            throw new InvalidOperationException("Unsupported status " + status);
-        }
-
-        internal class DiffRange
-        {
-            public int LeftFrom { get; set; }
-            public int LeftTo { get; set; }
-            public int RightFrom { get; set; }
-            public int RightTo { get; set; }
-
-            public static DiffRange Parse(IStringReader reader)
-            {
-                var range = new DiffRange();
-                reader.Skip("@@");
-                reader.SkipWhitespace();
-                reader.Skip('-');
-                range.LeftFrom = reader.ReadInt();
-                if (reader.Skip(','))
-                {
-                    range.LeftTo = range.LeftFrom + reader.ReadInt();
-                }
-                else
-                {
-                    range.LeftTo = range.LeftFrom;
-                }
-                reader.SkipWhitespace();
-                reader.Skip('+');
-                range.RightFrom = reader.ReadInt();
-                if (reader.Skip(','))
-                {
-                    range.RightTo = range.RightFrom + reader.ReadInt();
-                }
-                else
-                {
-                    range.RightTo = range.RightFrom;
-                }
-                reader.SkipWhitespace();
-                reader.Skip("@@");
-                return range;
-            }
         }
     }
 }

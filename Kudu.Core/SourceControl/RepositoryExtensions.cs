@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Kudu.Core.SourceControl
 {
@@ -12,7 +8,7 @@ namespace Kudu.Core.SourceControl
         {
             try
             {
-                return string.IsNullOrEmpty(repository.CurrentId);
+                return String.IsNullOrEmpty(repository.CurrentId);
             }
             catch (Exception)
             {

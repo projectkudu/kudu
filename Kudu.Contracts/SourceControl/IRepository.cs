@@ -21,15 +21,8 @@ namespace Kudu.Core.SourceControl
         /// <param name="configuration">The configuration to use.</param>
         void Initialize();
 
-        IEnumerable<Branch> GetBranches();
-        IEnumerable<FileStatus> GetStatus();
-        IEnumerable<ChangeSet> GetChanges();
-        IEnumerable<ChangeSet> GetChanges(int index, int limit);
         ChangeSet GetChangeSet(string id);
-        ChangeSetDetail GetDetails(string id);
-        ChangeSetDetail GetWorkingChanges();
         void AddFile(string path);
-        void RevertFile(string path);
 
         /// <summary>
         /// Commits new, modified and deleted files to the repository.

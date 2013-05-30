@@ -54,17 +54,9 @@
     <Compile Include="SSHKey\ISSHKeyManager.cs" />
     <Compile Include="Tracing\ITracer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SourceControl\Branch.cs" />
     <Compile Include="SourceControl\ChangeSet.cs" />
-    <Compile Include="SourceControl\ChangeSetDetail.cs" />
-    <Compile Include="SourceControl\ChangeType.cs" />
-    <Compile Include="SourceControl\FileDiff.cs" />
-    <Compile Include="SourceControl\FileInfo.cs" />
-    <Compile Include="SourceControl\FileStatus.cs" />
     <Compile Include="SourceControl\Git\IGitServer.cs" />
     <Compile Include="SourceControl\IRepository.cs" />
-    <Compile Include="SourceControl\LineDiff.cs" />
-    <Compile Include="SourceControl\ReceiveInfo.cs" />
     <Compile Include="SourceControl\RepositoryInfo.cs" />
     <Compile Include="SourceControl\RepositoryType.cs" />
     <Compile Include="Tracing\TraceExtensions.cs" />
