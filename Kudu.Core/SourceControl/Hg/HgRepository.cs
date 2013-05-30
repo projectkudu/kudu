@@ -113,13 +113,6 @@ namespace Kudu.Core.SourceControl
             }
         }
 
-        public IEnumerable<FileStatus> GetStatus()
-        {
-            return from fileStatus in Repository.Status()
-                   let path = fileStatus.Path.Replace('\\', '/')
-                   select new FileStatus(path, Convert(fileStatus.State));
-        }
-
         public IEnumerable<ChangeSet> GetChanges()
         {
             const int bufferSize = 10;
@@ -155,38 +148,6 @@ namespace Kudu.Core.SourceControl
             return Repository.Log(spec).Select(CreateChangeSet);
         }
 
-        public ChangeSetDetail GetDetails(string id)
-        {
-            var changeSet = GetChangeSet(id);
-
-            var detail = new ChangeSetDetail(changeSet);
-
-            return PopulateDetails(id, detail);
-        }
-
-        public ChangeSetDetail GetWorkingChanges()
-        {
-            var status = GetStatus().ToList();
-            if (!status.Any())
-            {
-                return null;
-            }
-
-            Repository.AddRemove();
-            var detail = PopulateDetails(null, new ChangeSetDetail());
-
-            foreach (var fileStatus in status)
-            {
-                FileInfo info;
-                if (detail.Files.TryGetValue(fileStatus.Path, out info))
-                {
-                    info.Status = fileStatus.Status;
-                }
-            }
-
-            return detail;
-        }
-
         public void UpdateSubmodules()
         {
             // TODO: Figure out if calling Update without parameters works 
@@ -204,7 +165,7 @@ namespace Kudu.Core.SourceControl
 
         public bool Commit(string message, string authorName = "")
         {
-            if (!GetStatus().Any())
+            if (!Repository.Status().Any())
             {
                 return false;
             }
@@ -234,19 +195,6 @@ namespace Kudu.Core.SourceControl
         public void Update()
         {
             Update("default");
-        }
-
-        public IEnumerable<Branch> GetBranches()
-        {
-            string currentId = CurrentId;
-            return Repository.Branches()
-                              .Select(b => ConvertToBranch(b, currentId));
-        }
-
-        private HgBranch ConvertToBranch(BranchHead branch, string activeBranchId)
-        {
-            string id = GetChangeSet(branch.RevisionNumber).Id;
-            return new HgBranch(id, branch.Name, String.Equals(id, activeBranchId, StringComparison.OrdinalIgnoreCase));
         }
 
         public void Push()
@@ -349,87 +297,9 @@ namespace Kudu.Core.SourceControl
             return CreateChangeSet(log.SingleOrDefault());
         }
 
-        internal ChangeSetDetail PopulateDetails(string id, ChangeSetDetail detail)
-        {
-            var summaryCommand = new DiffCommand
-            {
-                SummaryOnly = true
-            };
-
-            if (!String.IsNullOrEmpty(id))
-            {
-                summaryCommand.ChangeIntroducedByRevision = id;
-            }
-
-            IStringReader summaryReader = Repository.Diff(summaryCommand).AsReader();
-
-            ParseSummary(summaryReader, detail);
-
-            var diffCommand = new DiffCommand
-            {
-                UseGitDiffFormat = true,
-            };
-
-            if (!String.IsNullOrEmpty(id))
-            {
-                diffCommand.ChangeIntroducedByRevision = id;
-            }
-
-            var diffReader = Repository.Diff(diffCommand).AsReader();
-
-            GitExeRepository.ParseDiffAndPopulate(diffReader, detail);
-
-            return detail;
-        }
-
-        internal static void ParseSummary(IStringReader reader, ChangeSetDetail detail)
-        {
-            while (!reader.Done)
-            {
-                string line = reader.ReadLine();
-                if (line.Contains('|'))
-                {
-                    string[] parts = line.Split('|');
-                    string path = parts[0].Trim();
-
-                    // TODO: Figure out a way to get this information
-                    detail.Files[path] = new FileInfo();
-                }
-                else
-                {
-                    // n files changed, n insertions(+), n deletions(-)
-                    ParserHelpers.ParseSummaryFooter(line, detail);
-                }
-            }
-        }
-
         private ChangeSet CreateChangeSet(Mercurial.Changeset changeSet)
         {
             return new ChangeSet(changeSet.Hash, changeSet.AuthorName, changeSet.AuthorEmailAddress, changeSet.CommitMessage, new DateTimeOffset(changeSet.Timestamp));
-        }
-
-        internal static ChangeType Convert(FileState state)
-        {
-            switch (state)
-            {
-                case FileState.Added:
-                    return ChangeType.Added;
-                case FileState.Modified:
-                    return ChangeType.Modified;
-                case FileState.Removed:
-                    return ChangeType.Deleted;
-                case FileState.Unknown:
-                    return ChangeType.Untracked;
-                case FileState.Clean:
-                case FileState.Ignored:
-                case FileState.Missing:
-                default:
-                    break;
-            }
-
-            throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,
-                                                              Resources.Error_UnsupportedStatus,
-                                                              state));
         }
 
         private static bool EnsureClientInitialized()
