@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Abstractions;
 using System.Linq;
 using Kudu.Core.Infrastructure;
-using Kudu.Core.Settings;
 
 namespace Kudu.Core.Deployment
 {
