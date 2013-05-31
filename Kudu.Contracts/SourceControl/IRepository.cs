@@ -2,7 +2,7 @@
 
 namespace Kudu.Core.SourceControl
 {
-    public interface IRepository
+    public interface IRepository : IFileFinder
     {
         string CurrentId { get; }
 
@@ -50,7 +50,6 @@ namespace Kudu.Core.SourceControl
         /// </summary>
         /// <remarks></remarks>
         void ClearLock();
-        
 
         /// <summary>
         /// Creates a new branch or resets an existing branch at the given starting point. 

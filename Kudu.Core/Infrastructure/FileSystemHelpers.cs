@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.IO.Abstractions;
+using System.Linq;
 
 namespace Kudu.Core.Infrastructure
 {
@@ -17,6 +19,24 @@ namespace Kudu.Core.Infrastructure
         public static void DeleteDirectoryContentsSafe(string path, bool ignoreErrors = true)
         {
             DeleteDirectoryContentsSafe(new DirectoryInfoWrapper(new DirectoryInfo(path)), ignoreErrors);
+        }
+
+        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
+        public static IEnumerable<string> ListFiles(string path, SearchOption searchOption, params string[] lookupList)
+        {
+            if (!Directory.Exists(path))
+            {
+                return Enumerable.Empty<string>();
+            }
+
+            var filesFound = new List<string>();
+
+            foreach (var lookup in lookupList)
+            {
+                filesFound.AddRange(Directory.GetFiles(path, lookup, searchOption));
+            }
+
+            return filesFound;
         }
 
         [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]

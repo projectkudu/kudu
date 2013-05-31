@@ -3,24 +3,20 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.SourceControl;
 
 namespace Kudu.Core.Deployment
 {
     public static class DeploymentHelper
     {
         private static readonly string[] _projectFileExtensions = new[] { ".csproj", ".vbproj" };
+        private static readonly string[] _projectFileLookup = _projectFileExtensions.Select(p => "*" + p).ToArray();
         private static readonly List<string> _emptyList = Enumerable.Empty<string>().ToList();
 
-        public static IList<string> GetProjects(string path, SearchOption searchOption = SearchOption.AllDirectories)
+        public static IList<string> GetProjects(string path, IFileFinder fileFinder, SearchOption searchOption = SearchOption.AllDirectories)
         {
-            if (!Directory.Exists(path))
-            {
-                return _emptyList;
-            }
-
-            return (from projectFile in Directory.GetFiles(path, "*.*", searchOption)
-                    where IsProject(projectFile)
-                    select projectFile).ToList();
+            IEnumerable<string> filesList = fileFinder.ListFiles(path, searchOption, _projectFileLookup);
+            return filesList.ToList();
         }
 
         public static bool IsProject(string path)
