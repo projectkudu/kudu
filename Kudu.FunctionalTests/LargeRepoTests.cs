@@ -14,7 +14,7 @@ using TimeoutException = System.TimeoutException;
 
 namespace Kudu.FunctionalTests
 {
-    class LargeRepoTests
+    public class LargeRepoTests
     {
         private static readonly bool shouldRunLargeRepoTests = !String.IsNullOrEmpty(Environment.GetEnvironmentVariable("RUN_LARGE_REPO_TESTS"));
 
