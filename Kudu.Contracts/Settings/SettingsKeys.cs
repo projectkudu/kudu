@@ -21,5 +21,6 @@
         public const string Project = "PROJECT";
         public const string TargetPath = "SCM_TARGET_PATH";
         public const string RepositoryPath = "SCM_REPOSITORY_PATH";
+        public const string NoRepository = "SCM_NO_REPOSITORY";
     }
 }
