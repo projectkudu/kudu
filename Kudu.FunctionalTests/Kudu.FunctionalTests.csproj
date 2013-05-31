@@ -83,8 +83,8 @@
     <EmbeddedResource Include=".ssh\id_rsa" />
     <None Include="App.config" />
     <EmbeddedResource Include="dropbox\oauth.json" />
-    <None Include="dropbox\Kenticooauth.json" />
-    <None Include="dropbox\Moodleoauth.json" />
+    <EmbeddedResource Include="dropbox\Kenticooauth.json" />
+    <EmbeddedResource Include="dropbox\Moodleoauth.json" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
