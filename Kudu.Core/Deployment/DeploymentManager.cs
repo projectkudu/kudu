@@ -254,6 +254,7 @@ namespace Kudu.Core.Deployment
                 statusFile.Status = DeployStatus.Pending;
                 statusFile.StatusText = statusText;
                 statusFile.IsTemporary = changeSet.IsTemporary;
+                statusFile.IsReadOnly = changeSet.IsReadOnly;
                 statusFile.Save();
             }
 
@@ -411,6 +412,7 @@ namespace Kudu.Core.Deployment
                 statusFile.Author = changeSet.AuthorName;
                 statusFile.Deployer = deployer;
                 statusFile.AuthorEmail = changeSet.AuthorEmail;
+                statusFile.IsReadOnly = changeSet.IsReadOnly;
                 statusFile.Save();
 
                 return statusFile;
@@ -440,6 +442,7 @@ namespace Kudu.Core.Deployment
                 StatusText = file.StatusText,
                 Complete = file.Complete,
                 IsTemporary = file.IsTemporary,
+                IsReadOnly = file.IsReadOnly,
                 Current = file.Id == activeDeploymentId,
                 ReceivedTime = file.ReceivedTime,
                 LastSuccessEndTime = file.LastSuccessEndTime

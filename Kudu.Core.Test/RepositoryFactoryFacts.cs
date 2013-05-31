@@ -1,32 +1,42 @@
 ﻿using System;
+using System.Web;
 using Kudu.Contracts.Settings;
 using Kudu.Core.SourceControl;
-using Kudu.Core.SSHKey;
 using Kudu.Core.Tracing;
 using Moq;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Core.Test
 {
     public class RepositoryFactoryFacts
     {
-        [Theory]
-        [InlineData(RepositoryType.Git, false, true, "Expected a 'Git' repository but found a 'Mercurial' repository at path ''.")]
-        [InlineData(RepositoryType.Mercurial, true, false, "Expected a 'Mercurial' repository but found a 'Git' repository at path ''.")]
-        public void EnsuringGitRepositoryThrowsIfDifferentRepositoryAlreadyExists(RepositoryType repoType, bool isGit, bool isMercurial, string message)
+        [Fact]
+        public void EnsuringGitRepositoryThrowsIfDifferentRepositoryAlreadyExists()
         {
-            // Arrange
-            var repoFactory = new Mock<RepositoryFactory>(Mock.Of<IEnvironment>(), Mock.Of<IDeploymentSettingsManager>(), Mock.Of<ITraceFactory>()) { CallBase = true };
-            repoFactory.SetupGet(f => f.IsGitRepository)
-                       .Returns(isGit);
-            repoFactory.SetupGet(f => f.IsHgRepository)
-                       .Returns(isMercurial);
-            
-            // Act and Assert
-            var ex = Assert.Throws<InvalidOperationException>(() => repoFactory.Object.EnsureRepository(repoType));
+            foreach (RepositoryType repoType in Enum.GetValues(typeof(RepositoryType)))
+            {
+                foreach (RepositoryType currentType in Enum.GetValues(typeof(RepositoryType)))
+                {
+                    if (repoType == currentType)
+                    {
+                        continue;
+                    }
 
-            Assert.Equal(message, ex.Message);
+                    // Arrange
+                    var repoFactory = new Mock<RepositoryFactory>(Mock.Of<IEnvironment>(), Mock.Of<IDeploymentSettingsManager>(), Mock.Of<ITraceFactory>(), Mock.Of<HttpContextBase>()) { CallBase = true };
+                    repoFactory.SetupGet(f => f.IsNullRepository)
+                               .Returns(currentType == RepositoryType.None);
+                    repoFactory.SetupGet(f => f.IsGitRepository)
+                               .Returns(currentType == RepositoryType.Git);
+                    repoFactory.SetupGet(f => f.IsHgRepository)
+                               .Returns(currentType == RepositoryType.Mercurial);
+
+                    // Act and Assert
+                    var ex = Assert.Throws<InvalidOperationException>(() => repoFactory.Object.EnsureRepository(repoType));
+
+                    Assert.Equal(String.Format("Expected a '{0}' repository but found a '{1}' repository at path ''.", repoType, currentType), ex.Message);
+                }
+            }
         }
     }
 }

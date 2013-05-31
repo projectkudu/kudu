@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Web;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
@@ -17,23 +18,25 @@ namespace Kudu.Core.SourceControl
         private readonly IEnvironment _environment;
         private readonly ITraceFactory _traceFactory;
         private readonly IDeploymentSettingsManager _settings;
+        private readonly HttpContextBase _httpContext;
 
-        public RepositoryFactory(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory)
+        public RepositoryFactory(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, HttpContextBase httpContext)
         {
             _environment = environment;
             _settings = settings;
             _traceFactory = traceFactory;
+            _httpContext = httpContext;
         }
 
         /// <summary>
-        /// Hieruistically guesses if there's a Mercurial repository at the repositoryPath
+        /// Heuristically guesses if there's a Mercurial repository at the repositoryPath
         /// </summary>
         public virtual bool IsHgRepository
         {
             get
             {
                 string hgRepoFiles = Path.Combine(_environment.RepositoryPath, ".hg");
-                return Directory.Exists(hgRepoFiles) && 
+                return Directory.Exists(hgRepoFiles) &&
                        Directory.EnumerateFiles(hgRepoFiles).Any();
             }
         }
@@ -45,6 +48,11 @@ namespace Kudu.Core.SourceControl
                 var gitExeRepository = new GitExeRepository(_environment, _settings, _traceFactory);
                 return gitExeRepository.Exists;
             }
+        }
+
+        public virtual bool IsNullRepository
+        {
+            get { return _settings.IsNullRepository(); }
         }
 
         public virtual bool IsCustomGitRepository
@@ -59,22 +67,25 @@ namespace Kudu.Core.SourceControl
 
         public IRepository EnsureRepository(RepositoryType repositoryType)
         {
-            IRepository repository;
-            if (repositoryType == RepositoryType.Mercurial)
+            // Validate if conflicting with existing repository
+            RepositoryType existingType;
+            if (TryGetExistingRepositoryType(out existingType) && existingType != repositoryType)
             {
-                if (IsGitRepository)
-                {
-                    throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_MismatchRepository, repositoryType, RepositoryType.Git, _environment.RepositoryPath));
-                }
+                throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_MismatchRepository, repositoryType, existingType, _environment.RepositoryPath));
+            }
+
+            IRepository repository;
+            if (repositoryType == RepositoryType.None)
+            {
+                repository = new NullRepository(_environment, _traceFactory, _httpContext);
+            }
+            else if (repositoryType == RepositoryType.Mercurial)
+            {
                 FileSystemHelpers.EnsureDirectory(_environment.RepositoryPath);
                 repository = new HgRepository(_environment.RepositoryPath, _environment.SiteRootPath, _settings, _traceFactory);
             }
-            else 
+            else
             {
-                if (IsHgRepository)
-                {
-                    throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_MismatchRepository, repositoryType, RepositoryType.Mercurial, _environment.RepositoryPath));
-                }
                 repository = new GitExeRepository(_environment, _settings, _traceFactory);
             }
 
@@ -88,11 +99,16 @@ namespace Kudu.Core.SourceControl
         public IRepository GetRepository()
         {
             ITracer tracer = _traceFactory.GetTracer();
-            if (IsGitRepository)
+            if (IsNullRepository)
+            {
+                tracer.Trace("Assuming none repository at {0}", _environment.RepositoryPath);
+                return new NullRepository(_environment, _traceFactory, _httpContext);
+            }
+            else if (IsGitRepository)
             {
                 tracer.Trace("Assuming git repository at {0}", _environment.RepositoryPath);
                 return new GitExeRepository(_environment, _settings, _traceFactory);
-            } 
+            }
             else if (IsHgRepository)
             {
                 tracer.Trace("Found mercurial repository at {0}", _environment.RepositoryPath);
@@ -112,6 +128,28 @@ namespace Kudu.Core.SourceControl
                 return ret;
             }
             return null;
+        }
+
+        private bool TryGetExistingRepositoryType(out RepositoryType repositoryType)
+        {
+            if (IsNullRepository)
+            {
+                repositoryType = RepositoryType.None;
+                return true;
+            }
+            else if (IsGitRepository)
+            {
+                repositoryType = RepositoryType.Git;
+                return true;
+            }
+            else if (IsHgRepository)
+            {
+                repositoryType = RepositoryType.Mercurial;
+                return true;
+            }
+
+            repositoryType = default(RepositoryType);
+            return false;
         }
     }
 }

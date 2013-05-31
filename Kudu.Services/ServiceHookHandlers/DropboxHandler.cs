@@ -16,12 +16,14 @@ namespace Kudu.Services.ServiceHookHandlers
     public class DropboxHandler : IServiceHookHandler
     {
         private readonly DropboxHelper _dropBoxHelper;
+        private readonly IDeploymentSettingsManager _settings;
 
         public DropboxHandler(ITracer tracer,
                               IDeploymentStatusManager status,
                               IDeploymentSettingsManager settings,
                               IEnvironment environment)
         {
+            _settings = settings;
             _dropBoxHelper = new DropboxHelper(tracer, status, settings, environment);
         }
 
@@ -30,7 +32,7 @@ namespace Kudu.Services.ServiceHookHandlers
             deploymentInfo = null;
             if (!String.IsNullOrEmpty(payload.Value<string>("NewCursor")))
             {
-                var dropboxInfo = new DropboxInfo(payload);
+                var dropboxInfo = new DropboxInfo(payload, _settings.IsNullRepository() ? RepositoryType.None : RepositoryType.Git); 
                 deploymentInfo = dropboxInfo; 
 
                 // Temporary deployment
@@ -55,12 +57,11 @@ namespace Kudu.Services.ServiceHookHandlers
 
         internal class DropboxInfo : DeploymentInfo
         {
-            public DropboxInfo(JObject payload)
+            public DropboxInfo(JObject payload, RepositoryType repositoryType)
             {
                 Deployer = DropboxHelper.Dropbox;
                 DeployInfo = payload.ToObject<DropboxDeployInfo>();
-                // This ensure that the fetch handler provides an underlying Git repository.
-                RepositoryType = RepositoryType.Git;
+                RepositoryType = repositoryType;
                 IsReusable = false;
             }
 

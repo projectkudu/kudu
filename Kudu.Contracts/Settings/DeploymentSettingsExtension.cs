@@ -10,7 +10,6 @@ namespace Kudu.Contracts.Settings
         public static readonly TimeSpan DefaultCommandIdleTimeout = TimeSpan.FromMinutes(1);
         public static readonly TimeSpan DefaultLogStreamTimeout = TimeSpan.FromMinutes(30);
         public const TraceLevel DefaultTraceLevel = TraceLevel.Error;
-        public const string DefaultRepositoryPath = "repository";
 
         public static string GetValue(this IDeploymentSettingsManager settings, string key)
         {
@@ -112,7 +111,23 @@ namespace Kudu.Contracts.Settings
         public static string GetRepositoryPath(this IDeploymentSettingsManager settings)
         {
             string repositoryPath = settings.GetValue(SettingsKeys.RepositoryPath);
-            return !String.IsNullOrEmpty(repositoryPath) ? repositoryPath : DefaultRepositoryPath;
+            if (!String.IsNullOrEmpty(repositoryPath))
+            {
+                return repositoryPath;
+            }
+
+            // in case of no repository, we will default to webroot (preferring inplace).
+            if (settings.IsNullRepository())
+            {
+                return Constants.WebRoot;
+            }
+
+            return Constants.RepositoryPath;
+        }
+
+        public static bool IsNullRepository(this IDeploymentSettingsManager settings)
+        {
+            return settings.GetValue(SettingsKeys.NoRepository) == "1";
         }
     }
 }

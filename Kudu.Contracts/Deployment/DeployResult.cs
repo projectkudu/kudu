@@ -53,6 +53,9 @@ namespace Kudu.Core.Deployment
         [DataMember(Name = "is_temp")]
         public bool IsTemporary { get; set; }
 
+        [DataMember(Name = "is_readonly")]
+        public bool IsReadOnly { get; set; }
+
         [DataMember(Name = "url")]
         public Uri Url { get; set; }
 
