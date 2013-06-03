@@ -18,6 +18,7 @@ namespace Kudu.Core.Deployment
         DateTime? LastSuccessEndTime { get; set; }
         bool Complete { get; set; }
         bool IsTemporary { get; set; }
+        bool IsReadOnly { get; set; }
 
         void Save();
     }

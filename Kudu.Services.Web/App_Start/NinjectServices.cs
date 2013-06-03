@@ -106,7 +106,8 @@ namespace Kudu.Services.Web.App_Start
                                              .InRequestScope();
 
             // General
-            kernel.Bind<HttpContextBase>().ToMethod(context => new HttpContextWrapper(HttpContext.Current));
+            kernel.Bind<HttpContextBase>().ToMethod(context => new HttpContextWrapper(HttpContext.Current))
+                                             .InRequestScope();
             kernel.Bind<IServerConfiguration>().ToConstant(serverConfiguration);
             kernel.Bind<IFileSystem>().To<FileSystem>().InSingletonScope();
 

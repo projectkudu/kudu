@@ -49,6 +49,12 @@ namespace Kudu.Core.SourceControl
             set;
         }
 
+        public bool IsReadOnly
+        {
+            get;
+            set;
+        }
+
         public override string ToString()
         {
             return String.Format("{0} {1} {2} {3}", Id, Timestamp, AuthorName, Message);

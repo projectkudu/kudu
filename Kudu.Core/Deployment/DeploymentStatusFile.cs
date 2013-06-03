@@ -96,6 +96,14 @@ namespace Kudu.Core.Deployment
                 Boolean.TryParse(isTemporaryValue, out isTemporary);
             }
 
+            bool isReadOnly = false;
+            string isReadOnlyValue = GetOptionalElementValue(document.Root, "is_readonly");
+
+            if (!String.IsNullOrEmpty(isReadOnlyValue))
+            {
+                Boolean.TryParse(isReadOnlyValue, out isReadOnly);
+            }
+
             Id = document.Root.Element("id").Value;
             Author = GetOptionalElementValue(document.Root, "author");
             Deployer = GetOptionalElementValue(document.Root, "deployer");
@@ -110,6 +118,7 @@ namespace Kudu.Core.Deployment
             LastSuccessEndTime = ParseDateTime(lastSuccessEndTimeValue);
             Complete = complete;
             IsTemporary = isTemporary;
+            IsReadOnly = isReadOnly;
         }
 
         public string Id { get; set; }
@@ -126,6 +135,7 @@ namespace Kudu.Core.Deployment
         public DateTime? LastSuccessEndTime { get; set; }
         public bool Complete { get; set; }
         public bool IsTemporary { get; set; }
+        public bool IsReadOnly { get; set; }
 
         public void Save()
         {
@@ -148,7 +158,8 @@ namespace Kudu.Core.Deployment
                     new XElement("startTime", StartTime),
                     new XElement("endTime", EndTime),
                     new XElement("complete", Complete.ToString()),
-                    new XElement("is_temp", IsTemporary.ToString())
+                    new XElement("is_temp", IsTemporary.ToString()),
+                    new XElement("is_readonly", IsReadOnly.ToString())
                 ));
 
             _statusLock.LockOperation(() =>

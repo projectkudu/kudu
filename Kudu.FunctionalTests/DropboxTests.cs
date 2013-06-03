@@ -14,6 +14,7 @@ using System.Web;
 using Kudu.Client;
 using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Dropbox;
+using Kudu.Contracts.Settings;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.Services;
@@ -29,8 +30,18 @@ namespace Kudu.FunctionalTests
     {
         private static readonly Random _random = new Random(unchecked((int)DateTime.Now.Ticks));
 
-        [Fact]
-        public async Task TestDropboxBasic()
+        public enum Scenario
+        {
+            Default,
+            InPlace,
+            NoRepository
+        }
+
+        [Theory]
+        [InlineData(Scenario.Default)]
+        [InlineData(Scenario.InPlace)]
+        [InlineData(Scenario.NoRepository)]
+        public async Task TestDropboxBasic(Scenario scenario)
         {
             OAuthInfo oauth = GetOAuthInfo();
             if (oauth == null)
@@ -45,6 +56,15 @@ namespace Kudu.FunctionalTests
             string appName = "DropboxTest";
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
+                if (scenario == Scenario.NoRepository)
+                {
+                    await appManager.SettingsManager.SetValue(SettingsKeys.NoRepository, "1");
+                }
+                else if (scenario == Scenario.InPlace)
+                {
+                    await appManager.SettingsManager.SetValue(SettingsKeys.RepositoryPath, "wwwroot");
+                }
+
                 HttpClient client = HttpClientHelper.CreateClient(appManager.ServiceUrl, appManager.DeploymentManager.Credentials);
                 var result = await client.PostAsJsonAsync("deploy?scmType=Dropbox", deploy);
                 result.EnsureSuccessful();
@@ -54,6 +74,25 @@ namespace Kudu.FunctionalTests
                     KuduAssert.VerifyUrlAsync(appManager.SiteUrl + "/temp/temp.html", "Hello Temp!"),
                     KuduAssert.VerifyUrlAsync(appManager.SiteUrl + "/New Folder/New File.html", "Hello New File!")
                 );
+
+                var repositoryGit = appManager.VfsManager.Exists(@"site\repository\.git");
+                var wwwrootGit = appManager.VfsManager.Exists(@"site\wwwroot\.git");
+
+                if (scenario == Scenario.NoRepository)
+                {
+                    Assert.False(repositoryGit, @"site\repository\.git should not exist for " + scenario);
+                    Assert.False(wwwrootGit, @"site\wwwroot\.git should not exist for " + scenario);
+                }
+                else if (scenario == Scenario.InPlace)
+                {
+                    Assert.False(repositoryGit, @"site\repository\.git should not exist for " + scenario);
+                    Assert.True(wwwrootGit, @"site\wwwroot\.git should exist for " + scenario);
+                }
+                else if (scenario == Scenario.Default)
+                {
+                    Assert.True(repositoryGit, @"site\repository\.git should exist for " + scenario);
+                    Assert.False(wwwrootGit, @"site\wwwroot\.git should not exist for " + scenario);
+                }
             });
         }
 

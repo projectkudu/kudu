@@ -92,6 +92,8 @@ namespace Kudu.Core.Test.Deployment
 
             public bool IsTemporary { get; set; }
 
+            public bool IsReadOnly { get; set; }
+
             public void Save()
             {
                 // Do nothing.
