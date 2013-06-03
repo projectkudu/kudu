@@ -129,9 +129,6 @@
   <data name="Error_AmbiguousSolutions" xml:space="preserve">
     <value>Unable to determine which solution file to build. {0}.</value>
   </data>
-  <data name="Error_DeployNotFound" xml:space="preserve">
-    <value>Unable to deploy '{0}'. No deployment found.</value>
-  </data>
   <data name="Error_FailedToLocateGit" xml:space="preserve">
     <value>Unable to locate 'git.exe'. Make sure it is installed.</value>
   </data>
@@ -141,17 +138,11 @@
   <data name="Error_FailedToLocateSsh" xml:space="preserve">
     <value>Unable to locate 'ssh.exe'. Make sure it is installed.</value>
   </data>
-  <data name="Error_KeyAlreadyExists" xml:space="preserve">
-    <value>Cannot set key. A key pair already exists on disk. To generate a new key set 'forceCreate' to true.</value>
-  </data>
   <data name="Error_MismatchRepository" xml:space="preserve">
     <value>Expected a '{0}' repository but found a '{1}' repository at path '{2}'.</value>
   </data>
   <data name="Error_NoLogFound" xml:space="preserve">
     <value>No log found for '{0}'.</value>
-  </data>
-  <data name="Error_PrivateKeyAlreadyExists" xml:space="preserve">
-    <value>Private Key already exists</value>
   </data>
   <data name="Error_ProcessAborted" xml:space="preserve">
     <value>Command '{0}' aborted due to no output and CPU activity for {1:0} seconds.  You may increase {2} setting to solve the issue.</value>
@@ -171,54 +162,11 @@
   <data name="Error_BranchNotFound" xml:space="preserve">
     <value>Could not fetch remote branch '{0}'. Verify that the branch exists in the repository.</value>
   </data>
-  <data name="Error_UnableToSelectNodeVersion" xml:space="preserve">
-    <value>Unable to select node.js version to run the application with.</value>
-  </data>
   <data name="Error_UnsupportedStatus" xml:space="preserve">
     <value>Unsupported status '{0}'.</value>
   </data>
-  <data name="IisNodeWebConfig" xml:space="preserve">
-    <value>&lt;?xml version="1.0" encoding="utf-8"?&gt;
-&lt;configuration&gt;
-    &lt;system.webServer&gt;         
-      &lt;handlers&gt;
-           &lt;add name="iisnode" path="{0}" verb="*" modules="iisnode"/&gt;
-     &lt;/handlers&gt;
-      &lt;rewrite&gt;
-           &lt;rules&gt;
-                &lt;rule name="StaticContent"&gt;
-                     &lt;action type="Rewrite" url="public{{REQUEST_URI}}"/&gt;
-                &lt;/rule&gt;
-                &lt;rule name="DynamicContent"&gt;
-                     &lt;conditions&gt;
-                          &lt;add input="{{REQUEST_FILENAME}}" matchType="IsFile" negate="True"/&gt;
-                     &lt;/conditions&gt;
-                     &lt;action type="Rewrite" url="{0}"/&gt;
-                &lt;/rule&gt;
-           &lt;/rules&gt;
-      &lt;/rewrite&gt;
-    &lt;iisnode 
-      nodeProcessCommandLine="&amp;quot;%programfiles(x86)%\nodejs\node.exe&amp;quot;"
-      debuggingEnabled="false"
-      logDirectory="..\..\LogFiles\nodejs" 
-      watchedFiles="*.js;iisnode.yml;node_modules\*;views\*.jade;views\*.ejb;routes\*.js" /&gt;
-   &lt;/system.webServer&gt;
- &lt;/configuration&gt;</value>
-  </data>
-  <data name="Log_BuildingSolution" xml:space="preserve">
-    <value>Building solution '{0}'.</value>
-  </data>
-  <data name="Log_BuildingWebProject" xml:space="preserve">
-    <value>Building web project '{0}'.</value>
-  </data>
   <data name="Log_CleaningRepository" xml:space="preserve">
     <value>Cleaning {0} repository.</value>
-  </data>
-  <data name="Log_CreatingNodeConfig" xml:space="preserve">
-    <value>Deploying Web.config to enable Node.js activation.</value>
-  </data>
-  <data name="Log_DeploymentAlreadyActive" xml:space="preserve">
-    <value>Deployment '{0}' already active.</value>
   </data>
   <data name="Log_DeploymentScriptGeneratorCommand" xml:space="preserve">
     <value>Using the following command to generate deployment script: 'azure site deploymentscript {0}'.</value>
@@ -232,35 +180,11 @@
   <data name="Log_GeneratingDeploymentScript" xml:space="preserve">
     <value>Generating deployment script.</value>
   </data>
-  <data name="Log_NewDeploymentReceived" xml:space="preserve">
-    <value>New deployment received.</value>
-  </data>
   <data name="Log_NoDeployableProjects" xml:space="preserve">
     <value>Found solution '{0}' with no deployable projects. Deploying files instead.</value>
   </data>
-  <data name="Log_NodeWithMissingServerJs" xml:space="preserve">
-    <value>WARNING: Application appears to be a node.js application but no server.js is present. If it is a node application, please rename your startup js file to server.js and re-publish your application.</value>
-  </data>
-  <data name="Log_NpmNotInstalled" xml:space="preserve">
-    <value>NPM not installed or couldn't be located. Skipping package installation.</value>
-  </data>
-  <data name="Log_PackagesAlreadyInstalled" xml:space="preserve">
-    <value>Packages already installed.</value>
-  </data>
   <data name="Log_PreparingDeployment" xml:space="preserve">
     <value>Preparing deployment for commit id '{0}'.</value>
-  </data>
-  <data name="Log_PreparingFiles" xml:space="preserve">
-    <value>Preparing files for deployment.</value>
-  </data>
-  <data name="Log_RunningNPM" xml:space="preserve">
-    <value>Running NPM.</value>
-  </data>
-  <data name="Log_SelectNodeJsVersion" xml:space="preserve">
-    <value>Selecting nodejs version.</value>
-  </data>
-  <data name="Log_UnexpectedBranchPushed" xml:space="preserve">
-    <value>Deployment skipped. Received '{0}' branch, and only pushes to '{1}' are deployed.</value>
   </data>
   <data name="Log_UnexpectedError" xml:space="preserve">
     <value>An unknown error has occurred. Check the diagnostic log for details.</value>
@@ -270,9 +194,6 @@
   </data>
   <data name="Log_UpdatingSubmodules" xml:space="preserve">
     <value>Updating submodules.</value>
-  </data>
-  <data name="Log_UsingWebsiteProject" xml:space="preserve">
-    <value>Using website project '{0}'.</value>
   </data>
   <data name="Status_BuildingAndDeploying" xml:space="preserve">
     <value>Building and Deploying '{0}'.</value>

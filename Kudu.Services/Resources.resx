@@ -159,17 +159,11 @@
   <data name="Error_MismatchDropboxCursor" xml:space="preserve">
     <value>Mismatch dropbox origin cursor.</value>
   </data>
-  <data name="Error_MissingRepositoryUrl" xml:space="preserve">
-    <value>Missing repository url.</value>
-  </data>
   <data name="Error_UnsupportedFormat" xml:space="preserve">
     <value>The json payload is unsupported.</value>
   </data>
   <data name="FetchingChanges" xml:space="preserve">
     <value>Fetching changes.</value>
-  </data>
-  <data name="NothingToUpdate" xml:space="preserve">
-    <value>Nothing to update.</value>
   </data>
   <data name="ReceivingChanges" xml:space="preserve">
     <value>Receiving changes.</value>
@@ -201,9 +195,6 @@
   <data name="VfsScmController_WeakEtag" xml:space="preserve">
     <value>Invalid ETag: '{0}'. Updating an existing resource requires a strong etag based on an existing commit ID.</value>
   </data>
-  <data name="VfsController_fileChanged" xml:space="preserve">
-    <value>The contents of the file has changed while the operation was in progress. Please retry the request to avoid conflict.</value>
-  </data>
   <data name="VfsControllerBase_CannotDeleteDirectory" xml:space="preserve">
     <value>Cannot delete directory. It is either not empty or access is not allowed.</value>
   </data>
@@ -224,12 +215,6 @@
   </data>
   <data name="LogStream_Welcome" xml:space="preserve">
     <value>{0}  Welcome, you are now connected to log-streaming service.{1}</value>
-  </data>
-  <data name="Error_GitIsDisabled" xml:space="preserve">
-    <value>Git endpoints are not enabled.</value>
-  </data>
-  <data name="Error_SyncDropboxTimeout" xml:space="preserve">
-    <value>Synching with Dropbox timeout after {0} seconds.</value>
   </data>
   <data name="Error_InvalidRepoUrl" xml:space="preserve">
     <value>Repository url '{0}' is invalid.</value>
