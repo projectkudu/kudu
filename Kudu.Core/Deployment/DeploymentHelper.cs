@@ -11,7 +11,6 @@ namespace Kudu.Core.Deployment
     {
         private static readonly string[] _projectFileExtensions = new[] { ".csproj", ".vbproj" };
         private static readonly string[] _projectFileLookup = _projectFileExtensions.Select(p => "*" + p).ToArray();
-        private static readonly List<string> _emptyList = Enumerable.Empty<string>().ToList();
 
         public static IList<string> GetProjects(string path, IFileFinder fileFinder, SearchOption searchOption = SearchOption.AllDirectories)
         {
