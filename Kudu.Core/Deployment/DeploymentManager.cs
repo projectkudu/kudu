@@ -214,7 +214,7 @@ namespace Kudu.Core.Deployment
                 innerLogger = null;
 
                 // Perform the build deployment of this changeset
-                await Build(id, tracer, deployStep);
+                await Build(id, tracer, deployStep, repository);
             }
             catch (Exception ex)
             {
@@ -449,7 +449,7 @@ namespace Kudu.Core.Deployment
         /// <summary>
         /// Builds and deploys a particular changeset. Puts all build artifacts in a deployments/{id}
         /// </summary>
-        private async Task Build(string id, ITracer tracer, IDisposable deployStep)
+        private async Task Build(string id, ITracer tracer, IDisposable deployStep, IFileFinder fileFinder)
         {
             if (String.IsNullOrEmpty(id))
             {
@@ -480,7 +480,7 @@ namespace Kudu.Core.Deployment
                 {
                     using (tracer.Step("Determining deployment builder"))
                     {
-                        builder = _builderFactory.CreateBuilder(tracer, innerLogger, perDeploymentSettings);
+                        builder = _builderFactory.CreateBuilder(tracer, innerLogger, perDeploymentSettings, fileFinder);
                         tracer.Trace("Builder is {0}", builder.GetType().Name);
                     }
                 }

@@ -87,7 +87,6 @@ namespace Kudu.Core.SourceControl
             }
         }
 
-
         public void Initialize()
         {
             ITracer tracer = _traceFactory.GetTracer();
@@ -221,7 +220,7 @@ namespace Kudu.Core.SourceControl
 
             bool retried = false;
 
-            fetch:
+        fetch:
             try
             {
                 _hgExecutable.Execute(tracer, "pull {0} --branch {1} --noninteractive", remote, branchName, PathUtility.ResolveSSHPath());
@@ -295,6 +294,11 @@ namespace Kudu.Core.SourceControl
         {
             var log = Repository.Log(id);
             return CreateChangeSet(log.SingleOrDefault());
+        }
+
+        public IEnumerable<string> ListFiles(string path, SearchOption searchOption, params string[] lookupList)
+        {
+            return FileSystemHelpers.ListFiles(path, searchOption, lookupList);
         }
 
         private ChangeSet CreateChangeSet(Mercurial.Changeset changeSet)

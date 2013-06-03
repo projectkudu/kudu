@@ -77,9 +77,24 @@ namespace Kudu.Core.Infrastructure
             return Path.Combine(programFiles, "Microsoft Visual Studio 11.0", "Common7", "IDE", "CommonExtensions", "Microsoft", "TestWindow", "vstest.console.exe");
         }
 
-        internal static string NormalizePath(string path)
+        internal static string CleanPath(string path)
         {
-            return Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar).ToUpperInvariant();
+            if (path == null)
+            {
+                return null;
+            }
+
+            return Path.GetFullPath(path.Trim()).TrimEnd(Path.DirectorySeparatorChar);
+        }
+
+        internal static bool PathsEquals(string path1, string path2)
+        {
+            if (path1 == null)
+            {
+                return path2 == null;
+            }
+
+            return String.Equals(CleanPath(path1), CleanPath(path2), StringComparison.OrdinalIgnoreCase);
         }
     }
 }

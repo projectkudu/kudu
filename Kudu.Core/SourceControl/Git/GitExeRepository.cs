@@ -63,14 +63,14 @@ namespace Kudu.Core.SourceControl.Git
 
         public bool SkipPostReceiveHookCheck
         {
-            get; set;
+            get;
+            set;
         }
 
         public bool Exists
         {
             get
             {
-
                 // The last thing we do in Initialize is create the post-receive hook, so if it's not there,
                 // treat the repo as incomplete, so that we'll fully initialize it again.
                 if (!SkipPostReceiveHookCheck && !File.Exists(PostReceiveHookPath))
@@ -353,6 +353,51 @@ echo $i > pushinfo
         public void SetTraceLevel(int level)
         {
             _gitExe.SetTraceLevel(level);
+        }
+
+        public IEnumerable<string> ListFiles(string path, SearchOption searchOption, params string[] lookupList)
+        {
+            ITracer tracer = _tracerFactory.GetTracer();
+
+            path = PathUtility.CleanPath(path);
+
+            if (!path.StartsWith(RepositoryPath, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new NotSupportedException("Only paths relative to the repository root path are supported, path provided: {0}".FormatCurrentCulture(path));
+            }
+
+            if (Directory.Exists(path))
+            {
+                // TODO: Consider an implementation where the gitExe returns the list of files as a list (not storing the files list output as a blob)
+                // In-order to conserve memory consumption
+                Tuple<string, string> result = _gitExe.Execute(tracer, @"ls-files {0}", String.Join(" ", lookupList), RepositoryPath);
+
+                if (!String.IsNullOrEmpty(result.Item1))
+                {
+                    IEnumerable<string> lines = result.Item1.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    lines = lines
+                        .Select(line => Path.Combine(RepositoryPath, line.Trim().Replace('/', '\\')))
+                        .Where(p => p.StartsWith(path, StringComparison.OrdinalIgnoreCase));
+
+                    switch (searchOption)
+                    {
+                        case SearchOption.TopDirectoryOnly:
+                            lines = lines.Where(line => !line.Substring(path.Length).TrimStart('\\').Contains('\\'));
+                            break;
+
+                        case SearchOption.AllDirectories:
+                            break;
+
+                        default:
+                            throw new NotSupportedException("Search option {0} is not supported".FormatCurrentCulture(searchOption));
+                    }
+
+                    return lines;
+                }
+            }
+
+            return Enumerable.Empty<string>();
         }
 
         private bool IsEmpty()

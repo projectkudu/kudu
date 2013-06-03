@@ -6,16 +6,23 @@ namespace Kudu.Core.Test
     public class PathUtilityFacts
     {
         [Fact]
-        public void NormalizeFixesOtherSlashes()
+        public void CleanFixesOtherSlashes()
         {
-            Assert.Equal(@"C:\FOO\BAR", PathUtility.NormalizePath(@"c:/foo/bar"));
+            Assert.Equal(@"c:\foo\bar", PathUtility.CleanPath(@"c:/foo/bar"));
         }
 
         [Fact]
-        public void NormalizeTrimsTrailingSlashes()
+        public void CleanTrimsTrailingSlashes()
         {
-            Assert.Equal(@"C:\FOO\BAR", PathUtility.NormalizePath(@"c:/foo/bar/"));
-            Assert.Equal(@"C:\FOO\BAR", PathUtility.NormalizePath(@"c:\foo\bar\"));
+            Assert.Equal(@"c:\foo\BAR", PathUtility.CleanPath(@"c:/foo/BAR/"));
+            Assert.Equal(@"c:\foo\bar", PathUtility.CleanPath(@"c:\foo\bar\"));
+        }
+
+        [Fact]
+        public void CleanTrimsWhiteSpaces()
+        {
+            Assert.Equal(@"c:\foo\BAR", PathUtility.CleanPath(@" c:/foo/BAR/ "));
+            Assert.Equal(@"c:\foo\bar", PathUtility.CleanPath("\tc:\\foo\\bar\\"));
         }
     }
 }
