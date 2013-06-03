@@ -29,7 +29,13 @@ namespace Kudu.FunctionalTests
             {
                 return;
             }
-            GitDeploymentTests.PushAndDeployApps(repoCloneUrl, defaultBranchName, verificationText, HttpStatusCode.OK, commitId, resourcePath, "", "", true);
+            GitDeploymentTests.PushAndDeployApps(repoCloneUrl, 
+                                                 defaultBranchName, 
+                                                 verificationText, 
+                                                 HttpStatusCode.OK, 
+                                                 verificationLogText: commitId, 
+                                                 resourcePath: resourcePath, 
+                                                 deleteSCM: true);
         }
 
         [Theory]
