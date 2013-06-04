@@ -103,7 +103,7 @@ namespace Kudu.Core.Test
             if (isHeld)
             {
                 // Test
-                Assert.Throws<InvalidOperationException>(() => lockObj.LockOperation(() => actual + 1, TimeSpan.Zero));
+                Assert.Throws<LockOperationException>(() => lockObj.LockOperation(() => actual + 1, TimeSpan.Zero));
             }
             else
             {

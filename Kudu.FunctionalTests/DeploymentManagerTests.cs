@@ -586,65 +586,6 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public async Task PullApiTestConsecutivePushesGetQueued()
-        {
-            List<DeployResult> results;
-            string payloadMaster = @"{ ""newRef"": ""1ef30333deac14b99ac4bc93453cf4232ae88c24"", ""url"": ""https://github.com/KuduApps/RepoWithMultipleBranches.git"", ""deployer"" : ""CodePlex"", branch: ""master"" }";
-            string payloadTest = @"{ ""url"": ""https://github.com/KuduApps/RepoWithMultipleBranches.git"", ""deployer"" : ""CodePlex"", branch: ""test"", newRef: ""ad21595c668f3de813463df17c04a3b23065fedc"" }";
-            string appName = "PullApiTestPushesGetQueued";
-
-            await ApplicationManager.RunAsync(appName, async appManager =>
-            {
-                var postMaster = new Dictionary<string, string>
-                {
-                    { "payload", payloadMaster }
-                };
-
-                var postTest = new Dictionary<string, string>
-                {
-                    { "payload", payloadTest }
-                };
-
-                Task<HttpResponseMessage> responseTask1 = null;
-                Task<HttpResponseMessage> responseTask2 = null;
-
-                // Set custom command to make deployment last longer (10 seconds) so we'll be able to start the second deployment
-                // Safely knowing the first one is still going on
-                await appManager.SettingsManager.SetValue("COMMAND", "sleep 10 & xcopy /y %DEPLOYMENT_SOURCE%\\index.html %DEPLOYMENT_TARGET%\\");
-
-                // Start the first fetch request for the master branch
-                TestTracer.Trace("Making first deployment request");
-                responseTask1 = PostPayloadHelperAsync(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(postMaster)));
-
-                // Wait for the first deployment to start
-                await WaitForAnyBuildingDeploymentAsync(appManager);
-
-                // Change branch and start second fetch request for test branch
-                await appManager.SettingsManager.SetValue("branch", "test");
-                await appManager.SettingsManager.Delete("COMMAND");
-
-                TestTracer.Trace("Making second deployment request");
-                responseTask2 = PostPayloadHelperAsync(appManager, client => client.PostAsync("deploy", new FormUrlEncodedContent(postTest)));
-
-                HttpResponseMessage responseResult1 = await responseTask1;
-
-                HttpResponseMessage responseResult2 = await responseTask2;
-
-                Assert.Equal(HttpStatusCode.OK, responseResult1.StatusCode);
-                Assert.Equal(HttpStatusCode.Accepted, responseResult2.StatusCode);
-
-                KuduAssert.VerifyUrl(appManager.SiteUrl, "Test branch");
-
-                results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
-                Assert.Equal(2, results.Count);
-                Assert.Equal(DeployStatus.Success, results[0].Status);
-                Assert.Equal(DeployStatus.Success, results[1].Status);
-                Assert.Equal("CodePlex", results[1].Deployer);
-                Assert.Equal("CodePlex", results[1].Deployer);
-            });
-        }
-
-        [Fact]
         public async Task PullApiTestSimpleFormatMultiBranchWithUpdates()
         {
             var payload = new JObject();
