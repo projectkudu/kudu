@@ -47,7 +47,7 @@ namespace Kudu.Services.Web.App_Start
         /// Root directory that contains the VS target files
         /// </summary>
         private const string SdkRootDirectory = "msbuild";
-
+        //hello
         private static readonly Bootstrapper _bootstrapper = new Bootstrapper();
 
         private static event Action Shutdown;
