@@ -26,7 +26,7 @@ namespace Kudu.Services.SSHKey
             _sshKeyManager = sshKeyManager;
             _sshKeyLock = sshKeyLock;
         }
-        
+
         /// <summary>
         /// Set the private key. The supported key format is privacy enhanced mail (PEM)
         /// </summary>
@@ -54,28 +54,27 @@ namespace Kudu.Services.SSHKey
 
             using (_tracer.Step("SSHKeyController.SetPrivateKey"))
             {
-                // This is not what we want
-                bool success = _sshKeyLock.TryLockOperation(() =>
+                try
                 {
-                    try
+                    _sshKeyLock.LockOperation(() =>
                     {
-                        _sshKeyManager.SetPrivateKey(key);
-                    }
-                    catch (ArgumentException ex)
-                    {
-                        throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.BadRequest, ex));
-                    }
-                    catch (InvalidOperationException ex)
-                    {
-                        throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, ex));
-                    }
-                }, TimeSpan.FromSeconds(LockTimeoutSecs));
-
-                if (!success)
+                        try
+                        {
+                            _sshKeyManager.SetPrivateKey(key);
+                        }
+                        catch (ArgumentException ex)
+                        {
+                            throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.BadRequest, ex));
+                        }
+                        catch (InvalidOperationException ex)
+                        {
+                            throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, ex));
+                        }
+                    }, TimeSpan.FromSeconds(LockTimeoutSecs));
+                }
+                catch (LockOperationException ex)
                 {
-                    throw new HttpResponseException(Request.CreateErrorResponse(
-                        HttpStatusCode.Conflict,
-                        String.Format(CultureInfo.CurrentCulture, Resources.Error_OperationLockTimeout, LockTimeoutSecs)));
+                    throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, ex.Message));
                 }
             }
         }
@@ -86,27 +85,24 @@ namespace Kudu.Services.SSHKey
 
             using (_tracer.Step("SSHKeyController.GetPublicKey"))
             {
-                string key = null;
-                bool success = _sshKeyLock.TryLockOperation(() =>
+                try
                 {
-                    try
+                    return _sshKeyLock.LockOperation(() =>
                     {
-                        key = _sshKeyManager.GetPublicKey(ensurePublicKeyValue) ?? String.Empty;
-                    }
-                    catch (InvalidOperationException ex)
-                    {
-                        throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, ex));
-                    }
-                }, TimeSpan.FromSeconds(LockTimeoutSecs));
-
-                if (!success)
-                {
-                    throw new HttpResponseException(Request.CreateErrorResponse(
-                        HttpStatusCode.Conflict,
-                        String.Format(CultureInfo.CurrentCulture, Resources.Error_OperationLockTimeout, LockTimeoutSecs)));
+                        try
+                        {
+                            return _sshKeyManager.GetPublicKey(ensurePublicKeyValue) ?? String.Empty;
+                        }
+                        catch (InvalidOperationException ex)
+                        {
+                            throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, ex));
+                        }
+                    }, TimeSpan.FromSeconds(LockTimeoutSecs));
                 }
-
-                return key;
+                catch (LockOperationException ex)
+                {
+                    throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, ex.Message));
+                }
             }
         }
 
@@ -115,23 +111,23 @@ namespace Kudu.Services.SSHKey
         {
             using (_tracer.Step("SSHKeyController.GetPublicKey"))
             {
-                bool success = _sshKeyLock.TryLockOperation(() =>
+                try
                 {
-                    try
+                    _sshKeyLock.LockOperation(() =>
                     {
-                        _sshKeyManager.DeleteKeyPair();
-                    }
-                    catch (InvalidOperationException ex)
-                    {
-                        throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, ex));
-                    }
-                }, TimeSpan.FromSeconds(LockTimeoutSecs));
-
-                if (!success)
+                        try
+                        {
+                            _sshKeyManager.DeleteKeyPair();
+                        }
+                        catch (InvalidOperationException ex)
+                        {
+                            throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, ex));
+                        }
+                    }, TimeSpan.FromSeconds(LockTimeoutSecs));
+                }
+                catch (LockOperationException ex)
                 {
-                    throw new HttpResponseException(Request.CreateErrorResponse(
-                        HttpStatusCode.Conflict,
-                        String.Format(CultureInfo.CurrentCulture, Resources.Error_OperationLockTimeout, LockTimeoutSecs)));
+                    throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, ex.Message));
                 }
             }
         }

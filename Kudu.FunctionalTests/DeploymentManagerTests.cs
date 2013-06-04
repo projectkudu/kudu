@@ -585,7 +585,7 @@ namespace Kudu.FunctionalTests
             });
         }
 
-        [Fact]
+        [Fact(Skip = "Test is not valid as branch cannot be changed while ongoing deployment")]
         public async Task PullApiTestConsecutivePushesGetQueued()
         {
             List<DeployResult> results;
@@ -639,7 +639,7 @@ namespace Kudu.FunctionalTests
                 Assert.Equal(2, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
                 Assert.Equal(DeployStatus.Success, results[1].Status);
-                Assert.Equal("CodePlex", results[1].Deployer);
+                Assert.Equal("CodePlex", results[0].Deployer);
                 Assert.Equal("CodePlex", results[1].Deployer);
             });
         }

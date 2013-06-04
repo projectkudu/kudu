@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -74,7 +75,7 @@ namespace Kudu.Contracts.Infrastructure
 
             if (!success)
             {
-                throw new InvalidOperationException("Unable to acquire lock within a given time.");
+                throw new LockOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_OperationLockTimeout, timeout.TotalSeconds));
             }
         }
 
@@ -86,7 +87,7 @@ namespace Kudu.Contracts.Infrastructure
 
             if (!success)
             {
-                throw new InvalidOperationException("Unable to acquire lock within a given time.");
+                throw new LockOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_OperationLockTimeout, timeout.TotalSeconds));
             }
 
             return result;
