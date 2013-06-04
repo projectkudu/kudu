@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Newtonsoft.Json.Linq;
 
@@ -13,10 +14,12 @@ namespace Kudu.Services.Settings
     {
         private const string DeploymentSettingsSection = "deployment";
         private readonly IDeploymentSettingsManager _settingsManager;
+        private readonly IOperationLock _deploymentLock;
 
-        public SettingsController(IDeploymentSettingsManager settingsManager)
+        public SettingsController(IDeploymentSettingsManager settingsManager, IOperationLock deploymentLock)
         {
             _settingsManager = settingsManager;
+            _deploymentLock = deploymentLock;
         }
 
         /// <summary>
@@ -36,28 +39,37 @@ namespace Kudu.Services.Settings
             // 2. The preferred format is { someKey = 'someValue' }
             // Note that #2 allows multiple settings to be set, e.g. { someKey = 'someValue', someKey2 = 'someValue2' }
 
-
-            JToken keyToken, valueToken;
-            if (newSettings.Count == 2 && newSettings.TryGetValue("key", out keyToken) && newSettings.TryGetValue("value", out valueToken))
+            try
             {
-                string key = keyToken.Value<string>();
-
-                if (String.IsNullOrEmpty(key))
+                return _deploymentLock.LockOperation(() =>
                 {
-                    return Request.CreateResponse(HttpStatusCode.BadRequest);
-                }
+                    JToken keyToken, valueToken;
+                    if (newSettings.Count == 2 && newSettings.TryGetValue("key", out keyToken) && newSettings.TryGetValue("value", out valueToken))
+                    {
+                        string key = keyToken.Value<string>();
 
-                _settingsManager.SetValue(key, valueToken.Value<string>());
+                        if (String.IsNullOrEmpty(key))
+                        {
+                            return Request.CreateResponse(HttpStatusCode.BadRequest);
+                        }
+
+                        _settingsManager.SetValue(key, valueToken.Value<string>());
+                    }
+                    else
+                    {
+                        foreach (var keyValuePair in newSettings)
+                        {
+                            _settingsManager.SetValue(keyValuePair.Key, keyValuePair.Value.Value<string>());
+                        }
+                    }
+
+                    return Request.CreateResponse(HttpStatusCode.NoContent);
+                }, TimeSpan.Zero);
             }
-            else
+            catch (LockOperationException ex)
             {
-                foreach (var keyValuePair in newSettings)
-                {
-                    _settingsManager.SetValue(keyValuePair.Key, keyValuePair.Value.Value<string>());
-                }
+                return Request.CreateErrorResponse(HttpStatusCode.Conflict, ex.Message);
             }
-
-            return Request.CreateResponse(HttpStatusCode.NoContent);
         }
 
         /// <summary>
@@ -72,9 +84,19 @@ namespace Kudu.Services.Settings
                 return Request.CreateResponse(HttpStatusCode.BadRequest);
             }
 
-            _settingsManager.DeleteValue(key);
+            try
+            {
+                return _deploymentLock.LockOperation(() =>
+                {
+                    _settingsManager.DeleteValue(key);
 
-            return Request.CreateResponse(HttpStatusCode.NoContent);
+                    return Request.CreateResponse(HttpStatusCode.NoContent);
+                }, TimeSpan.Zero);
+            }
+            catch (LockOperationException ex)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.Conflict, ex.Message);
+            }
         }
 
         /// <summary>
