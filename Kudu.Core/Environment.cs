@@ -2,6 +2,9 @@
 using System.IO;
 using System.IO.Abstractions;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.PathManagement;
+using Kudu.Contracts.Settings;
+using System.Web;
 
 namespace Kudu.Core
 {
@@ -170,6 +173,33 @@ namespace Kudu.Core
             {
                 return FileSystemHelpers.EnsureDirectory(_fileSystem, _deploymentTracePath);
             }
+        }
+
+        public static IEnvironment GetEnvironment(IDeploymentSettingsManager settings = null)
+        {
+            string siteRoot = PathResolver.ResolveSiteRootPath();
+            string root = Path.GetFullPath(Path.Combine(siteRoot, ".."));
+            string webRootPath = Path.Combine(siteRoot, Constants.WebRoot);
+            string deployCachePath = Path.Combine(siteRoot, Constants.DeploymentCachePath);
+            string diagnosticsPath = Path.Combine(siteRoot, Constants.DiagnosticsPath);
+            string sshKeyPath = Path.Combine(siteRoot, Constants.SSHKeyPath);
+            string repositoryPath = Path.Combine(siteRoot, settings == null ? Constants.RepositoryPath : settings.GetRepositoryPath());
+            string tempPath = Path.GetTempPath();
+            string scriptPath = Path.Combine(HttpRuntime.BinDirectory, Constants.ScriptsPath);
+            string nodeModulesPath = Path.Combine(HttpRuntime.BinDirectory, Constants.NodeModulesPath);
+
+            return new Kudu.Core.Environment(
+                                   new FileSystem(),
+                                   root,
+                                   siteRoot,
+                                   tempPath,
+                                   repositoryPath,
+                                   webRootPath,
+                                   deployCachePath,
+                                   diagnosticsPath,
+                                   sshKeyPath,
+                                   scriptPath,
+                                   nodeModulesPath);
         }
     }
 }

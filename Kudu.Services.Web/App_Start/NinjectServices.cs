@@ -22,6 +22,7 @@ using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.SSHKey;
+using Kudu.Core.PathManagement;
 using Kudu.Core.Tracing;
 using Kudu.Services.GitServer;
 using Kudu.Services.Infrastructure;
@@ -302,6 +303,9 @@ namespace Kudu.Services.Web.App_Start
 
             // LogStream
             routes.MapHandler<LogStreamHandler>(kernel, "logstream", "logstream/{*path}");
+
+            //Analytics
+            routes.MapHttpRoute(name: "Analytics", routeTemplate: "analytics/{action}", defaults: new { controller = "Analytics", action = "GetName" });
 
             // Processes
             routes.MapHttpRoute("all-processes", "diagnostics/processes", new { controller = "Process", action = "GetAllProcesses" }, new { verb = new HttpMethodConstraint("GET") });
