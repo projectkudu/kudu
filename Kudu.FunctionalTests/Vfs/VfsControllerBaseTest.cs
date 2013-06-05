@@ -70,6 +70,8 @@ namespace Kudu.FunctionalTests
             string fileAddress = dirAddressWithTerminatingSlash + file;
             string fileAddressWithTerminatingSlash = fileAddress + _segmentDelimiter;
 
+            string putDirectoryAddressWithTerminatingSlash = BaseAddress + _segmentDelimiter + Path.GetRandomFileName() + _segmentDelimiter;
+
             string deploymentFileAddress = null;
             string customDeploymentFileAddress = null;
             if (DeploymentClient != null)
@@ -235,6 +237,11 @@ namespace Kudu.FunctionalTests
             TestTracer.Trace("==== Check that we can't delete a non-empty directory");
             response = await HttpDeleteAsync(dirAddress);
             Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+
+            // Check that we can create a directory
+            TestTracer.Trace("=== Check that we can create a directory");
+            response = await HttpPutAsync(putDirectoryAddressWithTerminatingSlash, CreateUploadContent(new byte[0]));
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
             EntityTagHeaderValue updatedEtag;
             if (_testConflictingUpdates)
