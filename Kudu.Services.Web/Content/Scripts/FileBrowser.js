@@ -51,10 +51,10 @@
         this.parent = parent;
         this.name = ko.observable(data.name);
         this.size = ko.observable(data.size ? (Math.ceil(data.size / 1024) + ' KB') : '');
-        this.mime = data.mime;
-        this.isDirectory = ko.observable(!data.name || (data.mime === "inode/directory"));
+        this.mime = data.mime || (data.type === "dir" && "inode/directory");
+        this.isDirectory = ko.observable(this.mime === "inode/directory");
         this.href = data.href;
-        this.modifiedTime = ((data.mtime && new Date(data.mtime)) || new Date()).toLocaleString() ;
+        this.modifiedTime = ((data.mtime && new Date(data.mtime)) || new Date()).toLocaleString();
         this.url = ko.observable(this.isDirectory() ? data.href.replace(/\/vfs\//, "/zip/") : data.href);
         this.appRelativePath = ko.computed(function () {
             if (data.href === '/vfs/') {
@@ -116,9 +116,9 @@
         this.selectChild = function (descendantPath) {
             var that = this;
             return this.fetchChildren().pipe(function () {
-                var childName = descendantPath.split(/\/|\\/)[0],
+                var childName = descendantPath.split(/\/|\\/)[0].toLowerCase(),
                     matches = $.grep(that.children(), function (elm) {
-                        return elm.name() === childName;
+                        return elm.name().toLowerCase() === childName;
                     }),
                     deferred;
                 if (matches && matches.length) {
@@ -144,9 +144,22 @@
     }
 
     var root = new node({ name: "/", type: "dir", href: "/vfs/" }),
-        viewModel = { root: root, selected: ko.observable(root), processing: ko.observable(false) },
         ignoreWorkingDirChange = true,
-        workingDirChanging = false;
+        workingDirChanging = false,
+        viewModel = {
+            root: root,
+            selected: ko.observable(root), processing: ko.observable(false),
+            sort: function (array) {
+                return array.sort(function (a, b) {
+                    if (a.mime === b.mime) {
+                        return a.name().localeCompare(b.name());
+                    } else if (a.mime === "inode/directory") {
+                        return -1;
+                    }
+                    return 1;
+                });
+            }
+        };
 
     root.fetchChildren();
     ko.applyBindings(viewModel, document.getElementById('#fileList'));
@@ -182,6 +195,29 @@
         }
     });
 
+    window.KuduExec.completePath = function (value, dirOnly) {
+        var subDirs = value.toLowerCase().split(/\/|\\/),
+            cur = viewModel.selected();
+
+        while (subDirs.length && cur) {
+            var curSubDir = subDirs.shift();
+            if (!cur.children) {
+                break;
+            }
+
+            cur = $.grep(cur.children(), function (elm) {
+                if (dirOnly && !elm.isDirectory()) {
+                    return false;
+                }
+
+                return subDirs.length ? (elm.name().toLowerCase() === curSubDir) : elm.name().toLowerCase().indexOf(curSubDir) === 0;
+            });
+        }
+        if (cur) {
+            return $.map(cur, function (elm) { return elm.name().substring(value.length); });
+        }
+    };
+
     function stashCurrentSelection(selected) {
         window.history.replaceState(selected.appRelativePath(), selected.name());
     }
@@ -210,9 +246,11 @@
         $("#fileList input[type='text']").focus();
 
         newFolder.name.subscribe(function (value) {
-            newFolder.href = newFolder.parent.href + '/' + value;
+            newFolder.href = trimTrailingSlash(newFolder.parent.href) + '/' + value + '/';
             newFolder.editing(false);
-            Vfs.createFolder(newFolder);
+            Vfs.createFolder(newFolder).fail(function () {
+                viewModel.selected().children.remove(newFolder);
+            });
             $("#createFolder").prop("disabled", false);
         });
     });
@@ -227,14 +265,53 @@
           evt.preventDefault();
           evt.stopPropagation();
 
+          var dir = viewModel.selected();
           viewModel.processing(true);
           _getInputFiles(evt).done(function (files) {
               Vfs.addFiles(files).always(function () {
-                  viewModel.selected().fetchChildren(/* force */ true);
+                  dir.fetchChildren(/* force */ true);
                   viewModel.processing(false);
               });
           });
       });
+
+    var defaults = { fileList: '40%', console: '45%' };
+    $('#resizeHandle .down')
+        .on('click', function (e) {
+            var fileList = $('#fileList'),
+                console = $('#KuduExecConsole');
+            if (!console.is(':visible')) {
+                return;
+            } else if (fileList.is(":visible")) {
+                console.slideDown(function () {
+                    console.hide();
+                    fileList.css('height', '85%');
+                });
+            } else {
+                console.css('height', defaults.console);
+                fileList.css('height', defaults.fileList);
+                fileList.show();
+            }
+        });
+
+    $('#resizeHandle .up')
+        .on('click', function (e) {
+            var fileList = $('#fileList'),
+                console = $('#KuduExecConsole');
+            if (!fileList.is(':visible')) {
+                return;
+            } else if (console.is(':visible')) {
+                fileList.slideUp(function () {
+                    fileList.hide();
+                    console.css('height', '85%');
+                });
+            } else {
+                fileList.css('height', defaults.fileList);
+                console.css('height', defaults.console);
+                console.show();
+            }
+        });
+
 
     function _getInputFiles(evt) {
         var dt = evt.originalEvent.dataTransfer,
@@ -248,7 +325,7 @@
                 return Array.prototype.concat.apply([], arguments);
             })
         } else {
-            return $.Deferred().resolveWith(null, [$.map(dt.files, function(e) { 
+            return $.Deferred().resolveWith(null, [$.map(dt.files, function (e) {
                 return { name: e.name, contents: e };
             })]);
         }
@@ -276,6 +353,10 @@
 
     function whenArray(deferreds) {
         return $.when.apply($, deferreds);
+    }
+
+    function trimTrailingSlash(input) {
+        return input.replace(/(\/|\\)$/, '');
     }
 
     window.history.pushState("/", "/");

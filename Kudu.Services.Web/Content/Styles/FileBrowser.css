@@ -1,6 +1,15 @@
-﻿body {
-    width: 1040px;
+﻿html,body{
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#main {
+    border: 1px solid #ccc;
+    border-radius: 10px;
     margin: 10px auto;
+    height: 80%;
+    width: 1040px;
 }
 
 img {
@@ -26,16 +35,19 @@ img {
 }
 
 #fileList {
+    height: 40%;
     margin-left: 10px;
-    min-height: 320px;
     width: 1024px;
 }
+    #fileList .table-container {
+        overflow-y: auto;
+        height: 85%;
+    }
 
     #fileList table {
         border: 1px solid #e5eff8;
         border-collapse: collapse;
         width: 100%;
-
     }
 
     #fileList caption {
@@ -91,8 +103,57 @@ img {
             padding: 3px;
         }
 
+#resizeHandle {
+    margin: 10px;
+    height: 20px;
+    text-align: center;
+}
+    #resizeHandle .up, #resizeHandle .down {
+        cursor: pointer;
+    }
+
 #KuduExecConsole {
-    height: 320px;
+    height: 45%;
+}
+
+div.console {
+    font-family: Consolas 'Courier New' sans-serif;
+    font-size: 12pt;
+    white-space: pre;
+    height: 100%;
+    padding: 0.5em;
+}
+
+    div.console div.jquery-console-inner {
+        padding: 0.1em;
+        overflow: auto;
+        margin-left: auto;
+        margin-right: auto;
+        width: 95%;
+        height: 100%;
+        background-color: black;
+        color: white;
+    }
+
+.left-aligned div.console div.jquery-console-inner {
+    margin: 0;
+}
+
+div.console div.jquery-console-focus span.jquery-console-cursor {
+    background: white;
+    color: black;
+}
+
+div.console div.jquery-console-message-error {
+    color: red;
+}
+
+div.console div.jquery-console-message-value {
+    color: white;
+}
+
+div.console div.jquery-console-message-type {
+    color: white;
 }
 
 footer {

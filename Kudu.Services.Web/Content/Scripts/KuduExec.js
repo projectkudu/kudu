@@ -48,7 +48,7 @@ $(function () {
 
     function SubmitCommand(command) {
         var deferred = $.Deferred();
-        if (command == "") {
+        if (!command) {
             deferred.resolveWith(null, [{ msg: "", className: "jquery-console-message-value" }]);
         } else {
             // always append these commands so the working directory after the command is returned.
@@ -79,8 +79,10 @@ $(function () {
                     return true;
                 },
                 commandHandle: function (line, reportFn) {
-                    if (line.trim() === "exit") {
+                    var trimmed = line.trim();
+                    if (trimmed === "exit" || trimmed === "cls") {
                         controller.reset();
+                        return;
                     }
                     curReportFun = reportFn;
                     SubmitCommand(line).done(reportFn);
@@ -90,6 +92,18 @@ $(function () {
                         curReportFun([{ msg: "Command canceled by user.", className: "jquery-console-message-error" }]);
                     }
                 },
+                completeHandle: function(line) {
+                    var cdRegex = /^cd\s+(.+)$/,
+                        pathRegex = /.+\s+(.{3,})/,
+                        matches;
+                    if (matches = line.match(cdRegex)) {
+                        return window.KuduExec.completePath(matches[1], /* dirOnly */ true);
+                    } else if (matches =  line.match(pathRegex)) {
+                        return window.KuduExec.completePath(matches[1]);
+                    }
+                    return;
+                },
+                cols: 3,
                 autofocus: true,
                 animateScroll: true,
                 promptHistory: true,
