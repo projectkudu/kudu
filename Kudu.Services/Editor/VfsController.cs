@@ -24,6 +24,31 @@ namespace Kudu.Services.Editor
         {
         }
 
+        protected override Task<HttpResponseMessage> CreateDirectoryPutResponse(DirectoryInfo info, string localFilePath)
+        {
+            if (info != null && info.Exists)
+            {
+                // Return a conflict result
+                return base.CreateDirectoryPutResponse(info, localFilePath);
+            }
+
+            try
+            {
+                info.Create();
+            }
+            catch (IOException ex)
+            {
+                Tracer.TraceError(ex);
+                HttpResponseMessage conflictDirectoryResponse = Request.CreateErrorResponse(
+                    HttpStatusCode.Conflict, Resources.VfsControllerBase_CannotDeleteDirectory);
+                return Task.FromResult(conflictDirectoryResponse);
+            }
+
+            // Return 201 Created response
+            HttpResponseMessage successFileResponse = Request.CreateResponse(HttpStatusCode.Created);
+            return Task.FromResult(successFileResponse);
+        }
+
         protected override Task<HttpResponseMessage> CreateItemGetResponse(FileSystemInfo info, string localFilePath)
         {
             // Get current etag

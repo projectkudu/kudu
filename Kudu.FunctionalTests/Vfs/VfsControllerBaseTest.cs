@@ -60,7 +60,7 @@ namespace Kudu.FunctionalTests
 
         protected string DeploymentBaseAddress { get; private set; }
 
-        public async Task RunIntegrationTest()
+        public virtual async Task RunIntegrationTest()
         {
             string dir = Guid.NewGuid().ToString("N");
             string dirAddress = BaseAddress + _segmentDelimiter + dir;
@@ -608,7 +608,7 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        private static HttpContent CreateUploadContent(byte[] content)
+        protected static HttpContent CreateUploadContent(byte[] content)
         {
             HttpContent uploadContent = new ByteArrayContent(content);
             uploadContent.Headers.ContentType = _fileMediaType;
@@ -620,7 +620,7 @@ namespace Kudu.FunctionalTests
             return await HttpClientRunAsync("Get", address, c => c.GetAsync(address), client);
         }
 
-        private async Task<HttpResponseMessage> HttpPutAsync(string address, HttpContent content, HttpClient client = null)
+        protected async Task<HttpResponseMessage> HttpPutAsync(string address, HttpContent content, HttpClient client = null)
         {
             return await HttpClientRunAsync("Put", address, c => c.PutAsync(address, content), client);
         }
