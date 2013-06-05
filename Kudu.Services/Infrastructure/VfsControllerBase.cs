@@ -97,14 +97,24 @@ namespace Kudu.Services.Infrastructure
             }
             else
             {
-                // If request URI ends in a "/" then redirect to one that does not
+                // If request URI ends in a "/" then create a directory
                 if (localFilePath[localFilePath.Length - 1] == Path.DirectorySeparatorChar)
                 {
-                    HttpResponseMessage redirectResponse = Request.CreateResponse(HttpStatusCode.TemporaryRedirect);
-                    UriBuilder location = new UriBuilder(Request.RequestUri);
-                    location.Path = location.Path.TrimEnd(_uriSegmentSeparator);
-                    redirectResponse.Headers.Location = location.Uri;
-                    return Task.FromResult(redirectResponse);
+                    try
+                    {
+                        Directory.CreateDirectory(localFilePath);
+                    }
+                    catch (IOException ex)
+                    {
+                        Tracer.TraceError(ex);
+                        HttpResponseMessage conflictDirectoryResponse = Request.CreateErrorResponse(
+                            HttpStatusCode.Conflict, Resources.VfsControllerBase_CannotDeleteDirectory);
+                        return Task.FromResult(conflictDirectoryResponse);
+                    }
+
+                    // Return 201 Created response
+                    HttpResponseMessage successFileResponse = Request.CreateResponse(HttpStatusCode.Created);
+                    return Task.FromResult(successFileResponse);
                 }
 
                 // We are ready to update the file
