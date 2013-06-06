@@ -54,13 +54,14 @@
         this.mime = data.mime || (data.type === "dir" && "inode/directory");
         this.isDirectory = ko.observable(this.mime === "inode/directory");
         this.href = data.href;
+        this._href = ko.observable(this.href);
         this.modifiedTime = ((data.mtime && new Date(data.mtime)) || new Date()).toLocaleString();
         this.url = ko.observable(this.isDirectory() ? data.href.replace(/\/vfs\//, "/zip/") : data.href);
         this.appRelativePath = ko.computed(function () {
-            if (data.href === '/vfs/') {
+            if (this._href() === '/vfs/') {
                 return "";
             }
-            var path = data.href.replace(/.*\/vfs($|\/(.*)\/)/, "$2").replace(/\//g, "\\");
+            var path = this._href().replace(/.*\/vfs($|\/(.*)\/)/, "$2").replace(/\//g, "\\");
             path.length--;
             return path;
         }, this);
@@ -151,12 +152,14 @@
             selected: ko.observable(root), processing: ko.observable(false),
             sort: function (array) {
                 return array.sort(function (a, b) {
-                    if (a.mime === b.mime) {
-                        return a.name().localeCompare(b.name());
-                    } else if (a.mime === "inode/directory") {
-                        return -1;
+                    var aDir = a.isDirectory(),
+                        bDir = b.isDirectory();
+
+                    if (aDir ^ bDir) {
+                        // If one of them is a directory, then it always comes first
+                        return aDir ? -1 : 1;
                     }
-                    return 1;
+                    return a.name().localeCompare(b.name());
                 });
             }
         };
@@ -247,6 +250,7 @@
 
         newFolder.name.subscribe(function (value) {
             newFolder.href = trimTrailingSlash(newFolder.parent.href) + '/' + value + '/';
+            newFolder._href(newFolder.href);
             newFolder.editing(false);
             Vfs.createFolder(newFolder).fail(function () {
                 viewModel.selected().children.remove(newFolder);
