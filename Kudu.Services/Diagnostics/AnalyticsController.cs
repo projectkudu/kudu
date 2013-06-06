@@ -8,13 +8,13 @@ using System.Web.Http;
 using System.Security.Permissions;
 using System.Security;
 using System.Diagnostics;
-using Kudu.Core.Analytics_DataLayer;
+using Kudu.Core.AnalyticsParser;
 
 namespace Kudu.Services.Diagnostics
 {
     public class AnalyticsController : ApiController
     {
-        string path = @"C:\Users\t-hawkf\Desktop\TempLogs\W3SVC1";
+        string path = @"C:\Users\t-hawkf\Desktop\TempLogs";
         private Dictionary<string, long> _logFiles;
         
         //Kudu.Core.IEnvironment environment;
@@ -64,14 +64,27 @@ namespace Kudu.Services.Diagnostics
         {
             List<HTTPLog> httpLogs = new List<HTTPLog>();
             LogParser logParser = new LogParser();
+            
             foreach (string logFile in _logFiles.Keys)
             {
+                Trace.WriteLine(logFile);
                 logParser.FileName = logFile;
+                List<HTTPLog> temp = null;
+                try
+                {
+                    temp = logParser.Parse();
+                }
+                catch (GrammarException)
+                {
+                    Trace.WriteLine("cool");
+                }
+                httpLogs.AddRange(temp);
+                break;
             }
 
             foreach (HTTPLog log in httpLogs)
             {
-                Trace.WriteLine(log.Date.ToString());
+                //Trace.WriteLine(log.Date.ToString());
             }
         }
 

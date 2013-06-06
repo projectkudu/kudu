@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Kudu.Core.Analytics_DataLayer
+namespace Kudu.Core.AnalyticsParser
 {
     public abstract class Log
     {
@@ -14,6 +14,9 @@ namespace Kudu.Core.Analytics_DataLayer
         /// </summary>
         public abstract DateTime Date{get;set;}
 
+        /// <summary>
+        /// Time at which the activity occured
+        /// </summary>
         public abstract string Time{get;set;}
 
         public abstract string BytesReceived{ get;set;}

@@ -4,12 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Kudu.Core.Analytics_DataLayer
+namespace Kudu.Core.AnalyticsParser
 {
 
     public class HTTPLog : Log, IComparable
     {
-        private System.DateTime _date;
+        private DateTime _date;
         private string _time;
         private string _statusCode;
         private string _clientServerURI;

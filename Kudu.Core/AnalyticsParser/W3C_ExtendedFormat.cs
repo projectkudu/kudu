@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Kudu.Core.Analytics_DataLayer
+namespace Kudu.Core.AnalyticsParser
 {
     class W3C_ExtendedFormat
     {

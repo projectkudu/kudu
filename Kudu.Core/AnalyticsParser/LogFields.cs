@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 namespace Kudu.Core.AnalyticsParser
 {
-    class Constants
+    abstract class LogFields
     {
-        public const string FIELD_DIRECTIVE = "#Fields";
+        protected string logField = string.Empty;
+        public abstract string Field { get; }
     }
 }
