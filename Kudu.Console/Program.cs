@@ -103,7 +103,8 @@ namespace Kudu.Console
             {
                 try
                 {
-                    deploymentManager.Deploy(gitRepository, changeSet: null, deployer: deployer, clean: false);
+                    deploymentManager.DeployAsync(gitRepository, changeSet: null, deployer: deployer, clean: false)
+                        .Wait();
                 }
                 catch (Exception e)
                 {

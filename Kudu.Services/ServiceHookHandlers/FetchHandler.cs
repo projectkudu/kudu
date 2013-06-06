@@ -194,7 +194,7 @@ namespace Kudu.Services
                             var changeSet = repository.GetChangeSet(targetBranch);
 
                             // Here, we don't need to update the working files, since we know Fetch left them in the correct state
-                            await _deploymentManager.Deploy(repository, changeSet, deploymentInfo.Deployer, clean: false, needFileUpdate: false);
+                            await _deploymentManager.DeployAsync(repository, changeSet, deploymentInfo.Deployer, clean: false, needFileUpdate: false);
                         }
                     }
                     catch (Exception ex)

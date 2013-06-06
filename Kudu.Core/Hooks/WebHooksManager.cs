@@ -148,14 +148,17 @@ namespace Kudu.Core.Hooks
 
             if (webHooks.Any())
             {
-                using (var httpClient = new HttpClient())
+                using (var httpClient = new HttpClient() { Timeout = TimeSpan.FromSeconds(10) })
                 {
-                    httpClient.Timeout = TimeSpan.FromSeconds(10);
+                    var publishTasks = new List<Task>();
 
                     foreach (var webHook in webHooks)
                     {
-                        await PublishToHookAsync(httpClient, webHook, jsonString);
+                        Task publishTask = PublishToHookAsync(httpClient, webHook, jsonString);
+                        publishTasks.Add(publishTask);
                     }
+
+                    await Task.WhenAll(publishTasks);
                 }
             }
         }

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Threading.Tasks;
 using System.Web.Http;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.SourceControl;
@@ -70,14 +71,14 @@ namespace Kudu.Services.Deployment
         /// </summary>
         /// <param name="id">id of the deployment to redeploy</param>
         [HttpPut]
-        public void Deploy(string id = null)
+        public async Task Deploy(string id = null)
         {
             JObject result = GetJsonContent();
 
             // Just block here to read the json payload from the body
             using (_tracer.Step("DeploymentService.Deploy(id)"))
             {
-                _deploymentLock.LockHttpOperation(() =>
+                await _deploymentLock.LockHttpOperationAsync(async () =>
                 {
                     try
                     {
@@ -96,8 +97,8 @@ namespace Kudu.Services.Deployment
                         {
                             throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, Resources.Error_RepositoryNotFound));
                         }
-                        
-                        _deploymentManager.Deploy(repository, id, username, clean);
+
+                        await _deploymentManager.DeployAsync(repository, id, username, clean);
                     }
                     catch (FileNotFoundException ex)
                     {
@@ -106,7 +107,7 @@ namespace Kudu.Services.Deployment
                 });
             }
         }
-        
+
         /// <summary>
         /// Get the list of all deployments
         /// </summary>
@@ -217,7 +218,7 @@ namespace Kudu.Services.Deployment
 
         private EntityTagHeaderValue GetCurrentEtag(HttpRequestMessage request)
         {
-            return new EntityTagHeaderValue(String.Format("\"{0:x}\"", request.RequestUri.PathAndQuery.GetHashCode()  ^ _status.LastModifiedTime.Ticks));
+            return new EntityTagHeaderValue(String.Format("\"{0:x}\"", request.RequestUri.PathAndQuery.GetHashCode() ^ _status.LastModifiedTime.Ticks));
         }
 
         private static bool EtagEquals(HttpRequestMessage request, EntityTagHeaderValue currentEtag)

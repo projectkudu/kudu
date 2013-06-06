@@ -13,7 +13,7 @@ namespace Kudu.Core.Deployment
         IEnumerable<LogEntry> GetLogEntryDetails(string id, string logId);
 
         void Delete(string id);
-        Task Deploy(IRepository repository, ChangeSet changeSet, string deployer, bool clean, bool needFileUpdate = true);
+        Task DeployAsync(IRepository repository, ChangeSet changeSet, string deployer, bool clean, bool needFileUpdate = true);
 
         /// <summary>
         /// Creates a temporary deployment that is used as a placeholder until changeset details are available.

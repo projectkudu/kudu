@@ -153,7 +153,7 @@ namespace Kudu.Core.Deployment
             }
         }
 
-        public async Task Deploy(IRepository repository, ChangeSet changeSet, string deployer, bool clean, bool needFileUpdate)
+        public async Task DeployAsync(IRepository repository, ChangeSet changeSet, string deployer, bool clean, bool needFileUpdate)
         {
             Exception exception = null;
             ITracer tracer = _traceFactory.GetTracer();

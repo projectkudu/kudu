@@ -1,10 +1,11 @@
-﻿using Kudu.Core.SourceControl;
+﻿using System.Threading.Tasks;
+using Kudu.Core.SourceControl;
 
 namespace Kudu.Core.Deployment
 {
     public static class DeploymentManagerExtensions
     {
-        public static void Deploy(this IDeploymentManager deploymentManager, IRepository repository, string id, string deployer, bool clean)
+        public static Task DeployAsync(this IDeploymentManager deploymentManager, IRepository repository, string id, string deployer, bool clean)
         {
             ChangeSet changeSet = null;
             if (id != null)
@@ -12,7 +13,7 @@ namespace Kudu.Core.Deployment
                 changeSet = repository.GetChangeSet(id);
             }
 
-            deploymentManager.Deploy(repository, changeSet, deployer, clean);
+            return deploymentManager.DeployAsync(repository, changeSet, deployer, clean);
         }
     }
 }

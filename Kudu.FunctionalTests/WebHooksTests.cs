@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Hooks;
 using Kudu.TestHarness;
@@ -19,6 +20,9 @@ namespace Kudu.FunctionalTests
         public async Task SubscribedWebHooksShouldBeCalledPostDeployment()
         {
             string testName = "SubscribedWebHooksShouldBeCalledPostDeployment";
+            var expectedHookAddresses = new List<string>();
+            string hook1 = "hookCalled/1";
+            string hook2 = "hookCalled/2";
 
             using (new LatencyLogger(testName))
             {
@@ -26,94 +30,108 @@ namespace Kudu.FunctionalTests
                 {
                     using (var hookAppRepository = Git.Clone("NodeWebHookTest"))
                     {
-                        string hookAddress1 = hookAppManager.SiteUrl + "hookCalled/1";
+                        string hookAddress1 = hookAppManager.SiteUrl + hook1;
+                        string hookAddress2 = hookAppManager.SiteUrl + hook2;
 
-                        TestTracer.Trace("Subscribe web hook to " + hookAddress1);
-                        await hookAppManager.WebHooksManager.SubscribeAsync(new WebHook(HookEventType.PostDeployment, hookAddress1));
+                        await SubscribeWebHook(hookAppManager, hookAddress1, 1);
 
-                        TestTracer.Trace("Verify web hook subscribed");
-                        IEnumerable<WebHook> webHooks = await hookAppManager.WebHooksManager.GetWebHooksAsync();
-                        Assert.Equal(1, webHooks.Count());
+                        GitDeployApp(hookAppManager, hookAppRepository);
 
-                        TestTracer.Trace("Deploy test app");
-                        hookAppManager.GitDeploy(hookAppRepository.PhysicalPath);
-                        var deploymentResults = hookAppManager.DeploymentManager.GetResultsAsync().Result.ToList();
-                        Assert.Equal(1, deploymentResults.Count);
-                        Assert.Equal(DeployStatus.Success, deploymentResults[0].Status);
+                        expectedHookAddresses.Add(hook1);
+                        await VerifyWebHooksCall(hookAddress1, expectedHookAddresses, hookAppRepository.CurrentId, hookAppManager);
 
-                        TestTracer.Trace("Verify web hook was called");
-                        string webHookCallResponse = await GetWebHookResponseAsync(hookAddress1);
-
-                        string[] results = webHookCallResponse.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                        Assert.Equal(1, results.Length);
-
-                        VerifyWebHookCall(results[0], "/hookCalled/1", hookAppRepository.CurrentId);
-
-                        var hookAddress2 = hookAppManager.SiteUrl + "hookCalled/2";
-
-                        TestTracer.Trace("Subscribe another web hook to " + hookAddress2);
-                        await hookAppManager.WebHooksManager.SubscribeAsync(new WebHook(HookEventType.PostDeployment, hookAddress2));
-
-                        TestTracer.Trace("Verify web hooks subscribed");
-                        webHooks = await hookAppManager.WebHooksManager.GetWebHooksAsync();
-                        Assert.Equal(2, webHooks.Count());
+                        await SubscribeWebHook(hookAppManager, hookAddress2, 2);
 
                         TestTracer.Trace("Redeploy to allow web hooks to be called");
                         await hookAppManager.DeploymentManager.DeployAsync(hookAppRepository.CurrentId);
 
-                        TestTracer.Trace("Verify web hooks were called");
-                        webHookCallResponse = await GetWebHookResponseAsync(hookAddress1);
-
-                        results = webHookCallResponse.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                        Assert.Equal(3, results.Length);
-
-                        VerifyWebHookCall(results[1], "/hookCalled/1", hookAppRepository.CurrentId);
-                        VerifyWebHookCall(results[2], "/hookCalled/2", hookAppRepository.CurrentId);
+                        expectedHookAddresses.Add(hook2);
+                        await VerifyWebHooksCall(hookAddress1, expectedHookAddresses, hookAppRepository.CurrentId, hookAppManager);
 
                         TestTracer.Trace("Unsubscribe first hook");
-                        await hookAppManager.WebHooksManager.UnsubscribeAsync(hookAddress1);
-
-                        TestTracer.Trace("Verify web hook was removed");
-                        webHooks = await hookAppManager.WebHooksManager.GetWebHooksAsync();
-                        Assert.Equal(1, webHooks.Count());
+                        await UnsubscribeWebHook(hookAppManager, hookAddress1, 1);
 
                         TestTracer.Trace("Redeploy to allow web hook to be called");
                         await hookAppManager.DeploymentManager.DeployAsync(hookAppRepository.CurrentId);
 
-                        TestTracer.Trace("Verify only one web hook was called");
-                        webHookCallResponse = await GetWebHookResponseAsync(hookAddress1);
-
-                        results = webHookCallResponse.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                        Assert.Equal(4, results.Length);
-
-                        VerifyWebHookCall(results[3], "/hookCalled/2", hookAppRepository.CurrentId);
+                        expectedHookAddresses.Remove(hook1);
+                        await VerifyWebHooksCall(hookAddress1, expectedHookAddresses, hookAppRepository.CurrentId, hookAppManager);
 
                         TestTracer.Trace("Unsubscribe second hook");
-                        await hookAppManager.WebHooksManager.UnsubscribeAsync(hookAddress2);
-
-                        TestTracer.Trace("Verify web hook was removed");
-                        webHooks = await hookAppManager.WebHooksManager.GetWebHooksAsync();
-                        Assert.Equal(0, webHooks.Count());
+                        await UnsubscribeWebHook(hookAppManager, hookAddress2, 0);
 
                         TestTracer.Trace("Redeploy to verify no web hook was called");
                         await hookAppManager.DeploymentManager.DeployAsync(hookAppRepository.CurrentId);
 
                         TestTracer.Trace("Verify web hook was not called");
-                        webHookCallResponse = await GetWebHookResponseAsync(hookAddress1);
-
-                        results = webHookCallResponse.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                        Assert.Equal(4, results.Length);
+                        expectedHookAddresses.Remove(hook2);
+                        await VerifyWebHooksCall(hookAddress1, expectedHookAddresses, hookAppRepository.CurrentId, hookAppManager);
                     }
                 });
             }
         }
 
-        private void VerifyWebHookCall(string webHookResult, string hookAddress, string commitId)
+        private static void GitDeployApp(ApplicationManager hookAppManager, TestRepository hookAppRepository)
         {
-            dynamic webHookResultObject = JsonConvert.DeserializeObject(webHookResult);
-            Assert.Equal(hookAddress, (string)webHookResultObject.url);
-            Assert.True(((string)webHookResultObject.body).Contains(DeployStatus.Success.ToString()), "Missing Success from body");
-            Assert.True(((string)webHookResultObject.body).Contains(commitId), "Missing commit id from body - " + commitId);
+            TestTracer.Trace("Deploy test app");
+            hookAppManager.GitDeploy(hookAppRepository.PhysicalPath);
+            var deploymentResults = hookAppManager.DeploymentManager.GetResultsAsync().Result.ToList();
+            Assert.Equal(1, deploymentResults.Count);
+            Assert.Equal(DeployStatus.Success, deploymentResults[0].Status);
+        }
+
+        private static async Task SubscribeWebHook(ApplicationManager hookAppManager, string hookAddress, int expectedHooksCount)
+        {
+            TestTracer.Trace("Subscribe web hook to " + hookAddress);
+            await hookAppManager.WebHooksManager.SubscribeAsync(new WebHook(HookEventType.PostDeployment, hookAddress));
+
+            await VerifyWebHooksCount(hookAppManager, expectedHooksCount);
+        }
+
+        private static async Task UnsubscribeWebHook(ApplicationManager hookAppManager, string hookAddress, int expectedHooksCount)
+        {
+            TestTracer.Trace("Unsubscribe web hook " + hookAddress);
+            await hookAppManager.WebHooksManager.UnsubscribeAsync(hookAddress);
+
+            await VerifyWebHooksCount(hookAppManager, expectedHooksCount);
+        }
+
+        private static async Task VerifyWebHooksCount(ApplicationManager hookAppManager, int expectedHooksCount)
+        {
+            TestTracer.Trace("Verify web hook subscribed");
+            IEnumerable<WebHook> webHooks = await hookAppManager.WebHooksManager.GetWebHooksAsync();
+            Assert.Equal(expectedHooksCount, webHooks.Count());
+        }
+
+        private async Task VerifyWebHooksCall(string siteAddress, IEnumerable<string> hookAddresses, string commitId, ApplicationManager hookAppManager)
+        {
+            TestTracer.Trace("Verify web hook was called {0} times".FormatCurrentCulture(hookAddresses.Count()));
+
+            string webHookCallResponse = await GetWebHookResponseAsync(siteAddress);
+
+            string[] webHookResults = webHookCallResponse.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+            Assert.Equal(hookAddresses.Count(), webHookResults.Count());
+
+            foreach (var hookAddress in hookAddresses)
+            {
+                bool found = false;
+
+                foreach (var webHookResult in webHookResults)
+                {
+                    dynamic webHookResultObject = JsonConvert.DeserializeObject(webHookResult);
+                    if (("/" + hookAddress) == (string)webHookResultObject.url)
+                    {
+                        found = true;
+                        Assert.True(((string)webHookResultObject.body).Contains(DeployStatus.Success.ToString()), "Missing Success from body");
+                        Assert.True(((string)webHookResultObject.body).Contains(commitId), "Missing commit id from body - " + commitId);
+                    }
+                }
+
+                Assert.True(found, "Web hook address {0} was not called".FormatCurrentCulture(hookAddress));
+            }
+
+            hookAppManager.VfsWebRootManager.Delete("result.txt");
         }
 
         private async Task<string> GetWebHookResponseAsync(string hookAddress)
@@ -125,7 +143,12 @@ namespace Kudu.FunctionalTests
 
                 TestTracer.Trace("Received response: {0}", responseContent);
 
-                return responseContent;
+                if (response.IsSuccessStatusCode)
+                {
+                    return responseContent;
+                }
+
+                return String.Empty;
             }
         }
     }
