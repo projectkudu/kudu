@@ -55,16 +55,19 @@ namespace Kudu.Core.Hooks
         {
             get
             {
-                IEnumerable<WebHook> webHooks = null;
-
-                bool lockAcquired = _hooksLock.TryLockOperation(() =>
+                using (_tracer.Step("WebHooksManager.WebHooks"))
                 {
-                    webHooks = ReadWebHooksFromFile();
-                }, LockTimeout);
+                    IEnumerable<WebHook> webHooks = null;
 
-                VerifyLockAcquired(lockAcquired);
+                    bool lockAcquired = _hooksLock.TryLockOperation(() =>
+                    {
+                        webHooks = ReadWebHooksFromFile();
+                    }, LockTimeout);
 
-                return webHooks;
+                    VerifyLockAcquired(lockAcquired);
+
+                    return webHooks;
+                }
             }
         }
 
@@ -105,42 +108,56 @@ namespace Kudu.Core.Hooks
 
         public void RemoveWebHook(string hookId)
         {
-            bool lockAcquired = _hooksLock.TryLockOperation(() =>
+            using (_tracer.Step("WebHooksManager.RemoveWebHook"))
             {
-                IEnumerable<WebHook> hooks = ReadWebHooksFromFile();
-                SaveHooksToFile(hooks.Where(h => !String.Equals(h.Id, hookId, StringComparison.OrdinalIgnoreCase)));
-            }, LockTimeout);
+                bool lockAcquired = _hooksLock.TryLockOperation(() =>
+                {
+                    RemoveWebHookNotUnderLock(hookId);
+                }, LockTimeout);
 
-            VerifyLockAcquired(lockAcquired);
+                VerifyLockAcquired(lockAcquired);
+            }
         }
 
         public WebHook GetWebHook(string hookId)
         {
-            return WebHooks.FirstOrDefault(h => String.Equals(h.Id, hookId, StringComparison.OrdinalIgnoreCase));
-        }
-
-        private IEnumerable<WebHook> GetWebHooks(string hookEventType)
-        {
-            return WebHooks.Where(h => String.Equals(h.HookEventType, hookEventType, StringComparison.OrdinalIgnoreCase));
+            using (_tracer.Step("WebHooksManager.GetWebHook"))
+            {
+                return WebHooks.FirstOrDefault(h => String.Equals(h.Id, hookId, StringComparison.OrdinalIgnoreCase));
+            }
         }
 
         public async Task PublishPostDeploymentAsync(IDeploymentStatusFile statusFile)
         {
-            string jsonString = JsonConvert.SerializeObject(statusFile, JsonSerializerSettings);
-
-            bool lockAcquired = await _hooksLock.TryLockOperationAsync(async () =>
+            using (_tracer.Step("WebHooksManager.PublishPostDeploymentAsync"))
             {
-                await PublishToHooksAsync(jsonString, HookEventTypes.PostDeployment);
-            }, LockTimeout);
+                string jsonString = JsonConvert.SerializeObject(statusFile, JsonSerializerSettings);
 
-            VerifyLockAcquired(lockAcquired);
+                bool lockAcquired = await _hooksLock.TryLockOperationAsync(async () =>
+                {
+                    await PublishToHooksAsync(jsonString, HookEventTypes.PostDeployment);
+                }, LockTimeout);
+
+                VerifyLockAcquired(lockAcquired);
+            }
+        }
+
+        private IEnumerable<WebHook> GetWebHooks(string hookEventType)
+        {
+            return ReadWebHooksFromFile().Where(h => String.Equals(h.HookEventType, hookEventType, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private void RemoveWebHookNotUnderLock(string hookId)
+        {
+            IEnumerable<WebHook> hooks = ReadWebHooksFromFile();
+            SaveHooksToFile(hooks.Where(h => !String.Equals(h.Id, hookId, StringComparison.OrdinalIgnoreCase)));
         }
 
         private void VerifyLockAcquired(bool lockAcquired)
         {
             if (!lockAcquired)
             {
-                throw new InvalidOperationException();
+                throw new LockOperationException("Failed to acquire lock");
             }
         }
 
@@ -163,7 +180,7 @@ namespace Kudu.Core.Hooks
                             // Handle 410 responses by removing the web hook
                             if (response.StatusCode == HttpStatusCode.Gone)
                             {
-                                RemoveWebHook(webHook.Id);
+                                RemoveWebHookNotUnderLock(webHook.Id);
                             }
 
                             webHook.LastPublishStatus = response.StatusCode.ToString();
