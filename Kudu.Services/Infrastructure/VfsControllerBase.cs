@@ -37,7 +37,7 @@ namespace Kudu.Services.Infrastructure
             Tracer = tracer;
             Environment = environment;
             RootPath = Path.GetFullPath(rootPath.TrimEnd(Path.DirectorySeparatorChar));
-            MediaTypeMap = new MediaTypeMap();
+            MediaTypeMap = MediaTypeMap.Default;
         }
 
         [AcceptVerbs("GET", "HEAD")]
