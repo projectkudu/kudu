@@ -20,15 +20,14 @@ namespace Kudu.Client.Diagnostics
             return Client.GetJsonAsync<IEnumerable<WebHook>>(String.Empty);
         }
 
-        public async Task SubscribeAsync(WebHook webHook)
+        public async Task<WebHook> SubscribeAsync(WebHook webHook)
         {
-            HttpResponseMessage response = await Client.PostAsJsonAsync("subscribe", webHook);
-            response.EnsureSuccessful();
+            return await Client.PostJsonAsync<WebHook, WebHook>(String.Empty, webHook);
         }
 
-        public async Task UnsubscribeAsync(string hookAddress)
+        public async Task UnsubscribeAsync(string hookId)
         {
-            HttpResponseMessage response = await Client.DeleteAsync("unsubscribe?hookAddress=" + Uri.EscapeUriString(hookAddress));
+            HttpResponseMessage response = await Client.DeleteAsync(hookId);
             response.EnsureSuccessful();
         }
     }

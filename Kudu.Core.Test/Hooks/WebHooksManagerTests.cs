@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO.Abstractions;
 using System.Linq;
+using System.Threading;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Hooks;
@@ -12,7 +13,7 @@ namespace Kudu.Core.Test.Deployment
 {
     public class WebHooksManagerTests
     {
-        private string[] _hooksFileContent = new string[] { };
+        private string _hooksFileContent = String.Empty;
         private WebHooksManager _webHooksManager;
 
         public WebHooksManagerTests()
@@ -25,14 +26,16 @@ namespace Kudu.Core.Test.Deployment
         {
             WebHook[] inputWebHooks = new WebHook[]
             {
-                new WebHook(HookEventType.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa")
+                new WebHook(HookEventTypes.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa")
             };
 
             WebHook[] expectedWebHooks = inputWebHooks;
 
-            AddWebHooks(inputWebHooks);
+            IEnumerable<WebHook> webHooksAdded = AddWebHooks(inputWebHooks);
 
             AssertWebHooks(expectedWebHooks);
+
+            AssertWebHook(expectedWebHooks[0], webHooksAdded.First());
         }
 
         [Fact]
@@ -40,25 +43,28 @@ namespace Kudu.Core.Test.Deployment
         {
             WebHook[] inputWebHooks = new WebHook[]
             {
-                new WebHook(HookEventType.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa"),
-                new WebHook(HookEventType.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa2"),
-                new WebHook(HookEventType.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa3")
+                new WebHook(HookEventTypes.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa"),
+                new WebHook(HookEventTypes.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa2"),
+                new WebHook(HookEventTypes.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa3")
             };
 
             AddWebHooks(inputWebHooks);
 
-            _webHooksManager.RemoveWebHook("http://www.gothere.com/aaabbbbbbaaa2");
+            WebHook webHookToRemove = _webHooksManager.WebHooks.First(h => h.HookAddress == "http://www.gothere.com/aaabbbbbbaaa2");
+            _webHooksManager.RemoveWebHook(webHookToRemove.Id);
+
             WebHook[] expectedWebHooks = new WebHook[]
             {
-                new WebHook(HookEventType.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa"),
-                new WebHook(HookEventType.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa3"),
+                new WebHook(HookEventTypes.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa"),
+                new WebHook(HookEventTypes.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa3"),
             };
             AssertWebHooks(expectedWebHooks);
 
-            _webHooksManager.RemoveWebHook("http://www.gothere.com/aaabbbbbbaaa");
+            webHookToRemove = _webHooksManager.WebHooks.First(h => h.HookAddress == "http://www.gothere.com/aaabbbbbbaaa");
+            _webHooksManager.RemoveWebHook(webHookToRemove.Id);
             expectedWebHooks = new WebHook[]
             {
-                new WebHook(HookEventType.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa3")
+                new WebHook(HookEventTypes.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa3")
             };
             AssertWebHooks(expectedWebHooks);
         }
@@ -76,9 +82,9 @@ namespace Kudu.Core.Test.Deployment
         {
             WebHook[] inputWebHooks = new WebHook[]
             {
-                new WebHook(HookEventType.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa"),
-                new WebHook(HookEventType.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa2"),
-                new WebHook(HookEventType.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa3")
+                new WebHook(HookEventTypes.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa"),
+                new WebHook(HookEventTypes.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa2", "111", insecureSsl: false),
+                new WebHook(HookEventTypes.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa3", "111", insecureSsl: true)
             };
 
             WebHook[] expectedWebHooks = inputWebHooks;
@@ -89,24 +95,22 @@ namespace Kudu.Core.Test.Deployment
         }
 
         [Fact]
-        public void AddSameAddressWebHookShouldAddOnlySingleTime()
+        public void AddSameAddressWebHookShouldThrowConflictException()
         {
             WebHook[] inputWebHooks = new WebHook[]
             {
-                new WebHook(HookEventType.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa"),
-                new WebHook(HookEventType.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa"),
-                new WebHook(HookEventType.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa2"),
-                new WebHook(HookEventType.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa2"),
-                new WebHook(HookEventType.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa")
+                new WebHook(HookEventTypes.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa"),
+                new WebHook(HookEventTypes.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa2"),
+                new WebHook(HookEventTypes.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa"),
             };
 
             WebHook[] expectedWebHooks = new WebHook[]
             {
-                new WebHook(HookEventType.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa"),
-                new WebHook(HookEventType.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa2"),
+                new WebHook(HookEventTypes.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa"),
+                new WebHook(HookEventTypes.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa2"),
             };
 
-            AddWebHooks(inputWebHooks);
+            Assert.Throws<ConflictException>(() => AddWebHooks(inputWebHooks));
 
             AssertWebHooks(expectedWebHooks);
         }
@@ -115,7 +119,7 @@ namespace Kudu.Core.Test.Deployment
         public void AddWebHookWithInvalidAddressShouldThrowFormatException()
         {
             Assert.Throws<FormatException>(() =>
-                _webHooksManager.AddWebHook(new WebHook(HookEventType.PostDeployment, "htsp://\\invalidurl")));
+                _webHooksManager.AddWebHook(new WebHook(HookEventTypes.PostDeployment, "htsp://\\invalidurl")));
         }
 
         private void AssertWebHooks(WebHook[] expectedWebHooks)
@@ -130,18 +134,26 @@ namespace Kudu.Core.Test.Deployment
             }
         }
 
-        private void AddWebHooks(WebHook[] webHooks)
+        private IEnumerable<WebHook> AddWebHooks(WebHook[] webHooks)
         {
+            List<WebHook> webHooksAdded = new List<WebHook>();
+
             foreach (var webHook in webHooks)
             {
-                _webHooksManager.AddWebHook(webHook);
+                WebHook webHookAdded = _webHooksManager.AddWebHook(webHook);
+                webHooksAdded.Add(webHookAdded);
+                Thread.Sleep(1);
             }
+
+            return webHooksAdded;
         }
 
         private static void AssertWebHook(WebHook expectedWebHook, WebHook actualWebHook)
         {
             Assert.Equal(expectedWebHook.HookEventType, actualWebHook.HookEventType);
             Assert.Equal(expectedWebHook.HookAddress, actualWebHook.HookAddress);
+            Assert.Equal(expectedWebHook.InsecureSsl, actualWebHook.InsecureSsl);
+            Assert.True(!String.IsNullOrEmpty(actualWebHook.Id), "Received empty id for web hook");
         }
 
         private static Mock<IEnvironment> BuildEnvironmentMock()
@@ -181,13 +193,13 @@ namespace Kudu.Core.Test.Deployment
             fileBaseMock.Setup(f => f.Exists("c:\\temp\\hooks"))
                         .Returns(true);
 
-            fileBaseMock.Setup(f => f.ReadAllLines("c:\\temp\\hooks"))
+            fileBaseMock.Setup(f => f.ReadAllText("c:\\temp\\hooks"))
                         .Returns(() => _hooksFileContent);
 
             fileBaseMock.Setup(f => f.WriteAllText("c:\\temp\\hooks", It.IsAny<string>()))
                         .Callback<string, string>((path, contents) =>
                         {
-                            _hooksFileContent = contents.Split('\n');
+                            _hooksFileContent = contents;
                         });
 
             return fileSystemMock;

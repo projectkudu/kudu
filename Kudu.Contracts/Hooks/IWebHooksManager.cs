@@ -6,11 +6,13 @@ namespace Kudu.Core.Hooks
 {
     public interface IWebHooksManager
     {
-        void AddWebHook(WebHook webHook);
+        WebHook AddWebHook(WebHook webHook);
 
-        void RemoveWebHook(string hookAddress);
+        void RemoveWebHook(string hookId);
 
         IEnumerable<WebHook> WebHooks { get; }
+
+        WebHook GetWebHook(string hookId);
 
         Task PublishPostDeploymentAsync(IDeploymentStatusFile statusFile);
     }

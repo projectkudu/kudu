@@ -26,7 +26,7 @@ namespace Kudu.Core.Hooks
         {
             ContractResolver = new CamelCasePropertyNamesContractResolver(),
             DefaultValueHandling = DefaultValueHandling.Ignore,
-            Formatting = Formatting.None,
+            Formatting = Formatting.Indented,
             NullValueHandling = NullValueHandling.Ignore
         };
 
@@ -38,7 +38,7 @@ namespace Kudu.Core.Hooks
 
         static WebHooksManager()
         {
-            JsonSerializerSettings.Converters.Add(new StringEnumConverter());
+            JsonSerializerSettings.Converters.Add(new StringEnumConverter() { CamelCaseText = true });
         }
 
         public WebHooksManager(ITracer tracer, IEnvironment environment, IOperationLock hooksLock, IFileSystem fileSystem)
@@ -66,71 +66,101 @@ namespace Kudu.Core.Hooks
             }
         }
 
-        public void AddWebHook(WebHook webHook)
+        public WebHook AddWebHook(WebHook webHook)
         {
             using (_tracer.Step("WebHooksManager.AddWebHook"))
             {
-                if (webHook.HookAddress == null)
-                {
-                    return;
-                }
-
                 if (!Uri.IsWellFormedUriString(webHook.HookAddress, UriKind.RelativeOrAbsolute))
                 {
                     throw new FormatException(Resources.Error_InvalidHookAddress.FormatCurrentCulture(webHook.HookAddress));
                 }
 
+                WebHook createdWebHook = null;
+
                 _hooksLock.LockOperation(() =>
                 {
-                    IList<WebHook> webHooks = ReadWebHooksFromFile();
-                    if (!webHooks.Any(h => h.HookEventType == webHook.HookEventType && String.Equals(h.HookAddress, webHook.HookAddress, StringComparison.OrdinalIgnoreCase)))
+                    createdWebHook = new WebHook(webHook.HookEventType, webHook.HookAddress, id: DateTime.UtcNow.Ticks.ToString(), insecureSsl: webHook.InsecureSsl);
+
+                    var webHooks = new List<WebHook>(ReadWebHooksFromFile());
+                    if (!webHooks.Any(h => String.Equals(h.HookAddress, createdWebHook.HookAddress, StringComparison.OrdinalIgnoreCase)))
                     {
-                        webHooks.Add(webHook);
+                        webHooks.Add(createdWebHook);
                         SaveHooksToFile(webHooks);
 
-                        _tracer.Trace("Added web hook: type - {0}, address - {1}", webHook.HookEventType, webHook.HookAddress);
+                        _tracer.Trace("Added web hook: type - {0}, address - {1}", createdWebHook.HookEventType, createdWebHook.HookAddress);
+                    }
+                    else
+                    {
+                        throw new ConflictException();
                     }
                 }, LockTimeout);
+
+                return createdWebHook;
             }
         }
 
-        public void RemoveWebHook(string hookAddress)
+        public void RemoveWebHook(string hookId)
         {
             _hooksLock.LockOperation(() =>
             {
-                IList<WebHook> hooks = ReadWebHooksFromFile();
-                SaveHooksToFile(hooks.Where(h => !String.Equals(h.HookAddress, hookAddress, StringComparison.OrdinalIgnoreCase)));
+                IEnumerable<WebHook> hooks = ReadWebHooksFromFile();
+                SaveHooksToFile(hooks.Where(h => !String.Equals(h.Id, hookId, StringComparison.OrdinalIgnoreCase)));
             }, LockTimeout);
         }
 
-        private IEnumerable<WebHook> GetWebHooks(HookEventType hookEventType)
+        public WebHook GetWebHook(string hookId)
         {
-            return WebHooks.Where(h => h.HookEventType == hookEventType);
+            return WebHooks.FirstOrDefault(h => String.Equals(h.Id, hookId, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private IEnumerable<WebHook> GetWebHooks(string hookEventType)
+        {
+            return WebHooks.Where(h => String.Equals(h.HookEventType, hookEventType, StringComparison.OrdinalIgnoreCase));
         }
 
         public async Task PublishPostDeploymentAsync(IDeploymentStatusFile statusFile)
         {
             string jsonString = JsonConvert.SerializeObject(statusFile, JsonSerializerSettings);
 
-            await PublishToHooksAsync(jsonString, HookEventType.PostDeployment);
+            await PublishToHooksAsync(jsonString, HookEventTypes.PostDeployment);
         }
 
-        private async Task PublishToHookAsync(HttpClient httpClient, WebHook webHook, string jsonString)
+        private async Task PublishToHookAsync(WebHook webHook, string jsonString)
         {
             try
             {
-                using (var content = new StringContent(jsonString))
+                WebRequestHandler webRequestHandler = null;
+                HttpClient httpClient = null;
+
+                if (webHook.InsecureSsl)
                 {
-                    _tracer.Trace("Publish {0} to address - {1}, json - {2}", webHook.HookEventType, webHook.HookAddress, jsonString);
-
-                    using (HttpResponseMessage response = await httpClient.PostAsync(webHook.HookAddress, content))
+                    webRequestHandler = new WebRequestHandler()
                     {
-                        _tracer.Trace("Publish {0} to address - {1}, response - {2}", webHook.HookEventType, webHook.HookAddress, response.StatusCode);
+                        ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true
+                    };
+                    httpClient = new HttpClient(webRequestHandler);
+                }
+                else
+                {
+                    httpClient = new HttpClient();
+                }
+                httpClient.Timeout = TimeSpan.FromSeconds(10);
 
-                        // Handle 410 responses by removing the web hook
-                        if (response.StatusCode == HttpStatusCode.Gone)
+                using (httpClient)
+                {
+                    using (var content = new StringContent(jsonString))
+                    {
+                        _tracer.Trace("Publish {0}#{1} to address - {2}, json - {3}, insecure - {4}", webHook.HookEventType, webHook.Id, webHook.HookAddress, jsonString, webHook.InsecureSsl);
+
+                        using (HttpResponseMessage response = await httpClient.PostAsync(webHook.HookAddress, content))
                         {
-                            RemoveWebHook(webHook.HookAddress);
+                            _tracer.Trace("Publish {0}#{1} to address - {2}, response - {3}", webHook.HookEventType, webHook.Id, webHook.HookAddress, response.StatusCode);
+
+                            // Handle 410 responses by removing the web hook
+                            if (response.StatusCode == HttpStatusCode.Gone)
+                            {
+                                RemoveWebHook(webHook.Id);
+                            }
                         }
                     }
                 }
@@ -142,78 +172,53 @@ namespace Kudu.Core.Hooks
             }
         }
 
-        private async Task PublishToHooksAsync(string jsonString, HookEventType hookType)
+        private async Task PublishToHooksAsync(string jsonString, string hookType)
         {
             IEnumerable<WebHook> webHooks = GetWebHooks(hookType);
 
             if (webHooks.Any())
             {
-                using (var httpClient = new HttpClient() { Timeout = TimeSpan.FromSeconds(10) })
+                var publishTasks = new List<Task>();
+
+                foreach (var webHook in webHooks)
                 {
-                    var publishTasks = new List<Task>();
-
-                    foreach (var webHook in webHooks)
-                    {
-                        Task publishTask = PublishToHookAsync(httpClient, webHook, jsonString);
-                        publishTasks.Add(publishTask);
-                    }
-
-                    await Task.WhenAll(publishTasks);
+                    Task publishTask = PublishToHookAsync(webHook, jsonString);
+                    publishTasks.Add(publishTask);
                 }
+
+                await Task.WhenAll(publishTasks);
             }
         }
 
-        private IList<WebHook> ReadWebHooksFromFile()
+        private IEnumerable<WebHook> ReadWebHooksFromFile()
         {
-            var hooks = new List<WebHook>();
+            string fileContent = null;
 
             if (!_fileSystem.File.Exists(_hooksFilePath))
             {
-                return hooks;
+                return Enumerable.Empty<WebHook>();
             }
 
-            IEnumerable<string> lines = null;
-            OperationManager.Attempt(() => lines = _fileSystem.File.ReadAllLines(_hooksFilePath));
+            OperationManager.Attempt(() => fileContent = _fileSystem.File.ReadAllText(_hooksFilePath));
 
-            // Each line has the following format:
-            // <Hook Event Type>    <Hook Address>
-            foreach (var line in lines)
+            if (!String.IsNullOrEmpty(fileContent))
             {
-                var trimmedLine = line.Trim();
-                if (String.IsNullOrEmpty(trimmedLine))
+                try
                 {
-                    continue;
+                    return JsonConvert.DeserializeObject<IEnumerable<WebHook>>(fileContent, JsonSerializerSettings);
                 }
-
-                int splitIndex = trimmedLine.IndexOf('\t');
-                if (splitIndex < 0)
+                catch (JsonSerializationException ex)
                 {
-                    continue;
+                    _tracer.TraceError(ex);
                 }
-
-                string hookEventTypeStr = trimmedLine.Substring(0, splitIndex);
-                HookEventType hookEventType;
-                bool hookTypeParsed = Enum.TryParse(hookEventTypeStr, out hookEventType);
-                if (!hookTypeParsed)
-                {
-                    continue;
-                }
-
-                string hookAddress = trimmedLine.Substring(splitIndex + 1);
-                if (!Uri.IsWellFormedUriString(hookAddress, UriKind.RelativeOrAbsolute))
-                {
-                    continue;
-                }
-
-                hooks.Add(new WebHook(hookEventType, hookAddress));
             }
 
-            return hooks;
+            return Enumerable.Empty<WebHook>();
         }
 
         private void SaveHooksToFile(IEnumerable<WebHook> hooks)
         {
-            string hooksFileContent = String.Join("\n", hooks.Select(h => h.HookEventType + "\t" + h.HookAddress));
+            string hooksFileContent = JsonConvert.SerializeObject(hooks, JsonSerializerSettings);
             OperationManager.Attempt(() => _fileSystem.File.WriteAllText(_hooksFilePath, hooksFileContent));
         }
     }

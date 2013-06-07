@@ -2,6 +2,7 @@
 using System.Net.Http;
 using System.Web.Http;
 using Kudu.Contracts.Tracing;
+using Kudu.Core;
 using Kudu.Core.Hooks;
 
 namespace Kudu.Services.Hooks
@@ -20,14 +21,22 @@ namespace Kudu.Services.Hooks
         [HttpPost]
         public HttpResponseMessage Subscribe(WebHook webHook)
         {
-            _hooksManager.AddWebHook(webHook);
-            return Request.CreateResponse(HttpStatusCode.Created);
+            try
+            {
+                WebHook webHookAdded = _hooksManager.AddWebHook(webHook);
+                return Request.CreateResponse(HttpStatusCode.Created, webHookAdded);
+            }
+            catch (ConflictException)
+            {
+                _tracer.Trace("Web hook with address {0} already exists".FormatCurrentCulture(webHook.HookAddress));
+                return Request.CreateResponse(HttpStatusCode.Conflict);
+            }
         }
 
         [HttpDelete]
-        public HttpResponseMessage Unsubscribe(string hookAddress)
+        public HttpResponseMessage Unsubscribe(string id)
         {
-            _hooksManager.RemoveWebHook(hookAddress);
+            _hooksManager.RemoveWebHook(id);
             return Request.CreateResponse(HttpStatusCode.OK);
         }
 
@@ -35,6 +44,19 @@ namespace Kudu.Services.Hooks
         public HttpResponseMessage GetWebHooks()
         {
             return Request.CreateResponse(HttpStatusCode.OK, _hooksManager.WebHooks);
+        }
+
+        [HttpGet]
+        public HttpResponseMessage GetWebHook(string id)
+        {
+            WebHook webHook = _hooksManager.GetWebHook(id);
+
+            if (webHook == null)
+            {
+                Request.CreateResponse(HttpStatusCode.NotFound);
+            }
+
+            return Request.CreateResponse(HttpStatusCode.OK, webHook);
         }
     }
 }

@@ -48,8 +48,9 @@
     <Compile Include="Dropbox\DropboxDeltaInfo.cs" />
     <Compile Include="Dropbox\DropboxDeployInfo.cs" />
     <Compile Include="Editor\VfsStatEntry.cs" />
+    <Compile Include="Hooks\ConflictException.cs" />
     <Compile Include="Hooks\WebHook.cs" />
-    <Compile Include="Hooks\HooksEventType.cs" />
+    <Compile Include="Hooks\HooksEventTypes.cs" />
     <Compile Include="Hooks\IWebHooksManager.cs" />
     <Compile Include="IEnvironment.cs" />
     <Compile Include="Infrastructure\IOperationLock.cs" />

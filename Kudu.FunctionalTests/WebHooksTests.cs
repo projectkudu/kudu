@@ -14,8 +14,6 @@ namespace Kudu.FunctionalTests
 {
     public class WebHooksTests
     {
-        // ASP.NET apps
-
         [Fact]
         public async Task SubscribedWebHooksShouldBeCalledPostDeployment()
         {
@@ -33,14 +31,14 @@ namespace Kudu.FunctionalTests
                         string hookAddress1 = hookAppManager.SiteUrl + hook1;
                         string hookAddress2 = hookAppManager.SiteUrl + hook2;
 
-                        await SubscribeWebHook(hookAppManager, hookAddress1, 1);
+                        WebHook webHookAdded1 = await SubscribeWebHook(hookAppManager, hookAddress1, 1);
 
                         GitDeployApp(hookAppManager, hookAppRepository);
 
                         expectedHookAddresses.Add(hook1);
                         await VerifyWebHooksCall(hookAddress1, expectedHookAddresses, hookAppRepository.CurrentId, hookAppManager);
 
-                        await SubscribeWebHook(hookAppManager, hookAddress2, 2);
+                        WebHook webHookAdded2 = await SubscribeWebHook(hookAppManager, hookAddress2, 2);
 
                         TestTracer.Trace("Redeploy to allow web hooks to be called");
                         await hookAppManager.DeploymentManager.DeployAsync(hookAppRepository.CurrentId);
@@ -49,7 +47,7 @@ namespace Kudu.FunctionalTests
                         await VerifyWebHooksCall(hookAddress1, expectedHookAddresses, hookAppRepository.CurrentId, hookAppManager);
 
                         TestTracer.Trace("Unsubscribe first hook");
-                        await UnsubscribeWebHook(hookAppManager, hookAddress1, 1);
+                        await UnsubscribeWebHook(hookAppManager, webHookAdded1.Id, 1);
 
                         TestTracer.Trace("Redeploy to allow web hook to be called");
                         await hookAppManager.DeploymentManager.DeployAsync(hookAppRepository.CurrentId);
@@ -58,7 +56,7 @@ namespace Kudu.FunctionalTests
                         await VerifyWebHooksCall(hookAddress1, expectedHookAddresses, hookAppRepository.CurrentId, hookAppManager);
 
                         TestTracer.Trace("Unsubscribe second hook");
-                        await UnsubscribeWebHook(hookAppManager, hookAddress2, 0);
+                        await UnsubscribeWebHook(hookAppManager, webHookAdded2.Id, 0);
 
                         TestTracer.Trace("Redeploy to verify no web hook was called");
                         await hookAppManager.DeploymentManager.DeployAsync(hookAppRepository.CurrentId);
@@ -80,12 +78,14 @@ namespace Kudu.FunctionalTests
             Assert.Equal(DeployStatus.Success, deploymentResults[0].Status);
         }
 
-        private static async Task SubscribeWebHook(ApplicationManager hookAppManager, string hookAddress, int expectedHooksCount)
+        private static async Task<WebHook> SubscribeWebHook(ApplicationManager hookAppManager, string hookAddress, int expectedHooksCount)
         {
             TestTracer.Trace("Subscribe web hook to " + hookAddress);
-            await hookAppManager.WebHooksManager.SubscribeAsync(new WebHook(HookEventType.PostDeployment, hookAddress));
+            WebHook webHookAdded = await hookAppManager.WebHooksManager.SubscribeAsync(new WebHook(HookEventTypes.PostDeployment, hookAddress));
 
             await VerifyWebHooksCount(hookAppManager, expectedHooksCount);
+
+            return webHookAdded;
         }
 
         private static async Task UnsubscribeWebHook(ApplicationManager hookAppManager, string hookAddress, int expectedHooksCount)
