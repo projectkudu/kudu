@@ -57,10 +57,12 @@ namespace Kudu.Core.Hooks
             {
                 IEnumerable<WebHook> webHooks = null;
 
-                _hooksLock.LockOperation(() =>
+                bool lockAcquired = _hooksLock.TryLockOperation(() =>
                 {
                     webHooks = ReadWebHooksFromFile();
                 }, LockTimeout);
+
+                VerifyLockAcquired(lockAcquired);
 
                 return webHooks;
             }
@@ -77,7 +79,7 @@ namespace Kudu.Core.Hooks
 
                 WebHook createdWebHook = null;
 
-                _hooksLock.LockOperation(() =>
+                bool lockAcquired = _hooksLock.TryLockOperation(() =>
                 {
                     createdWebHook = new WebHook(webHook.HookEventType, webHook.HookAddress, id: DateTime.UtcNow.Ticks.ToString(), insecureSsl: webHook.InsecureSsl);
 
@@ -95,17 +97,21 @@ namespace Kudu.Core.Hooks
                     }
                 }, LockTimeout);
 
+                VerifyLockAcquired(lockAcquired);
+
                 return createdWebHook;
             }
         }
 
         public void RemoveWebHook(string hookId)
         {
-            _hooksLock.LockOperation(() =>
+            bool lockAcquired = _hooksLock.TryLockOperation(() =>
             {
                 IEnumerable<WebHook> hooks = ReadWebHooksFromFile();
                 SaveHooksToFile(hooks.Where(h => !String.Equals(h.Id, hookId, StringComparison.OrdinalIgnoreCase)));
             }, LockTimeout);
+
+            VerifyLockAcquired(lockAcquired);
         }
 
         public WebHook GetWebHook(string hookId)
@@ -122,35 +128,33 @@ namespace Kudu.Core.Hooks
         {
             string jsonString = JsonConvert.SerializeObject(statusFile, JsonSerializerSettings);
 
-            await PublishToHooksAsync(jsonString, HookEventTypes.PostDeployment);
+            bool lockAcquired = await _hooksLock.TryLockOperationAsync(async () =>
+            {
+                await PublishToHooksAsync(jsonString, HookEventTypes.PostDeployment);
+            }, LockTimeout);
+
+            VerifyLockAcquired(lockAcquired);
+        }
+
+        private void VerifyLockAcquired(bool lockAcquired)
+        {
+            if (!lockAcquired)
+            {
+                throw new InvalidOperationException();
+            }
         }
 
         private async Task PublishToHookAsync(WebHook webHook, string jsonString)
         {
-            try
+            using (HttpClient httpClient = CreateHttpClient(webHook))
             {
-                WebRequestHandler webRequestHandler = null;
-                HttpClient httpClient = null;
-
-                if (webHook.InsecureSsl)
+                using (var content = new StringContent(jsonString))
                 {
-                    webRequestHandler = new WebRequestHandler()
-                    {
-                        ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true
-                    };
-                    httpClient = new HttpClient(webRequestHandler);
-                }
-                else
-                {
-                    httpClient = new HttpClient();
-                }
-                httpClient.Timeout = TimeSpan.FromSeconds(10);
-
-                using (httpClient)
-                {
-                    using (var content = new StringContent(jsonString))
+                    try
                     {
                         _tracer.Trace("Publish {0}#{1} to address - {2}, json - {3}, insecure - {4}", webHook.HookEventType, webHook.Id, webHook.HookAddress, jsonString, webHook.InsecureSsl);
+
+                        webHook.LastPublishDate = DateTime.UtcNow;
 
                         using (HttpResponseMessage response = await httpClient.PostAsync(webHook.HookAddress, content))
                         {
@@ -161,15 +165,44 @@ namespace Kudu.Core.Hooks
                             {
                                 RemoveWebHook(webHook.Id);
                             }
+
+                            webHook.LastPublishStatus = response.StatusCode.ToString();
+                            webHook.LastPublishReason = response.ReasonPhrase;
                         }
+                    }
+                    catch (Exception ex)
+                    {
+                        _tracer.Trace("Error while publishing hook - {0}#{1}, to address - {1}", webHook.HookEventType, webHook.Id, webHook.HookAddress);
+                        _tracer.TraceError(ex);
+
+                        webHook.LastPublishStatus = "Failure";
+                        webHook.LastPublishReason = ex.Message;
                     }
                 }
             }
-            catch (Exception ex)
+        }
+
+        private static HttpClient CreateHttpClient(WebHook webHook)
+        {
+            HttpClient httpClient = null;
+
+            if (webHook.InsecureSsl)
             {
-                _tracer.Trace("Error while publishing for hook type - {0}, to address - {1}", webHook.HookEventType, webHook.HookAddress);
-                _tracer.TraceError(ex);
+                var webRequestHandler = new WebRequestHandler()
+                {
+                    ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true
+                };
+
+                httpClient = new HttpClient(webRequestHandler);
             }
+            else
+            {
+                httpClient = new HttpClient();
+            }
+
+            httpClient.Timeout = TimeSpan.FromSeconds(10);
+
+            return httpClient;
         }
 
         private async Task PublishToHooksAsync(string jsonString, string hookType)
@@ -187,6 +220,8 @@ namespace Kudu.Core.Hooks
                 }
 
                 await Task.WhenAll(publishTasks);
+
+                SaveHooksToFile(webHooks);
             }
         }
 
