@@ -10,8 +10,14 @@ namespace Kudu.Services.Infrastructure
     /// </summary>
     public class MediaTypeMap
     {
+        private static readonly MediaTypeMap _defaultInstance = new MediaTypeMap();
+        private readonly ConcurrentDictionary<string, MediaTypeHeaderValue> _mediatypeMap = CreateMediaTypeMap();
         private readonly MediaTypeHeaderValue _defaultMediaType = MediaTypeHeaderValue.Parse("application/octet-stream");
-        private readonly ConcurrentDictionary<string, MediaTypeHeaderValue> _mediatypeMap = new ConcurrentDictionary<string, MediaTypeHeaderValue>(StringComparer.OrdinalIgnoreCase);
+
+        public static MediaTypeMap Default
+        {
+            get { return _defaultInstance; }
+        }
 
         public MediaTypeHeaderValue GetMediaType(string fileExtension)
         {
@@ -37,6 +43,15 @@ namespace Kudu.Services.Infrastructure
                         return _defaultMediaType;
                     }
                 });
+        }
+
+        private static ConcurrentDictionary<string, MediaTypeHeaderValue> CreateMediaTypeMap()
+        {
+            var dictionary = new ConcurrentDictionary<string, MediaTypeHeaderValue>(StringComparer.OrdinalIgnoreCase);
+            dictionary.TryAdd(".js", MediaTypeHeaderValue.Parse("application/javascript"));
+            dictionary.TryAdd(".json", MediaTypeHeaderValue.Parse("application/json"));
+
+            return dictionary;
         }
     }
 }
