@@ -153,7 +153,7 @@ namespace Kudu.Core.Hooks
             SaveHooksToFile(hooks.Where(h => !String.Equals(h.Id, hookId, StringComparison.OrdinalIgnoreCase)));
         }
 
-        private void VerifyLockAcquired(bool lockAcquired)
+        private static void VerifyLockAcquired(bool lockAcquired)
         {
             if (!lockAcquired)
             {
