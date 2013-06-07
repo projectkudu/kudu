@@ -67,25 +67,24 @@
         }, this);
         this.children = ko.observableArray([]);
         this.editing = ko.observable(data.editing || false);
-        this._childrenFetched = false;
+        this._fetchStatus;
 
         this.fetchChildren = function (force) {
             var that = this;
 
-            if (force || !that._childrenFetched) {
+            if (!that._fetchStatus || (force && that._fetchStatus === 2)) {
+                that._fetchStatus = 1;
                 viewModel.processing(true);
 
                 return Vfs.getChildren(that)
                 .done(function (data) {
                     viewModel.processing(false);
-                    if (data && data.length) {
-                        var children = that.children;
-                        children.removeAll();
-                        $.each(data, function () {
-                            children.push(new node(this, that));
-                        });
-                    }
-                    that._childrenFetched = true;
+                    var children = that.children;
+                    children.removeAll();
+                    $.each(data, function () {
+                        children.push(new node(this, that));
+                    });
+                    that._fetchStatus = 2;
                 }).promise();
             } else {
                 return $.Deferred().resolve().promise();
@@ -195,16 +194,25 @@
             // Mark it so that no-op the subscribe callback.
             ignoreWorkingDirChange = true;
             window.KuduExec.changeDir(path);
+
+            newValue.fetchChildren(/* force */ true);
         }
     });
 
     window.KuduExec.completePath = function (value, dirOnly) {
         var subDirs = value.toLowerCase().split(/\/|\\/),
-            cur = viewModel.selected();
+            cur = viewModel.selected(),
+            curToken = '';
 
         while (subDirs.length && cur) {
-            var curSubDir = subDirs.shift();
-            if (!cur.children) {
+            curToken = subDirs.shift();
+            if (curToken === '..' && cur && cur.parent) {
+                cur = cur.parent;
+                continue;
+            }
+
+            if (!cur.children || !cur.children().length) {
+                cur = null;
                 break;
             }
 
@@ -213,11 +221,16 @@
                     return false;
                 }
 
-                return subDirs.length ? (elm.name().toLowerCase() === curSubDir) : elm.name().toLowerCase().indexOf(curSubDir) === 0;
+                return subDirs.length ? (elm.name().toLowerCase() === curToken) : elm.name().toLowerCase().indexOf(curToken) === 0;
             });
+
+            if (cur && cur.length === 1 && subDirs.length) {
+                // If there's more path to traverse and we have exactly one match, return
+                cur = cur[0];                
+            }
         }
         if (cur) {
-            return $.map(cur, function (elm) { return elm.name().substring(value.length); });
+            return $.map(cur, function (elm) { return elm.name().substring(curToken.length); });
         }
     };
 
