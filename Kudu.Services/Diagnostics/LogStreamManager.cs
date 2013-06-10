@@ -52,7 +52,8 @@ namespace Kudu.Services.Performance
                                 ITracer tracer, 
                                 ShutdownDetector shutdownDetector)
         {
-            _logPath = logPath;
+            //_logPath = logPath;
+            _logPath = @"C:\Users\t-hawkf\Desktop\TempLogs\W3SVC1";
             _tracer = tracer;
             _environment = environment;
             _shutdownDetector = shutdownDetector;

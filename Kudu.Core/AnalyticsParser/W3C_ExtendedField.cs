@@ -23,12 +23,17 @@ namespace Kudu.Core.AnalyticsParser
             W3C_ExtendedField other = obj as W3C_ExtendedField;
             if (other != null)
             {
-                return this.logField.CompareTo(other.logField);
+                return String.Compare(this.logField, other.logField, StringComparison.OrdinalIgnoreCase);
             }
             else
             {
                 throw new ArgumentException("object is not of type W3C_ExtendedField");
             }
+        }
+
+        public override string ToString()
+        {
+            return base.logField;
         }
     }
 }

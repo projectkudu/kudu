@@ -25,6 +25,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\System.IO.Abstractions.1.4.0.37\lib\net35\System.IO.Abstractions.dll</HintPath>
     </Reference>
+    <Reference Include="System.Net" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -40,14 +41,15 @@
     <Compile Include="..\Common\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="AnalyticsParser\CookieParser\CookieParser.cs" />
     <Compile Include="AnalyticsParser\GrammarException.cs" />
     <Compile Include="AnalyticsParser\Constants.cs" />
-    <Compile Include="AnalyticsParser\HTTPLog.cs" />
-    <Compile Include="AnalyticsParser\Log.cs" />
+    <Compile Include="AnalyticsParser\IIS_Log.cs" />
+    <Compile Include="AnalyticsParser\HttpLog.cs" />
     <Compile Include="AnalyticsParser\LogFields.cs" />
     <Compile Include="AnalyticsParser\LogParser.cs" />
     <Compile Include="AnalyticsParser\W3C_ExtendedField.cs" />
-    <Compile Include="AnalyticsParser\W3C_ExtendedFormat.cs" />
+    <Compile Include="AnalyticsParser\W3C_ExtendedConstants.cs" />
     <Compile Include="Commands\CommandExecutor.cs" />
     <Compile Include="Deployment\CascadeLogger.cs" />
     <Compile Include="Deployment\DeploymentStatusFileExtensions.cs" />

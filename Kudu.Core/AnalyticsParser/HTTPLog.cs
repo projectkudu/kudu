@@ -6,160 +6,39 @@ using System.Threading.Tasks;
 
 namespace Kudu.Core.AnalyticsParser
 {
-
-    public class HTTPLog : Log, IComparable
+    public abstract class HttpLog
     {
-        private DateTime _date;
-        private string _time;
-        private string _statusCode;
-        private string _clientServerURI;
-        private string _timeTaken;
-        private string _typeRequest;
+        /// <summary>
+        /// All logs have some type of date information, extend this class to have your own format of how the date may be formatted
+        /// Eg, YYYY-MM-DD, MM-DD-YY, MM/DD/YYYY, MM/DD/YY
+        /// </summary>
+        public abstract DateTime Date{get;set;}
 
-        public override DateTime Date
-        {
-            get
-            {
-                return _date;
-            }
-            set
-            {
-                _date = value;
-            }
-        }
+        /// <summary>
+        /// Time at which the activity occured
+        /// </summary>
+        public abstract string Time{get;set;}
 
-        public override string Time
-        {
-            get
-            {
-                return _time;
-            }
-            set
-            {
-                _time = value;
-            }
-        }
+        public abstract long BytesReceived{ get;set;}
 
-        public override string StatusCode
-        {
-            get
-            {
-                return _statusCode;
-            }
-            set
-            {
-                _statusCode = value;
-            }
-        }
+        public abstract long BytesSent{ get; set;}
 
-        public override string URIRequested
-        {
-            get
-            {
-                return _clientServerURI;
-            }
-            set
-            {
-                _clientServerURI = value;
-            }
-        }
+        public abstract int StatusCode{get;set;}
 
-        public override string TimeTaken
-        {
-            get
-            {
-                return _timeTaken;
-            }
-            set
-            {
-                _timeTaken = value;
-            }
-        }
+        public abstract string URIRequested{get;set;}
 
-        public override string TypeRequest
-        {
-            get
-            {
-                return _typeRequest;
-            }
-            set
-            {
-                _typeRequest = value;
-            }
-        }
+        public abstract Uri Referrer { get; set; }
 
-        public override string Cookie
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-            set
-            {
-                throw new NotImplementedException();
-            }
-        }
+        public abstract System.Net.CookieCollection Cookies{get;set;}
 
-        public override string BytesReceived
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-            set
-            {
-                throw new NotImplementedException();
-            }
-        }
+        public abstract float TimeTaken{get;set;}
 
-        public override string BytesSent
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-            set
-            {
-                throw new NotImplementedException();
-            }
-        }
+        public abstract string TypeRequest { get; set; }
 
-        public override string ClientIP
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-            set
-            {
-                throw new NotImplementedException();
-            }
-        }
+        public abstract System.Net.IPAddress ClientIP {get; set;}
 
-        public override string ServerIP
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-            set
-            {
-                throw new NotImplementedException();
-            }
-        }
+        public abstract System.Net.IPAddress ServerIP { get; set; }
 
-
-        int IComparable.CompareTo(object obj)
-        {
-            HTTPLog tempLog = obj is HTTPLog ? (HTTPLog)obj : null;
-            if (tempLog == null)
-            {
-                throw new InvalidCastException();
-            }
-
-            //if less than zero then this instance is earlier than value, if zero its the same, and if greater then later
-            return this._date.CompareTo(tempLog._date);
-        }
 
     }
 }

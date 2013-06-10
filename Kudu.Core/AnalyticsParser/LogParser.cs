@@ -10,11 +10,12 @@ using System.Diagnostics;
 ///NCSA Common, IIS, and possibly custom log formats. But for now we will focus on the W3C standard for log formats since its the default for all web servers.
 namespace Kudu.Core.AnalyticsParser
 {
+    //TODO: can you handle this parsing of file, 
     public class LogParser
     {
         private static string _fileName = null;
         private List<string> _fields = new List<string>();
-        private HTTPLog _log;
+        private IIS_Log _log;
         private LogFields[] logFormatFields;
 
         /// <summary>
@@ -26,13 +27,13 @@ namespace Kudu.Core.AnalyticsParser
             set { _fileName = value; }
         }
 
-        public List<HTTPLog> Parse()
+        public List<IIS_Log> Parse()
         {
             if (_fileName == null)
             {
                 throw new NullReferenceException();
             }
-            List<HTTPLog> logs = null;
+            List<IIS_Log> logs = null;
             //Set fields for specific log format
             SetFields();
             //because we will be using this array for comparison against the fields of a log file, sort this array to use binary search and therefore have a O(logn) search
@@ -50,9 +51,10 @@ namespace Kudu.Core.AnalyticsParser
             return logs;
         }
 
-        private List<HTTPLog> ParseW3CFormat()
+        // return IEnumerable<T> 
+        private List<IIS_Log> ParseW3CFormat()
         {
-            List<HTTPLog> listLogs = new List<HTTPLog>();
+            List<IIS_Log> listLogs = new List<IIS_Log>();
             bool concateDateTime = false;
             //int dateColumn = 0;
             //int timeColumn = 0;
@@ -79,65 +81,119 @@ namespace Kudu.Core.AnalyticsParser
                     bool isDirectiveLine = line.StartsWith("#", StringComparison.OrdinalIgnoreCase);
                     if (!isDirectiveLine)
                     {
-                        _log = new HTTPLog();
+                        _log = new IIS_Log();
                         //get the data and follow the Grammar
                         string[] data = line.Split(default(Char[]), StringSplitOptions.RemoveEmptyEntries);                       
                         //using a foreach loop and follow through the grammar
-
-                        /*
                         for(int i = 0; i < _fields.Count(); i++)
                         {
-                            bool isValid = CheckGrammer(data[i], _fields[i]);
+                            //check that the text fits the grammar
+                            bool isValid = CheckGrammer(data[i], _fields[i].ToLower());
+                            
                             if (isValid)
                             {
-                                switch(_fields[i])
+                                
+                                switch(_fields[i].ToLower())
                                 {
-                                    case "date":
+                                    case W3C_ExtendedConstants.DATE:
+                                        //Trace.WriteLine(data[i]);
+                                        _log.Date = DateTime.Parse(data[count]);
+                                        break;
+                                    case W3C_ExtendedConstants.TIME:
+                                        //Trace.WriteLine(data[i]);
+                                        _log.Time = data[i];
+                                        break;
+                                    case W3C_ExtendedConstants.TIME_TAKEN:
+                                        //Trace.WriteLine(data[i]);
+                                        //_log.TimeTaken = data[i];
+                                        break;
+                                    case W3C_ExtendedConstants.BYTES:
+                                        _log.BytesSent = Convert.ToInt64(data[i]);
+                                        break;
+                                    case W3C_ExtendedConstants.CACHED:
+                                        //nothing
+                                        break;
+                                    case W3C_ExtendedConstants.CLIENT_IP:
+                                        try
+                                        {
+                                            
+                                            _log.ClientIP = System.Net.IPAddress.Parse(data[i]);
+                                        }
+                                        catch (FormatException)
+                                        {
+                                            _log.ClientIP = System.Net.IPAddress.Parse("0");
+                                        }
+                                        break;
+                                    case W3C_ExtendedConstants.USER_NAME:
+                                        _log.UserName = data[i];
+                                        break;
+                                    case W3C_ExtendedConstants.SERVICE_NAME:
+                                        _log.ServerSiteName = data[i];
+                                        break;
+                                    case W3C_ExtendedConstants.SERVER_IP:
+                                        try
+                                        {
+                                            _log.ServerIP = System.Net.IPAddress.Parse(data[i]);
+                                        }
+                                        catch (FormatException)
+                                        {
+                                            _log.ServerIP = System.Net.IPAddress.Parse("0");
+                                        }
+                                        break;
+                                    case W3C_ExtendedConstants.SERVER_PORT:
+                                        _log.ServerPort = Convert.ToInt16(data[i]);
+                                        break;
+                                    case W3C_ExtendedConstants.DNS:
+                                        //nothing
+                                        break;
+                                    case W3C_ExtendedConstants.STATUS:
+                                        _log.StatusCode = Convert.ToInt16(data[i]);
+                                        break;
+                                    case W3C_ExtendedConstants.WIN32_STATUS:
+                                        _log.Win32_Status = Convert.ToInt16(data[i]);
+                                        break;
+                                    case W3C_ExtendedConstants.COMMENT:
+                                        //nothing
+                                        break;
+                                    case W3C_ExtendedConstants.METHOD:
+                                        _log.TypeRequest = data[i];
+                                        break;
+                                    case W3C_ExtendedConstants.URI:
+                                        //nothing
+                                        break;
+                                    case W3C_ExtendedConstants.URI_STEM:
+                                        _log.UriStem = data[i];
+                                        break;
+                                    case W3C_ExtendedConstants.URI_QUERY:
+                                        _log.UriQuery = data[i];
+                                        break;
+                                    case W3C_ExtendedConstants.BYTES_SENT:
+                                        _log.BytesSent = Convert.ToInt64(data[i]);
+                                        break;
+                                    case W3C_ExtendedConstants.BYTES_RECEIVED:
+                                        _log.BytesSent = Convert.ToInt64(data[i]);
+                                        break;
+                                    case W3C_ExtendedConstants.PROTOCOL_VERSION:
+                                        _log.ProtocolVersion = data[i];
+                                        break;
+                                    case W3C_ExtendedConstants.HOST:
+                                        _log.Host = data[i];
+                                        break;
+                                    case W3C_ExtendedConstants.USER_AGENT:
+                                        _log.UserAgent = data[i];
+                                        break;
+                                    case W3C_ExtendedConstants.COOKIE:
+                                        CookieParser.CookieParser cookieParser = new CookieParser.CookieParser();
+                                        _log.Cookies = cookieParser.ExtractServerHeaderResponseCookies(data[i]);
+                                        break;
+                                    case W3C_ExtendedConstants.REFERRER:
+                                        _log.Referrer = new Uri(data[i]);
                                         break;
                                 }
-                            }
-                        }*/
-
-                        foreach (string field in _fields)
-                        {
-                            //check if the field is the Date field and parse that field for this specific log and be sure that it follows the grammar for W3C
-                            if (field.Equals(W3C_ExtendedConstants.DATE, StringComparison.OrdinalIgnoreCase))
-                            {
-                                bool isDate = CheckGrammer(data[count], W3C_ExtendedConstants.DATE);
-                                if (isDate)
-                                {
-                                    //set the date for the HTTP log
-                                    _log.Date = DateTime.Parse(data[count]);
-                                }
-                                else
-                                {
-                                    //System.Diagnostics.Trace.WriteLine("Excpetion: " + data[count]);
-                                    throw new GrammarException("Text did not pass the grammar for dates according to the W3C standard.");
-                                }
-                            }
-                            else if (field.Equals(W3C_ExtendedConstants.TIME, StringComparison.OrdinalIgnoreCase))
-                            {
-                                bool isTime = CheckGrammer(data[count], W3C_ExtendedConstants.TIME);
-                                if (isTime)
-                                {
-                                    _log.Time = data[count];
-                                }
-                                else
-                                {
-                                    throw new GrammarException("Text did not pass the grammar for the time according to the W3C standard");
-                                }
-                            }
-                            else if (field.Equals(W3C_ExtendedConstants.TIME_TAKEN, StringComparison.OrdinalIgnoreCase))
-                            {
-                                bool isTimeTaken = CheckGrammer(data[count], W3C_ExtendedConstants.TIME_TAKEN);
-                                if (isTimeTaken)
-                                {
-                                    Trace.WriteLine(data[count]);
-                                    _log.TimeTaken = data[count];
-                                }
-                            }
-                            count++;
+                            }//end of if statement
                         }
+
+                        //TODO: look into Enumeration, yield return _log;
                         listLogs.Add(_log);
                     }
                 }
@@ -201,17 +257,19 @@ namespace Kudu.Core.AnalyticsParser
             concateDateTime = existFieldDate & existFieldTime;
         }
 
+        //TODO: if something is not according to the format keep track of the errors and present it to user
         private bool CheckGrammer(string data, string operation)
         {
+            
             string spattern = null;
             switch (operation)
             {
                 //check to see if the data fits the date format requred by W3C
                     
-                case W3C_ExtendedConstants.DATE: 
+                case W3C_ExtendedConstants.DATE:
                     spattern = "^\\d{4}-\\d{2}-\\d{2}$";
                     break;
-                case W3C_ExtendedConstants.TIME: 
+                case W3C_ExtendedConstants.TIME:
                     spattern = "^\\d{2}:\\d{2}:*[\\d{2}].*[\\d{1}]$";
                     break;
                 case W3C_ExtendedConstants.TIME_TAKEN:
@@ -220,6 +278,8 @@ namespace Kudu.Core.AnalyticsParser
                 case W3C_ExtendedConstants.BYTES:
                     spattern = "^\\d*$";
                     break;
+                default: //if none of the aforementioned cases apply then that means we are using fields that dont necessarily need grammar checks for instance usernames, 
+                    return true;
             }
 
             return System.Text.RegularExpressions.Regex.IsMatch(data, spattern);

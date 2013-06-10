@@ -16,13 +16,26 @@ namespace Kudu.Services.Diagnostics
     {
         string path = @"C:\Users\t-hawkf\Desktop\TempLogs";
         private Dictionary<string, long> _logFiles;
-        
+        public string testing = null;
+        private List<IIS_Log> logs;
         //Kudu.Core.IEnvironment environment;
 
         public AnalyticsController()
         {
             _logFiles = GetDirectoryFiles(path);
-            ScanFiles();
+            logs = ScanIISFiles();
+            testing = "hello word";
+        }
+
+        [HttpGet]
+        public string TestData()
+        {
+            String data = String.Empty;
+            foreach (IIS_Log log in logs)
+            {
+                Trace.WriteLine(log);
+            }
+            return data;
         }
 
         public string GetName()
@@ -60,32 +73,19 @@ namespace Kudu.Services.Diagnostics
         /// Given that the dictionary of the files are there, start scanning each file and get the information that we need to store them in memory
         /// </summary>
         [NonAction]
-        private void ScanFiles()
+        private List<IIS_Log> ScanIISFiles()
         {
-            List<HTTPLog> httpLogs = new List<HTTPLog>();
+            List<IIS_Log> httpLogs = new List<IIS_Log>();
             LogParser logParser = new LogParser();
             
             foreach (string logFile in _logFiles.Keys)
             {
-                Trace.WriteLine(logFile);
                 logParser.FileName = logFile;
-                List<HTTPLog> temp = null;
-                try
-                {
-                    temp = logParser.Parse();
-                }
-                catch (GrammarException)
-                {
-                    Trace.WriteLine("cool");
-                }
+                List<IIS_Log> temp = logParser.Parse();
                 httpLogs.AddRange(temp);
-                break;
             }
 
-            foreach (HTTPLog log in httpLogs)
-            {
-                //Trace.WriteLine(log.Date.ToString());
-            }
+            return httpLogs;
         }
 
         /// <summary>
@@ -94,7 +94,7 @@ namespace Kudu.Services.Diagnostics
         /// <param name="directory">The path to the directory in which Kudu is storing log files. (*note same location in azure)</param>
         /// <returns>Dictionary where the key is the fullname or absolute path of the log file that we scanned and the value is the length of that file.</returns>
         [NonAction]
-        private Dictionary<string, long> GetDirectoryFiles(string directory)
+        private Dictionary<string, long> GetDirectoryFiles(string directory) //TODO: Move this code to a new class that both log stream controller and analytics can use
         {
             //using a stack, store the directory names in the data structure, and follow a post-order traversal in traversing the log files
             Stack<string> stack = new Stack<string>();
