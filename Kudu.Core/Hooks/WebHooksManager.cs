@@ -83,18 +83,26 @@ namespace Kudu.Core.Hooks
 
                 bool lockAcquired = _hooksLock.TryLockOperation(() =>
                 {
-                    createdWebHook = new WebHook(webHook.HookEventType, webHook.HookAddress, id: DateTime.UtcNow.Ticks.ToString(), insecureSsl: webHook.InsecureSsl);
-
                     var webHooks = new List<WebHook>(ReadWebHooksFromFile());
-                    if (!webHooks.Any(h => String.Equals(h.HookAddress, createdWebHook.HookAddress, StringComparison.OrdinalIgnoreCase)))
+                    WebHook existingWebHook = webHooks.FirstOrDefault(h => String.Equals(h.HookAddress, webHook.HookAddress, StringComparison.OrdinalIgnoreCase));
+
+                    if (existingWebHook == null)
                     {
+                        // if web hook doesn't exist (by address) then add it
+                        createdWebHook = new WebHook(webHook.HookEventType, webHook.HookAddress, id: DateTime.UtcNow.Ticks.ToString(), insecureSsl: webHook.InsecureSsl);
                         webHooks.Add(createdWebHook);
                         SaveHooksToFile(webHooks);
 
                         _tracer.Trace("Added web hook: type - {0}, address - {1}", createdWebHook.HookEventType, createdWebHook.HookAddress);
                     }
+                    else if (String.Equals(webHook.HookEventType, existingWebHook.HookEventType, StringComparison.OrdinalIgnoreCase))
+                    {
+                        // if web hook exist with the same hook event type, return the existing one
+                        createdWebHook = existingWebHook;
+                    }
                     else
                     {
+                        // if web hook exists but with a different hook event type then throw a conflict exception
                         throw new ConflictException();
                     }
                 }, LockTimeout);

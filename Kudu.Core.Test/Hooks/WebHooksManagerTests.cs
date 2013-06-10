@@ -95,7 +95,28 @@ namespace Kudu.Core.Test.Deployment
         }
 
         [Fact]
-        public void AddSameAddressWebHookShouldThrowConflictException()
+        public void AddSameAddressWebHookWithDifferentHookEventTypeShouldThrowConflictException()
+        {
+            WebHook[] inputWebHooks = new WebHook[]
+            {
+                new WebHook(HookEventTypes.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa"),
+                new WebHook(HookEventTypes.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa2"),
+                new WebHook(HookEventTypes.PostDeployment + "_NewEvent", "http://www.gothere.com/aaabbbbbbaaa"),
+            };
+
+            WebHook[] expectedWebHooks = new WebHook[]
+            {
+                new WebHook(HookEventTypes.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa"),
+                new WebHook(HookEventTypes.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa2"),
+            };
+
+            Assert.Throws<ConflictException>(() => AddWebHooks(inputWebHooks));
+
+            AssertWebHooks(expectedWebHooks);
+        }
+
+        [Fact]
+        public void AddSameAddressWebHookWithSameHookEventTypeShouldSucceed()
         {
             WebHook[] inputWebHooks = new WebHook[]
             {
@@ -110,7 +131,7 @@ namespace Kudu.Core.Test.Deployment
                 new WebHook(HookEventTypes.PostDeployment, "http://www.gothere.com/aaabbbbbbaaa2"),
             };
 
-            Assert.Throws<ConflictException>(() => AddWebHooks(inputWebHooks));
+            AddWebHooks(inputWebHooks);
 
             AssertWebHooks(expectedWebHooks);
         }
