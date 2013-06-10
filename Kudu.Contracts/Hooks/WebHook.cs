@@ -33,5 +33,8 @@ namespace Kudu.Core.Hooks
 
         [JsonProperty(PropertyName = "last_datetime")]
         public DateTime LastPublishDate { get; set; }
+
+        [JsonProperty(PropertyName = "last_context")]
+        public string LastContext { get; set; }
     }
 }

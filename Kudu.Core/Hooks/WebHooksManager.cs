@@ -171,6 +171,7 @@ namespace Kudu.Core.Hooks
                         _tracer.Trace("Publish {0}#{1} to address - {2}, json - {3}, insecure - {4}", webHook.HookEventType, webHook.Id, webHook.HookAddress, jsonString, webHook.InsecureSsl);
 
                         webHook.LastPublishDate = DateTime.UtcNow;
+                        webHook.LastContext = jsonString;
 
                         using (HttpResponseMessage response = await httpClient.PostAsync(webHook.HookAddress, content))
                         {
