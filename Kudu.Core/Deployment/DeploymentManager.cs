@@ -248,7 +248,7 @@ namespace Kudu.Core.Deployment
             statusFile = _status.Open(id);
             if (statusFile != null)
             {
-                await _hooksManager.PublishPostDeploymentAsync(statusFile);
+                await _hooksManager.PublishEventAsync(HookEventTypes.PostDeployment, statusFile);
             }
 
             if (exception != null)

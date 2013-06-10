@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using Kudu.Core.Deployment;
 
 namespace Kudu.Core.Hooks
 {
@@ -14,6 +13,6 @@ namespace Kudu.Core.Hooks
 
         WebHook GetWebHook(string hookId);
 
-        Task PublishPostDeploymentAsync(IDeploymentStatusFile statusFile);
+        Task PublishEventAsync(string hookEventType, object eventContent);
     }
 }

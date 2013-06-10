@@ -8,7 +8,6 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
-using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -127,15 +126,15 @@ namespace Kudu.Core.Hooks
             }
         }
 
-        public async Task PublishPostDeploymentAsync(IDeploymentStatusFile statusFile)
+        public async Task PublishEventAsync(string hookEventType, object eventContent)
         {
-            using (_tracer.Step("WebHooksManager.PublishPostDeploymentAsync"))
+            using (_tracer.Step("WebHooksManager.PublishEventAsync: " + hookEventType))
             {
-                string jsonString = JsonConvert.SerializeObject(statusFile, JsonSerializerSettings);
+                string jsonString = JsonConvert.SerializeObject(eventContent, JsonSerializerSettings);
 
                 bool lockAcquired = await _hooksLock.TryLockOperationAsync(async () =>
                 {
-                    await PublishToHooksAsync(jsonString, HookEventTypes.PostDeployment);
+                    await PublishToHooksAsync(jsonString, hookEventType);
                 }, LockTimeout);
 
                 VerifyLockAcquired(lockAcquired);

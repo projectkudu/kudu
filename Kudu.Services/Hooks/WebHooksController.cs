@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using System.Web.Http;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
@@ -35,6 +36,21 @@ namespace Kudu.Services.Hooks
             catch (LockOperationException)
             {
                 _tracer.Trace("Failed to acquire lock while subscribing {0}".FormatCurrentCulture(webHook.HookAddress));
+                return Request.CreateResponse(HttpStatusCode.InternalServerError);
+            }
+        }
+
+        [HttpPost]
+        public async Task<HttpResponseMessage> PublishEvent(string hookEventType, object eventContent)
+        {
+            try
+            {
+                await _hooksManager.PublishEventAsync(hookEventType, eventContent);
+                return Request.CreateResponse(HttpStatusCode.OK);
+            }
+            catch (LockOperationException)
+            {
+                _tracer.Trace("Failed to acquire lock");
                 return Request.CreateResponse(HttpStatusCode.InternalServerError);
             }
         }

@@ -131,6 +131,7 @@ namespace Kudu.Core.Test.Deployment
                 WebHook expectedWebHook = expectedWebHooks[i];
                 WebHook actualWebHook = webHooks.Single(w => String.Equals(w.HookAddress, expectedWebHook.HookAddress, StringComparison.OrdinalIgnoreCase));
                 AssertWebHook(expectedWebHooks[i], actualWebHook);
+                AssertWebHook(expectedWebHooks[i], _webHooksManager.GetWebHook(actualWebHook.Id));
             }
         }
 

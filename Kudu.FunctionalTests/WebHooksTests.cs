@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Kudu.Client;
 using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Hooks;
+using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
 using Newtonsoft.Json;
 using Xunit;
@@ -36,7 +38,7 @@ namespace Kudu.FunctionalTests
                         GitDeployApp(hookAppManager, hookAppRepository);
 
                         expectedHookAddresses.Add(hook1);
-                        await VerifyWebHooksCall(hookAddress1, expectedHookAddresses, hookAppRepository.CurrentId, hookAppManager);
+                        await VerifyWebHooksCall(expectedHookAddresses, hookAppManager, DeployStatus.Success.ToString(), hookAppRepository.CurrentId);
 
                         WebHook webHookAdded2 = await SubscribeWebHook(hookAppManager, hookAddress2, 2);
 
@@ -44,7 +46,7 @@ namespace Kudu.FunctionalTests
                         await hookAppManager.DeploymentManager.DeployAsync(hookAppRepository.CurrentId);
 
                         expectedHookAddresses.Add(hook2);
-                        await VerifyWebHooksCall(hookAddress1, expectedHookAddresses, hookAppRepository.CurrentId, hookAppManager);
+                        await VerifyWebHooksCall(expectedHookAddresses, hookAppManager, DeployStatus.Success.ToString(), hookAppRepository.CurrentId);
 
                         TestTracer.Trace("Unsubscribe first hook");
                         await UnsubscribeWebHook(hookAppManager, webHookAdded1.Id, 1);
@@ -53,7 +55,7 @@ namespace Kudu.FunctionalTests
                         await hookAppManager.DeploymentManager.DeployAsync(hookAppRepository.CurrentId);
 
                         expectedHookAddresses.Remove(hook1);
-                        await VerifyWebHooksCall(hookAddress1, expectedHookAddresses, hookAppRepository.CurrentId, hookAppManager);
+                        await VerifyWebHooksCall(expectedHookAddresses, hookAppManager, DeployStatus.Success.ToString(), hookAppRepository.CurrentId);
 
                         TestTracer.Trace("Unsubscribe second hook");
                         await UnsubscribeWebHook(hookAppManager, webHookAdded2.Id, 0);
@@ -63,8 +65,75 @@ namespace Kudu.FunctionalTests
 
                         TestTracer.Trace("Verify web hook was not called");
                         expectedHookAddresses.Remove(hook2);
-                        await VerifyWebHooksCall(hookAddress1, expectedHookAddresses, hookAppRepository.CurrentId, hookAppManager);
+                        await VerifyWebHooksCall(expectedHookAddresses, hookAppManager, DeployStatus.Success.ToString(), hookAppRepository.CurrentId);
                     }
+                });
+            }
+        }
+
+        [Fact]
+        public async Task SubscribedWebHooksShouldBeCalledWithPublish()
+        {
+            string testName = "SubscribedWebHooksShouldBeCalledWithPublish";
+            var expectedHookAddresses = new List<string>();
+            string hook1 = "hookCalled/1";
+            string hook2 = "hookCalled/2";
+
+            using (new LatencyLogger(testName))
+            {
+                await ApplicationManager.RunAsync("HookSite" + testName, async hookAppManager =>
+                {
+                    using (var hookAppRepository = Git.Clone("NodeWebHookTest"))
+                    {
+                        GitDeployApp(hookAppManager, hookAppRepository);
+
+                        string hookAddress1 = hookAppManager.SiteUrl + hook1;
+                        string hookAddress2 = hookAppManager.SiteUrl + hook2;
+
+                        string customHookEventType = "CustomEvent";
+
+                        WebHook webHookAdded1 = await SubscribeWebHook(hookAppManager, hookAddress1, 1, customHookEventType);
+                        WebHook webHookAdded2 = await SubscribeWebHook(hookAppManager, hookAddress2, 2, customHookEventType);
+
+                        var jsonObject = new
+                        {
+                            TestProperty = "mytest_property",
+                            CustomProperty = "mycustom_property"
+                        };
+
+                        await hookAppManager.WebHooksManager.PublishEventAsync(customHookEventType, jsonObject);
+
+                        expectedHookAddresses.Add(hook1);
+                        expectedHookAddresses.Add(hook2);
+
+                        await VerifyWebHooksCall(expectedHookAddresses, hookAppManager, jsonObject.TestProperty, jsonObject.CustomProperty);
+                    }
+                });
+            }
+        }
+
+        [Fact]
+        public async Task SubscribedWebHooksShouldFailOnErrors()
+        {
+            string testName = "SubscribedWebHooksShouldFailOnErrors";
+            string hook = "hookCalled/1";
+
+            using (new LatencyLogger(testName))
+            {
+                await ApplicationManager.RunAsync("HookSite" + testName, async hookAppManager =>
+                {
+                    string customHookEventType = "CustomEvent";
+
+                    string hookAddress = hookAppManager.SiteUrl + hook;
+
+                    await hookAppManager.WebHooksManager.SubscribeAsync(new WebHook(customHookEventType, hookAddress));
+
+                    var thrownException = await KuduAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(async () =>
+                    {
+                        await hookAppManager.WebHooksManager.SubscribeAsync(new WebHook(customHookEventType, hookAddress));
+                    });
+
+                    Assert.Contains("Conflict", thrownException.Message);
                 });
             }
         }
@@ -78,12 +147,13 @@ namespace Kudu.FunctionalTests
             Assert.Equal(DeployStatus.Success, deploymentResults[0].Status);
         }
 
-        private static async Task<WebHook> SubscribeWebHook(ApplicationManager hookAppManager, string hookAddress, int expectedHooksCount)
+        private static async Task<WebHook> SubscribeWebHook(ApplicationManager hookAppManager, string hookAddress, int expectedHooksCount, string hookEventType = "PostDeployment")
         {
             TestTracer.Trace("Subscribe web hook to " + hookAddress);
-            WebHook webHookAdded = await hookAppManager.WebHooksManager.SubscribeAsync(new WebHook(HookEventTypes.PostDeployment, hookAddress));
+            WebHook webHookAdded = await hookAppManager.WebHooksManager.SubscribeAsync(new WebHook(hookEventType, hookAddress));
 
             await VerifyWebHooksCount(hookAppManager, expectedHooksCount);
+            await VerifyWebHook(hookAppManager, webHookAdded);
 
             return webHookAdded;
         }
@@ -103,11 +173,19 @@ namespace Kudu.FunctionalTests
             Assert.Equal(expectedHooksCount, webHooks.Count());
         }
 
-        private async Task VerifyWebHooksCall(string siteAddress, IEnumerable<string> hookAddresses, string commitId, ApplicationManager hookAppManager)
+        private static async Task VerifyWebHook(ApplicationManager hookAppManager, WebHook expectedWebHook)
+        {
+            TestTracer.Trace("Verify web hook");
+            WebHook actualWebHooks = await hookAppManager.WebHooksManager.GetWebHookAsync(expectedWebHook.Id);
+            Assert.Equal(expectedWebHook.HookAddress, actualWebHooks.HookAddress);
+            Assert.Equal(expectedWebHook.HookEventType, actualWebHooks.HookEventType);
+        }
+
+        private async Task VerifyWebHooksCall(IEnumerable<string> hookAddresses, ApplicationManager hookAppManager, params string[] expectedContents)
         {
             TestTracer.Trace("Verify web hook was called {0} times".FormatCurrentCulture(hookAddresses.Count()));
 
-            string webHookCallResponse = await GetWebHookResponseAsync(siteAddress);
+            string webHookCallResponse = await GetWebHookResponseAsync(hookAppManager.SiteUrl);
 
             string[] webHookResults = webHookCallResponse.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -122,9 +200,15 @@ namespace Kudu.FunctionalTests
                     dynamic webHookResultObject = JsonConvert.DeserializeObject(webHookResult);
                     if (("/" + hookAddress) == (string)webHookResultObject.url)
                     {
+                        var body = (string)webHookResultObject.body;
                         found = true;
-                        Assert.True(((string)webHookResultObject.body).Contains(DeployStatus.Success.ToString()), "Missing Success from body");
-                        Assert.True(((string)webHookResultObject.body).Contains(commitId), "Missing commit id from body - " + commitId);
+
+                        // Make sure body json
+                        JsonConvert.DeserializeObject(body);
+                        foreach (var expectedContent in expectedContents)
+                        {
+                            Assert.True((body).Contains(expectedContent), "Missing {0} from body".FormatInvariant(expectedContent));
+                        }
                     }
                 }
 

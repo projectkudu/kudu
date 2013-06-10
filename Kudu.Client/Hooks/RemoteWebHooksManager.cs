@@ -20,9 +20,19 @@ namespace Kudu.Client.Diagnostics
             return Client.GetJsonAsync<IEnumerable<WebHook>>(String.Empty);
         }
 
+        public Task<WebHook> GetWebHookAsync(string hookId)
+        {
+            return Client.GetJsonAsync<WebHook>(hookId);
+        }
+
         public async Task<WebHook> SubscribeAsync(WebHook webHook)
         {
             return await Client.PostJsonAsync<WebHook, WebHook>(String.Empty, webHook);
+        }
+
+        public async Task PublishEventAsync<T>(string hookEventType, T eventContent)
+        {
+            await Client.PostJsonAsync<T, object>("publish/" + hookEventType, eventContent);
         }
 
         public async Task UnsubscribeAsync(string hookId)
