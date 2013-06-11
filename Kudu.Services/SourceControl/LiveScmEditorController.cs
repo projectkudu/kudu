@@ -260,7 +260,6 @@ namespace Kudu.Services.SourceControl
                         return conflictResponse;
                     }
                 }
-                
 
                 // Use to track whether our rebase applied updates from master.
                 bool updateBranchIsUpToDate = false;
@@ -323,7 +322,7 @@ namespace Kudu.Services.SourceControl
                 }
 
                 // Deploy changes
-                DeployResult result = DeployChanges();
+                DeployResult result = await DeployChangesAsync();
                 if (result != null && result.Status != DeployStatus.Success)
                 {
                     HttpResponseMessage deploymentErrorResponse =
@@ -385,7 +384,7 @@ namespace Kudu.Services.SourceControl
             }
 
             // Deploy changes
-            DeployResult result = DeployChanges();
+            DeployResult result = await DeployChangesAsync();
             if (result != null && result.Status != DeployStatus.Success)
             {
                 HttpResponseMessage deploymentErrorResponse =
@@ -497,11 +496,11 @@ namespace Kudu.Services.SourceControl
             }
         }
 
-        private DeployResult DeployChanges()
+        private async Task<DeployResult> DeployChangesAsync()
         {
             try
             {
-                _deploymentManager.Deploy(_repository, changeSet: null, deployer: string.Empty, clean: true);
+                await _deploymentManager.DeployAsync(_repository, changeSet: null, deployer: string.Empty, clean: true);
             }
             catch (Exception e)
             {

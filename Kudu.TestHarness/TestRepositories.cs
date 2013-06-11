@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Kudu.TestHarness
 {
-    class TestRepositories
+    internal class TestRepositories
     {
         private static TestRepositoryInfo[] _repoList = new TestRepositoryInfo[]
         {
@@ -44,6 +41,7 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/Html5Test.git",                     "7262300"),
             new TestRepositoryInfo("https://github.com/KuduApps/TargetPathTest.git",                "7446104"),
             new TestRepositoryInfo("https://github.com/KuduApps/WebDeploySamples.git",              "ee3a42b"),
+            new TestRepositoryInfo("https://github.com/KuduApps/NodeWebHookTest.git",               "cd5bee7"),
         };
 
         private static Dictionary<string, TestRepositoryInfo> _repos;

@@ -189,7 +189,7 @@ namespace Kudu.Services.Test
                 throw new NotImplementedException();
             }
 
-            public Task Deploy(IRepository repository, ChangeSet changeSet, string deployer, bool clean, bool needFileUpdate = true)
+            public Task DeployAsync(IRepository repository, ChangeSet changeSet, string deployer, bool clean, bool needFileUpdate = true)
             {
                 ++DeployCount;
                 return Task.FromResult(1);

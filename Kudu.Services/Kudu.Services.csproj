@@ -97,6 +97,7 @@
     <Compile Include="FetchHelpers\DropboxHelper.cs" />
     <Compile Include="GitServer\CustomGitRepositoryHandler.cs" />
     <Compile Include="GitServer\GitServerHttpHandler.cs" />
+    <Compile Include="Hooks\WebHooksController.cs" />
     <Compile Include="HttpRequestExtensions.cs" />
     <Compile Include="ServiceHookHandlers\CodebaseHqHandler.cs" />
     <Compile Include="ServiceHookHandlers\CodePlexHandler.cs" />
