@@ -137,7 +137,7 @@ namespace Kudu.FunctionalTests
 
                     var thrownException = await KuduAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(async () =>
                     {
-                        await hookAppManager.WebHooksManager.SubscribeAsync(new WebHook(customHookEventType, hookAddress));
+                        await hookAppManager.WebHooksManager.SubscribeAsync(new WebHook(customHookEventType + "_DifferentEvent", hookAddress));
                     });
 
                     Assert.Contains("Conflict", thrownException.Message);
