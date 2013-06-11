@@ -48,6 +48,13 @@ namespace Kudu.FunctionalTests
                         expectedHookAddresses.Add(hook2);
                         await VerifyWebHooksCall(expectedHookAddresses, hookAppManager, DeployStatus.Success.ToString(), hookAppRepository.CurrentId);
 
+                        TestTracer.Trace("Make sure web hooks are called for failed deployments");
+                        await hookAppManager.SettingsManager.SetValue("COMMAND", "thisIsAnErrorCommand");
+                        await hookAppManager.DeploymentManager.DeployAsync(hookAppRepository.CurrentId);
+                        await VerifyWebHooksCall(expectedHookAddresses, hookAppManager, DeployStatus.Failed.ToString());
+
+                        await hookAppManager.SettingsManager.Delete("COMMAND");
+
                         TestTracer.Trace("Unsubscribe first hook");
                         await UnsubscribeWebHook(hookAppManager, webHookAdded1.Id, 1);
 
@@ -207,7 +214,7 @@ namespace Kudu.FunctionalTests
                         JsonConvert.DeserializeObject(body);
                         foreach (var expectedContent in expectedContents)
                         {
-                            Assert.True((body).Contains(expectedContent), "Missing {0} from body".FormatInvariant(expectedContent));
+                            Assert.Contains(expectedContent, body, StringComparison.OrdinalIgnoreCase);
                         }
                     }
                 }
