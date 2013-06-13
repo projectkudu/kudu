@@ -1,9 +1,10 @@
-﻿var path = require('path')
-    , fs = require('fs');
+﻿var path = require('path'),
+    fs = require('fs'),
+    semver = require('./semver.js');
 
 var existsSync = fs.existsSync || path.existsSync;
 
-var flushAndExit = function (code) {
+function flushAndExit(code) {
     var exiting;
     process.on('exit', function () {
         if (exiting)
@@ -14,7 +15,59 @@ var flushAndExit = function (code) {
     });
 };
 
-var createIisNodeWebConfigIfNeeded = function (repoPath, wwwrootPath) {
+
+function getDefaultNpmPath(npmRootPath, nodeVersionPath) {
+    var npmLinkPath = path.resolve(nodeVersionPath, 'npm.txt');
+    
+    // Determine if there's a link to npm at the node path
+    if (!existsSync(npmLinkPath)) {
+        return;
+    }
+    
+    var npmVersion = fs.readFileSync(npmLinkPath, 'utf8'),
+        npmPath = path.resolve(npmRootPath, npmVersion, 'bin', 'npm-cli.js');
+
+    if (!existsSync(npmPath)) {
+        throw new Error('Unable to locate npm version ' + npmVersion + ' at ' + npmPath);
+    }
+    return npmPath;
+}
+
+function getNpmPath(npmRootPath, json) {
+    if (typeof json.engines.npm !== 'string') {
+        return;
+    }
+
+    var versions = [];
+    fs.readdirSync(npmRootPath).forEach(function (dir) {
+        versions.push(dir);
+    });
+
+    var npmVersion = semver.maxSatisfying(versions, json.engines.npm);
+    if (!npmVersion) {
+        var errorMsg = 'No available npm version matches application\'s version constraint of \''
+                        + json.engines.npm + '\'. Use package.json to choose one of the following versions: '
+                        + versions.join(', ') + '.';
+        throw new Error(errorMsg);
+    }
+    
+    return path.resolve(npmRootPath, npmVersion, 'bin', 'npm-cli.js');
+}
+
+function saveNodePaths(tempDir, nodeExePath, npmPath) {
+    if (!tempDir) {
+        return;
+    }
+    var nodeTmpFile = path.resolve(tempDir, '__nodeVersion.tmp'),
+        npmTempFile = path.resolve(tempDir, '__npmVersion.tmp');
+
+    fs.writeFileSync(nodeTmpFile, nodeExePath);
+    if (npmPath) {
+        fs.writeFileSync(npmTempFile, npmPath);
+    }
+}
+
+function createIisNodeWebConfigIfNeeded(repoPath, wwwrootPath) {
     // Check if web.config exists in the 'repository', if not generate it in 'wwwroot'
     var webConfigRepoPath = path.join(repoPath, 'web.config');
     var webConfigWwwRootPath = path.join(wwwrootPath, 'web.config');
@@ -34,7 +87,7 @@ var createIisNodeWebConfigIfNeeded = function (repoPath, wwwrootPath) {
     }
 }
 
-var getNodeStartFile = function (sitePath) {
+function getNodeStartFile(sitePath) {
     var nodeStartFiles = ['server.js', 'app.js'];
 
     for (var i in nodeStartFiles) {
@@ -49,7 +102,10 @@ var getNodeStartFile = function (sitePath) {
 
 // Determine the installation location of node.js and iisnode
 
-var nodejsDir = path.resolve(process.env['programfiles(x86)'] || process.env['programfiles'], 'nodejs');
+var programFilesDir = process.env['programfiles(x86)'] || process.env['programfiles'],
+    nodejsDir = path.resolve(programFilesDir, 'nodejs'),
+    npmDir = path.resolve(programFilesDir, 'npm');
+
 if (!existsSync(nodejsDir))
     throw new Error('Unable to locate node.js installation directory at ' + nodejsDir);
 
@@ -95,9 +151,16 @@ if (!existsSync(packageJson)) {
 
 var json = JSON.parse(fs.readFileSync(packageJson, 'utf8'));
 if (typeof json !== 'object' || typeof json.engines !== 'object' || typeof json.engines.node !== 'string') {
+    // Attempt to read the pinned node version or fallback to the version of the executing node.exe.
+    var nodeVersion = process.env['NodeInitialVersion'] || process.versions.node,
+	    nodeVersionPath = path.resolve(nodejsDir, nodeVersion),
+        nodeExePath = path.resolve(nodeVersionPath, 'node.exe'),
+        npmPath = getDefaultNpmPath(npmDir, nodeVersionPath);
+
     console.log('The package.json file does not specify node.js engine version constraints.');
     console.log('The node.js application will run with the default node.js version '
-        + process.versions.node + '.');
+        + nodeVersion + '.');
+    saveNodePaths(tempDir, nodeExePath, npmPath);
     return flushAndExit(0);
 }
 
@@ -128,27 +191,34 @@ console.log('Node.js versions available on the platform are: ' + versions.join('
 // Calculate actual node.js version to use for the application as the maximum available version
 // that satisfies the version constraints from package.json.
 
-var version = require('./semver.js').maxSatisfying(versions, json.engines.node);
-if (!version) {
-    console.log('No available node.js version matches application\'s version constraint of \''
+var nodeVersion = semver.maxSatisfying(versions, json.engines.node);
+if (!nodeVersion) {
+    console.error('No available node.js version matches application\'s version constraint of \''
         + json.engines.node + '\'.');
-    console.log('Use package.json to choose one of the available versions.');
+    console.error('Use package.json to choose one of the available versions.');
     return flushAndExit(-1);
 }
 
-console.log('Selected node.js version ' + version + '. Use package.json file to choose a different version.');
+console.log('Selected node.js version ' + nodeVersion + '. Use package.json file to choose a different version.');
+
+var nodeVersionPath = path.resolve(nodejsDir, nodeVersion),
+    nodeExePath = path.resolve(nodejsDir, 'node.exe'),
+    npmPath;
+try {
+    npmPath = getNpmPath(npmDir, json) || getDefaultNpmPath(npmDir, nodeVersionPath);
+} catch (ex) {
+    console.error(ex.message);
+    return flushAndExit(-1);
+}
 
 // Save the version information to iisnode.yml in the wwwroot directory
 
 if (yml !== '')
     yml += '\r\n';
 
-var nodeVersionPath = path.resolve(nodejsDir, version, 'node.exe');
 yml += 'nodeProcessCommandLine: "' + nodeVersionPath + '"';
 fs.writeFileSync(wwwrootIisnodeYml, yml);
 
 // Save the node version in a temporary path for kudu service usage
-if (tempDir) {
-    var tempFile = path.resolve(tempDir, '__nodeVersion.tmp');
-    fs.writeFileSync(tempFile, nodeVersionPath);
-}
+saveNodePaths(tempDir, nodeExePath, npmPath);
+
