@@ -96,42 +96,67 @@
         </h1>
     </div>
     
-   <div class="header">Environment</div>
+    <div class="header">Environment</div>
 
     <table>
         <tr>
             <%
                 var upTime = Kudu.Services.Web.Tracing.TraceModule.UpTime.ToString();
             %>
-            <td><strong>Up Time</strong></td>
+            <td><strong>Site up time</strong></td>
             <td><%= upTime %></td>
         </tr>
         <tr>
-            <td><strong>Live Site</strong></td>
+            <td><strong>Site folder</strong></td>
             <td class="path"><%= MapPath("_app") %></td>
         </tr>
         <tr>
-            <td><strong>Temp</strong></td>
+            <td><strong>Temp folder</strong></td>
             <td class="path"><%= Path.GetTempPath() %></td>
         </tr>
         <tr>
-            <td><strong>Runtime Environment</strong></td>
+            <td><strong>Runtime environment</strong></td>
             <td><a href="Env.aspx">View</a></td>
         </tr>
 
         <tr>
-            <td><strong>Diagnostic Dump</strong></td>
+            <td><strong>Diagnostic dump</strong></td>
             <td><a href="dump">Download</a></td>
         </tr>
         <tr>
-            <td><strong>Diagnostic Console</strong></td>
+            <td><strong>Diagnostic console</strong></td>
             <td><a href="KuduExec">Launch</a>&nbsp;&nbsp;This is an experimental feature.</td>
         </tr>
         <tr>
-            <td><strong>Diagnostic Log Stream</strong></td>
+            <td><strong>Diagnostic log stream</strong></td>
             <td><a href="logstream">Stream</a>&nbsp;&nbsp;If no log events are being generated the page may not load.</td>
         </tr>
 
+    </table>
+
+    <div class="header">REST API (works best when using a JSON viewer extension)</div>
+
+    <table>
+        <tr>
+            <td><strong>Deployments</strong></td>
+            <td><a href="deployments">Browse</a></td>
+        </tr>
+        <tr>
+            <td><strong>Files</strong></td>
+            <td><a href="vfs">Browse</a></td>
+        </tr>
+        <tr>
+            <td><strong>App settings</strong></td>
+            <td><a href="settings">Browse</a></td>
+        </tr>
+        <tr>
+            <td><strong>Processes and mini-dumps</strong></td>
+            <td><a href="diagnostics/processes">Browse</a></td>
+        </tr>
+        <tr>
+            <td><strong>Source control info</strong></td>
+            <td><a href="scm/info">Browse</a></td>
+        </tr>
     </table>
 </body>
 </html>
