@@ -41,15 +41,25 @@
     <Compile Include="..\Common\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="AnalyticsParser\CookieParser\CookieParser.cs" />
-    <Compile Include="AnalyticsParser\GrammarException.cs" />
-    <Compile Include="AnalyticsParser\Constants.cs" />
-    <Compile Include="AnalyticsParser\IIS_Log.cs" />
-    <Compile Include="AnalyticsParser\HttpLog.cs" />
-    <Compile Include="AnalyticsParser\LogFields.cs" />
-    <Compile Include="AnalyticsParser\LogParser.cs" />
-    <Compile Include="AnalyticsParser\W3C_ExtendedField.cs" />
-    <Compile Include="AnalyticsParser\W3C_ExtendedConstants.cs" />
+    <Compile Include="AnalyticsDataLayer\CookieParser\CookieConstants.cs" />
+    <Compile Include="AnalyticsDataLayer\CookieParser\CookieParser.cs" />
+    <Compile Include="AnalyticsDataLayer\DataEngine.cs" />
+    <Compile Include="AnalyticsDataLayer\DataLayerAPI.cs" />
+    <Compile Include="AnalyticsDataLayer\GrammarException.cs" />
+    <Compile Include="AnalyticsDataLayer\Constants.cs" />
+    <Compile Include="AnalyticsDataLayer\LogFormat.cs" />
+    <Compile Include="AnalyticsDataLayer\W3C_Extended_Log.cs" />
+    <Compile Include="AnalyticsDataLayer\HttpLog.cs" />
+    <Compile Include="AnalyticsDataLayer\LogFields.cs" />
+    <Compile Include="AnalyticsDataLayer\LogParser.cs" />
+    <Compile Include="AnalyticsDataLayer\Parser.cs" />
+    <Compile Include="AnalyticsDataLayer\W3C_ExtendedField.cs" />
+    <Compile Include="AnalyticsDataLayer\W3C_ExtendedConstants.cs" />
+    <Compile Include="AnalyticsEngineLayer\Metrics\IMetric.cs" />
+    <Compile Include="AnalyticsEngineLayer\Metrics\MetricRequirement.cs" />
+    <Compile Include="AnalyticsEngineLayer\Metrics\SessionNumberMetric.cs" />
+    <Compile Include="AnalyticsEngineLayer\Metrics\MetricFormatException.cs" />
+    <Compile Include="AnalyticsEngineLayer\Metrics\W3C_MetricRequirements.cs" />
     <Compile Include="Commands\CommandExecutor.cs" />
     <Compile Include="Deployment\CascadeLogger.cs" />
     <Compile Include="Deployment\DeploymentStatusFileExtensions.cs" />
@@ -65,7 +75,7 @@
     <Compile Include="Deployment\Generator\NodeSiteEnabler.cs" />
     <Compile Include="Deployment\Generator\SiteBuilderFactory.cs" />
     <Compile Include="Infrastructure\StringExtensions.cs" />
-    <Compile Include="LogHelper\StreamHelper.cs" />
+    <Compile Include="LogHelper\LogServiceHelper.cs" />
     <Compile Include="PathManagement\PathResolver.cs" />
     <Compile Include="Settings\DeploymentSettingsProvider.cs" />
     <Compile Include="Deployment\DeploymentContext.cs" />
@@ -147,6 +157,7 @@
     <Content Include="Scripts\starter.cmd">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Include="ClassDiagram1.cd" />
     <None Include="packages.config" />
     <Content Include="Scripts\kudusync.cmd">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

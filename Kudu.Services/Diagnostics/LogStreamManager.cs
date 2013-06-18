@@ -111,6 +111,7 @@ namespace Kudu.Services.Performance
             if (_watcher == null)
             {
                 FileSystemWatcher watcher = new FileSystemWatcher(path);
+                //private Action<T1, T2> DoSafeAction<T1, T2>(Action<T1, T2> func, string eventName)
                 watcher.Changed += new FileSystemEventHandler(DoSafeAction<object, FileSystemEventArgs>(OnChanged, "LogStreamManager.OnChanged"));
                 watcher.Deleted += new FileSystemEventHandler(DoSafeAction<object, FileSystemEventArgs>(OnDeleted, "LogStreamManager.OnDeleted"));
                 watcher.Renamed += new RenamedEventHandler(DoSafeAction<object, RenamedEventArgs>(OnRenamed, "LogStreamManager.OnRenamed"));

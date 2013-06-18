@@ -8,30 +8,63 @@ using System.Web.Http;
 using System.Security.Permissions;
 using System.Security;
 using System.Diagnostics;
-using Kudu.Core.AnalyticsParser;
+using Kudu.Core.AnalyticsDataLayer;
+using Kudu.Core.LogHelper;
+using Kudu.Core.AnalyticsEngineLayer.Metrics;
 
 namespace Kudu.Services.Diagnostics
 {
     public class AnalyticsController : ApiController
     {
-        string path = @"C:\Users\t-hawkf\Desktop\TempLogs";
-        private Dictionary<string, long> _logFiles;
+        //string path = @"C:\Users\t-hawkf\Desktop\TempLogs";
+        string path = @"C:\Users\t-hawkf\Desktop\Logs\W3SVC1";
+        //private Dictionary<string, long> _logFiles;
         public string testing = null;
-        private List<IIS_Log> logs;
+        //private List<W3C_Extended_Log> logs;
         //Kudu.Core.IEnvironment environment;
+        private AnalyticsEngine _analytics;
 
         public AnalyticsController()
         {
-            _logFiles = GetDirectoryFiles(path);
-            logs = ScanIISFiles();
+            //make an instance of the Anaylytics Engine
+            _analytics = new AnalyticsEngine();
+            _analytics.LogDirectory = path;
+            //TestData();
+            //_logFiles = LogServiceHelper.GetDirectoryFiles(path);
+            //logs = ScanIISFiles();
             testing = "hello word";
+            
+        }
+
+        /// <summary>
+        /// Gets the number of sessions for this site since the beginning of the logged data
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        public string GetSessionCount()
+        {
+            //add a metric that covers unique sessions to the AnalyticsEngine
+            SessionNumberMetric metric = new SessionNumberMetric("# of sessions");
+            //Make sure the log format is W3C EXtended
+            metric.LogFormat = LogFormat.W3C_EXTENDED;
+            _analytics.AddMetric(metric);
+            _analytics.RunEngine();
+            return String.Empty;
+        }
+
+        [HttpGet]
+        public string GetNumberOfSessions(string startTime, string endTime)
+        {
+            throw new NotImplementedException();
         }
 
         [HttpGet]
         public string TestData()
         {
+            DataEngine dataEngine = new DataEngine();
+            dataEngine.SetLogDirectory(path);
             String data = String.Empty;
-            foreach (IIS_Log log in logs)
+            foreach (W3C_Extended_Log log in dataEngine.GetLines(new DateTime(2013, 6, 12, 17, 19, 0), new DateTime(2013, 6, 12, 21, 19, 0)))
             {
                 Trace.WriteLine(log);
             }
@@ -73,55 +106,30 @@ namespace Kudu.Services.Diagnostics
         /// Given that the dictionary of the files are there, start scanning each file and get the information that we need to store them in memory
         /// </summary>
         [NonAction]
-        private List<IIS_Log> ScanIISFiles()
+
+        
+        private List<W3C_Extended_Log> ScanIISFiles()
         {
-            List<IIS_Log> httpLogs = new List<IIS_Log>();
+            List<W3C_Extended_Log> httpLogs = new List<W3C_Extended_Log>();
             LogParser logParser = new LogParser();
-            
+            /*
             foreach (string logFile in _logFiles.Keys)
             {
                 logParser.FileName = logFile;
-                List<IIS_Log> temp = logParser.Parse();
-                httpLogs.AddRange(temp);
-            }
+                //check if the parser is capable of parsing that file and if so then parse and if not then go on to next file
+                if (!logParser.IsCapable)
+                {
+                    continue;
+                }
+                //List<W3C_Extended_Log> temp = logParser.Parse();
+                foreach (W3C_Extended_Log log in logParser.ParseW3CFormat())
+                {
+                    Trace.WriteLine(log);
+                }
+                //httpLogs.AddRange(temp);
+            }*/
 
             return httpLogs;
-        }
-
-        /// <summary>
-        /// Given a path to a directory, scan all the .log, .txt files in the directory and subdirectories to store information in memory and work with the data
-        /// </summary>
-        /// <param name="directory">The path to the directory in which Kudu is storing log files. (*note same location in azure)</param>
-        /// <returns>Dictionary where the key is the fullname or absolute path of the log file that we scanned and the value is the length of that file.</returns>
-        [NonAction]
-        private Dictionary<string, long> GetDirectoryFiles(string directory) //TODO: Move this code to a new class that both log stream controller and analytics can use
-        {
-            //using a stack, store the directory names in the data structure, and follow a post-order traversal in traversing the log files
-            Stack<string> stack = new Stack<string>();
-            Dictionary<string, long> files = new Dictionary<string, long>();
-            //begin by pushing the directory where the files are
-            stack.Push(directory);
-            string currentDirectory = null;
-            while (stack.Count > 0)
-            {
-                //FIFO get the top directory to scan through
-                currentDirectory = stack.Pop();
-                string[] subDirectories;
-                subDirectories = Directory.GetDirectories(currentDirectory);
-                //traverse each file and add the file path to the dictionary
-                foreach (string fileName in Directory.GetFiles(currentDirectory))
-                {
-                    files.Add(fileName, new FileInfo(fileName).Length);
-                    //Trace.WriteLine(fileName);
-                }
-                
-                //after adding all the files to the dictionary for the current directory, push the paths of the subdirectories to the stack and continue the loop
-                foreach (string subDirectory in subDirectories)
-                {
-                    stack.Push(subDirectory);
-                }
-            }
-            return files;
         }
     }
 }
