@@ -49,9 +49,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\Kudu.Core.Test\MockDeploymentSettingsManager.cs">
-      <Link>MockDeploymentSettingsManager.cs</Link>
-    </Compile>
     <Compile Include="BitbucketHandlerFacts.cs" />
     <Compile Include="CodeBaseHqFacts.cs" />
     <Compile Include="CodePlexHandlerFacts.cs" />
@@ -84,6 +81,10 @@
     <ProjectReference Include="..\Kudu.Services\Kudu.Services.csproj">
       <Project>{d163e227-9eb6-4619-ad37-d8eef831aef0}</Project>
       <Name>Kudu.Services</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Kudu.TestHarness\Kudu.TestHarness.csproj">
+      <Project>{acf3450a-8062-48d5-9c9d-8486261f290f}</Project>
+      <Name>Kudu.TestHarness</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

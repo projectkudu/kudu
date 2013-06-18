@@ -61,11 +61,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AuthUtilityFacts.cs" />
+    <Compile Include="AsyncLockFileTests.cs" />
     <Compile Include="Deployment\NodeSiteEnablerTests.cs" />
     <Compile Include="Deployment\DeploymentManagerFacts.cs" />
     <Compile Include="HgRepositoryFacts.cs" />
     <Compile Include="Hooks\WebHooksManagerTests.cs" />
     <Compile Include="IdleManagerFacts.cs" />
+    <Compile Include="Infrastructure\ProgressWriterFacts.cs" />
     <Compile Include="Infrastructure\DisposableActionFacts.cs" />
     <Compile Include="Infrastructure\ExecutableExtensionFacts.cs" />
     <Compile Include="Infrastructure\OperationManagerFacts.cs" />
@@ -74,7 +76,6 @@
     <Compile Include="Infrastructure\XmlUtilityFacts.cs" />
     <Compile Include="DeploymentSettingsFacts.cs" />
     <Compile Include="JsonSettingsFacts.cs" />
-    <Compile Include="MockDeploymentSettingsManager.cs" />
     <Compile Include="FileSystemHelpersTest.cs" />
     <Compile Include="GitRepositoryTest.cs" />
     <Compile Include="IniFileFacts.cs" />
@@ -107,6 +108,10 @@
     <ProjectReference Include="..\Kudu.Services.Web\Kudu.Services.Web.csproj">
       <Project>{6295D938-63FD-4C26-AE00-B32776CC689E}</Project>
       <Name>Kudu.Services.Web</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Kudu.TestHarness\Kudu.TestHarness.csproj">
+      <Project>{acf3450a-8062-48d5-9c9d-8486261f290f}</Project>
+      <Name>Kudu.TestHarness</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

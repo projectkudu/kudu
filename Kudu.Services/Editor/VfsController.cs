@@ -99,11 +99,11 @@ namespace Kudu.Services.Editor
                 }
                 return Task.FromResult(invalidByteRangeResponse);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
                 // Could not read the file
-                Tracer.TraceError(e);
-                HttpResponseMessage errorResponse = Request.CreateErrorResponse(HttpStatusCode.NotFound, e);
+                Tracer.TraceError(ex);
+                HttpResponseMessage errorResponse = Request.CreateErrorResponse(HttpStatusCode.NotFound, ex);
                 if (fileStream != null)
                 {
                     fileStream.Close();
@@ -148,7 +148,6 @@ namespace Kudu.Services.Editor
             }
 
             // Save file
-            
             try
             {
                 using (Stream fileStream = GetFileWriteStream(localFilePath, fileExists: itemExists))
@@ -156,12 +155,13 @@ namespace Kudu.Services.Editor
                     try
                     {
                         await Request.Content.CopyToAsync(fileStream);
-                    } catch (Exception ex)
+                    } 
+                    catch (Exception ex)
                     {
                         Tracer.TraceError(ex);
                         HttpResponseMessage conflictResponse = Request.CreateErrorResponse(
                             HttpStatusCode.Conflict,
-                            RS.Format(Resources.VfsController_WriteConflict, localFilePath),
+                            RS.Format(Resources.VfsController_WriteConflict, localFilePath, ex.Message),
                             ex);
 
                         return conflictResponse;
@@ -177,12 +177,12 @@ namespace Kudu.Services.Editor
                 return successFileResponse;
                 
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Tracer.TraceError(e);
+                Tracer.TraceError(ex);
                 HttpResponseMessage errorResponse =
                     Request.CreateErrorResponse(HttpStatusCode.Conflict,
-                    RS.Format(Resources.VfsController_WriteConflict, localFilePath), e);
+                    RS.Format(Resources.VfsController_WriteConflict, localFilePath, ex.Message), ex);
                 
                 return errorResponse;
             }

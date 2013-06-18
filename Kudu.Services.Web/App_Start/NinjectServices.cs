@@ -51,6 +51,9 @@ namespace Kudu.Services.Web.App_Start
 
         private static readonly Bootstrapper _bootstrapper = new Bootstrapper();
 
+        // Due to a bug in Ninject we can't use Dispose to clean up LockFile so we shut it down manually
+        private static LockFile _deploymentLock;
+
         private static event Action Shutdown;
 
         /// <summary>
@@ -71,6 +74,12 @@ namespace Kudu.Services.Web.App_Start
             if (Shutdown != null)
             {
                 Shutdown();
+            }
+
+            if (_deploymentLock != null)
+            {
+                _deploymentLock.TerminateAsyncLocks();
+                _deploymentLock = null;
             }
 
             _bootstrapper.ShutDown();
@@ -132,7 +141,9 @@ namespace Kudu.Services.Web.App_Start
             string hooksLockPath = Path.Combine(lockPath, Constants.HooksLockFile);
 
             var fileSystem = new FileSystem();
-            var deploymentLock = new LockFile(deploymentLockPath, kernel.Get<ITraceFactory>(), fileSystem);
+            _deploymentLock = new LockFile(deploymentLockPath, kernel.Get<ITraceFactory>(), fileSystem);
+            _deploymentLock.InitializeAsyncLocks();
+
             var statusLock = new LockFile(statusLockPath, kernel.Get<ITraceFactory>(), fileSystem);
             var sshKeyLock = new LockFile(sshKeyLockPath, kernel.Get<ITraceFactory>(), fileSystem);
             var hooksLock = new LockFile(hooksLockPath, kernel.Get<ITraceFactory>(), fileSystem);
@@ -140,7 +151,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IOperationLock>().ToConstant(sshKeyLock).WhenInjectedInto<SSHKeyController>();
             kernel.Bind<IOperationLock>().ToConstant(statusLock).WhenInjectedInto<DeploymentStatusManager>();
             kernel.Bind<IOperationLock>().ToConstant(hooksLock).WhenInjectedInto<WebHooksManager>();
-            kernel.Bind<IOperationLock>().ToConstant(deploymentLock);
+            kernel.Bind<IOperationLock>().ToConstant(_deploymentLock);
 
             var shutdownDetector = new ShutdownDetector();
             shutdownDetector.Initialize();
@@ -197,7 +208,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IDeploymentEnvironment>().To<DeploymentEnvrionment>();
 
             kernel.Bind<IGitServer>().ToMethod(context => new GitExeServer(context.Kernel.Get<IEnvironment>(),
-                                                                           deploymentLock,
+                                                                           _deploymentLock,
                                                                            GetRequestTraceFile(context.Kernel),
                                                                            context.Kernel.Get<IRepositoryFactory>(),
                                                                            context.Kernel.Get<IDeploymentEnvironment>(),

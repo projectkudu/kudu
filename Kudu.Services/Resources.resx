@@ -184,7 +184,7 @@
     <value>Updating an existing resource requires an If-Match header carrying a single, strong ETag.</value>
   </data>
   <data name="VfsController_WriteConflict" xml:space="preserve">
-    <value>Could not write to local resource '{0}'.</value>
+    <value>Could not write to local resource '{0}' due to error '{1}'.</value>
   </data>
   <data name="VfsScmController_EtagMismatch" xml:space="preserve">
     <value>ETag does not represent an existing commit ID: '{0}'. Updates must be based on an existing commit ID.</value>
@@ -242,5 +242,8 @@
   </data>
   <data name="VfsScmController_DeploymentError" xml:space="preserve">
     <value>Deployment failed with status: '{0}'. Please retry operation.</value>
+  </data>
+  <data name="VfsScmUpdate_Error" xml:space="preserve">
+    <value>Could not complete update -- received error '{0}'. Please try again.</value>
   </data>
 </root>

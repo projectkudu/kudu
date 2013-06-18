@@ -134,6 +134,18 @@ namespace Kudu.Core.Test
                 return Interlocked.CompareExchange(ref _locked, 1, 0) == 0;
             }
 
+            public async Task LockAsync()
+            {
+                while (true)
+                {
+                    if (Interlocked.CompareExchange(ref _locked, 1, 0) == 0)
+                    {
+                        return;
+                    }
+                    await Task.Delay(100);
+                }
+            }
+
             public void Release()
             {
                 Assert.Equal(1, _locked);

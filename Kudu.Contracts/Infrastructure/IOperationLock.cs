@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Threading.Tasks;
 
 namespace Kudu.Contracts.Infrastructure
 {
@@ -6,6 +6,9 @@ namespace Kudu.Contracts.Infrastructure
     {
         bool IsHeld { get; }
         bool Lock();
+
+        // Waits until lock can be acquired after which the task completes.
+        Task LockAsync();
         void Release();
     }
 }

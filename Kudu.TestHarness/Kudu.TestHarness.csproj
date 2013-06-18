@@ -31,11 +31,9 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\Kudu.Core.Test\MockDeploymentSettingsManager.cs">
-      <Link>MockDeploymentSettingsManager.cs</Link>
-    </Compile>
     <Compile Include="ApplicationManager.cs" />
     <Compile Include="ApplicationManagerExtensions.cs" />
+    <Compile Include="MockDeploymentSettingsManager.cs" />
     <Compile Include="Npm.cs" />
     <Compile Include="Node.cs" />
     <Compile Include="LatencyLogger.cs" />

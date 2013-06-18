@@ -1,94 +1,134 @@
 ﻿using System;
+using System.IO;
 using System.Threading;
 
 namespace Kudu.Core.Infrastructure
 {
+    /// <summary>
+    /// The <see cref="ProgressWriter"/> class takes two <see cref="TextWriter"/> instances (output and error)
+    /// and acts as a write-through of data. However, if nothing is written to these two writers for a given amount 
+    /// of time then the <see cref="ProgressWriter"/> goes into "idle" mode which causes a sequence of "." to 
+    /// be written until new data is written to the output or error.
+    /// </summary>
     internal class ProgressWriter : IDisposable
     {
-        private Thread _progressThread;
-        private bool _writingProgress;
-        private bool _running;
+        private static readonly TimeSpan _defaultIdlingStart = TimeSpan.FromSeconds(5);
+        private static readonly TimeSpan _defaultIdlingDelay = TimeSpan.FromSeconds(1);
 
-        private DateTime _lastWriteTime;
+        private readonly Timer _timer;
+        private readonly TextWriter _output;
+        private readonly TextWriter _error;
 
+        private TimeSpan _idlingStart;
+        private TimeSpan _idlingDelay;
+
+        private object _thisLock = new object();
+        private bool _idling;
+        private bool disposed;
+
+        /// <summary>
+        /// Creates a new <see cref="ProgessWriter"/> instance defaulting to Console.Out and Console.Error and with 
+        /// default idling start and delay times.
+        /// </summary>
         public ProgressWriter()
+            : this(Console.Out, Console.Error)
         {
-            // Set the last write time and initialize progress thread
-            _lastWriteTime = DateTime.UtcNow;
-            _running = true;
-            _progressThread = new Thread(UpdateWriterState);
-            _progressThread.Start();
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ProgessWriter"/> instance.
+        /// </summary>
+        /// <param name="output">The output writer. The idle character (".") is always written to this writer. Writer is not disposed.</param>
+        /// <param name="error">The error writer. Writer is not disposed.</param>
+        /// <param name="idlingStart">The amount of time until the writers are consider to be idling.</param>
+        /// <param name="idlingDelay">The amount of time between each idle character (".") written while idling.</param>
+        public ProgressWriter(TextWriter output, TextWriter error, TimeSpan? idlingStart = null, TimeSpan? idlingDelay = null)
+        {
+            if (output == null)
+            {
+                throw new ArgumentNullException("output");
+            }
+            if (error == null)
+            {
+                throw new ArgumentNullException("error");
+            }
+            _output = output;
+            _error = error;
+
+            _idlingStart = idlingStart != null ? idlingStart.Value : _defaultIdlingStart;
+            _idlingDelay = idlingDelay != null ? idlingDelay.Value : _defaultIdlingDelay;
+
+            // Set timer to fire first time we go idle
+            _timer = new Timer(IdleWriter, null, _idlingStart, Timeout.InfiniteTimeSpan);
         }
 
         public void WriteOutLine(string value)
         {
-            OnBeforeWrite();
-
-            Console.Out.WriteLine(value);
+            lock (_thisLock)
+            {
+                OnBeforeWrite();
+                _output.WriteLine(value);
+            }
         }
 
         public void WriteErrorLine(string value)
         {
-            OnBeforeWrite();
-
-            Console.Error.WriteLine(value);
+            lock (_thisLock)
+            {
+                OnBeforeWrite();
+                _error.WriteLine(value);
+            }
         }
 
         private void OnBeforeWrite()
         {
-            _lastWriteTime = DateTime.UtcNow;
-
-            if (_writingProgress)
+            if (!disposed)
             {
-                // Go back to not writing progress and print a new line before
-                // we start to write new content
-                _writingProgress = false;
-                Console.WriteLine();
+                if (_idling)
+                {
+                    _idling = false;
+
+                    // Go back to not writing progress and print a new line before we start to write new content
+                    _output.WriteLine();
+                }
+
+                // Set next timer to fire when we would go idle
+                _timer.Change(_idlingStart, Timeout.InfiniteTimeSpan);
             }
         }
 
-        private void UpdateWriterState()
+        private void IdleWriter(object state)
         {
-            // Keep the background thread running
-            while (_running)
+            lock (_thisLock)
             {
-                if (!_writingProgress)
+                if (!disposed)
                 {
-                    // If 5 seconds elapsed since the last write then switch into progress writing state
-                    var elapsed = DateTime.UtcNow - _lastWriteTime;
+                    _idling = true;
 
-                    if (elapsed.TotalSeconds >= 5)
-                    {
-                        _writingProgress = true;
-                    }
-                    else
-                    {
-                        Thread.Sleep(500);
-                    }
-                }
-                else
-                {
                     // Write progress
-                    Console.Write(".");
+                    _output.Write(".");
 
-                    Thread.Sleep(1000);
+                    // Set next timer to fire when we write the next idle progress
+                    _timer.Change(_idlingDelay, Timeout.InfiniteTimeSpan);
                 }
             }
         }
 
         public void Dispose()
         {
-            // Set running to false
-            _running = false;
-
-            if (_progressThread != null)
+            lock (_thisLock)
             {
-                // Wait for the thread to terminate (should always happen since we set _running to false)
-                _progressThread.Join();
-                _progressThread = null;
+                if (_idling)
+                {
+                    _output.WriteLine();
+                }
+                disposed = true;
             }
 
-            OnBeforeWrite();
+            if (_timer != null)
+            {
+                _timer.Dispose();
+            }
         }
     }
 }

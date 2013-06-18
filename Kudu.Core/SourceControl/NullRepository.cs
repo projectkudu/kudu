@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Web;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
@@ -165,6 +164,11 @@ namespace Kudu.Core.SourceControl
         public void UpdateRef(string source)
         {
             throw new NotSupportedException();
+        }
+
+        public bool DoesBranchContainCommit(string branch, string commit)
+        {
+            throw new NotImplementedException();
         }
     }
 }

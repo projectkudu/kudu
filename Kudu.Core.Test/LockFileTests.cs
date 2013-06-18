@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.Threading;
@@ -9,7 +8,6 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Moq;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Core.Test
 {
@@ -75,7 +73,7 @@ namespace Kudu.Core.Test
                 var stream = new Mock<Stream>(MockBehavior.Strict);
                 var fs = new Mock<IFileSystem>(MockBehavior.Strict);
                 stream.Setup(s => s.Close())
-                      .Callback(() => 
+                      .Callback(() =>
                       {
                           locked = false;
                       });
@@ -85,7 +83,7 @@ namespace Kudu.Core.Test
                   .Returns(() => true);
                 fs.Setup(f => f.File.Delete(path));
                 fs.Setup(f => f.File.Open(path, It.IsAny<FileMode>(), FileAccess.Write, FileShare.None))
-                  .Returns(() => 
+                  .Returns(() =>
                   {
                       lock (stream)
                       {

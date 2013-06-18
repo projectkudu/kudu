@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Specialized;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
@@ -6,7 +8,6 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Common;
 using Kudu.Contracts.Infrastructure;
@@ -32,26 +33,6 @@ namespace Kudu.Services.SourceControl
         private readonly static MediaTypeHeaderValue _conflictMediaType = MediaTypeHeaderValue.Parse("text/plain");
         private readonly static char[] _quote = new char[] { '"' };
 
-        // In case we already have a lock on the repository, we deploy an exponential
-        // backoff algorithm, see http://en.wikipedia.org/wiki/Exponential_backoff. The backoff delays fall 
-        // in a range 0ms to 1280ms. The table below represents 8 pre-generated backoff sequences (eight rows)
-        // computed using Random with seed 0. When a request comes in and there is contention then it will
-        // get assigned one of the 8 sequences and backoff accordingly. If there still is content after having
-        // gone through all the delays then a 503 response is generated with a Retry-After header field 
-        // indicating that the client can try again after the specified delay.
-        private readonly static TimeSpan _retryAfter = TimeSpan.FromSeconds(2);
-        private readonly static int[][] _delaySets = new int[][]
-        {
-            new int[] { 16, 32, 96, 80, 32, 928, 1488, 3936 },
-            new int[] { 0, 16, 32, 160, 224, 944, 288, 3888 },
-            new int[] { 16, 0, 32, 192, 496, 672, 1280, 3952 },
-            new int[] { 0, 32, 96, 48, 272, 176, 512, 3872 },
-            new int[] { 16, 48, 80, 32, 448, 416, 1056, 3968 },
-            new int[] { 0, 16, 0, 112, 128, 432, 1920, 3920 },
-            new int[] { 16, 16, 0, 144, 400, 160, 848, 3984 },
-            new int[] { 0, 48, 80, 0, 176, 688, 804, 3904 },
-        };
-
         private readonly IDeploymentManager _deploymentManager;
         private readonly IOperationLock _operationLock;
         private readonly IRepository _repository;
@@ -59,7 +40,6 @@ namespace Kudu.Services.SourceControl
         private EntityTagHeaderValue _currentEtag = null;
         private RepositoryItemStream _readStream = null;
         private bool _cleanupRebaseConflict;
-        private int _delaySetIndex = 0;
 
         public LiveScmEditorController(ITracer tracer,
                                        IDeploymentManager deploymentManager,
@@ -77,11 +57,7 @@ namespace Kudu.Services.SourceControl
         public override async Task<HttpResponseMessage> GetItem()
         {
             // Get a lock on the repository
-            HttpResponseMessage busyResponse = await TryGetLock();
-            if (busyResponse != null)
-            {
-                return busyResponse;
-            }
+            await _operationLock.LockAsync();
 
             try
             {
@@ -113,11 +89,7 @@ namespace Kudu.Services.SourceControl
         public override async Task<HttpResponseMessage> PutItem()
         {
             // Get a lock on the repository
-            HttpResponseMessage busyResponse = await TryGetLock();
-            if (busyResponse != null)
-            {
-                return busyResponse;
-            }
+            await _operationLock.LockAsync();
 
             try
             {
@@ -143,11 +115,7 @@ namespace Kudu.Services.SourceControl
         public override async Task<HttpResponseMessage> DeleteItem()
         {
             // Get a lock on the repository
-            HttpResponseMessage busyResponse = await TryGetLock();
-            if (busyResponse != null)
-            {
-                return busyResponse;
-            }
+            await _operationLock.LockAsync();
 
             try
             {
@@ -215,11 +183,11 @@ namespace Kudu.Services.SourceControl
                 CloseReadStream();
                 return Task.FromResult(invalidByteRangeResponse);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
                 // Could not read the file
-                Tracer.TraceError(e);
-                HttpResponseMessage errorResponse = Request.CreateErrorResponse(HttpStatusCode.NotFound, e);
+                Tracer.TraceError(ex);
+                HttpResponseMessage errorResponse = Request.CreateErrorResponse(HttpStatusCode.NotFound, ex);
                 CloseReadStream();
                 return Task.FromResult(errorResponse);
             }
@@ -245,6 +213,9 @@ namespace Kudu.Services.SourceControl
             // Save file
             try
             {
+                // Get the query parameters
+                QueryParameters parameters = new QueryParameters(this.Request);
+
                 using (Stream fileStream = GetFileWriteStream(localFilePath, fileExists: itemExists))
                 {
                     try
@@ -255,17 +226,17 @@ namespace Kudu.Services.SourceControl
                     {
                         Tracer.TraceError(ex);
                         HttpResponseMessage conflictResponse = Request.CreateErrorResponse(
-                            HttpStatusCode.Conflict, RS.Format(Resources.VfsController_WriteConflict, localFilePath),
+                            HttpStatusCode.Conflict, RS.Format(Resources.VfsController_WriteConflict, localFilePath, ex.Message),
                             ex);
                         return conflictResponse;
                     }
                 }
 
                 // Use to track whether our rebase applied updates from master.
-                bool updateBranchIsUpToDate = false;
+                bool updateBranchIsUpToDate = true;
 
                 // Commit to local branch
-                bool commitResult = _repository.Commit(String.Format("Committing update from request {0}", Request.RequestUri), authorName: null);
+                bool commitResult = _repository.Commit(parameters.Message, authorName: null);
                 if (!commitResult)
                 {
                     HttpResponseMessage noChangeResponse = Request.CreateResponse(HttpStatusCode.NoContent);
@@ -273,12 +244,18 @@ namespace Kudu.Services.SourceControl
                     return noChangeResponse;
                 }
 
+                bool rebasing = false;
                 if (_currentEtag != null)
                 {
                     try
                     {
-                        // Rebase to get updates from master while checking whether we get a conflict
-                        updateBranchIsUpToDate = _repository.Rebase(MasterBranch);
+                        // Only rebase if VFS branch isn't up-to-date already
+                        if (!_repository.DoesBranchContainCommit(VfsUpdateBranch, MasterBranch))
+                        {
+                            // Rebase to get updates from master while checking whether we get a conflict
+                            rebasing = true;
+                            updateBranchIsUpToDate = _repository.Rebase(MasterBranch);
+                        }
 
                         // Switch content back to master
                         _repository.UpdateRef(VfsUpdateBranch);
@@ -287,14 +264,23 @@ namespace Kudu.Services.SourceControl
                     {
                         Tracer.TraceError(commandLineException);
 
-                        // The rebase resulted in a conflict. We send the conflicted version to the client so that the user
-                        // can see the conflicts and resubmit.
-                        _cleanupRebaseConflict = true;
-                        HttpResponseMessage conflictResponse = Request.CreateResponse(HttpStatusCode.Conflict);
-                        _readStream = new RepositoryItemStream(this, GetFileReadStream(localFilePath));
-                        conflictResponse.Content = new StreamContent(_readStream, BufferSize);
-                        conflictResponse.Content.Headers.ContentType = _conflictMediaType;
-                        return conflictResponse;
+                        if (rebasing)
+                        {
+                            // The rebase resulted in a conflict. We send the conflicted version to the client so that the user
+                            // can see the conflicts and resubmit.
+                            _cleanupRebaseConflict = true;
+                            HttpResponseMessage conflictResponse = Request.CreateResponse(HttpStatusCode.Conflict);
+                            _readStream = new RepositoryItemStream(this, GetFileReadStream(localFilePath));
+                            conflictResponse.Content = new StreamContent(_readStream, BufferSize);
+                            conflictResponse.Content.Headers.ContentType = _conflictMediaType;
+                            return conflictResponse;
+                        }
+                        else
+                        {
+                            HttpResponseMessage updateErrorResponse =
+                               Request.CreateErrorResponse(HttpStatusCode.InternalServerError, RS.Format(Resources.VfsScmUpdate_Error, commandLineException.Message));
+                            return updateErrorResponse;
+                        }
                     }
                 }
 
@@ -321,24 +307,30 @@ namespace Kudu.Services.SourceControl
                     successFileResponse = Request.CreateResponse(HttpStatusCode.Created);
                 }
 
-                // Deploy changes
-                DeployResult result = await DeployChangesAsync();
-                if (result != null && result.Status != DeployStatus.Success)
+                // Get current commit ID
+                string currentId = _repository.CurrentId;
+
+                // Deploy changes unless request indicated to not deploy
+                if (!parameters.NoDeploy)
                 {
-                    HttpResponseMessage deploymentErrorResponse =
-                        Request.CreateErrorResponse(HttpStatusCode.InternalServerError, RS.Format(Resources.VfsScmController_DeploymentError, result.StatusText));
-                    return deploymentErrorResponse;
+                    DeployResult result = await DeployChangesAsync(currentId);
+                    if (result != null && result.Status != DeployStatus.Success)
+                    {
+                        HttpResponseMessage deploymentErrorResponse =
+                            Request.CreateErrorResponse(HttpStatusCode.InternalServerError, RS.Format(Resources.VfsScmController_DeploymentError, result.StatusText));
+                        return deploymentErrorResponse;
+                    }
                 }
 
                 // Set updated etag for the file
-                successFileResponse.Headers.ETag = CreateEtag(_repository.CurrentId);
+                successFileResponse.Headers.ETag = CreateEtag(currentId);
                 return successFileResponse;
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Tracer.TraceError(e);
+                Tracer.TraceError(ex);
                 HttpResponseMessage errorResponse = Request.CreateErrorResponse(HttpStatusCode.Conflict,
-                    RS.Format(Resources.VfsController_WriteConflict, localFilePath), e);
+                    RS.Format(Resources.VfsController_WriteConflict, localFilePath, ex.Message), ex);
                 return errorResponse;
             }
         }
@@ -353,13 +345,22 @@ namespace Kudu.Services.SourceControl
 
             response = await base.CreateItemDeleteResponse(info, localFilePath);
 
-            // Commit to local branch
-            _repository.Commit(String.Format("Committing delete from request {0}", Request.RequestUri), authorName: null);
+            // Get the query parameters
+            QueryParameters parameters = new QueryParameters(this.Request);
 
+            // Commit to local branch
+            _repository.Commit(parameters.Message, authorName: null);
+
+            bool rebasing = false;
             try
             {
-                // Rebase to get updates from master while checking whether we get a conflict
-                _repository.Rebase(MasterBranch);
+                // Only rebase if VFS branch isn't up-to-date already
+                if (!_repository.DoesBranchContainCommit(VfsUpdateBranch, MasterBranch))
+                {
+                    // Rebase to get updates from master while checking whether we get a conflict
+                    rebasing = true;
+                    _repository.Rebase(MasterBranch);
+                }
 
                 // Switch content back to master
                 _repository.UpdateRef(VfsUpdateBranch);
@@ -371,7 +372,10 @@ namespace Kudu.Services.SourceControl
                 // Abort the ongoing rebase operation
                 try
                 {
-                    _repository.RebaseAbort();
+                    if (rebasing)
+                    {
+                        _repository.RebaseAbort();
+                    }
                 }
                 finally
                 {
@@ -383,46 +387,25 @@ namespace Kudu.Services.SourceControl
                 return conflictResponse;
             }
 
-            // Deploy changes
-            DeployResult result = await DeployChangesAsync();
-            if (result != null && result.Status != DeployStatus.Success)
+            // Get current commit ID
+            string currentId = _repository.CurrentId;
+
+            // Deploy changes unless request indicated to not deploy
+            if (!parameters.NoDeploy)
             {
-                HttpResponseMessage deploymentErrorResponse =
-                    Request.CreateErrorResponse(HttpStatusCode.InternalServerError, RS.Format(Resources.VfsScmController_DeploymentError, result.StatusText));
-                return deploymentErrorResponse;
+                DeployResult result = await DeployChangesAsync(currentId);
+                if (result != null && result.Status != DeployStatus.Success)
+                {
+                    HttpResponseMessage deploymentErrorResponse =
+                        Request.CreateErrorResponse(HttpStatusCode.InternalServerError, RS.Format(Resources.VfsScmController_DeploymentError, result.StatusText));
+                    return deploymentErrorResponse;
+                }
             }
 
             // Delete succeeded. We add the etag as is has been updated as a result of the delete
             // This allows a client to keep track of the latest etag even for deletes.
-            response.Headers.ETag = CreateEtag(_repository.CurrentId);
+            response.Headers.ETag = CreateEtag(currentId);
             return response;
-        }
-
-        private async Task<HttpResponseMessage> TryGetLock()
-        {
-            int index = Interlocked.Increment(ref _delaySetIndex);
-            int[] delaySet = _delaySets[index % _delaySets.Length];
-            for (int cnt = 0; cnt <= delaySet.Length; cnt++)
-            {
-                if (_operationLock.Lock())
-                {
-                    // We got a lock and can continue
-                    return null;
-                }
-
-                // We didn't get a lock and so delay exponentially before trying again
-                if (cnt < delaySet.Length)
-                {
-                    await Task.Delay(delaySet[cnt]);
-                }
-            }
-
-            // If we have gone through our delays and still can't get a lock then we give up and return 503
-            Tracer.TraceError(String.Format("TryGetLock could not get a lock for {0} request on {1} after {2} exponential backoff attempts. Giving up.",
-                Request.Method, Request.RequestUri.AbsolutePath, delaySet.Length));
-            HttpResponseMessage busyResponse = Request.CreateErrorResponse(HttpStatusCode.ServiceUnavailable, Resources.VfsController_Busy);
-            busyResponse.Headers.RetryAfter = new RetryConditionHeaderValue(_retryAfter);
-            return busyResponse;
         }
 
         private bool PrepareBranch(bool itemExists, out HttpResponseMessage errorResponse)
@@ -447,7 +430,7 @@ namespace Kudu.Services.SourceControl
                     return false;
                 }
 
-                // If wild card match then set to current commit it
+                // If wild card match then set to current commit ID
                 startPoint = ifMatch != EntityTagHeaderValue.Any ? ifMatch.Tag.Trim(_quote) : _currentEtag.Tag.Trim(_quote);
             }
 
@@ -496,11 +479,11 @@ namespace Kudu.Services.SourceControl
             }
         }
 
-        private async Task<DeployResult> DeployChangesAsync()
+        private async Task<DeployResult> DeployChangesAsync(string commitId)
         {
             try
             {
-                await _deploymentManager.DeployAsync(_repository, changeSet: null, deployer: string.Empty, clean: true);
+                await _deploymentManager.DeployAsync(_repository, changeSet: null, deployer: string.Empty, clean: true, needFileUpdate: false);
             }
             catch (Exception e)
             {
@@ -508,7 +491,7 @@ namespace Kudu.Services.SourceControl
             }
 
             // Inspect deployment for errors
-            return _deploymentManager.GetResult(_repository.CurrentId);
+            return _deploymentManager.GetResult(commitId);
         }
 
         private static EntityTagHeaderValue CreateEtag(string tag)
@@ -519,6 +502,47 @@ namespace Kudu.Services.SourceControl
             result.Append(tag);
             result.Append("\"");
             return new EntityTagHeaderValue(result.ToString());
+        }
+
+        /// <summary>
+        /// Contains optional query parameters passed in the request URI
+        /// </summary>
+        private class QueryParameters
+        {
+            public QueryParameters(HttpRequestMessage request)
+            {
+                if (request == null)
+                {
+                    throw new ArgumentNullException("request");
+                }
+
+                NameValueCollection queryParameters = request.RequestUri.ParseQueryString();
+                Message = queryParameters["Message"] ?? String.Format("Committing update from request {0}", request.RequestUri.AbsolutePath);
+                NoDeploy = GetBooleanValue(queryParameters["NoDeploy"]);
+            }
+
+            public string Message { get; private set; }
+
+            public bool NoDeploy { get; private set; }
+
+            [SuppressMessage("Microsoft.Performance", "CA1820:TestForEmptyStringsUsingStringLength", Justification = "We need to differentiate between null and empty string.")]
+            private static bool GetBooleanValue(string value)
+            {
+                bool result;
+                if (value == null)
+                {
+                    result = false;
+                }
+                else if (value == String.Empty)
+                {
+                    result = true;
+                }
+                else
+                {
+                    Boolean.TryParse(value, out result);
+                }
+                return result;
+            }
         }
 
         /// <summary>
