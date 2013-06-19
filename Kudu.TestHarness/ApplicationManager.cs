@@ -146,7 +146,7 @@ namespace Kudu.TestHarness
 
         public string GetKuduUpTime()
         {
-            const string pattern = "<td><strong>Up Time</strong></td>\\s*<td>(.*)</td>";
+            const string pattern = "<td><strong>Site up time</strong></td>\\s*<td>(.*)</td>";
 
             string content = OperationManager.Attempt<string>(() =>
             {
