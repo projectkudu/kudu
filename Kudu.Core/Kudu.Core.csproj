@@ -163,6 +163,12 @@
     <Content Include="Scripts\iisnode.config.template">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Scripts\postdeployment.cmd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="Scripts\postdeployment">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Kudu.Contracts\Kudu.Contracts.csproj">

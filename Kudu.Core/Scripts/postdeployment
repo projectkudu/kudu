@@ -1,0 +1,4 @@
+#!/bin/sh
+$COMSPEC /c postdeployment.cmd
+ret=$?
+exit $ret
