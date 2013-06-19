@@ -28,6 +28,7 @@ namespace Kudu.Core.AnalyticsDataLayer.CookieParser
         {
             CookieCollection cookieCollection = new CookieCollection();
             //each cookie is delited by commas
+            //for logs cookies are delimited by semicolons
             string[] cookies = stringCookieRepresentation.Split(new Char[] {','});
             //after this split it looks like:
             /*
@@ -83,6 +84,7 @@ namespace Kudu.Core.AnalyticsDataLayer.CookieParser
                     }
                     catch (IndexOutOfRangeException)
                     {
+                        Trace.WriteLine("Ahh index out of range!!!");
                         cookie.Name = "null";
                         cookie.Value = "null";
                     }

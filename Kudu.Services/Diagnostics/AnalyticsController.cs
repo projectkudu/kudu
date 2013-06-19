@@ -41,21 +41,20 @@ namespace Kudu.Services.Diagnostics
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        public string GetSessionCount()
+        public Dictionary<string, object> GetSessionCount()
         {
             //add a metric that covers unique sessions to the AnalyticsEngine
-            SessionNumberMetric metric = new SessionNumberMetric("# of sessions");
-            //Make sure the log format is W3C EXtended
-            metric.LogFormat = LogFormat.W3C_EXTENDED;
-            _analytics.AddMetric(metric);
-            _analytics.RunEngine();
-            return String.Empty;
+            _analytics.AddMetricFactor(() => new SessionNumberMetric("# of sessions"));
+            Dictionary<string, object> result = _analytics.RunEngine();
+            return result;
         }
 
         [HttpGet]
-        public string GetNumberOfSessions(string startTime, string endTime)
+        public Dictionary<string, List<KeyValuePair<string, object>>> GetSessionCount(DateTime startTime, DateTime endTime, TimeSpan timeInterval)
         {
-            throw new NotImplementedException();
+            _analytics.AddMetricFactor(() => new SessionNumberMetric("# of sessions"));
+            Dictionary<string, List<KeyValuePair<string, object>>> result = _analytics.RunEngine(startTime, endTime, timeInterval);
+            return result;
         }
 
         [HttpGet]

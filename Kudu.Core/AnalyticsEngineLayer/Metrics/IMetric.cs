@@ -13,10 +13,9 @@ namespace Kudu.Core.AnalyticsEngineLayer.Metrics
     public interface IMetric
     {
         string MetricName { get; set; }
-        //List<LogFields> MetricRequirements { get; set; }
-        string LogFormat { get; set; }
 
         //Depending on the metric and how a class derives this method, perform the computations to get the metric information
-        string PerformMetricJob(HttpLog resource);
+        void PerformMetricJob(HttpLog resource);
+        object GetResult();
     }
 }

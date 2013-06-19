@@ -44,28 +44,6 @@ namespace Kudu.Core.AnalyticsDataLayer
 
         public string LogFormat { get; set; }
 
-        /*
-        public IEnumerable<HttpLog> Parse()
-        {
-            if (FileName == null)
-            {
-                throw new NullReferenceException();
-            }
-            List<W3C_Extended_Log> logs = null;
-            try
-            {
-                logs = ParseW3CFormat();
-            }
-            catch (GrammarException e)
-            {
-                throw new GrammarException(e.Message);
-            }
-
-            yield return ParseW3CFormat();
-            //return logs;
-        }*/
-
-        // return IEnumerable<T> 
         public IEnumerable<W3C_Extended_Log> ParseW3CFormat()
         {
 
@@ -205,7 +183,8 @@ namespace Kudu.Core.AnalyticsDataLayer
 
                     //we had earlier the time and date of a log as seperate instances of the date time object, to make querying of logs simple, merged the date and time
                     //into a single instance of DateTime.
-                    _log.dateTime = DateTime.Parse(date + " " + time);
+                    _log.LogDateTime = DateTime.Parse(date + " " + time);
+                    //Trace.WriteLine(_log.LogDateTime);
                     yield return _log;
                 }
 
@@ -313,7 +292,8 @@ namespace Kudu.Core.AnalyticsDataLayer
             Array.Sort(logFormatFields);
             while (!FoundFields && (line = _reader.ReadLine()) != null && count != 7)
             {
-                bool isFields = line.StartsWith(W3C_ExtendedConstants.FIELD_DIRECTIVE, StringComparison.OrdinalIgnoreCase);
+                //bool isFields = line.StartsWith(W3C_ExtendedConstants.FIELD_DIRECTIVE, StringComparison.OrdinalIgnoreCase);
+                bool isFields = line.StartsWith("#", StringComparison.OrdinalIgnoreCase);
                 if (isFields)
                 {
                     //strip fields

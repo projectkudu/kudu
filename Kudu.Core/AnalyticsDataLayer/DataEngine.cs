@@ -29,7 +29,7 @@ namespace Kudu.Core.AnalyticsDataLayer
             LogParser logParser = new LogParser();
             logParser.LogFormat = W3C_ExtendedConstants.FORMAT;
             //iterate through our directory of files
-            Trace.WriteLine(start.ToString());
+            //Trace.WriteLine(start.ToString());
             foreach (string logFile in _logFiles.Keys)
             {
                 //see that its capable to read this file
@@ -42,10 +42,36 @@ namespace Kudu.Core.AnalyticsDataLayer
                 foreach (W3C_Extended_Log log in logParser.ParseW3CFormat())
                 {
                     //Trace.WriteLine(log.dateTime.ToString());
-                    if (log.dateTime.CompareTo(start) >= 0 && log.dateTime.CompareTo(end) < 0)
+                    if (log.LogDateTime.CompareTo(start) >= 0 && log.LogDateTime.CompareTo(end) < 0)
                     {
+                        //Trace.WriteLine(logFile);
                         yield return log;
                     }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Given a start and end date, return logs in a W3C_Extended object in that time interval
+        /// </summary>
+        /// <returns>Lines of DeSerialized logs since the beginning of when logs were recorded to the current time</returns>
+        public IEnumerable<W3C_Extended_Log> GetLines()
+        {
+            LogParser logParser = new LogParser();
+            logParser.LogFormat = W3C_ExtendedConstants.FORMAT;
+            //iterate through our directory of files
+            foreach (string logFile in _logFiles.Keys)
+            {
+                //see that its capable to read this file
+                logParser.FileName = logFile;
+                if (!logParser.IsCapable)
+                {
+                    continue;
+                }
+
+                foreach (W3C_Extended_Log log in logParser.ParseW3CFormat())
+                {
+                    yield return log;
                 }
             }
         }

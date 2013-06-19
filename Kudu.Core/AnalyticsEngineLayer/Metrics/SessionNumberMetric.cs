@@ -11,6 +11,8 @@ namespace Kudu.Core.AnalyticsEngineLayer.Metrics
 {
     public class SessionNumberMetric:IMetric
     {
+        private Dictionary<string, int> _uniqueSessionIds = new Dictionary<string, int>();
+
         public SessionNumberMetric(string metric)
         {
             //Metric name could be conversion, # of sessions, session lengths, bounce rate, leave rate, # of session ids
@@ -28,38 +30,28 @@ namespace Kudu.Core.AnalyticsEngineLayer.Metrics
         /// for these log entries
         /// </summary>
         /// <param name="resource"></param>
-        /// <returns></returns>
-        public string PerformMetricJob(AnalyticsDataLayer.HttpLog resource)
+        public void PerformMetricJob(AnalyticsDataLayer.HttpLog resource)
         {
-            Dictionary<string, int> uniqueSessionIds = new Dictionary<string, int>();
-
-            //for W3C_Extended, Get the cookies and count the number of unique sessions ids and return a string representation of a int
-            switch(LogFormat)
+            CookieCollection cookies = resource.Cookies;
+            try
             {
-                case AnalyticsDataLayer.LogFormat.W3C_EXTENDED:
-                    //for W3C Extended grab the cookie collection
-                    CookieCollection cookies = resource.Cookies;
-                    try
-                    {
-                        string sessionID = cookies[CookieConstants.WA_WEBSITE_SID].Name;
-                        uniqueSessionIds.Add(sessionID, 1);
-                    }
-                    catch (ArgumentException e)
-                    {
-                        Trace.WriteLine(e.StackTrace);
-                    }
-                    catch (NullReferenceException)
-                    {
-                        Trace.WriteLine("null reference");
-                    }
-                    break;
+                string sessionID = cookies[CookieConstants.D4DAD].Value;
+                _uniqueSessionIds.Add(sessionID, 1);
             }
-            return Convert.ToString(uniqueSessionIds.Count);
+            catch (ArgumentException)
+            {
+
+            }
+            catch (NullReferenceException e)
+            {
+                Trace.WriteLine(e.StackTrace);
+            }
         }
 
-        /// <summary>
-        /// Define the Log format that this metric will focus on
-        /// </summary>
-        public string LogFormat { get; set; }
+
+        public object GetResult()
+        {
+            return _uniqueSessionIds.Count;
+        }
     }
 }

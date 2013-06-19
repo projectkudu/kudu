@@ -18,7 +18,7 @@ namespace Kudu.Core.AnalyticsDataLayer
         
         public override DateTime Time {get; set;}
 
-        public DateTime dateTime { get; set; }
+        public DateTime LogDateTime { get; set; }
 
         public override int StatusCode {get; set;}
 

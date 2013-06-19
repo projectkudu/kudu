@@ -1,45 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <trace>
-  <step title="Process Shutdown" date="06/05 22:09:41" pid="5148,2,7" uptime="00:00:48.5566657" lastrequesttime="735023.22:09:41.2189116" elapsed="1" />
-  <step title="Process Shutdown" date="06/05 22:11:01" pid="9416,2,7" uptime="00:01:15.0296107" lastrequesttime="735023.22:11:01.2562471" elapsed="0" />
-  <step title="Process Shutdown" date="06/05 22:12:16" pid="1632,2,16" uptime="00:01:09.2519131" lastrequesttime="735023.22:12:16.3842324" elapsed="0" />
-  <step title="Process Shutdown" date="06/05 22:13:15" pid="3832,2,11" uptime="00:00:52.8809699" lastrequesttime="735023.22:13:15.6520243" elapsed="0" />
-  <step title="Process Shutdown" date="06/05 22:15:53" pid="7820,2,6" uptime="00:02:27.5732692" lastrequesttime="735023.22:15:53.9671187" elapsed="0" />
-  <step title="Process Shutdown" date="06/05 22:19:04" pid="8960,2,14" uptime="00:01:54.9309361" lastrequesttime="735023.22:19:04.6601462" elapsed="0" />
-  <step title="Process Shutdown" date="06/05 22:19:50" pid="4728,2,12" uptime="00:00:38.7674836" lastrequesttime="735023.22:19:50.4206683" elapsed="0" />
-  <step title="Process Shutdown" date="06/05 22:24:40" pid="76,2,13" uptime="00:04:44.7779227" lastrequesttime="735023.22:24:40.9574487" elapsed="0" />
-  <step title="Process Shutdown" date="06/05 22:26:41" pid="1264,2,5" uptime="00:01:53.4566818" lastrequesttime="735023.22:26:41.6688991" elapsed="0" />
-  <step title="Process Shutdown" date="06/05 22:28:45" pid="4416,2,14" uptime="00:01:20.4089350" lastrequesttime="735023.22:28:45.3294648" elapsed="0" />
-  <step title="Process Shutdown" date="06/05 22:31:31" pid="10024,2,6" uptime="00:02:43.1490681" lastrequesttime="735023.22:31:31.3460831" elapsed="0" />
-  <step title="Process Shutdown" date="06/05 22:36:59" pid="7792,2,15" uptime="00:05:17.8460214" lastrequesttime="735023.22:36:59.6929791" elapsed="0" />
-  <step title="Process Shutdown" date="06/05 22:38:30" pid="10068,2,12" uptime="00:01:22.6464059" lastrequesttime="735023.22:38:30.5083146" elapsed="0" />
-  <step title="Process Shutdown" date="06/05 22:39:43" pid="980,2,12" uptime="00:01:05.4067592" lastrequesttime="735023.22:39:43.5669086" elapsed="0" />
-  <step title="Process Shutdown" date="06/05 22:40:30" pid="7368,2,12" uptime="00:00:33.5924266" lastrequesttime="735023.22:40:30.2248354" elapsed="0" />
-  <step title="Process Shutdown" date="06/05 23:25:22" pid="9416,2,37" uptime="00:44:36.4996539" lastrequesttime="735023.23:25:22.1926290" elapsed="0" />
-  <step title="Process Shutdown" date="06/05 23:39:02" pid="7012,2,6" uptime="00:07:32.1490455" lastrequesttime="735023.23:39:02.2621195" elapsed="0" />
-  <step title="Process Shutdown" date="06/05 23:45:07" pid="9148,2,7" uptime="00:05:58.1709350" lastrequesttime="735023.23:45:07.4517444" elapsed="0" />
-  <step title="Process Shutdown" date="06/05 23:50:54" pid="5356,2,7" uptime="00:05:40.0906335" lastrequesttime="735023.23:50:54.3159719" elapsed="0" />
-  <step title="Process Shutdown" date="06/05 23:53:36" pid="360,2,6" uptime="00:02:05.8266231" lastrequesttime="735023.23:53:36.1499681" elapsed="0" />
-  <step title="Process Shutdown" date="06/05 23:56:58" pid="10560,2,15" uptime="00:03:13.2875475" lastrequesttime="735023.23:56:58.0195228" elapsed="0" />
-  <step title="Process Shutdown" date="06/05 23:58:28" pid="10616,2,11" uptime="00:01:22.6001122" lastrequesttime="735023.23:58:28.4925233" elapsed="0" />
-  <step title="Process Shutdown" date="06/05 23:58:46" pid="11124,2,13" uptime="00:00:10.2786927" lastrequesttime="735023.23:58:46.0397518" elapsed="0" />
-  <step title="Process Shutdown" date="06/05 23:59:31" pid="56,2,11" uptime="00:00:42.6982812" lastrequesttime="735023.23:59:31.6096271" elapsed="0" />
-  <step title="Process Shutdown" date="06/06 0:00:51" pid="1404,2,6" uptime="00:01:12.7020929" lastrequesttime="735024.00:00:51.7627693" elapsed="0" />
-  <step title="Process Shutdown" date="06/06 0:01:26" pid="9988,2,7" uptime="00:00:27.5641926" lastrequesttime="735024.00:01:26.2914829" elapsed="0" />
-  <step title="Process Shutdown" date="06/06 0:01:58" pid="4164,2,12" uptime="00:00:23.9512610" lastrequesttime="735024.00:01:58.4358520" elapsed="0" />
-  <step title="Process Shutdown" date="06/06 0:03:30" pid="2736,2,6" uptime="00:01:29.2977750" lastrequesttime="735024.00:03:30.6656697" elapsed="0" />
-  <step title="Process Shutdown" date="06/06 0:03:46" pid="7404,2,6" uptime="00:00:09.3376561" lastrequesttime="735024.00:03:46.7811485" elapsed="0" />
-  <step title="Process Shutdown" date="06/06 3:29:39" pid="8872,2,13" uptime="00:02:11.3958496" lastrequesttime="735024.03:29:39.1247781" elapsed="0" />
-  <step title="Process Shutdown" date="06/06 3:31:03" pid="11188,2,5" uptime="00:01:12.8833462" lastrequesttime="735024.03:31:03.0437845" elapsed="0" />
-  <step title="Process Shutdown" date="06/06 3:33:26" pid="3272,2,14" uptime="00:02:14.2710041" lastrequesttime="735024.03:33:26.7031324" elapsed="0" />
-  <step title="Process Shutdown" date="06/06 3:37:18" pid="2268,2,11" uptime="00:02:39.5335640" lastrequesttime="735024.03:37:18.3157107" elapsed="0" />
-  <step title="Process Shutdown" date="06/06 3:38:13" pid="5816,2,7" uptime="00:00:42.1767659" lastrequesttime="735024.03:38:13.2741505" elapsed="0" />
-  <step title="Process Shutdown" date="06/06 3:41:40" pid="6360,2,13" uptime="00:01:00.0968288" lastrequesttime="735024.03:41:40.2381255" elapsed="0" />
-  <step title="Process Shutdown" date="06/06 3:42:15" pid="9168,2,13" uptime="00:00:27.9856630" lastrequesttime="735024.03:42:15.9790190" elapsed="0" />
-  <step title="Process Shutdown" date="06/06 3:44:18" pid="11216,2,13" uptime="00:01:32.2217534" lastrequesttime="735024.03:44:18.7524973" elapsed="0" />
-  <step title="Process Shutdown" date="06/06 3:45:26" pid="9932,2,5" uptime="00:01:00.2192568" lastrequesttime="735024.03:45:26.3736513" elapsed="0" />
-  <step title="Process Shutdown" date="06/06 3:46:39" pid="4628,2,12" uptime="00:00:58.8803733" lastrequesttime="735024.03:46:39.2853797" elapsed="0" />
-  <step title="Process Shutdown" date="06/06 3:52:06" pid="10484,2,5" uptime="00:05:15.8215277" lastrequesttime="735024.03:52:06.7595856" elapsed="0" />
   <step title="Process Shutdown" date="06/06 3:54:01" pid="10936,2,6" uptime="00:01:44.3826562" lastrequesttime="735024.03:54:01.2048092" elapsed="0" />
   <step title="Process Shutdown" date="06/06 4:01:26" pid="4824,2,17" uptime="00:07:17.9614475" lastrequesttime="735024.04:01:26.7739172" elapsed="0" />
   <step title="Process Shutdown" date="06/06 4:03:21" pid="3020,2,15" uptime="00:01:45.5508100" lastrequesttime="735024.04:03:21.4851449" elapsed="0" />
@@ -200,4 +160,44 @@
   <step title="Process Shutdown" date="06/17 21:59:31" pid="29828,2,7" uptime="00:01:38.6286518" lastrequesttime="735035.21:59:31.0549190" elapsed="0" />
   <step title="Process Shutdown" date="06/17 22:33:00" pid="32504,2,29" uptime="00:33:22.5938695" lastrequesttime="735035.22:33:00.1781697" elapsed="0" />
   <step title="Process Shutdown" date="06/17 23:38:58" pid="32308,2,66" uptime="01:05:55.4144552" lastrequesttime="735035.23:38:58.2993587" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 17:44:09" pid="9768,2,6" uptime="00:06:32.2480356" lastrequesttime="735036.17:44:09.4340495" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 17:50:40" pid="35008,2,14" uptime="00:03:36.0285570" lastrequesttime="735036.17:50:40.2406525" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 17:51:10" pid="38548,2,13" uptime="00:00:22.6237091" lastrequesttime="735036.17:51:10.4605173" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 17:52:11" pid="28144,2,10" uptime="00:00:53.5180219" lastrequesttime="735036.17:52:11.3184164" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 17:57:48" pid="32324,2,14" uptime="00:05:29.3462181" lastrequesttime="735036.17:57:48.5558010" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 18:18:40" pid="4340,2,32" uptime="00:20:42.6023573" lastrequesttime="735036.18:18:40.5546028" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 18:30:26" pid="26240,2,14" uptime="00:11:04.7288043" lastrequesttime="735036.18:30:26.4716869" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 18:34:40" pid="37020,2,15" uptime="00:04:11.1892061" lastrequesttime="735036.18:34:40.5050076" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 18:40:13" pid="37576,2,15" uptime="00:05:10.3525868" lastrequesttime="735036.18:40:13.1477648" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 18:44:18" pid="34204,2,14" uptime="00:03:49.5266461" lastrequesttime="735036.18:44:18.4828684" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 18:47:15" pid="38948,2,11" uptime="00:01:23.3113567" lastrequesttime="735036.18:47:15.6565544" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 18:48:37" pid="39504,2,13" uptime="00:01:14.3649665" lastrequesttime="735036.18:48:37.1100018" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 18:52:57" pid="39616,2,13" uptime="00:04:09.5996539" lastrequesttime="735036.18:52:57.7370556" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 19:14:35" pid="39836,2,12" uptime="00:20:14.5412310" lastrequesttime="735036.19:14:35.2962564" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 19:54:33" pid="33112,2,42" uptime="00:39:45.9643567" lastrequesttime="735036.19:54:33.9924847" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 19:57:01" pid="33480,2,12" uptime="00:01:31.4102178" lastrequesttime="735036.19:57:01.2588475" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 19:58:10" pid="32932,2,14" uptime="00:00:56.0202511" lastrequesttime="735036.19:58:10.6773702" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 22:05:30" pid="34520,2,12" uptime="00:00:56.7556328" lastrequesttime="735036.22:05:30.1540627" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 22:29:09" pid="33964,2,15" uptime="00:23:32.1891398" lastrequesttime="735036.22:29:09.7634156" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 22:30:36" pid="35988,2,12" uptime="00:01:19.6166226" lastrequesttime="735036.22:30:36.4812628" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 22:37:23" pid="36920,2,11" uptime="00:00:47.9490257" lastrequesttime="735036.22:37:23.1205289" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 22:47:55" pid="35384,2,21" uptime="00:09:56.1911577" lastrequesttime="735036.22:47:55.6945355" elapsed="1" />
+  <step title="Process Shutdown" date="06/18 22:50:03" pid="40032,2,6" uptime="00:01:35.6112044" lastrequesttime="735036.22:50:03.6494400" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 22:51:47" pid="38872,2,12" uptime="00:01:36.0834183" lastrequesttime="735036.22:51:47.0069492" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 23:08:15" pid="41004,2,12" uptime="00:03:22.5766875" lastrequesttime="735036.23:08:15.7434598" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 23:24:01" pid="41036,2,20" uptime="00:07:47.4745829" lastrequesttime="735036.23:24:01.2040310" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 23:30:48" pid="41088,2,12" uptime="00:06:23.2861154" lastrequesttime="735036.23:30:48.7799445" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 23:34:39" pid="41608,2,14" uptime="00:03:48.2711112" lastrequesttime="735036.23:34:39.6374082" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 23:36:47" pid="41120,2,12" uptime="00:01:47.0898792" lastrequesttime="735036.23:36:47.5022757" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 23:40:40" pid="23088,2,7" uptime="00:03:34.3418050" lastrequesttime="735036.23:40:40.0971658" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 23:47:20" pid="39052,2,17" uptime="00:06:38.1255701" lastrequesttime="735036.23:47:20.9303763" elapsed="0" />
+  <step title="Process Shutdown" date="06/18 23:49:08" pid="29380,2,14" uptime="00:01:40.6182896" lastrequesttime="735036.23:49:08.6014529" elapsed="0" />
+  <step title="Process Shutdown" date="06/19 16:09:28" pid="32752,2,7" uptime="00:03:34.4827049" lastrequesttime="735037.16:09:28.4631369" elapsed="0" />
+  <step title="Process Shutdown" date="06/19 17:19:02" pid="37764,2,98" uptime="01:09:24.8844495" lastrequesttime="735037.17:19:02.7529863" elapsed="0" />
+  <step title="Process Shutdown" date="06/19 17:47:34" pid="2012,2,27" uptime="00:28:23.8662037" lastrequesttime="735037.17:47:34.6249276" elapsed="0" />
+  <step title="Process Shutdown" date="06/19 19:05:43" pid="29888,2,12" uptime="00:07:43.1648019" lastrequesttime="735037.19:05:43.5491314" elapsed="0" />
+  <step title="Process Shutdown" date="06/19 19:08:26" pid="39572,2,14" uptime="00:02:12.9754491" lastrequesttime="735037.19:08:26.6268221" elapsed="1" />
+  <step title="Process Shutdown" date="06/19 19:26:50" pid="6416,2,38" uptime="00:18:15.7035700" lastrequesttime="735037.19:26:50.3479570" elapsed="0" />
+  <step title="Process Shutdown" date="06/19 19:34:01" pid="39808,2,8" uptime="00:07:08.0616640" lastrequesttime="735037.19:34:01.2309626" elapsed="0" />
+  <step title="Process Shutdown" date="06/19 19:35:54" pid="39976,2,6" uptime="00:01:44.8796388" lastrequesttime="735037.19:35:54.0351176" elapsed="0" />
 </trace>

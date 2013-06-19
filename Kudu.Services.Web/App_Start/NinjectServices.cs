@@ -305,7 +305,8 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHandler<LogStreamHandler>(kernel, "logstream", "logstream/{*path}");
 
             //Analytics
-            routes.MapHttpRoute(name: "Analytics", routeTemplate: "analytics/{action}", defaults: new { controller = "Analytics", action = "GetName" });
+            routes.MapHttpRoute(name: "General Analytics", routeTemplate: "diagnostics/analytics", defaults: new { controller = "Analytics", action = "GetName" });
+            routes.MapHttpRoute(name: "Analytics SessionCount", routeTemplate: "diagnostics/analytics/getsessioncount", defaults: new { controller = "Analytics",action = "GetSessionCount"});
 
             // Processes
             routes.MapHttpRoute("all-processes", "diagnostics/processes", new { controller = "Process", action = "GetAllProcesses" }, new { verb = new HttpMethodConstraint("GET") });
