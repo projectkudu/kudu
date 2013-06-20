@@ -114,12 +114,8 @@
     <Content Include="Default.aspx" />
     <Content Include="DebugConsole\index.html" />
     <Content Include="Global.asax" />
-    <Content Include="Content\Scripts\jquery-console\jquery.console.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Content\Scripts\KuduExec.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <Content Include="Content\Scripts\jquery-console\jquery.console.js" />
+    <Content Include="Content\Scripts\KuduExec.js" />
     <Content Include="Content\Scripts\FileBrowser.js" />
     <Content Include="Web.config">
       <SubType>Designer</SubType>
