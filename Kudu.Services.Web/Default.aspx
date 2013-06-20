@@ -125,7 +125,7 @@
         </tr>
         <tr>
             <td><strong>Diagnostic console</strong></td>
-            <td><a href="KuduExec">Launch</a>&nbsp;&nbsp;This is an experimental feature.</td>
+            <td><a href="DebugConsole">Launch</a>&nbsp;&nbsp;This is an experimental feature.</td>
         </tr>
         <tr>
             <td><strong>Diagnostic log stream</strong></td>

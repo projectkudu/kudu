@@ -112,7 +112,7 @@
     <Content Include="Content\Styles\FileBrowser.css" />
     <Content Include="Env.aspx" />
     <Content Include="Default.aspx" />
-    <Content Include="KuduExec\index.html" />
+    <Content Include="DebugConsole\index.html" />
     <Content Include="Global.asax" />
     <Content Include="Content\Scripts\jquery-console\jquery.console.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
