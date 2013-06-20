@@ -150,7 +150,7 @@ namespace Kudu.Core.Deployment.Generator
             {
                 // Website projects need a solution to build so look for one in the repository path
                 // that has this website in it.
-                var solutions = VsHelper.FindContainingSolutions(targetPath, fileFinder);
+                var solutions = VsHelper.FindContainingSolutions(repositoryRoot, fileFinder);
 
                 // More than one solution is ambiguous
                 if (solutions.Count > 1)

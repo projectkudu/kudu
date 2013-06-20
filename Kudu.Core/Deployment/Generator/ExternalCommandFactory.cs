@@ -1,7 +1,5 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using Kudu.Contracts.Settings;
-using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment.Generator
@@ -36,6 +34,8 @@ namespace Kudu.Core.Deployment.Generator
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.WebRootPath, _environment.WebRootPath, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.MSBuildPath, PathUtility.ResolveMSBuildPath(), logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KuduSyncCommandKey, KuduSyncCommand, logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.PostDeploymentActionsCommandKey, PostDeploymentActionsCommand, logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.PostDeploymentActionsDirectoryKey, PostDeploymentActionsDir, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.SelectNodeVersionCommandKey, SelectNodeVersionCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.NpmJsPathKey, PathUtility.ResolveNpmJsPath(), logger);
 
@@ -72,6 +72,22 @@ namespace Kudu.Core.Deployment.Generator
             get
             {
                 return Path.Combine(_environment.ScriptPath, "kudusync");
+            }
+        }
+
+        private string PostDeploymentActionsCommand
+        {
+            get
+            {
+                return Path.Combine(_environment.ScriptPath, "postdeployment");
+            }
+        }
+
+        private string PostDeploymentActionsDir
+        {
+            get
+            {
+                return Path.Combine(_environment.DeploymentToolsPath, "PostDeploymentActions");
             }
         }
 
