@@ -47,6 +47,12 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public void PushAndDeployAspNetAppWebSiteInSolutionWithDeploymentFile()
+        {
+            PushAndDeployApps("WebSiteInSolution", "UseDeploymentFile", "SomeDummyLibrary.Class1", HttpStatusCode.OK, "");
+        }
+
+        [Fact]
         public void PushAndDeployAspNetAppKuduGlob()
         {
             PushAndDeployApps("kuduglob", "master", "ASP.NET MVC", HttpStatusCode.OK, "酷度");

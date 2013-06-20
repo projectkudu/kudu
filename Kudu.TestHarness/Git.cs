@@ -27,6 +27,8 @@ namespace Kudu.TestHarness
                 }
                 else
                 {
+                    GitExecute(gitExe, "checkout {0}", localBranchName);
+
                     // Dump out the error stream (git curl verbose)
                     stdErr = GitExecute(gitExe, "push {0} {1}:{2}", url, localBranchName, remoteBranchName).Item2;
                 }
