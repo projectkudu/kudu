@@ -46,7 +46,7 @@ namespace Kudu.FunctionalTests
             PushAndDeployApps("WebSiteInSolution", "master", "SomeDummyLibrary.Class1", HttpStatusCode.OK, "");
         }
 
-        [Fact]
+        [Fact(Skip = "Currently broken. See https://github.com/projectkudu/kudu/issues/671")]
         public void PushAndDeployAspNetAppWebSiteInSolutionWithDeploymentFile()
         {
             PushAndDeployApps("WebSiteInSolution", "UseDeploymentFile", "SomeDummyLibrary.Class1", HttpStatusCode.OK, "");

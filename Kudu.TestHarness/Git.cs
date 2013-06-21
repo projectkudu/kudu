@@ -27,7 +27,8 @@ namespace Kudu.TestHarness
                 }
                 else
                 {
-                    GitExecute(gitExe, "checkout {0}", localBranchName);
+                    // Checkout the local branch, making sure it points to the correct origin branch
+                    GitExecute(gitExe, "checkout -B {0} origin/{0}", localBranchName);
 
                     // Dump out the error stream (git curl verbose)
                     stdErr = GitExecute(gitExe, "push {0} {1}:{2}", url, localBranchName, remoteBranchName).Item2;
