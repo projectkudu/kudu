@@ -6,6 +6,7 @@ namespace Kudu.TestHarness
 {
     internal class TestRepositories
     {
+        // Make sure these are kept sorted alphabetically to reduce merge conflicts
         private static TestRepositoryInfo[] _repoList = new TestRepositoryInfo[]
         {
             new TestRepositoryInfo("git@github.com:KuduQAOrg/RepoWithPrivateSubModule.git",         "4820516"),
@@ -20,6 +21,7 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/HelloKudu.git",                     "2370e44"),
             new TestRepositoryInfo("https://github.com/KuduApps/HelloWorld.git",                    "1f3dfd8"),
             new TestRepositoryInfo("https://github.com/KuduApps/HiddenFoldersAndFiles.git",         "7bf5e6d"),
+            new TestRepositoryInfo("https://github.com/KuduApps/Html5Test.git",                     "7262300"),
             new TestRepositoryInfo("https://github.com/KuduApps/kuduglob.git",                      "2c84bbe"),
             new TestRepositoryInfo("https://github.com/KuduApps/LogTester.git",                     "f20ab64"),
             new TestRepositoryInfo("https://github.com/KuduApps/Mvc3Application_NoSolution.git",    "4e36ca3"),
@@ -29,19 +31,18 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/NodeHelloWorldNoConfig.git",        "d8a15b6"),
             new TestRepositoryInfo("https://github.com/KuduApps/NodeInnerSubDir.git",               "58f93f8"),
             new TestRepositoryInfo("https://github.com/KuduApps/NoDeployableProjects.git",          "e21eb82"),
+            new TestRepositoryInfo("https://github.com/KuduApps/NodeWebHookTest.git",               "cd5bee7"),
             new TestRepositoryInfo("https://github.com/KuduApps/NpmSite.git",                       "2b29b9d"),
             new TestRepositoryInfo("https://github.com/KuduApps/Orchard.git",                       "09ce5a5"),
             new TestRepositoryInfo("https://github.com/KuduApps/ProjectWithNoSolution.git",         "5460398"),
+            new TestRepositoryInfo("https://github.com/KuduApps/TargetPathTest.git",                "7446104"),
             new TestRepositoryInfo("https://github.com/KuduApps/VersionPinnedNodeJsApp.git",        "2bb9b07"),
             new TestRepositoryInfo("https://github.com/KuduApps/VersionPinnedNodeJsAppCustom.git",  "8d43d4e"),
             new TestRepositoryInfo("https://github.com/KuduApps/WaitForUserInput.git",              "cb35610"),
             new TestRepositoryInfo("https://github.com/KuduApps/WarningsAsErrors.git",              "51b6a48"),
             new TestRepositoryInfo("https://github.com/KuduApps/waws.git",                          "7652a66"),
-            new TestRepositoryInfo("https://github.com/KuduApps/WebSiteInSolution.git",             "efee8af"),
-            new TestRepositoryInfo("https://github.com/KuduApps/Html5Test.git",                     "7262300"),
-            new TestRepositoryInfo("https://github.com/KuduApps/TargetPathTest.git",                "7446104"),
             new TestRepositoryInfo("https://github.com/KuduApps/WebDeploySamples.git",              "ee3a42b"),
-            new TestRepositoryInfo("https://github.com/KuduApps/NodeWebHookTest.git",               "cd5bee7"),
+            new TestRepositoryInfo("https://github.com/KuduApps/WebSiteInSolution.git",             "efee8af"),
         };
 
         private static Dictionary<string, TestRepositoryInfo> _repos;
