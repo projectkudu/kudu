@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -8,7 +7,6 @@ using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.FunctionalTests
 {
@@ -46,7 +44,7 @@ namespace Kudu.FunctionalTests
             PushAndDeployApps("WebSiteInSolution", "master", "SomeDummyLibrary.Class1", HttpStatusCode.OK, "");
         }
 
-        [Fact(Skip = "Currently broken. See https://github.com/projectkudu/kudu/issues/671")]
+        [Fact]
         public void PushAndDeployAspNetAppWebSiteInSolutionWithDeploymentFile()
         {
             PushAndDeployApps("WebSiteInSolution", "UseDeploymentFile", "SomeDummyLibrary.Class1", HttpStatusCode.OK, "");

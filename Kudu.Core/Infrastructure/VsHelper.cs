@@ -20,9 +20,9 @@ namespace Kudu.Core.Infrastructure
         /// <summary>
         /// Locates the solution(s) where the specified project is
         /// </summary>
-        public static IList<VsSolution> FindContainingSolutions(string targetPath, IFileFinder fileFinder)
+        public static IList<VsSolution> FindContainingSolutions(string repositoryPath, string targetPath, IFileFinder fileFinder)
         {
-            return (from solution in GetSolutions(targetPath, fileFinder)
+            return (from solution in GetSolutions(repositoryPath, fileFinder)
                     where ExistsInSolution(solution, targetPath)
                     select solution).ToList();
         }
@@ -30,9 +30,9 @@ namespace Kudu.Core.Infrastructure
         /// <summary>
         /// Locates the unambiguous solution matching this project
         /// </summary>
-        public static VsSolution FindContainingSolution(string targetPath, IFileFinder fileFinder)
+        public static VsSolution FindContainingSolution(string repositoryPath, string targetPath, IFileFinder fileFinder)
         {
-            var solutions = FindContainingSolutions(targetPath, fileFinder);
+            var solutions = FindContainingSolutions(repositoryPath, targetPath, fileFinder);
 
             // Don't want to use SingleOrDefault since that throws
             if (solutions.Count == 0 || solutions.Count > 1)

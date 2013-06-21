@@ -150,7 +150,7 @@ namespace Kudu.Core.Deployment.Generator
             {
                 // Website projects need a solution to build so look for one in the repository path
                 // that has this website in it.
-                var solutions = VsHelper.FindContainingSolutions(repositoryRoot, fileFinder);
+                var solutions = VsHelper.FindContainingSolutions(repositoryRoot, targetPath, fileFinder);
 
                 // More than one solution is ambiguous
                 if (solutions.Count > 1)
@@ -192,7 +192,7 @@ namespace Kudu.Core.Deployment.Generator
             }
             else if (File.Exists(targetPath))
             {
-                var solution = VsHelper.FindContainingSolution(targetPath, fileFinder);
+                var solution = VsHelper.FindContainingSolution(repositoryRoot, targetPath, fileFinder);
                 string solutionPath = solution != null ? solution.Path : null;
 
                 return new WapBuilder(_environment,
