@@ -152,15 +152,19 @@ if (!existsSync(packageJson)) {
 var json = JSON.parse(fs.readFileSync(packageJson, 'utf8'));
 if (typeof json !== 'object' || typeof json.engines !== 'object' || typeof json.engines.node !== 'string') {
     // Attempt to read the pinned node version or fallback to the version of the executing node.exe.
-    var nodeVersion = process.env['NodeInitialVersion'] || process.versions.node,
-	    nodeVersionPath = path.resolve(nodejsDir, nodeVersion),
-        nodeExePath = path.resolve(nodeVersionPath, 'node.exe'),
-        npmPath = getDefaultNpmPath(npmDir, nodeVersionPath);
+    if (process.env['NodeInitialVersion']) {
+        var nodeVersion = process.env['NodeInitialVersion'],
+	        nodeVersionPath = path.resolve(nodejsDir, nodeVersion),
+            nodeExePath = path.resolve(nodeVersionPath, 'node.exe'),
+            npmPath = getDefaultNpmPath(npmDir, nodeVersionPath);
+
+        saveNodePaths(tempDir, nodeExePath, npmPath);
+    }
+    nodeVersion = nodeVersion || process.versions.node;
 
     console.log('The package.json file does not specify node.js engine version constraints.');
     console.log('The node.js application will run with the default node.js version '
         + nodeVersion + '.');
-    saveNodePaths(tempDir, nodeExePath, npmPath);
     return flushAndExit(0);
 }
 
@@ -202,7 +206,7 @@ if (!nodeVersion) {
 console.log('Selected node.js version ' + nodeVersion + '. Use package.json file to choose a different version.');
 
 var nodeVersionPath = path.resolve(nodejsDir, nodeVersion),
-    nodeExePath = path.resolve(nodejsDir, 'node.exe'),
+    nodeExePath = path.resolve(nodeVersionPath, 'node.exe'),
     npmPath;
 try {
     npmPath = getNpmPath(npmDir, json) || getDefaultNpmPath(npmDir, nodeVersionPath);
@@ -216,7 +220,7 @@ try {
 if (yml !== '')
     yml += '\r\n';
 
-yml += 'nodeProcessCommandLine: "' + nodeVersionPath + '"';
+yml += 'nodeProcessCommandLine: "' + nodeExePath + '"';
 fs.writeFileSync(wwwrootIisnodeYml, yml);
 
 // Save the node version in a temporary path for kudu service usage
