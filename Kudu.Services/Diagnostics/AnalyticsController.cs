@@ -33,7 +33,6 @@ namespace Kudu.Services.Diagnostics
             //_logFiles = LogServiceHelper.GetDirectoryFiles(path);
             //logs = ScanIISFiles();
             testing = "hello word";
-            
         }
 
         /// <summary>
@@ -53,7 +52,10 @@ namespace Kudu.Services.Diagnostics
         public Dictionary<string, List<KeyValuePair<string, object>>> GetSessionCount(DateTime startTime, DateTime endTime, TimeSpan timeInterval)
         {
             _analytics.AddMetricFactor(() => new SessionNumberMetric("# of sessions"));
-            Dictionary<string, List<KeyValuePair<string, object>>> result = _analytics.RunEngine(startTime, endTime, timeInterval);
+            _analytics.AddMetricFactor(() => new AverageLatencyMetric());
+            _analytics.AddMetricFactor(() => new SessionLengthMetric());
+            //Dictionary<string, List<KeyValuePair<string, object>>> result = _analytics.RunEngine(startTime, endTime, timeInterval);
+            Dictionary<string, List<KeyValuePair<string, object>>> result = _analytics.RunAlternativeEngine(startTime, endTime, timeInterval);
             return result;
         }
 

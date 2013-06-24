@@ -41,8 +41,8 @@
     <Compile Include="..\Common\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="AnalyticsDataLayer\CookieParser\CookieConstants.cs" />
-    <Compile Include="AnalyticsDataLayer\CookieParser\CookieParser.cs" />
+    <Compile Include="AnalyticsDataLayer\Cookies\CookieConstants.cs" />
+    <Compile Include="AnalyticsDataLayer\Cookies\CookieParser.cs" />
     <Compile Include="AnalyticsDataLayer\DataEngine.cs" />
     <Compile Include="AnalyticsDataLayer\DataLayerAPI.cs" />
     <Compile Include="AnalyticsDataLayer\GrammarException.cs" />
@@ -55,10 +55,13 @@
     <Compile Include="AnalyticsDataLayer\Parser.cs" />
     <Compile Include="AnalyticsDataLayer\W3C_ExtendedField.cs" />
     <Compile Include="AnalyticsDataLayer\W3C_ExtendedConstants.cs" />
+    <Compile Include="AnalyticsEngineLayer\Metrics\AverageLatencyMetric.cs" />
     <Compile Include="AnalyticsEngineLayer\Metrics\IMetric.cs" />
     <Compile Include="AnalyticsEngineLayer\Metrics\MetricRequirement.cs" />
+    <Compile Include="AnalyticsEngineLayer\Metrics\SessionLengthMetric.cs" />
     <Compile Include="AnalyticsEngineLayer\Metrics\SessionNumberMetric.cs" />
     <Compile Include="AnalyticsEngineLayer\Metrics\MetricFormatException.cs" />
+    <Compile Include="AnalyticsEngineLayer\Metrics\StatusCodeMetric.cs" />
     <Compile Include="AnalyticsEngineLayer\Metrics\W3C_MetricRequirements.cs" />
     <Compile Include="Commands\CommandExecutor.cs" />
     <Compile Include="Deployment\CascadeLogger.cs" />

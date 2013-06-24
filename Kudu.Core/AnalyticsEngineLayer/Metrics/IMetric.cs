@@ -13,7 +13,6 @@ namespace Kudu.Core.AnalyticsEngineLayer.Metrics
     public interface IMetric
     {
         string MetricName { get; set; }
-
         //Depending on the metric and how a class derives this method, perform the computations to get the metric information
         void PerformMetricJob(HttpLog resource);
         object GetResult();

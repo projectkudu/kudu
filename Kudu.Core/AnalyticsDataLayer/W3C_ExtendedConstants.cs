@@ -10,6 +10,7 @@ namespace Kudu.Core.AnalyticsDataLayer
     {
         public const string FORMAT = "W3C_EXTENDED";
         public const string FIELD_DIRECTIVE = "#Fields";
+        public const string AZURE_FIELD_DIRECTIVE = "#";
         //Identifiers <identifier>
         public const string DATE = "date";
         public const string TIME = "time";

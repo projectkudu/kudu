@@ -68,16 +68,6 @@ namespace Kudu.Services.Diagnostics
             return metricResults;
         }
 
-        private void MakeNewMetricCollection()
-        {
-            _metricCollection.Clear();
-            //iterate through the list of functions to create new instances of all the metrics we need
-            foreach (Func<IMetric> func in _factorMethods)
-            {
-                _metricCollection.Add(func());
-            }
-        }
-
         public Dictionary<string, List<KeyValuePair<string, object>>> RunEngine(DateTime startTime, DateTime endTime, TimeSpan timeInterval)
         {
             MakeNewMetricCollection();
@@ -114,6 +104,108 @@ namespace Kudu.Services.Diagnostics
             return metricResults;
         }
 
+        //public Dictionary<string, List<KeyValuePair<string, object>>> RunAlternativeEngine(DateTime start, DateTime end, TimeSpan timeInterval)
+        public Dictionary<string, List<KeyValuePair<string, object>>> RunAlternativeEngine(DateTime start, DateTime end, TimeSpan timeInterval)
+        {
+            Dictionary<string, List<KeyValuePair<string, object>>> metricResults = new Dictionary<string, List<KeyValuePair<string, object>>>();
+            List<W3C_Extended_Log> listLogs = new List<W3C_Extended_Log>();
+            MakeNewMetricCollection();
+            //Thought we are enumerating the data from the parser, the code is less complex if we have it all into a list and then perform our computations. Simple and quicker than the RunEngine method
+            foreach (W3C_Extended_Log log in dataEngine.GetLines(start, end))
+            {
+                listLogs.Add(log);
+            }
+
+            //now that we have all of our data in memory go ahead and perform computations on our data with our metrics
+            while (start < end)
+            {
+                //if we are going by the hour then add 1 Hour to starttime, by the day then add 1 day to startime, by weekly then add 7 days to starttime, by monthly
+                //and by yearly....
+                DateTime intermediateTime = start + timeInterval;
+                //perform metric computation on all data from [startTime, intermediateTime)
+                //afterwards clear the data that are in the metrics and compute metrics for the next set of data
+                HelperFunction(start, intermediateTime, listLogs);
+
+                //after HelperFunction is called, the metrics for the data of timestamps [startTime, intermediateTime] should be completed, now organize the data
+                foreach (IMetric job in _metricCollection)
+                {
+                    try
+                    {
+                        //make a new object of list for that key
+                        metricResults.Add(job.MetricName, new List<KeyValuePair<string, object>>());
+                    }
+                    catch (ArgumentException)
+                    {
+                        //KEY already exist, just add the KeyValuePair
+                    }
+                    metricResults[job.MetricName].Add(new KeyValuePair<string, object>(start.ToString(), job.GetResult()));
+                }
+
+                start = intermediateTime;
+                MakeNewMetricCollection();
+            }
+            return metricResults;
+        }
+        /*
+        public Dictionary<string, List<KeyValuePair<string, object>>> RunAlternativeEngine(DateTime start, DateTime end, TimeSpan timeInterval)
+        {
+            Dictionary<string, List<KeyValuePair<string, object>>> metricResults = new Dictionary<string, List<KeyValuePair<string, object>>>();
+            List<W3C_Extended_Log> listLogs = new List<W3C_Extended_Log>();
+            //since we have a timeinterval to follow, create to instances of DateTime that will increase by interval
+            DateTime startTime = start;
+            DateTime intermediateTime = startTime + timeInterval;
+            MakeNewMetricCollection();
+            //with a foreach loop, iterate through each logs as they are yielded and performJob
+            foreach (W3C_Extended_Log log in dataEngine.GetLines(start, end))
+            {
+                Trace.WriteLine(log.LogDateTime.ToString());
+                if (log.LogDateTime >= startTime && log.LogDateTime < intermediateTime)
+                {
+                    Trace.WriteLine("within bounds");
+                    //perform jobs
+                    foreach (IMetric job in _metricCollection)
+                    {
+                        job.PerformMetricJob(log);
+                    }
+                }
+                else
+                {
+                    if (log.LogDateTime >= intermediateTime)
+                    {
+                        //flush the old data that we computed into the dictionary
+                        foreach (IMetric job in _metricCollection)
+                        {
+                            try
+                            {
+                                //make a new object of list for that key
+                                metricResults.Add(job.MetricName, new List<KeyValuePair<string, object>>());
+                            }
+                            catch (ArgumentException)
+                            {
+                                //KEY already exist, just add the KeyValuePair
+                            }
+                            metricResults[job.MetricName].Add(new KeyValuePair<string, object>(startTime.ToString(), job.GetResult()));
+                        }
+
+                        startTime = intermediateTime;
+                        intermediateTime = startTime + timeInterval;
+                    }
+                    if (intermediateTime <= end)
+                    {
+                        MakeNewMetricCollection();
+                        //since intermediate time is still less than or equal to end, we dont want to skip this log and iterate to the next log. We need to compute metrics on this one also
+                        foreach (IMetric job in _metricCollection)
+                        {
+                            job.PerformMetricJob(log);
+                        }
+                    }
+                }
+            }
+
+            return metricResults;
+        }*/
+
+
         private void HelperFunction(DateTime start, DateTime end)
         {
             //get all the data that we need from one datetime instance to another then from there, work on the data to get it for specefic intervals
@@ -124,6 +216,34 @@ namespace Kudu.Services.Diagnostics
                 {
                     job.PerformMetricJob(log);
                 }
+            }
+        }
+
+        private void HelperFunction(DateTime start, DateTime end, List<W3C_Extended_Log> listLogs)
+        {
+            foreach (W3C_Extended_Log log in listLogs)
+            {
+                if (log.UTCLogDateTime >= start && log.UTCLogDateTime < end)
+                {
+                    foreach (IMetric job in _metricCollection)
+                    {
+                        job.PerformMetricJob(log);
+                    }
+                }
+                else
+                {
+                    continue;
+                }
+            }
+        }
+
+        private void MakeNewMetricCollection()
+        {
+            _metricCollection.Clear();
+            //iterate through the list of functions to create new instances of all the metrics we need
+            foreach (Func<IMetric> func in _factorMethods)
+            {
+                _metricCollection.Add(func());
             }
         }
     }

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using Kudu.Core.AnalyticsDataLayer.Cookies;
 
 ///The purpose of this class is to provide an efficient way to parse log information. We aim to have this parser be able to parse log formats such as NCSA Combined Log Format, NCSA Separate log format
 ///NCSA Common, IIS, and possibly custom log formats. But for now we will focus on the W3C standard for log formats since its the default for all web servers.
@@ -16,6 +17,8 @@ namespace Kudu.Core.AnalyticsDataLayer
         private W3C_Extended_Log _log;
         private LogFields[] logFormatFields;
         private StreamReader _reader;
+        private DateTime start;
+        private DateTime end;
 
         /// <summary>
         /// Get or Set the filename for the logParser to use
@@ -43,6 +46,18 @@ namespace Kudu.Core.AnalyticsDataLayer
         }
 
         public string LogFormat { get; set; }
+
+        /// <summary>
+        /// To shorten the parse and quicken the speed, provide the times the user is interested in. So that it will not have to parse raw data
+        /// that at the higher level the user will not be using
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        public void setTimes(DateTime start, DateTime end)
+        {
+            this.start = start;
+            this.end = end;
+        }
 
         public IEnumerable<W3C_Extended_Log> ParseW3CFormat()
         {
@@ -79,15 +94,12 @@ namespace Kudu.Core.AnalyticsDataLayer
                             switch (_fields[i].ToLower())
                             {
                                 case W3C_ExtendedConstants.DATE:
-                                    //Trace.WriteLine(data[i]);
-                                    //_log.Date = DateTime.Parse(data[count]);
-                                    _log.Date = TimeZoneInfo.ConvertTime(DateTime.Parse(data[i]), gmtZone, pstZone);
+                                    //TODO assume time is in UTC
+                                    _log.Date = DateTime.Parse(data[i]);
                                     break;
                                 case W3C_ExtendedConstants.TIME:
-                                    //Trace.WriteLine(data[i]);
-                                    //_log.Time = DateTime.Parse(data[i]);
-                                    DateTime tempTime = DateTime.Parse(data[i]);
-                                    _log.Time = TimeZoneInfo.ConvertTime(tempTime, gmtZone, pstZone);
+                                    _log.Time = DateTime.Parse(data[i]);
+                                    Trace.WriteLine("Time " + _log.Time.ToLongTimeString());
                                     break;
                                 case W3C_ExtendedConstants.TIME_TAKEN:
                                     _log.TimeTaken = Convert.ToInt32(data[i]);
@@ -168,23 +180,37 @@ namespace Kudu.Core.AnalyticsDataLayer
                                     _log.UserAgent = data[i];
                                     break;
                                 case W3C_ExtendedConstants.COOKIE:
-                                    CookieParser.CookieParser cookieParser = new CookieParser.CookieParser();
+                                     CookieParser cookieParser = new CookieParser();
                                     _log.Cookies = cookieParser.ExtractServerHeaderResponseCookies(data[i]);
                                     break;
                                 case W3C_ExtendedConstants.REFERRER:
                                     _log.Referrer = new Uri(data[i]);
                                     break;
                             }
+                            /*
+                            try
+                            {
+                                if (_log.LogDateTime.CompareTo(start) >= 0 && _log.LogDateTime.CompareTo(end) < 0)
+                                {
+                                    Trace.WriteLine("BREAK");
+                                    break;
+                                }
+                            }
+                            catch (Exception)
+                            {
+                                Trace.WriteLine("DateTime instances havent been set yet");
+                            }*/
+
                         }//end of if statement
                     }
 
-                    string date = _log.Date.ToShortDateString();
-                    string time = _log.Time.ToShortTimeString();
+                    string date = _log.Date.ToLongDateString();
+                    string time = _log.Time.ToLongTimeString();
 
                     //we had earlier the time and date of a log as seperate instances of the date time object, to make querying of logs simple, merged the date and time
                     //into a single instance of DateTime.
-                    _log.LogDateTime = DateTime.Parse(date + " " + time);
-                    //Trace.WriteLine(_log.LogDateTime);
+                    _log.UTCLogDateTime = DateTime.Parse(date + " " + time);
+                    Trace.WriteLine(_log.UTCLogDateTime.ToString());
                     yield return _log;
                 }
 
@@ -292,9 +318,11 @@ namespace Kudu.Core.AnalyticsDataLayer
             Array.Sort(logFormatFields);
             while (!FoundFields && (line = _reader.ReadLine()) != null && count != 7)
             {
-                //bool isFields = line.StartsWith(W3C_ExtendedConstants.FIELD_DIRECTIVE, StringComparison.OrdinalIgnoreCase);
-                bool isFields = line.StartsWith("#", StringComparison.OrdinalIgnoreCase);
-                if (isFields)
+                bool isAzureFields = LineHas(line);
+
+                //temporary bug fix
+                bool isFields = line.StartsWith(W3C_ExtendedConstants.FIELD_DIRECTIVE, StringComparison.OrdinalIgnoreCase);
+                if (isFields || isAzureFields)
                 {
                     //strip fields
                     StripFields(line);
@@ -302,9 +330,21 @@ namespace Kudu.Core.AnalyticsDataLayer
                 }
                 //7 lines total that W3C Extended uses for its directives
                 count++;
+
             }
         }
 
+        private bool LineHas(string line)
+        {
+            foreach (W3C_ExtendedField field in logFormatFields)
+            {
+                if (line.Contains(field.ToString()))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
         public void Dispose()
         {
             throw new NotImplementedException();

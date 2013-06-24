@@ -19,6 +19,8 @@ namespace Kudu.Core.AnalyticsDataLayer
         /// </summary>
         public abstract DateTime Time{get;set;}
 
+        public abstract DateTime UTCLogDateTime { get; set; }
+
         public abstract int BytesReceived{ get;set;}
 
         public abstract int BytesSent{ get; set;}
@@ -29,7 +31,7 @@ namespace Kudu.Core.AnalyticsDataLayer
 
         public abstract Uri Referrer { get; set; }
 
-        public abstract System.Net.CookieCollection Cookies{get;set;}
+        public abstract Dictionary<string,string> Cookies{get;set;}
 
         public abstract int TimeTaken{get;set;}
 

@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Net;
 using System.Diagnostics;
-using Kudu.Core.AnalyticsDataLayer.CookieParser;
+using Kudu.Core.AnalyticsDataLayer.Cookies;
 
 namespace Kudu.Core.AnalyticsEngineLayer.Metrics
 {
@@ -30,25 +29,42 @@ namespace Kudu.Core.AnalyticsEngineLayer.Metrics
         /// for these log entries
         /// </summary>
         /// <param name="resource"></param>
+        /// 
         public void PerformMetricJob(AnalyticsDataLayer.HttpLog resource)
         {
-            CookieCollection cookies = resource.Cookies;
-            try
+            if (resource.Cookies == null || resource.Cookies.Count == 0)
             {
-                string sessionID = cookies[CookieConstants.D4DAD].Value;
-                _uniqueSessionIds.Add(sessionID, 1);
+                return;
             }
-            catch (ArgumentException)
+            //http://localhost:12553/diagnostics/analytics/getsessioncount?startTime=06/19/2013&endTime=06/20/2013&timeInterval=1:00
+            //be sure to check if the cookies are empty. Some log files may not have cookies
+            Dictionary<string,string> cookies = resource.Cookies;
+            if (cookies != null)
             {
-
-            }
-            catch (NullReferenceException e)
-            {
-                Trace.WriteLine(e.StackTrace);
+                string sessionID = "";
+                if(cookies.TryGetValue(CookieConstants.AZURE_D4DAD, out sessionID))
+                {
+                    GeneralizedAdd(sessionID);
+                }
+                else if(cookies.TryGetValue(CookieConstants.D4DAD, out sessionID))
+                {
+                    GeneralizedAdd(sessionID);
+                }
             }
         }
 
+        private void GeneralizedAdd(string arg)
+        {
+            if (!_uniqueSessionIds.ContainsKey(arg))
+            {
+                _uniqueSessionIds.Add(arg, 1);
+            }
+        }
 
+        /// <summary>
+        /// Return the number of unique sessions
+        /// </summary>
+        /// <returns></returns>
         public object GetResult()
         {
             return _uniqueSessionIds.Count;

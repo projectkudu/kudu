@@ -14,11 +14,12 @@ namespace Kudu.Core.AnalyticsDataLayer
         /// Initialize a new instance of the HTTPLog class
         /// </summary>
 
+        //TODO make the below private or call it UTC date or time
         public override DateTime Date { get; set; }
         
         public override DateTime Time {get; set;}
 
-        public DateTime LogDateTime { get; set; }
+        public override DateTime UTCLogDateTime { get; set; }
 
         public override int StatusCode {get; set;}
 
@@ -28,7 +29,7 @@ namespace Kudu.Core.AnalyticsDataLayer
 
         public override string TypeRequest{get; set;}
 
-        public override System.Net.CookieCollection Cookies{get;set;}
+        public override Dictionary<string,string> Cookies{get;set;}
 
         public override int BytesReceived{get;set;}
 
@@ -69,10 +70,13 @@ namespace Kudu.Core.AnalyticsDataLayer
             {
                 fullURL += UriQuery;
             }
-            foreach (System.Net.Cookie cookie in Cookies)
+
+            /*
+            foreach (CookieParser.Cookie cookie in Cookies)
             {
-                summarize += fullURL + " " + Date.ToShortDateString() + " " + Time.ToShortTimeString() + " " + cookie.Name + " " + cookie.Value + " " + BytesSent.ToString() + " " + TimeTaken;
-            }
+                summarize += fullURL + " " + Date.ToShortDateString() + " " + Time.ToShortTimeString() + " " + cookie.Key + " " + cookie.Value + " " + BytesSent.ToString() + " " + TimeTaken;
+                System.Diagnostics.Trace.WriteLine(summarize);
+            }*/
             return summarize;
         }
 

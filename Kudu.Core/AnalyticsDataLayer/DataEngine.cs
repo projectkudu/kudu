@@ -20,6 +20,7 @@ namespace Kudu.Core.AnalyticsDataLayer
 
         /// <summary>
         /// Given a start and end date, return logs in a W3C_Extended object in that time interval
+        /// Only return logs that have cookies within them
         /// </summary>
         /// <param name="start"></param>
         /// <param name="end"></param>
@@ -28,6 +29,7 @@ namespace Kudu.Core.AnalyticsDataLayer
         {
             LogParser logParser = new LogParser();
             logParser.LogFormat = W3C_ExtendedConstants.FORMAT;
+            logParser.setTimes(start, end);
             //iterate through our directory of files
             //Trace.WriteLine(start.ToString());
             foreach (string logFile in _logFiles.Keys)
@@ -42,9 +44,17 @@ namespace Kudu.Core.AnalyticsDataLayer
                 foreach (W3C_Extended_Log log in logParser.ParseW3CFormat())
                 {
                     //Trace.WriteLine(log.dateTime.ToString());
-                    if (log.LogDateTime.CompareTo(start) >= 0 && log.LogDateTime.CompareTo(end) < 0)
+                    //We are only interesting in logs that have cookies
+
+                    /*
+                    if (log.Cookies.Count == 0)
                     {
-                        //Trace.WriteLine(logFile);
+                        continue;
+                    }
+                    */
+                    
+                    if (log.UTCLogDateTime.CompareTo(start) >= 0 && log.UTCLogDateTime.CompareTo(end) < 0)
+                    {
                         yield return log;
                     }
                 }
