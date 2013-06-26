@@ -152,8 +152,8 @@ if (!existsSync(packageJson)) {
 var json = JSON.parse(fs.readFileSync(packageJson, 'utf8'));
 if (typeof json !== 'object' || typeof json.engines !== 'object' || typeof json.engines.node !== 'string') {
     // Attempt to read the pinned node version or fallback to the version of the executing node.exe.
-    if (process.env['NodeInitialVersion']) {
-        var nodeVersion = process.env['NodeInitialVersion'],
+    if (process.env['AZURE_NODE_INITIAL_VERSION']) {
+        var nodeVersion = process.env['AZURE_NODE_INITIAL_VERSION'],
 	        nodeVersionPath = path.resolve(nodejsDir, nodeVersion),
             nodeExePath = path.resolve(nodeVersionPath, 'node.exe'),
             npmPath = getDefaultNpmPath(npmDir, nodeVersionPath);
