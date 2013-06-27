@@ -1,5 +1,23 @@
 ﻿$(function () {
     var Vfs = {
+        getContent: function(item) {
+            return $.ajax({
+                url: item.href,
+                dataType: "text"
+            });
+        },
+
+        setContent: function (item, text) {
+            return $.ajax({
+                url: item.href,
+                data: text,
+                method: "PUT",
+                headers: {
+                    "If-Match": "*"
+                }
+            });
+        },
+
         getChildren: function (item) {
             return $.get(item.href);
         },
@@ -41,7 +59,7 @@
                     method: "DELETE",
                     headers: {
                         "If-Match": "*"
-                    },
+                    }
                 })
             });
         }
@@ -141,6 +159,25 @@
                 viewModel.selected(that.parent);
             }
         }
+
+        this.editItem = function () {
+            var that = this;
+            viewModel.editText("Fetching changes...");
+            viewModel.fileEdit(this);
+            Vfs.getContent(this)
+               .done(function(data) {
+                   viewModel.editText(data);
+               });
+        }
+
+        this.saveItem = function () {
+            var text = viewModel.editText();
+            viewModel.editText("Saving changes...");
+            Vfs.setContent(this, text)
+                .done(function () {
+                    viewModel.fileEdit(null);
+                });
+        }
     }
 
     var root = new node({ name: "/", type: "dir", href: "/vfs/" }),
@@ -160,11 +197,17 @@
                     }
                     return a.name().localeCompare(b.name());
                 });
+            },
+            fileEdit: ko.observable(null),
+            editText: ko.observable(""),
+            cancelEdit: function () {
+                viewModel.fileEdit(null);
             }
+
         };
 
     root.fetchChildren();
-    ko.applyBindings(viewModel, document.getElementById('#fileList'));
+    ko.applyBindings(viewModel, document.getElementById("#main"));
 
     window.KuduExec.workingDir.subscribe(function (newValue) {
         if (ignoreWorkingDirChange) {
@@ -235,7 +278,7 @@
     };
 
     function stashCurrentSelection(selected) {
-        window.history.replaceState(selected.appRelativePath(), selected.name());
+        window.history.pushState(selected.appRelativePath(), selected.name());
     }
 
     window.onpopstate = function (evt) {
@@ -375,6 +418,4 @@
     function trimTrailingSlash(input) {
         return input.replace(/(\/|\\)$/, '');
     }
-
-    window.history.pushState("/", "/");
 });

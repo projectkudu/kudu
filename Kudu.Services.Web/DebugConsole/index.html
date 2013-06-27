@@ -7,70 +7,86 @@
 </head>
 <body>
     <div id="main">
-        <div id="fileList">
-            <div class="spinner">
-                <img data-bind="visible: processing()" src="/Content/Images/ajax-loader.gif" title="Please wait" />
-            </div>
-            <div id="operations">
-                <span data-bind="visible: selected().parent">
-                    <a href="#" data-bind="click: selected().selectParent, attr: { title: selected().parent && ('Up to ' + selected().parent.name()) }">...</a> /  
-                </span>
-                <span data-bind="text: selected().name()"></span>
+        <div class="view main-view" data-bind="visible: !fileEdit()">
+            <div id="fileList">
+                <div class="spinner">
+                    <img data-bind="visible: processing()" src="/Content/Images/ajax-loader.gif" title="Please wait" />
+                </div>
+                <div id="operations">
+                    <span data-bind="visible: selected().parent">
+                        <a href="#" data-bind="click: selected().selectParent, attr: { title: selected().parent && ('Up to ' + selected().parent.name()) }">...</a> /  
+                    </span>
+                    <span data-bind="text: selected().name()"></span>
 
-                <img src="/content/images/folder_add.png" title="Add Folder" data-bind="click: selected().addFolder" id="createFolder" />
-            </div>
-            <div class="table-container">
-                <table>
-                <thead>
-                    <tr>
-                        <th scope="col"></th>
-                        <th scope="col">Name</th>
-                        <th scope="col">Modifed</th>
-                        <th scope="col">Size</th>
-                    </tr>
-                </thead>
-                <tbody data-bind="foreach: sort(selected().children())">
-                    <tr>
-                        <td class="actions">
-                            <div data-bind="visible: !editing()">
-                                <a data-bind="attr: { href: url() }" target="_blank">
-                                    <img src="/content/images/download.png" alt="Download" title="Download" />
-                                </a>
-                                <a href="#" data-bind="click: deleteItem">
-                                    <img data-bind="attr: { src: '/content/images/' + (isDirectory() ? 'folder_delete.png' : 'file_delete.png') }" alt="Delete" title="Delete" />
-                                </a>
-                            </div>
-                        </td>
-                        <td class="name">
-                            <span data-bind="if: isDirectory()">
-                                <img src="/content/images/folder.png" alt="Folder" />
+                    <img src="/content/images/folder_add.png" title="Add Folder" data-bind="click: selected().addFolder" id="createFolder" />
+                </div>
+                <div class="table-container">
+                    <table>
+                    <thead>
+                        <tr>
+                            <th scope="col"></th>
+                            <th scope="col">Name</th>
+                            <th scope="col">Modifed</th>
+                            <th scope="col">Size</th>
+                        </tr>
+                    </thead>
+                    <tbody data-bind="foreach: sort(selected().children())">
+                        <tr>
+                            <td class="actions">
+                                <div data-bind="visible: !editing()">
+                                    <a data-bind="attr: { href: url() }" target="_blank">
+                                        <img src="/content/images/download.png" alt="Download" title="Download" />
+                                    </a>
+                                    <span data-bind="if: !isDirectory()">
+                                        <a data-bind="click: editItem">
+                                            <img src="/content/images/file_edit.png" alt="Edit" title="Edit" />
+                                        </a>
+                                    </span>
+                                    <a href="#" data-bind="click: deleteItem">
+                                        <img data-bind="attr: { src: '/content/images/' + (isDirectory() ? 'folder_delete.png' : 'file_delete.png') }" alt="Delete" title="Delete" />
+                                    </a>
+                                </div>
+                            </td>
+                            <td class="name">
+                                <span data-bind="if: isDirectory()">
+                                    <img src="/content/images/folder.png" alt="Folder" />
 
-                                <a href="#" data-bind="click: selectNode, text: name, visible: !editing()" target="_blank"></a>
-                                <input type="text" data-bind="value: name, valueUpdate: 'afterKeyDown', visible: editing()" />
-                            </span>
-                            <span data-bind="if: !isDirectory()">
-                                <img src="/content/images/file.png" alt="File" />
-                                <span data-bind="text: name"></span>
-                            </span>
+                                    <a href="#" data-bind="click: selectNode, text: name, visible: !editing()" target="_blank"></a>
+                                    <input type="text" data-bind="value: name, valueUpdate: 'afterKeyDown', visible: editing()" />
+                                </span>
+                                <span data-bind="if: !isDirectory()">
+                                    <img src="/content/images/file.png" alt="File" />
+                                    <span data-bind="text: name"></span>
+                                </span>
 
-                        </td>
-                        <td data-bind="text: modifiedTime" class="date"></td>
-                        <td data-bind="text: size" class="size"></td>
-                    </tr>
-                </tbody>
-            </table>
-            </div>
-            <div>
+                            </td>
+                            <td data-bind="text: modifiedTime" class="date"></td>
+                            <td data-bind="text: size" class="size"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                </div>
                 <div>
-                    <span data-bind="text: selected().children().length"></span> items
+                    <div>
+                        <span data-bind="text: selected().children().length"></span> items
+                    </div>
                 </div>
             </div>
+            <div id="resizeHandle">
+                <span class="down" title="Slide up">&#9660;</span>
+                <span class="up" title="Slide down">&#9650;</span>
+            </div>
+            <div id="KuduExecConsole" class="left-aligned"></div>
         </div>
-        <div id="resizeHandle">
-            <span class="down" title="Slide up">&#9660;</span>
-            <span class="up" title="Slide down">&#9650;</span>
+        <div class="view edit-view" data-bind="visible: fileEdit()">
+            <div class="edit-bar">
+                &nbsp;
+                <button data-bind="click: function () { return fileEdit().saveItem(); }">Save</button>
+                &nbsp;
+                <button data-bind="click: cancelEdit">Cancel</button>
+            </div>
+            <textarea class="edit-area" data-bind="value: editText, valueUpdate: 'afterkeydown'"></textarea>
         </div>
-        <div id="KuduExecConsole" class="left-aligned"></div>
     </div>
     <footer>
         Icons from <a href="http://www.fatcow.com/free-icons">Fat Cow</a>
