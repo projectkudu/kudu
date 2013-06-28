@@ -109,6 +109,7 @@
     <Content Include="Content\Images\folder_page.png" />
     <Content Include="Content\Images\file.png" />
     <Content Include="Content\Images\file_delete.png" />
+    <Content Include="Content\Images\file_edit.png" />
     <Content Include="Content\Styles\FileBrowser.css" />
     <Content Include="Env.aspx" />
     <Content Include="Default.aspx" />
