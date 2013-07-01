@@ -181,7 +181,10 @@ namespace Kudu.FunctionalTests
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
                     var url = new Uri(new Uri(appManager.SiteUrl), resourcePath);
-                    KuduAssert.VerifyUrl(url.ToString(), verificationText, expectedResponseCode, httpMethod, jsonPayload);
+                    if (!String.IsNullOrEmpty(verificationText))
+                    {
+                        KuduAssert.VerifyUrl(url.ToString(), verificationText, expectedResponseCode, httpMethod, jsonPayload);
+                    }
                     if (!String.IsNullOrEmpty(verificationLogText))
                     {
                         KuduAssert.VerifyLogOutput(appManager, results[0].Id, verificationLogText.Trim());
