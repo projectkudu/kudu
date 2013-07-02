@@ -11,20 +11,41 @@ namespace Kudu.Core.Infrastructure
     {
         private static readonly Guid _wapGuid = new Guid("349c5851-65df-11da-9384-00065b846f21");
 
-        public static IList<VsSolution> GetSolutions(string path, IFileFinder fileFinder)
+        public static IList<VsSolution> GetSolutions(string path, IFileFinder fileFinder, SearchOption searchOption = SearchOption.AllDirectories)
         {
-            IEnumerable<string> filesList = fileFinder.ListFiles(path, SearchOption.AllDirectories, "*.sln");
+            IEnumerable<string> filesList = fileFinder.ListFiles(path, searchOption, "*.sln");
             return filesList.Select(s => new VsSolution(s)).ToList();
         }
 
         /// <summary>
-        /// Locates the solution(s) where the specified project is
+        /// Locates the solution(s) where the specified project is (search up the tree up to the repository path)
         /// </summary>
         public static IList<VsSolution> FindContainingSolutions(string repositoryPath, string targetPath, IFileFinder fileFinder)
         {
-            return (from solution in GetSolutions(repositoryPath, fileFinder)
-                    where ExistsInSolution(solution, targetPath)
-                    select solution).ToList();
+            string solutionsPath = PathUtility.CleanPath(targetPath);
+            repositoryPath = PathUtility.CleanPath(repositoryPath);
+
+            while (solutionsPath != null && solutionsPath.Contains(repositoryPath))
+            {
+                var solutionsFound = from solution in GetSolutions(solutionsPath, fileFinder, SearchOption.TopDirectoryOnly)
+                                     where ExistsInSolution(solution, targetPath)
+                                     select solution;
+
+                if (solutionsFound.Any())
+                {
+                    return solutionsFound.ToList();
+                }
+
+                if (PathUtility.PathsEquals(solutionsPath, repositoryPath))
+                {
+                    break;
+                }
+
+                var parent = Directory.GetParent(solutionsPath);
+                solutionsPath = parent != null ? parent.ToString() : null;
+            }
+
+            return new List<VsSolution>();
         }
 
         /// <summary>
