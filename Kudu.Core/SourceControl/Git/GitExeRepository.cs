@@ -370,7 +370,7 @@ echo $i > pushinfo
 
             if (!path.StartsWith(RepositoryPath, StringComparison.OrdinalIgnoreCase))
             {
-                throw new NotSupportedException("Only paths relative to the repository root path are supported, path provided: {0}".FormatCurrentCulture(path));
+                throw new NotSupportedException("Only paths relative to the repository root path are supported, path provided: '{0}' is not a child folder of '{1}'".FormatCurrentCulture(path, RepositoryPath));
             }
 
             if (Directory.Exists(path))

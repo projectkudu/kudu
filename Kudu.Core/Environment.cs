@@ -68,7 +68,8 @@ namespace Kudu.Core
             }
             set
             {
-                _repositoryPath = value;
+                // normalize the '/' to '\'
+                _repositoryPath = Path.GetFullPath(value);
             }
         }
 
