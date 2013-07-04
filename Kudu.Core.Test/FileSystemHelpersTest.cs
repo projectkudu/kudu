@@ -7,6 +7,7 @@ using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Moq;
 using Xunit;
+using Xunit.Extensions;
 
 namespace Kudu.Core.Test
 {
@@ -38,6 +39,37 @@ namespace Kudu.Core.Test
 
             Assert.Equal("foo", path);
             directory.Verify(m => m.CreateDirectory("foo"), Times.Never());
+        }
+
+        [Theory]
+        [InlineData(@"x:\temp\foo", @"x:\temp\Foo", true)]
+        [InlineData(@"x:\temp\foo", @"x:\temp\Foo\bar", true)]
+        [InlineData(@"x:\temp\bar", @"x:\temp\Foo", false)]
+        [InlineData(@"x:\temp\Foo\bar", @"x:\temp\foo", false)]
+        [InlineData(@"x:\temp\foo\", @"x:\temp\Foo\", true)]
+        [InlineData(@"x:\temp\Foo\", @"x:\temp\foo", true)]
+        [InlineData(@"x:\temp\foo", @"x:\temp\Foo\", true)]
+        [InlineData(@"x:\temp\Foo", @"x:\temp\foobar", false)]
+        [InlineData(@"x:\temp\foo", @"x:\temp\Foobar\", false)]
+        [InlineData(@"x:\temp\foo\..", @"x:\temp\Foo", true)]
+        [InlineData(@"x:\temp\..\temp\foo\..", @"x:\temp\Foo", true)]
+        [InlineData(@"x:\temp\foo", @"x:\temp\Foo\..", false)]
+        // slashes
+        [InlineData(@"x:/temp\foo", @"x:\temp\Foo", true)]
+        [InlineData(@"x:\temp/foo", @"x:\temp\Foo\bar", true)]
+        [InlineData(@"x:\temp\bar", @"x:/temp\Foo", false)]
+        [InlineData(@"x:\temp\Foo\bar", @"x:\temp/foo", false)]
+        [InlineData(@"x:/temp\foo\", @"x:\temp\Foo\", true)]
+        [InlineData(@"x:\temp/Foo\", @"x:\temp\foo", true)]
+        [InlineData(@"x:\temp\foo", @"x:\temp/Foo\", true)]
+        [InlineData(@"x:\temp/Foo", @"x:\temp\foobar", false)]
+        [InlineData(@"x:\temp\foo", @"x:\temp\Foobar/", false)]
+        [InlineData(@"x:\temp\foo/..", @"x:/temp\Foo", true)]
+        [InlineData(@"x:\temp\..\temp/foo\..", @"x:/temp\Foo", true)]
+        [InlineData(@"x:\temp/foo", @"x:\temp\Foo\..", false)]
+        public void IsSubfolderOfTests(string parent, string child, bool expected)
+        {
+            Assert.Equal(expected, FileSystemHelpers.IsSubfolder(parent, child));
         }
     }
 }

@@ -62,6 +62,15 @@ namespace Kudu.Core.Infrastructure
         }
 
         [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
+        public static bool IsSubfolder(string parent, string child)
+        {
+            // normalize
+            string parentPath = Path.GetFullPath(parent).TrimEnd('\\') + '\\';
+            string childPath = Path.GetFullPath(child).TrimEnd('\\') + '\\';
+            return childPath.StartsWith(parentPath, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
         internal static bool DeleteFileSafe(IFileSystem fileSystem, string path)
         {
             try
