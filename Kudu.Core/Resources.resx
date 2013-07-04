@@ -201,4 +201,13 @@
   <data name="Error_InvalidHookAddress" xml:space="preserve">
     <value>The hooks address received - '{0}' is invalid.</value>
   </data>
+  <data name="Error_AsyncLockNoLockRequest" xml:space="preserve">
+    <value>Got a lock but no lock request to dequeue -- releasing lock. Queue length is {0}.</value>
+  </data>
+  <data name="Error_AsyncLockNotInitialized" xml:space="preserve">
+    <value>Must call Initialize before calling LockAsync!</value>
+  </data>
+  <data name="Error_AsyncLockRequestCompleted" xml:space="preserve">
+    <value>Async lock task is already in one of the three final states: RanToCompletion, Faulted, or Canceled -- releasing lock.</value>
+  </data>
 </root>

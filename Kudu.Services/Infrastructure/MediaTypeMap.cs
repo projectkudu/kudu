@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Net.Http.Headers;
-using Microsoft.Win32;
+using System.Web;
 
 namespace Kudu.Services.Infrastructure
 {
@@ -29,17 +29,18 @@ namespace Kudu.Services.Infrastructure
             return _mediatypeMap.GetOrAdd(fileExtension,
                 (extension) =>
                 {
-                    using (RegistryKey key = Registry.ClassesRoot.OpenSubKey(fileExtension))
+                    try
                     {
-                        if (key != null)
+                        string mediaTypeValue = MimeMapping.GetMimeMapping(fileExtension);
+                        MediaTypeHeaderValue mediaType;
+                        if (mediaTypeValue != null && MediaTypeHeaderValue.TryParse(mediaTypeValue, out mediaType))
                         {
-                            string keyValue = key.GetValue("Content Type") as string;
-                            MediaTypeHeaderValue mediaType;
-                            if (keyValue != null && MediaTypeHeaderValue.TryParse(keyValue, out mediaType))
-                            {
-                                return mediaType;
-                            }
+                            return mediaType;
                         }
+                        return _defaultMediaType;
+                    }
+                    catch
+                    {
                         return _defaultMediaType;
                     }
                 });
@@ -50,6 +51,9 @@ namespace Kudu.Services.Infrastructure
             var dictionary = new ConcurrentDictionary<string, MediaTypeHeaderValue>(StringComparer.OrdinalIgnoreCase);
             dictionary.TryAdd(".js", MediaTypeHeaderValue.Parse("application/javascript"));
             dictionary.TryAdd(".json", MediaTypeHeaderValue.Parse("application/json"));
+
+            // Add media type for markdown
+            dictionary.TryAdd(".md", MediaTypeHeaderValue.Parse("text/plain"));
 
             return dictionary;
         }

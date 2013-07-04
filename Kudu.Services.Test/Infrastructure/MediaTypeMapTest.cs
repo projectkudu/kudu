@@ -33,6 +33,7 @@ namespace Kudu.Services.Infrastructure.Test
         [InlineData(".html", "text/html")]
         [InlineData(".js", "application/javascript")]
         [InlineData(".json", "application/json")]
+        [InlineData(".md", "text/plain")]
         public void GetMediaType_HandlesKnownMediaTypes(string extension, string expectedMediaType)
         {
             MediaTypeMap map = new MediaTypeMap();

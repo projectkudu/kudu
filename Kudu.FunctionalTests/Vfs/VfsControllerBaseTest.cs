@@ -5,7 +5,6 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Client.Editor;
 using Kudu.Client.Infrastructure;
@@ -314,10 +313,6 @@ namespace Kudu.FunctionalTests
                     Assert.True(content.StartsWith(_conflict));
                 }
 
-                // The previous conflict results in a git cleanup which at times takes time. During this interval the server responds with ServerUnavailable.
-                // To work aroudn this, we'll simply add a bit of sleep timing.
-                Thread.Sleep(TimeSpan.FromSeconds(3));
-
                 // Update file with fifth edit based on invalid etag
                 TestTracer.Trace("==== Update file with fifth edit based on invalid etag");
                 using (HttpRequestMessage update5 = new HttpRequestMessage())
@@ -352,7 +347,41 @@ namespace Kudu.FunctionalTests
                     updatedEtag = response.Headers.ETag;
                 }
 
-                // Check that custom deployment script works
+                TestTracer.Trace("==== Check that 'nodeploy' doesn't deploy and that the old content remains.");
+                using (HttpRequestMessage request = new HttpRequestMessage())
+                {
+                    request.Method = HttpMethod.Put;
+                    request.RequestUri = new Uri(fileAddress + "?nodeploy");
+                    request.Headers.IfMatch.Add(EntityTagHeaderValue.Any);
+                    request.Content = CreateUploadContent(_fileContent2);
+
+                    response = await HttpSendAsync(request);
+                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent1);
+
+                    Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+                    Assert.NotNull(response.Headers.ETag);
+                    Assert.NotEqual(originalEtag, response.Headers.ETag);
+                    updatedEtag = response.Headers.ETag;
+                }
+
+                TestTracer.Trace("==== Check passing custom commit message.");
+                using (HttpRequestMessage request = new HttpRequestMessage())
+                {
+                    request.Method = HttpMethod.Put;
+                    request.RequestUri = new Uri(fileAddress + "?message=helloworld");
+                    request.Headers.IfMatch.Add(EntityTagHeaderValue.Any);
+                    request.Content = CreateUploadContent(_fileContent3);
+
+                    response = await HttpSendAsync(request);
+                    await VerifyDeployment(deploymentFileAddress, HttpStatusCode.OK, _fileContent3);
+
+                    Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+                    Assert.NotNull(response.Headers.ETag);
+                    Assert.NotEqual(originalEtag, response.Headers.ETag);
+                    updatedEtag = response.Headers.ETag;
+                }
+
+                TestTracer.Trace("==== Check that custom deployment script works");
                 using (HttpRequestMessage update7 = new HttpRequestMessage())
                 {
                     // Upload custom deployment scripts

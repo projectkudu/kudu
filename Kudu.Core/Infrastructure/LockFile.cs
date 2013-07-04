@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.IO.Abstractions;
+using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Tracing;
@@ -10,11 +13,15 @@ namespace Kudu.Core.Infrastructure
     /// <summary>
     /// A thread safe/multi application safe lock file.
     /// </summary>
+    [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "Because of a bug in Ninject we can't make this disposable as it would otherwise get disposed on every request.")]
     public class LockFile : IOperationLock
     {
         private readonly string _path;
         private readonly ITraceFactory _traceFactory;
         private readonly IFileSystem _fileSystem;
+
+        private ConcurrentQueue<QueueItem> _lockRequestQueue;
+        private FileSystemWatcher _lockFileWatcher;
 
         private Stream _lockStream;
 
@@ -28,6 +35,36 @@ namespace Kudu.Core.Infrastructure
             _path = Path.GetFullPath(path);
             _traceFactory = traceFactory;
             _fileSystem = fileSystem;
+        }
+
+        public void InitializeAsyncLocks()
+        {
+            _lockRequestQueue = new ConcurrentQueue<QueueItem>();
+
+            FileSystemHelpers.EnsureDirectory(_fileSystem, Path.GetDirectoryName(_path));
+
+            // Set up lock file watcher. Note that depending on how the file is accessed the file watcher may generate multiple events.
+            _lockFileWatcher = new FileSystemWatcher(_fileSystem.Path.GetDirectoryName(_path), _fileSystem.Path.GetFileName(_path));
+            _lockFileWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
+            _lockFileWatcher.Changed += OnLockReleased;
+            _lockFileWatcher.Deleted += OnLockReleased;
+            _lockFileWatcher.EnableRaisingEvents = true;
+        }
+
+        /// <summary>
+        /// Because of a bug in Ninject in how it disposes objects in the global scope for each request
+        /// we can't use Dispose to shut down the file system watcher. Otherwise this would get disposed
+        /// on every request.
+        /// </summary>
+        public void TerminateAsyncLocks()
+        {
+            if (_lockFileWatcher != null)
+            {
+                _lockRequestQueue = null;
+                _lockFileWatcher.EnableRaisingEvents = false;
+                _lockFileWatcher.Dispose();
+                _lockFileWatcher = null;
+            }
         }
 
         public bool IsHeld
@@ -49,7 +86,6 @@ namespace Kudu.Core.Infrastructure
                 catch (Exception ex)
                 {
                     TraceIfUnknown(ex);
-                    
                     return true;
                 }
 
@@ -77,6 +113,28 @@ namespace Kudu.Core.Infrastructure
 
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Returns a lock right away or waits asynchronously until a lock is available.
+        /// </summary>
+        /// <returns>Task indicating the task of acquiring the lock.</returns>
+        public Task LockAsync()
+        {
+            if (_lockFileWatcher == null)
+            {
+                throw new InvalidOperationException(Resources.Error_AsyncLockNotInitialized);
+            }
+
+            // See if we can get the lock -- if not then enqueue lock request.
+            if (Lock())
+            {
+                return Task.FromResult(true);
+            }
+
+            QueueItem item = new QueueItem();
+            _lockRequestQueue.Enqueue(item);
+            return item.HasLock.Task;
         }
 
         public void Release()
@@ -114,6 +172,50 @@ namespace Kudu.Core.Infrastructure
                 // trace unexpected exception
                 _traceFactory.GetTracer().TraceError(ex);
             }
+        }
+
+        /// <summary>
+        /// When a lock file change has been detected we check whether there are queued up lock requests.
+        /// If so then we attempt to get the lock and dequeue the next request.
+        /// </summary>
+        private void OnLockReleased(object sender, FileSystemEventArgs e)
+        {
+            if (!_lockRequestQueue.IsEmpty)
+            {
+                if (Lock())
+                {
+                    if (!_lockRequestQueue.IsEmpty)
+                    {
+                        QueueItem item;
+                        if (!_lockRequestQueue.TryDequeue(out item))
+                        {
+                            string msg = String.Format(Resources.Error_AsyncLockNoLockRequest, _lockRequestQueue.Count);
+                            _traceFactory.GetTracer().TraceError(msg);
+                            Release();
+                        }
+
+                        if (!item.HasLock.TrySetResult(true))
+                        {
+                            _traceFactory.GetTracer().TraceError(Resources.Error_AsyncLockRequestCompleted);
+                            Release();
+                        }
+                    }
+                    else
+                    {
+                        Release();
+                    }
+                }
+            }
+        }
+
+        private class QueueItem
+        {
+            public QueueItem()
+            {
+                HasLock = new TaskCompletionSource<bool>();
+            }
+
+            public TaskCompletionSource<bool> HasLock { get; private set; }
         }
     }
 }

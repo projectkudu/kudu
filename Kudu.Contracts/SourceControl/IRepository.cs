@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-
+﻿
 namespace Kudu.Core.SourceControl
 {
     public interface IRepository : IFileFinder
@@ -74,5 +73,10 @@ namespace Kudu.Core.SourceControl
         /// </summary>
         /// <param name="source">The source branch used to update master.</param>
         void UpdateRef(string source);
+
+        /// <summary>
+        /// Indicates whether a given branch contains a given commit.
+        /// </summary>
+        bool DoesBranchContainCommit(string branch, string commit);
     }
 }

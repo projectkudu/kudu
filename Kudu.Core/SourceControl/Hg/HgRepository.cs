@@ -6,7 +6,6 @@ using System.Linq;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
-using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Tracing;
 using Mercurial;
 
@@ -278,6 +277,11 @@ namespace Kudu.Core.SourceControl
         public void UpdateRef(string source)
         {
             throw new NotSupportedException();
+        }
+
+        public bool DoesBranchContainCommit(string branch, string commit)
+        {
+            throw new NotImplementedException();
         }
 
         public void Clean()

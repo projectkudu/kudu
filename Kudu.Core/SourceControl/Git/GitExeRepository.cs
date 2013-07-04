@@ -82,7 +82,7 @@ namespace Kudu.Core.SourceControl.Git
 
                 try
                 {
-                    string output = _gitExe.Execute("rev-parse --git-dir").Item1;
+                    string output = Execute("rev-parse --git-dir");
                     // If no exception and the output is .git (not a full directory to .git which means somewhere there's a git repository which is a parent of this directory)
                     // Then git repository directory found
                     return String.Equals(output.Trim(), ".git", StringComparison.OrdinalIgnoreCase);
@@ -116,28 +116,28 @@ namespace Kudu.Core.SourceControl.Git
 
         public void Initialize()
         {
-            var profiler = _tracerFactory.GetTracer();
-            using (profiler.Step("GitExeRepository.Initialize"))
+            var tracer = _tracerFactory.GetTracer();
+            using (tracer.Step("GitExeRepository.Initialize"))
             {
-                _gitExe.Execute(profiler, "init");
+                Execute(tracer, "init");
 
-                _gitExe.Execute(profiler, "config core.autocrlf true");
+                Execute(tracer, "config core.autocrlf true");
 
                 // This speeds up git operations like 'git checkout', especially on slow drives like in Azure
-                _gitExe.Execute(profiler, "config core.preloadindex true");
+                Execute(tracer, "config core.preloadindex true");
 
-                _gitExe.Execute(profiler, @"config user.name ""{0}""", _settings.GetGitUsername());
+                Execute(tracer, @"config user.name ""{0}""", _settings.GetGitUsername());
 
-                _gitExe.Execute(profiler, @"config user.email ""{0}""", _settings.GetGitEmail());
+                Execute(tracer, @"config user.email ""{0}""", _settings.GetGitEmail());
 
-                using (profiler.Step("Configure git server"))
+                using (tracer.Step("Configure git server"))
                 {
                     // Allow getting pushes even though we're not bare
-                    _gitExe.Execute(profiler, "config receive.denyCurrentBranch ignore");
+                    Execute(tracer, "config receive.denyCurrentBranch ignore");
                 }
 
                 // to disallow browsing to this folder in case of in-place repo
-                using (profiler.Step("Create deny users for .git folder"))
+                using (tracer.Step("Create deny users for .git folder"))
                 {
                     string content = "<?xml version=\"1.0\"" + @"?>
 <configuration>
@@ -153,7 +153,7 @@ namespace Kudu.Core.SourceControl.Git
 
                 // Server env does not support interactive cred prompt; hence, we intercept any credential provision
                 // for git fetch/clone with http/https scheme and return random invalid u/p forcing 'fatal: Authentication failed.'
-                using (profiler.Step("Configure git-credential"))
+                using (tracer.Step("Configure git-credential"))
                 {
                     FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(GitCredentialHookPath));
 
@@ -165,10 +165,10 @@ fi" + "\n";
 
                     File.WriteAllText(GitCredentialHookPath, content);
 
-                    _gitExe.Execute(profiler, "config credential.helper !'{0}'", GitCredentialHookPath);
+                    Execute(tracer, "config credential.helper !'{0}'", GitCredentialHookPath);
                 }
 
-                using (profiler.Step("Setup post receive hook"))
+                using (tracer.Step("Setup post receive hook"))
                 {
                     FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(PostReceiveHookPath));
 
@@ -187,19 +187,19 @@ echo $i > pushinfo
 
         public string Resolve(string id)
         {
-            return _gitExe.Execute("rev-parse {0}", id).Item1.Trim();
+            return Execute("rev-parse {0}", id).Trim();
         }
 
         public ChangeSet GetChangeSet(string id)
         {
-            string showCommit = _gitExe.Execute("log -n 1 {0}", id).Item1;
-            var commitReader = showCommit.AsReader();
+            string output = Execute("log -n 1 {0}", id);
+            var commitReader = output.AsReader();
             return ParseCommit(commitReader);
         }
 
         public void AddFile(string path)
         {
-            _gitExe.Execute("add {0}", path);
+            Execute("add {0}", path);
         }
 
         public bool Commit(string message, string authorName = null)
@@ -207,18 +207,18 @@ echo $i > pushinfo
             ITracer tracer = _tracerFactory.GetTracer();
 
             // Add all unstaged files
-            _gitExe.Execute(tracer, "add -A");
+            Execute(tracer, "add -A");
 
             try
             {
                 string output;
                 if (authorName == null)
                 {
-                    output = _gitExe.Execute(tracer, "commit -m \"{0}\"", message).Item1;
+                    output = Execute(tracer, "commit -m \"{0}\"", message);
                 }
                 else
                 {
-                    output = _gitExe.Execute(tracer, "commit -m \"{0}\" --author=\"{1}\"", message, authorName).Item1;
+                    output = Execute(tracer, "commit -m \"{0}\" --author=\"{1}\"", message, authorName);
                 }
 
                 // No pending changes
@@ -243,12 +243,12 @@ echo $i > pushinfo
         {
             // two f to remove submodule (dir with git).
             // see https://github.com/capistrano/capistrano/issues/135
-            _gitExe.Execute(@"clean -xdff");
+            Execute(@"clean -xdff");
         }
 
         public void Push()
         {
-            _gitExe.Execute(@"push origin master");
+            Execute(@"push origin master");
         }
 
         public void FetchWithoutConflict(string remote, string branchName)
@@ -269,7 +269,7 @@ echo $i > pushinfo
 
                 try
                 {
-                    GitFetchWithRetry(() => _gitExe.Execute(tracer, fetchCommand, RemoteAlias));
+                    GitFetchWithRetry(() => Execute(tracer, fetchCommand, RemoteAlias));
                 }
                 catch (CommandLineException exception)
                 {
@@ -285,7 +285,7 @@ echo $i > pushinfo
 
                 // Set our branch to point to the remote branch we just fetched. This is a trivial branch pointer
                 // operation that doesn't touch any working files
-                _gitExe.Execute(tracer, @"update-ref refs/heads/{1} {0}/{1}", RemoteAlias, branchName);
+                Execute(tracer, @"update-ref refs/heads/{1} {0}/{1}", RemoteAlias, branchName);
 
                 // Now checkout out our branch, which points to the right place
                 Update(branchName);
@@ -298,8 +298,7 @@ echo $i > pushinfo
 
         public void Update(string id)
         {
-            ITracer tracer = _tracerFactory.GetTracer();
-            _gitExe.Execute(tracer, "checkout {0} --force", id);
+            Execute("checkout {0} --force", id);
         }
 
         public void Update()
@@ -314,30 +313,40 @@ echo $i > pushinfo
             // there may be a submodule folder leftover, one could clean it manually by /live/scm/clean
             if (File.Exists(Path.Combine(_gitExe.WorkingDirectory, ".gitmodules")))
             {
-                ITracer tracer = _tracerFactory.GetTracer();
-                GitFetchWithRetry(() => _gitExe.Execute(tracer, "submodule update --init --recursive"));
+                GitFetchWithRetry(() => Execute("submodule update --init --recursive"));
             }
         }
 
         public void CreateOrResetBranch(string branchName, string startPoint)
         {
-            _gitExe.Execute("checkout -B \"{0}\" {1}", branchName, startPoint);
+            Execute("checkout -B \"{0}\" {1}", branchName, startPoint);
         }
 
         public bool Rebase(string branchName)
         {
-            string output = _gitExe.Execute("rebase \"{0}\"", branchName).Item1;
+            string output = Execute("rebase \"{0}\"", branchName);
             return output.Contains("is up to date");
         }
 
         public void RebaseAbort()
         {
-            _gitExe.Execute("rebase --abort");
+            Execute("rebase --abort");
         }
 
         public void UpdateRef(string source)
         {
-            _gitExe.Execute("update-ref refs/heads/master refs/heads/{0}", source);
+            Execute("update-ref refs/heads/master refs/heads/{0}", source);
+        }
+
+        public bool DoesBranchContainCommit(string branch, string commit)
+        {
+            if (String.IsNullOrEmpty(branch) || String.IsNullOrEmpty(commit))
+            {
+                return false;
+            }
+            string output = Execute("branch --contains \"{0}\"", commit);
+            string match = String.Format(" {0}\n", branch);
+            return output.IndexOf(match, StringComparison.OrdinalIgnoreCase) != -1;
         }
 
         public void ClearLock()
@@ -364,8 +373,6 @@ echo $i > pushinfo
 
         public IEnumerable<string> ListFiles(string path, SearchOption searchOption, params string[] lookupList)
         {
-            ITracer tracer = _tracerFactory.GetTracer();
-
             path = PathUtility.CleanPath(path);
 
             if (!path.StartsWith(RepositoryPath, StringComparison.OrdinalIgnoreCase))
@@ -377,11 +384,11 @@ echo $i > pushinfo
             {
                 // TODO: Consider an implementation where the gitExe returns the list of files as a list (not storing the files list output as a blob)
                 // In-order to conserve memory consumption
-                Tuple<string, string> result = _gitExe.Execute(tracer, @"ls-files {0}", String.Join(" ", lookupList), RepositoryPath);
+                string output = Execute(@"ls-files {0}", String.Join(" ", lookupList), RepositoryPath);
 
-                if (!String.IsNullOrEmpty(result.Item1))
+                if (!String.IsNullOrEmpty(output))
                 {
-                    IEnumerable<string> lines = result.Item1.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                    IEnumerable<string> lines = output.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
                     lines = lines
                         .Select(line => Path.Combine(RepositoryPath, line.Trim().Replace('/', '\\')))
@@ -407,15 +414,25 @@ echo $i > pushinfo
             return Enumerable.Empty<string>();
         }
 
+        private string Execute(string arguments, params object[] args)
+        {
+            return Execute(_tracerFactory.GetTracer(), arguments, args);
+        }
+
+        private string Execute(ITracer tracer, string arguments, params object[] args)
+        {
+            return _gitExe.Execute(tracer, arguments, args).Item1;
+        }
+
         private bool IsEmpty()
         {
             // REVIEW: Is this reliable
-            return String.IsNullOrWhiteSpace(_gitExe.Execute("branch").Item1);
+            return String.IsNullOrWhiteSpace(Execute("branch"));
         }
 
         private void AddRemote(string remote, string remoteAlias, string branchName, ITracer tracer)
         {
-            _gitExe.Execute(tracer, @"remote add -t {2} {0} ""{1}""", remoteAlias, remote, branchName);
+            Execute(tracer, @"remote add -t {2} {0} ""{1}""", remoteAlias, remote, branchName);
         }
 
         private void TryUpdateRemote(string remote, string remoteAlias, string branchName, ITracer tracer)
@@ -437,7 +454,7 @@ echo $i > pushinfo
         {
             try
             {
-                _gitExe.Execute(tracer, @"remote rm {0}", remoteAlias);
+                Execute(tracer, @"remote rm {0}", remoteAlias);
             }
             catch { }
         }
