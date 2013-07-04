@@ -146,11 +146,11 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>Scripts\KuduSync.NET.exe</Link>
     </Content>
-    <Content Include="..\packages\KuduSync.NET.0.1.9\tools\CommandLine.dll">
+    <Content Include="..\packages\KuduSync.NET.0.1.10\tools\CommandLine.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>Scripts\CommandLine.dll</Link>
     </Content>
-    <Content Include="..\packages\KuduSync.NET.0.1.9\tools\System.IO.Abstractions.dll">
+    <Content Include="..\packages\KuduSync.NET.0.1.10\tools\System.IO.Abstractions.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>Scripts\System.IO.Abstractions.dll</Link>
     </Content>
