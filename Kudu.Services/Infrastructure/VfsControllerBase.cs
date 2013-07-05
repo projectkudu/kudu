@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
+using System.IO.Abstractions;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -28,7 +29,7 @@ namespace Kudu.Services.Infrastructure
 
         protected const int BufferSize = 32 * 1024;
 
-        protected VfsControllerBase(ITracer tracer, IEnvironment environment, string rootPath)
+        protected VfsControllerBase(ITracer tracer, IEnvironment environment, IFileSystem fileSystem, string rootPath)
         {
             if (rootPath == null)
             {
@@ -38,13 +39,14 @@ namespace Kudu.Services.Infrastructure
             Environment = environment;
             RootPath = Path.GetFullPath(rootPath.TrimEnd(Path.DirectorySeparatorChar));
             MediaTypeMap = MediaTypeMap.Default;
+            FileSystem = fileSystem;
         }
 
         [AcceptVerbs("GET", "HEAD")]
         public virtual Task<HttpResponseMessage> GetItem()
         {
             string localFilePath = GetLocalFilePath();
-            DirectoryInfo info = new DirectoryInfo(localFilePath);
+            DirectoryInfoBase info = FileSystem.DirectoryInfo.FromDirectoryName(localFilePath);
 
             if (info.Attributes < 0)
             {
@@ -88,7 +90,7 @@ namespace Kudu.Services.Infrastructure
         public virtual Task<HttpResponseMessage> PutItem()
         {
             string localFilePath = GetLocalFilePath();
-            DirectoryInfo info = new DirectoryInfo(localFilePath);
+            DirectoryInfoBase info = FileSystem.DirectoryInfo.FromDirectoryName(localFilePath);
             bool itemExists = info.Attributes >= 0;
 
             if (itemExists && (info.Attributes & FileAttributes.Directory) != 0)
@@ -109,21 +111,21 @@ namespace Kudu.Services.Infrastructure
         }
 
         [HttpDelete]
-        public virtual Task<HttpResponseMessage> DeleteItem()
+        public virtual Task<HttpResponseMessage> DeleteItem(bool recursive = false)
         {
             string localFilePath = GetLocalFilePath();
-            DirectoryInfo info = new DirectoryInfo(localFilePath);
+            DirectoryInfoBase dirInfo = FileSystem.DirectoryInfo.FromDirectoryName(localFilePath);
 
-            if (info.Attributes < 0)
+            if (dirInfo.Attributes < 0)
             {
                 HttpResponseMessage notFoundResponse = Request.CreateResponse(HttpStatusCode.NotFound);
                 return Task.FromResult(notFoundResponse);
             }
-            else if ((info.Attributes & FileAttributes.Directory) != 0)
+            else if ((dirInfo.Attributes & FileAttributes.Directory) != 0)
             {
                 try
                 {
-                    info.Delete();
+                    dirInfo.Delete(recursive);
                 }
                 catch (Exception ex)
                 {
@@ -150,7 +152,8 @@ namespace Kudu.Services.Infrastructure
                 }
 
                 // We are ready to delete the file
-                return CreateItemDeleteResponse(info, localFilePath);
+                var fileInfo = FileSystem.FileInfo.FromFileName(localFilePath);
+                return CreateFileDeleteResponse(fileInfo);
             }
         }
 
@@ -162,7 +165,9 @@ namespace Kudu.Services.Infrastructure
 
         protected MediaTypeMap MediaTypeMap { get; private set; }
 
-        protected virtual Task<HttpResponseMessage> CreateDirectoryGetResponse(DirectoryInfo info, string localFilePath)
+        protected IFileSystem FileSystem { get; set; }
+
+        protected virtual Task<HttpResponseMessage> CreateDirectoryGetResponse(DirectoryInfoBase info, string localFilePath)
         {
             // Enumerate directory
             IEnumerable<VfsStatEntry> directory = GetDirectoryResponse(info);
@@ -170,25 +175,26 @@ namespace Kudu.Services.Infrastructure
             return Task.FromResult(successDirectoryResponse);
         }
 
-        protected abstract Task<HttpResponseMessage> CreateItemGetResponse(FileSystemInfo info, string localFilePath);
+        protected abstract Task<HttpResponseMessage> CreateItemGetResponse(FileSystemInfoBase info, string localFilePath);
 
-        protected virtual Task<HttpResponseMessage> CreateDirectoryPutResponse(DirectoryInfo info, string localFilePath)
+        protected virtual Task<HttpResponseMessage> CreateDirectoryPutResponse(DirectoryInfoBase info, string localFilePath)
         {
             HttpResponseMessage conflictDirectoryResponse = Request.CreateErrorResponse(
                 HttpStatusCode.Conflict, Resources.VfsController_CannotUpdateDirectory);
             return Task.FromResult(conflictDirectoryResponse);
         }
 
-        protected abstract Task<HttpResponseMessage> CreateItemPutResponse(FileSystemInfo info, string localFilePath, bool itemExists);
+        protected abstract Task<HttpResponseMessage> CreateItemPutResponse(FileSystemInfoBase info, string localFilePath, bool itemExists);
 
-        protected virtual Task<HttpResponseMessage> CreateItemDeleteResponse(FileSystemInfo info, string localFilePath)
+        protected virtual Task<HttpResponseMessage> CreateFileDeleteResponse(FileInfoBase info)
         {
             // Generate file response
-            Stream fileStream = null;
             try
             {
-                fileStream = GetFileDeleteStream(localFilePath);
-                File.Delete(localFilePath);
+                using (Stream fileStream = GetFileDeleteStream(info))
+                {
+                    info.Delete();
+                }
                 HttpResponseMessage successResponse = Request.CreateResponse(HttpStatusCode.OK);
                 return Task.FromResult(successResponse);
             }
@@ -198,13 +204,6 @@ namespace Kudu.Services.Infrastructure
                 Tracer.TraceError(e);
                 HttpResponseMessage notFoundResponse = Request.CreateErrorResponse(HttpStatusCode.NotFound, e);
                 return Task.FromResult(notFoundResponse);
-            }
-            finally
-            {
-                if (fileStream != null)
-                {
-                    fileStream.Close();
-                }
             }
         }
 
@@ -266,12 +265,12 @@ namespace Kudu.Services.Infrastructure
         /// <summary>
         /// Provides a common way for opening a file stream for exclusively deleting the file. 
         /// </summary>
-        private static Stream GetFileDeleteStream(string localFilePath)
+        private static Stream GetFileDeleteStream(FileInfoBase file)
         {
-            Contract.Assert(localFilePath != null);
+            Contract.Assert(file != null);
 
             // Open file exclusively for delete sharing only
-            return new FileStream(localFilePath, FileMode.Open, FileAccess.Read, FileShare.Delete);
+            return file.Open(FileMode.Open, FileAccess.Read, FileShare.Delete);
         }
 
         private string GetLocalFilePath()
@@ -283,7 +282,7 @@ namespace Kudu.Services.Infrastructure
                 string path = routeData.Values["path"] as string;
                 if (!String.IsNullOrEmpty(path))
                 {
-                    result = Path.GetFullPath(Path.Combine(result, path));
+                    result = FileSystem.Path.GetFullPath(Path.Combine(result, path));
                 }
                 else
                 {
@@ -297,23 +296,23 @@ namespace Kudu.Services.Infrastructure
             return result;
         }
 
-        private IEnumerable<VfsStatEntry> GetDirectoryResponse(DirectoryInfo info)
+        private IEnumerable<VfsStatEntry> GetDirectoryResponse(DirectoryInfoBase info)
         {
             Contract.Assert(info != null);
-
             string baseAddress = Request.RequestUri.AbsoluteUri;
-            foreach (FileSystemInfo fileSysInfo in info.EnumerateFileSystemInfos(DirectoryEnumerationSearchPattern, SearchOption.TopDirectoryOnly))
+            foreach (FileSystemInfoBase fileSysInfo in info.GetFileSystemInfos())
             {
-                FileInfo fInfo = fileSysInfo as FileInfo;
                 bool isDirectory = (fileSysInfo.Attributes & FileAttributes.Directory) != 0;
                 string mime = isDirectory ? _directoryMediaType.ToString() : MediaTypeMap.GetMediaType(fileSysInfo.Extension).ToString();
                 string unescapedHref = isDirectory ? fileSysInfo.Name + UriSegmentSeparator : fileSysInfo.Name;
+                long size = isDirectory ? 0 : ((FileInfoBase)fileSysInfo).Length;
+
                 yield return new VfsStatEntry
                 {
                     Name = fileSysInfo.Name,
                     MTime = fileSysInfo.LastWriteTimeUtc,
                     Mime = mime,
-                    Size = fInfo != null ? fInfo.Length : 0,
+                    Size = size,
                     Href = baseAddress + Uri.EscapeUriString(unescapedHref),
                 };
             }

@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.IO;
+using System.IO.Abstractions;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -45,8 +46,18 @@ namespace Kudu.Services.SourceControl
                                        IDeploymentManager deploymentManager,
                                        IOperationLock operationLock,
                                        IEnvironment environment,
-                                       IRepository repository)
-            : base(tracer, environment, environment.RepositoryPath)
+                                       IRepository repository) 
+            : this(tracer, deploymentManager, operationLock, environment, repository, new FileSystem())
+        {
+        }
+
+        public LiveScmEditorController(ITracer tracer,
+                                       IDeploymentManager deploymentManager,
+                                       IOperationLock operationLock,
+                                       IEnvironment environment,
+                                       IRepository repository,
+                                       IFileSystem fileSystem)
+            : base(tracer, environment, fileSystem, environment.RepositoryPath)
         {
             _deploymentManager = deploymentManager;
             _operationLock = operationLock;
@@ -111,8 +122,15 @@ namespace Kudu.Services.SourceControl
             }
         }
 
-        public override async Task<HttpResponseMessage> DeleteItem()
+        public override async Task<HttpResponseMessage> DeleteItem(bool recursive = false)
         {
+            if (recursive)
+            {
+                // Disallow recursive deletes when dealing with source control
+                HttpResponseMessage errorResponse = Request.CreateResponse(HttpStatusCode.BadRequest);
+                return errorResponse;
+            }
+
             // Get a lock on the repository
             await GetLockAsync();
 
@@ -139,7 +157,7 @@ namespace Kudu.Services.SourceControl
             }
         }
 
-        protected override Task<HttpResponseMessage> CreateItemGetResponse(FileSystemInfo info, string localFilePath)
+        protected override Task<HttpResponseMessage> CreateItemGetResponse(FileSystemInfoBase info, string localFilePath)
         {
             // Check whether we have a conditional If-None-Match request
             if (IsIfNoneMatchRequest(_currentEtag))
@@ -192,7 +210,7 @@ namespace Kudu.Services.SourceControl
             }
         }
 
-        protected override async Task<HttpResponseMessage> CreateItemPutResponse(FileSystemInfo info, string localFilePath, bool itemExists)
+        protected override async Task<HttpResponseMessage> CreateItemPutResponse(FileSystemInfoBase info, string localFilePath, bool itemExists)
         {
             // If repository is empty then there is no commit id and no master branch so we don't create any branch; we just init the repo.
             if (_currentEtag != null)
@@ -334,7 +352,7 @@ namespace Kudu.Services.SourceControl
             }
         }
 
-        protected override async Task<HttpResponseMessage> CreateItemDeleteResponse(FileSystemInfo info, string localFilePath)
+        protected override async Task<HttpResponseMessage> CreateFileDeleteResponse(FileInfoBase info)
         {
             HttpResponseMessage response;
             if (!PrepareBranch(true, out response))
@@ -342,7 +360,7 @@ namespace Kudu.Services.SourceControl
                 return response;
             }
 
-            response = await base.CreateItemDeleteResponse(info, localFilePath);
+            response = await base.CreateFileDeleteResponse(info);
 
             // Get the query parameters
             QueryParameters parameters = new QueryParameters(this.Request);

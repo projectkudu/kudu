@@ -64,6 +64,7 @@
     <Compile Include="ReceivePackHandlerFacts.cs" />
     <Compile Include="SettingsControllerFacts.cs" />
     <Compile Include="SSHKeyControllerTests.cs" />
+    <Compile Include="VfsControllerFacts.cs" />
     <Compile Include="ZipArchiveExtensionFacts.cs" />
   </ItemGroup>
   <ItemGroup>

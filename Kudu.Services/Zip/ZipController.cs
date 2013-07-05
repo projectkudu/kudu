@@ -18,24 +18,24 @@ namespace Kudu.Services.Deployment
     public class ZipController : VfsControllerBase
     {
         public ZipController(ITracer tracer, IEnvironment environment)
-            : base(tracer, environment, environment.RootPath)
+            : base(tracer, environment, new FileSystem(), environment.RootPath)
         {
         }
 
         [SuppressMessage("Microsoft.Usage", "CA2202", Justification = "The ZipArchive is instantiated in a way that the stream is not closed on dispose")]
-        protected override Task<HttpResponseMessage> CreateDirectoryGetResponse(DirectoryInfo info, string localFilePath)
+        protected override Task<HttpResponseMessage> CreateDirectoryGetResponse(DirectoryInfoBase info, string localFilePath)
         {
             HttpResponseMessage response = Request.CreateResponse();
             using (var ms = new MemoryStream())
             {
                 using (var zip = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
                 {
-                    foreach (FileSystemInfo fileSysInfo in info.EnumerateFileSystemInfos())
+                    foreach (FileSystemInfoBase fileSysInfo in info.GetFileSystemInfos())
                     {
-                        DirectoryInfo directoryInfo = fileSysInfo as DirectoryInfo;
+                        var directoryInfo = fileSysInfo as DirectoryInfoBase;
                         if (directoryInfo != null)
                         {
-                            zip.AddDirectory(new DirectoryInfoWrapper(directoryInfo), fileSysInfo.Name);
+                            zip.AddDirectory(directoryInfo, fileSysInfo.Name);
                         }
                         else
                         {
@@ -55,7 +55,7 @@ namespace Kudu.Services.Deployment
             return Task.FromResult(response);
         }
 
-        protected override Task<HttpResponseMessage> CreateItemGetResponse(FileSystemInfo info, string localFilePath)
+        protected override Task<HttpResponseMessage> CreateItemGetResponse(FileSystemInfoBase info, string localFilePath)
         {
             // We don't support getting a file from the zip controller
             // Conceivably, it could be a zip file containing just the one file, but that's rarely interesting
@@ -63,7 +63,7 @@ namespace Kudu.Services.Deployment
             return Task.FromResult(notFoundResponse);
         }
 
-        protected override async Task<HttpResponseMessage> CreateDirectoryPutResponse(DirectoryInfo info, string localFilePath)
+        protected override async Task<HttpResponseMessage> CreateDirectoryPutResponse(DirectoryInfoBase info, string localFilePath)
         {
             using (var stream = await Request.Content.ReadAsStreamAsync())
             {
@@ -77,7 +77,7 @@ namespace Kudu.Services.Deployment
             return Request.CreateResponse(HttpStatusCode.OK);
         }
 
-        protected override Task<HttpResponseMessage> CreateItemPutResponse(FileSystemInfo info, string localFilePath, bool itemExists)
+        protected override Task<HttpResponseMessage> CreateItemPutResponse(FileSystemInfoBase info, string localFilePath, bool itemExists)
         {
             // We don't support putting an individual file using the zip controller
             HttpResponseMessage notFoundResponse = Request.CreateResponse(HttpStatusCode.NotFound);
