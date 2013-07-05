@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.IO;
+using System.IO.Abstractions;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -20,11 +22,17 @@ namespace Kudu.Services.Editor
     public class VfsController : VfsControllerBase
     {
         public VfsController(ITracer tracer, IEnvironment environment)
-            : base(tracer, environment, environment.RootPath)
+            : this(tracer, environment, new FileSystem())
+        {
+
+        }
+
+        public VfsController(ITracer tracer, IEnvironment environment, IFileSystem fileSystem)
+            : base(tracer, environment, fileSystem, environment.RootPath)
         {
         }
 
-        protected override Task<HttpResponseMessage> CreateDirectoryPutResponse(DirectoryInfo info, string localFilePath)
+        protected override Task<HttpResponseMessage> CreateDirectoryPutResponse(DirectoryInfoBase info, string localFilePath)
         {
             if (info != null && info.Exists)
             {
@@ -49,10 +57,10 @@ namespace Kudu.Services.Editor
             return Task.FromResult(successFileResponse);
         }
 
-        protected override Task<HttpResponseMessage> CreateItemGetResponse(FileSystemInfo info, string localFilePath)
+        protected override Task<HttpResponseMessage> CreateItemGetResponse(FileSystemInfoBase info, string localFilePath)
         {
             // Get current etag
-            EntityTagHeaderValue currentEtag = GetCurrentEtag(info);
+            EntityTagHeaderValue currentEtag = CreateEntityTag(info);
 
             // Check whether we have a conditional If-None-Match request
             if (IsIfNoneMatchRequest(currentEtag))
@@ -112,13 +120,13 @@ namespace Kudu.Services.Editor
             }
         }
 
-        protected override async Task<HttpResponseMessage> CreateItemPutResponse(FileSystemInfo info, string localFilePath, bool itemExists)
+        protected override async Task<HttpResponseMessage> CreateItemPutResponse(FileSystemInfoBase info, string localFilePath, bool itemExists)
         {
             // Check that we have a matching conditional If-Match request for existing resources
             if (itemExists)
             {
                 // Get current etag
-                EntityTagHeaderValue currentEtag = GetCurrentEtag(info);
+                EntityTagHeaderValue currentEtag = CreateEntityTag(info);
 
                 // Existing resources require an etag to be updated.
                 if (Request.Headers.IfMatch == null)
@@ -173,7 +181,8 @@ namespace Kudu.Services.Editor
                     Request.CreateResponse(itemExists ? HttpStatusCode.NoContent : HttpStatusCode.Created);
 
                 // Set updated etag for the file
-                successFileResponse.Headers.ETag = GetUpdatedEtag(localFilePath);
+                info.Refresh();
+                successFileResponse.Headers.ETag = CreateEntityTag(info);
                 return successFileResponse;
                 
             }
@@ -188,11 +197,8 @@ namespace Kudu.Services.Editor
             }
         }
 
-        protected override Task<HttpResponseMessage> CreateItemDeleteResponse(FileSystemInfo info, string localFilePath)
+        protected override Task<HttpResponseMessage> CreateFileDeleteResponse(FileInfoBase info)
         {
-            // Get current etag
-            EntityTagHeaderValue currentEtag = GetCurrentEtag(info);
-
             // Existing resources require an etag to be updated.
             if (Request.Headers.IfMatch == null)
             {
@@ -201,15 +207,9 @@ namespace Kudu.Services.Editor
                 return Task.FromResult(conflictDirectoryResponse);
             }
 
-            bool isMatch = false;
-            foreach (EntityTagHeaderValue etag in Request.Headers.IfMatch)
-            {
-                if (currentEtag.Equals(etag) || etag == EntityTagHeaderValue.Any)
-                {
-                    isMatch = true;
-                    break;
-                }
-            }
+            // Get current etag
+            EntityTagHeaderValue currentEtag = CreateEntityTag(info);
+            bool isMatch = Request.Headers.IfMatch.Any(etag => etag == EntityTagHeaderValue.Any || currentEtag.Equals(etag));
 
             if (!isMatch)
             {
@@ -219,29 +219,18 @@ namespace Kudu.Services.Editor
                 return Task.FromResult(conflictFileResponse);
             }
 
-            return base.CreateItemDeleteResponse(info, localFilePath);
-        }
-
-        private static EntityTagHeaderValue GetCurrentEtag(FileSystemInfo info)
-        {
-            return CreateEntityTag(info);
-        }
-
-        private static EntityTagHeaderValue GetUpdatedEtag(string localFilePath)
-        {
-            FileInfo fInfo = new FileInfo(localFilePath);
-            return CreateEntityTag(fInfo);
+            return base.CreateFileDeleteResponse(info);
         }
 
         /// <summary>
         /// Create unique etag based on the last modified UTC time
         /// </summary>
-        public static EntityTagHeaderValue CreateEntityTag(FileSystemInfo sysInfo)
+        private static EntityTagHeaderValue CreateEntityTag(FileSystemInfoBase sysInfo)
         {
             Contract.Assert(sysInfo != null);
             byte[] etag = BitConverter.GetBytes(sysInfo.LastWriteTimeUtc.Ticks);
 
-            StringBuilder result = new StringBuilder();
+            var result = new StringBuilder(2 + etag.Length * 2);
             result.Append("\"");
             foreach (byte b in etag)
             {
