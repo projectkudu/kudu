@@ -147,7 +147,7 @@ namespace Kudu.Core.AnalyticsDataLayer
                                     _log.StatusCode = Convert.ToInt16(data[i]);
                                     break;
                                 case W3C_ExtendedConstants.WIN32_STATUS:
-                                    _log.Win32_Status = Convert.ToInt16(data[i]);
+                                    _log.Win32_Status = Convert.ToUInt32(data[i]);
                                     break;
                                 case W3C_ExtendedConstants.COMMENT:
                                     //nothing

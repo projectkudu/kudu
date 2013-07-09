@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using System.Reflection;
+using System.Text.RegularExpressions;
 using Kudu.Core.AnalyticsEngineLayer.Metrics;
 using Kudu.Core.AnalyticsDataLayer;
 
@@ -21,8 +23,9 @@ namespace Kudu.Services.Diagnostics
             _metricCollection = new List<IMetric>();
             _factorMethods = new List<Func<IMetric>>();
             dataEngine = new DataEngine();
-            //dataEngine.SetLogDirectory(@"C:\Users\t-hawkf\Desktop\Logs\W3SVC1");
-            dataEngine.SetLogDirectory(@"C:\Users\t-hawkf\Desktop\Azure Logs");
+            dataEngine.SetLogDirectory(@"C:\Users\t-hawkf\Desktop\Logs\W3SVC1");
+            //dataEngine.SetLogDirectory(@"C:\Users\t-hawkf\Desktop\TestRealLogs");
+            //dataEngine.SetLogDirectory(@"C:\Users\t-hawkf\Desktop\Azure Logs");
         }
 
         public string LogDirectory { get; set; }
@@ -246,6 +249,55 @@ namespace Kudu.Services.Diagnostics
                 _metricCollection.Add(func());
             }
         }
+
+        /// <summary>
+        /// Return the metrics and their descriptions for each and the parameters they need
+        /// </summary>
+        /// <returns></returns>
+        public List<MetricInfo> GetMetricsDescriptions()
+        {
+
+            //Dictionary<string,string> imetricTypes = new Dictionary<string,string>();
+            List<MetricInfo> imetricTypes = new List<MetricInfo>();
+            //use the assembly object to get to the types that inherits IMETRIC
+            Assembly kuduCore = Assembly.Load(typeof(IMetric).Assembly.FullName); //<== successful
+
+            //find the types that are instanceof IMetric
+            //string regularExpressionPattern = @"Kudu.Core.AnalyticsEngineLayer.Metrics.(\1)";
+            IMetric metric;
+            MetricInfo info;
+            foreach (TypeInfo typeInfo in kuduCore.DefinedTypes)
+            {
+                if (typeof(IMetric).IsAssignableFrom(typeInfo) && !typeInfo.IsInterface)
+                {
+                    info = new MetricInfo();
+                    //to get a description of the metric, we need to use activator to create an instance of that type and use the GetMetricDescription
+                    try
+                    {
+                        metric = (IMetric)Activator.CreateInstance(typeInfo);
+                        info.Name = metric.MetricName;
+                        info.Description = metric.GetMetricDescription;
+                        imetricTypes.Add(info);
+                    }
+                    catch (Exception)
+                    {
+                        Trace.WriteLine("error with: " + typeInfo.ToString());
+                    }
+                }
+            }
+            return imetricTypes;
+        }
+
+        public Dictionary<string, string> GetMetricDescription(string metricName)
+        {
+            return null;
+        }
+    }
+
+    public class MetricInfo
+    {
+        public string Name { get; set; }
+        public string Description { get; set; }
     }
 
     class Interval

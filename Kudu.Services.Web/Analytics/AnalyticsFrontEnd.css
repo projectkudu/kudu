@@ -1,0 +1,13 @@
+﻿/*This is for the divs that display the graph and the metric information*/
+#divLeft {
+    width: 500px;
+    float: left;
+    background-color:#000
+}
+
+#divRight {
+    width:inherit;
+    float:right
+}
+body {
+}

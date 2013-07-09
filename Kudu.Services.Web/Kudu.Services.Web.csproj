@@ -100,6 +100,17 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Analytics.html" />
+    <Content Include="AnalyticsManager.js" />
+    <Content Include="Analytics\AnalyticsFrontEnd.css" />
+    <Content Include="excanvas.min.js" />
+    <Content Include="jqplot.canvasAxisTickRenderer.min.js" />
+    <Content Include="jqplot.dateAxisRenderer.min.js" />
+    <Content Include="jqplot.pointLabels.min.js" />
+    <Content Include="jquery.jqplot.min.css" />
+    <Content Include="jquery.jqplot.min.js" />
+    <Content Include="knockout-2.2.1.js" />
+    <Content Include="TestJavaScript.js" />
     <Content Include="Areas\HelpPage\HelpPage.css" />
     <Content Include="Env.aspx" />
     <Content Include="Default.aspx" />
@@ -218,6 +229,7 @@
   <ItemGroup>
     <Content Include="KuduExec\jquery-console\README" />
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>

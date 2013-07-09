@@ -69,5 +69,24 @@ namespace Kudu.Core.AnalyticsEngineLayer.Metrics
         {
             return _uniqueSessionIds.Count;
         }
+
+
+        public void SetParameters(string args)
+        {
+            throw new NotImplementedException();
+        }
+
+
+        public void SetParameters(Dictionary<string, string> args)
+        {
+            throw new NotImplementedException();
+        }
+
+
+
+        public string GetMetricDescription
+        {
+            get { return "Find the number of unique sessions."; }
+        }
     }
 }

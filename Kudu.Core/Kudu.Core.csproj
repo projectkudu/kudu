@@ -57,6 +57,8 @@
     <Compile Include="AnalyticsDataLayer\W3C_ExtendedConstants.cs" />
     <Compile Include="AnalyticsEngineLayer\Metrics\AverageLatencyMetric.cs" />
     <Compile Include="AnalyticsEngineLayer\Metrics\IMetric.cs" />
+    <Compile Include="AnalyticsEngineLayer\Metrics\MetricArgument.cs" />
+    <Compile Include="AnalyticsEngineLayer\Metrics\MetricNames.cs" />
     <Compile Include="AnalyticsEngineLayer\Metrics\MetricRequirement.cs" />
     <Compile Include="AnalyticsEngineLayer\Metrics\SessionLengthMetric.cs" />
     <Compile Include="AnalyticsEngineLayer\Metrics\SessionNumberMetric.cs" />

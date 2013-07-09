@@ -1,0 +1,42 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Analytics UI</title>
+    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.0.2.min.js"></script>
+    <script src="knockout-2.2.1.js"></script>
+    <script src="jquery.jqplot.min.js"></script>
+    <script src="excanvas.min.js"></script>
+    <script src="AnalyticsManager.js"></script>
+    <script src="jqplot.dateAxisRenderer.min.js"></script>
+    <script src="jqplot.canvasAxisTickRenderer.min.js"></script>
+    <script src="jqplot.pointLabels.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="jquery.jqplot.min.css" />
+    <link rel="stylesheet" type="text/css" href="Analytics.css" />
+</head>
+<body>
+    <h1>Analytics</h1>
+    <!-- The dropdown list of units of time -->
+    <div>
+        <select data-bind="options: unitTimes, value: selectedTime" style="width:200px;"></select>
+    </div>
+    <div id="analyticsArea" style="margin:20px">
+        <!--<h2 id="metricName" data-bind="text: $data.name"></h2>
+        <h3 id="metricDescription" data-bind="text:$data.description"></h3>
+        <div id="getID()" style="width:79%;height:300px; float:left; margin-bottom:150px;" data-bind="chart: $parent.items"></div>
+        <div id="analyticsMetric" style="width:20%; height:300px; background-color:#808080; float:right; margin-bottom:150px"; ></div>-->
+    </div>
+    
+</body>
+</html>
+<script>
+    function getID() {
+        return "analyticsChart"
+    }
+    //ko.applyBindings(mee)
+    //add the bindings into the system
+    //ko.applyBindings(metricDesiredModel);
+    //ko.applyBindings(new AppViewModel());
+    $(document).ready(function () {
+        getAvailableMetrics();
+    });
+</script>

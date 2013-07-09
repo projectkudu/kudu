@@ -80,5 +80,24 @@ namespace Kudu.Core.AnalyticsEngineLayer.Metrics
 
             return _computedSessionLengths;
         }
+
+
+        public void SetParameters(string args)
+        {
+            throw new NotImplementedException();
+        }
+
+
+        public void SetParameters(Dictionary<string, string> args)
+        {
+            throw new NotImplementedException();
+        }
+
+
+        public string GetMetricDescription
+        {
+
+            get { String metricParameters = "No parameters"; return metricParameters + "\n" + "Find the length of time that each user was on this website per session."; }
+        }
     }
 }

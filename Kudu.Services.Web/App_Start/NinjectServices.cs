@@ -226,7 +226,6 @@ namespace Kudu.Services.Web.App_Start
             GlobalConfiguration.Configuration.Formatters.Add(jsonFormatter);
             GlobalConfiguration.Configuration.DependencyResolver = new NinjectWebApiDependencyResolver(kernel);
             GlobalConfiguration.Configuration.Filters.Add(new TraceExceptionFilterAttribute());
-
             // Git Service
             routes.MapHttpRoute("git-info-refs-root", "info/refs", new { controller = "InfoRefs", action = "Execute" });
             routes.MapHttpRoute("git-info-refs", configuration.GitServerRoot + "/info/refs", new { controller = "InfoRefs", action = "Execute" });
@@ -305,8 +304,11 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHandler<LogStreamHandler>(kernel, "logstream", "logstream/{*path}");
 
             //Analytics
-            routes.MapHttpRoute(name: "General Analytics", routeTemplate: "diagnostics/analytics", defaults: new { controller = "Analytics", action = "GetName" });
-            routes.MapHttpRoute(name: "Analytics SessionCount", routeTemplate: "diagnostics/analytics/getsessioncount", defaults: new { controller = "Analytics",action = "GetSessionCount"});
+            routes.MapHttpRoute(name: "Find-All Metrics", routeTemplate: "diagnostics/analytics/metrics", defaults: new { controller = "Analytics", action = "GetAvailableMetrics" });
+            routes.MapHttpRoute(name: "General Analytics", routeTemplate: "diagnostics/analytics/{metrics}/{start}/{end}/{interval}/{*arguments}", defaults: new { controller = "Analytics", action = "GetAnalytics", 
+                metrics = "", start = DateTime.Today.ToUniversalTime(), end = DateTime.Now.ToUniversalTime(), interval = "1:00", arguments = RouteParameter.Optional});
+            //routes.MapHttpRoute(name: "Specific Analytics", routeTemplate: "diagnostics/analytics", defaults: new { controller = "Analytics", action = "SessionCount" });
+            //routes.MapHttpRoute(name: "Analytics SessionCount", routeTemplate: "diagnostics/analytics/getsessioncount", defaults: new { controller = "Analytics",action = "GetSessionCount"});
 
             // Processes
             routes.MapHttpRoute("all-processes", "diagnostics/processes", new { controller = "Process", action = "GetAllProcesses" }, new { verb = new HttpMethodConstraint("GET") });

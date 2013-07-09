@@ -23,7 +23,7 @@ namespace Kudu.Core.AnalyticsDataLayer
 
         public override int StatusCode {get; set;}
 
-        public int Win32_Status{get; set;}
+        public uint Win32_Status{get; set;}
 
         public override string URIRequested{get;set;}
 
