@@ -5,19 +5,16 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Kudu.Client;
 using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
-using Newtonsoft.Json.Linq;
 using Xunit;
-using Kudu.Core.Infrastructure;
-using Kudu.Client;
 
 namespace Kudu.FunctionalTests
 {
@@ -180,7 +177,7 @@ project = myproject");
                     Assert.Null(results[0].LastSuccessEndTime);
                     KuduAssert.VerifyLogOutput(appManager, results[0].Id, "Warning as Error: The variable 'x' is declared but never used");
                     Assert.True(deployResult.GitTrace.Contains("Warning as Error: The variable 'x' is declared but never used"));
-                    Assert.True(deployResult.GitTrace.Contains("Error - Changes committed to remote repository but your website not updated."));
+                    Assert.True(deployResult.GitTrace.Contains("Error - Changes committed to remote repository but deployment to website failed, please check log for further details."));
                 });
             }
         }
@@ -471,7 +468,6 @@ project = myproject");
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
                     KuduAssert.VerifyUrl(appManager.SiteUrl + "Content/Site.css", statusCode: HttpStatusCode.OK);
-
 
                     Directory.Delete(deletePath, recursive: true);
                     Git.Commit(repo.PhysicalPath, "Deleted all styles");
@@ -1006,9 +1002,9 @@ project = myproject");
                     // for private Kudu, the kill child processes should take care of this.
                     foreach (var proc in Process.GetProcessesByName("SimpleSleep"))
                     {
-                        try 
-                        { 
-                            proc.Kill(); 
+                        try
+                        {
+                            proc.Kill();
                         }
                         catch (Exception)
                         {

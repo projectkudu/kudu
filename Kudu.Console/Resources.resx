@@ -118,6 +118,6 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Log_DeploymentError" xml:space="preserve">
-    <value>Error - Changes committed to remote repository but your website not updated.</value>
+    <value>Error - Changes committed to remote repository but deployment to website failed, please check log for further details.</value>
   </data>
 </root>
