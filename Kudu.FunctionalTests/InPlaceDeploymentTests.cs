@@ -20,22 +20,26 @@ namespace Kudu.FunctionalTests
             var appName = KuduUtils.GetRandomWebsiteName(scenario.Name);
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                await appManager.SettingsManager.SetValue(SettingsKeys.RepositoryPath, setting.RepositoryPath);
-                await appManager.SettingsManager.SetValue(SettingsKeys.Project, setting.Project);
-                await appManager.SettingsManager.SetValue(SettingsKeys.TargetPath, setting.TargetPath);
+                if (setting.RepositoryPath != "repository")
+                {
+                    await appManager.SettingsManager.SetValue(SettingsKeys.RepositoryPath, setting.RepositoryPath);
+                }
+
+                if (setting.Project != ".")
+                {
+                    await appManager.SettingsManager.SetValue(SettingsKeys.Project, setting.Project);
+                }
+
+                if (setting.TargetPath != ".")
+                {
+                    await appManager.SettingsManager.SetValue(SettingsKeys.TargetPath, setting.TargetPath);
+                }
 
                 using (TestRepository testRepository = Git.Clone(scenario.Name, scenario.CloneUrl))
                 {
-                    var result = appManager.GitDeploy(testRepository.PhysicalPath);
-
-                    if (setting.RepositoryPath == "wwwroot" && setting.TargetPath == ".")
-                    {
-                        scenario.GitVerifyDoesNotContainKuduSync(result);
-                    }
-
+                    var result = appManager.GitDeploy(testRepository.PhysicalPath);                    
                     setting.Verify(appManager);
-
-                    scenario.GitVerify(result);
+                    scenario.GitVerify(result, setting);
                 }
 
                 // Validate deployment status
@@ -44,14 +48,7 @@ namespace Kudu.FunctionalTests
                 Assert.Equal(DeployStatus.Success, results[0].Status);
 
                 // Validate site
-                if (setting.TargetPath == ".")
-                {
-                    scenario.Verify(appManager);
-                }
-                else
-                {
-                    scenario.Verify(appManager, setting.TargetPath);
-                }
+                scenario.Verify(appManager, setting);                
             });
         }
 
@@ -59,35 +56,34 @@ namespace Kudu.FunctionalTests
         {
             get
             {
-                foreach (object[] scenario in Scenarios)
+                foreach (object scenario in Scenarios)
                 {
-                    foreach (object[] setting in Settings)
-                    {
-                        yield return new object[] { (IScenario)scenario[0], (ISetting)setting[0] };
+                    foreach (object setting in Settings)
+                    {                            
+                        yield return new object[] {(IScenario)scenario, (ISetting)setting};
                     }
                 }
             }
         }
 
-        public static IEnumerable<object[]> Settings
+        public static IEnumerable<ISetting> Settings
         {
             get
             {
-                yield return new object[] { new InPlaceDefaultProjectTargetPathSetting() };
-                yield return new object[] { new InPlaceSubFolderProjectSubFolderTargetPathSetting() };
-                yield return new object[] { new RepositoryDefaultProjectTargetPathSetting() };
-                yield return new object[] { new RepositoryDefaultProjectSubFolderTargetPathSetting() };
-                yield return new object[] { new RepositorySubfolderProjectDefaultTargetPathSetting() };
-                yield return new object[] { new RepositorySubfolderProjectSubfolderTargetPathSetting() };
-
+                yield return new InPlaceDefaultProjectTargetPathSetting();
+                yield return new InPlaceSubFolderProjectSubFolderTargetPathSetting();
+                yield return new RepositoryDefaultProjectTargetPathSetting();
+                yield return new RepositoryDefaultProjectSubFolderTargetPathSetting();
+                yield return new RepositorySubfolderProjectDefaultTargetPathSetting();
+                yield return new RepositorySubfolderProjectSubfolderTargetPathSetting();
             }
         }
 
-        public static IEnumerable<object[]> Scenarios
+        public static IEnumerable<IScenario> Scenarios
         {
             get
             {
-                yield return new object[] { new HelloKuduWithSubFolders() };
+                yield return new HelloKuduWithSubFolders();
             }
         }
 
@@ -105,10 +101,8 @@ namespace Kudu.FunctionalTests
             string CloneUrl { get; }
             string BuilderTrace { get; }
 
-            void Verify(ApplicationManager appManager);
-            void Verify(ApplicationManager appManager, string documentRoot);
-
-            void GitVerify(GitDeploymentResult result);
+            void Verify(ApplicationManager appManager, ISetting setting);            
+            void GitVerify(GitDeploymentResult result, ISetting setting);
             void GitVerifyDoesNotContainKuduSync(GitDeploymentResult result);
         }
 
@@ -116,7 +110,8 @@ namespace Kudu.FunctionalTests
         {
             public string Name
             {
-                get { return "Scenario : InPlaceDefaultProjectTargetPathSetting, Setting : SCM_REPOSITORY_PATH = wwwroot, PROJECT = ., SCM_TARGET_PATH = ."; }
+                get { return "Scenario : InPlaceDefaultProjectTargetPathSetting, "
+                + "Setting : SCM_REPOSITORY_PATH = wwwroot, PROJECT = ., SCM_TARGET_PATH = ."; }
             }
 
             public string RepositoryPath
@@ -144,7 +139,8 @@ namespace Kudu.FunctionalTests
         {
             public string Name
             {
-                get { return "Scenario : InPlaceDefaultProjectTargetPathSetting, Setting : SCM_REPOSITORY_PATH = wwwroot, PROJECT = subfolder1, SCM_TARGET_PATH = subfolder3"; }
+                get { return "Scenario : InPlaceDefaultProjectTargetPathSetting, "
+                + "Setting : SCM_REPOSITORY_PATH = wwwroot, PROJECT = subfolder1, SCM_TARGET_PATH = subfolder3"; }
             }
 
             public string RepositoryPath
@@ -173,7 +169,8 @@ namespace Kudu.FunctionalTests
         {
             public string Name
             {
-                get { return "Scenario : RepositoryDefaultProjectTargetPathSetting, Setting : SCM_REPOSITORY_PATH = repository, PROJECT = ., SCM_TARGET_PATH = ."; }
+                get { return "Scenario : RepositoryDefaultProjectTargetPathSetting, "
+                + "Setting : SCM_REPOSITORY_PATH = repository, PROJECT = ., SCM_TARGET_PATH = ."; }
             }
 
             public string RepositoryPath
@@ -201,7 +198,8 @@ namespace Kudu.FunctionalTests
         {
             public string Name
             {
-                get { return "Scenario: RepositoryDefaultProjectSubFolderTargetPathSetting, Setting : SCM_REPOSITORY_PATH = repository, PROJECT = ., SCM_TARGET_PATH = subfolder"; }
+                get { return "Scenario: RepositoryDefaultProjectSubFolderTargetPathSetting, "
+                + "Setting : SCM_REPOSITORY_PATH = repository, PROJECT = ., SCM_TARGET_PATH = subfolder"; }
             }
 
             public string RepositoryPath
@@ -230,7 +228,8 @@ namespace Kudu.FunctionalTests
         {
             public string Name
             {
-                get { return "Scenario: RepositorySubfolderProjectDefaultTargetPathSetting, Setting : SCM_REPOSITORY_PATH = repository, PROJECT = subfolder1, SCM_TARGET_PATH = ."; }
+                get { return "Scenario: RepositorySubfolderProjectDefaultTargetPathSetting, "
+                + "Setting : SCM_REPOSITORY_PATH = repository, PROJECT = subfolder1, SCM_TARGET_PATH = ."; }
             }
 
             public string RepositoryPath
@@ -259,7 +258,8 @@ namespace Kudu.FunctionalTests
         {
             public string Name
             {
-                get { return "Scenario: RepositorySubfolderProjectDefaultTargetPathSetting, Setting : SCM_REPOSITORY_PATH = repository, PROJECT = subfolder1, SCM_TARGET_PATH = subfolder3"; }
+                get { return "Scenario: RepositorySubfolderProjectDefaultTargetPathSetting, "
+                + "Setting : SCM_REPOSITORY_PATH = repository, PROJECT = subfolder1, SCM_TARGET_PATH = subfolder3"; }
             }
 
             public string RepositoryPath
@@ -301,19 +301,31 @@ namespace Kudu.FunctionalTests
                 get { return "Handling Basic Web Site deployment"; }
             }
 
-            public void Verify(ApplicationManager appManager)
+            public void Verify(ApplicationManager appManager, ISetting setting)
             {
-                KuduAssert.VerifyUrl(appManager.SiteUrl + "index.htm", "Hello Kudu");
+                if (setting.TargetPath == ".")
+                {
+                    KuduAssert.VerifyUrl(appManager.SiteUrl + "index.htm", "Hello Kudu");
+                }
+                else
+                {
+                    Verify(appManager, setting.TargetPath);
+                }
             }
 
-            public void Verify(ApplicationManager appManager, string documentRoot)
+            private void Verify(ApplicationManager appManager, string documentRoot)
             {
                 KuduAssert.VerifyUrl(appManager.SiteUrl + documentRoot + @"/index.htm", "Hello Kudu");
             }
 
-            public void GitVerify(GitDeploymentResult result)
+            public void GitVerify(GitDeploymentResult result, ISetting setting)
             {
                 Assert.Contains(BuilderTrace, result.GitTrace);
+
+                if (setting.RepositoryPath == "wwwroot" && setting.TargetPath == ".")
+                {
+                    GitVerifyDoesNotContainKuduSync(result);
+                }
             }
 
             public void GitVerifyDoesNotContainKuduSync(GitDeploymentResult result)
