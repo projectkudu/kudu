@@ -43,24 +43,18 @@
         },
 
         deleteItems: function (item) {
-            var childDeferred;
-            if (item.mime !== "inode/directory") {
-                childDeferred = $.Deferred().resolve();
-            } else {
-                // Recursively delete the subtree
-                childDeferred = Vfs.getChildren(item).pipe(function (children) {
-                    return whenArray($.map(children, Vfs.deleteItems));
-                });
+            var url = item.href;
+            
+            if (item.mime === "inode/directory") {
+                url += "?recursive=true";
             }
 
-            return childDeferred.pipe(function () {
-                return $.ajax({
-                    url: item.href,
-                    method: "DELETE",
-                    headers: {
-                        "If-Match": "*"
-                    }
-                })
+            return $.ajax({
+                url: url,
+                method: "DELETE",
+                headers: {
+                    "If-Match": "*"
+                }
             });
         }
     };
