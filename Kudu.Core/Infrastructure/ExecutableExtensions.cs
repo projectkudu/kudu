@@ -1,23 +1,27 @@
-﻿using Kudu.Contracts.Settings;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using Kudu.Contracts.Settings;
 
 namespace Kudu.Core.Infrastructure
 {
     internal static class ExecutableExtensions
     {
-        public static void AddToPath(this Executable exe, params string[] paths)
+        public static void PrependToPath(this Executable exe, IEnumerable<string> paths)
         {
-            string pathEnv;
-            exe.EnvironmentVariables.TryGetValue("PATH", out pathEnv);
-            pathEnv = pathEnv ?? String.Empty;
-            if (pathEnv.Length > 0 && !pathEnv.EndsWith(";", StringComparison.OrdinalIgnoreCase))
+            if (!paths.Any())
             {
-                pathEnv += ";";
+                throw new ArgumentNullException("paths");
             }
 
-            pathEnv += String.Join(";", paths);
-            exe.EnvironmentVariables["PATH"] = pathEnv;
+            string pathEnv;
+            exe.EnvironmentVariables.TryGetValue("PATH", out pathEnv);
+            if (!String.IsNullOrEmpty(pathEnv))
+            {
+                paths = paths.Concat(new[] { pathEnv });
+            }
+
+            exe.EnvironmentVariables["PATH"] = String.Join(";", paths);
         }
 
         public static void AddDeploymentSettingsAsEnvironmentVariables(this Executable exe, IDeploymentSettingsManager deploymentSettingsManager)

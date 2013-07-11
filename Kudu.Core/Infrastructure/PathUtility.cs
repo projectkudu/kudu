@@ -7,6 +7,16 @@ namespace Kudu.Core.Infrastructure
     internal static class PathUtility
     {
         private const string ProgramFiles64bitKey = "ProgramW6432";
+        /// <summary>
+        /// The version of Node.exe that we'd use for running KuduScript and selectNodeVersion.js
+        /// </summary>
+        private const string DefaultNodeVersion = "0.10.5";
+
+        /// <summary>
+        /// Maps to the version of NPM that shipped with the DefaultNodeVersion
+        /// </summary>
+        private const string DefaultNpmVersion = "1.2.18";
+
 
         internal static string ResolveGitPath()
         {
@@ -53,15 +63,15 @@ namespace Kudu.Core.Infrastructure
             return path;
         }
 
-        internal static string ResolveNpmPath()
-        {
-            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
-            return Path.Combine(programFiles, "nodejs", "npm.cmd");
-        }
-
         internal static string ResolveNpmJsPath()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            string npmPath = Path.Combine(programFiles, "npm", DefaultNpmVersion, "bin", "npm-cli.js");
+            if (File.Exists(npmPath))
+            {
+                return npmPath;
+            }
+            
             return Path.Combine(programFiles, "nodejs", "node_modules", "npm", "bin", "npm-cli.js");
         }
 
@@ -75,6 +85,20 @@ namespace Kudu.Core.Infrastructure
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             return Path.Combine(programFiles, "Microsoft Visual Studio 11.0", "Common7", "IDE", "CommonExtensions", "Microsoft", "TestWindow", "vstest.console.exe");
+        }
+
+        /// <summary>
+        /// Returns the path to the version of node.exe that is used for KuduScript generation and select node version
+        /// </summary>
+        /// <returns>
+        /// The path to NodeJS version 0.10.5 if available, null otherwise.
+        /// </remarks>
+        internal static string ResolveNodePath()
+        {
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+
+            string nodePath = Path.Combine(programFiles, "nodejs", "0.10.5", "node.exe");
+            return File.Exists(nodePath) ? nodePath : null;
         }
 
         internal static string CleanPath(string path)

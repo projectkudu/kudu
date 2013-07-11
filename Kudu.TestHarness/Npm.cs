@@ -1,5 +1,6 @@
-﻿using Kudu.Core.Infrastructure;
-using System;
+﻿using System;
+using System.IO;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.TestHarness
 {
@@ -9,7 +10,9 @@ namespace Kudu.TestHarness
         {
             using (new LatencyLogger("npm install " + packageToInstall + " to " + installToPath))
             {
-                var exe = new Executable(PathUtility.ResolveNpmPath(), installToPath, idleTimeout: TimeSpan.FromSeconds(3600));
+                string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+                string npmPath = Path.Combine(programFiles, "nodejs", "npm.cmd");
+                var exe = new Executable(npmPath, installToPath, idleTimeout: TimeSpan.FromSeconds(3600));
                 var result = exe.Execute("install {0} .", packageToInstall);
 
                 TestTracer.Trace("  stdout: {0}", result.Item1);

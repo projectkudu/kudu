@@ -1,6 +1,6 @@
 ﻿namespace Kudu.Core.Deployment
 {
-    public static class WellKnownEnvironmentVariables
+    internal static class WellKnownEnvironmentVariables
     {
         public const string NuGetPackageRestoreKey = "EnableNuGetPackageRestore";
         public const string SourcePath = "DEPLOYMENT_SOURCE";

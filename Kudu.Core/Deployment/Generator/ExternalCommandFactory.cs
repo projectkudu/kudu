@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Infrastructure;
@@ -56,26 +57,30 @@ namespace Kudu.Core.Deployment.Generator
                 UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.InPlaceDeployment, "1", logger);
             }
 
-            // Disable this for now
-            // exe.EnvironmentVariables[NuGetCachePathKey] = Environment.NuGetCachePath;
-
             // NuGet.exe 1.8 will require an environment variable to make package restore work
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.NuGetPackageRestoreKey] = "true";
 
             exe.SetHomePath(_environment.SiteRootPath);
 
             // Set the path so we can add more variables
-            exe.EnvironmentVariables["PATH"] = System.Environment.GetEnvironmentVariable("PATH");
+            string path = System.Environment.GetEnvironmentVariable("PATH");
+            exe.EnvironmentVariables["PATH"] = path;
 
             // Add the msbuild path and git path to the %PATH% so more tools are available
-            var toolsPaths = new[] {
+            var toolsPaths = new List<string> {
                 Path.GetDirectoryName(PathUtility.ResolveMSBuildPath()),
                 Path.GetDirectoryName(PathUtility.ResolveGitPath()),
                 Path.GetDirectoryName(PathUtility.ResolveVsTestPath())
             };
 
-            exe.AddToPath(toolsPaths);
+            string nodeExePath = PathUtility.ResolveNodePath();
+            if (!String.IsNullOrEmpty(nodeExePath))
+            {
+                // If IIS node path is available prepend it to the path list so that it's discovered before any other node versions in the path.
+                toolsPaths.Add(Path.GetDirectoryName(nodeExePath));
+            }
 
+            exe.PrependToPath(toolsPaths);
             return exe;
         }
 

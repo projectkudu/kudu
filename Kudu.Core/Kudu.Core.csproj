@@ -64,7 +64,6 @@
     <Compile Include="Deployment\DeploymentManagerExtensions.cs" />
     <Compile Include="Deployment\Generator\WapBuilder.cs" />
     <Compile Include="Deployment\Generator\WebSiteBuilder.cs" />
-    <Compile Include="Deployment\NpmExecutable.cs" />
     <Compile Include="Deployment\NullLogger.cs" />
     <Compile Include="Deployment\WellKnownEnvironmentVariables.cs" />
     <Compile Include="Infrastructure\IdleManager.cs" />
