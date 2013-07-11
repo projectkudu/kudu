@@ -15,29 +15,20 @@ namespace Kudu.FunctionalTests
     {
         [Theory]
         [PropertyData("ScenarioSettings")]
-        public async Task InPlaceDeploymentBasicTests(IScenario scenario, ISetting setting)
+        public async Task InPlaceDeploymentBasicTests(IScenario scenario, Setting setting)
         {
             var appName = KuduUtils.GetRandomWebsiteName(scenario.Name);
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                if (setting.RepositoryPath != "repository")
+                KeyValuePair<string, string>[] settings = setting.GetSettings();
+                if (settings.Length > 0)
                 {
-                    await appManager.SettingsManager.SetValue(SettingsKeys.RepositoryPath, setting.RepositoryPath);
-                }
-
-                if (setting.Project != ".")
-                {
-                    await appManager.SettingsManager.SetValue(SettingsKeys.Project, setting.Project);
-                }
-
-                if (setting.TargetPath != ".")
-                {
-                    await appManager.SettingsManager.SetValue(SettingsKeys.TargetPath, setting.TargetPath);
+                    await appManager.SettingsManager.SetValues(settings);
                 }
 
                 using (TestRepository testRepository = Git.Clone(scenario.Name, scenario.CloneUrl))
                 {
-                    var result = appManager.GitDeploy(testRepository.PhysicalPath);                    
+                    var result = appManager.GitDeploy(testRepository.PhysicalPath);
                     setting.Verify(appManager);
                     scenario.GitVerify(result, setting);
                 }
@@ -48,7 +39,7 @@ namespace Kudu.FunctionalTests
                 Assert.Equal(DeployStatus.Success, results[0].Status);
 
                 // Validate site
-                scenario.Verify(appManager, setting);                
+                scenario.Verify(appManager, setting);
             });
         }
 
@@ -56,17 +47,17 @@ namespace Kudu.FunctionalTests
         {
             get
             {
-                foreach (object scenario in Scenarios)
+                //yield return new object[] { new SomeNodeJs(), new RepositoryDefaultProjectTargetPathSetting() };
+
+                var scenario = new HelloKuduWithSubFolders();
+                foreach (Setting setting in Settings)
                 {
-                    foreach (object setting in Settings)
-                    {                            
-                        yield return new object[] {(IScenario)scenario, (ISetting)setting};
-                    }
+                    yield return new object[] { scenario, setting };
                 }
             }
         }
 
-        public static IEnumerable<ISetting> Settings
+        public static IEnumerable<Setting> Settings
         {
             get
             {
@@ -79,20 +70,33 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        public static IEnumerable<IScenario> Scenarios
+        public abstract class Setting
         {
-            get
+            public abstract string RepositoryPath { get; }
+            public abstract string Project { get; }
+            public abstract string TargetPath { get; }
+            public abstract void Verify(ApplicationManager appManager);
+            public KeyValuePair<string, string>[] GetSettings()
             {
-                yield return new HelloKuduWithSubFolders();
-            }
-        }
+                var settings = new List<KeyValuePair<string, string>>();
 
-        public interface ISetting
-        {
-            string RepositoryPath { get; }
-            string Project { get; }
-            string TargetPath { get; }
-            void Verify(ApplicationManager appManager);
+                if (RepositoryPath != "repository")
+                {
+                    settings.Add(new KeyValuePair<string, string>(SettingsKeys.RepositoryPath, RepositoryPath));
+                }
+
+                if (Project != ".")
+                {
+                    settings.Add(new KeyValuePair<string, string>(SettingsKeys.Project, Project));
+                }
+
+                if (TargetPath != ".")
+                {
+                    settings.Add(new KeyValuePair<string, string>(SettingsKeys.TargetPath, TargetPath));
+                }
+
+                return settings.ToArray();
+            }
         }
 
         public interface IScenario
@@ -101,183 +105,201 @@ namespace Kudu.FunctionalTests
             string CloneUrl { get; }
             string BuilderTrace { get; }
 
-            void Verify(ApplicationManager appManager, ISetting setting);            
-            void GitVerify(GitDeploymentResult result, ISetting setting);
+            void Verify(ApplicationManager appManager, Setting setting);
+            void GitVerify(GitDeploymentResult result, Setting setting);
             void GitVerifyDoesNotContainKuduSync(GitDeploymentResult result);
         }
 
-        public class InPlaceDefaultProjectTargetPathSetting : ISetting
+        public class InPlaceDefaultProjectTargetPathSetting : Setting
         {
             public string Name
             {
-                get { return "Scenario : InPlaceDefaultProjectTargetPathSetting, "
-                + "Setting : SCM_REPOSITORY_PATH = wwwroot, PROJECT = ., SCM_TARGET_PATH = ."; }
+                get
+                {
+                    return "Scenario : InPlaceDefaultProjectTargetPathSetting, "
+                        + "Setting : SCM_REPOSITORY_PATH = wwwroot, PROJECT = ., SCM_TARGET_PATH = .";
+                }
             }
 
-            public string RepositoryPath
+            public override string RepositoryPath
             {
                 get { return "wwwroot"; }
             }
 
-            public string Project
+            public override string Project
             {
                 get { return "."; }
             }
 
-            public string TargetPath
+            public override string TargetPath
             {
                 get { return "."; }
             }
 
-            public void Verify(ApplicationManager appManager)
+            public override void Verify(ApplicationManager appManager)
             {
                 Assert.False(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should not have site\repository\.git folder");
             }
         }
 
-        public class InPlaceSubFolderProjectSubFolderTargetPathSetting : ISetting
+        public class InPlaceSubFolderProjectSubFolderTargetPathSetting : Setting
         {
             public string Name
             {
-                get { return "Scenario : InPlaceDefaultProjectTargetPathSetting, "
-                + "Setting : SCM_REPOSITORY_PATH = wwwroot, PROJECT = subfolder1, SCM_TARGET_PATH = subfolder3"; }
+                get
+                {
+                    return "Scenario : InPlaceDefaultProjectTargetPathSetting, "
+                        + "Setting : SCM_REPOSITORY_PATH = wwwroot, PROJECT = subfolder1, SCM_TARGET_PATH = subfolder3";
+                }
             }
 
-            public string RepositoryPath
+            public override string RepositoryPath
             {
                 get { return "wwwroot"; }
             }
 
-            public string Project
+            public override string Project
             {
                 get { return "subfolder1"; }
             }
 
-            public string TargetPath
+            public override string TargetPath
             {
                 get { return "subfolder3"; }
             }
 
-            public void Verify(ApplicationManager appManager)
+            public override void Verify(ApplicationManager appManager)
             {
                 Assert.False(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should not have site\repository\.git folder");
                 Assert.True(appManager.VfsManager.Exists(@"site\wwwroot\subfolder3"), @"Should have site\repository\subfolder3 folder");
             }
         }
 
-        public class RepositoryDefaultProjectTargetPathSetting : ISetting
+        public class RepositoryDefaultProjectTargetPathSetting : Setting
         {
             public string Name
             {
-                get { return "Scenario : RepositoryDefaultProjectTargetPathSetting, "
-                + "Setting : SCM_REPOSITORY_PATH = repository, PROJECT = ., SCM_TARGET_PATH = ."; }
+                get
+                {
+                    return "Scenario : RepositoryDefaultProjectTargetPathSetting, "
+                        + "Setting : SCM_REPOSITORY_PATH = repository, PROJECT = ., SCM_TARGET_PATH = .";
+                }
             }
 
-            public string RepositoryPath
+            public override string RepositoryPath
             {
                 get { return "repository"; }
             }
 
-            public string Project
+            public override string Project
             {
                 get { return "."; }
             }
 
-            public string TargetPath
+            public override string TargetPath
             {
                 get { return "."; }
             }
 
-            public void Verify(ApplicationManager appManager)
+            public override void Verify(ApplicationManager appManager)
             {
                 Assert.True(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should have site\repository\.git folder");
             }
         }
 
-        public class RepositoryDefaultProjectSubFolderTargetPathSetting : ISetting
+        public class RepositoryDefaultProjectSubFolderTargetPathSetting : Setting
         {
             public string Name
             {
-                get { return "Scenario: RepositoryDefaultProjectSubFolderTargetPathSetting, "
-                + "Setting : SCM_REPOSITORY_PATH = repository, PROJECT = ., SCM_TARGET_PATH = subfolder"; }
+                get
+                {
+                    return "Scenario: RepositoryDefaultProjectSubFolderTargetPathSetting, "
+                        + "Setting : SCM_REPOSITORY_PATH = repository, PROJECT = ., SCM_TARGET_PATH = subfolder";
+                }
             }
 
-            public string RepositoryPath
+            public override string RepositoryPath
             {
                 get { return "repository"; }
             }
 
-            public string Project
+            public override string Project
             {
                 get { return "."; }
             }
 
-            public string TargetPath
+            public override string TargetPath
             {
                 get { return "subfolder"; }
             }
 
-            public void Verify(ApplicationManager appManager)
+            public override void Verify(ApplicationManager appManager)
             {
                 Assert.True(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should have site\repository\.git folder");
                 Assert.True(appManager.VfsManager.Exists(@"site\wwwroot\subfolder"), @"Should have site\repository\subfolder folder");
             }
         }
 
-        public class RepositorySubfolderProjectDefaultTargetPathSetting : ISetting
+        public class RepositorySubfolderProjectDefaultTargetPathSetting : Setting
         {
             public string Name
             {
-                get { return "Scenario: RepositorySubfolderProjectDefaultTargetPathSetting, "
-                + "Setting : SCM_REPOSITORY_PATH = repository, PROJECT = subfolder1, SCM_TARGET_PATH = ."; }
+                get
+                {
+                    return "Scenario: RepositorySubfolderProjectDefaultTargetPathSetting, "
+                        + "Setting : SCM_REPOSITORY_PATH = repository, PROJECT = subfolder1, SCM_TARGET_PATH = .";
+                }
             }
 
-            public string RepositoryPath
+            public override string RepositoryPath
             {
                 get { return "repository"; }
             }
 
-            public string Project
+            public override string Project
             {
                 get { return "subfolder1"; }
             }
 
-            public string TargetPath
+            public override string TargetPath
             {
                 get { return "."; }
             }
 
-            public void Verify(ApplicationManager appManager)
+            public override void Verify(ApplicationManager appManager)
             {
                 Assert.True(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should have site\repository\.git folder");
                 Assert.False(appManager.VfsManager.Exists(@"site\wwwroot\subfolder2"), @"Should not have site\wwwroot\subfolder2 folder");
             }
         }
 
-        public class RepositorySubfolderProjectSubfolderTargetPathSetting : ISetting
+        public class RepositorySubfolderProjectSubfolderTargetPathSetting : Setting
         {
             public string Name
             {
-                get { return "Scenario: RepositorySubfolderProjectDefaultTargetPathSetting, "
-                + "Setting : SCM_REPOSITORY_PATH = repository, PROJECT = subfolder1, SCM_TARGET_PATH = subfolder3"; }
+                get
+                {
+                    return "Scenario: RepositorySubfolderProjectDefaultTargetPathSetting, "
+                        + "Setting : SCM_REPOSITORY_PATH = repository, PROJECT = subfolder1, SCM_TARGET_PATH = subfolder3";
+                }
             }
 
-            public string RepositoryPath
+            public override string RepositoryPath
             {
                 get { return "repository"; }
             }
 
-            public string Project
+            public override string Project
             {
                 get { return "subfolder1"; }
             }
 
-            public string TargetPath
+            public override string TargetPath
             {
                 get { return "subfolder3"; }
             }
 
-            public void Verify(ApplicationManager appManager)
+            public override void Verify(ApplicationManager appManager)
             {
                 Assert.True(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should have site\repository\.git folder");
                 Assert.True(appManager.VfsManager.Exists(@"site\wwwroot\subfolder3"), @"Should have site\wwwroot\subfolder3 folder");
@@ -301,7 +323,7 @@ namespace Kudu.FunctionalTests
                 get { return "Handling Basic Web Site deployment"; }
             }
 
-            public void Verify(ApplicationManager appManager, ISetting setting)
+            public void Verify(ApplicationManager appManager, Setting setting)
             {
                 if (setting.TargetPath == ".")
                 {
@@ -318,7 +340,7 @@ namespace Kudu.FunctionalTests
                 KuduAssert.VerifyUrl(appManager.SiteUrl + documentRoot + @"/index.htm", "Hello Kudu");
             }
 
-            public void GitVerify(GitDeploymentResult result, ISetting setting)
+            public void GitVerify(GitDeploymentResult result, Setting setting)
             {
                 Assert.Contains(BuilderTrace, result.GitTrace);
 
