@@ -15,7 +15,7 @@ namespace Kudu.FunctionalTests
     {
         [Theory]
         [PropertyData("ScenarioSettings")]
-        public async Task InPlaceDeploymentBasicTests(IScenario scenario, Setting setting)
+        public async Task InPlaceDeploymentBasicTests(Scenario scenario, Setting setting)
         {
             var appName = KuduUtils.GetRandomWebsiteName(scenario.Name);
             await ApplicationManager.RunAsync(appName, async appManager =>
@@ -33,13 +33,10 @@ namespace Kudu.FunctionalTests
                     scenario.GitVerify(result, setting);
                 }
 
-                // Validate deployment status
                 var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
-                Assert.Equal(1, results.Count);
-                Assert.Equal(DeployStatus.Success, results[0].Status);
+                scenario.ValidateDeploymentStatus(results, setting);
 
-                // Validate site
-                scenario.Verify(appManager, setting);
+                scenario.VerifyUrl(appManager, setting);
             });
         }
 
@@ -47,7 +44,7 @@ namespace Kudu.FunctionalTests
         {
             get
             {
-                //yield return new object[] { new SomeNodeJs(), new RepositoryDefaultProjectTargetPathSetting() };
+                yield return new object[] { new NodeJsAppScenario(), new RepositoryDefaultProjectTargetPathSetting() };
 
                 var scenario = new HelloKuduWithSubFolders();
                 foreach (Setting setting in Settings)
@@ -67,15 +64,19 @@ namespace Kudu.FunctionalTests
                 yield return new RepositoryDefaultProjectSubFolderTargetPathSetting();
                 yield return new RepositorySubfolderProjectDefaultTargetPathSetting();
                 yield return new RepositorySubfolderProjectSubfolderTargetPathSetting();
+                yield return new InPlaceErrorCaseSetting();
             }
         }
 
         public abstract class Setting
         {
+            public abstract string Name { get; }
             public abstract string RepositoryPath { get; }
             public abstract string Project { get; }
             public abstract string TargetPath { get; }
             public abstract void Verify(ApplicationManager appManager);
+            public abstract DeployStatus DeploymentStatus { get; }
+
             public KeyValuePair<string, string>[] GetSettings()
             {
                 var settings = new List<KeyValuePair<string, string>>();
@@ -99,20 +100,47 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        public interface IScenario
-        {
-            string Name { get; }
-            string CloneUrl { get; }
-            string BuilderTrace { get; }
 
-            void Verify(ApplicationManager appManager, Setting setting);
-            void GitVerify(GitDeploymentResult result, Setting setting);
-            void GitVerifyDoesNotContainKuduSync(GitDeploymentResult result);
+        public class InPlaceErrorCaseSetting : Setting
+        {
+            public override string Name
+            {
+                get
+                {
+                    return "Scenario : InPlaceErrorCaseSetting, "
+                        + "Setting : SCM_REPOSITORY_PATH = wwwroot, PROJECT = subfolder1, SCM_TARGET_PATH = subfolder2";
+                }
+            }
+
+            public override string RepositoryPath
+            {
+                get { return "wwwroot"; }
+            }
+
+            public override string Project
+            {
+                get { return "subfolder1"; }
+            }
+
+            public override string TargetPath
+            {
+                get { return "subfolder2"; }
+            }
+
+            public override DeployStatus DeploymentStatus
+            {
+                get { return DeployStatus.Failed; }
+            }
+
+            public override void Verify(ApplicationManager appManager)
+            {
+                Assert.False(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should not have site\repository\.git folder");
+            }
         }
 
         public class InPlaceDefaultProjectTargetPathSetting : Setting
         {
-            public string Name
+            public override string Name
             {
                 get
                 {
@@ -136,6 +164,11 @@ namespace Kudu.FunctionalTests
                 get { return "."; }
             }
 
+            public override DeployStatus DeploymentStatus
+            {
+                get { return DeployStatus.Success; }
+            }
+
             public override void Verify(ApplicationManager appManager)
             {
                 Assert.False(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should not have site\repository\.git folder");
@@ -144,7 +177,7 @@ namespace Kudu.FunctionalTests
 
         public class InPlaceSubFolderProjectSubFolderTargetPathSetting : Setting
         {
-            public string Name
+            public override string Name
             {
                 get
                 {
@@ -168,6 +201,11 @@ namespace Kudu.FunctionalTests
                 get { return "subfolder3"; }
             }
 
+            public override DeployStatus DeploymentStatus
+            {
+                get { return DeployStatus.Success; }
+            }
+
             public override void Verify(ApplicationManager appManager)
             {
                 Assert.False(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should not have site\repository\.git folder");
@@ -177,7 +215,7 @@ namespace Kudu.FunctionalTests
 
         public class RepositoryDefaultProjectTargetPathSetting : Setting
         {
-            public string Name
+            public override string Name
             {
                 get
                 {
@@ -201,6 +239,11 @@ namespace Kudu.FunctionalTests
                 get { return "."; }
             }
 
+            public override DeployStatus DeploymentStatus
+            {
+                get { return DeployStatus.Success; }
+            }
+
             public override void Verify(ApplicationManager appManager)
             {
                 Assert.True(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should have site\repository\.git folder");
@@ -209,7 +252,7 @@ namespace Kudu.FunctionalTests
 
         public class RepositoryDefaultProjectSubFolderTargetPathSetting : Setting
         {
-            public string Name
+            public override string Name
             {
                 get
                 {
@@ -233,6 +276,11 @@ namespace Kudu.FunctionalTests
                 get { return "subfolder"; }
             }
 
+            public override DeployStatus DeploymentStatus
+            {
+                get { return DeployStatus.Success; }
+            }
+
             public override void Verify(ApplicationManager appManager)
             {
                 Assert.True(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should have site\repository\.git folder");
@@ -242,7 +290,7 @@ namespace Kudu.FunctionalTests
 
         public class RepositorySubfolderProjectDefaultTargetPathSetting : Setting
         {
-            public string Name
+            public override string Name
             {
                 get
                 {
@@ -266,6 +314,11 @@ namespace Kudu.FunctionalTests
                 get { return "."; }
             }
 
+            public override DeployStatus DeploymentStatus
+            {
+                get { return DeployStatus.Success; }
+            }
+
             public override void Verify(ApplicationManager appManager)
             {
                 Assert.True(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should have site\repository\.git folder");
@@ -275,7 +328,7 @@ namespace Kudu.FunctionalTests
 
         public class RepositorySubfolderProjectSubfolderTargetPathSetting : Setting
         {
-            public string Name
+            public override string Name
             {
                 get
                 {
@@ -299,6 +352,11 @@ namespace Kudu.FunctionalTests
                 get { return "subfolder3"; }
             }
 
+            public override DeployStatus DeploymentStatus
+            {
+                get { return DeployStatus.Success; }
+            }
+
             public override void Verify(ApplicationManager appManager)
             {
                 Assert.True(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should have site\repository\.git folder");
@@ -306,39 +364,13 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        public class HelloKuduWithSubFolders : IScenario
+        public abstract class Scenario
         {
-            public string Name
-            {
-                get { return "HelloKuduWithSubFolders"; }
-            }
-
-            public string CloneUrl
-            {
-                get { return "https://github.com/KuduApps/HelloKuduWithSubFolders.git"; }
-            }
-
-            public string BuilderTrace
-            {
-                get { return "Handling Basic Web Site deployment"; }
-            }
-
-            public void Verify(ApplicationManager appManager, Setting setting)
-            {
-                if (setting.TargetPath == ".")
-                {
-                    KuduAssert.VerifyUrl(appManager.SiteUrl + "index.htm", "Hello Kudu");
-                }
-                else
-                {
-                    Verify(appManager, setting.TargetPath);
-                }
-            }
-
-            private void Verify(ApplicationManager appManager, string documentRoot)
-            {
-                KuduAssert.VerifyUrl(appManager.SiteUrl + documentRoot + @"/index.htm", "Hello Kudu");
-            }
+            public abstract string Name { get; }
+            public abstract string CloneUrl { get; }
+            public abstract string BuilderTrace { get; }
+            public abstract string Content { get; }
+            public abstract string DefaultDocument { get; }
 
             public void GitVerify(GitDeploymentResult result, Setting setting)
             {
@@ -353,6 +385,85 @@ namespace Kudu.FunctionalTests
             public void GitVerifyDoesNotContainKuduSync(GitDeploymentResult result)
             {
                 Assert.DoesNotContain("KuduSync", result.GitTrace);
+            }
+
+            public void VerifyUrl(ApplicationManager appManager, Setting setting)
+            {
+                if (setting.TargetPath == ".")
+                {
+                    KuduAssert.VerifyUrl(appManager.SiteUrl + DefaultDocument, Content);
+                }
+                else
+                {
+                    VerifyUrl(appManager, setting.TargetPath);
+                }
+            }
+
+            public void VerifyUrl(ApplicationManager appManager, string documentRoot)
+            {
+                KuduAssert.VerifyUrl(appManager.SiteUrl + documentRoot + @"/" + DefaultDocument, Content);
+            }
+
+            public void ValidateDeploymentStatus(List<DeployResult> results, Setting setting)
+            {
+                Assert.Equal(1, results.Count);
+                Assert.Equal(setting.DeploymentStatus, results[0].Status);
+            }
+        }
+
+        public class NodeJsAppScenario : Scenario
+        {
+            public override string Name
+            {
+                get { return "NodeHelloWorldNoConfig"; }
+            }
+
+            public override string CloneUrl
+            {
+                get { return "https://github.com/KuduApps/NodeHelloWorldNoConfig.git"; }
+            }
+
+            public override string Content
+            {
+                get { return "Hello, world"; }
+            }
+
+            public override string BuilderTrace
+            {
+                get { return "Handling node.js deployment"; }
+            }
+
+            public override string DefaultDocument
+            {
+                get { return null; }
+            }
+        }
+
+        public class HelloKuduWithSubFolders : Scenario
+        {
+            public override string Name
+            {
+                get { return "HelloKuduWithSubFolders"; }
+            }
+
+            public override string CloneUrl
+            {
+                get { return "https://github.com/KuduApps/HelloKuduWithSubFolders.git"; }
+            }
+
+            public override string Content
+            {
+                get { return "Hello Kudu"; }
+            }
+
+            public override string BuilderTrace
+            {
+                get { return "Handling Basic Web Site deployment"; }
+            }
+
+            public override string DefaultDocument
+            {
+                get { return "index.htm"; }
             }
         }
     }
