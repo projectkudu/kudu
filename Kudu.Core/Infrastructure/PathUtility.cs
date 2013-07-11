@@ -7,6 +7,7 @@ namespace Kudu.Core.Infrastructure
     internal static class PathUtility
     {
         private const string ProgramFiles64bitKey = "ProgramW6432";
+        private const string IISNodeExePath = "IISNODE_NODEPROCESSCOMMANDLINE";
 
         internal static string ResolveGitPath()
         {
@@ -75,6 +76,18 @@ namespace Kudu.Core.Infrastructure
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             return Path.Combine(programFiles, "Microsoft Visual Studio 11.0", "Common7", "IDE", "CommonExtensions", "Microsoft", "TestWindow", "vstest.console.exe");
+        }
+
+        /// <summary>
+        /// Returns the path in the environment variable IISNODE_NodeProcessCommandLine.
+        /// </summary>
+        /// <remarks>
+        /// IISNODE_NodeProcessCommandLine is used by IISNode if it is unable to determine the version of node from 
+        /// packages.json \ iisnode.yml files. 
+        /// </remarks>
+        internal static string ResolveIISNodeExePath()
+        {
+            return SystemEnvironment.GetEnvironmentVariable(IISNodeExePath);
         }
 
         internal static string CleanPath(string path)
