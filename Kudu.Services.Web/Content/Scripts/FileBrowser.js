@@ -278,7 +278,9 @@
     };
 
     function stashCurrentSelection(selected) {
-        window.history.pushState(selected.appRelativePath(), selected.name());
+        if (window.history && window.history.pushState) {
+            window.history.pushState(selected.appRelativePath(), selected.name());
+        }
     }
 
     window.onpopstate = function (evt) {
