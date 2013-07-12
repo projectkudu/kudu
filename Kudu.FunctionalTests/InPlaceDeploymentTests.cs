@@ -410,7 +410,7 @@ namespace Kudu.FunctionalTests
                 }
             }
 
-            public void VerifyUrl(ApplicationManager appManager, Setting setting)
+            public virtual void VerifyUrl(ApplicationManager appManager, Setting setting)
             {
                 if (setting.TargetPath == ".")
                 {
@@ -422,12 +422,12 @@ namespace Kudu.FunctionalTests
                 }
             }
 
-            public void VerifyUrl(ApplicationManager appManager, string documentRoot)
+            public virtual void VerifyUrl(ApplicationManager appManager, string documentRoot)
             {
                 KuduAssert.VerifyUrl(appManager.SiteUrl + documentRoot + @"/" + DefaultDocument, Content);
             }
 
-            public void ValidateDeploymentStatus(List<DeployResult> results, Setting setting)
+            public virtual void ValidateDeploymentStatus(List<DeployResult> results, Setting setting)
             {
                 Assert.Equal(1, results.Count);
                 Assert.Equal(setting.DeploymentStatus, results[0].Status);
