@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Infrastructure;
 
@@ -39,7 +40,18 @@ namespace Kudu.Core.Deployment.Generator
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.SelectNodeVersionCommandKey, SelectNodeVersionCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.NpmJsPathKey, PathUtility.ResolveNpmJsPath(), logger);
 
-            if (PathUtility.PathsEquals(sourcePath, targetPath))
+            bool isInPlace = false;
+            string project = _deploymentSettings.GetValue(SettingsKeys.Project);
+            if (!String.IsNullOrEmpty(project))
+            {
+                isInPlace = PathUtility.PathsEquals(Path.Combine(sourcePath, project), targetPath);
+            }
+            else
+            {
+                isInPlace = PathUtility.PathsEquals(sourcePath, targetPath);
+            }
+
+            if (isInPlace)
             {
                 UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.InPlaceDeployment, "1", logger);
             }

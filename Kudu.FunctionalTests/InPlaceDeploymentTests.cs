@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Kudu.Contracts.Settings;
@@ -14,98 +13,480 @@ namespace Kudu.FunctionalTests
     public class InPlaceDeploymentTest
     {
         [Theory]
-        [PropertyData("Scenarios")]
-        public async Task InPlaceDeploymentBasicTests(IScenario scenario)
+        [PropertyData("ScenarioSettings")]
+        public async Task InPlaceDeploymentBasicTests(Scenario scenario, Setting setting)
         {
             var appName = KuduUtils.GetRandomWebsiteName(scenario.Name);
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                await appManager.SettingsManager.SetValue(SettingsKeys.RepositoryPath, "wwwroot");
+                KeyValuePair<string, string>[] settings = setting.GetSettings();
+                if (settings.Length > 0)
+                {
+                    await appManager.SettingsManager.SetValues(settings);
+                }
 
                 using (TestRepository testRepository = Git.Clone(scenario.Name, scenario.CloneUrl))
                 {
                     var result = appManager.GitDeploy(testRepository.PhysicalPath);
-
-                    // Inplace should not do KuduSync
-                    Assert.DoesNotContain("KuduSync", result.GitTrace);
-
-                    // Repository path should not exist
-                    Assert.False(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should not have site\repository\.git folder");
-
-                    // Validate builder
-                    Assert.Contains(scenario.BuilderTrace, result.GitTrace);
+                    setting.Verify(appManager);
+                    scenario.GitVerify(result, setting);
                 }
 
-                // Validate deployment status
                 var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
-                Assert.Equal(1, results.Count);
-                Assert.Equal(DeployStatus.Success, results[0].Status);
+                scenario.ValidateDeploymentStatus(results, setting);
 
-                // Validate site
-                scenario.Verify(appManager);
+                scenario.VerifyUrl(appManager, setting);
             });
         }
 
-        public static IEnumerable<object[]> Scenarios
+        public static IEnumerable<object[]> ScenarioSettings
         {
             get
             {
-                yield return new object[] { new NodeJsAppScenario() };
-                yield return new object[] { new HelloKuduScenario() };
+                yield return new object[] { new NodeJsAppScenario(), new RepositoryDefaultProjectTargetPathSetting() };
+
+                var scenario = new HelloKuduWithSubFolders();
+                foreach (Setting setting in Settings)
+                {
+                    yield return new object[] { scenario, setting };
+                }
             }
         }
 
-        public interface IScenario
+        public static IEnumerable<Setting> Settings
         {
-            string Name { get; }
-            string CloneUrl { get; }
-            string BuilderTrace { get; }
-            void Verify(ApplicationManager appManager);
-        }
-
-        public class HelloKuduScenario : IScenario
-        {
-            public string Name
+            get
             {
-                get { return "HelloKudu"; }
-            }
-
-            public string CloneUrl
-            {
-                get { return "https://github.com/KuduApps/HelloKudu.git"; }
-            }
-
-            public string BuilderTrace
-            {
-                get { return "Handling Basic Web Site deployment"; }
-            }
-
-            public void Verify(ApplicationManager appManager)
-            {
-                KuduAssert.VerifyUrl(appManager.SiteUrl + "index.htm", "Hello Kudu");
+                yield return new InPlaceDefaultProjectTargetPathSetting();
+                yield return new InPlaceSubFolderProjectSubFolderTargetPathSetting();
+                yield return new RepositoryDefaultProjectTargetPathSetting();
+                yield return new RepositoryDefaultProjectSubFolderTargetPathSetting();
+                yield return new RepositorySubfolderProjectDefaultTargetPathSetting();
+                yield return new RepositorySubfolderProjectSubfolderTargetPathSetting();
+                yield return new InPlaceErrorCaseSetting();
             }
         }
 
-        public class NodeJsAppScenario : IScenario
+        public abstract class Setting
         {
-            public string Name
+            public abstract string Name { get; }
+            public abstract string RepositoryPath { get; }
+            public abstract string Project { get; }
+            public abstract string TargetPath { get; }
+            public abstract void Verify(ApplicationManager appManager);
+            public abstract DeployStatus DeploymentStatus { get; }
+            public virtual IEnumerable<string> ContainStrings { get { return new string[0]; } }
+            public virtual IEnumerable<string> NotContainStrings { get { return new string[0]; } }
+
+            public KeyValuePair<string, string>[] GetSettings()
+            {
+                var settings = new List<KeyValuePair<string, string>>();
+
+                if (RepositoryPath != "repository")
+                {
+                    settings.Add(new KeyValuePair<string, string>(SettingsKeys.RepositoryPath, RepositoryPath));
+                }
+
+                if (Project != ".")
+                {
+                    settings.Add(new KeyValuePair<string, string>(SettingsKeys.Project, Project));
+                }
+
+                if (TargetPath != ".")
+                {
+                    settings.Add(new KeyValuePair<string, string>(SettingsKeys.TargetPath, TargetPath));
+                }
+
+                return settings.ToArray();
+            }
+        }
+
+
+        public class InPlaceErrorCaseSetting : Setting
+        {
+            public override string Name
+            {
+                get
+                {
+                    return "Scenario : InPlaceErrorCaseSetting, "
+                        + "Setting : SCM_REPOSITORY_PATH = wwwroot, PROJECT = subfolder1, SCM_TARGET_PATH = subfolder2";
+                }
+            }
+
+            public override string RepositoryPath
+            {
+                get { return "wwwroot"; }
+            }
+
+            public override string Project
+            {
+                get { return "subfolder1"; }
+            }
+
+            public override string TargetPath
+            {
+                get { return "."; }
+            }
+
+            public override IEnumerable<string> ContainStrings
+            {
+                get
+                {
+                    return new[] 
+                    {
+                        "Error: Source and destination directories cannot be sub-directories of each other"
+                    };
+                }
+            }
+
+            public override DeployStatus DeploymentStatus
+            {
+                get { return DeployStatus.Failed; }
+            }
+            
+            public override void Verify(ApplicationManager appManager)
+            {
+                Assert.False(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should not have site\repository\.git folder");
+            }
+        }
+
+        public class InPlaceDefaultProjectTargetPathSetting : Setting
+        {
+            public override string Name
+            {
+                get
+                {
+                    return "Scenario : InPlaceDefaultProjectTargetPathSetting, "
+                        + "Setting : SCM_REPOSITORY_PATH = wwwroot, PROJECT = ., SCM_TARGET_PATH = .";
+                }
+            }
+
+            public override string RepositoryPath
+            {
+                get { return "wwwroot"; }
+            }
+
+            public override string Project
+            {
+                get { return "."; }
+            }
+
+            public override string TargetPath
+            {
+                get { return "."; }
+            }
+
+            public override DeployStatus DeploymentStatus
+            {
+                get { return DeployStatus.Success; }
+            }
+
+            public override IEnumerable<string> NotContainStrings
+            {
+                get
+                {
+                    return new[] 
+                    {
+                        "KuduSync"
+                    };
+                }
+            }
+
+            public override void Verify(ApplicationManager appManager)
+            {
+                Assert.False(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should not have site\repository\.git folder");
+            }
+        }
+
+        public class InPlaceSubFolderProjectSubFolderTargetPathSetting : Setting
+        {
+            public override string Name
+            {
+                get
+                {
+                    return "Scenario : InPlaceDefaultProjectTargetPathSetting, "
+                        + "Setting : SCM_REPOSITORY_PATH = wwwroot, PROJECT = subfolder1, SCM_TARGET_PATH = subfolder3";
+                }
+            }
+
+            public override string RepositoryPath
+            {
+                get { return "wwwroot"; }
+            }
+
+            public override string Project
+            {
+                get { return "subfolder1"; }
+            }
+
+            public override string TargetPath
+            {
+                get { return "subfolder3"; }
+            }
+
+            public override DeployStatus DeploymentStatus
+            {
+                get { return DeployStatus.Success; }
+            }
+
+            public override void Verify(ApplicationManager appManager)
+            {
+                Assert.False(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should not have site\repository\.git folder");
+                Assert.True(appManager.VfsManager.Exists(@"site\wwwroot\subfolder3"), @"Should have site\repository\subfolder3 folder");
+            }
+        }
+
+        public class RepositoryDefaultProjectTargetPathSetting : Setting
+        {
+            public override string Name
+            {
+                get
+                {
+                    return "Scenario : RepositoryDefaultProjectTargetPathSetting, "
+                        + "Setting : SCM_REPOSITORY_PATH = repository, PROJECT = ., SCM_TARGET_PATH = .";
+                }
+            }
+
+            public override string RepositoryPath
+            {
+                get { return "repository"; }
+            }
+
+            public override string Project
+            {
+                get { return "."; }
+            }
+
+            public override string TargetPath
+            {
+                get { return "."; }
+            }
+
+            public override DeployStatus DeploymentStatus
+            {
+                get { return DeployStatus.Success; }
+            }
+
+            public override void Verify(ApplicationManager appManager)
+            {
+                Assert.True(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should have site\repository\.git folder");
+            }
+        }
+
+        public class RepositoryDefaultProjectSubFolderTargetPathSetting : Setting
+        {
+            public override string Name
+            {
+                get
+                {
+                    return "Scenario: RepositoryDefaultProjectSubFolderTargetPathSetting, "
+                        + "Setting : SCM_REPOSITORY_PATH = repository, PROJECT = ., SCM_TARGET_PATH = subfolder";
+                }
+            }
+
+            public override string RepositoryPath
+            {
+                get { return "repository"; }
+            }
+
+            public override string Project
+            {
+                get { return "."; }
+            }
+
+            public override string TargetPath
+            {
+                get { return "subfolder"; }
+            }
+
+            public override DeployStatus DeploymentStatus
+            {
+                get { return DeployStatus.Success; }
+            }
+
+            public override void Verify(ApplicationManager appManager)
+            {
+                Assert.True(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should have site\repository\.git folder");
+                Assert.True(appManager.VfsManager.Exists(@"site\wwwroot\subfolder"), @"Should have site\repository\subfolder folder");
+            }
+        }
+
+        public class RepositorySubfolderProjectDefaultTargetPathSetting : Setting
+        {
+            public override string Name
+            {
+                get
+                {
+                    return "Scenario: RepositorySubfolderProjectDefaultTargetPathSetting, "
+                        + "Setting : SCM_REPOSITORY_PATH = repository, PROJECT = subfolder1, SCM_TARGET_PATH = .";
+                }
+            }
+
+            public override string RepositoryPath
+            {
+                get { return "repository"; }
+            }
+
+            public override string Project
+            {
+                get { return "subfolder1"; }
+            }
+
+            public override string TargetPath
+            {
+                get { return "."; }
+            }
+
+            public override DeployStatus DeploymentStatus
+            {
+                get { return DeployStatus.Success; }
+            }
+
+            public override void Verify(ApplicationManager appManager)
+            {
+                Assert.True(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should have site\repository\.git folder");
+                Assert.False(appManager.VfsManager.Exists(@"site\wwwroot\subfolder2"), @"Should not have site\wwwroot\subfolder2 folder");
+            }
+        }
+
+        public class RepositorySubfolderProjectSubfolderTargetPathSetting : Setting
+        {
+            public override string Name
+            {
+                get
+                {
+                    return "Scenario: RepositorySubfolderProjectDefaultTargetPathSetting, "
+                        + "Setting : SCM_REPOSITORY_PATH = repository, PROJECT = subfolder1, SCM_TARGET_PATH = subfolder3";
+                }
+            }
+
+            public override string RepositoryPath
+            {
+                get { return "repository"; }
+            }
+
+            public override string Project
+            {
+                get { return "subfolder1"; }
+            }
+
+            public override string TargetPath
+            {
+                get { return "subfolder3"; }
+            }
+
+            public override DeployStatus DeploymentStatus
+            {
+                get { return DeployStatus.Success; }
+            }
+
+            public override void Verify(ApplicationManager appManager)
+            {
+                Assert.True(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should have site\repository\.git folder");
+                Assert.True(appManager.VfsManager.Exists(@"site\wwwroot\subfolder3"), @"Should have site\wwwroot\subfolder3 folder");
+            }
+        }
+
+        public abstract class Scenario
+        {
+            public abstract string Name { get; }
+            public abstract string CloneUrl { get; }
+            public abstract string BuilderTrace { get; }
+            public abstract string Content { get; }
+            public abstract string DefaultDocument { get; }
+
+            public virtual void GitVerify(GitDeploymentResult result, Setting setting)
+            {
+                Assert.Contains(BuilderTrace, result.GitTrace);
+
+                foreach (string text in setting.ContainStrings)
+                {
+                    Assert.Contains(text, result.GitTrace);
+                }
+
+                foreach (string text in setting.NotContainStrings)
+                {
+                    Assert.DoesNotContain(text, result.GitTrace);
+                }
+            }
+
+            public void VerifyUrl(ApplicationManager appManager, Setting setting)
+            {
+                if (setting.TargetPath == ".")
+                {
+                    KuduAssert.VerifyUrl(appManager.SiteUrl + DefaultDocument, Content);
+                }
+                else
+                {
+                    VerifyUrl(appManager, setting.TargetPath);
+                }
+            }
+
+            public void VerifyUrl(ApplicationManager appManager, string documentRoot)
+            {
+                KuduAssert.VerifyUrl(appManager.SiteUrl + documentRoot + @"/" + DefaultDocument, Content);
+            }
+
+            public void ValidateDeploymentStatus(List<DeployResult> results, Setting setting)
+            {
+                Assert.Equal(1, results.Count);
+                Assert.Equal(setting.DeploymentStatus, results[0].Status);
+            }
+        }
+
+        public class NodeJsAppScenario : Scenario
+        {
+            public override string Name
             {
                 get { return "NodeHelloWorldNoConfig"; }
             }
 
-            public string CloneUrl
+            public override string CloneUrl
             {
                 get { return "https://github.com/KuduApps/NodeHelloWorldNoConfig.git"; }
             }
 
-            public string BuilderTrace
+            public override string Content
+            {
+                get { return "Hello, world"; }
+            }
+
+            public override string BuilderTrace
             {
                 get { return "Handling node.js deployment"; }
             }
 
-            public void Verify(ApplicationManager appManager)
+            public override string DefaultDocument
             {
-                KuduAssert.VerifyUrl(appManager.SiteUrl, "Hello, world");
+                get { return null; }
+            }
+        }
+
+        public class HelloKuduWithSubFolders : Scenario
+        {
+            public override string Name
+            {
+                get { return "HelloKuduWithSubFolders"; }
+            }
+
+            public override string CloneUrl
+            {
+                get { return "https://github.com/KuduApps/HelloKuduWithSubFolders.git"; }
+            }
+
+            public override string Content
+            {
+                get { return "Hello Kudu"; }
+            }
+
+            public override string BuilderTrace
+            {
+                get { return "Handling Basic Web Site deployment"; }
+            }
+
+            public override string DefaultDocument
+            {
+                get { return "index.htm"; }
             }
         }
     }
