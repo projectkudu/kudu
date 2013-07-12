@@ -43,8 +43,8 @@ namespace Kudu.FunctionalTests
         {
             get
             {
-                yield return new object[] { new NodeJsAppScenario(), new RepositoryDefaultProjectTargetPathSetting() };
-
+                yield return new object[] { new NodeJsAppScenario(), new InPlaceDefaultProjectTargetPathSetting() };
+                                
                 var scenario = new HelloKuduWithSubFolders();
                 foreach (Setting setting in Settings)
                 {
