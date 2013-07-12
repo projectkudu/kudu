@@ -44,7 +44,7 @@ namespace Kudu.FunctionalTests
             get
             {
                 yield return new object[] { new NodeJsAppScenario(), new RepositoryDefaultProjectTargetPathSetting() };
-                yield return new object[] { new MvcApplicationScenario(), new RepositoryDefaultProjectTargetPathSetting() };
+                //yield return new object[] { new MvcApplicationScenario(), new InPlaceDefaultProjectTargetPathSetting() };
 
                 var scenario = new HelloKuduWithSubFolders();
                 foreach (Setting setting in Settings)
@@ -489,34 +489,6 @@ namespace Kudu.FunctionalTests
             {
                 get { return "index.htm"; }
             }
-        }
-
-        public class MvcApplicationScenario : Scenario
-        {
-            public override string Name
-            {
-                get { return "MVCAppWithLatestNuget"; }
-            }
-
-            public override string CloneUrl
-            {
-                get { return "https://github.com/KuduApps/MVCAppWithLatestNuget.git"; }
-            }
-
-            public override string Content
-            {
-                get { return "MVCAppWithLatestNuget - My ASP.NET MVC Application"; }
-            }
-
-            public override string DefaultDocument
-            {
-                get { return null; }
-            }
-
-            public override string BuilderTrace
-            {
-                get { return "Handling .NET Web Application deployment"; }
-            }            
-        }
+        }       
     }
 }
