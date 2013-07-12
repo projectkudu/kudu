@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Kudu.Contracts.Settings;
@@ -76,6 +75,8 @@ namespace Kudu.FunctionalTests
             public abstract string TargetPath { get; }
             public abstract void Verify(ApplicationManager appManager);
             public abstract DeployStatus DeploymentStatus { get; }
+            public virtual IEnumerable<string> ContainStrings { get { return new string[0]; } }
+            public virtual IEnumerable<string> NotContainStrings { get { return new string[0]; } }
 
             public KeyValuePair<string, string>[] GetSettings()
             {
@@ -124,14 +125,25 @@ namespace Kudu.FunctionalTests
 
             public override string TargetPath
             {
-                get { return "subfolder2"; }
+                get { return "."; }
+            }
+
+            public override IEnumerable<string> ContainStrings
+            {
+                get
+                {
+                    return new[] 
+                    {
+                        "Error: Source and destination directories cannot be sub-directories of each other"
+                    };
+                }
             }
 
             public override DeployStatus DeploymentStatus
             {
                 get { return DeployStatus.Failed; }
             }
-
+            
             public override void Verify(ApplicationManager appManager)
             {
                 Assert.False(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should not have site\repository\.git folder");
@@ -167,6 +179,17 @@ namespace Kudu.FunctionalTests
             public override DeployStatus DeploymentStatus
             {
                 get { return DeployStatus.Success; }
+            }
+
+            public override IEnumerable<string> NotContainStrings
+            {
+                get
+                {
+                    return new[] 
+                    {
+                        "KuduSync"
+                    };
+                }
             }
 
             public override void Verify(ApplicationManager appManager)
@@ -372,19 +395,19 @@ namespace Kudu.FunctionalTests
             public abstract string Content { get; }
             public abstract string DefaultDocument { get; }
 
-            public void GitVerify(GitDeploymentResult result, Setting setting)
+            public virtual void GitVerify(GitDeploymentResult result, Setting setting)
             {
                 Assert.Contains(BuilderTrace, result.GitTrace);
 
-                if (setting.RepositoryPath == "wwwroot" && setting.TargetPath == ".")
+                foreach (string text in setting.ContainStrings)
                 {
-                    GitVerifyDoesNotContainKuduSync(result);
+                    Assert.Contains(text, result.GitTrace);
                 }
-            }
 
-            public void GitVerifyDoesNotContainKuduSync(GitDeploymentResult result)
-            {
-                Assert.DoesNotContain("KuduSync", result.GitTrace);
+                foreach (string text in setting.NotContainStrings)
+                {
+                    Assert.DoesNotContain(text, result.GitTrace);
+                }
             }
 
             public void VerifyUrl(ApplicationManager appManager, Setting setting)
