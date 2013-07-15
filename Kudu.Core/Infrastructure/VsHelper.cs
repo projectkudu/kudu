@@ -9,11 +9,13 @@ namespace Kudu.Core.Infrastructure
 {
     internal static class VsHelper
     {
+        public static readonly string[] SolutionsLookupList = new string[] { "*.sln" };
+
         private static readonly Guid _wapGuid = new Guid("349c5851-65df-11da-9384-00065b846f21");
 
         public static IList<VsSolution> GetSolutions(string path, IFileFinder fileFinder, SearchOption searchOption = SearchOption.AllDirectories)
         {
-            IEnumerable<string> filesList = fileFinder.ListFiles(path, searchOption, "*.sln");
+            IEnumerable<string> filesList = fileFinder.ListFiles(path, searchOption, SolutionsLookupList);
             return filesList.Select(s => new VsSolution(s)).ToList();
         }
 

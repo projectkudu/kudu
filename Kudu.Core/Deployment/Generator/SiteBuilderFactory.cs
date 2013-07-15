@@ -26,6 +26,9 @@ namespace Kudu.Core.Deployment.Generator
         {
             string repositoryRoot = _environment.RepositoryPath;
 
+            // Use the cached vs projects file finder for: a. better performance, b. ignoring solutions/projects under node_modules
+            fileFinder = new CachedVsProjectsFileFinder(fileFinder);
+
             // If there's a custom deployment file then let that take over.
             var command = settings.GetValue(SettingsKeys.Command);
             if (!String.IsNullOrEmpty(command))
@@ -213,6 +216,43 @@ namespace Kudu.Core.Deployment.Generator
             throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,
                                                               Resources.Error_AmbiguousSolutions,
                                                               String.Join(", ", solutions.Select(s => s.Path))));
+        }
+
+        private class CachedVsProjectsFileFinder : IFileFinder
+        {
+            private static readonly string[] CachedExtensions = DeploymentHelper.ProjectFileLookup.Concat(VsHelper.SolutionsLookupList).ToArray();
+
+            private const string NodeModulesDirectory = "\\node_modules\\";
+
+            private IFileFinder _fileFinder;
+            private string _path;
+            private List<string> _cachedResults;
+
+            public CachedVsProjectsFileFinder(IFileFinder fileFinder)
+            {
+                _fileFinder = fileFinder;
+            }
+
+            public IEnumerable<string> ListFiles(string path, SearchOption searchOption, params string[] lookupList)
+            {
+                if (searchOption == SearchOption.AllDirectories)
+                {
+                    if (_cachedResults == null)
+                    {
+                        _path = path;
+                        _cachedResults =
+                            _fileFinder.ListFiles(path, searchOption, CachedExtensions)
+                                       .Where(filePath => !filePath.Contains(NodeModulesDirectory))
+                                       .ToList();
+                    }
+
+                    lookupList = lookupList.Select(l => l.TrimStart('*')).ToArray();
+
+                    return _cachedResults.Where(filePath => lookupList.Any(lookup => filePath.EndsWith(lookup, StringComparison.OrdinalIgnoreCase)));
+                }
+
+                return _fileFinder.ListFiles(path, searchOption, lookupList);
+            }
         }
     }
 }
