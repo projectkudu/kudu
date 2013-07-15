@@ -811,6 +811,29 @@ project = myproject");
         }
 
         [Fact]
+        public void NodeWithSolutionsUnderNodeModulesShouldBeDeployed()
+        {
+            string appName = "NodeWithSolutionsUnderNodeModulesShouldBeDeployed";
+
+            using (var repo = Git.Clone("NodeWithSolutions"))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    appManager.GitDeploy(repo.PhysicalPath);
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+
+                    var log = GetLog(appManager, results[0].Id);
+                    Assert.Contains("Handling node.js deployment", log);
+                });
+            }
+        }
+
+        [Fact]
         public void RedeployNodeSite()
         {
             string appName = "RedeployNodeSite";

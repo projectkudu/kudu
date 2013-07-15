@@ -29,14 +29,16 @@ namespace Kudu.Core.Infrastructure
                 return Enumerable.Empty<string>();
             }
 
-            var filesFound = new List<string>();
-
-            foreach (var lookup in lookupList)
+            // Only lookup of type *.extension or path\file (no *) is supported
+            if (lookupList.Any(lookup => lookup.LastIndexOf('*') > 0))
             {
-                filesFound.AddRange(Directory.GetFiles(path, lookup, searchOption));
+                throw new NotSupportedException("lookup with a '*' that is not the first character is not supported");
             }
 
-            return filesFound;
+            lookupList = lookupList.Select(lookup => lookup.TrimStart('*')).ToArray();
+
+            return Directory.EnumerateFiles(path, "*.*", searchOption)
+                            .Where(filePath => lookupList.Any(lookup => filePath.EndsWith(lookup)));
         }
 
         [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]

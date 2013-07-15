@@ -10,11 +10,12 @@ namespace Kudu.Core.Deployment
     public static class DeploymentHelper
     {
         private static readonly string[] _projectFileExtensions = new[] { ".csproj", ".vbproj" };
-        private static readonly string[] _projectFileLookup = _projectFileExtensions.Select(p => "*" + p).ToArray();
+
+        public static readonly string[] ProjectFileLookup = _projectFileExtensions.Select(p => "*" + p).ToArray();
 
         public static IList<string> GetProjects(string path, IFileFinder fileFinder, SearchOption searchOption = SearchOption.AllDirectories)
         {
-            IEnumerable<string> filesList = fileFinder.ListFiles(path, searchOption, _projectFileLookup);
+            IEnumerable<string> filesList = fileFinder.ListFiles(path, searchOption, ProjectFileLookup);
             return filesList.ToList();
         }
 
