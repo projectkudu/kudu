@@ -38,7 +38,7 @@ namespace Kudu.Core.Infrastructure
             lookupList = lookupList.Select(lookup => lookup.TrimStart('*')).ToArray();
 
             return Directory.EnumerateFiles(path, "*.*", searchOption)
-                            .Where(filePath => lookupList.Any(lookup => filePath.EndsWith(lookup)));
+                            .Where(filePath => lookupList.Any(lookup => filePath.EndsWith(lookup, StringComparison.OrdinalIgnoreCase)));
         }
 
         [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
