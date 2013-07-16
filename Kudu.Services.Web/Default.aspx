@@ -157,6 +157,10 @@
             <td><strong>Source control info</strong></td>
             <td><a href="scm/info">Browse</a></td>
         </tr>
+        <tr>
+            <td><strong>Web hooks</strong></td>
+            <td><a href="hooks">Browse</a></td>
+        </tr>
     </table>
 </body>
 </html>
