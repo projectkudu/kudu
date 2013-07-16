@@ -162,11 +162,14 @@ namespace Kudu.Services.Web.App_Start
             Shutdown += () => TraceShutdown(environment, kernel);
 
             // LogStream service
+            // The hooks and log stream start endpoint are low traffic end-points. Re-using it to avoid creating another lock 
+            var logStreamManagerLock = hooksLock;
             kernel.Bind<LogStreamManager>().ToMethod(context => new LogStreamManager(Path.Combine(environment.RootPath, Constants.LogFilesPath),
                                                                                      context.Kernel.Get<IEnvironment>(),
                                                                                      context.Kernel.Get<IDeploymentSettingsManager>(),
                                                                                      context.Kernel.Get<ITracer>(),
-                                                                                     shutdownDetector));
+                                                                                     shutdownDetector,
+                                                                                     logStreamManagerLock));
 
             kernel.Bind<InfoRefsController>().ToMethod(context => new InfoRefsController(t => context.Kernel.Get(t)))
                                              .InRequestScope();

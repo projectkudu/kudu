@@ -7,6 +7,7 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Web;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
@@ -32,6 +33,7 @@ namespace Kudu.Services.Performance
         private readonly string _logPath;
         private readonly IEnvironment _environment;
         private readonly ITracer _tracer;
+        private readonly IOperationLock _operationLock;
         private readonly List<ProcessRequestAsyncResult> _results;
 
         private Dictionary<string, long> _logFiles;
@@ -50,13 +52,15 @@ namespace Kudu.Services.Performance
                                 IEnvironment environment,
                                 IDeploymentSettingsManager settings, 
                                 ITracer tracer, 
-                                ShutdownDetector shutdownDetector)
+                                ShutdownDetector shutdownDetector,
+                                IOperationLock operationLock)
         {
             _logPath = logPath;
             _tracer = tracer;
             _environment = environment;
             _shutdownDetector = shutdownDetector;
             _timeout = settings.GetLogStreamTimeout();
+            _operationLock = operationLock;
             _results = new List<ProcessRequestAsyncResult>();
         }
 
@@ -89,8 +93,11 @@ namespace Kudu.Services.Performance
             // it will be turn off automatically every 24 hours
             if (_enableTrace)
             {
-                var settings = new JsonSettings(Path.Combine(_environment.DiagnosticsPath, Constants.SettingsJsonFile));
-                settings.SetValue(AzureDriveEnabledKey, true);
+                _operationLock.LockOperation(() =>
+                {
+                    var settings = new JsonSettings(Path.Combine(_environment.DiagnosticsPath, Constants.SettingsJsonFile));
+                    settings.SetValue(AzureDriveEnabledKey, true);
+                }, TimeSpan.FromSeconds(30));
             }
 
             return result;
