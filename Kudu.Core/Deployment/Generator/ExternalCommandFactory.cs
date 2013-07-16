@@ -88,7 +88,7 @@ namespace Kudu.Core.Deployment.Generator
         {
             get
             {
-                return Path.Combine(_environment.ScriptPath, "kudusync");
+                return "\"" + Path.Combine(_environment.ScriptPath, "kudusync") + "\"";
             }
         }
 
@@ -96,7 +96,7 @@ namespace Kudu.Core.Deployment.Generator
         {
             get
             {
-                return Path.Combine(_environment.ScriptPath, "postdeployment");
+                return "\"" + Path.Combine(_environment.ScriptPath, "postdeployment") + "\"";
             }
         }
 
