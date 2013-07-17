@@ -51,13 +51,12 @@ namespace Kudu.Services.SourceControl
             _deploymentManager = deploymentManager;
             _operationLock = operationLock;
             _repository = repository;
-            _currentEtag = GetCurrentEtag();
         }
 
         public override async Task<HttpResponseMessage> GetItem()
         {
             // Get a lock on the repository
-            await _operationLock.LockAsync();
+            await GetLockAsync();
 
             try
             {
@@ -89,7 +88,7 @@ namespace Kudu.Services.SourceControl
         public override async Task<HttpResponseMessage> PutItem()
         {
             // Get a lock on the repository
-            await _operationLock.LockAsync();
+            await GetLockAsync();
 
             try
             {
@@ -115,7 +114,7 @@ namespace Kudu.Services.SourceControl
         public override async Task<HttpResponseMessage> DeleteItem()
         {
             // Get a lock on the repository
-            await _operationLock.LockAsync();
+            await GetLockAsync();
 
             try
             {
@@ -454,6 +453,14 @@ namespace Kudu.Services.SourceControl
             errorResponse = null;
             return true;
         }
+
+        private async Task GetLockAsync()
+        {
+            await _operationLock.LockAsync();
+
+            // Make sure we have the current commit ID
+            _currentEtag = GetCurrentEtag();
+         }
 
         private EntityTagHeaderValue GetCurrentEtag()
         {
