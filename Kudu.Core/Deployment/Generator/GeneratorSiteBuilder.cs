@@ -4,13 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
-using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment.Generator
 {
     public abstract class GeneratorSiteBuilder : ExternalCommandBuilder
     {
-        private const string ScriptGeneratorCommandFormat = "-y --no-dot-deployment -r \"{0}\" -o \"{1}\" {2}";
+        private const string ScriptGeneratorCommandArgumentsFormat = "-y --no-dot-deployment -r \"{0}\" -o \"{1}\" {2}";
         private const string DeploymentScriptFileName = "deploy.cmd";
         private const string DeploymentCommandCacheKeyFileName = "deploymentCacheKey";
 
@@ -66,25 +65,26 @@ namespace Kudu.Core.Deployment.Generator
             {
                 using (context.Tracer.Step("Generating deployment script"))
                 {
-                    var scriptGenerator = new Executable(DeploymentScriptGeneratorToolPath, RepositoryPath, DeploymentSettings.GetCommandIdleTimeout());
+                    var scriptGenerator = ExternalCommandFactory.BuildExternalCommandExecutable(RepositoryPath, context.OutputPath, buildLogger);
 
                     // Set home path to the user profile so cache directories created by azure-cli are created there
                     scriptGenerator.SetHomePath(System.Environment.GetEnvironmentVariable("APPDATA"));
 
-                    var scriptGeneratorCommand = String.Format(ScriptGeneratorCommandFormat, RepositoryPath, Environment.DeploymentToolsPath, ScriptGeneratorCommandArguments);
+                    var scriptGeneratorCommandArguments = String.Format(ScriptGeneratorCommandArgumentsFormat, RepositoryPath, Environment.DeploymentToolsPath, ScriptGeneratorCommandArguments);
+                    var scriptGeneratorCommand = "\"{0}\" {1}".FormatInvariant(DeploymentScriptGeneratorToolPath, scriptGeneratorCommandArguments);
 
-                    bool cacheUsed = UseCachedDeploymentScript(scriptGeneratorCommand, context);
+                    bool cacheUsed = UseCachedDeploymentScript(scriptGeneratorCommandArguments, context);
                     if (!cacheUsed)
                     {
-                        buildLogger.Log(Resources.Log_DeploymentScriptGeneratorCommand, scriptGeneratorCommand);
+                        buildLogger.Log(Resources.Log_DeploymentScriptGeneratorCommand, scriptGeneratorCommandArguments);
 
                         scriptGenerator.ExecuteWithProgressWriter(buildLogger, context.Tracer, scriptGeneratorCommand);
 
-                        CacheDeploymentScript(scriptGeneratorCommand, context);
+                        CacheDeploymentScript(scriptGeneratorCommandArguments, context);
                     }
                     else
                     {
-                        buildLogger.Log(Resources.Log_DeploymentScriptGeneratorUsingCache, scriptGeneratorCommand);
+                        buildLogger.Log(Resources.Log_DeploymentScriptGeneratorUsingCache, scriptGeneratorCommandArguments);
                     }
                 }
             }

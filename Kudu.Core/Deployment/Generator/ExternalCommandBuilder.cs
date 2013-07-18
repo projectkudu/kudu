@@ -9,10 +9,6 @@ namespace Kudu.Core.Deployment.Generator
 {
     public abstract class ExternalCommandBuilder : ISiteBuilder
     {
-        // TODO: Once CustomBuilder is removed, change all internals back to privates
-
-        private readonly ExternalCommandFactory _externalCommandFactory;
-
         protected ExternalCommandBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string repositoryPath)
         {
             Environment = environment;
@@ -22,7 +18,7 @@ namespace Kudu.Core.Deployment.Generator
             PropertyProvider = propertyProvider;
             HomePath = environment.SiteRootPath;
 
-            _externalCommandFactory = new ExternalCommandFactory(environment, settings, repositoryPath);
+            ExternalCommandFactory = new ExternalCommandFactory(environment, settings, repositoryPath);
         }
 
         protected IEnvironment Environment { get; private set; }
@@ -35,6 +31,8 @@ namespace Kudu.Core.Deployment.Generator
 
         protected string HomePath { get; private set; }
 
+        internal ExternalCommandFactory ExternalCommandFactory { get; private set; }
+
         public abstract Task Build(DeploymentContext context);
 
         protected void RunCommand(DeploymentContext context, string command)
@@ -44,8 +42,8 @@ namespace Kudu.Core.Deployment.Generator
 
             // Creates an executable pointing to cmd and the working directory being
             // the repository root
-            var exe = _externalCommandFactory.BuildExternalCommandExecutable(RepositoryPath, context.OutputPath, customLogger);
-            
+            var exe = ExternalCommandFactory.BuildExternalCommandExecutable(RepositoryPath, context.OutputPath, customLogger);
+
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.PreviousManifestPath] = context.PreviousManifestFilePath ?? String.Empty;
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.NextManifestPath] = context.NextManifestFilePath;
 
