@@ -798,13 +798,13 @@ namespace Kudu.FunctionalTests
             yield return new RepoInvalidInfo("InvalidUrl", "Repository url 'InvalidUrl' is invalid.", null);
             yield return new RepoInvalidInfo("InvalidUrl", "Repository url 'InvalidUrl' is invalid.", null);
             yield return new RepoInvalidInfo(".", "Repository url '.' is invalid.", null);
-            yield return new RepoInvalidInfo("http://google.com/", "fatal: http://google.com/info/refs.* not found", null);
+            yield return new RepoInvalidInfo("http://google.com/", "fatal:.*http://google.com.* not found", null);
             yield return new RepoInvalidInfo("http://google.com/", "abort: 'http://www.google.com/' does not appear to be an hg repository", "hg");
             yield return new RepoInvalidInfo("InvalidScheme://abcdefghigkl.com/", "fatal: Unable to find remote helper for 'InvalidScheme'", null);
             yield return new RepoInvalidInfo("InvalidScheme://abcdefghigkl.com/", "abort: repository InvalidScheme://abcdefghigkl.com/ not found", "hg");
-            yield return new RepoInvalidInfo("http://abcdefghigkl.com/", "Couldn't resolve host 'abcdefghigkl.com'", null);
+            yield return new RepoInvalidInfo("http://abcdefghigkl.com/", "Could.*n.*t resolve host.*abcdefghigkl.com", null);
             yield return new RepoInvalidInfo("http://abcdefghigkl.com/", "abort: error: getaddrinfo failed.*hg.exe pull", "hg");
-            yield return new RepoInvalidInfo("https://abcdefghigkl.com/", "Couldn't resolve host 'abcdefghigkl.com'", null);
+            yield return new RepoInvalidInfo("https://abcdefghigkl.com/", "Could.*n.*t resolve host.*abcdefghigkl.com", null);
             yield return new RepoInvalidInfo("https://abcdefghigkl.com/", "abort: error: getaddrinfo failed.*hg.exe pull", "hg");
             yield return new RepoInvalidInfo("git@abcdefghigkl.com:Invalid/Invalid.git", "ssh: abcdefghigkl.com: no address associated with name", null);
             yield return new RepoInvalidInfo("ssh://hg@abcdefghigkl.com/Invalid/Invalid.git", "abort: no suitable response from remote hg.*hg.exe pull", "hg");
@@ -815,15 +815,15 @@ namespace Kudu.FunctionalTests
             yield return new RepoInvalidInfo("git@github.com:KuduApps/HelloKudu.git", "Permission denied [(]publickey[)]", null);
             yield return new RepoInvalidInfo("git@bitbucket.org:kudutest/jeanprivate.git", "Permission denied [(]publickey[)]", null);
             yield return new RepoInvalidInfo("https://github.com/KuduApps/HelloKudu.git", "abort: HTTP Error 406: Not Acceptable.*hg.exe pull https://github.com/KuduApps/HelloKudu.git", "hg");
-            yield return new RepoInvalidInfo("https://bitbucket.org/kudutest/hellomercurial/", "fatal: https://bitbucket.org/kudutest/hellomercurial/info/refs.* not found", null);
+            yield return new RepoInvalidInfo("https://bitbucket.org/kudutest/hellomercurial/", "fatal:.*https://bitbucket.org/kudutest/hellomercurial.* not found", null);
             yield return new RepoInvalidInfo("https://github.com/Invalid/Invalid.git", "fatal: Authentication failed.*git.exe fetch", null);
             yield return new RepoInvalidInfo("https://github.com/KuduQAOrg/Invalid.git", "fatal: Authentication failed.*git.exe fetch", null);
             yield return new RepoInvalidInfo("https://github.com/KuduQAOrg/PrivateSubModule.git", "fatal: Authentication failed.*git.exe fetch", null);
             yield return new RepoInvalidInfo("https://KuduQAOrg@github.com/KuduQAOrg/PrivateSubModule.git", "fatal: Authentication failed.*git.exe fetch", null);
             yield return new RepoInvalidInfo("https://wrongusr@github.com/KuduQAOrg/PrivateSubModule.git", "fatal: Authentication failed.*git.exe fetch", null);
             yield return new RepoInvalidInfo("https://KuduQAOrg:wrongpwd@github.com/KuduQAOrg/PrivateSubModule.git", "fatal: Authentication failed.*git.exe fetch external", null);
-            yield return new RepoInvalidInfo("https://bitbucket.org/Invalid/Invalid.git", "fatal: https://bitbucket.org/Invalid/Invalid.git/info/refs.* not found", null);
-            yield return new RepoInvalidInfo("https://bitbucket.org/kudutest/Invalid.git", "fatal: https://bitbucket.org/kudutest/Invalid.git/info/refs.* not found", null);
+            yield return new RepoInvalidInfo("https://bitbucket.org/Invalid/Invalid.git", "fatal:.*https://bitbucket.org/Invalid/Invalid.git.* not found", null);
+            yield return new RepoInvalidInfo("https://bitbucket.org/kudutest/Invalid.git", "fatal:.*https://bitbucket.org/kudutest/Invalid.git.* not found", null);
             yield return new RepoInvalidInfo("https://bitbucket.org/kudutest/jeanprivate.git", "fatal: Authentication failed.*git.exe fetch", null);
             yield return new RepoInvalidInfo("https://kudutest@bitbucket.org/kudutest/jeanprivate.git", "fatal: Authentication failed.*git.exe fetch", null);
             yield return new RepoInvalidInfo("https://wrongusr@bitbucket.org/kudutest/jeanprivate.git", "fatal: Authentication failed.*git.exe fetch", null);
@@ -850,7 +850,10 @@ namespace Kudu.FunctionalTests
             public string Expect { get; set; }
             public string Scm { get; set; }
             public JObject Payload { get; set; }
-            public override string ToString() { return String.Format("RepoInvalidInfo(url: \"{0},\" expect: \"{1}\", scm: \"{2}\")", this.Url, this.Expect, this.Scm); }
+            public override string ToString()
+            {
+                return String.Format("RepoInvalidInfo(url: \"{0},\" expect: \"{1}\", scm: \"{2}\")", this.Url, this.Expect, this.Scm);
+            }
         }
 
         private static async Task DeployPayloadHelperAsync(ApplicationManager appManager, Func<HttpClient, Task<HttpResponseMessage>> func)
