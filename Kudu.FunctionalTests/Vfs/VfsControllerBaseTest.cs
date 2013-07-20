@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -345,6 +347,27 @@ namespace Kudu.FunctionalTests
                     Assert.NotNull(response.Headers.ETag);
                     Assert.NotEqual(originalEtag, response.Headers.ETag);
                     updatedEtag = response.Headers.ETag;
+                }
+
+                TestTracer.Trace("==== Check that concurrent updates work");
+                List<Task<HttpResponseMessage>> concurrentUpdates = new List<Task<HttpResponseMessage>>();
+                for (int cnt = 0; cnt < 16; cnt++)
+                {
+                    HttpRequestMessage concurrentRequest = new HttpRequestMessage()
+                    {
+                        Method = HttpMethod.Put,
+                        RequestUri = new Uri(fileAddress + "?nodeploy"),
+                        Content = CreateUploadContent(_fileContent2)
+                    };
+
+                    concurrentRequest.Headers.IfMatch.Add(EntityTagHeaderValue.Any);
+                    concurrentUpdates.Add(HttpSendAsync(concurrentRequest));
+                }
+                await Task.WhenAll(concurrentUpdates);
+                IEnumerable<HttpResponseMessage> concurrentResponses = concurrentUpdates.Select(update => update.Result);
+                foreach (HttpResponseMessage concurrentResponse in concurrentResponses)
+                {
+                    Assert.Equal(HttpStatusCode.NoContent, concurrentResponse.StatusCode);
                 }
 
                 TestTracer.Trace("==== Check that 'nodeploy' doesn't deploy and that the old content remains.");
