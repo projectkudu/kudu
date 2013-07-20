@@ -129,5 +129,23 @@ namespace Kudu.Contracts.Settings
         {
             return settings.GetValue(SettingsKeys.NoRepository) == "1";
         }
+
+        public static string GetWebSitePolicy(this IDeploymentSettingsManager settings)
+        {
+            // Azure may flow this as typical env variables
+            string computeModeEnv = Environment.GetEnvironmentVariable(SettingsKeys.WebSiteComputeMode);
+            if (String.IsNullOrEmpty(computeModeEnv))
+            {
+                computeModeEnv = settings.GetValue(SettingsKeys.WebSiteComputeMode);
+            }
+
+            string siteModeEnv = Environment.GetEnvironmentVariable(SettingsKeys.WebSiteSiteMode);
+            if (String.IsNullOrEmpty(siteModeEnv))
+            {
+                siteModeEnv = settings.GetValue(SettingsKeys.WebSiteSiteMode);
+            }
+
+            return computeModeEnv + '|' + siteModeEnv;
+        }
     }
 }
