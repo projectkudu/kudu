@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
 using Xunit;
 
 namespace Kudu.Core.Infrastructure.Test
@@ -13,7 +14,7 @@ namespace Kudu.Core.Infrastructure.Test
     /// Verifies that <see cref="ProgressWriter"/> produces expected result.
     /// </summary>
     [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "This is a test.")]
-    public class ProgressWriterFacts
+    public class ProgressWriterFacts : IDisposable
     {
         private const int MaxIterations = 100;
 
@@ -28,7 +29,7 @@ namespace Kudu.Core.Infrastructure.Test
         private readonly ProgressWriter _progressWriter;
         private readonly ManualResetEventSlim _done;
 
-        private Timer _timer;
+        private System.Timers.Timer _timer;
         private int counter;
 
         public ProgressWriterFacts()
@@ -47,7 +48,8 @@ namespace Kudu.Core.Infrastructure.Test
             GetNextDelay(out delay);
 
             // Act
-            _timer = new Timer(OutputWriter, null, delay, -1);
+            StartTimer(delay);
+
             _done.Wait();
 
             // Assert
@@ -62,7 +64,8 @@ namespace Kudu.Core.Infrastructure.Test
             GetNextDelay(out delay);
 
             // Act
-            _timer = new Timer(OutputWriter, null, delay, -1);
+            StartTimer(delay);
+
             await Task.Delay(501);
 
             _progressWriter.Dispose();
@@ -72,13 +75,20 @@ namespace Kudu.Core.Infrastructure.Test
             VerifyResult(_output.ToString());
         }
 
-        private void OutputWriter(object state)
+        private void StartTimer(int delay)
+        {
+            _timer = new System.Timers.Timer(delay);
+            _timer.Elapsed += OutputWriter;
+            _timer.Start();
+        }
+
+        private void OutputWriter(object sender, ElapsedEventArgs e)
         {
             _progressWriter.WriteOutLine("t");
             int delay;
             if (GetNextDelay(out delay))
             {
-                _timer.Change(delay, -1);
+                _timer.Interval = delay;
             }
         }
 
@@ -153,6 +163,15 @@ namespace Kudu.Core.Infrastructure.Test
         private static string Escape(string value)
         {
             return value.Replace("\r\n", "\\r\\n");
+        }
+
+        public void Dispose()
+        {
+            if (_timer != null)
+            {
+                _timer.Dispose();
+                _timer = null;
+            }
         }
     }
 }
