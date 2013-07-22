@@ -261,8 +261,8 @@
     <RemoveDir Directories="@(directoryToDelete)" />
   </Target>
   <Target Name="PostBuildEvents">
-    <Exec Command="$(ProjectDir)\updateNodeModules.cmd $(TargetDir)" />
-    <Exec Command="&quot;$(MSBuildProgramFiles32)\Git\bin\git.exe&quot; rev-parse HEAD &gt; $(MsBuildProjectDirectory)\commit.txt" />
+    <Exec Command="&quot;$(ProjectDir)\updateNodeModules.cmd&quot; &quot;$(TargetDir)&quot;" />
+    <Exec Command="&quot;$(MSBuildProgramFiles32)\Git\bin\git.exe&quot; rev-parse HEAD &gt; &quot;$(MsBuildProjectDirectory)\commit.txt&quot;" />
   </Target>
   <Target Name="AfterBuild">
     <Copy SourceFiles="$(SolutionDir)\Kudu.Console\bin\$(ConfigurationName)\kudu.exe" DestinationFolder="$(TargetDir)" />
