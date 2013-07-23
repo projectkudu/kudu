@@ -22,5 +22,7 @@
         public const string TargetPath = "SCM_TARGET_PATH";
         public const string RepositoryPath = "SCM_REPOSITORY_PATH";
         public const string NoRepository = "SCM_NO_REPOSITORY";
+        public const string WebSiteComputeMode = "WEBSITE_COMPUTE_MODE";
+        public const string WebSiteSiteMode = "WEBSITE_SITE_MODE";
     }
 }

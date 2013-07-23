@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
@@ -8,6 +9,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Web.Http;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Diagnostics;
@@ -18,16 +20,21 @@ namespace Kudu.Services.Performance
 {
     public class ProcessController : ApiController
     {
+        private const string FreeSitePolicy = "Shared|Limited";
+
         private readonly ITracer _tracer;
         private readonly IEnvironment _environment;
         private readonly IFileSystem _fileSystem;
+        private readonly IDeploymentSettingsManager _settings;
 
         public ProcessController(ITracer tracer,
                                  IEnvironment environment,
+                                 IDeploymentSettingsManager settings,
                                  IFileSystem fileSystem)
         {
             _tracer = tracer;
             _environment = environment;
+            _settings = settings;
             _fileSystem = fileSystem;
         }
 
@@ -66,9 +73,17 @@ namespace Kudu.Services.Performance
         {
             using (_tracer.Step("ProcessController.MiniDump"))
             {
+                string sitePolicy = _settings.GetWebSitePolicy();
+                if ((MINIDUMP_TYPE)dumpType == MINIDUMP_TYPE.WithFullMemory && sitePolicy.Equals(FreeSitePolicy, StringComparison.OrdinalIgnoreCase))
+                {
+                    return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, 
+                        String.Format(CultureInfo.CurrentCulture, Resources.Error_FullMiniDumpNotSupported, sitePolicy));
+                }
+
                 var process = GetProcessById(id);
 
-                string dumpFile = Path.Combine(_environment.TempPath, "minidump.dmp");
+                string dumpFile = Path.Combine(_environment.LogFilesPath, "minidump", "minidump.dmp");
+                FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(dumpFile));
                 FileSystemHelpers.DeleteFileSafe(_fileSystem, dumpFile);
 
                 try
@@ -77,10 +92,10 @@ namespace Kudu.Services.Performance
                     process.MiniDump(dumpFile, (MINIDUMP_TYPE)dumpType);
                     _tracer.Trace("MiniDump size={0}", new FileInfo(dumpFile).Length);
                 }
-                catch
+                catch (Exception ex)
                 {
                     FileSystemHelpers.DeleteFileSafe(_fileSystem, dumpFile);
-                    throw;
+                    return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
                 }
 
                 HttpResponseMessage response = Request.CreateResponse();
