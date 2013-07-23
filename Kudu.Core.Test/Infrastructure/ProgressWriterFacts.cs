@@ -170,8 +170,12 @@ namespace Kudu.Core.Infrastructure.Test
             if (_timer != null)
             {
                 _timer.Dispose();
-                _timer = null;
             }
+
+            _progressWriter.Dispose();
+            _output.Dispose();
+            _error.Dispose();
+            _done.Dispose();
         }
     }
 }
