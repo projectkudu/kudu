@@ -492,7 +492,7 @@ project = myproject");
                 ApplicationManager.Run(appName, appManager =>
                 {
                     string url = appManager.SiteUrl + "hostingstart.html";
-                    KuduAssert.VerifyUrl(url, "<h1>This web site has been successfully created</h1>");
+                    KuduAssert.VerifyUrl(url, "This web site has been successfully created");
 
                     // Act
                     appManager.GitDeploy(repo.PhysicalPath);

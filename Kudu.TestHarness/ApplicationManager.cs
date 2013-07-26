@@ -165,7 +165,7 @@ namespace Kudu.TestHarness
             return matches[0].Groups[1].Value;
         }
 
-        public static void Run(string testName, Action<ApplicationManager> action)
+        public static void Run(string testName, Action<ApplicationManager> action, bool randomizeSiteName = true)
         {
             Func<ApplicationManager, Task> asyncAction = (appManager) =>
             {
@@ -176,7 +176,8 @@ namespace Kudu.TestHarness
             RunAsync(testName, asyncAction).Wait();
         }
 
-        public static async Task RunAsync(string testName, Func<ApplicationManager, Task> action)
+        public static async Task RunAsync(
+            string testName, Func<ApplicationManager, Task> action, bool randomizeSiteName = true)
         {
             if (KuduUtils.StopAfterFirstTestFailure && KuduUtils.TestFailureOccurred)
             {
@@ -185,7 +186,7 @@ namespace Kudu.TestHarness
 
             try
             {
-                await RunNoCatch(testName, action);
+                await RunNoCatch(testName, action, randomizeSiteName);
             }
             catch
             {
@@ -194,11 +195,14 @@ namespace Kudu.TestHarness
             }
         }
 
-        public static async Task RunNoCatch(string testName, Func<ApplicationManager, Task> action)
+        public static async Task RunNoCatch(
+            string testName, Func<ApplicationManager, Task> action, bool randomizeSiteName)
         {
             TestTracer.Trace("Running test - {0}", testName);
 
-            var appManager = await CreateApplicationAsync(KuduUtils.GetRandomWebsiteName(testName), testName);
+            var appManager = (randomizeSiteName == true) ?
+                await CreateApplicationAsync(KuduUtils.GetRandomWebsiteName(testName), testName) :
+                await CreateApplicationAsync(testName);
 
             if (KuduUtils.ReuseSameSiteForAllTests)
             {
