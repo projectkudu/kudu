@@ -17,18 +17,42 @@ namespace Kudu.TestHarness
 {
     public class ApplicationManager
     {
+        private static bool _testFailureOccured;
         private readonly ISiteManager _siteManager;
         private readonly ISettingsResolver _settingsResolver;
         private readonly Site _site;
         private readonly string _appName;
 
-        private ApplicationManager(ISiteManager siteManager, Site site, string appName, string gitUrl, ISettingsResolver settingsResolver)
+        internal ApplicationManager(ISiteManager siteManager, Site site, string appName, ISettingsResolver settingsResolver)
         {
             _siteManager = siteManager;
             _site = site;
             _appName = appName;
-            GitUrl = gitUrl;
             _settingsResolver = settingsResolver;
+            
+            SiteUrl = site.SiteUrl;
+            ServiceUrl = site.ServiceUrl;
+
+            DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "deployments");
+            SettingsManager = new RemoteDeploymentSettingsManager(site.ServiceUrl + "settings");
+            LogStreamManager = new RemoteLogStreamManager(site.ServiceUrl + "logstream");
+            SSHKeyManager = new RemoteSSHKeyManager(site.ServiceUrl + "sshkey");
+            VfsManager = new RemoteVfsManager(site.ServiceUrl + "vfs");
+            VfsWebRootManager = new RemoteVfsManager(site.ServiceUrl + "vfs/site/wwwroot");
+            LiveScmVfsManager = new RemoteVfsManager(site.ServiceUrl + "scmvfs");
+            ZipManager = new RemoteZipManager(site.ServiceUrl + "zip");
+            CommandExecutor = new RemoteCommandExecutor(site.ServiceUrl + "command");
+            ProcessManager = new RemoteProcessManager(site.ServiceUrl + "diagnostics/processes");
+            WebHooksManager = new RemoteWebHooksManager(site.ServiceUrl + "hooks");
+            RepositoryManager = new RemoteRepositoryManager(site.ServiceUrl + "scm");
+
+            var repositoryInfo = RepositoryManager.GetRepositoryInfo().Result;
+            GitUrl = repositoryInfo.GitUrl.OriginalString;
+        }
+
+        public string ApplicationName
+        {
+            get { return _appName; }
         }
 
         public string SiteUrl
@@ -41,6 +65,11 @@ namespace Kudu.TestHarness
         {
             get;
             private set;
+        }
+
+        public ISiteManager SiteManager
+        {
+            get { return _siteManager; }
         }
 
         public RemoteDeploymentManager DeploymentManager
@@ -121,19 +150,15 @@ namespace Kudu.TestHarness
             private set;
         }
 
+        internal int SitePoolIndex
+        {
+            get; set;
+        }
+
         public string GetCustomGitUrl(string path)
         {
             // Return a custom git url, e.g. http://kuduservice/git/foo/bar
             return GitUrl.Substring(0, GitUrl.LastIndexOf("/")) + "/git/" + path;
-        }
-
-        private async Task Delete()
-        {
-            // Don't delete the site if we're supposed to reuse it
-            if (!KuduUtils.ReuseSameSiteForAllTests)
-            {
-                await _siteManager.DeleteSiteAsync(_appName);
-            }
         }
 
         public void Save(string path, string content)
@@ -178,7 +203,7 @@ namespace Kudu.TestHarness
 
         public static async Task RunAsync(string testName, Func<ApplicationManager, Task> action)
         {
-            if (KuduUtils.StopAfterFirstTestFailure && KuduUtils.TestFailureOccurred)
+            if (KuduUtils.StopAfterFirstTestFailure && _testFailureOccured)
             {
                 return;
             }
@@ -189,7 +214,7 @@ namespace Kudu.TestHarness
             }
             catch
             {
-                KuduUtils.ReportTestFailure();
+                
                 throw;
             }
         }
@@ -197,19 +222,12 @@ namespace Kudu.TestHarness
         public static async Task RunNoCatch(string testName, Func<ApplicationManager, Task> action)
         {
             TestTracer.Trace("Running test - {0}", testName);
-
-            var appManager = await CreateApplicationAsync(KuduUtils.GetRandomWebsiteName(testName), testName);
-
-            if (KuduUtils.ReuseSameSiteForAllTests)
-            {
-                // In site reuse mode, clean out the existing site so we start clean
-                appManager.RepositoryManager.Delete(deleteWebRoot: true, ignoreErrors: true).Wait();
-
-                // Make sure we start with the correct default file as some tests expect it
-                WriteIndexHtml(appManager);
-            }
+            
+            var appManager = await SitePool.CreateApplicationAsync();
+            TestTracer.Trace("Using site - {0}", appManager.SiteUrl);
 
             var dumpPath = Path.Combine(PathHelper.TestResultsPath, testName, testName + ".zip");
+            bool succcess = true;
             try
             {
                 using (StartLogStream(appManager))
@@ -225,50 +243,17 @@ namespace Kudu.TestHarness
 
                 TestTracer.Trace("Run failed with exception\n{0}", ex);
 
+                succcess = false;
+
+                _testFailureOccured = true;
+
                 throw;
             }
             finally
             {
                 SafeTraceDeploymentLogs(appManager);
 
-                // Delete the site at the end, unless we're in site reuse mode
-                if (!KuduUtils.ReuseSameSiteForAllTests)
-                {
-                    appManager.Delete().Wait();
-                }
-            }
-        }
-
-        // Try to write index.html.  In case of failure with 502, we will include
-        // UpTime information with the exception.  This info will be used for furthur
-        // investigation of Bad Gateway issue.
-        private static void WriteIndexHtml(ApplicationManager appManager)
-        {
-            try
-            {
-                appManager.VfsWebRootManager.WriteAllText("hostingstart.html", "<h1>This web site has been successfully created</h1>");
-            }
-            catch (HttpRequestException ex)
-            {
-                if (ex.Message.Contains("502 (Bad Gateway)"))
-                {
-                    string upTime = null;
-                    try
-                    {
-                        upTime = appManager.GetKuduUpTime();
-                    }
-                    catch (Exception exception)
-                    {
-                        TestTracer.Trace("GetKuduUpTime failed with exception\n{0}", exception);
-                    }
-
-                    if (!String.IsNullOrEmpty(upTime))
-                    {
-                        throw new HttpRequestException(ex.Message + " Kudu Up Time: " + upTime, ex);
-                    }
-                }
-
-                throw;
+                SitePool.ReportTestCompletion(appManager, succcess);
             }
         }
 
@@ -319,69 +304,6 @@ namespace Kudu.TestHarness
             }
         }
 
-        public static async Task<ApplicationManager> CreateApplicationAsync(string applicationName, string testName = null)
-        {
-            // Default the test name to the app name
-            testName = testName ?? applicationName;
-
-            TestTracer.Trace("Create application - {0}", applicationName);
-
-            var pathResolver = new DefaultPathResolver(PathHelper.ServiceSitePath, PathHelper.SitesPath);
-            var settingsResolver = new DefaultSettingsResolver();
-
-            var siteManager = GetSiteManager(pathResolver, settingsResolver);
-
-            Site site;
-
-            if (KuduUtils.ReuseSameSiteForAllTests)
-            {
-                // In site reuse mode, try to get the existing site, and create it if needed
-                site = siteManager.GetSite(applicationName);
-                if (site == null)
-                {
-                    site = await siteManager.CreateSiteAsync(applicationName);
-                }
-            }
-            else
-            {
-                try
-                {
-                    await siteManager.DeleteSiteAsync(applicationName);
-                }
-                catch (Exception)
-                {
-                }
-
-                site = await siteManager.CreateSiteAsync(applicationName);
-            }
-
-            TestTracer.Trace("Using site - {0}", site.SiteUrl);
-
-            string gitUrl = null;
-            var repositoryManager = new RemoteRepositoryManager(site.ServiceUrl + "scm");
-            var repositoryInfo = repositoryManager.GetRepositoryInfo().Result;
-            gitUrl = repositoryInfo.GitUrl.ToString();
-            var applicationManager = new ApplicationManager(siteManager, site, applicationName, gitUrl, settingsResolver)
-            {
-                SiteUrl = site.SiteUrl,
-                ServiceUrl = site.ServiceUrl,
-                DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "deployments"),
-                SettingsManager = new RemoteDeploymentSettingsManager(site.ServiceUrl + "settings"),
-                LogStreamManager = new RemoteLogStreamManager(site.ServiceUrl + "logstream"),
-                SSHKeyManager = new RemoteSSHKeyManager(site.ServiceUrl + "sshkey"),
-                VfsManager = new RemoteVfsManager(site.ServiceUrl + "vfs"),
-                VfsWebRootManager = new RemoteVfsManager(site.ServiceUrl + "vfs/site/wwwroot"),
-                LiveScmVfsManager = new RemoteVfsManager(site.ServiceUrl + "scmvfs"),
-                ZipManager = new RemoteZipManager(site.ServiceUrl + "zip"),
-                CommandExecutor = new RemoteCommandExecutor(site.ServiceUrl + "command"),
-                ProcessManager = new RemoteProcessManager(site.ServiceUrl + "diagnostics/processes"),
-                WebHooksManager = new RemoteWebHooksManager(site.ServiceUrl + "hooks"),
-                RepositoryManager = repositoryManager,
-            };
-
-            return applicationManager;
-        }
-
         public RemoteLogStreamManager CreateLogStreamManager(string path = null)
         {
             if (path != null)
@@ -389,11 +311,6 @@ namespace Kudu.TestHarness
                 path = "/" + path;
             }
             return new RemoteLogStreamManager(_site.ServiceUrl + "logstream" + path);
-        }
-
-        private static ISiteManager GetSiteManager(DefaultPathResolver pathResolver, DefaultSettingsResolver settingsResolver)
-        {
-            return new SiteManager(pathResolver, traceFailedRequests: true, logPath: PathHelper.TestResultsPath, settingsResolver: settingsResolver);
         }
     }
 }

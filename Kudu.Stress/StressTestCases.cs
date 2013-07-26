@@ -1,16 +1,10 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Configuration;
-using System.IO  ;
+using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Kudu.Contracts;
-using Kudu.TestHarness;
 using Kudu.Core.Deployment;
+using Kudu.TestHarness;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-
 
 namespace Kudu.Stress
 {
@@ -128,13 +122,14 @@ namespace Kudu.Stress
                     if (!testArtifactStore.ContainsKey(testName))
                     {
                         // create site & start w3wp.exe with a request
-                        ApplicationManager stressAppManager = ApplicationManager.CreateApplicationAsync(testName).Result;
+                        ApplicationManager stressAppManager = SitePool.CreateApplicationAsync().Result;
                         Uri siteUri;
                         Uri.TryCreate(new Uri(stressAppManager.SiteUrl), "hostingstart.html", out siteUri);
                         StressUtils.VerifySite(siteUri.AbsoluteUri, "successfully");
 
+                        string appName = stressAppManager.ApplicationName;
                         // create counter objects & do init log
-                        W3wpResourceMonitor counterManager = new W3wpResourceMonitor(testName);
+                        W3wpResourceMonitor counterManager = new W3wpResourceMonitor(appName);
                         counterManager.CheckAndLogResourceUsage();
 
                         TestRepository testRepository = Git.Clone(testName, gitUrl);

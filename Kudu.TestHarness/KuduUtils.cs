@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Configuration;
-using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -11,9 +10,6 @@ namespace Kudu.TestHarness
 {
     public class KuduUtils
     {
-        private const int MinSiteNameIndex = 1;
-        private const int DefaultMaxSiteNameIndex = 5;
-
         public static void DownloadDump(string serviceUrl, string zippedLogsPath, NetworkCredential credentials = null)
         {
             try
@@ -61,43 +57,6 @@ namespace Kudu.TestHarness
             return document;
         }
 
-        public static string GetRandomWebsiteName(string name)
-        {
-            if (KuduUtils.ReuseSameSiteForAllTests)
-            {
-                return KuduUtils.SiteReusedForAllTests;
-            }
-            else
-            {
-                int maxLen = Math.Min(name.Length, 25);
-                return name.Substring(0, maxLen) + Guid.NewGuid().ToString("N").Substring(0, 4);
-            }
-        }
-
-        private static int SiteNameIndex = MinSiteNameIndex;
-
-        public static void ReportTestFailure()
-        {
-            if (ReuseSameSiteForAllTests)
-            {
-                TestTracer.Trace("Test failed, name of site used for test is '{0}'", SiteReusedForAllTests);
-            }
-
-            // Make sure no more than max number of sites are created per test run.
-            if (SiteNameIndex < MaxSiteNameIndex)
-            {
-                SiteNameIndex++;
-            }
-        }
-
-        public static bool TestFailureOccurred
-        {
-            get
-            {
-                return SiteNameIndex > MinSiteNameIndex;
-            }
-        }
-
         public static string SiteReusedForAllTests
         {
             get
@@ -105,35 +64,11 @@ namespace Kudu.TestHarness
                 string siteName = GetTestSetting("SiteReusedForAllTests");
                 if (String.IsNullOrEmpty(siteName))
                 {
-                    return null;
+                    return Environment.MachineName;
                 }
 
                 // Append the machine name to the site to avoid conflicting with other users running tests
-                return String.Format("{0}{1}-{2}", siteName, Environment.MachineName, SiteNameIndex);
-            }
-        }
-
-        public static int MaxSiteNameIndex
-        {
-            get
-            {
-                string maxSiteNameIndex = GetTestSetting("MaxSiteNameIndex");
-                try
-                {
-                    return int.Parse(maxSiteNameIndex);
-                }
-                catch
-                {
-                    return DefaultMaxSiteNameIndex;
-                }
-            }
-        }
-
-        public static bool ReuseSameSiteForAllTests
-        {
-            get
-            {
-                return !String.IsNullOrEmpty(SiteReusedForAllTests);
+                return String.Format("{0}{1}", siteName, Environment.MachineName);
             }
         }
 
