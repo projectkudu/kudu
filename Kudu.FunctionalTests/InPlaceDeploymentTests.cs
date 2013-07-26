@@ -16,7 +16,7 @@ namespace Kudu.FunctionalTests
         [PropertyData("ScenarioSettings")]
         public async Task InPlaceDeploymentBasicTests(Scenario scenario, Setting setting)
         {
-            var appName = KuduUtils.GetRandomWebsiteName(scenario.Name);
+            var appName = scenario.Name;
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 KeyValuePair<string, string>[] settings = setting.GetSettings();

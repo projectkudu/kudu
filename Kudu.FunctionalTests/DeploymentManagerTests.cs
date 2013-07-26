@@ -480,7 +480,7 @@ namespace Kudu.FunctionalTests
         public async Task PullApiTestKilnHgFormat()
         {
             string kilnPayload = @"{ ""commits"": [ { ""author"": ""Brian Surowiec <xtorted@optonline.net>"", ""branch"": ""default"", ""id"": ""0bbefd70c4c4213bba1e91998141f6e861cec24d"", ""message"": ""more fun text"", ""revision"": 20, ""tags"": [ ""tip"" ], ""timestamp"": ""1/16/2013 3:32:04 AM"", ""url"": ""https://13degrees.kilnhg.com/Code/Kudu-Public/Group/Site/History/d2415cbaa78e"" } ], ""pusher"": { ""accesstoken"": false, ""email"": ""xtorted@optonline.net"", ""fullName"": ""Brian Surowiec"" }, ""repository"": { ""central"": true, ""description"": """", ""id"": 113336, ""name"": ""Site"", ""url"": ""https://bitbucket.org/kudutest/hellomercurial/"" } }";
-            string appName = KuduUtils.GetRandomWebsiteName("PullApiTestKilnHgFormat");
+            string appName = "PullApiTestKilnHgFormat";
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
