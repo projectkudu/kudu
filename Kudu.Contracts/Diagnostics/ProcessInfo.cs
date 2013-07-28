@@ -63,9 +63,6 @@ namespace Kudu.Core.Diagnostics
         [DataMember(Name = "peak_working_set", EmitDefaultValue = false)]
         public Int64 PeakWorkingSet64 { get; set; }
 
-        [DataMember(Name = "private_working_set", EmitDefaultValue = false)]
-        public Int64 PrivateWorkingSet64 { get; set; }
-
         [DataMember(Name = "private_memory", EmitDefaultValue = false)]
         public Int64 PrivateMemorySize64 { get; set; }
 

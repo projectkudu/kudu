@@ -150,11 +150,10 @@ namespace Kudu.Services.Performance
                 info.VirtualMemorySize64 = SafeGetValue(() => process.VirtualMemorySize64, -1);
                 info.PeakVirtualMemorySize64 = SafeGetValue(() => process.PeakVirtualMemorySize64, -1);
                 info.PrivateMemorySize64 = SafeGetValue(() => process.PrivateMemorySize64, -1);
-                info.PrivateWorkingSet64 = SafeGetValue(() => process.GetPrivateWorkingSet(), -1);
 
                 info.MiniDump = new Uri(selfLink + "/dump");
-                info.Parent = new Uri(selfLink, SafeGetValue(() => process.GetParentId(), 0).ToString());
-                info.Children = SafeGetValue(() => process.GetChildren(recursive: false), Enumerable.Empty<Process>()).Select(c => new Uri(selfLink, c.Id.ToString()));
+                info.Parent = new Uri(selfLink, SafeGetValue(() => process.GetParentId(_tracer), 0).ToString());
+                info.Children = SafeGetValue(() => process.GetChildren(_tracer, recursive: false), Enumerable.Empty<Process>()).Select(c => new Uri(selfLink, c.Id.ToString()));
             }
 
             return info;

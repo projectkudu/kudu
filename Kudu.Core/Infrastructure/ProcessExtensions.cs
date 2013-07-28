@@ -6,11 +6,13 @@ using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security;
 using Kudu.Contracts.Tracing;
 
 namespace Kudu.Core.Infrastructure
 {
     // http://blogs.msdn.com/b/bclteam/archive/2006/06/20/640259.aspx
+    // http://stackoverflow.com/questions/394816/how-to-get-parent-process-in-net-in-managed-way
     public static class ProcessExtensions
     {
         public static void Kill(this Process process, bool includesChildren, ITracer tracer)
@@ -19,7 +21,7 @@ namespace Kudu.Core.Infrastructure
             {
                 if (includesChildren)
                 {
-                    foreach (Process child in process.GetChildren())
+                    foreach (Process child in process.GetChildren(tracer))
                     {
                         SafeKillProcess(child, tracer);
                     }
@@ -35,10 +37,10 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        public static IEnumerable<Process> GetChildren(this Process process, bool recursive = true)
+        public static IEnumerable<Process> GetChildren(this Process process, ITracer tracer, bool recursive = true)
         {
             int pid = process.Id;
-            Dictionary<int, List<int>> tree = GetProcessTree();
+            Dictionary<int, List<int>> tree = GetProcessTree(tracer);
             return GetChildren(pid, tree, recursive).Select(cid => SafeGetProcessById(cid)).Where(p => p != null);
         }
 
@@ -70,7 +72,7 @@ namespace Kudu.Core.Infrastructure
         {
             try
             {
-                var processes = process.GetChildren().Concat(new[] { process }).Select(p => new { Name = p.ProcessName, Id = p.Id, Cpu = p.TotalProcessorTime });
+                var processes = process.GetChildren(tracer).Concat(new[] { process }).Select(p => new { Name = p.ProcessName, Id = p.Id, Cpu = p.TotalProcessorTime });
                 var totalTime = TimeSpan.FromTicks(processes.Sum(p => p.Cpu.Ticks));
                 var info = String.Join("+", processes.Select(p => String.Format("{0}({1},{2:0.000}s)", p.Name, p.Id, p.Cpu.TotalSeconds)).ToArray());
                 tracer.Trace("Cpu: {0}=total({1:0.000}s)", info, totalTime.TotalSeconds);
@@ -85,43 +87,39 @@ namespace Kudu.Core.Infrastructure
         }
 
         /// <summary>
-        /// Get parent id.
+        /// Get parent process.
         /// </summary>
-        public static int GetParentId(this Process process)
+        public static Process GetParentProcess(this Process process, ITracer tracer)
         {
-            string indexedProcessName = FindIndexedProcessName(process.Id, process.ProcessName);
-            if (String.IsNullOrEmpty(indexedProcessName))
+            var pbi = new ProcessNativeMethods.ProcessInformation();
+            try
             {
-                return 0;
-            }
+                int returnLength;
+                int status = ProcessNativeMethods.NtQueryInformationProcess(process.Handle, 0, ref pbi, Marshal.SizeOf(pbi), out returnLength);
+                if (status != 0)
+                {
+                    throw new Win32Exception(status);
+                }
 
-            int? parentId = FindPidFromIndexedProcessName(indexedProcessName);
-            if (!parentId.HasValue)
+                return Process.GetProcessById(pbi.InheritedFromUniqueProcessId.ToInt32());
+            }
+            catch (Exception ex)
             {
-                return 0;
+                if (!process.ProcessName.Equals("w3wp", StringComparison.OrdinalIgnoreCase))
+                {
+                    tracer.Trace("GetParentProcess of {0}({1}) failed with {2}", process.ProcessName, process.Id, ex);
+                }
+                return null;
             }
-
-            return parentId.Value;
         }
 
         /// <summary>
-        /// Get private working set.
+        /// Get parent id.
         /// </summary>
-        public static long GetPrivateWorkingSet(this Process process)
+        public static int GetParentId(this Process process, ITracer tracer)
         {
-            string indexedProcessName = FindIndexedProcessName(process.Id, process.ProcessName);
-            if (String.IsNullOrEmpty(indexedProcessName))
-            {
-                return -1;
-            }
-
-            var value = SafeGetPerfCounter("Process", "Working Set - Private", indexedProcessName);
-            if (!value.HasValue)
-            {
-                return -1;
-            }
-
-            return value.Value;
+            Process parent = process.GetParentProcess(tracer);
+            return parent != null ? parent.Id : -1;
         }
 
         public static void MiniDump(this Process process, string dumpFile, MINIDUMP_TYPE dumpType)
@@ -166,63 +164,43 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        private static Dictionary<int, List<int>> GetProcessTree()
+        private static Dictionary<int, List<int>> GetProcessTree(ITracer tracer)
         {
             var tree = new Dictionary<int, List<int>>();
-            foreach (var proc in Process.GetProcesses().ToDictionary(p => p.Id, p => p.ProcessName))
+            foreach (var proc in Process.GetProcesses())
             {
-                string indexedProcessName = FindIndexedProcessName(proc.Key, proc.Value);
-                if (String.IsNullOrEmpty(indexedProcessName))
+                Process parent = proc.GetParentProcess(tracer);
+                if (parent != null)
                 {
-                    continue;
-                }
+                    List<int> children = null;
+                    if (!tree.TryGetValue(parent.Id, out children))
+                    {
+                        tree[parent.Id] = children = new List<int>();
+                    }
 
-                int? parentId = FindPidFromIndexedProcessName(indexedProcessName);
-                if (!parentId.HasValue)
-                {
-                    // We encountered an unauthorized access exception when trying to use perf counters when the account Kudu AppDomain is executing in doesn't have sufficient privileges. 
-                    // Skip when this happens.
-                    continue;
+                    children.Add(proc.Id);
                 }
-                List<int> children = null;
-                if (!tree.TryGetValue(parentId.Value, out children))
-                {
-                    tree[parentId.Value] = children = new List<int>();
-                }
-
-                children.Add(proc.Key);
             }
 
             return tree;
         }
 
-        private static string FindIndexedProcessName(int pid, string processName)
+        [SuppressUnmanagedCodeSecurity]
+        internal static class ProcessNativeMethods
         {
-            string processIndexedName = null;
-            Process[] processesByName = Process.GetProcessesByName(processName);
-            for (var index = 0; index < processesByName.Length; index++)
+            [DllImport("ntdll.dll")]
+            public static extern int NtQueryInformationProcess(IntPtr processHandle, int processInformationClass, ref ProcessInformation processInformation, int processInformationLength, out int returnLength);
+
+            [StructLayout(LayoutKind.Sequential)]
+            public struct ProcessInformation
             {
-                processIndexedName = index == 0 ? processName : processName + "#" + index;
-                int? processId = SafeGetPerfCounter("Process", "ID Process", processIndexedName);
-                if (processId.HasValue && processId.Value == pid)
-                {
-                    return processIndexedName;
-                }
-            }
-
-            return processIndexedName;
-        }
-
-        private static int? FindPidFromIndexedProcessName(string indexedProcessName)
-        {
-            return SafeGetPerfCounter("Process", "Creating Process ID", indexedProcessName);
-        }
-
-        private static int? SafeGetPerfCounter(string category, string counterName, string key)
-        {
-            using (var counter = new PerformanceCounter(category, counterName, key, readOnly: true))
-            {
-                return (int)counter.NextValue();
+                // These members must match PROCESS_BASIC_INFORMATION
+                internal IntPtr Reserved1;
+                internal IntPtr PebBaseAddress;
+                internal IntPtr Reserved2_0;
+                internal IntPtr Reserved2_1;
+                internal IntPtr UniqueProcessId;
+                internal IntPtr InheritedFromUniqueProcessId;
             }
         }
     }
