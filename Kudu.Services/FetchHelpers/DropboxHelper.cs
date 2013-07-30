@@ -118,8 +118,6 @@ namespace Kudu.Services
                 // Commit anyway even partial change
                 if (repository.Commit(message, String.Format("{0} <{1}>", info.UserName, info.Email)))
                 {
-                    // We know this is backed by a git repository, so we can get away using the HEAD refspec 
-                    Debug.Assert(repository.RepositoryType == RepositoryType.Git);
                     changeSet = repository.GetChangeSet("HEAD");
                 }
             }
