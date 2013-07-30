@@ -1003,40 +1003,15 @@ project = myproject");
 
                     // This HangProcess repo spew out activity at 2s, 4s, 6s and 30s respectively
                     // we should receive the one < 10s and terminate otherwise.
-                    string trace = null;
-                    try
-                    {
-                        GitDeploymentResult result = appManager.GitDeploy(repo.PhysicalPath, retries: 1);
-                        trace = result.GitTrace;
-                    }
-                    catch (Exception ex)
-                    {
-                        trace = ex.ToString();
-                    }
+                    GitDeploymentResult result = appManager.GitDeploy(repo.PhysicalPath, retries: 1);
+                    string trace = result.GitTrace;
 
                     Assert.Contains("remote: Sleep(2000)", trace);
                     Assert.Contains("remote: Sleep(4000)", trace);
                     Assert.Contains("remote: Sleep(6000)", trace);
                     Assert.DoesNotContain("remote: Sleep(60000)", trace);
                     Assert.Contains("remote: Command 'starter.cmd simplesleep.exe ...' aborted due to no output and CPU activity for", trace);
-
-                    // in certain OS, the child process killed may not work
-                    // this only intends for public Kudu (test running on the same machine as git server).
-                    // for private Kudu, the kill child processes should take care of this.
-                    foreach (var proc in Process.GetProcessesByName("SimpleSleep"))
-                    {
-                        try
-                        {
-                            proc.Kill();
-                        }
-                        catch (Exception)
-                        {
-                            if (!proc.HasExited)
-                            {
-                                throw;
-                            }
-                        }
-                    }
+                    Assert.False(Process.GetProcesses().Any(p => p.ProcessName.Equals("simplesleep", StringComparison.OrdinalIgnoreCase)), "SimpleSleep should have been terminated!");
                 });
             }
         }
@@ -1057,16 +1032,8 @@ project = myproject");
                     appManager.SettingsManager.SetValue(SettingsKeys.CommandIdleTimeout, "10").Wait();
 
                     // This WaitForUserInput do set /P waiting for input
-                    string trace = null;
-                    try
-                    {
-                        GitDeploymentResult result = appManager.GitDeploy(repo.PhysicalPath, retries: 1);
-                        trace = result.GitTrace;
-                    }
-                    catch (Exception ex)
-                    {
-                        trace = ex.ToString();
-                    }
+                    GitDeploymentResult result = appManager.GitDeploy(repo.PhysicalPath, retries: 1);
+                    string trace = result.GitTrace;
 
                     Assert.Contains("remote: Insert your input:", trace);
                     Assert.Contains("remote: Command 'starter.cmd waitforinput.ba ...' aborted due to no output and CPU activity for", trace);

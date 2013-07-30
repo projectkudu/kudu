@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
 using System.Net;
 using System.Net.Http;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Infrastructure;
 using Kudu.Services.Performance;
 using Moq;
 using Newtonsoft.Json.Linq;
@@ -84,6 +86,32 @@ namespace Kudu.Core.Test
 
             var error = response.Content.ReadAsAsync<JObject>().Result;
             Assert.Equal("Site mode (Shared|Limited) does not support full minidump.", error.Value<string>("Message"));
+        }
+
+        [Fact]
+        public void GetParentProcessTests()
+        {
+            var prompt = Process.Start(new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = "/c \"SET /P __AREYOUSURE=Are you sure (Y/[N])?\"",
+                CreateNoWindow = true,
+                WindowStyle = ProcessWindowStyle.Hidden
+            });
+
+            try
+            {
+                // Test
+                var parent = prompt.GetParentProcess(Mock.Of<ITracer>());
+
+                // Assert
+                Assert.Equal(Process.GetCurrentProcess().ProcessName, parent.ProcessName);
+                Assert.Equal(Process.GetCurrentProcess().Id, parent.Id);
+            }
+            finally
+            {
+                prompt.Kill();
+            }
         }
     }
 }
