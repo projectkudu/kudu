@@ -1,8 +1,7 @@
-﻿using Kudu.Contracts.Settings;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Globalization;
 using System.Text;
+using Kudu.Contracts.Settings;
 
 namespace Kudu.Core.Deployment.Generator
 {
@@ -36,6 +35,11 @@ namespace Kudu.Core.Deployment.Generator
 
                 return commandArguments.ToString();
             }
+        }
+
+        public override string ProjectType
+        {
+            get { return "ASP.NET WEBSITE"; }
         }
     }
 }

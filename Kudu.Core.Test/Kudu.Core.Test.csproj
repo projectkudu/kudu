@@ -91,6 +91,7 @@
     <Compile Include="Settings\SettingsProvidersTests.cs" />
     <Compile Include="SSHKeyManagerFacts.cs" />
     <Compile Include="TracerTests.cs" />
+    <Compile Include="Tracing\SiteExtensionLogManagerTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Kudu.Contracts\Kudu.Contracts.csproj">

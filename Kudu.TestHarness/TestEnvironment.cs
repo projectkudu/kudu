@@ -1,5 +1,4 @@
-﻿using System;
-using Kudu.Core;
+﻿using Kudu.Core;
 
 namespace Kudu.TestHarness
 {
@@ -78,6 +77,12 @@ namespace Kudu.TestHarness
         }
 
         public string TracePath
+        {
+            get;
+            set;
+        }
+
+        public string AnalyticsPath
         {
             get;
             set;

@@ -57,7 +57,7 @@ namespace Kudu.Core.Test
             var status = new Mock<IDeploymentStatusManager>();
             var trace = new Mock<ITraceFactory>();
             var tracer = new Mock<ITracer>();
-            var manager = new DeploymentManager(null, null, null, trace.Object, null, status.Object, null, null, null);
+            var manager = new DeploymentManager(null, null, null, trace.Object, null, null, status.Object, null, null, null);
 
             // Setup
             status.Setup(s => s.ActiveDeploymentId)

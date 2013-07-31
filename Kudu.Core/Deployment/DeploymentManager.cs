@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.IO.Abstractions;
@@ -25,6 +26,7 @@ namespace Kudu.Core.Deployment
         private readonly IEnvironment _environment;
         private readonly IFileSystem _fileSystem;
         private readonly ITraceFactory _traceFactory;
+        private readonly IAnalytics _analytics;
         private readonly IOperationLock _deploymentLock;
         private readonly ILogger _globalLogger;
         private readonly IDeploymentSettingsManager _settings;
@@ -40,6 +42,7 @@ namespace Kudu.Core.Deployment
                                  IEnvironment environment,
                                  IFileSystem fileSystem,
                                  ITraceFactory traceFactory,
+                                 IAnalytics analytics,
                                  IDeploymentSettingsManager settings,
                                  IDeploymentStatusManager status,
                                  IOperationLock deploymentLock,
@@ -50,6 +53,7 @@ namespace Kudu.Core.Deployment
             _environment = environment;
             _fileSystem = fileSystem;
             _traceFactory = traceFactory;
+            _analytics = analytics;
             _deploymentLock = deploymentLock;
             _globalLogger = globalLogger ?? NullLogger.Instance;
             _settings = settings;
@@ -155,105 +159,110 @@ namespace Kudu.Core.Deployment
 
         public async Task DeployAsync(IRepository repository, ChangeSet changeSet, string deployer, bool clean, bool needFileUpdate)
         {
-            Exception exception = null;
-            ITracer tracer = _traceFactory.GetTracer();
-            IDisposable deployStep = null;
-            ILogger innerLogger = null;
-            string targetBranch = null;
-
-            // If we don't get a changeset, find out what branch we should be deploying and get the commit ID from it
-            if (changeSet == null)
+            using (var deploymentAnalytics = new DeploymentAnalytics(_analytics))
             {
-                targetBranch = _settings.GetBranch();
+                Exception exception = null;
+                ITracer tracer = _traceFactory.GetTracer();
+                IDisposable deployStep = null;
+                ILogger innerLogger = null;
+                string targetBranch = null;
 
-                changeSet = repository.GetChangeSet(targetBranch);
-            }
-
-            string id = changeSet.Id;
-            IDeploymentStatusFile statusFile = null;
-            try
-            {
-                deployStep = tracer.Step("DeploymentManager.Deploy(id)");
-
-                // Remove the old log file for this deployment id
-                string logPath = GetLogPath(id);
-                FileSystemHelpers.DeleteFileSafe(logPath);
-
-                statusFile = GetOrCreateStatusFile(changeSet, tracer, deployer);
-                statusFile.MarkPending();
-
-                ILogger logger = GetLogger(changeSet.Id);
-
-                repository.ClearLock();
-
-                if (needFileUpdate)
+                // If we don't get a changeset, find out what branch we should be deploying and get the commit ID from it
+                if (changeSet == null)
                 {
-                    using (tracer.Step("Updating to specific changeset"))
-                    {
-                        innerLogger = logger.Log(Resources.Log_UpdatingBranch, targetBranch ?? id);
+                    targetBranch = _settings.GetBranch();
 
-                        using (var writer = new ProgressWriter())
+                    changeSet = repository.GetChangeSet(targetBranch);
+                }
+
+                string id = changeSet.Id;
+                IDeploymentStatusFile statusFile = null;
+                try
+                {
+                    deployStep = tracer.Step("DeploymentManager.Deploy(id)");
+
+                    // Remove the old log file for this deployment id
+                    string logPath = GetLogPath(id);
+                    FileSystemHelpers.DeleteFileSafe(logPath);
+
+                    statusFile = GetOrCreateStatusFile(changeSet, tracer, deployer);
+                    statusFile.MarkPending();
+
+                    ILogger logger = GetLogger(changeSet.Id);
+
+                    repository.ClearLock();
+
+                    if (needFileUpdate)
+                    {
+                        using (tracer.Step("Updating to specific changeset"))
                         {
-                            // Update to the the specific changeset
-                            repository.Update(id);
+                            innerLogger = logger.Log(Resources.Log_UpdatingBranch, targetBranch ?? id);
+
+                            using (var writer = new ProgressWriter())
+                            {
+                                // Update to the the specific changeset
+                                repository.Update(id);
+                            }
                         }
+                    }
+
+                    using (tracer.Step("Updating submodules"))
+                    {
+                        innerLogger = logger.Log(Resources.Log_UpdatingSubmodules);
+
+                        repository.UpdateSubmodules();
+                    }
+
+                    if (clean)
+                    {
+                        tracer.Trace("Cleaning {0} repository", repository.RepositoryType);
+
+                        innerLogger = logger.Log(Resources.Log_CleaningRepository, repository.RepositoryType);
+
+                        repository.Clean();
+                    }
+
+                    // set to null as Build() below takes over logging
+                    innerLogger = null;
+
+                    // Perform the build deployment of this changeset
+                    await Build(id, tracer, deployStep, repository, deploymentAnalytics);
+                }
+                catch (Exception ex)
+                {
+                    exception = ex;
+
+                    if (innerLogger != null)
+                    {
+                        innerLogger.Log(ex);
+                    }
+
+                    if (statusFile != null)
+                    {
+                        statusFile.MarkFailed();
+                    }
+
+                    tracer.TraceError(ex);
+
+                    deploymentAnalytics.Error = ex.ToString();
+
+                    if (deployStep != null)
+                    {
+                        deployStep.Dispose();
                     }
                 }
 
-                using (tracer.Step("Updating submodules"))
-                {
-                    innerLogger = logger.Log(Resources.Log_UpdatingSubmodules);
-
-                    repository.UpdateSubmodules();
-                }
-
-                if (clean)
-                {
-                    tracer.Trace("Cleaning {0} repository", repository.RepositoryType);
-
-                    innerLogger = logger.Log(Resources.Log_CleaningRepository, repository.RepositoryType);
-
-                    repository.Clean();
-                }
-
-                // set to null as Build() below takes over logging
-                innerLogger = null;
-
-                // Perform the build deployment of this changeset
-                await Build(id, tracer, deployStep, repository);
-            }
-            catch (Exception ex)
-            {
-                exception = ex;
-
-                if (innerLogger != null)
-                {
-                    innerLogger.Log(ex);
-                }
-
+                // Reload status file with latest updates
+                statusFile = _status.Open(id);
                 if (statusFile != null)
                 {
-                    statusFile.MarkFailed();
+                    await _hooksManager.PublishEventAsync(HookEventTypes.PostDeployment, statusFile);
                 }
 
-                tracer.TraceError(ex);
-
-                if (deployStep != null)
+                if (exception != null)
                 {
-                    deployStep.Dispose();
+                    throw new DeploymentFailedException(exception);
                 }
-            }
-
-            // Reload status file with latest updates
-            statusFile = _status.Open(id);
-            if (statusFile != null)
-            {
-                await _hooksManager.PublishEventAsync(HookEventTypes.PostDeployment, statusFile);
-            }
-
-            if (exception != null)
-            {
-                throw new DeploymentFailedException(exception);
             }
         }
 
@@ -470,7 +479,7 @@ namespace Kudu.Core.Deployment
         /// <summary>
         /// Builds and deploys a particular changeset. Puts all build artifacts in a deployments/{id}
         /// </summary>
-        private async Task Build(string id, ITracer tracer, IDisposable deployStep, IFileFinder fileFinder)
+        private async Task Build(string id, ITracer tracer, IDisposable deployStep, IFileFinder fileFinder, DeploymentAnalytics deploymentAnalytics)
         {
             if (String.IsNullOrEmpty(id))
             {
@@ -502,6 +511,7 @@ namespace Kudu.Core.Deployment
                     using (tracer.Step("Determining deployment builder"))
                     {
                         builder = _builderFactory.CreateBuilder(tracer, innerLogger, perDeploymentSettings, fileFinder);
+                        deploymentAnalytics.ProjectType = builder.ProjectType;
                         tracer.Trace("Builder is {0}", builder.GetType().Name);
                     }
                 }
@@ -517,13 +527,11 @@ namespace Kudu.Core.Deployment
 
                     _globalLogger.Log(ex);
 
-                    tracer.TraceError(ex);
-
                     innerLogger.Log(ex);
 
                     currentStatus.MarkFailed();
 
-                    deployStep.Dispose();
+                    FailDeployment(tracer, deployStep, deploymentAnalytics, ex);
 
                     return;
                 }
@@ -556,15 +564,14 @@ namespace Kudu.Core.Deployment
 
                         // Run post deployment steps
                         FinishDeployment(id, deployStep);
+
+                        deploymentAnalytics.Result = DeployStatus.Success.ToString();
                     }
                     catch (Exception ex)
                     {
-                        tracer.TraceError(ex);
-
                         currentStatus.MarkFailed();
 
-                        // End the deploy step
-                        deployStep.Dispose();
+                        FailDeployment(tracer, deployStep, deploymentAnalytics, ex);
 
                         return;
                     }
@@ -572,10 +579,19 @@ namespace Kudu.Core.Deployment
             }
             catch (Exception ex)
             {
-                tracer.TraceError(ex);
-
-                deployStep.Dispose();
+                FailDeployment(tracer, deployStep, deploymentAnalytics, ex);
             }
+        }
+
+        private static void FailDeployment(ITracer tracer, IDisposable deployStep, DeploymentAnalytics deploymentAnalytics, Exception ex)
+        {
+            // End the deploy step
+            deployStep.Dispose();
+
+            tracer.TraceError(ex);
+
+            deploymentAnalytics.Result = "Failed";
+            deploymentAnalytics.Error = ex.ToString();
         }
 
         private static string GetOutputPath(IEnvironment environment, IDeploymentSettingsManager perDeploymentSettings)
@@ -727,6 +743,32 @@ namespace Kudu.Core.Deployment
         private bool IsActive(string id)
         {
             return id.Equals(_status.ActiveDeploymentId, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private class DeploymentAnalytics : IDisposable
+        {
+            private readonly IAnalytics _analytics;
+            private readonly Stopwatch _stopwatch = Stopwatch.StartNew();
+            private bool _disposed;
+
+            public DeploymentAnalytics(IAnalytics analytics)
+            {
+                _analytics = analytics;
+            }
+
+            public string ProjectType { get; set; }
+            public string Result { get; set; }
+            public string Error { get; set; }
+
+            public void Dispose()
+            {
+                if (!_disposed)
+                {
+                    _stopwatch.Stop();
+                    _analytics.ProjectDeployed(ProjectType, Result, Error, _stopwatch.ElapsedMilliseconds);
+                    _disposed = true;
+                }
+            }
         }
     }
 }

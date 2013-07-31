@@ -1,6 +1,4 @@
 ﻿using Kudu.Contracts.Settings;
-using System;
-using System.Globalization;
 
 namespace Kudu.Core.Deployment.Generator
 {
@@ -9,6 +7,11 @@ namespace Kudu.Core.Deployment.Generator
         public BasicBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string repositoryPath, string projectPath)
             : base(environment, settings, propertyProvider, repositoryPath, projectPath, "--basic")
         {
+        }
+
+        public override string ProjectType
+        {
+            get { return "BASIC"; }
         }
     }
 }

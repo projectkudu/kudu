@@ -1,10 +1,6 @@
 ﻿using System;
-using System.IO;
 using System.Threading.Tasks;
-using Kudu.Contracts.Tracing;
-using Kudu.Core.Infrastructure;
 using Kudu.Contracts.Settings;
-using System.IO.Abstractions;
 
 namespace Kudu.Core.Deployment.Generator
 {
@@ -35,6 +31,11 @@ namespace Kudu.Core.Deployment.Generator
             }
 
             return tcs.Task;
+        }
+
+        public override string ProjectType
+        {
+            get { return "CUSTOM DEPLOYMENT"; }
         }
     }
 }

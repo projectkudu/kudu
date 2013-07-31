@@ -19,6 +19,7 @@ namespace Kudu.Core
         private string _repositoryPath;
         private readonly string _logFilesPath;
         private readonly string _tracePath;
+        private readonly string _analyticsPath;
         private readonly string _deploymentTracePath;
 
         public Environment(
@@ -57,6 +58,7 @@ namespace Kudu.Core
             _nodeModulesPath = nodeModulesPath;
             _logFilesPath = Path.Combine(rootPath, Constants.LogFilesPath);
             _tracePath = Path.Combine(rootPath, Constants.TracePath);
+            _analyticsPath = Path.Combine(tempPath ?? _logFilesPath, Constants.SiteExtensionLogsDirectory);
             _deploymentTracePath = Path.Combine(rootPath, Constants.DeploymentTracePath);
         }
 
@@ -162,6 +164,14 @@ namespace Kudu.Core
             get
             {
                 return FileSystemHelpers.EnsureDirectory(_fileSystem, _tracePath);
+            }
+        }
+
+        public string AnalyticsPath
+        {
+            get
+            {
+                return FileSystemHelpers.EnsureDirectory(_fileSystem, _analyticsPath);
             }
         }
 
