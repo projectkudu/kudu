@@ -53,6 +53,7 @@
     <Compile Include="CodeBaseHqFacts.cs" />
     <Compile Include="CodePlexHandlerFacts.cs" />
     <Compile Include="CustomGitRepositoryHandlerFacts.cs" />
+    <Compile Include="DropboxHelperFacts.cs" />
     <Compile Include="FileInfoBase.cs" />
     <Compile Include="FetchHandlerFacts.cs" />
     <Compile Include="GenericHandlerFacts.cs" />
@@ -64,8 +65,10 @@
     <Compile Include="ReceivePackHandlerFacts.cs" />
     <Compile Include="SettingsControllerFacts.cs" />
     <Compile Include="SSHKeyControllerTests.cs" />
+    <Compile Include="TestMessageHandler.cs" />
     <Compile Include="VfsControllerFacts.cs" />
     <Compile Include="ZipArchiveExtensionFacts.cs" />
+    <Compile Include="..\Kudu.FunctionalTests\Infrastructure\ExceptionAssert.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
