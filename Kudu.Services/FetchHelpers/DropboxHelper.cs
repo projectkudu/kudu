@@ -21,8 +21,13 @@ namespace Kudu.Services
 {
     public class DropboxHelper
     {
+       
         public const string Dropbox = "Dropbox";
-        public const string CursorKey = "dropbox_cursor";
+        private const string CursorKey = "dropbox_cursor";
+        /// <summary>
+        /// The duratio to wait between file download retries to avoid rate limiting.
+        /// </summary>
+        internal static TimeSpan RetryWaitToAvoidRateLimit = TimeSpan.FromSeconds(20);
 
         private const string DropboxApiContentUri = "https://api-content.dropbox.com/";
         private const string SandboxFilePath = "1/files/sandbox";
@@ -35,8 +40,6 @@ namespace Kudu.Services
         private readonly IDeploymentSettingsManager _settings;
         private readonly IEnvironment _environment;
         private readonly TimeSpan _timeout;
-
-        private ILogger _logger;
 
         // stats
         private int _totals;
@@ -57,11 +60,19 @@ namespace Kudu.Services
             _timeout = settings.GetCommandIdleTimeout();
         }
 
-        internal async Task<ChangeSet> Sync(DropboxHandler.DropboxInfo deploymentInfo, string branch, ILogger logger, IRepository repository)
+        internal IEnvironment Environment
+        {
+            get { return _environment; }
+        }
+
+        internal ILogger Logger
+        {
+            get; set;
+        }
+
+        internal async Task<ChangeSet> Sync(DropboxHandler.DropboxInfo deploymentInfo, string branch, IRepository repository)
         {
             DropboxDeployInfo info = deploymentInfo.DeployInfo;
-
-            _logger = logger;
 
             _totals = 0;
             _successCount = 0;
@@ -85,7 +96,7 @@ namespace Kudu.Services
             string message = null;
             try
             {
-                using (_tracer.Step("Synch with Dropbox"))
+                using (_tracer.Step("Sync with Dropbox"))
                 {
                     // Sync dropbox => repository directory
                     await ApplyChanges(deploymentInfo);
@@ -107,9 +118,9 @@ namespace Kudu.Services
             }
             finally
             {
-                _logger.Log(message);
+                Logger.Log(message);
 
-                _logger.Log(String.Format("{0} downloaded files, {1} successful retries.", _fileCount, _retriedCount));
+                Logger.Log(String.Format("{0} downloaded files, {1} successful retries.", _fileCount, _retriedCount));
 
                 IDeploymentStatusFile statusFile = _status.Open(deploymentInfo.TargetChangeset.Id);
                 statusFile.UpdateMessage(message);
@@ -151,7 +162,7 @@ namespace Kudu.Services
             }
         }
 
-        private async Task ApplyChangesCore(DropboxDeployInfo info)
+        internal async Task ApplyChangesCore(DropboxDeployInfo info)
         {
             string parent = info.Path.TrimEnd('/') + '/';
             DateTime updateMessageTime = DateTime.UtcNow;
@@ -163,7 +174,6 @@ namespace Kudu.Services
             {
                 if (!delta.Path.StartsWith(parent, StringComparison.OrdinalIgnoreCase))
                 {
-                    Interlocked.Increment(ref _successCount);
                     continue;
                 }
 
@@ -295,16 +305,13 @@ namespace Kudu.Services
             return Path.Combine(_environment.RepositoryPath, relativePath);
         }
 
-        private async Task ProcessFileAsync(DropboxDeployInfo info, DropboxDeltaInfo delta, string parent, string path, DateTime lastModifiedUtc)
+        public virtual async Task ProcessFileAsync(DropboxDeployInfo info, DropboxDeltaInfo delta, string parent, string path, DateTime lastModifiedUtc)
         {
             var oauthHeader = GetOAuthHeader(info, delta);
-
-            int retries = MaxRetries;
-            while (retries >= 0)
+            int retries = 0;
+            while (retries <= MaxRetries)
             {
-                retries--;
-
-                using (var client = new HttpClient { BaseAddress = new Uri(DropboxApiContentUri), Timeout = _timeout })
+                using (var client = CreateDropboxHttpClient())
                 {
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("OAuth", oauthHeader);
                     try
@@ -317,28 +324,36 @@ namespace Kudu.Services
                                 await SafeWriteFile(parent, path, lastModifiedUtc, stream);
                             }
                         }
-                        if (retries < MaxRetries - 1)
+                        if (retries > 0)
                         {
+                            // Increment the successful retry count
                             Interlocked.Increment(ref _retriedCount);
                         }
+                        // Increment the total success counter
                         Interlocked.Increment(ref _successCount);
 
                         break;
                     }
                     catch (Exception ex)
                     {
-                        if (retries <= 0)
+                        if (retries == MaxRetries)
                         {
                             Interlocked.Increment(ref _failedCount);
-                            LogError("Get({0}) '{1}'failed with {2}", MaxRetries - retries - 1, SandboxFilePath + delta.Path, ex.Message);
-                            break;
+                            LogError("Get({0}) '{1}' failed with {2}", retries, SandboxFilePath + delta.Path, ex.Message);
+                            throw;
                         }
                     }
 
                     // First retry is 1s, second retry is 20s assuming rate-limit
-                    await Task.Delay(retries == 1 ? TimeSpan.FromSeconds(20) : TimeSpan.FromSeconds(1));
+                    await Task.Delay(retries == MaxRetries - 1 ? TimeSpan.FromSeconds(1) : RetryWaitToAvoidRateLimit);
+                    retries++;
                 }
             }
+        }
+
+        public virtual HttpClient CreateDropboxHttpClient()
+        {
+            return new HttpClient { BaseAddress = new Uri(DropboxApiContentUri), Timeout = _timeout };
         }
 
         private static string GetOAuthHeader(DropboxDeployInfo info, DropboxDeltaInfo delta)
@@ -405,7 +420,7 @@ namespace Kudu.Services
             string message = String.Format(CultureInfo.CurrentCulture, value, args);
             lock (_tracer)
             {
-                _logger.Log(message, LogEntryType.Error);
+                Logger.Log(message, LogEntryType.Error);
                 _tracer.TraceError(message);
             }
         }

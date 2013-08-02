@@ -52,7 +52,8 @@ namespace Kudu.Services.ServiceHookHandlers
         {
             // (A)sync with dropbox
             var dropboxInfo = (DropboxInfo)deploymentInfo;
-            deploymentInfo.TargetChangeset = await _dropBoxHelper.Sync(dropboxInfo, targetBranch, logger, repository);
+            _dropBoxHelper.Logger = logger;
+            deploymentInfo.TargetChangeset = await _dropBoxHelper.Sync(dropboxInfo, targetBranch, repository);
         }
 
         internal class DropboxInfo : DeploymentInfo
