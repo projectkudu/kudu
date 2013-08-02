@@ -135,7 +135,7 @@ namespace Kudu.FunctionalTests
 
                     await hookAppManager.WebHooksManager.SubscribeAsync(new WebHook(customHookEventType, hookAddress));
 
-                    var thrownException = await KuduAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(async () =>
+                    var thrownException = await ExceptionAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(async () =>
                     {
                         await hookAppManager.WebHooksManager.SubscribeAsync(new WebHook(customHookEventType + "_DifferentEvent", hookAddress));
                     });

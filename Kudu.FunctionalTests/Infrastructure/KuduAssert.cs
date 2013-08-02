@@ -155,27 +155,5 @@ namespace Kudu.FunctionalTests.Infrastructure
         {
             Assert.True(Regex.IsMatch(actual, pattern), String.Format("{0}\r\npattern: {1}\r\nactual: {2}\r\n", message, pattern, actual));
         }
-
-        public static async Task<TException> ThrowsAsync<TException>(Func<Task> func) where TException : Exception
-        {
-            Exception actualException = null;
-            try
-            {
-                await func();
-            }
-            catch (Exception ex)
-            {
-                actualException = ex;
-            }
-
-            return Assert.Throws<TException>(
-                () =>
-                {
-                    if (actualException != null)
-                    {
-                        throw actualException;
-                    }
-                });
-        }
     }
 }
