@@ -15,6 +15,23 @@ namespace Kudu.FunctionalTests
     public class HgRepositoryFacts
     {
         [Fact]
+        public void HgGetChangeSetReturnsNullIfIdDoesNotExist()
+        {
+            // Arrange
+            using (TestRepository testRepository = GetRepository())
+            {
+                var hgRepo = new HgRepository(testRepository.PhysicalPath, "", new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                hgRepo.Initialize();
+
+                // Act
+                var changeset = hgRepo.GetChangeSet("does-not-exist");
+
+                // Assert
+                Assert.Null(changeset);
+            }
+        }
+
+        [Fact]
         public void HgExecutableClonesRepository()
         {
             const string expectedId = "e2ff43634d31a70383142a4b3940baff8b6386ee";

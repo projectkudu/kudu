@@ -192,7 +192,20 @@ echo $i > pushinfo
 
         public ChangeSet GetChangeSet(string id)
         {
-            string output = Execute("log -n 1 {0}", id);
+            string output = null;
+            try
+            {
+                output = Execute("log -n 1 {0}", id);
+            }
+            catch (CommandLineException ex)
+            {
+                if (!String.IsNullOrEmpty(ex.Message) && ex.Message.IndexOf("unknown revision ", StringComparison.OrdinalIgnoreCase) != -1)
+                {
+                    // Indicates the changeset does not exist in the repo.
+                    return null;
+                }
+                throw;
+            }
             var commitReader = output.AsReader();
             return ParseCommit(commitReader);
         }

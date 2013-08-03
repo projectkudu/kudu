@@ -61,7 +61,6 @@
     <Compile Include="Settings\DeploymentSettingsProvider.cs" />
     <Compile Include="Deployment\DeploymentContext.cs" />
     <Compile Include="Deployment\DeploymentHelper.cs" />
-    <Compile Include="Deployment\DeploymentManagerExtensions.cs" />
     <Compile Include="Deployment\Generator\WapBuilder.cs" />
     <Compile Include="Deployment\Generator\WebSiteBuilder.cs" />
     <Compile Include="Deployment\NullLogger.cs" />

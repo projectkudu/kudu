@@ -15,6 +15,23 @@ namespace Kudu.FunctionalTests
     public class GitRepositoryFacts
     {
         [Fact]
+        public void GitGetChangeSetReturnsNullIfIdDoesNotExist()
+        {
+            // Arrange
+            using (TestRepository testRepository = GetRepository())
+            {
+                var gitRepo = new GitExeRepository(testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                gitRepo.Initialize();
+
+                // Act
+                var changeset = gitRepo.GetChangeSet("does-not-exist");
+
+                // Assert
+                Assert.Null(changeset);
+            }
+        }
+
+        [Fact]
         public void GitInitializeCreatesPostCommitHook()
         {
             using (TestRepository testRepository = GetRepository())
