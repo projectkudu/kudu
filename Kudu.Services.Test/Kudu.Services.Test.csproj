@@ -53,6 +53,7 @@
     <Compile Include="CodeBaseHqFacts.cs" />
     <Compile Include="CodePlexHandlerFacts.cs" />
     <Compile Include="CustomGitRepositoryHandlerFacts.cs" />
+    <Compile Include="DeploymentControllerFacts.cs" />
     <Compile Include="DropboxHelperFacts.cs" />
     <Compile Include="FileInfoBase.cs" />
     <Compile Include="FetchHandlerFacts.cs" />
