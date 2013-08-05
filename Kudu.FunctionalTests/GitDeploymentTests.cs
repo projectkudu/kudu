@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
@@ -149,6 +150,38 @@ namespace Kudu.FunctionalTests
         public void PushAndDeployMVCAppWithLatestNuget()
         {
             PushAndDeployApps("MVCAppWithLatestNuget", "master", "MVCAppWithLatestNuget", HttpStatusCode.OK, "Deployment successful");
+        }
+
+        [Fact]
+        public async Task DeployIgnoresPushesWhenBranchBeingBuiltHasNotChanged()
+        {
+            string repositoryName = "PushingNonMasterBranchToMasterBranchShouldDeploy";
+            string appName = "PushNonMasterToMaster";
+            string cloneUrl = "https://github.com/KuduApps/RepoWithMultipleBranches.git";
+            using (var repo = Git.Clone(repositoryName, cloneUrl))
+            {
+                await ApplicationManager.RunAsync(appName, async appManager =>
+                {
+                    // Act 1
+                    appManager.GitDeploy(repo.PhysicalPath, "master", "master");
+
+                    // Assert 1
+                    var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+
+                    await KuduAssert.VerifyUrlAsync(appManager.SiteUrl, "Master branch");
+
+                    // Act 2
+                    appManager.GitDeploy(repo.PhysicalPath, "test", "test");
+
+                    // Assert 2 
+                    // Verify no new deployments occur
+                    results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
+                    Assert.Equal(1, results.Count);
+                    await KuduAssert.VerifyTraceAsync(appManager, "Git receive completed, but HEAD remains unchanged at changeset '1ef30333deac14b99ac4bc93453cf4232ae88c24'. Exiting...");
+                });
+            }
         }
 
         //Common code
