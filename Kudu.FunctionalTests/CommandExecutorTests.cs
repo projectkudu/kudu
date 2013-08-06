@@ -64,6 +64,11 @@ namespace Kudu.FunctionalTests
                 commandTestSettings.ExpectedResult.Output = "Handles";
                 tests.Add(commandTestSettings);
 
+                // Make sure we can use braces in the command
+                commandTestSettings = new CommandTestSettings("powershell -command { SomeCommand }");
+                commandTestSettings.ExpectedResult.Output = "SomeCommand";
+                tests.Add(commandTestSettings);
+
                 foreach (CommandTestSettings test in tests)
                 {
                     VerifyCommand(test, appManager);

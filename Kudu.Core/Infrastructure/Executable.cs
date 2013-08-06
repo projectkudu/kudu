@@ -382,8 +382,13 @@ namespace Kudu.Core.Infrastructure
         }
 #endif
 
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
         internal Process CreateProcess(string arguments, object[] args)
+        {
+            return CreateProcess(String.Format(arguments, args));
+        }
+
+        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
+        internal Process CreateProcess(string arguments)
         {
             var psi = new ProcessStartInfo
             {
@@ -396,7 +401,7 @@ namespace Kudu.Core.Infrastructure
                 WindowStyle = ProcessWindowStyle.Hidden,
                 UseShellExecute = false,
                 ErrorDialog = false,
-                Arguments = String.Format(arguments, args)
+                Arguments = arguments
             };
 
             if (Encoding != null)
