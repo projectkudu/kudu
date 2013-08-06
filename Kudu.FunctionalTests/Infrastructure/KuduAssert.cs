@@ -146,9 +146,11 @@ namespace Kudu.FunctionalTests.Infrastructure
             var entries = appManager.DeploymentManager.GetLogEntriesAsync(id).Result.ToList();
             Assert.True(entries.Count > 0);
             var allDetails = entries.Where(e => e.DetailsUrl != null)
-                                    .SelectMany(e => appManager.DeploymentManager.GetLogEntryDetailsAsync(id, e.Id).Result).ToList();
-            var allEntries = entries.Concat(allDetails).ToList();
-            return allEntries;
+                                    .AsParallel()
+                                    .SelectMany(e => appManager.DeploymentManager.GetLogEntryDetailsAsync(id, e.Id).Result)
+                                    .ToList();
+            
+            return entries.Concat(allDetails).ToList();
         }
 
         public static void Match(string pattern, string actual, string message = null)
