@@ -65,8 +65,8 @@ namespace Kudu.FunctionalTests
                 tests.Add(commandTestSettings);
 
                 // Make sure we can use braces in the command
-                commandTestSettings = new CommandTestSettings("powershell -command { SomeCommand }");
-                commandTestSettings.ExpectedResult.Output = "SomeCommand";
+                commandTestSettings = new CommandTestSettings(@"powershell -command "" & { dir }""");
+                commandTestSettings.ExpectedResult.Output = "LastWriteTime";
                 tests.Add(commandTestSettings);
 
                 foreach (CommandTestSettings test in tests)
