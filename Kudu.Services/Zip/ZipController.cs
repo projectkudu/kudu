@@ -22,31 +22,29 @@ namespace Kudu.Services.Deployment
         {
         }
 
-        [SuppressMessage("Microsoft.Usage", "CA2202", Justification = "The ZipArchive is instantiated in a way that the stream is not closed on dispose")]
         protected override Task<HttpResponseMessage> CreateDirectoryGetResponse(DirectoryInfoBase info, string localFilePath)
         {
             HttpResponseMessage response = Request.CreateResponse();
-            using (var ms = new MemoryStream())
+            var ms = new MemoryStream();
+            using (var zip = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
             {
-                using (var zip = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
+                foreach (FileSystemInfoBase fileSysInfo in info.GetFileSystemInfos())
                 {
-                    foreach (FileSystemInfoBase fileSysInfo in info.GetFileSystemInfos())
+                    var directoryInfo = fileSysInfo as DirectoryInfoBase;
+                    if (directoryInfo != null)
                     {
-                        var directoryInfo = fileSysInfo as DirectoryInfoBase;
-                        if (directoryInfo != null)
-                        {
-                            zip.AddDirectory(directoryInfo, fileSysInfo.Name);
-                        }
-                        else
-                        {
-                            // Add it at the root of the zip
-                            zip.AddFile(fileSysInfo.FullName, String.Empty);
-                        }
+                        zip.AddDirectory(directoryInfo, fileSysInfo.Name);
+                    }
+                    else
+                    {
+                        // Add it at the root of the zip
+                        zip.AddFile(fileSysInfo.FullName, String.Empty);
                     }
                 }
-                response.Content = ms.AsContent();
             }
 
+            ms.Seek(0, SeekOrigin.Begin);
+            response.Content = new StreamContent(ms);
             response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
             response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
 
