@@ -126,7 +126,7 @@ img {
 }
 
 div.console {
-    font-family: 'Lucida Console' Consolas 'Courier New' sans-serif;
+    font-family: 'Lucida Console', Consolas, 'Courier New', monospace;
     white-space: pre;
     height: 100%;
     margin: auto;
