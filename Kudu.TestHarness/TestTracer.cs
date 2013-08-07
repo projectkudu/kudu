@@ -19,7 +19,6 @@ namespace Kudu.TestHarness
             }
 
             message = message.Replace("\n", "\n\t");
-
             System.Diagnostics.Trace.WriteLine(String.Format(CultureInfo.CurrentCulture, "{0}: {1}", messageDateTime, message));
         }
 
@@ -34,8 +33,10 @@ namespace Kudu.TestHarness
 
             var entries = appManager.DeploymentManager.GetLogEntriesAsync(id).Result.ToList();
             var allDetails = entries.Where(e => e.DetailsUrl != null)
-                                    .SelectMany(e => appManager.DeploymentManager.GetLogEntryDetailsAsync(id, e.Id).Result).ToList();
-            var allEntries = entries.Concat(allDetails).ToList();
+                                    .AsParallel()
+                                    .SelectMany(e => appManager.DeploymentManager.GetLogEntryDetailsAsync(id, e.Id).Result)
+                                    .ToList();
+            var allEntries = entries.Concat(allDetails);
             foreach (var entry in allEntries)
             {
                 Trace(entry.LogTime, entry.Message);

@@ -22,7 +22,7 @@ namespace Kudu.TestHarness
             ApplicationManager appManager = _nextAppManager;
             _nextAppManager = null;
             _semaphore.Release();
-            
+
             if (appManager == null)
             {
                 appManager = await CreateApplicationInternal();
@@ -50,13 +50,13 @@ namespace Kudu.TestHarness
 
         public static void ReportTestCompletion(ApplicationManager applicationManager, bool success)
         {
-            if (success)
+            if (success || _availableSiteIndex.Count <= 1)
             {
                 _availableSiteIndex.Push(applicationManager.SitePoolIndex);
             }
-            else if (_availableSiteIndex.Count <= 1)
+            else
             {
-                _availableSiteIndex.Push(applicationManager.SitePoolIndex);
+                TestTracer.Trace("SitePool.ReportTestCompletion Removing application {0} from pool", applicationManager.ApplicationName);
             }
         }
 
@@ -65,6 +65,9 @@ namespace Kudu.TestHarness
             int siteIndex;
             _availableSiteIndex.TryPop(out siteIndex);
             string applicationName = _sitePrefix + siteIndex;
+
+            string operationName = "SitePool.CreateApplicationInternal " + applicationName;
+            
             var pathResolver = new DefaultPathResolver(PathHelper.ServiceSitePath, PathHelper.SitesPath);
             var settingsResolver = new DefaultSettingsResolver();
 
@@ -73,6 +76,7 @@ namespace Kudu.TestHarness
             Site site = siteManager.GetSite(applicationName);
             if (site != null)
             {
+                TestTracer.Trace("{0} Site already exists at {1}. Reusing site", operationName, site.SiteUrl);
                 var appManager = new ApplicationManager(siteManager, site, applicationName, settingsResolver)
                 {
                     SitePoolIndex = siteIndex
@@ -84,11 +88,15 @@ namespace Kudu.TestHarness
                 // Make sure we start with the correct default file as some tests expect it
                 WriteIndexHtml(appManager);
 
+                TestTracer.Trace("{0} completed", operationName);
                 return appManager;
             }
             else
             {
+                TestTracer.Trace("{0} Creating new site", operationName);
                 site = await siteManager.CreateSiteAsync(applicationName);
+
+                TestTracer.Trace("{0} Created new site at {1}", operationName, site.SiteUrl);
                 return new ApplicationManager(siteManager, site, applicationName, settingsResolver)
                 {
                     SitePoolIndex = siteIndex
