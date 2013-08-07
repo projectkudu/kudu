@@ -12,6 +12,7 @@
                 url: item.href,
                 data: text,
                 method: "PUT",
+                processData: false,
                 headers: {
                     "If-Match": "*"
                 }
@@ -32,12 +33,7 @@
         addFiles: function (files) {
             return whenArray(
                 $.map(files, function (item) {
-                    return $.ajax({
-                        url: viewModel.selected().href + "/" + item.name,
-                        method: "PUT",
-                        data: item.contents,
-                        processData: false
-                    });
+                    return Vfs.setContent({ href: viewModel.selected().href + item.name }, item.contents);
                 })
             );
         },
