@@ -97,8 +97,14 @@ namespace Kudu.Services.Deployment
                         {
                             throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, Resources.Error_RepositoryNotFound));
                         }
+                        ChangeSet changeSet = null;
+                        if (changeSet == null)
+                        {
+                            string message = String.Format(CultureInfo.CurrentCulture, Resources.Error_DeploymentNotFound, id);
+                            throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, message));
+                        }
 
-                        await _deploymentManager.DeployAsync(repository, id, username, clean);
+                        await _deploymentManager.DeployAsync(repository, changeSet, username, clean);
                     }
                     catch (FileNotFoundException ex)
                     {

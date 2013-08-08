@@ -297,7 +297,13 @@ namespace Kudu.Core.SourceControl
         private ChangeSet GetChangeSet(RevSpec id)
         {
             var log = Repository.Log(id);
-            return CreateChangeSet(log.SingleOrDefault());
+            
+            var changeset = log.SingleOrDefault();
+            if (changeset != null)
+            {
+                return CreateChangeSet(changeset);
+            }
+            return null;
         }
 
         public IEnumerable<string> ListFiles(string path, SearchOption searchOption, params string[] lookupList)
