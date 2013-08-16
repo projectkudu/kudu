@@ -90,7 +90,7 @@
         %>
         
         <h1>Kudu - Build <%= version %>
-        <% if (sha != null) { %>
+        <% if (!String.IsNullOrEmpty(sha)) { %>
         (<a id="sha" href="https://github.com/projectkudu/kudu/commit/<%= sha %>"><%= sha.Substring(0, 10) %></a>)
         <% } %>
         </h1>
