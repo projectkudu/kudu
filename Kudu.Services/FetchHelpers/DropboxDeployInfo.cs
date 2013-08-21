@@ -1,9 +1,14 @@
 ﻿using System.Collections.Generic;
 
-namespace Kudu.Contracts.Dropbox
+namespace Kudu.Services
 {
     public class DropboxDeployInfo
     {
+        public DropboxDeployInfo()
+        {
+            Entries = new List<DropboxEntryInfo>();
+        }
+
         public string ConsumerKey { get; set; }
 
         public string SignatureMethod { get; set; }
@@ -24,6 +29,6 @@ namespace Kudu.Contracts.Dropbox
 
         public string Email { get; set; }
 
-        public IList<DropboxDeltaInfo> Deltas { get; set; }
+        public List<DropboxEntryInfo> Entries { get; private set; }
     }
 }

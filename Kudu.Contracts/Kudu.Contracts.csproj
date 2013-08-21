@@ -45,8 +45,6 @@
     <Compile Include="Deployment\LogEntry.cs" />
     <Compile Include="Deployment\LogEntryType.cs" />
     <Compile Include="Diagnostics\ProcessInfo.cs" />
-    <Compile Include="Dropbox\DropboxDeltaInfo.cs" />
-    <Compile Include="Dropbox\DropboxDeployInfo.cs" />
     <Compile Include="Editor\VfsStatEntry.cs" />
     <Compile Include="Hooks\ConflictException.cs" />
     <Compile Include="Hooks\WebHook.cs" />
@@ -90,6 +88,7 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(SolutionDir)\Build\Kudu.imports" Condition="$(KeyFile) != ''" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\nuget.targets" />

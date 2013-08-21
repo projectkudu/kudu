@@ -231,7 +231,7 @@
   <data name="Dropbox_SynchronizedWithFailure" xml:space="preserve">
     <value>Synchronized {0} of {1} change(s) from Dropbox with {2} failure(s).</value>
   </data>
-  <data name="Dropbox_Synchronizing" xml:space="preserve">
+  <data name="Dropbox_SynchronizingNChanges" xml:space="preserve">
     <value>Synchronizing {0} change(s) from Dropbox.</value>
   </data>
   <data name="Dropbox_SynchronizingProgress" xml:space="preserve">
@@ -248,5 +248,11 @@
   </data>
   <data name="VfsScmUpdate_Error" xml:space="preserve">
     <value>Could not complete update -- received error '{0}'. Please try again.</value>
+  </data>
+  <data name="Dropbox_Synchronizing" xml:space="preserve">
+    <value>Synchronizing changes from Dropbox.</value>
+  </data>
+  <data name="Error_DropboxValueNotSpecified" xml:space="preserve">
+    <value>Value for Dropbox sync '{0}' not specified.</value>
   </data>
 </root>

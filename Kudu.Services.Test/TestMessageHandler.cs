@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,9 +20,13 @@ namespace Kudu.Services.Test
             this.handlerFunc = _ => new HttpResponseMessage(statusCode);
         }
 
-        public TestMessageHandler(string content)
+        public TestMessageHandler(string content, bool isJson = false)
         {
             var stringContent = new StringContent(content);
+            if (isJson)
+            {
+                stringContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            }
             this.handlerFunc = _ => new HttpResponseMessage(HttpStatusCode.OK) { Content = stringContent };
         }
 

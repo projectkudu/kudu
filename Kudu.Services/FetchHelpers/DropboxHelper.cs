@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -9,26 +8,30 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Kudu.Contracts.Dropbox;
+using System.Web;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
-using Kudu.Services.ServiceHookHandlers;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services
 {
     public class DropboxHelper
     {
-       
+
         public const string Dropbox = "Dropbox";
         private const string CursorKey = "dropbox_cursor";
+
         /// <summary>
         /// The duratio to wait between file download retries to avoid rate limiting.
         /// </summary>
         internal static TimeSpan RetryWaitToAvoidRateLimit = TimeSpan.FromSeconds(20);
 
+        private const string AccountInfoUri = "https://api.dropbox.com/1/account/info";
+        private const string DeltaApiUri = "https://api.dropbox.com/1/delta";
         private const string DropboxApiContentUri = "https://api-content.dropbox.com/";
         private const string SandboxFilePath = "1/files/sandbox";
         private const int MaxConcurrentRequests = 5;
@@ -67,20 +70,62 @@ namespace Kudu.Services
 
         internal ILogger Logger
         {
-            get; set;
+            get;
+            set;
         }
 
-        internal async Task<ChangeSet> Sync(DropboxHandler.DropboxInfo deploymentInfo, string branch, IRepository repository)
+        public async Task UpdateDropboxDeployInfo(DropboxDeployInfo dropboxInfo)
         {
-            DropboxDeployInfo info = deploymentInfo.DeployInfo;
+            string currentCursor = _settings.GetValue(CursorKey),
+                   dropboxToken = dropboxInfo.Token;
 
-            _totals = 0;
-            _successCount = 0;
-            _fileCount = 0;
-            _failedCount = 0;
-            _retriedCount = 0;
+            dropboxInfo.OldCursor = currentCursor;
+            string parentPath = dropboxInfo.Path.TrimEnd('/') + '/';
+            
+            using (_tracer.Step("Updating deploy info"))
+            using (var client = CreateDropboxV2HttpClient(DeltaApiUri, dropboxToken))
+            {
+                while (true)
+                {
+                    LogInfo("Fetching delta for cursor '{0}'.", currentCursor);
+                    string url = String.IsNullOrEmpty(currentCursor) ? String.Empty : 
+                                                                      ("?cursor=" + HttpUtility.UrlPathEncode(currentCursor));
+                    using (var response = await client.PostAsync(url, content: null))
+                    {
+                        // The Content-Type of the Json result is text/json which the JsonMediaTypeFormatter does not approve of.
+                        // We'll parse it separately instead.
+                        var deltaResultString = await response.EnsureSuccessStatusCode().Content.ReadAsStringAsync();
+                        var deltaResult = JsonConvert.DeserializeObject<JObject>(deltaResultString);
 
-            if (_settings.GetValue(CursorKey) != info.OldCursor)
+                        var entries = deltaResult.Value<JArray>("entries");
+                        if (entries != null && entries.Count > 0)
+                        {
+                            var filteredEntries = entries.Cast<JArray>()
+                                                            .Select(DropboxEntryInfo.ParseFrom)
+                                                            .Where(entry => !CanIgnoreEntry(parentPath, entry));
+
+                            dropboxInfo.Entries.AddRange(filteredEntries);
+                        }
+                        currentCursor = deltaResult.Value<string>("cursor");
+                        if (!deltaResult.Value<bool>("has_more"))
+                        {
+                            LogInfo("Delta response exhausted. New cursor at '{0}'.", currentCursor);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            dropboxInfo.NewCursor = currentCursor;
+        }
+
+        internal async Task<ChangeSet> Sync(DropboxInfo dropboxInfo, string branch, IRepository repository)
+        {
+            DropboxDeployInfo deployInfo = dropboxInfo.DeployInfo;
+
+            ResetStats();
+
+            if (_settings.GetValue(CursorKey) != deployInfo.OldCursor)
             {
                 throw new InvalidOperationException(Resources.Error_MismatchDropboxCursor);
             }
@@ -98,20 +143,26 @@ namespace Kudu.Services
             {
                 using (_tracer.Step("Sync with Dropbox"))
                 {
+                    if (dropboxInfo.OAuthVersion == 2)
+                    {
+                        // Fetch the deltas
+                        await UpdateDropboxDeployInfo(deployInfo);
+                    }
+
                     // Sync dropbox => repository directory
-                    await ApplyChanges(deploymentInfo);
+                    await ApplyChanges(dropboxInfo, useOAuth20: dropboxInfo.OAuthVersion == 2);
                 }
 
                 message = String.Format(CultureInfo.CurrentCulture,
                             Resources.Dropbox_Synchronized,
-                            deploymentInfo.DeployInfo.Deltas.Count);
+                            deployInfo.Entries.Count);
             }
             catch (Exception)
             {
                 message = String.Format(CultureInfo.CurrentCulture,
                             Resources.Dropbox_SynchronizedWithFailure,
                             _successCount,
-                            deploymentInfo.DeployInfo.Deltas.Count,
+                            deployInfo.Entries.Count,
                             _failedCount);
 
                 throw;
@@ -122,12 +173,12 @@ namespace Kudu.Services
 
                 Logger.Log(String.Format("{0} downloaded files, {1} successful retries.", _fileCount, _retriedCount));
 
-                IDeploymentStatusFile statusFile = _status.Open(deploymentInfo.TargetChangeset.Id);
+                IDeploymentStatusFile statusFile = _status.Open(dropboxInfo.TargetChangeset.Id);
                 statusFile.UpdateMessage(message);
                 statusFile.UpdateProgress(String.Format(CultureInfo.CurrentCulture, Resources.Dropbox_Committing, _successCount));
 
                 // Commit anyway even partial change
-                if (repository.Commit(message, String.Format("{0} <{1}>", info.UserName, info.Email)))
+                if (repository.Commit(message, String.Format("{0} <{1}>", deployInfo.UserName, deployInfo.Email ?? deployInfo.UserName)))
                 {
                     changeSet = repository.GetChangeSet("HEAD");
                 }
@@ -135,34 +186,23 @@ namespace Kudu.Services
 
             // Save new dropboc cursor
             LogInfo("Update dropbox cursor");
-            _settings.SetValue(CursorKey, info.NewCursor);
+            _settings.SetValue(CursorKey, deployInfo.NewCursor);
 
             return changeSet;
         }
 
-        private void UpdateStatusFile(object state)
+        private async Task ApplyChanges(DropboxInfo dropboxInfo, bool useOAuth20)
         {
-            string changeset = (string)state;
-            IDeploymentStatusFile statusFile =_status.Open(changeset);
-            statusFile.UpdateProgress(String.Format(CultureInfo.CurrentCulture,
-                                        _failedCount == 0 ? Resources.Dropbox_SynchronizingProgress : Resources.Dropbox_SynchronizingProgressWithFailure,
-                                        ((_successCount + _failedCount) * 100) / _totals,
-                                        _totals,
-                                        _failedCount));
-        }
+            DropboxDeployInfo info = dropboxInfo.DeployInfo;
+            _totals = info.Entries.Count;
 
-        private async Task ApplyChanges(DropboxHandler.DropboxInfo deploymentInfo)
-        {
-            DropboxDeployInfo info = deploymentInfo.DeployInfo;
-            _totals = info.Deltas.Count;
-
-            using (new Timer(UpdateStatusFile, state: deploymentInfo.TargetChangeset.Id, dueTime: TimeSpan.FromSeconds(5), period: TimeSpan.FromSeconds(5)))
+            using (new Timer(UpdateStatusFile, state: dropboxInfo.TargetChangeset.Id, dueTime: TimeSpan.FromSeconds(5), period: TimeSpan.FromSeconds(5)))
             {
-                await ApplyChangesCore(info);
+                await ApplyChangesCore(info, useOAuth20);
             }
         }
 
-        internal async Task ApplyChangesCore(DropboxDeployInfo info)
+        internal async Task ApplyChangesCore(DropboxDeployInfo info, bool useOAuth20)
         {
             string parent = info.Path.TrimEnd('/') + '/';
             DateTime updateMessageTime = DateTime.UtcNow;
@@ -170,28 +210,20 @@ namespace Kudu.Services
             var rateLimiter = new RateLimiter(MaxFilesPerSecs * 10, TimeSpan.FromSeconds(10));
             var tasks = new List<Task>();
 
-            foreach (DropboxDeltaInfo delta in info.Deltas)
+            foreach (DropboxEntryInfo entry in info.Entries)
             {
-                if (!delta.Path.StartsWith(parent, StringComparison.OrdinalIgnoreCase))
+                if (CanIgnoreEntry(parent, entry))
                 {
                     continue;
                 }
 
-                // Ignore .git and .hg files and folders
-                string pathWithSlash = delta.Path + "/";
-                if (pathWithSlash.IndexOf("/.git/", StringComparison.OrdinalIgnoreCase) != -1 ||
-                    pathWithSlash.IndexOf("/.hg/", StringComparison.OrdinalIgnoreCase) != -1)
-                {
-                    continue;
-                }
-
-                var path = delta.Path;
-                if (delta.IsDeleted)
+                var path = entry.Path;
+                if (entry.IsDeleted)
                 {
                     SafeDelete(parent, path);
                     Interlocked.Increment(ref _successCount);
                 }
-                else if (delta.IsDirectory)
+                else if (entry.IsDirectory)
                 {
                     SafeCreateDir(parent, path);
                     Interlocked.Increment(ref _successCount);
@@ -199,7 +231,7 @@ namespace Kudu.Services
                 else
                 {
                     DateTime modified;
-                    if (DateTime.TryParse(delta.Modified, out modified))
+                    if (DateTime.TryParse(entry.Modified, out modified))
                     {
                         modified = modified.ToUniversalTime();
                     }
@@ -223,7 +255,12 @@ namespace Kudu.Services
                             try
                             {
                                 await rateLimiter.ThrottleAsync();
-                                await ProcessFileAsync(info, delta, parent, path, modified);
+                                using (HttpClient client = useOAuth20 ? CreateDropboxV2HttpClient(DropboxApiContentUri, info.Token) :
+                                                                        CreateDropboxHttpClient(info, entry))
+                                {
+
+                                    await ProcessFileAsync(client, entry.Path, parent, modified);
+                                }
                             }
                             finally
                             {
@@ -299,64 +336,110 @@ namespace Kudu.Services
             File.SetLastWriteTimeUtc(fullPath, lastModifiedUtc);
         }
 
+        public virtual async Task ProcessFileAsync(HttpClient client, string path, string parent, DateTime lastModifiedUtc)
+        {
+            int retries = 0;
+            while (retries <= MaxRetries)
+            {
+                try
+                {
+                    string requestPath = SandboxFilePath + DropboxPathEncode(path.ToLowerInvariant());
+                    using (HttpResponseMessage response = await client.GetAsync(requestPath))
+                    {
+                        using (Stream stream = await response.EnsureSuccessStatusCode().Content.ReadAsStreamAsync())
+                        {
+                            await SafeWriteFile(parent, path, lastModifiedUtc, stream);
+                        }
+                    }
+                    if (retries > 0)
+                    {
+                        // Increment the successful retry count
+                        Interlocked.Increment(ref _retriedCount);
+                    }
+                    // Increment the total success counter
+                    Interlocked.Increment(ref _successCount);
+
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    if (retries == MaxRetries)
+                    {
+                        Interlocked.Increment(ref _failedCount);
+                        LogError("Get({0}) '{1}' failed with {2}", retries, SandboxFilePath + path, ex.Message);
+                        throw;
+                    }
+                }
+
+                // First retry is 1s, second retry is 20s assuming rate-limit
+                await Task.Delay(retries == MaxRetries - 1 ? TimeSpan.FromSeconds(1) : RetryWaitToAvoidRateLimit);
+                retries++;
+            }
+        }
+
+        public virtual HttpClient CreateDropboxHttpClient(DropboxDeployInfo info, DropboxEntryInfo entry)
+        {
+            var oauthToken = GetOAuthHeader(info, entry);
+            var client = new HttpClient { BaseAddress = new Uri(DropboxApiContentUri), Timeout = _timeout };
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("OAuth", oauthToken);
+
+            return client;
+        }
+
+        public virtual HttpClient CreateDropboxV2HttpClient(string baseUrl, string oauthToken)
+        {
+            var client = new HttpClient { BaseAddress = new Uri(baseUrl), Timeout = _timeout };
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", oauthToken);
+
+            return client;
+        }
+
         private string GetRepositoryPath(string parent, string path)
         {
             string relativePath = path.Substring(parent.Length).Replace('/', '\\');
             return Path.Combine(_environment.RepositoryPath, relativePath);
         }
 
-        public virtual async Task ProcessFileAsync(DropboxDeployInfo info, DropboxDeltaInfo delta, string parent, string path, DateTime lastModifiedUtc)
+        private void UpdateStatusFile(object state)
         {
-            var oauthHeader = GetOAuthHeader(info, delta);
-            int retries = 0;
-            while (retries <= MaxRetries)
+            string changeset = (string)state;
+            IDeploymentStatusFile statusFile = _status.Open(changeset);
+            statusFile.UpdateProgress(String.Format(CultureInfo.CurrentCulture,
+                                        _failedCount == 0 ? Resources.Dropbox_SynchronizingProgress : Resources.Dropbox_SynchronizingProgressWithFailure,
+                                        ((_successCount + _failedCount) * 100) / _totals,
+                                        _totals,
+                                        _failedCount));
+        }
+
+        private void LogInfo(string value, params object[] args)
+        {
+            string message = String.Format(CultureInfo.CurrentCulture, value, args);
+            lock (_tracer)
             {
-                using (var client = CreateDropboxHttpClient())
-                {
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("OAuth", oauthHeader);
-                    try
-                    {
-                        string requestPath = SandboxFilePath + DropboxPathEncode(delta.Path.ToLowerInvariant());
-                        using (HttpResponseMessage response = await client.GetAsync(requestPath))
-                        {
-                            using (Stream stream = await response.EnsureSuccessStatusCode().Content.ReadAsStreamAsync())
-                            {
-                                await SafeWriteFile(parent, path, lastModifiedUtc, stream);
-                            }
-                        }
-                        if (retries > 0)
-                        {
-                            // Increment the successful retry count
-                            Interlocked.Increment(ref _retriedCount);
-                        }
-                        // Increment the total success counter
-                        Interlocked.Increment(ref _successCount);
-
-                        break;
-                    }
-                    catch (Exception ex)
-                    {
-                        if (retries == MaxRetries)
-                        {
-                            Interlocked.Increment(ref _failedCount);
-                            LogError("Get({0}) '{1}' failed with {2}", retries, SandboxFilePath + delta.Path, ex.Message);
-                            throw;
-                        }
-                    }
-
-                    // First retry is 1s, second retry is 20s assuming rate-limit
-                    await Task.Delay(retries == MaxRetries - 1 ? TimeSpan.FromSeconds(1) : RetryWaitToAvoidRateLimit);
-                    retries++;
-                }
+                _tracer.Trace(message);
             }
         }
 
-        public virtual HttpClient CreateDropboxHttpClient()
+        private void LogError(string value, params object[] args)
         {
-            return new HttpClient { BaseAddress = new Uri(DropboxApiContentUri), Timeout = _timeout };
+            string message = String.Format(CultureInfo.CurrentCulture, value, args);
+            lock (_tracer)
+            {
+                Logger.Log(message, LogEntryType.Error);
+                _tracer.TraceError(message);
+            }
         }
 
-        private static string GetOAuthHeader(DropboxDeployInfo info, DropboxDeltaInfo delta)
+        private void ResetStats()
+        {
+            _totals = 0;
+            _successCount = 0;
+            _fileCount = 0;
+            _failedCount = 0;
+            _retriedCount = 0;
+        }
+
+        private static string GetOAuthHeader(DropboxDeployInfo info, DropboxEntryInfo delta)
         {
             var parameters = new Dictionary<string, string>
             {
@@ -380,6 +463,7 @@ namespace Kudu.Services
             }
             return sb.ToString();
         }
+
 
         // Ported from https://github.com/SpringSource/spring-net-social-dropbox/blob/master/src/Spring.Social.Dropbox/Social/Dropbox/Api/Impl/DropboxTemplate.cs#L1713
         private static string DropboxPathEncode(string path)
@@ -406,23 +490,26 @@ namespace Kudu.Services
             return result.ToString();
         }
 
-        private void LogInfo(string value, params object[] args)
+        /// <summary>
+        /// An entry can be ignored if it doesn't belong to the path of the synced app or 
+        /// if it looks like a tool generated folder (e.g. .hg or .git)
+        /// </summary>
+        private static bool CanIgnoreEntry(string parent, DropboxEntryInfo entry)
         {
-            string message = String.Format(CultureInfo.CurrentCulture, value, args);
-            lock (_tracer)
+            if (!entry.Path.StartsWith(parent, StringComparison.OrdinalIgnoreCase))
             {
-                _tracer.Trace(message);
+                return true;
             }
-        }
 
-        private void LogError(string value, params object[] args)
-        {
-            string message = String.Format(CultureInfo.CurrentCulture, value, args);
-            lock (_tracer)
+            // Ignore .git and .hg files and folders
+            string pathWithSlash = entry.Path + "/";
+            if (pathWithSlash.IndexOf("/.git/", StringComparison.OrdinalIgnoreCase) != -1 ||
+                pathWithSlash.IndexOf("/.hg/", StringComparison.OrdinalIgnoreCase) != -1)
             {
-                Logger.Log(message, LogEntryType.Error);
-                _tracer.TraceError(message);
+                return true;
             }
+
+            return false;
         }
 
         public sealed class RateLimiter : IDisposable

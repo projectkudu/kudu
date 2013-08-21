@@ -94,7 +94,10 @@
     <Compile Include="Diagnostics\LogStreamManager.cs" />
     <Compile Include="Diagnostics\ProcessController.cs" />
     <Compile Include="Editor\VfsController.cs" />
+    <Compile Include="FetchHelpers\DropboxEntryInfo.cs" />
+    <Compile Include="FetchHelpers\DropboxDeployInfo.cs" />
     <Compile Include="FetchHelpers\DropboxHelper.cs" />
+    <Compile Include="FetchHelpers\DropboxInfo.cs" />
     <Compile Include="GitServer\CustomGitRepositoryHandler.cs" />
     <Compile Include="GitServer\GitServerHttpHandler.cs" />
     <Compile Include="Hooks\WebHooksController.cs" />

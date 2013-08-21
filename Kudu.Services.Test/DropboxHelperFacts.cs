@@ -1,18 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Kudu.Contracts.Dropbox;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
-using Kudu.TestHarness;
 using Moq;
 using Xunit;
 
@@ -32,7 +28,7 @@ namespace Kudu.Services.Test
             var helper = CreateDropboxHelper(handler);
 
             // Act
-            await helper.ProcessFileAsync(new DropboxDeployInfo(), new DropboxDeltaInfo { Path = path }, @"foo/bar/", path, DateTime.UtcNow);
+            await helper.ProcessFileAsync(CreateHttpClient(handler), path, @"foo/bar/", DateTime.UtcNow);
 
             // Assert
             string expectedFile = Path.Combine(helper.Environment.RepositoryPath, "test.txt");
@@ -63,7 +59,7 @@ namespace Kudu.Services.Test
             var helper = CreateDropboxHelper(handler);
 
             // Act
-            await helper.ProcessFileAsync(new DropboxDeployInfo(), new DropboxDeltaInfo { Path = path }, @"foo/qux/", path, DateTime.UtcNow);
+            await helper.ProcessFileAsync(CreateHttpClient(handler), path, @"foo/qux/", DateTime.UtcNow);
 
             // Assert
             string expectedFile = Path.Combine(helper.Environment.RepositoryPath, "test.txt");
@@ -86,8 +82,8 @@ namespace Kudu.Services.Test
             var helper = CreateDropboxHelper(handler);
 
             // Act
-            await ExceptionAssert.ThrowsAsync<HttpRequestException>(async() => 
-                await helper.ProcessFileAsync(new DropboxDeployInfo(), new DropboxDeltaInfo { Path = path }, @"foo/qux/", path, DateTime.UtcNow));
+            await ExceptionAssert.ThrowsAsync<HttpRequestException>(async() =>
+                await helper.ProcessFileAsync(CreateHttpClient(handler), path, @"foo/qux/", DateTime.UtcNow));
 
             // Assert
             Assert.Equal(3, counter);
@@ -98,10 +94,10 @@ namespace Kudu.Services.Test
         {
             // Arrange
             var helper = CreateDropboxHelper();
-            var fileDeltaInfo = new DropboxDeltaInfo { Path = "foo/bar.txt", IsDeleted = true };
-            var dirDeltaInfo = new DropboxDeltaInfo { Path = "foo/baz/", IsDeleted = true, IsDirectory = true };
+            var fileDeltaInfo = new DropboxEntryInfo { Path = "foo/bar.txt", IsDeleted = true };
+            var dirDeltaInfo = new DropboxEntryInfo { Path = "foo/baz/", IsDeleted = true, IsDirectory = true };
             var deployInfo = new DropboxDeployInfo { Path = "foo" };
-            deployInfo.Deltas = new[] { fileDeltaInfo, dirDeltaInfo };
+            deployInfo.Entries.AddRange(new [] { fileDeltaInfo, dirDeltaInfo });
             string filePath = Path.Combine(helper.Environment.RepositoryPath, "bar.txt"),
                    dirPath = Path.Combine(helper.Environment.RepositoryPath, "baz");
 
@@ -109,7 +105,7 @@ namespace Kudu.Services.Test
             Directory.CreateDirectory(dirPath);
 
             // Act
-            await helper.ApplyChangesCore(deployInfo);
+            await helper.ApplyChangesCore(deployInfo, useOAuth20: false);
 
             // Assert
             Assert.False(File.Exists(filePath));
@@ -121,13 +117,13 @@ namespace Kudu.Services.Test
         {
             // Arrange
             var helper = CreateDropboxHelper();
-            var dirDeltaInfo = new DropboxDeltaInfo { Path = "foo/qux/", IsDirectory = true };
+            var dirDeltaInfo = new DropboxEntryInfo { Path = "foo/qux/", IsDirectory = true };
             var deployInfo = new DropboxDeployInfo { Path = "foo" };
-            deployInfo.Deltas = new[] { dirDeltaInfo };
+            deployInfo.Entries.Add(dirDeltaInfo);
             string dirPath = Path.Combine(helper.Environment.RepositoryPath, "qux");
 
             // Act
-            await helper.ApplyChangesCore(deployInfo);
+            await helper.ApplyChangesCore(deployInfo, useOAuth20: false);
 
             // Assert
             Assert.True(Directory.Exists(dirPath));
@@ -139,33 +135,85 @@ namespace Kudu.Services.Test
             // Arrange
             var helper = CreateDropboxHelper();
             int processedFiles = 0;
-            Mock.Get(helper).Setup(h => h.ProcessFileAsync(It.IsAny<DropboxDeployInfo>(), It.IsAny<DropboxDeltaInfo>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>()))
+            Mock.Get(helper).Setup(h => h.ProcessFileAsync(It.IsAny<HttpClient>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>()))
                             .Callback(() => Interlocked.Increment(ref processedFiles))
                             .Returns(Task.FromResult(0));
 
-            Mock.Get(helper).Setup(h => h.ProcessFileAsync(It.IsAny<DropboxDeployInfo>(), It.IsAny<DropboxDeltaInfo>(), It.IsAny<string>(), "foo/qux.txt", It.IsAny<DateTime>()))
+            Mock.Get(helper).Setup(h => h.ProcessFileAsync(It.IsAny<HttpClient>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>()))
                             .Callback(() => Interlocked.Increment(ref processedFiles))
                             .Returns(GetFailedTask());
             var deployInfo = new DropboxDeployInfo { Path = "foo" };
-            deployInfo.Deltas = new[] 
+            deployInfo.Entries.AddRange(new [] 
             { 
-                new DropboxDeltaInfo { Path = "foo/test.txt" },
-                new DropboxDeltaInfo { Path = "foo/bar.txt" },
-                new DropboxDeltaInfo { Path = "foo/qux.txt" },
-                new DropboxDeltaInfo { Path = "foo/buzz.png" },
-                new DropboxDeltaInfo { Path = "foo/baz.php"},
-                new DropboxDeltaInfo { Path = "foo/file0.php"},
-                new DropboxDeltaInfo { Path = "foo/file1.php"},
-                new DropboxDeltaInfo { Path = "foo/file2.php"},
-                new DropboxDeltaInfo { Path = "foo/file3.php"},
-            };
+                new DropboxEntryInfo { Path = "foo/test.txt" },
+                new DropboxEntryInfo { Path = "foo/bar.txt" },
+                new DropboxEntryInfo { Path = "foo/qux.txt" },
+                new DropboxEntryInfo { Path = "foo/buzz.png" },
+                new DropboxEntryInfo { Path = "foo/baz.php"},
+                new DropboxEntryInfo { Path = "foo/file0.php"},
+                new DropboxEntryInfo { Path = "foo/file1.php"},
+                new DropboxEntryInfo { Path = "foo/file2.php"},
+                new DropboxEntryInfo { Path = "foo/file3.php"},
+            });
 
             // Act
-            await ExceptionAssert.ThrowsAsync<HttpRequestException>(async() => await helper.ApplyChangesCore(deployInfo));
+            await ExceptionAssert.ThrowsAsync<HttpRequestException>(async() => await helper.ApplyChangesCore(deployInfo, useOAuth20: false));
 
             // Assert
             // Ensure we processed other files
-            Assert.Equal(deployInfo.Deltas.Count, processedFiles);
+            Assert.Equal(deployInfo.Entries.Count, processedFiles);
+        }
+
+        [Fact]
+        public async Task GetDeltasPopulatesEntriesNode()
+        {
+            // Arrange
+            const string DeltaPayload = @"{""reset"": true, ""cursor"": ""AAGWKUylpghsuMRcKQSdHSpvUW3uPVcIyGINt30oO36wDebzBoqtFFaiqzNCWV568-U_uZwdM1QGyzxYw3GxJRsCWv0G3BlOUiguFrttRsbpmA"", ""has_more"": false, ""entries"": [[""/foo/bar.txt"", {""revision"": 1, ""rev"": ""11357a5a5"", ""thumb_exists"": false, ""bytes"": 123641, ""modified"": ""Thu, 22 Aug 2013 22:50:24 +0000"", ""client_mtime"": ""Thu, 22 Aug 2013 22:50:24 +0000"", ""path"": ""/foo/bar.txt"", ""is_dir"": false, ""icon"": ""page_white"", ""root"": ""dropbox"", ""mime_type"": ""application/epub+zip"", ""size"": ""120.7 KB""}]]}";
+            var dropboxInfo = new DropboxDeployInfo
+            {
+                Token = "Some-token",
+                Path = "/foo"
+            };
+            var handler = new TestMessageHandler(DeltaPayload, isJson: true);
+            var helper = CreateDropboxHelper(handler);
+
+            // Act
+            await helper.UpdateDropboxDeployInfo(dropboxInfo);
+
+            // Assert
+            Assert.Null(dropboxInfo.OldCursor);
+            Assert.Equal("AAGWKUylpghsuMRcKQSdHSpvUW3uPVcIyGINt30oO36wDebzBoqtFFaiqzNCWV568-U_uZwdM1QGyzxYw3GxJRsCWv0G3BlOUiguFrttRsbpmA", dropboxInfo.NewCursor);
+            Assert.Equal(1, dropboxInfo.Entries.Count);
+            Assert.Equal("/foo/bar.txt", dropboxInfo.Entries[0].Path);
+        }
+
+        [Fact]
+        public async Task GetDeltasPopulatesEntriesNodeWhenHasMoreIsSet()
+        {
+            // Arrange
+            const string DeltaPayload1 = @"{""reset"": true, ""cursor"": ""cursor1"", ""has_more"": true, ""entries"": [[""/foo/bar.txt"", {""revision"": 1, ""rev"": ""11357a5a5"", ""bytes"": 123641, ""modified"": ""Thu, 22 Aug 2013 22:50:24 +0000"", ""client_mtime"": ""Thu, 22 Aug 2013 22:50:24 +0000"", ""path"": ""/foo/bar.txt"", ""is_dir"": false}]]}";
+            const string DeltaPayload2 = @"{""reset"": false, ""cursor"": ""cursor2"", ""has_more"": false, ""entries"": [[""/foo/bar.txt"", {""revision"": 1, ""rev"": ""11357a5a5"", ""bytes"": 123641, ""modified"": ""Thu, 22 Aug 2013 22:50:24 +0000"", ""client_mtime"": ""Thu, 22 Aug 2013 22:50:24 +0000"", ""path"": ""/foo/qux.txt"", ""is_dir"": false}]]}";
+            var dropboxInfo = new DropboxDeployInfo
+            {
+                Token = "Some-token",
+                Path = "/foo"
+            };
+            int i = 0;
+            var handler = new TestMessageHandler(_ => 
+            {
+                var content = new StringContent(i++ == 0 ? DeltaPayload1 : DeltaPayload2, Encoding.UTF8, "application/json");
+                return new HttpResponseMessage { Content = content };
+            });
+            var helper = CreateDropboxHelper(handler);
+
+            // Act
+            await helper.UpdateDropboxDeployInfo(dropboxInfo);
+
+            // Assert
+            Assert.Equal("cursor2", dropboxInfo.NewCursor);
+            Assert.Equal(2, dropboxInfo.Entries.Count);
+            Assert.Equal("/foo/bar.txt", dropboxInfo.Entries[0].Path);
+            Assert.Equal("/foo/qux.txt", dropboxInfo.Entries[1].Path);
         }
 
         private DropboxHelper CreateDropboxHelper(TestMessageHandler handler = null)
@@ -180,8 +228,11 @@ namespace Kudu.Services.Test
 
             if (handler != null)
             {
-                helper.Setup(h => h.CreateDropboxHttpClient())
-                      .Returns(() => new HttpClient(handler) { BaseAddress = new Uri("http://site-does-not-exist.microsoft.com") });
+                helper.Setup(h => h.CreateDropboxHttpClient(It.IsAny<DropboxDeployInfo>(), It.IsAny<DropboxEntryInfo>()))
+                      .Returns(CreateHttpClient(handler));
+
+                helper.Setup(h => h.CreateDropboxV2HttpClient(It.IsAny<string>(), It.IsAny<string>()))
+                      .Returns(CreateHttpClient(handler));
 
                 DropboxHelper.RetryWaitToAvoidRateLimit = TimeSpan.FromSeconds(1);
             }
@@ -201,6 +252,16 @@ namespace Kudu.Services.Test
             {
                 Directory.CreateDirectory(repositoryPath);
             }
+        }
+
+        private static HttpClient CreateHttpClient(TestMessageHandler handler = null)
+        {
+            if (handler == null)
+            {
+                handler = new TestMessageHandler(HttpStatusCode.OK);
+            }
+
+            return new HttpClient(handler) { BaseAddress = new Uri("http://site-does-not-exist.microsoft.com") };
         }
 
         public void Dispose()
