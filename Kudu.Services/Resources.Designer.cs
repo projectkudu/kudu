@@ -169,11 +169,20 @@ namespace Kudu.Services {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Synchronizing {0} change(s) from Dropbox..
+        ///   Looks up a localized string similar to Synchronizing changes from Dropbox..
         /// </summary>
         internal static string Dropbox_Synchronizing {
             get {
                 return ResourceManager.GetString("Dropbox_Synchronizing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Synchronizing {0} change(s) from Dropbox..
+        /// </summary>
+        internal static string Dropbox_SynchronizingNChanges {
+            get {
+                return ResourceManager.GetString("Dropbox_SynchronizingNChanges", resourceCulture);
             }
         }
         
@@ -210,6 +219,15 @@ namespace Kudu.Services {
         internal static string Error_DeploymentNotFound {
             get {
                 return ResourceManager.GetString("Error_DeploymentNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Value for Dropbox sync &apos;{0}&apos; not specified..
+        /// </summary>
+        internal static string Error_DropboxValueNotSpecified {
+            get {
+                return ResourceManager.GetString("Error_DropboxValueNotSpecified", resourceCulture);
             }
         }
         

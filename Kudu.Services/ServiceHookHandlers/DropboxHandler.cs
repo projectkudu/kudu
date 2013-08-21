@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Globalization;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
-using Kudu.Contracts.Dropbox;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
@@ -15,6 +13,8 @@ namespace Kudu.Services.ServiceHookHandlers
 {
     public class DropboxHandler : IServiceHookHandler
     {
+        private const string DropboxTokenKey = "dropbox_token";
+        private const string DropboxPathKey = "dropbox_path";
         private readonly DropboxHelper _dropBoxHelper;
         private readonly IDeploymentSettingsManager _settings;
 
@@ -29,22 +29,42 @@ namespace Kudu.Services.ServiceHookHandlers
 
         public DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
         {
-            deploymentInfo = null;
+            DropboxInfo dropboxInfo = null;
+            string message = null;
+
             if (!String.IsNullOrEmpty(payload.Value<string>("NewCursor")))
             {
-                var dropboxInfo = new DropboxInfo(payload, _settings.IsNullRepository() ? RepositoryType.None : RepositoryType.Git); 
-                deploymentInfo = dropboxInfo; 
+                dropboxInfo = DropboxInfo.CreateV1Info(payload, GetRepositoryType());
+                message = String.Format(CultureInfo.CurrentUICulture, Resources.Dropbox_SynchronizingNChanges, dropboxInfo.DeployInfo.Entries.Count);
+            }
+            else if (String.Equals(payload.Value<string>("scmType"), "DropboxV2", StringComparison.OrdinalIgnoreCase))
+            {
+                string oauthToken = GetValue(payload, DropboxTokenKey),
+                       path = GetValue(payload, DropboxPathKey),
+                       userName = payload.Value<string>("dropbox_username") ?? "Dropbox",
+                       email = payload.Value<string>("dropbox_email");
+                
+                dropboxInfo = DropboxInfo.CreateV2Info(path, oauthToken, GetRepositoryType());
+                dropboxInfo.DeployInfo.UserName = userName;
+                dropboxInfo.DeployInfo.Email = email;
+                message = String.Format(CultureInfo.CurrentUICulture, Resources.Dropbox_Synchronizing);
+            }
+
+            if (dropboxInfo != null)
+            {
+                deploymentInfo = dropboxInfo;
 
                 // Temporary deployment
                 deploymentInfo.TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(
                     authorName: dropboxInfo.DeployInfo.UserName,
                     authorEmail: dropboxInfo.DeployInfo.Email,
-                    message: String.Format(CultureInfo.CurrentUICulture, Resources.Dropbox_Synchronizing, dropboxInfo.DeployInfo.Deltas.Count())
+                    message: message
                 );
-
+                
                 return DeployAction.ProcessDeployment;
             }
 
+            deploymentInfo = null;
             return DeployAction.UnknownPayload;
         }
 
@@ -56,17 +76,21 @@ namespace Kudu.Services.ServiceHookHandlers
             deploymentInfo.TargetChangeset = await _dropBoxHelper.Sync(dropboxInfo, targetBranch, repository);
         }
 
-        internal class DropboxInfo : DeploymentInfo
+        private RepositoryType GetRepositoryType()
         {
-            public DropboxInfo(JObject payload, RepositoryType repositoryType)
+            return _settings.IsNullRepository() ? RepositoryType.None : RepositoryType.Git;
+        }
+
+        private string GetValue(JObject payload, string key)
+        {
+            string value = payload.Value<string>(key) ?? _settings.GetValue(key);
+
+            if (String.IsNullOrEmpty(value))
             {
-                Deployer = DropboxHelper.Dropbox;
-                DeployInfo = payload.ToObject<DropboxDeployInfo>();
-                RepositoryType = repositoryType;
-                IsReusable = false;
+                throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_DropboxValueNotSpecified, key));
             }
 
-            public DropboxDeployInfo DeployInfo { get; set; }
+            return value;
         }
     }
 }

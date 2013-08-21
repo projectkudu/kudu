@@ -13,7 +13,6 @@ using System.Threading.Tasks;
 using System.Web;
 using Kudu.Client;
 using Kudu.Client.Infrastructure;
-using Kudu.Contracts.Dropbox;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
@@ -28,7 +27,8 @@ namespace Kudu.FunctionalTests
 {
     public class DropboxTests
     {
-        private static readonly Random _random = new Random(unchecked((int)DateTime.Now.Ticks));
+        private const string OAuth20Token = "";
+        private static readonly Random _random = new Random();
 
         public enum Scenario
         {
@@ -41,7 +41,7 @@ namespace Kudu.FunctionalTests
         [InlineData(Scenario.Default)]
         [InlineData(Scenario.InPlace)]
         [InlineData(Scenario.NoRepository)]
-        public async Task TestDropboxBasic(Scenario scenario)
+        public async Task TestDropboxBasicForBasicScenario(Scenario scenario)
         {
             OAuthInfo oauth = GetOAuthInfo();
             if (oauth == null)
@@ -93,6 +93,36 @@ namespace Kudu.FunctionalTests
                     Assert.True(repositoryGit, @"site\repository\.git should exist for " + scenario);
                     Assert.False(wwwrootGit, @"site\wwwroot\.git should not exist for " + scenario);
                 }
+            });
+        }
+
+        [Fact]
+        public async Task TestDropboxBasicForBasicScenarioWithOAuthV2()
+        {
+            if (String.IsNullOrEmpty(OAuth20Token))
+            {
+                // only run in private kudu
+                return;
+            }
+
+            object payload = new
+            {
+                scmType = "DropboxV2",
+                dropbox_token = OAuth20Token,
+                dropbox_path = "/Basictest"
+            };
+
+            await ApplicationManager.RunAsync("TestDropboxBasicForBasicScenarioWithOAuthV2", async appManager =>
+            {
+                HttpClient client = HttpClientHelper.CreateClient(appManager.ServiceUrl, appManager.DeploymentManager.Credentials);
+                var result = await client.PostAsJsonAsync("deploy?scmType=Dropbox", payload);
+                result.EnsureSuccessful();
+
+                await Task.WhenAll(
+                    KuduAssert.VerifyUrlAsync(appManager.SiteUrl + "/default.html", "Hello Default!"),
+                    KuduAssert.VerifyUrlAsync(appManager.SiteUrl + "/temp/temp.html", "Hello Temp!"),
+                    KuduAssert.VerifyUrlAsync(appManager.SiteUrl + "/New Folder/New File.html", "Hello New File!")
+                );
             });
         }
 
@@ -245,7 +275,7 @@ namespace Kudu.FunctionalTests
 
         internal DropboxDeployInfo GetDeployInfo(string path, OAuthInfo oauth, AccountInfo account, string cursor = null)
         {
-            List<DropboxDeltaInfo> deltas = new List<DropboxDeltaInfo>();
+            List<DropboxEntryInfo> deltas = new List<DropboxEntryInfo>();
             string timeStamp = GetUtcTimeStamp();
             string oldCursor = cursor;
             string newCursor = "";
@@ -260,7 +290,7 @@ namespace Kudu.FunctionalTests
 
                 foreach (EntryInfo info in delta.entries)
                 {
-                    DropboxDeltaInfo item = new DropboxDeltaInfo();
+                    DropboxEntryInfo item = new DropboxEntryInfo();
 
                     if (info.metadata != null && !info.metadata.path.StartsWith(path))
                     {
@@ -300,7 +330,7 @@ namespace Kudu.FunctionalTests
                 throw new InvalidOperationException("the repo is up-to-date.");
             }
 
-            return new DropboxDeployInfo
+            var deployInfo = new DropboxDeployInfo
             {
                 TimeStamp = timeStamp,
                 Token = oauth.Token,
@@ -312,8 +342,10 @@ namespace Kudu.FunctionalTests
                 Path = path,
                 UserName = account.display_name,
                 Email = account.email,
-                Deltas = deltas
             };
+            deployInfo.Entries.AddRange(deltas);
+
+            return deployInfo;
         }
 
         private HttpClient GetDropboxClient(HttpMethod method, Uri uri, OAuthInfo oauth, params KeyValuePair<string, string>[] query)
