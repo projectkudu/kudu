@@ -36,6 +36,7 @@ namespace Kudu.Core.Deployment.Generator
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.WebRootPath, _environment.WebRootPath, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.MSBuildPath, PathUtility.ResolveMSBuildPath(), logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KuduSyncCommandKey, KuduSyncCommand, logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.NuGetExeCommandKey, NuGetExeCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.PostDeploymentActionsCommandKey, PostDeploymentActionsCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.PostDeploymentActionsDirectoryKey, PostDeploymentActionsDir, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.SelectNodeVersionCommandKey, SelectNodeVersionCommand, logger);
@@ -88,7 +89,15 @@ namespace Kudu.Core.Deployment.Generator
         {
             get
             {
-                return "\"" + Path.Combine(_environment.ScriptPath, "kudusync") + "\"";
+                return QuotePath(Path.Combine(_environment.ScriptPath, "kudusync"));
+            }
+        }
+
+        private string NuGetExeCommand
+        {
+            get
+            {
+                return QuotePath(Path.Combine(_environment.ScriptPath, "nuget.exe"));
             }
         }
 
@@ -96,7 +105,7 @@ namespace Kudu.Core.Deployment.Generator
         {
             get
             {
-                return "\"" + Path.Combine(_environment.ScriptPath, "postdeployment") + "\"";
+                return QuotePath(Path.Combine(_environment.ScriptPath, "postdeployment"));
             }
         }
 
@@ -112,7 +121,7 @@ namespace Kudu.Core.Deployment.Generator
         {
             get
             {
-                return "node \"" + Path.Combine(_environment.ScriptPath, "selectNodeVersion") + "\"";
+                return "node " + QuotePath(Path.Combine(_environment.ScriptPath, "selectNodeVersion"));
             }
         }
 
@@ -136,6 +145,11 @@ namespace Kudu.Core.Deployment.Generator
                 logger.Log("Using custom deployment setting for {0} custom value is '{1}'.", key, value);
                 exe.EnvironmentVariables[key] = value;
             }
+        }
+
+        private static string QuotePath(string path)
+        {
+            return String.Concat('"', path, '"');
         }
     }
 }
