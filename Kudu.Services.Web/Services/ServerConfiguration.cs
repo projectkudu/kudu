@@ -5,11 +5,16 @@ namespace Kudu.Services.Web
 {
     public class ServerConfiguration : IServerConfiguration
     {
+        string _applicationName;
         public string ApplicationName
         {
             get
             {
-                return Environment.GetEnvironmentVariable("APP_POOL_ID");
+                if (_applicationName == null)
+                {
+                    _applicationName = GetApplicationName();
+                }
+                return _applicationName;
             }
         }
 
@@ -23,6 +28,17 @@ namespace Kudu.Services.Web
                 }
                 return ApplicationName + ".git";
             }
+        }
+
+        static private string GetApplicationName()
+        {
+            var applicationName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME");
+            if(!string.IsNullOrEmpty(applicationName))
+            {
+                return applicationName;
+            }
+            applicationName = Environment.GetEnvironmentVariable("APP_POOL_ID");
+            return applicationName;
         }
     }
 }

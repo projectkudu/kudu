@@ -71,6 +71,7 @@
     <Compile Include="Infrastructure\DisposableActionFacts.cs" />
     <Compile Include="Infrastructure\ExecutableExtensionFacts.cs" />
     <Compile Include="Infrastructure\OperationManagerFacts.cs" />
+    <Compile Include="Infrastructure\ServerConfigurationFacts.cs" />
     <Compile Include="Infrastructure\StringReaderFacts.cs" />
     <Compile Include="Infrastructure\VsSolutionTest.cs" />
     <Compile Include="Infrastructure\XmlUtilityFacts.cs" />
