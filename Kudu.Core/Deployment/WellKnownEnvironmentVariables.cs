@@ -8,6 +8,7 @@
         public const string WebRootPath = "WEBROOT_PATH";
         public const string MSBuildPath = "MSBUILD_PATH";
         public const string KuduSyncCommandKey = "KUDU_SYNC_CMD";
+        public const string NuGetExeCommandKey = "NUGET_EXE";
         public const string PostDeploymentActionsCommandKey = "POST_DEPLOYMENT_ACTION";
         public const string SelectNodeVersionCommandKey = "KUDU_SELECT_NODE_VERSION_CMD";
         public const string NpmJsPathKey = "NPM_JS_PATH";
