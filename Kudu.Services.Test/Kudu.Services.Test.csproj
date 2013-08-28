@@ -60,6 +60,7 @@
     <Compile Include="GithubHandlerFacts.cs" />
     <Compile Include="InfoRefsControllerFacts.cs" />
     <Compile Include="Infrastructure\MediaTypeMapTest.cs" />
+    <Compile Include="InstanceIdUtilityFacts.cs" />
     <Compile Include="KilnHgHandlerFacts.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReceivePackHandlerFacts.cs" />

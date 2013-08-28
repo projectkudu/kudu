@@ -98,11 +98,13 @@ namespace Kudu.Services.Performance
                     return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
                 }
 
+                var context = new System.Web.HttpContextWrapper(System.Web.HttpContext.Current);
+                string responseFileName = String.Format(CultureInfo.InvariantCulture, "{0}-{1}-{2:MM-dd-H:mm:ss}.dmp", process.ProcessName, InstanceIdUtility.GetShortInstanceId(context), DateTime.UtcNow);
                 HttpResponseMessage response = Request.CreateResponse();
                 response.Content = new StreamContent(MiniDumpStream.OpenRead(dumpFile, _fileSystem));
                 response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
                 response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
-                response.Content.Headers.ContentDisposition.FileName = String.Format("{0}-{1:MM-dd-H:mm:ss}.dmp", process.ProcessName, DateTime.UtcNow);
+                response.Content.Headers.ContentDisposition.FileName = responseFileName;
                 return response;
             }
         }
