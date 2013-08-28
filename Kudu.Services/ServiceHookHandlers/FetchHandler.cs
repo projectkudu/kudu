@@ -81,7 +81,7 @@ namespace Kudu.Services
 
                 if (!String.Equals(context.Request.HttpMethod, "POST", StringComparison.OrdinalIgnoreCase))
                 {
-                    context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                    context.Response.Redirect("~/");
                     context.ApplicationInstance.CompleteRequest();
                     return;
                 }
