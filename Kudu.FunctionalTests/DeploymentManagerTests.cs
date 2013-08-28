@@ -748,7 +748,9 @@ namespace Kudu.FunctionalTests
                 var client = CreateClient(appManager);
 
                 HttpResponseMessage response = await client.GetAsync("deploy");
-                Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+                // It's OK because it gets redirected to the Kudu root
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
                 response = await client.DeleteAsync("deploy");
                 Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);

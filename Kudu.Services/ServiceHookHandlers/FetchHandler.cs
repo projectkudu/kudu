@@ -71,6 +71,14 @@ namespace Kudu.Services
         {
             using (_tracer.Step("FetchHandler"))
             {
+                // Redirect GET /deploy requests to the Kudu root for convenience when using URL from Azure portal
+                if (String.Equals(context.Request.HttpMethod, "GET", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.Response.Redirect("~/");
+                    context.ApplicationInstance.CompleteRequest();
+                    return;
+                }
+
                 if (!String.Equals(context.Request.HttpMethod, "POST", StringComparison.OrdinalIgnoreCase))
                 {
                     context.Response.StatusCode = (int)HttpStatusCode.NotFound;
