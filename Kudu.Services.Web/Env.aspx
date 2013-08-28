@@ -103,6 +103,13 @@
             <li><%: name  %>=<%: Request.Headers[name] %></li>
         <% } %>
         </ul>
+
+        <h2>Server variables</h2>
+        <ul class="fixed-width">
+        <% foreach (string name in Request.ServerVariables) { %>
+            <li><%: name  %>=<%: Request.ServerVariables[name] %></li>
+        <% } %>
+        </ul>
     </div>
 </body>
 </html>
