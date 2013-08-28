@@ -98,6 +98,7 @@
     <Compile Include="GitServer\GitServerHttpHandler.cs" />
     <Compile Include="Hooks\WebHooksController.cs" />
     <Compile Include="HttpRequestExtensions.cs" />
+    <Compile Include="Infrastructure\InstanceIdUtility.cs" />
     <Compile Include="ServiceHookHandlers\CodebaseHqHandler.cs" />
     <Compile Include="ServiceHookHandlers\CodePlexHandler.cs" />
     <Compile Include="ServiceHookHandlers\DropboxHandler.cs" />
