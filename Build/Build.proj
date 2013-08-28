@@ -9,7 +9,7 @@
         <ToolsPath>$(ProjectRoot)\tools\</ToolsPath>
         <XunitPath>$(ProjectRoot)xunit\</XunitPath>
         <ArtifactsPath>$(ProjectRoot)\artifacts\$(Configuration)</ArtifactsPath>
-        <ServiceSiteTargetPath Condition="$(ServiceSiteTargetPath) == ''">$(ArtifactsPath)\KuduService</ServiceSiteTargetPath>
+        <ServiceSiteTargetPath Condition="$(ServiceSiteTargetPath) == ''">$(ArtifactsPath)\Kudu</ServiceSiteTargetPath>
         <ServiceSiteProject>$(ProjectRoot)\Kudu.Services.Web\Kudu.Services.Web.csproj</ServiceSiteProject>
         <ClientSiteTargetPath Condition="$(ClientSiteTargetPath) == ''">$(ArtifactsPath)\KuduWeb</ClientSiteTargetPath>
         <ClientSiteProject>$(ProjectRoot)\Kudu.Web\Kudu.Web.csproj</ClientSiteProject>
@@ -56,6 +56,7 @@
         <ItemGroup>
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\bin*\node_modules*\**\*.*" />
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\commit.txt" />
+            <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\applicationHost.xdt" />
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\bin*\Kudu.exe" />
         </ItemGroup>
 
