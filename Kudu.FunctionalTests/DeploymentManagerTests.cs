@@ -816,7 +816,8 @@ namespace Kudu.FunctionalTests
             yield return new RepoInvalidInfo("git@bitbucket.org:kudutest/Invalid.git", "Permission denied [(]publickey[)]", null);
             yield return new RepoInvalidInfo("git@github.com:KuduApps/HelloKudu.git", "Permission denied [(]publickey[)]", null);
             yield return new RepoInvalidInfo("git@bitbucket.org:kudutest/jeanprivate.git", "Permission denied [(]publickey[)]", null);
-            yield return new RepoInvalidInfo("https://github.com/KuduApps/HelloKudu.git", "abort: HTTP Error 406: Not Acceptable.*hg.exe pull https://github.com/KuduApps/HelloKudu.git", "hg");
+            // due to unreliable error from github
+            // yield return new RepoInvalidInfo("https://github.com/KuduApps/HelloKudu.git", "abort: HTTP Error 406: Not Acceptable.*hg.exe pull https://github.com/KuduApps/HelloKudu.git", "hg");
             yield return new RepoInvalidInfo("https://bitbucket.org/kudutest/hellomercurial/", "fatal:.*https://bitbucket.org/kudutest/hellomercurial.* not found", null);
             yield return new RepoInvalidInfo("https://github.com/Invalid/Invalid.git", "fatal: Authentication failed.*git.exe fetch", null);
             yield return new RepoInvalidInfo("https://github.com/KuduQAOrg/Invalid.git", "fatal: Authentication failed.*git.exe fetch", null);
