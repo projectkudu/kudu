@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 
 #if !SITEMANAGEMENT
 using Kudu.Contracts.Tracing;
@@ -88,12 +89,12 @@ namespace Kudu.Core.Infrastructure
 #else
                 var idleManager = new Kudu.SiteManagement.IdleManager();
 #endif
-                Func<StreamReader, string> reader = (StreamReader streamReader) =>
+                Func<StreamReader, Task<string>> reader = async (StreamReader streamReader) =>
                 {
                     var strb = new StringBuilder();
                     char[] buffer = new char[1024];
                     int read;
-                    while ((read = streamReader.ReadBlock(buffer, 0, buffer.Length)) != 0)
+                    while ((read = await streamReader.ReadBlockAsync(buffer, 0, buffer.Length)) != 0)
                     {
                         idleManager.UpdateActivity();
                         strb.Append(buffer, 0, read);
@@ -102,15 +103,15 @@ namespace Kudu.Core.Infrastructure
                     return strb.ToString();
                 };
 
-                IAsyncResult outputReader = reader.BeginInvoke(process.StandardOutput, null, null);
-                IAsyncResult errorReader = reader.BeginInvoke(process.StandardError, null, null);
+                Task<string> outputReaderTask = Task.Run(async () => await reader(process.StandardOutput));
+                Task<string> errorReaderTask = Task.Run(async () => await reader(process.StandardError));
 
                 process.StandardInput.Close();
 
                 idleManager.WaitForExit(process);
 
-                string output = reader.EndInvoke(outputReader);
-                string error = reader.EndInvoke(errorReader);
+                string output = outputReaderTask.Result;
+                string error = errorReaderTask.Result;
 
 #if !SITEMANAGEMENT
                 tracer.TraceProcessExitCode(process);
