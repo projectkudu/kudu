@@ -59,10 +59,12 @@
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\applicationHost.xdt" />
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\bin*\Kudu.exe" />
         </ItemGroup>
-
+        
         <Copy SourceFiles="%(ServiceSiteFilesToCopy.FullPath)" DestinationFiles="$(ServiceSiteTargetPath)\%(RecursiveDir)%(Filename)%(Extension)" 
                 SkipUnchangedFiles="true" />
 
+        <Copy SourceFiles="$(ProjectRoot)\Build\NuGet.exe" DestinationFiles="$(ServiceSiteTargetPath)\bin\Scripts\NuGet.exe" 
+                SkipUnchangedFiles="true" />
               
         <MSBuild Projects="$(ClientSiteProject)" 
                  Targets="pipelinePreDeployCopyAllFilesToOneFolder" 
