@@ -226,6 +226,11 @@
 		////////////////////////////////////////////////////////////////////////
 		// Handle setting focus
 		container.click(function(){
+			// Don't mess with the focus if there is an active selection
+			if (window.getSelection().toString()) {
+				return false;
+			}
+
 			inner.addClass('jquery-console-focus');
 			inner.removeClass('jquery-console-nofocus');
 			if (isWebkit) {
