@@ -1,7 +1,4 @@
 <?xml version="1.0"?>
-
-<!-- For more information on using Web.config transformation visit http://go.microsoft.com/fwlink/?LinkId=125889 -->
-
 <configuration xmlns:xdt="http://schemas.microsoft.com/XML-Document-Transform">
   <system.applicationHost>
     <sites>
@@ -9,7 +6,6 @@
         <application path="/" xdt:Locator="Match(path)" xdt:Transform="Remove" />
         <application path="/" applicationPool="%XDT_APPPOOLNAME%" xdt:Transform="Insert">
           <virtualDirectory path="/" physicalPath="%XDT_EXTENSIONPATH%" />
-          <virtualDirectory path="/_app" physicalPath="%XDT_SITEPATH%" />
         </application>
       </site>
     </sites>
