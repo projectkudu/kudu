@@ -97,7 +97,7 @@ namespace Kudu.Core.Deployment.Generator
         {
             get
             {
-                return QuotePath(Path.Combine(_environment.ScriptPath, "nuget.exe"));
+                return Path.Combine(_environment.ScriptPath, "nuget.exe");
             }
         }
 
