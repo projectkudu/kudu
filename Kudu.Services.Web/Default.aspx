@@ -107,8 +107,11 @@
             <td><%= upTime %></td>
         </tr>
         <tr>
+            <%
+                var sitePath = Kudu.Services.Web.PathResolver.ResolveSiteRootPath();
+            %>
             <td><strong>Site folder</strong></td>
-            <td class="path"><%= MapPath("_app") %></td>
+            <td class="path"><%= sitePath %></td>
         </tr>
         <tr>
             <td><strong>Temp folder</strong></td>
