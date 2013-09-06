@@ -135,7 +135,8 @@ using System.Web.Hosting;
 
         public void Dispose()
         {
-            Dispose(true);
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
 
         protected virtual void Dispose(bool disposing)
