@@ -9,7 +9,7 @@
         <ToolsPath>$(ProjectRoot)\tools\</ToolsPath>
         <XunitPath>$(ProjectRoot)xunit\</XunitPath>
         <ArtifactsPath>$(ProjectRoot)\artifacts\$(Configuration)</ArtifactsPath>
-        <ServiceSiteTargetPath Condition="$(ServiceSiteTargetPath) == ''">$(ArtifactsPath)\Kudu</ServiceSiteTargetPath>
+        <ServiceSiteTargetPath Condition="$(ServiceSiteTargetPath) == ''">$(ArtifactsPath)\Site Extensions\Kudu</ServiceSiteTargetPath>
         <ServiceSiteProject>$(ProjectRoot)\Kudu.Services.Web\Kudu.Services.Web.csproj</ServiceSiteProject>
         <ClientSiteTargetPath Condition="$(ClientSiteTargetPath) == ''">$(ArtifactsPath)\KuduWeb</ClientSiteTargetPath>
         <ClientSiteProject>$(ProjectRoot)\Kudu.Web\Kudu.Web.csproj</ClientSiteProject>
@@ -39,7 +39,7 @@
         <RegexTransform Items="@(RegexTransform)" />
     </Target>
     
-    <Target Name="RunAll" DependsOnTargets="UpdateVersion; RestorePackages; Build; ReportFxCopResults; RunTests; BuildSites" />
+    <Target Name="RunAll" DependsOnTargets="UpdateVersion; RestorePackages; Build; ReportFxCopResults; RunTests; BuildSites; BuildZips" />
 
     <Target Name="CreateOutputPath">
         <MakeDir Directories="$(ArtifactsPath)" Condition="!Exists('$(ArtifactsPath)')" />
@@ -96,4 +96,38 @@
         <Message Text="##teamcity[importData type='FxCop' path='%(FxCopOutputItems.Identity)']" 
                      Condition="@(FxCopOutputItems) != '' "/>
     </Target>
+    
+     <Target Name="BuildZips">
+        <PropertyGroup>
+          <SourceDirectory>$(ArtifactsPath)\Site Extensions</SourceDirectory>
+          <ZipTargetPath>$(ArtifactsPath)\zip</ZipTargetPath>
+        </PropertyGroup> 
+        <RemoveDir Directories="$(ZipTargetPath)" Condition=" Exists('$(ZipTargetPath)') " />
+        <MakeDir Directories="$(ZipTargetPath)" />
+        <CreateZipFileFromDirectory
+            DestinationArchive="$(ZipTargetPath)\Kudu.zip"
+            SourceDirectory="$(SourceDirectory)"
+            IncludeBaseDirectory="true" />
+        <Copy SourceFiles="$(ProjectRoot)\Setup\DeployPrivateKudu.cmd" DestinationFiles="$(ZipTargetPath)\DeployPrivateKudu.cmd" SkipUnchangedFiles="true" />
+     </Target>
+     
+     <UsingTask TaskName="CreateZipFileFromDirectory" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+        <ParameterGroup>
+          <DestinationArchive ParameterType="System.String" Required="true"/>
+          <SourceDirectory ParameterType="System.String" Required="true" />
+          <IncludeBaseDirectory ParameterType="System.Boolean" Required="true" />
+        </ParameterGroup>
+        <Task>
+          <Reference Include="$(MSBuildToolsPath)\System.IO.Compression.dll"/>
+          <Reference Include="$(MSBuildToolsPath)\System.IO.Compression.FileSystem.dll"/>
+          <Using Namespace="System.IO" />
+          <Using Namespace="System.IO.Compression" />
+          <Code Type="Fragment" Language="cs">
+            <![CDATA[
+                   ZipFile.CreateFromDirectory(SourceDirectory, DestinationArchive, System.IO.Compression.CompressionLevel.Optimal, IncludeBaseDirectory);
+              ]]>
+          </Code>
+        </Task>
+      </UsingTask>
+      
 </Project>
