@@ -187,7 +187,19 @@ echo $i > pushinfo
 
         public string Resolve(string id)
         {
-            return Execute("rev-parse {0}", id).Trim();
+            try
+            {
+                return Execute("rev-parse {0}", id).Trim();
+            }
+            catch (CommandLineException ex)
+            {
+                if (!String.IsNullOrEmpty(ex.Message) && 
+                    ex.Message.IndexOf("unknown revision or path not in the working tree", StringComparison.OrdinalIgnoreCase) != -1)
+                {
+                    return null;
+                }
+                throw;
+            }
         }
 
         public ChangeSet GetChangeSet(string id)

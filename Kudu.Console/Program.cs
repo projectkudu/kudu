@@ -80,6 +80,17 @@ namespace Kudu.Console
 
             IRepository gitRepository = new GitExeRepository(env, settingsManager, traceFactory);
 
+
+            string previousCommitId = System.Environment.GetEnvironmentVariable("KUDU_HEAD_COMMIT_ID");
+            var currentCommitId = gitRepository.CurrentId;
+            if (!String.IsNullOrEmpty(previousCommitId) && previousCommitId.Equals(currentCommitId, StringComparison.OrdinalIgnoreCase))
+            {
+                // The git push did not update the HEAD commit. It is likely that an update was pushed to a different branch.
+                // Do not perform the build at this point.
+                tracer.Trace("Git receive completed, but HEAD remains unchanged at changeset '{0}'. Exiting...", currentCommitId);
+                return 0;
+            }
+
             IWebHooksManager hooksManager = new WebHooksManager(tracer, env, hooksLock, fileSystem);
             var logger = new ConsoleLogger();
             IDeploymentManager deploymentManager = new DeploymentManager(builderFactory,

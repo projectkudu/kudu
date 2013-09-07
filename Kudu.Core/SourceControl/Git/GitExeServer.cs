@@ -66,6 +66,9 @@ namespace Kudu.Core.SourceControl.Git
 
         public void Receive(Stream inputStream, Stream outputStream)
         {
+            var repository = Initialize();
+            _gitExe.EnvironmentVariables[KnownEnvironment.HEAD_COMMIT_ID] = repository.CurrentId;
+
             ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("GitExeServer.Receive"))
             {
@@ -92,7 +95,7 @@ namespace Kudu.Core.SourceControl.Git
             _gitExe.Execute(tracer, input, output, @"{0} --stateless-rpc ""{1}""", serviceName, _gitExe.WorkingDirectory);
         }
 
-        internal void Initialize()
+        internal IRepository Initialize()
         {
             IRepository repository = _repositoryFactory.GetRepository();
             if (repository == null)
@@ -106,6 +109,8 @@ namespace Kudu.Core.SourceControl.Git
                     }
                 }, InitTimeout);
             }
+
+            return repository;
         }
 
         private void InitializeRepository()
