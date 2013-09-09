@@ -343,7 +343,7 @@ namespace Kudu.FunctionalTests
                 UserName = account.display_name,
                 Email = account.email,
             };
-            deployInfo.Entries.AddRange(deltas);
+            deployInfo.Deltas.AddRange(deltas);
 
             return deployInfo;
         }

@@ -6,7 +6,7 @@ namespace Kudu.Services
     {
         public DropboxDeployInfo()
         {
-            Entries = new List<DropboxEntryInfo>();
+            Deltas = new List<DropboxEntryInfo>();
         }
 
         public string ConsumerKey { get; set; }
@@ -29,6 +29,6 @@ namespace Kudu.Services
 
         public string Email { get; set; }
 
-        public List<DropboxEntryInfo> Entries { get; private set; }
+        public List<DropboxEntryInfo> Deltas { get; private set; }
     }
 }

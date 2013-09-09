@@ -35,7 +35,7 @@ namespace Kudu.Services.ServiceHookHandlers
             if (!String.IsNullOrEmpty(payload.Value<string>("NewCursor")))
             {
                 dropboxInfo = DropboxInfo.CreateV1Info(payload, GetRepositoryType());
-                message = String.Format(CultureInfo.CurrentUICulture, Resources.Dropbox_SynchronizingNChanges, dropboxInfo.DeployInfo.Entries.Count);
+                message = String.Format(CultureInfo.CurrentUICulture, Resources.Dropbox_SynchronizingNChanges, dropboxInfo.DeployInfo.Deltas.Count);
             }
             else if (String.Equals(payload.Value<string>("scmType"), "DropboxV2", StringComparison.OrdinalIgnoreCase))
             {

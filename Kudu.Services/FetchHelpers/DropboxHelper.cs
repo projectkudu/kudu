@@ -104,7 +104,7 @@ namespace Kudu.Services
                                                             .Select(DropboxEntryInfo.ParseFrom)
                                                             .Where(entry => !CanIgnoreEntry(parentPath, entry));
 
-                            dropboxInfo.Entries.AddRange(filteredEntries);
+                            dropboxInfo.Deltas.AddRange(filteredEntries);
                         }
                         currentCursor = deltaResult.Value<string>("cursor");
                         if (!deltaResult.Value<bool>("has_more"))
@@ -155,14 +155,14 @@ namespace Kudu.Services
 
                 message = String.Format(CultureInfo.CurrentCulture,
                             Resources.Dropbox_Synchronized,
-                            deployInfo.Entries.Count);
+                            deployInfo.Deltas.Count);
             }
             catch (Exception)
             {
                 message = String.Format(CultureInfo.CurrentCulture,
                             Resources.Dropbox_SynchronizedWithFailure,
                             _successCount,
-                            deployInfo.Entries.Count,
+                            deployInfo.Deltas.Count,
                             _failedCount);
 
                 throw;
@@ -194,7 +194,7 @@ namespace Kudu.Services
         private async Task ApplyChanges(DropboxInfo dropboxInfo, bool useOAuth20)
         {
             DropboxDeployInfo info = dropboxInfo.DeployInfo;
-            _totals = info.Entries.Count;
+            _totals = info.Deltas.Count;
 
             using (new Timer(UpdateStatusFile, state: dropboxInfo.TargetChangeset.Id, dueTime: TimeSpan.FromSeconds(5), period: TimeSpan.FromSeconds(5)))
             {
@@ -210,7 +210,7 @@ namespace Kudu.Services
             var rateLimiter = new RateLimiter(MaxFilesPerSecs * 10, TimeSpan.FromSeconds(10));
             var tasks = new List<Task>();
 
-            foreach (DropboxEntryInfo entry in info.Entries)
+            foreach (DropboxEntryInfo entry in info.Deltas)
             {
                 if (CanIgnoreEntry(parent, entry))
                 {

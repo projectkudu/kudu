@@ -97,7 +97,7 @@ namespace Kudu.Services.Test
             var fileDeltaInfo = new DropboxEntryInfo { Path = "foo/bar.txt", IsDeleted = true };
             var dirDeltaInfo = new DropboxEntryInfo { Path = "foo/baz/", IsDeleted = true, IsDirectory = true };
             var deployInfo = new DropboxDeployInfo { Path = "foo" };
-            deployInfo.Entries.AddRange(new [] { fileDeltaInfo, dirDeltaInfo });
+            deployInfo.Deltas.AddRange(new [] { fileDeltaInfo, dirDeltaInfo });
             string filePath = Path.Combine(helper.Environment.RepositoryPath, "bar.txt"),
                    dirPath = Path.Combine(helper.Environment.RepositoryPath, "baz");
 
@@ -119,7 +119,7 @@ namespace Kudu.Services.Test
             var helper = CreateDropboxHelper();
             var dirDeltaInfo = new DropboxEntryInfo { Path = "foo/qux/", IsDirectory = true };
             var deployInfo = new DropboxDeployInfo { Path = "foo" };
-            deployInfo.Entries.Add(dirDeltaInfo);
+            deployInfo.Deltas.Add(dirDeltaInfo);
             string dirPath = Path.Combine(helper.Environment.RepositoryPath, "qux");
 
             // Act
@@ -143,7 +143,7 @@ namespace Kudu.Services.Test
                             .Callback(() => Interlocked.Increment(ref processedFiles))
                             .Returns(GetFailedTask());
             var deployInfo = new DropboxDeployInfo { Path = "foo" };
-            deployInfo.Entries.AddRange(new [] 
+            deployInfo.Deltas.AddRange(new [] 
             { 
                 new DropboxEntryInfo { Path = "foo/test.txt" },
                 new DropboxEntryInfo { Path = "foo/bar.txt" },
@@ -161,7 +161,7 @@ namespace Kudu.Services.Test
 
             // Assert
             // Ensure we processed other files
-            Assert.Equal(deployInfo.Entries.Count, processedFiles);
+            Assert.Equal(deployInfo.Deltas.Count, processedFiles);
         }
 
         [Fact]
@@ -183,8 +183,8 @@ namespace Kudu.Services.Test
             // Assert
             Assert.Null(dropboxInfo.OldCursor);
             Assert.Equal("AAGWKUylpghsuMRcKQSdHSpvUW3uPVcIyGINt30oO36wDebzBoqtFFaiqzNCWV568-U_uZwdM1QGyzxYw3GxJRsCWv0G3BlOUiguFrttRsbpmA", dropboxInfo.NewCursor);
-            Assert.Equal(1, dropboxInfo.Entries.Count);
-            Assert.Equal("/foo/bar.txt", dropboxInfo.Entries[0].Path);
+            Assert.Equal(1, dropboxInfo.Deltas.Count);
+            Assert.Equal("/foo/bar.txt", dropboxInfo.Deltas[0].Path);
         }
 
         [Fact]
@@ -211,9 +211,9 @@ namespace Kudu.Services.Test
 
             // Assert
             Assert.Equal("cursor2", dropboxInfo.NewCursor);
-            Assert.Equal(2, dropboxInfo.Entries.Count);
-            Assert.Equal("/foo/bar.txt", dropboxInfo.Entries[0].Path);
-            Assert.Equal("/foo/qux.txt", dropboxInfo.Entries[1].Path);
+            Assert.Equal(2, dropboxInfo.Deltas.Count);
+            Assert.Equal("/foo/bar.txt", dropboxInfo.Deltas[0].Path);
+            Assert.Equal("/foo/qux.txt", dropboxInfo.Deltas[1].Path);
         }
 
         private DropboxHelper CreateDropboxHelper(TestMessageHandler handler = null)
