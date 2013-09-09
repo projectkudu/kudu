@@ -165,6 +165,11 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Kudu.Console\Kudu.Console.csproj">
+      <Project>{e2b0ee28-8c96-497a-ab08-605b9fd841e9}</Project>
+      <Name>Kudu.Console</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
     <ProjectReference Include="..\Kudu.Contracts\Kudu.Contracts.csproj">
       <Project>{EC0ED988-2C60-4F31-A434-645E048BFD95}</Project>
       <Name>Kudu.Contracts</Name>
@@ -247,10 +252,7 @@
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>
-    <BuildDependsOn>
-        $(BuildDependsOn);
-        PostBuildEvents
-    </BuildDependsOn>
+    <RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
   </PropertyGroup>
   <Target Name="AfterClean">
     <ItemGroup>
@@ -258,11 +260,19 @@
     </ItemGroup>
     <RemoveDir Directories="@(directoryToDelete)" />
   </Target>
-  <Target Name="PostBuildEvents">
-    <Exec Command="&quot;$(ProjectDir)\updateNodeModules.cmd&quot; &quot;$(TargetDir)&quot;" />
-    <Exec Command="&quot;$(MSBuildProgramFiles32)\Git\bin\git.exe&quot; rev-parse HEAD &gt; &quot;$(MsBuildProjectDirectory)\commit.txt&quot;" />
-  </Target>
   <Target Name="AfterBuild">
-    <Copy SourceFiles="$(SolutionDir)\Kudu.Console\bin\$(ConfigurationName)\kudu.exe" DestinationFolder="$(TargetDir)" />
+     <PropertyGroup>
+        <BuildOutputsUpdated Condition=" '$(_AssemblyTimestampBeforeCompile)' != '$(_AssemblyTimestampAfterCompile)' ">true</BuildOutputsUpdated>
+     </PropertyGroup>
+     
+     <Message Text="Running post build events" Importance="High" />
+    <Exec Command="&quot;$(ProjectDir)\updateNodeModules.cmd&quot; &quot;$(TargetDir)&quot;" Condition=" '$(BuildOutputsUpdated)' == 'true' " />
+    <Exec Command="&quot;$(MSBuildProgramFiles32)\Git\bin\git.exe&quot; rev-parse HEAD &gt; &quot;$(MsBuildProjectDirectory)\commit.txt&quot;" 
+             Condition=" '$(BuildOutputsUpdated)' == 'true' "
+    />
+  
+    <Copy SourceFiles="$(SolutionDir)\Kudu.Console\bin\$(ConfigurationName)\kudu.exe" 
+             DestinationFolder="$(TargetDir)" 
+             SkipUnchangedFiles="true" />
   </Target>
 </Project>
