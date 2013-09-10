@@ -54,7 +54,7 @@ namespace Kudu.Services.Performance
                     }
                 }
 
-                return Request.CreateResponse(HttpStatusCode.OK);
+                return Request.CreateResponse(HttpStatusCode.NotFound);
             }
         }
 
