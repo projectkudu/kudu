@@ -7,6 +7,19 @@ using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment.Generator
 {
+
+    //  Site builder class hierarchy:
+    //
+    //  ExternalCommandBuilder
+    //      GeneratorSiteBuilder
+    //          BaseBasicBuilder
+    //              BasicBuilder
+    //              BaseBasicBuilder
+    //          WapBuilder
+    //          WebSiteBuilder
+    //          CustomGeneratorCommandSiteBuilder
+    //      CustomBuilder
+
     public abstract class ExternalCommandBuilder : ISiteBuilder
     {
         protected ExternalCommandBuilder(IEnvironment environment, IDeploymentSettingsManager settings, IBuildPropertyProvider propertyProvider, string repositoryPath)

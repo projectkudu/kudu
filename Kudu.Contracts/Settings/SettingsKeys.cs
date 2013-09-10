@@ -9,6 +9,7 @@
 
         public const string DeploymentBranch = "deployment_branch";
         public const string BuildArgs = "SCM_BUILD_ARGS";
+        public const string ScriptGeneratorArgs = "SCM_SCRIPT_GENERATOR_ARGS";
         public const string TraceLevel = "SCM_TRACE_LEVEL";
         public const string CommandIdleTimeout = "SCM_COMMAND_IDLE_TIMEOUT";
         public const string LogStreamTimeout = "SCM_LOGSTREAM_TIMEOUT";
