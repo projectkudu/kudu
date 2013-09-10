@@ -170,7 +170,7 @@ namespace Kudu.Services.Performance
             
             if(details)
             {
-                threadInfo.Process = new Uri(href.Substring(0, href.IndexOf(@"/threads/")));
+                threadInfo.Process = new Uri(href.Substring(0, href.IndexOf(@"/threads/", StringComparison.OrdinalIgnoreCase)));
                 threadInfo.BasePriority = SafeGetValue(() => thread.BasePriority, -1);
                 threadInfo.PriorityLevel = thread.PriorityLevel.ToString();
                 threadInfo.CurrentPriority = SafeGetValue(() => thread.CurrentPriority, -1);
