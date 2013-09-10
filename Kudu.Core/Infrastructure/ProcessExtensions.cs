@@ -35,7 +35,7 @@ namespace Kudu.Core.Infrastructure
             {
                 SafeKillProcess(process, tracer);
             }
-        }
+        }              
 
         public static IEnumerable<Process> GetChildren(this Process process, ITracer tracer, bool recursive = true)
         {

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -37,6 +38,44 @@ namespace Kudu.Services.Performance
             _settings = settings;
             _fileSystem = fileSystem;
         }
+
+        [HttpGet]
+        public HttpResponseMessage GetThread(int processId, int threadId)
+        {
+            using (_tracer.Step("ProcessController.GetThread"))
+            {
+                var process = GetProcessById(processId);
+                var thread = process.Threads.Cast<ProcessThread>().FirstOrDefault(t => t.Id == threadId);
+
+                if (thread != null)
+                {
+                    return Request.CreateResponse(HttpStatusCode.OK, GetProcessThreadInfo(thread, Request.RequestUri.AbsoluteUri, true));
+                }
+                else
+                {
+                    return Request.CreateResponse(HttpStatusCode.NotFound);
+                }
+            }
+        }
+
+
+        [HttpGet]
+        public HttpResponseMessage GetAllThreads(int id)
+        {
+            using (_tracer.Step("ProcessController.GetAllThreads"))
+            {
+                var process = GetProcessById(id);
+                var results = new List<ProcessThreadInfo>();
+
+                foreach (ProcessThread thread in process.Threads)
+                {
+                    results.Add(GetProcessThreadInfo(thread, Request.RequestUri.AbsoluteUri.TrimEnd('/') + '/' + thread.Id, false));
+                }
+
+                return Request.CreateResponse(HttpStatusCode.OK, results);
+            }
+        }
+
 
         [HttpGet]
         public HttpResponseMessage GetAllProcesses()
@@ -109,6 +148,51 @@ namespace Kudu.Services.Performance
             }
         }
 
+        private IEnumerable<ProcessThreadInfo> GetThreads(Process process, string href)
+        {
+            List<ProcessThreadInfo> threads = new List<ProcessThreadInfo>();
+            foreach (ProcessThread thread in process.Threads)
+            {
+                threads.Add(GetProcessThreadInfo(thread, href + @"/threads/" + thread.Id));
+            }
+
+            return threads;
+        }
+
+        private ProcessThreadInfo GetProcessThreadInfo(ProcessThread thread, string href, bool details = false)
+        {
+            var threadInfo = new ProcessThreadInfo
+            {
+                Id = thread.Id,
+                State = thread.ThreadState.ToString(),
+                Href = new Uri(href)
+            };
+            
+            if(details)
+            {
+                threadInfo.Process = new Uri(href.Substring(0, href.IndexOf(@"/threads/", StringComparison.OrdinalIgnoreCase)));               
+                threadInfo.BasePriority = SafeGetValue(() => thread.BasePriority, -1);
+                threadInfo.PriorityLevel = thread.PriorityLevel.ToString();
+                threadInfo.CurrentPriority = SafeGetValue(() => thread.CurrentPriority, -1);
+                threadInfo.StartTime = SafeGetValue(() => thread.StartTime.ToUniversalTime(), DateTime.MinValue);
+                threadInfo.TotalProcessorTime = SafeGetValue(() => thread.TotalProcessorTime, TimeSpan.FromSeconds(-1));
+                threadInfo.UserProcessorTime = SafeGetValue(() => thread.UserProcessorTime, TimeSpan.FromSeconds(-1));
+                threadInfo.PriviledgedProcessorTime = SafeGetValue(() => thread.PrivilegedProcessorTime, TimeSpan.FromSeconds(-1));
+                threadInfo.StartAddress = "0x" + thread.StartAddress.ToInt64().ToString("X");
+
+                if (thread.ThreadState == ThreadState.Wait)
+                {
+                    threadInfo.WaitReason = thread.WaitReason.ToString();
+                }
+                else
+                {
+                    threadInfo.WaitReason = "Cannot obtain wait reason unless thread is in waiting state";
+                }
+            }
+
+            return threadInfo;
+        }
+
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "")]
         private ProcessInfo GetProcessInfo(Process process, string href, bool details = false)
         {
@@ -152,10 +236,11 @@ namespace Kudu.Services.Performance
                 info.VirtualMemorySize64 = SafeGetValue(() => process.VirtualMemorySize64, -1);
                 info.PeakVirtualMemorySize64 = SafeGetValue(() => process.PeakVirtualMemorySize64, -1);
                 info.PrivateMemorySize64 = SafeGetValue(() => process.PrivateMemorySize64, -1);
-
+                
                 info.MiniDump = new Uri(selfLink + "/dump");
                 info.Parent = new Uri(selfLink, SafeGetValue(() => process.GetParentId(_tracer), 0).ToString());
                 info.Children = SafeGetValue(() => process.GetChildren(_tracer, recursive: false), Enumerable.Empty<Process>()).Select(c => new Uri(selfLink, c.Id.ToString()));
+                info.Threads = SafeGetValue(() => GetThreads(process, selfLink.ToString()), Enumerable.Empty<ProcessThreadInfo>());
             }
 
             return info;
