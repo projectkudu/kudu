@@ -27,6 +27,9 @@ namespace Kudu.Core.Diagnostics
         [DataMember(Name = "children", EmitDefaultValue = false)]
         public IEnumerable<Uri> Children { get; set; }
 
+        [DataMember(Name = "threads", EmitDefaultValue = false)]
+        public IEnumerable<ProcessThreadInfo> Threads { get; set; }
+
         [DataMember(Name = "file_name", EmitDefaultValue = false)]
         public string FileName { get; set; }
 
