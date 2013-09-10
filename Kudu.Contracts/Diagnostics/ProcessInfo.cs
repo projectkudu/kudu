@@ -14,7 +14,7 @@ namespace Kudu.Core.Diagnostics
 
         [DataMember(Name = "name")]
         public string Name { get; set; }
-        
+
         [DataMember(Name = "href", EmitDefaultValue = false)]
         public Uri Href { get; set; }
 
