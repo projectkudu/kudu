@@ -14,7 +14,7 @@ namespace Kudu.Core.Deployment.Generator
     //      GeneratorSiteBuilder
     //          BaseBasicBuilder
     //              BasicBuilder
-    //              BaseBasicBuilder
+    //              NodeSiteBuilder
     //          WapBuilder
     //          WebSiteBuilder
     //          CustomGeneratorCommandSiteBuilder
