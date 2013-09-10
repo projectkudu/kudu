@@ -2,6 +2,8 @@
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
+using Kudu.Contracts.Settings;
 using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
@@ -125,6 +127,27 @@ namespace Kudu.FunctionalTests
                     kuduSetVar + "=" + kuduSetVarText,
                     expectedLogFeedback };
                 KuduAssert.VerifyLogOutput(appManager, results[0].Id, expectedStrings);
+            });
+        }
+
+        [Fact]
+        public async Task CustomGeneratorArgs()
+        {
+            await ApplicationManager.RunAsync("UpdatedTargetPathShouldChangeDeploymentDestination", async appManager =>
+            {
+                // Even though it's a WAP, use custom script generator arguments to treat it as a web site,
+                // deploying only its content folder
+                await appManager.SettingsManager.SetValue(SettingsKeys.ScriptGeneratorArgs, "--basic -p MvcApplication14/content");
+
+                using (TestRepository testRepository = Git.Clone("Mvc3AppWithTestProject"))
+                {
+                    appManager.GitDeploy(testRepository.PhysicalPath, "master");
+                }
+                var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                Assert.Equal(1, results.Count);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
+                KuduAssert.VerifyUrl(appManager.SiteUrl + "themes/base/jquery.ui.accordion.css", ".ui-accordion-header");
             });
         }
 

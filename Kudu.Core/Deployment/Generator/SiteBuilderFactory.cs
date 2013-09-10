@@ -36,6 +36,13 @@ namespace Kudu.Core.Deployment.Generator
                 return new CustomBuilder(_environment, settings, _propertyProvider, repositoryRoot, command);
             }
 
+            // If the user provided specific generator arguments, that overrides any detection logic
+            string scriptGeneratorArgs = settings.GetValue(SettingsKeys.ScriptGeneratorArgs);
+            if (!String.IsNullOrEmpty(scriptGeneratorArgs))
+            {
+                return new CustomGeneratorCommandSiteBuilder(_environment, settings, _propertyProvider, repositoryRoot, scriptGeneratorArgs);
+            }
+
             // If the repository has an explicit pointer to a project path to be deployed
             // then use it.
             string targetProjectPath = settings.GetValue(SettingsKeys.Project);
