@@ -14,7 +14,7 @@ namespace Kudu.Core.Diagnostics
 
         [DataMember(Name = "name")]
         public string Name { get; set; }
-
+        
         [DataMember(Name = "href", EmitDefaultValue = false)]
         public Uri Href { get; set; }
 
@@ -26,6 +26,9 @@ namespace Kudu.Core.Diagnostics
 
         [DataMember(Name = "children", EmitDefaultValue = false)]
         public IEnumerable<Uri> Children { get; set; }
+
+        [DataMember(Name = "threads", EmitDefaultValue = false)]
+        public IEnumerable<ProcessThreadInfo> Threads { get; set; }
 
         [DataMember(Name = "file_name", EmitDefaultValue = false)]
         public string FileName { get; set; }

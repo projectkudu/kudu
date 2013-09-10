@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Diagnostics;
 
 namespace Kudu.Core.Infrastructure
 {
@@ -35,7 +36,7 @@ namespace Kudu.Core.Infrastructure
             {
                 SafeKillProcess(process, tracer);
             }
-        }
+        }              
 
         public static IEnumerable<Process> GetChildren(this Process process, ITracer tracer, bool recursive = true)
         {
