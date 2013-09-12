@@ -225,6 +225,9 @@
   <data name="Error_FullMiniDumpNotSupported" xml:space="preserve">
     <value>Site mode ({0}) does not support full minidump.</value>
   </data>
+  <data name="Error_DumpFormatNotSupported" xml:space="preserve">
+    <value>Dump format ({0}) is not supported.</value>
+  </data>
   <data name="Dropbox_Synchronized" xml:space="preserve">
     <value>Synchronized {0} change(s) from Dropbox.</value>
   </data>

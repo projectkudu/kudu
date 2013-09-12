@@ -58,7 +58,6 @@ namespace Kudu.Services.Performance
             }
         }
 
-
         [HttpGet]
         public HttpResponseMessage GetAllThreads(int id)
         {
@@ -108,43 +107,172 @@ namespace Kudu.Services.Performance
         }
 
         [HttpGet]
-        public HttpResponseMessage MiniDump(int id, int dumpType = 0)
+        public HttpResponseMessage MiniDump(int id, int dumpType = 0, string format = null)
         {
             using (_tracer.Step("ProcessController.MiniDump"))
             {
+                DumpFormat dumpFormat = ParseDumpFormat(format, DumpFormat.Raw);
+                if (dumpFormat != DumpFormat.Raw && dumpFormat != DumpFormat.Zip)
+                {
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest,
+                        String.Format(CultureInfo.CurrentCulture, Resources.Error_DumpFormatNotSupported, dumpFormat));
+                }
+
                 string sitePolicy = _settings.GetWebSitePolicy();
                 if ((MINIDUMP_TYPE)dumpType == MINIDUMP_TYPE.WithFullMemory && sitePolicy.Equals(FreeSitePolicy, StringComparison.OrdinalIgnoreCase))
                 {
-                    return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, 
+                    return Request.CreateErrorResponse(HttpStatusCode.InternalServerError,
                         String.Format(CultureInfo.CurrentCulture, Resources.Error_FullMiniDumpNotSupported, sitePolicy));
                 }
 
                 var process = GetProcessById(id);
 
                 string dumpFile = Path.Combine(_environment.LogFilesPath, "minidump", "minidump.dmp");
-                FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(dumpFile));
+                FileSystemHelpers.EnsureDirectory(_fileSystem, Path.GetDirectoryName(dumpFile));
                 FileSystemHelpers.DeleteFileSafe(_fileSystem, dumpFile);
 
                 try
                 {
-                    _tracer.Trace("MiniDump pid={0}, name={1}, file={2}", process.Id, process.ProcessName, dumpFile);
-                    process.MiniDump(dumpFile, (MINIDUMP_TYPE)dumpType);
-                    _tracer.Trace("MiniDump size={0}", new FileInfo(dumpFile).Length);
+                    using (_tracer.Step(String.Format("MiniDump pid={0}, name={1}, file={2}", process.Id, process.ProcessName, dumpFile)))
+                    {
+                        process.MiniDump(dumpFile, (MINIDUMP_TYPE)dumpType);
+                        _tracer.Trace("MiniDump size={0}", new FileInfo(dumpFile).Length);
+                    }
                 }
                 catch (Exception ex)
                 {
+                    _tracer.TraceError(ex);
                     FileSystemHelpers.DeleteFileSafe(_fileSystem, dumpFile);
                     return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
                 }
 
-                var context = new System.Web.HttpContextWrapper(System.Web.HttpContext.Current);
-                string responseFileName = String.Format(CultureInfo.InvariantCulture, "{0}-{1}-{2:MM-dd-H:mm:ss}.dmp", process.ProcessName, InstanceIdUtility.GetShortInstanceId(context), DateTime.UtcNow);
-                HttpResponseMessage response = Request.CreateResponse();
-                response.Content = new StreamContent(MiniDumpStream.OpenRead(dumpFile, _fileSystem));
-                response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-                response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
-                response.Content.Headers.ContentDisposition.FileName = responseFileName;
-                return response;
+                if (dumpFormat == DumpFormat.Raw)
+                {
+                    string responseFileName = GetResponseFileName(process.ProcessName, "dmp");
+
+                    HttpResponseMessage response = Request.CreateResponse();
+                    response.Content = new StreamContent(FileStreamWrapper.OpenRead(dumpFile, _fileSystem));
+                    response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                    response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
+                    response.Content.Headers.ContentDisposition.FileName = responseFileName;
+                    return response;
+                }
+                else if (dumpFormat == DumpFormat.Zip)
+                {
+                    string responseFileName = GetResponseFileName(process.ProcessName, "zip");
+
+                    HttpResponseMessage response = Request.CreateResponse();
+                    response.Content = ZipStreamContent.Create(responseFileName, _tracer, zip =>
+                    {
+                        try
+                        {
+                            zip.AddFile(dumpFile, String.Empty);
+                        }
+                        finally
+                        {
+                            FileSystemHelpers.DeleteFileSafe(_fileSystem, dumpFile);
+                        }
+
+                        foreach (var fileName in new[] { "sos.dll", "mscordacwks.dll" })
+                        {
+                            string filePath = Path.Combine(ProcessExtensions.ClrRuntimeDirectory, fileName);
+                            if (_fileSystem.File.Exists(filePath))
+                            {
+                                zip.AddFile(filePath, String.Empty);
+                            }
+                        }
+                    });
+                    return response;
+                }
+                else
+                {
+                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest,
+                        String.Format(CultureInfo.CurrentCulture, Resources.Error_DumpFormatNotSupported, dumpFormat));
+                }
+            }
+        }
+
+        [HttpGet]
+        public HttpResponseMessage GCDump(int id, int maxDumpCountK = 0, string format = null)
+        {
+            using (_tracer.Step("ProcessController.GCDump"))
+            {
+                DumpFormat dumpFormat = ParseDumpFormat(format, DumpFormat.DiagSession);
+                var process = GetProcessById(id);
+                var ext = dumpFormat == DumpFormat.DiagSession ? "diagsession" : "gcdump";
+
+                string dumpFile = Path.Combine(_environment.LogFilesPath, "minidump", "dump." + ext);
+                FileSystemHelpers.EnsureDirectory(_fileSystem, Path.GetDirectoryName(dumpFile));
+                FileSystemHelpers.DeleteFileSafe(_fileSystem, dumpFile);
+
+                string resourcePath = GetResponseFileName(process.ProcessName, "gcdump");
+                try
+                {
+                    using (_tracer.Step(String.Format("GCDump pid={0}, name={1}, file={2}", process.Id, process.ProcessName, dumpFile)))
+                    {
+                        process.GCDump(dumpFile, resourcePath, maxDumpCountK, _tracer, _settings.GetCommandIdleTimeout());
+                        _tracer.Trace("GCDump size={0}", new FileInfo(dumpFile).Length);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _tracer.TraceError(ex);
+                    FileSystemHelpers.DeleteFileSafe(_fileSystem, dumpFile);
+                    return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
+                }
+
+                if (dumpFormat == DumpFormat.Zip)
+                {
+                    string responseFileName = GetResponseFileName(process.ProcessName, "zip");
+                    HttpResponseMessage response = Request.CreateResponse();
+                    response.Content = ZipStreamContent.Create(responseFileName, _tracer, zip =>
+                    {
+                        try
+                        {
+                            zip.AddFile(dumpFile, String.Empty);
+                        }
+                        finally
+                        {
+                            FileSystemHelpers.DeleteFileSafe(_fileSystem, dumpFile);
+                        }
+                    });
+                    return response;
+                }
+                else
+                {
+                    string responseFileName = GetResponseFileName(process.ProcessName, ext);
+                    HttpResponseMessage response = Request.CreateResponse();
+                    response.Content = new StreamContent(FileStreamWrapper.OpenRead(dumpFile, _fileSystem));
+                    response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                    response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
+                    response.Content.Headers.ContentDisposition.FileName = responseFileName;
+                    return response;
+                }
+            }
+        }
+
+        private static string GetResponseFileName(string prefix, string ext)
+        {
+            var context = new System.Web.HttpContextWrapper(System.Web.HttpContext.Current);
+            return String.Format(CultureInfo.InvariantCulture, "{0}-{1}-{2:MM-dd-HH-mm-ss}.{3}", prefix, InstanceIdUtility.GetShortInstanceId(context), DateTime.UtcNow, ext);
+        }
+
+        private DumpFormat ParseDumpFormat(string format, DumpFormat defaultFormat)
+        {
+            if (String.IsNullOrEmpty(format))
+            {
+                return defaultFormat;
+            }
+
+            try
+            {
+                return (DumpFormat)Enum.Parse(typeof(DumpFormat), format, ignoreCase: true);
+            }
+            catch (Exception ex)
+            {
+                _tracer.TraceError(ex);
+
+                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.BadRequest, ex.Message));
             }
         }
 
@@ -167,10 +295,10 @@ namespace Kudu.Services.Performance
                 State = thread.ThreadState.ToString(),
                 Href = new Uri(href)
             };
-            
-            if(details)
+
+            if (details)
             {
-                threadInfo.Process = new Uri(href.Substring(0, href.IndexOf(@"/threads/", StringComparison.OrdinalIgnoreCase)));               
+                threadInfo.Process = new Uri(href.Substring(0, href.IndexOf(@"/threads/", StringComparison.OrdinalIgnoreCase)));
                 threadInfo.BasePriority = SafeGetValue(() => thread.BasePriority, -1);
                 threadInfo.PriorityLevel = thread.PriorityLevel.ToString();
                 threadInfo.CurrentPriority = SafeGetValue(() => thread.CurrentPriority, -1);
@@ -236,8 +364,12 @@ namespace Kudu.Services.Performance
                 info.VirtualMemorySize64 = SafeGetValue(() => process.VirtualMemorySize64, -1);
                 info.PeakVirtualMemorySize64 = SafeGetValue(() => process.PeakVirtualMemorySize64, -1);
                 info.PrivateMemorySize64 = SafeGetValue(() => process.PrivateMemorySize64, -1);
-                
+
                 info.MiniDump = new Uri(selfLink + "/dump");
+                if (ProcessExtensions.SupportGCDump)
+                {
+                    info.GCDump = new Uri(selfLink + "/gcdump");
+                }
                 info.Parent = new Uri(selfLink, SafeGetValue(() => process.GetParentId(_tracer), 0).ToString());
                 info.Children = SafeGetValue(() => process.GetChildren(_tracer, recursive: false), Enumerable.Empty<Process>()).Select(c => new Uri(selfLink, c.Id.ToString()));
                 info.Threads = SafeGetValue(() => GetThreads(process, selfLink.ToString()), Enumerable.Empty<ProcessThreadInfo>());
@@ -272,12 +404,19 @@ namespace Kudu.Services.Performance
             return defaultValue;
         }
 
-        public class MiniDumpStream : DelegatingStream
+        public enum DumpFormat
+        {
+            Raw,
+            Zip,
+            DiagSession,
+        }
+
+        public class FileStreamWrapper : DelegatingStream
         {
             private readonly string _path;
             private readonly IFileSystem _fileSystem;
 
-            private MiniDumpStream(string path, IFileSystem fileSystem)
+            private FileStreamWrapper(string path, IFileSystem fileSystem)
                 : base(fileSystem.File.OpenRead(path))
             {
                 _path = path;
@@ -298,7 +437,7 @@ namespace Kudu.Services.Performance
 
             public static Stream OpenRead(string path, IFileSystem fileSystem)
             {
-                return new MiniDumpStream(path, fileSystem);
+                return new FileStreamWrapper(path, fileSystem);
             }
         }
     }

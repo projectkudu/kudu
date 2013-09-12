@@ -21,6 +21,9 @@ namespace Kudu.Core.Diagnostics
         [DataMember(Name = "minidump", EmitDefaultValue = false)]
         public Uri MiniDump { get; set; }
 
+        [DataMember(Name = "gcdump", EmitDefaultValue = false)]
+        public Uri GCDump { get; set; }
+
         [DataMember(Name = "parent", EmitDefaultValue = false)]
         public Uri Parent { get; set; }
 

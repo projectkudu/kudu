@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Abstractions;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -15,6 +14,40 @@ namespace Kudu.Core.Infrastructure
     // http://stackoverflow.com/questions/394816/how-to-get-parent-process-in-net-in-managed-way
     public static class ProcessExtensions
     {
+        private const string GCDump32Exe = @"%ProgramFiles(x86)%\vsdiagagent\x86\GCDump32.exe";
+        private const string GCDump64Exe = @"%ProgramFiles(x86)%\vsdiagagent\x64\GCDump64.exe";
+
+        private static Lazy<string> _clrRuntimeDirectory = new Lazy<string>(() =>
+        {
+            return RuntimeEnvironment.GetRuntimeDirectory();
+        });
+
+        private static Lazy<string> _gcDumpExe = new Lazy<string>(() =>
+        {
+            string gcDumpExe = System.Environment.ExpandEnvironmentVariables(GCDump32Exe);
+            if (ClrRuntimeDirectory.ToLowerInvariant().Contains(@"\framework64\"))
+            {
+                gcDumpExe = System.Environment.ExpandEnvironmentVariables(GCDump64Exe);
+            }
+
+            return gcDumpExe;
+        });
+
+        private static Lazy<bool> _supportGCDump = new Lazy<bool>(() =>
+        {
+            return File.Exists(_gcDumpExe.Value);
+        });
+
+        public static string ClrRuntimeDirectory
+        {
+            get { return _clrRuntimeDirectory.Value; }
+        }
+
+        public static bool SupportGCDump
+        {
+            get { return _supportGCDump.Value; }
+        }
+
         public static void Kill(this Process process, bool includesChildren, ITracer tracer)
         {
             try
@@ -131,6 +164,12 @@ namespace Kudu.Core.Infrastructure
                     throw new Win32Exception(Marshal.GetLastWin32Error());
                 }
             }
+        }
+
+        public static void GCDump(this Process process, string dumpFile, string resourcePath, int maxDumpCountK, ITracer tracer, TimeSpan idleTimeout)
+        {
+            var exe = new Executable(_gcDumpExe.Value, Path.GetDirectoryName(dumpFile), idleTimeout);
+            exe.Execute(tracer, "\"{0}\" \"{1}\" \"{2}\" \"{3}\"", process.Id, dumpFile, resourcePath, maxDumpCountK);  
         }
 
         private static Process SafeGetProcessById(int pid)

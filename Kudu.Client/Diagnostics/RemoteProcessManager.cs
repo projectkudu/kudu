@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using Kudu.Client.Infrastructure;
 using Kudu.Core.Diagnostics;
@@ -37,15 +38,45 @@ namespace Kudu.Client.Diagnostics
             response.EnsureSuccessful().Dispose();
         }
 
-        public async Task<Stream> MiniDump(int id = 0, int dumpType = 0)
+        public async Task<Stream> MiniDump(int id = 0, int dumpType = 0, string format = null)
         {
-            string path = id + "/dump";
-            if (dumpType != 0)
+            var path = new StringBuilder();
+            path.AppendFormat("{0}/dump", id);
+
+            var separator = '?';
+            if (dumpType > 0)
             {
-                path += "?dumpType=" + dumpType;
+                path.AppendFormat("{0}dumpType={1}", separator, dumpType);
+                separator = '&';
+            }
+            if (!String.IsNullOrEmpty(format))
+            {
+                path.AppendFormat("{0}format={1}", separator, format);
+                separator = '&';
             }
 
-            HttpResponseMessage response = await Client.GetAsync(path);
+            HttpResponseMessage response = await Client.GetAsync(path.ToString());
+            return await response.EnsureSuccessful().Content.ReadAsStreamAsync();
+        }
+
+        public async Task<Stream> GCDump(int id = 0, int maxDumpCountK = 0, string format = null)
+        {
+            var path = new StringBuilder();
+            path.AppendFormat("{0}/gcdump", id);
+
+            var separator = '?';
+            if (maxDumpCountK > 0)
+            {
+                path.AppendFormat("{0}maxDumpCountK={1}", separator, maxDumpCountK);
+                separator = '&';
+            }
+            if (!String.IsNullOrEmpty(format))
+            {
+                path.AppendFormat("{0}format={1}", separator, format);
+                separator = '&';
+            }
+
+            HttpResponseMessage response = await Client.GetAsync(path.ToString());
             return await response.EnsureSuccessful().Content.ReadAsStreamAsync();
         }
     }

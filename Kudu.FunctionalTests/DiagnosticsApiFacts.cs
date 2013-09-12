@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Kudu.Client;
 using Kudu.Client.Infrastructure;
+using Kudu.Core.Infrastructure;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
 using Newtonsoft.Json;
@@ -77,14 +78,39 @@ namespace Kudu.FunctionalTests
                 Assert.True(processes.Count() >= 1);
                 Assert.True(processes.Any(p => p.Id == currentId));
 
-                // Test minidump
-                var stream = new MemoryStream();
-                using (var minidump = await appManager.ProcessManager.MiniDump())
+                // Test process dumps
+                foreach (var format in new[] { "raw", "zip", "diagsession" })
                 {
-                    Assert.NotNull(minidump);
-                    await minidump.CopyToAsync(stream);
+                    if (format != "diagsession")
+                    {
+                        TestTracer.Trace("Test minidump format={0}", format);
+                        using (var stream = new MemoryStream())
+                        {
+                            using (var minidump = await appManager.ProcessManager.MiniDump(format: format))
+                            {
+                                Assert.NotNull(minidump);
+                                await minidump.CopyToAsync(stream);
+                            }
+                            TestTracer.Trace("Test minidump lenth={0}", stream.Length);
+                            Assert.True(stream.Length > 0);
+                        }
+                    }
+
+                    if (ProcessExtensions.SupportGCDump)
+                    {
+                        TestTracer.Trace("Test gcdump format={0}", format);
+                        using (var stream = new MemoryStream())
+                        {
+                            using (var gcdump = await appManager.ProcessManager.GCDump(format: format))
+                            {
+                                Assert.NotNull(gcdump);
+                                await gcdump.CopyToAsync(stream);
+                            }
+                            TestTracer.Trace("Test gcdump lenth={0}", stream.Length);
+                            Assert.True(stream.Length > 0);
+                        }
+                    }
                 }
-                Assert.True(stream.Length > 0);
 
                 // Test kill process
                 await KuduAssert.ThrowsUnwrappedAsync<HttpRequestException>(() => appManager.ProcessManager.KillProcessAsync(currentId));

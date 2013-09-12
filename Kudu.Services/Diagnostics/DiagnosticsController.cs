@@ -5,8 +5,8 @@ using System.IO.Abstractions;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Web.Http;
+using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Settings;
 using Kudu.Services.Infrastructure;
@@ -18,9 +18,9 @@ namespace Kudu.Services.Performance
     {
         private readonly JsonSettings _settings;
         private readonly string[] _paths;
-        private static object _lockObj = new object();
+        private readonly ITracer _tracer;
 
-        public DiagnosticsController(IEnvironment environment, IFileSystem fileSystem)
+        public DiagnosticsController(IEnvironment environment, IFileSystem fileSystem, ITracer tracer)
         {
             // Setup the diagnostics service to collect information from the following paths:
             // 1. The deployments folder
@@ -33,6 +33,7 @@ namespace Kudu.Services.Performance
             };
 
             _settings = new JsonSettings(fileSystem, Path.Combine(environment.DiagnosticsPath, Constants.SettingsJsonFile));
+            _tracer = tracer;
         }
 
         /// <summary>
@@ -43,25 +44,12 @@ namespace Kudu.Services.Performance
         [SuppressMessage("Microsoft.Usage", "CA2202", Justification = "The ZipArchive is instantiated in a way that the stream is not closed on dispose")]
         public HttpResponseMessage GetLog()
         {
-            lock (_lockObj)
+            HttpResponseMessage response = Request.CreateResponse();
+            response.Content = ZipStreamContent.Create(String.Format("dump-{0:MM-dd-HH-mm-ss}.zip", DateTime.UtcNow), _tracer, zip =>
             {
-                HttpResponseMessage response = Request.CreateResponse();
-
-                using (var stream = new MemoryStream())
-                {
-                    using (var zip = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: true))
-                    {
-                        AddFilesToZip(zip);
-                        
-                    }
-                    response.Content = stream.AsContent();
-                }
-
-                response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
-                response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
-                response.Content.Headers.ContentDisposition.FileName = String.Format("dump-{0:MM-dd-H:mm:ss}.zip", DateTime.UtcNow);
-                return response;
-            }
+                AddFilesToZip(zip);
+            });
+            return response;
         }
 
         private void AddFilesToZip(ZipArchive zip)
