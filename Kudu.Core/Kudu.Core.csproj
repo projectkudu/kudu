@@ -164,6 +164,10 @@
     <Content Include="Scripts\postdeployment.cmd">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="..\Build\NuGet.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Scripts\NuGet.exe</Link>
+    </Content>
     <None Include="Scripts\postdeployment">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -191,6 +195,10 @@
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="BeforeBuild">
+    <!-- Ensure NuGet.exe exists in the Build directory prior to building this project. -->
+    <MSBuild Projects="..\Build\NuGet.targets" Targets="CheckPrerequisites" />
+  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
