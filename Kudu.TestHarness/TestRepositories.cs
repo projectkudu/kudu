@@ -44,6 +44,7 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/WebDeploySamples.git",              "ee3a42b"),
             new TestRepositoryInfo("https://github.com/KuduApps/WebSiteInSolution.git",             "efee8af"),
             new TestRepositoryInfo("https://github.com/KuduApps/NodeWithSolutions.git",             "bd16404"),
+            new TestRepositoryInfo("https://github.com/KuduApps/MvcApplicationWithNuGetAutoRestore","1e269b52"),
         };
 
         private static Dictionary<string, TestRepositoryInfo> _repos;

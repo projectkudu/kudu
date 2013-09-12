@@ -174,6 +174,12 @@ namespace Kudu.FunctionalTests
             PushAndDeployApps("MVCAppWithLatestNuget", "master", "MVCAppWithLatestNuget", HttpStatusCode.OK, "Deployment successful");
         }
 
+        [Fact]
+        public void PushAndDeployMVCAppWithNuGetAutoRestore()
+        {
+            PushAndDeployApps("MvcApplicationWithNuGetAutoRestore", "master", "MvcApplicationWithNuGetAutoRestore", HttpStatusCode.OK, "Deployment successful");
+        }
+
         //Common code
         internal static void PushAndDeployApps(string repoCloneUrl, string defaultBranchName,
                                               string verificationText, HttpStatusCode expectedResponseCode, string verificationLogText,
