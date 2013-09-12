@@ -241,6 +241,15 @@ namespace Kudu.Services {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Dump format ({0}) is not supported..
+        /// </summary>
+        internal static string Error_DumpFormatNotSupported {
+            get {
+                return ResourceManager.GetString("Error_DumpFormatNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The json payload is empty..
         /// </summary>
         internal static string Error_EmptyPayload {

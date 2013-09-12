@@ -33,7 +33,7 @@ namespace Kudu.Core.Test
                       .Returns(() => new MemoryStream());
 
             // Test
-            using (var stream = ProcessController.MiniDumpStream.OpenRead(path, fileSystem.Object))
+            using (var stream = ProcessController.FileStreamWrapper.OpenRead(path, fileSystem.Object))
             {
             }
 
@@ -58,7 +58,7 @@ namespace Kudu.Core.Test
                       .Returns(() => new MemoryStream());
 
             // Test
-            var stream = ProcessController.MiniDumpStream.OpenRead(path, fileSystem.Object);
+            var stream = ProcessController.FileStreamWrapper.OpenRead(path, fileSystem.Object);
             stream.Close();
 
             // Assert

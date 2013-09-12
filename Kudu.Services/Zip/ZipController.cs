@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.IO.Abstractions;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
@@ -25,8 +23,7 @@ namespace Kudu.Services.Deployment
         protected override Task<HttpResponseMessage> CreateDirectoryGetResponse(DirectoryInfoBase info, string localFilePath)
         {
             HttpResponseMessage response = Request.CreateResponse();
-            var ms = new MemoryStream();
-            using (var zip = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
+            response.Content = ZipStreamContent.Create(Path.GetFileName(Path.GetDirectoryName(localFilePath)) + ".zip", Tracer,  zip =>
             {
                 foreach (FileSystemInfoBase fileSysInfo in info.GetFileSystemInfos())
                 {
@@ -41,15 +38,7 @@ namespace Kudu.Services.Deployment
                         zip.AddFile(fileSysInfo.FullName, String.Empty);
                     }
                 }
-            }
-
-            ms.Seek(0, SeekOrigin.Begin);
-            response.Content = new StreamContent(ms);
-            response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
-            response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
-
-            // Name the zip after the folder. e.g. "c:\foo\bar\" --> "bar"
-            response.Content.Headers.ContentDisposition.FileName = Path.GetFileName(Path.GetDirectoryName(localFilePath)) + ".zip";
+            });
             return Task.FromResult(response);
         }
 
