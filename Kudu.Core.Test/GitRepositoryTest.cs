@@ -120,6 +120,8 @@ Date:   Thu Jul 7 19:05:40 2011 -0700
                        .Returns(String.Empty);
             environment.SetupGet(e => e.SiteRootPath)
                        .Returns(String.Empty);
+            environment.SetupGet(e => e.HomePath)
+                       .Returns(String.Empty);
 
             IRepository repository = initialized ? new Mock<IRepository>().Object : null;
             var server = new GitExeServer(environment.Object, initLock, null, factory.Object, env.Object, settings.Object, trace.Object);

@@ -106,7 +106,7 @@
         </tr>
         <tr>
             <%
-                var sitePath = Kudu.Services.Web.PathResolver.ResolveSiteRootPath();
+                var sitePath = Kudu.Services.Web.PathResolver.ResolveRootPath();
             %>
             <td><strong>Site folder</strong></td>
             <td class="path"><%= sitePath %></td>

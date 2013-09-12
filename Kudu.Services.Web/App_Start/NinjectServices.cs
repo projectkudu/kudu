@@ -429,8 +429,8 @@ namespace Kudu.Services.Web.App_Start
 
         private static IEnvironment GetEnvironment(IDeploymentSettingsManager settings = null)
         {
-            string siteRoot = PathResolver.ResolveSiteRootPath();
-            string root = Path.GetFullPath(Path.Combine(siteRoot, ".."));
+            string root = PathResolver.ResolveRootPath();
+            string siteRoot = Path.Combine(root, Constants.SiteFolder);
             string webRootPath = Path.Combine(siteRoot, Constants.WebRoot);
             string deployCachePath = Path.Combine(siteRoot, Constants.DeploymentCachePath);
             string diagnosticsPath = Path.Combine(siteRoot, Constants.DiagnosticsPath);

@@ -47,6 +47,7 @@ namespace Kudu.Core
             _fileSystem = fileSystem;
             RootPath = rootPath;
             SiteRootPath = siteRootPath;
+            HomePath = siteRootPath;
             _tempPath = tempPath;
             _repositoryPath = repositoryPath;
             _webRootPath = webRootPath;
@@ -116,6 +117,12 @@ namespace Kudu.Core
         }
 
         public string RootPath
+        {
+            get;
+            private set;
+        }
+
+        public string HomePath
         {
             get;
             private set;

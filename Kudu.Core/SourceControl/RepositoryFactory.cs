@@ -82,7 +82,7 @@ namespace Kudu.Core.SourceControl
             else if (repositoryType == RepositoryType.Mercurial)
             {
                 FileSystemHelpers.EnsureDirectory(_environment.RepositoryPath);
-                repository = new HgRepository(_environment.RepositoryPath, _environment.SiteRootPath, _settings, _traceFactory);
+                repository = new HgRepository(_environment.RepositoryPath, _environment.HomePath, _settings, _traceFactory);
             }
             else
             {
@@ -112,7 +112,7 @@ namespace Kudu.Core.SourceControl
             else if (IsHgRepository)
             {
                 tracer.Trace("Found mercurial repository at {0}", _environment.RepositoryPath);
-                return new HgRepository(_environment.RepositoryPath, _environment.SiteRootPath, _settings, _traceFactory);
+                return new HgRepository(_environment.RepositoryPath, _environment.HomePath, _settings, _traceFactory);
             }
             return null;
         }

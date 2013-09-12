@@ -115,6 +115,7 @@ namespace Kudu.SiteManagement
 
                     // Create the main site
                     string siteName = GetLiveSite(applicationName);
+                    string root = _pathResolver.GetApplicationPath(applicationName);
                     string siteRoot = _pathResolver.GetLiveSitePath(applicationName);
                     string webRoot = Path.Combine(siteRoot, Constants.WebRoot);
 
@@ -134,8 +135,8 @@ namespace Kudu.SiteManagement
 
                     var site = await CreateSiteAsync(iis, applicationName, siteName, webRoot, siteBindings);
 
-                    // Map a path called app to the site root under the service site
-                    MapServiceSitePath(iis, applicationName, Constants.MappedSite, siteRoot);
+                    // Map a path called _app to the site root under the service site
+                    MapServiceSitePath(iis, applicationName, Constants.MappedSite, root);
 
                     // Commit the changes to iis
                     iis.CommitChanges();

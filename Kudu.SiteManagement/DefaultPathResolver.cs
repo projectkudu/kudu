@@ -46,7 +46,7 @@ namespace Kudu.SiteManagement
 
         public string GetLiveSitePath(string applicationName)
         {
-            return Path.Combine(GetApplicationPath(applicationName), "site");
+            return Path.Combine(GetApplicationPath(applicationName), Constants.SiteFolder);
         }
     }
 }
