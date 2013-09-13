@@ -157,6 +157,10 @@
             <td><a href="diagnostics/processes">Browse</a></td>
         </tr>
         <tr>
+            <td><strong>IIS Pipeline Info</strong></td>
+            <td><a href="diagnostics/iispipeline">Browse</a></td>
+        </tr>
+        <tr>
             <td><strong>Source control info</strong></td>
             <td><a href="scm/info">Browse</a></td>
         </tr>

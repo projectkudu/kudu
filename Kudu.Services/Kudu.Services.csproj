@@ -89,6 +89,7 @@
     <Compile Include="ByteRanges\InvalidByteRangeException.cs" />
     <Compile Include="Commands\CommandController.cs" />
     <Compile Include="Deployment\DeploymentController.cs" />
+    <Compile Include="Diagnostics\IISPipelineController.cs" />
     <Compile Include="Diagnostics\LogStreamHandler.cs" />
     <Compile Include="Diagnostics\LogStreamManager.cs" />
     <Compile Include="Diagnostics\ProcessController.cs" />
