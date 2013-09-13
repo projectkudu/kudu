@@ -20,6 +20,7 @@
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.EnterpriseServices" />
     <Reference Include="System.IO.Abstractions, Version=1.4.0.37, Culture=neutral, PublicKeyToken=d480b5b72fb413da, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\System.IO.Abstractions.1.4.0.37\lib\net35\System.IO.Abstractions.dll</HintPath>
@@ -59,6 +60,7 @@
     <Compile Include="Hooks\WebHooksManager.cs" />
     <Compile Include="Tracing\SiteExtensionLogEvent.cs" />
     <Compile Include="Tracing\ISiteExtensionLogEvent.cs" />
+    <Compile Include="Infrastructure\OpenFileHandle.cs" />
     <Compile Include="Infrastructure\StringExtensions.cs" />
     <Compile Include="Settings\DeploymentSettingsProvider.cs" />
     <Compile Include="Deployment\DeploymentContext.cs" />

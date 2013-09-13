@@ -239,7 +239,7 @@
         <WebProjectProperties>
           <UseIIS>False</UseIIS>
           <AutoAssignPort>True</AutoAssignPort>
-          <DevelopmentServerPort>37911</DevelopmentServerPort>
+          <DevelopmentServerPort>7088</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>
           <IISUrl>http://localhost:13073/</IISUrl>
           <NTLMAuthentication>False</NTLMAuthentication>
@@ -261,18 +261,12 @@
     <RemoveDir Directories="@(directoryToDelete)" />
   </Target>
   <Target Name="AfterBuild">
-     <PropertyGroup>
-        <BuildOutputsUpdated Condition=" '$(_AssemblyTimestampBeforeCompile)' != '$(_AssemblyTimestampAfterCompile)' ">true</BuildOutputsUpdated>
-     </PropertyGroup>
-     
-     <Message Text="Running post build events" Importance="High" />
+    <PropertyGroup>
+      <BuildOutputsUpdated Condition=" '$(_AssemblyTimestampBeforeCompile)' != '$(_AssemblyTimestampAfterCompile)' ">true</BuildOutputsUpdated>
+    </PropertyGroup>
+    <Message Text="Running post build events" Importance="High" />
     <Exec Command="&quot;$(ProjectDir)\updateNodeModules.cmd&quot; &quot;$(TargetDir)&quot;" Condition=" '$(BuildOutputsUpdated)' == 'true' " />
-    <Exec Command="&quot;$(MSBuildProgramFiles32)\Git\bin\git.exe&quot; rev-parse HEAD &gt; &quot;$(MsBuildProjectDirectory)\commit.txt&quot;" 
-             Condition=" '$(BuildOutputsUpdated)' == 'true' "
-    />
-  
-    <Copy SourceFiles="$(SolutionDir)\Kudu.Console\bin\$(ConfigurationName)\kudu.exe" 
-             DestinationFolder="$(TargetDir)" 
-             SkipUnchangedFiles="true" />
+    <Exec Command="&quot;$(MSBuildProgramFiles32)\Git\bin\git.exe&quot; rev-parse HEAD &gt; &quot;$(MsBuildProjectDirectory)\commit.txt&quot;" Condition=" '$(BuildOutputsUpdated)' == 'true' " />
+    <Copy SourceFiles="$(SolutionDir)\Kudu.Console\bin\$(ConfigurationName)\kudu.exe" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
   </Target>
 </Project>

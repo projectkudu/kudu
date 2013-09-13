@@ -40,6 +40,21 @@ namespace Kudu.Services.Performance
         }
 
         [HttpGet]
+        public HttpResponseMessage GetOpenFiles(int id)
+        {
+            using (_tracer.Step("ProcessController.GetOpenFiles"))
+            {
+                List<string> files = new List<string>();
+                var openFiles = DetectOpenFiles.GetOpenFilesEnumerator(id);
+                while (openFiles.MoveNext())
+                {
+                    files.Add(openFiles.Current.FullName);
+                }
+                return Request.CreateResponse(HttpStatusCode.OK, files);
+            }
+        }
+
+        [HttpGet]
         public HttpResponseMessage GetThread(int processId, int threadId)
         {
             using (_tracer.Step("ProcessController.GetThread"))
