@@ -43,10 +43,11 @@ namespace Kudu.Services.ServiceHookHandlers
             {
                 // Identify the last commit for the target branch. 
                 JObject targetCommit = (from commit in commits
-                                        where targetBranch.Equals(commit.Value<string>("branch"), StringComparison.OrdinalIgnoreCase)
-                                        orderby DateTimeOffset.Parse(commit.Value<string>("utctimestamp")) descending
+                                        where targetBranch.Equals(commit.Value<string>("branch") ?? targetBranch, StringComparison.OrdinalIgnoreCase)
+                                        orderby TryParseCommitStamp(commit.Value<string>("utctimestamp")) descending
                                         select (JObject)commit).FirstOrDefault();
 
+                
                 if (targetCommit == null)
                 {
                     return null;
@@ -56,10 +57,10 @@ namespace Kudu.Services.ServiceHookHandlers
                     authorName: targetCommit.Value<string>("author"),  // The Bitbucket id for the user.
                     authorEmail: null,                                 // TODO: Bitbucket gives us the raw_author field which is the user field set in the repository, maybe we should parse it.
                     message: (targetCommit.Value<string>("message") ?? String.Empty).TrimEnd(),
-                    timestamp: DateTimeOffset.Parse(targetCommit.Value<string>("utctimestamp"))
+                    timestamp: TryParseCommitStamp(targetCommit.Value<string>("utctimestamp"))
                 );
             }
-            else
+            else 
             {
                 info.TargetChangeset = new ChangeSet(id: String.Empty, authorName: null,
                                         authorEmail: null, message: null, timestamp: DateTime.UtcNow);
@@ -90,6 +91,12 @@ namespace Kudu.Services.ServiceHookHandlers
             }
 
             return info;
+        }
+
+        private static DateTimeOffset TryParseCommitStamp(string value)
+        {
+            DateTimeOffset dateTime;
+            return DateTimeOffset.TryParse(value, out dateTime) ? dateTime : DateTimeOffset.MinValue;
         }
     }
 }
