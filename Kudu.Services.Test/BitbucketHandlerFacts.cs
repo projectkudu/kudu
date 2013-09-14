@@ -45,6 +45,32 @@ namespace Kudu.Services.Test
         }
 
         [Fact]
+        public void BitbucketHandlerAllowsPayloadsWithNullBranch()
+        {
+            // Arrange
+            string payloadContent = @"{ ""canon_url"": ""https://bitbucket.org"", 
+                    ""commits"": [ { ""author"": ""pranavkm"", ""branch"": null, ""raw_node"": ""0bbefd70c4c4213bba1e91998141f6e861cec24d"", ""message"": ""Some file changes"" }],
+                    ""repository"": { ""absolute_url"": ""/kudutest/hellomercurial/"", ""is_private"": false, ""name"": ""HelloMercurial"", ""owner"": ""kudutest"", ""scm"": ""hg"" }, ""user"": ""kudutest"" }";
+
+            var httpRequest = new Mock<HttpRequestBase>();
+            httpRequest.SetupGet(r => r.UserAgent).Returns("Bitbucket.org");
+            var bitbucketHandler = new BitbucketHandler();
+
+            // Act
+            DeploymentInfo deploymentInfo;
+            DeployAction result = bitbucketHandler.TryParseDeploymentInfo(httpRequest.Object, payload: JObject.Parse(payloadContent), targetBranch: "not-default", deploymentInfo: out deploymentInfo);
+
+            // Assert
+            Assert.Equal(DeployAction.ProcessDeployment, result);
+            Assert.Equal("Bitbucket", deploymentInfo.Deployer);
+            Assert.Equal(RepositoryType.Mercurial, deploymentInfo.RepositoryType);
+            Assert.Equal("https://bitbucket.org/kudutest/hellomercurial/", deploymentInfo.RepositoryUrl);
+            Assert.Equal("pranavkm", deploymentInfo.TargetChangeset.AuthorName);
+            Assert.Equal("0bbefd70c4c4213bba1e91998141f6e861cec24d", deploymentInfo.TargetChangeset.Id);
+            Assert.Equal("Some file changes", deploymentInfo.TargetChangeset.Message);
+        }
+
+        [Fact]
         public void BitbucketHandlerParsesBitbucketPayloadsForMercurialRepositories()
         {
             // Arrange
