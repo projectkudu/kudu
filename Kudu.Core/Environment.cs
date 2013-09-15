@@ -47,7 +47,7 @@ namespace Kudu.Core
             _fileSystem = fileSystem;
             RootPath = rootPath;
             SiteRootPath = siteRootPath;
-            HomePath = siteRootPath;
+            HomePath = rootPath;
             _tempPath = tempPath;
             _repositoryPath = repositoryPath;
             _webRootPath = webRootPath;
