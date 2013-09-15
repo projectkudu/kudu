@@ -50,6 +50,10 @@ namespace Kudu.FunctionalTests
                 commandTestSettings.ExpectedResult.Output = "git";
                 tests.Add(commandTestSettings);
 
+                commandTestSettings = new CommandTestSettings("echo %HOME%");
+                commandTestSettings.ExpectedResult.Output = appManager.ApplicationName;
+                tests.Add(commandTestSettings);
+
                 commandTestSettings = new CommandTestSettings("dir");
                 commandTestSettings.WorkingDirectory = ".\\site";
                 commandTestSettings.ExpectedResult.Output = "wwwroot";

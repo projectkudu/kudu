@@ -171,27 +171,16 @@ namespace Kudu.Console
         private static IEnvironment GetEnvironment(string siteRoot)
         {
             string root = Path.GetFullPath(Path.Combine(siteRoot, ".."));
-            string webRootPath = Path.Combine(siteRoot, Constants.WebRoot);
-            string deployCachePath = Path.Combine(siteRoot, Constants.DeploymentCachePath);
-            string diagnosticsPath = Path.Combine(siteRoot, Constants.DiagnosticsPath);
-            string sshKeyPath = Path.Combine(siteRoot, Constants.SSHKeyPath);
+
+            // REVIEW: this looks wrong because it ignores SCM_REPOSITORY_PATH
             string repositoryPath = Path.Combine(siteRoot, Constants.RepositoryPath);
-            string tempPath = Path.GetTempPath();
+
             string binPath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
-            string scriptPath = Path.Combine(binPath, Constants.ScriptsPath);
-            string nodeModulesPath = Path.Combine(binPath, Constants.NodeModulesPath);
 
             return new Kudu.Core.Environment(new FileSystem(),
                                    root,
-                                   siteRoot,
-                                   tempPath,
-                                   repositoryPath,
-                                   webRootPath,
-                                   deployCachePath,
-                                   diagnosticsPath,
-                                   sshKeyPath,
-                                   scriptPath,
-                                   nodeModulesPath);
+                                   binPath,
+                                   repositoryPath);
         }
     }
 }

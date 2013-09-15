@@ -27,7 +27,7 @@ namespace Kudu.Core.SourceControl.Git
                             ITraceFactory traceFactory)
         {
             _gitExe = new GitExecutable(environment.RepositoryPath, settings.GetCommandIdleTimeout());
-            _gitExe.SetHomePath(environment.HomePath);
+            _gitExe.SetHomePath(environment);
             _traceFactory = traceFactory;
             _initLock = initLock;
             _repositoryFactory = repositoryFactory;

@@ -239,6 +239,8 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<ICommandExecutor>().ToMethod(context => GetCommandExecutor(environment, context))
                                            .InRequestScope();
 
+            MigrateSite(environment, kernel);
+
             RegisterRoutes(kernel, RouteTable.Routes);
         }
 
@@ -349,6 +351,48 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("subscribe-hook", "hooks", new { controller = "WebHooks", action = "Subscribe" }, new { verb = new HttpMethodConstraint("POST") });
         }
 
+        // Perform migration tasks to deal with legacy sites that had different file layout
+        private static void MigrateSite(IEnvironment environment, IKernel kernel)
+        {
+            try
+            {
+                MoveOldSSHFolder(environment);
+            }
+            catch (Exception e)
+            {
+                ITracer tracer = GetTracerWithoutContext(environment, kernel);
+                tracer.Trace("Failed to move legacy .ssh folder: {0}", e.Message);
+            }
+        }
+
+        // .ssh folder used to be under /site, and is now at the root
+        private static void MoveOldSSHFolder(IEnvironment environment)
+        {
+            var oldSSHDirInfo = new DirectoryInfo(Path.Combine(environment.SiteRootPath, Constants.SSHKeyPath));
+
+            if (oldSSHDirInfo.Exists)
+            {
+                string newSSHFolder = Path.Combine(environment.RootPath, Constants.SSHKeyPath);
+                if (!Directory.Exists(newSSHFolder))
+                {
+                    Directory.CreateDirectory(newSSHFolder);
+                }
+
+                foreach (FileInfo file in oldSSHDirInfo.EnumerateFiles())
+                {
+                    // Copy the file to the new folder, unless it already exists
+                    string newFile = Path.Combine(newSSHFolder, file.Name);
+                    if (!File.Exists(newFile))
+                    {
+                        file.CopyTo(newFile, overwrite: true);
+                    }
+                }
+
+                // Delete the old folder
+                oldSSHDirInfo.Delete(recursive: true);
+            }
+        }
+
         private static ITracer GetTracer(IEnvironment environment, IKernel kernel)
         {
             TraceLevel level = kernel.Get<IDeploymentSettingsManager>().GetTraceLevel();
@@ -364,7 +408,7 @@ namespace Kudu.Services.Web.App_Start
             return NullTracer.Instance;
         }
 
-        private static void TraceShutdown(IEnvironment environment, IKernel kernel)
+        private static ITracer GetTracerWithoutContext(IEnvironment environment, IKernel kernel)
         {
             TraceLevel level = kernel.Get<IDeploymentSettingsManager>().GetTraceLevel();
             if (level > TraceLevel.Off)
@@ -372,21 +416,28 @@ namespace Kudu.Services.Web.App_Start
                 string tracePath = Path.Combine(environment.TracePath, Constants.TraceFile);
                 string traceLockPath = Path.Combine(environment.TracePath, Constants.TraceLockFile);
                 var traceLock = new LockFile(traceLockPath);
-                ITracer tracer = new Tracer(tracePath, level, traceLock);
-                var attribs = new Dictionary<string, string>();
-
-                // Add an attribute containing the process, AppDomain and Thread ids to help debugging
-                attribs.Add("pid", String.Format("{0},{1},{2}",
-                    Process.GetCurrentProcess().Id,
-                    AppDomain.CurrentDomain.Id.ToString(),
-                    System.Threading.Thread.CurrentThread.ManagedThreadId));
-
-                attribs.Add("uptime", TraceModule.UpTime.ToString());
-
-                attribs.Add("lastrequesttime", TraceModule.LastRequestTime.ToString());
-
-                tracer.Trace("Process Shutdown", attribs);
+                return new Tracer(tracePath, level, traceLock);
             }
+
+            return NullTracer.Instance;
+        }
+
+        private static void TraceShutdown(IEnvironment environment, IKernel kernel)
+        {
+            ITracer tracer = GetTracerWithoutContext(environment, kernel);
+            var attribs = new Dictionary<string, string>();
+
+            // Add an attribute containing the process, AppDomain and Thread ids to help debugging
+            attribs.Add("pid", String.Format("{0},{1},{2}",
+                Process.GetCurrentProcess().Id,
+                AppDomain.CurrentDomain.Id.ToString(),
+                System.Threading.Thread.CurrentThread.ManagedThreadId));
+
+            attribs.Add("uptime", TraceModule.UpTime.ToString());
+
+            attribs.Add("lastrequesttime", TraceModule.LastRequestTime.ToString());
+
+            tracer.Trace("Process Shutdown", attribs);
         }
 
         private static ILogger GetLogger(IEnvironment environment, IKernel kernel)
@@ -431,27 +482,13 @@ namespace Kudu.Services.Web.App_Start
         {
             string root = PathResolver.ResolveRootPath();
             string siteRoot = Path.Combine(root, Constants.SiteFolder);
-            string webRootPath = Path.Combine(siteRoot, Constants.WebRoot);
-            string deployCachePath = Path.Combine(siteRoot, Constants.DeploymentCachePath);
-            string diagnosticsPath = Path.Combine(siteRoot, Constants.DiagnosticsPath);
-            string sshKeyPath = Path.Combine(siteRoot, Constants.SSHKeyPath);
             string repositoryPath = Path.Combine(siteRoot, settings == null ? Constants.RepositoryPath : settings.GetRepositoryPath());
-            string tempPath = Path.GetTempPath();
-            string scriptPath = Path.Combine(HttpRuntime.BinDirectory, Constants.ScriptsPath);
-            string nodeModulesPath = Path.Combine(HttpRuntime.BinDirectory, Constants.NodeModulesPath);
 
             return new Kudu.Core.Environment(
                                    new FileSystem(),
                                    root,
-                                   siteRoot,
-                                   tempPath,
-                                   repositoryPath,
-                                   webRootPath,
-                                   deployCachePath,
-                                   diagnosticsPath,
-                                   sshKeyPath,
-                                   scriptPath,
-                                   nodeModulesPath);
+                                   HttpRuntime.BinDirectory,
+                                   repositoryPath);
         }
     }
 }

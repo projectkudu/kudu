@@ -29,7 +29,6 @@ namespace Kudu.Core.Deployment.Generator
             DeploymentSettings = settings;
             RepositoryPath = repositoryPath;
             PropertyProvider = propertyProvider;
-            HomePath = environment.SiteRootPath;
 
             ExternalCommandFactory = new ExternalCommandFactory(environment, settings, repositoryPath);
         }
@@ -43,8 +42,6 @@ namespace Kudu.Core.Deployment.Generator
         protected string RepositoryPath { get; private set; }
 
         protected IBuildPropertyProvider PropertyProvider { get; private set; }
-
-        protected string HomePath { get; private set; }
 
         internal ExternalCommandFactory ExternalCommandFactory { get; private set; }
 

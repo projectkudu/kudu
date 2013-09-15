@@ -37,12 +37,24 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
+        public void SetHomePath(IEnvironment environment)
+        {
+            if (!String.IsNullOrEmpty(environment.RootPath))
+            {
+                SetHomePath(environment.RootPath);
+            }
+        }
+
         [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
         public void SetHomePath(string homePath)
         {
             // SSH requires HOME directory and applies to git, npm and (CustomBuilder) cmd
-            // Excutable seems to be the most optimal class for this api.
-            EnvironmentVariables["HOME"] = homePath;
+            // Don't set it if it's already set, as would be the case in Azure
+            if (String.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("HOME")))
+            {
+                EnvironmentVariables["HOME"] = homePath;
+            }
+
             EnvironmentVariables["HOMEDRIVE"] = homePath.Substring(0, homePath.IndexOf(':') + 1);
             EnvironmentVariables["HOMEPATH"] = homePath.Substring(homePath.IndexOf(':') + 1);
         }
