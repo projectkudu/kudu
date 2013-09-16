@@ -296,7 +296,18 @@ namespace Kudu.Core.SourceControl
 
         private ChangeSet GetChangeSet(RevSpec id)
         {
-            var log = Repository.Log(id);
+            var log = Enumerable.Empty<Changeset>();
+
+            try
+            {
+                log = Repository.Log(id);
+            }
+            catch (MercurialExecutionException e)
+            {
+                // Older Mercurial (e.g. 2.4.1) were returning empty without errors when called with an unknown revision,
+                // but newer versions (e.g. 2.7.1) actually fail here, so account for that possibility so we can run on both
+                if (!e.Message.Contains("unknown revision")) throw;
+            }
             
             var changeset = log.SingleOrDefault();
             if (changeset != null)
