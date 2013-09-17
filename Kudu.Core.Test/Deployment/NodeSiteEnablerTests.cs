@@ -3,6 +3,7 @@ using System.IO.Abstractions;
 using Moq;
 using Xunit;
 using Xunit.Extensions;
+
 //             "default.htm", "default.html", "default.asp", "index.htm", "index.html", "iisstart.htm", "default.aspx", "index.php"
 
 namespace Kudu.Core.Deployment.Generator.Test
@@ -17,7 +18,7 @@ namespace Kudu.Core.Deployment.Generator.Test
         [InlineData(true, new string[] { "server.js", "site.html" })]
         [InlineData(false, new string[] { "server.js", "default.html" })]
         [InlineData(false, new string[] { "app.js", "default.htm" })]
-        [InlineData(false, new string[] { "package.json", "default.asp" })]
+        [InlineData(true, new string[] { "package.json", "default.asp" })]
         [InlineData(false, new string[] { "server.js", "index.htm" })]
         [InlineData(false, new string[] { "server.js", "index.html" })]
         [InlineData(false, new string[] { "server.js", "iisstart.htm" })]
