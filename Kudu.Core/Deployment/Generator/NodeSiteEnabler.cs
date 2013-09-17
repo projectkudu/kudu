@@ -1,9 +1,5 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.IO.Abstractions;
-using Kudu.Contracts.Settings;
-using Kudu.Contracts.Tracing;
-using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment.Generator
 {
@@ -14,14 +10,28 @@ namespace Kudu.Core.Deployment.Generator
             "default.htm", "default.html", "default.asp", "index.htm", "index.html", "iisstart.htm", "default.aspx", "index.php"
         };
 
-        private static readonly string[] NodeDetectionFiles = new[] { "server.js", "app.js", "package.json" };
+        private static readonly string[] NodeDetectionFiles = new[] { "package.json" };
+
+        private static readonly string[] PotentialNodeDetectionFiles = new[] { "server.js", "app.js" };
 
         public static bool LooksLikeNode(IFileSystem fileSystem, string siteFolder)
         {
             bool potentiallyLooksLikeNode = false;
 
-            // Check if any of the known start pages exist
+            // If any of the files in NodeDetectionFiles exist
+            // We assume it's node.js
             foreach (var nodeDetectionFile in NodeDetectionFiles)
+            {
+                string fullPath = Path.Combine(siteFolder, nodeDetectionFile);
+                if (fileSystem.File.Exists(fullPath))
+                {
+                    return true;
+                }
+            }
+
+            // If any of the files in PotentialNodeDetectionFiles exist
+            // We assume it can potentially be node.js
+            foreach (var nodeDetectionFile in PotentialNodeDetectionFiles)
             {
                 string fullPath = Path.Combine(siteFolder, nodeDetectionFile);
                 if (fileSystem.File.Exists(fullPath))
@@ -31,10 +41,11 @@ namespace Kudu.Core.Deployment.Generator
                 }
             }
 
+            // If we assume it is potentially a node.js site
             if (potentiallyLooksLikeNode)
             {
                 // Check if any of the known iis start pages exist
-                // If so, then it is not a node.js web site
+                // If so, then it is not a node.js web site otherwise it is
                 foreach (var iisStartupFile in IisStartupFiles)
                 {
                     string fullPath = Path.Combine(siteFolder, iisStartupFile);
