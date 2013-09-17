@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.IO.Abstractions;
+using Kudu.Contracts.Settings;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core
@@ -22,6 +23,7 @@ namespace Kudu.Core
         private readonly string _analyticsPath;
         private readonly string _deploymentTracePath;
 
+        // This ctor is used only in unit tests
         public Environment(
                 IFileSystem fileSystem,
                 string rootPath,
@@ -47,7 +49,6 @@ namespace Kudu.Core
             _fileSystem = fileSystem;
             RootPath = rootPath;
             SiteRootPath = siteRootPath;
-            HomePath = rootPath;
             _tempPath = tempPath;
             _repositoryPath = repositoryPath;
             _webRootPath = webRootPath;
@@ -60,6 +61,36 @@ namespace Kudu.Core
             _logFilesPath = Path.Combine(rootPath, Constants.LogFilesPath);
             _tracePath = Path.Combine(rootPath, Constants.TracePath);
             _analyticsPath = Path.Combine(tempPath ?? _logFilesPath, Constants.SiteExtensionLogsDirectory);
+            _deploymentTracePath = Path.Combine(rootPath, Constants.DeploymentTracePath);
+        }
+
+        public Environment(
+                IFileSystem fileSystem,
+                string rootPath,
+                string binPath,
+                string repositoryPath)
+        {
+            _fileSystem = fileSystem;
+            RootPath = rootPath;
+
+            SiteRootPath = Path.Combine(rootPath, Constants.SiteFolder);
+
+            // We want the HOME path to be the root. However, for legacy sites that have a .ssh folder under site, we need
+            // to keep the HOME folder as site folder
+            HomePath = fileSystem.Directory.Exists(Path.Combine(SiteRootPath, Constants.SSHKeyPath)) ? SiteRootPath : rootPath;
+
+            _tempPath = Path.GetTempPath();
+            _repositoryPath = repositoryPath;
+            _webRootPath = Path.Combine(SiteRootPath, Constants.WebRoot);
+            _deploymentsPath = Path.Combine(SiteRootPath, Constants.DeploymentCachePath);
+            _deploymentToolsPath = Path.Combine(_deploymentsPath, Constants.DeploymentToolsPath);
+            _diagnosticsPath = Path.Combine(SiteRootPath, Constants.DiagnosticsPath);
+            _sshKeyPath = Path.Combine(HomePath, Constants.SSHKeyPath);
+            _scriptPath = Path.Combine(binPath, Constants.ScriptsPath);
+            _nodeModulesPath = Path.Combine(binPath, Constants.NodeModulesPath);
+            _logFilesPath = Path.Combine(rootPath, Constants.LogFilesPath);
+            _tracePath = Path.Combine(rootPath, Constants.TracePath);
+            _analyticsPath = Path.Combine(_tempPath ?? _logFilesPath, Constants.SiteExtensionLogsDirectory);
             _deploymentTracePath = Path.Combine(rootPath, Constants.DeploymentTracePath);
         }
 
