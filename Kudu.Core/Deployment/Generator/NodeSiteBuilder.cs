@@ -1,9 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using Kudu.Contracts.Settings;
-using Kudu.Contracts.Tracing;
-using Kudu.Core.SourceControl.Git;
+﻿using Kudu.Contracts.Settings;
 
 namespace Kudu.Core.Deployment.Generator
 {
@@ -14,9 +9,9 @@ namespace Kudu.Core.Deployment.Generator
         {
         }
 
-        public override Task Build(DeploymentContext context)
+        public override string ProjectType
         {
-            return base.Build(context);
+            get { return "NODE.JS"; }
         }
     }
 }

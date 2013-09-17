@@ -153,6 +153,11 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IOperationLock>().ToConstant(hooksLock).WhenInjectedInto<WebHooksManager>();
             kernel.Bind<IOperationLock>().ToConstant(_deploymentLock);
 
+            kernel.Bind<IAnalytics>().ToMethod(context => new Analytics(context.Kernel.Get<IDeploymentSettingsManager>(),
+                                                                        fileSystem,
+                                                                        context.Kernel.Get<ITracer>(),
+                                                                        environment.AnalyticsPath));
+
             var shutdownDetector = new ShutdownDetector();
             shutdownDetector.Initialize();
 

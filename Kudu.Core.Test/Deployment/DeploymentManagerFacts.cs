@@ -101,6 +101,7 @@ namespace Kudu.Core.Test.Deployment
                                  IEnvironment environment = null,
                                  IFileSystem fileSystem = null,
                                  ITraceFactory traceFactory = null,
+                                 IAnalytics analytics = null,
                                  IDeploymentSettingsManager settings = null,
                                  IDeploymentStatusManager status = null,
                                  IOperationLock deploymentLock = null,
@@ -111,12 +112,13 @@ namespace Kudu.Core.Test.Deployment
             environment = environment ?? Mock.Of<IEnvironment>();
             fileSystem = fileSystem ?? Mock.Of<IFileSystem>();
             traceFactory = traceFactory ?? Mock.Of<ITraceFactory>();
+            analytics = analytics ?? Mock.Of<IAnalytics>();
             settings = settings ?? Mock.Of<IDeploymentSettingsManager>();
             status = status ?? Mock.Of<IDeploymentStatusManager>();
             deploymentLock = deploymentLock ?? Mock.Of<IOperationLock>();
             globalLogger = globalLogger ?? Mock.Of<ILogger>();
 
-            return new DeploymentManager(builderFactory, environment, fileSystem, traceFactory, settings, status, deploymentLock, globalLogger, hooksManager);
+            return new DeploymentManager(builderFactory, environment, fileSystem, traceFactory, analytics, settings, status, deploymentLock, globalLogger, hooksManager);
         }
     }
 }

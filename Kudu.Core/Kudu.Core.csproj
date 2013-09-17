@@ -57,6 +57,8 @@
     <Compile Include="Deployment\Generator\NodeSiteEnabler.cs" />
     <Compile Include="Deployment\Generator\SiteBuilderFactory.cs" />
     <Compile Include="Hooks\WebHooksManager.cs" />
+    <Compile Include="Tracing\SiteExtensionLogEvent.cs" />
+    <Compile Include="Tracing\ISiteExtensionLogEvent.cs" />
     <Compile Include="Infrastructure\StringExtensions.cs" />
     <Compile Include="Settings\DeploymentSettingsProvider.cs" />
     <Compile Include="Deployment\DeploymentContext.cs" />
@@ -95,7 +97,10 @@
     <Compile Include="SSHKey\PEMEncoder.cs" />
     <Compile Include="SSHKey\SSHEncoding.cs" />
     <Compile Include="SSHKey\SSHKeyManager.cs" />
+    <Compile Include="Tracing\Analytics.cs" />
     <Compile Include="Tracing\CascadeTracer.cs" />
+    <Compile Include="Tracing\SiteExtensionLogManager.cs" />
+    <Compile Include="Tracing\IAnalytics.cs" />
     <Compile Include="Tracing\ITraceFactory.cs" />
     <Compile Include="Tracing\TextLogger.cs" />
     <Compile Include="Tracing\NullTracer.cs" />

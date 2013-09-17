@@ -1,5 +1,4 @@
-﻿using System;
-using Kudu.Contracts.Settings;
+﻿using Kudu.Contracts.Settings;
 
 namespace Kudu.Core.Deployment.Generator
 {
@@ -19,6 +18,11 @@ namespace Kudu.Core.Deployment.Generator
             {
                 return _scriptGeneratorArgs;
             }
+        }
+
+        public override string ProjectType
+        {
+            get { return "CustomGeneratorCommand"; }
         }
     }
 }
