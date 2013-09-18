@@ -78,8 +78,6 @@
         }
         
     </style>
-    <head>
-</head>
 </head>
 <body>
     <div>
