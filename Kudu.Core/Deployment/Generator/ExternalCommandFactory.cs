@@ -6,7 +6,7 @@ using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment.Generator
 {
-    internal class ExternalCommandFactory
+    public class ExternalCommandFactory
     {
         public const string KuduSyncCommand = "kudusync";
         public const string PostDeploymentActionsCommand = "postdeployment";

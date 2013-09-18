@@ -193,6 +193,13 @@
 			n.css('cursor','default');
 			return n;
 		};
+	    
+	    ////////////////////////////////////////////////////////////////////////
+	    // Reset history
+		extern.resetHistory = function () {
+		    ringn = 0;
+		};
+
 		////////////////////////////////////////////////////////////////////////
 		// Compute a promptLabel
 		function getPromptLabel() {
@@ -214,7 +221,9 @@
 			enableInput();
 			promptBox = $('<div class="jquery-console-prompt-box"></div>');
 			var label = $('<span class="jquery-console-prompt-label"></span>');
+			var pid = $('<span class="jquery-console-prompt-pid" style></span>');
 			var labelText = getPromptLabel();
+			promptBox.append(pid.text("").show());
 			promptBox.append(label.text(labelText).show());
 			label.html(label.html().replace(' ','&nbsp;'));
 			prompt = $('<span class="jquery-console-prompt"></span>');
@@ -358,7 +367,9 @@
 		};
 
 		// Add something to the history ring
-		function addToHistory(line){
+		function addToHistory(line) {
+		    if (!line || line.trim() == "")
+		        return;
 			history.push(line);
 			restoreText = '';
 		};
@@ -506,9 +517,11 @@
 
 		////////////////////////////////////////////////////////////////////////
 		// Reset the prompt in invalid command
-		function commandResult(msg,className) {
+        function commandResult(msg,className,ignorePrompt) {
 			column = -1;
-			updatePromptDisplay();
+            if (!ignorePrompt) {
+                updatePromptDisplay();
+            }
 			if (typeof msg == 'string') {
 				message(msg,className);
 			} else if ($.isArray(msg)) {
@@ -519,18 +532,24 @@
 			} else { // Assume it's a DOM node or jQuery object.
 				inner.append(msg);
 			}
-			newPromptBox();
+            if (!ignorePrompt) {
+                newPromptBox();
+            }
 		};
 
 		////////////////////////////////////////////////////////////////////////
 		// Display a message
 		function message(msg,className) {
-			var mesg = $('<div class="jquery-console-message"></div>');
+			var mesg = $('<div class="jquery-console-message" style="display: inline"></div>');
 			if (className) mesg.addClass(className);
 			mesg.filledText(msg).hide();
 			inner.append(mesg);
 			mesg.show();
+		    return mesg;
 		};
+
+        extern.message = message;
+        extern.enableInput = enableInput;
 
 		////////////////////////////////////////////////////////////////////////
 		// Handle normal character insertion
@@ -709,7 +728,6 @@
 					.replace(/</g,'&lt;')
 					.replace(/</g,'&lt;')
 					.replace(/ /g,'&nbsp;')
-					.replace(/\n/g,'<br />')
 			);
 		};
 
@@ -718,7 +736,7 @@
 	// Simple utility for printing messages
 	$.fn.filledText = function(txt){
 		$(this).text(txt);
-		$(this).html($(this).html().replace(/\n/g,'<br/>'));
+		$(this).html($(this).html());
 		return this;
 	};
 

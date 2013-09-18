@@ -1,4 +1,4 @@
-var curWorkingDir = ko.observable("");
+﻿var curWorkingDir = ko.observable("");
 window.KuduExec = { workingDir: curWorkingDir };
 
 $(function () {
@@ -94,13 +94,13 @@ $(function () {
                         curReportFun([{ msg: "Command canceled by user.", className: "jquery-console-message-error" }]);
                     }
                 },
-                completeHandle: function(line) {
+                completeHandle: function (line) {
                     var cdRegex = /^cd\s+(.+)$/,
                         pathRegex = /.+\s+(.+)/,
                         matches;
                     if (matches = line.match(cdRegex)) {
                         return window.KuduExec.completePath(matches[1], /* dirOnly */ true);
-                    } else if (matches =  line.match(pathRegex)) {
+                    } else if (matches = line.match(pathRegex)) {
                         return window.KuduExec.completePath(matches[1]);
                     }
                     return;
