@@ -24,11 +24,15 @@ function getDefaultNpmPath(npmRootPath, nodeVersionPath) {
         return;
     }
     
-    var npmVersion = fs.readFileSync(npmLinkPath, 'utf8'),
-        npmPath = path.resolve(npmRootPath, npmVersion, 'bin', 'npm-cli.js');
+    var npmVersion = fs.readFileSync(npmLinkPath, 'utf8').trim(),
+        npmPath = path.resolve(npmRootPath, npmVersion, 'node_modules', 'npm', 'bin', 'npm-cli.js');
 
     if (!existsSync(npmPath)) {
-        throw new Error('Unable to locate npm version ' + npmVersion + ' at ' + npmPath);
+        // Try resolving it using the old npm layout
+        npmPath = path.resolve(npmRootPath, npmVersion, 'bin', 'npm-cli.js');
+        if (!existsSync(npmPath)) {
+            throw new Error('Unable to locate npm version ' + npmVersion);
+        }
     }
     return npmPath;
 }
@@ -190,7 +194,7 @@ fs.readdirSync(nodejsDir).forEach(function (dir) {
         versions.push(dir);
 });
 
-console.log('Node.js versions available on the platform are: ' + versions.join(', ') + '.');
+console.log('Node.js versions available on the platform are: ' + versions.sort(semver.compare).join(', ') + '.');
 
 // Calculate actual node.js version to use for the application as the maximum available version
 // that satisfies the version constraints from package.json.
