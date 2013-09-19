@@ -17,15 +17,15 @@ namespace Kudu.Core.Infrastructure
         private const string GCDump32Exe = @"%ProgramFiles(x86)%\vsdiagagent\x86\GCDump32.exe";
         private const string GCDump64Exe = @"%ProgramFiles(x86)%\vsdiagagent\x64\GCDump64.exe";
 
-        private static Lazy<string> _clrRuntimeDirectory = new Lazy<string>(() =>
+        private readonly static Lazy<string> _clrRuntimeDirectory = new Lazy<string>(() =>
         {
             return RuntimeEnvironment.GetRuntimeDirectory();
         });
 
-        private static Lazy<string> _gcDumpExe = new Lazy<string>(() =>
+        private readonly static Lazy<string> _gcDumpExe = new Lazy<string>(() =>
         {
             string gcDumpExe = System.Environment.ExpandEnvironmentVariables(GCDump32Exe);
-            if (ClrRuntimeDirectory.ToLowerInvariant().Contains(@"\framework64\"))
+            if (ClrRuntimeDirectory.IndexOf(@"\Framework64\", StringComparison.OrdinalIgnoreCase) > 0)
             {
                 gcDumpExe = System.Environment.ExpandEnvironmentVariables(GCDump64Exe);
             }
@@ -33,7 +33,7 @@ namespace Kudu.Core.Infrastructure
             return gcDumpExe;
         });
 
-        private static Lazy<bool> _supportGCDump = new Lazy<bool>(() =>
+        private readonly static Lazy<bool> _supportGCDump = new Lazy<bool>(() =>
         {
             return File.Exists(_gcDumpExe.Value);
         });
