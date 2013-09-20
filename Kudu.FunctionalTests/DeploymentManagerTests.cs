@@ -11,6 +11,7 @@ using Kudu.Client.Deployment;
 using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
+using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
@@ -73,6 +74,10 @@ namespace Kudu.FunctionalTests
                     Assert.NotNull(result.Url);
                     Assert.NotNull(result.LogUrl);
                     Assert.True(String.IsNullOrEmpty(result.Deployer));
+
+                    // Make sure we end up on the master branch
+                    CommandResult commandResult = await appManager.CommandExecutor.ExecuteCommand("git status", @"site\repository");
+                    Assert.Contains("On branch master", commandResult.Output);
 
                     ICredentials cred = appManager.DeploymentManager.Credentials;
                     KuduAssert.VerifyUrl(result.Url, cred);
