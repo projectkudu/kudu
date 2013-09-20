@@ -200,8 +200,8 @@ namespace Kudu.Core.Deployment
 
                             using (var writer = new ProgressWriter())
                             {
-                                // Update to the the specific changeset
-                                repository.Update(id);
+                                // Update to the specific changeset or branch
+                                repository.Update(targetBranch ?? id);
                             }
                         }
                     }
