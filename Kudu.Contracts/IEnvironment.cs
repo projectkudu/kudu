@@ -3,7 +3,6 @@
     public interface IEnvironment
     {
         string RootPath { get; }                // e.g. /
-        string HomePath { get; }                // e.g. Normally the same as RootPath
         string SiteRootPath { get; }            // e.g. /site
         string RepositoryPath { get; set; }     // e.g. /site/repository
         string WebRootPath { get; }             // e.g. /site/wwwroot

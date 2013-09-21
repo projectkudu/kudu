@@ -21,11 +21,8 @@ namespace Kudu.Services.Web
             }
 
             // If d:\home exists, use it. This is a 'magic' folder on Azure that points to the root of the site files
-            // However, to avoid a bug on Azure, don't do this for legacy sites that have a d:\home\site\.ssh folder
-            // Note that new sites should have their .ssh folder as d:\home\.ssh
             path = Environment.ExpandEnvironmentVariables(@"%SystemDrive%\home");
-            if (Directory.Exists(path) &&
-                !Directory.Exists(Path.Combine(path, Constants.SiteFolder, Constants.SSHKeyPath)))
+            if (Directory.Exists(path))
             {
                 return path;
             }

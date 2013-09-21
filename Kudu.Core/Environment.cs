@@ -75,17 +75,13 @@ namespace Kudu.Core
 
             SiteRootPath = Path.Combine(rootPath, Constants.SiteFolder);
 
-            // We want the HOME path to be the root. However, for legacy sites that have a .ssh folder under site, we need
-            // to keep the HOME folder as site folder
-            HomePath = fileSystem.Directory.Exists(Path.Combine(SiteRootPath, Constants.SSHKeyPath)) ? SiteRootPath : rootPath;
-
             _tempPath = Path.GetTempPath();
             _repositoryPath = repositoryPath;
             _webRootPath = Path.Combine(SiteRootPath, Constants.WebRoot);
             _deploymentsPath = Path.Combine(SiteRootPath, Constants.DeploymentCachePath);
             _deploymentToolsPath = Path.Combine(_deploymentsPath, Constants.DeploymentToolsPath);
             _diagnosticsPath = Path.Combine(SiteRootPath, Constants.DiagnosticsPath);
-            _sshKeyPath = Path.Combine(HomePath, Constants.SSHKeyPath);
+            _sshKeyPath = Path.Combine(rootPath, Constants.SSHKeyPath);
             _scriptPath = Path.Combine(binPath, Constants.ScriptsPath);
             _nodeModulesPath = Path.Combine(binPath, Constants.NodeModulesPath);
             _logFilesPath = Path.Combine(rootPath, Constants.LogFilesPath);
@@ -148,12 +144,6 @@ namespace Kudu.Core
         }
 
         public string RootPath
-        {
-            get;
-            private set;
-        }
-
-        public string HomePath
         {
             get;
             private set;

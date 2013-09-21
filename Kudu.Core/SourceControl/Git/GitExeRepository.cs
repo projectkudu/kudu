@@ -39,10 +39,7 @@ namespace Kudu.Core.SourceControl.Git
             _tracerFactory = profilerFactory;
             _settings = settings;
             SkipPostReceiveHookCheck = false;
-            if (!String.IsNullOrEmpty(environment.HomePath))
-            {
-                _gitExe.SetHomePath(environment.HomePath);
-            }
+            _gitExe.SetHomePath(environment);
         }
 
         public string CurrentId

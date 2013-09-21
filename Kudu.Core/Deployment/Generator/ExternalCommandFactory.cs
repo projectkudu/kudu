@@ -61,7 +61,7 @@ namespace Kudu.Core.Deployment.Generator
             // NuGet.exe 1.8 will require an environment variable to make package restore work
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.NuGetPackageRestoreKey] = "true";
 
-            exe.SetHomePath(_environment.HomePath);
+            exe.SetHomePath(_environment);
 
             // Set the path so we can add more variables
             string path = System.Environment.GetEnvironmentVariable("PATH");

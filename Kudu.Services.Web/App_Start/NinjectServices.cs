@@ -111,6 +111,8 @@ namespace Kudu.Services.Web.App_Start
 
             IEnvironment environment = GetEnvironment();
 
+            MigrateSite(environment);
+
             // Per request environment
             kernel.Bind<IEnvironment>().ToMethod(context => GetEnvironment(context.Kernel.Get<IDeploymentSettingsManager>()))
                                              .InRequestScope();
@@ -347,6 +349,41 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("publish-hooks", "hooks/publish/{hookEventType}", new { controller = "WebHooks", action = "PublishEvent" }, new { verb = new HttpMethodConstraint("POST") });
             routes.MapHttpRoute("get-hooks", "hooks", new { controller = "WebHooks", action = "GetWebHooks" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("subscribe-hook", "hooks", new { controller = "WebHooks", action = "Subscribe" }, new { verb = new HttpMethodConstraint("POST") });
+        }
+
+        // Perform migration tasks to deal with legacy sites that had different file layout
+        private static void MigrateSite(IEnvironment environment)
+        {
+            try
+            {
+                MoveOldSSHFolder(environment);
+            }
+            catch
+            {
+                // TODO: log an error here
+            }
+        }
+
+        // .ssh folder used to be under /site, and is now at the root
+        private static void MoveOldSSHFolder(IEnvironment environment)
+        {
+            var oldSSHDirInfo = new DirectoryInfo(Path.Combine(environment.SiteRootPath, Constants.SSHKeyPath));
+
+            if (oldSSHDirInfo.Exists)
+            {
+                string newSSHFolder = Path.Combine(environment.RootPath, Constants.SSHKeyPath);
+                if (!Directory.Exists(newSSHFolder))
+                {
+                    Directory.CreateDirectory(newSSHFolder);
+                }
+
+                foreach (FileInfo file in oldSSHDirInfo.EnumerateFiles())
+                {
+                    file.CopyTo(Path.Combine(newSSHFolder, file.Name), overwrite: true);
+                }
+
+                oldSSHDirInfo.Delete(recursive: true);
+            }
         }
 
         private static ITracer GetTracer(IEnvironment environment, IKernel kernel)
