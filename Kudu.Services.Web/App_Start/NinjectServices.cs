@@ -239,7 +239,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<ICommandExecutor>().ToMethod(context => GetCommandExecutor(environment, context))
                                            .InRequestScope();
 
-            MigrateSite(environment);
+            MigrateSite(environment, kernel);
 
             RegisterRoutes(kernel, RouteTable.Routes);
         }
@@ -352,15 +352,16 @@ namespace Kudu.Services.Web.App_Start
         }
 
         // Perform migration tasks to deal with legacy sites that had different file layout
-        private static void MigrateSite(IEnvironment environment)
+        private static void MigrateSite(IEnvironment environment, IKernel kernel)
         {
             try
             {
                 MoveOldSSHFolder(environment);
             }
-            catch
+            catch (Exception e)
             {
-                // TODO: log an error here
+                ITracer tracer = GetTracerWithoutContext(environment, kernel);
+                tracer.Trace("Failed to move legacy .ssh folder: {0}", e.Message);
             }
         }
 
@@ -407,7 +408,7 @@ namespace Kudu.Services.Web.App_Start
             return NullTracer.Instance;
         }
 
-        private static void TraceShutdown(IEnvironment environment, IKernel kernel)
+        private static ITracer GetTracerWithoutContext(IEnvironment environment, IKernel kernel)
         {
             TraceLevel level = kernel.Get<IDeploymentSettingsManager>().GetTraceLevel();
             if (level > TraceLevel.Off)
@@ -415,21 +416,28 @@ namespace Kudu.Services.Web.App_Start
                 string tracePath = Path.Combine(environment.TracePath, Constants.TraceFile);
                 string traceLockPath = Path.Combine(environment.TracePath, Constants.TraceLockFile);
                 var traceLock = new LockFile(traceLockPath);
-                ITracer tracer = new Tracer(tracePath, level, traceLock);
-                var attribs = new Dictionary<string, string>();
-
-                // Add an attribute containing the process, AppDomain and Thread ids to help debugging
-                attribs.Add("pid", String.Format("{0},{1},{2}",
-                    Process.GetCurrentProcess().Id,
-                    AppDomain.CurrentDomain.Id.ToString(),
-                    System.Threading.Thread.CurrentThread.ManagedThreadId));
-
-                attribs.Add("uptime", TraceModule.UpTime.ToString());
-
-                attribs.Add("lastrequesttime", TraceModule.LastRequestTime.ToString());
-
-                tracer.Trace("Process Shutdown", attribs);
+                return new Tracer(tracePath, level, traceLock);
             }
+
+            return NullTracer.Instance;
+        }
+
+        private static void TraceShutdown(IEnvironment environment, IKernel kernel)
+        {
+            ITracer tracer = GetTracerWithoutContext(environment, kernel);
+            var attribs = new Dictionary<string, string>();
+
+            // Add an attribute containing the process, AppDomain and Thread ids to help debugging
+            attribs.Add("pid", String.Format("{0},{1},{2}",
+                Process.GetCurrentProcess().Id,
+                AppDomain.CurrentDomain.Id.ToString(),
+                System.Threading.Thread.CurrentThread.ManagedThreadId));
+
+            attribs.Add("uptime", TraceModule.UpTime.ToString());
+
+            attribs.Add("lastrequesttime", TraceModule.LastRequestTime.ToString());
+
+            tracer.Trace("Process Shutdown", attribs);
         }
 
         private static ILogger GetLogger(IEnvironment environment, IKernel kernel)
