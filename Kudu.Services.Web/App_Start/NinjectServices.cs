@@ -111,8 +111,6 @@ namespace Kudu.Services.Web.App_Start
 
             IEnvironment environment = GetEnvironment();
 
-            MigrateSite(environment);
-
             // Per request environment
             kernel.Bind<IEnvironment>().ToMethod(context => GetEnvironment(context.Kernel.Get<IDeploymentSettingsManager>()))
                                              .InRequestScope();
@@ -240,6 +238,8 @@ namespace Kudu.Services.Web.App_Start
             // Command executor
             kernel.Bind<ICommandExecutor>().ToMethod(context => GetCommandExecutor(environment, context))
                                            .InRequestScope();
+
+            MigrateSite(environment);
 
             RegisterRoutes(kernel, RouteTable.Routes);
         }
@@ -379,9 +379,15 @@ namespace Kudu.Services.Web.App_Start
 
                 foreach (FileInfo file in oldSSHDirInfo.EnumerateFiles())
                 {
-                    file.CopyTo(Path.Combine(newSSHFolder, file.Name), overwrite: true);
+                    // Copy the file to the new folder, unless it already exists
+                    string newFile = Path.Combine(newSSHFolder, file.Name);
+                    if (!File.Exists(newFile))
+                    {
+                        file.CopyTo(newFile, overwrite: true);
+                    }
                 }
 
+                // Delete the old folder
                 oldSSHDirInfo.Delete(recursive: true);
             }
         }
