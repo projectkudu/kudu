@@ -37,6 +37,7 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
+        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
         public void SetHomePath(IEnvironment environment)
         {
             if (!String.IsNullOrEmpty(environment.RootPath))
