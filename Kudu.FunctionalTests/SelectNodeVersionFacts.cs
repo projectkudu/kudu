@@ -30,7 +30,7 @@ namespace Kudu.FunctionalTests
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Assert.Contains("The package.json file is not present", deployResult.GitTrace);
+                    Assert.Contains("The package.json file does not specify node.js engine version constraints", deployResult.GitTrace);
                 });
             }
         }
@@ -84,7 +84,7 @@ namespace Kudu.FunctionalTests
                     // Assert
                     Assert.Equal(1, results.Count);
                     Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Assert.Contains("The package.json file is not present", deployResult.GitTrace);
+                    Assert.Contains("The package.json file does not specify node.js engine version constraints", deployResult.GitTrace);
                 });
             }
         }
