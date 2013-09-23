@@ -20,12 +20,15 @@ namespace Kudu.Services.Web
                 return path;
             }
 
+            // Due to an issue with d:\home on Azure, we can't quite use it yet
+#if NOTYET
             // If d:\home exists, use it. This is a 'magic' folder on Azure that points to the root of the site files
             path = Environment.ExpandEnvironmentVariables(@"%SystemDrive%\home");
             if (Directory.Exists(path))
             {
                 return path;
             }
+#endif
 
             // Fall back to the HOME env variable, which is set on Azure but to a longer folder that looks
             // something like C:\DWASFiles\Sites\MySite\VirtualDirectory0
