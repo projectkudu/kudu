@@ -543,7 +543,7 @@ namespace Kudu.FunctionalTests
         [Fact]
         public async Task PullApiTestGenericFormatCustomBranch()
         {
-            string payload = @"{ ""oldRef"": ""0000000000000000000"", ""newRef"": ""ad21595c668f3de813463df17c04a3b23065fedc"", ""url"": ""https://github.com/KuduApps/RepoWithMultipleBranches.git"", ""deployer"" : ""CodePlex"", branch: ""test"" }";
+            string payload = @"{ ""oldRef"": ""0000000000000000000"", ""newRef"": ""b4bd5b73ec4c15019d41d16e418c3017b70b3796"", ""url"": ""https://github.com/KuduApps/RepoWithMultipleBranches.git"", ""deployer"" : ""CodePlex"", branch: ""test"" }";
             string appName = "PullApiTestGenericCustomBranch";
 
             await ApplicationManager.RunAsync(appName, async appManager =>

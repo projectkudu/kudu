@@ -192,11 +192,11 @@ echo $i > pushinfo
             string output = null;
             try
             {
-                output = Execute("log -n 1 {0}", id);
+                output = Execute("log -n 1 {0} --", id);
             }
             catch (CommandLineException ex)
             {
-                if (!String.IsNullOrEmpty(ex.Message) && ex.Message.IndexOf("unknown revision ", StringComparison.OrdinalIgnoreCase) != -1)
+                if (!String.IsNullOrEmpty(ex.Message) && ex.Message.IndexOf("bad revision ", StringComparison.OrdinalIgnoreCase) != -1)
                 {
                     // Indicates the changeset does not exist in the repo.
                     return null;
