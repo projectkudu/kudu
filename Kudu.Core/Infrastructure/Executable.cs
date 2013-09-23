@@ -41,7 +41,6 @@ namespace Kudu.Core.Infrastructure
         {
             if (!String.IsNullOrEmpty(environment.RootPath))
             {
-                // The .ssh folder goes at the root of the site files
                 SetHomePath(environment.RootPath);
             }
         }
