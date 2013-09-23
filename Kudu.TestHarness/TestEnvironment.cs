@@ -10,11 +10,6 @@ namespace Kudu.TestHarness
             set;
         }
 
-        public string HomePath
-        {
-            get { return RootPath; }
-        }
-
         public string SiteRootPath
         {
             get;
