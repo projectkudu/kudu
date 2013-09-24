@@ -289,9 +289,15 @@ namespace Kudu.Services.Performance
         {
             List<string> files = new List<string>();
 
-            foreach (var handleInfo in HandleUtility.GetHandles(processId).Where(handleInfo => handleInfo.Type == HandleType.File))
+            foreach (var handleInfo in 
+                HandleUtility.GetHandles(processId).Where(
+                handleInfo => (handleInfo.Type == HandleType.File 
+                    || handleInfo.Type == HandleType.Directory)))
             {
-                files.Add(handleInfo.Name);
+                if (handleInfo.DosFilePath != null)
+                {
+                    files.Add(handleInfo.DosFilePath);
+                }
             }
 
             return files;
@@ -391,6 +397,7 @@ namespace Kudu.Services.Performance
                 {
                     info.GCDump = new Uri(selfLink + "/gcdump");
                 }
+                info.OpenFileHandles = SafeGetValue(() => GetOpenFileHandles(process.Id), Enumerable.Empty<string>());
                 info.Parent = new Uri(selfLink, SafeGetValue(() => process.GetParentId(_tracer), 0).ToString());
                 info.Children = SafeGetValue(() => process.GetChildren(_tracer, recursive: false), Enumerable.Empty<Process>()).Select(c => new Uri(selfLink, c.Id.ToString()));
                 info.Threads = SafeGetValue(() => GetThreads(process, selfLink.ToString()), Enumerable.Empty<ProcessThreadInfo>());

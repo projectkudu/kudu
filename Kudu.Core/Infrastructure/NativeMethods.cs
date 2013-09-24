@@ -54,5 +54,11 @@ namespace Kudu.Core.Infrastructure
             [In] IntPtr ObjectInformation,
             [In] int ObjectInformationLength,
             [Out] out int ReturnLength);
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        internal static extern int QueryDosDevice(
+            [In] string lpDeviceName,
+            [Out] StringBuilder lpTargetPath,
+            [In] int ucchMax);
     }    
 }

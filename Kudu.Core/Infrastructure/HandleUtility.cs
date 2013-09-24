@@ -29,21 +29,20 @@ namespace Kudu.Core.Infrastructure
                 while (true)
                 {
                     ptr = Marshal.AllocHGlobal(length);
-                    int wantedLength;
+                    int returnLength;
                     var result = 
                         NativeMethods.NtQuerySystemInformation(
-                        SYSTEM_INFORMATION_CLASS.SystemHandleInformation, ptr, length, out wantedLength);
+                        SYSTEM_INFORMATION_CLASS.SystemHandleInformation, ptr, length, out returnLength);
 
                     if (result == NT_STATUS.STATUS_INFO_LENGTH_MISMATCH)
                     {
-                        length = Math.Max(length, wantedLength);
-                        Marshal.FreeHGlobal(ptr);
-                        ptr = IntPtr.Zero;
+                        // Round required memory up to the nearest 64KB boundary.
+                        length = ((returnLength + 0xffff) & ~0xffff);
                     }
                     else if (result == NT_STATUS.STATUS_SUCCESS)
+                    {
                         break;
-                    else
-                        throw new Exception("Failed to retrieve system handle information.");
+                    }                    
                 }
 
                 int handleCount = IntPtr.Size == 4 ? Marshal.ReadInt32(ptr) : (int)Marshal.ReadInt64(ptr);
@@ -53,7 +52,7 @@ namespace Kudu.Core.Infrastructure
                 {
                     var handleEntry = 
                         (SystemHandleEntry)Marshal.PtrToStructure(
-                        (IntPtr)((int)ptr + offset), typeof(SystemHandleEntry));
+                        IntPtr.Add(ptr, offset), typeof(SystemHandleEntry));
 
                     if (handleEntry.OwnerProcessId == processId)
                     {

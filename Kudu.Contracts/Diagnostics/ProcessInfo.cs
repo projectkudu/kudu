@@ -34,7 +34,7 @@ namespace Kudu.Core.Diagnostics
         public IEnumerable<ProcessThreadInfo> Threads { get; set; }
 
         [DataMember(Name = "open_file_handles", EmitDefaultValue = false)]
-        public Uri OpenFileHandles { get; set; }
+        public IEnumerable<string> OpenFileHandles { get; set; }
 
         [DataMember(Name = "file_name", EmitDefaultValue = false)]
         public string FileName { get; set; }
