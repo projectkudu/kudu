@@ -66,13 +66,27 @@ namespace Kudu.Core.Infrastructure
         internal static string ResolveNpmJsPath()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
-            string npmPath = Path.Combine(programFiles, "npm", DefaultNpmVersion, "bin", "npm-cli.js");
+            string npmCliPath = Path.Combine("node_modules", "npm", "bin", "npm-cli.js");
+
+            // 1. Attempt to look for the file under the S24 updated path that looks like 
+            // "C:\Program Files (x86)\npm\1.3.8\node_modules\npm\bin\npm-cli.js"
+            string npmPath = Path.Combine(programFiles, "npm", DefaultNpmVersion, npmCliPath);
             if (File.Exists(npmPath))
             {
                 return npmPath;
             }
-            
-            return Path.Combine(programFiles, "nodejs", "node_modules", "npm", "bin", "npm-cli.js");
+
+            // 2. Attempt to look for the file under the pre-S24 npm path
+            // "C:\Program Files (x86)\npm\1.3.8\bin\npm-cli.js"
+            npmPath = Path.Combine(programFiles, "npm", DefaultNpmVersion, "bin", "npm-cli.js");
+            if (File.Exists(npmPath))
+            {
+                return npmPath;
+            }
+
+            // 3. Use the default npm path from the NodeJS installation
+            // "C:\Program Files (x86)\nodejs\node_modules\npm\bin\npm-cli.js"
+            return Path.Combine(programFiles, "nodejs", npmCliPath);
         }
 
         internal static string ResolveMSBuildPath()
