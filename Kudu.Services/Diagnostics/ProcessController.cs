@@ -44,13 +44,7 @@ namespace Kudu.Services.Performance
         {
             using (_tracer.Step("ProcessController.GetOpenFiles"))
             {
-                List<string> files = new List<string>();
-                var openFiles = DetectOpenFiles.GetOpenFilesEnumerator(id);
-                while (openFiles.MoveNext())
-                {
-                    files.Add(openFiles.Current.FullName);
-                }
-                return Request.CreateResponse(HttpStatusCode.OK, files);
+                return Request.CreateResponse(HttpStatusCode.OK, GetOpenFileHandles(id));
             }
         }
 
@@ -289,6 +283,18 @@ namespace Kudu.Services.Performance
 
                 throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.BadRequest, ex.Message));
             }
+        }
+
+        private static IEnumerable<string> GetOpenFileHandles(int processId)
+        {
+            List<string> files = new List<string>();
+
+            foreach (var handleInfo in HandleUtility.GetHandles(processId).Where(handleInfo => handleInfo.Type == HandleType.File))
+            {
+                files.Add(handleInfo.Name);
+            }
+
+            return files;
         }
 
         private IEnumerable<ProcessThreadInfo> GetThreads(Process process, string href)
