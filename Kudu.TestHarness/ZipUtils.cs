@@ -1,4 +1,5 @@
-﻿using Ionic.Zip;
+﻿using System.IO;
+using Ionic.Zip;
 
 namespace Kudu.TestHarness
 {
@@ -13,6 +14,17 @@ namespace Kudu.TestHarness
                     file.Extract(targetDir, ExtractExistingFileAction.OverwriteSilently);
                 }
             }
-        }       
+        }
+
+        public static void Unzip(Stream zipStream, Stream targetStream)
+        {
+            using (ZipFile zip = ZipFile.Read(zipStream))
+            {
+                foreach (ZipEntry file in zip)
+                {
+                    file.Extract(targetStream);
+                }
+            }
+        }
     }
 }
