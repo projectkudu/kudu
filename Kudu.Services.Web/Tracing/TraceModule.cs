@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 using System.Web;
 using Kudu.Contracts.Tracing;
@@ -43,7 +42,6 @@ namespace Kudu.Services.Web.Tracing
 
             // Skip certain paths
             if (httpContext.Request.RawUrl.EndsWith("favicon.ico", StringComparison.OrdinalIgnoreCase) ||
-                httpContext.Request.Path.StartsWith("/dump", StringComparison.OrdinalIgnoreCase) ||
                 httpContext.Request.RawUrl == "/")
             {
                 TraceServices.RemoveRequestTracer(httpContext);

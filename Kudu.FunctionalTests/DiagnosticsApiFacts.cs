@@ -208,5 +208,41 @@ namespace Kudu.FunctionalTests
                 }
             }
         }
+
+        [Fact]
+        public async Task DiagnosticsDumpTests()
+        {
+            string appName = "DiagnosticsDumpTests";
+
+            await ApplicationManager.RunAsync(appName, async appManager =>
+            {
+                string path = String.Format("dump?marker={0}", Guid.NewGuid());
+                using (HttpClient client = HttpClientHelper.CreateClient(appManager.ServiceUrl, appManager.DeploymentManager.Credentials))
+                {
+                    using (var zipStream = new MemoryStream())
+                    {
+                        using (var dump = await client.GetStreamAsync(path))
+                        {
+                            Assert.NotNull(dump);
+                            await dump.CopyToAsync(zipStream);
+                        }
+                        TestTracer.Trace("zipStream lenth={0}", zipStream.Length);
+                        Assert.True(zipStream.Length > 0);
+
+                        zipStream.Position = 0;
+                        using (var targetStream = new MemoryStream())
+                        {
+                            ZipUtils.Unzip(zipStream, targetStream);
+                            TestTracer.Trace("targetStream lenth={0}", targetStream.Length);
+                            Assert.True(targetStream.Length > zipStream.Length, "zip stream must be smaller in size");
+                        }
+                    }
+                }
+
+                // Ensure trace
+                string trace = await appManager.VfsManager.ReadAllTextAsync("LogFiles/Git/trace/trace.xml");
+                Assert.Contains(path, trace, StringComparison.OrdinalIgnoreCase);
+            });
+        }
     }
 }
