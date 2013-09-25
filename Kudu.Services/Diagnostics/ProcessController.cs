@@ -290,13 +290,14 @@ namespace Kudu.Services.Performance
             List<string> files = new List<string>();
 
             foreach (var handleInfo in 
-                HandleUtility.GetHandles(processId).Where(
-                handleInfo => (handleInfo.Type == HandleType.File 
-                    || handleInfo.Type == HandleType.Directory)))
+                HandleUtility.GetHandles(processId).Where(handleInfo => (handleInfo.Type == HandleType.File)))
             {
                 if (handleInfo.DosFilePath != null)
                 {
-                    files.Add(handleInfo.DosFilePath);
+                    if (!files.Contains(handleInfo.DosFilePath))
+                    {
+                        files.Add(handleInfo.DosFilePath);
+                    }
                 }
             }
 

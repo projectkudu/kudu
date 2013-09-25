@@ -62,7 +62,7 @@
     <Compile Include="Tracing\ISiteExtensionLogEvent.cs" />
     <Compile Include="Infrastructure\HandleInfo.cs" />
     <Compile Include="Infrastructure\HandleUtility.cs" />
-    <Compile Include="Infrastructure\NativeMethods.cs" />
+    <Compile Include="Infrastructure\FileHandleNativeMethods.cs" />
     <Compile Include="Infrastructure\StringExtensions.cs" />
     <Compile Include="Settings\DeploymentSettingsProvider.cs" />
     <Compile Include="Deployment\DeploymentContext.cs" />

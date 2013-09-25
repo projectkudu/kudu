@@ -31,7 +31,7 @@ namespace Kudu.Core.Infrastructure
                     ptr = Marshal.AllocHGlobal(length);
                     int returnLength;
                     var result = 
-                        NativeMethods.NtQuerySystemInformation(
+                        FileHandleNativeMethods.NtQuerySystemInformation(
                         SYSTEM_INFORMATION_CLASS.SystemHandleInformation, ptr, length, out returnLength);
 
                     if (result == NT_STATUS.STATUS_INFO_LENGTH_MISMATCH)

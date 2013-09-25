@@ -23,6 +23,7 @@ namespace Kudu.Core.Infrastructure
     {
         private const string networkDevicePrefix = "\\Device\\LanmanRedirector\\";
         private const int MAX_PATH = 260;
+        private const int PROCESS_DUP_HANDLE = 0x40;
 
         private static Dictionary<string, string> deviceMap;
         private static Dictionary<byte, string> _rawTypeMap = new Dictionary<byte, string>();
@@ -127,7 +128,7 @@ namespace Kudu.Core.Infrastructure
             foreach (string drive in logicalDrives)
             {
                 string lpDeviceName = drive.Substring(0, 2);
-                NativeMethods.QueryDosDevice(lpDeviceName, lpTargetPath, MAX_PATH);
+                FileHandleNativeMethods.QueryDosDevice(lpDeviceName, lpTargetPath, MAX_PATH);
                 localDeviceMap.Add(NormalizeDeviceName(lpTargetPath.ToString()), lpDeviceName);
             }
             localDeviceMap.Add(networkDevicePrefix.Substring(0, networkDevicePrefix.Length - 1), "\\");
@@ -162,17 +163,32 @@ namespace Kudu.Core.Infrastructure
             if (_typeAndNameAttempted)
                 return;
             _typeAndNameAttempted = true;
-                     
+            IntPtr sourceProcessHandle = IntPtr.Zero;
+            IntPtr handleDuplicate = IntPtr.Zero;
+        
             try
             {
+
+                sourceProcessHandle = FileHandleNativeMethods.OpenProcess(PROCESS_DUP_HANDLE, true, ProcessId);
+
+                // To read info about a handle owned by another process we must duplicate it into ours
+                // For simplicity, current process handles will also get duplicated; remember that process handles cannot be compared for equality
+                if (!FileHandleNativeMethods.DuplicateHandle(
+                    sourceProcessHandle, 
+                    (IntPtr)Handle, 
+                    FileHandleNativeMethods.GetCurrentProcess(), 
+                    out handleDuplicate, 0, false, 2 /* same_access */))
+
+                    return;
+
                 // Query the object type
                 if (_rawTypeMap.ContainsKey(RawType))
                     _typeStr = _rawTypeMap[RawType];
                 else
                 {
                     int length;
-                    NativeMethods.NtQueryObject(
-                        (IntPtr)Handle, 
+                    FileHandleNativeMethods.NtQueryObject(
+                        handleDuplicate, 
                         OBJECT_INFORMATION_CLASS.ObjectTypeInformation, 
                         IntPtr.Zero, 0, out length);
 
@@ -180,8 +196,8 @@ namespace Kudu.Core.Infrastructure
                     try
                     {
                         ptr = Marshal.AllocHGlobal(length);
-                        if (NativeMethods.NtQueryObject(
-                            (IntPtr)Handle,
+                        if (FileHandleNativeMethods.NtQueryObject(
+                            handleDuplicate,
                             OBJECT_INFORMATION_CLASS.ObjectTypeInformation,
                             ptr, length, out length) != NT_STATUS.STATUS_SUCCESS)
                         {
@@ -201,12 +217,23 @@ namespace Kudu.Core.Infrastructure
 
                 // don't query some objects that could get stuck
                 /*if (_typeStr != null && GrantedAccess != 0x0012019f 
-                    && GrantedAccess != 0x00120189 && GrantedAccess != 0x120089) */
+                    && GrantedAccess != 0x00120189 && GrantedAccess != 0x120089)                */
                 if(_typeStr != null)
                 {
                     int length;
-                    NativeMethods.NtQueryObject(
-                        (IntPtr)Handle, 
+                    /*
+                    var fileStructure = new FileHandleNativeMethods.FILE_ID_BOTH_DIR_INFO();
+                    if(FileHandleNativeMethods.GetFileInformationByHandleEx(
+                        handleDuplicate, 
+                        FileHandleNativeMethods.FILE_INFO_BY_HANDLE_CLASS.FileIdBothDirectoryInfo, 
+                        out fileStructure, 
+                        (uint)Marshal.SizeOf(fileStructure)))
+                    {
+                        _name = fileStructure.ShortName;
+                    }*/
+                    
+                    FileHandleNativeMethods.NtQueryObject(
+                        handleDuplicate, 
                         OBJECT_INFORMATION_CLASS.ObjectNameInformation, 
                         IntPtr.Zero, 0, out length);
 
@@ -214,14 +241,14 @@ namespace Kudu.Core.Infrastructure
                     try
                     {
                         ptr = Marshal.AllocHGlobal(length);
-                        if (NativeMethods.NtQueryObject(
-                            (IntPtr)Handle,
+                        if (FileHandleNativeMethods.NtQueryObject(
+                            handleDuplicate,
                             OBJECT_INFORMATION_CLASS.ObjectNameInformation,
                             ptr, length, out length) != NT_STATUS.STATUS_SUCCESS)
                         {
                             return;
                         }
-                        _name = Marshal.PtrToStringUni(IntPtr.Add(ptr, 2 * IntPtr.Size));
+                       _name = Marshal.PtrToStringUni(IntPtr.Add(ptr, 2 * IntPtr.Size));
                     }
                     finally
                     {
@@ -230,7 +257,12 @@ namespace Kudu.Core.Infrastructure
                 }
             }
             finally
-            {                
+            {
+                FileHandleNativeMethods.CloseHandle(sourceProcessHandle);
+                if (handleDuplicate != IntPtr.Zero)
+                {
+                    FileHandleNativeMethods.CloseHandle(handleDuplicate);
+                }
             }
         }
 
