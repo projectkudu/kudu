@@ -234,7 +234,7 @@ namespace Kudu.FunctionalTests
                         {
                             ZipUtils.Unzip(zipStream, targetStream);
                             TestTracer.Trace("targetStream lenth={0}", targetStream.Length);
-                            Assert.True(targetStream.Length > zipStream.Length, "zip stream must be smaller in size");
+                            Assert.True(targetStream.Length > 0);
                         }
                     }
                 }
