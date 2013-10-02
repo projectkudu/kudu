@@ -180,10 +180,17 @@ namespace Kudu.FunctionalTests
             PushAndDeployApps("MvcApplicationWithNuGetAutoRestore", "master", "MvcApplicationWithNuGetAutoRestore", HttpStatusCode.OK, "Deployment successful");
         }
 
+        [Fact]
+        public void PushAndDeployMvcAppWithAutoRestoreFailsIfRestoreFails()
+        {
+            PushAndDeployApps("MvcApplicationWithNuGetAutoRestore", "bad-config", null, HttpStatusCode.OK, "Unable to find version '1.2.34' of package 'Package.That.Should.NotExist'.", DeployStatus.Failed);
+        }
+
         //Common code
-        internal static void PushAndDeployApps(string repoCloneUrl, string defaultBranchName,
-                                              string verificationText, HttpStatusCode expectedResponseCode, string verificationLogText,
-                                              string resourcePath = "", string httpMethod = "GET", string jsonPayload = "", bool deleteSCM = false)
+        internal static void PushAndDeployApps(string repoCloneUrl, string defaultBranchName, string verificationText, 
+                                              HttpStatusCode expectedResponseCode, string verificationLogText, 
+                                              DeployStatus expectedStatus = DeployStatus.Success, string resourcePath = "", 
+                                              string httpMethod = "GET", string jsonPayload = "", bool deleteSCM = false)
         {
             using (new LatencyLogger("PushAndDeployApps - " + repoCloneUrl))
             {
@@ -208,7 +215,7 @@ namespace Kudu.FunctionalTests
 
                     // Assert
                     Assert.Equal(1, results.Count);
-                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    Assert.Equal(expectedStatus, results[0].Status);
                     var url = new Uri(new Uri(appManager.SiteUrl), resourcePath);
                     if (!String.IsNullOrEmpty(verificationText))
                     {
