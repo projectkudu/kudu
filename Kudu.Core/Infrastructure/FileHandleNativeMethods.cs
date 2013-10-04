@@ -81,27 +81,8 @@ namespace Kudu.Core.Infrastructure
     struct ObjectTypeInformation
     {
         internal UnicodeString Name;
-        internal uint TotalNumberOfObjects;
-        internal uint TotalNumberOfHandles;
-        internal uint TotalPagedPoolUsage;
-        internal uint TotalNonPagedPoolUsage;
-        internal uint TotalNamePoolUsage;
-        internal uint TotalHandleTableUsage;
-        internal uint HighWaterNumberOfObjects;
-        internal uint HighWaterNumberOfHandles;
-        internal uint HighWaterPagedPoolUsage;
-        internal uint HighWaterNonPagedPoolUsage;
-        internal uint HighWaterNamePoolUsage;
-        internal uint HighWaterHandleTableUsage;
-        internal uint InvalidAttributes;
-        internal GenericMapping GenericMapping;
-        internal uint ValidAccess;
-        [MarshalAs(UnmanagedType.Bool)] internal bool SecurityRequired;
-        [MarshalAs(UnmanagedType.Bool)] internal bool MaintainHandleCount;
-        internal ushort MaintainTypeList;
-        internal ushort PoolType;
-        internal uint PagedPoolUsage;
-        internal uint NonPagedPoolUsage;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 22, ArraySubType = UnmanagedType.U4)]
+        internal uint[] Reserved;
     }
 
     public static class FileHandleNativeMethods
