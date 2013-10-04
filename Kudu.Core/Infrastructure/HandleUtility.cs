@@ -18,14 +18,14 @@ namespace Kudu.Core.Infrastructure
                     uint returnLength;
                     var result = 
                         FileHandleNativeMethods.NtQuerySystemInformation(
-                        SystemInformationClass.SystemHandleInformation, ptr, length, out returnLength);
+                        SYSTEM_INFORMATION_CLASS.SystemHandleInformation, ptr, length, out returnLength);
 
-                    if (result == NtStatus.StatusInfoLengthMismatch)
+                    if (result == NTSTATUS.STATUS_INFO_LENGTH_MISMATCH)
                     {
                         // Round required memory up to the nearest 64KB boundary.
                         length = ((returnLength + 0xffff) & ~(uint)0xffff);
                     }
-                    else if (result == NtStatus.StatusSuccess)
+                    else if (result == NTSTATUS.STATUS_SUCCESS)
                     {
                         break;
                     }
@@ -33,12 +33,12 @@ namespace Kudu.Core.Infrastructure
 
                 int handleCount = IntPtr.Size == 4 ? Marshal.ReadInt32(ptr) : (int)Marshal.ReadInt64(ptr);
                 int offset = IntPtr.Size;
-                int size = Marshal.SizeOf(typeof(SystemHandleEntry));
+                int size = Marshal.SizeOf(typeof(SYSTEM_HANDLE_ENTRY));
                 for (int i = 0; i < handleCount; i++)
                 {
                     var handleEntry = 
-                        (SystemHandleEntry)Marshal.PtrToStructure(
-                        IntPtr.Add(ptr, offset), typeof(SystemHandleEntry));
+                        (SYSTEM_HANDLE_ENTRY)Marshal.PtrToStructure(
+                        IntPtr.Add(ptr, offset), typeof(SYSTEM_HANDLE_ENTRY));
 
                     if (handleEntry.OwnerProcessId == processId)
                     {

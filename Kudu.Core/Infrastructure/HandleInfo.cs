@@ -133,18 +133,29 @@ namespace Kudu.Core.Infrastructure
             {
                 if (_uncPath == null && HomePath != null)
                 {
-                    var wwwrootHandle = FileHandleNativeMethods.CreateFile(Path.Combine(HomePath, SiteWwwroot),
-                        FileAccess.Read,
-                        FileShare.ReadWrite,
-                        IntPtr.Zero,
-                        FileMode.Open,
-                        FileFlagsAndAttributes.FileFlagBackupSemantics,
-                        IntPtr.Zero);
-                    var wwwrootPath = GetNameFromHandle(wwwrootHandle);
-                    _uncPath = Regex.Replace(wwwrootPath, Regex.Escape("\\" + SiteWwwroot), String.Empty,
-                        RegexOptions.IgnoreCase);
-                    _uncPath = Regex.Replace(_uncPath, Regex.Escape(NetworkDevicePrefix), NetworkPrefix,
-                        RegexOptions.IgnoreCase);
+                    IntPtr wwwrootHandle = IntPtr.Zero;
+                    try
+                    {
+                        wwwrootHandle = FileHandleNativeMethods.CreateFile(Path.Combine(HomePath, SiteWwwroot),
+                            FileAccess.Read,
+                            FileShare.ReadWrite,
+                            IntPtr.Zero,
+                            FileMode.Open,
+                            FILE_FLAGS_AND_ATTRIBUTES.FILE_FLAG_BACKUP_SEMANTICS,
+                            IntPtr.Zero);
+                        var wwwrootPath = GetNameFromHandle(wwwrootHandle);
+                        _uncPath = Regex.Replace(wwwrootPath, Regex.Escape("\\" + SiteWwwroot), String.Empty,
+                            RegexOptions.IgnoreCase);
+                        _uncPath = Regex.Replace(_uncPath, Regex.Escape(NetworkDevicePrefix), NetworkPrefix,
+                            RegexOptions.IgnoreCase);
+                    }
+                    finally
+                    {
+                        if (wwwrootHandle != IntPtr.Zero)
+                        {
+                            FileHandleNativeMethods.CloseHandle(wwwrootHandle);
+                        }
+                    }
                 }
                 return _uncPath;
             }
@@ -237,7 +248,7 @@ namespace Kudu.Core.Infrastructure
             try
             {
 
-                sourceProcessHandle = FileHandleNativeMethods.OpenProcess(ProcessAccessRights.ProcessDupHandle, true,
+                sourceProcessHandle = FileHandleNativeMethods.OpenProcess(PROCESS_ACCESS_RIGHTS.PROCESS_DUP_HANDLE, true,
                     ProcessId);
 
                 // To read info about a handle owned by another process we must duplicate it into ours
@@ -248,7 +259,7 @@ namespace Kudu.Core.Infrastructure
                     out handleDuplicate,
                     0,
                     false,
-                    DuplicateHandleOptions.DuplicateSameAccess))
+                    DUPLICATE_HANDLE_OPTIONS.DUPLICATE_SAME_ACCESS))
                 {
                     return;
                 }
@@ -262,7 +273,7 @@ namespace Kudu.Core.Infrastructure
                 {
                     uint length;
                     FileHandleNativeMethods.NtQueryObject(handleDuplicate,
-                        ObjectInformationClass.ObjectTypeInformation,
+                        OBJECT_INFORMATION_CLASS.ObjectTypeInformation,
                         IntPtr.Zero,
                         0,
                         out length);
@@ -272,16 +283,16 @@ namespace Kudu.Core.Infrastructure
                     {
                         ptr = Marshal.AllocHGlobal((int) length);
                         if (FileHandleNativeMethods.NtQueryObject(handleDuplicate,
-                            ObjectInformationClass.ObjectTypeInformation,
+                            OBJECT_INFORMATION_CLASS.ObjectTypeInformation,
                             ptr,
                             length,
-                            out length) != NtStatus.StatusSuccess)
+                            out length) != NTSTATUS.STATUS_SUCCESS)
                         {
                             return;
                         }
 
-                        var typeInformation = (ObjectTypeInformation) Marshal.PtrToStructure(ptr, typeof (ObjectTypeInformation));
-                        TypeString = typeInformation.Name.ToString();
+                        var typeInformation = (PUBLIC_OBJECT_TYPE_INFORMATION) Marshal.PtrToStructure(ptr, typeof (PUBLIC_OBJECT_TYPE_INFORMATION));
+                        TypeString = typeInformation.TypeName.ToString();
                         RawTypeMap[RawType] = TypeString;
                     }
                     finally
@@ -312,7 +323,7 @@ namespace Kudu.Core.Infrastructure
 
             FileHandleNativeMethods.NtQueryObject(
                 handle,
-                ObjectInformationClass.ObjectNameInformation,
+                OBJECT_INFORMATION_CLASS.ObjectNameInformation,
                 IntPtr.Zero, 0, out length);
             IntPtr ptr = IntPtr.Zero;
             try
@@ -320,12 +331,12 @@ namespace Kudu.Core.Infrastructure
                 ptr = Marshal.AllocHGlobal((int) length);
                 if (FileHandleNativeMethods.NtQueryObject(
                     handle,
-                    ObjectInformationClass.ObjectNameInformation,
-                    ptr, length, out length) != NtStatus.StatusSuccess)
+                    OBJECT_INFORMATION_CLASS.ObjectNameInformation,
+                    ptr, length, out length) != NTSTATUS.STATUS_SUCCESS)
                 {
                     return null;
                 }
-                var unicodeStringName = (UnicodeString) Marshal.PtrToStructure(ptr, typeof (UnicodeString));
+                var unicodeStringName = (UNICODE_STRING) Marshal.PtrToStructure(ptr, typeof (UNICODE_STRING));
                 return unicodeStringName.ToString();
             }
             finally

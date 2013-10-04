@@ -6,40 +6,40 @@ using System.Runtime.InteropServices;
 
 namespace Kudu.Core.Infrastructure
 {
-    enum NtStatus : uint
+    enum NTSTATUS : uint
     {
-        StatusSuccess = 0x0,
-        StatusInfoLengthMismatch = 0xC0000004
+        STATUS_SUCCESS = 0x0,
+        STATUS_INFO_LENGTH_MISMATCH = 0xC0000004
     }
 
-    enum SystemInformationClass
+    enum SYSTEM_INFORMATION_CLASS
     {
         SystemHandleInformation = 16
     }
 
-    enum ObjectInformationClass
+    enum OBJECT_INFORMATION_CLASS
     {
         ObjectNameInformation = 1,
         ObjectTypeInformation = 2
     }
 
-    enum FileFlagsAndAttributes : uint
+    enum FILE_FLAGS_AND_ATTRIBUTES : uint
     {
-        FileFlagBackupSemantics = 0x02000000
+        FILE_FLAG_BACKUP_SEMANTICS = 0x02000000
     }
 
-    enum ProcessAccessRights : uint
+    enum PROCESS_ACCESS_RIGHTS : uint
     {
-        ProcessDupHandle = 0x0040
+        PROCESS_DUP_HANDLE = 0x0040
     }
 
-    enum DuplicateHandleOptions : uint
+    enum DUPLICATE_HANDLE_OPTIONS : uint
     {
-        DuplicateSameAccess = 0x00000002
+        DUPLICATE_SAME_ACCESS = 0x00000002
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    struct SystemHandleEntry
+    struct SYSTEM_HANDLE_ENTRY
     {
         internal uint OwnerProcessId;
         internal byte ObjectTypeNumber;
@@ -50,7 +50,7 @@ namespace Kudu.Core.Infrastructure
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    struct UnicodeString : IDisposable
+    struct UNICODE_STRING : IDisposable
     {
         internal ushort Length;
         internal ushort MaximumLength;
@@ -69,7 +69,7 @@ namespace Kudu.Core.Infrastructure
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    struct GenericMapping
+    struct GENERIC_MAPPING
     {
         internal uint GenericRead;
         internal uint GenericWrite;
@@ -78,9 +78,9 @@ namespace Kudu.Core.Infrastructure
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    struct ObjectTypeInformation
+    struct PUBLIC_OBJECT_TYPE_INFORMATION
     {
-        internal UnicodeString Name;
+        internal UNICODE_STRING TypeName;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 22, ArraySubType = UnmanagedType.U4)]
         internal uint[] Reserved;
     }
@@ -88,16 +88,16 @@ namespace Kudu.Core.Infrastructure
     public static class FileHandleNativeMethods
     {
         [DllImport("ntdll.dll")]
-        internal static extern NtStatus NtQuerySystemInformation(
-            [In] SystemInformationClass systemInformationClass,
+        internal static extern NTSTATUS NtQuerySystemInformation(
+            [In] SYSTEM_INFORMATION_CLASS systemInformationClass,
             [In] IntPtr systemInformation,
             [In] uint systemInformationLength,
             [Out] out uint returnLength);
 
         [DllImport("ntdll.dll")]
-        internal static extern NtStatus NtQueryObject(
+        internal static extern NTSTATUS NtQueryObject(
             [In] IntPtr handle,
-            [In] ObjectInformationClass objectInformationClass,
+            [In] OBJECT_INFORMATION_CLASS objectInformationClass,
             [In] IntPtr objectInformation,
             [In] uint objectInformationLength,
             [Out] out uint returnLength);
@@ -113,7 +113,7 @@ namespace Kudu.Core.Infrastructure
 
         [DllImport("kernel32.dll", SetLastError = true)]
         internal static extern IntPtr OpenProcess(
-            [In] ProcessAccessRights desiredAccess,
+            [In] PROCESS_ACCESS_RIGHTS desiredAccess,
             [In, MarshalAs(UnmanagedType.Bool)] bool inheritHandle,
             [In] uint processId);
 
@@ -132,7 +132,7 @@ namespace Kudu.Core.Infrastructure
             [Out] out IntPtr targetHandle,
             [In] uint desiredAccess,
             [In, MarshalAs(UnmanagedType.Bool)] bool inheritHandle,
-            [In] DuplicateHandleOptions options);
+            [In] DUPLICATE_HANDLE_OPTIONS options);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         internal static extern IntPtr CreateFile(
@@ -141,7 +141,7 @@ namespace Kudu.Core.Infrastructure
             [In] FileShare share,
             [In] IntPtr securityAttributes,
             [In] FileMode creationDisposition,
-            [In] FileFlagsAndAttributes flagsAndAttributes,
+            [In] FILE_FLAGS_AND_ATTRIBUTES flagsAndAttributes,
             [In] IntPtr templateFile);
     }
 }
