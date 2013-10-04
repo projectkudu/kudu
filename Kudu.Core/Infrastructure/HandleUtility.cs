@@ -1,48 +1,34 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Kudu.Core.Infrastructure
 {
     public static class HandleUtility
     {
-        [StructLayout(LayoutKind.Sequential)]
-        private struct SystemHandleEntry
-        {
-            public int OwnerProcessId;
-            public byte ObjectTypeNumber;
-            public byte Flags;
-            public ushort Handle;
-            public IntPtr Object;
-            public int GrantedAccess;
-        }
-
         public static IEnumerable<HandleInfo> GetHandles(int processId)
-        {            
-            int length = 0x10000;
+        {
+            uint length = 0x10000;
             IntPtr ptr = IntPtr.Zero;
             try
             {
                 while (true)
                 {
-                    ptr = Marshal.AllocHGlobal(length);
-                    int returnLength;
+                    ptr = Marshal.AllocHGlobal((int) length);
+                    uint returnLength;
                     var result = 
                         FileHandleNativeMethods.NtQuerySystemInformation(
-                        SYSTEM_INFORMATION_CLASS.SystemHandleInformation, ptr, length, out returnLength);
+                        SystemInformationClass.SystemHandleInformation, ptr, length, out returnLength);
 
-                    if (result == NT_STATUS.STATUS_INFO_LENGTH_MISMATCH)
+                    if (result == NtStatus.StatusInfoLengthMismatch)
                     {
                         // Round required memory up to the nearest 64KB boundary.
-                        length = ((returnLength + 0xffff) & ~0xffff);
+                        length = ((returnLength + 0xffff) & ~(uint)0xffff);
                     }
-                    else if (result == NT_STATUS.STATUS_SUCCESS)
+                    else if (result == NtStatus.StatusSuccess)
                     {
                         break;
-                    }                    
+                    }
                 }
 
                 int handleCount = IntPtr.Size == 4 ? Marshal.ReadInt32(ptr) : (int)Marshal.ReadInt64(ptr);

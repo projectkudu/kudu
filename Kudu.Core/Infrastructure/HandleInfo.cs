@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
@@ -12,30 +13,48 @@ namespace Kudu.Core.Infrastructure
     {
         Unknown,
         Other,
-        File, Directory, SymbolicLink, Key,
-        Process, Thread, Job, Session, WindowStation,
-        Timer, Desktop, Semaphore, Token,
-        Mutant, Section, Event, KeyedEvent, IoCompletion, IoCompletionReserve,
-        TpWorkerFactory, AlpcPort, WmiGuid, UserApcReserve,
+        File,
+        Directory
     }
 
     public class HandleInfo
     {
-        private const string networkDevicePrefix = "\\Device\\LanmanRedirector\\";
-        private const int MAX_PATH = 260;
-        private const int PROCESS_DUP_HANDLE = 0x40;
+        /*
+         * Ideally we will grab all the Network providers from HKLM\SYSTEM\CurrentControlSet\Control\NetworkProvider\Order
+         * and look for their Device names under HKLM\SYSTEM\CurrentControlSet\Services\<NetworkProviderName>\NetworkProvider\DeviceName
+         * http://msdn.microsoft.com/en-us/library/windows/hardware/ff550865%28v=vs.85%29.aspx
+         * However, these providers are generally for devices that are not supported on Azure, so there is no value in adding them.
+        */
 
-        private static Dictionary<string, string> deviceMap;
-        private static Dictionary<byte, string> _rawTypeMap = new Dictionary<byte, string>();
-        private string _name;
-        private string _dosFilePath;
-        private string _typeStr;
-        private HandleType _type;
-        
-        public int ProcessId { get; private set; }
+        private const string NetworkDevicePrefix = "\\Device\\Mup\\";
+
+        private const string NetworkPrefix = "\\\\";
+
+        private const string SiteWwwroot = "SITE\\WWWROOT";
+
+        private const int MaxPath = 260;
+
+        private readonly TimeSpan NtQueryObjectTimeout = TimeSpan.FromMilliseconds(50);
+
+        public uint ProcessId { get; private set; }
+
         public ushort Handle { get; private set; }
+
         public int GrantedAccess { get; private set; }
+
         public byte RawType { get; private set; }
+
+        private static Dictionary<byte, string> _rawTypeMap;
+
+        private static Dictionary<byte, string> RawTypeMap
+        {
+            get
+            {
+                return _rawTypeMap ?? (_rawTypeMap = new Dictionary<byte, string>());
+            }
+        }
+
+        private string _dosFilePath;
 
         public string DosFilePath
         {
@@ -43,218 +62,235 @@ namespace Kudu.Core.Infrastructure
             {
                 if (_dosFilePath == null)
                 {
-                    initDosFilePath();
+                    InitDosFilePath();
                 }
                 return _dosFilePath;
             }
         }
 
-        public string Name 
-        { 
-            get 
+        private string _name;
+
+        public string Name
+        {
+            get
             {
                 if (_name == null)
                 {
-                    initTypeAndName();
+                    InitTypeAndName();
                 }
-                return _name; 
-            } 
+                return _name;
+            }
+
+            private set
+            {
+                _name = value;
+            }
         }
+
+        private string _typeString;
 
         public string TypeString
         {
             get
             {
-                if (_typeStr == null)
+                if (_typeString == null)
                 {
-                    initType();
+                    InitType();
                 }
-                return _typeStr;
+                return _typeString;
+            }
+
+            private set
+            {
+                _typeString = value;
             }
         }
 
         public HandleType Type 
         { 
-            get 
+            get
             {
-                if (_typeStr == null)
-                {
-                    initType();
-                } 
-                return _type;
+                return HandleTypeFromString(TypeString);
             }
         }
 
-        public HandleInfo(int processId, ushort handle, int grantedAccess, byte rawType)
+        private static string _homePath;
+
+        public static string HomePath
+        {
+            get
+            {
+                return _homePath ?? (_homePath = System.Environment.ExpandEnvironmentVariables("%HOME%"));
+            }
+        }
+
+        private static string _uncPath;
+
+        public static string UncPath
+        {
+            get
+            {
+                if (_uncPath != null)
+                    return _uncPath;
+                var wwwrootHandle = FileHandleNativeMethods.CreateFile(Path.Combine(HomePath, SiteWwwroot),
+                                                                       FileAccess.Read,
+                                                                       FileShare.ReadWrite,
+                                                                       IntPtr.Zero,
+                                                                       FileMode.Open,
+                                                                       FileFlagsAndAttributes.FileFlagBackupSemantics,
+                                                                       IntPtr.Zero);
+                var wwwrootPath = GetNameFromHandle(wwwrootHandle);
+                _uncPath = Regex.Replace(wwwrootPath, Regex.Escape("\\" + SiteWwwroot), String.Empty, RegexOptions.IgnoreCase);
+                _uncPath = Regex.Replace(_uncPath, Regex.Escape(NetworkDevicePrefix), NetworkPrefix, RegexOptions.IgnoreCase);
+                return _uncPath;
+            }
+        }
+
+        private static Dictionary<string, string> _deviceMap;
+
+        private static Dictionary<string, string> DeviceMap
+        {
+            get { return _deviceMap ?? (_deviceMap = BuildDeviceMap()); }
+        }
+
+        public HandleInfo(uint processId, ushort handle, int grantedAccess, byte rawType)
         {
             ProcessId = processId;
             Handle = handle;
             GrantedAccess = grantedAccess;
             RawType = rawType;
-        }        
+        }
 
-        private void initDosFilePath()
+        private void InitDosFilePath()
         {
-            EnsureDeviceMap();
-
             if (Name != null)
             {
                 int i = Name.Length;
                 while (i > 0 && (i = Name.LastIndexOf('\\', i - 1)) != -1)
                 {
                     string drive;
-                    if (deviceMap.TryGetValue(Name.Substring(0, i), out drive))
+                    if (DeviceMap.TryGetValue(Name.Substring(0, i), out drive))
                     {
                         _dosFilePath = string.Concat(drive, Name.Substring(i));
+                        _dosFilePath = Regex.Replace(_dosFilePath, Regex.Escape(UncPath), HomePath,
+                            RegexOptions.IgnoreCase);
                     }
                 }
-            }
-        }
-
-        private static void EnsureDeviceMap()
-        {
-            if (deviceMap == null)
-            {
-                Dictionary<string, string> localDeviceMap = BuildDeviceMap();
-                Interlocked.CompareExchange<Dictionary<string, string>>(ref deviceMap, localDeviceMap, null);
             }
         }
 
         private static Dictionary<string, string> BuildDeviceMap()
         {
-            string[] logicalDrives = System.Environment.GetLogicalDrives();
-            Dictionary<string, string> localDeviceMap = new Dictionary<string, string>(logicalDrives.Length);
-            StringBuilder lpTargetPath = new StringBuilder(MAX_PATH);
+            var logicalDrives = System.Environment.GetLogicalDrives();
+            var localDeviceMap = new Dictionary<string, string>(logicalDrives.Length);
+            var lpTargetPath = new StringBuilder(MaxPath);
             foreach (string drive in logicalDrives)
             {
                 string lpDeviceName = drive.Substring(0, 2);
-                FileHandleNativeMethods.QueryDosDevice(lpDeviceName, lpTargetPath, MAX_PATH);
+                FileHandleNativeMethods.QueryDosDevice(lpDeviceName, lpTargetPath, MaxPath);
                 localDeviceMap.Add(NormalizeDeviceName(lpTargetPath.ToString()), lpDeviceName);
             }
-            localDeviceMap.Add(networkDevicePrefix.Substring(0, networkDevicePrefix.Length - 1), "\\");
+            localDeviceMap.Add(NetworkDevicePrefix.Substring(0, NetworkDevicePrefix.Length - 1), "\\");
             return localDeviceMap;
         }
 
         private static string NormalizeDeviceName(string deviceName)
         {
-            if (string.Compare(deviceName, 0, networkDevicePrefix, 0, networkDevicePrefix.Length, StringComparison.OrdinalIgnoreCase) == 0)
+            if (string.Compare(deviceName, 0, NetworkDevicePrefix, 0, NetworkDevicePrefix.Length, StringComparison.OrdinalIgnoreCase) == 0)
             {
-                string shareName = deviceName.Substring(deviceName.IndexOf('\\', networkDevicePrefix.Length) + 1);
-                return string.Concat(networkDevicePrefix, shareName);
+                string shareName = deviceName.Substring(deviceName.IndexOf('\\', NetworkDevicePrefix.Length) + 1);
+                return string.Concat(NetworkDevicePrefix, shareName);
             }
             return deviceName;
         }
 
-        private void initType()
+        private void InitType()
         {
-            if (_rawTypeMap.ContainsKey(RawType))
+            if (RawTypeMap.ContainsKey(RawType))
             {
-                _typeStr = _rawTypeMap[RawType];
-                _type = HandleTypeFromString(_typeStr);
+                TypeString = RawTypeMap[RawType];
             }
             else
-                initTypeAndName();
+            {
+                InitTypeAndName();
+            }
         }
 
-        bool _typeAndNameAttempted = false;
+        bool _typeAndNameAttempted;
 
-        private void initTypeAndName()
+        private void InitTypeAndName()
         {
-            if (_typeAndNameAttempted)
+           if (_typeAndNameAttempted)
                 return;
             _typeAndNameAttempted = true;
             IntPtr sourceProcessHandle = IntPtr.Zero;
             IntPtr handleDuplicate = IntPtr.Zero;
-        
+
             try
             {
 
-                sourceProcessHandle = FileHandleNativeMethods.OpenProcess(PROCESS_DUP_HANDLE, true, ProcessId);
+                sourceProcessHandle = FileHandleNativeMethods.OpenProcess(ProcessAccessRights.ProcessDupHandle, true,
+                    ProcessId);
 
                 // To read info about a handle owned by another process we must duplicate it into ours
                 // For simplicity, current process handles will also get duplicated; remember that process handles cannot be compared for equality
-                if (!FileHandleNativeMethods.DuplicateHandle(
-                    sourceProcessHandle, 
-                    (IntPtr)Handle, 
-                    FileHandleNativeMethods.GetCurrentProcess(), 
-                    out handleDuplicate, 0, false, 2 /* same_access */))
-
+                if (!FileHandleNativeMethods.DuplicateHandle(sourceProcessHandle,
+                    (IntPtr) Handle,
+                    FileHandleNativeMethods.GetCurrentProcess(),
+                    out handleDuplicate,
+                    0,
+                    false,
+                    DuplicateHandleOptions.DuplicateSameAccess))
+                {
                     return;
+                }
 
                 // Query the object type
-                if (_rawTypeMap.ContainsKey(RawType))
-                    _typeStr = _rawTypeMap[RawType];
+                if (RawTypeMap.ContainsKey(RawType))
+                {
+                    TypeString = RawTypeMap[RawType];
+                }
                 else
                 {
-                    int length;
-                    FileHandleNativeMethods.NtQueryObject(
-                        handleDuplicate, 
-                        OBJECT_INFORMATION_CLASS.ObjectTypeInformation, 
-                        IntPtr.Zero, 0, out length);
+                    uint length;
+                    FileHandleNativeMethods.NtQueryObject(handleDuplicate,
+                        ObjectInformationClass.ObjectTypeInformation,
+                        IntPtr.Zero,
+                        0,
+                        out length);
 
                     IntPtr ptr = IntPtr.Zero;
                     try
                     {
-                        ptr = Marshal.AllocHGlobal(length);
-                        if (FileHandleNativeMethods.NtQueryObject(
-                            handleDuplicate,
-                            OBJECT_INFORMATION_CLASS.ObjectTypeInformation,
-                            ptr, length, out length) != NT_STATUS.STATUS_SUCCESS)
+                        ptr = Marshal.AllocHGlobal((int) length);
+                        if (FileHandleNativeMethods.NtQueryObject(handleDuplicate,
+                            ObjectInformationClass.ObjectTypeInformation,
+                            ptr,
+                            length,
+                            out length) != NtStatus.StatusSuccess)
                         {
                             return;
                         }
 
-                        int offset = 0x58 + 2 * IntPtr.Size;
-                        _typeStr = Marshal.PtrToStringUni((IntPtr)(IntPtr.Add(ptr, offset)));
-                        _rawTypeMap[RawType] = _typeStr;
+                        var typeInformation = (ObjectTypeInformation) Marshal.PtrToStructure(ptr, typeof (ObjectTypeInformation));
+                        TypeString = typeInformation.Name.ToString();
+                        RawTypeMap[RawType] = TypeString;
                     }
                     finally
                     {
                         Marshal.FreeHGlobal(ptr);
                     }
                 }
-                _type = HandleTypeFromString(_typeStr);
-
-                // don't query some objects that could get stuck
-                /*if (_typeStr != null && GrantedAccess != 0x0012019f 
-                    && GrantedAccess != 0x00120189 && GrantedAccess != 0x120089)                */
-                if(_typeStr != null)
-                {
-                    int length;
-                    /*
-                    var fileStructure = new FileHandleNativeMethods.FILE_ID_BOTH_DIR_INFO();
-                    if(FileHandleNativeMethods.GetFileInformationByHandleEx(
-                        handleDuplicate, 
-                        FileHandleNativeMethods.FILE_INFO_BY_HANDLE_CLASS.FileIdBothDirectoryInfo, 
-                        out fileStructure, 
-                        (uint)Marshal.SizeOf(fileStructure)))
-                    {
-                        _name = fileStructure.ShortName;
-                    }*/
-                    
-                    FileHandleNativeMethods.NtQueryObject(
-                        handleDuplicate, 
-                        OBJECT_INFORMATION_CLASS.ObjectNameInformation, 
-                        IntPtr.Zero, 0, out length);
-
-                    IntPtr ptr = IntPtr.Zero;
-                    try
-                    {
-                        ptr = Marshal.AllocHGlobal(length);
-                        if (FileHandleNativeMethods.NtQueryObject(
-                            handleDuplicate,
-                            OBJECT_INFORMATION_CLASS.ObjectNameInformation,
-                            ptr, length, out length) != NT_STATUS.STATUS_SUCCESS)
-                        {
-                            return;
-                        }
-                       _name = Marshal.PtrToStringUni(IntPtr.Add(ptr, 2 * IntPtr.Size));
-                    }
-                    finally
-                    {
-                        Marshal.FreeHGlobal(ptr);
-                    }
-                }
+                /*
+                 * NtQueryObject can hang if called on a synchronous handle that is blocked on an operation (usually a read on pipes, but true for any synchronous handle)
+                 * The process can also have handles over the network which might be slow to resolve.
+                 * Therefore, I think having a timeout on the NtQueryObject is the correct approach. Timeout is currently 50 msec.
+                 */
+                ExecuteWithTimeout(() => { Name = GetNameFromHandle(handleDuplicate); }, NtQueryObjectTimeout);
+            }
+            catch (Exception e)
+            {
+                Console.Write(e);
             }
             finally
             {
@@ -264,6 +300,44 @@ namespace Kudu.Core.Infrastructure
                     FileHandleNativeMethods.CloseHandle(handleDuplicate);
                 }
             }
+        }
+
+        private static string GetNameFromHandle(IntPtr handle)
+        {
+            uint length;
+
+            FileHandleNativeMethods.NtQueryObject(
+                handle,
+                ObjectInformationClass.ObjectNameInformation,
+                IntPtr.Zero, 0, out length);
+            IntPtr ptr = IntPtr.Zero;
+            try
+            {
+                ptr = Marshal.AllocHGlobal((int) length);
+                if (FileHandleNativeMethods.NtQueryObject(
+                    handle,
+                    ObjectInformationClass.ObjectNameInformation,
+                    ptr, length, out length) != NtStatus.StatusSuccess)
+                {
+                    return null;
+                }
+                var unicodeStringName = (UnicodeString) Marshal.PtrToStructure(ptr, typeof (UnicodeString));
+                return unicodeStringName.ToString();
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(ptr);
+            }
+        }
+
+        private static void ExecuteWithTimeout(Action action, TimeSpan timeout)
+        {
+            var cancellationToken = new CancellationTokenSource();
+            var task = new Task(action, cancellationToken.Token);
+            task.Start();
+            if (task.Wait(timeout))
+                return;
+            cancellationToken.Cancel(false);
         }
 
         public static HandleType HandleTypeFromString(string typeStr)
