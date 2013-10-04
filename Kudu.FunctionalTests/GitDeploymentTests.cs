@@ -168,7 +168,7 @@ namespace Kudu.FunctionalTests
             });
         }
 
-        [Fact]
+        [Fact(Skip="There is no longer a working link to download the latest NuGet.exe")]
         public void PushAndDeployMVCAppWithLatestNuget()
         {
             PushAndDeployApps("MVCAppWithLatestNuget", "master", "MVCAppWithLatestNuget", HttpStatusCode.OK, "Deployment successful");
