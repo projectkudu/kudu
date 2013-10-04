@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -32,6 +33,8 @@ namespace Kudu.Core.Infrastructure
 
         private const string SiteWwwroot = "SITE\\WWWROOT";
 
+        private const string HomeEnvironmentVariable = "%HOME%";
+
         private const int MaxPath = 260;
 
         private readonly TimeSpan NtQueryObjectTimeout = TimeSpan.FromMilliseconds(50);
@@ -44,15 +47,7 @@ namespace Kudu.Core.Infrastructure
 
         public byte RawType { get; private set; }
 
-        private static Dictionary<byte, string> _rawTypeMap;
-
-        private static Dictionary<byte, string> RawTypeMap
-        {
-            get
-            {
-                return _rawTypeMap ?? (_rawTypeMap = new Dictionary<byte, string>());
-            }
-        }
+        private static readonly ConcurrentDictionary<byte, string> RawTypeMap = new ConcurrentDictionary<byte, string>();
 
         private string _dosFilePath;
 
@@ -120,7 +115,13 @@ namespace Kudu.Core.Infrastructure
         {
             get
             {
-                return _homePath ?? (_homePath = System.Environment.ExpandEnvironmentVariables("%HOME%"));
+                if (_homePath == null)
+                {
+                    _homePath = System.Environment.ExpandEnvironmentVariables(HomeEnvironmentVariable);
+                    if (_homePath == HomeEnvironmentVariable)
+                        _homePath = null;
+                }
+                return _homePath;
             }
         }
 
@@ -130,27 +131,45 @@ namespace Kudu.Core.Infrastructure
         {
             get
             {
-                if (_uncPath != null)
-                    return _uncPath;
-                var wwwrootHandle = FileHandleNativeMethods.CreateFile(Path.Combine(HomePath, SiteWwwroot),
-                                                                       FileAccess.Read,
-                                                                       FileShare.ReadWrite,
-                                                                       IntPtr.Zero,
-                                                                       FileMode.Open,
-                                                                       FileFlagsAndAttributes.FileFlagBackupSemantics,
-                                                                       IntPtr.Zero);
-                var wwwrootPath = GetNameFromHandle(wwwrootHandle);
-                _uncPath = Regex.Replace(wwwrootPath, Regex.Escape("\\" + SiteWwwroot), String.Empty, RegexOptions.IgnoreCase);
-                _uncPath = Regex.Replace(_uncPath, Regex.Escape(NetworkDevicePrefix), NetworkPrefix, RegexOptions.IgnoreCase);
+                if (_uncPath == null && HomePath != null)
+                {
+                    var wwwrootHandle = FileHandleNativeMethods.CreateFile(Path.Combine(HomePath, SiteWwwroot),
+                        FileAccess.Read,
+                        FileShare.ReadWrite,
+                        IntPtr.Zero,
+                        FileMode.Open,
+                        FileFlagsAndAttributes.FileFlagBackupSemantics,
+                        IntPtr.Zero);
+                    var wwwrootPath = GetNameFromHandle(wwwrootHandle);
+                    _uncPath = Regex.Replace(wwwrootPath, Regex.Escape("\\" + SiteWwwroot), String.Empty,
+                        RegexOptions.IgnoreCase);
+                    _uncPath = Regex.Replace(_uncPath, Regex.Escape(NetworkDevicePrefix), NetworkPrefix,
+                        RegexOptions.IgnoreCase);
+                }
                 return _uncPath;
             }
         }
 
-        private static Dictionary<string, string> _deviceMap;
+        private static readonly ConcurrentDictionary<string, string> _deviceMap = new ConcurrentDictionary<string, string>();
 
-        private static Dictionary<string, string> DeviceMap
+        private static ConcurrentDictionary<string, string> DeviceMap
         {
-            get { return _deviceMap ?? (_deviceMap = BuildDeviceMap()); }
+            get
+            {
+                if (_deviceMap.Count == 0)
+                {
+                    var logicalDrives = System.Environment.GetLogicalDrives();
+                    var lpTargetPath = new StringBuilder(MaxPath);
+                    foreach (string drive in logicalDrives)
+                    {
+                        string lpDeviceName = drive.Substring(0, 2);
+                        FileHandleNativeMethods.QueryDosDevice(lpDeviceName, lpTargetPath, MaxPath);
+                        _deviceMap.TryAdd(NormalizeDeviceName(lpTargetPath.ToString()), lpDeviceName);
+                    }
+                    _deviceMap.TryAdd(NetworkDevicePrefix.Substring(0, NetworkDevicePrefix.Length - 1), "\\");
+                }
+                return _deviceMap;
+            }
         }
 
         public HandleInfo(uint processId, ushort handle, int grantedAccess, byte rawType)
@@ -172,26 +191,15 @@ namespace Kudu.Core.Infrastructure
                     if (DeviceMap.TryGetValue(Name.Substring(0, i), out drive))
                     {
                         _dosFilePath = string.Concat(drive, Name.Substring(i));
-                        _dosFilePath = Regex.Replace(_dosFilePath, Regex.Escape(UncPath), HomePath,
+
+                        if (UncPath != null && HomePath != null)
+                        {
+                            _dosFilePath = Regex.Replace(_dosFilePath, Regex.Escape(UncPath), HomePath,
                             RegexOptions.IgnoreCase);
+                        }
                     }
                 }
             }
-        }
-
-        private static Dictionary<string, string> BuildDeviceMap()
-        {
-            var logicalDrives = System.Environment.GetLogicalDrives();
-            var localDeviceMap = new Dictionary<string, string>(logicalDrives.Length);
-            var lpTargetPath = new StringBuilder(MaxPath);
-            foreach (string drive in logicalDrives)
-            {
-                string lpDeviceName = drive.Substring(0, 2);
-                FileHandleNativeMethods.QueryDosDevice(lpDeviceName, lpTargetPath, MaxPath);
-                localDeviceMap.Add(NormalizeDeviceName(lpTargetPath.ToString()), lpDeviceName);
-            }
-            localDeviceMap.Add(NetworkDevicePrefix.Substring(0, NetworkDevicePrefix.Length - 1), "\\");
-            return localDeviceMap;
         }
 
         private static string NormalizeDeviceName(string deviceName)
@@ -287,10 +295,6 @@ namespace Kudu.Core.Infrastructure
                  * Therefore, I think having a timeout on the NtQueryObject is the correct approach. Timeout is currently 50 msec.
                  */
                 ExecuteWithTimeout(() => { Name = GetNameFromHandle(handleDuplicate); }, NtQueryObjectTimeout);
-            }
-            catch (Exception e)
-            {
-                Console.Write(e);
             }
             finally
             {
