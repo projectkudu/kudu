@@ -228,10 +228,9 @@
   <ItemGroup>
     <Content Include="Areas\HelpPage\Views\_ViewStart.cshtml" />
   </ItemGroup>
-  <ItemGroup>
+  <ItemGroup>  
     <Content Include="Content\Scripts\jquery-console\README" />
   </ItemGroup>
-  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
@@ -274,6 +273,11 @@
     <Exec Command="&quot;$(ProjectDir)\updateNodeModules.cmd&quot; &quot;$(TargetDir)&quot;" Condition=" '$(BuildOutputsUpdated)' == 'true' " />
     <Exec Command="&quot;$(MSBuildProgramFiles32)\Git\bin\git.exe&quot; rev-parse HEAD &gt; &quot;$(MsBuildProjectDirectory)\commit.txt&quot;" Condition=" '$(BuildOutputsUpdated)' == 'true' " />
     <Copy SourceFiles="$(SolutionDir)\Kudu.Console\bin\$(ConfigurationName)\kudu.exe" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
+    <ItemGroup>
+        <ScriptFilesToCopy Include="..\packages\KuduSync.NET*\tools\*" />
+        <ScriptFilesToCopy Include="..\Build\NuGet.exe" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ScriptFilesToCopy)" DestinationFolder="$(TargetDir)\Scripts" SkipUnchangedFiles="true" />
   </Target>
   <Import Project="..\packages\Microsoft.Bcl.Build.1.0.10\tools\Microsoft.Bcl.Build.targets" Condition="Exists('..\packages\Microsoft.Bcl.Build.1.0.10\tools\Microsoft.Bcl.Build.targets')" />
   <Target Name="EnsureBclBuildImported" BeforeTargets="BeforeBuild" Condition="'$(BclBuildImported)' == ''">
