@@ -90,6 +90,18 @@ namespace Kudu.Core.Deployment.Generator
 
             if (project == null)
             {
+                // Try executable type project
+                project = solution.Projects.Where(p => p.IsExecutable).FirstOrDefault();
+                if (project != null)
+                {
+                    return new DotNetConsoleBuilder(_environment,
+                                              settings,
+                                              _propertyProvider,
+                                              repositoryRoot,
+                                              project.AbsolutePath,
+                                              solution.Path);
+                }
+
                 logger.Log(Resources.Log_NoDeployableProjects, solution.Path);
 
                 return ResolveNonAspProject(repositoryRoot, null, settings);
@@ -115,9 +127,16 @@ namespace Kudu.Core.Deployment.Generator
 
         private ISiteBuilder ResolveNonAspProject(string repositoryRoot, string projectPath, IDeploymentSettingsManager perDeploymentSettings)
         {
+            // Using WORKER_COMMAND you can explicitly set a command to run as a worker
+            string workerCommand = perDeploymentSettings.GetValue(SettingsKeys.WorkerCommand);
+
             if (IsNodeSite(projectPath ?? repositoryRoot))
             {
                 return new NodeSiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
+            }
+            else if (!String.IsNullOrEmpty(workerCommand))
+            {
+                return new BasicConsoleBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
             }
             else
             {
@@ -200,17 +219,30 @@ namespace Kudu.Core.Deployment.Generator
                                                                   Resources.Error_ProjectNotDeployable,
                                                                   targetPath));
             }
-            else if (File.Exists(targetPath))
+            else if (File.Exists(targetPath)) // TODO: what is this if about?
             {
                 var solution = VsHelper.FindContainingSolution(repositoryRoot, targetPath, fileFinder);
                 string solutionPath = solution != null ? solution.Path : null;
 
-                return new WapBuilder(_environment,
-                                      perDeploymentSettings,
-                                      _propertyProvider,
-                                      repositoryRoot,
-                                      targetPath,
-                                      solutionPath);
+                if (VsHelper.IsWap(targetPath))
+                {
+                    return new WapBuilder(_environment,
+                                          perDeploymentSettings,
+                                          _propertyProvider,
+                                          repositoryRoot,
+                                          targetPath,
+                                          solutionPath);
+                }
+                else
+                {
+                    // This is a console app
+                    return new DotNetConsoleBuilder(_environment,
+                                          perDeploymentSettings,
+                                          _propertyProvider,
+                                          repositoryRoot,
+                                          targetPath,
+                                          solutionPath);
+                }
             }
 
             throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,

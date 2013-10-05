@@ -488,6 +488,7 @@ namespace Kudu.Core.Deployment
 
             ILogger logger = null;
             IDeploymentStatusFile currentStatus = null;
+            string buildTempPath = null;
 
             try
             {
@@ -536,6 +537,10 @@ namespace Kudu.Core.Deployment
                     return;
                 }
 
+                // Create a directory for the script output temporary artifacts
+                buildTempPath = Path.Combine(_environment.TempPath, Guid.NewGuid().ToString());
+                FileSystemHelpers.EnsureDirectory(buildTempPath);
+
                 var context = new DeploymentContext
                 {
                     NextManifestFilePath = GetDeploymentManifestPath(id),
@@ -544,6 +549,7 @@ namespace Kudu.Core.Deployment
                     Logger = logger,
                     GlobalLogger = _globalLogger,
                     OutputPath = GetOutputPath(_environment, perDeploymentSettings),
+                    BuildTempPath = buildTempPath
                 };
 
                 if (context.PreviousManifestFilePath == null)
@@ -580,6 +586,29 @@ namespace Kudu.Core.Deployment
             catch (Exception ex)
             {
                 FailDeployment(tracer, deployStep, deploymentAnalytics, ex);
+            }
+            finally
+            {
+                // Clean the temp folder up
+                CleanBuild(tracer, buildTempPath);
+            }
+        }
+
+        private static void CleanBuild(ITracer tracer, string buildTempPath)
+        {
+            if (buildTempPath != null)
+            {
+                using (tracer.Step("Cleaning up temp files"))
+                {
+                    try
+                    {
+                        FileSystemHelpers.DeleteDirectorySafe(buildTempPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        tracer.TraceError(ex);
+                    }
+                }
             }
         }
 

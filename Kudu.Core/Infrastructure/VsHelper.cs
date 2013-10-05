@@ -88,6 +88,42 @@ namespace Kudu.Core.Infrastructure
             return guids;
         }
 
+        public static bool IsExecutableProject(string projectPath)
+        {
+            var document = XDocument.Parse(File.ReadAllText(projectPath));
+
+            var root = document.Root;
+            if (root == null)
+            {
+                return false;
+            }
+
+            var outputTypes = from propertyGroup in root.Elements(GetName("PropertyGroup"))
+                              let outputType = propertyGroup.Element(GetName("OutputType"))
+                              where outputType != null && String.Equals(outputType.Value, "exe", StringComparison.OrdinalIgnoreCase)
+                              select outputType.Value;
+
+            return outputTypes.Any();
+        }
+
+        public static string GetProjectExecutableName(string path)
+        {
+            var document = XDocument.Parse(File.ReadAllText(path));
+
+            var root = document.Root;
+            if (root == null)
+            {
+                return null;
+            }
+
+            var assemblyNames = from propertyGroup in root.Elements(GetName("PropertyGroup"))
+                                let assemblyName = propertyGroup.Element(GetName("AssemblyName"))
+                                where assemblyName != null
+                                select assemblyName.Value;
+
+            return assemblyNames.FirstOrDefault();
+        }
+
         private static bool ExistsInSolution(VsSolution solution, string targetPath)
         {
             return (from p in solution.Projects

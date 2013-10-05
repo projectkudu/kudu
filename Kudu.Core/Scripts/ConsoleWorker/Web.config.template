@@ -1,0 +1,16 @@
+﻿<?xml version="1.0"?>
+<configuration>
+
+    <system.web>
+        <compilation debug="true" targetFramework="4.5" />
+        <httpRuntime targetFramework="4.5" />
+    </system.web>
+    <system.codedom>
+        <compilers>
+            <compiler language="c#;cs;csharp"
+                      extension=".cs"
+                      compilerOptions="/d:TRACE"
+                      type="Microsoft.CSharp.CSharpCodeProvider, System, Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" warningLevel="1" />
+        </compilers>
+    </system.codedom>
+</configuration>
