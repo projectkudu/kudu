@@ -34,9 +34,9 @@
       <HintPath>..\packages\Ninject.Web.Common.3.0.0.7\lib\net45-full\Ninject.Web.Common.dll</HintPath>
     </Reference>
     <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="System.IO.Abstractions, Version=1.4.0.37, Culture=neutral, PublicKeyToken=d480b5b72fb413da, processorArchitecture=MSIL">
+    <Reference Include="System.IO.Abstractions, Version=1.4.0.66, Culture=neutral, PublicKeyToken=d480b5b72fb413da, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\System.IO.Abstractions.1.4.0.37\lib\net35\System.IO.Abstractions.dll</HintPath>
+      <HintPath>..\packages\System.IO.Abstractions.1.4.0.66\lib\net35\System.IO.Abstractions.dll</HintPath>
     </Reference>
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Net.Http.Extensions">
@@ -228,7 +228,7 @@
   <ItemGroup>
     <Content Include="Areas\HelpPage\Views\_ViewStart.cshtml" />
   </ItemGroup>
-  <ItemGroup>  
+  <ItemGroup>
     <Content Include="Content\Scripts\jquery-console\README" />
   </ItemGroup>
   <PropertyGroup>
@@ -274,8 +274,8 @@
     <Exec Command="&quot;$(MSBuildProgramFiles32)\Git\bin\git.exe&quot; rev-parse HEAD &gt; &quot;$(MsBuildProjectDirectory)\commit.txt&quot;" Condition=" '$(BuildOutputsUpdated)' == 'true' " />
     <Copy SourceFiles="$(SolutionDir)\Kudu.Console\bin\$(ConfigurationName)\kudu.exe" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
     <ItemGroup>
-        <ScriptFilesToCopy Include="..\packages\KuduSync.NET*\tools\*" />
-        <ScriptFilesToCopy Include="..\Build\NuGet.exe" />
+      <ScriptFilesToCopy Include="..\packages\KuduSync.NET*\tools\*" />
+      <ScriptFilesToCopy Include="..\Build\NuGet.exe" />
     </ItemGroup>
     <Copy SourceFiles="@(ScriptFilesToCopy)" DestinationFolder="$(TargetDir)\Scripts" SkipUnchangedFiles="true" />
   </Target>
