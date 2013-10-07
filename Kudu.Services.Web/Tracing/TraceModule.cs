@@ -97,9 +97,14 @@ namespace Kudu.Services.Web.Tracing
                 AddTraceLevel(httpContext, attribs);
             }
 
-            foreach (string key in httpContext.Response.Headers)
+
+            // Response.Headers is not supported in Classic mode, so just skip this
+            if (HttpRuntime.UsingIntegratedPipeline)
             {
-                attribs[key] = httpContext.Response.Headers[key];
+                foreach (string key in httpContext.Response.Headers)
+                {
+                    attribs[key] = httpContext.Response.Headers[key];
+                }
             }
 
             tracer.Trace("Outgoing response", attribs);
