@@ -58,6 +58,7 @@
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\commit.txt" />
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\applicationHost.xdt" />
             <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\bin*\Kudu.exe" />
+            <ServiceSiteFilesToCopy Include="$(ProjectRoot)\Kudu.Services.Web\bin*\Scripts\*" />
         </ItemGroup>
         
         <Copy SourceFiles="%(ServiceSiteFilesToCopy.FullPath)" DestinationFiles="$(ServiceSiteTargetPath)\%(RecursiveDir)%(Filename)%(Extension)" 
