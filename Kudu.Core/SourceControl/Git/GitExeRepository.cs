@@ -320,7 +320,7 @@ echo $i > pushinfo
         {
             // submodule update only needed when submodule added/updated
             // in case of submodule delete, the git database and .gitmodules already reflects that
-            // there may be a submodule folder leftover, one could clean it manually by /live/scm/clean
+            // there may be a submodule folder leftover, one could clean it manually by /scm/clean
             if (File.Exists(Path.Combine(_gitExe.WorkingDirectory, ".gitmodules")))
             {
                 GitFetchWithRetry(() => Execute("submodule update --init --recursive"));
