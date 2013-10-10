@@ -186,6 +186,24 @@ namespace Kudu.FunctionalTests
             PushAndDeployApps("MvcApplicationWithNuGetAutoRestore", "bad-config", null, HttpStatusCode.OK, "Unable to find version '1.2.34' of package 'Package.That.Should.NotExist'.", DeployStatus.Failed);
         }
 
+        [Fact]
+        public void PushAndDeployPreviewWebApi5()
+        {
+            PushAndDeployApps("PreviewWebApi5", "master", "ASP.NET Preview WebAPI 5", HttpStatusCode.OK, "Deployment successful");
+        }
+
+        [Fact]
+        public void PushAndDeployPreviewSpa5()
+        {
+            PushAndDeployApps("PreviewSpa5", "master", "Preview SPA 5", HttpStatusCode.OK, "Deployment successful");
+        }
+
+        [Fact]
+        public void PushAndDeployPreviewMvc5()
+        {
+            PushAndDeployApps("PreviewMvc5", "master", "ASP.NET Preview MVC5 App", HttpStatusCode.OK, "Deployment successful");
+        }
+
         //Common code
         internal static void PushAndDeployApps(string repoCloneUrl, string defaultBranchName, string verificationText, 
                                               HttpStatusCode expectedResponseCode, string verificationLogText, 
