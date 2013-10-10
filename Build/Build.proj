@@ -9,7 +9,7 @@
         <ToolsPath>$(ProjectRoot)\tools\</ToolsPath>
         <XunitPath>$(ProjectRoot)xunit\</XunitPath>
         <ArtifactsPath>$(ProjectRoot)\artifacts\$(Configuration)</ArtifactsPath>
-        <ServiceSiteTargetPath Condition="$(ServiceSiteTargetPath) == ''">$(ArtifactsPath)\Site Extensions\Kudu</ServiceSiteTargetPath>
+        <ServiceSiteTargetPath Condition="$(ServiceSiteTargetPath) == ''">$(ArtifactsPath)\SiteExtensions\Kudu</ServiceSiteTargetPath>
         <ServiceSiteProject>$(ProjectRoot)\Kudu.Services.Web\Kudu.Services.Web.csproj</ServiceSiteProject>
         <ClientSiteTargetPath Condition="$(ClientSiteTargetPath) == ''">$(ArtifactsPath)\KuduWeb</ClientSiteTargetPath>
         <ClientSiteProject>$(ProjectRoot)\Kudu.Web\Kudu.Web.csproj</ClientSiteProject>
@@ -97,7 +97,7 @@
     
      <Target Name="BuildZips">
         <PropertyGroup>
-          <SourceDirectory>$(ArtifactsPath)\Site Extensions</SourceDirectory>
+          <SourceDirectory>$(ArtifactsPath)\SiteExtensions</SourceDirectory>
           <ZipTargetPath>$(ArtifactsPath)\zip</ZipTargetPath>
         </PropertyGroup> 
         <RemoveDir Directories="$(ZipTargetPath)" Condition=" Exists('$(ZipTargetPath)') " />
