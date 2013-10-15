@@ -169,6 +169,7 @@
     <Compile Include="..\Kudu.Console\Services\BuildPropertyProvider.cs">
       <Link>Services\BuildPropertyProvider.cs</Link>
     </Compile>
+    <Compile Include="XDomain\XDomainModule.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Kudu.Console\Kudu.Console.csproj">
