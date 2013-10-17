@@ -30,7 +30,7 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/MVCAppWithLatestNuget.git",         "08e315c"),
             new TestRepositoryInfo("https://github.com/KuduApps/NodeHelloWorldNoConfig.git",        "d8a15b6"),
             new TestRepositoryInfo("https://github.com/KuduApps/NodeInnerSubDir.git",               "58f93f8"),
-            new TestRepositoryInfo("https://github.com/KuduApps/NoDeployableProjects.git",          "e21eb82"),
+            new TestRepositoryInfo("https://github.com/KuduApps/NoDeployableProjects.git",          "04e9920"),
             new TestRepositoryInfo("https://github.com/KuduApps/NodeWebHookTest.git",               "cd5bee7"),
             new TestRepositoryInfo("https://github.com/KuduApps/NpmSite.git",                       "2b29b9d"),
             new TestRepositoryInfo("https://github.com/KuduApps/Orchard.git",                       "09ce5a5"),
@@ -47,7 +47,9 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/WebDeploySamples.git",              "ee3a42b"),
             new TestRepositoryInfo("https://github.com/KuduApps/WebSiteInSolution.git",             "efee8af"),
             new TestRepositoryInfo("https://github.com/KuduApps/NodeWithSolutions.git",             "bd16404"),
-            new TestRepositoryInfo("https://github.com/KuduApps/MvcApplicationWithNuGetAutoRestore","1e269b52"),
+            new TestRepositoryInfo("https://github.com/KuduApps/MvcApplicationWithNuGetAutoRestore","1e269b5"),
+            new TestRepositoryInfo("https://github.com/KuduApps/ConsoleWorker",                     "8b572a4"),
+            new TestRepositoryInfo("https://github.com/KuduApps/BasicConsoleWorker",                "29b7f01"),
         };
 
         private static Dictionary<string, TestRepositoryInfo> _repos;

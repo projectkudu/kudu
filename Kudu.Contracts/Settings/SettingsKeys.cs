@@ -19,6 +19,7 @@
         public const string UseShallowClone = "SCM_USE_SHALLOW_CLONE";
         public const string Command = "COMMAND";
         public const string Project = "PROJECT";
+        public const string WorkerCommand = "WORKER_COMMAND";
         public const string TargetPath = "SCM_TARGET_PATH";
         public const string RepositoryPath = "SCM_REPOSITORY_PATH";
         public const string NoRepository = "SCM_NO_REPOSITORY";

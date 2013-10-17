@@ -29,6 +29,14 @@ namespace Kudu.Core.Deployment
         /// </summary>
         public ILogger GlobalLogger { get; set; }
 
+        /// <summary>
+        /// The output path.
+        /// </summary>
         public string OutputPath { get; set; }
+
+        /// <summary>
+        /// The temporary path that will be provided to the deployment script for build artifacts.
+        /// </summary>
+        public string BuildTempPath { get; set; }
     }
 }

@@ -37,6 +37,7 @@ namespace Kudu.Core.Infrastructure
 
         private bool _isWap;
         private bool _isWebSite;
+        private bool _isExecutable;
         private IEnumerable<Guid> _projectTypeGuids;
         private string _projectName;
         private string _absolutePath;
@@ -88,6 +89,15 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
+        public bool IsExecutable
+        {
+            get
+            {
+                EnsureProperties();
+                return _isExecutable;
+            }
+        }
+
         public VsSolutionProject(string solutionPath, object project)
         {
             _solutionPath = solutionPath;
@@ -135,6 +145,8 @@ namespace Kudu.Core.Infrastructure
 
                 // Check if it's a wap
                 _isWap = VsHelper.IsWap(_projectTypeGuids);
+
+                _isExecutable = VsHelper.IsExecutableProject(_absolutePath);
             }
             else
             {
