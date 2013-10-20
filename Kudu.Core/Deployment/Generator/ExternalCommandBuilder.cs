@@ -16,9 +16,8 @@ namespace Kudu.Core.Deployment.Generator
     //          WapBuilder
     //          WebSiteBuilder
     //          CustomGeneratorCommandSiteBuilder
-    //          BaseConsoleBuilder
-    //              BasicConsoleBuilder
-    //              DotNetConsoleBuilder
+    //          BasicConsoleBuilder
+    //          DotNetConsoleBuilder
 
     public abstract class ExternalCommandBuilder : ISiteBuilder
     {
@@ -60,6 +59,11 @@ namespace Kudu.Core.Deployment.Generator
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.NextManifestPath] = context.NextManifestFilePath;
 
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.BuildTempPath] = context.BuildTempPath;
+
+            foreach (var extraEnvironmentVariable in context.ExtraEnvironmentVariables)
+            {
+                exe.EnvironmentVariables[extraEnvironmentVariable.Key] = extraEnvironmentVariable.Value;
+            }
 
             // Populate the environment with the build properties
             foreach (var property in PropertyProvider.GetProperties())
