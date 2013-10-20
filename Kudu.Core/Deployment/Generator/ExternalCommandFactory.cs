@@ -40,6 +40,7 @@ namespace Kudu.Core.Deployment.Generator
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.PostDeploymentActionsCommandKey, PostDeploymentActionsCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.PostDeploymentActionsDirectoryKey, PostDeploymentActionsDir, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.SelectNodeVersionCommandKey, SelectNodeVersionCommand, logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.SetupConsoleWorkerCommandKey, SetupConsoleWorkerCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.NpmJsPathKey, PathUtility.ResolveNpmJsPath(), logger);
 
             bool isInPlace = false;
@@ -123,6 +124,11 @@ namespace Kudu.Core.Deployment.Generator
             {
                 return "node " + QuotePath(Path.Combine(_environment.ScriptPath, "selectNodeVersion"));
             }
+        }
+
+        private string SetupConsoleWorkerCommand
+        {
+            get { return Path.Combine(_environment.ScriptPath, "ConsoleWorker", "setupConsoleWorker"); }
         }
 
         private string StarterScriptPath

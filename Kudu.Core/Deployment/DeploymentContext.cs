@@ -1,9 +1,15 @@
-﻿using Kudu.Contracts.Tracing;
+﻿using System.Collections.Generic;
+using Kudu.Contracts.Tracing;
 
 namespace Kudu.Core.Deployment
 {
     public class DeploymentContext
     {
+        public DeploymentContext()
+        {
+            ExtraEnvironmentVariables = new Dictionary<string, string>();
+        }
+
         /// <summary>
         /// Path to the previous manifest file.
         /// </summary>
@@ -38,5 +44,10 @@ namespace Kudu.Core.Deployment
         /// The temporary path that will be provided to the deployment script for build artifacts.
         /// </summary>
         public string BuildTempPath { get; set; }
+
+        /// <summary>
+        /// Add other environment variables to the deployment script running environment.
+        /// </summary>
+        public Dictionary<string, string> ExtraEnvironmentVariables { get; private set; }
     }
 }

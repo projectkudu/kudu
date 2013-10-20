@@ -1,0 +1,6 @@
+#!/bin/sh
+SCRIPT_DIR="${BASH_SOURCE[0]%\\*}"
+SCRIPT_DIR="${SCRIPT_DIR%/*}"
+$COMSPEC /c "$SCRIPT_DIR/setupConsoleWorker.cmd"
+ret=$?
+exit $ret
