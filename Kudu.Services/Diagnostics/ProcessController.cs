@@ -9,10 +9,12 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Runtime.InteropServices;
 using System.Web.Http;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
+using Kudu.Core.Commands;
 using Kudu.Core.Diagnostics;
 using Kudu.Core.Infrastructure;
 using Kudu.Services.Infrastructure;
@@ -285,23 +287,15 @@ namespace Kudu.Services.Performance
             }
         }
 
-        private static IEnumerable<string> GetOpenFileHandles(int processId)
+        private IEnumerable<string> GetOpenFileHandles(int processId)
         {
-            List<string> files = new List<string>();
+            var commandExecutor = new CommandExecutor(_environment.RootPath, _environment, _settings, _tracer);
+            var result = commandExecutor.ExecuteCommand(String.Format("KuduHandles.exe {0}", processId), _environment.RootPath);
 
-            foreach (var handleInfo in 
-                HandleUtility.GetHandles(processId).Where(handleInfo => (handleInfo.Type == HandleType.File)))
-            {
-                if (handleInfo.DosFilePath != null)
-                {
-                    if (!files.Contains(handleInfo.DosFilePath))
-                    {
-                        files.Add(handleInfo.DosFilePath);
-                    }
-                }
-            }
+            if (String.IsNullOrEmpty(result.Output))
+                return Enumerable.Empty<string>();
 
-            return files;
+            return result.Output.Split(new [] { System.Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
         }
 
         private IEnumerable<ProcessThreadInfo> GetThreads(Process process, string href)
