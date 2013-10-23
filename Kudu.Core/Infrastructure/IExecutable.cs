@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Kudu.Contracts.Tracing;
 
 namespace Kudu.Core.Infrastructure
 {
@@ -18,11 +19,6 @@ namespace Kudu.Core.Infrastructure
 
         void SetHomePath(string homePath);
 
-#if SITEMANAGEMENT
-        Tuple<string, string> Execute(string arguments, params object[] args); 
-#else
-        Tuple<string, string> Execute(Kudu.Contracts.Tracing.ITracer tracer, string arguments, params object[] args);
-#endif
-
+        Tuple<string, string> Execute(ITracer tracer, string arguments, params object[] args);
     }
 }

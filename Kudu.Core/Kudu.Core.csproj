@@ -59,6 +59,7 @@
     <Compile Include="Deployment\Generator\NodeSiteEnabler.cs" />
     <Compile Include="Deployment\Generator\SiteBuilderFactory.cs" />
     <Compile Include="Hooks\WebHooksManager.cs" />
+    <Compile Include="Tracing\NullTracer.cs" />
     <Compile Include="Tracing\SiteExtensionLogEvent.cs" />
     <Compile Include="Tracing\ISiteExtensionLogEvent.cs" />
     <Compile Include="Infrastructure\StringExtensions.cs" />
@@ -105,7 +106,6 @@
     <Compile Include="Tracing\IAnalytics.cs" />
     <Compile Include="Tracing\ITraceFactory.cs" />
     <Compile Include="Tracing\TextLogger.cs" />
-    <Compile Include="Tracing\NullTracer.cs" />
     <Compile Include="Tracing\NullTracerFactory.cs" />
     <Compile Include="Tracing\TextTracer.cs" />
     <Compile Include="Tracing\Tracer.cs" />

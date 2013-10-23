@@ -1,24 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-
-#if !SITEMANAGEMENT
 using Kudu.Contracts.Tracing;
-using Kudu.Core.Tracing;
 using Kudu.Core.Deployment;
-#else
-using Kudu.SiteManagement;
-#endif
+using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Infrastructure
 {
-    internal class Executable : Kudu.Core.Infrastructure.IExecutable
+    public class Executable : Kudu.Core.Infrastructure.IExecutable
     {
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
         public Executable(string path, string workingDirectory, TimeSpan idleTimeout)
         {
             Path = path;
@@ -28,7 +21,6 @@ namespace Kudu.Core.Infrastructure
             IdleTimeout = idleTimeout;
         }
 
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
         public bool IsAvailable
         {
             get
@@ -37,7 +29,6 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
         public void SetHomePath(IEnvironment environment)
         {
             if (!String.IsNullOrEmpty(environment.RootPath))
@@ -46,7 +37,6 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
         public void SetHomePath(string homePath)
         {
             // SSH requires HOME directory and applies to git, npm and (CustomBuilder) cmd
@@ -60,48 +50,29 @@ namespace Kudu.Core.Infrastructure
             EnvironmentVariables["HOMEPATH"] = homePath.Substring(homePath.IndexOf(':') + 1);
         }
 
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
         public string WorkingDirectory { get; private set; }
 
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
         public string Path { get; private set; }
 
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
         public IDictionary<string, string> EnvironmentVariables { get; set; }
 
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
         public Encoding Encoding { get; set; }
 
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
         public TimeSpan IdleTimeout { get; private set; }
 
-#if !SITEMANAGEMENT
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
         public Tuple<string, string> Execute(string arguments, params object[] args)
         {
             return Execute(NullTracer.Instance, arguments, args);
         }
 
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
         public Tuple<string, string> Execute(ITracer tracer, string arguments, params object[] args)
-#else
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
-        public Tuple<string, string> Execute(string arguments, params object[] args)
-#endif
         {
-
-#if !SITEMANAGEMENT
             using (GetProcessStep(tracer, arguments, args))
             {
-#endif
                 var process = CreateProcess(arguments, args);
                 process.Start();
 
-#if !SITEMANAGEMENT
                 var idleManager = new Kudu.Core.Infrastructure.IdleManager(IdleTimeout, tracer);
-#else
-                var idleManager = new Kudu.SiteManagement.IdleManager();
-#endif
                 Func<StreamReader, Task<string>> reader = async (StreamReader streamReader) =>
                 {
                     var strb = new StringBuilder();
@@ -126,9 +97,7 @@ namespace Kudu.Core.Infrastructure
                 string output = outputReaderTask.Result;
                 string error = errorReaderTask.Result;
 
-#if !SITEMANAGEMENT
                 tracer.TraceProcessExitCode(process);
-#endif
 
                 // Sometimes, we get an exit code of 1 even when the command succeeds (e.g. with 'git reset .').
                 // So also make sure there is an error string
@@ -145,14 +114,9 @@ namespace Kudu.Core.Infrastructure
                 }
 
                 return Tuple.Create(output, error);
-
-#if !SITEMANAGEMENT
             }
-#endif
         }
 
-#if !SITEMANAGEMENT
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
         public void Execute(ITracer tracer, Stream input, Stream output, string arguments, params object[] args)
         {
             using (GetProcessStep(tracer, arguments, args))
@@ -244,26 +208,6 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
-        public Tuple<string, string> ExecuteWithConsoleOutput(ITracer tracer, string arguments, params object[] args)
-        {
-            return Execute(tracer,
-                           output =>
-                           {
-                               Console.Out.WriteLine(output);
-                               return true;
-                           },
-                           error =>
-                           {
-                               Console.Error.WriteLine(error);
-                               return true;
-                           },
-                           Console.OutputEncoding,
-                           arguments,
-                           args);
-        }
-
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
         public Tuple<string, string> ExecuteWithProgressWriter(ILogger logger, ITracer tracer, string arguments, params object[] args)
         {
             try
@@ -307,13 +251,6 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
-        public Tuple<string, string> ExecuteWithProgressWriter(ITracer tracer, string arguments, params object[] args)
-        {
-            return ExecuteWithProgressWriter(new NullLogger(), tracer, arguments, args);
-        }
-
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
         public Tuple<string, string> Execute(ITracer tracer, Func<string, bool> onWriteOutput, Func<string, bool> onWriteError, Encoding encoding, string arguments, params object[] args)
         {
             using (GetProcessStep(tracer, arguments, args))
@@ -394,14 +331,12 @@ namespace Kudu.Core.Infrastructure
                 { "arguments", String.Format(arguments, args) }
             });
         }
-#endif
 
         internal Process CreateProcess(string arguments, object[] args)
         {
             return CreateProcess(String.Format(arguments, args));
         }
 
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
         internal Process CreateProcess(string arguments)
         {
             var psi = new ProcessStartInfo

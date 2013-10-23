@@ -1,13 +1,8 @@
 ﻿using System;
 using System.Globalization;
 
-#if SITEMANAGEMENT
-namespace Kudu.SiteManagement
-#else
 namespace Kudu.Core.Infrastructure
-#endif
 {
-
     public class CommandLineException : Exception
     {
         public CommandLineException(string executablePath, string arguments, string message)
