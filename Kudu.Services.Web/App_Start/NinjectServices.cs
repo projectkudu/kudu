@@ -10,6 +10,7 @@ using System.Web;
 using System.Web.Http;
 using System.Web.Routing;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
@@ -19,6 +20,7 @@ using Kudu.Core.Deployment;
 using Kudu.Core.Deployment.Generator;
 using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Jobs;
 using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
@@ -196,6 +198,14 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IWebHooksManager>().To<WebHooksManager>()
                                              .InRequestScope();
 
+            ITriggeredJobsManager triggeredJobsManager = kernel.Get<TriggeredJobsManager>();
+            kernel.Bind<ITriggeredJobsManager>().ToConstant(triggeredJobsManager)
+                                             .InTransientScope();
+
+            IContinuousJobsManager continuousJobManager = kernel.Get<ContinuousJobsManager>();
+            kernel.Bind<IContinuousJobsManager>().ToConstant(continuousJobManager)
+                                             .InTransientScope();
+
             kernel.Bind<ILogger>().ToMethod(context => GetLogger(environment, context.Kernel))
                                              .InRequestScope();
 
@@ -347,6 +357,18 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("publish-hooks", "hooks/publish/{hookEventType}", new { controller = "WebHooks", action = "PublishEvent" }, new { verb = new HttpMethodConstraint("POST") });
             routes.MapHttpRoute("get-hooks", "hooks", new { controller = "WebHooks", action = "GetWebHooks" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("subscribe-hook", "hooks", new { controller = "WebHooks", action = "Subscribe" }, new { verb = new HttpMethodConstraint("POST") });
+
+            // Jobs
+            routes.MapHttpRoute("list-all-jobs", "jobs", new { controller = "Jobs", action = "ListAllJobs" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("list-triggered-jobs", "jobs/triggered", new { controller = "Jobs", action = "ListTriggeredJobs" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("get-triggered-job", "jobs/triggered/{jobName}", new { controller = "Jobs", action = "GetTriggeredJob" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("invoke-triggered-job", "jobs/triggered/{jobName}/run", new { controller = "Jobs", action = "InvokeTriggeredJob" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpRoute("get-triggered-job-history", "jobs/triggered/{jobName}/history", new { controller = "Jobs", action = "GetTriggeredJobHistory" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("get-triggered-job-run", "jobs/triggered/{jobName}/history/{runId}", new { controller = "Jobs", action = "GetTriggeredJobRun" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("list-continuous-jobs", "jobs/continuous", new { controller = "Jobs", action = "ListContinuousJobs" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("get-continuous-job", "jobs/continuous/{jobName}", new { controller = "Jobs", action = "GetContinuousJob" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("disable-continuous-job", "jobs/continuous/{jobName}/stop", new { controller = "Jobs", action = "DisableContinuousJob" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpRoute("enable-continuous-job", "jobs/continuous/{jobName}/start", new { controller = "Jobs", action = "EnableContinuousJob" }, new { verb = new HttpMethodConstraint("POST") });
         }
 
         // Perform migration tasks to deal with legacy sites that had different file layout
@@ -397,7 +419,7 @@ namespace Kudu.Services.Web.App_Start
             if (level > TraceLevel.Off)
             {
                 string tracePath = Path.Combine(environment.TracePath, Constants.TraceFile);
-                string textPath = Path.Combine(environment.TracePath, TraceServices.CurrentRequestTraceFile);
+                string textPath = Path.Combine(environment.TracePath, TraceServices.CurrentRequestTraceFile ?? "trace.xml");
                 string traceLockPath = Path.Combine(environment.TracePath, Constants.TraceLockFile);
                 var traceLock = new LockFile(traceLockPath);
                 return new CascadeTracer(new Tracer(tracePath, level, traceLock), new TextTracer(textPath, level));

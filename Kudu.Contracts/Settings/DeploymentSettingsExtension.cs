@@ -9,6 +9,9 @@ namespace Kudu.Contracts.Settings
     {
         public static readonly TimeSpan DefaultCommandIdleTimeout = TimeSpan.FromMinutes(1);
         public static readonly TimeSpan DefaultLogStreamTimeout = TimeSpan.FromMinutes(30);
+        public static readonly TimeSpan DefaultTimeoutBetweenJobs = TimeSpan.FromMinutes(1);
+        public static readonly TimeSpan DefaultJobsIdleTimeout = TimeSpan.FromMinutes(5);
+
         public const TraceLevel DefaultTraceLevel = TraceLevel.Error;
 
         public static string GetValue(this IDeploymentSettingsManager settings, string key)
@@ -73,6 +76,30 @@ namespace Kudu.Contracts.Settings
         {
             string value = settings.GetValue(SettingsKeys.GitEmail);
             return !String.IsNullOrEmpty(value) ? value : "unknown";
+        }
+
+        public static TimeSpan GetTimeoutBetweenJobs(this IDeploymentSettingsManager settings)
+        {
+            string value = settings.GetValue(SettingsKeys.TimeoutBetweenJobs);
+            int seconds;
+            if (Int32.TryParse(value, out seconds))
+            {
+                return seconds > 0 ? TimeSpan.FromSeconds(seconds) : DefaultTimeoutBetweenJobs;
+            }
+
+            return DefaultTimeoutBetweenJobs;
+        }
+
+        public static TimeSpan GetJobsIdleTimeout(this IDeploymentSettingsManager settings)
+        {
+            string value = settings.GetValue(SettingsKeys.JobsIdleTimeoutInSeconds);
+            int seconds;
+            if (Int32.TryParse(value, out seconds))
+            {
+                return seconds > 0 ? TimeSpan.FromSeconds(seconds) : DefaultJobsIdleTimeout;
+            }
+
+            return DefaultJobsIdleTimeout;
         }
 
         public static string GetBranch(this IDeploymentSettingsManager settings)

@@ -17,5 +17,8 @@
         string TracePath { get; }               // e.g. /logfiles/git/trace
         string AnalyticsPath { get; }           // e.g. %temp%/siteExtLogs
         string DeploymentTracePath { get; }     // e.g. /logfiles/git/deployment
+        string DataPath { get; }                // e.g. /data
+        string JobsDataPath { get; }            // e.g. /data/jobs
+        string JobsBinariesPath { get; }        // e.g. /site/wwwroot/app_data/jobs
     }
 }

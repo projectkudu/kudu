@@ -30,6 +30,12 @@ namespace Kudu
         public const string NodeModulesPath = "node_modules";
         public const string FirstDeploymentManifestFileName = "firstDeploymentManifest";
 
+        public const string AppDataPath = "App_Data";
+        public const string DataPath = "data";
+        public const string JobsPath = "jobs";
+        public const string ContinuousPath = "continuous";
+        public const string TriggeredPath = "triggered";
+
         // Kudu trace text file related
         public const string DeploymentTracePath = LogFilesPath + @"\Git\deployment";
 

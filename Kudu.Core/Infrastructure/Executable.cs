@@ -251,7 +251,26 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
+        public int ExecuteReturnExitCode(ITracer tracer, Func<string, bool> onWriteOutput, Func<string, bool> onWriteError, string arguments, params object[] args)
+        {
+            try
+            {
+                ExecuteInternal(tracer, onWriteOutput, onWriteError, null, arguments, args);
+            }
+            catch (CommandLineException ex)
+            {
+                return ex.ExitCode;
+            }
+
+            return 0;
+        }
+
         public Tuple<string, string> Execute(ITracer tracer, Func<string, bool> onWriteOutput, Func<string, bool> onWriteError, Encoding encoding, string arguments, params object[] args)
+        {
+            return ExecuteInternal(tracer, onWriteOutput, onWriteError, encoding, arguments, args);
+        }
+
+        private Tuple<string, string> ExecuteInternal(ITracer tracer, Func<string, bool> onWriteOutput, Func<string, bool> onWriteError, Encoding encoding, string arguments, params object[] args)
         {
             using (GetProcessStep(tracer, arguments, args))
             {
@@ -267,7 +286,7 @@ namespace Kudu.Core.Infrastructure
                     idleManager.UpdateActivity();
                     if (e.Data != null)
                     {
-                        if (onWriteOutput(e.Data))
+                        if (onWriteOutput(e.Data) && encoding != null)
                         {
                             outputBuffer.AppendLine(Encoding.UTF8.GetString(encoding.GetBytes(e.Data)));
                         }
@@ -279,7 +298,7 @@ namespace Kudu.Core.Infrastructure
                     idleManager.UpdateActivity();
                     if (e.Data != null)
                     {
-                        if (onWriteError(e.Data))
+                        if (onWriteError(e.Data) && encoding != null)
                         {
                             errorBuffer.AppendLine(Encoding.UTF8.GetString(encoding.GetBytes(e.Data)));
                         }

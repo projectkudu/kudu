@@ -93,5 +93,23 @@ namespace Kudu.TestHarness
             get;
             set;
         }
+
+        public string DataPath
+        {
+            get;
+            set;
+        }
+
+        public string JobsDataPath
+        {
+            get;
+            set;
+        }
+
+        public string JobsBinariesPath
+        {
+            get;
+            set;
+        }
     }
 }

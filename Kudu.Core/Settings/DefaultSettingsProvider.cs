@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Configuration;
 using Kudu.Contracts.Settings;
 
 namespace Kudu.Core.Settings

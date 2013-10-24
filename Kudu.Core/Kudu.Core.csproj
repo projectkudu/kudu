@@ -44,8 +44,6 @@
     <Compile Include="Deployment\CascadeLogger.cs" />
     <Compile Include="Deployment\DeploymentStatusFileExtensions.cs" />
     <Compile Include="Deployment\DeploymentStatusManager.cs" />
-    <Compile Include="Deployment\Generator\BaseConsoleBuilder.cs" />
-    <Compile Include="Deployment\Generator\BasicConsoleBuilder.cs" />
     <Compile Include="Deployment\Generator\DotNetConsoleBuilder.cs" />
     <Compile Include="Deployment\Generator\CustomGeneratorCommandSiteBuilder.cs" />
     <Compile Include="Deployment\Generator\ExternalCommandFactory.cs" />
@@ -59,6 +57,28 @@
     <Compile Include="Deployment\Generator\NodeSiteEnabler.cs" />
     <Compile Include="Deployment\Generator\SiteBuilderFactory.cs" />
     <Compile Include="Hooks\WebHooksManager.cs" />
+    <Compile Include="Infrastructure\InstanceIdUtility.cs" />
+    <Compile Include="Infrastructure\ProcessEnvironment.cs" />
+    <Compile Include="Jobs\ContinuousJobLogger.cs" />
+    <Compile Include="Jobs\ContinuousJobRunner.cs" />
+    <Compile Include="Jobs\ContinuousJobsManager.cs" />
+    <Compile Include="Jobs\BaseJobRunner.cs" />
+    <Compile Include="Jobs\BashScriptHost.cs" />
+    <Compile Include="Jobs\ContinuousJobStatus.cs" />
+    <Compile Include="Jobs\IJobLogger.cs" />
+    <Compile Include="Jobs\IJobStatus.cs" />
+    <Compile Include="Jobs\JobLogger.cs" />
+    <Compile Include="Jobs\JobNotFoundException.cs" />
+    <Compile Include="Jobs\TriggeredJobRunLogger.cs" />
+    <Compile Include="Jobs\TriggeredJobRunner.cs" />
+    <Compile Include="Jobs\JobsManagerBase.cs" />
+    <Compile Include="Jobs\NodeScriptHost.cs" />
+    <Compile Include="Jobs\PhpScriptHost.cs" />
+    <Compile Include="Jobs\PythonScriptHost.cs" />
+    <Compile Include="Jobs\ScriptHostBase.cs" />
+    <Compile Include="Jobs\TriggeredJobsManager.cs" />
+    <Compile Include="Jobs\TriggeredJobStatus.cs" />
+    <Compile Include="Jobs\WindowsScriptHost.cs" />
     <Compile Include="Tracing\NullTracer.cs" />
     <Compile Include="Tracing\SiteExtensionLogEvent.cs" />
     <Compile Include="Tracing\ISiteExtensionLogEvent.cs" />
@@ -140,9 +160,6 @@
     <Compile Include="SourceControl\Hg\HgRepository.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Scripts\ConsoleWorker\Global.asax.template">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="Scripts\starter.cmd">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -170,9 +187,6 @@
     </Content>
     <Content Include="Scripts\semver.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Scripts\ConsoleWorker\Web.config.template">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
   <ItemGroup>

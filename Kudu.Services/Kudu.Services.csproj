@@ -110,6 +110,7 @@
     <Compile Include="HttpRequestExtensions.cs" />
     <Compile Include="Infrastructure\InstanceIdUtility.cs" />
     <Compile Include="Infrastructure\LowerCasePropertyNamesContractResolver.cs" />
+    <Compile Include="Jobs\JobsController.cs" />
     <Compile Include="ServiceHookHandlers\CodebaseHqHandler.cs" />
     <Compile Include="ServiceHookHandlers\CodePlexHandler.cs" />
     <Compile Include="ServiceHookHandlers\DropboxHandler.cs" />

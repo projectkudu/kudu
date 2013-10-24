@@ -58,6 +58,15 @@
     <Compile Include="Infrastructure\LockOperationException.cs" />
     <Compile Include="Infrastructure\RS.cs" />
     <Compile Include="Infrastructure\StringUtils.cs" />
+    <Compile Include="Jobs\ContinuousJob.cs" />
+    <Compile Include="Jobs\IContinuousJobsManager.cs" />
+    <Compile Include="Jobs\IJobsManager.cs" />
+    <Compile Include="Jobs\IScriptHost.cs" />
+    <Compile Include="Jobs\ITriggeredJobsManager.cs" />
+    <Compile Include="Jobs\JobBase.cs" />
+    <Compile Include="Jobs\TriggeredJob.cs" />
+    <Compile Include="Jobs\TriggeredJobHistory.cs" />
+    <Compile Include="Jobs\TriggeredJobRun.cs" />
     <Compile Include="Settings\ISettingsProvider.cs" />
     <Compile Include="Settings\DeploymentSettingsExtension.cs" />
     <Compile Include="Settings\IDeploymentSettingsManager.cs" />

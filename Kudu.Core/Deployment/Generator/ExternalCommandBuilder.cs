@@ -15,10 +15,8 @@ namespace Kudu.Core.Deployment.Generator
     //              NodeSiteBuilder
     //          WapBuilder
     //          WebSiteBuilder
+    //          DotNetConsoleBuilder
     //          CustomGeneratorCommandSiteBuilder
-    //          BaseConsoleBuilder
-    //              BasicConsoleBuilder
-    //              DotNetConsoleBuilder
 
     public abstract class ExternalCommandBuilder : ISiteBuilder
     {

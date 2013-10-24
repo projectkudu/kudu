@@ -166,6 +166,10 @@
             <td><strong>Available Node versions</strong></td>
             <td><a href="diagnostics/runtime">Browse</a></td>
         </tr>
+        <tr>
+            <td><strong>Web jobs</strong></td>
+            <td><a href="jobs">Browse</a></td>
+        </tr>
     </table>
 </body>
 </html>

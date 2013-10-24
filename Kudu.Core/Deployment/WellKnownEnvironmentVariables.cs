@@ -6,6 +6,7 @@
         public const string SourcePath = "DEPLOYMENT_SOURCE";
         public const string TargetPath = "DEPLOYMENT_TARGET";
         public const string WebRootPath = "WEBROOT_PATH";
+        public const string JobRootPath = "JOB_ROOT";
         public const string MSBuildPath = "MSBUILD_PATH";
         public const string KuduSyncCommandKey = "KUDU_SYNC_CMD";
         public const string NuGetExeCommandKey = "NUGET_EXE";

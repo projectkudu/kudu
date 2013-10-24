@@ -14,7 +14,7 @@ namespace Kudu.Services.Hooks
         private readonly ITracer _tracer;
         private readonly IWebHooksManager _hooksManager;
 
-        public WebHooksController(ITracer tracer, WebHooksManager hooksManager)
+        public WebHooksController(ITracer tracer, IWebHooksManager hooksManager)
         {
             _tracer = tracer;
             _hooksManager = hooksManager;

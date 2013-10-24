@@ -8,7 +8,6 @@ namespace Kudu.Core.Deployment.Generator
 {
     internal class ExternalCommandFactory
     {
-        // TODO: Once CustomBuilder is removed, change all internals back to privates
         internal const string StarterScriptName = "starter.cmd";
 
         private IEnvironment _environment;
@@ -27,20 +26,12 @@ namespace Kudu.Core.Deployment.Generator
             string sourcePath = _repositoryPath;
             string targetPath = deploymentTargetPath;
 
-            // Creates an executable pointing to cmd and the working directory being
-            // the repository root
-            var exe = new Executable(StarterScriptPath, workingDirectory, _deploymentSettings.GetCommandIdleTimeout());
-            exe.AddDeploymentSettingsAsEnvironmentVariables(_deploymentSettings);
+            var exe = BuildCommandExecutable(StarterScriptPath, workingDirectory, _deploymentSettings.GetCommandIdleTimeout(), logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.SourcePath, sourcePath, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.TargetPath, targetPath, logger);
-            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.WebRootPath, _environment.WebRootPath, logger);
-            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.MSBuildPath, PathUtility.ResolveMSBuildPath(), logger);
-            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KuduSyncCommandKey, KuduSyncCommand, logger);
-            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.NuGetExeCommandKey, NuGetExeCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.PostDeploymentActionsCommandKey, PostDeploymentActionsCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.PostDeploymentActionsDirectoryKey, PostDeploymentActionsDir, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.SelectNodeVersionCommandKey, SelectNodeVersionCommand, logger);
-            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.NpmJsPathKey, PathUtility.ResolveNpmJsPath(), logger);
 
             bool isInPlace = false;
             string project = _deploymentSettings.GetValue(SettingsKeys.Project);
@@ -60,6 +51,21 @@ namespace Kudu.Core.Deployment.Generator
 
             // NuGet.exe 1.8 will require an environment variable to make package restore work
             exe.EnvironmentVariables[WellKnownEnvironmentVariables.NuGetPackageRestoreKey] = "true";
+
+            return exe;
+        }
+
+        public Executable BuildCommandExecutable(string commandPath, string workingDirectory, TimeSpan idleTimeout, ILogger logger)
+        {
+            // Creates an executable pointing to cmd and the working directory being
+            // the repository root
+            var exe = new Executable(commandPath, workingDirectory, idleTimeout);
+            exe.AddDeploymentSettingsAsEnvironmentVariables(_deploymentSettings);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.WebRootPath, _environment.WebRootPath, logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.MSBuildPath, PathUtility.ResolveMSBuildPath(), logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KuduSyncCommandKey, KuduSyncCommand, logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.NuGetExeCommandKey, NuGetExeCommand, logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.NpmJsPathKey, PathUtility.ResolveNpmJsPath(), logger);
 
             exe.SetHomePath(_environment);
 
