@@ -46,6 +46,7 @@
     <Compile Include="Deployment\LogEntryType.cs" />
     <Compile Include="Diagnostics\ProcessInfo.cs" />
     <Compile Include="Diagnostics\ProcessThreadInfo.cs" />
+    <Compile Include="Diagnostics\RuntimeInfo.cs" />
     <Compile Include="Editor\VfsStatEntry.cs" />
     <Compile Include="Hooks\ConflictException.cs" />
     <Compile Include="Hooks\WebHook.cs" />
