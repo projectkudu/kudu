@@ -2,6 +2,10 @@
 <%@ Import Namespace="System.Configuration" %>
 <%@ Import Namespace="System.Collections" %>
 
+<%
+    var context = new HttpContextWrapper(HttpContext.Current);
+%>
+
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head id="Head1" runat="server">
     <title></title>
@@ -68,6 +72,22 @@
 </head>
 <body>
     <div>
+        <h2>System info</h2>
+        <ul class="fixed-width">
+            <li>System up time: <%: TimeSpan.FromMilliseconds(Environment.TickCount) %></li>
+            <li>OS version: <%: Environment.OSVersion %></li>
+            <li>64 bit system: <%: Environment.Is64BitOperatingSystem %></li>
+            <li>64 bit process: <%: Environment.Is64BitProcess %></li>
+            <li>Processor count: <%: Environment.ProcessorCount %></li>
+            <li>Machine name: <%: Environment.MachineName %></li>
+            <li>Instance id: <%: Kudu.Services.InstanceIdUtility.GetInstanceId(context) %></li>
+            <li>Short instance id: <%: Kudu.Services.InstanceIdUtility.GetShortInstanceId(context) %></li>
+            <li>CLR version: <%: Environment.Version %></li>
+            <li>System directory: <%: Environment.SystemDirectory %></li>
+            <li>Current working directory: <%: Environment.CurrentDirectory %></li>
+            <li>IIS command line: <%: Environment.CommandLine %></li>
+        </ul>
+
         <h2>AppSettings</h2>
         <ul class="fixed-width">
         <% foreach (string name in ConfigurationManager.AppSettings) { %>
@@ -92,21 +112,28 @@
 
         <h2>Environment variables</h2>
         <ul class="fixed-width">
-        <% foreach (DictionaryEntry entry in Environment.GetEnvironmentVariables()) { %>
+        <% foreach (DictionaryEntry entry in Environment.GetEnvironmentVariables().OfType<DictionaryEntry>().OrderBy(e => e.Key)) { %>
             <li><%: entry.Key %> = <%: entry.Value %></li>
+        <% } %>
+        </ul>
+
+        <h2>PATH</h2>
+        <ul class="fixed-width">
+        <% foreach (string folder in Environment.GetEnvironmentVariable("PATH").Trim(';').Split(';').OrderBy(s => s)) { %>
+            <li><%: folder %></li>
         <% } %>
         </ul>
 
         <h2>HTTP headers</h2>
         <ul class="fixed-width">
-        <% foreach (string name in Request.Headers) { %>
+        <% foreach (string name in Request.Headers.OfType<string>().OrderBy(s => s)) { %>
             <li><%: name  %>=<%: Request.Headers[name] %></li>
         <% } %>
         </ul>
 
         <h2>Server variables</h2>
         <ul class="fixed-width">
-        <% foreach (string name in Request.ServerVariables) { %>
+        <% foreach (string name in Request.ServerVariables.OfType<string>().OrderBy(s => s)) { %>
             <li><%: name  %>=<%: Request.ServerVariables[name] %></li>
         <% } %>
         </ul>
