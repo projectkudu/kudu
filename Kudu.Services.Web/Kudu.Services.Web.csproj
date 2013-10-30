@@ -274,6 +274,7 @@
     <Exec Command="&quot;$(MSBuildProgramFiles32)\Git\bin\git.exe&quot; rev-parse HEAD &gt; &quot;$(MsBuildProjectDirectory)\commit.txt&quot;" Condition=" '$(BuildOutputsUpdated)' == 'true' " />
     <Copy SourceFiles="$(SolutionDir)\Kudu.Console\bin\$(ConfigurationName)\kudu.exe" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
     <ItemGroup>
+      <ScriptFilesToCopy Include="..\packages\KuduHandles*\KuduHandles.exe" />
       <ScriptFilesToCopy Include="..\packages\KuduSync.NET*\tools\*" />
       <ScriptFilesToCopy Include="..\Build\NuGet.exe" />
     </ItemGroup>
