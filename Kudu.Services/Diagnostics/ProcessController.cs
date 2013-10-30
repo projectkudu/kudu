@@ -40,6 +40,15 @@ namespace Kudu.Services.Performance
         }
 
         [HttpGet]
+        public HttpResponseMessage GetOpenFiles(int processId)
+        {
+            using (_tracer.Step("ProcessController.GetOpenFiles"))
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, GetOpenFileHandles(processId));
+            }
+        }
+
+        [HttpGet]
         public HttpResponseMessage GetThread(int processId, int threadId)
         {
             using (_tracer.Step("ProcessController.GetThread"))
@@ -276,6 +285,23 @@ namespace Kudu.Services.Performance
             }
         }
 
+        private IEnumerable<string> GetOpenFileHandles(int processId)
+        {
+            var exe = new Executable(Path.Combine(_environment.ScriptPath, "KuduHandles.exe"), _environment.RootPath,
+                _settings.GetCommandIdleTimeout());
+            var result = exe.Execute(_tracer, processId.ToString());
+            var stdout = result.Item1;
+            var stderr = result.Item2;
+
+            if (!String.IsNullOrEmpty(stderr))
+                _tracer.TraceError(stderr);
+
+            if (String.IsNullOrEmpty(stdout))
+                return Enumerable.Empty<string>();
+            return stdout.Split(new [] { System.Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
+        }
+
+
         private IEnumerable<ProcessThreadInfo> GetThreads(Process process, string href)
         {
             List<ProcessThreadInfo> threads = new List<ProcessThreadInfo>();
@@ -370,6 +396,7 @@ namespace Kudu.Services.Performance
                 {
                     info.GCDump = new Uri(selfLink + "/gcdump");
                 }
+                info.OpenFileHandles = SafeGetValue(() => GetOpenFileHandles(process.Id), Enumerable.Empty<string>());
                 info.Parent = new Uri(selfLink, SafeGetValue(() => process.GetParentId(_tracer), 0).ToString());
                 info.Children = SafeGetValue(() => process.GetChildren(_tracer, recursive: false), Enumerable.Empty<Process>()).Select(c => new Uri(selfLink, c.Id.ToString()));
                 info.Threads = SafeGetValue(() => GetThreads(process, selfLink.ToString()), Enumerable.Empty<ProcessThreadInfo>());
