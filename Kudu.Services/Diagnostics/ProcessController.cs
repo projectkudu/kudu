@@ -40,11 +40,11 @@ namespace Kudu.Services.Performance
         }
 
         [HttpGet]
-        public HttpResponseMessage GetOpenFiles(int id)
+        public HttpResponseMessage GetOpenFiles(int processId)
         {
             using (_tracer.Step("ProcessController.GetOpenFiles"))
             {
-                return Request.CreateResponse(HttpStatusCode.OK, GetOpenFileHandles(id));
+                return Request.CreateResponse(HttpStatusCode.OK, GetOpenFileHandles(processId));
             }
         }
 
@@ -287,24 +287,18 @@ namespace Kudu.Services.Performance
 
         private IEnumerable<string> GetOpenFileHandles(int processId)
         {
-            var startInfo = new ProcessStartInfo()
-            {
-                UseShellExecute = false,
-                FileName = Path.Combine(_environment.ScriptPath, "KuduHandles.exe"),
-                Arguments = processId.ToString(),
-                CreateNoWindow = true,
-                RedirectStandardError = true,
-                RedirectStandardInput = true,
-                RedirectStandardOutput = true,
-                WorkingDirectory = _environment.RootPath
-            };
-            var process = Process.Start(startInfo);
-            process.EnableRaisingEvents = true;
-            var result = process.StandardOutput.ReadToEnd();
-            process.WaitForExit();
-            if (String.IsNullOrEmpty(result))
+            var exe = new Executable(Path.Combine(_environment.ScriptPath, "KuduHandles.exe"), _environment.RootPath,
+                _settings.GetCommandIdleTimeout());
+            var result = exe.Execute(_tracer, processId.ToString());
+            var stdout = result.Item1;
+            var stderr = result.Item2;
+
+            if (!String.IsNullOrEmpty(stderr))
+                _tracer.TraceError(stderr);
+
+            if (String.IsNullOrEmpty(stdout))
                 return Enumerable.Empty<string>();
-            return result.Split(new [] { System.Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            return stdout.Split(new [] { System.Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
         }
 
 
