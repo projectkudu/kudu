@@ -61,7 +61,6 @@
     </Compile>
     <Compile Include="DefaultSettingsResolver.cs" />
     <Compile Include="ISettingsResolver.cs" />
-    <Compile Include="IISExtensions.cs" />
     <Compile Include="IPathResolver.cs" />
     <Compile Include="ISiteManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
