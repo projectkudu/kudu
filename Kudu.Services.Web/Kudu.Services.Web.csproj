@@ -106,15 +106,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Areas\HelpPage\HelpPage.css" />
-    <Content Include="Content\Images\ajax-loader.gif" />
-    <Content Include="Content\Images\download.png" />
-    <Content Include="Content\Images\folder.png" />
-    <Content Include="Content\Images\folder_add.png" />
-    <Content Include="Content\Images\folder_delete.png" />
-    <Content Include="Content\Images\folder_page.png" />
-    <Content Include="Content\Images\file.png" />
-    <Content Include="Content\Images\file_delete.png" />
-    <Content Include="Content\Images\file_edit.png" />
     <Content Include="Content\Styles\FileBrowser.css" />
     <Content Include="Env.aspx" />
     <Content Include="Default.aspx" />
