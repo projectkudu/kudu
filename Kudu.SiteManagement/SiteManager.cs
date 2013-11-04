@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Net.NetworkInformation;
 using System.Threading;
 using System.Threading.Tasks;
@@ -41,7 +42,7 @@ namespace Kudu.SiteManagement
 
         public IEnumerable<string> GetSites()
         {
-            using (var iis = new IIS.ServerManager())
+            using (var iis = GetServerManager())
             {
                 // The app pool is the app name
                 return iis.Sites.Where(x => x.Name.StartsWith("kudu_", StringComparison.OrdinalIgnoreCase))
@@ -53,7 +54,7 @@ namespace Kudu.SiteManagement
 
         public Site GetSite(string applicationName)
         {
-            using (var iis = new IIS.ServerManager())
+            using (var iis = GetServerManager())
             {
                 var mainSiteName = GetLiveSite(applicationName);
                 var serviceSiteName = GetServiceSite(applicationName);
@@ -101,7 +102,7 @@ namespace Kudu.SiteManagement
 
         public async Task<Site> CreateSiteAsync(string applicationName)
         {
-            using (var iis = new IIS.ServerManager())
+            using (var iis = GetServerManager())
             {
                 try
                 {
@@ -111,7 +112,7 @@ namespace Kudu.SiteManagement
 
                     // Create the service site for this site
                     string serviceSiteName = GetServiceSite(applicationName);
-                    var serviceSite = await CreateSiteAsync(iis, applicationName, serviceSiteName, _pathResolver.ServiceSitePath, serviceSiteBindings);
+                    var serviceSite = CreateSiteAsync(iis, applicationName, serviceSiteName, _pathResolver.ServiceSitePath, serviceSiteBindings);
 
                     // Create the main site
                     string siteName = GetLiveSite(applicationName);
@@ -133,7 +134,7 @@ namespace Kudu.SiteManagement
 </body> 
 </html>");
 
-                    var site = await CreateSiteAsync(iis, applicationName, siteName, webRoot, siteBindings);
+                    var site = CreateSiteAsync(iis, applicationName, siteName, webRoot, siteBindings);
 
                     // Map a path called _app to the site root under the service site
                     MapServiceSitePath(iis, applicationName, Constants.MappedSite, root);
@@ -141,14 +142,14 @@ namespace Kudu.SiteManagement
                     // Commit the changes to iis
                     iis.CommitChanges();
 
-                    // Wait for the site to start
-                    await site.WaitForState(ObjectState.Started);
-
                     var serviceUrls = new List<string>();
                     foreach (var url in serviceSite.Bindings)
                     {
                         serviceUrls.Add(String.Format("http://{0}:{1}/", String.IsNullOrEmpty(url.Host) ? "localhost" : url.Host, url.EndPoint.Port));
                     }
+
+                    // Wait for the site to start
+                    await OperationManager.AttemptAsync(() => WaitForSiteAsync(serviceUrls[0]));
 
                     // Set initial ScmType state to LocalGit
                     var settings = new RemoteDeploymentSettingsManager(serviceUrls.First() + "settings");
@@ -183,7 +184,7 @@ namespace Kudu.SiteManagement
 
         public async Task DeleteSiteAsync(string applicationName)
         {
-            using (var iis = new IIS.ServerManager())
+            using (var iis = GetServerManager())
             {
                 // Get the app pool for this application
                 string appPoolName = GetAppPool(applicationName);
@@ -197,7 +198,6 @@ namespace Kudu.SiteManagement
 
                 await Task.WhenAll(
                     DeleteSiteAsync(iis, GetLiveSite(applicationName)),
-                    DeleteSiteAsync(iis, GetDevSite(applicationName)),
                     // Don't delete the physical files for the service site
                     DeleteSiteAsync(iis, GetServiceSite(applicationName), deletePhysicalFiles: false)
                 );
@@ -230,26 +230,6 @@ namespace Kudu.SiteManagement
             }
         }
 
-        public void SetSiteWebRoot(string applicationName, string siteRoot)
-        {
-            using (var iis = new IIS.ServerManager())
-            {
-                string siteName = GetDevSite(applicationName);
-
-                IIS.Site site = iis.Sites[siteName];
-                if (site != null)
-                {
-                    string sitePath = _pathResolver.GetLiveSitePath(applicationName);
-                    string webRoot = Path.Combine(sitePath, Constants.WebRoot, siteRoot);
-
-                    // Change the web root
-                    site.Applications[0].VirtualDirectories[0].PhysicalPath = webRoot;
-
-                    iis.CommitChanges();
-                }
-            }
-        }
-
         public bool AddSiteBinding(string applicationName, string siteBinding, SiteType siteType)
         {
             IIS.Site site;
@@ -263,7 +243,7 @@ namespace Kudu.SiteManagement
 
             try
             {
-                using (var iis = new IIS.ServerManager())
+                using (var iis = GetServerManager())
                 {
                     if (!IsAvailable(uri.Host, uri.Port, iis))
                     {
@@ -301,7 +281,7 @@ namespace Kudu.SiteManagement
 
             try
             {
-                using (var iis = new IIS.ServerManager())
+                using (var iis = GetServerManager())
                 {
                     if (siteType == SiteType.Live)
                     {
@@ -352,7 +332,7 @@ namespace Kudu.SiteManagement
             site.Applications.Add(path, siteRoot);
         }
 
-        private static async Task<IIS.ApplicationPool> EnsureAppPool(IIS.ServerManager iis, string appName)
+        private static IIS.ApplicationPool EnsureAppPool(IIS.ServerManager iis, string appName)
         {
             string appPoolName = GetAppPool(appName);
             var kuduAppPool = iis.ApplicationPools[appPoolName];
@@ -365,8 +345,9 @@ namespace Kudu.SiteManagement
                 kuduAppPool.ManagedRuntimeVersion = "v4.0";
                 kuduAppPool.AutoStart = true;
                 kuduAppPool.ProcessModel.LoadUserProfile = true;
-                await kuduAppPool.WaitForState(IIS.ObjectState.Started);
             }
+
+            EnsureDefaultDocument(iis);
 
             return kuduAppPool;
         }
@@ -434,11 +415,9 @@ namespace Kudu.SiteManagement
             return true;
         }
 
-        private async Task<IIS.Site> CreateSiteAsync(IIS.ServerManager iis, string applicationName, string siteName, string siteRoot, List<string> siteBindings)
+        private IIS.Site CreateSiteAsync(IIS.ServerManager iis, string applicationName, string siteName, string siteRoot, List<string> siteBindings)
         {
-            var pool = await EnsureAppPool(iis, applicationName);
-
-            EnsureDefaultDocument(iis);
+            var pool = EnsureAppPool(iis, applicationName);
 
             IIS.Site site;
 
@@ -522,24 +501,26 @@ namespace Kudu.SiteManagement
             return String.Format("{0}:{1}:{2}", ip, port, applicationName + "." + host);
         }
 
-        private static async Task DeleteSiteAsync(IIS.ServerManager iis, string siteName, bool deletePhysicalFiles = true)
+        private static Task DeleteSiteAsync(IIS.ServerManager iis, string siteName, bool deletePhysicalFiles = true)
         {
             var site = iis.Sites[siteName];
             if (site != null)
             {
-                await site.StopAndWait();
-                if (deletePhysicalFiles)
+                return OperationManager.AttemptAsync(async () =>
                 {
-                    string physicalPath = site.Applications[0].VirtualDirectories[0].PhysicalPath;
-                    DeleteSafe(physicalPath);
-                }
-                iis.Sites.Remove(site);
+                    await Task.Run(() =>
+                    {
+                        if (deletePhysicalFiles)
+                        {
+                            string physicalPath = site.Applications[0].VirtualDirectories[0].PhysicalPath;
+                            DeleteSafe(physicalPath);
+                        }
+                        iis.Sites.Remove(site);
+                    });
+                });
             }
-        }
 
-        private static string GetDevSite(string applicationName)
-        {
-            return "kudu_dev_" + applicationName;
+            return Task.FromResult(0);
         }
 
         private static string GetLiveSite(string applicationName)
@@ -565,6 +546,22 @@ namespace Kudu.SiteManagement
             }
 
             FileSystemHelpers.DeleteDirectorySafe(physicalPath);
+        }
+
+        private static ServerManager GetServerManager()
+        {
+            return new IIS.ServerManager(Environment.ExpandEnvironmentVariables("%windir%\\system32\\inetsrv\\config\\applicationHost.config"));
+        }
+
+        private static async Task WaitForSiteAsync(string serviceUrl)
+        {
+            using (var client = new HttpClient())
+            {
+                using (var response = await client.GetAsync(serviceUrl))
+                {
+                    response.EnsureSuccessStatusCode();
+                }
+            }
         }
     }
 }
