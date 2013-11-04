@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Kudu.Core.Infrastructure
 {
@@ -43,6 +44,41 @@ namespace Kudu.Core.Infrastructure
                 }
 
                 Thread.Sleep(delayBeforeRetry);
+            }
+
+            return result;
+        }
+
+        public static Task AttemptAsync(Func<Task> action, int retries = DefaultRetries, int delayBeforeRetry = DefaultDelayBeforeRetry)
+        {
+            return AttemptAsync(async () =>
+            {
+                await action();
+                return true;
+            }, retries, delayBeforeRetry);
+        }
+
+        public static async Task<TVal> AttemptAsync<TVal>(Func<Task<TVal>> action, int retries = DefaultRetries, int delayBeforeRetry = DefaultDelayBeforeRetry)
+        {
+            TVal result = default(TVal);
+
+            while (retries > 0)
+            {
+                try
+                {
+                    result = await action();
+                    break;
+                }
+                catch
+                {
+                    retries--;
+                    if (retries == 0)
+                    {
+                        throw;
+                    }
+                }
+
+                await Task.Delay(delayBeforeRetry);
             }
 
             return result;
