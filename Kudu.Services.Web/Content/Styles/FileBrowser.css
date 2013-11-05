@@ -5,13 +5,9 @@
 }
 
 #main {
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    margin: 10px auto;
-    min-height: 800px;
-    height: 80%;
-    min-width: 1040px;
-    width: 80%;
+    min-height: 900px;
+    height: 95%;
+
 }
 
     #main > .view {
@@ -19,111 +15,19 @@
         width: 100%;
     }
 
-img {
-    border: 0;
-}
-
-.left {
-    float: left;
-}
-
-.clear {
-    clear: both;
-}
-
-#operations a {
-    text-decoration: none;
-}
-
-#operations img {
-    cursor: pointer;
-    margin-left: 5px;
-    vertical-align: middle;
+#KuduExecConsole {
+    height: 45%;
 }
 
 #fileList {
     height: 40%;
-    margin-left: 10px;
-    min-width: 1024px;
     width: 95%;
+    overflow: auto;
 }
     #fileList .table-container {
-        overflow-y: auto;
         height: 80%;
         border: 2px solid #e5eff8;
     }
-
-    #fileList table {
-        border: 1px solid #e5eff8;
-        border-collapse: collapse;
-        width: 100%;
-    }
-
-    #fileList caption {
-        color: #66a3d3;
-        font-weight: bold;
-        text-align: left;
-    }
-        .spinner {
-            width: 100%;
-            text-align: center;
-            min-height: 20px;
-        }
-
-        #fileList table th {
-            background-color: #f7fbff;
-            border-bottom:1px solid #e5eff8;
-            border-left:1px solid #e5eff8;
-            color: #66a3d3;
-            padding: 3px;
-        }
-        #fileList table td.actions {
-            width: 10%;
-            text-align: center;
-        }
-        #fileList table td.name {
-            overflow-x: hidden;
-            width: 55%;
-            text-overflow: ellipsis;
-        }
-        #fileList table td.date {
-            width: 25%;
-            font-size: small;
-        }
-        #fileList table td.size {
-            width: 10%;
-        }
-        #fileList table img {
-            vertical-align: middle;
-            margin-bottom: 2px;
-        }
-        #fileList table a {
-            text-decoration: none;
-        }
-        #fileList table tr:hover, #fileList table tr:nth-child(even):hover {
-            background-color: #e8f1f7;
-        }
-        #fileList table tr:nth-child(even) {
-            background-color: #f7fbff;
-        }
-        #fileList table td {
-            border-bottom:1px solid #e5eff8;
-            border-left:1px solid #e5eff8;
-            padding: 3px;
-        }
-
-#resizeHandle {
-    margin: 10px;
-    height: 20px;
-    text-align: center;
-}
-    #resizeHandle .up, #resizeHandle .down {
-        cursor: pointer;
-    }
-
-#KuduExecConsole {
-    height: 45%;
-}
 
 div.console {
     font-family: 'Lucida Console', Consolas, 'Courier New', monospace;
@@ -138,7 +42,7 @@ div.console {
         overflow: auto;
         margin-left: auto;
         margin-right: auto;
-        width: 98%;
+        width: 90%;
         height: 100%;
         color: white;
     }
@@ -183,3 +87,6 @@ footer {
     width: 100%;
 }
 
+textarea {
+    min-height: 800px;
+}
