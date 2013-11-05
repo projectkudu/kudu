@@ -19,6 +19,16 @@
     height: 45%;
 }
 
+#fileList {
+    height: 40%;
+    width: 95%;
+    overflow: auto;
+}
+    #fileList .table-container {
+        height: 80%;
+        border: 2px solid #e5eff8;
+    }
+
 div.console {
     font-family: 'Lucida Console', Consolas, 'Courier New', monospace;
     white-space: pre;
@@ -32,7 +42,7 @@ div.console {
         overflow: auto;
         margin-left: auto;
         margin-right: auto;
-        width: 98%;
+        width: 90%;
         height: 100%;
         color: white;
     }
