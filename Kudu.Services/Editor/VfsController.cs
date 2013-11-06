@@ -59,6 +59,7 @@ namespace Kudu.Services.Editor
 
         protected override Task<HttpResponseMessage> CreateItemGetResponse(FileSystemInfoBase info, string localFilePath)
         {
+            
             // Get current etag
             EntityTagHeaderValue currentEtag = CreateEntityTag(info);
 

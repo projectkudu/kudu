@@ -1,9 +1,9 @@
 ﻿<%@ page language="C#" %>
 
 <%@ import namespace="System.IO" %>
+<%@ import namespace="System.Web.Hosting" %>
 <%@ import namespace="Kudu.Services.Web" %>
 <%@ import namespace="Kudu.Services" %>
-<%@ import namespace="System.Web.Hosting" %>
 
 <!DOCTYPE html>
 <html>
@@ -24,7 +24,7 @@
     <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
         <div class="container">
             <div class="navbar-header">
-                <a class="navbar-brand" href="<%=ResolveUrl("~/")%>">Kudu</a>
+                <a class="navbar-brand" href="/">Kudu</a>
             </div>
             <div class="collapse navbar-collapse">
                 <ul class="nav navbar-nav">
@@ -50,7 +50,7 @@
             <div>
                 <%=version%>
                 <% if (!String.IsNullOrEmpty(sha)) { %>
-                (<a id="sha" href="https://github.com/projectkudu/kudu/commit/<%= sha %>"><%= sha.Substring(0, 10) %></a>)
+                (<a id="sha" href="https://github.com/projectkudu/kudu/commit/<%: sha %>"><%: sha.Substring(0, 10) %></a>)
                 <% } %>
             </div>
         </div>
@@ -60,7 +60,7 @@
                 <strong>Site up time</strong>
             </div>
             <div>
-                <%=Kudu.Services.Web.Tracing.TraceModule.UpTime%>
+                <%: Kudu.Services.Web.Tracing.TraceModule.UpTime%>
             </div>
         </div>
         <div class="row">
@@ -68,7 +68,7 @@
                 <strong>Site folder</strong>
             </div>
             <div>
-                <%=Kudu.Services.Web.PathResolver.ResolveRootPath()%></em>
+                <%: Kudu.Services.Web.PathResolver.ResolveRootPath()%>
             </div>
         </div>
         <div class="row">
@@ -76,12 +76,15 @@
                 <strong>Temp folder</strong>
             </div>
             <div>
-                <em><%=Path.GetTempPath()%></em>
+                <%: Path.GetTempPath()%>
             </div>
         </div>
 
         <h3>REST API <small>(works best when using a JSON viewer extension)</small></h3>
         <ul>
+            <li>
+                <a href="settings">App Settings</a>
+            </li>
             <li>
                 <a href="deployments">Deployments</a>
             </li>  
@@ -89,19 +92,16 @@
                 <a href="vfs">Files</a>
             </li>
             <li>
-                <a href="settings">App Settings</a>
+                <a href="diagnostics/processes">Processes and mini-dumps</a>
             </li>
             <li>
-                <a href="diagnostics/processes">Processes and mini-dumps</a>
+                <a href="diagnostics/runtime">Runtime versions</a>
             </li>
             <li>
                 <a href="scm/info">Source control info</a>
             </li>
             <li>
                 <a href="hooks">Web hooks</a>
-            </li>
-            <li>
-                <a href="diagnostics/runtime">Runtime versions</a>
             </li>
             <li>
                 <a href="jobs">Web jobs</a>

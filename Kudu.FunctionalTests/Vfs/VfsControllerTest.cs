@@ -1,6 +1,8 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Net;
 using System.Threading.Tasks;
+using Kudu.Client;
 using Kudu.Client.Editor;
 using Kudu.TestHarness;
 using Xunit;
@@ -24,6 +26,39 @@ namespace Kudu.FunctionalTests
             });
         }
 
+        [Fact]
+        public async Task VfsSpecialFoldersTest()
+        {
+            // Arrange
+            string appName = "VfsSpecialFolders";
+
+            await ApplicationManager.RunAsync(appName, async appManager =>
+            {
+                // Act + Assert
+                Assert.True(appManager.VfsManager.Exists("/vfs/SystemDrive/"), "'/vfs/SystemDrive/' must exists");
+
+                Assert.True(appManager.VfsManager.Exists("/vfs/SystemDrive/windows/"), "'/vfs/SystemDrive/windows/' must exists");
+
+                Assert.False(appManager.VfsManager.Exists("/vfs/SystemDrive/NotFound/"), "'/vfs/SystemDrive/NotFound/' must not exists");
+
+                try
+                {
+                    string value = await appManager.SettingsManager.GetValue("WEBSITE_NODE_DEFAULT_VERSION");
+                    if (!String.IsNullOrEmpty(value))
+                    {
+                        Assert.True(appManager.VfsManager.Exists("/vfs/LocalSiteRoot/Temp/"), "'/vfs/LocalSiteRoot/Temp/' must exists");
+                    }
+                }
+                catch (HttpUnsuccessfulRequestException ex)
+                {
+                    if (ex.ResponseMessage.StatusCode != HttpStatusCode.NotFound)
+                    {
+                        throw;
+                    }
+                }
+
+            });
+        }
 
         private sealed class VfsControllerSuite : VfsControllerBaseTest
         {

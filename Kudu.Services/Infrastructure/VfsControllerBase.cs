@@ -22,7 +22,7 @@ namespace Kudu.Services.Infrastructure
     public abstract class VfsControllerBase : ApiController
     {
         private const string DirectoryEnumerationSearchPattern = "*";
-        private const char UriSegmentSeparator = '/';
+        public const char UriSegmentSeparator = '/';
 
         private static readonly char[] _uriSegmentSeparator = new char[] { UriSegmentSeparator };
         private static readonly MediaTypeHeaderValue _directoryMediaType = MediaTypeHeaderValue.Parse("inode/directory");
@@ -46,11 +46,18 @@ namespace Kudu.Services.Infrastructure
         public virtual Task<HttpResponseMessage> GetItem()
         {
             string localFilePath = GetLocalFilePath();
+
+            HttpResponseMessage response;
+            if (VfsSpecialFolders.TryHandleRequest(Request, localFilePath, out response))
+            {
+                return Task.FromResult(response);
+            }
+
             DirectoryInfoBase info = FileSystem.DirectoryInfo.FromDirectoryName(localFilePath);
 
             if (info.Attributes < 0)
             {
-                HttpResponseMessage notFoundResponse = Request.CreateResponse(HttpStatusCode.NotFound);
+                HttpResponseMessage notFoundResponse = Request.CreateErrorResponse(HttpStatusCode.NotFound, String.Format("'{0}' not found.", info.FullName));
                 return Task.FromResult(notFoundResponse);
             }
             else if ((info.Attributes & FileAttributes.Directory) != 0)
@@ -90,6 +97,13 @@ namespace Kudu.Services.Infrastructure
         public virtual Task<HttpResponseMessage> PutItem()
         {
             string localFilePath = GetLocalFilePath();
+
+            HttpResponseMessage response;
+            if (VfsSpecialFolders.TryHandleRequest(Request, localFilePath, out response))
+            {
+                return Task.FromResult(response);
+            }
+
             DirectoryInfoBase info = FileSystem.DirectoryInfo.FromDirectoryName(localFilePath);
             bool itemExists = info.Attributes >= 0;
 
@@ -114,11 +128,18 @@ namespace Kudu.Services.Infrastructure
         public virtual Task<HttpResponseMessage> DeleteItem(bool recursive = false)
         {
             string localFilePath = GetLocalFilePath();
+
+            HttpResponseMessage response;
+            if (VfsSpecialFolders.TryHandleRequest(Request, localFilePath, out response))
+            {
+                return Task.FromResult(response);
+            }
+
             DirectoryInfoBase dirInfo = FileSystem.DirectoryInfo.FromDirectoryName(localFilePath);
 
             if (dirInfo.Attributes < 0)
             {
-                HttpResponseMessage notFoundResponse = Request.CreateResponse(HttpStatusCode.NotFound);
+                HttpResponseMessage notFoundResponse = Request.CreateErrorResponse(HttpStatusCode.NotFound, String.Format("'{0}' not found.", dirInfo.FullName));
                 return Task.FromResult(notFoundResponse);
             }
             else if ((dirInfo.Attributes & FileAttributes.Directory) != 0)
@@ -169,10 +190,20 @@ namespace Kudu.Services.Infrastructure
 
         protected virtual Task<HttpResponseMessage> CreateDirectoryGetResponse(DirectoryInfoBase info, string localFilePath)
         {
-            // Enumerate directory
-            IEnumerable<VfsStatEntry> directory = GetDirectoryResponse(info);
-            HttpResponseMessage successDirectoryResponse = Request.CreateResponse<IEnumerable<VfsStatEntry>>(HttpStatusCode.OK, directory);
-            return Task.FromResult(successDirectoryResponse);
+            Contract.Assert(info != null);
+            try
+            {
+                // Enumerate directory
+                IEnumerable<VfsStatEntry> directory = GetDirectoryResponse(info.GetFileSystemInfos());
+                HttpResponseMessage successDirectoryResponse = Request.CreateResponse<IEnumerable<VfsStatEntry>>(HttpStatusCode.OK, directory);
+                return Task.FromResult(successDirectoryResponse);
+            }
+            catch (Exception e)
+            {
+                Tracer.TraceError(e);
+                HttpResponseMessage errorResponse = Request.CreateErrorResponse(HttpStatusCode.InternalServerError, e.Message);
+                return Task.FromResult(errorResponse);
+            }
         }
 
         protected abstract Task<HttpResponseMessage> CreateItemGetResponse(FileSystemInfoBase info, string localFilePath);
@@ -273,10 +304,18 @@ namespace Kudu.Services.Infrastructure
             return file.Open(FileMode.Open, FileAccess.Read, FileShare.Delete);
         }
 
-        private string GetLocalFilePath()
+        // internal for testing purpose
+        internal string GetLocalFilePath()
         {
             IHttpRouteData routeData = Request.GetRouteData();
-            string result = RootPath;
+
+            string result;
+            if (VfsSpecialFolders.TryParse(routeData, out result))
+            {
+                return result;
+            }
+
+            result = RootPath;
             if (routeData != null)
             {
                 string path = routeData.Values["path"] as string;
@@ -296,11 +335,10 @@ namespace Kudu.Services.Infrastructure
             return result;
         }
 
-        private IEnumerable<VfsStatEntry> GetDirectoryResponse(DirectoryInfoBase info)
+        private IEnumerable<VfsStatEntry> GetDirectoryResponse(FileSystemInfoBase[] infos)
         {
-            Contract.Assert(info != null);
             string baseAddress = Request.RequestUri.AbsoluteUri;
-            foreach (FileSystemInfoBase fileSysInfo in info.GetFileSystemInfos())
+            foreach (FileSystemInfoBase fileSysInfo in infos)
             {
                 bool isDirectory = (fileSysInfo.Attributes & FileAttributes.Directory) != 0;
                 string mime = isDirectory ? _directoryMediaType.ToString() : MediaTypeMap.GetMediaType(fileSysInfo.Extension).ToString();
@@ -314,7 +352,18 @@ namespace Kudu.Services.Infrastructure
                     Mime = mime,
                     Size = size,
                     Href = baseAddress + Uri.EscapeUriString(unescapedHref),
+                    Path = fileSysInfo.FullName
                 };
+            }
+
+            // add special folders when requesting Root url
+            IHttpRouteData routeData = Request.GetRouteData();
+            if (routeData != null && String.IsNullOrEmpty(routeData.Values["path"] as string))
+            {
+                foreach (var entry in VfsSpecialFolders.GetEntries(baseAddress, FileSystem))
+                {
+                    yield return entry;
+                }
             }
         }
     }

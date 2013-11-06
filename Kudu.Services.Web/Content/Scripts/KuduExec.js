@@ -64,7 +64,9 @@ $(function () {
     window.KuduExec.changeDir = function (value) {
         value = value || window.KuduExec.appRoot;
         curWorkingDir(value);
-        $(".jquery-console-cursor").parent().prev(".jquery-console-prompt-label").text(value.replace(/\/|\\$/, '') + ">");
+        // Trim the trailing slash.
+        value = value.replace(/\/|\\$/, "").replace(/:$/, ":\\") + ">";
+        $(".jquery-console-cursor").parent().prev(".jquery-console-prompt-label").text(value);
     }
 
     // call make console after this first command so the current working directory is set.

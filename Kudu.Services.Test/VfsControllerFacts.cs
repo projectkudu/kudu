@@ -11,6 +11,7 @@ using System.Web.Http.Routing;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Services.Editor;
+using Kudu.Services.Infrastructure;
 using Moq;
 using Xunit;
 using Xunit.Extensions;
@@ -19,6 +20,9 @@ namespace Kudu.Services.Test
 {
     public class VfsControllerFacts
     {
+        private const string SiteRootPath = @"C:\DWASFiles\Sites\SiteName\VirtualDirectory0";
+        private static readonly string LocalSiteRootPath = Path.GetFullPath(Path.Combine(SiteRootPath, @".."));
+
         [Fact]
         public async Task DeleteRequestReturnsNotFoundIfItemDoesNotExist()
         {
@@ -158,12 +162,75 @@ namespace Kudu.Services.Test
             fileInfo.Verify(f => f.Delete());
         }
 
-        private static VfsController CreateController(string path, IFileSystem fileBase)
+        [Theory]
+        [PropertyData("MapRouteToLocalPathData")]
+        public void MapRouteToLocalPathTests(string requestUri, string expected)
+        {
+            // in case of env variable not exist in certain target machine
+            var expanded = System.Environment.ExpandEnvironmentVariables(expected);
+            if (expanded.Contains("%"))
+            {
+                return;
+            }
+
+            if (requestUri.IndexOf("/LocalSiteRoot") > 0)
+            {
+                VfsSpecialFolders.LocalSiteRootPath = LocalSiteRootPath;
+            }
+
+            try
+            {
+                foreach (var suffixes in new[] { new[] { "", "" }, new[] { "/", "\\" } })
+                {
+                    // Arrange
+                    var controller = CreateController(requestUri + suffixes[0], new FileSystem(), SiteRootPath);
+
+                    // Act
+                    string path = controller.GetLocalFilePath();
+
+                    // Assert
+                    Assert.Equal(expanded + suffixes[1], path);
+                }
+            }
+            finally
+            {
+                VfsSpecialFolders.LocalSiteRootPath = null;
+            }
+        }
+
+        public static IEnumerable<object[]> MapRouteToLocalPathData
+        {
+            get
+            {
+                yield return new object[] { "https://localhost/vfs", SiteRootPath };
+                yield return new object[] { "https://localhost/vfs/LogFiles/Git", SiteRootPath + @"\LogFiles\Git" };
+                
+                yield return new object[] { "https://localhost/vfs/SystemDrive", "%SystemDrive%" };
+                yield return new object[] { "https://localhost/vfs/SystemDrive/windows", @"%SystemDrive%\windows" };
+                yield return new object[] { "https://localhost/vfs/SystemDrive/Program Files (x86)", @"%ProgramFiles(x86)%" };
+
+                yield return new object[] { "https://localhost/vfs/LocalSiteRoot", LocalSiteRootPath };
+                yield return new object[] { "https://localhost/vfs/LocalSiteRoot/Temp", LocalSiteRootPath + @"\Temp" };
+            }
+        }
+
+        private static VfsController CreateController(string path, IFileSystem fileBase, string rootPath = "/")
         {
             var env = new Mock<IEnvironment>();
-            env.SetupGet(e => e.RootPath).Returns("/");
+            env.SetupGet(e => e.RootPath).Returns(rootPath);
             var request = new HttpRequestMessage();
-            request.Properties[HttpPropertyKeys.HttpRouteDataKey] = new HttpRouteData(Mock.Of<IHttpRoute>(), new HttpRouteValueDictionary(new { path = path }));
+
+            string routePath = path;
+            Uri requestUri = null;
+            if (Uri.TryCreate(path, UriKind.Absolute, out requestUri))
+            {
+                request.RequestUri = requestUri;
+
+                // route path never starts with '/'
+                routePath = requestUri.LocalPath.Replace("/vfs", String.Empty).TrimStart('/');
+            }
+
+            request.Properties[HttpPropertyKeys.HttpRouteDataKey] = new HttpRouteData(Mock.Of<IHttpRoute>(), new HttpRouteValueDictionary(new { path = routePath }));
             
             return new VfsController(Mock.Of<ITracer>(), env.Object, fileBase)
             {

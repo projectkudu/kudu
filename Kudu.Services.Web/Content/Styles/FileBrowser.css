@@ -4,18 +4,22 @@
     padding: 0;
 }
 
+body {
+    padding-top: 55px;
+}
+
 #main {
-    min-height: 900px;
-    height: 95%;
+    min-height: 860px;
+    height: 90%;
 }
 
     #main > .view {
         height: 100%;
-        width: 100%;
+        width: 90%;
     }
 
 #KuduExecConsole {
-    height: 45%;
+    height: 48%;
     width: 100%;
 }
 
@@ -24,8 +28,7 @@ div.spinner {
 }
 
 #fileList {
-    height: 40%;
-    width: 95%;
+    height: 32%;
 }
 
     #fileList > div.table-container {
@@ -33,6 +36,11 @@ div.spinner {
         overflow-y: auto;
         width: 100%;
     }
+
+#resizeHandle {
+    cursor: pointer;
+    text-align: center;
+}
 
 div.console {
     font-family: 'Lucida Console', Consolas, 'Courier New', monospace;
@@ -96,4 +104,8 @@ footer {
 
 textarea {
     min-height: 800px;
+}
+
+.disabled {
+    color: gray;
 }
