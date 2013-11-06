@@ -91,7 +91,7 @@
         <% } %>
         </ul>
 
-        <h3 id="PATH">PATH</h3>
+        <h3 id="path">PATH</h3>
         <ul class="fixed-width">
         <% foreach (string folder in Environment.GetEnvironmentVariable("PATH").Trim(';').Split(';').OrderBy(s => s)) { %>
             <li><%: folder %></li>

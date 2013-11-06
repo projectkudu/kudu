@@ -9,24 +9,45 @@
     <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.2/css/font-awesome.css" rel="stylesheet">
 </head>
 <body>
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="/">Kudu</a>
+            </div>
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="/Env.aspx">Runtime Environment</a></li>
+                    <li><a href="/DebugConsole">Diagnostic console</a></li>
+                    <li><a href="/logstream" title="If no log events are being generated the page may not load.">Diagnostic log stream</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
     <div id="main" class="container">
         <div class="view main-view" data-bind="visible: !fileEdit()">
             <div id="fileList">
-                <div id="operations">
-                    <h3>
-                        <span data-bind="visible: selected().parent">
-                            <a href="#" data-bind="click: selected().selectParent, attr: { title: selected().parent && ('Up to ' + selected().parent.name()) }">...</a> /
-                        </span>
-                        <span data-bind="text: selected().name()"></span>
-                        <i class="fa fa-plus " title="Add Folder" data-bind="click: selected().addFolder" id="createFolder"></i>
-
-                        |
-                        <span data-bind="text: selected().children().length"></span> items
-
-                        <div class="spinner">
-                            <i data-bind="visible: processing()" class="fa fa-spinner fa-spin" title="Please wait"></i>
-                        </div>
-                    </h3>
+                <div id="operations" class="h3">
+                    <span data-bind="visible: selected().parent">
+                        <a href="#" data-bind="click: selected().selectParent, attr: { title: selected().parent && ('Up to ' + selected().parent.name()) }">...</a> /
+                    </span>
+                    <span data-bind="text: selected().name()"></span>
+                    <a href="#">
+                        <i class="glyphicon glyphicon-plus " title="Add Folder" id="createFolder"></i></a>
+                    |
+                    <span data-bind="text: selected().children().length"></span> items
+                    <a class="btn" href="#" data-bind="click: function() { root.selectNode() }">
+                        <i class="h4 glyphicon glyphicon-home" title="Home"></i>
+                    </a>
+                    <a class="btn" href="#" data-bind="click: function() { selectSpecialDir('LocalSiteRoot') }, visible: specialDirsIndex()['LocalSiteRoot']">
+                        <i class="h4 glyphicon glyphicon-globe" title="Site Root"></i>
+                    </a>
+                    <a class="btn" href="#" data-bind="click: function() { selectSpecialDir('SystemDrive') }">
+                        <i class="h4 glyphicon glyphicon-hdd" title="System Drive"></i>
+                    </a>
+                    <div class="spinner">
+                        <i data-bind="visible: processing()" class="fa fa-spinner fa-spin" title="Please wait"></i>
+                        <i data-bind="visible: errorText, attr: {title: errorText}" class="alert-warning glyphicon glyphicon-exclamation-sign"></i>
+                    </div>
                 </div>
                 <div class="table-container">
                     <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
@@ -43,24 +64,26 @@
                                 <td class="actions">
                                     <div data-bind="visible: !editing()">
                                         <a data-bind="attr: { href: url() }" target="_blank">
-                                            <i class="fa fa-download" title="Download"></i></a>
+                                            <i class="fa fa-download" title="Download"></i>
+                                        </a>
                                         <span data-bind="if: !isDirectory()">
                                             <a data-bind="click: editItem" href="#">
-                                                <i class="fa fa-pencil" title="Edit"></i></a>
+                                                <i class="glyphicon glyphicon-pencil" title="Edit"></i>
+                                            </a>
                                         </span>
                                         <a href="#" data-bind="click: deleteItem">
-                                            <i class="fa fa-minus-square" title="Delete"></i></a>
+                                            <i class="glyphicon glyphicon-minus-sign" title="Delete"></i>
+                                        </a>
                                     </div>
                                 </td>
                                 <td class="name">
                                     <span data-bind="if: isDirectory()">
-                                        <i class="fa fa-folder-o" title="Folder"></i>
-
+                                        <i class="glyphicon glyphicon-folder-open" title="Folder"></i>&nbsp;
                                         <a href="#" data-bind="click: selectNode, text: name, visible: !editing()" target="_blank"></a>
                                         <input type="text" data-bind="value: name, valueUpdate: 'afterKeyDown', visible: editing()" />
                                     </span>
                                     <span data-bind="if: !isDirectory()">
-                                        <i class="fa fa-file-o" title="File"></i>
+                                        <i class="glyphicon glyphicon-file" title="File"></i>
                                         <span data-bind="text: name"></span>
                                     </span>
 
@@ -74,8 +97,8 @@
             </div>
             <div id="resizeHandle">
                 <h4>
-                    <span class="down" title="Slide down">&#9660;</span>
-                    <span class="up" title="Slide up">&#9650;</span>
+                    <span class="down" title="Slide down"><i class="glyphicon glyphicon-chevron-down"></i></span>
+                    <span class="up" title="Slide up"><i class="glyphicon glyphicon-chevron-up"></i></span>
                 </h4>
             </div>
             <div id="KuduExecConsole" class="left-aligned"></div>

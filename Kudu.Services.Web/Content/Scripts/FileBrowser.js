@@ -1,6 +1,6 @@
 ﻿$(function () {
     var Vfs = {
-        getContent: function(item) {
+        getContent: function (item) {
             return $.ajax({
                 url: item.href,
                 dataType: "text"
@@ -40,7 +40,7 @@
 
         deleteItems: function (item) {
             var url = item.href;
-            
+
             if (item.mime === "inode/directory") {
                 url += "?recursive=true";
             }
@@ -65,14 +65,7 @@
         this._href = ko.observable(this.href);
         this.modifiedTime = ((data.mtime && new Date(data.mtime)) || new Date()).toLocaleString();
         this.url = ko.observable(this.isDirectory() ? data.href.replace(/\/vfs\//, "/zip/") : data.href);
-        this.appRelativePath = ko.computed(function () {
-            if (this._href() === '/vfs/') {
-                return "";
-            }
-            var path = this._href().replace(/.*\/vfs($|\/(.*)\/)/, "$2").replace(/\//g, "\\");
-            path.length--;
-            return path;
-        }, this);
+        this.path = ko.observable(data.path);
         this.children = ko.observableArray([]);
         this.editing = ko.observable(data.editing || false);
         this._fetchStatus;
@@ -89,11 +82,16 @@
                     viewModel.processing(false);
                     var children = that.children;
                     children.removeAll();
+
                     $.each(data, function () {
-                        children.push(new node(this, that));
+                        if (this.mime === "inode/shortcut") {
+                            viewModel.specialDirs.push(new node(this));
+                        } else {
+                            children.push(new node(this, that));
+                        }
                     });
                     that._fetchStatus = 2;
-                }).promise();
+                }).fail(showError).promise();
             } else {
                 return $.Deferred().resolve().promise();
             }
@@ -107,9 +105,8 @@
                     if (viewModel.selected() === this) {
                         viewModel.selected(this.parent);
                     }
-                }).always(function () {
                     viewModel.processing(false);
-                });
+                }).fail(showError);
             }
         }
         this.selectNode = function () {
@@ -155,9 +152,9 @@
             viewModel.editText("Fetching changes...");
             viewModel.fileEdit(this);
             Vfs.getContent(this)
-               .done(function(data) {
+               .done(function (data) {
                    viewModel.editText(data);
-               });
+               }).fail(showError);
         }
 
         this.saveItem = function () {
@@ -166,6 +163,9 @@
             Vfs.setContent(this, text)
                 .done(function () {
                     viewModel.fileEdit(null);
+                }).fail(function (error) {
+                    viewModel.fileEdit(null);
+                    showError(error);
                 });
         }
     }
@@ -175,7 +175,9 @@
         workingDirChanging = false,
         viewModel = {
             root: root,
-            selected: ko.observable(root), processing: ko.observable(false),
+            specialDirs: ko.observableArray([]),
+            selected: ko.observable(root),
+            processing: ko.observable(false),
             sort: function (array) {
                 return array.sort(function (a, b) {
                     var aDir = a.isDirectory(),
@@ -192,9 +194,29 @@
             editText: ko.observable(""),
             cancelEdit: function () {
                 viewModel.fileEdit(null);
-            }
-
+            },
+            selectSpecialDir: function (name) {
+                var item = viewModel.specialDirsIndex()[name];
+                if (item) {
+                    item.selectNode();
+                }
+            },
+            errorText: ko.observable()
         };
+
+    viewModel.specialDirsIndex = ko.dependentObservable(function () {
+        var result = {};
+        ko.utils.arrayForEach(viewModel.specialDirs(), function (value) {
+            result[value.name()] = value;
+        });
+        return result;
+    }, viewModel),
+
+    viewModel.processing.subscribe(function (newValue) {
+        if (newValue) {
+            viewModel.errorText("");
+        }
+    });
 
     root.fetchChildren();
     ko.applyBindings(viewModel, document.getElementById("#main"));
@@ -204,29 +226,34 @@
             ignoreWorkingDirChange = false;
             return;
         }
-        var appRoot = window.KuduExec.appRoot.toLowerCase();
-        if (newValue.length >= appRoot.length && newValue.toLowerCase().indexOf(appRoot) === 0) {
-            workingDirChanging = true;
-            var relativeDir = newValue.substring(appRoot.length).replace(/^(\/|\\)?(.*)(\/|\\)?$/g, '$2'),
-                deferred;
-            if (!relativeDir) {
-                deferred = viewModel.root.selectNode();
-            } else {
-                stashCurrentSelection(viewModel.selected());
-                deferred = viewModel.root.selectChild(relativeDir);
+
+        function getRelativePath(parent, childDir) {
+            var parentPath = (parent.path() || window.KuduExec.appRoot).toLowerCase();
+            if (childDir.length >= parentPath.length && childDir.toLowerCase().indexOf(parentPath) === 0) {
+                return { parent: parent, relativePath: childDir.substring(parentPath.length).replace(/^(\/|\\)?(.*)(\/|\\)?$/g, "$2") };
             }
-            deferred.done(function () {
-                workingDirChanging = false;
-            });
         }
+            
+        workingDirChanging = true;
+        var relativeDir = getRelativePath(viewModel.root, newValue) || getRelativePath(viewModel.specialDirsIndex()["SystemDrive"], newValue),
+            deferred;
+
+        if (!relativeDir || !relativeDir.relativePath) {
+            deferred = ((relativeDir && relativeDir.parent) || viewModel.root).selectNode();
+        } else {
+            stashCurrentSelection(viewModel.selected());
+            deferred = relativeDir.parent.selectChild(relativeDir.relativePath);
+        }
+        deferred.done(function () {
+            workingDirChanging = false;
+        });
     });
 
     viewModel.selected.subscribe(function (newValue) {
         if (!workingDirChanging) {
-            var path = window.KuduExec.appRoot + '\\' + newValue.appRelativePath();
             // Mark it so that no-op the subscribe callback.
             ignoreWorkingDirChange = true;
-            window.KuduExec.changeDir(path);
+            window.KuduExec.changeDir(newValue.path());
 
             newValue.fetchChildren(/* force */ true);
         }
@@ -235,11 +262,11 @@
     window.KuduExec.completePath = function (value, dirOnly) {
         var subDirs = value.toLowerCase().split(/\/|\\/),
             cur = viewModel.selected(),
-            curToken = '';
+            curToken = "";
 
         while (subDirs.length && cur) {
             curToken = subDirs.shift();
-            if (curToken === '..' && cur && cur.parent) {
+            if (curToken === ".." && cur && cur.parent) {
                 cur = cur.parent;
                 continue;
             }
@@ -259,7 +286,7 @@
 
             if (cur && cur.length === 1 && subDirs.length) {
                 // If there's more path to traverse and we have exactly one match, return
-                cur = cur[0];                
+                cur = cur[0];
             }
         }
         if (cur) {
@@ -269,14 +296,19 @@
 
     function stashCurrentSelection(selected) {
         if (window.history && window.history.pushState) {
-            window.history.pushState(selected.appRelativePath(), selected.name());
+            window.history.pushState(selected.path(), selected.name());
         }
     }
 
     window.onpopstate = function (evt) {
-        var selected = viewModel.selected();
-        if (selected.parent) {
-            viewModel.selected(selected.parent);
+        if (viewModel.fileEdit()) {
+            // If we're editing, exit the editing.
+            viewModel.fileEdit(null);
+        } else {
+            var selected = viewModel.selected();
+            if (selected.parent) {
+                viewModel.selected(selected.parent);
+            }
         }
     };
 
@@ -290,14 +322,16 @@
         }
     });
 
-    $("#createFolder").click(function () {
+    $("#createFolder").click(function (evt) {
+        evt.preventDefault();
+
         var newFolder = new node({ name: "", type: "dir", href: "", editing: true }, viewModel.selected());
         $(this).prop("disabled", true);
         viewModel.selected().children.unshift(newFolder);
         $("#fileList input[type='text']").focus();
 
         newFolder.name.subscribe(function (value) {
-            newFolder.href = trimTrailingSlash(newFolder.parent.href) + '/' + value + '/';
+            newFolder.href = trimTrailingSlash(newFolder.parent.href) + "/" + value + "/";
             newFolder._href(newFolder.href);
             newFolder.editing(false);
             Vfs.createFolder(newFolder).fail(function () {
@@ -308,12 +342,12 @@
     });
 
     // Drag and drop
-    $('#fileList')
-      .on('dragenter dragover', function (e) {
+    $("#fileList")
+      .on("dragenter dragover", function (e) {
           e.preventDefault();
           e.stopPropagation();
       })
-      .on('drop', function (evt) {
+      .on("drop", function (evt) {
           evt.preventDefault();
           evt.stopPropagation();
 
@@ -409,5 +443,10 @@
 
     function trimTrailingSlash(input) {
         return input.replace(/(\/|\\)$/, '');
+    }
+
+    function showError(error) {
+        viewModel.processing(false);
+        viewModel.errorText(JSON.parse(error.responseText).Message);
     }
 });

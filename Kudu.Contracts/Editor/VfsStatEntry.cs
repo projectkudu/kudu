@@ -24,5 +24,8 @@ namespace Kudu.Contracts.Editor
 
         [DataMember(Name = "href")]
         public string Href { get; set; }
+
+        [DataMember(Name = "path")]
+        public string Path { get; set; }
     }
 }
