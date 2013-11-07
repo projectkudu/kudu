@@ -69,23 +69,23 @@ namespace Kudu.Services.Performance
                                 // excluding FREB as it contains user sensitive data such as authorization header
                                 if (!info.Name.StartsWith("W3SVC", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    zip.AddDirectory(directoryInfo, Path.Combine(dir.Name, info.Name));
+                                    zip.AddDirectory(directoryInfo, _tracer, Path.Combine(dir.Name, info.Name));
                                 }
                             }
                             else
                             {
-                                zip.AddFile((FileInfo)info, dir.Name);
+                                zip.AddFile((FileInfo)info, _tracer, dir.Name);
                             }
                         }
                     }
                     else
                     {
-                        zip.AddDirectory(dir, Path.GetFileName(path));
+                        zip.AddDirectory(dir, _tracer, Path.GetFileName(path));
                     }
                 }
                 else if (File.Exists(path))
                 {
-                    zip.AddFile(path, String.Empty);
+                    zip.AddFile(path, _tracer, String.Empty);
                 }
             }
         }

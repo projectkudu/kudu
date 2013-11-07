@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.IO.Compression;
 using System.Text;
+using Kudu.Contracts.Tracing;
 using Moq;
 using Xunit;
 using Xunit.Extensions;
@@ -22,7 +24,7 @@ namespace Kudu.Services.Test
             var fileInfo = CreateFile(fileName, content);
 
             // Act
-            zip.AddFile(fileInfo, "");
+            zip.AddFile(fileInfo, Mock.Of<ITracer>(), "");
 
 
             // Assert
@@ -53,7 +55,7 @@ namespace Kudu.Services.Test
             directoryInfo.Setup(f => f.GetFileSystemInfos()).Returns(new FileSystemInfoBase[] { subDir.Object, CreateFile("zero-length-file", ""), CreateFile("log.txt", "log content") });
 
             // Act
-            zip.AddDirectory(directoryInfo.Object, "");
+            zip.AddDirectory(directoryInfo.Object, Mock.Of<ITracer>(), "");
 
             // Assert
             zip.Dispose();
@@ -64,6 +66,40 @@ namespace Kudu.Services.Test
             AssertZipEntry(zip, @"site\site.css", "some css");
             AssertZipEntry(zip, @"site\empty-dir\", null);
             AssertZipEntry(zip, @"zero-length-file", null);
+        }
+
+        [Fact]
+        public void AddFileInUseTests()
+        {
+            // Arrange
+            var fileName = @"x:\test\temp.txt";
+            var exception = new IOException("file in use");
+            var stream = new MemoryStream();
+            var zip = new ZipArchive(stream, ZipArchiveMode.Create);
+            var tracer = new Mock<ITracer>();
+            var file = new Mock<FileInfoBase>();
+
+            // setup
+            file.Setup(f => f.OpenRead())
+                .Throws(exception);
+            file.SetupGet(f => f.FullName)
+                .Returns(fileName);
+            tracer.Setup(t => t.Trace(It.IsAny<string>(), It.IsAny<IDictionary<string, string>>()))
+                  .Callback((string message, IDictionary<string, string> attributes) =>
+                  {
+                      Assert.Contains("error", attributes["type"]);
+                      Assert.Contains(fileName, attributes["text"]);
+                      Assert.Contains("file in use", attributes["text"]);
+                  });
+
+            // Act
+            zip.AddFile(file.Object, tracer.Object, String.Empty);
+            zip.Dispose();
+
+            // Assert
+            tracer.Verify(t => t.Trace(It.IsAny<string>(), It.IsAny<IDictionary<string, string>>()), Times.Once());
+            zip = new ZipArchive(ReOpen(stream));
+            Assert.Equal(0, zip.Entries.Count);
         }
 
         private static void AssertZipEntry(ZipArchive archive, string fileName, string content)

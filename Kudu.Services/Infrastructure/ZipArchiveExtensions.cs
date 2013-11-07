@@ -2,19 +2,20 @@
 using System.IO;
 using System.IO.Abstractions;
 using System.IO.Compression;
+using Kudu.Contracts.Tracing;
 using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services
 {
     public static class ZipArchiveExtensions
     {
-        public static void AddDirectory(this ZipArchive zipArchive, string directoryPath, string directoryNameInArchive = "")
+        public static void AddDirectory(this ZipArchive zipArchive, string directoryPath, ITracer tracer, string directoryNameInArchive = "")
         {
             var directoryInfo = new DirectoryInfoWrapper(new DirectoryInfo(directoryPath));
-            zipArchive.AddDirectory(directoryInfo, directoryNameInArchive);
+            zipArchive.AddDirectory(directoryInfo, tracer, directoryNameInArchive);
         }
 
-        public static void AddDirectory(this ZipArchive zipArchive, DirectoryInfoBase directory, string directoryNameInArchive)
+        public static void AddDirectory(this ZipArchive zipArchive, DirectoryInfoBase directory, ITracer tracer, string directoryNameInArchive)
         {
             bool any = false;
             foreach (var info in directory.GetFileSystemInfos())
@@ -24,11 +25,11 @@ namespace Kudu.Services
                 if (subDirectoryInfo != null)
                 {
                     string childName = Path.Combine(directoryNameInArchive, subDirectoryInfo.Name);
-                    zipArchive.AddDirectory(subDirectoryInfo, childName);
+                    zipArchive.AddDirectory(subDirectoryInfo, tracer, childName);
                 }
                 else
                 {
-                    zipArchive.AddFile((FileInfoBase)info, directoryNameInArchive);
+                    zipArchive.AddFile((FileInfoBase)info, tracer, directoryNameInArchive);
                 }
             }
 
@@ -39,20 +40,40 @@ namespace Kudu.Services
             }
         }
 
-        public static void AddFile(this ZipArchive zipArchive, string filePath, string directoryNameInArchive = "")
+        public static void AddFile(this ZipArchive zipArchive, string filePath, ITracer tracer, string directoryNameInArchive = "")
         {
             var fileInfo = new FileInfoWrapper(new FileInfo(filePath));
-            zipArchive.AddFile(fileInfo, directoryNameInArchive);
+            zipArchive.AddFile(fileInfo, tracer, directoryNameInArchive);
         }
 
-        public static void AddFile(this ZipArchive zipArchive, FileInfoBase file, string directoryNameInArchive)
+        public static void AddFile(this ZipArchive zipArchive, FileInfoBase file, ITracer tracer, string directoryNameInArchive)
         {
-            string fileName = Path.Combine(directoryNameInArchive, file.Name);
-            ZipArchiveEntry entry = zipArchive.CreateEntry(fileName, CompressionLevel.Fastest);
-            using (Stream zipStream = entry.Open(),
-                          fileStream = file.OpenRead())
+            Stream fileStream = null;
+            try
             {
-                fileStream.CopyTo(zipStream);
+                fileStream = file.OpenRead();
+            }
+            catch (Exception ex)
+            {
+                // tolerate if file in use.  
+                // for simplicity, any exception.
+                tracer.TraceError(String.Format("{0}, {1}", file.FullName, ex));
+                return;
+            }
+
+            try
+            {
+                string fileName = Path.Combine(directoryNameInArchive, file.Name);
+                ZipArchiveEntry entry = zipArchive.CreateEntry(fileName, CompressionLevel.Fastest);
+
+                using (Stream zipStream = entry.Open())
+                {
+                    fileStream.CopyTo(zipStream);
+                }
+            }
+            finally
+            {
+                fileStream.Dispose();
             }
         }
 

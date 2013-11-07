@@ -218,7 +218,7 @@ namespace Kudu.Services.Test
             scenario.Setup(fileBase, directoryBase, webroot);
 
             // Act
-            bool result = controller.IsDefaultWebRootContent(webroot);
+            bool result = DeploymentHelper.IsDefaultWebRootContent(webroot, fileSystem.Object);
 
             // Assert
             scenario.Verify(result);

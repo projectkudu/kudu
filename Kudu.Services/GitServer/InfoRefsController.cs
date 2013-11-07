@@ -32,6 +32,7 @@ using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
+using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Services.Infrastructure;
@@ -167,7 +168,7 @@ namespace Kudu.Services.GitServer
 
                 var env = GetInstance<IEnvironment>();
                 // it is default webroot content, do nothing
-                if (IsDefaultWebRootContent(env.WebRootPath))
+                if (DeploymentHelper.IsDefaultWebRootContent(env.WebRootPath, GetInstance<IFileSystem>()))
                 {
                     return;
                 }
@@ -191,31 +192,6 @@ namespace Kudu.Services.GitServer
                 settings.SetValue(SettingsKeys.RepositoryPath, Constants.WebRoot);
 
             }, GitExeServer.InitTimeout);
-        }
-
-        public bool IsDefaultWebRootContent(string webroot)
-        {
-            var fileSystem = GetInstance<IFileSystem>();
-            if (!fileSystem.Directory.Exists(webroot))
-            {
-                // degenerated
-                return true;
-            }
-
-            var entries = fileSystem.Directory.GetFileSystemEntries(webroot);
-            if (entries.Length == 0)
-            {
-                // degenerated
-                return true;
-            }
-
-            if (entries.Length == 1 && fileSystem.File.Exists(entries[0]))
-            {
-                string hoststarthtml = Path.Combine(webroot, Constants.HostingStartHtml);
-                return String.Equals(entries[0], hoststarthtml, StringComparison.OrdinalIgnoreCase);
-            }
-
-            return false;
         }
     }
 }
