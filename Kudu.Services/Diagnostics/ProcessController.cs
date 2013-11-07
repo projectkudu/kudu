@@ -175,7 +175,7 @@ namespace Kudu.Services.Performance
                     {
                         try
                         {
-                            zip.AddFile(dumpFile, String.Empty);
+                            zip.AddFile(dumpFile, _tracer, String.Empty);
                         }
                         finally
                         {
@@ -187,7 +187,7 @@ namespace Kudu.Services.Performance
                             string filePath = Path.Combine(ProcessExtensions.ClrRuntimeDirectory, fileName);
                             if (_fileSystem.File.Exists(filePath))
                             {
-                                zip.AddFile(filePath, String.Empty);
+                                zip.AddFile(filePath, _tracer, String.Empty);
                             }
                         }
                     });
@@ -238,7 +238,7 @@ namespace Kudu.Services.Performance
                     {
                         try
                         {
-                            zip.AddFile(dumpFile, String.Empty);
+                            zip.AddFile(dumpFile, _tracer, String.Empty);
                         }
                         finally
                         {

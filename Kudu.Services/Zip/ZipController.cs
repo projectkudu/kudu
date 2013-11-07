@@ -30,12 +30,12 @@ namespace Kudu.Services.Deployment
                     var directoryInfo = fileSysInfo as DirectoryInfoBase;
                     if (directoryInfo != null)
                     {
-                        zip.AddDirectory(directoryInfo, fileSysInfo.Name);
+                        zip.AddDirectory(directoryInfo, Tracer, fileSysInfo.Name);
                     }
                     else
                     {
                         // Add it at the root of the zip
-                        zip.AddFile(fileSysInfo.FullName, String.Empty);
+                        zip.AddFile(fileSysInfo.FullName, Tracer, String.Empty);
                     }
                 }
             });

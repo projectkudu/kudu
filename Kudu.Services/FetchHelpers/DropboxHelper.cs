@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.IO.Abstractions;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -13,6 +14,7 @@ using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -42,6 +44,7 @@ namespace Kudu.Services
         private readonly IDeploymentStatusManager _status;
         private readonly IDeploymentSettingsManager _settings;
         private readonly IEnvironment _environment;
+        private readonly IFileSystem _fileSystem;
         private readonly TimeSpan _timeout;
 
         // stats
@@ -60,6 +63,7 @@ namespace Kudu.Services
             _status = status;
             _settings = settings;
             _environment = environment;
+            _fileSystem = new FileSystem();
             _timeout = settings.GetCommandIdleTimeout();
         }
 
@@ -128,6 +132,15 @@ namespace Kudu.Services
             if (_settings.GetValue(CursorKey) != deployInfo.OldCursor)
             {
                 throw new InvalidOperationException(Resources.Error_MismatchDropboxCursor);
+            }
+
+            // initial sync, remove default content
+            // for simplicity, we do it blindly whether or not in-place
+            // given the end result is the same
+            if (String.IsNullOrEmpty(deployInfo.OldCursor) && DeploymentHelper.IsDefaultWebRootContent(_environment.WebRootPath, _fileSystem))
+            {
+                string hoststarthtml = Path.Combine(_environment.WebRootPath, Constants.HostingStartHtml);
+                FileSystemHelpers.DeleteFileSafe(_fileSystem, hoststarthtml);
             }
 
             if (!repository.IsEmpty())
