@@ -162,6 +162,10 @@
             <td><strong>Web hooks</strong></td>
             <td><a href="hooks">Browse</a></td>
         </tr>
+        <tr>
+            <td><strong>Available Node versions</strong></td>
+            <td><a href="diagnostics/runtime">Browse</a></td>
+        </tr>
     </table>
 </body>
 </html>
