@@ -347,6 +347,9 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("publish-hooks", "hooks/publish/{hookEventType}", new { controller = "WebHooks", action = "PublishEvent" }, new { verb = new HttpMethodConstraint("POST") });
             routes.MapHttpRoute("get-hooks", "hooks", new { controller = "WebHooks", action = "GetWebHooks" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("subscribe-hook", "hooks", new { controller = "WebHooks", action = "Subscribe" }, new { verb = new HttpMethodConstraint("POST") });
+
+            // IISPipeline
+            routes.MapHttpRoute("iis-pipeline", "diagnostics/iispipeline", new { controller = "IISPipeline", action = "GetIISPipelineInfo" }, new { verb = new HttpMethodConstraint("GET") });
         }
 
         // Perform migration tasks to deal with legacy sites that had different file layout

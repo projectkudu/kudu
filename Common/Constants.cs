@@ -41,6 +41,10 @@ namespace Kudu
 
         public const string HostingStartHtml = "hostingstart.html";
 
+        public const string TotalRequestCountHeader = "HTTP_X_TOTAL_REQUESTS_COUNT";
+        public const string ActiveRequestsCountHeader = "HTTP_X_ACTIVE_REQUESTS_COUNT";
+        public const string ListActiveRequestsHeader = "HTTP_X_LIST_ACTIVE_REQUESTS";
+
         private static readonly TimeSpan _maxAllowedExectionTime = TimeSpan.FromMinutes(30);
 
         public static TimeSpan MaxAllowedExecutionTime
