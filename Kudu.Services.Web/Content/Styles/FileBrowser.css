@@ -1,13 +1,12 @@
-﻿html,body{
-  height: 100%;
-  margin: 0;
-  padding: 0;
+﻿html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
 }
 
 #main {
     min-height: 900px;
     height: 95%;
-
 }
 
     #main > .view {
@@ -17,6 +16,7 @@
 
 #KuduExecConsole {
     height: 45%;
+    width: 100%;
 }
 
 div.spinner {
@@ -26,48 +26,55 @@ div.spinner {
 #fileList {
     height: 40%;
     width: 95%;
-    overflow: auto;
 }
+
+    #fileList > div.table-container {
+        height: 90%;
+        overflow-y: auto;
+        width: 100%;
+    }
 
 div.console {
     font-family: 'Lucida Console', Consolas, 'Courier New', monospace;
-    white-space: pre;
     height: 100%;
     margin: auto;
+    white-space: pre;
+    width: 100%;
 }
 
     div.console div.jquery-console-inner {
         background-color: #012456;
-        padding: 0.3em;
-        overflow: auto;
+        color: white;
+        height: 100%;
         margin-left: auto;
         margin-right: auto;
-        width: 90%;
-        height: 100%;
+        overflow: auto;
+        padding: 0.3em;
+        width: 100%;
+    }
+
+    div.console div.jquery-console-focus span.jquery-console-cursor {
+        background: white;
+        color: black;
+    }
+
+    div.console div.jquery-console-message-error {
+        color: red;
+    }
+
+    div.console div.jquery-console-message-value {
         color: white;
     }
 
-div.console div.jquery-console-focus span.jquery-console-cursor {
-    background: white;
-    color: black;
-}
-
-div.console div.jquery-console-message-error {
-    color: red;
-}
-
-div.console div.jquery-console-message-value {
-    color: white;
-}
-
-div.console div.jquery-console-message-type {
-    color: white;
-}
+    div.console div.jquery-console-message-type {
+        color: white;
+    }
 
 .edit-view {
     width: 100%;
     height: 100%;
 }
+
     .edit-view .edit-bar {
         width: 100%;
         border-bottom: 1px solid #ccc;
@@ -75,9 +82,9 @@ div.console div.jquery-console-message-type {
 
     .edit-view, .edit-view .edit-area {
         width: 100%;
-        height:100%;
+        height: 100%;
         min-height: 800px;
-        min-width: 1024px;        
+        min-width: 1024px;
     }
 
 footer {
