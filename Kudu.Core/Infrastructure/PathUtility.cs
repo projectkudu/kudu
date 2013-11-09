@@ -7,6 +7,7 @@ namespace Kudu.Core.Infrastructure
     internal static class PathUtility
     {
         private const string ProgramFiles64bitKey = "ProgramW6432";
+
         /// <summary>
         /// The version of Node.exe that we'd use for running KuduScript and selectNodeVersion.js
         /// </summary>
@@ -16,7 +17,6 @@ namespace Kudu.Core.Infrastructure
         /// Maps to the version of NPM that shipped with the DefaultNodeVersion
         /// </summary>
         private const string DefaultNpmVersion = "1.2.18";
-
 
         internal static string ResolveGitPath()
         {
@@ -63,12 +63,25 @@ namespace Kudu.Core.Infrastructure
             return path;
         }
 
+        internal static string ResolveBashPath()
+        {
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            string path = Path.Combine(programFiles, "Git", "bin", "bash.exe");
+
+            if (!File.Exists(path))
+            {
+                throw new InvalidOperationException(Resources.Error_FailedToLocateSsh);
+            }
+
+            return path;
+        }
+
         internal static string ResolveNpmJsPath()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             string npmCliPath = Path.Combine("node_modules", "npm", "bin", "npm-cli.js");
 
-            // 1. Attempt to look for the file under the S24 updated path that looks like 
+            // 1. Attempt to look for the file under the S24 updated path that looks like
             // "C:\Program Files (x86)\npm\1.3.8\node_modules\npm\bin\npm-cli.js"
             string npmPath = Path.Combine(programFiles, "npm", DefaultNpmVersion, npmCliPath);
             if (File.Exists(npmPath))

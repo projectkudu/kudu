@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -15,15 +16,17 @@ namespace Kudu.Core.Infrastructure
             return GetEnvironmentVariablesCore(process.Handle);
         }
 
-        public static StringDictionary TryGetEnvironmentVariables(Process process)
+        public static bool TryGetEnvironmentVariables(Process process, out StringDictionary environmentVariables)
         {
             try
             {
-                return GetEnvironmentVariables(process);
+                environmentVariables = GetEnvironmentVariables(process);
+                return true;
             }
             catch
             {
-                return null;
+                environmentVariables = null;
+                return false;
             }
         }
 
@@ -34,7 +37,7 @@ namespace Kudu.Core.Infrastructure
             int dataSize;
             if (!HasReadAccess(hProcess, penv, out dataSize))
             {
-                throw new InvalidOperationException("Unable to read environment block.");
+                throw new Win32Exception("Unable to read environment block.");
             }
 
             const int maxEnvSize = 32767;
@@ -54,7 +57,7 @@ namespace Kudu.Core.Infrastructure
 
             if (!b || (int)res_len != dataSize)
             {
-                throw new InvalidOperationException("Unable to read environment block data.");
+                throw new Win32Exception("Unable to read environment block data.");
             }
 
             return EnvToDictionary(envData);
@@ -197,7 +200,7 @@ namespace Kudu.Core.Infrastructure
             {
                 if (!System.Environment.Is64BitProcess)
                 {
-                    throw new InvalidOperationException(
+                    throw new Win32Exception(
                         "The current process should run in 64 bit mode to be able to get the environment of another 64 bit process.");
                 }
 
@@ -206,13 +209,13 @@ namespace Kudu.Core.Infrastructure
                 IntPtr ptr;
                 if (!TryReadIntPtr(hProcess, pPeb + 0x20, out ptr))
                 {
-                    throw new InvalidOperationException("Unable to read PEB.");
+                    throw new Win32Exception("Unable to read PEB.");
                 }
 
                 IntPtr penv;
                 if (!TryReadIntPtr(hProcess, ptr + 0x80, out penv))
                 {
-                    throw new InvalidOperationException("Unable to read RTL_USER_PROCESS_PARAMETERS.");
+                    throw new Win32Exception("Unable to read RTL_USER_PROCESS_PARAMETERS.");
                 }
 
                 return penv;
@@ -224,13 +227,13 @@ namespace Kudu.Core.Infrastructure
                 IntPtr ptr;
                 if (!TryReadIntPtr32(hProcess, pPeb + 0x10, out ptr))
                 {
-                    throw new InvalidOperationException("Unable to read PEB.");
+                    throw new Win32Exception("Unable to read PEB.");
                 }
 
                 IntPtr penv;
                 if (!TryReadIntPtr32(hProcess, ptr + 0x48, out penv))
                 {
-                    throw new InvalidOperationException("Unable to read RTL_USER_PROCESS_PARAMETERS.");
+                    throw new Win32Exception("Unable to read RTL_USER_PROCESS_PARAMETERS.");
                 }
 
                 return penv;
@@ -275,7 +278,7 @@ namespace Kudu.Core.Infrastructure
 
                 if (res_len != pbiSize)
                 {
-                    throw new InvalidOperationException("Unable to query process information.");
+                    throw new Win32Exception("Unable to query process information.");
                 }
 
                 return ptr;
@@ -300,7 +303,7 @@ namespace Kudu.Core.Infrastructure
 
             if (res_len != pbiSize)
             {
-                throw new InvalidOperationException("Unable to query process information.");
+                throw new Win32Exception("Unable to query process information.");
             }
 
             return pbi.PebBaseAddress;
@@ -356,8 +359,10 @@ namespace Kudu.Core.Infrastructure
             {
                 public IntPtr Reserved1;
                 public IntPtr PebBaseAddress;
+
                 [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
                 public IntPtr[] Reserved2;
+
                 public IntPtr UniqueProcessId;
                 public IntPtr Reserved3;
             }

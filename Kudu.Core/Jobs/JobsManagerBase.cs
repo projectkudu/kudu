@@ -173,7 +173,7 @@ namespace Kudu.Core.Jobs
                     if (supportedFiles.Any())
                     {
                         var scriptFound =
-                            supportedFiles.FirstOrDefault(f => String.Equals(f.Name, DefaultScriptFileName, StringComparison.OrdinalIgnoreCase));
+                            supportedFiles.FirstOrDefault(f => String.Equals(f.Name, DefaultScriptFileName + supportedExtension, StringComparison.OrdinalIgnoreCase));
 
                         if (scriptFound != null)
                         {

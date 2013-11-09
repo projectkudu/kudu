@@ -9,7 +9,7 @@ namespace Kudu.Contracts.Settings
     {
         public static readonly TimeSpan DefaultCommandIdleTimeout = TimeSpan.FromMinutes(1);
         public static readonly TimeSpan DefaultLogStreamTimeout = TimeSpan.FromMinutes(30);
-        public static readonly TimeSpan DefaultTimeoutBetweenJobs = TimeSpan.FromMinutes(1);
+        public static readonly TimeSpan DefaultJobsInterval = TimeSpan.FromMinutes(1);
         public static readonly TimeSpan DefaultJobsIdleTimeout = TimeSpan.FromMinutes(5);
 
         public const TraceLevel DefaultTraceLevel = TraceLevel.Error;
@@ -56,14 +56,7 @@ namespace Kudu.Contracts.Settings
 
         public static TimeSpan GetLogStreamTimeout(this IDeploymentSettingsManager settings)
         {
-            string value = settings.GetValue(SettingsKeys.LogStreamTimeout);
-            int seconds;
-            if (Int32.TryParse(value, out seconds))
-            {
-                return TimeSpan.FromSeconds(seconds >= 0 ? seconds : 0);
-            }
-
-            return DeploymentSettingsExtension.DefaultLogStreamTimeout;
+            return GetTimeSpan(settings, SettingsKeys.LogStreamTimeout, DefaultLogStreamTimeout);
         }
 
         public static string GetGitUsername(this IDeploymentSettingsManager settings)
@@ -78,28 +71,14 @@ namespace Kudu.Contracts.Settings
             return !String.IsNullOrEmpty(value) ? value : "unknown";
         }
 
-        public static TimeSpan GetTimeoutBetweenJobs(this IDeploymentSettingsManager settings)
+        public static TimeSpan GetJobsInterval(this IDeploymentSettingsManager settings)
         {
-            string value = settings.GetValue(SettingsKeys.TimeoutBetweenJobs);
-            int seconds;
-            if (Int32.TryParse(value, out seconds))
-            {
-                return seconds > 0 ? TimeSpan.FromSeconds(seconds) : DefaultTimeoutBetweenJobs;
-            }
-
-            return DefaultTimeoutBetweenJobs;
+            return GetTimeSpan(settings, SettingsKeys.JobsInterval, DefaultJobsInterval);
         }
 
         public static TimeSpan GetJobsIdleTimeout(this IDeploymentSettingsManager settings)
         {
-            string value = settings.GetValue(SettingsKeys.JobsIdleTimeoutInSeconds);
-            int seconds;
-            if (Int32.TryParse(value, out seconds))
-            {
-                return seconds > 0 ? TimeSpan.FromSeconds(seconds) : DefaultJobsIdleTimeout;
-            }
-
-            return DefaultJobsIdleTimeout;
+            return GetTimeSpan(settings, SettingsKeys.JobsIdleTimeoutInSeconds, DefaultJobsIdleTimeout);
         }
 
         public static string GetBranch(this IDeploymentSettingsManager settings)
@@ -121,7 +100,7 @@ namespace Kudu.Contracts.Settings
         }
 
         /// <summary>
-        /// Determines if Kudu should perform shallow clones (--depth 1) when attempting to perform the first fetch from a remote Git repository. 
+        /// Determines if Kudu should perform shallow clones (--depth 1) when attempting to perform the first fetch from a remote Git repository.
         /// </summary>
         public static bool AllowShallowClones(this IDeploymentSettingsManager settings)
         {
@@ -173,6 +152,18 @@ namespace Kudu.Contracts.Settings
             }
 
             return computeModeEnv + '|' + siteModeEnv;
+        }
+
+        private static TimeSpan GetTimeSpan(IDeploymentSettingsManager settings, string settingsKey, TimeSpan defaultValue)
+        {
+            string value = settings.GetValue(settingsKey);
+            int seconds;
+            if (Int32.TryParse(value, out seconds))
+            {
+                return TimeSpan.FromSeconds(seconds >= 0 ? seconds : 0);
+            }
+
+            return defaultValue;
         }
     }
 }

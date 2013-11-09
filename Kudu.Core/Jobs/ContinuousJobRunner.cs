@@ -17,7 +17,7 @@ namespace Kudu.Core.Jobs
         private Thread _continuousJobThread;
         private readonly ContinuousJobLogger _continuousJobLogger;
         private readonly string _disableFilePath;
-        private readonly TimeSpan _timeoutBetweenJobs;
+        private readonly TimeSpan _jobsInterval;
 
         public ContinuousJobRunner(string jobName, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings, ITraceFactory traceFactory)
             : base(jobName, Constants.ContinuousPath, environment, fileSystem, settings, traceFactory)
@@ -27,7 +27,7 @@ namespace Kudu.Core.Jobs
 
             _disableFilePath = Path.Combine(JobBinariesPath, "disable.job");
 
-            _timeoutBetweenJobs = settings.GetTimeoutBetweenJobs();
+            _jobsInterval = settings.GetJobsInterval();
         }
 
         protected override string JobEnvironmentKeyPrefix
@@ -61,9 +61,9 @@ namespace Kudu.Core.Jobs
 
                         if (_started == 1 && !IsDisabled)
                         {
-                            _continuousJobLogger.LogInformation("Process went down, waiting for {0} seconds".FormatInvariant(_timeoutBetweenJobs.TotalSeconds));
-                            _continuousJobLogger.ReportStatus(ContinuousJobStatus.Waiting);
-                            WaitForTimeOrStop(_timeoutBetweenJobs);
+                            _continuousJobLogger.LogInformation("Process went down, waiting for {0} seconds".FormatInvariant(_jobsInterval.TotalSeconds));
+                            _continuousJobLogger.ReportStatus(ContinuousJobStatus.PendingRestart);
+                            WaitForTimeOrStop(_jobsInterval);
                         }
                     }
                 }
@@ -101,7 +101,7 @@ namespace Kudu.Core.Jobs
 
         public void DisableJob()
         {
-            OperationManager.Attempt(() => FileSystem.File.WriteAllText(_disableFilePath, String.Empty));
+            OperationManager.Attempt(() => FileSystem.File.WriteAllBytes(_disableFilePath, new byte[0]));
             StopJob();
         }
 

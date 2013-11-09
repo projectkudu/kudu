@@ -12,6 +12,8 @@ namespace Kudu.Core.Jobs
 {
     public class ContinuousJobsManager : JobsManagerBase<ContinuousJob>, IContinuousJobsManager, IDisposable
     {
+        private const int TimeoutUntilMakingChanges = 5 * 1000;
+
         private readonly Dictionary<string, ContinuousJobRunner> _continuousJobRunners = new Dictionary<string, ContinuousJobRunner>(StringComparer.OrdinalIgnoreCase);
 
         private HashSet<string> _updatedJobs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -73,7 +75,8 @@ namespace Kudu.Core.Jobs
         protected override void UpdateJob(ContinuousJob job)
         {
             job.LogUrl = BuildVfsUrl("{0}/{1}".FormatInvariant(job.Name, "job.log"));
-            job.Status = GetStatus<ContinuousJobStatus>(Path.Combine(JobsDataPath, job.Name, "status")).Status;
+            job.Status = GetStatus<ContinuousJobStatus>(Path.Combine(JobsDataPath, job.Name, "status")).Status ??
+                            ContinuousJobStatus.Initializing.Status;
         }
 
         private void OnMakeChanges(object state)
@@ -84,7 +87,7 @@ namespace Kudu.Core.Jobs
             {
                 if (_makingChanges)
                 {
-                    _makeChangesTimer.Change(5000, Timeout.Infinite);
+                    _makeChangesTimer.Change(TimeoutUntilMakingChanges, Timeout.Infinite);
                 }
 
                 _makingChanges = true;
@@ -193,7 +196,7 @@ namespace Kudu.Core.Jobs
         private void MarkJobUpdated(string jobName)
         {
             _updatedJobs.Add(jobName);
-            _makeChangesTimer.Change(5000, Timeout.Infinite);
+            _makeChangesTimer.Change(TimeoutUntilMakingChanges, Timeout.Infinite);
         }
 
         public void Dispose()
@@ -204,11 +207,13 @@ namespace Kudu.Core.Jobs
 
         protected virtual void Dispose(bool disposing)
         {
+            // HACK: Next if statement should be removed once ninject wlll not dispose this class
             // Since ninject automatically calls dispose we currently disable it
             if (disposing)
             {
                 return;
             }
+            // End of code to be removed
 
             if (disposing)
             {

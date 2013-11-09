@@ -10,8 +10,8 @@
 
         void LogInformation(string message);
 
-        bool LogStandardOutput(string message);
+        void LogStandardOutput(string message);
 
-        bool LogStandardError(string message);
+        void LogStandardError(string message);
     }
 }

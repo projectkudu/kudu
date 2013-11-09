@@ -45,7 +45,7 @@ namespace Kudu.Core.Jobs
         {
             var triggeredJobStatus = ReadJobStatusFromFile<TriggeredJobStatus>(TraceFactory, FileSystem, GetStatusFilePath()) ?? new TriggeredJobStatus();
             triggeredJobStatus.EndTime = DateTime.UtcNow;
-            ReportStatus(triggeredJobStatus);
+            ReportStatus(triggeredJobStatus, logStatus: false);
         }
 
         public void ReportStatus(string status)
@@ -78,16 +78,14 @@ namespace Kudu.Core.Jobs
             Log(Level.Info, message, isSystem: true);
         }
 
-        public override bool LogStandardOutput(string message)
+        public override void LogStandardOutput(string message)
         {
             Log(Level.Info, message);
-            return true;
         }
 
-        public override bool LogStandardError(string message)
+        public override void LogStandardError(string message)
         {
             Log(Level.Err, message);
-            return true;
         }
 
         private void Log(Level level, string message, bool isSystem = false)

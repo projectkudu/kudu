@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -251,11 +252,24 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        public int ExecuteReturnExitCode(ITracer tracer, Func<string, bool> onWriteOutput, Func<string, bool> onWriteError, string arguments, params object[] args)
+        [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", Justification = "Functions are used")]
+        public int ExecuteReturnExitCode(ITracer tracer, Action<string> onWriteOutput, Action<string> onWriteError, string arguments, params object[] args)
         {
             try
             {
-                ExecuteInternal(tracer, onWriteOutput, onWriteError, null, arguments, args);
+                Func<string, bool> writeOutput = (message) =>
+                {
+                    onWriteOutput(message);
+                    return false;
+                };
+
+                Func<string, bool> writeError = (message) =>
+                {
+                    onWriteError(message);
+                    return false;
+                };
+
+                ExecuteInternal(tracer, writeOutput, writeError, null, arguments, args);
             }
             catch (CommandLineException ex)
             {
@@ -286,7 +300,7 @@ namespace Kudu.Core.Infrastructure
                     idleManager.UpdateActivity();
                     if (e.Data != null)
                     {
-                        if (onWriteOutput(e.Data) && encoding != null)
+                        if (onWriteOutput(e.Data))
                         {
                             outputBuffer.AppendLine(Encoding.UTF8.GetString(encoding.GetBytes(e.Data)));
                         }
@@ -298,7 +312,7 @@ namespace Kudu.Core.Infrastructure
                     idleManager.UpdateActivity();
                     if (e.Data != null)
                     {
-                        if (onWriteError(e.Data) && encoding != null)
+                        if (onWriteError(e.Data))
                         {
                             errorBuffer.AppendLine(Encoding.UTF8.GetString(encoding.GetBytes(e.Data)));
                         }

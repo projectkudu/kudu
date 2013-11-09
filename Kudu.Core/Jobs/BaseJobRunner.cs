@@ -16,8 +16,6 @@ namespace Kudu.Core.Jobs
 {
     public abstract class BaseJobRunner
     {
-        private static readonly NullLogger NullLogger = new NullLogger();
-
         private readonly ExternalCommandFactory _externalCommandFactory;
 
         protected BaseJobRunner(string jobName, string jobsTypePath, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings, ITraceFactory traceFactory)
@@ -154,7 +152,7 @@ namespace Kudu.Core.Jobs
 
             try
             {
-                var exe = _externalCommandFactory.BuildCommandExecutable(job.ScriptHost.HostPath, WorkingDirectory, IdleTimeout, NullLogger);
+                var exe = _externalCommandFactory.BuildCommandExecutable(job.ScriptHost.HostPath, WorkingDirectory, IdleTimeout, NullLogger.Instance);
 
                 // Set environment variable to be able to identify all processes spawned for this job
                 exe.EnvironmentVariables[GetJobEnvironmentKey()] = "true";
@@ -201,14 +199,14 @@ namespace Kudu.Core.Jobs
 
                 foreach (Process process in processes)
                 {
-                    StringDictionary processEnvironment = ProcessEnvironment.TryGetEnvironmentVariables(process);
-                    if (processEnvironment != null && processEnvironment.ContainsKey(GetJobEnvironmentKey()))
+                    StringDictionary processEnvironment;
+                    bool success = ProcessEnvironment.TryGetEnvironmentVariables(process, out processEnvironment);
+                    if (success && processEnvironment.ContainsKey(GetJobEnvironmentKey()))
                     {
                         try
                         {
                             process.Kill();
                         }
-
                         catch (Exception ex)
                         {
                             if (!process.HasExited)

@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+﻿using System;
 
 namespace Kudu.Core.Infrastructure
 {
@@ -27,14 +27,13 @@ namespace Kudu.Core.Infrastructure
             }
 
             string instanceId = System.Environment.GetEnvironmentVariable("WEBSITE_INSTANCE_ID");
-            if (string.IsNullOrEmpty(instanceId))
+            if (String.IsNullOrEmpty(instanceId))
             {
                 instanceId = System.Environment.MachineName;
             }
             _instanceId = instanceId;
 
-            Debug.Assert(_instanceId.Length >= 6);
-            _shortInstanceId = _instanceId.Substring(0, 6);
+            _shortInstanceId = _instanceId.Length > 6 ? _instanceId.Substring(0, 6) : _instanceId;
         }
     }
 }

@@ -44,9 +44,9 @@ namespace Kudu.Core.Jobs
 
         public abstract void LogInformation(string message);
 
-        public abstract bool LogStandardOutput(string message);
+        public abstract void LogStandardOutput(string message);
 
-        public abstract bool LogStandardError(string message);
+        public abstract void LogStandardError(string message);
 
         protected abstract string HistoryPath { get; }
 
@@ -62,11 +62,19 @@ namespace Kudu.Core.Jobs
 
         public void ReportStatus<TJobStatus>(TJobStatus status) where TJobStatus : class, IJobStatus
         {
+            ReportStatus(status, logStatus: true);
+        }
+
+        protected void ReportStatus<TJobStatus>(TJobStatus status, bool logStatus) where TJobStatus : class, IJobStatus
+        {
             try
             {
                 string content = JsonConvert.SerializeObject(status, JsonSerializerSettings);
                 SafeLogToFile(GetStatusFilePath(), content, isAppend: false);
-                LogInformation("Status changed to " + status.Status);
+                if (logStatus)
+                {
+                    LogInformation("Status changed to " + status.Status);
+                }
             }
             catch (Exception ex)
             {

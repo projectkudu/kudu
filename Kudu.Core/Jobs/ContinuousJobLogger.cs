@@ -40,16 +40,14 @@ namespace Kudu.Core.Jobs
             Log(Level.Info, message);
         }
 
-        public override bool LogStandardOutput(string message)
+        public override void LogStandardOutput(string message)
         {
             Trace.TraceInformation(message);
-            return true;
         }
 
-        public override bool LogStandardError(string message)
+        public override void LogStandardError(string message)
         {
             Trace.TraceError(message);
-            return true;
         }
 
         private void Log(Level level, string message)
