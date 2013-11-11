@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.IO.Abstractions;
-using Kudu.Contracts.Settings;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core
@@ -22,6 +21,9 @@ namespace Kudu.Core
         private readonly string _tracePath;
         private readonly string _analyticsPath;
         private readonly string _deploymentTracePath;
+        private readonly string _dataPath;
+        private readonly string _jobsDataPath;
+        private readonly string _jobsBinariesPath;
 
         // This ctor is used only in unit tests
         public Environment(
@@ -35,7 +37,8 @@ namespace Kudu.Core
                 string diagnosticsPath,
                 string sshKeyPath,
                 string scriptPath,
-                string nodeModulesPath)
+                string nodeModulesPath,
+                string dataPath)
         {
             if (fileSystem == null)
             {
@@ -58,6 +61,12 @@ namespace Kudu.Core
             _sshKeyPath = sshKeyPath;
             _scriptPath = scriptPath;
             _nodeModulesPath = nodeModulesPath;
+
+            _dataPath = dataPath;
+
+            _jobsDataPath = Path.Combine(_dataPath, Constants.JobsPath);
+            _jobsBinariesPath = _jobsDataPath;
+
             _logFilesPath = Path.Combine(rootPath, Constants.LogFilesPath);
             _tracePath = Path.Combine(rootPath, Constants.TracePath);
             _analyticsPath = Path.Combine(tempPath ?? _logFilesPath, Constants.SiteExtensionLogsDirectory);
@@ -88,6 +97,9 @@ namespace Kudu.Core
             _tracePath = Path.Combine(rootPath, Constants.TracePath);
             _analyticsPath = Path.Combine(_tempPath ?? _logFilesPath, Constants.SiteExtensionLogsDirectory);
             _deploymentTracePath = Path.Combine(rootPath, Constants.DeploymentTracePath);
+            _dataPath = Path.Combine(rootPath, Constants.DataPath);
+            _jobsDataPath = Path.Combine(_dataPath, Constants.JobsPath);
+            _jobsBinariesPath = Path.Combine(_webRootPath, Constants.AppDataPath, Constants.JobsPath);
         }
 
         public string RepositoryPath
@@ -209,6 +221,27 @@ namespace Kudu.Core
             {
                 return FileSystemHelpers.EnsureDirectory(_fileSystem, _deploymentTracePath);
             }
+        }
+
+        public string DataPath
+        {
+            get
+            {
+                return _dataPath;
+            }
+        }
+
+        public string JobsDataPath
+        {
+            get
+            {
+                return _jobsDataPath;
+            }
+        }
+
+        public string JobsBinariesPath
+        {
+            get { return _jobsBinariesPath; }
         }
     }
 }

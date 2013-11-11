@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -251,7 +252,39 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
+        [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", Justification = "Functions are used")]
+        public int ExecuteReturnExitCode(ITracer tracer, Action<string> onWriteOutput, Action<string> onWriteError, string arguments, params object[] args)
+        {
+            try
+            {
+                Func<string, bool> writeOutput = (message) =>
+                {
+                    onWriteOutput(message);
+                    return false;
+                };
+
+                Func<string, bool> writeError = (message) =>
+                {
+                    onWriteError(message);
+                    return false;
+                };
+
+                ExecuteInternal(tracer, writeOutput, writeError, null, arguments, args);
+            }
+            catch (CommandLineException ex)
+            {
+                return ex.ExitCode;
+            }
+
+            return 0;
+        }
+
         public Tuple<string, string> Execute(ITracer tracer, Func<string, bool> onWriteOutput, Func<string, bool> onWriteError, Encoding encoding, string arguments, params object[] args)
+        {
+            return ExecuteInternal(tracer, onWriteOutput, onWriteError, encoding, arguments, args);
+        }
+
+        private Tuple<string, string> ExecuteInternal(ITracer tracer, Func<string, bool> onWriteOutput, Func<string, bool> onWriteError, Encoding encoding, string arguments, params object[] args)
         {
             using (GetProcessStep(tracer, arguments, args))
             {

@@ -127,21 +127,12 @@ namespace Kudu.Core.Deployment.Generator
 
         private ISiteBuilder ResolveNonAspProject(string repositoryRoot, string projectPath, IDeploymentSettingsManager perDeploymentSettings)
         {
-            // Using WORKER_COMMAND you can explicitly set a command to run as a worker
-            string workerCommand = perDeploymentSettings.GetValue(SettingsKeys.WorkerCommand);
-
             if (IsNodeSite(projectPath ?? repositoryRoot))
             {
                 return new NodeSiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
             }
-            else if (!String.IsNullOrEmpty(workerCommand))
-            {
-                return new BasicConsoleBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
-            }
-            else
-            {
-                return new BasicBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
-            }
+
+            return new BasicBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
         }
 
         private static bool IsNodeSite(string projectPath)

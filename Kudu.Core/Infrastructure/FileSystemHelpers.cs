@@ -89,6 +89,48 @@ namespace Kudu.Core.Infrastructure
             return false;
         }
 
+        // From MSDN: http://msdn.microsoft.com/en-us/library/bb762914.aspx
+        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
+        internal static void CopyDirectoryRecursive(IFileSystem fileSystem, string sourceDirPath, string destinationDirPath, bool overwrite = true)
+        {
+            // Get the subdirectories for the specified directory.
+            var sourceDir = new DirectoryInfo(sourceDirPath);
+
+            if (!sourceDir.Exists)
+            {
+                throw new DirectoryNotFoundException(
+                    "Source directory does not exist or could not be found: "
+                    + sourceDirPath);
+            }
+
+            // If the destination directory doesn't exist, create it.
+            if (!fileSystem.Directory.Exists(destinationDirPath))
+            {
+                fileSystem.Directory.CreateDirectory(destinationDirPath);
+            }
+
+            // Get the files in the directory and copy them to the new location.
+            foreach (FileSystemInfo sourceFileSystemInfo in sourceDir.EnumerateFileSystemInfos())
+            {
+                var sourceFile = sourceFileSystemInfo as FileInfo;
+                if (sourceFile != null)
+                {
+                    string destinationFilePath = Path.Combine(destinationDirPath, sourceFile.Name);
+                    fileSystem.File.Copy(sourceFile.FullName, destinationFilePath, overwrite);
+                }
+                else
+                {
+                    var sourceSubDir = sourceFileSystemInfo as DirectoryInfo;
+                    if (sourceSubDir != null)
+                    {
+                        // Copy sub-directories and their contents to new location.
+                        string destinationSubDirPath = Path.Combine(destinationDirPath, sourceSubDir.Name);
+                        CopyDirectoryRecursive(fileSystem, sourceSubDir.FullName, destinationSubDirPath, overwrite);
+                    }
+                }
+            }
+        }
+
         private static void DeleteFileSystemInfo(FileSystemInfoBase fileSystemInfo, bool ignoreErrors)
         {
             if (!fileSystemInfo.Exists)

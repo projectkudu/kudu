@@ -1,0 +1,241 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.IO.Abstractions;
+using System.Threading;
+using Kudu.Contracts.Jobs;
+using Kudu.Contracts.Settings;
+using Kudu.Contracts.Tracing;
+using Kudu.Core.Tracing;
+
+namespace Kudu.Core.Jobs
+{
+    public class ContinuousJobsManager : JobsManagerBase<ContinuousJob>, IContinuousJobsManager, IDisposable
+    {
+        private const int TimeoutUntilMakingChanges = 5 * 1000;
+
+        private readonly Dictionary<string, ContinuousJobRunner> _continuousJobRunners = new Dictionary<string, ContinuousJobRunner>(StringComparer.OrdinalIgnoreCase);
+
+        private HashSet<string> _updatedJobs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        private readonly object _lockObject = new object();
+
+        private Timer _makeChangesTimer;
+        private Timer _startFileWatcherTimer;
+        private FileSystemWatcher _fileSystemWatcher;
+
+        private bool _makingChanges;
+
+        public ContinuousJobsManager(ITraceFactory traceFactory, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings)
+            : base(traceFactory, environment, fileSystem, settings, Constants.ContinuousPath)
+        {
+            _makeChangesTimer = new Timer(OnMakeChanges);
+            _startFileWatcherTimer = new Timer(StartWatcher);
+            _startFileWatcherTimer.Change(0, Timeout.Infinite);
+        }
+
+        public override IEnumerable<ContinuousJob> ListJobs()
+        {
+            return ListJobsInternal();
+        }
+
+        public override ContinuousJob GetJob(string jobName)
+        {
+            return GetJobInternal(jobName);
+        }
+
+        public void DisableJob(string jobName)
+        {
+            ContinuousJobRunner continuousJobRunner;
+            if (!_continuousJobRunners.TryGetValue(jobName, out continuousJobRunner))
+            {
+                throw new JobNotFoundException();
+            }
+
+            continuousJobRunner.DisableJob();
+        }
+
+        public void EnableJob(string jobName)
+        {
+            ContinuousJob continuousJob = GetJob(jobName);
+            if (continuousJob == null)
+            {
+                throw new JobNotFoundException();
+            }
+
+            ContinuousJobRunner continuousJobRunner;
+            if (!_continuousJobRunners.TryGetValue(continuousJob.Name, out continuousJobRunner))
+            {
+                throw new InvalidOperationException("Missing job runner for an existing job - " + jobName);
+            }
+
+            continuousJobRunner.EnableJob(continuousJob);
+        }
+
+        protected override void UpdateJob(ContinuousJob job)
+        {
+            job.LogUrl = BuildVfsUrl("{0}/{1}".FormatInvariant(job.Name, "job.log"));
+            job.Status = GetStatus<ContinuousJobStatus>(Path.Combine(JobsDataPath, job.Name, "status")).Status ??
+                            ContinuousJobStatus.Initializing.Status;
+        }
+
+        private void OnMakeChanges(object state)
+        {
+            HashSet<string> updatedJobs;
+
+            lock (_lockObject)
+            {
+                if (_makingChanges)
+                {
+                    _makeChangesTimer.Change(TimeoutUntilMakingChanges, Timeout.Infinite);
+                }
+
+                _makingChanges = true;
+
+                _makeChangesTimer.Change(Timeout.Infinite, Timeout.Infinite);
+
+                updatedJobs = _updatedJobs;
+                _updatedJobs = new HashSet<string>();
+            }
+
+            foreach (string updatedJobName in updatedJobs)
+            {
+                try
+                {
+                    ContinuousJob continuousJob = GetJob(updatedJobName);
+                    if (continuousJob == null)
+                    {
+                        RemoveJob(updatedJobName);
+                    }
+                    else
+                    {
+                        RefreshJob(continuousJob);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    TraceFactory.GetTracer().TraceError(ex);
+                }
+            }
+
+            _makingChanges = false;
+        }
+
+        private void RefreshJob(ContinuousJob continuousJob)
+        {
+            ContinuousJobRunner continuousJobRunner;
+            if (!_continuousJobRunners.TryGetValue(continuousJob.Name, out continuousJobRunner))
+            {
+                continuousJobRunner = new ContinuousJobRunner(continuousJob.Name, Environment, FileSystem, Settings, TraceFactory);
+                _continuousJobRunners.Add(continuousJob.Name, continuousJobRunner);
+            }
+
+            continuousJobRunner.RefreshJob(continuousJob);
+        }
+
+        private void RemoveJob(string updatedJobName)
+        {
+            ContinuousJobRunner continuousJobRunner;
+            if (!_continuousJobRunners.TryGetValue(updatedJobName, out continuousJobRunner))
+            {
+                return;
+            }
+
+            continuousJobRunner.StopJob();
+
+            _continuousJobRunners.Remove(updatedJobName);
+        }
+
+        private void StartWatcher(object state)
+        {
+            // Check if there is a directory we can listen on
+            if (!FileSystem.Directory.Exists(JobsBinariesPath))
+            {
+                // If not check again in 30 seconds
+                _startFileWatcherTimer.Change(30 * 1000, Timeout.Infinite);
+                return;
+            }
+
+            // Start file system watcher
+            _fileSystemWatcher = new FileSystemWatcher(JobsBinariesPath);
+            _fileSystemWatcher.Created += OnChanged;
+            _fileSystemWatcher.Changed += OnChanged;
+            _fileSystemWatcher.Deleted += OnChanged;
+            _fileSystemWatcher.Renamed += OnChanged;
+            _fileSystemWatcher.Error += OnError;
+            _fileSystemWatcher.IncludeSubdirectories = true;
+            _fileSystemWatcher.EnableRaisingEvents = true;
+
+            // Refresh all jobs
+            foreach (ContinuousJob continuousJob in ListJobs())
+            {
+                MarkJobUpdated(continuousJob.Name);
+            }
+        }
+
+        private void OnError(object sender, ErrorEventArgs e)
+        {
+            TraceFactory.GetTracer().TraceError(e.GetException().ToString());
+        }
+
+        private void OnChanged(object sender, FileSystemEventArgs e)
+        {
+            string path = e.FullPath;
+            if (path != null && path.Length > JobsBinariesPath.Length)
+            {
+                path = path.Substring(JobsBinariesPath.Length).TrimStart(Path.DirectorySeparatorChar);
+                int firstSeparator = path.IndexOf(Path.DirectorySeparatorChar);
+                if (firstSeparator > 0)
+                {
+                    string jobName = path.Substring(0, firstSeparator);
+                    MarkJobUpdated(jobName);
+                }
+            }
+        }
+
+        private void MarkJobUpdated(string jobName)
+        {
+            _updatedJobs.Add(jobName);
+            _makeChangesTimer.Change(TimeoutUntilMakingChanges, Timeout.Infinite);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            // HACK: Next if statement should be removed once ninject wlll not dispose this class
+            // Since ninject automatically calls dispose we currently disable it
+            if (disposing)
+            {
+                return;
+            }
+            // End of code to be removed
+
+            if (disposing)
+            {
+                if (_makeChangesTimer != null)
+                {
+                    _makeChangesTimer.Dispose();
+                    _makeChangesTimer = null;
+                }
+
+                if (_startFileWatcherTimer != null)
+                {
+                    _startFileWatcherTimer.Dispose();
+                    _startFileWatcherTimer = null;
+                }
+
+                if (_fileSystemWatcher != null)
+                {
+                    _fileSystemWatcher.Dispose();
+                    _fileSystemWatcher.EnableRaisingEvents = false;
+                    _fileSystemWatcher = null;
+                }
+            }
+        }
+    }
+}
