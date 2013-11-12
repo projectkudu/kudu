@@ -10,6 +10,8 @@ namespace Kudu.Core.Jobs
 {
     public abstract class JobLogger : IJobLogger
     {
+        public const string StatusFile = "status";
+
         private static readonly JsonSerializerSettings JsonSerializerSettings = new JsonSerializerSettings()
         {
             DefaultValueHandling = DefaultValueHandling.Ignore,
@@ -54,7 +56,7 @@ namespace Kudu.Core.Jobs
         {
             if (_statusFilePath == null)
             {
-                _statusFilePath = Path.Combine(HistoryPath, "status");
+                _statusFilePath = Path.Combine(HistoryPath, StatusFile);
             }
 
             return _statusFilePath;
@@ -86,6 +88,11 @@ namespace Kudu.Core.Jobs
         {
             try
             {
+                if (!fileSystem.File.Exists(statusFilePath))
+                {
+                    return null;
+                }
+
                 return OperationManager.Attempt(() =>
                 {
                     string content = fileSystem.File.ReadAllText(statusFilePath).Trim();

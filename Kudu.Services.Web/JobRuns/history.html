@@ -1,0 +1,73 @@
+﻿<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Job History</title>
+    <meta charset="utf-8" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.2/css/font-awesome.css" rel="stylesheet">
+    <script src="//ajax.aspnetcdn.com/ajax/jquery/jquery-1.9.1.min.js"></script>
+    <script type="text/javascript">
+        $(function () {
+
+            function getParameterByName(name) {
+                name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+                var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+                    results = regex.exec(location.search);
+                return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+            }
+
+            function getUrlLinkTd(url, description) {
+                if (url) {
+                    return "<td><a href='" + url + "'>" + description + "</a></td>";
+                }
+
+                return "<td></td>";
+            }
+
+            var jobName = getParameterByName('jobName');
+            $.getJSON('/jobs/triggered/' + jobName + '/history', function (data) {
+                console.log(data);
+                var tbl_body = "";
+                $.each(data.runs, function () {
+                    var tbl_row = "";
+                    tbl_row += "<td>" + this.id + "</td>";
+                    tbl_row += "<td>" + this.status + "</td>";
+                    tbl_row += "<td>" + this.start_time + "</td>";
+                    tbl_row += "<td>" + this.end_time + "</td>";
+                    tbl_row += "<td>" + this.duration + "</td>";
+                    tbl_row += getUrlLinkTd(this.output_url, "Output");
+                    tbl_row += getUrlLinkTd(this.error_url, "Error");
+                    tbl_body += "<tr>" + tbl_row + "</tr>";
+                });
+                $("#history_table tbody").html(tbl_body);
+            });
+        });
+    </script>
+</head>
+<body>
+    <table width="100%">
+        <tr>
+            <td align="center">
+                <table id="history_table" border="1" cellspacing="0" cellpadding="4">
+                    <thead>
+                        <tr>
+                            <td>ID</td>
+                            <td>Status</td>
+                            <td>Started At</td>
+                            <td>Ended At</td>
+                            <td>Duration</td>
+                            <td>Output File</td>
+                            <td>Error File</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="7" align="center">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

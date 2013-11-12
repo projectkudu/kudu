@@ -15,6 +15,8 @@ namespace Kudu.Core.Jobs
         private readonly ConcurrentDictionary<string, TriggeredJobRunner> _triggeredJobRunners =
             new ConcurrentDictionary<string, TriggeredJobRunner>(StringComparer.OrdinalIgnoreCase);
 
+        private string _extraInfoUrlPrefix;
+
         public TriggeredJobsManager(ITraceFactory traceFactory, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings)
             : base(traceFactory, environment, fileSystem, settings, Constants.TriggeredPath)
         {
@@ -70,6 +72,21 @@ namespace Kudu.Core.Jobs
             job.LatestRun = BuildLatestJobRun(job.Name);
         }
 
+        protected override Uri BuildDefaultExtraInfoUrl(string jobName)
+        {
+            if (_extraInfoUrlPrefix == null)
+            {
+                if (AppBaseUrlPrefix == null)
+                {
+                    return null;
+                }
+
+                _extraInfoUrlPrefix = AppBaseUrlPrefix + "/JobRuns/history.html";
+            }
+
+            return new Uri(_extraInfoUrlPrefix + "?jobName=" + jobName);
+        }
+
         private TriggeredJobRun BuildLatestJobRun(string jobName)
         {
             DirectoryInfoBase[] jobRunsDirectories = GetJobRunsDirectories(jobName);
@@ -104,7 +121,7 @@ namespace Kudu.Core.Jobs
 
             string runId = jobRunDirectory.Name;
             string triggeredJobRunPath = jobRunDirectory.FullName;
-            string statusFilePath = Path.Combine(triggeredJobRunPath, "status");
+            string statusFilePath = Path.Combine(triggeredJobRunPath, JobLogger.StatusFile);
 
             var triggeredJobStatus = GetStatus<TriggeredJobStatus>(statusFilePath);
 

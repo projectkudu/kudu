@@ -6,6 +6,7 @@ using System.Threading;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Jobs
@@ -74,9 +75,22 @@ namespace Kudu.Core.Jobs
 
         protected override void UpdateJob(ContinuousJob job)
         {
-            job.LogUrl = BuildVfsUrl("{0}/{1}".FormatInvariant(job.Name, "job.log"));
-            job.Status = GetStatus<ContinuousJobStatus>(Path.Combine(JobsDataPath, job.Name, "status")).Status ??
+            string jobsSpecificDataPath = Path.Combine(JobsDataPath, job.Name);
+            FileSystemHelpers.EnsureDirectory(FileSystem, jobsSpecificDataPath);
+
+            job.LogUrl = BuildLogUrl(job.Name);
+            job.Status = GetStatus<ContinuousJobStatus>(Path.Combine(jobsSpecificDataPath, JobLogger.StatusFile)).Status ??
                             ContinuousJobStatus.Initializing.Status;
+        }
+
+        protected override Uri BuildDefaultExtraInfoUrl(string jobName)
+        {
+            return BuildLogUrl(jobName);
+        }
+
+        private Uri BuildLogUrl(string jobName)
+        {
+            return BuildVfsUrl("{0}/{1}".FormatInvariant(jobName, "job.log"));
         }
 
         private void OnMakeChanges(object state)
@@ -163,6 +177,8 @@ namespace Kudu.Core.Jobs
             _fileSystemWatcher.Deleted += OnChanged;
             _fileSystemWatcher.Renamed += OnChanged;
             _fileSystemWatcher.Error += OnError;
+            _fileSystemWatcher.NotifyFilter = NotifyFilters.CreationTime | NotifyFilters.DirectoryName | NotifyFilters.FileName |
+                                              NotifyFilters.LastWrite;
             _fileSystemWatcher.IncludeSubdirectories = true;
             _fileSystemWatcher.EnableRaisingEvents = true;
 

@@ -114,6 +114,7 @@
     <Content Include="Content\Scripts\jquery-console\jquery.console.js" />
     <Content Include="Content\Scripts\KuduExec.js" />
     <Content Include="Content\Scripts\FileBrowser.js" />
+    <Content Include="JobRuns\history.html" />
     <Content Include="Web.config">
       <SubType>Designer</SubType>
     </Content>

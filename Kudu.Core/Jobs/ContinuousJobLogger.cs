@@ -16,13 +16,16 @@ namespace Kudu.Core.Jobs
         {
             _historyPath = Path.Combine(Environment.JobsDataPath, Constants.ContinuousPath, jobName);
             FileSystemHelpers.EnsureDirectory(_historyPath);
-
             _logFilePath = Path.Combine(_historyPath, "job.log");
         }
 
         protected override string HistoryPath
         {
-            get { return _historyPath; }
+            get
+            {
+                FileSystemHelpers.EnsureDirectory(_historyPath);
+                return _historyPath;
+            }
         }
 
         public override void LogError(string error)

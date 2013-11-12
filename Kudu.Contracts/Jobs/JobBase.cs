@@ -15,6 +15,9 @@ namespace Kudu.Contracts.Jobs
         [DataMember(Name = "url")]
         public Uri Url { get; set; }
 
+        [DataMember(Name = "extra_info_url")]
+        public Uri ExtraInfoUrl { get; set; }
+
         [DataMember(Name = "type")]
         public string JobType { get; set; }
 
