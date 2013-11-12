@@ -10,7 +10,7 @@ namespace Kudu.Contracts.Settings
         public static readonly TimeSpan DefaultCommandIdleTimeout = TimeSpan.FromMinutes(1);
         public static readonly TimeSpan DefaultLogStreamTimeout = TimeSpan.FromMinutes(30);
         public static readonly TimeSpan DefaultJobsInterval = TimeSpan.FromMinutes(1);
-        public static readonly TimeSpan DefaultJobsIdleTimeout = TimeSpan.FromMinutes(5);
+        public static readonly TimeSpan DefaultJobsIdleTimeout = TimeSpan.FromMinutes(2);
 
         public const TraceLevel DefaultTraceLevel = TraceLevel.Error;
 
@@ -44,14 +44,7 @@ namespace Kudu.Contracts.Settings
 
         public static TimeSpan GetCommandIdleTimeout(this IDeploymentSettingsManager settings)
         {
-            string value = settings.GetValue(SettingsKeys.CommandIdleTimeout);
-            int seconds;
-            if (Int32.TryParse(value, out seconds))
-            {
-                return TimeSpan.FromSeconds(seconds >= 0 ? seconds : 0);
-            }
-
-            return DeploymentSettingsExtension.DefaultCommandIdleTimeout;
+            return GetTimeSpan(settings, SettingsKeys.CommandIdleTimeout, DefaultCommandIdleTimeout);
         }
 
         public static TimeSpan GetLogStreamTimeout(this IDeploymentSettingsManager settings)
