@@ -38,7 +38,7 @@ namespace Kudu.Core.Jobs
                 throw new ConflictException();
             }
 
-            TriggeredJobRunLogger logger = TriggeredJobRunLogger.LogNewRun(triggeredJob, Environment, FileSystem, TraceFactory);
+            TriggeredJobRunLogger logger = TriggeredJobRunLogger.LogNewRun(triggeredJob, Environment, FileSystem, TraceFactory, Settings);
             Debug.Assert(logger != null);
 
             try
