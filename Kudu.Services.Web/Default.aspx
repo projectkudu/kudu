@@ -103,6 +103,9 @@
             <li>
                 <a href="diagnostics/runtime">Runtime versions</a>
             </li>
+            <li>
+                <a href="jobs">Web jobs</a>
+            </li>
         </ul>
     </div>
 </body>
