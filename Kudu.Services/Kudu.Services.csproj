@@ -108,7 +108,6 @@
     <Compile Include="GitServer\GitServerHttpHandler.cs" />
     <Compile Include="Hooks\WebHooksController.cs" />
     <Compile Include="HttpRequestExtensions.cs" />
-    <Compile Include="Infrastructure\InstanceIdUtility.cs" />
     <Compile Include="Infrastructure\LowerCasePropertyNamesContractResolver.cs" />
     <Compile Include="Jobs\JobsController.cs" />
     <Compile Include="Infrastructure\VfsSpecialFolders.cs" />
