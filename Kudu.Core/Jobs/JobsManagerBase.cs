@@ -101,19 +101,22 @@ namespace Kudu.Core.Jobs
             string jobName = jobDirectory.Name;
             FileInfoBase[] files = jobDirectory.GetFiles("*.*", SearchOption.TopDirectoryOnly);
             IScriptHost scriptHost;
-            string runCommand = FindCommandToRun(files, out scriptHost);
+            string scriptFilePath = FindCommandToRun(files, out scriptHost);
 
-            if (runCommand == null)
+            if (scriptFilePath == null)
             {
                 return null;
             }
+
+            string runCommand = scriptFilePath.Substring(jobDirectory.FullName.Length + 1);
 
             var job = new TJob()
             {
                 Name = jobName,
                 Url = BuildJobsUrl(jobName),
                 ExtraInfoUrl = BuildExtraInfoUrl(jobName),
-                ScriptFilePath = runCommand,
+                ScriptFilePath = scriptFilePath,
+                RunCommand = runCommand,
                 JobType = _jobsTypePath,
                 ScriptHost = scriptHost
             };

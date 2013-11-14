@@ -10,7 +10,7 @@ namespace Kudu.Contracts.Jobs
         public string Name { get; set; }
 
         [DataMember(Name = "run_command")]
-        public string ScriptFilePath { get; set; }
+        public string RunCommand { get; set; }
 
         [DataMember(Name = "url")]
         public Uri Url { get; set; }
@@ -22,5 +22,7 @@ namespace Kudu.Contracts.Jobs
         public string JobType { get; set; }
 
         public IScriptHost ScriptHost { get; set; }
+
+        public string ScriptFilePath { get; set; }
     }
 }
