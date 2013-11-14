@@ -2,7 +2,10 @@
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.IO.Abstractions;
+using System.Linq;
 using Kudu.Contracts.Jobs;
+using Kudu.Contracts.Settings;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
@@ -28,8 +31,10 @@ namespace Kudu.Core.Jobs
         }
 
         [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters", Justification = "We do not want to accept jobs which are not TriggeredJob")]
-        public static TriggeredJobRunLogger LogNewRun(TriggeredJob triggeredJob, IEnvironment environment, IFileSystem fileSystem, ITraceFactory traceFactory)
+        public static TriggeredJobRunLogger LogNewRun(TriggeredJob triggeredJob, IEnvironment environment, IFileSystem fileSystem, ITraceFactory traceFactory, IDeploymentSettingsManager settings)
         {
+            OldRunsCleanup(triggeredJob.Name, fileSystem, environment, traceFactory, settings);
+
             string id = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
             var logger = new TriggeredJobRunLogger(triggeredJob.Name, id, environment, fileSystem, traceFactory);
             var triggeredJobStatus = new TriggeredJobStatus()
@@ -39,6 +44,37 @@ namespace Kudu.Core.Jobs
             };
             logger.ReportStatus(triggeredJobStatus);
             return logger;
+        }
+
+        private static void OldRunsCleanup(string jobName, IFileSystem fileSystem, IEnvironment environment, ITraceFactory traceFactory, IDeploymentSettingsManager settings)
+        {
+            int maxRuns = settings.GetMaxJobRunsHistoryCount();
+
+            string historyPath = Path.Combine(environment.JobsDataPath, Constants.TriggeredPath, jobName);
+            DirectoryInfoBase historyDirectory = fileSystem.DirectoryInfo.FromDirectoryName(historyPath);
+            if (!historyDirectory.Exists)
+            {
+                return;
+            }
+
+            DirectoryInfoBase[] historyRunsDirectories = historyDirectory.GetDirectories();
+            if (historyRunsDirectories.Length <= maxRuns)
+            {
+                return;
+            }
+
+            var directoriesToRemove = historyRunsDirectories.OrderByDescending(d => d.Name).Skip(maxRuns);
+            foreach (DirectoryInfoBase directory in directoriesToRemove)
+            {
+                try
+                {
+                    directory.Delete(true);
+                }
+                catch (Exception ex)
+                {
+                    traceFactory.GetTracer().TraceError(ex);
+                }
+            }
         }
 
         public void ReportEndRun()

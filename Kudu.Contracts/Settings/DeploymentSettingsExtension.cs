@@ -14,6 +14,8 @@ namespace Kudu.Contracts.Settings
 
         public const TraceLevel DefaultTraceLevel = TraceLevel.Error;
 
+        public const int DefaultMaxJobRunsHistoryCount = 50;
+
         public static string GetValue(this IDeploymentSettingsManager settings, string key)
         {
             return settings.GetValue(key, onlyPerSite: false);
@@ -72,6 +74,18 @@ namespace Kudu.Contracts.Settings
         public static TimeSpan GetJobsIdleTimeout(this IDeploymentSettingsManager settings)
         {
             return GetTimeSpan(settings, SettingsKeys.JobsIdleTimeoutInSeconds, DefaultJobsIdleTimeout);
+        }
+
+        public static int GetMaxJobRunsHistoryCount(this IDeploymentSettingsManager settings)
+        {
+            string value = settings.GetValue(SettingsKeys.MaxJobRunsHistoryCount);
+            int maxJobRunsHistoryCount;
+            if (Int32.TryParse(value, out maxJobRunsHistoryCount))
+            {
+                return maxJobRunsHistoryCount;
+            }
+
+            return DefaultMaxJobRunsHistoryCount;
         }
 
         public static string GetBranch(this IDeploymentSettingsManager settings)
