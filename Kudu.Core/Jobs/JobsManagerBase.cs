@@ -194,6 +194,11 @@ namespace Kudu.Core.Jobs
 
             foreach (IScriptHost scriptHost in ScriptHosts)
             {
+                if (String.IsNullOrEmpty(scriptHost.HostPath))
+                {
+                    continue;
+                }
+
                 foreach (string supportedExtension in scriptHost.SupportedExtensions)
                 {
                     var supportedFiles = files.Where(f => String.Equals(f.Extension, supportedExtension, StringComparison.OrdinalIgnoreCase));
