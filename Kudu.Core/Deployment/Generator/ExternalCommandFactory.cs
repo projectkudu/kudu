@@ -8,6 +8,9 @@ namespace Kudu.Core.Deployment.Generator
 {
     internal class ExternalCommandFactory
     {
+        public const string KuduSyncCommand = "kudusync";
+        public const string PostDeploymentActionsCommand = "postdeployment";
+
         internal const string StarterScriptName = "starter.cmd";
 
         private IEnvironment _environment;
@@ -77,7 +80,8 @@ namespace Kudu.Core.Deployment.Generator
             var toolsPaths = new List<string> {
                 Path.GetDirectoryName(PathUtility.ResolveMSBuildPath()),
                 Path.GetDirectoryName(PathUtility.ResolveGitPath()),
-                Path.GetDirectoryName(PathUtility.ResolveVsTestPath())
+                Path.GetDirectoryName(PathUtility.ResolveVsTestPath()),
+                _environment.ScriptPath
             };
 
             string nodeExePath = PathUtility.ResolveNodePath();
@@ -91,27 +95,11 @@ namespace Kudu.Core.Deployment.Generator
             return exe;
         }
 
-        private string KuduSyncCommand
-        {
-            get
-            {
-                return QuotePath(Path.Combine(_environment.ScriptPath, "kudusync"));
-            }
-        }
-
         private string NuGetExeCommand
         {
             get
             {
                 return Path.Combine(_environment.ScriptPath, "nuget.exe");
-            }
-        }
-
-        private string PostDeploymentActionsCommand
-        {
-            get
-            {
-                return QuotePath(Path.Combine(_environment.ScriptPath, "postdeployment"));
             }
         }
 

@@ -1,2 +1,2 @@
 @echo off
-"%~dp0KuduSync.NET.exe" %*
+"KuduSync.NET.exe" %*
