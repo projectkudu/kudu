@@ -4,7 +4,7 @@
 <head>
     <title>Job History</title>
     <meta charset="utf-8" />
-    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.2/css/font-awesome.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="//ajax.aspnetcdn.com/ajax/bootstrap/3.0.2/css/bootstrap.min.css" />
     <script src="//ajax.aspnetcdn.com/ajax/jquery/jquery-1.9.1.min.js"></script>
     <script type="text/javascript">
         $(function () {
@@ -25,6 +25,7 @@
             }
 
             var jobName = getParameterByName('jobName');
+
             $.getJSON('/jobs/triggered/' + jobName + '/history', function (data) {
                 console.log(data);
                 var tbl_body = "";
@@ -37,37 +38,35 @@
                     tbl_row += "<td>" + this.duration + "</td>";
                     tbl_row += getUrlLinkTd(this.output_url, "Output");
                     tbl_row += getUrlLinkTd(this.error_url, "Error");
-                    tbl_body += "<tr>" + tbl_row + "</tr>";
+                    tbl_body = "<tr>" + tbl_row + "</tr>" + tbl_body;
                 });
                 $("#history_table tbody").html(tbl_body);
+                $('#page_title').text('Triggered job history for: ' + jobName);
             });
         });
     </script>
 </head>
-<body>
-    <table width="100%">
-        <tr>
-            <td align="center">
-                <table id="history_table" border="1" cellspacing="0" cellpadding="4">
-                    <thead>
-                        <tr>
-                            <td>ID</td>
-                            <td>Status</td>
-                            <td>Started At</td>
-                            <td>Ended At</td>
-                            <td>Duration</td>
-                            <td>Output File</td>
-                            <td>Error File</td>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td colspan="7" align="center">Loading...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </td>
-        </tr>
+<body style="margin: 20px">
+    <div>
+        <h3 id="page_title" />
+    </div>
+    <table id="history_table" class="table table-striped table-bordered">
+        <thead style="font-weight: bold">
+            <tr>
+                <td>ID</td>
+                <td>Status</td>
+                <td>Duration</td>
+                <td>Started At</td>
+                <td>Ended At</td>
+                <td>Output File</td>
+                <td>Error File</td>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td colspan="7" align="center">Loading...</td>
+            </tr>
+        </tbody>
     </table>
 </body>
 </html>
