@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO.Abstractions;
 using System.Security.Cryptography;
+using System.Text;
 using Moq;
 using Xunit;
 using Xunit.Extensions;
@@ -10,13 +11,21 @@ namespace Kudu.Core.SSHKey.Test
 {
     public class SSHKeyManagerFacts
     {
-        private const string _privateKey = @"-----BEGIN RSA PRIVATE KEY-----
-MIGpAgEAAiEAuP52TyQ82vNoHmlxc3bFZnPBBguVXwp/LX4/IAWyEUUCASUCIFT/
-Sx1xg76Lgt2KZI7/OBmHRuKr8nGmemgPyMdnd9MtAhEA9wWeggZekx/tUBIZAE2J
-ZQIRAL+3tm2sgZSREmYsvm992mECEHgsP0YsnLZG4ib0DCmpLhUCEQCwLEbFpXAn
-p+dkzyuJC91tAhEAqZQQlB/blelwf7hrrbEOfw==
------END RSA PRIVATE KEY-----
-";
+        private static string _privateKey;
+
+        static SSHKeyManagerFacts()
+        {
+            var strb = new StringBuilder();
+            strb.AppendLine("-----BEGIN RSA PRIVATE KEY-----");
+            strb.AppendLine("MIGpAgEAAiEAuP52TyQ82vNoHmlxc3bFZnPBBguVXwp/LX4/IAWyEUUCASUCIFT/");
+            strb.AppendLine("Sx1xg76Lgt2KZI7/OBmHRuKr8nGmemgPyMdnd9MtAhEA9wWeggZekx/tUBIZAE2J");
+            strb.AppendLine("ZQIRAL+3tm2sgZSREmYsvm992mECEHgsP0YsnLZG4ib0DCmpLhUCEQCwLEbFpXAn");
+            strb.AppendLine("p+dkzyuJC91tAhEAqZQQlB/blelwf7hrrbEOfw==");
+            strb.AppendLine("-----END RSA PRIVATE KEY-----");
+
+            _privateKey = strb.ToString();
+        }
+
         [Fact]
         public void ConstructorThrowsIfEnvironmentIsNull()
         {
@@ -281,28 +290,29 @@ p+dkzyuJC91tAhEAqZQQlB/blelwf7hrrbEOfw==
                 P = Convert.FromBase64String("4w4EblF6UB7KE3dVFZOxyAIVixRFuOZf7niPjsCr0/x8SvQ3yMYa14OTsL472yKTvDIrECbmH8Adju8/hWHM/w=="),
                 Q = Convert.FromBase64String("3/gqdG19aGYIuKj7Fe38tGGt5S4NEFvR0i2up+5lr9aoTZj9moFICqP+Ojkvvr5n1RSueTX3JQ5rorNmLDEugw==")
             };
-            string expected = @"-----BEGIN RSA PRIVATE KEY-----
-MIICXQIBAAKBgQDGpVEX9AjH9sAZvORj6lU8BD8E/VY9nqFtZRlOvItLc4n6ssmZ
-ZN7bvGGij+y5MRSvrI5pRV5LFODTQu/CyLWqx3Wkxxm2OwHwIeSF2eyntbGoZgjL
-SKX0N0IzLqa/xnzQl/S3zBqGinoqVvnBEomnGMjIgQiDFTBa4ykG5LC4fQIDAQAB
-AoGAKaWHNupm3OWSqNK9X2VFsWuCet1SM2EKnxDPGX7WBV+X0gOh2JMZViBMp/Rc
-wQbVO2+F+/QbLMqXyDMEaWYDEAhqBeF2VPKuoHPWyxpiOxYUiqgskB7FH4QWdml2
-eAZp5DGL1f98JMGpb2NVqe2+Dxg92Yf7aKwjlf8OGVrKJVECQQDjDgRuUXpQHsoT
-d1UVk7HIAhWLFEW45l/ueI+OwKvT/HxK9DfIxhrXg5OwvjvbIpO8MisQJuYfwB2O
-7z+FYcz/AkEA3/gqdG19aGYIuKj7Fe38tGGt5S4NEFvR0i2up+5lr9aoTZj9moFI
-CqP+Ojkvvr5n1RSueTX3JQ5rorNmLDEugwJAVxvOmWBK86gMUNGMY/3Iy/n4t+Xs
-JdbEYSIBuXuzsF2CdeMh77YJIDuLktg48IZgdWgt20GBMhcrf+XL0elGkwJBAJVU
-MXpPRj5FSatVf5Ovib37IqabfbpafhtUug7dtI744F5ckzpg2Fe/39GSL3NOIIzB
-rVLD2HSsmLdyRb1RTWECQQDZ20WQgZk43lFZyrl0A4bjaeO9vOtElQ66Hasdur1J
-9OzikqfmQg95sRA6oXENazTTmnTruaK6ZEaEtndujEl7
------END RSA PRIVATE KEY-----
-";
+
+            var expected = new StringBuilder();
+            expected.AppendLine("-----BEGIN RSA PRIVATE KEY-----");
+            expected.AppendLine("MIICXQIBAAKBgQDGpVEX9AjH9sAZvORj6lU8BD8E/VY9nqFtZRlOvItLc4n6ssmZ");
+            expected.AppendLine("ZN7bvGGij+y5MRSvrI5pRV5LFODTQu/CyLWqx3Wkxxm2OwHwIeSF2eyntbGoZgjL");
+            expected.AppendLine("SKX0N0IzLqa/xnzQl/S3zBqGinoqVvnBEomnGMjIgQiDFTBa4ykG5LC4fQIDAQAB");
+            expected.AppendLine("AoGAKaWHNupm3OWSqNK9X2VFsWuCet1SM2EKnxDPGX7WBV+X0gOh2JMZViBMp/Rc");
+            expected.AppendLine("wQbVO2+F+/QbLMqXyDMEaWYDEAhqBeF2VPKuoHPWyxpiOxYUiqgskB7FH4QWdml2");
+            expected.AppendLine("eAZp5DGL1f98JMGpb2NVqe2+Dxg92Yf7aKwjlf8OGVrKJVECQQDjDgRuUXpQHsoT");
+            expected.AppendLine("d1UVk7HIAhWLFEW45l/ueI+OwKvT/HxK9DfIxhrXg5OwvjvbIpO8MisQJuYfwB2O");
+            expected.AppendLine("7z+FYcz/AkEA3/gqdG19aGYIuKj7Fe38tGGt5S4NEFvR0i2up+5lr9aoTZj9moFI");
+            expected.AppendLine("CqP+Ojkvvr5n1RSueTX3JQ5rorNmLDEugwJAVxvOmWBK86gMUNGMY/3Iy/n4t+Xs");
+            expected.AppendLine("JdbEYSIBuXuzsF2CdeMh77YJIDuLktg48IZgdWgt20GBMhcrf+XL0elGkwJBAJVU");
+            expected.AppendLine("MXpPRj5FSatVf5Ovib37IqabfbpafhtUug7dtI744F5ckzpg2Fe/39GSL3NOIIzB");
+            expected.AppendLine("rVLD2HSsmLdyRb1RTWECQQDZ20WQgZk43lFZyrl0A4bjaeO9vOtElQ66Hasdur1J");
+            expected.AppendLine("9OzikqfmQg95sRA6oXENazTTmnTruaK6ZEaEtndujEl7");
+            expected.AppendLine("-----END RSA PRIVATE KEY-----");
 
             // Act
             string output = PEMEncoding.GetString(privateKey);
 
             // Assert
-            Assert.Equal(expected, output);
+            Assert.Equal(expected.ToString(), output);
         }
     }
 }
