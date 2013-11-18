@@ -114,6 +114,12 @@ namespace Kudu.Core.Infrastructure
             return Path.Combine(programFiles, "Microsoft Visual Studio 11.0", "Common7", "IDE", "CommonExtensions", "Microsoft", "TestWindow", "vstest.console.exe");
         }
 
+        internal static string ResolveSQLCmdPath()
+        {
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            return Path.Combine(programFiles, "Microsoft SQL Server", "110", "Tools", "Binn", "sqlcmd.exe");
+        }
+
         /// <summary>
         /// Returns the path to the version of node.exe that is used for KuduScript generation and select node version
         /// </summary>
