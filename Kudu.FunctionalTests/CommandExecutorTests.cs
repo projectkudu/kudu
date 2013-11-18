@@ -1,7 +1,7 @@
-﻿using Kudu.Core;
-using Kudu.TestHarness;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using Kudu.Core;
+using Kudu.TestHarness;
 using Xunit;
 
 namespace Kudu.FunctionalTests
@@ -35,7 +35,7 @@ namespace Kudu.FunctionalTests
                 tests.Add(commandTestSettings);
 
                 commandTestSettings = new CommandTestSettings("echo %KUDU_SYNC_CMD%");
-                commandTestSettings.ExpectedResult.Output = "\\kudusync";
+                commandTestSettings.ExpectedResult.Output = "kudusync";
                 tests.Add(commandTestSettings);
 
                 commandTestSettings = new CommandTestSettings("echo %KUDU_SELECT_NODE_VERSION_CMD%");
@@ -104,7 +104,7 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        class CommandTestSettings
+        private class CommandTestSettings
         {
             public CommandResult ExpectedResult { get; set; }
             public string WorkingDirectory { get; set; }
