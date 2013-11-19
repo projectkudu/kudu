@@ -90,7 +90,7 @@ namespace Kudu.Core.Jobs
 
         private Uri BuildLogUrl(string jobName)
         {
-            return BuildVfsUrl("{0}/{1}".FormatInvariant(jobName, "job.log"));
+            return BuildVfsUrl("{0}/{1}".FormatInvariant(jobName, ContinuousJobLogger.JobLogFileName));
         }
 
         private void OnMakeChanges(object state)

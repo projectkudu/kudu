@@ -80,7 +80,7 @@ namespace Kudu.Contracts.Settings
         {
             string value = settings.GetValue(SettingsKeys.MaxJobRunsHistoryCount);
             int maxJobRunsHistoryCount;
-            if (Int32.TryParse(value, out maxJobRunsHistoryCount))
+            if (Int32.TryParse(value, out maxJobRunsHistoryCount) && maxJobRunsHistoryCount > 0)
             {
                 return maxJobRunsHistoryCount;
             }

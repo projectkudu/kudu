@@ -8,6 +8,8 @@ namespace Kudu.Core.Jobs
 {
     public class ContinuousJobLogger : JobLogger
     {
+        public const string JobLogFileName = "job.log";
+
         private readonly string _historyPath;
         private readonly string _logFilePath;
 
@@ -16,7 +18,7 @@ namespace Kudu.Core.Jobs
         {
             _historyPath = Path.Combine(Environment.JobsDataPath, Constants.ContinuousPath, jobName);
             FileSystemHelpers.EnsureDirectory(_historyPath);
-            _logFilePath = Path.Combine(_historyPath, "job.log");
+            _logFilePath = Path.Combine(_historyPath, JobLogFileName);
         }
 
         protected override string HistoryPath
