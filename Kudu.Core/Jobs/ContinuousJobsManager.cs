@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
+using System.Linq;
 using System.Threading;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
@@ -103,11 +104,10 @@ namespace Kudu.Core.Jobs
                 if (_makingChanges)
                 {
                     _makeChangesTimer.Change(TimeoutUntilMakingChanges, Timeout.Infinite);
+                    return;
                 }
 
                 _makingChanges = true;
-
-                _makeChangesTimer.Change(Timeout.Infinite, Timeout.Infinite);
 
                 updatedJobs = _updatedJobs;
                 _updatedJobs = new HashSet<string>();
@@ -163,30 +163,35 @@ namespace Kudu.Core.Jobs
 
         private void StartWatcher(object state)
         {
-            // Check if there is a directory we can listen on
-            if (!FileSystem.Directory.Exists(JobsBinariesPath))
+            lock (_lockObject)
             {
-                // If not check again in 30 seconds
-                _startFileWatcherTimer.Change(CheckForWatcherTimeout, Timeout.Infinite);
-                return;
-            }
+                // Check if there is a directory we can listen on
+                if (!FileSystem.Directory.Exists(JobsBinariesPath))
+                {
+                    // If not check again in 30 seconds
+                    _startFileWatcherTimer.Change(CheckForWatcherTimeout, Timeout.Infinite);
+                    return;
+                }
 
-            // Start file system watcher
-            _fileSystemWatcher = new FileSystemWatcher(JobsBinariesPath);
-            _fileSystemWatcher.Created += OnChanged;
-            _fileSystemWatcher.Changed += OnChanged;
-            _fileSystemWatcher.Deleted += OnChanged;
-            _fileSystemWatcher.Renamed += OnChanged;
-            _fileSystemWatcher.Error += OnError;
-            _fileSystemWatcher.NotifyFilter = NotifyFilters.CreationTime | NotifyFilters.DirectoryName | NotifyFilters.FileName |
-                                              NotifyFilters.LastWrite;
-            _fileSystemWatcher.IncludeSubdirectories = true;
-            _fileSystemWatcher.EnableRaisingEvents = true;
+                // Start file system watcher
+                _fileSystemWatcher = new FileSystemWatcher(JobsBinariesPath);
+                _fileSystemWatcher.Created += OnChanged;
+                _fileSystemWatcher.Changed += OnChanged;
+                _fileSystemWatcher.Deleted += OnChanged;
+                _fileSystemWatcher.Renamed += OnChanged;
+                _fileSystemWatcher.Error += OnError;
+                _fileSystemWatcher.NotifyFilter = NotifyFilters.CreationTime | NotifyFilters.DirectoryName | NotifyFilters.FileName |
+                                                  NotifyFilters.LastWrite;
+                _fileSystemWatcher.IncludeSubdirectories = true;
+                _fileSystemWatcher.EnableRaisingEvents = true;
 
-            // Refresh all jobs
-            foreach (ContinuousJob continuousJob in ListJobs())
-            {
-                MarkJobUpdated(continuousJob.Name);
+                // Refresh all jobs
+                IEnumerable<ContinuousJob> continuousJobs = ListJobs();
+                IEnumerable<string> continuousJobsNames = _continuousJobRunners.Keys.Union(continuousJobs.Select(j => j.Name));
+                foreach (string continuousJobName in continuousJobsNames)
+                {
+                    MarkJobUpdated(continuousJobName);
+                }
             }
         }
 
