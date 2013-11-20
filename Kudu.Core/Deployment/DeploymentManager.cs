@@ -74,13 +74,7 @@ namespace Kudu.Core.Deployment
             ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("DeploymentManager.GetResults"))
             {
-                // Order the results by date (newest first). Previously, we supported OData to allow
-                // arbitrary queries, but that was way overkill and brought in too many large binaries.
-                IEnumerable<DeployResult> results = EnumerateResults().OrderByDescending(t => t.ReceivedTime).ToList();
-
-                results = PurgeDeployments(results);
-
-                return results;
+                return PurgeAndGetDeployments();
             }
         }
 
@@ -239,7 +233,7 @@ namespace Kudu.Core.Deployment
 
                     if (statusFile != null)
                     {
-                        statusFile.MarkFailed();
+                        MarkStatusComplete(statusFile, success: false);
                     }
 
                     tracer.TraceError(ex);
@@ -304,6 +298,40 @@ namespace Kudu.Core.Deployment
             {
                 IsTemporary = true
             };
+        }
+
+        private IEnumerable<DeployResult> PurgeAndGetDeployments()
+        {
+            // Order the results by date (newest first). Previously, we supported OData to allow
+            // arbitrary queries, but that was way overkill and brought in too many large binaries.
+            IEnumerable<DeployResult> results = EnumerateResults().OrderByDescending(t => t.ReceivedTime).ToList();
+            try
+            {
+                results = PurgeDeployments(results);
+            }
+            catch (Exception ex)
+            {
+                // tolerate purge error
+                var tracer = _traceFactory.GetTracer();
+                tracer.TraceError(ex);
+            }
+
+            return results;
+        }
+
+        private void MarkStatusComplete(IDeploymentStatusFile status, bool success)
+        {
+            if (success)
+            {
+                status.MarkSuccess();
+            }
+            else
+            {
+                status.MarkFailed();
+            }
+
+            // Cleaup old deployments
+            PurgeAndGetDeployments();
         }
 
         // since the expensive part (reading all files) is done,
@@ -530,7 +558,7 @@ namespace Kudu.Core.Deployment
 
                     innerLogger.Log(ex);
 
-                    currentStatus.MarkFailed();
+                    MarkStatusComplete(currentStatus, success: false);
 
                     FailDeployment(tracer, deployStep, deploymentAnalytics, ex);
 
@@ -575,7 +603,7 @@ namespace Kudu.Core.Deployment
                     }
                     catch (Exception ex)
                     {
-                        currentStatus.MarkFailed();
+                        MarkStatusComplete(currentStatus, success: false);
 
                         FailDeployment(tracer, deployStep, deploymentAnalytics, ex);
 
@@ -681,7 +709,7 @@ namespace Kudu.Core.Deployment
                 ILogger logger = GetLogger(id);
                 logger.LogUnexpectedError();
 
-                statusFile.MarkFailed();
+                MarkStatusComplete(statusFile, success: false);
             }
 
             return statusFile;
@@ -700,7 +728,7 @@ namespace Kudu.Core.Deployment
                 logger.Log(Resources.Log_DeploymentSuccessful);
 
                 IDeploymentStatusFile currentStatus = _status.Open(id);
-                currentStatus.MarkSuccess();
+                MarkStatusComplete(currentStatus, success: true);
 
                 _status.ActiveDeploymentId = id;
             }
