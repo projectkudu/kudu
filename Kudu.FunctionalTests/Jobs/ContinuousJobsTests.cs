@@ -1,23 +1,22 @@
 ﻿using System;
 using System.Linq;
 using System.Threading;
+using Kudu.Contracts.Jobs;
+using Kudu.Contracts.Settings;
 using Kudu.Core.Deployment;
-using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
 using Xunit;
 
-namespace Kudu.FunctionalTests
+namespace Kudu.FunctionalTests.Jobs
 {
-    public class ConsoleWorkerTests
+    public class ContinuousJobsTests
     {
         private const string VerificationFilePath = "LogFiles/verification.txt";
-        private const string RunScriptPath = "Site/wwwroot/bin/run_worker.cmd";
-        private const string RunningVerification = "Process went down, Waiting for";
-        private const string StoppedVerification = "Missing run_worker.cmd file";
+        private const string RunScriptPath = "Site/wwwroot/App_Data/jobs/continuous/deployedJob/ConsoleWorker.exe";
         private const string ExpectedDotNetVerificationFileContent = "Verified!!!";
         private const string ExpectedChangedFileContent = "Changed!!!";
 
-        [Fact(Skip = "Need to fix test")]
+        [Fact]
         public void PushAndDeployDotNetConsoleWorker()
         {
             ApplicationManager.Run("ConsoleWorker", appManager =>
@@ -33,7 +32,7 @@ namespace Kudu.FunctionalTests
                     TestTracer.Trace("II) Waiting for worker to start the process again...");
 
                     var lines = new string[0];
-                    for (int checkCount = 0; lines.Length < 2 && checkCount < 60; checkCount++)
+                    for (int checkCount = 0; lines.Length < 2 && checkCount < 20; checkCount++)
                     {
                         Thread.Sleep(1000);
                         string verificationFileContent = appManager.VfsManager.ReadAllText(VerificationFilePath);
@@ -49,53 +48,33 @@ namespace Kudu.FunctionalTests
                     appManager.VfsManager.Delete(RunScriptPath);
 
                     bool workerStopped = false;
+                    ContinuousJob deployedJob = null;
                     for (int checkCount = 0; !workerStopped && checkCount < 20; checkCount++)
                     {
                         try
                         {
                             Thread.Sleep(1000);
-                            KuduAssert.VerifyUrl(appManager.SiteUrl, StoppedVerification);
+                            deployedJob = appManager.JobsManager.GetContinuousJobAsync("deployedJob").Result;
+                            Assert.Equal("Stopped", deployedJob.Status);
                             workerStopped = true;
                         }
                         catch (Exception)
                         {
                         }
                     }
-                    KuduAssert.VerifyUrl(appManager.SiteUrl, StoppedVerification);
+                    Assert.Equal("Stopped", deployedJob.Status);
 
                     ///////// Part 4
-                    TestTracer.Trace("IV) Verifying worker starts again when run.cmd is back");
-
-                    appManager.VfsManager.WriteAllText(RunScriptPath, "ConsoleWorker.exe");
-
-                    bool workerStarted = false;
-                    for (int checkCount = 0; !workerStarted && checkCount < 60; checkCount++)
-                    {
-                        try
-                        {
-                            Thread.Sleep(1000);
-                            KuduAssert.VerifyUrl(appManager.SiteUrl, RunningVerification);
-                            workerStarted = true;
-                        }
-                        catch (Exception)
-                        {
-                        }
-                    }
-                    KuduAssert.VerifyUrl(appManager.SiteUrl, RunningVerification);
-
-                    ///////// Part 5
-                    TestTracer.Trace("V) Make sure redeploy works for console worker");
+                    TestTracer.Trace("IV) Make sure redeploy works for console worker");
                     testRepository.Replace("ConsoleWorker\\Program.cs", ExpectedDotNetVerificationFileContent, ExpectedChangedFileContent);
                     Git.Commit(testRepository.PhysicalPath, "Made a small change");
-
-                    appManager.GitDeploy(testRepository.PhysicalPath);
 
                     DeployConsoleWorker(appManager, testRepository, ExpectedChangedFileContent, expectedDeployments: 2);
                 }
             });
         }
 
-        [Fact(Skip = "Need to fix test")]
+        [Fact]
         public void PushAndDeployBasicConsoleWorker()
         {
             ApplicationManager.Run("BasicConsoleWorker", appManager =>
@@ -142,23 +121,27 @@ WORKER_COMMAND=subFolder\runSubFolder.cmd");
                 Assert.Equal(DeployStatus.Success, results[i].Status);
             }
 
+            appManager.SettingsManager.SetValue(SettingsKeys.JobsIdleTimeoutInSeconds, "5").Wait();
+
             // Make sure verification file doesn't exist
             appManager.VfsManager.Delete(VerificationFilePath);
 
+            ContinuousJob deployedJob = null;
             bool workerWaiting = false;
             for (int checkCount = 0; !workerWaiting && checkCount < 60; checkCount++)
             {
                 try
                 {
                     Thread.Sleep(1000);
-                    KuduAssert.VerifyUrl(appManager.SiteUrl, RunningVerification);
+                    deployedJob = appManager.JobsManager.GetContinuousJobAsync("deployedJob").Result;
+                    Assert.Equal("Running", deployedJob.Status);
                     workerWaiting = true;
                 }
                 catch
                 {
                 }
             }
-            KuduAssert.VerifyUrl(appManager.SiteUrl, RunningVerification);
+            Assert.Equal("Running", deployedJob.Status);
 
             TestTracer.Trace("Waiting for the verification file...");
 

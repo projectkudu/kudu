@@ -52,6 +52,7 @@
     <Compile Include="Infrastructure\IEventProvider.cs" />
     <Compile Include="Infrastructure\KuduRemoteClientBase.cs" />
     <Compile Include="Infrastructure\UrlUtility.cs" />
+    <Compile Include="Jobs\RemoteJobsManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Deployment\RemoteDeploymentManager.cs" />
     <Compile Include="RemoteEnvironmentManager.cs" />
