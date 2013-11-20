@@ -14,5 +14,13 @@ namespace Kudu.Core
         {
             return String.Format(CultureInfo.CurrentCulture, format, args);
         }
+
+        /// <summary>
+        /// Make string PII safe
+        /// </summary>
+        public static string Fuzz(this string str)
+        {
+            return String.IsNullOrEmpty(str) ? str : str.GetHashCode().ToString();
+        }
     }
 }

@@ -29,6 +29,18 @@ namespace Kudu.Core.Tracing
             _siteExtensionLogManager.Log(o);
         }
 
+        public void JobStarted(string jobName, string scriptExtension, string jobType)
+        {
+            var o = new JobStartedSiteExtensionLogEvent()
+            {
+                JobName = jobName,
+                ScriptExtension = scriptExtension,
+                JobType = jobType
+            };
+
+            _siteExtensionLogManager.Log(o);
+        }
+
         private class SiteDeployedSiteExtensionLogEvent : SiteExtensionLogEvent
         {
             public string SiteType
@@ -58,6 +70,29 @@ namespace Kudu.Core.Tracing
 
             public SiteDeployedSiteExtensionLogEvent()
                 : base("Kudu", "SiteDeployed")
+            {
+            }
+        }
+
+        private class JobStartedSiteExtensionLogEvent : SiteExtensionLogEvent
+        {
+            public string JobName
+            {
+                set { this["JobName"] = value; }
+            }
+
+            public string ScriptExtension
+            {
+                set { this["ScriptExtension"] = value; }
+            }
+
+            public string JobType
+            {
+                set { this["JobType"] = value; }
+            }
+
+            public JobStartedSiteExtensionLogEvent()
+                : base("Kudu", "JobStarted")
             {
             }
         }

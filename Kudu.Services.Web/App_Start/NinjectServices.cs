@@ -209,7 +209,8 @@ namespace Kudu.Services.Web.App_Start
                 noContextTraceFactory,
                 kernel.Get<IEnvironment>(),
                 kernel.Get<IFileSystem>(),
-                kernel.Get<IDeploymentSettingsManager>());
+                kernel.Get<IDeploymentSettingsManager>(),
+                kernel.Get<IAnalytics>());
             kernel.Bind<ITriggeredJobsManager>().ToConstant(triggeredJobsManager)
                                              .InTransientScope();
 
@@ -217,7 +218,8 @@ namespace Kudu.Services.Web.App_Start
                 noContextTraceFactory,
                 kernel.Get<IEnvironment>(),
                 kernel.Get<IFileSystem>(),
-                kernel.Get<IDeploymentSettingsManager>());
+                kernel.Get<IDeploymentSettingsManager>(),
+                kernel.Get<IAnalytics>());
             kernel.Bind<IContinuousJobsManager>().ToConstant(continuousJobManager)
                                              .InTransientScope();
 
