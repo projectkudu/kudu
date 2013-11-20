@@ -160,7 +160,6 @@ namespace Kudu.Core.Jobs
 
                 UpdateStatus(logger, "Running");
 
-                // TODO: add timeout
                 int exitCode =
                     exe.ExecuteReturnExitCode(
                         TraceFactory.GetTracer(),

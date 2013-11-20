@@ -84,7 +84,6 @@ namespace Kudu.Services.Performance
             }
         }
 
-
         [HttpGet]
         public HttpResponseMessage GetAllProcesses()
         {
@@ -262,8 +261,7 @@ namespace Kudu.Services.Performance
 
         private static string GetResponseFileName(string prefix, string ext)
         {
-            var context = new System.Web.HttpContextWrapper(System.Web.HttpContext.Current);
-            return String.Format(CultureInfo.InvariantCulture, "{0}-{1}-{2:MM-dd-HH-mm-ss}.{3}", prefix, InstanceIdUtility.GetShortInstanceId(context), DateTime.UtcNow, ext);
+            return String.Format(CultureInfo.InvariantCulture, "{0}-{1}-{2:MM-dd-HH-mm-ss}.{3}", prefix, InstanceIdUtility.GetShortInstanceId(), DateTime.UtcNow, ext);
         }
 
         private DumpFormat ParseDumpFormat(string format, DumpFormat defaultFormat)
@@ -298,9 +296,8 @@ namespace Kudu.Services.Performance
 
             if (String.IsNullOrEmpty(stdout))
                 return Enumerable.Empty<string>();
-            return stdout.Split(new [] { System.Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            return stdout.Split(new[] { System.Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).ToList();
         }
-
 
         private IEnumerable<ProcessThreadInfo> GetThreads(Process process, string href)
         {

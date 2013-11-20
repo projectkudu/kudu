@@ -10,9 +10,11 @@ namespace Kudu.Contracts.Settings
         public static readonly TimeSpan DefaultCommandIdleTimeout = TimeSpan.FromMinutes(1);
         public static readonly TimeSpan DefaultLogStreamTimeout = TimeSpan.FromMinutes(30);
         public static readonly TimeSpan DefaultJobsInterval = TimeSpan.FromMinutes(1);
-        public static readonly TimeSpan DefaultJobsIdleTimeout = TimeSpan.FromMinutes(5);
+        public static readonly TimeSpan DefaultJobsIdleTimeout = TimeSpan.FromMinutes(2);
 
         public const TraceLevel DefaultTraceLevel = TraceLevel.Error;
+
+        public const int DefaultMaxJobRunsHistoryCount = 50;
 
         public static string GetValue(this IDeploymentSettingsManager settings, string key)
         {
@@ -44,14 +46,7 @@ namespace Kudu.Contracts.Settings
 
         public static TimeSpan GetCommandIdleTimeout(this IDeploymentSettingsManager settings)
         {
-            string value = settings.GetValue(SettingsKeys.CommandIdleTimeout);
-            int seconds;
-            if (Int32.TryParse(value, out seconds))
-            {
-                return TimeSpan.FromSeconds(seconds >= 0 ? seconds : 0);
-            }
-
-            return DeploymentSettingsExtension.DefaultCommandIdleTimeout;
+            return GetTimeSpan(settings, SettingsKeys.CommandIdleTimeout, DefaultCommandIdleTimeout);
         }
 
         public static TimeSpan GetLogStreamTimeout(this IDeploymentSettingsManager settings)
@@ -79,6 +74,18 @@ namespace Kudu.Contracts.Settings
         public static TimeSpan GetJobsIdleTimeout(this IDeploymentSettingsManager settings)
         {
             return GetTimeSpan(settings, SettingsKeys.JobsIdleTimeoutInSeconds, DefaultJobsIdleTimeout);
+        }
+
+        public static int GetMaxJobRunsHistoryCount(this IDeploymentSettingsManager settings)
+        {
+            string value = settings.GetValue(SettingsKeys.MaxJobRunsHistoryCount);
+            int maxJobRunsHistoryCount;
+            if (Int32.TryParse(value, out maxJobRunsHistoryCount) && maxJobRunsHistoryCount > 0)
+            {
+                return maxJobRunsHistoryCount;
+            }
+
+            return DefaultMaxJobRunsHistoryCount;
         }
 
         public static string GetBranch(this IDeploymentSettingsManager settings)

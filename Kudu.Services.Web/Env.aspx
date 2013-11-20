@@ -54,8 +54,8 @@
             <li>64 bit process: <%: Environment.Is64BitProcess %></li>
             <li>Processor count: <%: Environment.ProcessorCount %></li>
             <li>Machine name: <%: Environment.MachineName %></li>
-            <li>Instance id: <%: Kudu.Services.InstanceIdUtility.GetInstanceId(context) %></li>
-            <li>Short instance id: <%: Kudu.Services.InstanceIdUtility.GetShortInstanceId(context) %></li>
+            <li>Instance id: <%: Kudu.Core.Infrastructure.InstanceIdUtility.GetInstanceId() %></li>
+            <li>Short instance id: <%: Kudu.Core.Infrastructure.InstanceIdUtility.GetShortInstanceId() %></li>
             <li>CLR version: <%: Environment.Version %></li>
             <li>System directory: <%: Environment.SystemDirectory %></li>
             <li>Current working directory: <%: Environment.CurrentDirectory %></li>

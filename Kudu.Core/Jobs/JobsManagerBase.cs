@@ -26,7 +26,9 @@ namespace Kudu.Core.Jobs
     {
         private const string DefaultScriptFileName = "run";
 
-        private string _jobsTypePath;
+        private readonly string _jobsTypePath;
+
+        private string _appBaseUrlPrefix;
         private string _urlPrefix;
         private string _vfsUrlPrefix;
 
@@ -99,18 +101,22 @@ namespace Kudu.Core.Jobs
             string jobName = jobDirectory.Name;
             FileInfoBase[] files = jobDirectory.GetFiles("*.*", SearchOption.TopDirectoryOnly);
             IScriptHost scriptHost;
-            string runCommand = FindCommandToRun(files, out scriptHost);
+            string scriptFilePath = FindCommandToRun(files, out scriptHost);
 
-            if (runCommand == null)
+            if (scriptFilePath == null)
             {
                 return null;
             }
+
+            string runCommand = scriptFilePath.Substring(jobDirectory.FullName.Length + 1);
 
             var job = new TJob()
             {
                 Name = jobName,
                 Url = BuildJobsUrl(jobName),
-                ScriptFilePath = runCommand,
+                ExtraInfoUrl = BuildExtraInfoUrl(jobName),
+                ScriptFilePath = scriptFilePath,
+                RunCommand = runCommand,
                 JobType = _jobsTypePath,
                 ScriptHost = scriptHost
             };
@@ -131,13 +137,12 @@ namespace Kudu.Core.Jobs
         {
             if (_urlPrefix == null)
             {
-                if (HttpContext.Current == null)
+                if (AppBaseUrlPrefix == null)
                 {
                     return null;
                 }
 
-                var appBaseUrl = HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority);
-                _urlPrefix = "{0}/jobs/{1}/".FormatInvariant(appBaseUrl, _jobsTypePath);
+                _urlPrefix = "{0}/jobs/{1}/".FormatInvariant(AppBaseUrlPrefix, _jobsTypePath);
             }
 
             return new Uri(_urlPrefix + relativeUrl);
@@ -147,16 +152,41 @@ namespace Kudu.Core.Jobs
         {
             if (_vfsUrlPrefix == null)
             {
-                if (HttpContext.Current == null)
+                if (AppBaseUrlPrefix == null)
                 {
                     return null;
                 }
 
-                var appBaseUrl = HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority);
-                _vfsUrlPrefix = "{0}/vfs/data/jobs/{1}/".FormatInvariant(appBaseUrl, _jobsTypePath);
+                _vfsUrlPrefix = "{0}/vfs/data/jobs/{1}/".FormatInvariant(AppBaseUrlPrefix, _jobsTypePath);
             }
 
             return new Uri(_vfsUrlPrefix + relativeUrl);
+        }
+
+        protected Uri BuildExtraInfoUrl(string jobName)
+        {
+            // TODO: If a specific file exists read url from there
+            return BuildDefaultExtraInfoUrl(jobName);
+        }
+
+        protected abstract Uri BuildDefaultExtraInfoUrl(string jobName);
+
+        protected string AppBaseUrlPrefix
+        {
+            get
+            {
+                if (_appBaseUrlPrefix == null)
+                {
+                    if (HttpContext.Current == null)
+                    {
+                        return null;
+                    }
+
+                    _appBaseUrlPrefix = HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority);
+                }
+
+                return _appBaseUrlPrefix;
+            }
         }
 
         private static string FindCommandToRun(FileInfoBase[] files, out IScriptHost scriptHostFound)
@@ -167,6 +197,11 @@ namespace Kudu.Core.Jobs
 
             foreach (IScriptHost scriptHost in ScriptHosts)
             {
+                if (String.IsNullOrEmpty(scriptHost.HostPath))
+                {
+                    continue;
+                }
+
                 foreach (string supportedExtension in scriptHost.SupportedExtensions)
                 {
                     var supportedFiles = files.Where(f => String.Equals(f.Extension, supportedExtension, StringComparison.OrdinalIgnoreCase));

@@ -187,8 +187,10 @@ namespace Kudu.Services.Web.App_Start
             // Deployment Service
             kernel.Bind<ISettings>().ToMethod(context => new XmlSettings.Settings(GetSettingsPath(environment)))
                                              .InRequestScope();
-            kernel.Bind<IDeploymentSettingsManager>().To<DeploymentSettingsManager>()
-                                             .InRequestScope();
+
+            IDeploymentSettingsManager deploymentSettingsManager = kernel.Get<DeploymentSettingsManager>();
+            kernel.Bind<IDeploymentSettingsManager>().ToConstant(deploymentSettingsManager);
+
             kernel.Bind<IDeploymentStatusManager>().To<DeploymentStatusManager>()
                                              .InRequestScope();
 
@@ -198,11 +200,21 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IWebHooksManager>().To<WebHooksManager>()
                                              .InRequestScope();
 
-            ITriggeredJobsManager triggeredJobsManager = kernel.Get<TriggeredJobsManager>();
+            var noContextTraceFactory = new TracerFactory(() => GetTracerWithoutContext(environment, kernel));
+
+            ITriggeredJobsManager triggeredJobsManager = new TriggeredJobsManager(
+                noContextTraceFactory,
+                kernel.Get<IEnvironment>(),
+                kernel.Get<IFileSystem>(),
+                kernel.Get<IDeploymentSettingsManager>());
             kernel.Bind<ITriggeredJobsManager>().ToConstant(triggeredJobsManager)
                                              .InTransientScope();
 
-            IContinuousJobsManager continuousJobManager = kernel.Get<ContinuousJobsManager>();
+            IContinuousJobsManager continuousJobManager = new ContinuousJobsManager(
+                noContextTraceFactory,
+                kernel.Get<IEnvironment>(),
+                kernel.Get<IFileSystem>(),
+                kernel.Get<IDeploymentSettingsManager>());
             kernel.Bind<IContinuousJobsManager>().ToConstant(continuousJobManager)
                                              .InTransientScope();
 
@@ -419,7 +431,7 @@ namespace Kudu.Services.Web.App_Start
             if (level > TraceLevel.Off)
             {
                 string tracePath = Path.Combine(environment.TracePath, Constants.TraceFile);
-                string textPath = Path.Combine(environment.TracePath, TraceServices.CurrentRequestTraceFile ?? "trace.xml");
+                string textPath = Path.Combine(environment.TracePath, TraceServices.CurrentRequestTraceFile);
                 string traceLockPath = Path.Combine(environment.TracePath, Constants.TraceLockFile);
                 var traceLock = new LockFile(traceLockPath);
                 return new CascadeTracer(new Tracer(tracePath, level, traceLock), new TextTracer(textPath, level));

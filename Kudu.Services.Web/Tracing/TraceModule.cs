@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Web;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Services.Web.Tracing
 {
@@ -97,7 +98,6 @@ namespace Kudu.Services.Web.Tracing
                 AddTraceLevel(httpContext, attribs);
             }
 
-
             // Response.Headers is not supported in Classic mode, so just skip this
             if (HttpRuntime.UsingIntegratedPipeline)
             {
@@ -137,7 +137,6 @@ namespace Kudu.Services.Web.Tracing
                 Debug.WriteLine(ex.Message);
             }
         }
-
 
         private static void AddTraceLevel(HttpContext httpContext, Dictionary<string, string> attribs)
         {
@@ -188,7 +187,7 @@ namespace Kudu.Services.Web.Tracing
                     { "url", httpContext.Request.RawUrl },
                     { "method", httpContext.Request.HttpMethod },
                     { "type", "request" },
-                    { "instance", InstanceIdUtility.GetShortInstanceId(new HttpContextWrapper(httpContext)) }
+                    { "instance", InstanceIdUtility.GetShortInstanceId() }
                 };
 
             // Add an attribute containing the process, AppDomain and Thread ids to help debugging
@@ -200,6 +199,8 @@ namespace Kudu.Services.Web.Tracing
             return attribs;
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+        }
     }
 }
