@@ -17,8 +17,8 @@ namespace Kudu.Core.Jobs
 
         private string _extraInfoUrlPrefix;
 
-        public TriggeredJobsManager(ITraceFactory traceFactory, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings)
-            : base(traceFactory, environment, fileSystem, settings, Constants.TriggeredPath)
+        public TriggeredJobsManager(ITraceFactory traceFactory, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings, IAnalytics analytics)
+            : base(traceFactory, environment, fileSystem, settings, analytics, Constants.TriggeredPath)
         {
         }
 
@@ -160,7 +160,7 @@ namespace Kudu.Core.Jobs
             TriggeredJobRunner triggeredJobRunner =
                 _triggeredJobRunners.GetOrAdd(
                     jobName,
-                    _ => new TriggeredJobRunner(triggeredJob.Name, Environment, FileSystem, Settings, TraceFactory));
+                    _ => new TriggeredJobRunner(triggeredJob.Name, Environment, FileSystem, Settings, TraceFactory, Analytics));
 
             triggeredJobRunner.StartJobRun(triggeredJob);
         }

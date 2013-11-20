@@ -27,8 +27,8 @@ namespace Kudu.Core.Jobs
 
         private bool _makingChanges;
 
-        public ContinuousJobsManager(ITraceFactory traceFactory, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings)
-            : base(traceFactory, environment, fileSystem, settings, Constants.ContinuousPath)
+        public ContinuousJobsManager(ITraceFactory traceFactory, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings, IAnalytics analytics)
+            : base(traceFactory, environment, fileSystem, settings, analytics, Constants.ContinuousPath)
         {
             _makeChangesTimer = new Timer(OnMakeChanges);
             _startFileWatcherTimer = new Timer(StartWatcher);
@@ -140,7 +140,7 @@ namespace Kudu.Core.Jobs
             ContinuousJobRunner continuousJobRunner;
             if (!_continuousJobRunners.TryGetValue(continuousJob.Name, out continuousJobRunner))
             {
-                continuousJobRunner = new ContinuousJobRunner(continuousJob.Name, Environment, FileSystem, Settings, TraceFactory);
+                continuousJobRunner = new ContinuousJobRunner(continuousJob.Name, Environment, FileSystem, Settings, TraceFactory, Analytics);
                 _continuousJobRunners.Add(continuousJob.Name, continuousJobRunner);
             }
 

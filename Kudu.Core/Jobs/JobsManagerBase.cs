@@ -44,12 +44,15 @@ namespace Kudu.Core.Jobs
 
         protected string JobsDataPath { get; private set; }
 
-        protected JobsManagerBase(ITraceFactory traceFactory, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings, string jobsTypePath)
+        protected IAnalytics Analytics { get; private set; }
+
+        protected JobsManagerBase(ITraceFactory traceFactory, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings, IAnalytics analytics, string jobsTypePath)
         {
             TraceFactory = traceFactory;
             Environment = environment;
             FileSystem = fileSystem;
             Settings = settings;
+            Analytics = analytics;
 
             _jobsTypePath = jobsTypePath;
 

@@ -17,14 +17,16 @@ namespace Kudu.Core.Jobs
     public abstract class BaseJobRunner
     {
         private readonly ExternalCommandFactory _externalCommandFactory;
+        private readonly IAnalytics _analytics;
 
-        protected BaseJobRunner(string jobName, string jobsTypePath, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings, ITraceFactory traceFactory)
+        protected BaseJobRunner(string jobName, string jobsTypePath, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
         {
             TraceFactory = traceFactory;
             Environment = environment;
             FileSystem = fileSystem;
             Settings = settings;
             JobName = jobName;
+            _analytics = analytics;
 
             JobBinariesPath = Path.Combine(Environment.JobsBinariesPath, jobsTypePath, jobName);
             JobTempPath = Path.Combine(Environment.TempPath, Constants.JobsPath, jobsTypePath, jobName);
@@ -147,8 +149,10 @@ namespace Kudu.Core.Jobs
         {
             string scriptFileName = Path.GetFileName(job.ScriptFilePath);
             string binariesPath = Path.GetDirectoryName(job.ScriptFilePath);
+            string scriptFileExtension = Path.GetExtension(job.ScriptFilePath);
 
             logger.LogInformation("Run script '{0}' with script host - '{1}'".FormatCurrentCulture(scriptFileName, job.ScriptHost.GetType().Name));
+            _analytics.JobStarted(job.Name.Fuzz(), scriptFileExtension, job.JobType);
 
             try
             {
