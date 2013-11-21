@@ -4,9 +4,9 @@
 <head>
     <title>Diagnostic Console</title>
     <meta charset="utf-8" />
-    <link rel="stylesheet" type="text/css" href="/content/styles/filebrowser.css" />
-    <link rel="stylesheet" type="text/css" href="//ajax.aspnetcdn.com/ajax/bootstrap/3.0.0/css/bootstrap.min.css" />
-    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.2/css/font-awesome.css" rel="stylesheet">
+    <link href="/content/styles/filebrowser.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.2/css/font-awesome.css" rel="stylesheet" />
 </head>
 <body>
     <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
@@ -64,16 +64,13 @@
                                 <td class="actions">
                                     <div data-bind="visible: !editing()">
                                         <a data-bind="attr: { href: url() }" target="_blank">
-                                            <i class="fa fa-download" title="Download"></i>
-                                        </a>
+                                            <i class="glyphicon glyphicon-download-alt" title="Download"></i></a>
                                         <span data-bind="if: !isDirectory()">
                                             <a data-bind="click: editItem" href="#">
-                                                <i class="glyphicon glyphicon-pencil" title="Edit"></i>
-                                            </a>
+                                                <i class="glyphicon glyphicon-pencil" title="Edit"></i></a>
                                         </span>
                                         <a href="#" data-bind="click: deleteItem">
-                                            <i class="glyphicon glyphicon-minus-sign" title="Delete"></i>
-                                        </a>
+                                            <i class="glyphicon glyphicon-minus-sign" title="Delete"></i></a>
                                     </div>
                                 </td>
                                 <td class="name">
@@ -119,7 +116,7 @@
     </div>
     <script src="//ajax.aspnetcdn.com/ajax/jquery/jquery-1.9.1.min.js"></script>
     <script src="//ajax.aspnetcdn.com/ajax/knockout/knockout-2.2.1.js"></script>
-    <script src="//ajax.aspnetcdn.com/ajax/bootstrap/3.0.0/bootstrap.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js"></script>
     <script src="/content/scripts/kuduexec.js"></script>
     <script src="/content/scripts/filebrowser.js"></script>
     <script src="/content/scripts/jquery-console/jquery.console.js"></script>
