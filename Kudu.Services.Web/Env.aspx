@@ -37,7 +37,7 @@
         <ul>
             <li><a href="#sysInfo">System Info</a></li>
             <li><a href="#appSettings">App Settings</a></li>
-            <li><a href="#connectionString">Connection Strings</a></li>
+            <li><a href="#connectionStrings">Connection Strings</a></li>
             <li><a href="#envVariables">Environment variables</a></li>
             <li><a href="#path">PATH</a></li>
             <li><a href="#httpHeaders">HTTP Headers</a></li>
