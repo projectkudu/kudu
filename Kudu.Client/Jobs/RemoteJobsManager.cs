@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -13,11 +12,6 @@ namespace Kudu.Client.Jobs
         public RemoteJobsManager(string serviceUrl, ICredentials credentials = null, HttpMessageHandler handler = null)
             : base(serviceUrl, credentials, handler)
         {
-        }
-
-        public Task<IEnumerable<JobBase>> ListJobsAsync()
-        {
-            return Client.GetJsonAsync<IEnumerable<JobBase>>(String.Empty);
         }
 
         public Task<IEnumerable<ContinuousJob>> ListContinuousJobsAsync()
@@ -52,17 +46,17 @@ namespace Kudu.Client.Jobs
 
         public async Task EnableContinuousJobAsync(string jobName)
         {
-            await Client.PostAsync("continuous/" + jobName + "/start", new StringContent(String.Empty));
+            await Client.PostAsync("continuous/" + jobName + "/start");
         }
 
         public async Task DisableContinuousJobAsync(string jobName)
         {
-            await Client.PostAsync("continuous/" + jobName + "/stop", new StringContent(String.Empty));
+            await Client.PostAsync("continuous/" + jobName + "/stop");
         }
 
         public async Task InvokeTriggeredJobAsync(string jobName)
         {
-            await Client.PostAsync("triggered/" + jobName + "/run", new StringContent(String.Empty));
+            await Client.PostAsync("triggered/" + jobName + "/run");
         }
     }
 }

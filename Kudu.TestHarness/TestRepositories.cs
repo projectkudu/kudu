@@ -48,7 +48,7 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/WebSiteInSolution.git",             "efee8af"),
             new TestRepositoryInfo("https://github.com/KuduApps/NodeWithSolutions.git",             "bd16404"),
             new TestRepositoryInfo("https://github.com/KuduApps/MvcApplicationWithNuGetAutoRestore","1e269b5"),
-            new TestRepositoryInfo("https://github.com/KuduApps/ConsoleWorker",                     "8b572a4"),
+            new TestRepositoryInfo("https://github.com/KuduApps/ConsoleWorker",                     "9f6d494"),
             new TestRepositoryInfo("https://github.com/KuduApps/BasicConsoleWorker",                "ce1ec74"),
         };
 

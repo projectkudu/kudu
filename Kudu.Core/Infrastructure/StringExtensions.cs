@@ -16,7 +16,8 @@ namespace Kudu.Core
         }
 
         /// <summary>
-        /// Make string PII safe
+        /// Make string PII safe.
+        /// Use this method for sensitive personal information to hides its content.
         /// </summary>
         public static string Fuzz(this string str)
         {
