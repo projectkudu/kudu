@@ -163,10 +163,13 @@ namespace Kudu.Services.Web.App_Start
             var shutdownDetector = new ShutdownDetector();
             shutdownDetector.Initialize();
 
+            IDeploymentSettingsManager noContextDeploymentsSettingsManager =
+                new DeploymentSettingsManager(new XmlSettings.Settings(GetSettingsPath(environment)));
+
             // Trace shutdown event
             // Cannot use shutdownDetector.Token.Register because of race condition
             // with NinjectServices.Stop via WebActivator.ApplicationShutdownMethodAttribute
-            Shutdown += () => TraceShutdown(environment, kernel);
+            Shutdown += () => TraceShutdown(environment, kernel, noContextDeploymentsSettingsManager);
 
             // LogStream service
             // The hooks and log stream start endpoint are low traffic end-points. Re-using it to avoid creating another lock 
@@ -187,9 +190,8 @@ namespace Kudu.Services.Web.App_Start
             // Deployment Service
             kernel.Bind<ISettings>().ToMethod(context => new XmlSettings.Settings(GetSettingsPath(environment)))
                                              .InRequestScope();
-
-            IDeploymentSettingsManager deploymentSettingsManager = kernel.Get<DeploymentSettingsManager>();
-            kernel.Bind<IDeploymentSettingsManager>().ToConstant(deploymentSettingsManager);
+            kernel.Bind<IDeploymentSettingsManager>().To<DeploymentSettingsManager>()
+                                             .InRequestScope();
 
             kernel.Bind<IDeploymentStatusManager>().To<DeploymentStatusManager>()
                                              .InRequestScope();
@@ -200,7 +202,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IWebHooksManager>().To<WebHooksManager>()
                                              .InRequestScope();
 
-            var noContextTraceFactory = new TracerFactory(() => GetTracerWithoutContext(environment, kernel));
+            var noContextTraceFactory = new TracerFactory(() => GetTracerWithoutContext(environment, kernel, noContextDeploymentsSettingsManager));
 
             ITriggeredJobsManager triggeredJobsManager = new TriggeredJobsManager(
                 noContextTraceFactory,
@@ -261,7 +263,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<ICommandExecutor>().ToMethod(context => GetCommandExecutor(environment, context))
                                            .InRequestScope();
 
-            MigrateSite(environment, kernel);
+            MigrateSite(environment, kernel, noContextDeploymentsSettingsManager);
 
             RegisterRoutes(kernel, RouteTable.Routes);
         }
@@ -384,7 +386,7 @@ namespace Kudu.Services.Web.App_Start
         }
 
         // Perform migration tasks to deal with legacy sites that had different file layout
-        private static void MigrateSite(IEnvironment environment, IKernel kernel)
+        private static void MigrateSite(IEnvironment environment, IKernel kernel, IDeploymentSettingsManager settings)
         {
             try
             {
@@ -392,7 +394,7 @@ namespace Kudu.Services.Web.App_Start
             }
             catch (Exception e)
             {
-                ITracer tracer = GetTracerWithoutContext(environment, kernel);
+                ITracer tracer = GetTracerWithoutContext(environment, kernel, settings);
                 tracer.Trace("Failed to move legacy .ssh folder: {0}", e.Message);
             }
         }
@@ -440,9 +442,9 @@ namespace Kudu.Services.Web.App_Start
             return NullTracer.Instance;
         }
 
-        private static ITracer GetTracerWithoutContext(IEnvironment environment, IKernel kernel)
+        private static ITracer GetTracerWithoutContext(IEnvironment environment, IKernel kernel, IDeploymentSettingsManager settings)
         {
-            TraceLevel level = kernel.Get<IDeploymentSettingsManager>().GetTraceLevel();
+            TraceLevel level = settings.GetTraceLevel();
             if (level > TraceLevel.Off)
             {
                 string tracePath = Path.Combine(environment.TracePath, Constants.TraceFile);
@@ -454,9 +456,9 @@ namespace Kudu.Services.Web.App_Start
             return NullTracer.Instance;
         }
 
-        private static void TraceShutdown(IEnvironment environment, IKernel kernel)
+        private static void TraceShutdown(IEnvironment environment, IKernel kernel, IDeploymentSettingsManager settings)
         {
-            ITracer tracer = GetTracerWithoutContext(environment, kernel);
+            ITracer tracer = GetTracerWithoutContext(environment, kernel, settings);
             var attribs = new Dictionary<string, string>();
 
             // Add an attribute containing the process, AppDomain and Thread ids to help debugging
