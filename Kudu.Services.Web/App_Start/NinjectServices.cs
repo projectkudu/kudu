@@ -169,7 +169,7 @@ namespace Kudu.Services.Web.App_Start
             // Trace shutdown event
             // Cannot use shutdownDetector.Token.Register because of race condition
             // with NinjectServices.Stop via WebActivator.ApplicationShutdownMethodAttribute
-            Shutdown += () => TraceShutdown(environment, kernel, noContextDeploymentsSettingsManager);
+            Shutdown += () => TraceShutdown(environment, noContextDeploymentsSettingsManager);
 
             // LogStream service
             // The hooks and log stream start endpoint are low traffic end-points. Re-using it to avoid creating another lock 
@@ -202,7 +202,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IWebHooksManager>().To<WebHooksManager>()
                                              .InRequestScope();
 
-            var noContextTraceFactory = new TracerFactory(() => GetTracerWithoutContext(environment, kernel, noContextDeploymentsSettingsManager));
+            var noContextTraceFactory = new TracerFactory(() => GetTracerWithoutContext(environment, noContextDeploymentsSettingsManager));
 
             ITriggeredJobsManager triggeredJobsManager = new TriggeredJobsManager(
                 noContextTraceFactory,
@@ -263,7 +263,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<ICommandExecutor>().ToMethod(context => GetCommandExecutor(environment, context))
                                            .InRequestScope();
 
-            MigrateSite(environment, kernel, noContextDeploymentsSettingsManager);
+            MigrateSite(environment, noContextDeploymentsSettingsManager);
 
             RegisterRoutes(kernel, RouteTable.Routes);
         }
@@ -386,7 +386,7 @@ namespace Kudu.Services.Web.App_Start
         }
 
         // Perform migration tasks to deal with legacy sites that had different file layout
-        private static void MigrateSite(IEnvironment environment, IKernel kernel, IDeploymentSettingsManager settings)
+        private static void MigrateSite(IEnvironment environment, IDeploymentSettingsManager settings)
         {
             try
             {
@@ -394,7 +394,7 @@ namespace Kudu.Services.Web.App_Start
             }
             catch (Exception e)
             {
-                ITracer tracer = GetTracerWithoutContext(environment, kernel, settings);
+                ITracer tracer = GetTracerWithoutContext(environment, settings);
                 tracer.Trace("Failed to move legacy .ssh folder: {0}", e.Message);
             }
         }
@@ -442,7 +442,7 @@ namespace Kudu.Services.Web.App_Start
             return NullTracer.Instance;
         }
 
-        private static ITracer GetTracerWithoutContext(IEnvironment environment, IKernel kernel, IDeploymentSettingsManager settings)
+        private static ITracer GetTracerWithoutContext(IEnvironment environment, IDeploymentSettingsManager settings)
         {
             TraceLevel level = settings.GetTraceLevel();
             if (level > TraceLevel.Off)
@@ -456,9 +456,9 @@ namespace Kudu.Services.Web.App_Start
             return NullTracer.Instance;
         }
 
-        private static void TraceShutdown(IEnvironment environment, IKernel kernel, IDeploymentSettingsManager settings)
+        private static void TraceShutdown(IEnvironment environment, IDeploymentSettingsManager settings)
         {
-            ITracer tracer = GetTracerWithoutContext(environment, kernel, settings);
+            ITracer tracer = GetTracerWithoutContext(environment, settings);
             var attribs = new Dictionary<string, string>();
 
             // Add an attribute containing the process, AppDomain and Thread ids to help debugging
