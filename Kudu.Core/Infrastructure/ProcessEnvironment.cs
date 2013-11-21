@@ -2,7 +2,6 @@
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -124,72 +123,24 @@ namespace Kudu.Core.Infrastructure
             return result;
         }
 
-        private static bool TryReadIntPtr32(IntPtr hProcess, IntPtr ptr, out IntPtr readPtr)
-        {
-            bool result;
-            RuntimeHelpers.PrepareConstrainedRegions();
-            try
-            {
-            }
-            finally
-            {
-                int dataSize = sizeof(Int32);
-                var data = Marshal.AllocHGlobal(dataSize);
-                IntPtr res_len = IntPtr.Zero;
-                bool b = NativeMethods.ReadProcessMemory(
-                    hProcess,
-                    ptr,
-                    data,
-                    new IntPtr(dataSize),
-                    ref res_len);
-                readPtr = new IntPtr(Marshal.ReadInt32(data));
-                Marshal.FreeHGlobal(data);
-                if (!b || (int)res_len != dataSize)
-                {
-                    result = false;
-                }
-                else
-                {
-                    result = true;
-                }
-            }
-
-            return result;
-        }
-
+        // should just be ReadIntPtr not TryReadIntPtr, throw when failed
         private static bool TryReadIntPtr(IntPtr hProcess, IntPtr ptr, out IntPtr readPtr)
         {
-            bool result;
-            RuntimeHelpers.PrepareConstrainedRegions();
-            try
+            var dataSize = new IntPtr(IntPtr.Size);
+            var res_len = IntPtr.Zero;
+            if (!NativeMethods.ReadProcessMemory(
+                hProcess,
+                ptr,
+                out readPtr,
+                dataSize,
+                ref res_len))
             {
-            }
-            finally
-            {
-                int dataSize = IntPtr.Size;
-                var data = Marshal.AllocHGlobal(dataSize);
-                IntPtr res_len = IntPtr.Zero;
-                bool b = NativeMethods.ReadProcessMemory(
-                    hProcess,
-                    ptr,
-                    data,
-                    new IntPtr(dataSize),
-                    ref res_len);
-
-                readPtr = Marshal.ReadIntPtr(data);
-                Marshal.FreeHGlobal(data);
-
-                if (!b || (int)res_len != dataSize)
-                {
-                    result = false;
-                }
-                else
-                {
-                    result = true;
-                }
+                // automatically GetLastError() and format message
+                throw new Win32Exception();
             }
 
-            return result;
+            // This is more like an assert
+            return res_len == dataSize;
         }
 
         private static IntPtr GetPenv(IntPtr hProcess)
@@ -225,13 +176,13 @@ namespace Kudu.Core.Infrastructure
                 IntPtr pPeb = GetPeb32(hProcess);
 
                 IntPtr ptr;
-                if (!TryReadIntPtr32(hProcess, pPeb + 0x10, out ptr))
+                if (!TryReadIntPtr(hProcess, pPeb + 0x10, out ptr))
                 {
                     throw new Win32Exception("Unable to read PEB.");
                 }
 
                 IntPtr penv;
-                if (!TryReadIntPtr32(hProcess, ptr + 0x48, out penv))
+                if (!TryReadIntPtr(hProcess, ptr + 0x48, out penv))
                 {
                     throw new Win32Exception("Unable to read RTL_USER_PROCESS_PARAMETERS.");
                 }
@@ -400,7 +351,7 @@ namespace Kudu.Core.Infrastructure
             public static extern bool ReadProcessMemory(
                 IntPtr hProcess,
                 IntPtr lpBaseAddress,
-                IntPtr lpBuffer,
+                out IntPtr lpPtr,
                 IntPtr dwSize,
                 ref IntPtr lpNumberOfBytesRead);
 
