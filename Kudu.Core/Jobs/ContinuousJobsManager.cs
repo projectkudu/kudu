@@ -14,6 +14,7 @@ namespace Kudu.Core.Jobs
     public class ContinuousJobsManager : JobsManagerBase<ContinuousJob>, IContinuousJobsManager, IDisposable
     {
         private const int TimeoutUntilMakingChanges = 5 * 1000;
+        private const int CheckForWatcherTimeout = 30 * 1000;
 
         private readonly Dictionary<string, ContinuousJobRunner> _continuousJobRunners = new Dictionary<string, ContinuousJobRunner>(StringComparer.OrdinalIgnoreCase);
 
@@ -166,7 +167,7 @@ namespace Kudu.Core.Jobs
             if (!FileSystem.Directory.Exists(JobsBinariesPath))
             {
                 // If not check again in 30 seconds
-                _startFileWatcherTimer.Change(30 * 1000, Timeout.Infinite);
+                _startFileWatcherTimer.Change(CheckForWatcherTimeout, Timeout.Infinite);
                 return;
             }
 
@@ -191,7 +192,29 @@ namespace Kudu.Core.Jobs
 
         private void OnError(object sender, ErrorEventArgs e)
         {
-            TraceFactory.GetTracer().TraceError(e.GetException().ToString());
+            Exception ex = e.GetException();
+            TraceFactory.GetTracer().TraceError(ex.ToString());
+            if (!(ex is InternalBufferOverflowException))
+            {
+                ResetWatcher();
+            }
+        }
+
+        private void ResetWatcher()
+        {
+            DisposeWatcher();
+
+            _startFileWatcherTimer.Change(CheckForWatcherTimeout, Timeout.Infinite);
+        }
+
+        private void DisposeWatcher()
+        {
+            if (_fileSystemWatcher != null)
+            {
+                _fileSystemWatcher.EnableRaisingEvents = false;
+                _fileSystemWatcher.Dispose();
+                _fileSystemWatcher = null;
+            }
         }
 
         private void OnChanged(object sender, FileSystemEventArgs e)
@@ -233,23 +256,18 @@ namespace Kudu.Core.Jobs
 
             if (disposing)
             {
-                if (_makeChangesTimer != null)
-                {
-                    _makeChangesTimer.Dispose();
-                    _makeChangesTimer = null;
-                }
-
                 if (_startFileWatcherTimer != null)
                 {
                     _startFileWatcherTimer.Dispose();
                     _startFileWatcherTimer = null;
                 }
 
-                if (_fileSystemWatcher != null)
+                DisposeWatcher();
+
+                if (_makeChangesTimer != null)
                 {
-                    _fileSystemWatcher.Dispose();
-                    _fileSystemWatcher.EnableRaisingEvents = false;
-                    _fileSystemWatcher = null;
+                    _makeChangesTimer.Dispose();
+                    _makeChangesTimer = null;
                 }
             }
         }
