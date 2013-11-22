@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Kudu.Contracts.Tracing;
 
 namespace Kudu.Core.Infrastructure
@@ -43,5 +44,30 @@ namespace Kudu.Core.Infrastructure
         /// </summary>
         /// <see cref="http://msdn.microsoft.com/en-us/library/system.diagnostics.process.totalprocessortime.aspx"/>
         TimeSpan GetTotalProcessorTime(ITracer tracer);
+
+        /// <summary>
+        /// Gets the process Id
+        /// </summary>
+        int Id { get; }
+
+        /// <summary>
+        /// Gets whether the process has exited
+        /// </summary>
+        bool HasExited { get; }
+
+        /// <summary>
+        /// Gets the StandardError stream for the process
+        /// </summary>
+        StreamReader StandardError { get; }
+
+        /// <summary>
+        /// Gets the StandardInput stream for the process
+        /// </summary>
+        StreamWriter StandardInput { get; }
+
+        /// <summary>
+        /// Gets the StandardOutput stream for the process
+        /// </summary>
+        StreamReader StandardOutput { get; }
     }
 }

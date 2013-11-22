@@ -34,6 +34,7 @@ using Kudu.Services.SSHKey;
 using Kudu.Services.Web.Infrastructure;
 using Kudu.Services.Web.Services;
 using Kudu.Services.Web.Tracing;
+using Microsoft.AspNet.SignalR;
 using Ninject;
 using Ninject.Activation;
 using Ninject.Web.Common;
@@ -266,6 +267,30 @@ namespace Kudu.Services.Web.App_Start
             MigrateSite(environment, noContextDeploymentsSettingsManager);
 
             RegisterRoutes(kernel, RouteTable.Routes);
+
+            // Register the default hubs route: ~/signalr
+            GlobalHost.DependencyResolver = new SignalRNinjectDependencyResolver(kernel);
+            RouteTable.Routes.MapConnection<PersistentCommandController>("commandstream", "/commandstream");
+        }
+
+        public class SignalRNinjectDependencyResolver : DefaultDependencyResolver
+        {
+            private readonly IKernel _kernel;
+
+            public SignalRNinjectDependencyResolver(IKernel kernel)
+            {
+                _kernel = kernel;
+            }
+
+            public override object GetService(Type serviceType)
+            {
+                return _kernel.TryGet(serviceType) ?? base.GetService(serviceType);
+            }
+
+            public override IEnumerable<object> GetServices(Type serviceType)
+            {
+                return System.Linq.Enumerable.Concat(_kernel.GetAll(serviceType), base.GetServices(serviceType));
+            }
         }
 
         public static void RegisterRoutes(IKernel kernel, RouteCollection routes)

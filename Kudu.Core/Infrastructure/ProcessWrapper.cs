@@ -17,8 +17,8 @@ namespace Kudu.Core.Infrastructure
 
         public string Name { get; private set; }
 
-        public string Arguments 
-        { 
+        public string Arguments
+        {
             get
             {
                 return _process.StartInfo.Arguments;
@@ -43,6 +43,36 @@ namespace Kudu.Core.Infrastructure
         public TimeSpan GetTotalProcessorTime(ITracer tracer)
         {
             return _process.GetTotalProcessorTime(tracer);
+        }
+
+        public int Id
+        {
+            get { return _process.Id; }
+        }
+
+        public bool HasExited
+        {
+            get { return _process.HasExited; }
+        }
+
+        public StreamReader StandardError
+        {
+            get { return _process.StandardError; }
+        }
+
+        public StreamWriter StandardInput
+        {
+            get { return _process.StandardInput; }
+        }
+
+        public StreamReader StandardOutput
+        {
+            get { return _process.StandardOutput; }
+        }
+
+        public void Kill(bool includesChildren, ITracer tracer)
+        {
+            _process.Kill(includesChildren, tracer);
         }
     }
 }

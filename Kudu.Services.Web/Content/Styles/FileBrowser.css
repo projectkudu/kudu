@@ -23,6 +23,11 @@ body {
     width: 100%;
 }
 
+#KuduExecConsoleV2 {
+    height: 45%;
+    width: 100%;
+}
+
 div.spinner {
     float: right;
 }
@@ -57,6 +62,7 @@ div.console {
         margin-left: auto;
         margin-right: auto;
         overflow: auto;
+        word-wrap: break-word;
         padding: 0.3em;
         width: 100%;
     }
@@ -64,6 +70,20 @@ div.console {
     div.console div.jquery-console-focus span.jquery-console-cursor {
         background: white;
         color: black;
+        animation: blink 1s steps(5, start) infinite;
+        -webkit-animation: blink 1s steps(5, start) infinite;
+    }
+    
+    @-webkit-keyframes blink {
+       to {
+            visibility: hidden;
+        }
+    }
+    
+    @keyframes blink {
+       to {
+            visibility: hidden;
+        }
     }
 
     div.console div.jquery-console-message-error {
@@ -76,6 +96,10 @@ div.console {
 
     div.console div.jquery-console-message-type {
         color: white;
+    }
+
+    div.console span.jquery-console-prompt-pid {
+        color: green;
     }
 
 .edit-view {
@@ -108,4 +132,8 @@ textarea {
 
 .disabled {
     color: gray;
+}
+
+.right {
+    float: right;
 }
