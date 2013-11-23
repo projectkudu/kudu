@@ -16,10 +16,12 @@ window.KuduExec = { workingDir: curWorkingDir };
 
 function LoadConsoleV2() {
 
+    var fileExplorerChanged = false;
     function _changeDir(value) {
         value = value || window.KuduExec.appRoot;
         curWorkingDir(value);
         _sendCommand("cd /d \"" + value + "\"");
+        fileExplorerChanged = true;
     };
 
     window.KuduExec.changeDir = _changeDir;
@@ -60,14 +62,15 @@ function LoadConsoleV2() {
                 DisplayAndUpdate(lastLine);
                 lastLine.Output = "";
                 DisplayAndUpdate(lastLine);
+                fileExplorerChanged = false;
                 if (line.trim().toUpperCase() == "EXIT") {
                     controller.enableInput();
                 }
             }
         },
-        cancelHandle: function() {
+        cancelHandle: function () {
+            //sending CTRL+C character (^C) to the server to cancel the current command
             _sendCommand("\x03");
-            //curReportFun("Command canceled by user.", "jquery-console-message-error");
         },
         completeHandle: function (line) {
             var cdRegex = /^cd\s+(.+)$/,
@@ -172,7 +175,7 @@ function LoadConsoleV2() {
         //save last line for next time.
         lastLine = data;
 
-        if (!endsWith(prompt, "\n")) {
+        if (!endsWith(prompt, "\n") && !fileExplorerChanged) {
             var windowsPath = prompt.replace("\n", "").replace(">", "");
             if (windowsPath.match(/^[a-zA-Z]:(\\\w+)*([\\])?$/)) {
                 if (!window.KuduExec.appRoot) {
