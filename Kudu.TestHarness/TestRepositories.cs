@@ -48,8 +48,8 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/WebSiteInSolution.git",             "efee8af"),
             new TestRepositoryInfo("https://github.com/KuduApps/NodeWithSolutions.git",             "bd16404"),
             new TestRepositoryInfo("https://github.com/KuduApps/MvcApplicationWithNuGetAutoRestore","1e269b5"),
-            new TestRepositoryInfo("https://github.com/KuduApps/ConsoleWorker",                     "8b572a4"),
-            new TestRepositoryInfo("https://github.com/KuduApps/BasicConsoleWorker",                "29b7f01"),
+            new TestRepositoryInfo("https://github.com/KuduApps/ConsoleWorker",                     "f9adcf9"),
+            new TestRepositoryInfo("https://github.com/KuduApps/BasicConsoleWorker",                "ce1ec74"),
         };
 
         private static Dictionary<string, TestRepositoryInfo> _repos;
@@ -87,6 +87,7 @@ namespace Kudu.TestHarness
         }
 
         public string Url { get; set; }
+
         public string CommitId { get; set; }
     }
 }

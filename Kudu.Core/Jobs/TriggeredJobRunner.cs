@@ -15,8 +15,8 @@ namespace Kudu.Core.Jobs
     {
         private readonly LockFile _lockFile;
 
-        public TriggeredJobRunner(string jobName, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings, ITraceFactory traceFactory)
-            : base(jobName, Constants.TriggeredPath, environment, fileSystem, settings, traceFactory)
+        public TriggeredJobRunner(string jobName, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
+            : base(jobName, Constants.TriggeredPath, environment, fileSystem, settings, traceFactory, analytics)
         {
             _lockFile = new LockFile(Path.Combine(JobDataPath, "triggeredJob.lock"), TraceFactory, FileSystem);
         }

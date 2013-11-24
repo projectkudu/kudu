@@ -17,17 +17,14 @@ namespace Kudu.Core.Jobs
         private Thread _continuousJobThread;
         private readonly ContinuousJobLogger _continuousJobLogger;
         private readonly string _disableFilePath;
-        private readonly TimeSpan _jobsInterval;
 
-        public ContinuousJobRunner(string jobName, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings, ITraceFactory traceFactory)
-            : base(jobName, Constants.ContinuousPath, environment, fileSystem, settings, traceFactory)
+        public ContinuousJobRunner(string jobName, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
+            : base(jobName, Constants.ContinuousPath, environment, fileSystem, settings, traceFactory, analytics)
         {
             _continuousJobLogger = new ContinuousJobLogger(jobName, Environment, FileSystem, TraceFactory);
             _continuousJobLogger.ReportStatus(ContinuousJobStatus.Initializing);
 
             _disableFilePath = Path.Combine(JobBinariesPath, "disable.job");
-
-            _jobsInterval = settings.GetJobsInterval();
         }
 
         protected override string JobEnvironmentKeyPrefix
@@ -61,9 +58,10 @@ namespace Kudu.Core.Jobs
 
                         if (_started == 1 && !IsDisabled)
                         {
-                            _continuousJobLogger.LogInformation("Process went down, waiting for {0} seconds".FormatInvariant(_jobsInterval.TotalSeconds));
+                            TimeSpan jobsInterval = Settings.GetJobsInterval();
+                            _continuousJobLogger.LogInformation("Process went down, waiting for {0} seconds".FormatInvariant(jobsInterval.TotalSeconds));
                             _continuousJobLogger.ReportStatus(ContinuousJobStatus.PendingRestart);
-                            WaitForTimeOrStop(_jobsInterval);
+                            WaitForTimeOrStop(jobsInterval);
                         }
                     }
                 }

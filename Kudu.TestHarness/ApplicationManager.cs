@@ -8,6 +8,7 @@ using Kudu.Client.Deployment;
 using Kudu.Client.Diagnostics;
 using Kudu.Client.Editor;
 using Kudu.Client.Infrastructure;
+using Kudu.Client.Jobs;
 using Kudu.Client.SourceControl;
 using Kudu.Client.SSHKey;
 using Kudu.Core.Infrastructure;
@@ -29,7 +30,7 @@ namespace Kudu.TestHarness
             _site = site;
             _appName = appName;
             _settingsResolver = settingsResolver;
-            
+
             SiteUrl = site.SiteUrl;
             ServiceUrl = site.ServiceUrl;
 
@@ -45,6 +46,7 @@ namespace Kudu.TestHarness
             ProcessManager = new RemoteProcessManager(site.ServiceUrl + "diagnostics/processes");
             WebHooksManager = new RemoteWebHooksManager(site.ServiceUrl + "hooks");
             RepositoryManager = new RemoteRepositoryManager(site.ServiceUrl + "scm");
+            JobsManager = new RemoteJobsManager(site.ServiceUrl + "jobs");
 
             var repositoryInfo = RepositoryManager.GetRepositoryInfo().Result;
             GitUrl = repositoryInfo.GitUrl.OriginalString;
@@ -144,6 +146,12 @@ namespace Kudu.TestHarness
             private set;
         }
 
+        public RemoteJobsManager JobsManager
+        {
+            get;
+            private set;
+        }
+
         public string GitUrl
         {
             get;
@@ -152,7 +160,8 @@ namespace Kudu.TestHarness
 
         internal int SitePoolIndex
         {
-            get; set;
+            get;
+            set;
         }
 
         public string GetCustomGitUrl(string path)
@@ -214,7 +223,6 @@ namespace Kudu.TestHarness
             }
             catch
             {
-                
                 throw;
             }
         }
@@ -222,7 +230,7 @@ namespace Kudu.TestHarness
         public static async Task RunNoCatch(string testName, Func<ApplicationManager, Task> action)
         {
             TestTracer.Trace("Running test - {0}", testName);
-            
+
             var appManager = await SitePool.CreateApplicationAsync();
             TestTracer.Trace("Using site - {0}", appManager.SiteUrl);
 
