@@ -11,7 +11,7 @@
 <html>
 <head>
     <title>Kudu Services</title>
-    <link rel="stylesheet" type="text/css" href="//ajax.aspnetcdn.com/ajax/bootstrap/3.0.2/css/bootstrap.min.css" />
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css" rel="stylesheet" />
     <style type="text/css">
         body {
             padding-top: 50px;
@@ -101,5 +101,7 @@
         <% } %>
         </ul>
     </div>
+    <script src="//ajax.aspnetcdn.com/ajax/jquery/jquery-1.9.1.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js"></script>
 </body>
 </html>
