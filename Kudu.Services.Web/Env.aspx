@@ -1,6 +1,8 @@
 ﻿<%@ Page Language="C#" %>
 <%@ Import Namespace="System.Configuration" %>
 <%@ Import Namespace="System.Collections" %>
+<%@ Register Src="~/Menu.ascx" TagPrefix="uc1" TagName="Menu" %>
+
 
 <%
     var context = new HttpContextWrapper(HttpContext.Current);
@@ -17,20 +19,7 @@
     </style>
 </head>
 <body>
-    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-        <div class="container">
-            <div class="navbar-header">
-                <a class="navbar-brand" href="<%=ResolveUrl("~/")%>">Kudu</a>
-            </div>
-            <div class="collapse navbar-collapse">
-                <ul class="nav navbar-nav">
-                    <li><a href="Env.aspx">Runtime Environment</a></li>
-                    <li><a href="DebugConsole">Diagnostic console</a></li>
-                    <li><a href="logstream" title="If no log events are being generated the page may not load.">Diagnostic log stream</a></li>
-                </ul>
-            </div>
-        </div>
-    </div>
+    <uc1:menu runat="server" id="Menu" />
 
     <div class="container">
         <h3>Index</h3>

@@ -1,4 +1,8 @@
-﻿<!DOCTYPE html>
+﻿<%@ Page Language="C#" %>
+<%@ Register Src="~/Menu.ascx" TagPrefix="uc1" TagName="Menu" %>
+
+
+<!DOCTYPE html>
 
 <html>
 <head>
@@ -9,20 +13,7 @@
     <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.2/css/font-awesome.css" rel="stylesheet" />
 </head>
 <body>
-    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-        <div class="container">
-            <div class="navbar-header">
-                <a class="navbar-brand" href="/">Kudu</a>
-            </div>
-            <div class="collapse navbar-collapse">
-                <ul class="nav navbar-nav">
-                    <li><a href="/Env.aspx">Runtime Environment</a></li>
-                    <li><a href="/DebugConsole">Diagnostic console</a></li>
-                    <li><a href="/logstream" title="If no log events are being generated the page may not load.">Diagnostic log stream</a></li>
-                </ul>
-            </div>
-        </div>
-    </div>
+    <uc1:menu runat="server" id="Menu" />
     <div id="main" class="container">
         <div class="view main-view" data-bind="visible: !fileEdit()">
             <div id="fileList">
