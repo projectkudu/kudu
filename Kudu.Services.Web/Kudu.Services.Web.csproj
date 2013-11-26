@@ -123,9 +123,10 @@
     <Content Include="Areas\HelpPage\HelpPage.css" />
     <Content Include="Content\Scripts\KuduExec.js" />
     <Content Include="Content\Styles\FileBrowser.css" />
+    <Content Include="Menu.ascx" />
     <Content Include="Env.aspx" />
     <Content Include="Default.aspx" />
-    <Content Include="DebugConsole\index.html" />
+    <Content Include="DebugConsole\Default.aspx" />
     <Content Include="Global.asax" />
     <Content Include="Content\Scripts\jquery-console\jquery.console.js" />
     <Content Include="Content\Scripts\KuduExecV2.js" />
