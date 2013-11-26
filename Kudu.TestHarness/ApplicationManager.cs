@@ -180,7 +180,7 @@ namespace Kudu.TestHarness
 
         public string GetKuduUpTime()
         {
-            const string pattern = @"<div class=""col-md-2"">\s*<strong>Site up time</strong>\s*</div>\s*<div>([^<]*)</div>";
+            const string pattern = @"<div class=""col-xs-2"">\s*<strong>Site up time</strong>\s*</div>\s*<div>([^<]*)</div>";
 
             string content = OperationManager.Attempt<string>(() =>
             {

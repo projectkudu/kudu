@@ -33,7 +33,7 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        [Fact(Skip="This test is too unreliable as it relies on formatting. Also, its main Assert has been disabled so it's useless")]
+        [Fact]
         public void KuduUpTimeTest()
         {
             ApplicationManager.Run("KuduUpTimeTest", appManager =>
