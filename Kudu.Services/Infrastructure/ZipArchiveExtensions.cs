@@ -65,6 +65,7 @@ namespace Kudu.Services
             {
                 string fileName = Path.Combine(directoryNameInArchive, file.Name);
                 ZipArchiveEntry entry = zipArchive.CreateEntry(fileName, CompressionLevel.Fastest);
+                entry.LastWriteTime = file.LastWriteTime;
 
                 using (Stream zipStream = entry.Open())
                 {
