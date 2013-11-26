@@ -273,7 +273,7 @@ namespace Kudu.Services.Infrastructure
             Contract.Assert(localFilePath != null);
 
             // Open file exclusively for read-sharing
-            return new FileStream(localFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, BufferSize, useAsync: true);
+            return new FileStream(localFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, BufferSize, useAsync: true);
         }
 
         /// <summary>
@@ -301,7 +301,7 @@ namespace Kudu.Services.Infrastructure
             Contract.Assert(file != null);
 
             // Open file exclusively for delete sharing only
-            return file.Open(FileMode.Open, FileAccess.Read, FileShare.Delete);
+            return file.Open(FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
         }
 
         // internal for testing purpose
