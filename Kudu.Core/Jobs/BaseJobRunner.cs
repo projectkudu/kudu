@@ -160,7 +160,7 @@ namespace Kudu.Core.Jobs
 
                 // Set environment variable to be able to identify all processes spawned for this job
                 exe.EnvironmentVariables[GetJobEnvironmentKey()] = "true";
-                exe.EnvironmentVariables[WellKnownEnvironmentVariables.JobRootPath] = binariesPath;
+                exe.EnvironmentVariables[WellKnownEnvironmentVariables.JobRootPath] = WorkingDirectory;
 
                 UpdateStatus(logger, "Running");
 
