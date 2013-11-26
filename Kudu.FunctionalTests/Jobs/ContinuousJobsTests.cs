@@ -279,15 +279,15 @@ namespace Kudu.FunctionalTests.Jobs
                     "run.bat",
                     "run.exe",
                     "run.sh",
-                    "run.php",
                     "run.py",
+                    //"run.php",
                     "run.js",
                     "go.cmd",
                     "do.bat",
                     "console.exe",
                     "invoke.sh",
-                    "request.php",
                     "respond.py",
+                    //"request.php",
                     "execute.js"
                 };
 
@@ -318,6 +318,7 @@ namespace Kudu.FunctionalTests.Jobs
         private void VerifyVerificationFile(ApplicationManager appManager, string[] expectedContentLines)
         {
             string verificationFileContent = appManager.VfsManager.ReadAllText(VerificationFilePath).TrimEnd();
+            Assert.NotNull(verificationFileContent);
             string[] lines = verificationFileContent.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
             Assert.Equal(expectedContentLines.Length, lines.Length);
             for (int i = 0; i < expectedContentLines.Length; i++)
@@ -366,19 +367,30 @@ namespace Kudu.FunctionalTests.Jobs
             {
                 appManager.SettingsManager.SetValue(SettingsKeys.JobsInterval, "5").Wait();
 
-                // Make sure verification file and jobs doesn't exist
-                WaitUntilAssertVerified(
-                    "clean site for jobs",
-                    TimeSpan.FromSeconds(60),
-                    () =>
-                    {
-                        appManager.VfsManager.Delete(JobsBinPath + "?recursive=true");
-                        appManager.VfsManager.Delete(JobsDataPath + "?recursive=true");
-                        appManager.VfsManager.Delete(VerificationFilePath);
-                    });
+                CleanupTest(appManager);
 
-                action(appManager);
+                try
+                {
+                    action(appManager);
+                }
+                finally
+                {
+                    CleanupTest(appManager);
+                }
             });
+        }
+
+        private void CleanupTest(ApplicationManager appManager)
+        {
+            WaitUntilAssertVerified(
+                "clean site for jobs",
+                TimeSpan.FromSeconds(60),
+                () =>
+                {
+                    appManager.VfsManager.Delete(JobsBinPath + "?recursive=true");
+                    appManager.VfsManager.Delete(JobsDataPath + "?recursive=true");
+                    appManager.VfsManager.Delete(VerificationFilePath);
+                });
         }
 
         private void PushAndVerifyConsoleWorker(ApplicationManager appManager, TestRepository testRepository, string[] expectedVerificationFileLines, int expectedDeployments = 1)
