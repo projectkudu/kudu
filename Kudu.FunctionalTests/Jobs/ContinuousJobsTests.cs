@@ -225,43 +225,46 @@ namespace Kudu.FunctionalTests.Jobs
 
                 TestTracer.Trace("Trigger the job");
 
-                appManager.JobsManager.InvokeTriggeredJobAsync(jobName).Wait();
+                VerifyTriggeredJobTriggers(appManager, jobName, 1, "Success", "echo ");
 
-                WaitUntilAssertVerified(
-                    "verify triggered job run",
-                    TimeSpan.FromSeconds(10),
-                    () =>
-                    {
-                        TriggeredJobHistory triggeredJobHistory = appManager.JobsManager.GetTriggeredJobHistoryAsync(jobName).Result;
-                        Assert.NotNull(triggeredJobHistory);
-                        Assert.Equal(1, triggeredJobHistory.TriggeredJobRuns.Count());
-
-                        AssertTriggeredJobRun(triggeredJobHistory.TriggeredJobRuns.First(), "Success", "echo ");
-
-                        VerifyVerificationFile(appManager, new string[] { ExpectedVerificationFileContent });
-                    });
+                VerifyVerificationFile(appManager, new string[] { ExpectedVerificationFileContent });
 
                 TestTracer.Trace("Trigger the job again");
 
-                appManager.JobsManager.InvokeTriggeredJobAsync(jobName).Wait();
+                VerifyTriggeredJobTriggers(appManager, jobName, 2, "Success", "echo ");
 
-                WaitUntilAssertVerified(
-                    "verify triggered job run again",
-                    TimeSpan.FromSeconds(10),
-                    () =>
-                    {
-                        TriggeredJobHistory triggeredJobHistory = appManager.JobsManager.GetTriggeredJobHistoryAsync(jobName).Result;
-                        Assert.NotNull(triggeredJobHistory);
-                        Assert.Equal(2, triggeredJobHistory.TriggeredJobRuns.Count());
+                VerifyVerificationFile(appManager, new string[] { ExpectedVerificationFileContent, ExpectedVerificationFileContent });
 
-                        foreach (TriggeredJobRun triggeredJobRun in triggeredJobHistory.TriggeredJobRuns)
-                        {
-                            AssertTriggeredJobRun(triggeredJobRun, "Success", "echo ");
-                        }
+                TestTracer.Trace("Trigger the job 5 more times to make sure history is trimmed");
 
-                        VerifyVerificationFile(appManager, new string[] { ExpectedVerificationFileContent, ExpectedVerificationFileContent });
-                    });
+                appManager.SettingsManager.SetValue(SettingsKeys.MaxJobRunsHistoryCount, "5").Wait();
+
+                VerifyTriggeredJobTriggers(appManager, jobName, 3, "Success", "echo ");
+                VerifyTriggeredJobTriggers(appManager, jobName, 4, "Success", "echo ");
+                VerifyTriggeredJobTriggers(appManager, jobName, 5, "Success", "echo ");
+                VerifyTriggeredJobTriggers(appManager, jobName, 5, "Success", "echo ");
+                VerifyTriggeredJobTriggers(appManager, jobName, 5, "Success", "echo ");
             });
+        }
+
+        private void VerifyTriggeredJobTriggers(ApplicationManager appManager, string jobName, int expectedNumberOfRuns, string expectedStatus, string expectedOutput = null, string expectedError = null)
+        {
+            appManager.JobsManager.InvokeTriggeredJobAsync(jobName).Wait();
+
+            WaitUntilAssertVerified(
+                "verify triggered job run",
+                TimeSpan.FromSeconds(20),
+                () =>
+                {
+                    TriggeredJobHistory triggeredJobHistory = appManager.JobsManager.GetTriggeredJobHistoryAsync(jobName).Result;
+                    Assert.NotNull(triggeredJobHistory);
+                    Assert.Equal(expectedNumberOfRuns, triggeredJobHistory.TriggeredJobRuns.Count());
+
+                    foreach (TriggeredJobRun triggeredJobRun in triggeredJobHistory.TriggeredJobRuns)
+                    {
+                        AssertTriggeredJobRun(triggeredJobRun, expectedStatus, expectedOutput, expectedError);
+                    }
+                });
         }
 
         [Fact]
@@ -279,14 +282,14 @@ namespace Kudu.FunctionalTests.Jobs
                     "run.bat",
                     "run.exe",
                     "run.sh",
-                    "run.py",
+                    //"run.py",
                     //"run.php",
                     "run.js",
                     "go.cmd",
                     "do.bat",
                     "console.exe",
                     "invoke.sh",
-                    "respond.py",
+                    //"respond.py",
                     //"request.php",
                     "execute.js"
                 };
