@@ -9,7 +9,7 @@ namespace Kudu.Core.Jobs
     public class ContinuousJobLogger : JobLogger
     {
         public const string JobLogFileName = "job.log";
-        public const string JobPrevLogFileName = "job_1.log";
+        public const string JobPrevLogFileName = "job_prev.log";
         public const int MaxContinuousLogFileSize = 1 * 1024 * 1024;
 
         private readonly string _historyPath;
