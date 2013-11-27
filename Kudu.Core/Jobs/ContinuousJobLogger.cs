@@ -9,6 +9,8 @@ namespace Kudu.Core.Jobs
     public class ContinuousJobLogger : JobLogger
     {
         public const string JobLogFileName = "job.log";
+        public const string JobPrevLogFileName = "job_1.log";
+        public const int MaxContinuousLogFileSize = 1 * 1024 * 1024;
 
         private readonly string _historyPath;
         private readonly string _logFilePath;
@@ -18,7 +20,12 @@ namespace Kudu.Core.Jobs
         {
             _historyPath = Path.Combine(Environment.JobsDataPath, Constants.ContinuousPath, jobName);
             FileSystemHelpers.EnsureDirectory(_historyPath);
-            _logFilePath = Path.Combine(_historyPath, JobLogFileName);
+            _logFilePath = GetLogFilePath(JobLogFileName);
+        }
+
+        private string GetLogFilePath(string logFileName)
+        {
+            return Path.Combine(_historyPath, logFileName);
         }
 
         protected override string HistoryPath
@@ -57,7 +64,33 @@ namespace Kudu.Core.Jobs
 
         private void Log(Level level, string message)
         {
+            CleanupLogFileIfNeeded();
             SafeLogToFile(_logFilePath, GetSystemFormattedMessage(level, message));
+        }
+
+        private void CleanupLogFileIfNeeded()
+        {
+            try
+            {
+                FileInfoBase logFile = FileSystem.FileInfo.FromFileName(_logFilePath);
+
+                if (logFile.Length > MaxContinuousLogFileSize)
+                {
+                    // lock file and only allow deleting it
+                    // this is for allowing only the first (instance) trying to roll the log file
+                    using (File.Open(_logFilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.Delete))
+                    {
+                        // roll log file, currently allow only 2 log files to exist at the same time
+                        string prevLogFilePath = GetLogFilePath(JobPrevLogFileName);
+                        FileSystem.File.Delete(prevLogFilePath);
+                        logFile.MoveTo(prevLogFilePath);
+                    }
+                }
+            }
+            catch
+            {
+                // best effort for this method
+            }
         }
     }
 }
