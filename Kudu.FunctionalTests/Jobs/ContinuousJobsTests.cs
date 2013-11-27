@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Deployment;
@@ -262,7 +262,7 @@ namespace Kudu.FunctionalTests.Jobs
 
                     foreach (TriggeredJobRun triggeredJobRun in triggeredJobHistory.TriggeredJobRuns)
                     {
-                        AssertTriggeredJobRun(triggeredJobRun, expectedStatus, expectedOutput, expectedError);
+                        AssertTriggeredJobRun(appManager, triggeredJobRun, expectedStatus, expectedOutput, expectedError);
                     }
                 });
         }
@@ -330,7 +330,7 @@ namespace Kudu.FunctionalTests.Jobs
             }
         }
 
-        private void AssertTriggeredJobRun(TriggeredJobRun actualTriggeredJobRun, string expectedStatus, string expectedOutput = null, string expectedError = null)
+        private void AssertTriggeredJobRun(ApplicationManager appManager, TriggeredJobRun actualTriggeredJobRun, string expectedStatus, string expectedOutput = null, string expectedError = null)
         {
             Assert.NotNull(actualTriggeredJobRun);
             Assert.Equal(expectedStatus, actualTriggeredJobRun.Status);
@@ -340,21 +340,22 @@ namespace Kudu.FunctionalTests.Jobs
             Assert.NotNull(actualTriggeredJobRun.StartTime);
             Assert.NotNull(actualTriggeredJobRun.Url);
 
-            AssertUrlContentAsync(actualTriggeredJobRun.OutputUrl, expectedOutput).Wait();
-            AssertUrlContentAsync(actualTriggeredJobRun.ErrorUrl, expectedError).Wait();
+            AssertUrlContentAsync(appManager, actualTriggeredJobRun.OutputUrl, expectedOutput).Wait();
+            AssertUrlContentAsync(appManager, actualTriggeredJobRun.ErrorUrl, expectedError).Wait();
         }
 
-        private async Task AssertUrlContentAsync(Uri address, string expectedContent)
+        private async Task AssertUrlContentAsync(ApplicationManager appManager, Uri requestUrl, string expectedContent)
         {
             if (expectedContent == null)
             {
-                Assert.Null(address);
+                Assert.Null(requestUrl);
                 return;
             }
 
-            using (var httpClient = new HttpClient())
+            string address = requestUrl.ToString();
+            using (var httpClient = HttpClientHelper.CreateClient(address, appManager.JobsManager.Credentials))
             {
-                using (var response = await httpClient.GetAsync(address))
+                using (var response = await httpClient.GetAsync(String.Empty))
                 {
                     var content = await response.Content.ReadAsStringAsync();
                     TestTracer.Trace("Request to: {0}\nStatus code: {1}\nContent: {2}", address, response.StatusCode, content);
