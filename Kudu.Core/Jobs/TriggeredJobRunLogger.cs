@@ -35,7 +35,7 @@ namespace Kudu.Core.Jobs
         {
             OldRunsCleanup(triggeredJob.Name, fileSystem, environment, traceFactory, settings);
 
-            string id = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+            string id = DateTime.UtcNow.ToString("yyyyMMddHHmmssffff");
             var logger = new TriggeredJobRunLogger(triggeredJob.Name, id, environment, fileSystem, traceFactory);
             var triggeredJobStatus = new TriggeredJobStatus()
             {
@@ -48,7 +48,9 @@ namespace Kudu.Core.Jobs
 
         private static void OldRunsCleanup(string jobName, IFileSystem fileSystem, IEnvironment environment, ITraceFactory traceFactory, IDeploymentSettingsManager settings)
         {
-            int maxRuns = settings.GetMaxJobRunsHistoryCount();
+            // if max is 5 and we have 5 we still want to remove one to make room for the next
+            // that's why we decrement max value by 1
+            int maxRuns = settings.GetMaxJobRunsHistoryCount() - 1;
 
             string historyPath = Path.Combine(environment.JobsDataPath, Constants.TriggeredPath, jobName);
             DirectoryInfoBase historyDirectory = fileSystem.DirectoryInfo.FromDirectoryName(historyPath);
