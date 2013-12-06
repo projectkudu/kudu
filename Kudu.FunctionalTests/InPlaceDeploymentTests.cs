@@ -25,7 +25,7 @@ namespace Kudu.FunctionalTests
                     await appManager.SettingsManager.SetValues(settings);
                 }
 
-                using (TestRepository testRepository = Git.Clone(scenario.Name, scenario.CloneUrl))
+                using (TestRepository testRepository = Git.Clone(scenario.Name))
                 {
                     var result = appManager.GitDeploy(testRepository.PhysicalPath);
                     setting.Verify(appManager);
@@ -44,7 +44,7 @@ namespace Kudu.FunctionalTests
             get
             {
                 yield return new object[] { new NodeJsAppScenario(), new InPlaceDefaultProjectTargetPathSetting() };
-                                
+
                 var scenario = new HelloKuduWithSubFolders();
                 foreach (Setting setting in Settings)
                 {
@@ -143,7 +143,7 @@ namespace Kudu.FunctionalTests
             {
                 get { return DeployStatus.Failed; }
             }
-            
+
             public override void Verify(ApplicationManager appManager)
             {
                 Assert.False(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should not have site\repository\.git folder");
@@ -390,7 +390,6 @@ namespace Kudu.FunctionalTests
         public abstract class Scenario
         {
             public abstract string Name { get; }
-            public abstract string CloneUrl { get; }
             public abstract string BuilderTrace { get; }
             public abstract string Content { get; }
             public abstract string DefaultDocument { get; }
@@ -441,11 +440,6 @@ namespace Kudu.FunctionalTests
                 get { return "NodeHelloWorldNoConfig"; }
             }
 
-            public override string CloneUrl
-            {
-                get { return "https://github.com/KuduApps/NodeHelloWorldNoConfig.git"; }
-            }
-
             public override string Content
             {
                 get { return "Hello, world"; }
@@ -467,11 +461,6 @@ namespace Kudu.FunctionalTests
             public override string Name
             {
                 get { return "HelloKuduWithSubFolders"; }
-            }
-
-            public override string CloneUrl
-            {
-                get { return "https://github.com/KuduApps/HelloKuduWithSubFolders.git"; }
             }
 
             public override string Content
