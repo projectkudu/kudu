@@ -25,6 +25,11 @@ namespace Kudu.Services.Hooks
         {
             try
             {
+                if (webHook == null)
+                {
+                    return Request.CreateResponse(HttpStatusCode.BadRequest);
+                }
+
                 WebHook webHookAdded = _hooksManager.AddWebHook(webHook);
                 return Request.CreateResponse(HttpStatusCode.Created, webHookAdded);
             }
