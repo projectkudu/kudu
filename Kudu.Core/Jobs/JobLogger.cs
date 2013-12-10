@@ -10,8 +10,6 @@ namespace Kudu.Core.Jobs
 {
     public abstract class JobLogger : IJobLogger
     {
-        public const string StatusFile = "status";
-
         private static readonly JsonSerializerSettings JsonSerializerSettings = new JsonSerializerSettings()
         {
             DefaultValueHandling = DefaultValueHandling.Ignore,
@@ -31,8 +29,11 @@ namespace Kudu.Core.Jobs
 
         private string _statusFilePath;
 
-        protected JobLogger(IEnvironment environment, IFileSystem fileSystem, ITraceFactory traceFactory)
+        private readonly string _statusFileName;
+
+        protected JobLogger(string statusFileName, IEnvironment environment, IFileSystem fileSystem, ITraceFactory traceFactory)
         {
+            _statusFileName = statusFileName;
             TraceFactory = traceFactory;
             FileSystem = fileSystem;
             Environment = environment;
@@ -56,7 +57,7 @@ namespace Kudu.Core.Jobs
         {
             if (_statusFilePath == null)
             {
-                _statusFilePath = Path.Combine(HistoryPath, StatusFile);
+                _statusFilePath = Path.Combine(HistoryPath, _statusFileName);
             }
 
             return _statusFilePath;
@@ -95,7 +96,7 @@ namespace Kudu.Core.Jobs
 
                 return OperationManager.Attempt(() =>
                 {
-                    string content = fileSystem.File.ReadAllText(statusFilePath).Trim();
+                    string content = ReadAllTextFromFile(statusFilePath).Trim();
                     return JsonConvert.DeserializeObject<TJobStatus>(content, JsonSerializerSettings);
                 });
             }
@@ -112,11 +113,11 @@ namespace Kudu.Core.Jobs
             {
                 if (isAppend)
                 {
-                    OperationManager.Attempt(() => File.AppendAllText(path, content));
+                    OperationManager.Attempt(() => AppendAllTextFromFile(path, content));
                 }
                 else
                 {
-                    OperationManager.Attempt(() => File.WriteAllText(path, content));
+                    OperationManager.Attempt(() => WriteAllTextFromFile(path, content));
                 }
             }
             catch (Exception ex)
@@ -135,6 +136,33 @@ namespace Kudu.Core.Jobs
         protected string GetSystemFormattedMessage(Level level, string message)
         {
             return "[{0} > {1}: SYS {2,-4}] {3}\r\n".FormatInvariant(DateTime.UtcNow, InstanceId, level.ToString().ToUpperInvariant(), message);
+        }
+
+        private static string ReadAllTextFromFile(string path)
+        {
+            using (FileStream fileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            {
+                var streamReader = new StreamReader(fileStream);
+                return streamReader.ReadToEnd();
+            }
+        }
+
+        private static void WriteAllTextFromFile(string path, string content)
+        {
+            using (FileStream fileStream = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete))
+            {
+                var streamWriter = new StreamWriter(fileStream);
+                streamWriter.Write(content);
+            }
+        }
+
+        private static void AppendAllTextFromFile(string path, string content)
+        {
+            using (FileStream fileStream = File.Open(path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete))
+            {
+                var streamWriter = new StreamWriter(fileStream);
+                streamWriter.Write(content);
+            }
         }
     }
 }

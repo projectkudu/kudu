@@ -2,6 +2,8 @@
 {
     public class ContinuousJobStatus : IJobStatus
     {
+        public const string FileNamePrefix = "status_";
+
         public static readonly ContinuousJobStatus Initializing = new ContinuousJobStatus() { Status = "Initializing" };
         public static readonly ContinuousJobStatus Starting = new ContinuousJobStatus() { Status = "Starting" };
         public static readonly ContinuousJobStatus PendingRestart = new ContinuousJobStatus() { Status = "PendingRestart" };

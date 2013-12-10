@@ -13,13 +13,15 @@ namespace Kudu.Core.Jobs
 {
     public class TriggeredJobRunLogger : JobLogger
     {
+        public const string TriggeredStatusFile = "status";
+
         private readonly string _id;
         private readonly string _historyPath;
         private readonly string _outputFilePath;
         private readonly string _errorFilePath;
 
         private TriggeredJobRunLogger(string jobName, string id, IEnvironment environment, IFileSystem fileSystem, ITraceFactory traceFactory)
-            : base(environment, fileSystem, traceFactory)
+            : base(TriggeredStatusFile, environment, fileSystem, traceFactory)
         {
             _id = id;
 

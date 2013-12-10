@@ -11,11 +11,12 @@ using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Jobs
 {
-    public class ContinuousJobRunner : BaseJobRunner
+    public class ContinuousJobRunner : BaseJobRunner, IDisposable
     {
         private int _started = 0;
         private Thread _continuousJobThread;
-        private readonly ContinuousJobLogger _continuousJobLogger;
+        private ContinuousJobLogger _continuousJobLogger;
+
         private readonly string _disableFilePath;
 
         public ContinuousJobRunner(string jobName, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
@@ -127,6 +128,24 @@ namespace Kudu.Core.Jobs
         private bool IsDisabled
         {
             get { return FileSystem.File.Exists(_disableFilePath); }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (_continuousJobLogger != null)
+                {
+                    _continuousJobLogger.Dispose();
+                    _continuousJobLogger = null;
+                }
+            }
         }
     }
 }
