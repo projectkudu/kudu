@@ -87,6 +87,15 @@ namespace Kudu.Core.Jobs
             UpdateDetailedStatus(job, jobsSpecificDataPath);
         }
 
+        /// <summary>
+        /// Update the status and the detailed status of the job.
+        /// The status is the status of one of the instances,
+        /// The detailed status contains status for all instances and looks like:
+        /// 
+        /// aabbcc - Running
+        /// 112233 - PendingRestart
+        /// 
+        /// </summary>
         private void UpdateDetailedStatus(ContinuousJob job, string jobsSpecificDataPath)
         {
             string[] statusFiles = FileSystem.Directory.GetFiles(jobsSpecificDataPath, StatusFilesSearchPattern);

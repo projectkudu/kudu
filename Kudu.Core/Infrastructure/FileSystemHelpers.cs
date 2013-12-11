@@ -72,6 +72,50 @@ namespace Kudu.Core.Infrastructure
             return childPath.StartsWith(parentPath, StringComparison.OrdinalIgnoreCase);
         }
 
+        /// <summary>
+        /// Replaces File.ReadAllText,
+        /// Will do the same thing only this can work on files that are already open (and share read/write).
+        /// </summary>
+        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
+        public static string ReadAllTextFromFile(string path)
+        {
+            using (FileStream fileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            {
+                var streamReader = new StreamReader(fileStream);
+                return streamReader.ReadToEnd();
+            }
+        }
+
+        /// <summary>
+        /// Replaces File.WriteAllText,
+        /// Will do the same thing only this can work on files that are already open (and share read/write).
+        /// </summary>
+        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
+        public static void WriteAllTextFromFile(string path, string content)
+        {
+            using (FileStream fileStream = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete))
+            {
+                var streamWriter = new StreamWriter(fileStream);
+                streamWriter.Write(content);
+                streamWriter.Flush();
+            }
+        }
+
+        /// <summary>
+        /// Replaces File.AppendAllText,
+        /// Will do the same thing only this can work on files that are already open (and share read/write).
+        /// </summary>
+        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
+        public static void AppendAllTextFromFile(string path, string content)
+        {
+            using (FileStream fileStream = File.Open(path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete))
+            {
+                var streamWriter = new StreamWriter(fileStream);
+                streamWriter.Write(content);
+                streamWriter.Flush();
+            }
+        }
+
         [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
         internal static bool DeleteFileSafe(IFileSystem fileSystem, string path)
         {

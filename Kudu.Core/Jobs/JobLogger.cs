@@ -96,7 +96,7 @@ namespace Kudu.Core.Jobs
 
                 return OperationManager.Attempt(() =>
                 {
-                    string content = ReadAllTextFromFile(statusFilePath).Trim();
+                    string content = FileSystemHelpers.ReadAllTextFromFile(statusFilePath).Trim();
                     return JsonConvert.DeserializeObject<TJobStatus>(content, JsonSerializerSettings);
                 });
             }
@@ -113,11 +113,11 @@ namespace Kudu.Core.Jobs
             {
                 if (isAppend)
                 {
-                    OperationManager.Attempt(() => AppendAllTextFromFile(path, content));
+                    OperationManager.Attempt(() => FileSystemHelpers.AppendAllTextFromFile(path, content));
                 }
                 else
                 {
-                    OperationManager.Attempt(() => WriteAllTextFromFile(path, content));
+                    OperationManager.Attempt(() => FileSystemHelpers.WriteAllTextFromFile(path, content));
                 }
             }
             catch (Exception ex)
@@ -136,33 +136,6 @@ namespace Kudu.Core.Jobs
         protected string GetSystemFormattedMessage(Level level, string message)
         {
             return "[{0} > {1}: SYS {2,-4}] {3}\r\n".FormatInvariant(DateTime.UtcNow, InstanceId, level.ToString().ToUpperInvariant(), message);
-        }
-
-        private static string ReadAllTextFromFile(string path)
-        {
-            using (FileStream fileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
-            {
-                var streamReader = new StreamReader(fileStream);
-                return streamReader.ReadToEnd();
-            }
-        }
-
-        private static void WriteAllTextFromFile(string path, string content)
-        {
-            using (FileStream fileStream = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete))
-            {
-                var streamWriter = new StreamWriter(fileStream);
-                streamWriter.Write(content);
-            }
-        }
-
-        private static void AppendAllTextFromFile(string path, string content)
-        {
-            using (FileStream fileStream = File.Open(path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete))
-            {
-                var streamWriter = new StreamWriter(fileStream);
-                streamWriter.Write(content);
-            }
         }
     }
 }
