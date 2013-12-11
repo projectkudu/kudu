@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -61,176 +60,81 @@ namespace Kudu.Core.Infrastructure
 
         public TimeSpan IdleTimeout { get; private set; }
 
+        // this is for simple execution just to get stdout such as 'git init .'
         public Tuple<string, string> Execute(string arguments, params object[] args)
         {
             return Execute(NullTracer.Instance, arguments, args);
         }
 
+        // this is for simple execution just to get stdout such as 'git init .'
         public Tuple<string, string> Execute(ITracer tracer, string arguments, params object[] args)
         {
-            using (GetProcessStep(tracer, arguments, args))
+            var cmdArguments = String.Format(arguments, args);
+            var outputStream = new MemoryStream();
+            var errorStream = new MemoryStream();
+
+            // common execute
+            int exitCode = Task.Run(() => ExecuteAsync(tracer, cmdArguments, outputStream, errorStream)).Result;
+
+            string output = GetString(outputStream);
+            string error = GetString(errorStream);
+            if (exitCode != 0)
             {
-                var process = CreateProcess(arguments, args);
-                process.Start();
-
-                var idleManager = new Kudu.Core.Infrastructure.IdleManager(IdleTimeout, tracer);
-                Func<StreamReader, Task<string>> reader = async (StreamReader streamReader) =>
+                throw new CommandLineException(Path, cmdArguments, !String.IsNullOrEmpty(error) ? error : output)
                 {
-                    var strb = new StringBuilder();
-                    char[] buffer = new char[1024];
-                    int read;
-                    while ((read = await streamReader.ReadBlockAsync(buffer, 0, buffer.Length)) != 0)
-                    {
-                        idleManager.UpdateActivity();
-                        strb.Append(buffer, 0, read);
-                    }
-                    idleManager.UpdateActivity();
-                    return strb.ToString();
+                    ExitCode = exitCode,
+                    Output = output,
+                    Error = error
                 };
-
-                Task<string> outputReaderTask = Task.Run(async () => await reader(process.StandardOutput));
-                Task<string> errorReaderTask = Task.Run(async () => await reader(process.StandardError));
-
-                process.StandardInput.Close();
-
-                idleManager.WaitForExit(process);
-
-                string output = outputReaderTask.Result;
-                string error = errorReaderTask.Result;
-
-                tracer.TraceProcessExitCode(process);
-
-                // Sometimes, we get an exit code of 1 even when the command succeeds (e.g. with 'git reset .').
-                // So also make sure there is an error string
-                if (process.ExitCode != 0)
-                {
-                    string text = String.IsNullOrEmpty(error) ? output : error;
-
-                    throw new CommandLineException(Path, process.StartInfo.Arguments, text)
-                    {
-                        ExitCode = process.ExitCode,
-                        Output = output,
-                        Error = error
-                    };
-                }
-
-                return Tuple.Create(output, error);
             }
+
+            return Tuple.Create(output, error);
         }
 
+        // this is used exclusive in git sever scenario
         public void Execute(ITracer tracer, Stream input, Stream output, string arguments, params object[] args)
         {
-            using (GetProcessStep(tracer, arguments, args))
+            var cmdArguments = String.Format(arguments, args);
+            var errorStream = new MemoryStream();
+            var idleManager = new IdleManager(IdleTimeout, tracer, output);
+
+            // common execute
+            int exitCode = Task.Run(() => ExecuteAsync(tracer, cmdArguments, output, errorStream, input, idleManager)).Result;
+
+            string error = GetString(errorStream);
+            if (exitCode != 0)
             {
-                var process = CreateProcess(arguments, args);
-                process.Start();
-
-                var idleManager = new IdleManager(IdleTimeout, tracer, output);
-                Func<StreamReader, string> reader = (StreamReader streamReader) => streamReader.ReadToEnd();
-                Action<Stream, Stream, bool> copyStream = (Stream from, Stream to, bool closeAfterCopy) =>
+                throw new CommandLineException(Path, cmdArguments, error)
                 {
-                    try
-                    {
-                        byte[] bytes = new byte[1024];
-                        int read = 0;
-                        bool writeError = false;
-                        while ((read = from.Read(bytes, 0, bytes.Length)) != 0)
-                        {
-                            idleManager.UpdateActivity();
-                            try
-                            {
-                                if (!writeError)
-                                {
-                                    to.Write(bytes, 0, read);
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                writeError = true;
-                                tracer.TraceError(ex);
-                            }
-                        }
-
-                        idleManager.UpdateActivity();
-                        if (closeAfterCopy)
-                        {
-                            to.Close();
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        tracer.TraceError(ex);
-                    }
+                    ExitCode = exitCode,
+                    Error = error
                 };
-
-                IAsyncResult errorReader = reader.BeginInvoke(process.StandardError, null, null);
-                IAsyncResult inputResult = null;
-
-                if (input != null)
-                {
-                    // Copy into the input stream, and close it to tell the exe it can process it
-                    inputResult = copyStream.BeginInvoke(input,
-                                                         process.StandardInput.BaseStream,
-                                                         true,
-                                                         null,
-                                                         null);
-                }
-
-                // Copy the exe's output into the output stream
-                IAsyncResult outputResult = copyStream.BeginInvoke(process.StandardOutput.BaseStream,
-                                                                   output,
-                                                                   false,
-                                                                   null,
-                                                                   null);
-
-                idleManager.WaitForExit(process);
-
-                // Wait for the input operation to complete
-                if (inputResult != null)
-                {
-                    inputResult.AsyncWaitHandle.WaitOne();
-                }
-
-                // Wait for the output operation to be complete
-                outputResult.AsyncWaitHandle.WaitOne();
-
-                string error = reader.EndInvoke(errorReader);
-
-                tracer.TraceProcessExitCode(process);
-
-                if (process.ExitCode != 0)
-                {
-                    throw new CommandLineException(Path, process.StartInfo.Arguments, error)
-                    {
-                        ExitCode = process.ExitCode,
-                        Error = error
-                    };
-                }
             }
         }
 
+        // this is used for long running command that requires ongoing progress such as job, build script etc.
         public Tuple<string, string> ExecuteWithProgressWriter(ILogger logger, ITracer tracer, string arguments, params object[] args)
         {
             try
             {
                 using (var writer = new ProgressWriter())
                 {
-                    return Execute(tracer,
-                                   output =>
-                                   {
-                                       writer.WriteOutLine(output);
-                                       logger.Log(output);
-                                       return true;
-                                   },
-                                   error =>
-                                   {
-                                       writer.WriteErrorLine(error);
-                                       logger.Log(error, LogEntryType.Warning);
-                                       return true;
-                                   },
-                                   Console.OutputEncoding,
-                                   arguments,
-                                   args);
+                    return ExecuteInternal(tracer,
+                                           output =>
+                                           {
+                                               writer.WriteOutLine(output);
+                                               logger.Log(output);
+                                               return true;
+                                           },
+                                           error =>
+                                           {
+                                               writer.WriteErrorLine(error);
+                                               logger.Log(error, LogEntryType.Warning);
+                                               return true;
+                                           },
+                                           Console.OutputEncoding,
+                                           arguments,
+                                           args);
                 }
             }
             catch (CommandLineException exception)
@@ -252,7 +156,7 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", Justification = "Functions are used")]
+        // this is used for long running command that requires ongoing progress such as job, build script etc.
         public int ExecuteReturnExitCode(ITracer tracer, Action<string> onWriteOutput, Action<string> onWriteError, string arguments, params object[] args)
         {
             try
@@ -279,95 +183,114 @@ namespace Kudu.Core.Infrastructure
             return 0;
         }
 
-        public Tuple<string, string> Execute(ITracer tracer, Func<string, bool> onWriteOutput, Func<string, bool> onWriteError, Encoding encoding, string arguments, params object[] args)
-        {
-            return ExecuteInternal(tracer, onWriteOutput, onWriteError, encoding, arguments, args);
-        }
-
         private Tuple<string, string> ExecuteInternal(ITracer tracer, Func<string, bool> onWriteOutput, Func<string, bool> onWriteError, Encoding encoding, string arguments, params object[] args)
         {
-            using (GetProcessStep(tracer, arguments, args))
+            var cmdArguments = String.Format(arguments, args);
+            var errorBuffer = new StringBuilder();
+            var outputBuffer = new StringBuilder();
+            var idleManager = new IdleManager(IdleTimeout, tracer);
+            var outputStream = new AsyncStreamWriter(data =>
             {
-                Process process = CreateProcess(arguments, args);
-                process.EnableRaisingEvents = true;
-
-                var errorBuffer = new StringBuilder();
-                var outputBuffer = new StringBuilder();
-
-                var idleManager = new IdleManager(IdleTimeout, tracer);
-                process.OutputDataReceived += (sender, e) =>
+                idleManager.UpdateActivity();
+                if (data != null)
                 {
-                    idleManager.UpdateActivity();
-                    if (e.Data != null)
+                    if (onWriteOutput(data))
                     {
-                        if (onWriteOutput(e.Data))
-                        {
-                            outputBuffer.AppendLine(Encoding.UTF8.GetString(encoding.GetBytes(e.Data)));
-                        }
+                        outputBuffer.AppendLine(Encoding.UTF8.GetString(encoding.GetBytes(data)));
                     }
-                };
-
-                process.ErrorDataReceived += (sender, e) =>
+                }
+            }, Encoding ?? Console.OutputEncoding);
+            var errorStream = new AsyncStreamWriter(data =>
+            {
+                idleManager.UpdateActivity();
+                if (data != null)
                 {
-                    idleManager.UpdateActivity();
-                    if (e.Data != null)
+                    if (onWriteError(data))
                     {
-                        if (onWriteError(e.Data))
-                        {
-                            errorBuffer.AppendLine(Encoding.UTF8.GetString(encoding.GetBytes(e.Data)));
-                        }
+                        errorBuffer.AppendLine(Encoding.UTF8.GetString(encoding.GetBytes(data)));
                     }
+                }
+            }, Encoding ?? Console.OutputEncoding);
+
+            int exitCode;
+            try
+            {
+                // common execute
+                exitCode = Task.Run(() => ExecuteAsync(tracer, cmdArguments, outputStream, errorStream, idleManager: idleManager)).Result;
+            }
+            catch (AggregateException ex)
+            {
+                foreach (var inner in ex.Flatten().InnerExceptions)
+                {
+                    onWriteError(inner.Message);
+                }
+                throw;
+            }
+            catch (Exception ex)
+            {
+                onWriteError(ex.Message);
+                throw;
+            }
+            finally
+            {
+                // flush out last buffer if any
+                outputStream.Dispose();
+                errorStream.Dispose();
+            }
+
+            string output = outputBuffer.ToString().Trim();
+            string error = errorBuffer.ToString().Trim();
+
+            if (exitCode != 0)
+            {
+                throw new CommandLineException(Path, cmdArguments, !String.IsNullOrEmpty(error) ? error : output)
+                {
+                    ExitCode = exitCode,
+                    Output = output,
+                    Error = error
                 };
+            }
 
-                process.Start();
+            return Tuple.Create(output, error);
+        }
 
-                process.BeginErrorReadLine();
-                process.BeginOutputReadLine();
-
-                try
+        // This is pure async process execution
+        public async Task<int> ExecuteAsync(ITracer tracer, string arguments, Stream output, Stream error, Stream input = null, IdleManager idleManager = null)
+        {
+            using (GetProcessStep(tracer, arguments))
+            {
+                using (Process process = CreateProcess(arguments))
                 {
-                    idleManager.WaitForExit(process);
+                    var wrapper = new ProcessWrapper(process);
+
+                    int exitCode = await wrapper.Start(output, error, input, idleManager ?? new IdleManager(IdleTimeout, tracer));
+
+                    tracer.TraceProcessExitCode(process);
+
+                    return exitCode;
                 }
-                catch (Exception ex)
-                {
-                    onWriteError(ex.Message);
-                    throw;
-                }
-
-                tracer.TraceProcessExitCode(process);
-
-                string output = outputBuffer.ToString().Trim();
-                string error = errorBuffer.ToString().Trim();
-
-                if (process.ExitCode != 0)
-                {
-                    string text = String.IsNullOrEmpty(error) ? output : error;
-
-                    throw new CommandLineException(Path, process.StartInfo.Arguments, text)
-                    {
-                        ExitCode = process.ExitCode,
-                        Output = output,
-                        Error = error
-                    };
-                }
-
-                return Tuple.Create(output, error);
             }
         }
 
-        private IDisposable GetProcessStep(ITracer tracer, string arguments, object[] args)
+        private string GetString(MemoryStream stream)
+        {
+            if (stream.Length > 0)
+            {
+                var encoding = Encoding ?? Console.OutputEncoding;
+                return encoding.GetString(stream.GetBuffer(), 0, (int)stream.Length);
+            }
+
+            return String.Empty;
+        }
+
+        private IDisposable GetProcessStep(ITracer tracer, string arguments)
         {
             return tracer.Step("Executing external process", new Dictionary<string, string>
             {
                 { "type", "process" },
                 { "path", System.IO.Path.GetFileName(Path) },
-                { "arguments", String.Format(arguments, args) }
+                { "arguments", arguments }
             });
-        }
-
-        internal Process CreateProcess(string arguments, object[] args)
-        {
-            return CreateProcess(String.Format(arguments, args));
         }
 
         internal Process CreateProcess(string arguments)

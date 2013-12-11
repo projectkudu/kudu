@@ -23,6 +23,15 @@ namespace Kudu.Core.Deployment
 #if DEBUG
             logger.Log(exception.StackTrace, LogEntryType.Error);
 #endif
+            AggregateException aggregate = exception as AggregateException;
+            if (aggregate != null)
+            {
+                foreach (var inner in aggregate.Flatten().InnerExceptions)
+                {
+                    returnLog = logger.Log(inner);
+                }
+            }
+
             return returnLog;
         }
 

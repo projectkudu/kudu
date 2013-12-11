@@ -19,10 +19,12 @@ namespace Kudu.Core.Infrastructure
 
         public string Arguments
         {
-            get
-            {
-                return _process.StartInfo.Arguments;
-            }
+            get { return _process.StartInfo.Arguments; }
+        }
+
+        public bool Start()
+        {
+            return _process.Start();
         }
 
         public void WaitUntilEOF()
@@ -53,6 +55,11 @@ namespace Kudu.Core.Infrastructure
         public bool HasExited
         {
             get { return _process.HasExited; }
+        }
+
+        public int ExitCode
+        {
+            get { return _process.ExitCode; }
         }
 
         public StreamReader StandardError

@@ -66,6 +66,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AsyncStreamWriterFacts.cs" />
     <Compile Include="AuthUtilityFacts.cs" />
     <Compile Include="AsyncLockFileTests.cs" />
     <Compile Include="DebugConsoleFacts.cs" />

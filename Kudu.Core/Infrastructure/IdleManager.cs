@@ -6,7 +6,7 @@ using Kudu.Contracts.Tracing;
 
 namespace Kudu.Core.Infrastructure
 {
-    internal class IdleManager
+    public class IdleManager
     {
         private static readonly TimeSpan _initialCpuUsage = TimeSpan.FromSeconds(-1);
 
@@ -21,6 +21,11 @@ namespace Kudu.Core.Infrastructure
             _tracer = tracer;
             _output = output;
             _lastActivity = DateTime.UtcNow;
+        }
+
+        public DateTime LastActivity
+        {
+            get { return _lastActivity; }
         }
 
         public void UpdateActivity()
@@ -105,7 +110,8 @@ namespace Kudu.Core.Infrastructure
                     //      0006[0x2].
                     // Where [0x2] is just an ASCII 2 char, and is the marker for the progress sideband
                     // 0006 is the line length.
-                    _output.Write(progressLine, 0, progressLine.Length);
+                    _output.WriteAsync(progressLine, 0, progressLine.Length).Wait();
+
                     _output.Flush();
                 }
                 catch (Exception e)

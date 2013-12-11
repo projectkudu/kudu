@@ -6,6 +6,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Threading;
+using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
 
 namespace Kudu.Core.Infrastructure
@@ -14,6 +16,8 @@ namespace Kudu.Core.Infrastructure
     // http://stackoverflow.com/questions/394816/how-to-get-parent-process-in-net-in-managed-way
     public static class ProcessExtensions
     {
+        internal static TimeSpan StandardOutputDrainTimeout = TimeSpan.FromSeconds(5);
+
         private const string GCDump32Exe = @"%ProgramFiles(x86)%\vsdiagagent\x86\GCDump32.exe";
         private const string GCDump64Exe = @"%ProgramFiles(x86)%\vsdiagagent\x64\GCDump64.exe";
 
@@ -170,6 +174,104 @@ namespace Kudu.Core.Infrastructure
         {
             var exe = new Executable(_gcDumpExe.Value, Path.GetDirectoryName(dumpFile), idleTimeout);
             exe.Execute(tracer, "\"{0}\" \"{1}\" \"{2}\" \"{3}\"", process.Id, dumpFile, resourcePath, maxDumpCountK);  
+        }
+
+        public static async Task<int> Start(this IProcess process, Stream output, Stream error, Stream input = null, IdleManager idleManager = null)
+        {
+            var cancellationTokenSource = new CancellationTokenSource();
+
+            process.Start();
+
+            var tasks = new List<Task>();
+
+            if (input != null)
+            {
+                tasks.Add(CopyStreamAsync(input, process.StandardInput.BaseStream, idleManager, cancellationTokenSource.Token, closeAfterCopy: true));
+            }
+
+            tasks.Add(CopyStreamAsync(process.StandardOutput.BaseStream, output, idleManager, cancellationTokenSource.Token));
+            tasks.Add(CopyStreamAsync(process.StandardError.BaseStream, error, idleManager, cancellationTokenSource.Token));
+
+            idleManager.WaitForExit(process);
+
+            // Process has exited, draining the stdout and stderr
+            await FlushAllAsync(idleManager, cancellationTokenSource, tasks);
+
+            return process.ExitCode;
+        }
+
+        private static async Task CopyStreamAsync(Stream from, Stream to, IdleManager idleManager, CancellationToken cancellationToken, bool closeAfterCopy = false)
+        {
+            try
+            {
+                byte[] bytes = new byte[1024];
+                int read = 0;
+                while ((read = await from.ReadAsync(bytes, 0, bytes.Length, cancellationToken)) != 0)
+                {
+                    idleManager.UpdateActivity();
+                    await to.WriteAsync(bytes, 0, read, cancellationToken);
+                }
+
+                idleManager.UpdateActivity();
+            }
+            finally
+            {
+                // this is needed specifically for input stream
+                // in order to tell executable that the input is done
+                if (closeAfterCopy)
+                {
+                    to.Close();
+                }
+            }
+        }
+
+        private static async Task FlushAllAsync(IdleManager idleManager, CancellationTokenSource cancellationTokenSource, IEnumerable<Task> tasks)
+        {
+            var prevActivity = DateTime.MinValue;
+            while (true)
+            {
+                // Wait for either delay or io tasks
+                var delay = Task.Delay(StandardOutputDrainTimeout, cancellationTokenSource.Token);
+                var stdio = Task.WhenAll(tasks);
+                var completed = await Task.WhenAny(stdio, delay);
+
+                // if delay commpleted first (meaning timeout), check if activity and continue to wait
+                if (completed == delay)
+                {
+                    var lastActivity = idleManager.LastActivity;
+                    if (lastActivity != prevActivity)
+                    {
+                        prevActivity = lastActivity;
+                        continue;
+                    }
+                }
+
+                // clean up all pending tasks by cancelling them
+                // this is important so we don't have runaway tasks
+                cancellationTokenSource.Cancel();
+
+                try
+                {
+                    // observe all tasks to avoid process crashes
+                    await Task.WhenAll(stdio, delay);
+
+                    // in case tasks completion races with cancellation
+                    break;
+                }
+                catch (TaskCanceledException)
+                {
+                    // expected since we cancelled all task
+                }
+
+                // this means no activity within given time
+                if (completed != stdio)
+                {
+                    throw new TimeoutException("Timeout draining standard input, output and error!");
+                }
+
+                // happy path
+                break;
+            }
         }
 
         private static Process SafeGetProcessById(int pid)

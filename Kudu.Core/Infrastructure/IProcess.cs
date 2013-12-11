@@ -17,6 +17,11 @@ namespace Kudu.Core.Infrastructure
         string Arguments { get; }
 
         /// <summary>
+        /// Start the process
+        /// </summary>
+        bool Start();
+
+        /// <summary>
         /// Equivalent to Process.WaitForExit(-1)
         /// </summary>
         /// <remarks>
@@ -54,6 +59,11 @@ namespace Kudu.Core.Infrastructure
         /// Gets whether the process has exited
         /// </summary>
         bool HasExited { get; }
+
+        /// <summary>
+        /// Gets the ExitCode for the process
+        /// </summary>
+        int ExitCode { get; }
 
         /// <summary>
         /// Gets the StandardError stream for the process
