@@ -121,7 +121,7 @@ namespace Kudu.Core.Jobs
 
             string runId = jobRunDirectory.Name;
             string triggeredJobRunPath = jobRunDirectory.FullName;
-            string statusFilePath = Path.Combine(triggeredJobRunPath, JobLogger.StatusFile);
+            string statusFilePath = Path.Combine(triggeredJobRunPath, TriggeredJobRunLogger.TriggeredStatusFile);
 
             var triggeredJobStatus = GetStatus<TriggeredJobStatus>(statusFilePath);
 

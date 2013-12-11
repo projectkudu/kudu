@@ -10,8 +10,6 @@ namespace Kudu.Core.Jobs
 {
     public abstract class JobLogger : IJobLogger
     {
-        public const string StatusFile = "status";
-
         private static readonly JsonSerializerSettings JsonSerializerSettings = new JsonSerializerSettings()
         {
             DefaultValueHandling = DefaultValueHandling.Ignore,
@@ -31,8 +29,11 @@ namespace Kudu.Core.Jobs
 
         private string _statusFilePath;
 
-        protected JobLogger(IEnvironment environment, IFileSystem fileSystem, ITraceFactory traceFactory)
+        private readonly string _statusFileName;
+
+        protected JobLogger(string statusFileName, IEnvironment environment, IFileSystem fileSystem, ITraceFactory traceFactory)
         {
+            _statusFileName = statusFileName;
             TraceFactory = traceFactory;
             FileSystem = fileSystem;
             Environment = environment;
@@ -56,7 +57,7 @@ namespace Kudu.Core.Jobs
         {
             if (_statusFilePath == null)
             {
-                _statusFilePath = Path.Combine(HistoryPath, StatusFile);
+                _statusFilePath = Path.Combine(HistoryPath, _statusFileName);
             }
 
             return _statusFilePath;
@@ -95,7 +96,7 @@ namespace Kudu.Core.Jobs
 
                 return OperationManager.Attempt(() =>
                 {
-                    string content = fileSystem.File.ReadAllText(statusFilePath).Trim();
+                    string content = FileSystemHelpers.ReadAllTextFromFile(statusFilePath).Trim();
                     return JsonConvert.DeserializeObject<TJobStatus>(content, JsonSerializerSettings);
                 });
             }
@@ -112,11 +113,11 @@ namespace Kudu.Core.Jobs
             {
                 if (isAppend)
                 {
-                    OperationManager.Attempt(() => File.AppendAllText(path, content));
+                    OperationManager.Attempt(() => FileSystemHelpers.AppendAllTextFromFile(path, content));
                 }
                 else
                 {
-                    OperationManager.Attempt(() => File.WriteAllText(path, content));
+                    OperationManager.Attempt(() => FileSystemHelpers.WriteAllTextFromFile(path, content));
                 }
             }
             catch (Exception ex)

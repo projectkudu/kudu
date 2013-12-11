@@ -9,6 +9,9 @@ namespace Kudu.Contracts.Jobs
         [DataMember(Name = "status")]
         public string Status { get; set; }
 
+        [DataMember(Name = "detailed_status")]
+        public string DetailedStatus { get; set; }
+
         [DataMember(Name = "log_url")]
         public Uri LogUrl { get; set; }
     }

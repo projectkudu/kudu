@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
@@ -14,6 +15,8 @@ namespace Kudu.Core.Jobs
 {
     public class ContinuousJobsManager : JobsManagerBase<ContinuousJob>, IContinuousJobsManager, IDisposable
     {
+        private const string StatusFilesSearchPattern = ContinuousJobStatus.FileNamePrefix + "*";
+
         private const int TimeoutUntilMakingChanges = 5 * 1000;
         private const int CheckForWatcherTimeout = 30 * 1000;
 
@@ -81,8 +84,70 @@ namespace Kudu.Core.Jobs
             FileSystemHelpers.EnsureDirectory(FileSystem, jobsSpecificDataPath);
 
             job.LogUrl = BuildLogUrl(job.Name);
-            job.Status = GetStatus<ContinuousJobStatus>(Path.Combine(jobsSpecificDataPath, JobLogger.StatusFile)).Status ??
-                            ContinuousJobStatus.Initializing.Status;
+            UpdateDetailedStatus(job, jobsSpecificDataPath);
+        }
+
+        /// <summary>
+        /// Update the status and the detailed status of the job.
+        /// The status is the status of one of the instances,
+        /// The detailed status contains status for all instances and looks like:
+        /// 
+        /// aabbcc - Running
+        /// 112233 - PendingRestart
+        /// 
+        /// </summary>
+        private void UpdateDetailedStatus(ContinuousJob job, string jobsSpecificDataPath)
+        {
+            string[] statusFiles = FileSystem.Directory.GetFiles(jobsSpecificDataPath, StatusFilesSearchPattern);
+            if (statusFiles.Length <= 0)
+            {
+                // If no status files exist update to default values
+                string status = ContinuousJobStatus.Initializing.Status;
+                string instanceId = InstanceIdUtility.GetShortInstanceId();
+
+                job.DetailedStatus = instanceId + " - " + status;
+                job.Status = status;
+
+                return;
+            }
+
+            string lastStatus = null;
+            var stringBuilder = new StringBuilder();
+
+            foreach (string statusFile in statusFiles)
+            {
+                // Try to delete file, it'll be deleted if no one holds a lock on it
+                // That way we know the status file is obsolete
+                if (!TryDelete(statusFile))
+                {
+                    // If we couldn't delete the file, we know it holds the status of an actual instance holding it
+                    string status = GetStatus<ContinuousJobStatus>(statusFile).Status ?? ContinuousJobStatus.Initializing.Status;
+
+                    // Extract instance id from the file name
+                    int statusFileNameIndex = statusFile.IndexOf(ContinuousJobStatus.FileNamePrefix, StringComparison.OrdinalIgnoreCase);
+                    string instanceId = statusFile.Substring(statusFileNameIndex + ContinuousJobStatus.FileNamePrefix.Length);
+
+                    stringBuilder.AppendLine(instanceId + " - " + status);
+                    lastStatus = status;
+                }
+            }
+
+            // Job status will only show one of the statuses
+            job.Status = lastStatus;
+            job.DetailedStatus = stringBuilder.ToString();
+        }
+
+        private bool TryDelete(string statusFile)
+        {
+            try
+            {
+                FileSystem.File.Delete(statusFile);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         protected override Uri BuildDefaultExtraInfoUrl(string jobName)
@@ -157,6 +222,7 @@ namespace Kudu.Core.Jobs
             }
 
             continuousJobRunner.StopJob();
+            continuousJobRunner.Dispose();
 
             _continuousJobRunners.Remove(updatedJobName);
         }
