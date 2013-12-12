@@ -39,10 +39,10 @@
         <RegexTransform Items="@(RegexTransform)" />
     </Target>
     
-    <Target Name="RunAll" DependsOnTargets="UpdateVersion; RestorePackages; Build; ReportFxCopResults; RunTests; BuildSites; BuildZips" />
+    <Target Name="RunAll" DependsOnTargets="UpdateVersion; RestorePackages; Build; ReportFxCopResults; RunTests; BuildSites; BuildZips; CopySymbols" />
 
     <Target Name="CreateOutputPath">
-        <MakeDir Directories="$(ArtifactsPath)" Condition="!Exists('$(ArtifactsPath)')" />
+        <MakeDir Directories="$(ArtifactsPath)\symbols" Condition="!Exists('$(ArtifactsPath)\symbols')" />
         <MakeDir Directories="$(TestResultsPath)" Condition="!Exists('$(TestResultsPath)')" />
     </Target>
 
@@ -129,5 +129,13 @@
           </Code>
         </Task>
       </UsingTask>
+      
+      <Target Name="CopySymbols">
+        <ItemGroup>
+          <SymbolFilesToCopy Include="$(ProjectRoot)\Kudu.*\obj\$(Configuration)\Kudu*.pdb" />
+          <SymbolFilesToCopy Include="$(ProjectRoot)\Kudu.*\obj\x86\$(Configuration)\Kudu*.pdb" />
+        </ItemGroup>
+        <Copy SourceFiles="%(SymbolFilesToCopy.FullPath)" DestinationFiles="$(ArtifactsPath)\symbols\%(Filename)%(Extension)" SkipUnchangedFiles="true" />
+      </Target>
       
 </Project>
