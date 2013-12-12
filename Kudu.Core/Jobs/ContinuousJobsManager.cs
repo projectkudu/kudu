@@ -52,12 +52,7 @@ namespace Kudu.Core.Jobs
 
         public void DisableJob(string jobName)
         {
-            ContinuousJobRunner continuousJobRunner;
-            if (!_continuousJobRunners.TryGetValue(jobName, out continuousJobRunner))
-            {
-                throw new JobNotFoundException();
-            }
-
+            var continuousJobRunner = GetJobRunner(jobName);
             continuousJobRunner.DisableJob();
         }
 
@@ -76,6 +71,22 @@ namespace Kudu.Core.Jobs
             }
 
             continuousJobRunner.EnableJob(continuousJob);
+        }
+
+        public void SetSingleton(string jobName, bool isSingleton)
+        {
+            var continuousJobRunner = GetJobRunner(jobName);
+            continuousJobRunner.SetSingleton(isSingleton);
+        }
+
+        private ContinuousJobRunner GetJobRunner(string jobName)
+        {
+            ContinuousJobRunner continuousJobRunner;
+            if (!_continuousJobRunners.TryGetValue(jobName, out continuousJobRunner))
+            {
+                throw new JobNotFoundException();
+            }
+            return continuousJobRunner;
         }
 
         protected override void UpdateJob(ContinuousJob job)
@@ -127,10 +138,14 @@ namespace Kudu.Core.Jobs
                     || !TryDelete(statusFile))
                 {
                     // If we couldn't delete the file, we know it holds the status of an actual instance holding it
-                    string status = GetStatus<ContinuousJobStatus>(statusFile).Status ?? ContinuousJobStatus.Initializing.Status;
+                    var continuousJobStatus = GetStatus<ContinuousJobStatus>(statusFile) ?? ContinuousJobStatus.Initializing;
 
-                    stringBuilder.AppendLine(statusFileInstanceId + " - " + status);
-                    lastStatus = status;
+                    stringBuilder.AppendLine(statusFileInstanceId + " - " + continuousJobStatus.Status);
+                    if (lastStatus == null ||
+                        !ContinuousJobStatus.InactiveInstance.Equals(continuousJobStatus))
+                    {
+                        lastStatus = continuousJobStatus.Status;
+                    }
                 }
             }
 

@@ -16,8 +16,10 @@ namespace Kudu.Core.Jobs
         private int _started = 0;
         private Thread _continuousJobThread;
         private ContinuousJobLogger _continuousJobLogger;
+        private IDisposable _singletonLock;
 
         private readonly string _disableFilePath;
+        private readonly string _singletonFilePath;
 
         public ContinuousJobRunner(string jobName, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
             : base(jobName, Constants.ContinuousPath, environment, fileSystem, settings, traceFactory, analytics)
@@ -25,6 +27,7 @@ namespace Kudu.Core.Jobs
             _continuousJobLogger = new ContinuousJobLogger(jobName, Environment, FileSystem, TraceFactory);
 
             _disableFilePath = Path.Combine(JobBinariesPath, "disable.job");
+            _singletonFilePath = Path.Combine(JobBinariesPath, "singleton.job");
         }
 
         private void UpdateStatusIfChanged(ContinuousJobStatus continuousJobStatus)
@@ -69,6 +72,14 @@ namespace Kudu.Core.Jobs
                 {
                     while (_started == 1 && !IsDisabled)
                     {
+                        // Try getting the singleton lock if single is enabled
+                        if (!TryGetLockIfSingleton())
+                        {
+                            // Wait 5 seconds and retry to take the lock
+                            WaitForTimeOrStop(TimeSpan.FromSeconds(5));
+                            continue;
+                        }
+
                         InitializeJobInstance(continuousJob, _continuousJobLogger);
                         RunJobInstance(continuousJob, _continuousJobLogger);
 
@@ -85,9 +96,41 @@ namespace Kudu.Core.Jobs
                 {
                     TraceFactory.GetTracer().TraceError(ex);
                 }
+                finally
+                {
+                    DisposeSingletonLock();
+                }
             });
 
             _continuousJobThread.Start();
+        }
+
+        private bool TryGetLockIfSingleton()
+        {
+            if (!IsSingletonFileExists())
+            {
+                return true;
+            }
+
+            try
+            {
+                if (_singletonLock == null)
+                {
+                    _singletonLock = FileSystem.File.Open(_singletonFilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.Read | FileShare.Delete);
+                }
+
+                return true;
+            }
+            catch
+            {
+                _continuousJobLogger.ReportStatus(ContinuousJobStatus.InactiveInstance);
+                return false;
+            }
+        }
+
+        private bool IsSingletonFileExists()
+        {
+            return OperationManager.Attempt(() => FileSystem.File.Exists(_singletonFilePath));
         }
 
         public void StopJob()
@@ -125,6 +168,21 @@ namespace Kudu.Core.Jobs
             StartJob(continuousJob);
         }
 
+        public void SetSingleton(bool isSingleton)
+        {
+            if (isSingleton)
+            {
+                if (!IsSingletonFileExists())
+                {
+                    OperationManager.Attempt(() => FileSystem.File.WriteAllBytes(_singletonFilePath, new byte[0]));
+                }
+            }
+            else
+            {
+                OperationManager.Attempt(() => FileSystem.File.Delete(_singletonFilePath));
+            }
+        }
+
         protected override void UpdateStatus(IJobLogger logger, string status)
         {
             logger.ReportStatus(new ContinuousJobStatus() { Status = status });
@@ -145,6 +203,15 @@ namespace Kudu.Core.Jobs
             get { return FileSystem.File.Exists(_disableFilePath); }
         }
 
+        private void DisposeSingletonLock()
+        {
+            if (_singletonLock != null)
+            {
+                _singletonLock.Dispose();
+                _singletonLock = null;
+            }
+        }
+
         public void Dispose()
         {
             Dispose(true);
@@ -160,6 +227,8 @@ namespace Kudu.Core.Jobs
                     _continuousJobLogger.Dispose();
                     _continuousJobLogger = null;
                 }
+
+                DisposeSingletonLock();
             }
         }
     }

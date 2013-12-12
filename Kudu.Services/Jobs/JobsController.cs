@@ -79,6 +79,20 @@ namespace Kudu.Services.Jobs
             }
         }
 
+        [HttpPost]
+        public HttpResponseMessage SetContinuousJobSingleton(string jobName, bool isSingleton)
+        {
+            try
+            {
+                _continuousJobsManager.SetSingleton(jobName, isSingleton);
+                return Request.CreateResponse(HttpStatusCode.OK);
+            }
+            catch (JobNotFoundException)
+            {
+                return Request.CreateResponse(HttpStatusCode.NotFound);
+            }
+        }
+
         [HttpGet]
         public HttpResponseMessage ListTriggeredJobs()
         {
