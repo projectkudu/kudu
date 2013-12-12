@@ -59,7 +59,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CommandExecutorTests.cs" />
-    <Compile Include="Jobs\ContinuousJobsTests.cs" />
+    <Compile Include="Jobs\WebJobsTests.cs" />
     <Compile Include="DeploymentActionsTests.cs" />
     <Compile Include="Infrastructure\ExceptionAssert.cs" />
     <Compile Include="WebHooksTests.cs" />

@@ -12,7 +12,7 @@ using Xunit;
 
 namespace Kudu.FunctionalTests.Jobs
 {
-    public class ContinuousJobsTests
+    public class WebJobsTests
     {
         private const string VerificationFilePath = "LogFiles/verification.txt";
         private const string JobsBinPath = "Site/wwwroot/App_Data/jobs";
