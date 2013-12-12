@@ -6,6 +6,7 @@ using System.Linq;
 using System.Web;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Jobs
@@ -113,11 +114,12 @@ namespace Kudu.Core.Jobs
 
             string runCommand = scriptFilePath.Substring(jobDirectory.FullName.Length + 1);
 
+            JobSettings jobSettings = JobSettings.LoadJobSettings(jobDirectory.FullName, FileSystem, TraceFactory);
             var job = new TJob()
             {
                 Name = jobName,
                 Url = BuildJobsUrl(jobName),
-                ExtraInfoUrl = BuildExtraInfoUrl(jobName),
+                ExtraInfoUrl = BuildExtraInfoUrl(jobName, jobSettings),
                 ScriptFilePath = scriptFilePath,
                 RunCommand = runCommand,
                 JobType = _jobsTypePath,
@@ -166,9 +168,29 @@ namespace Kudu.Core.Jobs
             return new Uri(_vfsUrlPrefix + relativeUrl);
         }
 
-        protected Uri BuildExtraInfoUrl(string jobName)
+        protected Uri BuildExtraInfoUrl(string jobName, JobSettings jobSettings)
         {
-            // TODO: If a specific file exists read url from there
+            try
+            {
+                string extraInfoUrlTemplate = jobSettings.ExtraInfoUrlTemplate;
+                if (!String.IsNullOrEmpty(extraInfoUrlTemplate))
+                {
+                    extraInfoUrlTemplate = extraInfoUrlTemplate.Replace("{jobName}", jobName);
+                    extraInfoUrlTemplate = extraInfoUrlTemplate.Replace("{jobType}", _jobsTypePath);
+                    if (extraInfoUrlTemplate.StartsWith("http"))
+                    {
+                        return new Uri(extraInfoUrlTemplate);
+                    }
+
+                    return new Uri(AppBaseUrlPrefix + extraInfoUrlTemplate);
+                }
+            }
+            catch (Exception ex)
+            {
+                // On exception trace and use the default extra info url
+                TraceFactory.GetTracer().TraceError(ex);
+            }
+
             return BuildDefaultExtraInfoUrl(jobName);
         }
 
