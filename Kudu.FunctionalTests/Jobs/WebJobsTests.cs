@@ -247,6 +247,66 @@ namespace Kudu.FunctionalTests.Jobs
             });
         }
 
+        [Fact]
+        public void ExtraInfoUrlTemplateShouldBeUsedWhenExists()
+        {
+            RunScenario("ExtraInfoUrlTemplateShouldBeUsedWhenExists", appManager =>
+            {
+                TestTracer.Trace("Adding jobs");
+
+                var extraInfoUrlTemplates = new string[]
+                {
+                    "/sb?jobName={jobName}&jobType={jobType}",
+                    "",
+                    null,
+                    "/some/other/link",
+                    "/some/other/{jobName}/link",
+                    "http://someplace.else.com/{jobType}/index.html"
+                };
+
+                var extraInfoUrlExpectedResults = new string[]
+                {
+                    appManager.ServiceUrl + "sb?jobName=job1&jobType=triggered",
+                    appManager.ServiceUrl + "JobRuns/history.html?jobName=job2",
+                    appManager.ServiceUrl + "JobRuns/history.html?jobName=job3",
+                    appManager.ServiceUrl + "some/other/link",
+                    appManager.ServiceUrl + "some/other/job5/link",
+                    "http://someplace.else.com/triggered/index.html"
+                };
+
+                int index = 1;
+                foreach (string extraInfoUrlTemplate in extraInfoUrlTemplates)
+                {
+                    string jobName = "job" + index;
+                    string jobScriptPath = TriggeredJobBinPath + "/" + jobName + "/run.cmd";
+                    string jobSettingsPath = TriggeredJobBinPath + "/" + jobName + "/job.settings.json";
+
+                    appManager.VfsManager.WriteAllText(jobScriptPath, "echo echo echo echo");
+
+                    if (extraInfoUrlTemplate != null)
+                    {
+                        string jobSettingsContent = "{\"extra_info_url_template\":\"" + extraInfoUrlTemplate + "\"}";
+                        appManager.VfsManager.WriteAllText(jobSettingsPath, jobSettingsContent);
+                    }
+
+                    index++;
+                }
+
+                index = 1;
+                foreach (string extraUrlExpectedResult in extraInfoUrlExpectedResults)
+                {
+                    TestTracer.Trace("Verify - " + extraUrlExpectedResult);
+
+                    string jobName = "job" + index;
+
+                    TriggeredJob triggeredJob = appManager.JobsManager.GetTriggeredJobAsync(jobName).Result;
+                    Assert.Equal(extraUrlExpectedResult, triggeredJob.ExtraInfoUrl.ToString());
+
+                    index++;
+                }
+            });
+        }
+
         private void VerifyTriggeredJobTriggers(ApplicationManager appManager, string jobName, int expectedNumberOfRuns, string expectedStatus, string expectedOutput = null, string expectedError = null)
         {
             appManager.JobsManager.InvokeTriggeredJobAsync(jobName).Wait();
