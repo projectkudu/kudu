@@ -219,7 +219,6 @@ namespace Kudu.Core.Jobs
                     }
                 }
             }
-
             catch (Exception ex)
             {
                 logger.LogWarning(ex.ToString());

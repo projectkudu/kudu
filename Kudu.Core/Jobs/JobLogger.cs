@@ -63,6 +63,11 @@ namespace Kudu.Core.Jobs
             return _statusFilePath;
         }
 
+        public TJobStatus GetStatus<TJobStatus>() where TJobStatus : class, IJobStatus
+        {
+            return ReadJobStatusFromFile<TJobStatus>(TraceFactory, FileSystem, GetStatusFilePath());
+        }
+
         public void ReportStatus<TJobStatus>(TJobStatus status) where TJobStatus : class, IJobStatus
         {
             ReportStatus(status, logStatus: true);

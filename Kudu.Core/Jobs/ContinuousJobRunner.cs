@@ -23,9 +23,27 @@ namespace Kudu.Core.Jobs
             : base(jobName, Constants.ContinuousPath, environment, fileSystem, settings, traceFactory, analytics)
         {
             _continuousJobLogger = new ContinuousJobLogger(jobName, Environment, FileSystem, TraceFactory);
-            _continuousJobLogger.ReportStatus(ContinuousJobStatus.Initializing);
 
             _disableFilePath = Path.Combine(JobBinariesPath, "disable.job");
+
+            if (IsDisabled)
+            {
+                UpdateStatusIfChanged(ContinuousJobStatus.Stopped);
+            }
+            else
+            {
+                UpdateStatusIfChanged(ContinuousJobStatus.Initializing);
+            }
+        }
+
+        private void UpdateStatusIfChanged(ContinuousJobStatus continuousJobStatus)
+        {
+            ContinuousJobStatus currentStatus = _continuousJobLogger.GetStatus<ContinuousJobStatus>();
+            if (currentStatus == null ||
+                !String.Equals(currentStatus.Status, continuousJobStatus.Status, StringComparison.OrdinalIgnoreCase))
+            {
+                _continuousJobLogger.ReportStatus(continuousJobStatus);
+            }
         }
 
         protected override string JobEnvironmentKeyPrefix
