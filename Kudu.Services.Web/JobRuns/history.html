@@ -36,8 +36,8 @@
                     tbl_row += "<td>" + this.start_time + "</td>";
                     tbl_row += "<td>" + this.end_time + "</td>";
                     tbl_row += "<td>" + this.duration + "</td>";
-                    tbl_row += getUrlLinkTd(this.output_url, "Output");
-                    tbl_row += getUrlLinkTd(this.error_url, "Error");
+                    tbl_row += getUrlLinkTd(this.output_url, "Download");
+                    tbl_row += getUrlLinkTd(this.error_url, "Download");
                     tbl_body = "<tr>" + tbl_row + "</tr>" + tbl_body;
                 });
                 $("#history_table tbody").html(tbl_body);
@@ -55,9 +55,9 @@
             <tr>
                 <td>ID</td>
                 <td>Status</td>
-                <td>Duration</td>
                 <td>Started At</td>
                 <td>Ended At</td>
+                <td>Duration</td>
                 <td>Output File</td>
                 <td>Error File</td>
             </tr>
