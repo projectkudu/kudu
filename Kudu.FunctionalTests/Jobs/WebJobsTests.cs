@@ -279,7 +279,7 @@ namespace Kudu.FunctionalTests.Jobs
                 {
                     string jobName = "job" + index;
                     string jobScriptPath = TriggeredJobBinPath + "/" + jobName + "/run.cmd";
-                    string jobSettingsPath = TriggeredJobBinPath + "/" + jobName + "/job.json";
+                    string jobSettingsPath = TriggeredJobBinPath + "/" + jobName + "/job.settings.json";
 
                     appManager.VfsManager.WriteAllText(jobScriptPath, "echo echo echo echo");
 

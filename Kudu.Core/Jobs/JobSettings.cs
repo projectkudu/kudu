@@ -18,7 +18,7 @@ namespace Kudu.Core.Jobs
 
             try
             {
-                string jobSettingsPath = Path.Combine(jobSettingsDirectory, "job.json");
+                string jobSettingsPath = Path.Combine(jobSettingsDirectory, "job.settings.json");
                 if (fileSystem.File.Exists(jobSettingsPath))
                 {
                     string jobSettingsContent = fileSystem.File.ReadAllText(jobSettingsPath);
