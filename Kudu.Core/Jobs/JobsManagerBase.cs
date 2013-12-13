@@ -177,7 +177,7 @@ namespace Kudu.Core.Jobs
                 {
                     extraInfoUrlTemplate = extraInfoUrlTemplate.Replace("{jobName}", jobName);
                     extraInfoUrlTemplate = extraInfoUrlTemplate.Replace("{jobType}", _jobsTypePath);
-                    if (extraInfoUrlTemplate.StartsWith("http"))
+                    if (extraInfoUrlTemplate.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                     {
                         return new Uri(extraInfoUrlTemplate);
                     }
