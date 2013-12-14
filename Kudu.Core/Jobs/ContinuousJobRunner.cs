@@ -25,22 +25,12 @@ namespace Kudu.Core.Jobs
             _continuousJobLogger = new ContinuousJobLogger(jobName, Environment, FileSystem, TraceFactory);
 
             _disableFilePath = Path.Combine(JobBinariesPath, "disable.job");
-
-            if (IsDisabled)
-            {
-                UpdateStatusIfChanged(ContinuousJobStatus.Stopped);
-            }
-            else
-            {
-                UpdateStatusIfChanged(ContinuousJobStatus.Initializing);
-            }
         }
 
         private void UpdateStatusIfChanged(ContinuousJobStatus continuousJobStatus)
         {
-            ContinuousJobStatus currentStatus = _continuousJobLogger.GetStatus<ContinuousJobStatus>();
-            if (currentStatus == null ||
-                !String.Equals(currentStatus.Status, continuousJobStatus.Status, StringComparison.OrdinalIgnoreCase))
+            var currentStatus = _continuousJobLogger.GetStatus<ContinuousJobStatus>();
+            if (!continuousJobStatus.Equals(currentStatus))
             {
                 _continuousJobLogger.ReportStatus(continuousJobStatus);
             }
@@ -59,7 +49,14 @@ namespace Kudu.Core.Jobs
         private void StartJob(ContinuousJob continuousJob)
         {
             // Do not go further if already started or job is disabled
-            if (Interlocked.Exchange(ref _started, 1) == 1 || IsDisabled)
+
+            if (IsDisabled)
+            {
+                UpdateStatusIfChanged(ContinuousJobStatus.Stopped);
+                return;
+            }
+
+            if (Interlocked.Exchange(ref _started, 1) == 1)
             {
                 return;
             }

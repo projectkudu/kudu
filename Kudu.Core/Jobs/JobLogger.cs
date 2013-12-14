@@ -118,11 +118,11 @@ namespace Kudu.Core.Jobs
             {
                 if (isAppend)
                 {
-                    OperationManager.Attempt(() => FileSystemHelpers.AppendAllTextFromFile(path, content));
+                    OperationManager.Attempt(() => FileSystemHelpers.AppendAllTextToFile(path, content));
                 }
                 else
                 {
-                    OperationManager.Attempt(() => FileSystemHelpers.WriteAllTextFromFile(path, content));
+                    OperationManager.Attempt(() => FileSystemHelpers.WriteAllTextToFile(path, content));
                 }
             }
             catch (Exception ex)

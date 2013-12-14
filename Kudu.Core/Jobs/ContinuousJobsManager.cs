@@ -98,12 +98,13 @@ namespace Kudu.Core.Jobs
         /// </summary>
         private void UpdateDetailedStatus(ContinuousJob job, string jobsSpecificDataPath)
         {
+            string instanceId = InstanceIdUtility.GetShortInstanceId();
+
             string[] statusFiles = FileSystem.Directory.GetFiles(jobsSpecificDataPath, StatusFilesSearchPattern);
             if (statusFiles.Length <= 0)
             {
                 // If no status files exist update to default values
                 string status = ContinuousJobStatus.Initializing.Status;
-                string instanceId = InstanceIdUtility.GetShortInstanceId();
 
                 job.DetailedStatus = instanceId + " - " + status;
                 job.Status = status;
@@ -116,18 +117,19 @@ namespace Kudu.Core.Jobs
 
             foreach (string statusFile in statusFiles)
             {
+                // Extract instance id from the file name
+                int statusFileNameIndex = statusFile.IndexOf(ContinuousJobStatus.FileNamePrefix, StringComparison.OrdinalIgnoreCase);
+                string statusFileInstanceId = statusFile.Substring(statusFileNameIndex + ContinuousJobStatus.FileNamePrefix.Length);
+
                 // Try to delete file, it'll be deleted if no one holds a lock on it
                 // That way we know the status file is obsolete
-                if (!TryDelete(statusFile))
+                if (String.Equals(statusFileInstanceId, instanceId, StringComparison.OrdinalIgnoreCase)
+                    || !TryDelete(statusFile))
                 {
                     // If we couldn't delete the file, we know it holds the status of an actual instance holding it
                     string status = GetStatus<ContinuousJobStatus>(statusFile).Status ?? ContinuousJobStatus.Initializing.Status;
 
-                    // Extract instance id from the file name
-                    int statusFileNameIndex = statusFile.IndexOf(ContinuousJobStatus.FileNamePrefix, StringComparison.OrdinalIgnoreCase);
-                    string instanceId = statusFile.Substring(statusFileNameIndex + ContinuousJobStatus.FileNamePrefix.Length);
-
-                    stringBuilder.AppendLine(instanceId + " - " + status);
+                    stringBuilder.AppendLine(statusFileInstanceId + " - " + status);
                     lastStatus = status;
                 }
             }
