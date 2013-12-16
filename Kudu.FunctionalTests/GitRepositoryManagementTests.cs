@@ -43,7 +43,8 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        [Fact(Skip = "Dangerous")]
+        // Has been disabled for ages. Commenting out attribute to avoid warning. Should probably just delete
+        //[Fact(Skip = "Dangerous")]
         public void PushSimpleWapWithInlineCommand()
         {
             // Arrange
@@ -70,7 +71,8 @@ command = msbuild SimpleWebApplication/SimpleWebApplication.csproj /t:pipelinePr
             }
         }
 
-        [Fact(Skip = "Dangerous")]
+        // Has been disabled for ages. Commenting out attribute to avoid warning. Should probably just delete
+        //[Fact(Skip = "Dangerous")]
         public void PushSimpleWapWithCustomDeploymentScript()
         {
             // Arrange
