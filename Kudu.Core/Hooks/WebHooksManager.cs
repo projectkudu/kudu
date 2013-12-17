@@ -172,7 +172,7 @@ namespace Kudu.Core.Hooks
         {
             using (HttpClient httpClient = CreateHttpClient(webHook))
             {
-                using (var content = new StringContent(jsonString))
+                using (var content = new StringContent(jsonString, System.Text.Encoding.UTF8, "application/json"))
                 {
                     try
                     {
