@@ -6,7 +6,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace Kudu.Client.Deployment
+namespace Kudu.Client.Command
 {
     public class RemoteCommandExecutor : KuduRemoteClientBase
     {
