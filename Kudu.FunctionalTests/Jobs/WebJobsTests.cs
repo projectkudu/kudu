@@ -264,13 +264,17 @@ namespace Kudu.FunctionalTests.Jobs
                     "http://someplace.else.com/{jobType}/index.html"
                 };
 
+                // Extract expected url (remove any user/password that might exists in the service url)
+                var serviceUrl = new Uri(appManager.ServiceUrl);
+                string expectedBaseUrl = appManager.ServiceUrl.Replace(serviceUrl.UserInfo + '@', String.Empty);
+
                 var extraInfoUrlExpectedResults = new string[]
                 {
-                    appManager.ServiceUrl + "sb?jobName=job1&jobType=triggered",
-                    appManager.ServiceUrl + "JobRuns/history.html?jobName=job2",
-                    appManager.ServiceUrl + "JobRuns/history.html?jobName=job3",
-                    appManager.ServiceUrl + "some/other/link",
-                    appManager.ServiceUrl + "some/other/job5/link",
+                    expectedBaseUrl + "sb?jobName=job1&jobType=triggered",
+                    expectedBaseUrl + "JobRuns/history.html?jobName=job2",
+                    expectedBaseUrl + "JobRuns/history.html?jobName=job3",
+                    expectedBaseUrl + "some/other/link",
+                    expectedBaseUrl + "some/other/job5/link",
                     "http://someplace.else.com/triggered/index.html"
                 };
 
