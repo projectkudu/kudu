@@ -31,7 +31,6 @@ namespace Kudu.Core.Tracing
         public Tracer(string path, TraceLevel level, IOperationLock traceLock)
             : this(new FileSystem(), path, level, traceLock)
         {
-
         }
 
         public Tracer(IFileSystem fileSystem, string path, TraceLevel level, IOperationLock traceLock)
