@@ -91,7 +91,7 @@ namespace Kudu.Core.Infrastructure
         /// Will do the same thing only this can work on files that are already open (and share read/write).
         /// </summary>
         [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
-        public static void WriteAllTextFromFile(string path, string content)
+        public static void WriteAllTextToFile(string path, string content)
         {
             using (FileStream fileStream = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete))
             {
@@ -106,9 +106,9 @@ namespace Kudu.Core.Infrastructure
         /// Will do the same thing only this can work on files that are already open (and share read/write).
         /// </summary>
         [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
-        public static void AppendAllTextFromFile(string path, string content)
+        public static void AppendAllTextToFile(string path, string content)
         {
-            using (FileStream fileStream = File.Open(path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete))
+            using (FileStream fileStream = File.Open(path, FileMode.Append, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete))
             {
                 var streamWriter = new StreamWriter(fileStream);
                 streamWriter.Write(content);

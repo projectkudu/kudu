@@ -63,6 +63,11 @@ namespace Kudu.Core.Jobs
             return _statusFilePath;
         }
 
+        public TJobStatus GetStatus<TJobStatus>() where TJobStatus : class, IJobStatus
+        {
+            return ReadJobStatusFromFile<TJobStatus>(TraceFactory, FileSystem, GetStatusFilePath());
+        }
+
         public void ReportStatus<TJobStatus>(TJobStatus status) where TJobStatus : class, IJobStatus
         {
             ReportStatus(status, logStatus: true);
@@ -113,11 +118,11 @@ namespace Kudu.Core.Jobs
             {
                 if (isAppend)
                 {
-                    OperationManager.Attempt(() => FileSystemHelpers.AppendAllTextFromFile(path, content));
+                    OperationManager.Attempt(() => FileSystemHelpers.AppendAllTextToFile(path, content));
                 }
                 else
                 {
-                    OperationManager.Attempt(() => FileSystemHelpers.WriteAllTextFromFile(path, content));
+                    OperationManager.Attempt(() => FileSystemHelpers.WriteAllTextToFile(path, content));
                 }
             }
             catch (Exception ex)
