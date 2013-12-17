@@ -4,6 +4,7 @@ using System.IO;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Kudu.Client.Command;
 using Kudu.Client.Deployment;
 using Kudu.Client.Diagnostics;
 using Kudu.Client.Editor;
