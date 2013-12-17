@@ -11,6 +11,22 @@ namespace Kudu.Contracts.Tracing
 
         private static readonly Dictionary<string, string> _empty = new Dictionary<string, string>();
 
+        // this are set of headers that will be filtered out from trace.xml
+        private static readonly HashSet<string> _blackList = new HashSet<string>(new[]
+        {
+            AlwaysTrace,
+            TraceLevelKey,
+            "Max-Forwards",
+            "X-LiveUpgrade",
+            "X-ARR-LOG-ID",
+            "DISGUISED-HOST",
+            "X-Original-URL",
+            "X-Forwarded-For",
+            "X-ARR-SSL"
+        },
+        StringComparer.OrdinalIgnoreCase);
+
+
         public static IDisposable Step(this ITracer tracer, string message)
         {
             return tracer.Step(message, _empty);
@@ -80,7 +96,7 @@ namespace Kudu.Contracts.Tracing
         // Some attributes only carry control information and are not meant for display
         public static bool IsNonDisplayableAttribute(string key)
         {
-            return key == AlwaysTrace || key == TraceLevelKey;
+            return _blackList.Contains(key);
         }
 
         private static TraceLevel GetTraceLevel(IDictionary<string, string> attributes)
@@ -109,6 +125,5 @@ namespace Kudu.Contracts.Tracing
 
             return TraceLevel.Verbose;
         }
-
     }
 }
