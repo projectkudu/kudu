@@ -90,7 +90,7 @@ namespace Kudu.Core.Jobs
         private TriggeredJobRun BuildLatestJobRun(string jobName)
         {
             DirectoryInfoBase[] jobRunsDirectories = GetJobRunsDirectories(jobName);
-            if (jobRunsDirectories == null)
+            if (jobRunsDirectories == null || jobRunsDirectories.Length == 0)
             {
                 return null;
             }
