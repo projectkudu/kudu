@@ -32,13 +32,14 @@ namespace Kudu.Core.Tracing
             _siteExtensionLogManager.Log(o);
         }
 
-        public void JobStarted(string jobName, string scriptExtension, string jobType)
+        public void JobStarted(string jobName, string scriptExtension, string jobType, string siteMode)
         {
             var o = new JobStartedSiteExtensionLogEvent()
             {
                 JobName = jobName,
                 ScriptExtension = scriptExtension,
-                JobType = jobType
+                JobType = jobType,
+                SiteMode = siteMode
             };
 
             _siteExtensionLogManager.Log(o);
@@ -119,6 +120,11 @@ namespace Kudu.Core.Tracing
             public string JobType
             {
                 set { this["JobType"] = value; }
+            }
+
+            public string SiteMode
+            {
+                set { this["SiteMode"] = value; }
             }
 
             public JobStartedSiteExtensionLogEvent()

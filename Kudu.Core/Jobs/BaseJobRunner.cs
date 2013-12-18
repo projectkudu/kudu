@@ -151,7 +151,8 @@ namespace Kudu.Core.Jobs
             string scriptFileExtension = Path.GetExtension(job.ScriptFilePath);
 
             logger.LogInformation("Run script '{0}' with script host - '{1}'".FormatCurrentCulture(scriptFileName, job.ScriptHost.GetType().Name));
-            _analytics.JobStarted(job.Name.Fuzz(), scriptFileExtension, job.JobType);
+            string siteMode = Settings.GetWebSitePolicy();
+            _analytics.JobStarted(job.Name.Fuzz(), scriptFileExtension, job.JobType, siteMode);
 
             try
             {
