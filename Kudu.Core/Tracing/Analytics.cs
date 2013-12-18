@@ -17,7 +17,7 @@ namespace Kudu.Core.Tracing
             _siteExtensionLogManager = new SiteExtensionLogManager(fileSystem, tracer, directoryPath);
         }
 
-        public void ProjectDeployed(string projectType, string result, string error, long deploymentDurationInMilliseconds)
+        public void ProjectDeployed(string projectType, string result, string error, long deploymentDurationInMilliseconds, string siteMode)
         {
             var o = new SiteDeployedSiteExtensionLogEvent()
             {
@@ -25,7 +25,8 @@ namespace Kudu.Core.Tracing
                 ScmType = _settings.GetValue(SettingsKeys.ScmType),
                 Result = result,
                 Error = error,
-                Latency = deploymentDurationInMilliseconds
+                Latency = deploymentDurationInMilliseconds,
+                SiteMode = siteMode
             };
 
             _siteExtensionLogManager.Log(o);
@@ -90,6 +91,11 @@ namespace Kudu.Core.Tracing
             public long? Latency
             {
                 set { this["Latency"] = value; }
+            }
+
+            public string SiteMode
+            {
+                set { this["SiteMode"] = value; }
             }
 
             public SiteDeployedSiteExtensionLogEvent()

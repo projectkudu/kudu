@@ -153,7 +153,7 @@ namespace Kudu.Core.Deployment
 
         public async Task DeployAsync(IRepository repository, ChangeSet changeSet, string deployer, bool clean, bool needFileUpdate)
         {
-            using (var deploymentAnalytics = new DeploymentAnalytics(_analytics))
+            using (var deploymentAnalytics = new DeploymentAnalytics(_analytics, _settings))
             {
                 Exception exception = null;
                 ITracer tracer = _traceFactory.GetTracer();
@@ -807,10 +807,12 @@ namespace Kudu.Core.Deployment
             private readonly IAnalytics _analytics;
             private readonly Stopwatch _stopwatch = Stopwatch.StartNew();
             private bool _disposed;
+            private string _siteMode;
 
-            public DeploymentAnalytics(IAnalytics analytics)
+            public DeploymentAnalytics(IAnalytics analytics, IDeploymentSettingsManager settings)
             {
                 _analytics = analytics;
+                _siteMode = settings.GetWebSitePolicy();
             }
 
             public string ProjectType { get; set; }
@@ -822,7 +824,7 @@ namespace Kudu.Core.Deployment
                 if (!_disposed)
                 {
                     _stopwatch.Stop();
-                    _analytics.ProjectDeployed(ProjectType, Result, Error, _stopwatch.ElapsedMilliseconds);
+                    _analytics.ProjectDeployed(ProjectType, Result, Error, _stopwatch.ElapsedMilliseconds, _siteMode);
                     _disposed = true;
                 }
             }
