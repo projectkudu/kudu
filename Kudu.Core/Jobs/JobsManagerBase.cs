@@ -21,6 +21,11 @@ namespace Kudu.Core.Jobs
             new PhpScriptHost(),
             new NodeScriptHost()
         };
+
+        public static string GetJobExtraInfoUrlFilePath(string jobsSpecificDataPath)
+        {
+            return Path.Combine(jobsSpecificDataPath, "job.extra_info_url.template");
+        }
     }
 
     public abstract class JobsManagerBase<TJob> : JobsManagerBase, IJobsManager<TJob> where TJob : JobBase, new()
@@ -114,12 +119,11 @@ namespace Kudu.Core.Jobs
 
             string runCommand = scriptFilePath.Substring(jobDirectory.FullName.Length + 1);
 
-            JobSettings jobSettings = JobSettings.LoadJobSettings(jobDirectory.FullName, FileSystem, TraceFactory);
             var job = new TJob()
             {
                 Name = jobName,
                 Url = BuildJobsUrl(jobName),
-                ExtraInfoUrl = BuildExtraInfoUrl(jobName, jobSettings),
+                ExtraInfoUrl = BuildExtraInfoUrl(jobName),
                 ScriptFilePath = scriptFilePath,
                 RunCommand = runCommand,
                 JobType = _jobsTypePath,
@@ -168,12 +172,13 @@ namespace Kudu.Core.Jobs
             return new Uri(_vfsUrlPrefix + relativeUrl);
         }
 
-        protected Uri BuildExtraInfoUrl(string jobName, JobSettings jobSettings)
+        protected Uri BuildExtraInfoUrl(string jobName)
         {
             try
             {
-                string extraInfoUrlTemplate = jobSettings.ExtraInfoUrlTemplate;
-                if (!String.IsNullOrEmpty(extraInfoUrlTemplate))
+                string jobsSpecificDataPath = Path.Combine(JobsDataPath, jobName);
+                string extraInfoUrlTemplate = LoadExtraInfoUrlTemplateFromFile(jobsSpecificDataPath);
+                if (extraInfoUrlTemplate != null)
                 {
                     extraInfoUrlTemplate = extraInfoUrlTemplate.Replace("{jobName}", jobName);
                     extraInfoUrlTemplate = extraInfoUrlTemplate.Replace("{jobType}", _jobsTypePath);
@@ -192,6 +197,38 @@ namespace Kudu.Core.Jobs
             }
 
             return BuildDefaultExtraInfoUrl(jobName);
+        }
+
+        /// <summary>
+        /// Load the extra url template from a file
+        /// </summary>
+        /// <remarks>
+        /// As each job has an extra information url, it is possible to use specific url for a job
+        /// By providing the url as content in a file called "job.extra_info_url.template" under the job's data directory.
+        /// Sample file content:
+        /// /sb?jobName={jobName}&jobType={jobType}
+        /// </remarks>
+        private string LoadExtraInfoUrlTemplateFromFile(string jobsSpecificDataPath)
+        {
+            try
+            {
+                string jobExtraInfoUrlFilePath = GetJobExtraInfoUrlFilePath(jobsSpecificDataPath);
+                if (FileSystem.File.Exists(jobExtraInfoUrlFilePath))
+                {
+                    string jobExtraInfoUrlFileContent = FileSystem.File.ReadAllText(jobExtraInfoUrlFilePath);
+                    jobExtraInfoUrlFileContent = jobExtraInfoUrlFileContent.Trim();
+                    if (!String.IsNullOrEmpty(jobExtraInfoUrlFileContent))
+                    {
+                        return jobExtraInfoUrlFileContent.Split('\n')[0];
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                TraceFactory.GetTracer().TraceError(ex);
+            }
+
+            return null;
         }
 
         protected abstract Uri BuildDefaultExtraInfoUrl(string jobName);

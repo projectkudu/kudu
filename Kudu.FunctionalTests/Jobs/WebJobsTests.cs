@@ -27,6 +27,7 @@ namespace Kudu.FunctionalTests.Jobs
         private const string ConsoleWorkerExecutablePath = ContinuousJobsBinPath + "/deployedJob/ConsoleWorker.exe";
 
         private const string TriggeredJobBinPath = "Site/wwwroot/App_Data/jobs/triggered";
+        private const string TriggeredJobDataPath = JobsDataPath + "/triggered";
 
         [Fact]
         public void PushAndRedeployContinuousJobAsConsoleWorker()
@@ -303,14 +304,13 @@ namespace Kudu.FunctionalTests.Jobs
                 {
                     string jobName = "job" + index;
                     string jobScriptPath = TriggeredJobBinPath + "/" + jobName + "/run.cmd";
-                    string jobSettingsPath = TriggeredJobBinPath + "/" + jobName + "/job.settings.json";
+                    string jobExtraInfoUrlFilePath = TriggeredJobDataPath + "/" + jobName + "/job.extra_info_url.template";
 
                     appManager.VfsManager.WriteAllText(jobScriptPath, "echo echo echo echo");
 
                     if (extraInfoUrlTemplate != null)
                     {
-                        string jobSettingsContent = "{\"extra_info_url_template\":\"" + extraInfoUrlTemplate + "\"}";
-                        appManager.VfsManager.WriteAllText(jobSettingsPath, jobSettingsContent);
+                        appManager.VfsManager.WriteAllText(jobExtraInfoUrlFilePath, extraInfoUrlTemplate);
                     }
 
                     index++;

@@ -69,7 +69,6 @@
     <Compile Include="Jobs\IJobStatus.cs" />
     <Compile Include="Jobs\JobLogger.cs" />
     <Compile Include="Jobs\JobNotFoundException.cs" />
-    <Compile Include="Jobs\JobSettings.cs" />
     <Compile Include="Jobs\TriggeredJobRunLogger.cs" />
     <Compile Include="Jobs\TriggeredJobRunner.cs" />
     <Compile Include="Jobs\JobsManagerBase.cs" />
