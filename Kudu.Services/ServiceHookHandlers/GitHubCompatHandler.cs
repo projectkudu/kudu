@@ -88,7 +88,7 @@ namespace Kudu.Services.ServiceHookHandlers
                     commitAuthor.Value<string>("name"),
                     commitAuthor.Value<string>("email"),
                     latestCommit.Value<string>("message"),
-                    DateTimeOffset.Parse(latestCommit.Value<string>("timestamp"))
+                    latestCommit.Value<DateTime>("timestamp")
             );
         }
 
