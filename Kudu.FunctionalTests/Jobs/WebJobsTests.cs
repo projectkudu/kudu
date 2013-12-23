@@ -136,6 +136,7 @@ namespace Kudu.FunctionalTests.Jobs
 
                 appManager.JobsManager.SetSingletonContinuousJobAsync(expectedContinuousJob.Name, true).Wait();
                 expectedVerificationFileContents.Add(ExpectedVerificationFileContent);
+                expectedVerificationFileContents.Add(ExpectedVerificationFileContent);
 
                 WaitUntilAssertVerified(
                     "verification file",
@@ -143,6 +144,7 @@ namespace Kudu.FunctionalTests.Jobs
                     () => VerifyVerificationFile(appManager, expectedVerificationFileContents.ToArray()));
 
                 appManager.JobsManager.SetSingletonContinuousJobAsync(expectedContinuousJob.Name, false).Wait();
+                expectedVerificationFileContents.Add(ExpectedVerificationFileContent);
                 expectedVerificationFileContents.Add(ExpectedVerificationFileContent);
 
                 WaitUntilAssertVerified(
