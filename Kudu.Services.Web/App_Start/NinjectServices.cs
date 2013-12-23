@@ -410,6 +410,7 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("get-continuous-job", "jobs/continuous/{jobName}", new { controller = "Jobs", action = "GetContinuousJob" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("disable-continuous-job", "jobs/continuous/{jobName}/stop", new { controller = "Jobs", action = "DisableContinuousJob" }, new { verb = new HttpMethodConstraint("POST") });
             routes.MapHttpRoute("enable-continuous-job", "jobs/continuous/{jobName}/start", new { controller = "Jobs", action = "EnableContinuousJob" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpRoute("singleton-continuous-job", "jobs/continuous/{jobName}/singleton", new { controller = "Jobs", action = "SetContinuousJobSingleton" }, new { verb = new HttpMethodConstraint("POST") });
         }
 
         // Perform migration tasks to deal with legacy sites that had different file layout

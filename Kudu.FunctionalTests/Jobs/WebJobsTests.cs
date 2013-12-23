@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -124,13 +125,30 @@ namespace Kudu.FunctionalTests.Jobs
 
                 TestTracer.Trace("Waiting for verification file to have 2 lines (which means it ran twice)");
 
+                var expectedVerificationFileContents = new List<string>();
+                expectedVerificationFileContents.Add(ExpectedVerificationFileContent);
+                expectedVerificationFileContents.Add(ExpectedVerificationFileContent);
+
                 WaitUntilAssertVerified(
                     "verification file",
                     TimeSpan.FromSeconds(30),
-                    () =>
-                    {
-                        VerifyVerificationFile(appManager, new string[] { ExpectedVerificationFileContent, ExpectedVerificationFileContent });
-                    });
+                    () => VerifyVerificationFile(appManager, expectedVerificationFileContents.ToArray()));
+
+                appManager.JobsManager.SetSingletonContinuousJobAsync(expectedContinuousJob.Name, true).Wait();
+                expectedVerificationFileContents.Add(ExpectedVerificationFileContent);
+
+                WaitUntilAssertVerified(
+                    "verification file",
+                    TimeSpan.FromSeconds(30),
+                    () => VerifyVerificationFile(appManager, expectedVerificationFileContents.ToArray()));
+
+                appManager.JobsManager.SetSingletonContinuousJobAsync(expectedContinuousJob.Name, false).Wait();
+                expectedVerificationFileContents.Add(ExpectedVerificationFileContent);
+
+                WaitUntilAssertVerified(
+                    "verification file",
+                    TimeSpan.FromSeconds(30),
+                    () => VerifyVerificationFile(appManager, expectedVerificationFileContents.ToArray()));
             });
         }
 
@@ -443,7 +461,14 @@ namespace Kudu.FunctionalTests.Jobs
                 }
                 finally
                 {
-                    CleanupTest(appManager);
+                    try
+                    {
+                        CleanupTest(appManager);
+                    }
+                    catch (Exception ex)
+                    {
+                        TestTracer.Trace(ex.ToString());
+                    }
                 }
             });
         }
