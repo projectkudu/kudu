@@ -1,12 +1,19 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
+using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Xml.Linq;
+using System.Xml.XPath;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
 using Kudu.Core.Deployment.Generator;
 using Kudu.Core.Infrastructure;
@@ -16,10 +23,13 @@ namespace Kudu.Core.Jobs
 {
     public abstract class BaseJobRunner
     {
+        private static readonly string[] AppConfigFilesLookupList = new string[] { "*.exe.config" };
+
         private readonly ExternalCommandFactory _externalCommandFactory;
         private readonly IAnalytics _analytics;
 
-        protected BaseJobRunner(string jobName, string jobsTypePath, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
+        protected BaseJobRunner(string jobName, string jobsTypePath, IEnvironment environment, IFileSystem fileSystem,
+            IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
         {
             TraceFactory = traceFactory;
             Environment = environment;
@@ -102,6 +112,7 @@ namespace Kudu.Core.Jobs
                 var tempJobInstancePath = Path.Combine(JobTempPath, Path.GetRandomFileName());
 
                 FileSystemHelpers.CopyDirectoryRecursive(FileSystem, JobBinariesPath, tempJobInstancePath);
+                UpdateAppConfigs(tempJobInstancePath);
 
                 WorkingDirectory = tempJobInstancePath;
             }
@@ -228,6 +239,104 @@ namespace Kudu.Core.Jobs
             catch (Exception ex)
             {
                 logger.LogWarning(ex.ToString());
+            }
+        }
+
+        private void UpdateAppConfigs(string tempJobInstancePath)
+        {
+            IEnumerable<string> configFilePaths = FileSystemHelpers.ListFiles(tempJobInstancePath, SearchOption.AllDirectories, AppConfigFilesLookupList);
+
+            foreach (string configFilePath in configFilePaths)
+            {
+                UpdateAppConfig(configFilePath);
+            }
+        }
+
+        private void UpdateAppConfig(string configFilePath)
+        {
+            try
+            {
+                var settings = SettingsProcessor.Instance;
+
+                bool updateXml = false;
+
+                // Read app.config as xml document
+                var xmlConfig = XDocument.Load(configFilePath);
+
+                // Process app settings section
+                var appSettingsElement = xmlConfig.XPathSelectElement("configuration/appSettings");
+
+                // Only update app settings when the app settings section exists
+                if (appSettingsElement != null && appSettingsElement.Attribute("configSource") == null)
+                {
+                    foreach (var appSetting in settings.AppSettings)
+                    {
+                        XElement appSettingElement = appSettingsElement.Elements().FirstOrDefault(xElement =>
+                        {
+                            XAttribute keyAttribute = xElement.Attribute("key");
+                            return keyAttribute != null && String.Equals(keyAttribute.Value, appSetting.Key, StringComparison.OrdinalIgnoreCase);
+                        });
+
+                        if (appSettingElement != null)
+                        {
+                            // Remove previous settings element
+                            appSettingElement.Remove();
+                        }
+
+                        // Add updated settings element
+                        var addElement = new XElement("add");
+                        addElement.Add(new XAttribute("key", appSetting.Key));
+                        addElement.Add(new XAttribute("value", appSetting.Value));
+                        appSettingsElement.Add(addElement);
+
+                        updateXml = true;
+                    }
+                }
+
+                // Process connection strings section
+                var connectionStringsElement = xmlConfig.XPathSelectElement("configuration/connectionStrings");
+
+                // Only update connection strings if connection strings section exists
+                if (connectionStringsElement != null)
+                {
+                    foreach (ConnectionStringSettings connectionString in settings.ConnectionStrings)
+                    {
+                        XElement connectionStringElement = connectionStringsElement.Elements().FirstOrDefault(xElement =>
+                        {
+                            XAttribute nameAttribute = xElement.Attribute("name");
+                            return nameAttribute != null &&
+                                   String.Equals(nameAttribute.Value, connectionString.Name, StringComparison.OrdinalIgnoreCase);
+                        });
+
+                        if (connectionStringElement != null)
+                        {
+                            // Remove previous connection string element
+                            connectionStringElement.Remove();
+                        }
+
+                        // Add updated connection string element
+                        if (!String.IsNullOrEmpty(connectionString.Name))
+                        {
+                            var addElement = new XElement("add");
+                            addElement.Add(new XAttribute("name", connectionString.Name));
+                            addElement.Add(new XAttribute("connectionString", connectionString.ConnectionString ?? String.Empty));
+                            addElement.Add(new XAttribute("providerName", connectionString.ProviderName ?? String.Empty));
+                            connectionStringsElement.Add(addElement);
+
+                            updateXml = true;
+                        }
+                    }
+                }
+
+                if (updateXml)
+                {
+                    // Write updated app.config
+                    FileSystem.File.WriteAllText(configFilePath, xmlConfig.ToString());
+                }
+            }
+            catch (Exception ex)
+            {
+                TraceFactory.GetTracer().TraceError(ex);
             }
         }
     }
