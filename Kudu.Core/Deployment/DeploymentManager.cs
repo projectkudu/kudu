@@ -97,7 +97,7 @@ namespace Kudu.Core.Deployment
 
                 VerifyDeployment(id, IsDeploying);
 
-                var logger = new XmlLogger(_fileSystem, path);
+                var logger = new XmlLogger(_fileSystem, path, _analytics);
                 List<LogEntry> entries = logger.GetLogEntries().ToList();
 
                 // Determine if there's details to show at all
@@ -124,7 +124,7 @@ namespace Kudu.Core.Deployment
 
                 VerifyDeployment(id, IsDeploying);
 
-                var logger = new XmlLogger(_fileSystem, path);
+                var logger = new XmlLogger(_fileSystem, path, _analytics);
 
                 return logger.GetLogEntryDetails(entryId).ToList();
             }
@@ -759,7 +759,7 @@ namespace Kudu.Core.Deployment
         public ILogger GetLogger(string id)
         {
             var path = GetLogPath(id);
-            var xmlLogger = new XmlLogger(_fileSystem, path);
+            var xmlLogger = new XmlLogger(_fileSystem, path, _analytics);
             return new ProgressLogger(id, _status, new CascadeLogger(xmlLogger, _globalLogger));
         }
 

@@ -102,6 +102,7 @@
     <Compile Include="TracerTests.cs" />
     <Compile Include="Tracing\TracingTests.cs" />
     <Compile Include="Tracing\SiteExtensionLogManagerTests.cs" />
+    <Compile Include="XmlLoggerFacts.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Kudu.Contracts\Kudu.Contracts.csproj">
