@@ -4,6 +4,7 @@ using System.IO.Abstractions;
 using System.Linq;
 using System.Xml.Linq;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Deployment
 {
@@ -11,12 +12,14 @@ namespace Kudu.Core.Deployment
     {
         private readonly string _path;
         private readonly IFileSystem _fileSystem;
+        private readonly IAnalytics _analytics;
         private readonly static object LogLock = new object();
 
-        public XmlLogger(IFileSystem fileSystem, string path)
+        public XmlLogger(IFileSystem fileSystem, string path, IAnalytics analytics)
         {
             _fileSystem = fileSystem;
             _path = path;
+            _analytics = analytics;
         }
 
         public ILogger Log(string value, LogEntryType type)
@@ -85,18 +88,22 @@ namespace Kudu.Core.Deployment
 
         private XDocument GetDocument()
         {
-            if (!_fileSystem.File.Exists(_path))
+            try
             {
-                return new XDocument(new XElement("entries"));
+                if (_fileSystem.File.Exists(_path))
+                {
+                    using (var stream = _fileSystem.File.OpenRead(_path))
+                    {
+                        return XDocument.Load(stream);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _analytics.UnexpectedException(ex);
             }
 
-            XDocument document;
-            using (var stream = _fileSystem.File.OpenRead(_path))
-            {
-                document = XDocument.Load(stream);
-            }
-
-            return document;
+            return new XDocument(new XElement("entries"));
         }
 
         private class InnerXmlLogger : ILogger

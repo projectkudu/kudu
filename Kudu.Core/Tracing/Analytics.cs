@@ -1,4 +1,6 @@
-﻿using System.IO.Abstractions;
+﻿using System;
+using System.IO.Abstractions;
+using System.Text;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 
@@ -36,6 +38,28 @@ namespace Kudu.Core.Tracing
                 JobName = jobName,
                 ScriptExtension = scriptExtension,
                 JobType = jobType
+            };
+
+            _siteExtensionLogManager.Log(o);
+        }
+
+        public void UnexpectedException(Exception exception)
+        {
+            var strb = new StringBuilder();
+            strb.AppendLine(exception.ToString());
+
+            var aggregate = exception as AggregateException;
+            if (aggregate != null)
+            {
+                foreach (var inner in aggregate.Flatten().InnerExceptions)
+                {
+                    strb.AppendLine(inner.ToString());
+                }
+            }
+
+            var o = new UnexpectedExceptionSiteExtensionLogEvent()
+            {
+                Error = strb.ToString()
             };
 
             _siteExtensionLogManager.Log(o);
@@ -93,6 +117,19 @@ namespace Kudu.Core.Tracing
 
             public JobStartedSiteExtensionLogEvent()
                 : base("Kudu", "JobStarted")
+            {
+            }
+        }
+
+        private class UnexpectedExceptionSiteExtensionLogEvent : SiteExtensionLogEvent
+        {
+            public string Error
+            {
+                set { this["Error"] = value; }
+            }
+
+            public UnexpectedExceptionSiteExtensionLogEvent()
+                : base("Kudu", "UnexpectedException")
             {
             }
         }
