@@ -323,6 +323,10 @@ echo $i > pushinfo
             // there may be a submodule folder leftover, one could clean it manually by /scm/clean
             if (File.Exists(Path.Combine(_gitExe.WorkingDirectory, ".gitmodules")))
             {
+                // in case the remote url is changed in .gitmodules for existing submodules
+                // git submodule sync will update related git/config to reflect that change
+                Execute("submodule sync");
+
                 GitFetchWithRetry(() => Execute("submodule update --init --recursive"));
             }
         }
