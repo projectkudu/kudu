@@ -4,7 +4,7 @@
     <sites>
       <site name="%XDT_SCMSITENAME%" xdt:Locator="Match(name)">
         <application path="/" xdt:Locator="Match(path)" xdt:Transform="Remove" />
-        <application path="/" applicationPool="%XDT_APPPOOLNAME%" xdt:Transform="Insert">
+        <application path="/" preloadEnabled="%XDT_PRELOADENABLED%" xdt:Transform="Insert">
           <virtualDirectory path="/" physicalPath="%XDT_EXTENSIONPATH%" />
         </application>
       </site>
