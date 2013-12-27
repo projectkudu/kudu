@@ -545,7 +545,7 @@ echo $i > pushinfo
                 messageBuilder.Append(line);
             }
 
-            string message = messageBuilder.ToString();
+            string message = messageBuilder.ToString().Trim();
             return new ChangeSet(id, author, email, message, DateTimeOffset.ParseExact(date, "ddd MMM d HH:mm:ss yyyy zzz", CultureInfo.InvariantCulture));
         }
     }
