@@ -33,17 +33,18 @@ namespace Kudu.Services.ServiceHookHandlers
             }
 
             // The format of ref is refs/something/something else
-            // For master it's normally refs/head/master
+            // e.g. refs/head/master or refs/head/foo/bar
             string branch = payload.Value<string>("ref");
 
-            if (String.IsNullOrEmpty(branch))
+            if (String.IsNullOrEmpty(branch) || !branch.StartsWith("refs/"))
             {
                 return null;
             }
             else
             {
-                // Extract the name from /refs/head/master notation.
-                branch = Path.GetFileName(branch);
+                // Extract the name from refs/head/master notation.
+                int secondSlashIndex = branch.IndexOf('/', 5);
+                branch = branch.Substring(secondSlashIndex + 1);
                 if (!branch.Equals(targetBranch, StringComparison.OrdinalIgnoreCase))
                 {
                     return null;
