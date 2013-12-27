@@ -30,7 +30,7 @@ Date:   Thu Jul 7 19:05:40 2011 -0700
             Assert.Equal("307d8fe354ff30609decef49f91195e2e9719398", changeSet.Id);
             Assert.Equal("David Fowler", changeSet.AuthorName);
             Assert.Equal("davidfowl@gmail.com", changeSet.AuthorEmail);
-            Assert.Equal("    Initial commit", changeSet.Message);
+            Assert.Equal("Initial commit", changeSet.Message);
         }
 
         [Fact]
@@ -54,8 +54,7 @@ Date:   Thu Jul 7 19:05:40 2011 -0700
             Assert.Equal("d35697645e2472f5e327c0ec4b9f3489e806c276", changeSet.Id);
             Assert.Equal("John Doe", changeSet.AuthorName);
             Assert.Null(changeSet.AuthorEmail);
-            Assert.Equal(@"    Second commit
-", changeSet.Message);
+            Assert.Equal(@"Second commit", changeSet.Message);
         }
 
         [Theory]
