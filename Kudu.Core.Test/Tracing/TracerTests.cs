@@ -7,15 +7,15 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 using System.Xml.Linq;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Tracing;
 using Moq;
 using Xunit;
 using Xunit.Extensions;
 
-using MockOperationLock = Kudu.Core.Test.OperationLockTests.MockOperationLock;
-
-namespace Kudu.Core.Test
+namespace Kudu.Core.Test.Tracing
 {
     public class TracerTests
     {
@@ -25,7 +25,7 @@ namespace Kudu.Core.Test
             // Mock
             var path = @"x:\git\trace\trace.xml";
             var fs = GetMockFileSystem();
-            var traceLock = new MockOperationLock();
+            var traceLock = new OperationLockTests.MockOperationLock();
             var threads = 5;
             var tasks = new List<Task>(threads);
             var total = 0;
@@ -62,7 +62,7 @@ namespace Kudu.Core.Test
             // Mock
             var path = @"x:\git\trace\trace.xml";
             var fs = GetMockFileSystem();
-            var traceLock = new MockOperationLock();
+            var traceLock = new OperationLockTests.MockOperationLock();
             var tracer = new Tracer(fs, path, traceLevel, traceLock);
 
             // Test
@@ -87,6 +87,36 @@ namespace Kudu.Core.Test
 
             // Assert
             Assert.Equal(requests.Where(r => r.Traced), traces, RequestInfoComparer.Instance);
+        }
+
+        [Theory]
+        [InlineData(true, TraceExtensions.AlwaysTrace)]
+        [InlineData(true, TraceExtensions.TraceLevelKey)]
+        [InlineData(true, "Max-Forwards")]
+        [InlineData(true, "X-ARR-LOG-ID")]
+        [InlineData(false, "url")]
+        [InlineData(false, "method")]
+        [InlineData(false, "type")]
+        [InlineData(false, "Host")]
+        public void TracingAttributeBlacklistTests(bool expected, string header)
+        {
+            Assert.Equal(expected, TraceExtensions.IsNonDisplayableAttribute(header));
+        }
+
+        [Theory]
+        [InlineData(true, "/", null)]
+        [InlineData(true, "/", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36")]
+        [InlineData(true, "/vfs/", "Mozilla/5.0 (Windows NT 6.3; WOW64; Trident/7.0; rv:11.0) like Gecko")]
+        [InlineData(false, "/coolapp.git/info/refs?service=git-receive-pack", "git/1.8.4.msysgit.0")]
+        [InlineData(false, "/dump", null)]
+        [InlineData(false, "/scm/info", null)]
+        public void SkipRequestTracingTests(bool expected, string rawUrl, string userAgent)
+        {
+            var mock = new Mock<HttpRequestBase>();
+            mock.Setup(req => req.RawUrl).Returns(rawUrl);
+            mock.Setup(req => req.UserAgent).Returns(userAgent);
+            HttpRequestBase request = mock.Object;
+            Assert.Equal(expected, TraceExtensions.ShouldSkipRequest(request));
         }
 
         public static IEnumerable<object[]> Requests

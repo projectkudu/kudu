@@ -38,18 +38,16 @@ namespace Kudu.Services.Web.Tracing
             _lastRequestDateTime = DateTime.UtcNow;
 
             var httpContext = ((HttpApplication)sender).Context;
-
-            var tracer = TraceStartup(httpContext);
+            var httpRequest = new HttpRequestWrapper(httpContext.Request);
 
             // Skip certain paths
-            if (httpContext.Request.RawUrl.EndsWith("favicon.ico", StringComparison.OrdinalIgnoreCase) ||
-                httpContext.Request.RawUrl == "/")
+            if (TraceExtensions.ShouldSkipRequest(httpRequest))
             {
                 TraceServices.RemoveRequestTracer(httpContext);
-
                 return;
             }
 
+            ITracer tracer = TraceStartup(httpContext);
             tracer = tracer ?? TraceServices.CreateRequestTracer(httpContext);
 
             if (tracer == null || tracer.TraceLevel <= TraceLevel.Off)
