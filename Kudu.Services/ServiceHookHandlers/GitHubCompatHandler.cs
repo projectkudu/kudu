@@ -36,7 +36,7 @@ namespace Kudu.Services.ServiceHookHandlers
             // e.g. refs/head/master or refs/head/foo/bar
             string branch = payload.Value<string>("ref");
 
-            if (String.IsNullOrEmpty(branch) || !branch.StartsWith("refs/"))
+            if (String.IsNullOrEmpty(branch) || !branch.StartsWith("refs/", StringComparison.OrdinalIgnoreCase))
             {
                 return null;
             }
