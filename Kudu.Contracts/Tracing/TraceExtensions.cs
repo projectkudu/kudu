@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Web;
 
 namespace Kudu.Contracts.Tracing
 {
@@ -96,6 +97,24 @@ namespace Kudu.Contracts.Tracing
         public static bool IsNonDisplayableAttribute(string key)
         {
             return _blackList.Contains(key);
+        }
+
+        public static bool ShouldSkipRequest(HttpRequestBase request)
+        {
+            // Filter out pings to applications.
+            if (request.RawUrl == "/")
+            {
+                return true;
+            }
+
+            if (request.UserAgent == null)
+            {
+                return false;
+            }
+
+            // Skip tracing direct browsers requests.
+            return (request.UserAgent.StartsWith("Mozilla", StringComparison.OrdinalIgnoreCase) ||
+                    request.UserAgent.StartsWith("Opera", StringComparison.OrdinalIgnoreCase));
         }
 
         private static TraceLevel GetTraceLevel(IDictionary<string, string> attributes)
