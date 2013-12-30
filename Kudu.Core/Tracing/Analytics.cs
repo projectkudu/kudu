@@ -19,28 +19,24 @@ namespace Kudu.Core.Tracing
 
         public void ProjectDeployed(string projectType, string result, string error, long deploymentDurationInMilliseconds, string siteMode)
         {
-            var o = new SiteDeployedSiteExtensionLogEvent()
-            {
-                SiteType = projectType,
-                ScmType = _settings.GetValue(SettingsKeys.ScmType),
-                Result = result,
-                Error = error,
-                Latency = deploymentDurationInMilliseconds,
-                SiteMode = siteMode
-            };
+            var o = new KuduSiteExtensionLogEvent("SiteDeployed");
+            o["SiteType"] = projectType;
+            o["ScmType"] = _settings.GetValue(SettingsKeys.ScmType);
+            o["Result"] = result;
+            o["Error"] = error;
+            o["Latency"] = deploymentDurationInMilliseconds;
+            o["SiteMode"] = siteMode;
 
             _siteExtensionLogManager.Log(o);
         }
 
         public void JobStarted(string jobName, string scriptExtension, string jobType, string siteMode)
         {
-            var o = new JobStartedSiteExtensionLogEvent()
-            {
-                JobName = jobName,
-                ScriptExtension = scriptExtension,
-                JobType = jobType,
-                SiteMode = siteMode
-            };
+            var o = new KuduSiteExtensionLogEvent("JobStarted");
+            o["JobName"] = jobName;
+            o["ScriptExtension"] = scriptExtension;
+            o["JobType"] = jobType;
+            o["SiteMode"] = siteMode;
 
             _siteExtensionLogManager.Log(o);
         }
@@ -59,91 +55,10 @@ namespace Kudu.Core.Tracing
                 }
             }
 
-            var o = new UnexpectedExceptionSiteExtensionLogEvent()
-            {
-                Error = strb.ToString()
-            };
+            var o = new KuduSiteExtensionLogEvent("UnexpectedException");
+            o["Error"] = strb.ToString();
 
             _siteExtensionLogManager.Log(o);
-        }
-
-        private class SiteDeployedSiteExtensionLogEvent : SiteExtensionLogEvent
-        {
-            public string SiteType
-            {
-                set { this["SiteType"] = value; }
-            }
-
-            public string ScmType
-            {
-                set { this["ScmType"] = value; }
-            }
-
-            public string Result
-            {
-                set { this["Result"] = value; }
-            }
-
-            public string Error
-            {
-                set { this["Error"] = value; }
-            }
-
-            public long? Latency
-            {
-                set { this["Latency"] = value; }
-            }
-
-            public string SiteMode
-            {
-                set { this["SiteMode"] = value; }
-            }
-
-            public SiteDeployedSiteExtensionLogEvent()
-                : base("Kudu", "SiteDeployed")
-            {
-            }
-        }
-
-        private class JobStartedSiteExtensionLogEvent : SiteExtensionLogEvent
-        {
-            public string JobName
-            {
-                set { this["JobName"] = value; }
-            }
-
-            public string ScriptExtension
-            {
-                set { this["ScriptExtension"] = value; }
-            }
-
-            public string JobType
-            {
-                set { this["JobType"] = value; }
-            }
-
-            public string SiteMode
-            {
-                set { this["SiteMode"] = value; }
-            }
-
-            public JobStartedSiteExtensionLogEvent()
-                : base("Kudu", "JobStarted")
-            {
-            }
-        }
-
-        private class UnexpectedExceptionSiteExtensionLogEvent : SiteExtensionLogEvent
-        {
-            public string Error
-            {
-                set { this["Error"] = value; }
-            }
-
-            public UnexpectedExceptionSiteExtensionLogEvent()
-                : base("Kudu", "UnexpectedException")
-            {
-            }
         }
     }
 }

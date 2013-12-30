@@ -5,11 +5,11 @@ namespace Kudu.Core.Tracing
 {
     public class SiteExtensionLogEvent : Dictionary<string, object>
     {
-        public SiteExtensionLogEvent(string siteExtension, string eventType)
+        public SiteExtensionLogEvent(string siteExtension, string eventName)
         {
             this["SiteExtension"] = siteExtension;
             this["EventDate"] = DateTime.UtcNow;
-            this["EventName"] = eventType;
+            this["EventName"] = eventName;
         }
     }
 }
