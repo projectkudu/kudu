@@ -458,7 +458,7 @@ namespace Kudu.Services.Web.App_Start
         private static ITracer GetTracer(IEnvironment environment, IKernel kernel)
         {
             TraceLevel level = kernel.Get<IDeploymentSettingsManager>().GetTraceLevel();
-            if (level > TraceLevel.Off)
+            if (level > TraceLevel.Off && TraceServices.CurrentRequestTraceFile != null)
             {
                 string tracePath = Path.Combine(environment.TracePath, Constants.TraceFile);
                 string textPath = Path.Combine(environment.TracePath, TraceServices.CurrentRequestTraceFile);
@@ -505,7 +505,7 @@ namespace Kudu.Services.Web.App_Start
         private static ILogger GetLogger(IEnvironment environment, IKernel kernel)
         {
             TraceLevel level = kernel.Get<IDeploymentSettingsManager>().GetTraceLevel();
-            if (level > TraceLevel.Off)
+            if (level > TraceLevel.Off && TraceServices.CurrentRequestTraceFile != null)
             {
                 string textPath = Path.Combine(environment.DeploymentTracePath, TraceServices.CurrentRequestTraceFile);
                 return new TextLogger(textPath);
