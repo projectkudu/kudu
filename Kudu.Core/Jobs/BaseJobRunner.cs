@@ -6,11 +6,8 @@ using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
-using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Xml.Linq;
-using System.Xml.XPath;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
@@ -260,78 +257,28 @@ namespace Kudu.Core.Jobs
 
                 bool updateXml = false;
 
-                // Read app.config as xml document
-                var xmlConfig = XDocument.Load(configFilePath);
+                // Read app.config
+                string exeFilePath = configFilePath.Substring(0, configFilePath.Length - ".config".Length);
+                Configuration config = ConfigurationManager.OpenExeConfiguration(exeFilePath);
 
-                // Process app settings section
-                var appSettingsElement = xmlConfig.XPathSelectElement("configuration/appSettings");
-
-                // Only update app settings when the app settings section exists
-                if (appSettingsElement != null && appSettingsElement.Attribute("configSource") == null)
+                foreach (var appSetting in settings.AppSettings)
                 {
-                    foreach (var appSetting in settings.AppSettings)
-                    {
-                        XElement appSettingElement = appSettingsElement.Elements().FirstOrDefault(xElement =>
-                        {
-                            XAttribute keyAttribute = xElement.Attribute("key");
-                            return keyAttribute != null && String.Equals(keyAttribute.Value, appSetting.Key, StringComparison.OrdinalIgnoreCase);
-                        });
-
-                        if (appSettingElement != null)
-                        {
-                            // Remove previous settings element
-                            appSettingElement.Remove();
-                        }
-
-                        // Add updated settings element
-                        var addElement = new XElement("add");
-                        addElement.Add(new XAttribute("key", appSetting.Key));
-                        addElement.Add(new XAttribute("value", appSetting.Value));
-                        appSettingsElement.Add(addElement);
-
-                        updateXml = true;
-                    }
+                    config.AppSettings.Settings.Remove(appSetting.Key);
+                    config.AppSettings.Settings.Add(appSetting.Key, appSetting.Value);
+                    updateXml = true;
                 }
 
-                // Process connection strings section
-                var connectionStringsElement = xmlConfig.XPathSelectElement("configuration/connectionStrings");
-
-                // Only update connection strings if connection strings section exists
-                if (connectionStringsElement != null)
+                foreach (ConnectionStringSettings connectionString in settings.ConnectionStrings)
                 {
-                    foreach (ConnectionStringSettings connectionString in settings.ConnectionStrings)
-                    {
-                        XElement connectionStringElement = connectionStringsElement.Elements().FirstOrDefault(xElement =>
-                        {
-                            XAttribute nameAttribute = xElement.Attribute("name");
-                            return nameAttribute != null &&
-                                   String.Equals(nameAttribute.Value, connectionString.Name, StringComparison.OrdinalIgnoreCase);
-                        });
-
-                        if (connectionStringElement != null)
-                        {
-                            // Remove previous connection string element
-                            connectionStringElement.Remove();
-                        }
-
-                        // Add updated connection string element
-                        if (!String.IsNullOrEmpty(connectionString.Name))
-                        {
-                            var addElement = new XElement("add");
-                            addElement.Add(new XAttribute("name", connectionString.Name));
-                            addElement.Add(new XAttribute("connectionString", connectionString.ConnectionString ?? String.Empty));
-                            addElement.Add(new XAttribute("providerName", connectionString.ProviderName ?? String.Empty));
-                            connectionStringsElement.Add(addElement);
-
-                            updateXml = true;
-                        }
-                    }
+                    config.ConnectionStrings.ConnectionStrings.Remove(connectionString.Name);
+                    config.ConnectionStrings.ConnectionStrings.Add(connectionString);
+                    updateXml = true;
                 }
 
                 if (updateXml)
                 {
                     // Write updated app.config
-                    FileSystem.File.WriteAllText(configFilePath, xmlConfig.ToString());
+                    config.Save();
                 }
             }
             catch (Exception ex)

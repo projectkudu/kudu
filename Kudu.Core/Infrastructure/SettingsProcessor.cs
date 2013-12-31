@@ -19,7 +19,7 @@ namespace Kudu.Core.Infrastructure
         public Dictionary<string, string> AppSettings { get; private set; }
         public List<ConnectionStringSettings> ConnectionStrings { get; private set; }
 
-        private static readonly Lazy<SettingsProcessor> _instance = new Lazy<SettingsProcessor>();
+        private static readonly Lazy<SettingsProcessor> _instance = new Lazy<SettingsProcessor>(() => new SettingsProcessor());
 
         public static SettingsProcessor Instance
         {
