@@ -191,6 +191,7 @@ namespace Kudu.Core.Jobs
                 {
                     // We kill the process when refreshing the job
                     logger.LogInformation("Job aborted");
+                    UpdateStatus(logger, "Aborted");
                     return;
                 }
 
