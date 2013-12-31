@@ -69,7 +69,6 @@
     <Compile Include="Jobs\IJobStatus.cs" />
     <Compile Include="Jobs\JobLogger.cs" />
     <Compile Include="Jobs\JobNotFoundException.cs" />
-    <Compile Include="Jobs\JobSettings.cs" />
     <Compile Include="Jobs\TriggeredJobRunLogger.cs" />
     <Compile Include="Jobs\TriggeredJobRunner.cs" />
     <Compile Include="Jobs\JobsManagerBase.cs" />
@@ -80,6 +79,7 @@
     <Compile Include="Jobs\TriggeredJobsManager.cs" />
     <Compile Include="Jobs\TriggeredJobStatus.cs" />
     <Compile Include="Jobs\WindowsScriptHost.cs" />
+    <Compile Include="Tracing\KuduSiteExtensionLogEvent.cs" />
     <Compile Include="Tracing\NullTracer.cs" />
     <Compile Include="Tracing\SiteExtensionLogEvent.cs" />
     <Compile Include="Tracing\ISiteExtensionLogEvent.cs" />
