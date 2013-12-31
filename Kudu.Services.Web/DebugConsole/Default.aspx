@@ -89,8 +89,8 @@
                     <span class="up" title="Slide up"><i class="glyphicon glyphicon-chevron-up"></i></span>
                 </h4>
             </div>
-            <a id="SwitchConsoleLink" href="javascript:SwitchConsole();" class="right">Try The New Interactive Console (Alpha)</a>
-            <div id="KuduExecConsole" class="left-aligned"></div>
+            <a id="SwitchConsoleLink" href="javascript:SwitchConsole();" class="right">Use old console</a>
+            <div id="KuduExecConsoleV2" class="left-aligned"></div>
         </div>
         <div class="view edit-view" data-bind="visible: fileEdit()">
             <div class="form-group form-inline">

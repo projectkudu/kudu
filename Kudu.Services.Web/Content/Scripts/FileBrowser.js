@@ -365,7 +365,7 @@
     $('#resizeHandle .down')
         .on('click', function (e) {
             var fileList = $('#fileList'),
-                console = $('#KuduExecConsole');
+                console = window.$KuduExecConsole;
             if (!console.is(':visible')) {
                 return;
             } else if (fileList.is(":visible")) {
@@ -383,7 +383,7 @@
     $('#resizeHandle .up')
         .on('click', function (e) {
             var fileList = $('#fileList'),
-                console = $('#KuduExecConsole');
+                console = window.$KuduExecConsole;
             if (!fileList.is(':visible')) {
                 return;
             } else if (console.is(':visible')) {

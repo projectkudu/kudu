@@ -1,7 +1,8 @@
 ﻿var curWorkingDir = ko.observable("");
 window.KuduExec = { workingDir: curWorkingDir };
 
-$(function () {
+function LoadConsole() {
+
     function MessagesFromResponse(resp) {
         // parse the output to separate the command output from
         // our tacked on expression to get the current working directory
@@ -111,9 +112,10 @@ $(function () {
                 promptHistory: true,
                 welcomeMessage: "Kudu Remote Execution Console\nType 'exit' to reset this console."
             });
-        $('#KuduExecConsole').append(kuduExecConsole);
+        window.$KuduExecConsole = $('#KuduExecConsole');
+        window.$KuduExecConsole.append(kuduExecConsole);
         window.KuduExec.appRoot = curWorkingDir();
     });
-});
+}
 
 
