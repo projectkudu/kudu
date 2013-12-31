@@ -1,13 +1,14 @@
-var switched;
-
 function SwitchConsole() {
-    if (!switched) {
-        $('#KuduExecConsole').replaceWith("<div id=\"KuduExecConsoleV2\" class=\"left-aligned\"></div>");
-        $('#SwitchConsoleLink').text("Refresh to go back to the old console");
-        LoadConsoleV2();
-        switched = true;
+    var id = window.$KuduExecConsole.attr("id");
+    if (id === "KuduExecConsoleV2") {
+        window.$KuduExecConsole.data('connection').stop();
+        window.$KuduExecConsole.replaceWith("<div id=\"KuduExecConsole\" class=\"left-aligned\"></div>");
+        $('#SwitchConsoleLink').text("Use new interactive console");
+        LoadConsole();
     } else {
-        location.reload(false);
+        window.$KuduExecConsole.replaceWith("<div id=\"KuduExecConsoleV2\" class=\"left-aligned\"></div>");
+        $('#SwitchConsoleLink').text("Use old console");
+        LoadConsoleV2();
     }
 }
 
@@ -93,9 +94,11 @@ function LoadConsoleV2() {
         promptHistory: true,
         welcomeMessage: "Kudu Remote Execution Console\r\nType 'exit' then hit 'enter' to get a new cmd.exe process.\r\nType 'cls' to clear the console\r\n\r\n"
     });
-    $('#KuduExecConsoleV2').append(kuduExecConsole);
+    window.$KuduExecConsole = $('#KuduExecConsoleV2');
+    window.$KuduExecConsole.append(kuduExecConsole);
 
     var connection = $.connection('/commandstream');
+    window.$KuduExecConsole.data('connection', connection);
 
     connection.start({
         waitForPageLoad: true,
@@ -191,3 +194,7 @@ function LoadConsoleV2() {
         controller.enableInput();
     }, 2000);
 }
+
+$(function () {
+    LoadConsoleV2();
+})
