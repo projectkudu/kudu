@@ -3,7 +3,6 @@ using System.IO;
 using System.IO.Abstractions;
 using System.Xml.Linq;
 using Kudu.Contracts.Infrastructure;
-using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment
@@ -28,6 +27,8 @@ namespace Kudu.Core.Deployment
             _statusLock = statusLock;
 
             Id = id;
+
+            SiteName = GetSiteName(environment);
 
             if (document != null)
             {
@@ -136,6 +137,7 @@ namespace Kudu.Core.Deployment
         public bool Complete { get; set; }
         public bool IsTemporary { get; set; }
         public bool IsReadOnly { get; set; }
+        public string SiteName { get; private set; }
 
         public void Save()
         {
@@ -194,10 +196,24 @@ namespace Kudu.Core.Deployment
             }
             return child != null ? child.Value : null;
         }
-        
+
         private static DateTime? ParseDateTime(string value)
         {
             return !String.IsNullOrEmpty(value) ? DateTime.Parse(value).ToUniversalTime() : (DateTime?)null;
+        }
+
+        private static string GetSiteName(IEnvironment environment)
+        {
+            // Try to get the site name from the environment (WAWS will set it)
+            string siteName = System.Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME");
+
+            if (String.IsNullOrEmpty(siteName))
+            {
+                // Otherwise get it from the root directory name
+                siteName = Path.GetFileName(environment.RootPath);
+            }
+
+            return siteName;
         }
     }
 }

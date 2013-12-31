@@ -61,5 +61,8 @@ namespace Kudu.Core.Deployment
 
         [DataMember(Name = "log_url")]
         public Uri LogUrl { get; set; }
+
+        [DataMember(Name = "site_name")]
+        public string SiteName { get; set; }
     }
 }

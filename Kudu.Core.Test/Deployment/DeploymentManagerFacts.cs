@@ -90,6 +90,8 @@ namespace Kudu.Core.Test.Deployment
 
             public bool IsReadOnly { get; set; }
 
+            public string SiteName { get; set; }
+
             public void Save()
             {
                 // Do nothing.
