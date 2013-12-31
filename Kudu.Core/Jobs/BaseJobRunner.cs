@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
@@ -7,6 +10,7 @@ using System.Text;
 using System.Threading;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
 using Kudu.Core.Deployment.Generator;
 using Kudu.Core.Infrastructure;
@@ -16,10 +20,13 @@ namespace Kudu.Core.Jobs
 {
     public abstract class BaseJobRunner
     {
+        private static readonly string[] AppConfigFilesLookupList = new string[] { "*.exe.config" };
+
         private readonly ExternalCommandFactory _externalCommandFactory;
         private readonly IAnalytics _analytics;
 
-        protected BaseJobRunner(string jobName, string jobsTypePath, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
+        protected BaseJobRunner(string jobName, string jobsTypePath, IEnvironment environment, IFileSystem fileSystem,
+            IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
         {
             TraceFactory = traceFactory;
             Environment = environment;
@@ -102,6 +109,7 @@ namespace Kudu.Core.Jobs
                 var tempJobInstancePath = Path.Combine(JobTempPath, Path.GetRandomFileName());
 
                 FileSystemHelpers.CopyDirectoryRecursive(FileSystem, JobBinariesPath, tempJobInstancePath);
+                UpdateAppConfigs(tempJobInstancePath);
 
                 WorkingDirectory = tempJobInstancePath;
             }
@@ -228,6 +236,54 @@ namespace Kudu.Core.Jobs
             catch (Exception ex)
             {
                 logger.LogWarning(ex.ToString());
+            }
+        }
+
+        private void UpdateAppConfigs(string tempJobInstancePath)
+        {
+            IEnumerable<string> configFilePaths = FileSystemHelpers.ListFiles(tempJobInstancePath, SearchOption.AllDirectories, AppConfigFilesLookupList);
+
+            foreach (string configFilePath in configFilePaths)
+            {
+                UpdateAppConfig(configFilePath);
+            }
+        }
+
+        private void UpdateAppConfig(string configFilePath)
+        {
+            try
+            {
+                var settings = SettingsProcessor.Instance;
+
+                bool updateXml = false;
+
+                // Read app.config
+                string exeFilePath = configFilePath.Substring(0, configFilePath.Length - ".config".Length);
+                Configuration config = ConfigurationManager.OpenExeConfiguration(exeFilePath);
+
+                foreach (var appSetting in settings.AppSettings)
+                {
+                    config.AppSettings.Settings.Remove(appSetting.Key);
+                    config.AppSettings.Settings.Add(appSetting.Key, appSetting.Value);
+                    updateXml = true;
+                }
+
+                foreach (ConnectionStringSettings connectionString in settings.ConnectionStrings)
+                {
+                    config.ConnectionStrings.ConnectionStrings.Remove(connectionString.Name);
+                    config.ConnectionStrings.ConnectionStrings.Add(connectionString);
+                    updateXml = true;
+                }
+
+                if (updateXml)
+                {
+                    // Write updated app.config
+                    config.Save();
+                }
+            }
+            catch (Exception ex)
+            {
+                TraceFactory.GetTracer().TraceError(ex);
             }
         }
     }
