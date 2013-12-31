@@ -107,7 +107,7 @@ namespace Kudu.Contracts.Tracing
                 return true;
             }
 
-            if (request.UserAgent == null)
+            if (String.IsNullOrEmpty(request.UserAgent))
             {
                 return false;
             }
