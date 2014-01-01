@@ -109,6 +109,8 @@ namespace Kudu.Services
                 startInfo.EnvironmentVariables[environmentVariable.Key] = environmentVariable.Value;
             }
 
+            startInfo.EnvironmentVariables["PROMPT"] = "$P$G";
+
             var process = new Process
             {
                 StartInfo = startInfo,

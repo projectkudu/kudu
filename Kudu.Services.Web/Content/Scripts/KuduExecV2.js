@@ -1,3 +1,4 @@
+
 function SwitchConsole() {
     var id = window.$KuduExecConsole.attr("id");
     if (id === "KuduExecConsoleV2") {
@@ -178,14 +179,13 @@ function LoadConsoleV2() {
         //save last line for next time.
         lastLine = data;
 
-        if (!endsWith(prompt, "\n") && !fileExplorerChanged) {
+        if (!endsWith(prompt, "\n") && endsWith(prompt, ">") && !fileExplorerChanged) {
             var windowsPath = prompt.replace("\n", "").replace(">", "");
-            if (windowsPath.match(/^[a-zA-Z]:(\\\w+)*([\\])?$/)) {
+            if (windowsPath.match(/^[a-zA-Z]:(\\\w+)*(.*)$/)) {
                 if (!window.KuduExec.appRoot) {
                     window.KuduExec.appRoot = windowsPath;
-                } else {
-                    curWorkingDir(windowsPath);
                 }
+                curWorkingDir(windowsPath);
             }
         }
     }
