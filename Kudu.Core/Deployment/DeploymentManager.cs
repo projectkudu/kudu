@@ -500,7 +500,8 @@ namespace Kudu.Core.Deployment
                 IsReadOnly = file.IsReadOnly,
                 Current = file.Id == activeDeploymentId,
                 ReceivedTime = file.ReceivedTime,
-                LastSuccessEndTime = file.LastSuccessEndTime
+                LastSuccessEndTime = file.LastSuccessEndTime,
+                SiteName = file.SiteName
             };
         }
 

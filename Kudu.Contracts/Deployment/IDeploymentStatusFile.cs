@@ -19,6 +19,7 @@ namespace Kudu.Core.Deployment
         bool Complete { get; set; }
         bool IsTemporary { get; set; }
         bool IsReadOnly { get; set; }
+        string SiteName { get; }
 
         void Save();
     }
