@@ -40,6 +40,9 @@ namespace Kudu.Services.Web.Tracing
             var httpContext = ((HttpApplication)sender).Context;
             var httpRequest = new HttpRequestWrapper(httpContext.Request);
 
+            // Always trace the startup request.
+            ITracer tracer = TraceStartup(httpContext);
+
             // Skip certain paths
             if (TraceExtensions.ShouldSkipRequest(httpRequest))
             {
@@ -47,7 +50,6 @@ namespace Kudu.Services.Web.Tracing
                 return;
             }
 
-            ITracer tracer = TraceStartup(httpContext);
             tracer = tracer ?? TraceServices.CreateRequestTracer(httpContext);
 
             if (tracer == null || tracer.TraceLevel <= TraceLevel.Off)
