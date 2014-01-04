@@ -252,25 +252,14 @@ namespace Kudu.Core.Infrastructure
 
                 try
                 {
-                    // in happy path, stdio task will complete in timely manner and
-                    // delay task is canceled.  we observe the delay.Exception
-                    // explicitly to avoid first chance exception.
-                    if (delay.IsCanceled && delay.Exception == null)
-                    {
-                        await stdio;
-                    }
-                    else
-                    {
-                        // observe all tasks to avoid process crashes
-                        await Task.WhenAll(stdio, delay);
-                    }
+                    // to get the result of stdio flush
+                    await stdio;
 
-                    // in case tasks completion races with cancellation
                     break;
                 }
                 catch (TaskCanceledException)
                 {
-                    // expected since we cancelled all task
+                    // expected since we cancelled all tasks
                 }
 
                 // this means no activity within given time

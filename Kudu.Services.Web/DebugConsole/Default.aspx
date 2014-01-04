@@ -50,7 +50,7 @@
                                 <th scope="col">Size</th>
                             </tr>
                         </thead>
-                        <tbody data-bind="foreach: sort(selected().children())">
+                        <tbody data-bind="foreach: selected().children()">
                             <tr>
                                 <td class="actions">
                                     <div data-bind="visible: !editing()">
