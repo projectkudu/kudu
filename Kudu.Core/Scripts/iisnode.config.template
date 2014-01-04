@@ -7,6 +7,9 @@
     </handlers>
     <rewrite>
       <rules>
+        <rule name="NodeInspector" patternSyntax="ECMAScript" stopProcessing="true">
+          <match url="^{NodeStartFile}\/debug[\/]?" />
+        </rule>
         <rule name="StaticContent">
           <action type="Rewrite" url="public{REQUEST_URI}"/>
         </rule>
