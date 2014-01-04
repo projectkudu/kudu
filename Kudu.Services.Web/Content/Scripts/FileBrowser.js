@@ -55,6 +55,8 @@
         }
     };
 
+    var MAX_VIEW_ITEMS = 100;
+
     var node = function (data, parent) {
         this.parent = parent;
         this.name = ko.observable(data.name);
@@ -83,13 +85,26 @@
                     var children = that.children;
                     children.removeAll();
 
-                    $.each(data, function () {
-                        if (this.mime === "inode/shortcut") {
-                            viewModel.specialDirs.push(new node(this));
-                        } else {
-                            children.push(new node(this, that));
+                    // maxViewItems overridable by localStorage setting.
+                    var maxViewItems = getLocalStorageSetting("maxViewItems", MAX_VIEW_ITEMS);
+                    var folders = [];
+                    var files = $.map(data, function (elem) {
+                        if (elem.mime === "inode/shortcut") {
+                            viewModel.specialDirs.push(new node(elem));
+                        } else if (--maxViewItems > 0) {
+                            if (elem.mime === "inode/directory") {
+                                // track folders explicitly to avoid additional sort
+                                folders.push(new node(elem, that));
+                            } else {
+                                return new node(elem, that);
+                            }
                         }
                     });
+
+                    // view display folders then files
+                    children.push.apply(children, folders);
+                    children.push.apply(children, files);
+
                     that._fetchStatus = 2;
                 }).fail(showError).promise();
             } else {
@@ -178,18 +193,6 @@
             specialDirs: ko.observableArray([]),
             selected: ko.observable(root),
             processing: ko.observable(false),
-            sort: function (array) {
-                return array.sort(function (a, b) {
-                    var aDir = a.isDirectory(),
-                        bDir = b.isDirectory();
-
-                    if (aDir ^ bDir) {
-                        // If one of them is a directory, then it always comes first
-                        return aDir ? -1 : 1;
-                    }
-                    return a.name().localeCompare(b.name());
-                });
-            },
             fileEdit: ko.observable(null),
             editText: ko.observable(""),
             cancelEdit: function () {
@@ -297,6 +300,25 @@
     function stashCurrentSelection(selected) {
         if (window.history && window.history.pushState) {
             window.history.pushState(selected.path(), selected.name());
+        }
+    }
+
+    function getLocalStorageSetting(name, defaultValue) {
+        try {
+            var value = window.localStorage[name];
+            if (value === undefined) {
+                return defaultValue;
+            }
+
+            if (typeof (defaultValue) === "number") {
+                return parseInt(value);
+            } else if (typeof (defaultValue) === "boolean") {
+                return !!value;
+            } else {
+                return value;
+            }
+        } catch (e) {
+            return defaultValue;
         }
     }
 
