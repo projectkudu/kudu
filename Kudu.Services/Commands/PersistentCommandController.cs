@@ -109,7 +109,12 @@ namespace Kudu.Services
                 startInfo.EnvironmentVariables[environmentVariable.Key] = environmentVariable.Value;
             }
 
+            // add '>' to distinguish PROMPT from other output
             startInfo.EnvironmentVariables["PROMPT"] = "$P$G";
+
+            // dir cmd would list folders then files alpabetically
+            // consistent with FileBrowser ui.
+            startInfo.EnvironmentVariables["DIRCMD"] = "/OG /ON";
 
             var process = new Process
             {
