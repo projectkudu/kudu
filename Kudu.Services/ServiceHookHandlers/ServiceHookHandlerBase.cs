@@ -14,7 +14,6 @@ namespace Kudu.Services.ServiceHookHandlers
 
         public Task Fetch(IRepository repository, DeploymentInfo deploymentInfo, string targetBranch, ILogger logger)
         {
-            repository.ClearLock();
             repository.FetchWithoutConflict(deploymentInfo.RepositoryUrl, targetBranch);
             return _completed;
         }

@@ -146,7 +146,6 @@ namespace Kudu.Services
             if (!repository.IsEmpty())
             {
                 // git checkout --force <branch>
-                repository.ClearLock();
                 repository.Update(branch);
             }
 

@@ -4,9 +4,12 @@ using System.IO;
 using System.IO.Abstractions;
 using System.Threading;
 using System.Threading.Tasks;
+using Kudu.Contracts.SourceControl;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
 using Kudu.TestHarness;
+using Moq;
 using Xunit;
 
 namespace Kudu.Core.Test
@@ -14,12 +17,12 @@ namespace Kudu.Core.Test
     public class AsyncLockFileTests
     {
         private string _lockFilePath;
-        private LockFile _lockFile;
+        private DeploymentLockFile _lockFile;
 
         public AsyncLockFileTests()
         {
             _lockFilePath = Path.Combine(PathHelper.TestLockPath, "file.lock");
-            _lockFile = new LockFile(_lockFilePath, NullTracerFactory.Instance, new FileSystem());
+            _lockFile = new DeploymentLockFile(_lockFilePath, NullTracerFactory.Instance, new FileSystem());
             _lockFile.InitializeAsyncLocks();
         }
 
@@ -80,20 +83,36 @@ namespace Kudu.Core.Test
         [Fact]
         public async Task LockAsync_SequentialLockFollowedByRelease()
         {
-            List<Task> lockRequests = new List<Task>();
-            for (int cnt = 0; cnt < 100; cnt++)
-            {
-                Task lockRequest = _lockFile.LockAsync();
-                lockRequests.Add(lockRequest);
-            }
+            // Mock
+            var repository = new Mock<IRepository>();
+            var repositoryFactory = new Mock<IRepositoryFactory>();
+            repositoryFactory.Setup(f => f.GetRepository())
+                             .Returns(repository.Object);
+            _lockFile.RepositoryFactory = repositoryFactory.Object;
 
-            for (int cnt = 0; cnt < 100; cnt++)
+            try
             {
-                await lockRequests[cnt];
-                _lockFile.Release();
-            }
+                var maxCount = 100;
+                List<Task> lockRequests = new List<Task>();
+                for (int cnt = 0; cnt < maxCount; cnt++)
+                {
+                    Task lockRequest = _lockFile.LockAsync();
+                    lockRequests.Add(lockRequest);
+                }
 
-            Assert.Equal(false, _lockFile.IsHeld);
+                for (int cnt = 0; cnt < maxCount; cnt++)
+                {
+                    await lockRequests[cnt];
+                    _lockFile.Release();
+                }
+
+                Assert.Equal(false, _lockFile.IsHeld);
+                repository.Verify(r => r.ClearLock(), Times.Exactly(maxCount));
+            }
+            finally
+            {
+                _lockFile.RepositoryFactory = null;
+            }
         }
 
         [Fact]
