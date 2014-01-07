@@ -54,6 +54,12 @@ namespace Kudu.Contracts.Settings
             return GetTimeSpan(settings, SettingsKeys.LogStreamTimeout, DefaultLogStreamTimeout);
         }
 
+        public static string GetPostDeploymentActionsDir(this IDeploymentSettingsManager settings, string defaultPath)
+        {
+            string value = settings.GetValue(SettingsKeys.PostDeploymentActionsDirectory);
+            return !String.IsNullOrEmpty(value) ? value : defaultPath;
+        }
+
         public static string GetGitUsername(this IDeploymentSettingsManager settings)
         {
             string value = settings.GetValue(SettingsKeys.GitUsername);

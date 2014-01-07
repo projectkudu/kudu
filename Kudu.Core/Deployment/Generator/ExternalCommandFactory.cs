@@ -109,7 +109,8 @@ namespace Kudu.Core.Deployment.Generator
         {
             get
             {
-                return Path.Combine(_environment.DeploymentToolsPath, "PostDeploymentActions");
+                var defaultPath = Path.Combine(_environment.DeploymentToolsPath, "PostDeploymentActions");
+                return _deploymentSettings.GetPostDeploymentActionsDir(defaultPath);
             }
         }
 

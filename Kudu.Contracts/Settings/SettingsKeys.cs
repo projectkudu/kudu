@@ -28,5 +28,6 @@
         public const string JobsInterval = "SCM_JOBS_INTERVAL";
         public const string JobsIdleTimeoutInSeconds = "SCM_JOBS_IDLE_TIMEOUT";
         public const string MaxJobRunsHistoryCount = "SCM_MAX_JOB_RUNS";
+        public const string PostDeploymentActionsDirectory = "SCM_POST_DEPLOYMENT_ACTIONS_PATH";
     }
 }
