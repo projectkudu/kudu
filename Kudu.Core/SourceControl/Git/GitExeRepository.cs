@@ -366,7 +366,14 @@ echo $i > pushinfo
         public void ClearLock()
         {
             // Delete the lock file from the .git folder
-            var lockFiles = Directory.EnumerateFiles(Path.Combine(_gitExe.WorkingDirectory, ".git"), "*.lock", SearchOption.AllDirectories)
+            var lockFilesPath = Path.Combine(_gitExe.WorkingDirectory, ".git");
+            
+            if (!Directory.Exists(lockFilesPath))
+            {
+                return;
+            }
+
+            var lockFiles = Directory.EnumerateFiles(lockFilesPath, "*.lock", SearchOption.AllDirectories)
                                      .Where(fullPath => _lockFileNames.Contains(Path.GetFileName(fullPath), StringComparer.OrdinalIgnoreCase))
                                      .ToList();
             if (lockFiles.Count > 0)

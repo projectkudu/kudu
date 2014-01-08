@@ -55,7 +55,7 @@ namespace Kudu.Services.Web.App_Start
         private static readonly Bootstrapper _bootstrapper = new Bootstrapper();
 
         // Due to a bug in Ninject we can't use Dispose to clean up LockFile so we shut it down manually
-        private static LockFile _deploymentLock;
+        private static DeploymentLockFile _deploymentLock;
 
         private static event Action Shutdown;
 
@@ -144,7 +144,7 @@ namespace Kudu.Services.Web.App_Start
             string hooksLockPath = Path.Combine(lockPath, Constants.HooksLockFile);
 
             var fileSystem = new FileSystem();
-            _deploymentLock = new LockFile(deploymentLockPath, kernel.Get<ITraceFactory>(), fileSystem);
+            _deploymentLock = new DeploymentLockFile(deploymentLockPath, kernel.Get<ITraceFactory>(), fileSystem);
             _deploymentLock.InitializeAsyncLocks();
 
             var statusLock = new LockFile(statusLockPath, kernel.Get<ITraceFactory>(), fileSystem);
@@ -236,7 +236,10 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<ISSHKeyManager>().To<SSHKeyManager>()
                                              .InRequestScope();
 
-            kernel.Bind<IRepositoryFactory>().To<RepositoryFactory>()
+            kernel.Bind<IRepositoryFactory>().ToMethod(context => _deploymentLock.RepositoryFactory = new RepositoryFactory(context.Kernel.Get<IEnvironment>(),
+                                                                                                                            context.Kernel.Get<IDeploymentSettingsManager>(),
+                                                                                                                            context.Kernel.Get<ITraceFactory>(),
+                                                                                                                            context.Kernel.Get<HttpContextBase>()))
                                              .InRequestScope();
 
             // Git server

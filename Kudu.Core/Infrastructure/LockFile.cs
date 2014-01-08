@@ -105,6 +105,8 @@ namespace Kudu.Core.Infrastructure
 
                 _lockStream = _fileSystem.File.Open(_path, FileMode.Create, FileAccess.Write, FileShare.None);
 
+                OnLockAcquired();
+
                 return true;
             }
             catch (Exception ex)
@@ -113,6 +115,11 @@ namespace Kudu.Core.Infrastructure
 
                 return false;
             }
+        }
+
+        protected virtual void OnLockAcquired()
+        {
+            // no-op
         }
 
         /// <summary>
