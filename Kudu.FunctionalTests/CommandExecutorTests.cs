@@ -73,6 +73,11 @@ namespace Kudu.FunctionalTests
                 commandTestSettings.ExpectedResult.Output = "LastWriteTime";
                 tests.Add(commandTestSettings);
 
+                // Make sure that we are able to launch certutil
+                commandTestSettings = new CommandTestSettings("certutil");
+                commandTestSettings.ExpectedResult.Output = "dump command completed successfully";
+                tests.Add(commandTestSettings);
+
                 foreach (CommandTestSettings test in tests)
                 {
                     VerifyCommand(test, appManager);
