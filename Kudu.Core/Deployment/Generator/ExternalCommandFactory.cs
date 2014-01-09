@@ -93,6 +93,12 @@ namespace Kudu.Core.Deployment.Generator
                 toolsPaths.Add(Path.GetDirectoryName(nodeExePath));
             }
 
+            string npmExePath = PathUtility.ResolveNpmCmdPath();
+            if (!String.IsNullOrEmpty(npmExePath))
+            {
+                toolsPaths.Add(Path.GetDirectoryName(npmExePath));
+            }
+
             exe.PrependToPath(toolsPaths);
             return exe;
         }

@@ -120,17 +120,26 @@ namespace Kudu.Core.Infrastructure
             return Path.Combine(programFiles, "Microsoft SQL Server", "110", "Tools", "Binn", "sqlcmd.exe");
         }
 
+        internal static string ResolveNpmCmdPath()
+        {
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+
+            string npmExePath = Path.Combine(programFiles, "npm", DefaultNpmVersion, "npm.cmd");
+
+            return File.Exists(npmExePath) ? npmExePath : null;
+        }
+
         /// <summary>
         /// Returns the path to the version of node.exe that is used for KuduScript generation and select node version
         /// </summary>
         /// <returns>
-        /// The path to NodeJS version 0.10.5 if available, null otherwise.
+        /// The path to DefaultNodeVersion if available, null otherwise.
         /// </remarks>
         internal static string ResolveNodePath()
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
 
-            string nodePath = Path.Combine(programFiles, "nodejs", "0.10.5", "node.exe");
+            string nodePath = Path.Combine(programFiles, "nodejs", DefaultNodeVersion, "node.exe");
             return File.Exists(nodePath) ? nodePath : null;
         }
 
