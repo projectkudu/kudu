@@ -576,7 +576,8 @@ namespace Kudu.Core.Deployment
                     Logger = logger,
                     GlobalLogger = _globalLogger,
                     OutputPath = GetOutputPath(_environment, perDeploymentSettings),
-                    BuildTempPath = buildTempPath
+                    BuildTempPath = buildTempPath,
+                    CommitId = id
                 };
 
                 if (context.PreviousManifestFilePath == null)

@@ -38,5 +38,11 @@ namespace Kudu.Core.Deployment
         /// The temporary path that will be provided to the deployment script for build artifacts.
         /// </summary>
         public string BuildTempPath { get; set; }
+
+        /// <summary>
+        // Commit ID of the repository to be deployed.
+        /// </summary>
+        public string CommitId { get; set; }
+
     }
 }

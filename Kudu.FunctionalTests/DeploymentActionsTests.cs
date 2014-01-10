@@ -11,9 +11,12 @@ namespace Kudu.FunctionalTests
         [Fact]
         public void PostDeploymentActionsShouldBeCalledOnSuccessfulDeployment()
         {
-            string testName = "PostDeploymentActionsShouldBeCalledOnSuccessfulPublish";
+            string testName = "PostDeploymentActionsShouldBeCalledOnSuccessfulDeployment";
             string testLine1 = "test script 1 is running";
             string testLine2 = "test script 2 is running too";
+
+            const string testCommitIdPrefix = @"SCM_COMMIT_ID = ";
+            const string testCommitIdVariable = @"%SCM_COMMIT_ID%";
 
             using (new LatencyLogger(testName))
             {
@@ -38,6 +41,11 @@ namespace Kudu.FunctionalTests
                               echo fail if we try to run this
                               exit /b 1");
 
+                        appManager.VfsManager.WriteAllText(
+                            @"site\deployments\tools\PostDeploymentActions\test_script_4.cmd",
+                            @"@echo off
+                              echo " + testCommitIdPrefix + testCommitIdVariable);
+
                         TestTracer.Trace("Deploy test app");
                         appManager.GitDeploy(appRepository.PhysicalPath);
 
@@ -47,6 +55,7 @@ namespace Kudu.FunctionalTests
                         Assert.Equal(DeployStatus.Success, deploymentResults[0].Status);
 
                         KuduAssert.VerifyLogOutput(appManager, deploymentResults[0].Id, testLine1, testLine2);
+                        KuduAssert.VerifyLogOutput(appManager, deploymentResults[0].Id, testCommitIdPrefix + deploymentResults[0].Id);
                     }
                 });
             }
