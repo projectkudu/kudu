@@ -10,6 +10,7 @@ using Xunit.Extensions;
 
 namespace Kudu.FunctionalTests
 {
+    [TestHarnessClassCommand]
     public class InPlaceDeploymentTest
     {
         [Theory]

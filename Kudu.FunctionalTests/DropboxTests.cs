@@ -25,6 +25,7 @@ using Xunit.Extensions;
 
 namespace Kudu.FunctionalTests
 {
+    [TestHarnessClassCommand]
     public class DropboxTests
     {
         private const string OAuth20Token = "";

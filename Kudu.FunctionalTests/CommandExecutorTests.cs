@@ -6,6 +6,7 @@ using Xunit;
 
 namespace Kudu.FunctionalTests
 {
+    [TestHarnessClassCommand]
     public class CommandExecutorTests
     {
         [Fact]

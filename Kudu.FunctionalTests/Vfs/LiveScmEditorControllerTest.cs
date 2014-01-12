@@ -4,6 +4,7 @@ using Xunit;
 
 namespace Kudu.FunctionalTests
 {
+    [TestHarnessClassCommand]
     public class LiveScmEditorControllerTest
     {
         [Fact]
