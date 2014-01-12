@@ -12,6 +12,7 @@ using Xunit;
 
 namespace Kudu.FunctionalTests
 {
+    [TestHarnessClassCommand]
     public class SettingsApiFacts
     {
         [Fact]

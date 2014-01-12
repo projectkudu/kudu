@@ -21,6 +21,7 @@ using Xunit.Extensions;
 
 namespace Kudu.FunctionalTests
 {
+    [TestHarnessClassCommand]
     public class DeploymentManagerTests
     {
         [Fact]
@@ -807,7 +808,7 @@ namespace Kudu.FunctionalTests
             yield return new RepoInvalidInfo("InvalidUrl", "Repository url 'InvalidUrl' is invalid.", null);
             yield return new RepoInvalidInfo("InvalidUrl", "Repository url 'InvalidUrl' is invalid.", null);
             yield return new RepoInvalidInfo(".", "Repository url '.' is invalid.", null);
-            yield return new RepoInvalidInfo("http://google.com/", "fatal:.*http://google.com.* not found", null);
+            yield return new RepoInvalidInfo("http://google.com/", "fatal:.*http://.*google.com.* not found", null);
             yield return new RepoInvalidInfo("http://google.com/", "abort: 'http://www.google.com/' does not appear to be an hg repository", "hg");
             yield return new RepoInvalidInfo("InvalidScheme://abcdefghigkl.com/", "fatal: Unable to find remote helper for 'InvalidScheme'", null);
             yield return new RepoInvalidInfo("InvalidScheme://abcdefghigkl.com/", "abort: repository InvalidScheme://abcdefghigkl.com/ not found", "hg");

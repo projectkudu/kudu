@@ -10,6 +10,7 @@ using Xunit;
 
 namespace Kudu.FunctionalTests
 {
+    [TestHarnessClassCommand]
     public class CustomGitTests
     {
         [Fact]
