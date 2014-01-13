@@ -7,6 +7,7 @@ using Xunit;
 
 namespace Kudu.FunctionalTests
 {
+    [TestHarnessClassCommand]
     public class GitStabilityTests
     {
         [Fact]

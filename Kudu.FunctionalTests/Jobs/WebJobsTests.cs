@@ -13,6 +13,7 @@ using Xunit;
 
 namespace Kudu.FunctionalTests.Jobs
 {
+    [TestHarnessClassCommand]
     public class WebJobsTests
     {
         private const string VerificationFilePath = "LogFiles/verification.txt";
