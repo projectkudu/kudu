@@ -114,12 +114,17 @@ namespace Kudu.Core.Jobs
 
             if (scriptFilePath == null)
             {
-                return null;
+                // Return a job representing an error for no runnable script file found for job
+                return new TJob
+                {
+                    Name = jobName,
+                    Error = Resources.Error_NoRunnableScriptForJob
+                };
             }
 
             string runCommand = scriptFilePath.Substring(jobDirectory.FullName.Length + 1);
 
-            var job = new TJob()
+            var job = new TJob
             {
                 Name = jobName,
                 Url = BuildJobsUrl(jobName),

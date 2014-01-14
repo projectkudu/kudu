@@ -21,6 +21,9 @@ namespace Kudu.Contracts.Jobs
         [DataMember(Name = "type")]
         public string JobType { get; set; }
 
+        [DataMember(Name = "error")]
+        public string Error { get; set; }
+
         public IScriptHost ScriptHost { get; set; }
 
         public string ScriptFilePath { get; set; }

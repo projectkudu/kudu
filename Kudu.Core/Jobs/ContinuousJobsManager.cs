@@ -200,7 +200,7 @@ namespace Kudu.Core.Jobs
                 try
                 {
                     ContinuousJob continuousJob = GetJob(updatedJobName);
-                    if (continuousJob == null)
+                    if (continuousJob == null || !String.IsNullOrEmpty(continuousJob.Error))
                     {
                         RemoveJob(updatedJobName);
                     }

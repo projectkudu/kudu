@@ -53,10 +53,12 @@ namespace Kudu.Client.Editor
             }
         }
 
-        public void Delete(string path)
+        public void Delete(string path, bool recursive = false)
         {
             using (var request = new HttpRequestMessage())
             {
+                path += recursive ? "?recursive=true" : String.Empty;
+
                 request.Method = HttpMethod.Delete;
                 request.RequestUri = new Uri(path, UriKind.Relative);
                 request.Headers.IfMatch.Add(EntityTagHeaderValue.Any);

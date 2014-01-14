@@ -210,4 +210,7 @@
   <data name="Error_AsyncLockRequestCompleted" xml:space="preserve">
     <value>Async lock task is already in one of the three final states: RanToCompletion, Faulted, or Canceled -- releasing lock.</value>
   </data>
+  <data name="Error_NoRunnableScriptForJob" xml:space="preserve">
+    <value>No runnable script file was found.</value>
+  </data>
 </root>
