@@ -12,16 +12,14 @@ namespace Kudu.Core.Jobs
         public const string JobLogFileName = "job_log.txt";
         public const string JobPrevLogFileName = "job_prev_log.txt";
         public const int MaxContinuousLogFileSize = 1 * 1024 * 1024;
-        public const int MaxOutputLogLines = 100;
-        public const int MaxErrorLogLines = 100;
+        public const int MaxConsoleLogLines = 200;
 
         private readonly string _historyPath;
         private readonly string _logFilePath;
 
         private FileStream _lockedStatusFile;
 
-        private int _outputLogLinesCount;
-        private int _errorLogLinesCount;
+        private int _consoleLogLinesCount;
 
         public ContinuousJobLogger(string jobName, IEnvironment environment, IFileSystem fileSystem, ITraceFactory traceFactory)
             : base(GetStatusFileName(), environment, fileSystem, traceFactory)
@@ -71,20 +69,32 @@ namespace Kudu.Core.Jobs
         public override void LogStandardOutput(string message)
         {
             Trace.TraceInformation(message);
-            if (_outputLogLinesCount < MaxOutputLogLines)
-            {
-                _outputLogLinesCount++;
-                Log(Level.Info, message, isSystem: false);
-            }
+            LogConsole(message, Level.Info);
         }
 
         public override void LogStandardError(string message)
         {
             Trace.TraceError(message);
-            if (_errorLogLinesCount < MaxErrorLogLines)
+            LogConsole(message, Level.Err);
+        }
+
+        public void StartingNewRun()
+        {
+            // Reset log lines count
+            _consoleLogLinesCount = 0;
+        }
+
+        private void LogConsole(string message, Level level)
+        {
+            if (_consoleLogLinesCount < MaxConsoleLogLines)
             {
-                _errorLogLinesCount++;
-                Log(Level.Err, message, isSystem: false);
+                _consoleLogLinesCount++;
+                Log(level, message, isSystem: false);
+            }
+            else if (_consoleLogLinesCount == MaxConsoleLogLines)
+            {
+                _consoleLogLinesCount++;
+                Log(Level.Warn, Resources.Log_MaxJobLogLinesReached, isSystem: false);
             }
         }
 
