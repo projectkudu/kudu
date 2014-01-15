@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{FA1EA7CE-E6A4-4E55-AD76-6B43572A9092}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.Core", "Kudu.Core\Kudu.Core.csproj", "{5320177C-725A-44BD-8FA6-F88D9725B46C}"
@@ -36,6 +38,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.Services.Test", "Kudu.Services.Test\Kudu.Services.Test.csproj", "{5DEE4A10-5CA1-484D-B7A3-64C972EA2546}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.Stress", "Kudu.Stress\Kudu.Stress.csproj", "{108774AC-560E-4E59-A602-80C9CBA906AE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{627D3DCD-A814-440F-A730-DECD48E5EA2C}"
+	ProjectSection(SolutionItems) = preProject
+		.nuget\packages.config = .nuget\packages.config
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
