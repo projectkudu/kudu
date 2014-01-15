@@ -80,6 +80,8 @@ namespace Kudu.Core.Jobs
                             continue;
                         }
 
+                        _continuousJobLogger.StartingNewRun();
+
                         InitializeJobInstance(continuousJob, _continuousJobLogger);
                         RunJobInstance(continuousJob, _continuousJobLogger);
 

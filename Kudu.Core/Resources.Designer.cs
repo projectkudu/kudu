@@ -286,6 +286,15 @@ namespace Kudu.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Reached maximum allowed output lines for this run, to see all of the job&apos;s logs you can enable website application diagnostics.
+        /// </summary>
+        internal static string Log_MaxJobLogLinesReached {
+            get {
+                return ResourceManager.GetString("Log_MaxJobLogLinesReached", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Found solution &apos;{0}&apos; with no deployable projects. Deploying files instead..
         /// </summary>
         internal static string Log_NoDeployableProjects {

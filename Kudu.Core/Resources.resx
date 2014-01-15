@@ -210,4 +210,7 @@
   <data name="Error_AsyncLockRequestCompleted" xml:space="preserve">
     <value>Async lock task is already in one of the three final states: RanToCompletion, Faulted, or Canceled -- releasing lock.</value>
   </data>
+  <data name="Log_MaxJobLogLinesReached" xml:space="preserve">
+    <value>Reached maximum allowed output lines for this run, to see all of the job's logs you can enable website application diagnostics</value>
+  </data>
 </root>
