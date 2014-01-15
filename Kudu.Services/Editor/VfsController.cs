@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 using Kudu.Common;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
-using Kudu.Services.ByteRanges;
 using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.Editor

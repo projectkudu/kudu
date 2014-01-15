@@ -17,7 +17,6 @@ using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
-using Kudu.Services.ByteRanges;
 using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.SourceControl
