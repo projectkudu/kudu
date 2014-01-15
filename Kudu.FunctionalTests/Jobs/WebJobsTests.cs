@@ -25,7 +25,8 @@ namespace Kudu.FunctionalTests.Jobs
 
         private const string ContinuousJobsBinPath = JobsBinPath + "/continuous";
         private const string BasicContinuousJobExecutablePath = ContinuousJobsBinPath + "/basicJob1/run.cmd";
-        private const string ConsoleWorkerExecutablePath = ContinuousJobsBinPath + "/deployedJob/ConsoleWorker.exe";
+        private const string ConsoleWorkerJobPath = ContinuousJobsBinPath + "/deployedJob";
+        private const string ConsoleWorkerExecutablePath = ConsoleWorkerJobPath + "/ConsoleWorker.exe";
 
         private const string TriggeredJobBinPath = "Site/wwwroot/App_Data/jobs/triggered";
         private const string TriggeredJobDataPath = JobsDataPath + "/triggered";
@@ -73,6 +74,18 @@ namespace Kudu.FunctionalTests.Jobs
                     TestTracer.Trace("II) Verifying worker gone when executable file is removed");
 
                     appManager.VfsManager.Delete(ConsoleWorkerExecutablePath);
+
+                    WaitUntilAssertVerified(
+                        "runnable script is missing",
+                        TimeSpan.FromSeconds(60),
+                        () =>
+                        {
+                            var job = appManager.JobsManager.GetContinuousJobAsync("deployedJob").Result;
+                            Assert.Null(job.RunCommand);
+                            Assert.Equal("No runnable script file was found.", job.Error);
+                        });
+
+                    appManager.VfsManager.Delete(ConsoleWorkerJobPath, recursive: true);
 
                     WaitUntilAssertVerified(
                         "no continuous jobs exist",
@@ -483,8 +496,8 @@ namespace Kudu.FunctionalTests.Jobs
                 TimeSpan.FromSeconds(60),
                 () =>
                 {
-                    appManager.VfsManager.Delete(JobsBinPath + "?recursive=true");
-                    appManager.VfsManager.Delete(JobsDataPath + "?recursive=true");
+                    appManager.VfsManager.Delete(JobsBinPath, recursive: true);
+                    appManager.VfsManager.Delete(JobsDataPath, recursive: true);
                     appManager.VfsManager.Delete(VerificationFilePath);
                 });
         }
