@@ -9,14 +9,19 @@ namespace Kudu.Core.Jobs
 {
     public class ContinuousJobLogger : JobLogger, IDisposable
     {
-        public const string JobLogFileName = "job.log";
-        public const string JobPrevLogFileName = "job_prev.log";
+        public const string JobLogFileName = "job_log.txt";
+        public const string JobPrevLogFileName = "job_prev_log.txt";
         public const int MaxContinuousLogFileSize = 1 * 1024 * 1024;
+        public const int MaxOutputLogLines = 100;
+        public const int MaxErrorLogLines = 100;
 
         private readonly string _historyPath;
         private readonly string _logFilePath;
 
         private FileStream _lockedStatusFile;
+
+        private int _outputLogLinesCount;
+        private int _errorLogLinesCount;
 
         public ContinuousJobLogger(string jobName, IEnvironment environment, IFileSystem fileSystem, ITraceFactory traceFactory)
             : base(GetStatusFileName(), environment, fileSystem, traceFactory)
@@ -50,33 +55,43 @@ namespace Kudu.Core.Jobs
 
         public override void LogError(string error)
         {
-            Log(Level.Err, error);
+            Log(Level.Err, error, isSystem: true);
         }
 
         public override void LogWarning(string warning)
         {
-            Log(Level.Warn, warning);
+            Log(Level.Warn, warning, isSystem: true);
         }
 
         public override void LogInformation(string message)
         {
-            Log(Level.Info, message);
+            Log(Level.Info, message, isSystem: true);
         }
 
         public override void LogStandardOutput(string message)
         {
             Trace.TraceInformation(message);
+            if (_outputLogLinesCount < MaxOutputLogLines)
+            {
+                _outputLogLinesCount++;
+                Log(Level.Info, message, isSystem: false);
+            }
         }
 
         public override void LogStandardError(string message)
         {
             Trace.TraceError(message);
+            if (_errorLogLinesCount < MaxErrorLogLines)
+            {
+                _errorLogLinesCount++;
+                Log(Level.Err, message, isSystem: false);
+            }
         }
 
-        private void Log(Level level, string message)
+        private void Log(Level level, string message, bool isSystem)
         {
             CleanupLogFileIfNeeded();
-            SafeLogToFile(_logFilePath, GetSystemFormattedMessage(level, message));
+            SafeLogToFile(_logFilePath, GetFormattedMessage(level, message, isSystem));
         }
 
         private void CleanupLogFileIfNeeded()

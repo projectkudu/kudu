@@ -28,8 +28,8 @@ namespace Kudu.Core.Jobs
             _historyPath = Path.Combine(Environment.JobsDataPath, Constants.TriggeredPath, jobName, _id);
             FileSystemHelpers.EnsureDirectory(_historyPath);
 
-            _outputFilePath = Path.Combine(_historyPath, "output.log");
-            _errorFilePath = Path.Combine(_historyPath, "error.log");
+            _outputFilePath = Path.Combine(_historyPath, "output_log.txt");
+            _errorFilePath = Path.Combine(_historyPath, "error_log.txt");
         }
 
         [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters", Justification = "We do not want to accept jobs which are not TriggeredJob")]
@@ -120,24 +120,17 @@ namespace Kudu.Core.Jobs
 
         public override void LogStandardOutput(string message)
         {
-            Log(Level.Info, message);
+            Log(Level.Info, message, isSystem: false);
         }
 
         public override void LogStandardError(string message)
         {
-            Log(Level.Err, message);
+            Log(Level.Err, message, isSystem: false);
         }
 
-        private void Log(Level level, string message, bool isSystem = false)
+        private void Log(Level level, string message, bool isSystem)
         {
-            if (isSystem)
-            {
-                message = GetSystemFormattedMessage(level, message);
-            }
-            else
-            {
-                message = "[{0}] {1}\r\n".FormatInvariant(DateTime.UtcNow, message);
-            }
+            message = GetFormattedMessage(level, message, isSystem);
 
             string logPath = level == Level.Err ? _errorFilePath : _outputFilePath;
 

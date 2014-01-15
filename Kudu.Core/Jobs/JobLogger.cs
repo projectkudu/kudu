@@ -138,9 +138,11 @@ namespace Kudu.Core.Jobs
             Err
         }
 
-        protected string GetSystemFormattedMessage(Level level, string message)
+        protected string GetFormattedMessage(Level level, string message, bool isSystem)
         {
-            return "[{0} > {1}: SYS {2,-4}] {3}\r\n".FormatInvariant(DateTime.UtcNow, InstanceId, level.ToString().ToUpperInvariant(), message);
+            return isSystem
+                ? "[{0} > {1}: SYS {2,-4}] {3}\r\n".FormatInvariant(DateTime.UtcNow, InstanceId, level.ToString().ToUpperInvariant(), message)
+                : "[{0} > {1}: {2,-4}] {3}\r\n".FormatInvariant(DateTime.UtcNow, InstanceId, level.ToString().ToUpperInvariant(), message);
         }
     }
 }
