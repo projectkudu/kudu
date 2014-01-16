@@ -192,6 +192,11 @@ namespace Kudu.Core.Jobs
                         return new Uri(extraInfoUrlTemplate);
                     }
 
+                    if (AppBaseUrlPrefix == null)
+                    {
+                        return null;
+                    }
+
                     return new Uri(AppBaseUrlPrefix + extraInfoUrlTemplate);
                 }
             }
