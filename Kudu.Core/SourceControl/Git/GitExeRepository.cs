@@ -162,7 +162,7 @@ fi" + "\n";
 
                     File.WriteAllText(GitCredentialHookPath, content);
 
-                    Execute(tracer, "config credential.helper !'{0}'", GitCredentialHookPath);
+                    Execute(tracer, "config credential.helper !\"{0}\"", GitCredentialHookPath);
                 }
 
                 using (tracer.Step("Setup post receive hook"))
