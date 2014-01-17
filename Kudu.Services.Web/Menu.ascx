@@ -17,6 +17,7 @@
                 <li><a runat="server" href="~/DebugConsole">Debug console</a></li>
                 <li><a runat="server" href="~/dump">Diagnostic dump</a></li>
                 <li><a runat="server" href="~/logstream" title="If no log events are being generated the page may not load.">Log stream</a></li>
+                <li><a runat="server" href="~/Hooks.aspx">Web hooks</a></li>
             </ul>
         </div>
     </div>
