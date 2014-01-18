@@ -427,8 +427,10 @@
 
         if (items && items.length) {
             return whenArray($.map(items, function (item) {
-                var entry = (item.webkitGetAsEntry || item.getAsEntry).apply(item);
-                return _processEntry(entry);
+                if (item.kind === 'file') {
+                    var entry = (item.webkitGetAsEntry || item.getAsEntry).apply(item);
+                    return _processEntry(entry);
+                }
             })).pipe(function () {
                 return Array.prototype.concat.apply([], arguments);
             })
