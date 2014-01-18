@@ -79,6 +79,12 @@ namespace Kudu.FunctionalTests
                 commandTestSettings.ExpectedResult.Output = "dump command completed successfully";
                 tests.Add(commandTestSettings);
 
+                // Make sure 'npm -g' installs to AppData (and not Program Files)
+                commandTestSettings = new CommandTestSettings("npm install -g underscore");
+                commandTestSettings.ExpectedResult.Error = "registry.npmjs.org";
+                commandTestSettings.ExpectedResult.Output = "AppData";
+                tests.Add(commandTestSettings);
+
                 foreach (CommandTestSettings test in tests)
                 {
                     VerifyCommand(test, appManager);
