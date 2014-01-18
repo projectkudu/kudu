@@ -16,7 +16,7 @@ namespace Kudu.Core.Infrastructure
         /// <summary>
         /// Maps to the version of NPM that shipped with the DefaultNodeVersion
         /// </summary>
-        private const string DefaultNpmVersion = "1.2.18";
+        private const string DefaultNpmVersion = "1.3.21";
 
         internal static string ResolveGitPath()
         {
