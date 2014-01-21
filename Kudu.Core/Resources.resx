@@ -213,4 +213,7 @@
   <data name="Error_NoRunnableScriptForJob" xml:space="preserve">
     <value>No runnable script file was found.</value>
   </data>
+  <data name="Log_MaxJobLogLinesReached" xml:space="preserve">
+    <value>Reached maximum allowed output lines for this run, to see all of the job's logs you can enable website application diagnostics</value>
+  </data>
 </root>
