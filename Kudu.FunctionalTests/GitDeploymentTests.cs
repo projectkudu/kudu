@@ -188,6 +188,12 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public void PushAndDeployMvcAppWithTypeScript()
+        {
+            PushAndDeployApps("MvcAppWithTypeScript", "master", "Hello, TypeScript Footer!", HttpStatusCode.OK, "Deployment successful", resourcePath: "/Scripts/ts/FooterUpdater.js");
+        }
+
+        [Fact]
         public void PushAndDeployPreviewWebApi5()
         {
             PushAndDeployApps("PreviewWebApi5", "master", "ASP.NET Preview WebAPI 5", HttpStatusCode.OK, "Deployment successful");
