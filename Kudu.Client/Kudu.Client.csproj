@@ -35,6 +35,7 @@
     </Compile>
     <Compile Include="Command\RemoteCommandExecutor.cs" />
     <Compile Include="Deployment\RemoteFetchManager.cs" />
+    <Compile Include="Diagnostics\RemoteLogFilesManager.cs" />
     <Compile Include="Diagnostics\RemoteProcessManager.cs" />
     <Compile Include="Diagnostics\RemoteLogStreamManager.cs" />
     <Compile Include="Editor\RemoteVfsManager.cs" />

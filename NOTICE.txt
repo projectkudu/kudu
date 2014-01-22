@@ -117,3 +117,9 @@ System.IO.Abstractions
 Website:      http://systemioabstractions.codeplex.com/
 Copyright:    Copyright Tatham Oddie
 License:      Ms-Pl
+
+MiscUtil
+-----
+Website:      http://www.yoda.arachsys.com/csharp/miscutil/
+Copyright:    Copyright (c) 2004-2008 Jon Skeet and Marc Gravell
+License:      http://www.yoda.arachsys.com/csharp/miscutil/licence.txt

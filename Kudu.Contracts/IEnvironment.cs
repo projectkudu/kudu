@@ -14,6 +14,7 @@
         string ScriptPath { get; }
         string NodeModulesPath { get; }
         string LogFilesPath { get; }            // e.g. /logfiles
+        string ApplicationLogFilesPath { get; } // e.g. /logfiles/application
         string TracePath { get; }               // e.g. /logfiles/git/trace
         string AnalyticsPath { get; }           // e.g. %temp%/siteExtLogs
         string DeploymentTracePath { get; }     // e.g. /logfiles/git/deployment

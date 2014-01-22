@@ -26,6 +26,7 @@ using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.SSHKey;
 using Kudu.Core.Tracing;
+using Kudu.Services.Diagnostics;
 using Kudu.Services.GitServer;
 using Kudu.Services.Infrastructure;
 using Kudu.Services.Performance;
@@ -242,6 +243,9 @@ namespace Kudu.Services.Web.App_Start
                                                                                                                             context.Kernel.Get<HttpContextBase>()))
                                              .InRequestScope();
 
+            kernel.Bind<IApplicationLogsReader>().To<ApplicationLogsReader>()
+                                             .InSingletonScope();
+
             // Git server
             kernel.Bind<IDeploymentEnvironment>().To<DeploymentEnvrionment>();
 
@@ -376,9 +380,10 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("diagnostics-get-all-settings", "diagnostics/settings", new { controller = "Diagnostics", action = "GetAll" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("diagnostics-get-setting", "diagnostics/settings/{key}", new { controller = "Diagnostics", action = "Get" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("diagnostics-delete-setting", "diagnostics/settings/{key}", new { controller = "Diagnostics", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
-
-            // LogStream
+            
+            // Logs
             routes.MapHandler<LogStreamHandler>(kernel, "logstream", "logstream/{*path}");
+            routes.MapHttpRoute("recent-logs", "api/logs/recent", new { controller = "Diagnostics", action = "GetRecentLogs"}, new { verb = new HttpMethodConstraint("GET") });
 
             // Processes
             routes.MapHttpRoute("all-processes", "diagnostics/processes", new { controller = "Process", action = "GetAllProcesses" }, new { verb = new HttpMethodConstraint("GET") });

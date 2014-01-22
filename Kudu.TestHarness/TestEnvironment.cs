@@ -76,6 +76,12 @@ namespace Kudu.TestHarness
             set;
         }
 
+        public string ApplicationLogFilesPath
+        {
+            get;
+            set;
+        }
+
         public string TracePath
         {
             get;

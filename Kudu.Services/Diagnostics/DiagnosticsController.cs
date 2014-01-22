@@ -9,6 +9,7 @@ using System.Web.Http;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Settings;
+using Kudu.Services.Diagnostics;
 using Kudu.Services.Infrastructure;
 using Newtonsoft.Json.Linq;
 
@@ -19,8 +20,9 @@ namespace Kudu.Services.Performance
         private readonly JsonSettings _settings;
         private readonly string[] _paths;
         private readonly ITracer _tracer;
+        private readonly IApplicationLogsReader _applicationLogsReader;
 
-        public DiagnosticsController(IEnvironment environment, IFileSystem fileSystem, ITracer tracer)
+        public DiagnosticsController(IEnvironment environment, IFileSystem fileSystem, ITracer tracer, IApplicationLogsReader applicationLogsReader)
         {
             // Setup the diagnostics service to collect information from the following paths:
             // 1. The deployments folder
@@ -33,6 +35,7 @@ namespace Kudu.Services.Performance
             };
 
             _settings = new JsonSettings(fileSystem, Path.Combine(environment.DiagnosticsPath, Constants.SettingsJsonFile));
+            _applicationLogsReader = applicationLogsReader;
             _tracer = tracer;
         }
 
@@ -50,6 +53,16 @@ namespace Kudu.Services.Performance
                 AddFilesToZip(zip);
             });
             return response;
+        }
+
+        [HttpGet]
+        public HttpResponseMessage GetRecentLogs(int top = 100)
+        {
+            using (_tracer.Step("DiagnosticsController.GetRecentLogs"))
+            {
+                var results = _applicationLogsReader.GetRecentLogs(top);
+                return Request.CreateResponse(HttpStatusCode.OK, results);
+            }
         }
 
         private void AddFilesToZip(ZipArchive zip)
