@@ -61,6 +61,15 @@ namespace Kudu.Client.Infrastructure
             }
         }
 
+        public static async Task<TOutput> PutJsonAsync<TInput, TOutput>(this HttpClient client, string url, TInput param)
+        {
+            HttpResponseMessage result = await client.PutAsJsonAsync(url, param);
+
+            string content = await result.EnsureSuccessful().Content.ReadAsStringAsync();
+
+            return JsonConvert.DeserializeObject<TOutput>(content);
+        }
+
         public static async Task<HttpResponseMessage> DeleteSafeAsync(this HttpClient client, string requestUri)
         {
             HttpResponseMessage result = await client.DeleteAsync(requestUri);

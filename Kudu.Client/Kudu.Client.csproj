@@ -52,6 +52,7 @@
     <Compile Include="Deployment\RemoteDeploymentManager.cs" />
     <Compile Include="RemoteEnvironmentManager.cs" />
     <Compile Include="Settings\RemoteDeploymentSettingsManager.cs" />
+    <Compile Include="SiteExtensions\RemoteSiteExtensionManager.cs" />
     <Compile Include="SourceControl\RemoteRepositoryManager.cs" />
     <Compile Include="SSHKey\RemoteSSHKeyManager.cs" />
     <Compile Include="Zip\RemoteVfsManager.cs" />
