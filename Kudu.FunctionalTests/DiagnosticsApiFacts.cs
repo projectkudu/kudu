@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Kudu.Client;
 using Kudu.Client.Infrastructure;
+using Kudu.Contracts.Diagnostics;
 using Kudu.Core.Infrastructure;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
@@ -244,6 +247,77 @@ namespace Kudu.FunctionalTests
                 string trace = await appManager.VfsManager.ReadAllTextAsync("LogFiles/Git/trace/trace.xml");
                 Assert.Contains(path, trace, StringComparison.OrdinalIgnoreCase);
             });
+        }
+
+        [Fact]
+        public async Task TestRecentLogEntries()
+        {
+            string appName = "TestRecentLogEntries";
+
+            await ApplicationManager.RunAsync(appName, async appManager =>
+            {
+                IList<ApplicationLogEntry> results = null;
+
+                using (var localRepo = Git.Clone("LogTester"))
+                {
+                    appManager.GitDeploy(localRepo.PhysicalPath);
+                }
+
+                await appManager.CommandExecutor.ExecuteCommand("rm *.txt", @"LogFiles/Application");                
+                results = await appManager.LogFilesManager.GetRecentLogEntriesAsync(10);
+                
+                // All the log files have been deleted so this API should return an empty array.
+                Assert.Equal(0, results.Count);
+
+                var logFile = 
+@"2013-12-06T00:29:20  PID[20108] Information this is a log
+2013-12-06T00:29:21  PID[20108] Warning     this is a warning
+that spans
+several lines
+2013-12-06T00:29:22  PID[20108] Error       this is an error
+";
+                await WriteLogText(appManager.SiteUrl, @"LogFiles\Application\test-1.txt", logFile);
+                await WriteLogText(appManager.SiteUrl, @"LogFiles\Application\test-2.txt", logFile);
+
+                // Verify that the log files were written
+                var dirResult = await appManager.CommandExecutor.ExecuteCommand("ls -1 | wc -l", @"LogFiles/Application");
+                Assert.Equal(2, int.Parse(dirResult.Output));
+
+                // Verify that the log entries have appeared in the correct order
+                results = await appManager.LogFilesManager.GetRecentLogEntriesAsync(10);
+                Assert.Equal(6, results.Count);
+                AssertLogEntry(results[0], "2013-12-06T00:29:22+00:00", "Error", "this is an error");
+                AssertLogEntry(results[1], "2013-12-06T00:29:22+00:00", "Error", "this is an error");
+                AssertLogEntry(results[2], "2013-12-06T00:29:21+00:00", "Warning", "this is a warning\r\nthat spans\r\nseveral lines");
+                AssertLogEntry(results[3], "2013-12-06T00:29:21+00:00", "Warning", "this is a warning\r\nthat spans\r\nseveral lines");
+                AssertLogEntry(results[4], "2013-12-06T00:29:20+00:00", "Information", "this is a log");
+                AssertLogEntry(results[5], "2013-12-06T00:29:20+00:00", "Information", "this is a log");
+            });
+        }
+
+        private static void AssertLogEntry(ApplicationLogEntry entry, string timeStamp, string level, string message)
+        {
+            Assert.Equal(DateTimeOffset.Parse(timeStamp, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal), entry.TimeStamp);
+            Assert.Equal(level, entry.Level);
+            Assert.Equal(message, entry.Message);            
+        }
+
+        private static async Task WriteLogText(string siteUrl, string filePath, string log)
+        {
+            using (var client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Kudu-Test", "1.0"));                
+                var content = new FormUrlEncodedContent(new Dictionary<string, string>() { 
+                    { "path", filePath },
+                    { "content", log } 
+                });
+
+                HttpResponseMessage response = await client.PostAsync(siteUrl, content);                
+                string responseBody = await response.Content.ReadAsStringAsync();
+
+                Assert.True(response.StatusCode == HttpStatusCode.OK,
+                    String.Format("For {0}, Expected Status Code: {1} Actual Status Code: {2}. \r\n Response: {3}", siteUrl, 200, response.StatusCode, responseBody));
+            }                        
         }
     }
 }

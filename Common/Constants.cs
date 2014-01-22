@@ -21,6 +21,7 @@ namespace Kudu
         public const string DeploymentToolsPath = "tools";
         public const string SiteFolder = @"site";
         public const string LogFilesPath = @"LogFiles";
+        public const string ApplicationLogFilesPath = LogFilesPath + @"\Application";
         public const string TracePath = LogFilesPath + @"\Git\trace";
         public const string SiteExtensionLogsDirectory = "siteExtLogs";
         public const string DeploySettingsPath = "settings.xml";
