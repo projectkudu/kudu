@@ -143,6 +143,7 @@
     <Compile Include="Infrastructure\VfsControllerBase.cs" />
     <Compile Include="ServiceHookHandlers\KilnHgHandler.cs" />
     <Compile Include="ServiceHookHandlers\ServiceHookHandlerBase.cs" />
+    <Compile Include="SiteExtensions\SiteExtensionController.cs" />
     <Compile Include="SourceControl\LiveScmEditorController.cs" />
     <Compile Include="SSHKey\SSHKeyController.cs" />
     <Compile Include="EnvironmentController.cs" />

@@ -64,6 +64,7 @@
     <Compile Include="Jobs\WebJobsTests.cs" />
     <Compile Include="DeploymentActionsTests.cs" />
     <Compile Include="Infrastructure\ExceptionAssert.cs" />
+    <Compile Include="SiteExtensionApiFacts.cs" />
     <Compile Include="WebHooksTests.cs" />
     <Compile Include="CustomGitTests.cs" />
     <Compile Include="GitRepositoryFacts.cs" />

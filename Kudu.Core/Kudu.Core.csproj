@@ -82,6 +82,7 @@
     <Compile Include="Jobs\TriggeredJobsManager.cs" />
     <Compile Include="Jobs\TriggeredJobStatus.cs" />
     <Compile Include="Jobs\WindowsScriptHost.cs" />
+    <Compile Include="SiteExtensions\SiteExtensionManager.cs" />
     <Compile Include="Tracing\KuduSiteExtensionLogEvent.cs" />
     <Compile Include="Tracing\NullTracer.cs" />
     <Compile Include="Tracing\SiteExtensionLogEvent.cs" />

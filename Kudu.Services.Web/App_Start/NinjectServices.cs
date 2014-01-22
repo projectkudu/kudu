@@ -12,6 +12,7 @@ using System.Web.Routing;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
+using Kudu.Contracts.SiteExtensions;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
@@ -22,6 +23,7 @@ using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Jobs;
 using Kudu.Core.Settings;
+using Kudu.Core.SiteExtensions;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.SSHKey;
@@ -269,6 +271,9 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IServiceHookHandler>().To<GitHubCompatHandler>().InRequestScope();
             kernel.Bind<IServiceHookHandler>().To<KilnHgHandler>().InRequestScope();
 
+            // SiteExtensions
+            kernel.Bind<ISiteExtensionManager>().To<SiteExtensionManager>().InRequestScope();
+
             // Command executor
             kernel.Bind<ICommandExecutor>().ToMethod(context => GetCommandExecutor(environment, context))
                                            .InRequestScope();
@@ -419,6 +424,14 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("disable-continuous-job", "jobs/continuous/{jobName}/stop", new { controller = "Jobs", action = "DisableContinuousJob" }, new { verb = new HttpMethodConstraint("POST") });
             routes.MapHttpRoute("enable-continuous-job", "jobs/continuous/{jobName}/start", new { controller = "Jobs", action = "EnableContinuousJob" }, new { verb = new HttpMethodConstraint("POST") });
             routes.MapHttpRoute("singleton-continuous-job", "jobs/continuous/{jobName}/singleton", new { controller = "Jobs", action = "SetContinuousJobSingleton" }, new { verb = new HttpMethodConstraint("POST") });
+
+            // SiteExtensions
+            routes.MapHttpRoute("api-get-remote-extensions", "api/extensions/remote", new { controller = "SiteExtension", action = "GetRemoteExtensions" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("api-get-remote-extension", "api/extensions/remote/{id}", new { controller = "SiteExtension", action = "GetRemoteExtension" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("api-get-local-extensions", "api/extensions/local", new { controller = "SiteExtension", action = "GetLocalExtensions" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("api-get-local-extension", "api/extensions/local/{id}", new { controller = "SiteExtension", action = "GetLocalExtension" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("api-uninstall-extension", "api/extensions/local/{id}", new { controller = "SiteExtension", action = "UninstallExtension" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpRoute("api-install-update-extension", "api/extensions", new { controller = "SiteExtension", action = "InstallExtension" }, new { verb = new HttpMethodConstraint("POST") });
         }
 
         // Perform migration tasks to deal with legacy sites that had different file layout
