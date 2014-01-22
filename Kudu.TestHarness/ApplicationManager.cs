@@ -10,6 +10,7 @@ using Kudu.Client.Diagnostics;
 using Kudu.Client.Editor;
 using Kudu.Client.Infrastructure;
 using Kudu.Client.Jobs;
+using Kudu.Client.SiteExtensions;
 using Kudu.Client.SourceControl;
 using Kudu.Client.SSHKey;
 using Kudu.Core.Infrastructure;
@@ -48,6 +49,7 @@ namespace Kudu.TestHarness
             WebHooksManager = new RemoteWebHooksManager(site.ServiceUrl + "hooks");
             RepositoryManager = new RemoteRepositoryManager(site.ServiceUrl + "scm");
             JobsManager = new RemoteJobsManager(site.ServiceUrl + "jobs");
+            SiteExtensionManager = new RemoteSiteExtensionManager(site.ServiceUrl + "api/extensions");
 
             var repositoryInfo = RepositoryManager.GetRepositoryInfo().Result;
             GitUrl = repositoryInfo.GitUrl.OriginalString;
@@ -148,6 +150,12 @@ namespace Kudu.TestHarness
         }
 
         public RemoteJobsManager JobsManager
+        {
+            get;
+            private set;
+        }
+
+        public RemoteSiteExtensionManager SiteExtensionManager
         {
             get;
             private set;
