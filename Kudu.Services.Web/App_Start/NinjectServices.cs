@@ -383,7 +383,7 @@ namespace Kudu.Services.Web.App_Start
             
             // Logs
             routes.MapHandler<LogStreamHandler>(kernel, "logstream", "logstream/{*path}");
-            routes.MapHttpRoute("recent-logs", "logs/recent", new { controller = "Diagnostics", action = "GetRecentLogs"}, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("recent-logs", "api/logs/recent", new { controller = "Diagnostics", action = "GetRecentLogs"}, new { verb = new HttpMethodConstraint("GET") });
 
             // Processes
             routes.MapHttpRoute("all-processes", "diagnostics/processes", new { controller = "Process", action = "GetAllProcesses" }, new { verb = new HttpMethodConstraint("GET") });

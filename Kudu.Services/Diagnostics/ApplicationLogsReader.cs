@@ -17,11 +17,11 @@ namespace Kudu.Services.Diagnostics
 
     public class ApplicationLogsReader : IApplicationLogsReader
     {
-        public static readonly int ReadBatchSize = 5;
-        public static readonly int FileOpenLimit = 50;
-        public static readonly string LogFilenamePattern = "*-*.txt";
-        public static readonly string LogErrorsSuffix = "-logging-errors.txt";
-        public static readonly string LogEntryRegexPattern = @"^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)\s+PID\[(\d+)\]\s(Warning|Information|Error)\s+(.*)";
+        internal const int ReadBatchSize = 5;
+        internal const int FileOpenLimit = 50;
+        internal const string LogFilenamePattern = "*-*.txt";
+        internal const string LogErrorsSuffix = "-logging-errors.txt";
+        internal const string LogEntryRegexPattern = @"^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)\s+PID\[(\d+)\]\s(Warning|Information|Error)\s+(.*)";
         
         private readonly string _logsFolder;
         private readonly LogFileFinder _logFinder;            
@@ -35,7 +35,9 @@ namespace Kudu.Services.Diagnostics
         public IEnumerable<ApplicationLogEntry> GetRecentLogs(int top)
         {
             if (top <= 0)
+            {
                 throw new ArgumentOutOfRangeException("top", "Number of logs to return must be a positive integer.");
+            }
 
             List<ResumableLogFileReader> logReaders = null;
             try
@@ -97,7 +99,9 @@ namespace Kudu.Services.Diagnostics
             public IEnumerable<FileInfoBase> FindLogFiles()
             {
                 if (!_directory.Exists)
+                {
                     return new List<FileInfoBase>();
+                }
 
                 var files = _directory.GetFiles(LogFilenamePattern, SearchOption.TopDirectoryOnly)
                     .Where(f => !f.FullName.EndsWith(LogErrorsSuffix, StringComparison.OrdinalIgnoreCase))
@@ -113,16 +117,22 @@ namespace Kudu.Services.Diagnostics
                 
                 foreach (var file in files)
                 {
-                    if(newIncludedFiles.Contains(file.FullName) || newExcludedFiles.Contains(file.FullName))
+                    if (newIncludedFiles.Contains(file.FullName) || newExcludedFiles.Contains(file.FullName))
+                    {
                         continue;
+                    }
 
                     var line = ReadFirstLine(file);
                     if (!string.IsNullOrWhiteSpace(line))
                     {
                         if (IsLineInExpectedFormat(line))
+                        {
                             newIncludedFiles.Add(file.FullName);
+                        }
                         else
+                        {
                             newExcludedFiles.Add(file.FullName);
+                        }
                     }
                 }
 
@@ -142,7 +152,9 @@ namespace Kudu.Services.Diagnostics
                 using (var reader = fileInfo.OpenText())
                 {
                     if (_stats != null)
+                    {
                         _stats.IncrementOpenTextCount(fileInfo.Name);
+                    }
 
                     return reader.ReadLine();
                 }
@@ -176,7 +188,9 @@ namespace Kudu.Services.Diagnostics
             public List<ApplicationLogEntry> ReadNextBatch(int batchSize)
             {
                 if (_disposed)
+                {
                     throw new ObjectDisposedException("_enumerator");
+                }
 
                 ApplicationLogEntry currentEntry = new ApplicationLogEntry();
                 List<ApplicationLogEntry> entries = new List<ApplicationLogEntry>();
@@ -206,7 +220,9 @@ namespace Kudu.Services.Diagnostics
                 }
 
                 if (entries.Count > 0)
+                {
                     this.LastTime = entries.Last().TimeStamp;
+                }
 
                 return entries;
             }
@@ -216,7 +232,9 @@ namespace Kudu.Services.Diagnostics
                 if (!_disposed)
                 {
                     if (_enumerator != null)
+                    {
                         _enumerator.Dispose();
+                    }
                     _disposed = true;
                 }
             }
@@ -227,7 +245,9 @@ namespace Kudu.Services.Diagnostics
                 {
                     var stream = _fileInfo.OpenRead();
                     if (_stats != null)
+                    {
                         _stats.IncrementOpenReadCount(_fileInfo.Name);
+                    }
                     return stream;
                 });
             }
@@ -269,7 +289,9 @@ namespace Kudu.Services.Diagnostics
             private void EnsureKey(string file)
             {
                 if (!_stats.ContainsKey(file))
+                {
                     _stats[file] = new SingleFileStats();
+                }
             }
 
             private class SingleFileStats
