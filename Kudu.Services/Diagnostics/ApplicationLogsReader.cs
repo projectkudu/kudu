@@ -22,14 +22,12 @@ namespace Kudu.Services.Diagnostics
         internal const string LogFilenamePattern = "*-*.txt";
         internal const string LogErrorsSuffix = "-logging-errors.txt";
         internal const string LogEntryRegexPattern = @"^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)\s+PID\[(\d+)\]\s(Warning|Information|Error)\s+(.*)";
-        
-        private readonly string _logsFolder;
+                
         private readonly LogFileFinder _logFinder;            
 
         public ApplicationLogsReader(IFileSystem fileSystem, IEnvironment environment)
-        {              
-            _logsFolder = fileSystem.Path.Combine(environment.RootPath, Constants.ApplicationLogFilesPath);
-            _logFinder = new LogFileFinder(fileSystem, this._logsFolder);
+        {            
+            _logFinder = new LogFileFinder(fileSystem, environment);
         }       
 
         public IEnumerable<ApplicationLogEntry> GetRecentLogs(int top)
@@ -88,11 +86,11 @@ namespace Kudu.Services.Diagnostics
             internal HashSet<string> ExcludedFiles { get; private set; }
             internal HashSet<string> IncludedFiles { get; private set; }
 
-            public LogFileFinder(IFileSystem fileSystem, string logsFolder, LogFileAccessStats stats = null)
+            public LogFileFinder(IFileSystem fileSystem, IEnvironment env, LogFileAccessStats stats = null)
             {
                 ExcludedFiles = new HashSet<string>();
                 IncludedFiles = new HashSet<string>();                
-                _directory = fileSystem.DirectoryInfo.FromDirectoryName(logsFolder);
+                _directory = fileSystem.DirectoryInfo.FromDirectoryName(env.ApplicationLogFilesPath);
                 _stats = stats;                
             }
 
@@ -148,7 +146,7 @@ namespace Kudu.Services.Diagnostics
             }
 
             private string ReadFirstLine(FileInfoBase fileInfo)
-            {
+            {                
                 using (var reader = fileInfo.OpenText())
                 {
                     if (_stats != null)

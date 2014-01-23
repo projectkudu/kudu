@@ -18,6 +18,7 @@ namespace Kudu.Core
         private readonly string _nodeModulesPath;
         private string _repositoryPath;
         private readonly string _logFilesPath;
+        private readonly string _applicationLogFilesPath;
         private readonly string _tracePath;
         private readonly string _analyticsPath;
         private readonly string _deploymentTracePath;
@@ -68,6 +69,7 @@ namespace Kudu.Core
             _jobsBinariesPath = _jobsDataPath;
 
             _logFilesPath = Path.Combine(rootPath, Constants.LogFilesPath);
+            _applicationLogFilesPath = Path.Combine(_logFilesPath, Constants.ApplicationLogFilesDirectory);
             _tracePath = Path.Combine(rootPath, Constants.TracePath);
             _analyticsPath = Path.Combine(tempPath ?? _logFilesPath, Constants.SiteExtensionLogsDirectory);
             _deploymentTracePath = Path.Combine(rootPath, Constants.DeploymentTracePath);
@@ -94,6 +96,7 @@ namespace Kudu.Core
             _scriptPath = Path.Combine(binPath, Constants.ScriptsPath);
             _nodeModulesPath = Path.Combine(binPath, Constants.NodeModulesPath);
             _logFilesPath = Path.Combine(rootPath, Constants.LogFilesPath);
+            _applicationLogFilesPath = Path.Combine(_logFilesPath, Constants.ApplicationLogFilesDirectory);
             _tracePath = Path.Combine(rootPath, Constants.TracePath);
             _analyticsPath = Path.Combine(_tempPath ?? _logFilesPath, Constants.SiteExtensionLogsDirectory);
             _deploymentTracePath = Path.Combine(rootPath, Constants.DeploymentTracePath);
@@ -196,6 +199,14 @@ namespace Kudu.Core
             get
             {
                 return _logFilesPath;
+            }
+        }
+
+        public string ApplicationLogFilesPath
+        {
+            get
+            {
+                return _applicationLogFilesPath;
             }
         }
 
