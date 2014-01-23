@@ -41,9 +41,9 @@ namespace Kudu.Core.Jobs
 
             string id = DateTime.UtcNow.ToString("yyyyMMddHHmmssffff");
             var logger = new TriggeredJobRunLogger(triggeredJob.Name, id, environment, fileSystem, traceFactory);
-            var triggeredJobStatus = new TriggeredJobStatus()
+            var triggeredJobStatus = new TriggeredJobStatus
             {
-                Status = "Initializing",
+                Status = JobStatus.Initializing,
                 StartTime = DateTime.UtcNow
             };
             logger.ReportStatus(triggeredJobStatus);
@@ -105,7 +105,7 @@ namespace Kudu.Core.Jobs
         public override void LogError(string error)
         {
             var triggeredJobStatus = ReadJobStatusFromFile<TriggeredJobStatus>(TraceFactory, FileSystem, GetStatusFilePath()) ?? new TriggeredJobStatus();
-            triggeredJobStatus.Status = "Failed";
+            triggeredJobStatus.Status = JobStatus.Failed;
             ReportStatus(triggeredJobStatus);
             Log(Level.Err, error, isSystem: true);
         }

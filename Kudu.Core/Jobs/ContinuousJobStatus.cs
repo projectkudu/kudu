@@ -6,11 +6,11 @@ namespace Kudu.Core.Jobs
     {
         public const string FileNamePrefix = "status_";
 
-        public static readonly ContinuousJobStatus Initializing = new ContinuousJobStatus() { Status = "Initializing" };
-        public static readonly ContinuousJobStatus Starting = new ContinuousJobStatus() { Status = "Starting" };
-        public static readonly ContinuousJobStatus PendingRestart = new ContinuousJobStatus() { Status = "PendingRestart" };
-        public static readonly ContinuousJobStatus Stopped = new ContinuousJobStatus() { Status = "Stopped" };
-        public static readonly ContinuousJobStatus InactiveInstance = new ContinuousJobStatus() { Status = "InactiveInstance" };
+        public static readonly ContinuousJobStatus Initializing = new ContinuousJobStatus() { Status = JobStatus.Initializing };
+        public static readonly ContinuousJobStatus Starting = new ContinuousJobStatus() { Status = JobStatus.Starting };
+        public static readonly ContinuousJobStatus PendingRestart = new ContinuousJobStatus() { Status = JobStatus.PendingRestart };
+        public static readonly ContinuousJobStatus Stopped = new ContinuousJobStatus() { Status = JobStatus.Stopped };
+        public static readonly ContinuousJobStatus InactiveInstance = new ContinuousJobStatus() { Status = JobStatus.InactiveInstance };
 
         public string Status { get; set; }
 
