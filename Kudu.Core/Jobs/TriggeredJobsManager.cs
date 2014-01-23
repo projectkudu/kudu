@@ -132,8 +132,8 @@ namespace Kudu.Core.Jobs
                 StartTime = triggeredJobStatus.StartTime,
                 EndTime = triggeredJobStatus.EndTime,
                 Url = BuildJobsUrl("{0}/history/{1}".FormatInvariant(jobName, runId)),
-                OutputUrl = BuildVfsLogUrl(triggeredJobRunPath, jobName, runId, "output.log"),
-                ErrorUrl = BuildVfsLogUrl(triggeredJobRunPath, jobName, runId, "error.log")
+                OutputUrl = BuildVfsLogUrl(triggeredJobRunPath, jobName, runId, TriggeredJobRunLogger.OutputLogFileName),
+                ErrorUrl = BuildVfsLogUrl(triggeredJobRunPath, jobName, runId, TriggeredJobRunLogger.ErrorLogFileName)
             };
         }
 
