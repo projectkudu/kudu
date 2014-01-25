@@ -17,6 +17,7 @@ namespace Kudu.Services.Diagnostics
 
     public class ApplicationLogsReader : IApplicationLogsReader
     {
+        internal const int TopLimit = 1000;
         internal const int ReadBatchSize = 5;
         internal const int FileOpenLimit = 50;
         internal const string LogFilenamePattern = "*-*.txt";
@@ -34,9 +35,9 @@ namespace Kudu.Services.Diagnostics
 
         public IEnumerable<ApplicationLogEntry> GetRecentLogs(int top)
         {
-            if (top <= 0)
+            if (top <= 0 || top > TopLimit)
             {
-                throw new ArgumentOutOfRangeException("top", "Number of logs to return must be a positive integer.");
+                throw new ArgumentOutOfRangeException("top", "Number of logs to return must be positive and not exceed 1000.");
             }
 
             List<ResumableLogFileReader> logReaders = null;
@@ -176,14 +177,16 @@ namespace Kudu.Services.Diagnostics
                 }
                 finally
                 {
-                    if(stream != null)
-                    {
-                        stream.Dispose();
-                    }
                     if(reader != null)
                     {
                         reader.Dispose();
-                    }                    
+                        stream = null;
+                    }
+
+                    if (stream != null)
+                    {
+                        stream.Dispose();
+                    }
                 }
             }
         }

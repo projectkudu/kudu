@@ -305,8 +305,7 @@ several lines
             using (var dir = new TemporaryApplicationLogDirectory(fs))
             {
                 var logFile = dir.AddLogFile("log-1.txt", "2013-12-06T00:29:20  PID[20108] Information this is a log\r\n");
-                using (var stream = fs.File.Open(logFile.FullName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
-                using (var writer = new StreamWriter(stream) { AutoFlush = true })
+                using (var writer = new StreamWriter(fs.File.Open(logFile.FullName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite)) { AutoFlush = true })
                 using (var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs))
                 {                 
                     writer.WriteLine("2013-12-06T00:29:21  PID[20108] Warning     this is a warning");                    
@@ -339,9 +338,8 @@ several lines
                     var results = reader.ReadNextBatch(1);
                     Assert.Equal(1, results.Count);
                     results[0].AssertLogEntry("2013-12-06T00:29:21+00:00", "Warning", "this is a warning");
-
-                    using (var stream = fs.File.Open(logFile.FullName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
-                    using (var writer = new StreamWriter(stream) { AutoFlush = true })
+                    
+                    using (var writer = new StreamWriter(fs.File.Open(logFile.FullName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite)))
                     {
                         writer.WriteLine("2013-12-06T00:29:22  PID[20108] Error       this is an error");
                     }

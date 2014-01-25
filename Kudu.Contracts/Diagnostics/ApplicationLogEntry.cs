@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
@@ -43,7 +44,7 @@ namespace Kudu.Contracts.Diagnostics
 
         public override string ToString()
         {
-            return string.Format("Application Log Entry, TimeStamp: {0}, Level: {1}, PID: {2}, Message: {3}", TimeStamp, Level, PID, Message);
+            return string.Format(CultureInfo.InvariantCulture, "Application Log Entry, TimeStamp: {0}, Level: {1}, PID: {2}, Message: {3}", TimeStamp, Level, PID, Message);
         }
     }
 }
