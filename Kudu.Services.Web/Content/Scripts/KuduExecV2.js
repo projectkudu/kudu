@@ -1,4 +1,3 @@
-
 function SwitchConsole() {
     var id = window.$KuduExecConsole.attr("id");
     if (id === "KuduExecConsoleV2") {
@@ -19,10 +18,20 @@ window.KuduExec = { workingDir: curWorkingDir };
 function LoadConsoleV2() {
 
     var fileExplorerChanged = false;
+    //diretory change callback from FileBrowser.js
     function _changeDir(value) {
+        //for the very first time, value is empty but we know that the file explorer root is appRoot
         value = value || window.KuduExec.appRoot;
-        curWorkingDir(value);
-        _sendCommand("cd /d \"" + value + "\"");
+        if (getShell().toUpperCase() === "POWERSHELL") {
+            //PowerShell doesn't return a new line after CD, so let's add a new line in the UI 
+            DisplayAndUpdate({ Error: "", Output: "\n" });
+            _sendCommand("cd \"" + value + "\"");
+        } else {
+            //CMD can't CD into different drives without /d and it's harmless for normal directories
+            _sendCommand("cd /d \"" + value + "\"");
+        }
+        //the change notification goes both ways (console <--> file explorer)
+        //the console uses this flag to break the loop
         fileExplorerChanged = true;
     };
 
@@ -63,6 +72,7 @@ function LoadConsoleV2() {
                 controller.resetHistory();
                 DisplayAndUpdate(lastLine);
                 lastLine.Output = "";
+                lastLine.Error = "";
                 DisplayAndUpdate(lastLine);
                 fileExplorerChanged = false;
                 if (line.trim().toUpperCase() == "EXIT") {
@@ -93,12 +103,15 @@ function LoadConsoleV2() {
         autofocus: true,
         animateScroll: true,
         promptHistory: true,
-        welcomeMessage: "Kudu Remote Execution Console\r\nType 'exit' then hit 'enter' to get a new cmd.exe process.\r\nType 'cls' to clear the console\r\n\r\n"
+        welcomeMessage: "Kudu Remote Execution Console\r\nType 'exit' then hit 'enter' to get a new " + getShell() + " process.\r\nType 'cls' to clear the console\r\n\r\n"
     });
     window.$KuduExecConsole = $('#KuduExecConsoleV2');
     window.$KuduExecConsole.append(kuduExecConsole);
+    if (getShell().toUpperCase() === "POWERSHELL") {
+        $("div.jquery-console-inner").css("background-color", "#012456");
+    }
 
-    var connection = $.connection('/commandstream');
+    var connection = $.connection('/commandstream', "shell=" + getShell(), true);
     window.$KuduExecConsole.data('connection', connection);
 
     connection.start({
@@ -106,25 +119,32 @@ function LoadConsoleV2() {
         transport: "auto"
     });
 
+
     connection.received(function (data) {
         DisplayAndUpdate(data);
         controller.enableInput();
     });
-    
-    function _sendCommand(input) {
-        _sendMessage(input);
-    }
 
-    function _sendMessage(input) {
+    function _sendCommand(input) {
         connection.send(input);
     }
-    
+
     function endsWith(str, suffix) {
         return str.indexOf(suffix, str.length - suffix.length) !== -1;
     }
-    
+
+    function startsWith(str, prefix) {
+        return str.indexOf(prefix) == 0;
+    }
+
     function getJSONValue(input) {
         return input? (input.Output || input.Error || "").toString() : "";
+    }
+
+    function getShell() {
+        var regex = new RegExp("[\\?&]shell=([^&#]*)"),
+            results = regex.exec(location.search);
+        return results == null ? "CMD" : decodeURIComponent(results[1].replace(/\+/g, " "));
     }
 
     function DisplayAndUpdate(data) {
@@ -178,9 +198,12 @@ function LoadConsoleV2() {
 
         //save last line for next time.
         lastLine = data;
-
+        prompt = prompt.trim();
         if (!endsWith(prompt, "\n") && endsWith(prompt, ">") && !fileExplorerChanged) {
             var windowsPath = prompt.replace("\n", "").replace(">", "");
+            if (startsWith(windowsPath, "PS ")) {
+                windowsPath = windowsPath.substr(3);
+            }
             if (windowsPath.match(/^[a-zA-Z]:(\\\w+)*(.*)$/)) {
                 if (!window.KuduExec.appRoot) {
                     window.KuduExec.appRoot = windowsPath;
