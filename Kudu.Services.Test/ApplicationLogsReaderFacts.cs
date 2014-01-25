@@ -7,6 +7,7 @@ using System.IO.Abstractions.TestingHelpers;
 using System.Linq;
 using System.Threading.Tasks;
 using Kudu.Contracts.Diagnostics;
+using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Services.Diagnostics;
 using Kudu.TestHarness;
@@ -31,8 +32,8 @@ namespace Kudu.Services.Test
             DateTimeOffset.Parse("2013-12-06T00:29:20+00:00")
 );
 
-            var env = new ApplicationLogsTestEnvironment();
-            var reader = new ApplicationLogsReader(fs, env);
+            var env = new ApplicationLogsTestEnvironment();            
+            var reader = new ApplicationLogsReader(fs, env, Mock.Of<ITracer>());
 
             var results = reader.GetRecentLogs(1).ToList();
 
@@ -57,7 +58,7 @@ namespace Kudu.Services.Test
 );
 
             var env = new ApplicationLogsTestEnvironment();
-            var reader = new ApplicationLogsReader(fs, env);
+            var reader = new ApplicationLogsReader(fs, env, Mock.Of<ITracer>());
 
             var results = reader.GetRecentLogs(6).ToList();
 
@@ -82,7 +83,7 @@ namespace Kudu.Services.Test
 );
 
             var env = new ApplicationLogsTestEnvironment();
-            var reader = new ApplicationLogsReader(fs, env);
+            var reader = new ApplicationLogsReader(fs, env, Mock.Of<ITracer>());
 
             var results = reader.GetRecentLogs(6).ToList();
             
@@ -106,7 +107,7 @@ namespace Kudu.Services.Test
 );
 
             var env = new ApplicationLogsTestEnvironment();
-            var reader = new ApplicationLogsReader(fs, env);
+            var reader = new ApplicationLogsReader(fs, env, Mock.Of<ITracer>());
 
             var results = reader.GetRecentLogs(6).ToList();            
             Assert.Equal(3, results.Count);
@@ -152,7 +153,7 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
                 );
 
                 var env = new ApplicationLogsTestEnvironment(dir.RootDir);
-                var reader = new ApplicationLogsReader(fs, env);
+                var reader = new ApplicationLogsReader(fs, env, Mock.Of<ITracer>());
                        
                 var loopResult = Parallel.For(0, 10, (i) =>
                 {
@@ -184,7 +185,7 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
                 }
 
                 var env = new ApplicationLogsTestEnvironment(dir.RootDir);
-                var reader = new ApplicationLogsReader(fs, env);
+                var reader = new ApplicationLogsReader(fs, env, Mock.Of<ITracer>());
 
                 var results = reader.GetRecentLogs(logFileCount).ToList();
 
@@ -210,7 +211,7 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
 2013-12-06T00:29:22  PID[20108] Error       this is an error"
             );
 
-            using (var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs))
+            using (var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs, Mock.Of<ITracer>()))
             {
                 var entry1 = reader.ReadNextBatch(1).Single();
                 var entry2 = reader.ReadNextBatch(1).Single();
@@ -232,8 +233,8 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
 2013-12-06T00:29:22  PID[20108] Error       this is an error"
             );
 
-            using (var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs))
-            using (var reader2 = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs))
+            using (var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs, Mock.Of<ITracer>()))
+            using (var reader2 = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs, Mock.Of<ITracer>()))
             {
                 var result1 = reader.ReadNextBatch(3).ToList();
                 var result2 = reader2.ReadNextBatch(1)
@@ -261,7 +262,7 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
 2013-12-06T00:29:22  PID[20108] Error       this is an error"
             );
 
-            using(var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs))
+            using(var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs, Mock.Of<ITracer>()))
             {
                 reader.ReadNextBatch(2);
                 Assert.Equal(DateTimeOffset.Parse("2013-12-06T00:29:21+00:00"), reader.LastTime);
@@ -280,7 +281,7 @@ several lines
 2013-12-06T00:29:22  PID[20108] Error       this is an error"
             );
 
-            using (var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs))
+            using (var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs, Mock.Of<ITracer>()))
             {
                 var results = reader.ReadNextBatch(3);
                 Assert.Equal(3, results.Count);
@@ -306,7 +307,7 @@ several lines
             {
                 var logFile = dir.AddLogFile("log-1.txt", "2013-12-06T00:29:20  PID[20108] Information this is a log\r\n");
                 using (var writer = new StreamWriter(fs.File.Open(logFile.FullName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite)) { AutoFlush = true })
-                using (var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs))
+                using (var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs, Mock.Of<ITracer>()))
                 {                 
                     writer.WriteLine("2013-12-06T00:29:21  PID[20108] Warning     this is a warning");                    
                     var results = reader.ReadNextBatch(1);
@@ -333,7 +334,7 @@ several lines
 "               );
                 
                 // Open a reader and read the lines while the writer appends a new line
-                using (var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs))
+                using (var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs, Mock.Of<ITracer>()))
                 {                    
                     var results = reader.ReadNextBatch(1);
                     Assert.Equal(1, results.Count);
@@ -350,7 +351,7 @@ several lines
                 }
 
                 // Open a new reader and confirm that the new line written by the writer is present
-                using (var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs))
+                using (var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs, Mock.Of<ITracer>()))
                 {
                     var results = reader.ReadNextBatch(1);
                     Assert.Equal(1, results.Count);
@@ -367,11 +368,16 @@ several lines
                 .Setup(f => f.File.Open(It.IsAny<string>(),FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 .Throws<UnauthorizedAccessException>();           
             
-            var fileMock = new Mock<FileInfoBase>();            
+            var fileMock = new Mock<FileInfoBase>();
 
-            var reader = new ApplicationLogsReader.ResumableLogFileReader(fileMock.Object, fileSystemMock.Object);
+            var tracerMock = new Mock<ITracer>(MockBehavior.Strict);
+            tracerMock.Setup(t => t.Trace("Error occurred", It.IsAny<Dictionary<string,string>>())).Verifiable();
+
+            var reader = new ApplicationLogsReader.ResumableLogFileReader(fileMock.Object, fileSystemMock.Object, tracerMock.Object);
             var results = reader.ReadNextBatch(1);
+
             Assert.Equal(0, results.Count);
+            tracerMock.Verify();
         }
 
         private IEnumerable<string> InfiniteLines
@@ -395,7 +401,7 @@ several lines
         {
             var fs = new ApplicationLogsTestFileSystem();
             var env = new ApplicationLogsTestEnvironment();
-            var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env);
+            var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env, Mock.Of<ITracer>());
             var results = fileFinder.FindLogFiles().ToList();
             Assert.Equal(0, results.Count);
         }
@@ -406,7 +412,7 @@ several lines
             var fs = new ApplicationLogsTestFileSystem();
             var env = new ApplicationLogsTestEnvironment();
             fs.AddDirectory(env.ApplicationLogFilesPath);            
-            var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env);
+            var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env, Mock.Of<ITracer>());
             var results = fileFinder.FindLogFiles().ToList();
             Assert.Equal(0, results.Count);
         }
@@ -422,7 +428,7 @@ several lines
             );
 
             var env = new ApplicationLogsTestEnvironment();
-            var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env);
+            var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env, Mock.Of<ITracer>());
             var results = fileFinder.FindLogFiles().ToList();
 
             Assert.Equal(1, results.Count);
@@ -442,7 +448,7 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
             );
 
             var env = new ApplicationLogsTestEnvironment();
-            var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env);
+            var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env, Mock.Of<ITracer>());
             var results = fileFinder.FindLogFiles().ToList();
 
             Assert.Equal(0, results.Count);
@@ -463,7 +469,7 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
 
             var stats = new ApplicationLogsReader.LogFileAccessStats();
             var env = new ApplicationLogsTestEnvironment();
-            var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env, stats);
+            var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env, Mock.Of<ITracer>(), stats);
             var results = fileFinder.FindLogFiles().ToList();
 
             Assert.Equal(0, results.Count);
@@ -487,7 +493,7 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
 
             var stats = new ApplicationLogsReader.LogFileAccessStats();
             var env = new ApplicationLogsTestEnvironment();
-            var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env, stats);
+            var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env, Mock.Of<ITracer>(), stats);
             
             fileFinder.FindLogFiles();
 
@@ -521,7 +527,7 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
             );
 
             var env = new ApplicationLogsTestEnvironment();
-            var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env);
+            var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env, Mock.Of<ITracer>());
 
             fileFinder.FindLogFiles();            
             Assert.Equal(1, fileFinder.IncludedFiles.Count);
@@ -542,7 +548,7 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
             fs.AddLogFile("log-1.txt", "");
 
             var env = new ApplicationLogsTestEnvironment();
-            var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env);
+            var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env, Mock.Of<ITracer>());
             var results = fileFinder.FindLogFiles();
 
             Assert.Equal(0, results.Count());
@@ -558,7 +564,7 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
 
             var stats = new ApplicationLogsReader.LogFileAccessStats();
             var env = new ApplicationLogsTestEnvironment();
-            var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env, stats);
+            var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env, Mock.Of<ITracer>(), stats);
 
             fileFinder.FindLogFiles();            
             fileFinder.FindLogFiles();            
@@ -579,7 +585,7 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
 
             var stats = new ApplicationLogsReader.LogFileAccessStats();
             var env = new ApplicationLogsTestEnvironment();
-            var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env, stats);
+            var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env, Mock.Of<ITracer>(), stats);
 
             var results = fileFinder.FindLogFiles();
             Assert.Equal(0, stats.GetOpenTextCount("abc-123-logging-errors.txt"));
@@ -593,11 +599,15 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
             fs.AddLogFileWithOpenException<UnauthorizedAccessException>("log-1.txt");
             var env = new ApplicationLogsTestEnvironment();
 
-            var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env);
+            var tracerMock = new Mock<ITracer>(MockBehavior.Strict);
+            tracerMock.Setup(t => t.Trace("Error occurred", It.IsAny<Dictionary<string, string>>())).Verifiable();
+
+            var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env, tracerMock.Object);
             var results = fileFinder.FindLogFiles().ToList();
             Assert.Equal(0, results.Count);
             Assert.Equal(0, fileFinder.IncludedFiles.Count);
-            Assert.Equal(0, fileFinder.ExcludedFiles.Count);            
+            Assert.Equal(0, fileFinder.ExcludedFiles.Count);
+            tracerMock.Verify();
         }
 
     }
@@ -650,11 +660,7 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
             _defaultFileSystem = new MockFileSystem();
             _fileMock = new Mock<FileBase>();
 
-            // System.IO.Abstractions.TestHelpers does not provide an implementation for .Open(..) so we have to provide one
-            _fileMock
-                .Setup(f => f.Open(It.IsAny<string>(), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                .Returns<string, FileMode, FileAccess, FileShare>((path, fileMode, fileAccess, fileShare) =>
-                    new MemoryStream(_defaultFileSystem.GetFile(path).Contents));
+            
         }
 
         public void AddDirectory(string dir)
@@ -670,14 +676,22 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
         public FileInfoBase AddLogFile(string name, string contents, DateTimeOffset lastWriteTime)
         {
             var path = System.IO.Path.Combine(Constants.LogFilesPath, Constants.ApplicationLogFilesDirectory, name);
-            _defaultFileSystem.AddFile(path, new MockFileData(contents) { LastWriteTime = lastWriteTime });
+            _defaultFileSystem.AddFile(path, new MockFileData(contents ?? string.Empty) { LastWriteTime = lastWriteTime });
+
+            // System.IO.Abstractions.TestHelpers does not provide an implementation for .Open(..) so we have to provide one
+            if(contents != null)
+            {
+                _fileMock.Setup(f => f.Open(It.Is<string>(s => s.EndsWith(path)), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    .Returns(() => new MemoryStream(_defaultFileSystem.GetFile(path).Contents));            
+            }
+
             return _defaultFileSystem.FileInfo.FromFileName(path);            
         }
 
         public void AddLogFileWithOpenException<T>(string name) where T : Exception, new()
         {
-            var fileInfo = AddLogFile(name, "");
-            _fileMock.Setup(f => f.Open(fileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            var fileInfo = AddLogFile(name, null);
+            _fileMock.Setup(f => f.Open(It.Is<string>( s => s.EndsWith(fileInfo.FullName)), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 .Throws<T>();
         }
 

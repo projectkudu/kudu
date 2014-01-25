@@ -6,6 +6,7 @@ using System.IO.Abstractions;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Kudu.Contracts.Diagnostics;
+using Kudu.Contracts.Tracing;
 using Kudu.Core;
 
 namespace Kudu.Services.Diagnostics
@@ -26,11 +27,13 @@ namespace Kudu.Services.Diagnostics
                 
         private readonly LogFileFinder _logFinder;
         private readonly IFileSystem _fileSystem;
+        private readonly ITracer _tracer;
 
-        public ApplicationLogsReader(IFileSystem fileSystem, IEnvironment environment)
+        public ApplicationLogsReader(IFileSystem fileSystem, IEnvironment environment, ITracer tracer)
         {
             _fileSystem = fileSystem;
-            _logFinder = new LogFileFinder(fileSystem, environment);            
+            _tracer = tracer;
+            _logFinder = new LogFileFinder(fileSystem, environment, tracer);            
         }       
 
         public IEnumerable<ApplicationLogEntry> GetRecentLogs(int top)
@@ -45,8 +48,8 @@ namespace Kudu.Services.Diagnostics
             {
                 logReaders = _logFinder
                     .FindLogFiles()                    
-                    .Select(f => new ResumableLogFileReader(f, _fileSystem))                    
-                    .ToList();
+                    .Select(f => new ResumableLogFileReader(f, _fileSystem, _tracer))                    
+                    .ToList();                
 
                 List<ApplicationLogEntry> logs = new List<ApplicationLogEntry>();
                 while (logs.Count < top && logReaders.Count > 0)
@@ -86,17 +89,20 @@ namespace Kudu.Services.Diagnostics
             private readonly DirectoryInfoBase _directory;
             private readonly LogFileAccessStats _stats;
             private readonly IFileSystem _fileSystem;
+            private readonly ITracer _tracer;
 
             internal HashSet<string> ExcludedFiles { get; private set; }
             internal HashSet<string> IncludedFiles { get; private set; }
 
-            public LogFileFinder(IFileSystem fileSystem, IEnvironment env, LogFileAccessStats stats = null)
+            public LogFileFinder(IFileSystem fileSystem, IEnvironment env, ITracer tracer, LogFileAccessStats stats = null)
             {
                 ExcludedFiles = new HashSet<string>();
-                IncludedFiles = new HashSet<string>();                
-                _directory = fileSystem.DirectoryInfo.FromDirectoryName(env.ApplicationLogFilesPath);
+                IncludedFiles = new HashSet<string>();
+
                 _stats = stats;
                 _fileSystem = fileSystem;
+                _tracer = tracer;
+                _directory = fileSystem.DirectoryInfo.FromDirectoryName(env.ApplicationLogFilesPath);
             }
 
             public IEnumerable<FileInfoBase> FindLogFiles()
@@ -166,13 +172,15 @@ namespace Kudu.Services.Diagnostics
 
                     return reader.ReadLine();
                 }
-                catch (UnauthorizedAccessException)
+                catch (UnauthorizedAccessException e)
                 {
                     // If we are unable to open the file, silently skip it this time
+                    _tracer.TraceError(e);
                     return null;
                 }
-                catch (IOException)
+                catch (IOException e)
                 {
+                    _tracer.TraceError(e);
                     return null;
                 }
                 finally
@@ -197,16 +205,18 @@ namespace Kudu.Services.Diagnostics
             private IEnumerator<string> _enumerator;            
             private readonly IFileSystem _fileSystem;
             private readonly LogFileAccessStats _stats;
+            private readonly ITracer _tracer;
             private bool _disposed;            
 
             public DateTimeOffset LastTime { get; private set; }            
 
-            public ResumableLogFileReader(FileInfoBase fileInfo, IFileSystem fileSystem, LogFileAccessStats stats = null)
-            {
-                LastTime = fileInfo.LastWriteTimeUtc;
+            public ResumableLogFileReader(FileInfoBase fileInfo, IFileSystem fileSystem, ITracer tracer, LogFileAccessStats stats = null)
+            {                
                 _fileSystem = fileSystem;                
                 _stats = stats;
+                _tracer = tracer;                
                 _lines = CreateReverseLineReader(fileInfo);
+                LastTime = fileInfo.LastWriteTimeUtc;
             }
 
             internal ResumableLogFileReader(DateTimeOffset lastWrite, IEnumerable<string> lines)
@@ -282,13 +292,15 @@ namespace Kudu.Services.Diagnostics
                         }
                         return stream;
                     }
-                    catch (UnauthorizedAccessException)
+                    catch (UnauthorizedAccessException e)
                     {
                         // If we are unable to open the file, silently skip it this time
+                        _tracer.TraceError(e);                        
                         return Stream.Null;
                     }
-                    catch (IOException)
+                    catch (IOException e)
                     {
+                        _tracer.TraceError(e);
                         return Stream.Null;
                     }
                 });
