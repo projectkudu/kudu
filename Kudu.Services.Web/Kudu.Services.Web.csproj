@@ -147,7 +147,6 @@
     <Compile Include="Tracing\TraceServices.cs" />
     <Compile Include="App_Start\NinjectServices.cs" />
     <Compile Include="App_Start\PathResolver.cs" />
-    <Compile Include="App_Start\SignalRStartup.cs" />
     <Compile Include="Services\ServerConfiguration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="..\Kudu.Console\Services\BuildPropertyProvider.cs">
