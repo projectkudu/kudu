@@ -20,7 +20,7 @@ namespace Kudu.Services.Test
         [Fact]
         public void ApplicationLogsReaderStartsWithMostRecentlyWrittenFile()
         {
-            var fs = new MockFileSystem();
+            var fs = new ApplicationLogsTestFileSystem();
 
             fs.AddLogFile("log-1.txt",
 @"2013-12-06T00:29:20  PID[20108] Information this is the most recent log",
@@ -43,7 +43,7 @@ namespace Kudu.Services.Test
         [Fact]
         public void ApplicationLogsReaderMergesResultsFromMultipleLogFiles()
         {
-            var fs = new MockFileSystem();
+            var fs = new ApplicationLogsTestFileSystem();
 
             fs.AddLogFile("log-1.txt",
 @"2013-12-06T00:29:20  PID[20108] Information this is a log
@@ -73,8 +73,7 @@ namespace Kudu.Services.Test
         [Fact]
         public void ApplicationLogsReaderMissingLogMessageIsValidEntry()
         {
-            var fs = new MockFileSystem();
-
+            var fs = new ApplicationLogsTestFileSystem();
             fs.AddLogFile("log-1.txt",
 @"2013-12-06T00:29:20  PID[20108] Information this is a log
 2013-12-06T00:29:21  PID[20108] Warning     this is a warning
@@ -97,7 +96,7 @@ namespace Kudu.Services.Test
             // This is really just a variation on the multiline tests but is here to demonstrate that any 'junk' lines 
             // will just be treated as part of the preceeding log message
 
-            var fs = new MockFileSystem();
+            var fs = new ApplicationLogsTestFileSystem();
 
             fs.AddLogFile("log-1.txt",
 @"2013-12-06T00:29:20  PID[20108] Information this is a log
@@ -204,14 +203,14 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
         [Fact]
         public void ResumableLogReaderLogEntriesAreReturnedInReverseOrder()
         {
-            var fs = new MockFileSystem();
+            var fs = new ApplicationLogsTestFileSystem();
             var logFile = fs.AddLogFile("log-1.txt",
 @"2013-12-06T00:29:20  PID[20108] Information this is a log
 2013-12-06T00:29:21  PID[20108] Warning     this is a warning
 2013-12-06T00:29:22  PID[20108] Error       this is an error"
             );
 
-            using (var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile))
+            using (var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs))
             {
                 var entry1 = reader.ReadNextBatch(1).Single();
                 var entry2 = reader.ReadNextBatch(1).Single();
@@ -226,15 +225,15 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
         [Fact]
         public void ResumableLogReaderSeveralSmallBatchesAreEquivalentToOneLargeBatchInTheCaseOfSingleLogFile()
         {
-            var fs = new MockFileSystem();
+            var fs = new ApplicationLogsTestFileSystem();
             var logFile = fs.AddLogFile("log-1.txt",
 @"2013-12-06T00:29:20  PID[20108] Information this is a log
 2013-12-06T00:29:21  PID[20108] Warning     this is a warning
 2013-12-06T00:29:22  PID[20108] Error       this is an error"
             );
 
-            using (var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile))
-            using (var reader2 = new ApplicationLogsReader.ResumableLogFileReader(logFile))
+            using (var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs))
+            using (var reader2 = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs))
             {
                 var result1 = reader.ReadNextBatch(3).ToList();
                 var result2 = reader2.ReadNextBatch(1)
@@ -255,14 +254,14 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
         [Fact]
         public void ResumableLogReaderLastTimeIsSetToTimeOfLastReadLogEntry()
         {
-            var fs = new MockFileSystem();
+            var fs = new ApplicationLogsTestFileSystem();
             var logFile = fs.AddLogFile("log-1.txt",
 @"2013-12-06T00:29:20  PID[20108] Information this is a log
 2013-12-06T00:29:21  PID[20108] Warning     this is a warning
 2013-12-06T00:29:22  PID[20108] Error       this is an error"
             );
 
-            using(var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile))
+            using(var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs))
             {
                 reader.ReadNextBatch(2);
                 Assert.Equal(DateTimeOffset.Parse("2013-12-06T00:29:21+00:00"), reader.LastTime);
@@ -272,7 +271,7 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
         [Fact]
         public void ResumableLogReaderMultilineMessagesAreMergedIntoOneEntry()
         {
-            var fs = new MockFileSystem();
+            var fs = new ApplicationLogsTestFileSystem();
             var logFile = fs.AddLogFile("log-1.txt",
 @"2013-12-06T00:29:20  PID[20108] Information this is a log
 2013-12-06T00:29:21  PID[20108] Warning     this is a warning
@@ -281,7 +280,7 @@ several lines
 2013-12-06T00:29:22  PID[20108] Error       this is an error"
             );
 
-            using (var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile))
+            using (var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs))
             {
                 var results = reader.ReadNextBatch(3);
                 Assert.Equal(3, results.Count);
@@ -297,6 +296,84 @@ several lines
                 var results = reader.ReadNextBatch(100);
                 Assert.Equal(100, results.Count);                
             }      
+        }
+
+        [Fact]
+        public void ResumableLogReaderCanReadFromFilesOpenForWriting()
+        {
+            var fs = new FileSystem();
+            using (var dir = new TemporaryApplicationLogDirectory(fs))
+            {
+                var logFile = dir.AddLogFile("log-1.txt", "2013-12-06T00:29:20  PID[20108] Information this is a log\r\n");
+                using (var stream = fs.File.Open(logFile.FullName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
+                using (var writer = new StreamWriter(stream) { AutoFlush = true })
+                using (var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs))
+                {                 
+                    writer.WriteLine("2013-12-06T00:29:21  PID[20108] Warning     this is a warning");                    
+                    var results = reader.ReadNextBatch(1);
+                    Assert.Equal(1, results.Count);
+                    results[0].AssertLogEntry("2013-12-06T00:29:21+00:00", "Warning", "this is a warning");
+                                                          
+                    writer.WriteLine("2013-12-06T00:29:22  PID[20108] Error       this is an error");                    
+                    results = reader.ReadNextBatch(1);
+                    Assert.Equal(1, results.Count);
+                    results[0].AssertLogEntry("2013-12-06T00:29:20+00:00", "Information", "this is a log");         
+                }
+            }            
+        }
+
+        [Fact]
+        public void ResumableLogReaderDoesNotBlockLogWriters()
+        {
+            var fs = new FileSystem();
+            using (var dir = new TemporaryApplicationLogDirectory(fs))
+            {
+                var logFile = dir.AddLogFile("log-1.txt", 
+@"2013-12-06T00:29:20  PID[20108] Information this is a log
+2013-12-06T00:29:21  PID[20108] Warning     this is a warning
+"               );
+                
+                // Open a reader and read the lines while the writer appends a new line
+                using (var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs))
+                {                    
+                    var results = reader.ReadNextBatch(1);
+                    Assert.Equal(1, results.Count);
+                    results[0].AssertLogEntry("2013-12-06T00:29:21+00:00", "Warning", "this is a warning");
+
+                    using (var stream = fs.File.Open(logFile.FullName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
+                    using (var writer = new StreamWriter(stream) { AutoFlush = true })
+                    {
+                        writer.WriteLine("2013-12-06T00:29:22  PID[20108] Error       this is an error");
+                    }
+                    
+                    results = reader.ReadNextBatch(1);
+                    Assert.Equal(1, results.Count);
+                    results[0].AssertLogEntry("2013-12-06T00:29:20+00:00", "Information", "this is a log");
+                }
+
+                // Open a new reader and confirm that the new line written by the writer is present
+                using (var reader = new ApplicationLogsReader.ResumableLogFileReader(logFile, fs))
+                {
+                    var results = reader.ReadNextBatch(1);
+                    Assert.Equal(1, results.Count);
+                    results[0].AssertLogEntry("2013-12-06T00:29:22+00:00", "Error", "this is an error");
+                }
+            }
+        }
+
+        [Fact]
+        public void ResumableLogReaderCanHandleFileAccessError()
+        {
+            var fileSystemMock = new Mock<IFileSystem>();
+            fileSystemMock
+                .Setup(f => f.File.Open(It.IsAny<string>(),FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                .Throws<UnauthorizedAccessException>();           
+            
+            var fileMock = new Mock<FileInfoBase>();            
+
+            var reader = new ApplicationLogsReader.ResumableLogFileReader(fileMock.Object, fileSystemMock.Object);
+            var results = reader.ReadNextBatch(1);
+            Assert.Equal(0, results.Count);
         }
 
         private IEnumerable<string> InfiniteLines
@@ -318,7 +395,7 @@ several lines
         [Fact]
         public void LogFileFinderCanHandleDirectoryDoesNotExist()
         {
-            MockFileSystem fs = new MockFileSystem();
+            var fs = new ApplicationLogsTestFileSystem();
             var env = new ApplicationLogsTestEnvironment();
             var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env);
             var results = fileFinder.FindLogFiles().ToList();
@@ -328,7 +405,7 @@ several lines
         [Fact]
         public void LogFileFinderNoLogFilesFoundForEmptyDirectory()
         {
-            MockFileSystem fs = new MockFileSystem();
+            var fs = new ApplicationLogsTestFileSystem();
             var env = new ApplicationLogsTestEnvironment();
             fs.AddDirectory(env.ApplicationLogFilesPath);            
             var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env);
@@ -339,7 +416,7 @@ several lines
         [Fact]
         public void LogFileFinderFindsSingleLogFile()
         {
-            var fs = new MockFileSystem();            
+            var fs = new ApplicationLogsTestFileSystem();            
             fs.AddLogFile("log-1.txt",            
 @"2013-12-06T00:29:20  PID[20108] Information this is a log
 2013-12-06T00:29:21  PID[20108] Warning     this is a warning
@@ -357,7 +434,7 @@ several lines
         [Fact]
         public void LogFileFinderIgnoresFilesNotInStandardLogFormat()
         {
-            var fs = new MockFileSystem();            
+            var fs = new ApplicationLogsTestFileSystem();            
             fs.AddLogFile("logging-errors.txt",
 @"2014-01-09T00:18:30
 System.ApplicationException: The trace listener AzureTableTraceListener is disabled. 
@@ -377,7 +454,7 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
         [Fact]
         public void LogFileFinderIgnoredFilesAreOnlyReadOnce()
         {
-            var fs = new MockFileSystem();
+            var fs = new ApplicationLogsTestFileSystem();
             fs.AddLogFile("logging-errors.txt",
 @"2014-01-09T00:18:30
 System.ApplicationException: The trace listener AzureTableTraceListener is disabled. 
@@ -403,7 +480,7 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
         [Fact]
         public void LogFileFinderValidFilesAreOnlyReadOnce()
         {
-            var fs = new MockFileSystem();
+            var fs = new ApplicationLogsTestFileSystem();
             fs.AddLogFile("log-1.txt",
 @"2013-12-06T00:29:20  PID[20108] Information this is a log
 2013-12-06T00:29:21  PID[20108] Warning     this is a warning
@@ -431,7 +508,7 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
         [Fact]
         public void LogFileFinderFilesAreNotTrackedOnceDeleted()
         {
-            var fs = new MockFileSystem();
+            var fs = new ApplicationLogsTestFileSystem();
             fs.AddLogFile("log-1.txt",
 @"2013-12-06T00:29:20  PID[20108] Information this is a log
 2013-12-06T00:29:21  PID[20108] Warning     this is a warning
@@ -463,7 +540,7 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
         [Fact]
         public void LogFileFinderEmptyFilesAreNotReturned()
         {
-            var fs = new MockFileSystem();
+            var fs = new ApplicationLogsTestFileSystem();
             fs.AddLogFile("log-1.txt", "");
 
             var env = new ApplicationLogsTestEnvironment();
@@ -478,7 +555,7 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
         [Fact]
         public void LogFileFinderEmptyFilesAreReadEachTime()
         {
-            var fs = new MockFileSystem();
+            var fs = new ApplicationLogsTestFileSystem();
             fs.AddLogFile("log-1.txt", "");
 
             var stats = new ApplicationLogsReader.LogFileAccessStats();
@@ -493,7 +570,7 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
         [Fact]
         public void LogFileFinderLoggingErrorFilesAreSkippedWithoutReading()
         {
-            var fs = new MockFileSystem();
+            var fs = new ApplicationLogsTestFileSystem();
             fs.AddLogFile("abc-123-logging-errors.txt",
 @"2014-01-09T00:18:30
 System.ApplicationException: The trace listener AzureTableTraceListener is disabled. 
@@ -509,6 +586,20 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
             var results = fileFinder.FindLogFiles();
             Assert.Equal(0, stats.GetOpenTextCount("abc-123-logging-errors.txt"));
             Assert.Equal(0, stats.GetOpenReadCount("abc-123-logging-errors.txt"));
+        }
+
+        [Fact]
+        public void LogFileFinderSkipsFileOnFileAccessError()
+        {
+            var fs = new ApplicationLogsTestFileSystem();
+            fs.AddLogFileWithOpenException<UnauthorizedAccessException>("log-1.txt");
+            var env = new ApplicationLogsTestEnvironment();
+
+            var fileFinder = new ApplicationLogsReader.LogFileFinder(fs, env);
+            var results = fileFinder.FindLogFiles().ToList();
+            Assert.Equal(0, results.Count);
+            Assert.Equal(0, fileFinder.IncludedFiles.Count);
+            Assert.Equal(0, fileFinder.ExcludedFiles.Count);            
         }
 
     }
@@ -551,26 +642,81 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
         }
     }
 
+    internal class ApplicationLogsTestFileSystem : IFileSystem
+    {
+        private MockFileSystem _defaultFileSystem;
+        private Mock<FileBase> _fileMock;
+        
+        public ApplicationLogsTestFileSystem()
+        {
+            _defaultFileSystem = new MockFileSystem();
+            _fileMock = new Mock<FileBase>();
+
+            // System.IO.Abstractions.TestHelpers does not provide an implementation for .Open(..) so we have to provide one
+            _fileMock
+                .Setup(f => f.Open(It.IsAny<string>(), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                .Returns<string, FileMode, FileAccess, FileShare>((path, fileMode, fileAccess, fileShare) =>
+                    new MemoryStream(_defaultFileSystem.GetFile(path).Contents));
+        }
+
+        public void AddDirectory(string dir)
+        {
+            _defaultFileSystem.AddDirectory(dir);
+        }
+
+        public FileInfoBase AddLogFile(string name, string contents)
+        {
+            return AddLogFile(name, contents, DateTimeOffset.UtcNow);
+        }
+
+        public FileInfoBase AddLogFile(string name, string contents, DateTimeOffset lastWriteTime)
+        {
+            var path = System.IO.Path.Combine(Constants.LogFilesPath, Constants.ApplicationLogFilesDirectory, name);
+            _defaultFileSystem.AddFile(path, new MockFileData(contents) { LastWriteTime = lastWriteTime });
+            return _defaultFileSystem.FileInfo.FromFileName(path);            
+        }
+
+        public void AddLogFileWithOpenException<T>(string name) where T : Exception, new()
+        {
+            var fileInfo = AddLogFile(name, "");
+            _fileMock.Setup(f => f.Open(fileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                .Throws<T>();
+        }
+
+        public void RemoveLogFile(string name)
+        {
+            var path = System.IO.Path.Combine(Constants.LogFilesPath, Constants.ApplicationLogFilesDirectory, name);
+            _defaultFileSystem.RemoveFile(path);
+        }
+
+        public DirectoryBase Directory
+        {
+            get { return _defaultFileSystem.Directory; }
+        }
+
+        public IDirectoryInfoFactory DirectoryInfo
+        {
+            get { return _defaultFileSystem.DirectoryInfo; }
+        }
+
+        public FileBase File
+        {
+            get  { return _fileMock.Object; }
+        }
+
+        public IFileInfoFactory FileInfo
+        {
+            get { return _defaultFileSystem.FileInfo; }
+        }
+
+        public PathBase Path
+        {
+            get { return _defaultFileSystem.Path; }
+        }
+    }
+
     internal static class LogFileTestExtensions
     {
-        public static FileInfoBase AddLogFile(this MockFileSystem fs, string name, string contents)
-        {
-            return AddLogFile(fs, name, contents, DateTimeOffset.UtcNow);
-        }
-
-        public static FileInfoBase AddLogFile(this MockFileSystem fs, string name, string contents, DateTimeOffset lastWriteTime)
-        {
-            var path = Path.Combine(Constants.LogFilesPath, Constants.ApplicationLogFilesDirectory, name);
-            fs.AddFile(path, new MockFileData(contents) { LastWriteTime = lastWriteTime });
-            return fs.FileInfo.FromFileName(path);
-        }
-
-        public static void RemoveLogFile(this MockFileSystem fs, string name)
-        {
-            var path = Path.Combine(Constants.LogFilesPath, Constants.ApplicationLogFilesDirectory, name);
-            fs.RemoveFile(path);
-        }
-
         public static void AssertLogEntry(this ApplicationLogEntry entry, string timeStamp, string level, string message)
         {
             AssertLogEntry(entry, DateTimeOffset.Parse(timeStamp, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal), level, message);            
@@ -582,6 +728,5 @@ System.ApplicationException: The trace listener AzureTableTraceListener is disab
             Assert.Equal(level, entry.Level);
             Assert.Equal(message, entry.Message);
         }
-    }    
-
+    }
 }

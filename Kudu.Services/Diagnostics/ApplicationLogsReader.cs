@@ -23,11 +23,13 @@ namespace Kudu.Services.Diagnostics
         internal const string LogErrorsSuffix = "-logging-errors.txt";
         internal const string LogEntryRegexPattern = @"^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)\s+PID\[(\d+)\]\s(Warning|Information|Error)\s+(.*)";
                 
-        private readonly LogFileFinder _logFinder;            
+        private readonly LogFileFinder _logFinder;
+        private readonly IFileSystem _fileSystem;
 
         public ApplicationLogsReader(IFileSystem fileSystem, IEnvironment environment)
-        {            
-            _logFinder = new LogFileFinder(fileSystem, environment);
+        {
+            _fileSystem = fileSystem;
+            _logFinder = new LogFileFinder(fileSystem, environment);            
         }       
 
         public IEnumerable<ApplicationLogEntry> GetRecentLogs(int top)
@@ -42,7 +44,7 @@ namespace Kudu.Services.Diagnostics
             {
                 logReaders = _logFinder
                     .FindLogFiles()                    
-                    .Select(f => new ResumableLogFileReader(f))                    
+                    .Select(f => new ResumableLogFileReader(f, _fileSystem))                    
                     .ToList();
 
                 List<ApplicationLogEntry> logs = new List<ApplicationLogEntry>();
@@ -82,6 +84,7 @@ namespace Kudu.Services.Diagnostics
         {            
             private readonly DirectoryInfoBase _directory;
             private readonly LogFileAccessStats _stats;
+            private readonly IFileSystem _fileSystem;
 
             internal HashSet<string> ExcludedFiles { get; private set; }
             internal HashSet<string> IncludedFiles { get; private set; }
@@ -91,7 +94,8 @@ namespace Kudu.Services.Diagnostics
                 ExcludedFiles = new HashSet<string>();
                 IncludedFiles = new HashSet<string>();                
                 _directory = fileSystem.DirectoryInfo.FromDirectoryName(env.ApplicationLogFilesPath);
-                _stats = stats;                
+                _stats = stats;
+                _fileSystem = fileSystem;
             }
 
             public IEnumerable<FileInfoBase> FindLogFiles()
@@ -146,9 +150,14 @@ namespace Kudu.Services.Diagnostics
             }
 
             private string ReadFirstLine(FileInfoBase fileInfo)
-            {                
-                using (var reader = fileInfo.OpenText())
+            {          
+                Stream stream = null;
+                StreamReader reader = null;
+                try
                 {
+                    stream = _fileSystem.File.Open(fileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                    reader = new StreamReader(stream);
+
                     if (_stats != null)
                     {
                         _stats.IncrementOpenTextCount(fileInfo.Name);
@@ -156,25 +165,45 @@ namespace Kudu.Services.Diagnostics
 
                     return reader.ReadLine();
                 }
+                catch (UnauthorizedAccessException)
+                {
+                    // If we are unable to open the file, silently skip it this time
+                    return null;
+                }
+                catch (IOException)
+                {
+                    return null;
+                }
+                finally
+                {
+                    if(stream != null)
+                    {
+                        stream.Dispose();
+                    }
+                    if(reader != null)
+                    {
+                        reader.Dispose();
+                    }                    
+                }
             }
         }
 
         internal class ResumableLogFileReader : IDisposable
         {
             private IEnumerable<string> _lines;
-            private IEnumerator<string> _enumerator;
-            private readonly FileInfoBase _fileInfo;
+            private IEnumerator<string> _enumerator;            
+            private readonly IFileSystem _fileSystem;
             private readonly LogFileAccessStats _stats;
             private bool _disposed;            
 
             public DateTimeOffset LastTime { get; private set; }            
 
-            public ResumableLogFileReader(FileInfoBase fileInfo, LogFileAccessStats stats = null)
+            public ResumableLogFileReader(FileInfoBase fileInfo, IFileSystem fileSystem, LogFileAccessStats stats = null)
             {
                 LastTime = fileInfo.LastWriteTimeUtc;
-                _fileInfo = fileInfo;
+                _fileSystem = fileSystem;                
                 _stats = stats;
-                _lines = CreateReverseLineReader();
+                _lines = CreateReverseLineReader(fileInfo);
             }
 
             internal ResumableLogFileReader(DateTimeOffset lastWrite, IEnumerable<string> lines)
@@ -237,16 +266,28 @@ namespace Kudu.Services.Diagnostics
                 }
             }
 
-            private IEnumerable<string> CreateReverseLineReader()
+            private IEnumerable<string> CreateReverseLineReader(FileInfoBase fileInfo)
             {
                 return new MiscUtil.IO.ReverseLineReader(() =>
                 {
-                    var stream = _fileInfo.OpenRead();
-                    if (_stats != null)
+                    try
                     {
-                        _stats.IncrementOpenReadCount(_fileInfo.Name);
+                        var stream = _fileSystem.File.Open(fileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                        if (_stats != null)
+                        {
+                            _stats.IncrementOpenReadCount(fileInfo.Name);
+                        }
+                        return stream;
                     }
-                    return stream;
+                    catch (UnauthorizedAccessException)
+                    {
+                        // If we are unable to open the file, silently skip it this time
+                        return Stream.Null;
+                    }
+                    catch (IOException)
+                    {
+                        return Stream.Null;
+                    }
                 });
             }
         }
