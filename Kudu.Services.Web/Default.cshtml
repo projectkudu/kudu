@@ -1,0 +1,88 @@
+﻿@using System.IO
+@using System.Web.Hosting
+@using Kudu.Services.Web
+@using Kudu.Services
+
+@{
+    Layout = "~/_Layout.cshtml";
+    Page.Title = "Kudu Services";
+}
+
+<div class="container">
+    @{
+        string commitFile = Server.MapPath("~/commit.txt");
+        string sha = File.Exists(commitFile) ? File.ReadAllText(commitFile).Trim() : null;
+        var version = typeof(Kudu.Services.Web.Tracing.TraceModule).Assembly.GetName().Version;
+    }
+
+    <h3>Environment</h3>
+    <div class="row">
+        <div class="col-xs-2">
+            <strong>Build</strong>
+        </div>
+        <div>
+            @version
+            @if (!String.IsNullOrEmpty(sha))
+            {
+                <text>
+                    (<a id="sha" href="https://github.com/projectkudu/kudu/commit/@sha">@sha.Substring(0, 10)</a>)
+                </text>
+            }
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xs-2">
+            <strong>Site up time</strong>
+        </div>
+        <div>
+            @Kudu.Services.Web.Tracing.TraceModule.UpTime
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-2">
+            <strong>Site folder</strong>
+        </div>
+        <div>
+            @Kudu.Services.Web.PathResolver.ResolveRootPath()
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-2">
+            <strong>Temp folder</strong>
+        </div>
+        <div>
+            @Path.GetTempPath()
+        </div>
+    </div>
+
+    <h3>REST API <small>(works best when using a JSON viewer extension)</small></h3>
+    <ul>
+        <li>
+            <a href="settings">App Settings</a>
+        </li>
+        <li>
+            <a href="deployments">Deployments</a>
+        </li>
+        <li>
+            <a href="vfs">Files</a>
+        </li>
+        <li>
+            <a href="diagnostics/processes">Processes and mini-dumps</a>
+        </li>
+        <li>
+            <a href="diagnostics/runtime">Runtime versions</a>
+        </li>
+        <li>
+            <a href="scm/info">Source control info</a>
+        </li>
+        <li>
+            <a href="hooks">Web hooks</a>
+        </li>
+        <li>
+            <a href="jobs">Web jobs</a>
+        </li>
+    </ul>
+</div>
+<script src="//ajax.aspnetcdn.com/ajax/jquery/jquery-1.9.1.min.js"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js"></script>

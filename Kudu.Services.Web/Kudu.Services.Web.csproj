@@ -115,10 +115,6 @@
   <ItemGroup>
     <Content Include="Content\Scripts\KuduExec.js" />
     <Content Include="Content\Styles\FileBrowser.css" />
-    <Content Include="Menu.ascx" />
-    <Content Include="Env.aspx" />
-    <Content Include="Default.aspx" />
-    <Content Include="DebugConsole\Default.aspx" />
     <Content Include="Content\Scripts\jquery-console\jquery.console.js" />
     <Content Include="Content\Scripts\KuduExecV2.js" />
     <Content Include="Content\Scripts\FileBrowser.js" />
@@ -133,7 +129,6 @@
     <Content Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
     </Content>
-    <Content Include="Hooks.aspx" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\Common\CommonAssemblyInfo.cs">
@@ -179,6 +174,23 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\Scripts\jquery-console\README" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Default.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="_Layout.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Env.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="WebHooks.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="DebugConsole\Default.cshtml">
+      <SubType>Code</SubType>
+    </Content>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
