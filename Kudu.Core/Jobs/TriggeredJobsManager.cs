@@ -6,6 +6,7 @@ using System.IO.Abstractions;
 using System.Linq;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Jobs
@@ -46,12 +47,16 @@ namespace Kudu.Core.Jobs
                 return triggeredJobHistory;
             }
 
-            foreach (DirectoryInfoBase jobRunDirectory in jobRunsDirectories)
+            bool isLatest = true;
+
+            // Order runs by name (date) descending
+            foreach (DirectoryInfoBase jobRunDirectory in jobRunsDirectories.OrderByDescending(j => j.Name))
             {
-                TriggeredJobRun triggeredJobRun = BuildJobRun(jobRunDirectory, jobName);
+                TriggeredJobRun triggeredJobRun = BuildJobRun(jobRunDirectory, jobName, isLatest);
                 if (triggeredJobRun != null)
                 {
                     triggeredJobRuns.Add(triggeredJobRun);
+                    isLatest = false;
                 }
             }
 
@@ -63,7 +68,7 @@ namespace Kudu.Core.Jobs
             string triggeredJobRunPath = Path.Combine(JobsDataPath, jobName, runId);
             DirectoryInfoBase triggeredJobRunDirectory = FileSystem.DirectoryInfo.FromDirectoryName(triggeredJobRunPath);
 
-            return BuildJobRun(triggeredJobRunDirectory, jobName);
+            return BuildJobRun(triggeredJobRunDirectory, jobName, isLatest: true);
         }
 
         protected override void UpdateJob(TriggeredJob job)
@@ -97,7 +102,7 @@ namespace Kudu.Core.Jobs
 
             DirectoryInfoBase latestJobRunDirectory = jobRunsDirectories.OrderByDescending(j => j.Name).First();
 
-            return BuildJobRun(latestJobRunDirectory, jobName);
+            return BuildJobRun(latestJobRunDirectory, jobName, isLatest: true);
         }
 
         private DirectoryInfoBase[] GetJobRunsDirectories(string jobName)
@@ -112,7 +117,7 @@ namespace Kudu.Core.Jobs
             return jobHistoryDirectory.GetDirectories("*", SearchOption.TopDirectoryOnly);
         }
 
-        private TriggeredJobRun BuildJobRun(DirectoryInfoBase jobRunDirectory, string jobName)
+        private TriggeredJobRun BuildJobRun(DirectoryInfoBase jobRunDirectory, string jobName, bool isLatest)
         {
             if (!jobRunDirectory.Exists)
             {
@@ -124,6 +129,25 @@ namespace Kudu.Core.Jobs
             string statusFilePath = Path.Combine(triggeredJobRunPath, TriggeredJobRunLogger.TriggeredStatusFile);
 
             var triggeredJobStatus = GetStatus<TriggeredJobStatus>(statusFilePath);
+
+            if (triggeredJobStatus.Status == JobStatus.Running)
+            {
+                if (isLatest)
+                {
+                    // If it is the latest run, make sure it's actually running
+                    string triggeredJobDataPath = Path.Combine(JobsDataPath, jobName);
+                    LockFile triggeredJobRunLockFile = TriggeredJobRunner.BuildTriggeredJobRunnerLockFile(triggeredJobDataPath, TraceFactory, FileSystem);
+                    if (!triggeredJobRunLockFile.IsHeld)
+                    {
+                        triggeredJobStatus.Status = JobStatus.Aborted;
+                    }
+                }
+                else
+                {
+                    // If it's not latest run it cannot be running
+                    triggeredJobStatus.Status = JobStatus.Aborted;
+                }
+            }
 
             return new TriggeredJobRun()
             {
