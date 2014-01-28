@@ -1,0 +1,127 @@
+﻿@{
+    Layout = "~/_Layout.cshtml";
+    Page.Title = "Kudu Services - Site Extensions";
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-2">
+            <ul class="nav nav-pills nav-stacked" data-tabs="tabs">
+                <li class="active"><a data-toggle="tab" href="#gallery">Gallery</a></li>
+                <li><a data-toggle="tab" href="#installed">Installed</a></li>
+            </ul>
+        </div>
+
+        <div class="col-md-10">
+            <div class="tab-content">
+                <div class="tab-pane active" id="gallery">
+                    <div class="row" data-bind="foreach: gallery">
+                        <div class="col-sm-4 col-md-3">
+                            <div class="thumbnail">
+                                <img alt="" style="width: 150px; height: 100px;">
+                                <div class="caption">
+                                    <h4 data-bind="text: Name"></h4>
+                                    <p data-bind="text: Description"></p>
+                                    <p>
+                                        <a class="btn btn-primary" role="button" href="#" data-bind="click: $parent.install">Install</a>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane" id="installed">
+                    <div class="row" data-bind="foreach: installed">
+                        <div class="col-sm-4 col-md-3">
+                            <div class="thumbnail">
+                                <img alt="" style="width: 150px; height: 100px;">
+                                <div class="caption">
+                                    <h4 data-bind="text: Name"></h4>
+                                    <p data-bind="text: Description"></p>
+                                    <p>
+                                        <a class="btn btn-primary" role="button" href="#" data-bind="click: $parent.remove">Remove</a>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="//ajax.aspnetcdn.com/ajax/jquery/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="//ajax.aspnetcdn.com/ajax/knockout/knockout-2.2.1.js"></script>
+<script type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+
+<script type="text/javascript">
+    function ExtensionsViewModel() {
+        // Data
+        var self = this;
+        self.gallery = ko.observableArray([]);
+        self.installed = ko.observableArray([]);
+
+        // Operations
+        self.populate = function () {
+            $.ajax({
+                type: "GET",
+                url: "/api/extensions/remote",
+                dataType: "json",
+                success: function (data) {
+                    self.gallery(data);
+                },
+                error: function (jqXhr, textStatus, errorThrown) {
+                    alert(textStatus + ": " + errorThrown);
+                }
+            });
+            $.ajax({
+                type: "GET",
+                url: "/api/extensions/local",
+                dataType: "json",
+                success: function (data) {
+                    self.installed(data);
+                },
+                error: function (jqXhr, textStatus, errorThrown) {
+                    alert(textStatus + ": " + errorThrown);
+                }
+            });
+        };
+
+        self.install = function (extension) {
+            $.ajax({
+                type: "POST",
+                url: "/api/extensions",
+                contentType: "application/json",
+                data: JSON.stringify(extension),
+                success: function () {
+                },
+                error: function (jqXhr, textStatus, errorThrown) {
+                    alert(textStatus + ": " + errorThrown);
+                },
+                complete: function () {
+                    self.populate();
+                }
+            });
+        };
+
+        self.remove = function (extension) {
+            $.ajax({
+                type: "DELETE",
+                url: "/api/extensions/" + extension.Id,
+                error: function (jqXhr, textStatus, errorThrown) {
+                    alert(textStatus + ": " + errorThrown);
+                },
+                complete: function () {
+                    self.populate();
+                }
+            });
+        };
+
+        // Initialization
+        self.populate();
+    }
+
+    ko.applyBindings(new ExtensionsViewModel());
+</script>

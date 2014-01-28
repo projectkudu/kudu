@@ -10,6 +10,8 @@ namespace Kudu.Core.SiteExtensions
         // TODO, suwatch: testing purpose
         static SiteExtensionInfo DummyInfo = new SiteExtensionInfo
         {
+            Name = "Dummy Extension",
+            Description = "Dummy stuff",
             Id = "Dummy",
             Update = new SiteExtensionInfo
             {
@@ -17,9 +19,20 @@ namespace Kudu.Core.SiteExtensions
             }
         };
 
+        static SiteExtensionInfo CoolInfo = new SiteExtensionInfo
+        {
+            Name = "Cool Extension",
+            Description = "Do cool stuff",
+            Id = "Cool",
+            Update = new SiteExtensionInfo
+            {
+                Id = "Cool",
+            }
+        };
+
         public async Task<IEnumerable<SiteExtensionInfo>> GetRemoteExtensions(string filter, string version)
         {
-            return await Task.FromResult(new[] { DummyInfo });
+            return await Task.FromResult(new[] { DummyInfo, CoolInfo });
         }
 
         public async Task<SiteExtensionInfo> GetRemoteExtension(string id, string version)
