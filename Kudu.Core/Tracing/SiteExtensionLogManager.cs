@@ -89,7 +89,7 @@ namespace Kudu.Core.Tracing
 
         private void UpdateCurrentPath()
         {
-            string filePostfix = DateTime.UtcNow.ToString("yyyyMMddHHMM");
+            string filePostfix = DateTime.UtcNow.ToString("yyyyMMddHHmm");
             _currentFileName = DefaultFileNameFormat.FormatInvariant(filePostfix);
             _currentPath = Path.Combine(_directoryPath, _currentFileName);
         }
