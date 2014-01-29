@@ -1,49 +1,64 @@
 ﻿@{
     Layout = "~/_Layout.cshtml";
     Page.Title = "Kudu Services - Site Extensions";
+    // class="img-thumbnail"
+}
+
+@section PageHead {
+    <style type="text/css">
+        img.icon {
+            height: 48px;
+            width: 48px;
+        }
+    </style>
+
 }
 
 <div class="container">
-    <div class="row">
-        <div class="col-md-2">
-            <ul class="nav nav-pills nav-stacked" data-tabs="tabs">
+    <div class="row navbar">
+        <div class="col-sm-6 col-md-4">
+            <ul class="nav nav-tabs" data-tabs="tabs">
                 <li class="active"><a data-toggle="tab" href="#gallery">Gallery</a></li>
                 <li><a data-toggle="tab" href="#installed">Installed</a></li>
             </ul>
         </div>
+        <div class="col-sm-6 col-md-8">
+            <form class="navbar-form" role="search">
+                <div class="form-group">
+                    <input type="text" class="form-control" placeholder="Site Extension">
+                </div>
+                <button type="submit" class="btn btn-default">Search</button>
+            </form>
+        </div>
+    </div>
 
-        <div class="col-md-10">
-            <div class="tab-content">
-                <div class="tab-pane active" id="gallery">
-                    <div class="row" data-bind="foreach: gallery">
-                        <div class="col-sm-4 col-md-3">
-                            <div class="thumbnail">
-                                <img alt="" style="width: 150px; height: 100px;">
-                                <div class="caption">
-                                    <h4 data-bind="text: Name"></h4>
-                                    <p data-bind="text: Description"></p>
-                                    <p>
-                                        <a class="btn btn-primary" role="button" href="#" data-bind="click: $parent.install">Install</a>
-                                    </p>
-                                </div>
-                            </div>
+    <div class="row">
+        <div class="tab-content">
+            <div class="tab-pane active" id="gallery">
+                <div class="row" data-bind="foreach: gallery">
+                    <div class="col-sm-4 col-md-3">
+                        <div class="thumbnail">
+                            <img alt="" class="icon">
+                            <h4 class="" data-bind="text: Name"></h4>
+                            <p data-bind="text: Description"></p>
+                            <p>
+                                <a class="btn btn-primary" role="button" href="#" data-bind="click: $parent.install">Install</a>
+                            </p>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="tab-pane" id="installed">
-                    <div class="row" data-bind="foreach: installed">
-                        <div class="col-sm-4 col-md-3">
-                            <div class="thumbnail">
-                                <img alt="" style="width: 150px; height: 100px;">
-                                <div class="caption">
-                                    <h4 data-bind="text: Name"></h4>
-                                    <p data-bind="text: Description"></p>
-                                    <p>
-                                        <a class="btn btn-primary" role="button" href="#" data-bind="click: $parent.remove">Remove</a>
-                                    </p>
-                                </div>
-                            </div>
+            <div class="tab-pane" id="installed">
+                <div class="row" data-bind="foreach: installed">
+                    <div class="col-sm-4 col-md-3">
+                        <div class="thumbnail">
+                            <img alt="" class="icon">
+                            <h4 class="" data-bind="text: Name"></h4>
+                            <p data-bind="text: Description"></p>
+                            <p>
+                                <a class="btn btn-primary" role="button" href="#" data-bind="click: $parent.remove">Remove</a>
+                            </p>
                         </div>
                     </div>
                 </div>

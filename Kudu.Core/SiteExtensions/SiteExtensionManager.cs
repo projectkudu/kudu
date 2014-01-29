@@ -19,9 +19,42 @@ namespace Kudu.Core.SiteExtensions
             }
         };
 
-        static SiteExtensionInfo CoolInfo = new SiteExtensionInfo
+        static SiteExtensionInfo CoolInfo0 = new SiteExtensionInfo
         {
-            Name = "Cool Extension",
+            Name = "Cool Extension 0",
+            Description = "Do cool stuff",
+            Id = "Cool",
+            Update = new SiteExtensionInfo
+            {
+                Id = "Cool",
+            }
+        };
+
+        static SiteExtensionInfo CoolInfo1 = new SiteExtensionInfo
+        {
+            Name = "Cool Extension 1",
+            Description = "Do cool stuff",
+            Id = "Cool",
+            Update = new SiteExtensionInfo
+            {
+                Id = "Cool",
+            }
+        };
+
+        static SiteExtensionInfo CoolInfo2 = new SiteExtensionInfo
+        {
+            Name = "Cool Extension 2",
+            Description = "Do cool stuff",
+            Id = "Cool",
+            Update = new SiteExtensionInfo
+            {
+                Id = "Cool",
+            }
+        };
+
+        static SiteExtensionInfo CoolInfo3 = new SiteExtensionInfo
+        {
+            Name = "Cool Extension 3",
             Description = "Do cool stuff",
             Id = "Cool",
             Update = new SiteExtensionInfo
@@ -32,7 +65,7 @@ namespace Kudu.Core.SiteExtensions
 
         public async Task<IEnumerable<SiteExtensionInfo>> GetRemoteExtensions(string filter, string version)
         {
-            return await Task.FromResult(new[] { DummyInfo, CoolInfo });
+            return await Task.FromResult(new[] { DummyInfo, CoolInfo0, CoolInfo1, CoolInfo2, CoolInfo3 });
         }
 
         public async Task<SiteExtensionInfo> GetRemoteExtension(string id, string version)
