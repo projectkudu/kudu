@@ -15,6 +15,10 @@
     <DefineConstants>TRACE;SITEMANAGEMENT</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Kudu.Core\Kudu.Core.csproj">
+      <Project>{5320177C-725A-44BD-8FA6-F88D9725B46C}</Project>
+      <Name>Kudu.Core</Name>
+    </ProjectReference>
     <Reference Include="Microsoft.Web.Administration, Version=7.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Microsoft.Web.Administration.7.0.0.0\lib\net20\Microsoft.Web.Administration.dll</HintPath>
@@ -52,9 +56,6 @@
   <ItemGroup>
     <Compile Include="..\Common\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
-    </Compile>
-    <Compile Include="..\Kudu.Core\Infrastructure\FileSystemHelpers.cs">
-      <Link>FileSystemHelpers.cs</Link>
     </Compile>
     <Compile Include="..\Kudu.Core\Infrastructure\OperationManager.cs">
       <Link>OperationManager.cs</Link>

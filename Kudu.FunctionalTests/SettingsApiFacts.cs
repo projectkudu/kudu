@@ -146,7 +146,7 @@ namespace Kudu.FunctionalTests
                 string clientId = await client.GetStringAsync("commit.txt");
 
                 // Assert
-                Assert.Equal(id, clientId.TrimEnd());
+                 Assert.Equal(id, clientId.TrimEnd());
             });
         }
     }

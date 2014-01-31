@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Web.Http;
 using System.Web.Http.Controllers;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Infrastructure;
 using Newtonsoft.Json;
 
 namespace Kudu.Services.Diagnostics
@@ -17,12 +18,10 @@ namespace Kudu.Services.Diagnostics
         private const string VersionKey = "version";
         private static readonly Regex _versionRegex = new Regex(@"^\d+\.\d+", RegexOptions.ExplicitCapture);
         private readonly ITracer _tracer;
-        private readonly IFileSystem _fileSystem;
 
-        public RuntimeController(ITracer tracer, IFileSystem fileSystem)
+        public RuntimeController(ITracer tracer)
         {
             _tracer = tracer;
-            _fileSystem = fileSystem;
         }
 
         protected override void Initialize(HttpControllerContext controllerContext)
@@ -48,10 +47,10 @@ namespace Kudu.Services.Diagnostics
             }
         }
 
-        private IEnumerable<Dictionary<string, string>> GetNodeVersions()
+        private static IEnumerable<Dictionary<string, string>> GetNodeVersions()
         {
             string nodeRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "nodejs");
-            var directoryInfo = _fileSystem.DirectoryInfo.FromDirectoryName(nodeRoot);
+            var directoryInfo = FileSystemHelpers.DirectoryInfoFromDirectoryName(nodeRoot);
             if (directoryInfo.Exists)
             {
                 return directoryInfo.GetDirectories()

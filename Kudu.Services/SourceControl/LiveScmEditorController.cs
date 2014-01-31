@@ -45,18 +45,8 @@ namespace Kudu.Services.SourceControl
                                        IDeploymentManager deploymentManager,
                                        IOperationLock operationLock,
                                        IEnvironment environment,
-                                       IRepository repository) 
-            : this(tracer, deploymentManager, operationLock, environment, repository, new FileSystem())
-        {
-        }
-
-        public LiveScmEditorController(ITracer tracer,
-                                       IDeploymentManager deploymentManager,
-                                       IOperationLock operationLock,
-                                       IEnvironment environment,
-                                       IRepository repository,
-                                       IFileSystem fileSystem)
-            : base(tracer, environment, fileSystem, environment.RepositoryPath)
+                                       IRepository repository)
+            : base(tracer, environment, environment.RepositoryPath)
         {
             _deploymentManager = deploymentManager;
             _operationLock = operationLock;

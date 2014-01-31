@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO.Abstractions;
 using System.Security.Cryptography;
 using System.Text;
+using Kudu.Core.Infrastructure;
 using Moq;
 using Xunit;
 using Xunit.Extensions;
@@ -33,20 +34,8 @@ namespace Kudu.Core.SSHKey.Test
             IEnvironment env = null;
 
             // Act and Assert
-            var ex = Assert.Throws<ArgumentNullException>(() => new SSHKeyManager(env, fileSystem: null, traceFactory: null));
+            var ex = Assert.Throws<ArgumentNullException>(() => new SSHKeyManager(env, traceFactory: null));
             Assert.Equal("environment", ex.ParamName);
-        }
-
-        [Fact]
-        public void ConstructorThrowsIfFileSystemIsNull()
-        {
-            // Arrange
-            IEnvironment env = Mock.Of<IEnvironment>();
-            IFileSystem fileSystem = null;
-
-            // Act and Assert
-            var ex = Assert.Throws<ArgumentNullException>(() => new SSHKeyManager(env, fileSystem, traceFactory: null));
-            Assert.Equal("fileSystem", ex.ParamName);
         }
 
         [Fact]
@@ -68,11 +57,12 @@ namespace Kudu.Core.SSHKey.Test
             var fileSystem = new Mock<IFileSystem>();
             fileSystem.SetupGet(f => f.File).Returns(fileBase.Object);
             fileSystem.SetupGet(f => f.Directory).Returns(directory.Object);
+            FileSystemHelpers.Instance = fileSystem.Object;
 
             var environment = new Mock<IEnvironment>();
             environment.SetupGet(e => e.SSHKeyPath).Returns(sshPath);
 
-            var sshKeyManager = new SSHKeyManager(environment.Object, fileSystem.Object, traceFactory: null);
+            var sshKeyManager = new SSHKeyManager(environment.Object, traceFactory: null);
 
             // Act
             sshKeyManager.SetPrivateKey(_privateKey);
@@ -97,11 +87,12 @@ namespace Kudu.Core.SSHKey.Test
             var fileSystem = new Mock<IFileSystem>(MockBehavior.Strict);
             fileSystem.SetupGet(f => f.File).Returns(fileBase.Object);
             fileSystem.SetupGet(f => f.Directory).Returns(directory.Object);
+            FileSystemHelpers.Instance = fileSystem.Object;
 
             var environment = new Mock<IEnvironment>();
             environment.SetupGet(e => e.SSHKeyPath).Returns(sshPath);
 
-            var sshKeyManager = new SSHKeyManager(environment.Object, fileSystem.Object, traceFactory: null);
+            var sshKeyManager = new SSHKeyManager(environment.Object, traceFactory: null);
 
             // Act
             sshKeyManager.SetPrivateKey(_privateKey);
@@ -121,18 +112,19 @@ namespace Kudu.Core.SSHKey.Test
             fileBase.Setup(s => s.WriteAllText(sshPath + @"\config", "HOST *\r\n  StrictHostKeyChecking no"));
             fileBase.Setup(s => s.WriteAllText(sshPath + @"\id_rsa", It.IsAny<string>()));
             fileBase.Setup(s => s.Exists(sshPath + @"\id_rsa.pub"))
-                    .Returns(() => ++invoked == 1);
+                    .Returns(() => ++invoked <= 2);
 
             var directory = new Mock<DirectoryBase>();
             directory.Setup(d => d.Exists(sshPath)).Returns(true);
             var fileSystem = new Mock<IFileSystem>();
             fileSystem.SetupGet(f => f.File).Returns(fileBase.Object);
             fileSystem.SetupGet(f => f.Directory).Returns(directory.Object);
+            FileSystemHelpers.Instance = fileSystem.Object;
 
             var environment = new Mock<IEnvironment>();
             environment.SetupGet(e => e.SSHKeyPath).Returns(sshPath);
 
-            var sshKeyManager = new SSHKeyManager(environment.Object, fileSystem.Object, traceFactory: null);
+            var sshKeyManager = new SSHKeyManager(environment.Object, traceFactory: null);
 
             // Act
             sshKeyManager.SetPrivateKey(key1);
@@ -157,11 +149,12 @@ namespace Kudu.Core.SSHKey.Test
 
             var fileSystem = new Mock<IFileSystem>(MockBehavior.Strict);
             fileSystem.SetupGet(f => f.File).Returns(fileBase.Object);
+            FileSystemHelpers.Instance = fileSystem.Object;
 
             var environment = new Mock<IEnvironment>();
             environment.SetupGet(e => e.SSHKeyPath).Returns(sshPath);
 
-            var sshKeyManager = new SSHKeyManager(environment.Object, fileSystem.Object, traceFactory: null);
+            var sshKeyManager = new SSHKeyManager(environment.Object, traceFactory: null);
 
             // Act 
             var actual = sshKeyManager.GetPublicKey(ensurePublicKey);
@@ -181,11 +174,12 @@ namespace Kudu.Core.SSHKey.Test
 
             var fileSystem = new Mock<IFileSystem>(MockBehavior.Strict);
             fileSystem.SetupGet(f => f.File).Returns(fileBase.Object);
+            FileSystemHelpers.Instance = fileSystem.Object;
 
             var environment = new Mock<IEnvironment>();
             environment.SetupGet(e => e.SSHKeyPath).Returns(sshPath);
 
-            var sshKeyManager = new SSHKeyManager(environment.Object, fileSystem.Object, traceFactory: null);
+            var sshKeyManager = new SSHKeyManager(environment.Object, traceFactory: null);
 
             // Act 
             var actual = sshKeyManager.GetPublicKey(ensurePublicKey: false);
@@ -214,11 +208,12 @@ namespace Kudu.Core.SSHKey.Test
 
             var fileSystem = new Mock<IFileSystem>(MockBehavior.Strict);
             fileSystem.SetupGet(f => f.File).Returns(fileBase.Object);
+            FileSystemHelpers.Instance = fileSystem.Object;
 
             var environment = new Mock<IEnvironment>();
             environment.SetupGet(e => e.SSHKeyPath).Returns(sshPath);
 
-            var sshKeyManager = new SSHKeyManager(environment.Object, fileSystem.Object, traceFactory: null);
+            var sshKeyManager = new SSHKeyManager(environment.Object, traceFactory: null);
 
             // Act 
             var actual = sshKeyManager.GetPublicKey(ensurePublicKey: true);
@@ -244,11 +239,12 @@ namespace Kudu.Core.SSHKey.Test
 
             var fileSystem = new Mock<IFileSystem>(MockBehavior.Strict);
             fileSystem.SetupGet(f => f.File).Returns(fileBase.Object);
+            FileSystemHelpers.Instance = fileSystem.Object;
 
             var environment = new Mock<IEnvironment>();
             environment.SetupGet(e => e.SSHKeyPath).Returns(sshPath);
 
-            var sshKeyManager = new SSHKeyManager(environment.Object, fileSystem.Object, traceFactory: null);
+            var sshKeyManager = new SSHKeyManager(environment.Object, traceFactory: null);
 
             // Act 
             var actual = sshKeyManager.GetPublicKey(ensurePublicKey);

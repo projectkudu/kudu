@@ -25,12 +25,11 @@ namespace Kudu.Core.Jobs
         private readonly ExternalCommandFactory _externalCommandFactory;
         private readonly IAnalytics _analytics;
 
-        protected BaseJobRunner(string jobName, string jobsTypePath, IEnvironment environment, IFileSystem fileSystem,
+        protected BaseJobRunner(string jobName, string jobsTypePath, IEnvironment environment, 
             IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
         {
             TraceFactory = traceFactory;
             Environment = environment;
-            FileSystem = fileSystem;
             Settings = settings;
             JobName = jobName;
             _analytics = analytics;
@@ -43,8 +42,6 @@ namespace Kudu.Core.Jobs
         }
 
         protected IEnvironment Environment { get; private set; }
-
-        protected IFileSystem FileSystem { get; private set; }
 
         protected IDeploymentSettingsManager Settings { get; private set; }
 
@@ -66,10 +63,10 @@ namespace Kudu.Core.Jobs
 
         protected abstract void UpdateStatus(IJobLogger logger, string status);
 
-        private int CalculateHashForJob(string jobBinariesPath)
+        private static int CalculateHashForJob(string jobBinariesPath)
         {
             var updateDatesString = new StringBuilder();
-            DirectoryInfoBase jobBinariesDirectory = FileSystem.DirectoryInfo.FromDirectoryName(jobBinariesPath);
+            DirectoryInfoBase jobBinariesDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(jobBinariesPath);
             FileInfoBase[] files = jobBinariesDirectory.GetFiles("*.*", SearchOption.AllDirectories);
             foreach (FileInfoBase file in files)
             {
@@ -94,12 +91,12 @@ namespace Kudu.Core.Jobs
 
             SafeKillAllRunningJobInstances(logger);
 
-            if (FileSystem.Directory.Exists(JobTempPath))
+            if (FileSystemHelpers.DirectoryExists(JobTempPath))
             {
                 FileSystemHelpers.DeleteDirectorySafe(JobTempPath, true);
             }
 
-            if (FileSystem.Directory.Exists(JobTempPath))
+            if (FileSystemHelpers.DirectoryExists(JobTempPath))
             {
                 logger.LogWarning("Failed to delete temporary directory");
             }
@@ -108,7 +105,7 @@ namespace Kudu.Core.Jobs
             {
                 var tempJobInstancePath = Path.Combine(JobTempPath, Path.GetRandomFileName());
 
-                FileSystemHelpers.CopyDirectoryRecursive(FileSystem, JobBinariesPath, tempJobInstancePath);
+                FileSystemHelpers.CopyDirectoryRecursive(JobBinariesPath, tempJobInstancePath);
                 UpdateAppConfigs(tempJobInstancePath);
 
                 WorkingDirectory = tempJobInstancePath;
@@ -138,7 +135,7 @@ namespace Kudu.Core.Jobs
                         JobName, job.Name));
             }
 
-            if (!FileSystem.File.Exists(job.ScriptFilePath))
+            if (!FileSystemHelpers.FileExists(job.ScriptFilePath))
             {
                 //Status = "Missing run_worker.cmd file";
                 //Trace.TraceError(Status);

@@ -11,8 +11,8 @@ namespace Kudu.Core.Infrastructure
     /// </summary>
     public class DeploymentLockFile : LockFile
     {
-        public DeploymentLockFile(string path, ITraceFactory traceFactory, IFileSystem fileSystem)
-            : base(path, traceFactory, fileSystem)
+        public DeploymentLockFile(string path, ITraceFactory traceFactory)
+            : base(path, traceFactory)
         {
         }
 

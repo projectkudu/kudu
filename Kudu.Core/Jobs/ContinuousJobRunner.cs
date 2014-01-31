@@ -21,10 +21,10 @@ namespace Kudu.Core.Jobs
         private readonly string _disableFilePath;
         private readonly string _singletonFilePath;
 
-        public ContinuousJobRunner(string jobName, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
-            : base(jobName, Constants.ContinuousPath, environment, fileSystem, settings, traceFactory, analytics)
+        public ContinuousJobRunner(string jobName, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
+            : base(jobName, Constants.ContinuousPath, environment, settings, traceFactory, analytics)
         {
-            _continuousJobLogger = new ContinuousJobLogger(jobName, Environment, FileSystem, TraceFactory);
+            _continuousJobLogger = new ContinuousJobLogger(jobName, Environment, TraceFactory);
 
             _disableFilePath = Path.Combine(JobBinariesPath, "disable.job");
             _singletonFilePath = Path.Combine(JobBinariesPath, "singleton.job");
@@ -118,7 +118,7 @@ namespace Kudu.Core.Jobs
             {
                 if (_singletonLock == null)
                 {
-                    _singletonLock = FileSystem.File.Open(_singletonFilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.Read | FileShare.Delete);
+                    _singletonLock = FileSystemHelpers.OpenFile(_singletonFilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.Read | FileShare.Delete);
                 }
 
                 return true;
@@ -132,7 +132,7 @@ namespace Kudu.Core.Jobs
 
         private bool IsSingletonFileExists()
         {
-            return OperationManager.Attempt(() => FileSystem.File.Exists(_singletonFilePath));
+            return OperationManager.Attempt(() => FileSystemHelpers.FileExists(_singletonFilePath));
         }
 
         public void StopJob()
@@ -162,14 +162,14 @@ namespace Kudu.Core.Jobs
 
         public void DisableJob()
         {
-            OperationManager.Attempt(() => FileSystem.File.WriteAllBytes(_disableFilePath, new byte[0]));
+            OperationManager.Attempt(() => FileSystemHelpers.WriteAllBytes(_disableFilePath, new byte[0]));
             _continuousJobLogger.ReportStatus(ContinuousJobStatus.Disabling);
             StopJob();
         }
 
         public void EnableJob(ContinuousJob continuousJob)
         {
-            OperationManager.Attempt(() => FileSystem.File.Delete(_disableFilePath));
+            OperationManager.Attempt(() => FileSystemHelpers.DeleteFile(_disableFilePath));
             StartJob(continuousJob);
         }
 
@@ -179,12 +179,12 @@ namespace Kudu.Core.Jobs
             {
                 if (!IsSingletonFileExists())
                 {
-                    OperationManager.Attempt(() => FileSystem.File.WriteAllBytes(_singletonFilePath, new byte[0]));
+                    OperationManager.Attempt(() => FileSystemHelpers.WriteAllBytes(_singletonFilePath, new byte[0]));
                 }
             }
             else
             {
-                OperationManager.Attempt(() => FileSystem.File.Delete(_singletonFilePath));
+                OperationManager.Attempt(() => FileSystemHelpers.DeleteFileSafe(_singletonFilePath));
             }
         }
 
@@ -205,7 +205,7 @@ namespace Kudu.Core.Jobs
 
         private bool IsDisabled
         {
-            get { return FileSystem.File.Exists(_disableFilePath); }
+            get { return FileSystemHelpers.FileExists(_disableFilePath); }
         }
 
         private void DisposeSingletonLock()

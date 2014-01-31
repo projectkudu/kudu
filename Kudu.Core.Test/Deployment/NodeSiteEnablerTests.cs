@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO.Abstractions;
+using Kudu.Core.Infrastructure;
 using Moq;
 using Xunit;
 using Xunit.Extensions;
@@ -42,8 +43,9 @@ namespace Kudu.Core.Deployment.Generator.Test
             }
 
             fileSystemMock.Setup(f => f.File).Returns(fileMock.Object);
+            FileSystemHelpers.Instance = fileSystemMock.Object;
 
-            bool looksLikeNodeResult = NodeSiteEnabler.LooksLikeNode(fileSystemMock.Object, "site");
+            bool looksLikeNodeResult = NodeSiteEnabler.LooksLikeNode("site");
             Assert.Equal(looksLikeNodeExpectedResult, looksLikeNodeResult);
         }
     }

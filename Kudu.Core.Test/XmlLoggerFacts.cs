@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Xml.Linq;
 using Kudu.Core.Deployment;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Moq;
 using Xunit;
@@ -22,9 +23,10 @@ namespace Kudu.Core.Test
             // Setup
             fileSystem.SetupGet(f => f.File)
                       .Returns(Mock.Of<FileBase>());
+            FileSystemHelpers.Instance = fileSystem.Object;
 
             // Test
-            var logger = new XmlLogger(fileSystem.Object, path, Mock.Of<IAnalytics>());
+            var logger = new XmlLogger(path, Mock.Of<IAnalytics>());
             var entries = logger.GetLogEntries();
             
             // Assert
@@ -57,9 +59,10 @@ namespace Kudu.Core.Test
                 .Returns(true);
             file.Setup(f => f.OpenRead(path))
                 .Returns(() => { mem.Position = 0; return mem; });
+            FileSystemHelpers.Instance = fileSystem.Object;
 
             // Test
-            var logger = new XmlLogger(fileSystem.Object, path, Mock.Of<IAnalytics>());
+            var logger = new XmlLogger(path, Mock.Of<IAnalytics>());
             var entries = logger.GetLogEntries();
 
             // Assert
@@ -86,9 +89,10 @@ namespace Kudu.Core.Test
                 .Returns(true);
             file.Setup(f => f.OpenRead(path))
                 .Returns(() => { mem.Position = 0; return mem; });
+            FileSystemHelpers.Instance = fileSystem.Object;
 
             // Test
-            var logger = new XmlLogger(fileSystem.Object, path, analytics.Object);
+            var logger = new XmlLogger(path, analytics.Object);
             var entries = logger.GetLogEntries();
 
             // Assert

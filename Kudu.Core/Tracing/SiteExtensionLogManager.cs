@@ -28,15 +28,13 @@ namespace Kudu.Core.Tracing
             ReferenceLoopHandling = ReferenceLoopHandling.Error
         };
 
-        private readonly IFileSystem _fileSystem;
         private readonly ITracer _tracer;
         private readonly string _directoryPath;
         private string _currentFileName;
         private string _currentPath;
 
-        public SiteExtensionLogManager(IFileSystem fileSystem, ITracer tracer, string directoryPath)
+        public SiteExtensionLogManager(ITracer tracer, string directoryPath)
         {
-            _fileSystem = fileSystem;
             _tracer = tracer;
             _directoryPath = directoryPath;
 
@@ -58,7 +56,7 @@ namespace Kudu.Core.Tracing
 
                     OperationManager.Attempt(() =>
                     {
-                        using (var streamWriter = new StreamWriter(_fileSystem.File.Open(_currentPath, FileMode.Append, FileAccess.Write, FileShare.Read)))
+                        using (var streamWriter = new StreamWriter(FileSystemHelpers.OpenFile(_currentPath, FileMode.Append, FileAccess.Write, FileShare.Read)))
                         {
                             streamWriter.WriteLine(message);
                         }
@@ -98,7 +96,7 @@ namespace Kudu.Core.Tracing
         {
             try
             {
-                return _fileSystem.DirectoryInfo.FromDirectoryName(_directoryPath).GetFiles(SiteExtensionLogSearchPattern);
+                return FileSystemHelpers.DirectoryInfoFromDirectoryName(_directoryPath).GetFiles(SiteExtensionLogSearchPattern);
             }
             catch
             {

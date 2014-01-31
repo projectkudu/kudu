@@ -21,8 +21,6 @@ namespace Kudu.Core.Jobs
 
         protected IEnvironment Environment { get; private set; }
 
-        protected IFileSystem FileSystem { get; private set; }
-
         protected ITraceFactory TraceFactory { get; private set; }
 
         protected string InstanceId { get; private set; }
@@ -31,11 +29,10 @@ namespace Kudu.Core.Jobs
 
         private readonly string _statusFileName;
 
-        protected JobLogger(string statusFileName, IEnvironment environment, IFileSystem fileSystem, ITraceFactory traceFactory)
+        protected JobLogger(string statusFileName, IEnvironment environment, ITraceFactory traceFactory)
         {
             _statusFileName = statusFileName;
             TraceFactory = traceFactory;
-            FileSystem = fileSystem;
             Environment = environment;
 
             InstanceId = InstanceIdUtility.GetShortInstanceId();
@@ -65,7 +62,7 @@ namespace Kudu.Core.Jobs
 
         public TJobStatus GetStatus<TJobStatus>() where TJobStatus : class, IJobStatus
         {
-            return ReadJobStatusFromFile<TJobStatus>(TraceFactory, FileSystem, GetStatusFilePath());
+            return ReadJobStatusFromFile<TJobStatus>(TraceFactory, GetStatusFilePath());
         }
 
         public void ReportStatus<TJobStatus>(TJobStatus status) where TJobStatus : class, IJobStatus
@@ -90,11 +87,11 @@ namespace Kudu.Core.Jobs
             }
         }
 
-        public static TJobStatus ReadJobStatusFromFile<TJobStatus>(ITraceFactory traceFactory, IFileSystem fileSystem, string statusFilePath) where TJobStatus : class, IJobStatus
+        public static TJobStatus ReadJobStatusFromFile<TJobStatus>(ITraceFactory traceFactory, string statusFilePath) where TJobStatus : class, IJobStatus
         {
             try
             {
-                if (!fileSystem.File.Exists(statusFilePath))
+                if (!FileSystemHelpers.FileExists(statusFilePath))
                 {
                     return null;
                 }

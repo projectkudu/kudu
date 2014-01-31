@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO.Abstractions;
+using Kudu.Core.Infrastructure;
 using Moq;
 using Xunit;
 
@@ -8,21 +9,13 @@ namespace Kudu.Core.Test
     public class EnvironmentFacts
     {
         [Fact]
-        public void ConstructorThrowsIfFileSystemIsNull()
-        {
-            // Act and Assert
-            var ex = Assert.Throws<ArgumentNullException>(() =>
-                new Environment(null, null, null, null, null, null, null, null, null, null, null, null));
-
-            Assert.Equal("fileSystem", ex.ParamName);
-        }
-
-        [Fact]
         public void ConstructorThrowsIfRepositoryPathResolverIsNull()
         {
+            FileSystemHelpers.Instance = Mock.Of<IFileSystem>();
+
             // Act and Assert
             var ex = Assert.Throws<ArgumentNullException>(() =>
-                new Environment(Mock.Of<IFileSystem>(), null, null, null, null, null, null, null, null, null, null, null));
+                new Environment(null, null, null, null, null, null, null, null, null, null, null));
 
             Assert.Equal("repositoryPath", ex.ParamName);
         }
@@ -38,6 +31,7 @@ namespace Kudu.Core.Test
 
             var mockFileSystem = new Mock<IFileSystem>();
             mockFileSystem.Setup(s => s.Directory).Returns(directory.Object);
+            FileSystemHelpers.Instance = mockFileSystem.Object;
 
             var environment = CreateEnvironment(mockFileSystem.Object, repositoryPath: repositoryPath);
 
@@ -60,6 +54,7 @@ namespace Kudu.Core.Test
 
             var mockFileSystem = new Mock<IFileSystem>();
             mockFileSystem.Setup(s => s.Directory).Returns(directory.Object);
+            FileSystemHelpers.Instance = mockFileSystem.Object;
 
             var environment = CreateEnvironment(mockFileSystem.Object, webRootPath: webRootPath);
 
@@ -82,6 +77,7 @@ namespace Kudu.Core.Test
 
             var mockFileSystem = new Mock<IFileSystem>();
             mockFileSystem.Setup(s => s.Directory).Returns(directory.Object);
+            FileSystemHelpers.Instance = mockFileSystem.Object;
 
             var environment = CreateEnvironment(mockFileSystem.Object, deploymentsPath: deployCachePath);
 
@@ -104,6 +100,7 @@ namespace Kudu.Core.Test
 
             var mockFileSystem = new Mock<IFileSystem>();
             mockFileSystem.Setup(s => s.Directory).Returns(directory.Object);
+            FileSystemHelpers.Instance = mockFileSystem.Object;
 
             var environment = CreateEnvironment(mockFileSystem.Object, sshKeyPath: sshPath);
 
@@ -133,9 +130,9 @@ namespace Kudu.Core.Test
             repositoryPath = repositoryPath ?? "";
             rootPath = rootPath ?? "";
             dataPath = dataPath ?? "";
+            FileSystemHelpers.Instance = fileSystem;
 
-            return new Environment(fileSystem,
-                    rootPath,
+            return new Environment(rootPath,
                     siteRootPath,
                     tempPath,
                     repositoryPath,

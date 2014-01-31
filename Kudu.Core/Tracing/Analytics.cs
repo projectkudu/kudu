@@ -11,10 +11,10 @@ namespace Kudu.Core.Tracing
         private readonly SiteExtensionLogManager _siteExtensionLogManager;
         private readonly IDeploymentSettingsManager _settings;
 
-        public Analytics(IDeploymentSettingsManager settings, IFileSystem fileSystem, ITracer tracer, string directoryPath)
+        public Analytics(IDeploymentSettingsManager settings, ITracer tracer, string directoryPath)
         {
             _settings = settings;
-            _siteExtensionLogManager = new SiteExtensionLogManager(fileSystem, tracer, directoryPath);
+            _siteExtensionLogManager = new SiteExtensionLogManager(tracer, directoryPath);
         }
 
         public void ProjectDeployed(string projectType, string result, string error, long deploymentDurationInMilliseconds, string siteMode)

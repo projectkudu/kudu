@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Moq;
 using Newtonsoft.Json;
@@ -181,15 +182,17 @@ namespace Kudu.Core.Test.Tracing
             directoryInfoMock.Setup(d => d.GetFiles(It.IsAny<string>()))
                              .Returns(() => _mockLogFiles.ToArray());
 
+            FileSystemHelpers.Instance = fileSystemMock.Object;
+
             return fileSystemMock;
         }
 
         private SiteExtensionLogManager BuildSiteExtensionLogManager()
         {
-            var fileSystemMock = BuildFileSystemMock();
+            FileSystemHelpers.Instance = BuildFileSystemMock().Object;
             var tracer = Mock.Of<ITracer>();
 
-            return new SiteExtensionLogManager(fileSystemMock.Object, tracer, DirectoryPath);
+            return new SiteExtensionLogManager(tracer, DirectoryPath);
         }
     }
 }

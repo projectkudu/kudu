@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.IO.Abstractions;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment.Generator
 {
@@ -14,7 +15,7 @@ namespace Kudu.Core.Deployment.Generator
 
         private static readonly string[] PotentialNodeDetectionFiles = new[] { "server.js", "app.js" };
 
-        public static bool LooksLikeNode(IFileSystem fileSystem, string siteFolder)
+        public static bool LooksLikeNode(string siteFolder)
         {
             bool potentiallyLooksLikeNode = false;
 
@@ -23,7 +24,7 @@ namespace Kudu.Core.Deployment.Generator
             foreach (var nodeDetectionFile in NodeDetectionFiles)
             {
                 string fullPath = Path.Combine(siteFolder, nodeDetectionFile);
-                if (fileSystem.File.Exists(fullPath))
+                if (FileSystemHelpers.FileExists(fullPath))
                 {
                     return true;
                 }
@@ -34,7 +35,7 @@ namespace Kudu.Core.Deployment.Generator
             foreach (var nodeDetectionFile in PotentialNodeDetectionFiles)
             {
                 string fullPath = Path.Combine(siteFolder, nodeDetectionFile);
-                if (fileSystem.File.Exists(fullPath))
+                if (FileSystemHelpers.FileExists(fullPath))
                 {
                     potentiallyLooksLikeNode = true;
                     break;
@@ -49,7 +50,7 @@ namespace Kudu.Core.Deployment.Generator
                 foreach (var iisStartupFile in IisStartupFiles)
                 {
                     string fullPath = Path.Combine(siteFolder, iisStartupFile);
-                    if (fileSystem.File.Exists(fullPath))
+                    if (FileSystemHelpers.FileExists(fullPath))
                     {
                         return false;
                     }

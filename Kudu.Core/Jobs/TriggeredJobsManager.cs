@@ -18,8 +18,8 @@ namespace Kudu.Core.Jobs
 
         private string _extraInfoUrlPrefix;
 
-        public TriggeredJobsManager(ITraceFactory traceFactory, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings, IAnalytics analytics)
-            : base(traceFactory, environment, fileSystem, settings, analytics, Constants.TriggeredPath)
+        public TriggeredJobsManager(ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics)
+            : base(traceFactory, environment, settings, analytics, Constants.TriggeredPath)
         {
         }
 
@@ -66,7 +66,7 @@ namespace Kudu.Core.Jobs
         public TriggeredJobRun GetJobRun(string jobName, string runId)
         {
             string triggeredJobRunPath = Path.Combine(JobsDataPath, jobName, runId);
-            DirectoryInfoBase triggeredJobRunDirectory = FileSystem.DirectoryInfo.FromDirectoryName(triggeredJobRunPath);
+            DirectoryInfoBase triggeredJobRunDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(triggeredJobRunPath);
 
             return BuildJobRun(triggeredJobRunDirectory, jobName, isLatest: true);
         }
@@ -108,7 +108,7 @@ namespace Kudu.Core.Jobs
         private DirectoryInfoBase[] GetJobRunsDirectories(string jobName)
         {
             string jobHistoryPath = Path.Combine(JobsDataPath, jobName);
-            DirectoryInfoBase jobHistoryDirectory = FileSystem.DirectoryInfo.FromDirectoryName(jobHistoryPath);
+            DirectoryInfoBase jobHistoryDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(jobHistoryPath);
             if (!jobHistoryDirectory.Exists)
             {
                 return null;
@@ -136,7 +136,7 @@ namespace Kudu.Core.Jobs
                 {
                     // If it is the latest run, make sure it's actually running
                     string triggeredJobDataPath = Path.Combine(JobsDataPath, jobName);
-                    LockFile triggeredJobRunLockFile = TriggeredJobRunner.BuildTriggeredJobRunnerLockFile(triggeredJobDataPath, TraceFactory, FileSystem);
+                    LockFile triggeredJobRunLockFile = TriggeredJobRunner.BuildTriggeredJobRunnerLockFile(triggeredJobDataPath, TraceFactory);
                     if (!triggeredJobRunLockFile.IsHeld)
                     {
                         triggeredJobStatus.Status = JobStatus.Aborted;
@@ -165,7 +165,7 @@ namespace Kudu.Core.Jobs
         {
             string filePath = Path.Combine(triggeredJobRunPath, fileName);
 
-            if (FileSystem.File.Exists(filePath))
+            if (FileSystemHelpers.FileExists(filePath))
             {
                 return BuildVfsUrl("{0}/{1}/{2}".FormatInvariant(jobName, runId, fileName));
             }
@@ -184,7 +184,7 @@ namespace Kudu.Core.Jobs
             TriggeredJobRunner triggeredJobRunner =
                 _triggeredJobRunners.GetOrAdd(
                     jobName,
-                    _ => new TriggeredJobRunner(triggeredJob.Name, Environment, FileSystem, Settings, TraceFactory, Analytics));
+                    _ => new TriggeredJobRunner(triggeredJob.Name, Environment, Settings, TraceFactory, Analytics));
 
             triggeredJobRunner.StartJobRun(triggeredJob);
         }

@@ -7,21 +7,198 @@ using System.Linq;
 
 namespace Kudu.Core.Infrastructure
 {
-    internal static class FileSystemHelpers
+    public static class FileSystemHelpers
     {
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
-        public static void DeleteDirectorySafe(string path, bool ignoreErrors = true)
+        public static IFileSystem Instance { get; set; }
+
+        static FileSystemHelpers()
         {
-            DeleteFileSystemInfo(new DirectoryInfoWrapper(new DirectoryInfo(path)), ignoreErrors);
+            Instance = new FileSystem();
         }
 
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
-        public static void DeleteDirectoryContentsSafe(string path, bool ignoreErrors = true)
+        public static Stream CreateFile(string path)
         {
-            DeleteDirectoryContentsSafe(new DirectoryInfoWrapper(new DirectoryInfo(path)), ignoreErrors);
+            return Instance.File.Create(path);
         }
 
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
+        public static void CreateDirectory(string path)
+        {
+            Instance.Directory.CreateDirectory(path);
+        }
+
+        public static string EnsureDirectory(string path)
+        {
+            if (!DirectoryExists(path))
+            {
+                CreateDirectory(path);
+            }
+            return path;
+        }
+
+        public static bool FileExists(string path)
+        {
+            return Instance.File.Exists(path);
+        }
+
+        public static bool DirectoryExists(string path)
+        {
+            return Instance.Directory.Exists(path);
+        }
+
+        public static bool IsSubfolder(string parent, string child)
+        {
+            // normalize
+            string parentPath = Path.GetFullPath(parent).TrimEnd('\\') + '\\';
+            string childPath = Path.GetFullPath(child).TrimEnd('\\') + '\\';
+            return childPath.StartsWith(parentPath, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static Stream OpenFile(string path, FileMode mode, FileAccess access = FileAccess.ReadWrite, FileShare share = FileShare.None)
+        {
+            return Instance.File.Open(path, mode, access, share);
+        }
+
+        public static Stream OpenRead(string path)
+        {
+            return Instance.File.OpenRead(path);
+        }
+
+        public static string ReadAllText(string path)
+        {
+            return Instance.File.ReadAllText(path);
+        }
+
+        /// <summary>
+        /// Replaces File.ReadAllText,
+        /// Will do the same thing only this can work on files that are already open (and share read/write).
+        /// </summary>
+        public static string ReadAllTextFromFile(string path)
+        {
+            using (Stream fileStream = OpenFile(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            {
+                var streamReader = new StreamReader(fileStream);
+                return streamReader.ReadToEnd();
+            }
+        }
+
+        public static void WriteAllText(string path, string contents)
+        {
+            Instance.File.WriteAllText(path, contents);
+        }
+        public static DateTime GetLastWriteTimeUtc(string path)
+        {
+            return Instance.File.GetLastWriteTimeUtc(path);
+        }
+
+        public static void WriteAllBytes(string path, byte[] contents)
+        {
+            Instance.File.WriteAllBytes(path, contents);
+        }
+
+        /// <summary>
+        /// Replaces File.WriteAllText,
+        /// Will do the same thing only this can work on files that are already open (and share read/write).
+        /// </summary>
+        public static void WriteAllTextToFile(string path, string content)
+        {
+            using (Stream fileStream = OpenFile(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete))
+            {
+                var streamWriter = new StreamWriter(fileStream);
+                streamWriter.Write(content);
+                streamWriter.Flush();
+            }
+        }
+
+        /// <summary>
+        /// Replaces File.AppendAllText,
+        /// Will do the same thing only this can work on files that are already open (and share read/write).
+        /// </summary>
+        public static void AppendAllTextToFile(string path, string content)
+        {
+            using (Stream fileStream = OpenFile(path, FileMode.Append, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete))
+            {
+                var streamWriter = new StreamWriter(fileStream);
+                streamWriter.Write(content);
+                streamWriter.Flush();
+            }
+        }
+
+        // From MSDN: http://msdn.microsoft.com/en-us/library/bb762914.aspx
+        public static void CopyDirectoryRecursive(string sourceDirPath, string destinationDirPath, bool overwrite = true)
+        {
+            // Get the subdirectories for the specified directory.
+            var sourceDir = new DirectoryInfo(sourceDirPath);
+
+            if (!sourceDir.Exists)
+            {
+                throw new DirectoryNotFoundException(
+                    "Source directory does not exist or could not be found: "
+                    + sourceDirPath);
+            }
+
+            // If the destination directory doesn't exist, create it.
+            if (!DirectoryExists(destinationDirPath))
+            {
+                CreateDirectory(destinationDirPath);
+            }
+
+            // Get the files in the directory and copy them to the new location.
+            foreach (FileSystemInfo sourceFileSystemInfo in sourceDir.EnumerateFileSystemInfos())
+            {
+                var sourceFile = sourceFileSystemInfo as FileInfo;
+                if (sourceFile != null)
+                {
+                    string destinationFilePath = Path.Combine(destinationDirPath, sourceFile.Name);
+                    Instance.File.Copy(sourceFile.FullName, destinationFilePath, overwrite);
+                }
+                else
+                {
+                    var sourceSubDir = sourceFileSystemInfo as DirectoryInfo;
+                    if (sourceSubDir != null)
+                    {
+                        // Copy sub-directories and their contents to new location.
+                        string destinationSubDirPath = Path.Combine(destinationDirPath, sourceSubDir.Name);
+                        CopyDirectoryRecursive(sourceSubDir.FullName, destinationSubDirPath, overwrite);
+                    }
+                }
+            }
+        }
+
+        public static void SetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc)
+        {
+            Instance.File.SetLastWriteTimeUtc(path, lastWriteTimeUtc);
+        }
+
+        public static FileInfoBase FileInfoFromFileName(string fileName)
+        {
+            return Instance.FileInfo.FromFileName(fileName);
+        }
+
+        public static DirectoryInfoBase DirectoryInfoFromDirectoryName(string path)
+        {
+            return Instance.DirectoryInfo.FromDirectoryName(path);
+        }
+
+        public static string GetFullPath(string path)
+        {
+            return Instance.Path.GetFullPath(path);
+        }
+
+        public static string[] GetFileSystemEntries(string path)
+        {
+            return Instance.Directory.GetFileSystemEntries(path);
+        }
+
+        public static IEnumerable<string> GetDirectories(string path)
+        {
+            return Instance.Directory.GetDirectories(path);
+        }
+
+        public static string[] GetFiles(string path, string pattern)
+        {
+            return Instance.Directory.GetFiles(path, pattern);
+        }
+
         public static IEnumerable<string> ListFiles(string path, SearchOption searchOption, params string[] lookupList)
         {
             if (!Directory.Exists(path))
@@ -41,89 +218,18 @@ namespace Kudu.Core.Infrastructure
                             .Where(filePath => lookupList.Any(lookup => filePath.EndsWith(lookup, StringComparison.OrdinalIgnoreCase)));
         }
 
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
-        internal static string EnsureDirectory(string path)
+        public static void DeleteFile(string path)
         {
-            return EnsureDirectory(new FileSystem(), path);
+            Instance.File.Delete(path);
         }
 
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
-        internal static string EnsureDirectory(IFileSystem fileSystem, string path)
-        {
-            if (!fileSystem.Directory.Exists(path))
-            {
-                fileSystem.Directory.CreateDirectory(path);
-            }
-            return path;
-        }
-
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
         public static bool DeleteFileSafe(string path)
-        {
-            return DeleteFileSafe(new FileSystem(), path);
-        }
-
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
-        public static bool IsSubfolder(string parent, string child)
-        {
-            // normalize
-            string parentPath = Path.GetFullPath(parent).TrimEnd('\\') + '\\';
-            string childPath = Path.GetFullPath(child).TrimEnd('\\') + '\\';
-            return childPath.StartsWith(parentPath, StringComparison.OrdinalIgnoreCase);
-        }
-
-        /// <summary>
-        /// Replaces File.ReadAllText,
-        /// Will do the same thing only this can work on files that are already open (and share read/write).
-        /// </summary>
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
-        public static string ReadAllTextFromFile(string path)
-        {
-            using (FileStream fileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
-            {
-                var streamReader = new StreamReader(fileStream);
-                return streamReader.ReadToEnd();
-            }
-        }
-
-        /// <summary>
-        /// Replaces File.WriteAllText,
-        /// Will do the same thing only this can work on files that are already open (and share read/write).
-        /// </summary>
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
-        public static void WriteAllTextToFile(string path, string content)
-        {
-            using (FileStream fileStream = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete))
-            {
-                var streamWriter = new StreamWriter(fileStream);
-                streamWriter.Write(content);
-                streamWriter.Flush();
-            }
-        }
-
-        /// <summary>
-        /// Replaces File.AppendAllText,
-        /// Will do the same thing only this can work on files that are already open (and share read/write).
-        /// </summary>
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
-        public static void AppendAllTextToFile(string path, string content)
-        {
-            using (FileStream fileStream = File.Open(path, FileMode.Append, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete))
-            {
-                var streamWriter = new StreamWriter(fileStream);
-                streamWriter.Write(content);
-                streamWriter.Flush();
-            }
-        }
-
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
-        internal static bool DeleteFileSafe(IFileSystem fileSystem, string path)
         {
             try
             {
-                if (fileSystem.File.Exists(path))
+                if (FileExists(path))
                 {
-                    fileSystem.File.Delete(path);
+                    DeleteFile(path);
                     return true;
                 }
             }
@@ -133,45 +239,31 @@ namespace Kudu.Core.Infrastructure
             return false;
         }
 
-        // From MSDN: http://msdn.microsoft.com/en-us/library/bb762914.aspx
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "Method is used, misdiagnosed due to linking of this file")]
-        internal static void CopyDirectoryRecursive(IFileSystem fileSystem, string sourceDirPath, string destinationDirPath, bool overwrite = true)
+        public static void DeleteDirectorySafe(string path, bool ignoreErrors = true)
         {
-            // Get the subdirectories for the specified directory.
-            var sourceDir = new DirectoryInfo(sourceDirPath);
+            DeleteFileSystemInfo(new DirectoryInfoWrapper(new DirectoryInfo(path)), ignoreErrors);
+        }
 
-            if (!sourceDir.Exists)
-            {
-                throw new DirectoryNotFoundException(
-                    "Source directory does not exist or could not be found: "
-                    + sourceDirPath);
-            }
+        public static void DeleteDirectoryContentsSafe(string path, bool ignoreErrors = true)
+        {
+            DeleteDirectoryContentsSafe(new DirectoryInfoWrapper(new DirectoryInfo(path)), ignoreErrors);
+        }
 
-            // If the destination directory doesn't exist, create it.
-            if (!fileSystem.Directory.Exists(destinationDirPath))
+        private static void DeleteDirectoryContentsSafe(DirectoryInfoBase directoryInfo, bool ignoreErrors)
+        {
+            try
             {
-                fileSystem.Directory.CreateDirectory(destinationDirPath);
-            }
-
-            // Get the files in the directory and copy them to the new location.
-            foreach (FileSystemInfo sourceFileSystemInfo in sourceDir.EnumerateFileSystemInfos())
-            {
-                var sourceFile = sourceFileSystemInfo as FileInfo;
-                if (sourceFile != null)
+                if (directoryInfo.Exists)
                 {
-                    string destinationFilePath = Path.Combine(destinationDirPath, sourceFile.Name);
-                    fileSystem.File.Copy(sourceFile.FullName, destinationFilePath, overwrite);
-                }
-                else
-                {
-                    var sourceSubDir = sourceFileSystemInfo as DirectoryInfo;
-                    if (sourceSubDir != null)
+                    foreach (var fsi in directoryInfo.GetFileSystemInfos())
                     {
-                        // Copy sub-directories and their contents to new location.
-                        string destinationSubDirPath = Path.Combine(destinationDirPath, sourceSubDir.Name);
-                        CopyDirectoryRecursive(fileSystem, sourceSubDir.FullName, destinationSubDirPath, overwrite);
+                        DeleteFileSystemInfo(fsi, ignoreErrors);
                     }
                 }
+            }
+            catch
+            {
+                if (!ignoreErrors) throw;
             }
         }
 
@@ -201,24 +293,6 @@ namespace Kudu.Core.Infrastructure
             DoSafeAction(fileSystemInfo.Delete, ignoreErrors);
         }
 
-        private static void DeleteDirectoryContentsSafe(DirectoryInfoBase directoryInfo, bool ignoreErrors)
-        {
-            try
-            {
-                if (directoryInfo.Exists)
-                {
-                    foreach (var fsi in directoryInfo.GetFileSystemInfos())
-                    {
-                        DeleteFileSystemInfo(fsi, ignoreErrors);
-                    }
-                }
-            }
-            catch
-            {
-                if (!ignoreErrors) throw;
-            }
-        }
-
         private static void DoSafeAction(Action action, bool ignoreErrors)
         {
             try
@@ -230,5 +304,6 @@ namespace Kudu.Core.Infrastructure
                 if (!ignoreErrors) throw;
             }
         }
+
     }
 }

@@ -21,13 +21,7 @@ namespace Kudu.Services.Editor
     public class VfsController : VfsControllerBase
     {
         public VfsController(ITracer tracer, IEnvironment environment)
-            : this(tracer, environment, new FileSystem())
-        {
-
-        }
-
-        public VfsController(ITracer tracer, IEnvironment environment, IFileSystem fileSystem)
-            : base(tracer, environment, fileSystem, environment.RootPath)
+            : base(tracer, environment, environment.RootPath)
         {
         }
 

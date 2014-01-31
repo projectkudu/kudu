@@ -4,6 +4,7 @@ using System.IO.Abstractions;
 using System.Linq;
 using System.Text;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Infrastructure;
 using Kudu.Services.Diagnostics;
 using Moq;
 using Xunit;
@@ -25,8 +26,8 @@ namespace Kudu.Services.Test
             directory.Setup(d => d.FromDirectoryName(_nodeDir)).Returns(nodeDir.Object);
             var fileSystem = new Mock<IFileSystem>();
             fileSystem.Setup(f => f.DirectoryInfo).Returns(directory.Object);
-
-            var controller = new RuntimeController(Mock.Of<ITracer>(), fileSystem.Object);
+            FileSystemHelpers.Instance = fileSystem.Object;
+            var controller = new RuntimeController(Mock.Of<ITracer>());
 
             // Act
             var runtimeInfo = controller.GetRuntimeVersions();
@@ -52,8 +53,8 @@ namespace Kudu.Services.Test
             directoryInfo.Setup(d => d.FromDirectoryName(_nodeDir)).Returns(nodeDir.Object);
             var fileSystem = new Mock<IFileSystem>();
             fileSystem.Setup(f => f.DirectoryInfo).Returns(directoryInfo.Object);
-
-            var controller = new RuntimeController(Mock.Of<ITracer>(), fileSystem.Object);
+            FileSystemHelpers.Instance = fileSystem.Object;
+            var controller = new RuntimeController(Mock.Of<ITracer>());
 
             // Act
             var nodeVersions = controller.GetRuntimeVersions().NodeVerions.ToList();

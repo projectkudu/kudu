@@ -16,26 +16,18 @@ namespace Kudu.Core.Tracing
     {
         // TODO: Make this configurable
         public const int MaxLogEntries = 200;
-
         private readonly Stack<TraceStep> _currentSteps = new Stack<TraceStep>();
         private readonly List<TraceStep> _steps = new List<TraceStep>();
         private readonly Stack<XElement> _elements = new Stack<XElement>();
 
         private readonly string _path;
-        private readonly IFileSystem _fileSystem;
         private readonly TraceLevel _level;
         private readonly IOperationLock _traceLock;
 
         private const string TraceRoot = "trace";
 
         public Tracer(string path, TraceLevel level, IOperationLock traceLock)
-            : this(new FileSystem(), path, level, traceLock)
         {
-        }
-
-        public Tracer(IFileSystem fileSystem, string path, TraceLevel level, IOperationLock traceLock)
-        {
-            _fileSystem = fileSystem;
             _path = path;
             _level = level;
             _traceLock = traceLock;
@@ -159,7 +151,7 @@ namespace Kudu.Core.Tracing
 
                 document.Root.Add(stepElement);
 
-                using (var stream = _fileSystem.File.Open(_path, FileMode.Create, FileAccess.Write, FileShare.Read))
+                using (var stream = FileSystemHelpers.OpenFile(_path, FileMode.Create, FileAccess.Write, FileShare.Read))
                 {
                     document.Save(stream);
                 }
@@ -200,16 +192,16 @@ namespace Kudu.Core.Tracing
 
         private XDocument GetDocument()
         {
-            if (!_fileSystem.File.Exists(_path))
+            if (!FileSystemHelpers.FileExists(_path))
             {
-                _fileSystem.Directory.CreateDirectory(Path.GetDirectoryName(_path));
+                FileSystemHelpers.CreateDirectory(Path.GetDirectoryName(_path));
                 return CreateDocumentRoot();
             }
 
             try
             {
                 XDocument document;
-                using (var stream = _fileSystem.File.OpenRead(_path))
+                using (var stream = FileSystemHelpers.OpenRead(_path))
                 {
                     document = XDocument.Load(stream);
                 }

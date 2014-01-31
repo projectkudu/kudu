@@ -22,8 +22,8 @@ namespace Kudu.Core.Jobs
         private readonly string _outputFilePath;
         private readonly string _errorFilePath;
 
-        private TriggeredJobRunLogger(string jobName, string id, IEnvironment environment, IFileSystem fileSystem, ITraceFactory traceFactory)
-            : base(TriggeredStatusFile, environment, fileSystem, traceFactory)
+        private TriggeredJobRunLogger(string jobName, string id, IEnvironment environment, ITraceFactory traceFactory)
+            : base(TriggeredStatusFile, environment, traceFactory)
         {
             _id = id;
 
@@ -35,12 +35,12 @@ namespace Kudu.Core.Jobs
         }
 
         [SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters", Justification = "We do not want to accept jobs which are not TriggeredJob")]
-        public static TriggeredJobRunLogger LogNewRun(TriggeredJob triggeredJob, IEnvironment environment, IFileSystem fileSystem, ITraceFactory traceFactory, IDeploymentSettingsManager settings)
+        public static TriggeredJobRunLogger LogNewRun(TriggeredJob triggeredJob, IEnvironment environment,  ITraceFactory traceFactory, IDeploymentSettingsManager settings)
         {
-            OldRunsCleanup(triggeredJob.Name, fileSystem, environment, traceFactory, settings);
+            OldRunsCleanup(triggeredJob.Name, environment, traceFactory, settings);
 
             string id = DateTime.UtcNow.ToString("yyyyMMddHHmmssffff");
-            var logger = new TriggeredJobRunLogger(triggeredJob.Name, id, environment, fileSystem, traceFactory);
+            var logger = new TriggeredJobRunLogger(triggeredJob.Name, id, environment, traceFactory);
             var triggeredJobStatus = new TriggeredJobStatus
             {
                 Status = JobStatus.Initializing,
@@ -50,14 +50,14 @@ namespace Kudu.Core.Jobs
             return logger;
         }
 
-        private static void OldRunsCleanup(string jobName, IFileSystem fileSystem, IEnvironment environment, ITraceFactory traceFactory, IDeploymentSettingsManager settings)
+        private static void OldRunsCleanup(string jobName, IEnvironment environment, ITraceFactory traceFactory, IDeploymentSettingsManager settings)
         {
             // if max is 5 and we have 5 we still want to remove one to make room for the next
             // that's why we decrement max value by 1
             int maxRuns = settings.GetMaxJobRunsHistoryCount() - 1;
 
             string historyPath = Path.Combine(environment.JobsDataPath, Constants.TriggeredPath, jobName);
-            DirectoryInfoBase historyDirectory = fileSystem.DirectoryInfo.FromDirectoryName(historyPath);
+            DirectoryInfoBase historyDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(historyPath);
             if (!historyDirectory.Exists)
             {
                 return;
@@ -85,14 +85,14 @@ namespace Kudu.Core.Jobs
 
         public void ReportEndRun()
         {
-            var triggeredJobStatus = ReadJobStatusFromFile<TriggeredJobStatus>(TraceFactory, FileSystem, GetStatusFilePath()) ?? new TriggeredJobStatus();
+            var triggeredJobStatus = ReadJobStatusFromFile<TriggeredJobStatus>(TraceFactory, GetStatusFilePath()) ?? new TriggeredJobStatus();
             triggeredJobStatus.EndTime = DateTime.UtcNow;
             ReportStatus(triggeredJobStatus, logStatus: false);
         }
 
         public void ReportStatus(string status)
         {
-            var triggeredJobStatus = ReadJobStatusFromFile<TriggeredJobStatus>(TraceFactory, FileSystem, GetStatusFilePath()) ?? new TriggeredJobStatus();
+            var triggeredJobStatus = ReadJobStatusFromFile<TriggeredJobStatus>(TraceFactory, GetStatusFilePath()) ?? new TriggeredJobStatus();
             triggeredJobStatus.Status = status;
             ReportStatus(triggeredJobStatus);
         }
@@ -104,7 +104,7 @@ namespace Kudu.Core.Jobs
 
         public override void LogError(string error)
         {
-            var triggeredJobStatus = ReadJobStatusFromFile<TriggeredJobStatus>(TraceFactory, FileSystem, GetStatusFilePath()) ?? new TriggeredJobStatus();
+            var triggeredJobStatus = ReadJobStatusFromFile<TriggeredJobStatus>(TraceFactory, GetStatusFilePath()) ?? new TriggeredJobStatus();
             triggeredJobStatus.Status = JobStatus.Failed;
             ReportStatus(triggeredJobStatus);
             Log(Level.Err, error, isSystem: true);

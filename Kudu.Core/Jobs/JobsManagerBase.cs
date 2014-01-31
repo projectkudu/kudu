@@ -45,8 +45,6 @@ namespace Kudu.Core.Jobs
 
         protected IEnvironment Environment { get; private set; }
 
-        protected IFileSystem FileSystem { get; private set; }
-
         protected IDeploymentSettingsManager Settings { get; private set; }
 
         protected ITraceFactory TraceFactory { get; private set; }
@@ -57,11 +55,10 @@ namespace Kudu.Core.Jobs
 
         protected IAnalytics Analytics { get; private set; }
 
-        protected JobsManagerBase(ITraceFactory traceFactory, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings, IAnalytics analytics, string jobsTypePath)
+        protected JobsManagerBase(ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics, string jobsTypePath)
         {
             TraceFactory = traceFactory;
             Environment = environment;
-            FileSystem = fileSystem;
             Settings = settings;
             Analytics = analytics;
 
@@ -82,7 +79,7 @@ namespace Kudu.Core.Jobs
                 {
                     using (var zipArchive = new ZipArchive(zipStream, ZipArchiveMode.Read))
                     {
-                        zipArchive.Extract(new FileSystem(), jobDirectory.FullName);
+                        zipArchive.Extract(jobDirectory.FullName);
                     }
                 });
         }
@@ -93,7 +90,7 @@ namespace Kudu.Core.Jobs
                 (jobDirectory) =>
                 {
                     string filePath = Path.Combine(jobDirectory.FullName, scriptFileName);
-                    using (Stream destinationFileStream = FileSystem.File.Open(filePath, FileMode.Create))
+                    using (Stream destinationFileStream = FileSystemHelpers.OpenFile(filePath, FileMode.Create))
                     {
                         scriptFileStream.CopyTo(destinationFileStream);
                     }
@@ -145,12 +142,12 @@ namespace Kudu.Core.Jobs
         {
             var jobs = new List<TJob>();
 
-            if (!FileSystem.Directory.Exists(JobsBinariesPath))
+            if (!FileSystemHelpers.DirectoryExists(JobsBinariesPath))
             {
                 return Enumerable.Empty<TJob>();
             }
 
-            DirectoryInfoBase jobsDirectory = FileSystem.DirectoryInfo.FromDirectoryName(JobsBinariesPath);
+            DirectoryInfoBase jobsDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(JobsBinariesPath);
             DirectoryInfoBase[] jobDirectories = jobsDirectory.GetDirectories("*", SearchOption.TopDirectoryOnly);
             foreach (DirectoryInfoBase jobDirectory in jobDirectories)
             {
@@ -214,7 +211,7 @@ namespace Kudu.Core.Jobs
 
         protected TJobStatus GetStatus<TJobStatus>(string statusFilePath) where TJobStatus : class, IJobStatus, new()
         {
-            return JobLogger.ReadJobStatusFromFile<TJobStatus>(TraceFactory, FileSystem, statusFilePath) ?? new TJobStatus();
+            return JobLogger.ReadJobStatusFromFile<TJobStatus>(TraceFactory, statusFilePath) ?? new TJobStatus();
         }
 
         protected Uri BuildJobsUrl(string relativeUrl)
@@ -293,9 +290,9 @@ namespace Kudu.Core.Jobs
             try
             {
                 string jobExtraInfoUrlFilePath = GetJobExtraInfoUrlFilePath(jobsSpecificDataPath);
-                if (FileSystem.File.Exists(jobExtraInfoUrlFilePath))
+                if (FileSystemHelpers.FileExists(jobExtraInfoUrlFilePath))
                 {
-                    string jobExtraInfoUrlFileContent = FileSystem.File.ReadAllText(jobExtraInfoUrlFilePath);
+                    string jobExtraInfoUrlFileContent = FileSystemHelpers.ReadAllText(jobExtraInfoUrlFilePath);
                     jobExtraInfoUrlFileContent = jobExtraInfoUrlFileContent.Trim();
                     if (!String.IsNullOrEmpty(jobExtraInfoUrlFileContent))
                     {
@@ -334,7 +331,7 @@ namespace Kudu.Core.Jobs
         private DirectoryInfoBase GetJobDirectory(string jobName)
         {
             string jobPath = Path.Combine(JobsBinariesPath, jobName);
-            return FileSystem.DirectoryInfo.FromDirectoryName(jobPath);
+            return FileSystemHelpers.DirectoryInfoFromDirectoryName(jobPath);
         }
 
         private static string FindCommandToRun(FileInfoBase[] files, out IScriptHost scriptHostFound)
