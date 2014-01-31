@@ -56,7 +56,7 @@ div.console {
 }
 
     div.console div.jquery-console-inner {
-        background-color: #012456;
+        background-color: black;
         color: white;
         height: 100%;
         margin-left: auto;

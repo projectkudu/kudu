@@ -213,7 +213,7 @@ namespace Kudu.Core.Test
                 _processes.Clear();
             }
 
-            protected override IProcess CreateProcess(string connectionId)
+            protected override IProcess CreateProcess(string connectionId, string shell)
             {
                 return _process;
             }

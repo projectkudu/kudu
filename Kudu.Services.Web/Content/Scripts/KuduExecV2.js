@@ -63,6 +63,7 @@ function LoadConsoleV2() {
                 controller.resetHistory();
                 DisplayAndUpdate(lastLine);
                 lastLine.Output = "";
+                lastLine.Error = "";
                 DisplayAndUpdate(lastLine);
                 fileExplorerChanged = false;
                 if (line.trim().toUpperCase() == "EXIT") {
@@ -97,8 +98,11 @@ function LoadConsoleV2() {
     });
     window.$KuduExecConsole = $('#KuduExecConsoleV2');
     window.$KuduExecConsole.append(kuduExecConsole);
+    if (getShell().toUpperCase() === "POWERSHELL") {
+        $("div.jquery-console-inner").css("background-color", "#012456");
+    }
 
-    var connection = $.connection('/commandstream');
+    var connection = $.connection('/commandstream', "shell=" + getShell(), true);
     window.$KuduExecConsole.data('connection', connection);
 
     connection.start({
@@ -106,25 +110,34 @@ function LoadConsoleV2() {
         transport: "auto"
     });
 
+
     connection.received(function (data) {
         DisplayAndUpdate(data);
         controller.enableInput();
     });
-    
-    function _sendCommand(input) {
-        _sendMessage(input);
-    }
 
-    function _sendMessage(input) {
+    function _sendCommand(input) {
         connection.send(input);
     }
-    
+
     function endsWith(str, suffix) {
         return str.indexOf(suffix, str.length - suffix.length) !== -1;
     }
-    
+
+    function startsWith(str, prefix) {
+        return str.indexOf(prefix) == 0;
+    }
+
     function getJSONValue(input) {
         return input? (input.Output || input.Error || "").toString() : "";
+    }
+
+    function getShell() {
+        var name = "shell";
+        //name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+        var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+            results = regex.exec(location.search);
+        return results == null ? "CMD" : decodeURIComponent(results[1].replace(/\+/g, " "));
     }
 
     function DisplayAndUpdate(data) {
@@ -178,9 +191,12 @@ function LoadConsoleV2() {
 
         //save last line for next time.
         lastLine = data;
-
+        prompt = prompt.trim();
         if (!endsWith(prompt, "\n") && endsWith(prompt, ">") && !fileExplorerChanged) {
             var windowsPath = prompt.replace("\n", "").replace(">", "");
+            if (startsWith(windowsPath, "PS ")) {
+                windowsPath = windowsPath.substr(3);
+            }
             if (windowsPath.match(/^[a-zA-Z]:(\\\w+)*(.*)$/)) {
                 if (!window.KuduExec.appRoot) {
                     window.KuduExec.appRoot = windowsPath;

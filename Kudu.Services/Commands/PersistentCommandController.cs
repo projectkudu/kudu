@@ -39,9 +39,10 @@ namespace Kudu.Services
 
         protected override Task OnConnected(IRequest request, string connectionId)
         {
+            var shell = request.QueryString != null ? request.QueryString["shell"] : null;
             using (_tracer.Step("Client connected with connectionId = " + connectionId))
             {
-                _processes.GetOrAdd(connectionId, StartProcess);
+                _processes.GetOrAdd(connectionId, cId => StartProcess(cId, shell));
 
                 return base.OnConnected(request, connectionId);
             }
@@ -60,9 +61,10 @@ namespace Kudu.Services
         protected override Task OnReceived(IRequest request, string connectionId, string data)
         {
             ProcessInfo process;
+            var shell = request.QueryString != null ? request.QueryString["shell"] : null;
             if (!_processes.TryGetValue(connectionId, out process) || process.Process.HasExited)
             {
-                process = _processes.AddOrUpdate(connectionId, StartProcess, (s, p) => StartProcess(s));
+                process = _processes.AddOrUpdate(connectionId, cId => StartProcess(cId, shell), (s, p) => StartProcess(s, shell));
             }
             else
             {
@@ -88,21 +90,30 @@ namespace Kudu.Services
             return base.OnReceived(request, connectionId, data);
         }
 
-        protected virtual IProcess CreateProcess(string connectionId)
+        protected virtual IProcess CreateProcess(string connectionId, string shell)
         {
             var externalCommandFactory = new ExternalCommandFactory(_environment, _settings, _environment.RootPath);
             var exe = externalCommandFactory.BuildExternalCommandExecutable(_environment.RootPath, _environment.WebRootPath, NullLogger.Instance);
             var startInfo = new ProcessStartInfo()
             {
                 UseShellExecute = false,
-                FileName = System.Environment.ExpandEnvironmentVariables(@"%windir%\System32\cmd.exe"),
-                Arguments = "/Q",
                 CreateNoWindow = true,
                 RedirectStandardError = true,
                 RedirectStandardInput = true,
                 RedirectStandardOutput = true,
                 WorkingDirectory = _environment.RootPath
             };
+
+            if (shell.Equals("powershell", StringComparison.OrdinalIgnoreCase))
+            {
+                startInfo.FileName = System.Environment.ExpandEnvironmentVariables(@"%windir%\System32\WindowsPowerShell\v1.0\powershell.exe");
+                startInfo.Arguments = "-File -";
+            }
+            else
+            {
+                startInfo.FileName = System.Environment.ExpandEnvironmentVariables(@"%windir%\System32\cmd.exe");
+                startInfo.Arguments = "/Q";
+            }
 
             foreach (var environmentVariable in exe.EnvironmentVariables)
             {
@@ -153,11 +164,11 @@ namespace Kudu.Services
             thread.Join();
         }
 
-        private ProcessInfo StartProcess(string connectionId)
+        private ProcessInfo StartProcess(string connectionId, string shell)
         {
             using (_tracer.Step("start process for connectionId = " + connectionId))
             {
-                var process = CreateProcess(connectionId);
+                var process = CreateProcess(connectionId, shell);
                 _tracer.Trace("process " + process.Id + " started");
                 EnsureMaxProcesses();
                 return new ProcessInfo(process);
