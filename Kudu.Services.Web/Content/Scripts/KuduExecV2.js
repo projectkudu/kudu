@@ -21,7 +21,12 @@ function LoadConsoleV2() {
     function _changeDir(value) {
         value = value || window.KuduExec.appRoot;
         curWorkingDir(value);
-        _sendCommand("cd /d \"" + value + "\"");
+        if (getShell().toUpperCase() === "POWERSHELL") {
+            DisplayAndUpdate({ Error: "", Output: "\n" });
+            _sendCommand("cd \"" + value + "\"");
+        } else {
+            _sendCommand("cd /d \"" + value + "\"");
+        }
         fileExplorerChanged = true;
     };
 
