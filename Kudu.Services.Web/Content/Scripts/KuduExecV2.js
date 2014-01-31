@@ -1,4 +1,3 @@
-
 function SwitchConsole() {
     var id = window.$KuduExecConsole.attr("id");
     if (id === "KuduExecConsoleV2") {
@@ -134,7 +133,6 @@ function LoadConsoleV2() {
 
     function getShell() {
         var name = "shell";
-        //name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
         var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
             results = regex.exec(location.search);
         return results == null ? "CMD" : decodeURIComponent(results[1].replace(/\+/g, " "));
