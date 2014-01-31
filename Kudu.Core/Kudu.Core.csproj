@@ -72,6 +72,7 @@
     <Compile Include="Jobs\JobLogger.cs" />
     <Compile Include="Jobs\JobNotFoundException.cs" />
     <Compile Include="Jobs\JobStatus.cs" />
+    <Compile Include="Jobs\PowerShellScriptHost.cs" />
     <Compile Include="Jobs\TriggeredJobRunLogger.cs" />
     <Compile Include="Jobs\TriggeredJobRunner.cs" />
     <Compile Include="Jobs\JobsManagerBase.cs" />

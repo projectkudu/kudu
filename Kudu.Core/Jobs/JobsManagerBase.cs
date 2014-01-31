@@ -16,6 +16,7 @@ namespace Kudu.Core.Jobs
         protected static readonly IScriptHost[] ScriptHosts = new IScriptHost[]
         {
             new WindowsScriptHost(),
+            new PowerShellScriptHost(),
             new BashScriptHost(),
             new PythonScriptHost(),
             new PhpScriptHost(),

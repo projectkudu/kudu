@@ -142,6 +142,8 @@ namespace Kudu.Core.Jobs
 
             if (_continuousJobThread != null)
             {
+                _continuousJobLogger.ReportStatus(ContinuousJobStatus.Stopping);
+
                 if (!_continuousJobThread.Join(TimeSpan.FromMinutes(1)))
                 {
                     _continuousJobThread.Abort();
@@ -161,6 +163,7 @@ namespace Kudu.Core.Jobs
         public void DisableJob()
         {
             OperationManager.Attempt(() => FileSystem.File.WriteAllBytes(_disableFilePath, new byte[0]));
+            _continuousJobLogger.ReportStatus(ContinuousJobStatus.Disabling);
             StopJob();
         }
 

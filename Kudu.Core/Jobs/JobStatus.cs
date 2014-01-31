@@ -10,5 +10,7 @@
         public const string InactiveInstance = "InactiveInstance";
         public const string Failed = "Failed";
         public const string Aborted = "Aborted";
+        public const string Disabling = "Disabling";
+        public const string Stopping = "Stopping";
     }
 }

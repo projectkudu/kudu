@@ -11,6 +11,8 @@ namespace Kudu.Core.Jobs
         public static readonly ContinuousJobStatus PendingRestart = new ContinuousJobStatus() { Status = JobStatus.PendingRestart };
         public static readonly ContinuousJobStatus Stopped = new ContinuousJobStatus() { Status = JobStatus.Stopped };
         public static readonly ContinuousJobStatus InactiveInstance = new ContinuousJobStatus() { Status = JobStatus.InactiveInstance };
+        public static readonly ContinuousJobStatus Disabling = new ContinuousJobStatus() { Status = JobStatus.Disabling };
+        public static readonly ContinuousJobStatus Stopping = new ContinuousJobStatus() { Status = JobStatus.Stopping };
 
         public string Status { get; set; }
 
