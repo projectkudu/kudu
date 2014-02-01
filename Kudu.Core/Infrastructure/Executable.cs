@@ -263,7 +263,7 @@ namespace Kudu.Core.Infrastructure
                 {
                     var wrapper = new ProcessWrapper(process);
 
-                    int exitCode = await wrapper.Start(output, error, input, idleManager ?? new IdleManager(IdleTimeout, tracer));
+                    int exitCode = await wrapper.Start(tracer, output, error, input, idleManager ?? new IdleManager(IdleTimeout, tracer));
 
                     tracer.TraceProcessExitCode(process);
 

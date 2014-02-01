@@ -120,8 +120,9 @@ namespace Kudu.Core.Test
         [Fact]
         public async Task ProcesStartBasicTests()
         {
+            var tracer = Mock.Of<ITracer>();
             var process = new Mock<IProcess>();
-            var idleManager = new IdleManager(TimeSpan.MaxValue, Mock.Of<ITracer>());
+            var idleManager = new IdleManager(TimeSpan.MaxValue, tracer);
 
             var expectedExitCode = 10;
             var input = "this is input";
@@ -161,7 +162,7 @@ namespace Kudu.Core.Test
                    .Returns(true);
 
             // Test
-            int actualExitCode = await process.Object.Start(actualOutput, actualError, expectedInput, idleManager);
+            int actualExitCode = await process.Object.Start(tracer, actualOutput, actualError, expectedInput, idleManager);
 
             // Assert
             Assert.Equal(expectedExitCode, actualExitCode);
@@ -174,8 +175,9 @@ namespace Kudu.Core.Test
         [Fact]
         public async Task ProcesOutputBlockedTests()
         {
+            var tracer = Mock.Of<ITracer>();
             var process = new Mock<IProcess>();
-            var idleManager = new IdleManager(TimeSpan.MaxValue, Mock.Of<ITracer>());
+            var idleManager = new IdleManager(TimeSpan.MaxValue, tracer);
             var output = new Mock<Stream>(MockBehavior.Strict);
             CancellationToken cancellationToken;
 
@@ -205,7 +207,7 @@ namespace Kudu.Core.Test
                 ProcessExtensions.StandardOutputDrainTimeout = TimeSpan.FromSeconds(1);
 
                 // Test
-                await process.Object.Start(new MemoryStream(), new MemoryStream(), null, idleManager);
+                await process.Object.Start(tracer, new MemoryStream(), new MemoryStream(), null, idleManager);
 
                 throw new InvalidOperationException("Should not reach here!");
             }
