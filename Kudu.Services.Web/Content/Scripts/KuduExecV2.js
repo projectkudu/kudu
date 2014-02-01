@@ -18,15 +18,20 @@ window.KuduExec = { workingDir: curWorkingDir };
 function LoadConsoleV2() {
 
     var fileExplorerChanged = false;
+    //diretory change callback from FileBrowser.js
     function _changeDir(value) {
+        //for the very first time, value is empty but we know that the file explorer root is appRoot
         value = value || window.KuduExec.appRoot;
-        curWorkingDir(value);
         if (getShell().toUpperCase() === "POWERSHELL") {
+            //PowerShell doesn't return a new line after CD, so let's add a new line in the UI 
             DisplayAndUpdate({ Error: "", Output: "\n" });
             _sendCommand("cd \"" + value + "\"");
         } else {
+            //CMD can't CD into different drives without /d and it's harmless for normal directories
             _sendCommand("cd /d \"" + value + "\"");
         }
+        //the change notification goes both ways (console <--> file explorer)
+        //the console uses this flag to break the loop
         fileExplorerChanged = true;
     };
 
@@ -137,8 +142,7 @@ function LoadConsoleV2() {
     }
 
     function getShell() {
-        var name = "shell";
-        var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+        var regex = new RegExp("[\\?&]shell=([^&#]*)"),
             results = regex.exec(location.search);
         return results == null ? "CMD" : decodeURIComponent(results[1].replace(/\+/g, " "));
     }
