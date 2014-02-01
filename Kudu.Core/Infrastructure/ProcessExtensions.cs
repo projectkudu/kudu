@@ -176,7 +176,7 @@ namespace Kudu.Core.Infrastructure
             exe.Execute(tracer, "\"{0}\" \"{1}\" \"{2}\" \"{3}\"", process.Id, dumpFile, resourcePath, maxDumpCountK);  
         }
 
-        public static async Task<int> Start(this IProcess process, Stream output, Stream error, Stream input = null, IdleManager idleManager = null)
+        public static async Task<int> Start(this IProcess process, ITracer tracer, Stream output, Stream error, Stream input = null, IdleManager idleManager = null)
         {
             var cancellationTokenSource = new CancellationTokenSource();
 
@@ -195,7 +195,7 @@ namespace Kudu.Core.Infrastructure
             idleManager.WaitForExit(process);
 
             // Process has exited, draining the stdout and stderr
-            await FlushAllAsync(idleManager, cancellationTokenSource, tasks);
+            await FlushAllAsync(process, tracer, idleManager, cancellationTokenSource, tasks);
 
             return process.ExitCode;
         }
@@ -225,7 +225,7 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        private static async Task FlushAllAsync(IdleManager idleManager, CancellationTokenSource cancellationTokenSource, IEnumerable<Task> tasks)
+        private static async Task FlushAllAsync(IProcess process, ITracer tracer, IdleManager idleManager, CancellationTokenSource cancellationTokenSource, IEnumerable<Task> tasks)
         {
             var prevActivity = DateTime.MinValue;
             while (true)
@@ -250,26 +250,41 @@ namespace Kudu.Core.Infrastructure
                 // this is important so we don't have runaway tasks
                 cancellationTokenSource.Cancel();
 
-                try
+                // in case of stdoutput/err have no activity within given time
+                // we force close all streams
+                if (completed == delay)
                 {
-                    // get result of stdio flush
-                    await stdio;
+                    // TODO, suwatch: MDS Kudu SiteExtension
+                    using (tracer.Step("Flush stdio and stderr have no activity within given time"))
+                    {
+                        bool exited = process.HasExited;
 
-                    break;
-                }
-                catch (TaskCanceledException)
-                {
-                    // expected since we cancelled all tasks
-                }
+                        SafeCloseStream(process.StandardOutput.BaseStream);
+                        SafeCloseStream(process.StandardError.BaseStream);
 
-                // this means no activity within given time
-                if (completed != stdio)
-                {
-                    throw new TimeoutException("Timeout draining standard input, output and error!");
+                        // this means no activity within given time
+                        // and process has not exited
+                        if (!exited)
+                        {
+                            throw new TimeoutException("Timeout draining standard input, output and error!");
+                        }
+                    }
                 }
 
                 // happy path
                 break;
+            }
+        }
+
+        private static void SafeCloseStream(Stream stream)
+        {
+            try
+            {
+                stream.Close();
+            }
+            catch (Exception)
+            {
+                // no-op
             }
         }
 
