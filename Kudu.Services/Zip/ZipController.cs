@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
+using Kudu.Core.Infrastructure;
 using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.Deployment
@@ -23,7 +24,7 @@ namespace Kudu.Services.Deployment
         protected override Task<HttpResponseMessage> CreateDirectoryGetResponse(DirectoryInfoBase info, string localFilePath)
         {
             HttpResponseMessage response = Request.CreateResponse();
-            response.Content = ZipStreamContent.Create(Path.GetFileName(Path.GetDirectoryName(localFilePath)) + ".zip", Tracer,  zip =>
+            response.Content = ZipStreamContent.Create(Path.GetFileName(Path.GetDirectoryName(localFilePath)) + ".zip", Tracer, zip =>
             {
                 foreach (FileSystemInfoBase fileSysInfo in info.GetFileSystemInfos())
                 {

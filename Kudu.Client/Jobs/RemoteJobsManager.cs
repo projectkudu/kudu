@@ -1,6 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Threading.Tasks;
 using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Jobs;
@@ -62,6 +66,68 @@ namespace Kudu.Client.Jobs
         public async Task InvokeTriggeredJobAsync(string jobName)
         {
             await Client.PostAsync("triggered/" + jobName + "/run");
+        }
+
+        public async Task CreateContinuousJobAsync(string jobName, string scriptFileName, string content = null)
+        {
+            await UploadJobScriptFile("continuous/" + jobName, scriptFileName, content);
+        }
+
+        public async Task CreateTriggeredJobAsync(string jobName, string scriptFileName, string content = null)
+        {
+            await UploadJobScriptFile("triggered/" + jobName, scriptFileName, content);
+        }
+
+        public async Task DeleteContinuousJobAsync(string jobName)
+        {
+            await Client.DeleteSafeAsync("continuous/" + jobName);
+        }
+
+        public async Task DeleteTriggeredJobAsync(string jobName)
+        {
+            await Client.DeleteSafeAsync("triggered/" + jobName);
+        }
+
+        private async Task UploadJobScriptFile(string urlPath, string filePath, string content = null)
+        {
+            Stream stream;
+            if (content != null)
+            {
+                stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
+            }
+            else
+            {
+                stream = File.OpenRead(filePath);
+            }
+
+            using (stream)
+            {
+                await UploadJobScriptFile(urlPath, filePath, stream);
+            }
+        }
+
+        private async Task UploadJobScriptFile(string urlPath, string filePath, Stream stream)
+        {
+            using (var request = new HttpRequestMessage())
+            {
+                request.Method = HttpMethod.Put;
+                request.RequestUri = new Uri(urlPath, UriKind.Relative);
+                var content = new StreamContent(stream);
+                content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachement")
+                {
+                    FileName = Path.GetFileName(filePath)
+                };
+
+                if (String.Equals(Path.GetExtension(filePath), ".zip", StringComparison.OrdinalIgnoreCase))
+                {
+                    content.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
+                }
+
+                request.Content = content;
+
+                var response = await Client.SendAsync(request);
+                response.EnsureSuccessful();
+            }
         }
     }
 }

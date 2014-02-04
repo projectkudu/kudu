@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Kudu.Client;
 using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
@@ -24,7 +28,6 @@ namespace Kudu.FunctionalTests.Jobs
         private const string JobScript = "echo " + ExpectedVerificationFileContent + " >> %WEBROOT_PATH%\\..\\..\\LogFiles\\verification.txt\n";
 
         private const string ContinuousJobsBinPath = JobsBinPath + "/continuous";
-        private const string BasicContinuousJobExecutablePath = ContinuousJobsBinPath + "/basicJob1/run.cmd";
         private const string ConsoleWorkerJobPath = ContinuousJobsBinPath + "/deployedJob";
         private const string ConsoleWorkerExecutablePath = ConsoleWorkerJobPath + "/ConsoleWorker.exe";
 
@@ -116,10 +119,7 @@ namespace Kudu.FunctionalTests.Jobs
             {
                 TestTracer.Trace("Copying the script to the continuous job directory");
 
-                WaitUntilAssertVerified(
-                    "writing file",
-                    TimeSpan.FromSeconds(10),
-                    () => appManager.VfsManager.WriteAllText(BasicContinuousJobExecutablePath, JobScript));
+                appManager.JobsManager.CreateContinuousJobAsync("basicJob1", "run.cmd", JobScript).Wait();
 
                 var expectedContinuousJob = new ContinuousJob()
                 {
@@ -241,10 +241,7 @@ namespace Kudu.FunctionalTests.Jobs
 
                 TestTracer.Trace("Copying the script to the triggered job directory");
 
-                WaitUntilAssertVerified(
-                    "writing file",
-                    TimeSpan.FromSeconds(10),
-                    () => appManager.VfsManager.WriteAllText(TriggeredJobBinPath + "/" + jobName + "/run.cmd", JobScript));
+                appManager.JobsManager.CreateTriggeredJobAsync(jobName, "run.cmd", JobScript).Wait();
 
                 var expectedTriggeredJob = new TriggeredJob()
                 {
@@ -279,6 +276,93 @@ namespace Kudu.FunctionalTests.Jobs
                 VerifyTriggeredJobTriggers(appManager, jobName, 5, "Success", "echo ");
                 VerifyTriggeredJobTriggers(appManager, jobName, 5, "Success", "echo ");
                 VerifyTriggeredJobTriggers(appManager, jobName, 5, "Success", "echo ");
+            });
+        }
+
+        [Fact]
+        public void CreateSameTriggeredJobTwiceFailsWithConflict()
+        {
+            RunScenario("CreateSameTriggeredJobTwiceFailsWithConflict", appManager =>
+            {
+                HttpUnsuccessfulRequestException actualException = null;
+
+                const string jobName = "job1";
+
+                string zippedJobBinaries = BuildZippedJobBinaries();
+
+                appManager.JobsManager.CreateTriggeredJobAsync(jobName, zippedJobBinaries).Wait();
+
+                try
+                {
+                    TestTracer.Trace("Second triggered job creation should fail with conflict");
+                    appManager.JobsManager.CreateTriggeredJobAsync(jobName, zippedJobBinaries).Wait();
+                }
+                catch (AggregateException ex)
+                {
+                    actualException = ex.InnerException as HttpUnsuccessfulRequestException;
+                }
+
+                Assert.NotNull(actualException);
+                Assert.Equal(HttpStatusCode.Conflict, actualException.ResponseMessage.StatusCode);
+            });
+        }
+
+        [Fact]
+        public void CreateSameContinuousJobTwiceFailsWithConflict()
+        {
+            RunScenario("CreateSameContinuousJobTwiceFailsWithConflict", appManager =>
+            {
+                HttpUnsuccessfulRequestException actualException = null;
+
+                const string jobName = "job1";
+
+                string zippedJobBinaries = BuildZippedJobBinaries();
+
+                appManager.JobsManager.CreateContinuousJobAsync(jobName, zippedJobBinaries).Wait();
+
+                try
+                {
+                    TestTracer.Trace("Second triggered job creation should fail with conflict");
+                    appManager.JobsManager.CreateContinuousJobAsync(jobName, zippedJobBinaries).Wait();
+                }
+                catch (AggregateException ex)
+                {
+                    actualException = ex.InnerException as HttpUnsuccessfulRequestException;
+                }
+
+                Assert.NotNull(actualException);
+                Assert.Equal(HttpStatusCode.Conflict, actualException.ResponseMessage.StatusCode);
+            });
+        }
+
+        [Fact]
+        public void CreateAndDeleteJobSucceeds()
+        {
+            RunScenario("CreateAndDeleteJobSucceeds", appManager =>
+            {
+                string zippedJobBinaries = BuildZippedJobBinaries();
+
+                appManager.JobsManager.CreateTriggeredJobAsync("job1", zippedJobBinaries).Wait();
+                appManager.JobsManager.CreateTriggeredJobAsync("job2", zippedJobBinaries).Wait();
+                appManager.JobsManager.CreateContinuousJobAsync("job1", zippedJobBinaries).Wait();
+                appManager.JobsManager.CreateContinuousJobAsync("job2", zippedJobBinaries).Wait();
+
+                var triggeredJobs = appManager.JobsManager.ListTriggeredJobsAsync().Result;
+                var continuousJobs = appManager.JobsManager.ListContinuousJobsAsync().Result;
+
+                Assert.Equal(2, triggeredJobs.Count());
+                Assert.Equal(2, continuousJobs.Count());
+
+                appManager.JobsManager.DeleteTriggeredJobAsync("job1").Wait();
+                appManager.JobsManager.DeleteTriggeredJobAsync("job2").Wait();
+                appManager.JobsManager.DeleteContinuousJobAsync("job1").Wait();
+                appManager.JobsManager.DeleteContinuousJobAsync("job2").Wait();
+
+                triggeredJobs = appManager.JobsManager.ListTriggeredJobsAsync().Result;
+                continuousJobs = appManager.JobsManager.ListContinuousJobsAsync().Result;
+
+                Assert.Equal(0, triggeredJobs.Count());
+                Assert.Equal(0, continuousJobs.Count());
             });
         }
 
@@ -416,6 +500,26 @@ namespace Kudu.FunctionalTests.Jobs
                     appManager.VfsManager.Delete(TriggeredJobBinPath + "/" + jobName + "/" + scriptFileName);
                 }
             });
+        }
+
+        private string BuildZippedJobBinaries()
+        {
+            string tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            Directory.CreateDirectory(tempDirectory);
+            string zippedFilePath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".zip");
+            const string scriptFileName1 = "run.cmd";
+            const string scriptFileContent1 = "test.cmd\n";
+            var scriptFilePath1 = Path.Combine(tempDirectory, scriptFileName1);
+            File.WriteAllText(scriptFilePath1, scriptFileContent1);
+
+            const string scriptFileName2 = "test.cmd";
+            const string scriptFileContent2 = "echo test";
+            var scriptFilePath2 = Path.Combine(tempDirectory, scriptFileName2);
+            File.WriteAllText(scriptFilePath2, scriptFileContent2);
+
+            ZipFile.CreateFromDirectory(tempDirectory, zippedFilePath);
+
+            return zippedFilePath;
         }
 
         private void VerifyVerificationFile(ApplicationManager appManager, string[] expectedContentLines)

@@ -2,11 +2,15 @@
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
+using System.IO.Compression;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Hooks;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Jobs
@@ -71,10 +75,69 @@ namespace Kudu.Core.Jobs
 
         public abstract TJob GetJob(string jobName);
 
+        public TJob CreateJobFromZipStream(Stream zipStream, string jobName)
+        {
+            return CreateJob(jobName,
+                (jobDirectory) =>
+                {
+                    using (var zipArchive = new ZipArchive(zipStream, ZipArchiveMode.Read))
+                    {
+                        zipArchive.Extract(new FileSystem(), jobDirectory.FullName);
+                    }
+                });
+        }
+
+        public TJob CreateJobFromFileStream(Stream scriptFileStream, string jobName, string scriptFileName)
+        {
+            return CreateJob(jobName,
+                (jobDirectory) =>
+                {
+                    string filePath = Path.Combine(jobDirectory.FullName, scriptFileName);
+                    using (Stream destinationFileStream = FileSystem.File.Open(filePath, FileMode.Create))
+                    {
+                        scriptFileStream.CopyTo(destinationFileStream);
+                    }
+                });
+        }
+
+        private TJob CreateJob(string jobName, Action<DirectoryInfoBase> writeJob)
+        {
+            DirectoryInfoBase jobDirectory = GetJobDirectory(jobName);
+            if (jobDirectory.Exists)
+            {
+                throw new ConflictException();
+            }
+
+            jobDirectory.Create();
+            jobDirectory = GetJobDirectory(jobName); // regenerating the DirectoryInfoBase instance to populate the Exists method with true.
+
+            writeJob(jobDirectory);
+
+            return BuildJob(jobDirectory);
+        }
+
+        public async Task DeleteJobAsync(string jobName)
+        {
+            var jobDirectory = GetJobDirectory(jobName);
+            if (!jobDirectory.Exists)
+            {
+                return;
+            }
+
+            string jobsSpecificDataPath = Path.Combine(JobsDataPath, jobName);
+
+            // Remove both job binaries and data directories
+            await OperationManager.AttemptAsync(() =>
+            {
+                FileSystemHelpers.DeleteDirectorySafe(jobDirectory.FullName, ignoreErrors: false);
+                FileSystemHelpers.DeleteDirectorySafe(jobsSpecificDataPath, ignoreErrors: false);
+                return Task.FromResult(true);
+            }, retries: 3, delayBeforeRetry: 2000);
+        }
+
         protected TJob GetJobInternal(string jobName)
         {
-            string jobPath = Path.Combine(JobsBinariesPath, jobName);
-            DirectoryInfoBase jobDirectory = FileSystem.DirectoryInfo.FromDirectoryName(jobPath);
+            DirectoryInfoBase jobDirectory = GetJobDirectory(jobName);
             return BuildJob(jobDirectory);
         }
 
@@ -260,6 +323,12 @@ namespace Kudu.Core.Jobs
 
                 return _appBaseUrlPrefix;
             }
+        }
+
+        private DirectoryInfoBase GetJobDirectory(string jobName)
+        {
+            string jobPath = Path.Combine(JobsBinariesPath, jobName);
+            return FileSystem.DirectoryInfo.FromDirectoryName(jobPath);
         }
 
         private static string FindCommandToRun(FileInfoBase[] files, out IScriptHost scriptHostFound)

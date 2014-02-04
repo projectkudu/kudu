@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Web.Http;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Services.Diagnostics;
 using Kudu.Services.Infrastructure;
@@ -28,7 +29,7 @@ namespace Kudu.Services.Performance
             // 1. The deployments folder
             // 2. The profile dump
             // 3. The npm log
-            _paths = new[] { 
+            _paths = new[] {
                 environment.DeploymentsPath,
                 Path.Combine(environment.RootPath, Constants.LogFilesPath),
                 Path.Combine(environment.WebRootPath, Constants.NpmDebugLogFile),

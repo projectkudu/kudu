@@ -258,4 +258,10 @@
   <data name="Error_DropboxValueNotSpecified" xml:space="preserve">
     <value>Value for Dropbox sync '{0}' not specified.</value>
   </data>
+  <data name="Error_MissingContentDispositionHeader" xml:space="preserve">
+    <value>Missing Content-Disposition header.</value>
+  </data>
+  <data name="Error_WebJobAlreadyExists" xml:space="preserve">
+    <value>The WebJob already exists.</value>
+  </data>
 </root>
