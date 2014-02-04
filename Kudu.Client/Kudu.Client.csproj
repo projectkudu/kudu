@@ -56,7 +56,7 @@
     <Compile Include="SiteExtensions\RemoteSiteExtensionManager.cs" />
     <Compile Include="SourceControl\RemoteRepositoryManager.cs" />
     <Compile Include="SSHKey\RemoteSSHKeyManager.cs" />
-    <Compile Include="Zip\RemoteVfsManager.cs" />
+    <Compile Include="Zip\RemoteZipManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config">

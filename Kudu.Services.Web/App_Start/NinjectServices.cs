@@ -176,7 +176,7 @@ namespace Kudu.Services.Web.App_Start
             Shutdown += () => TraceShutdown(environment, noContextDeploymentsSettingsManager);
 
             // LogStream service
-            // The hooks and log stream start endpoint are low traffic end-points. Re-using it to avoid creating another lock 
+            // The hooks and log stream start endpoint are low traffic end-points. Re-using it to avoid creating another lock
             var logStreamManagerLock = hooksLock;
             kernel.Bind<LogStreamManager>().ToMethod(context => new LogStreamManager(Path.Combine(environment.RootPath, Constants.LogFilesPath),
                                                                                      context.Kernel.Get<IEnvironment>(),
@@ -385,10 +385,10 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("diagnostics-get-all-settings", "diagnostics/settings", new { controller = "Diagnostics", action = "GetAll" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("diagnostics-get-setting", "diagnostics/settings/{key}", new { controller = "Diagnostics", action = "Get" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("diagnostics-delete-setting", "diagnostics/settings/{key}", new { controller = "Diagnostics", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
-            
+
             // Logs
             routes.MapHandler<LogStreamHandler>(kernel, "logstream", "logstream/{*path}");
-            routes.MapHttpRoute("recent-logs", "api/logs/recent", new { controller = "Diagnostics", action = "GetRecentLogs"}, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("recent-logs", "api/logs/recent", new { controller = "Diagnostics", action = "GetRecentLogs" }, new { verb = new HttpMethodConstraint("GET") });
 
             // Processes
             routes.MapHttpRoute("all-processes", "diagnostics/processes", new { controller = "Process", action = "GetAllProcesses" }, new { verb = new HttpMethodConstraint("GET") });
@@ -419,11 +419,15 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("invoke-triggered-job", "jobs/triggered/{jobName}/run", new { controller = "Jobs", action = "InvokeTriggeredJob" }, new { verb = new HttpMethodConstraint("POST") });
             routes.MapHttpRoute("get-triggered-job-history", "jobs/triggered/{jobName}/history", new { controller = "Jobs", action = "GetTriggeredJobHistory" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("get-triggered-job-run", "jobs/triggered/{jobName}/history/{runId}", new { controller = "Jobs", action = "GetTriggeredJobRun" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("create-triggered-job", "jobs/triggered/{jobName}", new { controller = "Jobs", action = "CreateTriggeredJob" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRoute("remove-triggered-job", "jobs/triggered/{jobName}", new { controller = "Jobs", action = "RemoveTriggeredJob" }, new { verb = new HttpMethodConstraint("DELETE") });
             routes.MapHttpRoute("list-continuous-jobs", "jobs/continuous", new { controller = "Jobs", action = "ListContinuousJobs" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("get-continuous-job", "jobs/continuous/{jobName}", new { controller = "Jobs", action = "GetContinuousJob" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("disable-continuous-job", "jobs/continuous/{jobName}/stop", new { controller = "Jobs", action = "DisableContinuousJob" }, new { verb = new HttpMethodConstraint("POST") });
             routes.MapHttpRoute("enable-continuous-job", "jobs/continuous/{jobName}/start", new { controller = "Jobs", action = "EnableContinuousJob" }, new { verb = new HttpMethodConstraint("POST") });
             routes.MapHttpRoute("singleton-continuous-job", "jobs/continuous/{jobName}/singleton", new { controller = "Jobs", action = "SetContinuousJobSingleton" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpRoute("create-continuous-job", "jobs/continuous/{jobName}", new { controller = "Jobs", action = "CreateContinuousJob" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRoute("remove-continuous-job", "jobs/continuous/{jobName}", new { controller = "Jobs", action = "RemoveContinuousJob" }, new { verb = new HttpMethodConstraint("DELETE") });
 
             // SiteExtensions
             routes.MapHttpRoute("api-get-remote-extensions", "api/extensions/remote", new { controller = "SiteExtension", action = "GetRemoteExtensions" }, new { verb = new HttpMethodConstraint("GET") });

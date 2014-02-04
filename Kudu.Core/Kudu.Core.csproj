@@ -24,6 +24,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\System.IO.Abstractions.1.4.0.74\lib\net35\System.IO.Abstractions.dll</HintPath>
     </Reference>
+    <Reference Include="System.IO.Compression" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Net.Http.WebRequest" />
     <Reference Include="System.Xml.Linq" />
@@ -61,6 +62,7 @@
     <Compile Include="Infrastructure\InstanceIdUtility.cs" />
     <Compile Include="Infrastructure\ProcessEnvironment.cs" />
     <Compile Include="Infrastructure\SettingsProcessor.cs" />
+    <Compile Include="Infrastructure\ZipArchiveExtensions.cs" />
     <Compile Include="Jobs\ContinuousJobLogger.cs" />
     <Compile Include="Jobs\ContinuousJobRunner.cs" />
     <Compile Include="Jobs\ContinuousJobsManager.cs" />

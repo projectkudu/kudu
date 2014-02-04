@@ -5,6 +5,7 @@ using System.IO.Abstractions;
 using System.IO.Compression;
 using System.Text;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Infrastructure;
 using Moq;
 using Xunit;
 using Xunit.Extensions;
@@ -26,7 +27,6 @@ namespace Kudu.Services.Test
             // Act
             zip.AddFile(fileInfo, Mock.Of<ITracer>(), "");
 
-
             // Assert
             zip.Dispose();
             zip = new ZipArchive(ReOpen(stream));
@@ -41,14 +41,12 @@ namespace Kudu.Services.Test
             var stream = new MemoryStream();
             var zip = new ZipArchive(stream, ZipArchiveMode.Create);
 
-
             var emptyDir = new Mock<DirectoryInfoBase>();
             emptyDir.SetupGet(d => d.Name).Returns("empty-dir");
             emptyDir.Setup(d => d.GetFileSystemInfos()).Returns(new FileSystemInfoBase[0]);
             var subDir = new Mock<DirectoryInfoBase>();
             subDir.SetupGet(d => d.Name).Returns("site");
             subDir.Setup(d => d.GetFileSystemInfos()).Returns(new FileSystemInfoBase[] { emptyDir.Object, CreateFile("home.aspx", "home content"), CreateFile("site.css", "some css") });
-
 
             var directoryInfo = new Mock<DirectoryInfoBase>();
             directoryInfo.SetupGet(f => f.Name).Returns("zip-test");

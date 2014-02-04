@@ -3,9 +3,8 @@ using System.IO;
 using System.IO.Abstractions;
 using System.IO.Compression;
 using Kudu.Contracts.Tracing;
-using Kudu.Services.Infrastructure;
 
-namespace Kudu.Services
+namespace Kudu.Core.Infrastructure
 {
     public static class ZipArchiveExtensions
     {
@@ -55,7 +54,7 @@ namespace Kudu.Services
             }
             catch (Exception ex)
             {
-                // tolerate if file in use.  
+                // tolerate if file in use.
                 // for simplicity, any exception.
                 tracer.TraceError(String.Format("{0}, {1}", file.FullName, ex));
                 return;

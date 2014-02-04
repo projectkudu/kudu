@@ -166,7 +166,6 @@
     </Compile>
     <Compile Include="Settings\SettingsController.cs" />
     <Compile Include="SourceControl\LiveScmController.cs" />
-    <Compile Include="Infrastructure\ZipArchiveExtensions.cs" />
     <Compile Include="Zip\ZipController.cs" />
   </ItemGroup>
   <ItemGroup>
