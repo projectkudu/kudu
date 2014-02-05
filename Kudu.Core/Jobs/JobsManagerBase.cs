@@ -113,7 +113,7 @@ namespace Kudu.Core.Jobs
 
             writeJob(jobDirectory);
 
-            return BuildJob(jobDirectory);
+            return BuildJob(jobDirectory, nullJobOnError: false);
         }
 
         public async Task DeleteJobAsync(string jobName)
@@ -164,7 +164,7 @@ namespace Kudu.Core.Jobs
             return jobs;
         }
 
-        protected TJob BuildJob(DirectoryInfoBase jobDirectory)
+        protected TJob BuildJob(DirectoryInfoBase jobDirectory, bool nullJobOnError = true)
         {
             if (!jobDirectory.Exists)
             {
@@ -179,10 +179,16 @@ namespace Kudu.Core.Jobs
             if (scriptFilePath == null)
             {
                 // Return a job representing an error for no runnable script file found for job
+                if (nullJobOnError)
+                {
+                    return null;
+                }
+
                 return new TJob
                 {
                     Name = jobName,
-                    Error = Resources.Error_NoRunnableScriptForJob
+                    JobType = _jobsTypePath,
+                    Error = Resources.Error_NoRunnableScriptForJob,
                 };
             }
 
