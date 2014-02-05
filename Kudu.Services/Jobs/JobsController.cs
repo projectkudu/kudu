@@ -85,12 +85,26 @@ namespace Kudu.Services.Jobs
             }
         }
 
-        [HttpPost]
-        public HttpResponseMessage SetContinuousJobSingleton(string jobName, bool isSingleton)
+        [HttpGet]
+        public HttpResponseMessage GetContinuousJobSettings(string jobName)
         {
             try
             {
-                _continuousJobsManager.SetSingleton(jobName, isSingleton);
+                ContinuousJobSettings jobSettings = _continuousJobsManager.GetJobSettings(jobName);
+                return Request.CreateResponse(HttpStatusCode.OK, jobSettings);
+            }
+            catch (JobNotFoundException)
+            {
+                return Request.CreateResponse(HttpStatusCode.NotFound);
+            }
+        }
+
+        [HttpPut]
+        public HttpResponseMessage SetContinuousJobSettings(string jobName, ContinuousJobSettings jobSettings)
+        {
+            try
+            {
+                _continuousJobsManager.SetJobSettings(jobName, jobSettings);
                 return Request.CreateResponse(HttpStatusCode.OK);
             }
             catch (JobNotFoundException)

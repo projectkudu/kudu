@@ -425,9 +425,10 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("get-continuous-job", "jobs/continuous/{jobName}", new { controller = "Jobs", action = "GetContinuousJob" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("disable-continuous-job", "jobs/continuous/{jobName}/stop", new { controller = "Jobs", action = "DisableContinuousJob" }, new { verb = new HttpMethodConstraint("POST") });
             routes.MapHttpRoute("enable-continuous-job", "jobs/continuous/{jobName}/start", new { controller = "Jobs", action = "EnableContinuousJob" }, new { verb = new HttpMethodConstraint("POST") });
-            routes.MapHttpRoute("singleton-continuous-job", "jobs/continuous/{jobName}/singleton", new { controller = "Jobs", action = "SetContinuousJobSingleton" }, new { verb = new HttpMethodConstraint("POST") });
             routes.MapHttpRoute("create-continuous-job", "jobs/continuous/{jobName}", new { controller = "Jobs", action = "CreateContinuousJob" }, new { verb = new HttpMethodConstraint("PUT") });
             routes.MapHttpRoute("remove-continuous-job", "jobs/continuous/{jobName}", new { controller = "Jobs", action = "RemoveContinuousJob" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpRoute("get-continuous-job-settings", "jobs/continuous/{jobName}/settings", new { controller = "Jobs", action = "GetContinuousJobSettings" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("set-continuous-job-settings", "jobs/continuous/{jobName}/settings", new { controller = "Jobs", action = "SetContinuousJobSettings" }, new { verb = new HttpMethodConstraint("PUT") });
 
             // SiteExtensions
             routes.MapHttpRoute("api-get-remote-extensions", "api/extensions/remote", new { controller = "SiteExtension", action = "GetRemoteExtensions" }, new { verb = new HttpMethodConstraint("GET") });

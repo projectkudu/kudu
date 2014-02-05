@@ -61,6 +61,7 @@
     <Compile Include="Infrastructure\RS.cs" />
     <Compile Include="Infrastructure\StringUtils.cs" />
     <Compile Include="Jobs\ContinuousJob.cs" />
+    <Compile Include="Jobs\ContinuousJobSettings.cs" />
     <Compile Include="Jobs\IContinuousJobsManager.cs" />
     <Compile Include="Jobs\IJobsManager.cs" />
     <Compile Include="Jobs\IScriptHost.cs" />

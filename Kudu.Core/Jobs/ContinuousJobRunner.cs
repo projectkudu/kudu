@@ -8,18 +8,20 @@ using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
+using Newtonsoft.Json;
 
 namespace Kudu.Core.Jobs
 {
     public class ContinuousJobRunner : BaseJobRunner, IDisposable
     {
+        private readonly LockFile _singletonLock;
+
         private int _started = 0;
         private Thread _continuousJobThread;
         private ContinuousJobLogger _continuousJobLogger;
-        private IDisposable _singletonLock;
+        private ContinuousJobSettings _jobSettings;
 
         private readonly string _disableFilePath;
-        private readonly string _singletonFilePath;
 
         public ContinuousJobRunner(string jobName, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
             : base(jobName, Constants.ContinuousPath, environment, fileSystem, settings, traceFactory, analytics)
@@ -27,7 +29,10 @@ namespace Kudu.Core.Jobs
             _continuousJobLogger = new ContinuousJobLogger(jobName, Environment, FileSystem, TraceFactory);
 
             _disableFilePath = Path.Combine(JobBinariesPath, "disable.job");
-            _singletonFilePath = Path.Combine(JobBinariesPath, "singleton.job");
+
+            _singletonLock = new LockFile(Path.Combine(JobDataPath, "singleton.job.lock"), TraceFactory, FileSystem);
+
+            UpdateJobSettings();
         }
 
         private void UpdateStatusIfChanged(ContinuousJobStatus continuousJobStatus)
@@ -66,6 +71,8 @@ namespace Kudu.Core.Jobs
 
             _continuousJobLogger.ReportStatus(ContinuousJobStatus.Starting);
 
+            UpdateJobSettings();
+
             _continuousJobThread = new Thread(() =>
             {
                 try
@@ -100,39 +107,42 @@ namespace Kudu.Core.Jobs
                 }
                 finally
                 {
-                    DisposeSingletonLock();
+                    ReleaseSingletonLock();
                 }
             });
 
             _continuousJobThread.Start();
         }
 
-        private bool TryGetLockIfSingleton()
+        private void UpdateJobSettings()
         {
-            if (!IsSingletonFileExists())
-            {
-                return true;
-            }
-
             try
             {
-                if (_singletonLock == null)
+                OperationManager.Attempt(() =>
                 {
-                    _singletonLock = FileSystem.File.Open(_singletonFilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.Read | FileShare.Delete);
-                }
-
-                return true;
+                    _jobSettings = GetJobSettings();
+                });
             }
-            catch
+            catch (Exception ex)
             {
-                _continuousJobLogger.ReportStatus(ContinuousJobStatus.InactiveInstance);
-                return false;
+                TraceFactory.GetTracer().TraceError(ex);
             }
         }
 
-        private bool IsSingletonFileExists()
+        private bool TryGetLockIfSingleton()
         {
-            return OperationManager.Attempt(() => FileSystem.File.Exists(_singletonFilePath));
+            if (_jobSettings.IsSingleton == false)
+            {
+                return true;
+            }
+
+            if (_singletonLock.Lock())
+            {
+                return true;
+            }
+
+            _continuousJobLogger.ReportStatus(ContinuousJobStatus.InactiveInstance);
+            return false;
         }
 
         public void StopJob()
@@ -173,19 +183,28 @@ namespace Kudu.Core.Jobs
             StartJob(continuousJob);
         }
 
-        public void SetSingleton(bool isSingleton)
+        public ContinuousJobSettings GetJobSettings()
         {
-            if (isSingleton)
+            var jobSettingsPath = GetJobSettingsPath();
+            if (!FileSystem.File.Exists(jobSettingsPath))
             {
-                if (!IsSingletonFileExists())
-                {
-                    OperationManager.Attempt(() => FileSystem.File.WriteAllBytes(_singletonFilePath, new byte[0]));
-                }
+                return new ContinuousJobSettings();
             }
-            else
-            {
-                OperationManager.Attempt(() => FileSystem.File.Delete(_singletonFilePath));
-            }
+
+            string jobSettingsContent = FileSystem.File.ReadAllText(jobSettingsPath);
+            return JsonConvert.DeserializeObject<ContinuousJobSettings>(jobSettingsContent);
+        }
+
+        public void SetJobSettings(ContinuousJobSettings jobSettings)
+        {
+            var jobSettingsPath = GetJobSettingsPath();
+            string jobSettingsContent = JsonConvert.SerializeObject(jobSettings);
+            FileSystem.File.WriteAllText(jobSettingsPath, jobSettingsContent);
+        }
+
+        private string GetJobSettingsPath()
+        {
+            return Path.Combine(JobBinariesPath, "settings.job");
         }
 
         protected override void UpdateStatus(IJobLogger logger, string status)
@@ -208,13 +227,9 @@ namespace Kudu.Core.Jobs
             get { return FileSystem.File.Exists(_disableFilePath); }
         }
 
-        private void DisposeSingletonLock()
+        private void ReleaseSingletonLock()
         {
-            if (_singletonLock != null)
-            {
-                _singletonLock.Dispose();
-                _singletonLock = null;
-            }
+            _singletonLock.Release();
         }
 
         public void Dispose()
@@ -232,8 +247,6 @@ namespace Kudu.Core.Jobs
                     _continuousJobLogger.Dispose();
                     _continuousJobLogger = null;
                 }
-
-                DisposeSingletonLock();
             }
         }
     }
