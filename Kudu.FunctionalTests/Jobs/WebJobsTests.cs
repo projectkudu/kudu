@@ -78,6 +78,7 @@ namespace Kudu.FunctionalTests.Jobs
 
                     appManager.VfsManager.Delete(ConsoleWorkerExecutablePath);
 
+#if NOTYET
                     WaitUntilAssertVerified(
                         "runnable script is missing",
                         TimeSpan.FromSeconds(60),
@@ -89,6 +90,7 @@ namespace Kudu.FunctionalTests.Jobs
                         });
 
                     appManager.VfsManager.Delete(ConsoleWorkerJobPath, recursive: true);
+#endif
 
                     WaitUntilAssertVerified(
                         "no continuous jobs exist",
