@@ -151,7 +151,15 @@ namespace Kudu.FunctionalTests.Jobs
                     TimeSpan.FromSeconds(30),
                     () => VerifyVerificationFile(appManager, expectedVerificationFileContents.ToArray()));
 
-                appManager.JobsManager.SetSingletonContinuousJobAsync(expectedContinuousJob.Name, true).Wait();
+                TestTracer.Trace("Verify continuous job settings and set it to isSingleton: true");
+                ContinuousJobSettings continuousJobSettings =
+                    appManager.JobsManager.GetContinuousJobSettingsAsync(expectedContinuousJob.Name).Result;
+
+                Assert.False(continuousJobSettings.IsSingleton);
+
+                continuousJobSettings.IsSingleton = true;
+                appManager.JobsManager.SetContinuousJobSettingsAsync(expectedContinuousJob.Name, continuousJobSettings).Wait();
+
                 expectedVerificationFileContents.Add(ExpectedVerificationFileContent);
                 expectedVerificationFileContents.Add(ExpectedVerificationFileContent);
 
@@ -160,7 +168,15 @@ namespace Kudu.FunctionalTests.Jobs
                     TimeSpan.FromSeconds(30),
                     () => VerifyVerificationFile(appManager, expectedVerificationFileContents.ToArray()));
 
-                appManager.JobsManager.SetSingletonContinuousJobAsync(expectedContinuousJob.Name, false).Wait();
+                TestTracer.Trace("Verify continuous job settings and set it to isSingleton: false");
+                continuousJobSettings =
+                    appManager.JobsManager.GetContinuousJobSettingsAsync(expectedContinuousJob.Name).Result;
+
+                Assert.True(continuousJobSettings.IsSingleton);
+
+                continuousJobSettings.IsSingleton = false;
+                appManager.JobsManager.SetContinuousJobSettingsAsync(expectedContinuousJob.Name, continuousJobSettings).Wait();
+
                 expectedVerificationFileContents.Add(ExpectedVerificationFileContent);
                 expectedVerificationFileContents.Add(ExpectedVerificationFileContent);
 

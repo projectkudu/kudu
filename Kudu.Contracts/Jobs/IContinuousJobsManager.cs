@@ -6,6 +6,8 @@
 
         void EnableJob(string jobName);
 
-        void SetSingleton(string jobName, bool isSingleton);
+        ContinuousJobSettings GetJobSettings(string jobName);
+
+        void SetJobSettings(string jobName, ContinuousJobSettings jobSettings);
     }
 }

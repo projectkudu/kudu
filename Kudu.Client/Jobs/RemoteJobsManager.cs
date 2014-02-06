@@ -58,9 +58,14 @@ namespace Kudu.Client.Jobs
             await Client.PostAsync("continuous/" + jobName + "/stop");
         }
 
-        public async Task SetSingletonContinuousJobAsync(string jobName, bool isSingleton)
+        public async Task<ContinuousJobSettings> GetContinuousJobSettingsAsync(string jobName)
         {
-            await Client.PostAsync("continuous/" + jobName + "/singleton?isSingleton=" + isSingleton);
+            return await Client.GetJsonAsync<ContinuousJobSettings>("continuous/" + jobName + "/settings");
+        }
+
+        public async Task SetContinuousJobSettingsAsync(string jobName, ContinuousJobSettings continuousJobSettings)
+        {
+            await Client.PutJsonAsync<ContinuousJobSettings, object>("continuous/" + jobName + "/settings", continuousJobSettings);
         }
 
         public async Task InvokeTriggeredJobAsync(string jobName)
