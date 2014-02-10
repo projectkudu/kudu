@@ -32,7 +32,13 @@
             <div class="collapse navbar-collapse">
                 <ul class="nav navbar-nav">
                     <li><a href="~/Env">Environment</a></li>
-                    <li><a href="~/DebugConsole">Debug console</a></li>
+                    <li class="dropdown">
+                        <a href="#" data-toggle="dropdown" class="dropdown-toggle">Debug console <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/DebugConsole">CMD</a></li>
+                            <li><a href="/DebugConsole/?shell=powershell">PowerShell</a></li>
+                        </ul>
+                    </li>
                     <li><a href="~/dump">Diagnostic dump</a></li>
                     <li><a href="~/logstream" title="If no log events are being generated the page may not load.">Log stream</a></li>
                     <li><a href="~/WebHooks">Web hooks</a></li>
