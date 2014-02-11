@@ -76,6 +76,7 @@
     <Compile Include="DebugConsoleFacts.cs" />
     <Compile Include="Deployment\NodeSiteEnablerTests.cs" />
     <Compile Include="Deployment\DeploymentManagerFacts.cs" />
+    <Compile Include="FileSystemHubFacts.cs" />
     <Compile Include="HgRepositoryFacts.cs" />
     <Compile Include="Hooks\WebHooksManagerTests.cs" />
     <Compile Include="IdleManagerFacts.cs" />
