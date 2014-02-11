@@ -151,7 +151,15 @@ namespace Kudu.FunctionalTests.Jobs
                     TimeSpan.FromSeconds(30),
                     () => VerifyVerificationFile(appManager, expectedVerificationFileContents.ToArray()));
 
-                appManager.JobsManager.SetSingletonContinuousJobAsync(expectedContinuousJob.Name, true).Wait();
+                TestTracer.Trace("Verify continuous job settings and set it to isSingleton: true");
+                JobSettings continuousJobSettings =
+                    appManager.JobsManager.GetContinuousJobSettingsAsync(expectedContinuousJob.Name).Result;
+
+                Assert.False(continuousJobSettings.GetSetting<bool>("is_singleton"));
+
+                continuousJobSettings.SetSetting("is_singleton", true);
+                appManager.JobsManager.SetContinuousJobSettingsAsync(expectedContinuousJob.Name, continuousJobSettings).Wait();
+
                 expectedVerificationFileContents.Add(ExpectedVerificationFileContent);
                 expectedVerificationFileContents.Add(ExpectedVerificationFileContent);
 
@@ -160,7 +168,15 @@ namespace Kudu.FunctionalTests.Jobs
                     TimeSpan.FromSeconds(30),
                     () => VerifyVerificationFile(appManager, expectedVerificationFileContents.ToArray()));
 
-                appManager.JobsManager.SetSingletonContinuousJobAsync(expectedContinuousJob.Name, false).Wait();
+                TestTracer.Trace("Verify continuous job settings and set it to isSingleton: false");
+                continuousJobSettings =
+                    appManager.JobsManager.GetContinuousJobSettingsAsync(expectedContinuousJob.Name).Result;
+
+                Assert.True(continuousJobSettings.GetSetting<bool>("is_singleton"));
+
+                continuousJobSettings.SetSetting("is_singleton", false);
+                appManager.JobsManager.SetContinuousJobSettingsAsync(expectedContinuousJob.Name, continuousJobSettings).Wait();
+
                 expectedVerificationFileContents.Add(ExpectedVerificationFileContent);
                 expectedVerificationFileContents.Add(ExpectedVerificationFileContent);
 
@@ -278,6 +294,46 @@ namespace Kudu.FunctionalTests.Jobs
                 VerifyTriggeredJobTriggers(appManager, jobName, 5, "Success", "echo ");
                 VerifyTriggeredJobTriggers(appManager, jobName, 5, "Success", "echo ");
                 VerifyTriggeredJobTriggers(appManager, jobName, 5, "Success", "echo ");
+            });
+        }
+
+        [Fact]
+        public void JobsSettingsSetSuccessfully()
+        {
+            RunScenario("JobsSettingsSetSuccessfully", appManager =>
+            {
+                const string triggeredJobName = "triggeredJob";
+                const string continuousJobName = "continuousJob";
+
+                const string settingKey = "mysetting";
+                const string settingValue = "myvalue";
+
+                TestTracer.Trace("Creating a triggered job and creating a continuous job");
+
+                appManager.JobsManager.CreateTriggeredJobAsync(triggeredJobName, "run.cmd", JobScript).Wait();
+                appManager.JobsManager.CreateContinuousJobAsync(continuousJobName, "run.cmd", JobScript).Wait();
+
+                TestTracer.Trace("Test update of continuous job settings");
+
+                JobSettings continuousJobSettings = appManager.JobsManager.GetContinuousJobSettingsAsync(continuousJobName).Result;
+                Assert.Equal(null, continuousJobSettings.GetSetting<string>(settingKey));
+
+                continuousJobSettings.SetSetting(settingKey, settingValue);
+                appManager.JobsManager.SetContinuousJobSettingsAsync(continuousJobName, continuousJobSettings).Wait();
+
+                continuousJobSettings = appManager.JobsManager.GetContinuousJobSettingsAsync(continuousJobName).Result;
+                Assert.Equal(settingValue, continuousJobSettings.GetSetting<string>(settingKey));
+
+                TestTracer.Trace("Test update of triggered job settings");
+
+                JobSettings triggeredJobSettings = appManager.JobsManager.GetTriggeredJobSettingsAsync(triggeredJobName).Result;
+                Assert.Equal(null, triggeredJobSettings.GetSetting<string>(settingKey));
+
+                triggeredJobSettings.SetSetting(settingKey, settingValue);
+                appManager.JobsManager.SetTriggeredJobSettingsAsync(triggeredJobName, triggeredJobSettings).Wait();
+
+                triggeredJobSettings = appManager.JobsManager.GetTriggeredJobSettingsAsync(triggeredJobName).Result;
+                Assert.Equal(settingValue, triggeredJobSettings.GetSetting<string>(settingKey));
             });
         }
 

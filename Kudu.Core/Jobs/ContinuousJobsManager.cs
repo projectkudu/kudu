@@ -73,12 +73,6 @@ namespace Kudu.Core.Jobs
             continuousJobRunner.EnableJob(continuousJob);
         }
 
-        public void SetSingleton(string jobName, bool isSingleton)
-        {
-            var continuousJobRunner = GetJobRunner(jobName);
-            continuousJobRunner.SetSingleton(isSingleton);
-        }
-
         private ContinuousJobRunner GetJobRunner(string jobName)
         {
             ContinuousJobRunner continuousJobRunner;
@@ -102,10 +96,10 @@ namespace Kudu.Core.Jobs
         /// Update the status and the detailed status of the job.
         /// The status is the status of one of the instances,
         /// The detailed status contains status for all instances and looks like:
-        /// 
+        ///
         /// aabbcc - Running
         /// 112233 - PendingRestart
-        /// 
+        ///
         /// </summary>
         private void UpdateDetailedStatus(ContinuousJob job, string jobsSpecificDataPath)
         {
@@ -227,7 +221,8 @@ namespace Kudu.Core.Jobs
                 _continuousJobRunners.Add(continuousJob.Name, continuousJobRunner);
             }
 
-            continuousJobRunner.RefreshJob(continuousJob);
+            JobSettings jobSettings = GetJobSettings(continuousJob.Name);
+            continuousJobRunner.RefreshJob(continuousJob, jobSettings);
         }
 
         private void RemoveJob(string updatedJobName)

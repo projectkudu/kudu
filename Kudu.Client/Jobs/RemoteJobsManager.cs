@@ -58,9 +58,14 @@ namespace Kudu.Client.Jobs
             await Client.PostAsync("continuous/" + jobName + "/stop");
         }
 
-        public async Task SetSingletonContinuousJobAsync(string jobName, bool isSingleton)
+        public async Task<JobSettings> GetContinuousJobSettingsAsync(string jobName)
         {
-            await Client.PostAsync("continuous/" + jobName + "/singleton?isSingleton=" + isSingleton);
+            return await Client.GetJsonAsync<JobSettings>("continuous/" + jobName + "/settings");
+        }
+
+        public async Task SetContinuousJobSettingsAsync(string jobName, JobSettings jobSettings)
+        {
+            await Client.PutJsonAsync<JobSettings, object>("continuous/" + jobName + "/settings", jobSettings);
         }
 
         public async Task InvokeTriggeredJobAsync(string jobName)
@@ -86,6 +91,16 @@ namespace Kudu.Client.Jobs
         public async Task DeleteTriggeredJobAsync(string jobName)
         {
             await Client.DeleteSafeAsync("triggered/" + jobName);
+        }
+
+        public async Task<JobSettings> GetTriggeredJobSettingsAsync(string jobName)
+        {
+            return await Client.GetJsonAsync<JobSettings>("triggered/" + jobName + "/settings");
+        }
+
+        public async Task SetTriggeredJobSettingsAsync(string jobName, JobSettings jobSettings)
+        {
+            await Client.PutJsonAsync<JobSettings, object>("triggered/" + jobName + "/settings", jobSettings);
         }
 
         private async Task UploadJobScriptFile(string urlPath, string filePath, string content = null)

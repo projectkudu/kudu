@@ -12,6 +12,7 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
+using Newtonsoft.Json;
 
 namespace Kudu.Core.Jobs
 {
@@ -205,6 +206,45 @@ namespace Kudu.Core.Jobs
             UpdateJob(job);
 
             return job;
+        }
+
+        public JobSettings GetJobSettings(string jobName)
+        {
+            return OperationManager.Attempt(() =>
+            {
+                var jobDirectory = GetJobDirectory(jobName);
+                if (!jobDirectory.Exists)
+                {
+                    throw new JobNotFoundException();
+                }
+
+                var jobSettingsPath = GetJobSettingsPath(jobDirectory);
+                if (!FileSystemHelpers.FileExists(jobSettingsPath))
+                {
+                    return new JobSettings();
+                }
+
+                string jobSettingsContent = FileSystemHelpers.ReadAllTextFromFile(jobSettingsPath);
+                return JsonConvert.DeserializeObject<JobSettings>(jobSettingsContent);
+            });
+        }
+
+        public void SetJobSettings(string jobName, JobSettings jobSettings)
+        {
+            var jobDirectory = GetJobDirectory(jobName);
+            if (!jobDirectory.Exists)
+            {
+                throw new JobNotFoundException();
+            }
+
+            var jobSettingsPath = GetJobSettingsPath(jobDirectory);
+            string jobSettingsContent = JsonConvert.SerializeObject(jobSettings);
+            FileSystemHelpers.WriteAllTextToFile(jobSettingsPath, jobSettingsContent);
+        }
+
+        private string GetJobSettingsPath(DirectoryInfoBase jobDirectory)
+        {
+            return Path.Combine(jobDirectory.FullName, "settings.job");
         }
 
         protected abstract void UpdateJob(TJob job);
