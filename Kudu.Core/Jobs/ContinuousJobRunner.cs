@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Abstractions;
 using System.Threading;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
@@ -13,13 +12,14 @@ namespace Kudu.Core.Jobs
 {
     public class ContinuousJobRunner : BaseJobRunner, IDisposable
     {
+        private readonly LockFile _singletonLock;
+
         private int _started = 0;
         private Thread _continuousJobThread;
         private ContinuousJobLogger _continuousJobLogger;
-        private IDisposable _singletonLock;
+        private JobSettings _jobSettings;
 
         private readonly string _disableFilePath;
-        private readonly string _singletonFilePath;
 
         public ContinuousJobRunner(string jobName, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
             : base(jobName, Constants.ContinuousPath, environment, settings, traceFactory, analytics)
@@ -27,7 +27,8 @@ namespace Kudu.Core.Jobs
             _continuousJobLogger = new ContinuousJobLogger(jobName, Environment, TraceFactory);
 
             _disableFilePath = Path.Combine(JobBinariesPath, "disable.job");
-            _singletonFilePath = Path.Combine(JobBinariesPath, "singleton.job");
+
+            _singletonLock = new LockFile(Path.Combine(JobDataPath, "singleton.job.lock"), TraceFactory);
         }
 
         private void UpdateStatusIfChanged(ContinuousJobStatus continuousJobStatus)
@@ -100,7 +101,7 @@ namespace Kudu.Core.Jobs
                 }
                 finally
                 {
-                    DisposeSingletonLock();
+                    ReleaseSingletonLock();
                 }
             });
 
@@ -109,30 +110,19 @@ namespace Kudu.Core.Jobs
 
         private bool TryGetLockIfSingleton()
         {
-            if (!IsSingletonFileExists())
+            bool isSingleton = _jobSettings.GetSetting("is_singleton", defaultValue: false);
+            if (!isSingleton)
             {
                 return true;
             }
 
-            try
+            if (_singletonLock.Lock())
             {
-                if (_singletonLock == null)
-                {
-                    _singletonLock = FileSystemHelpers.OpenFile(_singletonFilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.Read | FileShare.Delete);
-                }
-
                 return true;
             }
-            catch
-            {
-                _continuousJobLogger.ReportStatus(ContinuousJobStatus.InactiveInstance);
-                return false;
-            }
-        }
 
-        private bool IsSingletonFileExists()
-        {
-            return OperationManager.Attempt(() => FileSystemHelpers.FileExists(_singletonFilePath));
+            _continuousJobLogger.ReportStatus(ContinuousJobStatus.InactiveInstance);
+            return false;
         }
 
         public void StopJob()
@@ -154,9 +144,10 @@ namespace Kudu.Core.Jobs
             }
         }
 
-        public void RefreshJob(ContinuousJob continuousJob)
+        public void RefreshJob(ContinuousJob continuousJob, JobSettings jobSettings)
         {
             StopJob();
+            _jobSettings = jobSettings;
             StartJob(continuousJob);
         }
 
@@ -171,21 +162,6 @@ namespace Kudu.Core.Jobs
         {
             OperationManager.Attempt(() => FileSystemHelpers.DeleteFile(_disableFilePath));
             StartJob(continuousJob);
-        }
-
-        public void SetSingleton(bool isSingleton)
-        {
-            if (isSingleton)
-            {
-                if (!IsSingletonFileExists())
-                {
-                    OperationManager.Attempt(() => FileSystemHelpers.WriteAllBytes(_singletonFilePath, new byte[0]));
-                }
-            }
-            else
-            {
-                OperationManager.Attempt(() => FileSystemHelpers.DeleteFileSafe(_singletonFilePath));
-            }
         }
 
         protected override void UpdateStatus(IJobLogger logger, string status)
@@ -208,13 +184,9 @@ namespace Kudu.Core.Jobs
             get { return FileSystemHelpers.FileExists(_disableFilePath); }
         }
 
-        private void DisposeSingletonLock()
+        private void ReleaseSingletonLock()
         {
-            if (_singletonLock != null)
-            {
-                _singletonLock.Dispose();
-                _singletonLock = null;
-            }
+            _singletonLock.Release();
         }
 
         public void Dispose()
@@ -232,8 +204,6 @@ namespace Kudu.Core.Jobs
                     _continuousJobLogger.Dispose();
                     _continuousJobLogger = null;
                 }
-
-                DisposeSingletonLock();
             }
         }
     }

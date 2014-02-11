@@ -85,18 +85,16 @@ namespace Kudu.Services.Jobs
             }
         }
 
-        [HttpPost]
-        public HttpResponseMessage SetContinuousJobSingleton(string jobName, bool isSingleton)
+        [HttpGet]
+        public HttpResponseMessage GetContinuousJobSettings(string jobName)
         {
-            try
-            {
-                _continuousJobsManager.SetSingleton(jobName, isSingleton);
-                return Request.CreateResponse(HttpStatusCode.OK);
-            }
-            catch (JobNotFoundException)
-            {
-                return Request.CreateResponse(HttpStatusCode.NotFound);
-            }
+            return GetJobSettings(jobName, _continuousJobsManager);
+        }
+
+        [HttpPut]
+        public HttpResponseMessage SetContinuousJobSettings(string jobName, JobSettings jobSettings)
+        {
+            return SetJobSettings(jobName, jobSettings, _continuousJobsManager);
         }
 
         [HttpGet]
@@ -185,6 +183,18 @@ namespace Kudu.Services.Jobs
             return RemoveJob(jobName, _triggeredJobsManager);
         }
 
+        [HttpGet]
+        public HttpResponseMessage GetTriggeredJobSettings(string jobName)
+        {
+            return GetJobSettings(jobName, _triggeredJobsManager);
+        }
+
+        [HttpPut]
+        public HttpResponseMessage SetTriggeredJobSettings(string jobName, JobSettings jobSettings)
+        {
+            return SetJobSettings(jobName, jobSettings, _triggeredJobsManager);
+        }
+
         private HttpResponseMessage RemoveJob<TJob>(string jobName, IJobsManager<TJob> jobsManager) where TJob : JobBase, new()
         {
             jobsManager.DeleteJobAsync(jobName);
@@ -251,6 +261,32 @@ namespace Kudu.Services.Jobs
             }
 
             return Request.CreateResponse(job);
+        }
+
+        private HttpResponseMessage GetJobSettings<TJob>(string jobName, IJobsManager<TJob> jobsManager) where TJob : JobBase, new()
+        {
+            try
+            {
+                JobSettings jobSettings = jobsManager.GetJobSettings(jobName);
+                return Request.CreateResponse(HttpStatusCode.OK, jobSettings);
+            }
+            catch (JobNotFoundException)
+            {
+                return Request.CreateResponse(HttpStatusCode.NotFound);
+            }
+        }
+
+        private HttpResponseMessage SetJobSettings<TJob>(string jobName, JobSettings jobSettings, IJobsManager<TJob> jobsManager) where TJob : JobBase, new()
+        {
+            try
+            {
+                jobsManager.SetJobSettings(jobName, jobSettings);
+                return Request.CreateResponse(HttpStatusCode.OK);
+            }
+            catch (JobNotFoundException)
+            {
+                return Request.CreateResponse(HttpStatusCode.NotFound);
+            }
         }
 
         private HttpResponseMessage CreateErrorResponse(HttpStatusCode errorStatusCode, string errorMessage)

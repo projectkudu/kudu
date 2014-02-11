@@ -15,5 +15,9 @@ namespace Kudu.Contracts.Jobs
         TJob CreateJobFromFileStream(Stream scriptFileStream, string jobName, string scriptFileName);
 
         Task DeleteJobAsync(string jobName);
+
+        JobSettings GetJobSettings(string jobName);
+
+        void SetJobSettings(string jobName, JobSettings jobSettings);
     }
 }
