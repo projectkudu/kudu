@@ -34,9 +34,10 @@ namespace Kudu.Core.Test
                       .Returns(true);
             file.Setup(f => f.OpenRead(path))
                       .Returns(() => new MemoryStream());
+            FileSystemHelpers.Instance = fileSystem.Object;
 
             // Test
-            using (var stream = ProcessController.FileStreamWrapper.OpenRead(path, fileSystem.Object))
+            using (var stream = ProcessController.FileStreamWrapper.OpenRead(path))
             {
             }
 
@@ -59,9 +60,10 @@ namespace Kudu.Core.Test
                       .Returns(true);
             file.Setup(f => f.OpenRead(path))
                       .Returns(() => new MemoryStream());
+            FileSystemHelpers.Instance = fileSystem.Object;
 
             // Test
-            var stream = ProcessController.FileStreamWrapper.OpenRead(path, fileSystem.Object);
+            var stream = ProcessController.FileStreamWrapper.OpenRead(path);
             stream.Close();
 
             // Assert
@@ -72,7 +74,7 @@ namespace Kudu.Core.Test
         public void MiniDumpFreeModeTests()
         {
             var settings = new Mock<IDeploymentSettingsManager>();
-            var controller = new Mock<ProcessController>(Mock.Of<ITracer>(), null, settings.Object, null);
+            var controller = new Mock<ProcessController>(Mock.Of<ITracer>(), null, settings.Object);
 
             // Setup
             controller.Object.Request = new HttpRequestMessage();

@@ -19,16 +19,9 @@ namespace Kudu.Core.Settings
     public class JsonSettings
     {
         private string _path;
-        private IFileSystem _fileSystem;
 
         public JsonSettings(string path)
-            : this(new FileSystem(), path)
         {
-        }
-
-        public JsonSettings(IFileSystem fileSystem, string path)
-        {
-            _fileSystem = fileSystem;
             _path = path;
         }
 
@@ -86,14 +79,14 @@ namespace Kudu.Core.Settings
 
         private JObject Read()
         {
-            if (!_fileSystem.File.Exists(_path))
+            if (!FileSystemHelpers.FileExists(_path))
             {
                 return new JObject();
             }
 
             // opens file for FileAccess.Read but does allow other read/write (FileShare.ReadWrite).   
             // it is the most optimal where write is infrequent and dirty read is acceptable.
-            using (var reader = new JsonTextReader(new StreamReader(_fileSystem.File.Open(_path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))))
+            using (var reader = new JsonTextReader(new StreamReader(FileSystemHelpers.OpenFile(_path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))))
             {
                 return JObject.Load(reader);
             }
@@ -101,14 +94,14 @@ namespace Kudu.Core.Settings
 
         private void Save(JObject json)
         {
-            if (!_fileSystem.File.Exists(_path))
+            if (!FileSystemHelpers.FileExists(_path))
             {
-                FileSystemHelpers.EnsureDirectory(_fileSystem, Path.GetDirectoryName(_path));
+                FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(_path));
             }
 
             // opens file for FileAccess.Write but does allow other dirty read (FileShare.Read).   
             // it is the most optimal where write is infrequent and dirty read is acceptable.
-            using (var writer = new JsonTextWriter(new StreamWriter(_fileSystem.File.Open(_path, FileMode.Create, FileAccess.Write, FileShare.Read))))
+            using (var writer = new JsonTextWriter(new StreamWriter(FileSystemHelpers.OpenFile(_path, FileMode.Create, FileAccess.Write, FileShare.Read))))
             {
                 // prefer indented-readable format
                 writer.Formatting = Formatting.Indented;

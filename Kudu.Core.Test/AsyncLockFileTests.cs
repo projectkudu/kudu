@@ -22,7 +22,7 @@ namespace Kudu.Core.Test
         public AsyncLockFileTests()
         {
             _lockFilePath = Path.Combine(PathHelper.TestLockPath, "file.lock");
-            _lockFile = new DeploymentLockFile(_lockFilePath, NullTracerFactory.Instance, new FileSystem());
+            _lockFile = new DeploymentLockFile(_lockFilePath, NullTracerFactory.Instance);
             _lockFile.InitializeAsyncLocks();
         }
 
@@ -30,7 +30,7 @@ namespace Kudu.Core.Test
         public void AsyncLock_ThrowsIfNotInitialized()
         {
             string lockFilePath = Path.Combine(PathHelper.TestLockPath, "uninitialized.lock");
-            LockFile uninitialized = new LockFile(lockFilePath, NullTracerFactory.Instance, new FileSystem());
+            LockFile uninitialized = new LockFile(lockFilePath, NullTracerFactory.Instance);
             Assert.Throws<InvalidOperationException>(() => uninitialized.LockAsync());
         }
 

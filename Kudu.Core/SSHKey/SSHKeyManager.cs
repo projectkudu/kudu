@@ -15,26 +15,19 @@ namespace Kudu.Core.SSHKey
         private const string ConfigFile = "config";
         private const string ConfigContent = "HOST *\r\n  StrictHostKeyChecking no";
         private const int KeySize = 2048;
-        private readonly IFileSystem _fileSystem;
         private readonly ITraceFactory _traceFactory;
         private readonly string _sshPath;
         private readonly string _id_rsa;
         private readonly string _id_rsaPub;
         private readonly string _config;
 
-        public SSHKeyManager(IEnvironment environment, IFileSystem fileSystem, ITraceFactory traceFactory)
+        public SSHKeyManager(IEnvironment environment, ITraceFactory traceFactory)
         {
             if (environment == null)
             {
                 throw new ArgumentNullException("environment");
             }
 
-            if (fileSystem == null)
-            {
-                throw new ArgumentNullException("fileSystem");
-            }
-
-            _fileSystem = fileSystem;
             _traceFactory = traceFactory ?? NullTracerFactory.Instance;
             _sshPath = environment.SSHKeyPath;
             _id_rsa = Path.Combine(_sshPath, PrivateKeyFile);
@@ -47,19 +40,19 @@ namespace Kudu.Core.SSHKey
             ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("SSHKeyManager.SetPrivateKey"))
             {
-                FileSystemHelpers.EnsureDirectory(_fileSystem, _sshPath);
+                FileSystemHelpers.EnsureDirectory(_sshPath);
 
                 // Delete existing public key
-                if (_fileSystem.File.Exists(_id_rsaPub))
+                if (FileSystemHelpers.FileExists(_id_rsaPub))
                 {
-                    _fileSystem.File.Delete(_id_rsaPub);
+                    FileSystemHelpers.DeleteFileSafe(_id_rsaPub);
                 }
 
                 // bypass service key checking prompt (StrictHostKeyChecking=no).
-                _fileSystem.File.WriteAllText(_config, ConfigContent);
+                FileSystemHelpers.WriteAllText(_config, ConfigContent);
 
                 // This overrides if file exists
-                _fileSystem.File.WriteAllText(_id_rsa, key);
+                FileSystemHelpers.WriteAllText(_id_rsa, key);
             }
         }
 
@@ -71,11 +64,11 @@ namespace Kudu.Core.SSHKey
             ITracer tracer = _traceFactory.GetTracer();
             using (tracer.Step("SSHKeyManager.GetKey"))
             {
-                if (_fileSystem.File.Exists(_id_rsaPub))
+                if (FileSystemHelpers.FileExists(_id_rsaPub))
                 {
                     tracer.Trace("Public key exists.");
                     // If a public key exists, return it.
-                    return _fileSystem.File.ReadAllText(_id_rsaPub);
+                    return FileSystemHelpers.ReadAllText(_id_rsaPub);
                 }
                 else if (ensurePublicKey)
                 {
@@ -94,9 +87,9 @@ namespace Kudu.Core.SSHKey
             using (tracer.Step("SSHKeyManager.GetKey"))
             {
                 // Delete public key
-                FileSystemHelpers.DeleteFileSafe(_fileSystem, _id_rsaPub);
+                FileSystemHelpers.DeleteFileSafe(_id_rsaPub);
 
-                FileSystemHelpers.DeleteFileSafe(_fileSystem, _id_rsa);
+                FileSystemHelpers.DeleteFileSafe(_id_rsa);
             }
         }
 
@@ -115,10 +108,10 @@ namespace Kudu.Core.SSHKey
                     string privateKey = PEMEncoding.GetString(privateKeyParam);
                     string publicKey = SSHEncoding.GetString(publicKeyParam);
 
-                    _fileSystem.File.WriteAllText(_id_rsa, privateKey);
-                    _fileSystem.File.WriteAllText(_id_rsaPub, publicKey);
+                    FileSystemHelpers.WriteAllText(_id_rsa, privateKey);
+                    FileSystemHelpers.WriteAllText(_id_rsaPub, publicKey);
 
-                    _fileSystem.File.WriteAllText(_config, ConfigContent);
+                    FileSystemHelpers.WriteAllText(_config, ConfigContent);
 
                     return publicKey;
                 }

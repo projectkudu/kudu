@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.IO.Abstractions;
 using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
@@ -18,7 +17,6 @@ namespace Kudu.Core.Infrastructure
     {
         private readonly string _path;
         private readonly ITraceFactory _traceFactory;
-        private readonly IFileSystem _fileSystem;
 
         private ConcurrentQueue<QueueItem> _lockRequestQueue;
         private FileSystemWatcher _lockFileWatcher;
@@ -26,25 +24,24 @@ namespace Kudu.Core.Infrastructure
         private Stream _lockStream;
 
         public LockFile(string path)
-            : this(path, NullTracerFactory.Instance, new FileSystem())
+            : this(path, NullTracerFactory.Instance)
         {
         }
 
-        public LockFile(string path, ITraceFactory traceFactory, IFileSystem fileSystem)
+        public LockFile(string path, ITraceFactory traceFactory)
         {
             _path = Path.GetFullPath(path);
             _traceFactory = traceFactory;
-            _fileSystem = fileSystem;
         }
 
         public void InitializeAsyncLocks()
         {
             _lockRequestQueue = new ConcurrentQueue<QueueItem>();
 
-            FileSystemHelpers.EnsureDirectory(_fileSystem, Path.GetDirectoryName(_path));
+            FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(_path));
 
             // Set up lock file watcher. Note that depending on how the file is accessed the file watcher may generate multiple events.
-            _lockFileWatcher = new FileSystemWatcher(_fileSystem.Path.GetDirectoryName(_path), _fileSystem.Path.GetFileName(_path));
+            _lockFileWatcher = new FileSystemWatcher(Path.GetDirectoryName(_path), Path.GetFileName(_path));
             _lockFileWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
             _lockFileWatcher.Changed += OnLockReleased;
             _lockFileWatcher.Deleted += OnLockReleased;
@@ -72,7 +69,7 @@ namespace Kudu.Core.Infrastructure
             get
             {
                 // If there's no file then there's no process holding onto it
-                if (!_fileSystem.File.Exists(_path))
+                if (!FileSystemHelpers.FileExists(_path))
                 {
                     return false;
                 }
@@ -81,7 +78,7 @@ namespace Kudu.Core.Infrastructure
                 {
                     // If there is a file, lets see if someone has an open handle to it, or if it's
                     // just hanging there for no reason
-                    using (_fileSystem.File.Open(_path, FileMode.Open, FileAccess.Write, FileShare.None)) { }
+                    using (FileSystemHelpers.OpenFile(_path, FileMode.Open, FileAccess.Write, FileShare.None)) { }
                 }
                 catch (Exception ex)
                 {
@@ -101,9 +98,9 @@ namespace Kudu.Core.Infrastructure
         {
             try
             {
-                FileSystemHelpers.EnsureDirectory(_fileSystem, Path.GetDirectoryName(_path));
+                FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(_path));
 
-                _lockStream = _fileSystem.File.Open(_path, FileMode.Create, FileAccess.Write, FileShare.None);
+                _lockStream = FileSystemHelpers.OpenFile(_path, FileMode.Create, FileAccess.Write, FileShare.None);
 
                 OnLockAcquired();
 
@@ -164,7 +161,7 @@ namespace Kudu.Core.Infrastructure
         {
             try
             {
-                _fileSystem.File.Delete(_path);
+                FileSystemHelpers.DeleteFile(_path);
             }
             catch (Exception ex)
             {

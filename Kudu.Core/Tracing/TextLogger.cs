@@ -2,6 +2,7 @@
 using System.IO;
 using System.IO.Abstractions;
 using Kudu.Core.Deployment;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Tracing
 {
@@ -11,12 +12,7 @@ namespace Kudu.Core.Tracing
         private readonly int _depth;
 
         public TextLogger(string path)
-            : this(new FileSystem(), path)
-        {
-        }
-
-        public TextLogger(IFileSystem fileSystem, string path)
-            : this(new LogFileHelper(fileSystem, path), 0)
+            : this(new LogFileHelper(path), 0)
         {
         }
 
@@ -34,12 +30,10 @@ namespace Kudu.Core.Tracing
 
         private class LogFileHelper
         {
-            private readonly IFileSystem _fileSystem;
             private readonly string _logFile;
 
-            public LogFileHelper(IFileSystem fileSystem, string logFile)
+            public LogFileHelper(string logFile)
             {
-                _fileSystem = fileSystem;
                 _logFile = logFile;
             }
 
@@ -50,7 +44,7 @@ namespace Kudu.Core.Tracing
                 strb.Append(GetIndentation(depth + 1));
                 strb.Append(value);
 
-                using (StreamWriter writer = new StreamWriter(_fileSystem.File.Open(_logFile, FileMode.Append, FileAccess.Write, FileShare.ReadWrite)))
+                using (StreamWriter writer = new StreamWriter(FileSystemHelpers.OpenFile(_logFile, FileMode.Append, FileAccess.Write, FileShare.ReadWrite)))
                 {
                     writer.WriteLine(strb.ToString());
                 }

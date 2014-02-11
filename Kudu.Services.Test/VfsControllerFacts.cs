@@ -10,6 +10,7 @@ using System.Web.Http.Hosting;
 using System.Web.Http.Routing;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
+using Kudu.Core.Infrastructure;
 using Kudu.Services.Editor;
 using Kudu.Services.Infrastructure;
 using Moq;
@@ -33,7 +34,8 @@ namespace Kudu.Services.Test
             var dirInfo = new Mock<DirectoryInfoBase>();
             dirInfo.SetupGet(d => d.Attributes).Returns((FileAttributes)(-1));
             var fileSystem = CreateFileSystem(path, dirInfo.Object, fileInfo.Object);
-            var controller = CreateController(path, fileSystem);
+            var controller = CreateController(path);
+            FileSystemHelpers.Instance = fileSystem;
 
             // Act
             var result = await controller.DeleteItem();
@@ -52,8 +54,9 @@ namespace Kudu.Services.Test
             var dirInfo = new Mock<DirectoryInfoBase>();
             dirInfo.SetupGet(d => d.Attributes).Returns(FileAttributes.Directory);
             var fileSystem = CreateFileSystem(path, dirInfo.Object, fileInfo.Object);
+            FileSystemHelpers.Instance = fileSystem;
 
-            var controller = CreateController(path, fileSystem);
+            var controller = CreateController(path);
 
             // Act
             await controller.DeleteItem();
@@ -74,7 +77,8 @@ namespace Kudu.Services.Test
             var dirInfo = new Mock<DirectoryInfoBase>();
             dirInfo.SetupGet(d => d.Attributes).Returns(FileAttributes.Directory);
             var fileSystem = CreateFileSystem(path, dirInfo.Object, fileInfo.Object);
-            var controller = CreateController(path, fileSystem);
+            var controller = CreateController(path);
+            FileSystemHelpers.Instance = fileSystem;
 
             // Act
             var response = await controller.DeleteItem(recursive);
@@ -94,8 +98,9 @@ namespace Kudu.Services.Test
             var dirInfo = new Mock<DirectoryInfoBase>();
             dirInfo.SetupGet(d => d.Attributes).Returns(FileAttributes.Normal);
             var fileSystem = CreateFileSystem(path, dirInfo.Object, fileInfo.Object);
+            FileSystemHelpers.Instance = fileSystem;
 
-            var controller = CreateController(path, fileSystem);
+            var controller = CreateController(path);
 
             // Act
             var response = await controller.DeleteItem();
@@ -116,8 +121,9 @@ namespace Kudu.Services.Test
             var dirInfo = new Mock<DirectoryInfoBase>();
             dirInfo.SetupGet(d => d.Attributes).Returns(FileAttributes.Normal);
             var fileSystem = CreateFileSystem(path, dirInfo.Object, fileInfo.Object);
+            FileSystemHelpers.Instance = fileSystem;
 
-            var controller = CreateController(path, fileSystem);
+            var controller = CreateController(path);
             controller.Request.Headers.IfMatch.Add(new EntityTagHeaderValue("\"this-will-not-match\""));
 
             // Act
@@ -149,8 +155,9 @@ namespace Kudu.Services.Test
             var dirInfo = new Mock<DirectoryInfoBase>();
             dirInfo.SetupGet(d => d.Attributes).Returns(FileAttributes.Normal);
             var fileSystem = CreateFileSystem(path, dirInfo.Object, fileInfo.Object);
+            FileSystemHelpers.Instance = fileSystem;
 
-            var controller = CreateController(path, fileSystem);
+            var controller = CreateController(path);
             controller.Request.Headers.IfMatch.Add(new EntityTagHeaderValue("\"this-will-not-match\""));
             controller.Request.Headers.IfMatch.Add(etag);
 
@@ -183,7 +190,8 @@ namespace Kudu.Services.Test
                 foreach (var suffixes in new[] { new[] { "", "" }, new[] { "/", "\\" } })
                 {
                     // Arrange
-                    var controller = CreateController(requestUri + suffixes[0], new FileSystem(), SiteRootPath);
+                    var controller = CreateController(requestUri + suffixes[0], SiteRootPath);
+                    FileSystemHelpers.Instance = new FileSystem();
 
                     // Act
                     string path = controller.GetLocalFilePath();
@@ -214,7 +222,7 @@ namespace Kudu.Services.Test
             }
         }
 
-        private static VfsController CreateController(string path, IFileSystem fileBase, string rootPath = "/")
+        private static VfsController CreateController(string path, string rootPath = "/")
         {
             var env = new Mock<IEnvironment>();
             env.SetupGet(e => e.RootPath).Returns(rootPath);
@@ -232,7 +240,7 @@ namespace Kudu.Services.Test
 
             request.Properties[HttpPropertyKeys.HttpRouteDataKey] = new HttpRouteData(Mock.Of<IHttpRoute>(), new HttpRouteValueDictionary(new { path = routePath }));
             
-            return new VfsController(Mock.Of<ITracer>(), env.Object, fileBase)
+            return new VfsController(Mock.Of<ITracer>(), env.Object)
             {
                 Request = request
             };
@@ -255,6 +263,8 @@ namespace Kudu.Services.Test
             fileSystem.SetupGet(f => f.DirectoryInfo).Returns(directoryFactory.Object);
             fileSystem.SetupGet(f => f.FileInfo).Returns(fileInfoFactory.Object);
             fileSystem.SetupGet(f => f.Path).Returns(pathBase.Object);
+
+            FileSystemHelpers.Instance = fileSystem.Object;
 
             return fileSystem.Object;
         }

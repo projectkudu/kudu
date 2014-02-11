@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Moq;
 using Newtonsoft.Json;
@@ -20,7 +21,7 @@ namespace Kudu.Core.Test
         {
             IFileSystem fileSystem = GetMockFileSystem(SettingsPath);
 
-            var settings = new JsonSettings(fileSystem, SettingsPath);
+            var settings = new JsonSettings(SettingsPath);
 
             Assert.Equal(null, settings.GetValue("non_existing"));
 
@@ -28,7 +29,7 @@ namespace Kudu.Core.Test
 
             Assert.False(settings.DeleteValue("non_existing"));
 
-            Assert.False(fileSystem.File.Exists(SettingsPath));
+            Assert.False(FileSystemHelpers.FileExists(SettingsPath));
         }
 
         [Fact]
@@ -40,7 +41,9 @@ namespace Kudu.Core.Test
                 new KeyValuePair<string, string>(Guid.NewGuid().ToString(), Guid.NewGuid().ToString())
             };
 
-            var settings = new JsonSettings(GetMockFileSystem(SettingsPath, values), SettingsPath);
+            FileSystemHelpers.Instance = GetMockFileSystem(SettingsPath, values);
+
+            var settings = new JsonSettings(SettingsPath);
 
             foreach (KeyValuePair<string, string> value in values)
             {
@@ -63,7 +66,9 @@ namespace Kudu.Core.Test
                 { Guid.NewGuid().ToString(), random.Next() % 2 == 0 }
             };
 
-            var settings = new JsonSettings(GetMockFileSystem(SettingsPath), SettingsPath);
+            FileSystemHelpers.Instance = GetMockFileSystem(SettingsPath);
+
+            var settings = new JsonSettings(SettingsPath);
 
             foreach (KeyValuePair<string, JToken> value in values)
             {
@@ -86,7 +91,9 @@ namespace Kudu.Core.Test
                 { Guid.NewGuid().ToString(), random.Next() % 2 == 0 }
             };
 
-            var settings = new JsonSettings(GetMockFileSystem(SettingsPath), SettingsPath);
+            FileSystemHelpers.Instance = GetMockFileSystem(SettingsPath);
+
+            var settings = new JsonSettings(SettingsPath);
 
             Assert.Equal(0, settings.GetValues().Count());
 
@@ -126,7 +133,9 @@ namespace Kudu.Core.Test
                 json[value.Key] = value.Value;
             }
 
-            var settings = new JsonSettings(GetMockFileSystem(SettingsPath), SettingsPath);
+            FileSystemHelpers.Instance = GetMockFileSystem(SettingsPath);
+
+            var settings = new JsonSettings(SettingsPath);
 
             Assert.Equal(0, settings.GetValues().Count());
 
@@ -144,7 +153,8 @@ namespace Kudu.Core.Test
         public void NullOrEmptyTest()
         {
             var key = Guid.NewGuid().ToString();
-            var settings = new JsonSettings(GetMockFileSystem(SettingsPath), SettingsPath);
+            FileSystemHelpers.Instance = GetMockFileSystem(SettingsPath);
+            var settings = new JsonSettings(SettingsPath);
 
             Assert.Equal(null, settings.GetValue(key));
 
@@ -159,7 +169,9 @@ namespace Kudu.Core.Test
         public void DeleteValueTest()
         {
             var value = new KeyValuePair<string, string>(Guid.NewGuid().ToString(), Guid.NewGuid().ToString());
-            var settings = new JsonSettings(GetMockFileSystem(SettingsPath), SettingsPath);
+            FileSystemHelpers.Instance = GetMockFileSystem(SettingsPath);
+
+            var settings = new JsonSettings(SettingsPath);
 
             Assert.Equal(null, settings.GetValue(value.Key));
 
@@ -219,6 +231,8 @@ namespace Kudu.Core.Test
 
             fileSystem.Setup(fs => fs.File).Returns(file.Object);
             fileSystem.Setup(fs => fs.Directory).Returns(directory.Object);
+
+            FileSystemHelpers.Instance = fileSystem.Object;
 
             return fileSystem.Object;
         }

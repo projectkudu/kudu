@@ -77,7 +77,7 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        public static void Extract(this ZipArchive archive, FileSystem fileSystem, string directoryName)
+        public static void Extract(this ZipArchive archive, string directoryName)
         {
             foreach (ZipArchiveEntry entry in archive.Entries)
             {
@@ -85,11 +85,11 @@ namespace Kudu.Core.Infrastructure
                 if (entry.Length == 0 && (path.EndsWith("/", StringComparison.Ordinal) || path.EndsWith("\\", StringComparison.Ordinal)))
                 {
                     // Extract directory
-                    fileSystem.Directory.CreateDirectory(path);
+                    FileSystemHelpers.CreateDirectory(path);
                 }
                 else
                 {
-                    FileInfoBase fileInfo = fileSystem.FileInfo.FromFileName(path);
+                    FileInfoBase fileInfo = FileSystemHelpers.FileInfoFromFileName(path);
 
                     if (!fileInfo.Directory.Exists)
                     {

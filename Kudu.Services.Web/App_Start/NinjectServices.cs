@@ -128,7 +128,6 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<HttpContextBase>().ToMethod(context => new HttpContextWrapper(HttpContext.Current))
                                              .InRequestScope();
             kernel.Bind<IServerConfiguration>().ToConstant(serverConfiguration);
-            kernel.Bind<IFileSystem>().To<FileSystem>().InSingletonScope();
 
             kernel.Bind<IBuildPropertyProvider>().ToConstant(new BuildPropertyProvider());
 
@@ -149,13 +148,12 @@ namespace Kudu.Services.Web.App_Start
             string sshKeyLockPath = Path.Combine(lockPath, Constants.SSHKeyLockFile);
             string hooksLockPath = Path.Combine(lockPath, Constants.HooksLockFile);
 
-            var fileSystem = new FileSystem();
-            _deploymentLock = new DeploymentLockFile(deploymentLockPath, kernel.Get<ITraceFactory>(), fileSystem);
+            _deploymentLock = new DeploymentLockFile(deploymentLockPath, kernel.Get<ITraceFactory>());
             _deploymentLock.InitializeAsyncLocks();
 
-            var statusLock = new LockFile(statusLockPath, kernel.Get<ITraceFactory>(), fileSystem);
-            var sshKeyLock = new LockFile(sshKeyLockPath, kernel.Get<ITraceFactory>(), fileSystem);
-            var hooksLock = new LockFile(hooksLockPath, kernel.Get<ITraceFactory>(), fileSystem);
+            var statusLock = new LockFile(statusLockPath, kernel.Get<ITraceFactory>());
+            var sshKeyLock = new LockFile(sshKeyLockPath, kernel.Get<ITraceFactory>());
+            var hooksLock = new LockFile(hooksLockPath, kernel.Get<ITraceFactory>());
 
             kernel.Bind<IOperationLock>().ToConstant(sshKeyLock).WhenInjectedInto<SSHKeyController>();
             kernel.Bind<IOperationLock>().ToConstant(statusLock).WhenInjectedInto<DeploymentStatusManager>();
@@ -163,7 +161,6 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IOperationLock>().ToConstant(_deploymentLock);
 
             kernel.Bind<IAnalytics>().ToMethod(context => new Analytics(context.Kernel.Get<IDeploymentSettingsManager>(),
-                                                                        fileSystem,
                                                                         context.Kernel.Get<ITracer>(),
                                                                         environment.AnalyticsPath));
 
@@ -214,7 +211,6 @@ namespace Kudu.Services.Web.App_Start
             ITriggeredJobsManager triggeredJobsManager = new TriggeredJobsManager(
                 noContextTraceFactory,
                 kernel.Get<IEnvironment>(),
-                kernel.Get<IFileSystem>(),
                 kernel.Get<IDeploymentSettingsManager>(),
                 kernel.Get<IAnalytics>());
             kernel.Bind<ITriggeredJobsManager>().ToConstant(triggeredJobsManager)
@@ -223,7 +219,6 @@ namespace Kudu.Services.Web.App_Start
             IContinuousJobsManager continuousJobManager = new ContinuousJobsManager(
                 noContextTraceFactory,
                 kernel.Get<IEnvironment>(),
-                kernel.Get<IFileSystem>(),
                 kernel.Get<IDeploymentSettingsManager>(),
                 kernel.Get<IAnalytics>());
             kernel.Bind<IContinuousJobsManager>().ToConstant(continuousJobManager)
@@ -582,7 +577,6 @@ namespace Kudu.Services.Web.App_Start
             string repositoryPath = Path.Combine(siteRoot, settings == null ? Constants.RepositoryPath : settings.GetRepositoryPath());
 
             return new Kudu.Core.Environment(
-                                   new FileSystem(),
                                    root,
                                    HttpRuntime.BinDirectory,
                                    repositoryPath);

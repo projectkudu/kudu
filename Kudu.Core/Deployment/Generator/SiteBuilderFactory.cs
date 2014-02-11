@@ -137,7 +137,7 @@ namespace Kudu.Core.Deployment.Generator
 
         private static bool IsNodeSite(string projectPath)
         {
-            return NodeSiteEnabler.LooksLikeNode(new FileSystem(), projectPath);
+            return NodeSiteEnabler.LooksLikeNode(projectPath);
         }
 
         private ISiteBuilder ResolveProject(string repositoryRoot, IDeploymentSettingsManager perDeploymentSettings, IFileFinder fileFinder, bool tryWebSiteProject = false, SearchOption searchOption = SearchOption.AllDirectories)

@@ -13,6 +13,7 @@ using System.Web.Http.Routing;
 using Kudu.Contracts.Editor;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Services.Infrastructure
 {
@@ -29,7 +30,7 @@ namespace Kudu.Services.Infrastructure
 
         protected const int BufferSize = 32 * 1024;
 
-        protected VfsControllerBase(ITracer tracer, IEnvironment environment, IFileSystem fileSystem, string rootPath)
+        protected VfsControllerBase(ITracer tracer, IEnvironment environment, string rootPath)
         {
             if (rootPath == null)
             {
@@ -39,7 +40,6 @@ namespace Kudu.Services.Infrastructure
             Environment = environment;
             RootPath = Path.GetFullPath(rootPath.TrimEnd(Path.DirectorySeparatorChar));
             MediaTypeMap = MediaTypeMap.Default;
-            FileSystem = fileSystem;
         }
 
         [AcceptVerbs("GET", "HEAD")]
@@ -53,7 +53,7 @@ namespace Kudu.Services.Infrastructure
                 return Task.FromResult(response);
             }
 
-            DirectoryInfoBase info = FileSystem.DirectoryInfo.FromDirectoryName(localFilePath);
+            DirectoryInfoBase info = FileSystemHelpers.DirectoryInfoFromDirectoryName(localFilePath);
 
             if (info.Attributes < 0)
             {
@@ -104,7 +104,7 @@ namespace Kudu.Services.Infrastructure
                 return Task.FromResult(response);
             }
 
-            DirectoryInfoBase info = FileSystem.DirectoryInfo.FromDirectoryName(localFilePath);
+            DirectoryInfoBase info = FileSystemHelpers.DirectoryInfoFromDirectoryName(localFilePath);
             bool itemExists = info.Attributes >= 0;
 
             if (itemExists && (info.Attributes & FileAttributes.Directory) != 0)
@@ -135,7 +135,7 @@ namespace Kudu.Services.Infrastructure
                 return Task.FromResult(response);
             }
 
-            DirectoryInfoBase dirInfo = FileSystem.DirectoryInfo.FromDirectoryName(localFilePath);
+            DirectoryInfoBase dirInfo = FileSystemHelpers.DirectoryInfoFromDirectoryName(localFilePath);
 
             if (dirInfo.Attributes < 0)
             {
@@ -173,7 +173,7 @@ namespace Kudu.Services.Infrastructure
                 }
 
                 // We are ready to delete the file
-                var fileInfo = FileSystem.FileInfo.FromFileName(localFilePath);
+                var fileInfo = FileSystemHelpers.FileInfoFromFileName(localFilePath);
                 return CreateFileDeleteResponse(fileInfo);
             }
         }
@@ -185,8 +185,6 @@ namespace Kudu.Services.Infrastructure
         protected string RootPath { get; private set; }
 
         protected MediaTypeMap MediaTypeMap { get; private set; }
-
-        protected IFileSystem FileSystem { get; set; }
 
         protected virtual Task<HttpResponseMessage> CreateDirectoryGetResponse(DirectoryInfoBase info, string localFilePath)
         {
@@ -321,7 +319,7 @@ namespace Kudu.Services.Infrastructure
                 string path = routeData.Values["path"] as string;
                 if (!String.IsNullOrEmpty(path))
                 {
-                    result = FileSystem.Path.GetFullPath(Path.Combine(result, path));
+                    result = FileSystemHelpers.GetFullPath(Path.Combine(result, path));
                 }
                 else
                 {
@@ -360,7 +358,7 @@ namespace Kudu.Services.Infrastructure
             IHttpRouteData routeData = Request.GetRouteData();
             if (routeData != null && String.IsNullOrEmpty(routeData.Values["path"] as string))
             {
-                foreach (var entry in VfsSpecialFolders.GetEntries(baseAddress, FileSystem))
+                foreach (var entry in VfsSpecialFolders.GetEntries(baseAddress))
                 {
                     yield return entry;
                 }

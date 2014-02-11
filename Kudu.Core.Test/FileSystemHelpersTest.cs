@@ -20,8 +20,9 @@ namespace Kudu.Core.Test
             var directory = new Mock<DirectoryBase>();
             fileSystem.Setup(m => m.Directory).Returns(directory.Object);
             directory.Setup(m => m.Exists("foo")).Returns(false);
+            FileSystemHelpers.Instance = fileSystem.Object;
 
-            string path = FileSystemHelpers.EnsureDirectory(fileSystem.Object, "foo");
+            string path = FileSystemHelpers.EnsureDirectory("foo");
 
             Assert.Equal("foo", path);
             directory.Verify(m => m.CreateDirectory("foo"), Times.Once());
@@ -34,8 +35,9 @@ namespace Kudu.Core.Test
             var directory = new Mock<DirectoryBase>();
             fileSystem.Setup(m => m.Directory).Returns(directory.Object);
             directory.Setup(m => m.Exists("foo")).Returns(true);
+            FileSystemHelpers.Instance = fileSystem.Object;
 
-            string path = FileSystemHelpers.EnsureDirectory(fileSystem.Object, "foo");
+            string path = FileSystemHelpers.EnsureDirectory("foo");
 
             Assert.Equal("foo", path);
             directory.Verify(m => m.CreateDirectory("foo"), Times.Never());

@@ -168,7 +168,7 @@ namespace Kudu.Services.GitServer
 
                 var env = GetInstance<IEnvironment>();
                 // it is default webroot content, do nothing
-                if (DeploymentHelper.IsDefaultWebRootContent(env.WebRootPath, GetInstance<IFileSystem>()))
+                if (DeploymentHelper.IsDefaultWebRootContent(env.WebRootPath))
                 {
                     return;
                 }

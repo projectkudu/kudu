@@ -17,7 +17,7 @@ namespace Kudu.Services.Deployment
     public class ZipController : VfsControllerBase
     {
         public ZipController(ITracer tracer, IEnvironment environment)
-            : base(tracer, environment, new FileSystem(), environment.RootPath)
+            : base(tracer, environment, environment.RootPath)
         {
         }
 
@@ -59,7 +59,7 @@ namespace Kudu.Services.Deployment
                 // Hence it's more of a PATCH than a PUT. We should consider supporting both with the right semantic.
                 // Though a true PUT at the root would be scary as it would wipe all existing files!
                 var zipArchive = new ZipArchive(stream, ZipArchiveMode.Read);
-                zipArchive.Extract(new FileSystem(), localFilePath);
+                zipArchive.Extract(localFilePath);
             }
 
             return Request.CreateResponse(HttpStatusCode.OK);

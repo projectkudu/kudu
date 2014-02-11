@@ -21,8 +21,8 @@ namespace Kudu.Core.Jobs
 
         private int _consoleLogLinesCount;
 
-        public ContinuousJobLogger(string jobName, IEnvironment environment, IFileSystem fileSystem, ITraceFactory traceFactory)
-            : base(GetStatusFileName(), environment, fileSystem, traceFactory)
+        public ContinuousJobLogger(string jobName, IEnvironment environment, ITraceFactory traceFactory)
+            : base(GetStatusFileName(), environment, traceFactory)
         {
             _historyPath = Path.Combine(Environment.JobsDataPath, Constants.ContinuousPath, jobName);
             FileSystemHelpers.EnsureDirectory(_historyPath);
@@ -108,7 +108,7 @@ namespace Kudu.Core.Jobs
         {
             try
             {
-                FileInfoBase logFile = FileSystem.FileInfo.FromFileName(_logFilePath);
+                FileInfoBase logFile = FileSystemHelpers.FileInfoFromFileName(_logFilePath);
 
                 if (logFile.Length > MaxContinuousLogFileSize)
                 {
@@ -118,7 +118,7 @@ namespace Kudu.Core.Jobs
                     {
                         // roll log file, currently allow only 2 log files to exist at the same time
                         string prevLogFilePath = GetLogFilePath(JobPrevLogFileName);
-                        FileSystem.File.Delete(prevLogFilePath);
+                        FileSystemHelpers.DeleteFileSafe(prevLogFilePath);
                         logFile.MoveTo(prevLogFilePath);
                     }
                 }

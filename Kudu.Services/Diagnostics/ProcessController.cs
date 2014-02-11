@@ -25,18 +25,15 @@ namespace Kudu.Services.Performance
 
         private readonly ITracer _tracer;
         private readonly IEnvironment _environment;
-        private readonly IFileSystem _fileSystem;
         private readonly IDeploymentSettingsManager _settings;
 
         public ProcessController(ITracer tracer,
                                  IEnvironment environment,
-                                 IDeploymentSettingsManager settings,
-                                 IFileSystem fileSystem)
+                                 IDeploymentSettingsManager settings)
         {
             _tracer = tracer;
             _environment = environment;
             _settings = settings;
-            _fileSystem = fileSystem;
         }
 
         [HttpGet]
@@ -136,8 +133,8 @@ namespace Kudu.Services.Performance
                 var process = GetProcessById(id);
 
                 string dumpFile = Path.Combine(_environment.LogFilesPath, "minidump", "minidump.dmp");
-                FileSystemHelpers.EnsureDirectory(_fileSystem, Path.GetDirectoryName(dumpFile));
-                FileSystemHelpers.DeleteFileSafe(_fileSystem, dumpFile);
+                FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(dumpFile));
+                FileSystemHelpers.DeleteFileSafe(dumpFile);
 
                 try
                 {
@@ -150,7 +147,7 @@ namespace Kudu.Services.Performance
                 catch (Exception ex)
                 {
                     _tracer.TraceError(ex);
-                    FileSystemHelpers.DeleteFileSafe(_fileSystem, dumpFile);
+                    FileSystemHelpers.DeleteFileSafe(dumpFile);
                     return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
                 }
 
@@ -159,7 +156,7 @@ namespace Kudu.Services.Performance
                     string responseFileName = GetResponseFileName(process.ProcessName, "dmp");
 
                     HttpResponseMessage response = Request.CreateResponse();
-                    response.Content = new StreamContent(FileStreamWrapper.OpenRead(dumpFile, _fileSystem));
+                    response.Content = new StreamContent(FileStreamWrapper.OpenRead(dumpFile));
                     response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
                     response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
                     response.Content.Headers.ContentDisposition.FileName = responseFileName;
@@ -178,13 +175,13 @@ namespace Kudu.Services.Performance
                         }
                         finally
                         {
-                            FileSystemHelpers.DeleteFileSafe(_fileSystem, dumpFile);
+                            FileSystemHelpers.DeleteFileSafe(dumpFile);
                         }
 
                         foreach (var fileName in new[] { "sos.dll", "mscordacwks.dll" })
                         {
                             string filePath = Path.Combine(ProcessExtensions.ClrRuntimeDirectory, fileName);
-                            if (_fileSystem.File.Exists(filePath))
+                            if (FileSystemHelpers.FileExists(filePath))
                             {
                                 zip.AddFile(filePath, _tracer, String.Empty);
                             }
@@ -210,8 +207,8 @@ namespace Kudu.Services.Performance
                 var ext = dumpFormat == DumpFormat.DiagSession ? "diagsession" : "gcdump";
 
                 string dumpFile = Path.Combine(_environment.LogFilesPath, "minidump", "dump." + ext);
-                FileSystemHelpers.EnsureDirectory(_fileSystem, Path.GetDirectoryName(dumpFile));
-                FileSystemHelpers.DeleteFileSafe(_fileSystem, dumpFile);
+                FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(dumpFile));
+                FileSystemHelpers.DeleteFileSafe(dumpFile);
 
                 string resourcePath = GetResponseFileName(process.ProcessName, "gcdump");
                 try
@@ -225,7 +222,7 @@ namespace Kudu.Services.Performance
                 catch (Exception ex)
                 {
                     _tracer.TraceError(ex);
-                    FileSystemHelpers.DeleteFileSafe(_fileSystem, dumpFile);
+                    FileSystemHelpers.DeleteFileSafe(dumpFile);
                     return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
                 }
 
@@ -241,7 +238,7 @@ namespace Kudu.Services.Performance
                         }
                         finally
                         {
-                            FileSystemHelpers.DeleteFileSafe(_fileSystem, dumpFile);
+                            FileSystemHelpers.DeleteFileSafe(dumpFile);
                         }
                     });
                     return response;
@@ -250,7 +247,7 @@ namespace Kudu.Services.Performance
                 {
                     string responseFileName = GetResponseFileName(process.ProcessName, ext);
                     HttpResponseMessage response = Request.CreateResponse();
-                    response.Content = new StreamContent(FileStreamWrapper.OpenRead(dumpFile, _fileSystem));
+                    response.Content = new StreamContent(FileStreamWrapper.OpenRead(dumpFile));
                     response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
                     response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
                     response.Content.Headers.ContentDisposition.FileName = responseFileName;
@@ -438,13 +435,11 @@ namespace Kudu.Services.Performance
         public class FileStreamWrapper : DelegatingStream
         {
             private readonly string _path;
-            private readonly IFileSystem _fileSystem;
 
-            private FileStreamWrapper(string path, IFileSystem fileSystem)
-                : base(fileSystem.File.OpenRead(path))
+            private FileStreamWrapper(string path)
+                : base(FileSystemHelpers.OpenRead(path))
             {
                 _path = path;
-                _fileSystem = fileSystem;
             }
 
             protected override void Dispose(bool disposing)
@@ -455,13 +450,13 @@ namespace Kudu.Services.Performance
                 }
                 finally
                 {
-                    FileSystemHelpers.DeleteFileSafe(_fileSystem, _path);
+                    FileSystemHelpers.DeleteFileSafe(_path);
                 }
             }
 
-            public static Stream OpenRead(string path, IFileSystem fileSystem)
+            public static Stream OpenRead(string path)
             {
-                return new FileStreamWrapper(path, fileSystem);
+                return new FileStreamWrapper(path);
             }
         }
     }

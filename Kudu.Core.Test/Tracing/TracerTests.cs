@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Web;
 using System.Xml.Linq;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Moq;
 using Xunit;
@@ -24,11 +25,11 @@ namespace Kudu.Core.Test.Tracing
         {
             // Mock
             var path = @"x:\git\trace\trace.xml";
-            var fs = GetMockFileSystem();
             var traceLock = new OperationLockTests.MockOperationLock();
             var threads = 5;
             var tasks = new List<Task>(threads);
             var total = 0;
+            FileSystemHelpers.Instance = GetMockFileSystem();
 
             // Test writing 5*50 traces which > 200 limits
             // also test concurrency and locking with multiple threads
@@ -36,7 +37,7 @@ namespace Kudu.Core.Test.Tracing
             {
                 tasks.Add(Task.Factory.StartNew(() =>
                 {
-                    var tracer = new Tracer(fs, path, TraceLevel.Verbose, traceLock);
+                    var tracer = new Tracer(path, TraceLevel.Verbose, traceLock);
 
                     for (int j = 0; j < 50; ++j)
                     {
@@ -48,7 +49,7 @@ namespace Kudu.Core.Test.Tracing
 
             Task.WaitAll(tasks.ToArray());
 
-            XDocument document = ReadTraceFile(fs, path);
+            XDocument document = ReadTraceFile(path);
 
             // Assert
             Assert.True(total > Tracer.MaxLogEntries);
@@ -61,12 +62,12 @@ namespace Kudu.Core.Test.Tracing
         {
             // Mock
             var path = @"x:\git\trace\trace.xml";
-            var fs = GetMockFileSystem();
             var traceLock = new OperationLockTests.MockOperationLock();
-            var tracer = new Tracer(fs, path, traceLevel, traceLock);
+            var tracer = new Tracer(path, traceLevel, traceLock);
+            FileSystemHelpers.Instance = GetMockFileSystem();
 
             // Test
-            IntializeTraceFile(fs, path);
+            IntializeTraceFile(path);
 
             foreach (var request in requests)
             {
@@ -82,7 +83,7 @@ namespace Kudu.Core.Test.Tracing
                 }
             }
 
-            XDocument document = ReadTraceFile(fs, path);
+            XDocument document = ReadTraceFile(path);
             IEnumerable<RequestInfo> traces = document.Root.Elements().Select(e => new RequestInfo { Url = e.Attribute("url").Value });
 
             // Assert
@@ -151,18 +152,18 @@ namespace Kudu.Core.Test.Tracing
             }
         }
 
-        private void IntializeTraceFile(IFileSystem fs, string path)
+        private void IntializeTraceFile(string path)
         {
-            using (var writer = new StreamWriter(fs.File.Open(path, FileMode.Create, FileAccess.Write, FileShare.Read)))
+            using (var writer = new StreamWriter(FileSystemHelpers.OpenFile(path, FileMode.Create, FileAccess.Write, FileShare.Read)))
             {
                 writer.WriteLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
                 writer.WriteLine("<trace/>");
             }
         }
 
-        private XDocument ReadTraceFile(IFileSystem fs, string path)
+        private XDocument ReadTraceFile(string path)
         {
-            using (var stream = fs.File.OpenRead(path))
+            using (var stream = FileSystemHelpers.OpenRead(path))
             {
                 return XDocument.Load(stream);
             }
@@ -201,6 +202,8 @@ namespace Kudu.Core.Test.Tracing
 
             dirBase.Setup(d => d.CreateDirectory(It.IsAny<string>()))
                    .Returns(dirInfoBase.Object);
+
+            FileSystemHelpers.Instance = fs.Object;
 
             return fs.Object;
         }

@@ -10,6 +10,7 @@ using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Services.ServiceHookHandlers;
 using Moq;
@@ -97,6 +98,7 @@ namespace Kudu.Services.Test
                                                 IRepositoryFactory repositoryFactory = null,
                                                 IFileSystem fileSystem = null)
         {
+            FileSystemHelpers.Instance = fileSystem ?? Mock.Of<IFileSystem>();
             return new FetchHandler(tracer ?? Mock.Of<ITracer>(),
                                     deploymentManager ?? Mock.Of<IDeploymentManager>(),
                                     settings ?? Mock.Of<IDeploymentSettingsManager>(),
@@ -104,8 +106,7 @@ namespace Kudu.Services.Test
                                     deploymentLock ?? Mock.Of<IOperationLock>(),
                                     environment ?? Mock.Of<IEnvironment>(),
                                     new[] { serviceHookHandler ?? Mock.Of<IServiceHookHandler>() },
-                                    repositoryFactory ?? Mock.Of<IRepositoryFactory>(),
-                                    fileSystem ?? Mock.Of<IFileSystem>());
+                                    repositoryFactory ?? Mock.Of<IRepositoryFactory>());
         }
 
         private Mock<IFileSystem> GetFileSystem(string siteRoot, params DateTime[] writeTimeUtcs)

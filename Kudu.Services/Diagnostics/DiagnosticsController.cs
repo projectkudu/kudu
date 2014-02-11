@@ -23,7 +23,7 @@ namespace Kudu.Services.Performance
         private readonly ITracer _tracer;
         private readonly IApplicationLogsReader _applicationLogsReader;
 
-        public DiagnosticsController(IEnvironment environment, IFileSystem fileSystem, ITracer tracer, IApplicationLogsReader applicationLogsReader)
+        public DiagnosticsController(IEnvironment environment, ITracer tracer, IApplicationLogsReader applicationLogsReader)
         {
             // Setup the diagnostics service to collect information from the following paths:
             // 1. The deployments folder
@@ -35,7 +35,7 @@ namespace Kudu.Services.Performance
                 Path.Combine(environment.WebRootPath, Constants.NpmDebugLogFile),
             };
 
-            _settings = new JsonSettings(fileSystem, Path.Combine(environment.DiagnosticsPath, Constants.SettingsJsonFile));
+            _settings = new JsonSettings(Path.Combine(environment.DiagnosticsPath, Constants.SettingsJsonFile));
             _applicationLogsReader = applicationLogsReader;
             _tracer = tracer;
         }

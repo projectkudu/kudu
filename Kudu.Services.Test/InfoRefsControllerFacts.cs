@@ -10,6 +10,7 @@ using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Deployment;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Services.GitServer;
@@ -216,9 +217,10 @@ namespace Kudu.Services.Test
             fileSystem.SetupGet(fs => fs.Directory)
                       .Returns(directoryBase.Object);
             scenario.Setup(fileBase, directoryBase, webroot);
+            FileSystemHelpers.Instance = fileSystem.Object;
 
             // Act
-            bool result = DeploymentHelper.IsDefaultWebRootContent(webroot, fileSystem.Object);
+            bool result = DeploymentHelper.IsDefaultWebRootContent(webroot);
 
             // Assert
             scenario.Verify(result);
@@ -334,6 +336,9 @@ namespace Kudu.Services.Test
                 directoryBase.Setup(d => d.GetFileSystemEntries(webrootPath))
                              .Returns(new string[2]);
             }
+
+            FileSystemHelpers.Instance = fileSystem.Object;
+
             return fileSystem.Object;
         }
 

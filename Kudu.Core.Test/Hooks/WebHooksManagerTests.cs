@@ -6,6 +6,7 @@ using System.Threading;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Hooks;
+using Kudu.Core.Infrastructure;
 using Moq;
 using Xunit;
 
@@ -224,6 +225,8 @@ namespace Kudu.Core.Test.Deployment
                             _hooksFileContent = contents;
                         });
 
+            FileSystemHelpers.Instance = fileSystemMock.Object;
+
             return fileSystemMock;
         }
 
@@ -233,8 +236,9 @@ namespace Kudu.Core.Test.Deployment
             var environmentMock = BuildEnvironmentMock();
             var fileSystemMock = BuildFileSystemMock();
             var tracer = Mock.Of<ITracer>();
+            FileSystemHelpers.Instance = fileSystemMock.Object;
 
-            return new WebHooksManager(tracer, environmentMock.Object, hooksLockMock.Object, fileSystemMock.Object);
+            return new WebHooksManager(tracer, environmentMock.Object, hooksLockMock.Object);
         }
     }
 }

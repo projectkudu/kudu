@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Http;
 using System.Web.Http.Routing;
 using Kudu.Contracts.Editor;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Services.Infrastructure
 {
@@ -59,11 +60,11 @@ namespace Kudu.Services.Infrastructure
             }
         }
 
-        public static IEnumerable<VfsStatEntry> GetEntries(string baseAddress, IFileSystem fileSystem)
+        public static IEnumerable<VfsStatEntry> GetEntries(string baseAddress)
         {
             if (!String.IsNullOrEmpty(SystemDrivePath))
             {
-                var dir = fileSystem.DirectoryInfo.FromDirectoryName(SystemDrivePath + Path.DirectorySeparatorChar);
+                var dir = FileSystemHelpers.DirectoryInfoFromDirectoryName(SystemDrivePath + Path.DirectorySeparatorChar);
                 yield return new VfsStatEntry
                 {
                     Name = SystemDriveFolder,
@@ -76,7 +77,7 @@ namespace Kudu.Services.Infrastructure
 
             if (!String.IsNullOrEmpty(LocalSiteRootPath))
             {
-                var dir = fileSystem.DirectoryInfo.FromDirectoryName(LocalSiteRootPath + Path.DirectorySeparatorChar);
+                var dir = FileSystemHelpers.DirectoryInfoFromDirectoryName(LocalSiteRootPath + Path.DirectorySeparatorChar);
                 yield return new VfsStatEntry
                 {
                     Name = LocalSiteRootFolder,

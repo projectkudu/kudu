@@ -60,9 +60,8 @@ namespace Kudu.Console
             env.RepositoryPath = Path.Combine(env.SiteRootPath, settingsManager.GetRepositoryPath());
 
             // Setup the trace
-            IFileSystem fileSystem = new FileSystem();
             TraceLevel level = settingsManager.GetTraceLevel();
-            ITracer tracer = GetTracer(env, level, fileSystem);
+            ITracer tracer = GetTracer(env, level);
             ITraceFactory traceFactory = new TracerFactory(() => tracer);
 
             // Calculate the lock path
@@ -72,26 +71,25 @@ namespace Kudu.Console
             string hooksLockPath = Path.Combine(lockPath, Constants.HooksLockFile);
             string analyticsPath = env.AnalyticsPath;
 
-            IOperationLock deploymentLock = new LockFile(deploymentLockPath, traceFactory, fileSystem);
-            IOperationLock statusLock = new LockFile(statusLockPath, traceFactory, fileSystem);
-            IOperationLock hooksLock = new LockFile(hooksLockPath, traceFactory, fileSystem);
+            IOperationLock deploymentLock = new LockFile(deploymentLockPath, traceFactory);
+            IOperationLock statusLock = new LockFile(statusLockPath, traceFactory);
+            IOperationLock hooksLock = new LockFile(hooksLockPath, traceFactory);
 
             IBuildPropertyProvider buildPropertyProvider = new BuildPropertyProvider();
             ISiteBuilderFactory builderFactory = new SiteBuilderFactory(buildPropertyProvider, env);
 
             IRepository gitRepository = new GitExeRepository(env, settingsManager, traceFactory);
 
-            IAnalytics analytics = new Analytics(settingsManager, fileSystem, tracer, analyticsPath);
+            IAnalytics analytics = new Analytics(settingsManager, tracer, analyticsPath);
 
-            IWebHooksManager hooksManager = new WebHooksManager(tracer, env, hooksLock, fileSystem);
+            IWebHooksManager hooksManager = new WebHooksManager(tracer, env, hooksLock);
             var logger = new ConsoleLogger();
             IDeploymentManager deploymentManager = new DeploymentManager(builderFactory,
                                                           env,
-                                                          fileSystem,
                                                           traceFactory,
                                                           analytics,
                                                           settingsManager,
-                                                          new DeploymentStatusManager(env, fileSystem, statusLock),
+                                                          new DeploymentStatusManager(env, statusLock),
                                                           deploymentLock,
                                                           GetLogger(env, level, logger),
                                                           hooksManager);
@@ -127,19 +125,19 @@ namespace Kudu.Console
             return 0;
         }
 
-        private static ITracer GetTracer(IEnvironment env, TraceLevel level, IFileSystem fileSystem)
+        private static ITracer GetTracer(IEnvironment env, TraceLevel level)
         {
             if (level > TraceLevel.Off)
             {
                 string traceLockPath = Path.Combine(env.TracePath, Constants.TraceLockFile);
-                var traceLock = new LockFile(traceLockPath, NullTracerFactory.Instance, fileSystem);
+                var traceLock = new LockFile(traceLockPath, NullTracerFactory.Instance);
                 var tracer = new Tracer(Path.Combine(env.TracePath, Constants.TraceFile), level, traceLock);
                 string logFile = System.Environment.GetEnvironmentVariable(Constants.TraceFileEnvKey);
                 if (!String.IsNullOrEmpty(logFile))
                 {
                     // Kudu.exe is executed as part of git.exe (post-receive), giving its initial depth of 4 indentations
                     string logPath = Path.Combine(env.TracePath, logFile);
-                    return new CascadeTracer(tracer, new TextTracer(fileSystem, logPath, level, 4));
+                    return new CascadeTracer(tracer, new TextTracer(logPath, level, 4));
                 }
 
                 return tracer;
@@ -177,10 +175,9 @@ namespace Kudu.Console
 
             string binPath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
 
-            return new Kudu.Core.Environment(new FileSystem(),
-                                   root,
-                                   binPath,
-                                   repositoryPath);
+            return new Kudu.Core.Environment(root, 
+                binPath, 
+                repositoryPath);
         }
     }
 }

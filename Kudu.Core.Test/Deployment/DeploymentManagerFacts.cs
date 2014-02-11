@@ -5,6 +5,7 @@ using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
 using Kudu.Core.Hooks;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
 using Moq;
@@ -112,7 +113,7 @@ namespace Kudu.Core.Test.Deployment
         {
             builderFactory = builderFactory ?? Mock.Of<ISiteBuilderFactory>();
             environment = environment ?? Mock.Of<IEnvironment>();
-            fileSystem = fileSystem ?? Mock.Of<IFileSystem>();
+            FileSystemHelpers.Instance = fileSystem ?? Mock.Of<IFileSystem>();
             traceFactory = traceFactory ?? Mock.Of<ITraceFactory>();
             analytics = analytics ?? Mock.Of<IAnalytics>();
             settings = settings ?? Mock.Of<IDeploymentSettingsManager>();
@@ -120,7 +121,7 @@ namespace Kudu.Core.Test.Deployment
             deploymentLock = deploymentLock ?? Mock.Of<IOperationLock>();
             globalLogger = globalLogger ?? Mock.Of<ILogger>();
 
-            return new DeploymentManager(builderFactory, environment, fileSystem, traceFactory, analytics, settings, status, deploymentLock, globalLogger, hooksManager);
+            return new DeploymentManager(builderFactory, environment, traceFactory, analytics, settings, status, deploymentLock, globalLogger, hooksManager);
         }
     }
 }

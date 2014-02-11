@@ -31,22 +31,22 @@ namespace Kudu.Core.Deployment
                    (VsHelper.IsWap(path) || VsHelper.IsExecutableProject(path));
         }
 
-        public static bool IsDefaultWebRootContent(string webroot, IFileSystem fileSystem)
+        public static bool IsDefaultWebRootContent(string webroot)
         {
-            if (!fileSystem.Directory.Exists(webroot))
+            if (!FileSystemHelpers.DirectoryExists(webroot))
             {
                 // degenerated
                 return true;
             }
 
-            var entries = fileSystem.Directory.GetFileSystemEntries(webroot);
+            var entries = FileSystemHelpers.GetFileSystemEntries(webroot);
             if (entries.Length == 0)
             {
                 // degenerated
                 return true;
             }
 
-            if (entries.Length == 1 && fileSystem.File.Exists(entries[0]))
+            if (entries.Length == 1 && FileSystemHelpers.FileExists(entries[0]))
             {
                 string hoststarthtml = Path.Combine(webroot, Constants.HostingStartHtml);
                 return String.Equals(entries[0], hoststarthtml, StringComparison.OrdinalIgnoreCase);

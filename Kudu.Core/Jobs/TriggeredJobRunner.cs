@@ -15,15 +15,15 @@ namespace Kudu.Core.Jobs
     {
         private readonly LockFile _lockFile;
 
-        public TriggeredJobRunner(string jobName, IEnvironment environment, IFileSystem fileSystem, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
-            : base(jobName, Constants.TriggeredPath, environment, fileSystem, settings, traceFactory, analytics)
+        public TriggeredJobRunner(string jobName, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
+            : base(jobName, Constants.TriggeredPath, environment, settings, traceFactory, analytics)
         {
-            _lockFile = BuildTriggeredJobRunnerLockFile(JobDataPath, TraceFactory, FileSystem);
+            _lockFile = BuildTriggeredJobRunnerLockFile(JobDataPath, TraceFactory);
         }
 
-        public static LockFile BuildTriggeredJobRunnerLockFile(string jobDataPath, ITraceFactory traceFactory, IFileSystem fileSystem)
+        public static LockFile BuildTriggeredJobRunnerLockFile(string jobDataPath, ITraceFactory traceFactory)
         {
-            return new LockFile(Path.Combine(jobDataPath, "triggeredJob.lock"), traceFactory, fileSystem);
+            return new LockFile(Path.Combine(jobDataPath, "triggeredJob.lock"), traceFactory);
         }
 
         protected override string JobEnvironmentKeyPrefix
@@ -43,7 +43,7 @@ namespace Kudu.Core.Jobs
                 throw new ConflictException();
             }
 
-            TriggeredJobRunLogger logger = TriggeredJobRunLogger.LogNewRun(triggeredJob, Environment, FileSystem, TraceFactory, Settings);
+            TriggeredJobRunLogger logger = TriggeredJobRunLogger.LogNewRun(triggeredJob, Environment, TraceFactory, Settings);
             Debug.Assert(logger != null);
 
             try

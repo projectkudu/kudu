@@ -76,7 +76,7 @@ namespace Kudu.Core.Test
             var directory = new Mock<DirectoryBase>();
             var repository = new Mock<IRepository>();
             var repositoryFactory = new Mock<IRepositoryFactory>();
-            var lockFile = new DeploymentLockFile(lockFileName, Mock.Of<ITraceFactory>(), fileSystem.Object);
+            var lockFile = new DeploymentLockFile(lockFileName, Mock.Of<ITraceFactory>());
 
             // Setup
             fileSystem.SetupGet(f => f.Directory)
@@ -89,6 +89,7 @@ namespace Kudu.Core.Test
                 .Returns(Mock.Of<Stream>());
             repositoryFactory.Setup(f => f.GetRepository())
                              .Returns(repository.Object);
+            FileSystemHelpers.Instance = fileSystem.Object;
 
             // Test
             lockFile.RepositoryFactory = repositoryFactory.Object;
@@ -135,7 +136,9 @@ namespace Kudu.Core.Test
                 fileSystem = fs.Object;
             }
 
-            return new LockFile(path, traceFactory, fileSystem);
+            FileSystemHelpers.Instance = fileSystem;
+
+            return new LockFile(path, traceFactory);
         }
     }
 }

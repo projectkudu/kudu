@@ -15,14 +15,9 @@ namespace Kudu.Core.Tracing
         private readonly TraceLevel _level;
         private int _depth;
 
-        public TextTracer(string path, TraceLevel level)
-            : this(new FileSystem(), path, level)
+        public TextTracer(string path, TraceLevel level, int depth = 0)
         {
-        }
-
-        public TextTracer(IFileSystem fileSystem, string path, TraceLevel level, int depth = 0)
-        {
-            _logFile = new LogFileHelper(this, fileSystem, path);
+            _logFile = new LogFileHelper(this, path);
             _level = level;
             _depth = depth;
 
@@ -62,14 +57,12 @@ namespace Kudu.Core.Tracing
         private class LogFileHelper
         {
             private readonly ITracer _tracer;
-            private readonly IFileSystem _fileSystem;
             private readonly string _logFile;
             private Stopwatch _stopWatch;
 
-            public LogFileHelper(ITracer tracer, IFileSystem fileSystem, string logFile)
+            public LogFileHelper(ITracer tracer, string logFile)
             {
                 _tracer = tracer;
-                _fileSystem = fileSystem;
                 _logFile = logFile;
             }
 
@@ -141,7 +134,7 @@ namespace Kudu.Core.Tracing
                     }
                 }
 
-                using (StreamWriter writer = new StreamWriter(_fileSystem.File.Open(_logFile, FileMode.Append, FileAccess.Write, FileShare.ReadWrite)))
+                using (StreamWriter writer = new StreamWriter(FileSystemHelpers.OpenFile(_logFile, FileMode.Append, FileAccess.Write, FileShare.ReadWrite)))
                 {
                     writer.WriteLine(strb.ToString());
                 }
