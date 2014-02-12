@@ -242,7 +242,7 @@ namespace Kudu.Core.Jobs
             FileSystemHelpers.WriteAllTextToFile(jobSettingsPath, jobSettingsContent);
         }
 
-        private string GetJobSettingsPath(DirectoryInfoBase jobDirectory)
+        private static string GetJobSettingsPath(DirectoryInfoBase jobDirectory)
         {
             return Path.Combine(jobDirectory.FullName, "settings.job");
         }
