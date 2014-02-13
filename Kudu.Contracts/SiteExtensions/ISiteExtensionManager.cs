@@ -1,21 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Security.Policy;
 using System.Threading.Tasks;
 
 namespace Kudu.Contracts.SiteExtensions
 {
     public interface ISiteExtensionManager
     {
-        Task<IEnumerable<SiteExtensionInfo>> GetRemoteExtensions(string filter, string version);
+        IEnumerable<SiteExtensionInfo> GetRemoteExtensions(string filter, bool allowPrereleaseVersions);
 
-        Task<SiteExtensionInfo> GetRemoteExtension(string id, string version);
+        SiteExtensionInfo GetRemoteExtension(string id, string version);
 
-        Task<IEnumerable<SiteExtensionInfo>> GetLocalExtensions(string filter, bool update_info);
+        IEnumerable<SiteExtensionInfo> GetLocalExtensions(string filter, bool checkLatest);
 
-        Task<SiteExtensionInfo> GetLocalExtension(string id, bool update_info);
+        SiteExtensionInfo GetLocalExtension(string id, bool checkLatest);
 
-        Task<SiteExtensionInfo> InstallExtension(SiteExtensionInfo info);
+        SiteExtensionInfo InstallExtension(SiteExtensionInfo info);
 
-        Task<bool> UninstallExtension(string id);
+        bool UninstallExtension(string id);
     }
 }

@@ -1,0 +1,29 @@
+﻿img.icon {
+    height: 72px;
+    width: 72px;
+    display: inline-block;
+}
+
+.thumbnail {
+    text-align: center;
+    height: 300px;
+}
+
+.button-bottom-left {
+    position: absolute;
+    width: 70px;
+    left: 20px;
+    bottom: 25px;
+}
+
+.button-bottom-right {
+    position: absolute;
+    right: 20px;
+    bottom: 25px;
+}
+
+.text-description {
+    height: 50%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

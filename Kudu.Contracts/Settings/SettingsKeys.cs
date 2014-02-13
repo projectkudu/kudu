@@ -31,5 +31,6 @@
         public const string WebJobsStopped = "WEBJOBS_STOPPED";
         public const string PostDeploymentActionsDirectory = "SCM_POST_DEPLOYMENT_ACTIONS_PATH";
         public const string DisableSubmodules = "SCM_DISABLE_SUBMODULES";
+        public const string SiteExtensionRemoteUrl = "SCM_SITEEXTENSION_REMOTE_URL";
     }
 }
