@@ -162,7 +162,7 @@ fi" + "\n";
 
                     File.WriteAllText(GitCredentialHookPath, content);
 
-                    Execute(tracer, "config credential.helper !\"{0}\"", GitCredentialHookPath);
+                    Execute(tracer, "config credential.helper !'{0}'", GitCredentialHookPath);
                 }
 
                 using (tracer.Step("Setup post receive hook"))
@@ -367,7 +367,7 @@ echo $i > pushinfo
         {
             // Delete the lock file from the .git folder
             var lockFilesPath = Path.Combine(_gitExe.WorkingDirectory, ".git");
-            
+
             if (!Directory.Exists(lockFilesPath))
             {
                 return;
@@ -460,7 +460,7 @@ echo $i > pushinfo
         {
             try
             {
-                // Try adding a remote. In the event this fails, it might be the result of the previous remote deletion failing. 
+                // Try adding a remote. In the event this fails, it might be the result of the previous remote deletion failing.
                 // In this case, delete and re-add it.
                 AddRemote(remote, remoteAlias, branchName, tracer);
             }
