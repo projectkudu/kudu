@@ -4,10 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using Kudu.Client;
 using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
@@ -338,58 +336,46 @@ namespace Kudu.FunctionalTests.Jobs
         }
 
         [Fact]
-        public void CreateSameTriggeredJobTwiceFailsWithConflict()
+        public void CreateSameTriggeredJobTwiceUpdatesJobBinaries()
         {
-            RunScenario("CreateSameTriggeredJobTwiceFailsWithConflict", appManager =>
+            RunScenario("CreateSameTriggeredJobTwiceUpdatesJobBinaries", appManager =>
             {
-                HttpUnsuccessfulRequestException actualException = null;
-
+                const string secondScriptName = "myrun.cmd";
                 const string jobName = "job1";
+                const string jobPath = JobsBinPath + "/triggered/" + jobName + "/";
 
                 string zippedJobBinaries = BuildZippedJobBinaries();
 
                 appManager.JobsManager.CreateTriggeredJobAsync(jobName, zippedJobBinaries).Wait();
+                Assert.True(appManager.VfsManager.Exists(jobPath + "run.cmd"));
+                Assert.False(appManager.VfsManager.Exists(jobPath + secondScriptName));
 
-                try
-                {
-                    TestTracer.Trace("Second triggered job creation should fail with conflict");
-                    appManager.JobsManager.CreateTriggeredJobAsync(jobName, zippedJobBinaries).Wait();
-                }
-                catch (AggregateException ex)
-                {
-                    actualException = ex.InnerException as HttpUnsuccessfulRequestException;
-                }
-
-                Assert.NotNull(actualException);
-                Assert.Equal(HttpStatusCode.Conflict, actualException.ResponseMessage.StatusCode);
+                TestTracer.Trace("Second triggered job creation should replace current binaries");
+                appManager.JobsManager.CreateTriggeredJobAsync(jobName, secondScriptName, "echo test test test test").Wait();
+                Assert.False(appManager.VfsManager.Exists(jobPath + "run.cmd"));
+                Assert.True(appManager.VfsManager.Exists(jobPath + secondScriptName));
             });
         }
 
         [Fact]
-        public void CreateSameContinuousJobTwiceFailsWithConflict()
+        public void CreateSameContinuousJobTwiceUpdatesJobBinaries()
         {
-            RunScenario("CreateSameContinuousJobTwiceFailsWithConflict", appManager =>
+            RunScenario("CreateSameContinuousJobTwiceUpdatesJobBinaries", appManager =>
             {
-                HttpUnsuccessfulRequestException actualException = null;
-
+                const string secondScriptName = "myrun.cmd";
                 const string jobName = "job1";
+                const string jobPath = JobsBinPath + "/continuous/" + jobName + "/";
 
                 string zippedJobBinaries = BuildZippedJobBinaries();
 
                 appManager.JobsManager.CreateContinuousJobAsync(jobName, zippedJobBinaries).Wait();
+                Assert.True(appManager.VfsManager.Exists(jobPath + "run.cmd"));
+                Assert.False(appManager.VfsManager.Exists(jobPath + secondScriptName));
 
-                try
-                {
-                    TestTracer.Trace("Second triggered job creation should fail with conflict");
-                    appManager.JobsManager.CreateContinuousJobAsync(jobName, zippedJobBinaries).Wait();
-                }
-                catch (AggregateException ex)
-                {
-                    actualException = ex.InnerException as HttpUnsuccessfulRequestException;
-                }
-
-                Assert.NotNull(actualException);
-                Assert.Equal(HttpStatusCode.Conflict, actualException.ResponseMessage.StatusCode);
+                TestTracer.Trace("Second continuous job creation should replace current binaries");
+                appManager.JobsManager.CreateContinuousJobAsync(jobName, secondScriptName, "echo test test test test").Wait();
+                Assert.False(appManager.VfsManager.Exists(jobPath + "run.cmd"));
+                Assert.True(appManager.VfsManager.Exists(jobPath + secondScriptName));
             });
         }
 

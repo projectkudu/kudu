@@ -10,9 +10,9 @@ namespace Kudu.Contracts.Jobs
 
         TJob GetJob(string jobName);
 
-        TJob CreateJobFromZipStream(Stream zipStream, string jobName);
+        TJob CreateOrReplaceJobFromZipStream(Stream zipStream, string jobName);
 
-        TJob CreateJobFromFileStream(Stream scriptFileStream, string jobName, string scriptFileName);
+        TJob CreateOrReplaceJobFromFileStream(Stream scriptFileStream, string jobName, string scriptFileName);
 
         Task DeleteJobAsync(string jobName);
 

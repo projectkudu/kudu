@@ -232,11 +232,11 @@ namespace Kudu.Services.Jobs
                 if (content.Headers.ContentType != null &&
                     String.Equals(content.Headers.ContentType.MediaType, "application/zip", StringComparison.OrdinalIgnoreCase))
                 {
-                    job = jobsManager.CreateJobFromZipStream(fileStream, jobName);
+                    job = jobsManager.CreateOrReplaceJobFromZipStream(fileStream, jobName);
                 }
                 else
                 {
-                    job = jobsManager.CreateJobFromFileStream(fileStream, jobName, scriptFileName);
+                    job = jobsManager.CreateOrReplaceJobFromFileStream(fileStream, jobName, scriptFileName);
                 }
 
                 errorMessage = job.Error;
