@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Abstractions;
 using System.Threading;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
@@ -54,7 +53,7 @@ namespace Kudu.Core.Jobs
                 {
                     try
                     {
-                        RunJobInstance(triggeredJob, logger);
+                        RunJobInstance(triggeredJob, logger, logger.Id);
                     }
                     finally
                     {
@@ -77,4 +76,3 @@ namespace Kudu.Core.Jobs
         }
     }
 }
-
