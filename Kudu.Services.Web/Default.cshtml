@@ -8,6 +8,14 @@
     Page.Title = "Kudu Services";
 }
 
+@section PageHead {
+    <style type="text/css">
+        .row > div {
+            padding-bottom: 10px;
+        }
+    </style>
+}
+
 <div class="container">
     @{
         string commitFile = Server.MapPath("~/commit.txt");
