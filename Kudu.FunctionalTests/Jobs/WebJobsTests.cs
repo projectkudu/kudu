@@ -603,7 +603,6 @@ namespace Kudu.FunctionalTests.Jobs
             Assert.NotNull(actualTriggeredJobRun.Url);
 
             AssertUrlContentAsync(appManager, actualTriggeredJobRun.OutputUrl, expectedOutput).Wait();
-            AssertUrlContentAsync(appManager, actualTriggeredJobRun.ErrorUrl, expectedError).Wait();
         }
 
         private async Task AssertUrlContentAsync(ApplicationManager appManager, Uri requestUrl, string expectedContent)
