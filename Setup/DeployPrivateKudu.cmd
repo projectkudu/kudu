@@ -31,7 +31,10 @@ if NOT EXIST "%_CURLEXE%" (
 @echo.
 @call "%_CURLEXE%" -k -v -T "%_KUDUZIP%" "%_SCMURI%/zip"
 @echo.
-@call "%_CURLEXE%" -k -v -X DELETE "%_SCMURI%/diagnostics/processes/0"
+@call "%_CURLEXE%" -k -X DELETE "%_SCMURI%/diagnostics/processes/0" >nul 2>&1
+if "%ERRORLEVEL%" equ "0" (
+  @echo - w3wp.exe restarted 
+)
 
 exit /b 0
 
