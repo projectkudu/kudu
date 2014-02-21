@@ -10,7 +10,7 @@ using Kudu.Core;
 using Kudu.Core.Infrastructure;
 using Kudu.Services.Infrastructure;
 
-namespace Kudu.Services.Deployment
+namespace Kudu.Services.Zip
 {
     // Extending VfsControllerBase is a slight abuse since this has nothing to do with vfs. But there is a lot
     // of good reusable logic in there. We could consider extracting a more basic base class from it.
