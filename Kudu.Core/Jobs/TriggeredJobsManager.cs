@@ -44,7 +44,7 @@ namespace Kudu.Core.Jobs
             DirectoryInfoBase[] jobRunsDirectories = GetJobRunsDirectories(jobName);
             if (jobRunsDirectories == null)
             {
-                return triggeredJobHistory;
+                return null;
             }
 
             bool isLatest = true;

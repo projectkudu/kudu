@@ -9,7 +9,6 @@ using System.Web;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
-using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Newtonsoft.Json;
@@ -73,9 +72,9 @@ namespace Kudu.Core.Jobs
 
         public abstract TJob GetJob(string jobName);
 
-        public TJob CreateJobFromZipStream(Stream zipStream, string jobName)
+        public TJob CreateOrReplaceJobFromZipStream(Stream zipStream, string jobName)
         {
-            return CreateJob(jobName,
+            return CreateOrReplaceJob(jobName,
                 (jobDirectory) =>
                 {
                     using (var zipArchive = new ZipArchive(zipStream, ZipArchiveMode.Read))
@@ -85,9 +84,9 @@ namespace Kudu.Core.Jobs
                 });
         }
 
-        public TJob CreateJobFromFileStream(Stream scriptFileStream, string jobName, string scriptFileName)
+        public TJob CreateOrReplaceJobFromFileStream(Stream scriptFileStream, string jobName, string scriptFileName)
         {
-            return CreateJob(jobName,
+            return CreateOrReplaceJob(jobName,
                 (jobDirectory) =>
                 {
                     string filePath = Path.Combine(jobDirectory.FullName, scriptFileName);
@@ -98,12 +97,14 @@ namespace Kudu.Core.Jobs
                 });
         }
 
-        private TJob CreateJob(string jobName, Action<DirectoryInfoBase> writeJob)
+        private TJob CreateOrReplaceJob(string jobName, Action<DirectoryInfoBase> writeJob)
         {
             DirectoryInfoBase jobDirectory = GetJobDirectory(jobName);
             if (jobDirectory.Exists)
             {
-                throw new ConflictException();
+                // If job binaries already exist, remove them to make place for new job binaries
+                OperationManager.Attempt(
+                    () => FileSystemHelpers.DeleteDirectorySafe(jobDirectory.FullName, ignoreErrors: false));
             }
 
             jobDirectory.Create();

@@ -25,7 +25,7 @@ namespace Kudu.Core.Jobs
         private readonly ExternalCommandFactory _externalCommandFactory;
         private readonly IAnalytics _analytics;
 
-        protected BaseJobRunner(string jobName, string jobsTypePath, IEnvironment environment, 
+        protected BaseJobRunner(string jobName, string jobsTypePath, IEnvironment environment,
             IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
         {
             TraceFactory = traceFactory;
@@ -150,7 +150,7 @@ namespace Kudu.Core.Jobs
             }
         }
 
-        protected void RunJobInstance(JobBase job, IJobLogger logger)
+        protected void RunJobInstance(JobBase job, IJobLogger logger, string runId)
         {
             string scriptFileName = Path.GetFileName(job.ScriptFilePath);
             string scriptFileExtension = Path.GetExtension(job.ScriptFilePath);
@@ -169,6 +169,7 @@ namespace Kudu.Core.Jobs
                 exe.EnvironmentVariables[WellKnownEnvironmentVariables.JobName] = job.Name;
                 exe.EnvironmentVariables[WellKnownEnvironmentVariables.JobType] = job.JobType;
                 exe.EnvironmentVariables[WellKnownEnvironmentVariables.JobDataPath] = JobDataPath;
+                exe.EnvironmentVariables[WellKnownEnvironmentVariables.JobRunId] = runId;
                 exe.EnvironmentVariables[WellKnownEnvironmentVariables.JobExtraUrlPath] = JobsManagerBase.GetJobExtraInfoUrlFilePath(JobDataPath);
 
                 UpdateStatus(logger, "Running");
@@ -267,8 +268,16 @@ namespace Kudu.Core.Jobs
 
                 foreach (ConnectionStringSettings connectionString in settings.ConnectionStrings)
                 {
+                    ConnectionStringSettings currentConnectionString = config.ConnectionStrings.ConnectionStrings[connectionString.Name];
+                    if (currentConnectionString != null)
+                    {
+                        // Update provider name if connection string already exists and provider name is null (custom type)
+                        connectionString.ProviderName = connectionString.ProviderName ?? currentConnectionString.ProviderName;
+                    }
+
                     config.ConnectionStrings.ConnectionStrings.Remove(connectionString.Name);
                     config.ConnectionStrings.ConnectionStrings.Add(connectionString);
+
                     updateXml = true;
                 }
 

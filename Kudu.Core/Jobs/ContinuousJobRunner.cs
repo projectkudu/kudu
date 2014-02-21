@@ -84,7 +84,7 @@ namespace Kudu.Core.Jobs
                         _continuousJobLogger.StartingNewRun();
 
                         InitializeJobInstance(continuousJob, _continuousJobLogger);
-                        RunJobInstance(continuousJob, _continuousJobLogger);
+                        RunJobInstance(continuousJob, _continuousJobLogger, String.Empty);
 
                         if (_started == 1 && !IsDisabled)
                         {

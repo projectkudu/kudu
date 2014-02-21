@@ -24,6 +24,7 @@
         public const string JobType = "JOB_TYPE";
         public const string JobDataPath = "JOB_DATA_PATH";
         public const string JobExtraUrlPath = "JOB_EXTRA_INFO_URL_PATH";
+        public const string JobRunId = "JOB_RUN_ID";
 
         public const string CommitId = "SCM_COMMIT_ID";
     }

@@ -95,6 +95,14 @@ namespace Kudu.Core.Jobs
             ReportStatus(triggeredJobStatus);
         }
 
+        public string Id
+        {
+            get
+            {
+                return _id;
+            }
+        }
+
         protected override string HistoryPath
         {
             get { return _historyPath; }
