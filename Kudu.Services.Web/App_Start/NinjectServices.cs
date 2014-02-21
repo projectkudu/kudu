@@ -346,109 +346,110 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHandler<CustomGitRepositoryHandler>(kernel, "git-custom-repository", "git/{*path}");
 
             // Scm (deployment repository)
-            routes.MapHttpRoute("scm-info", "scm/info", new { controller = "LiveScm", action = "GetRepositoryInfo" });
-            routes.MapHttpRoute("scm-clean", "scm/clean", new { controller = "LiveScm", action = "Clean" });
-            routes.MapHttpRoute("scm-delete", "scm", new { controller = "LiveScm", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpRouteDual("scm-info", "scm/info", new { controller = "LiveScm", action = "GetRepositoryInfo" });
+            routes.MapHttpRouteDual("scm-clean", "scm/clean", new { controller = "LiveScm", action = "Clean" });
+            routes.MapHttpRouteDual("scm-delete", "scm", new { controller = "LiveScm", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
 
             // Scm files editor
-            routes.MapHttpRoute("scm-get-files", "scmvfs/{*path}", new { controller = "LiveScmEditor", action = "GetItem" }, new { verb = new HttpMethodConstraint("GET", "HEAD") });
-            routes.MapHttpRoute("scm-put-files", "scmvfs/{*path}", new { controller = "LiveScmEditor", action = "PutItem" }, new { verb = new HttpMethodConstraint("PUT") });
-            routes.MapHttpRoute("scm-delete-files", "scmvfs/{*path}", new { controller = "LiveScmEditor", action = "DeleteItem" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpRouteDual("scm-get-files", "scmvfs/{*path}", new { controller = "LiveScmEditor", action = "GetItem" }, new { verb = new HttpMethodConstraint("GET", "HEAD") });
+            routes.MapHttpRouteDual("scm-put-files", "scmvfs/{*path}", new { controller = "LiveScmEditor", action = "PutItem" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRouteDual("scm-delete-files", "scmvfs/{*path}", new { controller = "LiveScmEditor", action = "DeleteItem" }, new { verb = new HttpMethodConstraint("DELETE") });
 
             // Live files editor
-            routes.MapHttpRoute("vfs-get-files", "vfs/{*path}", new { controller = "Vfs", action = "GetItem" }, new { verb = new HttpMethodConstraint("GET", "HEAD") });
-            routes.MapHttpRoute("vfs-put-files", "vfs/{*path}", new { controller = "Vfs", action = "PutItem" }, new { verb = new HttpMethodConstraint("PUT") });
-            routes.MapHttpRoute("vfs-delete-files", "vfs/{*path}", new { controller = "Vfs", action = "DeleteItem" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpRouteDual("vfs-get-files", "vfs/{*path}", new { controller = "Vfs", action = "GetItem" }, new { verb = new HttpMethodConstraint("GET", "HEAD") });
+            routes.MapHttpRouteDual("vfs-put-files", "vfs/{*path}", new { controller = "Vfs", action = "PutItem" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRouteDual("vfs-delete-files", "vfs/{*path}", new { controller = "Vfs", action = "DeleteItem" }, new { verb = new HttpMethodConstraint("DELETE") });
 
             // Zip file handler
-            routes.MapHttpRoute("zip-get-files", "zip/{*path}", new { controller = "Zip", action = "GetItem" }, new { verb = new HttpMethodConstraint("GET", "HEAD") });
-            routes.MapHttpRoute("zip-put-files", "zip/{*path}", new { controller = "Zip", action = "PutItem" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRouteDual("zip-get-files", "zip/{*path}", new { controller = "Zip", action = "GetItem" }, new { verb = new HttpMethodConstraint("GET", "HEAD") });
+            routes.MapHttpRouteDual("zip-put-files", "zip/{*path}", new { controller = "Zip", action = "PutItem" }, new { verb = new HttpMethodConstraint("PUT") });
 
             // Live Command Line
-            routes.MapHttpRoute("execute-command", "command", new { controller = "Command", action = "ExecuteCommand" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpRouteDual("execute-command", "command", new { controller = "Command", action = "ExecuteCommand" }, new { verb = new HttpMethodConstraint("POST") });
 
             // Deployments
-            routes.MapHttpRoute("all-deployments", "deployments", new { controller = "Deployment", action = "GetDeployResults" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("one-deployment-get", "deployments/{id}", new { controller = "Deployment", action = "GetResult" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("one-deployment-put", "deployments/{id}", new { controller = "Deployment", action = "Deploy", id = RouteParameter.Optional }, new { verb = new HttpMethodConstraint("PUT") });
-            routes.MapHttpRoute("one-deployment-delete", "deployments/{id}", new { controller = "Deployment", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
-            routes.MapHttpRoute("one-deployment-log", "deployments/{id}/log", new { controller = "Deployment", action = "GetLogEntry" });
-            routes.MapHttpRoute("one-deployment-log-details", "deployments/{id}/log/{logId}", new { controller = "Deployment", action = "GetLogEntryDetails" });
+            routes.MapHttpRouteDual("all-deployments", "deployments", new { controller = "Deployment", action = "GetDeployResults" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("one-deployment-get", "deployments/{id}", new { controller = "Deployment", action = "GetResult" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("one-deployment-put", "deployments/{id}", new { controller = "Deployment", action = "Deploy", id = RouteParameter.Optional }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRouteDual("one-deployment-delete", "deployments/{id}", new { controller = "Deployment", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpRouteDual("one-deployment-log", "deployments/{id}/log", new { controller = "Deployment", action = "GetLogEntry" });
+            routes.MapHttpRouteDual("one-deployment-log-details", "deployments/{id}/log/{logId}", new { controller = "Deployment", action = "GetLogEntryDetails" });
 
             // SSHKey
-            routes.MapHttpRoute("get-sshkey", "sshkey", new { controller = "SSHKey", action = "GetPublicKey" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("put-sshkey", "sshkey", new { controller = "SSHKey", action = "SetPrivateKey" }, new { verb = new HttpMethodConstraint("PUT") });
-            routes.MapHttpRoute("delete-sshkey", "sshkey", new { controller = "SSHKey", action = "DeleteKeyPair" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpRouteDual("get-sshkey", "sshkey", new { controller = "SSHKey", action = "GetPublicKey" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("put-sshkey", "sshkey", new { controller = "SSHKey", action = "SetPrivateKey" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRouteDual("delete-sshkey", "sshkey", new { controller = "SSHKey", action = "DeleteKeyPair" }, new { verb = new HttpMethodConstraint("DELETE") });
 
             // Environment
-            routes.MapHttpRoute("get-env", "environment", new { controller = "Environment", action = "Get" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("get-env", "environment", new { controller = "Environment", action = "Get" }, new { verb = new HttpMethodConstraint("GET") });
 
             // Settings
-            routes.MapHttpRoute("set-setting", "settings", new { controller = "Settings", action = "Set" }, new { verb = new HttpMethodConstraint("POST") });
-            routes.MapHttpRoute("get-all-settings", "settings", new { controller = "Settings", action = "GetAll" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("get-setting", "settings/{key}", new { controller = "Settings", action = "Get" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("delete-setting", "settings/{key}", new { controller = "Settings", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpRouteDual("set-setting", "settings", new { controller = "Settings", action = "Set" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpRoute("get-all-settings-old", "settings", new { controller = "Settings", action = "GetAll" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("get-all-settings", "api/settings", new { controller = "Settings", action = "GetAll", version = 2 }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("get-setting", "settings/{key}", new { controller = "Settings", action = "Get" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("delete-setting", "settings/{key}", new { controller = "Settings", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
 
             // Diagnostics
-            routes.MapHttpRoute("diagnostics", "dump", new { controller = "Diagnostics", action = "GetLog" });
-            routes.MapHttpRoute("diagnostics-set-setting", "diagnostics/settings", new { controller = "Diagnostics", action = "Set" }, new { verb = new HttpMethodConstraint("POST") });
-            routes.MapHttpRoute("diagnostics-get-all-settings", "diagnostics/settings", new { controller = "Diagnostics", action = "GetAll" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("diagnostics-get-setting", "diagnostics/settings/{key}", new { controller = "Diagnostics", action = "Get" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("diagnostics-delete-setting", "diagnostics/settings/{key}", new { controller = "Diagnostics", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpRouteDual("diagnostics", "dump", new { controller = "Diagnostics", action = "GetLog" });
+            routes.MapHttpRouteDual("diagnostics-set-setting", "diagnostics/settings", new { controller = "Diagnostics", action = "Set" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpRouteDual("diagnostics-get-all-settings", "diagnostics/settings", new { controller = "Diagnostics", action = "GetAll" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("diagnostics-get-setting", "diagnostics/settings/{key}", new { controller = "Diagnostics", action = "Get" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("diagnostics-delete-setting", "diagnostics/settings/{key}", new { controller = "Diagnostics", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
 
             // Logs
-            routes.MapHandler<LogStreamHandler>(kernel, "logstream", "logstream/{*path}");
+            routes.MapHandlerDual<LogStreamHandler>(kernel, "logstream", "logstream/{*path}");
             routes.MapHttpRoute("recent-logs", "api/logs/recent", new { controller = "Diagnostics", action = "GetRecentLogs" }, new { verb = new HttpMethodConstraint("GET") });
 
             // Processes
-            routes.MapHttpRoute("all-processes", "diagnostics/processes", new { controller = "Process", action = "GetAllProcesses" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("one-process-get", "diagnostics/processes/{id}", new { controller = "Process", action = "GetProcess" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("one-process-delete", "diagnostics/processes/{id}", new { controller = "Process", action = "KillProcess" }, new { verb = new HttpMethodConstraint("DELETE") });
-            routes.MapHttpRoute("one-process-dump", "diagnostics/processes/{id}/dump", new { controller = "Process", action = "MiniDump" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("all-processes", "diagnostics/processes", new { controller = "Process", action = "GetAllProcesses" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("one-process-get", "diagnostics/processes/{id}", new { controller = "Process", action = "GetProcess" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("one-process-delete", "diagnostics/processes/{id}", new { controller = "Process", action = "KillProcess" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpRouteDual("one-process-dump", "diagnostics/processes/{id}/dump", new { controller = "Process", action = "MiniDump" }, new { verb = new HttpMethodConstraint("GET") });
             if (ProcessExtensions.SupportGCDump)
             {
-                routes.MapHttpRoute("one-process-gcdump", "diagnostics/processes/{id}/gcdump", new { controller = "Process", action = "GCDump" }, new { verb = new HttpMethodConstraint("GET") });
+                routes.MapHttpRouteDual("one-process-gcdump", "diagnostics/processes/{id}/gcdump", new { controller = "Process", action = "GCDump" }, new { verb = new HttpMethodConstraint("GET") });
             }
-            routes.MapHttpRoute("all-threads", "diagnostics/processes/{id}/threads", new { controller = "Process", action = "GetAllThreads" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("one-process-thread", "diagnostics/processes/{processId}/threads/{threadId}", new { controller = "Process", action = "GetThread" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("all-threads", "diagnostics/processes/{id}/threads", new { controller = "Process", action = "GetAllThreads" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("one-process-thread", "diagnostics/processes/{processId}/threads/{threadId}", new { controller = "Process", action = "GetThread" }, new { verb = new HttpMethodConstraint("GET") });
 
             // Runtime
-            routes.MapHttpRoute("runtime", "diagnostics/runtime", new { controller = "Runtime", action = "GetRuntimeVersions" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("runtime", "diagnostics/runtime", new { controller = "Runtime", action = "GetRuntimeVersions" }, new { verb = new HttpMethodConstraint("GET") });
 
             // Hooks
-            routes.MapHttpRoute("unsubscribe-hook", "hooks/{id}", new { controller = "WebHooks", action = "Unsubscribe" }, new { verb = new HttpMethodConstraint("DELETE") });
-            routes.MapHttpRoute("get-hook", "hooks/{id}", new { controller = "WebHooks", action = "GetWebHook" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("publish-hooks", "hooks/publish/{hookEventType}", new { controller = "WebHooks", action = "PublishEvent" }, new { verb = new HttpMethodConstraint("POST") });
-            routes.MapHttpRoute("get-hooks", "hooks", new { controller = "WebHooks", action = "GetWebHooks" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("subscribe-hook", "hooks", new { controller = "WebHooks", action = "Subscribe" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpRouteDual("unsubscribe-hook", "hooks/{id}", new { controller = "WebHooks", action = "Unsubscribe" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpRouteDual("get-hook", "hooks/{id}", new { controller = "WebHooks", action = "GetWebHook" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("publish-hooks", "hooks/publish/{hookEventType}", new { controller = "WebHooks", action = "PublishEvent" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpRouteDual("get-hooks", "hooks", new { controller = "WebHooks", action = "GetWebHooks" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("subscribe-hook", "hooks", new { controller = "WebHooks", action = "Subscribe" }, new { verb = new HttpMethodConstraint("POST") });
 
             // Jobs
-            routes.MapHttpRoute("list-all-jobs", "jobs", new { controller = "Jobs", action = "ListAllJobs" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("list-triggered-jobs", "jobs/triggered", new { controller = "Jobs", action = "ListTriggeredJobs" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("get-triggered-job", "jobs/triggered/{jobName}", new { controller = "Jobs", action = "GetTriggeredJob" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("invoke-triggered-job", "jobs/triggered/{jobName}/run", new { controller = "Jobs", action = "InvokeTriggeredJob" }, new { verb = new HttpMethodConstraint("POST") });
-            routes.MapHttpRoute("get-triggered-job-history", "jobs/triggered/{jobName}/history", new { controller = "Jobs", action = "GetTriggeredJobHistory" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("get-triggered-job-run", "jobs/triggered/{jobName}/history/{runId}", new { controller = "Jobs", action = "GetTriggeredJobRun" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("create-triggered-job", "jobs/triggered/{jobName}", new { controller = "Jobs", action = "CreateTriggeredJob" }, new { verb = new HttpMethodConstraint("PUT") });
-            routes.MapHttpRoute("remove-triggered-job", "jobs/triggered/{jobName}", new { controller = "Jobs", action = "RemoveTriggeredJob" }, new { verb = new HttpMethodConstraint("DELETE") });
-            routes.MapHttpRoute("get-triggered-job-settings", "jobs/triggered/{jobName}/settings", new { controller = "Jobs", action = "GetTriggeredJobSettings" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("set-triggered-job-settings", "jobs/triggered/{jobName}/settings", new { controller = "Jobs", action = "SetTriggeredJobSettings" }, new { verb = new HttpMethodConstraint("PUT") });
-            routes.MapHttpRoute("list-continuous-jobs", "jobs/continuous", new { controller = "Jobs", action = "ListContinuousJobs" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("get-continuous-job", "jobs/continuous/{jobName}", new { controller = "Jobs", action = "GetContinuousJob" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("disable-continuous-job", "jobs/continuous/{jobName}/stop", new { controller = "Jobs", action = "DisableContinuousJob" }, new { verb = new HttpMethodConstraint("POST") });
-            routes.MapHttpRoute("enable-continuous-job", "jobs/continuous/{jobName}/start", new { controller = "Jobs", action = "EnableContinuousJob" }, new { verb = new HttpMethodConstraint("POST") });
-            routes.MapHttpRoute("create-continuous-job", "jobs/continuous/{jobName}", new { controller = "Jobs", action = "CreateContinuousJob" }, new { verb = new HttpMethodConstraint("PUT") });
-            routes.MapHttpRoute("remove-continuous-job", "jobs/continuous/{jobName}", new { controller = "Jobs", action = "RemoveContinuousJob" }, new { verb = new HttpMethodConstraint("DELETE") });
-            routes.MapHttpRoute("get-continuous-job-settings", "jobs/continuous/{jobName}/settings", new { controller = "Jobs", action = "GetContinuousJobSettings" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("set-continuous-job-settings", "jobs/continuous/{jobName}/settings", new { controller = "Jobs", action = "SetContinuousJobSettings" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRouteDual("list-all-jobs", "jobs", new { controller = "Jobs", action = "ListAllJobs" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("list-triggered-jobs", "jobs/triggered", new { controller = "Jobs", action = "ListTriggeredJobs" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("get-triggered-job", "jobs/triggered/{jobName}", new { controller = "Jobs", action = "GetTriggeredJob" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("invoke-triggered-job", "jobs/triggered/{jobName}/run", new { controller = "Jobs", action = "InvokeTriggeredJob" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpRouteDual("get-triggered-job-history", "jobs/triggered/{jobName}/history", new { controller = "Jobs", action = "GetTriggeredJobHistory" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("get-triggered-job-run", "jobs/triggered/{jobName}/history/{runId}", new { controller = "Jobs", action = "GetTriggeredJobRun" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("create-triggered-job", "jobs/triggered/{jobName}", new { controller = "Jobs", action = "CreateTriggeredJob" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRouteDual("remove-triggered-job", "jobs/triggered/{jobName}", new { controller = "Jobs", action = "RemoveTriggeredJob" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpRouteDual("get-triggered-job-settings", "jobs/triggered/{jobName}/settings", new { controller = "Jobs", action = "GetTriggeredJobSettings" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("set-triggered-job-settings", "jobs/triggered/{jobName}/settings", new { controller = "Jobs", action = "SetTriggeredJobSettings" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRouteDual("list-continuous-jobs", "jobs/continuous", new { controller = "Jobs", action = "ListContinuousJobs" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("get-continuous-job", "jobs/continuous/{jobName}", new { controller = "Jobs", action = "GetContinuousJob" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("disable-continuous-job", "jobs/continuous/{jobName}/stop", new { controller = "Jobs", action = "DisableContinuousJob" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpRouteDual("enable-continuous-job", "jobs/continuous/{jobName}/start", new { controller = "Jobs", action = "EnableContinuousJob" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpRouteDual("create-continuous-job", "jobs/continuous/{jobName}", new { controller = "Jobs", action = "CreateContinuousJob" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRouteDual("remove-continuous-job", "jobs/continuous/{jobName}", new { controller = "Jobs", action = "RemoveContinuousJob" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpRouteDual("get-continuous-job-settings", "jobs/continuous/{jobName}/settings", new { controller = "Jobs", action = "GetContinuousJobSettings" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("set-continuous-job-settings", "jobs/continuous/{jobName}/settings", new { controller = "Jobs", action = "SetContinuousJobSettings" }, new { verb = new HttpMethodConstraint("PUT") });
 
             // SiteExtensions
-            routes.MapHttpRoute("api-get-remote-extensions", "api/extensions/remote", new { controller = "SiteExtension", action = "GetRemoteExtensions" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("api-get-remote-extension", "api/extensions/remote/{id}", new { controller = "SiteExtension", action = "GetRemoteExtension" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("api-get-local-extensions", "api/extensions/local", new { controller = "SiteExtension", action = "GetLocalExtensions" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("api-get-local-extension", "api/extensions/local/{id}", new { controller = "SiteExtension", action = "GetLocalExtension" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRoute("api-uninstall-extension", "api/extensions/local/{id}", new { controller = "SiteExtension", action = "UninstallExtension" }, new { verb = new HttpMethodConstraint("DELETE") });
-            routes.MapHttpRoute("api-install-update-extension", "api/extensions", new { controller = "SiteExtension", action = "InstallExtension" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpRouteDual("api-get-remote-extensions", "api/extensions/remote", new { controller = "SiteExtension", action = "GetRemoteExtensions" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("api-get-remote-extension", "api/extensions/remote/{id}", new { controller = "SiteExtension", action = "GetRemoteExtension" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("api-get-local-extensions", "api/extensions/local", new { controller = "SiteExtension", action = "GetLocalExtensions" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("api-get-local-extension", "api/extensions/local/{id}", new { controller = "SiteExtension", action = "GetLocalExtension" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("api-uninstall-extension", "api/extensions/local/{id}", new { controller = "SiteExtension", action = "UninstallExtension" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpRouteDual("api-install-update-extension", "api/extensions", new { controller = "SiteExtension", action = "InstallExtension" }, new { verb = new HttpMethodConstraint("POST") });
         }
 
         // Perform migration tasks to deal with legacy sites that had different file layout

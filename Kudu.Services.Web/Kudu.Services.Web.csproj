@@ -138,6 +138,7 @@
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="Infrastruture\HttpHandlerRouteHandler.cs" />
+    <Compile Include="Infrastruture\RouteCollectionExtensions.cs" />
     <Compile Include="Security\BlockLocalhostModule.cs" />
     <Compile Include="Services\DeploymentEnvironment.cs" />
     <Compile Include="Services\NinjectWebApiDependencyResolver.cs" />
