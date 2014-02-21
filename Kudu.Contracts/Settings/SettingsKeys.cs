@@ -29,5 +29,6 @@
         public const string JobsIdleTimeoutInSeconds = "SCM_JOBS_IDLE_TIMEOUT";
         public const string MaxJobRunsHistoryCount = "SCM_MAX_JOB_RUNS";
         public const string PostDeploymentActionsDirectory = "SCM_POST_DEPLOYMENT_ACTIONS_PATH";
+        public const string DisableSubmodules = "SCM_DISABLE_SUBMODULES";
     }
 }

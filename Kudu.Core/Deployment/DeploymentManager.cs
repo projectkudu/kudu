@@ -195,11 +195,14 @@ namespace Kudu.Core.Deployment
                         }
                     }
 
-                    using (tracer.Step("Updating submodules"))
+                    if (_settings.ShouldUpdateSubmodules())
                     {
-                        innerLogger = logger.Log(Resources.Log_UpdatingSubmodules);
+                        using (tracer.Step("Updating submodules"))
+                        {
+                            innerLogger = logger.Log(Resources.Log_UpdatingSubmodules);
 
-                        repository.UpdateSubmodules();
+                            repository.UpdateSubmodules();
+                        }
                     }
 
                     if (clean)
