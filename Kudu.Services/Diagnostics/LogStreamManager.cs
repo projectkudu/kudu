@@ -266,6 +266,15 @@ namespace Kudu.Services.Performance
             _filter = context.Request.QueryString[FilterQueryKey];
 
             string[] paths = context.Request.Path.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+
+            // If using /api/logstream instead of /logstream, yank the first token
+            if (paths[0].Equals("api", StringComparison.OrdinalIgnoreCase))
+            {
+                var tmp = new string[paths.Length - 1];
+                Array.Copy(paths, 1, tmp, 0, paths.Length - 1);
+                paths = tmp;
+            }
+
             paths[0] = _logPath;
             _enableTrace = paths.Length == 1;
 

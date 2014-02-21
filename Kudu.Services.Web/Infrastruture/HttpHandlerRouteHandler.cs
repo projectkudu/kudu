@@ -21,14 +21,4 @@ namespace Kudu.Services.Web.Infrastructure
             return (IHttpHandler)_kernel.Get(_handlerType);
         }
     }
-
-    public static class HttpHandlerExtensions
-    {
-        public static RouteBase MapHandler<THandler>(this RouteCollection routes, IKernel kernel, string name, string url)
-        {
-            var route = new Route(url, new HttpHandlerRouteHandler(kernel, typeof(THandler)));
-            routes.Add(name, route);
-            return route;
-        }
-    }
 }
