@@ -22,6 +22,7 @@ function LoadConsoleV2() {
     function _changeDir(value) {
         //for the very first time, value is empty but we know that the file explorer root is appRoot
         value = value || window.KuduExec.appRoot;
+        curWorkingDir(value);
         if (getShell().toUpperCase() === "POWERSHELL") {
             //PowerShell doesn't return a new line after CD, so let's add a new line in the UI 
             DisplayAndUpdate({ Error: "", Output: "\n" });
@@ -209,6 +210,8 @@ function LoadConsoleV2() {
                     window.KuduExec.appRoot = windowsPath;
                 }
                 curWorkingDir(windowsPath);
+                if (window.KuduExec.updateFileSystemWatcher)
+                    window.KuduExec.updateFileSystemWatcher(windowsPath);
             }
         }
     }
