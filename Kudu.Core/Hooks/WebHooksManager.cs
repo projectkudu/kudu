@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Abstractions;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -207,25 +206,28 @@ namespace Kudu.Core.Hooks
 
         private static HttpClient CreateHttpClient(WebHook webHook)
         {
-            HttpClient httpClient = null;
+            var webRequestHandler = new WebRequestHandler();
+
+            var hookAddress = new Uri(webHook.HookAddress);
+            string userInfo = hookAddress.UserInfo;
+            if (userInfo != null)
+            {
+                string[] userInfos = userInfo.Split(':');
+                if (userInfos.Length == 2)
+                {
+                    webRequestHandler.Credentials = new NetworkCredential(userInfos[0], userInfos[1]);
+                }
+            }
 
             if (webHook.InsecureSsl)
             {
-                var webRequestHandler = new WebRequestHandler()
-                {
-                    ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true
-                };
-
-                httpClient = new HttpClient(webRequestHandler);
+                webRequestHandler.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
             }
-            else
+
+            return new HttpClient(webRequestHandler)
             {
-                httpClient = new HttpClient();
-            }
-
-            httpClient.Timeout = TimeSpan.FromSeconds(10);
-
-            return httpClient;
+                Timeout = TimeSpan.FromSeconds(10)
+            };
         }
 
         private async Task PublishToHooksAsync(string jsonString, string hookType)
