@@ -39,13 +39,6 @@ namespace Kudu.Core.Infrastructure
 
         public void SetHomePath(string homePath)
         {
-            // SSH requires HOME directory and applies to git, npm and (CustomBuilder) cmd
-            // Don't set it if it's already set, as would be the case in Azure
-            if (String.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("HOME")))
-            {
-                EnvironmentVariables["HOME"] = homePath;
-            }
-
             EnvironmentVariables["HOMEDRIVE"] = homePath.Substring(0, homePath.IndexOf(':') + 1);
             EnvironmentVariables["HOMEPATH"] = homePath.Substring(homePath.IndexOf(':') + 1);
         }
