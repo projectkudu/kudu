@@ -149,6 +149,11 @@ namespace Kudu.Contracts.Settings
             return settings.GetValue(SettingsKeys.NoRepository) == "1";
         }
 
+        public static bool ShouldUpdateSubmodules(this IDeploymentSettingsManager settings)
+        {
+            return settings.GetValue(SettingsKeys.DisableSubmodules) != "1";
+        }
+
         public static string GetWebSitePolicy(this IDeploymentSettingsManager settings)
         {
             // Azure may flow this as typical env variables
