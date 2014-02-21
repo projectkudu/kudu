@@ -7,6 +7,7 @@ using System.IO.Abstractions;
 using System.Net;
 using System.Net.Http.Formatting;
 using System.Web;
+using System.Web.Hosting;
 using System.Web.Http;
 using System.Web.Routing;
 using Kudu.Contracts.Infrastructure;
@@ -117,6 +118,9 @@ namespace Kudu.Services.Web.App_Start
         private static void RegisterServices(IKernel kernel)
         {
             var serverConfiguration = new ServerConfiguration();
+
+            // Make sure %HOME% is correctly set
+            EnsureHomeEnvironmentVariable();
 
             IEnvironment environment = GetEnvironment();
 
@@ -571,6 +575,18 @@ namespace Kudu.Services.Web.App_Start
         private static string GetSettingsPath(IEnvironment environment)
         {
             return Path.Combine(environment.DeploymentsPath, Constants.DeploySettingsPath);
+        }
+
+        private static void EnsureHomeEnvironmentVariable()
+        {
+            // If MapPath("/_app") returns a valid folder, set %HOME% to that, regardless of
+            // it current value. This is the non-Azure code path.
+            string path = HostingEnvironment.MapPath(Constants.MappedSite);
+            if (Directory.Exists(path))
+            {
+                path = Path.GetFullPath(path);
+                System.Environment.SetEnvironmentVariable("HOME", path);
+            }
         }
 
         private static IEnvironment GetEnvironment(IDeploymentSettingsManager settings = null)
