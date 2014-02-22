@@ -7,6 +7,6 @@ namespace Kudu.Services.Diagnostics
     public class RuntimeInfo
     {
         [DataMember(Name = "nodejs")]
-        public IEnumerable<Dictionary<string, string>> NodeVerions { get; set; }
+        public IEnumerable<Dictionary<string, string>> NodeVersions { get; set; }
     }
 }

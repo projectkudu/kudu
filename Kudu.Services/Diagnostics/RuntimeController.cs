@@ -26,6 +26,8 @@ namespace Kudu.Services.Diagnostics
 
         protected override void Initialize(HttpControllerContext controllerContext)
         {
+            base.Initialize(controllerContext);
+
             controllerContext.Configuration.Formatters.Clear();
 
             var settings = new JsonSerializerSettings
@@ -42,7 +44,7 @@ namespace Kudu.Services.Diagnostics
             {
                 return new RuntimeInfo
                 {
-                    NodeVerions = GetNodeVersions()
+                    NodeVersions = GetNodeVersions()
                 };
             }
         }

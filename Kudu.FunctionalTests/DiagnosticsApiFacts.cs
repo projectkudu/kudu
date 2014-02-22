@@ -12,6 +12,7 @@ using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Diagnostics;
 using Kudu.Core.Infrastructure;
 using Kudu.FunctionalTests.Infrastructure;
+using Kudu.Services.Diagnostics;
 using Kudu.TestHarness;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -246,6 +247,10 @@ namespace Kudu.FunctionalTests
                 // Ensure trace
                 string trace = await appManager.VfsManager.ReadAllTextAsync("LogFiles/Git/trace/trace.xml");
                 Assert.Contains(path, trace, StringComparison.OrdinalIgnoreCase);
+
+                // Test runtime object by checking for one Node version
+                RuntimeInfo runtimeInfo  = await appManager.RuntimeManager.GetRuntimeInfo();
+                Assert.True(runtimeInfo.NodeVersions.Any(dict => dict["version"] == "0.6.20"));
             });
         }
 
