@@ -192,7 +192,7 @@
     <Content Include="Scripts\deployedJob.html.template">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Scripts\deploy_web_job.cmd">
+    <Content Include="Scripts\deploy_webjobs.cmd">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Scripts\postdeployment">

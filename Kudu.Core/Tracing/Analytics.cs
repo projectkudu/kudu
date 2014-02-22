@@ -33,9 +33,9 @@ namespace Kudu.Core.Tracing
         public void JobStarted(string jobName, string scriptExtension, string jobType, string siteMode)
         {
             var o = new KuduSiteExtensionLogEvent("JobStarted");
-            o["JobName"] = jobName;
+            o["WebJobsName"] = jobName;
             o["ScriptExtension"] = scriptExtension;
-            o["JobType"] = jobType;
+            o["WebJobsType"] = jobType;
             o["SiteMode"] = siteMode;
 
             _siteExtensionLogManager.Log(o);

@@ -165,12 +165,12 @@ namespace Kudu.Core.Jobs
 
                 // Set environment variable to be able to identify all processes spawned for this job
                 exe.EnvironmentVariables[GetJobEnvironmentKey()] = "true";
-                exe.EnvironmentVariables[WellKnownEnvironmentVariables.JobRootPath] = WorkingDirectory;
-                exe.EnvironmentVariables[WellKnownEnvironmentVariables.JobName] = job.Name;
-                exe.EnvironmentVariables[WellKnownEnvironmentVariables.JobType] = job.JobType;
-                exe.EnvironmentVariables[WellKnownEnvironmentVariables.JobDataPath] = JobDataPath;
-                exe.EnvironmentVariables[WellKnownEnvironmentVariables.JobRunId] = runId;
-                exe.EnvironmentVariables[WellKnownEnvironmentVariables.JobExtraUrlPath] = JobsManagerBase.GetJobExtraInfoUrlFilePath(JobDataPath);
+                exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsRootPath] = WorkingDirectory;
+                exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsName] = job.Name;
+                exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsType] = job.JobType;
+                exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsDataPath] = JobDataPath;
+                exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsRunId] = runId;
+                exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsExtraUrlPath] = JobsManagerBase.GetJobExtraInfoUrlFilePath(JobDataPath);
 
                 UpdateStatus(logger, "Running");
 
