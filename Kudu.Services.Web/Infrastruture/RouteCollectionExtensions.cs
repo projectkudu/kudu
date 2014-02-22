@@ -10,12 +10,7 @@ namespace Kudu.Services.Web.Infrastructure
 {
     public static class RouteCollectionExtensions
     {
-        public static void MapHttpRouteDual(this RouteCollection routes, string name, string routeTemplate, object defaults)
-        {
-            routes.MapHttpRouteDual(name, routeTemplate, defaults, constraints: null);
-        }
-
-        public static void MapHttpRouteDual(this RouteCollection routes, string name, string routeTemplate, object defaults, object constraints)
+        public static void MapHttpRouteDual(this RouteCollection routes, string name, string routeTemplate, object defaults, object constraints = null)
         {
             routes.MapHttpRoute(name + "-old", routeTemplate, defaults, constraints);
             routes.MapHttpRoute(name, "api/" + routeTemplate, defaults, constraints);
