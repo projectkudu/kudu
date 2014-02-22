@@ -182,25 +182,30 @@ namespace Kudu.Services
             {
                 while (!process.HasExited)
                 {
-                    string line;
-                    while ((line = await ReadLineAsync(textReader, strb)) != null)
+                    StreamResult line;
+                    while ((line = await ReadLineAsync(textReader, strb.Clear())) != null)
                     {
-                        strb.Clear();
 
                         if (isError)
                         {
                             lock (Connection)
                             {
-                                Connection.Send(connectionId, new { Error = line, ProcessId = process.Id, RunningProcessesCount = _processes.Count }).Wait();
-                                Thread.Sleep(10);
+                                do
+                                {
+                                    Connection.Send(connectionId, new { Error = line.Value, ProcessId = process.Id, RunningProcessesCount = _processes.Count }).Wait();
+                                    Thread.Sleep(10);
+                                } while (line.HasNext && (line = ReadLineAsync(textReader, strb.Clear()).Result) != null);
                             }
                         }
                         else
                         {
                             lock (Connection)
                             {
-                                Connection.Send(connectionId, new { Output = line, ProcessId = process.Id, RunningProcessesCount = _processes.Count }).Wait();
-                                Thread.Sleep(10);
+                                do
+                                {
+                                    Connection.Send(connectionId, new { Output = line.Value, ProcessId = process.Id, RunningProcessesCount = _processes.Count }).Wait();
+                                    Thread.Sleep(10);
+                                } while (line.HasNext && (line = ReadLineAsync(textReader, strb.Clear()).Result) != null);
                             }
                         }
                     }
@@ -213,7 +218,7 @@ namespace Kudu.Services
         }
 
         // Unlike normal ReadLine, this returns the line content with new line characters.
-        public static async Task<string> ReadLineAsync(TextReader reader, StringBuilder builder)
+        public static async Task<StreamResult> ReadLineAsync(TextReader reader, StringBuilder builder)
         {
             bool written = false;
             char[] chars = new char[1];
@@ -222,7 +227,7 @@ namespace Kudu.Services
                 int num = await reader.ReadAsync(chars, 0, chars.Length);
                 if (num <= 0)
                 {
-                    return written ? builder.ToString() : null;
+                    return written ? new StreamResult(builder.ToString(), hasMore:reader.Peek() != -1) : null;
                 }
 
                 if (chars[0] == '\r' || chars[0] == '\n')
@@ -233,7 +238,7 @@ namespace Kudu.Services
                         builder.Append((char)reader.Read());
                     }
 
-                    return builder.ToString();
+                    return new StreamResult(builder.ToString(), hasMore: reader.Peek() != -1);
                 }
 
                 written = true;
@@ -242,7 +247,7 @@ namespace Kudu.Services
                 // to anticipate last non-ending line
                 if (reader.Peek() == -1)
                 {
-                    return written ? builder.ToString() : null;
+                    return written ? new StreamResult(builder.ToString(), hasMore: reader.Peek() != -1) : null;
                 }
             }
         }
@@ -331,6 +336,18 @@ namespace Kudu.Services
             {
                 // no-op
             }
+        }
+
+        public class StreamResult
+        {
+            public StreamResult(string value, bool hasMore)
+            {
+                Value = value;
+                HasNext = hasMore;
+            }
+
+            public string Value { get; private set; }
+            public bool HasNext { get; private set; }
         }
 
         public class ProcessInfo

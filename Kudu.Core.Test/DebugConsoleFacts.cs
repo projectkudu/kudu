@@ -165,12 +165,12 @@ namespace Kudu.Core.Test
             using (StreamReader reader = new StreamReader(new MemoryStream(Encoding.UTF8.GetBytes(actual))))
             {
                 int count = 0;
-                string line;
+                PersistentCommandController.StreamResult line;
                 StringBuilder strb = new StringBuilder();
                 while ((line = await PersistentCommandController.ReadLineAsync(reader, strb)) != null)
                 {
                     strb.Clear();
-                    Assert.Equal(line, expecteds[count]);
+                    Assert.Equal(line.Value, expecteds[count]);
                     ++count;
                 }
 
