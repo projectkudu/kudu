@@ -33,7 +33,7 @@ namespace Kudu.Services.Test
             var runtimeInfo = controller.GetRuntimeVersions();
 
             // Assert
-            Assert.Empty(runtimeInfo.NodeVerions);
+            Assert.Empty(runtimeInfo.NodeVersions);
         }
 
         [Fact]
@@ -57,7 +57,7 @@ namespace Kudu.Services.Test
             var controller = new RuntimeController(Mock.Of<ITracer>());
 
             // Act
-            var nodeVersions = controller.GetRuntimeVersions().NodeVerions.ToList();
+            var nodeVersions = controller.GetRuntimeVersions().NodeVersions.ToList();
 
             // Assert
             Assert.Equal(new[] { "0.8.19", "0.10.5", "0.10.18" }, nodeVersions.Select(v => v["version"]));

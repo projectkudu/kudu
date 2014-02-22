@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -33,24 +34,28 @@ namespace Kudu.TestHarness
             _appName = appName;
             _settingsResolver = settingsResolver;
 
+            // Always null in public Kudu, but makes the code more similar to private Kudu
+            NetworkCredential credentials = null;
+
             SiteUrl = site.SiteUrl;
             ServiceUrl = site.ServiceUrl;
 
-            DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "deployments");
-            SettingsManager = new RemoteDeploymentSettingsManager(site.ServiceUrl + "settings");
-            LogStreamManager = new RemoteLogStreamManager(site.ServiceUrl + "logstream");
-            SSHKeyManager = new RemoteSSHKeyManager(site.ServiceUrl + "sshkey");
-            VfsManager = new RemoteVfsManager(site.ServiceUrl + "vfs");
-            VfsWebRootManager = new RemoteVfsManager(site.ServiceUrl + "vfs/site/wwwroot");
-            LiveScmVfsManager = new RemoteVfsManager(site.ServiceUrl + "scmvfs");
-            ZipManager = new RemoteZipManager(site.ServiceUrl + "zip");
-            CommandExecutor = new RemoteCommandExecutor(site.ServiceUrl + "command");
-            ProcessManager = new RemoteProcessManager(site.ServiceUrl + "diagnostics/processes");
-            WebHooksManager = new RemoteWebHooksManager(site.ServiceUrl + "hooks");
-            RepositoryManager = new RemoteRepositoryManager(site.ServiceUrl + "scm");
-            JobsManager = new RemoteJobsManager(site.ServiceUrl + "jobs");
-            LogFilesManager = new RemoteLogFilesManager(site.ServiceUrl + "/api/logs");
-            SiteExtensionManager = new RemoteSiteExtensionManager(site.ServiceUrl + "api/extensions");
+            DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "deployments", credentials);
+            SettingsManager = new RemoteDeploymentSettingsManager(site.ServiceUrl + "settings", credentials);
+            LogStreamManager = new RemoteLogStreamManager(site.ServiceUrl + "logstream", credentials);
+            SSHKeyManager = new RemoteSSHKeyManager(site.ServiceUrl + "sshkey", credentials);
+            VfsManager = new RemoteVfsManager(site.ServiceUrl + "vfs", credentials);
+            VfsWebRootManager = new RemoteVfsManager(site.ServiceUrl + "vfs/site/wwwroot", credentials);
+            LiveScmVfsManager = new RemoteVfsManager(site.ServiceUrl + "scmvfs", credentials);
+            ZipManager = new RemoteZipManager(site.ServiceUrl + "zip", credentials);
+            RuntimeManager = new RemoteRuntimeManager(site.ServiceUrl + "diagnostics/runtime", credentials);
+            CommandExecutor = new RemoteCommandExecutor(site.ServiceUrl + "command", credentials);
+            ProcessManager = new RemoteProcessManager(site.ServiceUrl + "diagnostics/processes", credentials);
+            WebHooksManager = new RemoteWebHooksManager(site.ServiceUrl + "hooks", credentials);
+            RepositoryManager = new RemoteRepositoryManager(site.ServiceUrl + "scm", credentials);
+            JobsManager = new RemoteJobsManager(site.ServiceUrl + "jobs", credentials);
+            LogFilesManager = new RemoteLogFilesManager(site.ServiceUrl + "/api/logs", credentials);
+            SiteExtensionManager = new RemoteSiteExtensionManager(site.ServiceUrl + "api/extensions", credentials);
 
             var repositoryInfo = RepositoryManager.GetRepositoryInfo().Result;
             GitUrl = repositoryInfo.GitUrl.OriginalString;
@@ -127,6 +132,12 @@ namespace Kudu.TestHarness
         }
 
         public RemoteZipManager ZipManager
+        {
+            get;
+            private set;
+        }
+
+        public RemoteRuntimeManager RuntimeManager
         {
             get;
             private set;
