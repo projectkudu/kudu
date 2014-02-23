@@ -129,7 +129,7 @@ namespace Kudu.Services.Settings
 
             if (version < 2)
             {
-                var legacyValues = values.Select(pair => new Dictionary<string, string> { { "Key", pair.Key }, { "Value", pair.Value } });
+                var legacyValues = values.Select(pair => new Dictionary<string, string> { { "key", pair.Key }, { "value", pair.Value } });
                 return Request.CreateResponse(HttpStatusCode.OK, legacyValues);
             }
 

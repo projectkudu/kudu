@@ -53,7 +53,7 @@ namespace Kudu.Client.Deployment
             {
                 try
                 {
-                    nvc[GetProperty(value, "Key")] = GetProperty(value, "Value");
+                    nvc[GetProperty(value, "key")] = GetProperty(value, "value");
                 }
                 catch (Exception e)
                 {
