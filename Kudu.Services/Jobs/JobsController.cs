@@ -4,12 +4,14 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Web.Http;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Hooks;
 using Kudu.Core.Jobs;
+using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.Jobs
 {
@@ -120,13 +122,27 @@ namespace Kudu.Services.Jobs
         [HttpGet]
         public HttpResponseMessage GetTriggeredJobHistory(string jobName)
         {
-            TriggeredJobHistory triggeredJobHistory = _triggeredJobsManager.GetJobHistory(jobName);
-            if (triggeredJobHistory != null)
+            string etag = Request.Headers.IfNoneMatch.Select(header => header.Tag).FirstOrDefault();
+
+            string currentETag;
+            TriggeredJobHistory history = _triggeredJobsManager.GetJobHistory(jobName, etag, out currentETag);
+
+            if (history == null && currentETag == null)
             {
-                return Request.CreateResponse(HttpStatusCode.OK, triggeredJobHistory);
+                return Request.CreateResponse(HttpStatusCode.NotFound);
             }
 
-            return Request.CreateResponse(HttpStatusCode.NotFound);
+            HttpResponseMessage response;
+            if (etag == currentETag)
+            {
+                response = Request.CreateResponse(HttpStatusCode.NotModified);
+            }
+            else
+            {
+                response = Request.CreateResponse(HttpStatusCode.OK, history);
+            }
+            response.Headers.ETag = new EntityTagHeaderValue(currentETag);
+            return response;
         }
 
         [HttpGet]
