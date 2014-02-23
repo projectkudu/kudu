@@ -4,7 +4,7 @@
     {
         void InvokeTriggeredJob(string jobName);
 
-        TriggeredJobHistory GetJobHistory(string jobName);
+        TriggeredJobHistory GetJobHistory(string jobName, string etag, out string currentETag);
 
         TriggeredJobRun GetJobRun(string jobName, string runId);
     }

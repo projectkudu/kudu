@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
+using System.Globalization;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
@@ -33,13 +35,10 @@ namespace Kudu.Core.Jobs
             return GetJobInternal(jobName);
         }
 
-        public TriggeredJobHistory GetJobHistory(string jobName)
+        public TriggeredJobHistory GetJobHistory(string jobName, string etag, out string currentETag)
         {
+            currentETag = null;
             var triggeredJobRuns = new List<TriggeredJobRun>();
-            var triggeredJobHistory = new TriggeredJobHistory()
-            {
-                TriggeredJobRuns = triggeredJobRuns
-            };
 
             DirectoryInfoBase[] jobRunsDirectories = GetJobRunsDirectories(jobName);
             if (jobRunsDirectories == null)
@@ -55,12 +54,38 @@ namespace Kudu.Core.Jobs
                 TriggeredJobRun triggeredJobRun = BuildJobRun(jobRunDirectory, jobName, isLatest);
                 if (triggeredJobRun != null)
                 {
+                    if (isLatest)
+                    {
+                        // The history state is determined by the most recent invocation, 
+                        // as previous ones are immutable (beind historical records).
+                        currentETag = CalculateETag(triggeredJobRun);
+                        if (currentETag == etag)
+                        {
+                            return null;
+                        }
+                    }
                     triggeredJobRuns.Add(triggeredJobRun);
                     isLatest = false;
                 }
             }
 
-            return triggeredJobHistory;
+            if (triggeredJobRuns.Count == 0)
+            {
+                currentETag = string.Format(CultureInfo.CurrentCulture, "\"{0:x}-{1:x}\"",
+                    jobName.GetHashCode(), "EMPTY".GetHashCode());
+            }
+
+            return new TriggeredJobHistory {TriggeredJobRuns = triggeredJobRuns};
+        }
+
+        private static string CalculateETag(TriggeredJobRun triggeredJobRun)
+        {
+            // during a job's life time, the status and endtime could change, so 
+            // a job run state is made of its id, status, and end time.
+            return string.Format(CultureInfo.CurrentCulture, "\"{0:x}-{1:x}-{2:x}\"",
+                triggeredJobRun.Id.GetHashCode(),
+                triggeredJobRun.Status.GetHashCode(),
+                triggeredJobRun.EndTime.Ticks.GetHashCode());
         }
 
         public TriggeredJobRun GetJobRun(string jobName, string runId)
