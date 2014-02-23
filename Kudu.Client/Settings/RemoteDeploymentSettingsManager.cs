@@ -48,12 +48,32 @@ namespace Kudu.Client.Deployment
             var obj = await Client.GetJsonAsync<JArray>(String.Empty);
 
             var nvc = new NameValueCollection();
+
             foreach (JObject value in obj)
             {
-                nvc[value["Key"].Value<string>()] = value["Value"].Value<string>();
+                try
+                {
+                    nvc[GetProperty(value, "Key")] = GetProperty(value, "Value");
+                }
+                catch (Exception e)
+                {
+                    // Include the payload in the exception for diagnostic
+                    throw new Exception("Payload: " + obj.ToString(), e);
+                }
             }
 
             return nvc;
+        }
+
+        private static string GetProperty(JObject obj, string name)
+        {
+            JToken token;
+            if (!obj.TryGetValue(name, out token))
+            {
+                throw new ArgumentException(String.Format("Object '{0}' doesn't have a '{1}' property", obj.ToString(), name));
+            }
+
+            return token.Value<string>();
         }
 
         public async Task<NameValueCollection> GetValues()
