@@ -265,36 +265,37 @@ namespace Kudu.Services.Performance
         {
             _filter = context.Request.QueryString[FilterQueryKey];
 
-            string[] paths = context.Request.Path.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+            // path route as in logstream/{*path} without query strings
+            string routePath = context.Request.RequestContext.RouteData.Values["path"] as string;
+            
+            // trim '/'
+            routePath = String.IsNullOrEmpty(routePath) ? routePath : routePath.Trim('/');
 
-            // If using /api/logstream instead of /logstream, yank the first token
-            if (paths[0].Equals("api", StringComparison.OrdinalIgnoreCase))
+            // logstream at root
+            if (String.IsNullOrEmpty(routePath))
             {
-                var tmp = new string[paths.Length - 1];
-                Array.Copy(paths, 1, tmp, 0, paths.Length - 1);
-                paths = tmp;
+                _enableTrace = true;
+                return _logPath;
             }
 
-            paths[0] = _logPath;
-            _enableTrace = paths.Length == 1;
-
-            if (paths.Length > 1)
+            // in case of application or http log, we ensure directory
+            string firstPath = routePath.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries)[0];
+            bool isApplication = String.Equals(firstPath, "Application", StringComparison.OrdinalIgnoreCase);
+            if (isApplication)
             {
-                bool isApplication = String.Equals(paths[1], "Application", StringComparison.OrdinalIgnoreCase);
-                if (isApplication)
-                {
-                    _enableTrace = true;
-                    FileSystemHelpers.EnsureDirectory(Path.Combine(_logPath, paths[1]));
-                }
-
-                bool isHttp = String.Equals(paths[1], "http", StringComparison.OrdinalIgnoreCase);
+                _enableTrace = true;
+                FileSystemHelpers.EnsureDirectory(Path.Combine(_logPath, firstPath));
+            }
+            else
+            {
+                bool isHttp = String.Equals(firstPath, "http", StringComparison.OrdinalIgnoreCase);
                 if (isHttp)
                 {
-                    FileSystemHelpers.EnsureDirectory(Path.Combine(_logPath, paths[1]));
+                    FileSystemHelpers.EnsureDirectory(Path.Combine(_logPath, firstPath));
                 }
             }
 
-            return Path.Combine(paths);
+            return Path.Combine(_logPath, routePath);
         }
 
         private static bool MatchFilters(string fileName)
