@@ -28,7 +28,7 @@ namespace Kudu.FunctionalTests
                 {
                     // Act
                     appManager.SettingsManager.SetValue("x", "1").Wait();
-                    appManager.SettingsManager.SetValueLegacy("y", "2").Wait();
+                    appManager.SettingsManager.SetValue("y", "2").Wait();
 
                     // Assert
                     string result = appManager.SettingsManager.GetValue("x").Result;
@@ -86,11 +86,9 @@ namespace Kudu.FunctionalTests
                     appManager.SettingsManager.SetValue("y", "2").Wait();
                     appManager.SettingsManager.SetValue("z", "3").Wait();
 
-                    NameValueCollection resultsLegacy = appManager.SettingsManager.GetValuesLegacy().Result;
                     NameValueCollection results = appManager.SettingsManager.GetValues().Result;
 
                     // Assert
-                    CheckSettings(resultsLegacy);
                     CheckSettings(results);
                 });
             }

@@ -16,15 +16,6 @@ namespace Kudu.Client.Deployment
         {
         }
 
-        public async Task SetValueLegacy(string key, string value)
-        {
-            using (var values = HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>("key", key), new KeyValuePair<string, string>("value", value)))
-            {
-                HttpResponseMessage response = await Client.PostAsync(String.Empty, values);
-                response.EnsureSuccessful();
-            }
-        }
-
         public async Task SetValue(string key, string value)
         {
             using (var values = HttpClientHelper.CreateJsonContent(new KeyValuePair<string, string>(key, value)))
@@ -41,28 +32,6 @@ namespace Kudu.Client.Deployment
                 HttpResponseMessage response = await Client.PostAsync(String.Empty, jsonvalues);
                 response.EnsureSuccessful();
             }
-        }
-
-        public async Task<NameValueCollection> GetValuesLegacy()
-        {
-            var obj = await Client.GetJsonAsync<JArray>(String.Empty);
-
-            var nvc = new NameValueCollection();
-
-            foreach (JObject value in obj)
-            {
-                try
-                {
-                    nvc[GetProperty(value, "key")] = GetProperty(value, "value");
-                }
-                catch (Exception e)
-                {
-                    // Include the payload in the exception for diagnostic
-                    throw new Exception("Payload: " + obj.ToString(), e);
-                }
-            }
-
-            return nvc;
         }
 
         private static string GetProperty(JObject obj, string name)

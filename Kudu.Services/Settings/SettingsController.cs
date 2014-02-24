@@ -34,33 +34,16 @@ namespace Kudu.Services.Settings
                 return Request.CreateResponse(HttpStatusCode.BadRequest);
             }
 
-            // We support two formats here:
-            // 1. For backward compat, we support {key: 'someKey', value: 'someValue' }
-            // 2. The preferred format is { someKey = 'someValue' }
-            // Note that #2 allows multiple settings to be set, e.g. { someKey = 'someValue', someKey2 = 'someValue2' }
+            // The JSON format is: { someKey = 'someValue' }
+            // Note that it allows multiple settings to be set, e.g. { someKey = 'someValue', someKey2 = 'someValue2' }
 
             try
             {
                 return _deploymentLock.LockOperation(() =>
                 {
-                    JToken keyToken, valueToken;
-                    if (newSettings.Count == 2 && newSettings.TryGetValue("key", out keyToken) && newSettings.TryGetValue("value", out valueToken))
+                    foreach (var keyValuePair in newSettings)
                     {
-                        string key = keyToken.Value<string>();
-
-                        if (String.IsNullOrEmpty(key))
-                        {
-                            return Request.CreateResponse(HttpStatusCode.BadRequest);
-                        }
-
-                        _settingsManager.SetValue(key, valueToken.Value<string>());
-                    }
-                    else
-                    {
-                        foreach (var keyValuePair in newSettings)
-                        {
-                            _settingsManager.SetValue(keyValuePair.Key, keyValuePair.Value.Value<string>());
-                        }
+                        _settingsManager.SetValue(keyValuePair.Key, keyValuePair.Value.Value<string>());
                     }
 
                     return Request.CreateResponse(HttpStatusCode.NoContent);
@@ -103,22 +86,10 @@ namespace Kudu.Services.Settings
         /// Get the list of all settings
         /// </summary>
         /// <returns></returns>
-        public HttpResponseMessage GetAll(int version = 1)
+        public HttpResponseMessage GetAll()
         {
             /*
-            Old format looks like this:
-            [
-                {
-                    Key: "branch",
-                    Value: "master"
-                },
-                {
-                    Key: "foo",
-                    Value: "123"
-                }
-            ]
-
-            New format looks like:
+            Format looks like:
             {
                 branch: "master",
                 foo: "123"
@@ -126,12 +97,6 @@ namespace Kudu.Services.Settings
             */
 
             var values = _settingsManager.GetValues();
-
-            if (version < 2)
-            {
-                var legacyValues = values.Select(pair => new Dictionary<string, string> { { "key", pair.Key }, { "value", pair.Value } });
-                return Request.CreateResponse(HttpStatusCode.OK, legacyValues);
-            }
 
             return Request.CreateResponse(HttpStatusCode.OK, values);
         }
