@@ -17,14 +17,15 @@
         public const string NextManifestPath = "NEXT_MANIFEST_PATH";
         public const string InPlaceDeployment = "IN_PLACE_DEPLOYMENT";
         public const string PostDeploymentActionsDirectoryKey = "POST_DEPLOYMENT_ACTIONS_DIR";
-        public const string WebJobDeployCommandKey = "WEB_JOB_DEPLOY_CMD";
 
-        public const string JobRootPath = "JOB_ROOT";
-        public const string JobName = "JOB_NAME";
-        public const string JobType = "JOB_TYPE";
-        public const string JobDataPath = "JOB_DATA_PATH";
-        public const string JobExtraUrlPath = "JOB_EXTRA_INFO_URL_PATH";
-        public const string JobRunId = "JOB_RUN_ID";
+        public const string WebJobsDeployCommandKey = "WEBJOBS_DEPLOY_CMD";
+        public const string WebJobsDeployCommandKeyOld = "WEB_JOB_DEPLOY_CMD";
+        public const string WebJobsRootPath = "WEBJOBS_PATH";
+        public const string WebJobsName = "WEBJOBS_NAME";
+        public const string WebJobsType = "WEBJOBS_TYPE";
+        public const string WebJobsDataPath = "WEBJOBS_DATA_PATH";
+        public const string WebJobsExtraUrlPath = "WEBJOBS_EXTRA_INFO_URL_PATH";
+        public const string WebJobsRunId = "WEBJOBS_RUN_ID";
 
         public const string CommitId = "SCM_COMMIT_ID";
     }

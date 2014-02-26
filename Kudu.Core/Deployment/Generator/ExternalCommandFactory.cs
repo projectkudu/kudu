@@ -35,7 +35,8 @@ namespace Kudu.Core.Deployment.Generator
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.PostDeploymentActionsCommandKey, PostDeploymentActionsCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.PostDeploymentActionsDirectoryKey, PostDeploymentActionsDir, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.SelectNodeVersionCommandKey, SelectNodeVersionCommand, logger);
-            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.WebJobDeployCommandKey, WebJobDeployCommand, logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.WebJobsDeployCommandKey, WebJobsDeployCommand, logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.WebJobsDeployCommandKeyOld, WebJobsDeployCommand, logger);
 
             bool isInPlace = false;
             string project = _deploymentSettings.GetValue(SettingsKeys.Project);
@@ -128,9 +129,9 @@ namespace Kudu.Core.Deployment.Generator
             }
         }
 
-        private static string WebJobDeployCommand
+        private static string WebJobsDeployCommand
         {
-            get { return "deploy_web_job.cmd"; }
+            get { return "deploy_webjobs.cmd"; }
         }
 
         private string StarterScriptPath

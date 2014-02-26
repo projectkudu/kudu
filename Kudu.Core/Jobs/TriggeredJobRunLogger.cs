@@ -52,7 +52,7 @@ namespace Kudu.Core.Jobs
         {
             // if max is 5 and we have 5 we still want to remove one to make room for the next
             // that's why we decrement max value by 1
-            int maxRuns = settings.GetMaxJobRunsHistoryCount() - 1;
+            int maxRuns = settings.GetWebJobsHistorySize() - 1;
 
             string historyPath = Path.Combine(environment.JobsDataPath, Constants.TriggeredPath, jobName);
             DirectoryInfoBase historyDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(historyPath);

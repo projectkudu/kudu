@@ -88,10 +88,10 @@ namespace Kudu.Core.Jobs
 
                         if (_started == 1 && !IsDisabled)
                         {
-                            TimeSpan jobsInterval = Settings.GetJobsInterval();
-                            _continuousJobLogger.LogInformation("Process went down, waiting for {0} seconds".FormatInvariant(jobsInterval.TotalSeconds));
+                            TimeSpan webJobsRestartTime = Settings.GetWebJobsRestartTime();
+                            _continuousJobLogger.LogInformation("Process went down, waiting for {0} seconds".FormatInvariant(webJobsRestartTime.TotalSeconds));
                             _continuousJobLogger.ReportStatus(ContinuousJobStatus.PendingRestart);
-                            WaitForTimeOrStop(jobsInterval);
+                            WaitForTimeOrStop(webJobsRestartTime);
                         }
                     }
                 }
@@ -181,7 +181,7 @@ namespace Kudu.Core.Jobs
 
         private bool IsDisabled
         {
-            get { return FileSystemHelpers.FileExists(_disableFilePath); }
+            get { return FileSystemHelpers.FileExists(_disableFilePath) || Settings.IsWebJobsStopped(); }
         }
 
         private void ReleaseSingletonLock()

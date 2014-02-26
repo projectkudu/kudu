@@ -32,11 +32,16 @@ namespace Kudu.Core.Jobs
 
         protected override TimeSpan IdleTimeout
         {
-            get { return Settings.GetJobsIdleTimeout(); }
+            get { return Settings.GetWebJobsIdleTimeout(); }
         }
 
         public void StartJobRun(TriggeredJob triggeredJob)
         {
+            if (Settings.IsWebJobsStopped())
+            {
+                throw new WebJobsStoppedException();
+            }
+
             if (!_lockFile.Lock())
             {
                 throw new ConflictException();
