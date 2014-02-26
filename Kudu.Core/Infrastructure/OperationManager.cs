@@ -4,12 +4,11 @@ using System.Threading.Tasks;
 
 namespace Kudu.Core.Infrastructure
 {
-    internal static class OperationManager
+    public static class OperationManager
     {
         private const int DefaultRetries = 3;
         private const int DefaultDelayBeforeRetry = 250; // 250 ms
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         public static void Attempt(Action action, int retries = DefaultRetries, int delayBeforeRetry = DefaultDelayBeforeRetry)
         {
             OperationManager.Attempt<object>(() =>
@@ -19,7 +18,6 @@ namespace Kudu.Core.Infrastructure
             }, retries, delayBeforeRetry);
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         public static T Attempt<T>(Func<T> action, int retries = DefaultRetries, int delayBeforeRetry = DefaultDelayBeforeRetry, Func<Exception, bool> shouldRetry = null)
         {
             T result = default(T);
