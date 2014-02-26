@@ -87,13 +87,12 @@ function LoadConsoleV2() {
         },
         completeHandle: function (line) {
             var cdRegex = /^cd\s+(.+)$/,
-                        pathRegex = /.+\s+(.+)/,
                         matches;
             var result = [];
             if (matches = line.match(cdRegex)) {
                 result = window.KuduExec.completePath(matches[1], /* dirOnly */ true);
-            } else if (matches = line.match(pathRegex)) {
-                result = window.KuduExec.completePath(matches[1]);
+            } else if (matches = line.split(" ")) {
+                result = window.KuduExec.completePath(matches.pop());
             }
             if (result.length > 0) {
                 $(".jquery-console-prompt-box").last().css("display", "block");
