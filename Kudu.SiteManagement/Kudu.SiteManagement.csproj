@@ -57,9 +57,6 @@
     <Compile Include="..\Common\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="..\Kudu.Core\Infrastructure\OperationManager.cs">
-      <Link>OperationManager.cs</Link>
-    </Compile>
     <Compile Include="DefaultPathResolver.cs">
       <SubType>Code</SubType>
     </Compile>
