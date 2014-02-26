@@ -137,8 +137,6 @@ namespace Kudu.Core.Jobs
 
             if (!FileSystemHelpers.FileExists(job.ScriptFilePath))
             {
-                //Status = "Missing run_worker.cmd file";
-                //Trace.TraceError(Status);
                 throw new InvalidOperationException("Missing job script to run - {0}".FormatInvariant(job.ScriptFilePath));
             }
 
@@ -180,7 +178,7 @@ namespace Kudu.Core.Jobs
                         logger.LogStandardOutput,
                         logger.LogStandardError,
                         job.ScriptHost.ArgumentsFormat,
-                        scriptFileName);
+                        job.RunCommand);
 
                 if (exitCode != 0)
                 {
