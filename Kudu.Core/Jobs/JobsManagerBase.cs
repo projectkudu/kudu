@@ -170,8 +170,10 @@ namespace Kudu.Core.Jobs
                 return null;
             }
 
+            DirectoryInfoBase jobScriptDirectory = GetJobScriptDirectory(jobDirectory);
+
             string jobName = jobDirectory.Name;
-            FileInfoBase[] files = jobDirectory.GetFiles("*.*", SearchOption.TopDirectoryOnly);
+            FileInfoBase[] files = jobScriptDirectory.GetFiles("*.*", SearchOption.TopDirectoryOnly);
             IScriptHost scriptHost;
             string scriptFilePath = FindCommandToRun(files, out scriptHost);
 
@@ -373,6 +375,23 @@ namespace Kudu.Core.Jobs
         {
             string jobPath = Path.Combine(JobsBinariesPath, jobName);
             return FileSystemHelpers.DirectoryInfoFromDirectoryName(jobPath);
+        }
+
+        private DirectoryInfoBase GetJobScriptDirectory(DirectoryInfoBase jobDirectory)
+        {
+            // Return the directory where the script should be found using the following logic:
+            // If current directory (jobDirectory) has only one sub-directory and no files recurse this using that sub-directory
+            // Otherwise return current directory
+            if (jobDirectory != null && jobDirectory.Exists)
+            {
+                var jobFiles = jobDirectory.GetFileSystemInfos();
+                if (jobFiles.Length == 1 && jobFiles[0] is DirectoryInfoBase)
+                {
+                    return GetJobScriptDirectory(jobFiles[0] as DirectoryInfoBase);
+                }
+            }
+
+            return jobDirectory;
         }
 
         private static string FindCommandToRun(FileInfoBase[] files, out IScriptHost scriptHostFound)

@@ -334,12 +334,12 @@ namespace Kudu.FunctionalTests.Jobs
                 string zippedJobBinaries = BuildZippedJobBinaries();
 
                 appManager.JobsManager.CreateTriggeredJobAsync(jobName, zippedJobBinaries).Wait();
-                Assert.True(appManager.VfsManager.Exists(jobPath + "run.cmd"));
+                Assert.True(appManager.VfsManager.Exists(jobPath + "inner/run.cmd"));
                 Assert.False(appManager.VfsManager.Exists(jobPath + secondScriptName));
 
                 TestTracer.Trace("Second triggered job creation should replace current binaries");
                 appManager.JobsManager.CreateTriggeredJobAsync(jobName, secondScriptName, "echo test test test test").Wait();
-                Assert.False(appManager.VfsManager.Exists(jobPath + "run.cmd"));
+                Assert.False(appManager.VfsManager.Exists(jobPath + "inner/run.cmd"));
                 Assert.True(appManager.VfsManager.Exists(jobPath + secondScriptName));
             });
         }
@@ -356,12 +356,12 @@ namespace Kudu.FunctionalTests.Jobs
                 string zippedJobBinaries = BuildZippedJobBinaries();
 
                 appManager.JobsManager.CreateContinuousJobAsync(jobName, zippedJobBinaries).Wait();
-                Assert.True(appManager.VfsManager.Exists(jobPath + "run.cmd"));
+                Assert.True(appManager.VfsManager.Exists(jobPath + "inner/run.cmd"));
                 Assert.False(appManager.VfsManager.Exists(jobPath + secondScriptName));
 
                 TestTracer.Trace("Second continuous job creation should replace current binaries");
                 appManager.JobsManager.CreateContinuousJobAsync(jobName, secondScriptName, "echo test test test test").Wait();
-                Assert.False(appManager.VfsManager.Exists(jobPath + "run.cmd"));
+                Assert.False(appManager.VfsManager.Exists(jobPath + "inner/run.cmd"));
                 Assert.True(appManager.VfsManager.Exists(jobPath + secondScriptName));
             });
         }
@@ -609,16 +609,18 @@ namespace Kudu.FunctionalTests.Jobs
         private string BuildZippedJobBinaries()
         {
             string tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-            Directory.CreateDirectory(tempDirectory);
+            string innerTempDirectory = Path.Combine(tempDirectory, "inner");
+            Directory.CreateDirectory(innerTempDirectory);
+
             string zippedFilePath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".zip");
             const string scriptFileName1 = "run.cmd";
             const string scriptFileContent1 = "test.cmd\n";
-            var scriptFilePath1 = Path.Combine(tempDirectory, scriptFileName1);
+            var scriptFilePath1 = Path.Combine(innerTempDirectory, scriptFileName1);
             File.WriteAllText(scriptFilePath1, scriptFileContent1);
 
             const string scriptFileName2 = "test.cmd";
             const string scriptFileContent2 = "echo test";
-            var scriptFilePath2 = Path.Combine(tempDirectory, scriptFileName2);
+            var scriptFilePath2 = Path.Combine(innerTempDirectory, scriptFileName2);
             File.WriteAllText(scriptFilePath2, scriptFileContent2);
 
             ZipFile.CreateFromDirectory(tempDirectory, zippedFilePath);
