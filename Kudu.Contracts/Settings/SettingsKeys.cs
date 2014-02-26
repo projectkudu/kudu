@@ -25,9 +25,9 @@
         public const string NoRepository = "SCM_NO_REPOSITORY";
         public const string WebSiteComputeMode = "WEBSITE_COMPUTE_MODE";
         public const string WebSiteSiteMode = "WEBSITE_SITE_MODE";
-        public const string JobsInterval = "WEBJOBS_RESTART_TIME";
-        public const string JobsIdleTimeoutInSeconds = "WEBJOBS_IDLE_TIMEOUT";
-        public const string MaxJobRunsHistoryCount = "WEBJOBS_HISTORY_SIZE";
+        public const string WebJobsRestartTime = "WEBJOBS_RESTART_TIME";
+        public const string WebJobsIdleTimeoutInSeconds = "WEBJOBS_IDLE_TIMEOUT";
+        public const string WebJobsHistorySize = "WEBJOBS_HISTORY_SIZE";
         public const string WebJobsStopped = "WEBJOBS_STOPPED";
         public const string PostDeploymentActionsDirectory = "SCM_POST_DEPLOYMENT_ACTIONS_PATH";
         public const string DisableSubmodules = "SCM_DISABLE_SUBMODULES";

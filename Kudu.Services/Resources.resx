@@ -264,4 +264,10 @@
   <data name="Error_WebJobAlreadyExists" xml:space="preserve">
     <value>The WebJob already exists.</value>
   </data>
+  <data name="Error_WebJobAlreadyRunning" xml:space="preserve">
+    <value>Cannot start a new run since job is already running.</value>
+  </data>
+  <data name="Error_WebJobsStopped" xml:space="preserve">
+    <value>WebJobs are currently in "stopped" state.</value>
+  </data>
 </root>

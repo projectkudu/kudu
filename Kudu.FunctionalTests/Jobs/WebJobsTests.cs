@@ -4,8 +4,10 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Kudu.Client;
 using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
@@ -201,49 +203,27 @@ namespace Kudu.FunctionalTests.Jobs
                     var workerProcess = processes.FirstOrDefault(p => String.Equals("ConsoleWorker", p.Name, StringComparison.OrdinalIgnoreCase));
                     Assert.NotNull(workerProcess);
 
+                    TestTracer.Trace("Disable this job");
                     appManager.JobsManager.DisableContinuousJobAsync("deployedJob").Wait();
 
-                    WaitUntilAssertVerified(
-                        "continuous job disabled",
-                        TimeSpan.FromSeconds(30),
-                        () =>
-                        {
-                            var jobs = appManager.JobsManager.ListContinuousJobsAsync().Result;
-                            Assert.Equal(1, jobs.Count());
-                            Assert.Equal("Stopped", jobs.First().Status);
-                        });
+                    VerifyContinuousJobDisabled(appManager);
 
-                    WaitUntilAssertVerified(
-                        "make sure process is down",
-                        TimeSpan.FromSeconds(30),
-                        () =>
-                        {
-                            var allProcesses = appManager.ProcessManager.GetProcessesAsync().Result;
-                            var process = allProcesses.FirstOrDefault(p => String.Equals("ConsoleWorker", p.Name, StringComparison.OrdinalIgnoreCase));
-                            Assert.Null(process);
-                        });
-
+                    TestTracer.Trace("Enable this job");
                     appManager.JobsManager.EnableContinuousJobAsync("deployedJob").Wait();
 
-                    WaitUntilAssertVerified(
-                        "continuous job enabled",
-                        TimeSpan.FromSeconds(30),
-                        () =>
-                        {
-                            var jobs = appManager.JobsManager.ListContinuousJobsAsync().Result;
-                            Assert.Equal(1, jobs.Count());
-                            Assert.Equal("Running", jobs.First().Status);
-                        });
+                    VerifyContinuousJobEnabled(appManager);
 
-                    WaitUntilAssertVerified(
-                        "make sure process is up",
-                        TimeSpan.FromSeconds(30),
-                        () =>
-                        {
-                            var allProcesses = appManager.ProcessManager.GetProcessesAsync().Result;
-                            var process = allProcesses.FirstOrDefault(p => String.Equals("ConsoleWorker", p.Name, StringComparison.OrdinalIgnoreCase));
-                            Assert.NotNull(process);
-                        });
+                    TestTracer.Trace("Disable all WebJobs");
+                    appManager.SettingsManager.SetValue(SettingsKeys.WebJobsStopped, "1").Wait();
+                    RestartServiceSite(appManager);
+
+                    VerifyContinuousJobDisabled(appManager);
+
+                    TestTracer.Trace("Enable all WebJobs");
+                    appManager.SettingsManager.SetValue(SettingsKeys.WebJobsStopped, "0").Wait();
+                    RestartServiceSite(appManager);
+
+                    VerifyContinuousJobEnabled(appManager);
                 }
             });
         }
@@ -285,9 +265,16 @@ namespace Kudu.FunctionalTests.Jobs
 
                 TestTracer.Trace("Trigger the job 5 more times to make sure history is trimmed");
 
-                appManager.SettingsManager.SetValue(SettingsKeys.MaxJobRunsHistoryCount, "5").Wait();
+                TestTracer.Trace("Disable all WebJobs");
+                appManager.SettingsManager.SetValue(SettingsKeys.WebJobsStopped, "1").Wait();
+                VerifyTriggeredJobDoesNotTrigger(appManager, jobName).Wait();
 
+                TestTracer.Trace("Enable all WebJobs");
+                appManager.SettingsManager.SetValue(SettingsKeys.WebJobsStopped, "0").Wait();
                 VerifyTriggeredJobTriggers(appManager, jobName, 3, "Success", "echo ");
+
+                appManager.SettingsManager.SetValue(SettingsKeys.WebJobsHistorySize, "5").Wait();
+
                 VerifyTriggeredJobTriggers(appManager, jobName, 4, "Success", "echo ");
                 VerifyTriggeredJobTriggers(appManager, jobName, 5, "Success", "echo ");
                 VerifyTriggeredJobTriggers(appManager, jobName, 5, "Success", "echo ");
@@ -493,6 +480,22 @@ namespace Kudu.FunctionalTests.Jobs
                 });
         }
 
+        private async Task VerifyTriggeredJobDoesNotTrigger(ApplicationManager appManager, string jobName)
+        {
+            HttpUnsuccessfulRequestException thrownException = null;
+            try
+            {
+                await appManager.JobsManager.InvokeTriggeredJobAsync(jobName);
+            }
+            catch (HttpUnsuccessfulRequestException ex)
+            {
+                thrownException = ex;
+            }
+
+            Assert.NotNull(thrownException);
+            Assert.Equal(HttpStatusCode.Conflict, thrownException.ResponseMessage.StatusCode);
+        }
+
         [Fact]
         public void JobsScriptsShouldBeChosenByOrder()
         {
@@ -544,6 +547,63 @@ namespace Kudu.FunctionalTests.Jobs
                     appManager.VfsManager.Delete(TriggeredJobBinPath + "/" + jobName + "/" + scriptFileName);
                 }
             });
+        }
+
+        private static void RestartServiceSite(ApplicationManager appManager)
+        {
+            try
+            {
+                appManager.ProcessManager.KillProcessAsync(0).Wait();
+            }
+            catch
+            {
+            }
+        }
+
+        private void VerifyContinuousJobEnabled(ApplicationManager appManager)
+        {
+            WaitUntilAssertVerified(
+                "continuous job enabled",
+                TimeSpan.FromSeconds(30),
+                () =>
+                {
+                    var jobs = appManager.JobsManager.ListContinuousJobsAsync().Result;
+                    Assert.Equal(1, jobs.Count());
+                    Assert.Equal("Running", jobs.First().Status);
+                });
+
+            WaitUntilAssertVerified(
+                "make sure process is up",
+                TimeSpan.FromSeconds(30),
+                () =>
+                {
+                    var allProcesses = appManager.ProcessManager.GetProcessesAsync().Result;
+                    var process = allProcesses.FirstOrDefault(p => String.Equals("ConsoleWorker", p.Name, StringComparison.OrdinalIgnoreCase));
+                    Assert.NotNull(process);
+                });
+        }
+
+        private void VerifyContinuousJobDisabled(ApplicationManager appManager)
+        {
+            WaitUntilAssertVerified(
+                "continuous job disabled",
+                TimeSpan.FromSeconds(30),
+                () =>
+                {
+                    var jobs = appManager.JobsManager.ListContinuousJobsAsync().Result;
+                    Assert.Equal(1, jobs.Count());
+                    Assert.Equal("Stopped", jobs.First().Status);
+                });
+
+            WaitUntilAssertVerified(
+                "make sure process is down",
+                TimeSpan.FromSeconds(30),
+                () =>
+                {
+                    var allProcesses = appManager.ProcessManager.GetProcessesAsync().Result;
+                    var process = allProcesses.FirstOrDefault(p => String.Equals("ConsoleWorker", p.Name, StringComparison.OrdinalIgnoreCase));
+                    Assert.Null(process);
+                });
         }
 
         private string BuildZippedJobBinaries()
@@ -616,7 +676,7 @@ namespace Kudu.FunctionalTests.Jobs
         {
             ApplicationManager.Run(name, appManager =>
             {
-                appManager.SettingsManager.SetValue(SettingsKeys.JobsInterval, "5").Wait();
+                appManager.SettingsManager.SetValue(SettingsKeys.WebJobsRestartTime, "5").Wait();
 
                 CleanupTest(appManager);
 

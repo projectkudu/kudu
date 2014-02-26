@@ -9,7 +9,7 @@ namespace Kudu.Contracts.Settings
     {
         public static readonly TimeSpan DefaultCommandIdleTimeout = TimeSpan.FromMinutes(1);
         public static readonly TimeSpan DefaultLogStreamTimeout = TimeSpan.FromMinutes(30);
-        public static readonly TimeSpan DefaultJobsInterval = TimeSpan.FromMinutes(1);
+        public static readonly TimeSpan DefaultWebJobsRestartTime = TimeSpan.FromMinutes(1);
         public static readonly TimeSpan DefaultJobsIdleTimeout = TimeSpan.FromMinutes(2);
 
         public const TraceLevel DefaultTraceLevel = TraceLevel.Error;
@@ -72,19 +72,19 @@ namespace Kudu.Contracts.Settings
             return !String.IsNullOrEmpty(value) ? value : "unknown";
         }
 
-        public static TimeSpan GetJobsInterval(this IDeploymentSettingsManager settings)
+        public static TimeSpan GetWebJobsRestartTime(this IDeploymentSettingsManager settings)
         {
-            return GetTimeSpan(settings, SettingsKeys.JobsInterval, DefaultJobsInterval);
+            return GetTimeSpan(settings, SettingsKeys.WebJobsRestartTime, DefaultWebJobsRestartTime);
         }
 
-        public static TimeSpan GetJobsIdleTimeout(this IDeploymentSettingsManager settings)
+        public static TimeSpan GetWebJobsIdleTimeout(this IDeploymentSettingsManager settings)
         {
-            return GetTimeSpan(settings, SettingsKeys.JobsIdleTimeoutInSeconds, DefaultJobsIdleTimeout);
+            return GetTimeSpan(settings, SettingsKeys.WebJobsIdleTimeoutInSeconds, DefaultJobsIdleTimeout);
         }
 
-        public static int GetMaxJobRunsHistoryCount(this IDeploymentSettingsManager settings)
+        public static int GetWebJobsHistorySize(this IDeploymentSettingsManager settings)
         {
-            string value = settings.GetValue(SettingsKeys.MaxJobRunsHistoryCount);
+            string value = settings.GetValue(SettingsKeys.WebJobsHistorySize);
             int maxJobRunsHistoryCount;
             if (Int32.TryParse(value, out maxJobRunsHistoryCount) && maxJobRunsHistoryCount > 0)
             {
@@ -92,6 +92,13 @@ namespace Kudu.Contracts.Settings
             }
 
             return DefaultMaxJobRunsHistoryCount;
+        }
+
+        public static bool IsWebJobsStopped(this IDeploymentSettingsManager settings)
+        {
+            string value = settings.GetValue(SettingsKeys.WebJobsStopped);
+
+            return StringUtils.IsTrueLike(value);
         }
 
         public static string GetBranch(this IDeploymentSettingsManager settings)

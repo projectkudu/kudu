@@ -11,7 +11,6 @@ using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Hooks;
 using Kudu.Core.Jobs;
-using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.Jobs
 {
@@ -171,7 +170,11 @@ namespace Kudu.Services.Jobs
             }
             catch (ConflictException)
             {
-                return Request.CreateResponse(HttpStatusCode.Conflict);
+                return CreateErrorResponse(HttpStatusCode.Conflict, Resources.Error_WebJobAlreadyRunning);
+            }
+            catch (WebJobsStoppedException)
+            {
+                return CreateErrorResponse(HttpStatusCode.Conflict, Resources.Error_WebJobsStopped);
             }
         }
 

@@ -331,6 +331,24 @@ namespace Kudu.Services {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot start a new run since job is already running..
+        /// </summary>
+        internal static string Error_WebJobAlreadyRunning {
+            get {
+                return ResourceManager.GetString("Error_WebJobAlreadyRunning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to WebJobs are currently in &quot;stopped&quot; state..
+        /// </summary>
+        internal static string Error_WebJobsStopped {
+            get {
+                return ResourceManager.GetString("Error_WebJobsStopped", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Fetching changes..
         /// </summary>
         internal static string FetchingChanges {
