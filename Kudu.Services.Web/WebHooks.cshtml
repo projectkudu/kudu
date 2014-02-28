@@ -12,11 +12,23 @@
 <div class="container">
     <h3>Add Subscriber Url</h3>
     <form class="form-inline" role="form">
-        <div class="form-group" id="urlInput">
+        <div class="form-group">
             <input type="url" class="form-control" id="urlTextBox" placeholder="Subscriber Url"
                    data-bind="value: newHookUrl">
         </div>
         <button type="button" class="btn btn-default" data-bind="click: addHook">Add Url</button>
+    </form>
+</div>
+
+<div class="container">
+    <h3>Test Event</h3>
+    <form class="form-inline" role="form">
+        <div class="form-group">
+            <select class="form-control" data-bind="value: eventType">
+                <option>PostDeployment</option>
+            </select>
+        </div>
+        <button type="button" class="btn btn-default" data-bind="click: publishHooks">Test</button>
     </form>
 </div>
 
@@ -54,12 +66,13 @@
         var self = this;
         self.hooks = ko.observableArray([]);
         self.newHookUrl = ko.observable();
+        self.eventType = ko.observable();
 
         // Operations
         self.populateHooks = function () {
             $.ajax({
                 type: "GET",
-                url: "hooks",
+                url: "/api/hooks",
                 dataType: "json",
                 success: function (data) {
                     // The /hooks api returns an array of json objects.
@@ -75,7 +88,7 @@
         self.addHook = function () {
             $.ajax({
                 type: "POST",
-                url: "hooks",
+                url: "/api/hooks",
                 contentType: "application/json",
                 data: JSON.stringify({ url: self.newHookUrl(), event: "PostDeployment" }),
                 success: function () {
@@ -93,12 +106,22 @@
         self.removeHook = function (hook) {
             $.ajax({
                 type: "DELETE",
-                url: "hooks/" + hook.id,
+                url: "/api/hooks/" + hook.id,
                 error: function (jqXhr, textStatus, errorThrown) {
                     alert(textStatus + ": " + errorThrown);
                 },
                 complete: function() {
                     self.populateHooks();
+                }
+            });
+        };
+
+        self.publishHooks = function() {
+            $.ajax({
+                type: "POST",
+                url: "/api/hooks/publish/" + self.eventType(),
+                error: function (jqXhr, textStatus, errorThrown) {
+                    alert(textStatus + ": " + errorThrown);
                 }
             });
         };
