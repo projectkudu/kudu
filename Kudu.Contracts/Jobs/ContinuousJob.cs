@@ -14,5 +14,10 @@ namespace Kudu.Contracts.Jobs
 
         [DataMember(Name = "log_url")]
         public Uri LogUrl { get; set; }
+
+        public override int GetHashCode()
+        {
+            return HashHelpers.CalculateCompositeHash(DetailedStatus, base.GetHashCode());
+        }
     }
 }

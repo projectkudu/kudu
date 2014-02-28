@@ -57,6 +57,7 @@
     <Compile Include="Diagnostics\ProcessThreadInfo.cs" />
     <Compile Include="Diagnostics\RuntimeInfo.cs" />
     <Compile Include="Editor\VfsStatEntry.cs" />
+    <Compile Include="HashHelpers.cs" />
     <Compile Include="Hooks\ConflictException.cs" />
     <Compile Include="Hooks\WebHook.cs" />
     <Compile Include="Hooks\HooksEventTypes.cs" />

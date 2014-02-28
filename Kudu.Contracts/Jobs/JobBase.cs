@@ -27,5 +27,10 @@ namespace Kudu.Contracts.Jobs
         public IScriptHost ScriptHost { get; set; }
 
         public string ScriptFilePath { get; set; }
+
+        public override int GetHashCode()
+        {
+            return HashHelpers.CalculateCompositeHash(Name, RunCommand, JobType, Error);
+        }
     }
 }
