@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using System.Web;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
-using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Newtonsoft.Json;
@@ -27,9 +26,17 @@ namespace Kudu.Core.Jobs
             new NodeScriptHost()
         };
 
-        public static string GetJobExtraInfoUrlFilePath(string jobsSpecificDataPath)
+        public static bool IsUsingSdk(string specificJobDataPath)
         {
-            return Path.Combine(jobsSpecificDataPath, "job.extra_info_url.template");
+            try
+            {
+                string webJobsSdkMarkerFilePath = Path.Combine(specificJobDataPath, "webjobssdk.marker");
+                return FileSystemHelpers.FileExists(webJobsSdkMarkerFilePath);
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 
@@ -123,7 +130,7 @@ namespace Kudu.Core.Jobs
                 return;
             }
 
-            string jobsSpecificDataPath = Path.Combine(JobsDataPath, jobName);
+            var jobsSpecificDataPath = GetSpecificJobDataPath(jobName);
 
             // Remove both job binaries and data directories
             await OperationManager.AttemptAsync(() =>
@@ -132,6 +139,12 @@ namespace Kudu.Core.Jobs
                 FileSystemHelpers.DeleteDirectorySafe(jobsSpecificDataPath, ignoreErrors: false);
                 return Task.FromResult(true);
             }, retries: 3, delayBeforeRetry: 2000);
+        }
+
+        private string GetSpecificJobDataPath(string jobName)
+        {
+            string jobsSpecificDataPath = Path.Combine(JobsDataPath, jobName);
+            return jobsSpecificDataPath;
         }
 
         protected TJob GetJobInternal(string jobName)
@@ -203,7 +216,8 @@ namespace Kudu.Core.Jobs
                 ScriptFilePath = scriptFilePath,
                 RunCommand = runCommand,
                 JobType = _jobsTypePath,
-                ScriptHost = scriptHost
+                ScriptHost = scriptHost,
+                UsingSdk = IsUsingSdk(GetSpecificJobDataPath(jobName))
             };
 
             UpdateJob(job);
@@ -287,71 +301,7 @@ namespace Kudu.Core.Jobs
             return new Uri(_vfsUrlPrefix + relativeUrl);
         }
 
-        protected Uri BuildExtraInfoUrl(string jobName)
-        {
-            try
-            {
-                string jobsSpecificDataPath = Path.Combine(JobsDataPath, jobName);
-                string extraInfoUrlTemplate = LoadExtraInfoUrlTemplateFromFile(jobsSpecificDataPath);
-                if (extraInfoUrlTemplate != null)
-                {
-                    extraInfoUrlTemplate = extraInfoUrlTemplate.Replace("{jobName}", jobName);
-                    extraInfoUrlTemplate = extraInfoUrlTemplate.Replace("{jobType}", _jobsTypePath);
-                    if (extraInfoUrlTemplate.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                    {
-                        return new Uri(extraInfoUrlTemplate);
-                    }
-
-                    if (AppBaseUrlPrefix == null)
-                    {
-                        return null;
-                    }
-
-                    return new Uri(AppBaseUrlPrefix + extraInfoUrlTemplate);
-                }
-            }
-            catch (Exception ex)
-            {
-                // On exception trace and use the default extra info url
-                TraceFactory.GetTracer().TraceError(ex);
-            }
-
-            return BuildDefaultExtraInfoUrl(jobName);
-        }
-
-        /// <summary>
-        /// Load the extra url template from a file
-        /// </summary>
-        /// <remarks>
-        /// As each job has an extra information url, it is possible to use specific url for a job
-        /// By providing the url as content in a file called "job.extra_info_url.template" under the job's data directory.
-        /// Sample file content:
-        /// /sb?jobName={jobName}&jobType={jobType}
-        /// </remarks>
-        private string LoadExtraInfoUrlTemplateFromFile(string jobsSpecificDataPath)
-        {
-            try
-            {
-                string jobExtraInfoUrlFilePath = GetJobExtraInfoUrlFilePath(jobsSpecificDataPath);
-                if (FileSystemHelpers.FileExists(jobExtraInfoUrlFilePath))
-                {
-                    string jobExtraInfoUrlFileContent = FileSystemHelpers.ReadAllText(jobExtraInfoUrlFilePath);
-                    jobExtraInfoUrlFileContent = jobExtraInfoUrlFileContent.Trim();
-                    if (!String.IsNullOrEmpty(jobExtraInfoUrlFileContent))
-                    {
-                        return jobExtraInfoUrlFileContent.Split('\n')[0];
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                TraceFactory.GetTracer().TraceError(ex);
-            }
-
-            return null;
-        }
-
-        protected abstract Uri BuildDefaultExtraInfoUrl(string jobName);
+        protected abstract Uri BuildExtraInfoUrl(string jobName);
 
         protected string AppBaseUrlPrefix
         {

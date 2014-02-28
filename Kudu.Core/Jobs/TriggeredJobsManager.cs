@@ -102,7 +102,7 @@ namespace Kudu.Core.Jobs
             job.LatestRun = BuildLatestJobRun(job.Name);
         }
 
-        protected override Uri BuildDefaultExtraInfoUrl(string jobName)
+        protected override Uri BuildExtraInfoUrl(string jobName)
         {
             if (_extraInfoUrlPrefix == null)
             {

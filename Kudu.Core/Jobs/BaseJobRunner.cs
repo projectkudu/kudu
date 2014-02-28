@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Configuration;
@@ -93,7 +92,7 @@ namespace Kudu.Core.Jobs
 
             if (FileSystemHelpers.DirectoryExists(JobTempPath))
             {
-                FileSystemHelpers.DeleteDirectorySafe(JobTempPath, true);
+                FileSystemHelpers.DeleteDirectorySafe(JobTempPath, ignoreErrors: true);
             }
 
             if (FileSystemHelpers.DirectoryExists(JobTempPath))
@@ -151,55 +150,58 @@ namespace Kudu.Core.Jobs
         protected void RunJobInstance(JobBase job, IJobLogger logger, string runId)
         {
             string scriptFileName = Path.GetFileName(job.ScriptFilePath);
-            string scriptFileExtension = Path.GetExtension(job.ScriptFilePath);
 
             logger.LogInformation("Run script '{0}' with script host - '{1}'".FormatCurrentCulture(scriptFileName, job.ScriptHost.GetType().Name));
-            string siteMode = Settings.GetWebSitePolicy();
-            _analytics.JobStarted(job.Name.Fuzz(), scriptFileExtension, job.JobType, siteMode);
 
-            try
+            using (var jobStartedReporter = new JobStartedReporter(_analytics, job, Settings.GetWebSitePolicy(), JobDataPath))
             {
-                var exe = _externalCommandFactory.BuildCommandExecutable(job.ScriptHost.HostPath, WorkingDirectory, IdleTimeout, NullLogger.Instance);
-
-                // Set environment variable to be able to identify all processes spawned for this job
-                exe.EnvironmentVariables[GetJobEnvironmentKey()] = "true";
-                exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsRootPath] = WorkingDirectory;
-                exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsName] = job.Name;
-                exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsType] = job.JobType;
-                exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsDataPath] = JobDataPath;
-                exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsRunId] = runId;
-                exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsExtraUrlPath] = JobsManagerBase.GetJobExtraInfoUrlFilePath(JobDataPath);
-
-                UpdateStatus(logger, "Running");
-
-                int exitCode =
-                    exe.ExecuteReturnExitCode(
-                        TraceFactory.GetTracer(),
-                        logger.LogStandardOutput,
-                        logger.LogStandardError,
-                        job.ScriptHost.ArgumentsFormat,
-                        job.RunCommand);
-
-                if (exitCode != 0)
+                try
                 {
-                    logger.LogError("Job failed due to exit code " + exitCode);
-                }
-                else
-                {
-                    UpdateStatus(logger, "Success");
-                }
-            }
-            catch (Exception ex)
-            {
-                if (ex is ThreadAbortException)
-                {
-                    // We kill the process when refreshing the job
-                    logger.LogInformation("Job aborted");
-                    UpdateStatus(logger, "Aborted");
-                    return;
-                }
+                    var exe = _externalCommandFactory.BuildCommandExecutable(job.ScriptHost.HostPath, WorkingDirectory, IdleTimeout, NullLogger.Instance);
 
-                logger.LogError(ex.ToString());
+                    // Set environment variable to be able to identify all processes spawned for this job
+                    exe.EnvironmentVariables[GetJobEnvironmentKey()] = "true";
+                    exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsRootPath] = WorkingDirectory;
+                    exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsName] = job.Name;
+                    exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsType] = job.JobType;
+                    exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsDataPath] = JobDataPath;
+                    exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsRunId] = runId;
+
+                    UpdateStatus(logger, "Running");
+
+                    int exitCode =
+                        exe.ExecuteReturnExitCode(
+                            TraceFactory.GetTracer(),
+                            logger.LogStandardOutput,
+                            logger.LogStandardError,
+                            job.ScriptHost.ArgumentsFormat,
+                            scriptFileName);
+
+                    if (exitCode != 0)
+                    {
+                        string errorMessage = "Job failed due to exit code " + exitCode;
+                        logger.LogError(errorMessage);
+                        jobStartedReporter.Error = errorMessage;
+                    }
+                    else
+                    {
+                        UpdateStatus(logger, "Success");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (ex is ThreadAbortException)
+                    {
+                        // We kill the process when refreshing the job
+                        logger.LogInformation("Job aborted");
+                        UpdateStatus(logger, "Aborted");
+                        return;
+                    }
+
+                    logger.LogError(ex.ToString());
+
+                    jobStartedReporter.Error = ex.Message;
+                }
             }
         }
 
@@ -288,6 +290,70 @@ namespace Kudu.Core.Jobs
             catch (Exception ex)
             {
                 TraceFactory.GetTracer().TraceError(ex);
+            }
+        }
+
+        private sealed class JobStartedReporter : IDisposable
+        {
+            private static readonly int ReportTimeoutInMilliseconds = (int)TimeSpan.FromSeconds(5).TotalMilliseconds;
+
+            private readonly IAnalytics _analytics;
+            private readonly JobBase _job;
+            private readonly string _siteMode;
+            private readonly string _jobDataPath;
+
+            private Timer _timer;
+            private int _reported;
+
+            public JobStartedReporter(IAnalytics analytics, JobBase job, string siteMode, string jobDataPath)
+            {
+                _analytics = analytics;
+                _job = job;
+                _siteMode = siteMode;
+                _jobDataPath = jobDataPath;
+
+                _timer = new Timer(Report, null, ReportTimeoutInMilliseconds, Timeout.Infinite);
+            }
+
+            public string Error { get; set; }
+
+            private void Report(object state = null)
+            {
+                if (Interlocked.Exchange(ref _reported, 1) == 0)
+                {
+                    string scriptFileExtension = Path.GetExtension(_job.ScriptFilePath);
+                    string jobType = _job.JobType;
+
+                    // Recheck whether the job is marked as "using sdk" here since the SDK will create the marker file
+                    // on the fly so it requires a "first run" first.
+                    bool isUsingSdk = JobsManagerBase.IsUsingSdk(_jobDataPath);
+                    if (isUsingSdk)
+                    {
+                        jobType += "/SDK";
+                    }
+
+                    _analytics.JobStarted(_job.Name.Fuzz(), scriptFileExtension, jobType, _siteMode, Error);
+                }
+            }
+
+            public void Dispose()
+            {
+                Dispose(true);
+                GC.SuppressFinalize(this);
+            }
+
+            private void Dispose(bool disposing)
+            {
+                if (disposing)
+                {
+                    if (_timer != null)
+                    {
+                        _timer.Dispose();
+                        _timer = null;
+                    }
+
+                    Report();
+                }
             }
         }
     }
