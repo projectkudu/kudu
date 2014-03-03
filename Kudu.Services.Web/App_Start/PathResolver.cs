@@ -12,6 +12,13 @@ namespace Kudu.Services.Web
             string path = Environment.ExpandEnvironmentVariables(@"%HOME%");
             if (Directory.Exists(path))
             {
+                // For users running Windows Azure Pack 2 (WAP2), %HOME% actually points to the site folder,
+                // which we don't want here. So yank that segment if we detect it.
+                if (Path.GetFileName(path).Equals(Constants.SiteFolder, StringComparison.OrdinalIgnoreCase))
+                {
+                    path = Path.GetDirectoryName(path);
+                }			
+				
                 return path;
             }
 
