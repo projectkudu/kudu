@@ -116,12 +116,15 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Content\Images\Windows Azure Web Site.png" />
     <Content Include="Content\Scripts\jquery.signalR-2.0.1.min.js" />
     <Content Include="Content\Scripts\KuduExec.js" />
+    <Content Include="Content\Scripts\SiteExtensions.js" />
     <Content Include="Content\Styles\FileBrowser.css" />
     <Content Include="Content\Scripts\jquery-console\jquery.console.js" />
     <Content Include="Content\Scripts\KuduExecV2.js" />
     <Content Include="Content\Scripts\FileBrowser.js" />
+    <Content Include="Content\Styles\SiteExtensions.css" />
     <Content Include="JobRuns\history.html" />
     <Content Include="Web.config">
       <SubType>Designer</SubType>
@@ -195,6 +198,9 @@
     <Content Include="DebugConsole\Default.cshtml">
       <SubType>Code</SubType>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="SiteExtensions\Default.cshtml" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

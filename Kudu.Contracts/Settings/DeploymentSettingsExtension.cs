@@ -11,10 +11,11 @@ namespace Kudu.Contracts.Settings
         public static readonly TimeSpan DefaultLogStreamTimeout = TimeSpan.FromMinutes(30);
         public static readonly TimeSpan DefaultWebJobsRestartTime = TimeSpan.FromMinutes(1);
         public static readonly TimeSpan DefaultJobsIdleTimeout = TimeSpan.FromMinutes(2);
-
         public const TraceLevel DefaultTraceLevel = TraceLevel.Error;
 
         public const int DefaultMaxJobRunsHistoryCount = 50;
+
+        public static readonly string DefaultSiteExtensionRemoteUrl = "http://siteextensions.azurewebsites.net/api/v2/";
 
         public static string GetValue(this IDeploymentSettingsManager settings, string key)
         {
@@ -189,6 +190,12 @@ namespace Kudu.Contracts.Settings
             }
 
             return defaultValue;
+        }
+
+        public static string GetSiteExtensionRemoteUrl(this IDeploymentSettingsManager settings)
+        {
+            string value = settings.GetValue(SettingsKeys.SiteExtensionRemoteUrl);
+            return !String.IsNullOrEmpty(value) ? value : DefaultSiteExtensionRemoteUrl;
         }
     }
 }

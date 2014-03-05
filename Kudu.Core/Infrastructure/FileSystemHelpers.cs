@@ -81,6 +81,11 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
+        public static Stream OpenWrite(string path)
+        {
+            return Instance.File.OpenWrite(path);
+        }
+
         public static void WriteAllText(string path, string contents)
         {
             Instance.File.WriteAllText(path, contents);
@@ -304,6 +309,5 @@ namespace Kudu.Core.Infrastructure
                 if (!ignoreErrors) throw;
             }
         }
-
     }
 }

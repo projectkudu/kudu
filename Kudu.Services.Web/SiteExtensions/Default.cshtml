@@ -1,0 +1,165 @@
+﻿@{
+    Layout = "~/_Layout.cshtml";
+    Page.Title = "Site Extensions";
+}
+
+@section PageHead {
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet" />
+    <link href="../Content/Styles/SiteExtensions.css" rel="stylesheet" />
+}
+
+<div class="container">
+    <div class="row navbar">
+        <div class="col-sm-6 col-md-4" id="tabHeadings">
+            <ul class="nav nav-tabs" data-tabs="tabs">
+                <li class="active"><a data-toggle="tab" href="#gallery">Gallery</a></li>
+                <li><a data-toggle="tab" href="#installed">Installed</a></li>
+                <li><a data-toggle="tab" href="#update">Updates</a></li>
+            </ul>
+        </div>
+        <div class="col-sm-6 col-md-5" id="searchBox">
+            <form class="navbar-form" role="search">
+                <div class="form-group">
+                    <input type="text" class="form-control" id="searchText" data-bind="value: searchTerms" placeholder="Site Extension" />
+                </div>
+                <a class="btn btn-default" id="searchButton"><span>Search</span></a>
+                <a class="btn btn-default" id="clearButton"><span>Clear</span></a>
+            </form>
+        </div>
+        <div class="col-sm-6 col-md-3">
+            <form class="navbar-form">
+                <a class="btn btn-default" id="restartButton"><span>Restart Site</span></a>
+            </form>
+        </div>
+    </div>
+
+    <div class="alert alert-success alert-dismissable" id="successNotification" aria-hidden="true">
+        <button type="button" class="close" id="successNotificationClose" aria-hidden="true">&times;</button>
+        <span id="successNotificationText"></span>
+    </div>
+
+    <div class="alert alert-warning alert-dismissable" id="errorNotification" aria-hidden="true">
+        <button type="button" class="close" id="errorNotificationClose" aria-hidden="true">&times;</button>
+        <span id="errorNotificationText"></span>
+    </div>
+
+    <div class="row">
+        <div class="tab-content">
+            <div class="tab-pane active" id="gallery">
+                <div class="row" data-bind="foreach: gallery">
+                    <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
+                        <div class="thumbnail" id="tile1">
+                            <a href="#">
+                                <img data-bind="attr: { src: IconUrl }, click: $parent.details"
+                                     alt="Icon" class="icon" data-toggle="modal" data-target="#detailsModal" />
+                            </a>
+                            <h4 class="" data-bind="text: Title"></h4>
+                            <p class="text-description" data-bind="text: Description"></p>
+                            <p>
+                                <a class="btn btn-info button-bottom-left installButton" role="button"><span>Install</span></a>
+                                <a class="btn btn-info button-bottom-right" role="button"
+                                   data-toggle="modal" data-target="#detailsModal" data-bind="click: $parent.details">
+                                    <span>Details</span>
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane" id="installed">
+                <div class="row" data-bind="foreach: installed">
+                    <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
+                        <div class="thumbnail" id="tile2">
+                            <a href="#">
+                                <img data-bind="attr: { src: IconUrl }, click: $parent.details"
+                                     alt="Icon" class="icon" data-toggle="modal" data-target="#detailsModal" />
+                            </a>
+                            <h4 class="" data-bind="text: Title"></h4>
+                            <p class="text-description" data-bind="text: Description"></p>
+                            <p>
+                                <a class="btn btn-info button-bottom-left" role="button" data-bind="attr: {href : '/' + Id, target : '_blank'}"><span>Launch</span></a>
+                                <a class="btn btn-info button-bottom-right removeButton" role="button" id="removeButton"><span>Remove</span></a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane" id="update">
+                <div class="row" data-bind="foreach: updates">
+                    <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
+                        <div class="thumbnail" id="tile3">
+                            <a href="#">
+                                <img data-bind="attr: { src: IconUrl }, click: $parent.details"
+                                     alt="Icon" class="icon" data-toggle="modal" data-target="#detailsModal" />
+                            </a>
+                            <h4 class="" data-bind="text: Title"></h4>
+                            <p class="text-description" data-bind="text: Description"></p>
+                            <p>
+                                <a class="btn btn-info button-bottom-left updateButton" role="button"><span>Update</span></a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" data-bind="with: detailedSiteExtension">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <div class="row">
+                    <div class="col-md-3 col-lg-3">
+                        <img data-bind="attr: { src: IconUrl }" alt="Icon" class="icon" />
+                    </div>
+                    <div class="col-md-9 col-lg-9">
+                        <h2 class="modal-title" data-bind="text: Title"></h2>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-body" data-bind="with: detailedSiteExtension">
+                <strong>ID</strong>
+                <p data-bind="text: Id"></p>
+                <strong>Version</strong>
+                <p data-bind="text: Version"></p>
+                <div id="detailsDownloadCount" data-bind="visible: DownloadCount">
+                    <strong>Download Count</strong>
+                    <p data-bind="text: DownloadCount"></p>
+                </div>
+                <div id="detailsAuthors" data-bind="visible: Authors">
+                    <strong>Authors</strong>
+                    <p data-bind="text: Authors"></p>
+                </div>
+                <div id="detailsLicenseUrl" data-bind="visible: LicenseUrl">
+                    <strong>License</strong>
+                    <p><a data-bind="text: LicenseUrl, attr: {href: LicenseUrl, target: '_blank'}"></a></p>
+                </div>
+                <strong>Published Time</strong>
+                <p data-bind="text: PublishedDateTime"></p>
+                <div id="detailsLocalPath" data-bind="visible: LocalPath">
+                    <strong>Installed Path</strong>
+                    <p data-bind="text: LocalPath"></p>
+                </div>
+                <div id="detailsInstalledDateTime" data-bind="visible: InstalledDateTime">
+                    <strong>Installed Time</strong>
+                    <p data-bind="text: InstalledDateTime"></p>
+                </div>
+                <div id="detailsDescription" data-bind="visible: Description">
+                    <strong>Description</strong>
+                    <p data-bind="text: Description"></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="//ajax.aspnetcdn.com/ajax/knockout/knockout-3.0.0.js"></script>
+<script type="text/javascript" src="../Content/Scripts/SiteExtensions.js"></script>

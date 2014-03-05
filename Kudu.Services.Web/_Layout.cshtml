@@ -4,17 +4,13 @@
 <head>
     <meta name="viewport" content="width=device-width" charset="utf-8" />
     <title>@Page.Title</title>
-    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css" rel="stylesheet" />
-    <script src="//ajax.aspnetcdn.com/ajax/jquery/jquery-1.9.1.min.js"></script>
-    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js"></script>
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet" />
+    <script type="text/javascript" src="//ajax.aspnetcdn.com/ajax/jquery/jquery-2.1.0.min.js"></script>
+    <script type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
     @RenderSection("PageHead", required: false)
     <style type="text/css">
         body {
-            padding-top: 50px;
-        }
-
-        .row > div {
-            padding-bottom: 10px;
+            padding-top: 60px;
         }
     </style>
 </head>
@@ -44,6 +40,7 @@
                     <li><a href="~/api/dump">Diagnostic dump</a></li>
                     <li><a href="~/api/logstream" title="If no log events are being generated the page may not load.">Log stream</a></li>
                     <li><a href="~/WebHooks">Web hooks</a></li>
+                    <li><a href="~/SiteExtensions/">Site extensions</a></li>
                 </ul>
             </div>
         </div>

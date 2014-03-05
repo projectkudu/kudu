@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.IO;
+using System.Net;
+using System.Net.Http;
 using System.Web.Http;
 using Kudu.Contracts.SiteExtensions;
 
@@ -16,39 +18,61 @@ namespace Kudu.Services.SiteExtensions
         }
 
         [HttpGet]
-        public async Task<IEnumerable<SiteExtensionInfo>> GetRemoteExtensions(string filter = null, string version = null)
+        public IEnumerable<SiteExtensionInfo> GetRemoteExtensions(string filter = null, bool allowPrereleaseVersions = false)
         {
-            return await _manager.GetRemoteExtensions(filter, version);
+            return _manager.GetRemoteExtensions(filter, allowPrereleaseVersions);
         }
 
         [HttpGet]
-        public async Task<SiteExtensionInfo> GetRemoteExtension(string id, string version = null)
+        public SiteExtensionInfo GetRemoteExtension(string id, string version = null)
         {
-            return await _manager.GetRemoteExtension(id, version);
+            SiteExtensionInfo extension = _manager.GetRemoteExtension(id, version);
+            if (extension == null)
+            {
+                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, id));
+            }
+            return extension;
         }
 
         [HttpGet]
-        public async Task<IEnumerable<SiteExtensionInfo>> GetLocalExtensions(string filter = null, bool update_info = true)
+        public IEnumerable<SiteExtensionInfo> GetLocalExtensions(string filter = null, bool latestInfo = false)
         {
-            return await _manager.GetLocalExtensions(filter, update_info);
+            return _manager.GetLocalExtensions(filter, latestInfo);
         }
 
         [HttpGet]
-        public async Task<SiteExtensionInfo> GetLocalExtension(string id, bool update_info = true)
+        public SiteExtensionInfo GetLocalExtension(string id, bool latestInfo = false)
         {
-            return await _manager.GetLocalExtension(id, update_info);
+            SiteExtensionInfo extension = _manager.GetLocalExtension(id, latestInfo);
+            if (extension == null)
+            {
+                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, id));
+            }
+            return extension;
         }
 
         [HttpPost]
-        public async Task<SiteExtensionInfo> InstallExtension(SiteExtensionInfo info)
+        public SiteExtensionInfo InstallExtension(SiteExtensionInfo info)
         {
-            return await _manager.InstallExtension(info);
+            SiteExtensionInfo extension = _manager.InstallExtension(info);
+            if (extension == null)
+            {
+                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, info.ToString()));
+            }
+            return extension;
         }
 
         [HttpDelete]
-        public async Task<bool> UninstallExtension(string id)
+        public bool UninstallExtension(string id)
         {
-            return await _manager.UninstallExtension(id);
+            try
+            {
+                return _manager.UninstallExtension(id);
+            }
+            catch (DirectoryNotFoundException ex)
+            {
+                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, ex));
+            }
         }
     }
 }
