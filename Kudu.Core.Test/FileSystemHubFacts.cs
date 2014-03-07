@@ -24,7 +24,7 @@ namespace Kudu.Core.Test
             var tracer = new Mock<ITracer>();
             var context = new HubCallerContext(Mock.Of<IRequest>(), Guid.NewGuid().ToString());
             var groups = new Mock<IGroupManager>();
-            var clients = new Mock<IHubCallerConnectionContext>();
+            var clients = new Mock<HubConnectionContext>();
 
             using (
                 var fileSystemHubTest = new FileSystemHubTest(env.Object, tracer.Object, context, groups.Object,
@@ -61,7 +61,7 @@ namespace Kudu.Core.Test
             var tracer = new Mock<ITracer>();
             var context = new HubCallerContext(Mock.Of<IRequest>(), Guid.NewGuid().ToString());
             var groups = new Mock<IGroupManager>();
-            var clients = new Mock<IHubCallerConnectionContext>();
+            var clients = new Mock<HubConnectionContext>();
 
             using (
                 var fileSystemHubTest = new FileSystemHubTest(env.Object, tracer.Object, context, groups.Object,
@@ -91,7 +91,7 @@ namespace Kudu.Core.Test
                 var env = new Mock<IEnvironment>();
                 var tracer = new Mock<ITracer>();
                 var groups = new Mock<IGroupManager>();
-                var clients = new Mock<IHubCallerConnectionContext>();
+                var clients = new Mock<HubConnectionContext>();
 
                 // Test
                 for (var i = 0; i < 10; i++)
@@ -119,7 +119,7 @@ namespace Kudu.Core.Test
     public class FileSystemHubTest : FileSystemHub, IDisposable
     {
         public FileSystemHubTest(IEnvironment environment, ITracer tracer, HubCallerContext context,
-            IGroupManager group, IHubCallerConnectionContext clients) : base(environment, tracer)
+            IGroupManager group, HubConnectionContext clients) : base(environment, tracer)
         {
             Context = context;
             Groups = group;
