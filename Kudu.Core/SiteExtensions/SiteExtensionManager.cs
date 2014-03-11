@@ -42,8 +42,7 @@ namespace Kudu.Core.SiteExtensions
                     .Where(p => p.IsLatestVersion);
             }
 
-            return packages.AsEnumerable()
-                           .Select(p => new SiteExtensionInfo(p));
+            return packages.Select(ConvertRemotePackageToSiteExtensionInfo).AsEnumerable();
         }
 
         public SiteExtensionInfo GetRemoteExtension(string id, string version = null)
@@ -55,7 +54,7 @@ namespace Kudu.Core.SiteExtensions
                 return null;
             }
 
-            return new SiteExtensionInfo(package);
+            return ConvertRemotePackageToSiteExtensionInfo(package);
         }
 
         public IEnumerable<SiteExtensionInfo> GetLocalExtensions(string filter, bool checkLatest = true)
@@ -96,7 +95,7 @@ namespace Kudu.Core.SiteExtensions
 
             if (success)
             {
-                return new SiteExtensionInfo(package);
+                return ConvertLocalPackageToSiteExtensionInfo(package);
             }
 
             return null;
@@ -188,18 +187,41 @@ namespace Kudu.Core.SiteExtensions
 <configuration>", id);
         }
 
+        public void UpdateLocalInfo(SiteExtensionInfo info)
+        {
+            string localPath = GetInstallationDirectory(info.Id);
+            if (FileSystemHelpers.DirectoryExists(localPath))
+            {
+                info.LocalPath = localPath;
+                info.InstalledDateTime = FileSystemHelpers.GetLastWriteTimeUtc(info.LocalPath);
+            }
+        }
+
+        public SiteExtensionInfo ConvertRemotePackageToSiteExtensionInfo(IPackage package)
+        {
+            var info = new SiteExtensionInfo(package);
+
+            IPackage localPackage = _localRepository.FindPackage(info.Id);
+            if (localPackage != null)
+            {
+                UpdateLocalInfo(info);
+                // Assume input package (from remote) is always the latest version.
+                info.LocalIsLatestVersion = package.Version == localPackage.Version;
+            }
+
+            return info;
+        }
+
         public SiteExtensionInfo ConvertLocalPackageToSiteExtensionInfo(IPackage package, bool checkLatest = true)
         {
             var info = new SiteExtensionInfo(package);
 
-            info.LocalPath = GetInstallationDirectory(info.Id);
-
-            info.InstalledDateTime = FileSystemHelpers.GetLastWriteTimeUtc(info.LocalPath);
-
+            UpdateLocalInfo(info);
             if (checkLatest)
             {
+                // FindPackage gets back the latest version.
                 IPackage latestPackage = _remoteRepository.FindPackage(info.Id);
-                info.IsLatestVersion = package.Version == latestPackage.Version;
+                info.LocalIsLatestVersion = package.Version == latestPackage.Version;
             }
 
             return info;
