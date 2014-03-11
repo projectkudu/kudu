@@ -15,6 +15,7 @@ namespace Kudu.Contracts.SiteExtensions
         {
             Id = package.Id;
             Title = package.Title;
+            Summary = package.Summary;
             Description = package.Description;
             Version = package.Version.ToString();
             ProjectUrl = package.ProjectUrl;
@@ -38,6 +39,12 @@ namespace Kudu.Contracts.SiteExtensions
             set;
         }
 
+        public string Summary
+        {
+            get;
+            set;
+        }
+
         public string Description
         {
             get;
@@ -45,12 +52,6 @@ namespace Kudu.Contracts.SiteExtensions
         }
 
         public string Version
-        {
-            get;
-            set;
-        }
-
-        public bool IsLatestVersion
         {
             get;
             set;
@@ -68,6 +69,12 @@ namespace Kudu.Contracts.SiteExtensions
             set;
         }
 
+        public Uri LicenseUrl
+        {
+            get;
+            set;
+        }
+
         public IEnumerable<string> Authors
         {
             get;
@@ -80,7 +87,7 @@ namespace Kudu.Contracts.SiteExtensions
             set;
         }
 
-        public Uri LicenseUrl
+        public bool IsLatestVersion
         {
             get;
             set;
@@ -90,6 +97,12 @@ namespace Kudu.Contracts.SiteExtensions
         {
             get;
             set;
+        }
+
+        public bool? LocalIsLatestVersion
+        {
+            get; 
+            set; 
         }
 
         public string LocalPath
