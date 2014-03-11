@@ -160,11 +160,6 @@ namespace Kudu.Core.Jobs
             }
         }
 
-        protected override Uri BuildExtraInfoUrl(string jobName)
-        {
-            return BuildLogUrl(jobName);
-        }
-
         private Uri BuildLogUrl(string jobName)
         {
             return BuildVfsUrl("{0}/{1}".FormatInvariant(jobName, ContinuousJobLogger.JobLogFileName));

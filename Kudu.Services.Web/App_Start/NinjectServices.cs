@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.IO.Abstractions;
 using System.Net;
 using System.Net.Http.Formatting;
 using System.Web;
@@ -312,6 +311,7 @@ namespace Kudu.Services.Web.App_Start
             var configuration = kernel.Get<IServerConfiguration>();
             GlobalConfiguration.Configuration.Formatters.Clear();
             GlobalConfiguration.Configuration.IncludeErrorDetailPolicy = IncludeErrorDetailPolicy.LocalOnly;
+
             var jsonFormatter = new JsonMediaTypeFormatter();
             GlobalConfiguration.Configuration.Formatters.Add(jsonFormatter);
             GlobalConfiguration.Configuration.DependencyResolver = new NinjectWebApiDependencyResolver(kernel);

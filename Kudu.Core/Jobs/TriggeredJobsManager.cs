@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.IO;
 using System.IO.Abstractions;
@@ -17,8 +16,6 @@ namespace Kudu.Core.Jobs
     {
         private readonly ConcurrentDictionary<string, TriggeredJobRunner> _triggeredJobRunners =
             new ConcurrentDictionary<string, TriggeredJobRunner>(StringComparer.OrdinalIgnoreCase);
-
-        private string _extraInfoUrlPrefix;
 
         public TriggeredJobsManager(ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics)
             : base(traceFactory, environment, settings, analytics, Constants.TriggeredPath)
@@ -56,7 +53,7 @@ namespace Kudu.Core.Jobs
                 {
                     if (isLatest)
                     {
-                        // The history state is determined by the most recent invocation, 
+                        // The history state is determined by the most recent invocation,
                         // as previous ones are immutable (beind historical records).
                         currentETag = CalculateETag(triggeredJobRun);
                         if (currentETag == etag)
@@ -75,12 +72,12 @@ namespace Kudu.Core.Jobs
                     jobName.GetHashCode(), "EMPTY".GetHashCode());
             }
 
-            return new TriggeredJobHistory {TriggeredJobRuns = triggeredJobRuns};
+            return new TriggeredJobHistory { TriggeredJobRuns = triggeredJobRuns };
         }
 
         private static string CalculateETag(TriggeredJobRun triggeredJobRun)
         {
-            // during a job's life time, the status and endtime could change, so 
+            // during a job's life time, the status and endtime could change, so
             // a job run state is made of its id, status, and end time.
             return string.Format(CultureInfo.CurrentCulture, "\"{0:x}-{1:x}-{2:x}\"",
                 triggeredJobRun.Id.GetHashCode(),
@@ -100,21 +97,6 @@ namespace Kudu.Core.Jobs
         {
             job.HistoryUrl = BuildJobsUrl(job.Name + "/history");
             job.LatestRun = BuildLatestJobRun(job.Name);
-        }
-
-        protected override Uri BuildExtraInfoUrl(string jobName)
-        {
-            if (_extraInfoUrlPrefix == null)
-            {
-                if (AppBaseUrlPrefix == null)
-                {
-                    return null;
-                }
-
-                _extraInfoUrlPrefix = AppBaseUrlPrefix + "/JobRuns/history.html";
-            }
-
-            return new Uri(_extraInfoUrlPrefix + "?jobName=" + jobName);
         }
 
         private TriggeredJobRun BuildLatestJobRun(string jobName)

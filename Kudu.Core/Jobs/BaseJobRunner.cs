@@ -293,6 +293,9 @@ namespace Kudu.Core.Jobs
             }
         }
 
+        /// <summary>
+        /// This class will make sure the "JobStarted" analytics event is invoked after 5 seconds or when disposed.
+        /// </summary>
         private sealed class JobStartedReporter : IDisposable
         {
             private static readonly int ReportTimeoutInMilliseconds = (int)TimeSpan.FromSeconds(5).TotalMilliseconds;
@@ -319,6 +322,7 @@ namespace Kudu.Core.Jobs
 
             private void Report(object state = null)
             {
+                // Make sure this code is only called once.
                 if (Interlocked.Exchange(ref _reported, 1) == 0)
                 {
                     string scriptFileExtension = Path.GetExtension(_job.ScriptFilePath);

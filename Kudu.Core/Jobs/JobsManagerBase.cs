@@ -143,8 +143,7 @@ namespace Kudu.Core.Jobs
 
         private string GetSpecificJobDataPath(string jobName)
         {
-            string jobsSpecificDataPath = Path.Combine(JobsDataPath, jobName);
-            return jobsSpecificDataPath;
+            return Path.Combine(JobsDataPath, jobName);
         }
 
         protected TJob GetJobInternal(string jobName)
@@ -301,7 +300,15 @@ namespace Kudu.Core.Jobs
             return new Uri(_vfsUrlPrefix + relativeUrl);
         }
 
-        protected abstract Uri BuildExtraInfoUrl(string jobName);
+        private Uri BuildExtraInfoUrl(string jobName)
+        {
+            if (AppBaseUrlPrefix == null)
+            {
+                return null;
+            }
+
+            return new Uri("{0}/azurejobs/#/jobs/{1}/{2}".FormatInvariant(AppBaseUrlPrefix, _jobsTypePath, jobName));
+        }
 
         protected string AppBaseUrlPrefix
         {

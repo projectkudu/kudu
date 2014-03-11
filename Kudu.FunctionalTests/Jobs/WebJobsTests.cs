@@ -32,7 +32,6 @@ namespace Kudu.FunctionalTests.Jobs
         private const string ConsoleWorkerExecutablePath = ConsoleWorkerJobPath + "/ConsoleWorker.exe";
 
         private const string TriggeredJobBinPath = "Site/wwwroot/App_Data/jobs/triggered";
-        private const string TriggeredJobDataPath = JobsDataPath + "/triggered";
 
         [Fact]
         public void PushAndRedeployContinuousJobAsConsoleWorker()
