@@ -434,12 +434,12 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRouteDual("set-continuous-job-settings", "jobs/continuous/{jobName}/settings", new { controller = "Jobs", action = "SetContinuousJobSettings" }, new { verb = new HttpMethodConstraint("PUT") });
 
             // SiteExtensions
-            routes.MapHttpRouteDual("api-get-remote-extensions", "api/extensions/remote", new { controller = "SiteExtension", action = "GetRemoteExtensions" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRouteDual("api-get-remote-extension", "api/extensions/remote/{id}", new { controller = "SiteExtension", action = "GetRemoteExtension" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRouteDual("api-get-local-extensions", "api/extensions/local", new { controller = "SiteExtension", action = "GetLocalExtensions" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRouteDual("api-get-local-extension", "api/extensions/local/{id}", new { controller = "SiteExtension", action = "GetLocalExtension" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRouteDual("api-uninstall-extension", "api/extensions/local/{id}", new { controller = "SiteExtension", action = "UninstallExtension" }, new { verb = new HttpMethodConstraint("DELETE") });
-            routes.MapHttpRouteDual("api-install-update-extension", "api/extensions", new { controller = "SiteExtension", action = "InstallExtension" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpRoute("api-get-remote-extensions", "api/extensions/remote", new { controller = "SiteExtension", action = "GetRemoteExtensions" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("api-get-remote-extension", "api/extensions/remote/{id}", new { controller = "SiteExtension", action = "GetRemoteExtension" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("api-get-local-extensions", "api/extensions/local", new { controller = "SiteExtension", action = "GetLocalExtensions" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("api-get-local-extension", "api/extensions/local/{id}", new { controller = "SiteExtension", action = "GetLocalExtension" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("api-uninstall-extension", "api/extensions/local/{id}", new { controller = "SiteExtension", action = "UninstallExtension" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpRoute("api-install-update-extension", "api/extensions", new { controller = "SiteExtension", action = "InstallExtension" }, new { verb = new HttpMethodConstraint("POST") });
         }
 
         // Perform migration tasks to deal with legacy sites that had different file layout
