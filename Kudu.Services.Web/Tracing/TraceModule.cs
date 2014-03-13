@@ -43,8 +43,9 @@ namespace Kudu.Services.Web.Tracing
             // HACK: If it's a Razor extension, add a dummy extension to prevent WebPages for blocking it,
             // as we need to serve those files via /vfs
             // Yes, this is an abuse of the trace module
-            if (httpRequest.FilePath.EndsWith(".cshtml", StringComparison.OrdinalIgnoreCase) ||
-                httpRequest.FilePath.EndsWith(".vbhtml", StringComparison.OrdinalIgnoreCase))
+            if (httpRequest.FilePath.IndexOf("vfs/", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                (httpRequest.FilePath.EndsWith(".cshtml", StringComparison.OrdinalIgnoreCase) ||
+                httpRequest.FilePath.EndsWith(".vbhtml", StringComparison.OrdinalIgnoreCase)))
             {
                 httpContext.Server.TransferRequest(httpRequest.FilePath + Constants.DummyRazorExtension);
             }
