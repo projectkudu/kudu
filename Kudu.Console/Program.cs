@@ -110,7 +110,9 @@ namespace Kudu.Console
                 }
                 catch (Exception e)
                 {
-                    System.Console.Error.WriteLine(e.Message);
+                    tracer.TraceError(e);
+
+                    System.Console.Error.WriteLine(e.GetBaseException().Message);
                     System.Console.Error.WriteLine(Resources.Log_DeploymentError);
                     return 1;
                 }

@@ -164,6 +164,11 @@ namespace Kudu.Core.Deployment
                     targetBranch = _settings.GetBranch();
 
                     changeSet = repository.GetChangeSet(targetBranch);
+
+                    if (changeSet == null)
+                    {
+                        throw new InvalidOperationException(String.Format("The current deployment branch is '{0}', but nothing has been pushed to it", targetBranch));
+                    }
                 }
 
                 string id = changeSet.Id;
