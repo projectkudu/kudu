@@ -305,6 +305,19 @@ namespace Kudu.Services.Infrastructure
         // internal for testing purpose
         internal string GetLocalFilePath()
         {
+            // Restore the original extension if we had added a dummy
+            // See comment in TraceModule.OnBeginRequest
+            string result = GetOriginalLocalFilePath();
+            if (result.EndsWith(Constants.DummyRazorExtension, StringComparison.Ordinal))
+            {
+                result = result.Substring(0, result.Length - Constants.DummyRazorExtension.Length);
+            }
+
+            return result;
+        }
+
+        private string GetOriginalLocalFilePath()
+        {
             IHttpRouteData routeData = Request.GetRouteData();
 
             string result;

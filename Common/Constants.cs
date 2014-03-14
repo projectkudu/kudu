@@ -37,6 +37,8 @@ namespace Kudu
         public const string ContinuousPath = "continuous";
         public const string TriggeredPath = "triggered";
 
+        public const string DummyRazorExtension = ".kudu777";
+
         // Kudu trace text file related
         public const string DeploymentTracePath = LogFilesPath + @"\Git\deployment";
 
