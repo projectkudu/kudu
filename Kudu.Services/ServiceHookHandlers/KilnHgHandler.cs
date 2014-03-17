@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Web;
@@ -110,7 +111,7 @@ namespace Kudu.Services.ServiceHookHandlers
                     authorName: ParseNameFromAuthor(author),
                     authorEmail: ParseEmailFromAuthor(author),
                     message: (targetCommit.Value<string>("message") ?? String.Empty).Trim(),
-                    timestamp: new DateTimeOffset(DateTime.Parse(targetCommit.Value<string>("timestamp")), TimeSpan.Zero)
+                    timestamp: new DateTimeOffset(DateTime.Parse(targetCommit.Value<string>("timestamp"), CultureInfo.InvariantCulture), TimeSpan.Zero)
                     )
             };
 
