@@ -24,8 +24,16 @@ namespace Kudu.Contracts.Jobs
         [DataMember(Name = "error")]
         public string Error { get; set; }
 
+        [DataMember(Name = "using_sdk")]
+        public bool UsingSdk { get; set; }
+
         public IScriptHost ScriptHost { get; set; }
 
         public string ScriptFilePath { get; set; }
+
+        public override int GetHashCode()
+        {
+            return HashHelpers.CalculateCompositeHash(Name, RunCommand, JobType, Error);
+        }
     }
 }

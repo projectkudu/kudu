@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO.Abstractions;
 using System.Text;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
@@ -30,13 +29,14 @@ namespace Kudu.Core.Tracing
             _siteExtensionLogManager.Log(o);
         }
 
-        public void JobStarted(string jobName, string scriptExtension, string jobType, string siteMode)
+        public void JobStarted(string jobName, string scriptExtension, string jobType, string siteMode, string error)
         {
             var o = new KuduSiteExtensionLogEvent("JobStarted");
-            o["WebJobsName"] = jobName;
+            o["JobName"] = jobName;
             o["ScriptExtension"] = scriptExtension;
-            o["WebJobsType"] = jobType;
+            o["JobType"] = jobType;
             o["SiteMode"] = siteMode;
+            o["Error"] = error;
 
             _siteExtensionLogManager.Log(o);
         }

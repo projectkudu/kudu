@@ -11,5 +11,10 @@ namespace Kudu.Contracts.Jobs
 
         [DataMember(Name = "history_url")]
         public Uri HistoryUrl { get; set; }
+
+        public override int GetHashCode()
+        {
+            return HashHelpers.CalculateCompositeHash(LatestRun, base.GetHashCode());
+        }
     }
 }

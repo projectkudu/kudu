@@ -32,7 +32,6 @@ namespace Kudu.FunctionalTests.Jobs
         private const string ConsoleWorkerExecutablePath = ConsoleWorkerJobPath + "/ConsoleWorker.exe";
 
         private const string TriggeredJobBinPath = "Site/wwwroot/App_Data/jobs/triggered";
-        private const string TriggeredJobDataPath = JobsDataPath + "/triggered";
 
         [Fact]
         public void PushAndRedeployContinuousJobAsConsoleWorker()
@@ -394,69 +393,6 @@ namespace Kudu.FunctionalTests.Jobs
 
                 Assert.Equal(0, triggeredJobs.Count());
                 Assert.Equal(0, continuousJobs.Count());
-            });
-        }
-
-        [Fact]
-        public void ExtraInfoUrlTemplateShouldBeUsedWhenExists()
-        {
-            RunScenario("ExtraInfoUrlTemplateShouldBeUsedWhenExists", appManager =>
-            {
-                TestTracer.Trace("Adding jobs");
-
-                var extraInfoUrlTemplates = new string[]
-                {
-                    "/sb?jobName={jobName}&jobType={jobType}",
-                    "",
-                    null,
-                    "/some/other/link",
-                    "/some/other/{jobName}/link",
-                    "http://someplace.else.com/{jobType}/index.html"
-                };
-
-                // Extract expected url (remove any user/password that might exists in the service url)
-                var serviceUrl = new Uri(appManager.ServiceUrl);
-                string expectedBaseUrl = appManager.ServiceUrl.Replace(serviceUrl.UserInfo + '@', String.Empty);
-
-                var extraInfoUrlExpectedResults = new string[]
-                {
-                    expectedBaseUrl + "sb?jobName=job1&jobType=triggered",
-                    expectedBaseUrl + "JobRuns/history.html?jobName=job2",
-                    expectedBaseUrl + "JobRuns/history.html?jobName=job3",
-                    expectedBaseUrl + "some/other/link",
-                    expectedBaseUrl + "some/other/job5/link",
-                    "http://someplace.else.com/triggered/index.html"
-                };
-
-                int index = 1;
-                foreach (string extraInfoUrlTemplate in extraInfoUrlTemplates)
-                {
-                    string jobName = "job" + index;
-                    string jobScriptPath = TriggeredJobBinPath + "/" + jobName + "/run.cmd";
-                    string jobExtraInfoUrlFilePath = TriggeredJobDataPath + "/" + jobName + "/job.extra_info_url.template";
-
-                    appManager.VfsManager.WriteAllText(jobScriptPath, "echo echo echo echo");
-
-                    if (extraInfoUrlTemplate != null)
-                    {
-                        appManager.VfsManager.WriteAllText(jobExtraInfoUrlFilePath, extraInfoUrlTemplate);
-                    }
-
-                    index++;
-                }
-
-                index = 1;
-                foreach (string extraUrlExpectedResult in extraInfoUrlExpectedResults)
-                {
-                    TestTracer.Trace("Verify - " + extraUrlExpectedResult);
-
-                    string jobName = "job" + index;
-
-                    TriggeredJob triggeredJob = appManager.JobsManager.GetTriggeredJobAsync(jobName).Result;
-                    Assert.Equal(extraUrlExpectedResult, triggeredJob.ExtraInfoUrl.ToString());
-
-                    index++;
-                }
             });
         }
 

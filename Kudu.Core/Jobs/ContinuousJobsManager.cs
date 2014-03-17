@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Abstractions;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -159,11 +158,6 @@ namespace Kudu.Core.Jobs
             {
                 return false;
             }
-        }
-
-        protected override Uri BuildDefaultExtraInfoUrl(string jobName)
-        {
-            return BuildLogUrl(jobName);
         }
 
         private Uri BuildLogUrl(string jobName)

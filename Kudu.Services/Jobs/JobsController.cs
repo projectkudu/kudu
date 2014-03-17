@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Web.Http;
+using Kudu.Contracts;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Hooks;
@@ -35,7 +36,7 @@ namespace Kudu.Services.Jobs
 
             var allJobs = triggeredJobs.OfType<JobBase>().Union(continuousJobs);
 
-            return Request.CreateResponse(HttpStatusCode.OK, allJobs);
+            return ListJobsResponseBasedOnETag(allJobs);
         }
 
         [HttpGet]
@@ -43,7 +44,7 @@ namespace Kudu.Services.Jobs
         {
             IEnumerable<ContinuousJob> continuousJobs = _continuousJobsManager.ListJobs();
 
-            return Request.CreateResponse(HttpStatusCode.OK, continuousJobs);
+            return ListJobsResponseBasedOnETag(continuousJobs);
         }
 
         [HttpGet]
@@ -103,7 +104,7 @@ namespace Kudu.Services.Jobs
         {
             IEnumerable<TriggeredJob> triggeredJobs = _triggeredJobsManager.ListJobs();
 
-            return Request.CreateResponse(HttpStatusCode.OK, triggeredJobs);
+            return ListJobsResponseBasedOnETag(triggeredJobs);
         }
 
         [HttpGet]
@@ -121,7 +122,7 @@ namespace Kudu.Services.Jobs
         [HttpGet]
         public HttpResponseMessage GetTriggeredJobHistory(string jobName)
         {
-            string etag = Request.Headers.IfNoneMatch.Select(header => header.Tag).FirstOrDefault();
+            string etag = GetRequestETag();
 
             string currentETag;
             TriggeredJobHistory history = _triggeredJobsManager.GetJobHistory(jobName, etag, out currentETag);
@@ -212,6 +213,32 @@ namespace Kudu.Services.Jobs
         public HttpResponseMessage SetTriggeredJobSettings(string jobName, JobSettings jobSettings)
         {
             return SetJobSettings(jobName, jobSettings, _triggeredJobsManager);
+        }
+
+        private HttpResponseMessage ListJobsResponseBasedOnETag(IEnumerable<JobBase> jobs)
+        {
+            string etag = GetRequestETag();
+
+            string currentETag = "\"" + HashHelpers.CalculateCompositeHash(jobs.ToArray()).ToString("x") + "\"";
+
+            HttpResponseMessage response;
+            if (etag == currentETag)
+            {
+                response = Request.CreateResponse(HttpStatusCode.NotModified);
+            }
+            else
+            {
+                response = Request.CreateResponse(HttpStatusCode.OK, jobs);
+            }
+
+            response.Headers.ETag = new EntityTagHeaderValue(currentETag);
+
+            return response;
+        }
+
+        private string GetRequestETag()
+        {
+            return Request.Headers.IfNoneMatch.Select(header => header.Tag).FirstOrDefault();
         }
 
         private HttpResponseMessage RemoveJob<TJob>(string jobName, IJobsManager<TJob> jobsManager) where TJob : JobBase, new()
