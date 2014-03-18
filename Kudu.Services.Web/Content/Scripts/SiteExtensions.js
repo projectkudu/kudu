@@ -1,21 +1,4 @@
 ﻿(function () {
-    function adjustTileRaito() {
-        var tiles = $("#tile1, #tile2, #tile3");
-        tiles.height(tiles.width() * 1.6);
-    }
-
-    adjustTileRaito();
-
-    $(window).resize(adjustTileRaito);
-
-    $('a[data-toggle="tab"]').on("shown.bs.tab", function (event) {
-        window.location.hash = $(event.target).attr("href").substr(1);
-        $("#successNotification").slideUp();
-        $("#errorNotification").slideUp();
-    });
-
-    $('#tabHeadings a[href="' + window.location.hash + '"]').tab('show');
-
     $("#successNotification").hide();
     $("#errorNotification").hide();
 
@@ -36,22 +19,63 @@
         $("#errorNotification").slideDown();
     }
 
+    $('#navTabs a[href="#installed"]').click(function (e) {
+        e.preventDefault();
+        switchTab(e);
+        var context = ko.contextFor(this);
+        context.$root.display(context.$root.installed());
+        $(this).tab('show');
+    });
+
+    $('#navTabs a[href="#gallery"]').click(function (e) {
+        e.preventDefault();
+        switchTab(e);
+        var context = ko.contextFor(this);
+        context.$root.display(context.$root.gallery());
+        $(this).tab('show');
+    });
+
+    function switchTab(event) {
+        $("#successNotification").slideUp();
+        $("#errorNotification").slideUp();
+        window.location.hash = $(event.target).attr("href").substr(1);
+    };
+
+    if (window.location.hash !== "#installed" && window.location.hash !== "#gallery") {
+        window.location.hash = "#installed";
+    }
+
+    $('#tabHeadings a[href="' + window.location.hash + '"]').tab('show');
+
+    function processExtensions(ext) {
+        if (ext.IconUrl === null) {
+            ext.IconUrl = "../Content/Images/Windows Azure Web Site.png";
+        }
+        if (ext.DownloadCount < 0) {
+            ext.DownloadCount = null;
+        }
+        if (ext.Title === null) {
+            ext.Title = ext.Id;
+        }
+        return ext;
+    }
+
     var activitySpin = "<i class=\"fa fa-spinner fa-spin\"></i>";
     var searchText = "<span>Search</span>";
     var clearText = "<span>Clear</span>";
-    var installText = "<span>Install</span>";
-    var removeText = "<span>Remove</span>";
-    var updateText = "<span>Update</span>";
+    var removeText = '<i class="fa fa-times"></i>';
+    var updateText = '<i class="fa fa-arrow-up"></i>';
     var restartText = "<span>Restart Site</span>";
 
     function buttonResponse(btn, action, text) {
         var width = $(btn).width();
         $(btn).width(width);
         $(btn).html(activitySpin);
-        $(btn).prop("disabled", "disabled");
+        $(btn).attr("disabled", true);
         action(function () {
             $(btn).html(text);
-            $(btn).removeProp("disabled");
+            $(btn).removeAttr("disabled");
+            $(btn).css("width", "");
         });
     }
 
@@ -65,16 +89,34 @@
     });
 
     $(document).on("click", ".installButton", function () {
-        var context = ko.contextFor(this);
-        var data = ko.dataFor(this);
-        buttonResponse(this, function (completionCallback) {
-            context.$root.install(data, completionCallback,
-                function () {
-                    displaySuccess("<strong>" + data.Title
-                        + " </strong> is successfully installed. <strong>Restart Site </strong> to make it available.");
-                });
-        },
-        installText);
+        var btn = this;
+        var context = ko.contextFor(btn);
+        var data = ko.dataFor(btn);
+        $(btn).html(activitySpin);
+        $(btn).prop("disabled", "disabled");
+        $.ajax({
+            type: "POST",
+            url: "/api/extensions",
+            contentType: "application/json",
+            data: JSON.stringify(data),
+            success: function (result) {
+                result = processExtensions(result);
+                //displaySuccess("<strong>" + result.Title
+                //    + "</strong> is successfully installed. <strong>Restart Site </strong> to make it available.");
+                $("#restartButton").attr("data-content", "<strong>" + result.Title
+                    + "</strong> is successfully installed. <strong>Restart Site </strong> to make it available.");
+                $("#restartButton").popover('show');
+                setTimeout(function () {
+                    $("#restartButton").popover('hide');
+                }, 5000);
+            },
+            error: function (jqXhr, textStatus, errorThrown) {
+                displayError("Failed to install <strong>" + result.Title + "</strong>: " + textStatus + " - " + errorThrown);
+            },
+            complete: function () {
+                context.$root.populateAllTabs();
+            }
+        });
     });
 
     $(document).on("click", ".removeButton", function () {
@@ -83,8 +125,6 @@
         buttonResponse(this, function (completionCallback) {
             context.$root.remove(data, completionCallback,
                 function () {
-                    displaySuccess("<strong>" + data.Title
-                        + " </strong> is successfully removed.");
                 });
         }, removeText);
     });
@@ -95,8 +135,6 @@
         buttonResponse(this, function (completionCallback) {
             context.$root.install(data, completionCallback,
                 function () {
-                    displaySuccess("<strong>" + data.Title
-                        + " </strong> is successfully updated.");
                 });
         }, updateText);
     });
@@ -109,65 +147,73 @@
                 error: function () {
                     // no op
                 },
-                complete: completionCallback
+                complete: function() {
+                    setTimeout(completionCallback, 5000);
+                }
             });
         }, restartText);
     });
 
-    function extensionsViewModel() {
+    var extensionsViewModel = function () {
         // Data
         var self = this;
-        self.gallery = ko.observableArray([]);
-        self.installed = ko.observableArray([]);
-        self.updates = ko.observableArray([]);
+        self.loadingGallery = ko.observable(true);
+        self.loadingInstalled = ko.observable(true);
         self.detailedSiteExtension = ko.observable();
         self.searchTerms = ko.observable("");
-        self.activeTab = ko.observable("gallery");
+        self.installed = ko.observableArray();
+        self.gallery = ko.observableArray();
+        self.display = ko.observableArray();
 
         // Operations
-        function processExtensions(data) {
-            data.forEach(function (ext) {
-                if (ext.IconUrl === null) {
-                    ext.IconUrl = "../Content/Images/Windows Azure Web Site.png";
-                }
-                if (ext.DownloadCount < 0) {
-                    ext.DownloadCount = null;
-                }
-                if (ext.Title === null) {
-                    ext.Title = ext.Id;
-                }
-            });
-            return data;
-        }
 
         self.populateGallery = function (filter, completionCallback) {
+            self.loadingGallery(true);
             $.ajax({
                 type: "GET",
                 url: "/api/extensions/remote?" + $.param({ "filter": filter }),
                 dataType: "json",
                 success: function (data) {
-                    self.gallery(processExtensions(data));
+                    data.forEach(processExtensions);
+                    self.gallery(data);
+                    if ($("#gallery").hasClass("active")) {
+                        self.display(data);
+                    }
                 },
                 error: function (jqXhr, textStatus, errorThrown) {
                     displayError(textStatus + ": " + errorThrown);
                 },
-                complete: completionCallback
+                complete: function () {
+                    self.loadingGallery(false);
+                    if (typeof (completionCallback) === "function") {
+                        completionCallback();
+                    }
+                }
             });
         };
 
         self.populateInstalled = function (filter, completionCallback) {
+            self.loadingInstalled(true);
             $.ajax({
                 type: "GET",
                 url: "/api/extensions/local?" + $.param({ "filter": filter }),
                 dataType: "json",
                 success: function (data) {
-                    self.installed(processExtensions(data));
-                    self.updates(data.filter(function (item) { return !item.IsLatestVersion; }));
+                    data.forEach(processExtensions);
+                    self.installed(data);
+                    if ($("#installed").hasClass("active")) {
+                        self.display(data);
+                    }
                 },
                 error: function (jqXhr, textStatus, errorThrown) {
                     displayError(textStatus + ": " + errorThrown);
                 },
-                complete: completionCallback
+                complete: function () {
+                    self.loadingInstalled(false);
+                    if (typeof (completionCallback) === "function") {
+                        completionCallback();
+                    }
+                }
             });
         };
 
@@ -184,12 +230,10 @@
             self.populateInstalled(self.searchTerms, completionCallback);
         };
 
-        self.install = function (extension, completionCallback, successCallback) {
+        self.remove = function (extension, completionCallback, successCallback) {
             $.ajax({
-                type: "POST",
-                url: "/api/extensions",
-                contentType: "application/json",
-                data: JSON.stringify(extension),
+                type: "DELETE",
+                url: "/api/extensions/local/" + extension.Id,
                 success: successCallback,
                 error: function (jqXhr, textStatus, errorThrown) {
                     displayError(textStatus + ": " + errorThrown);
@@ -200,27 +244,13 @@
             });
         };
 
-        self.remove = function (extension, completionCallback, successCallback) {
-            $.ajax({
-                type: "DELETE",
-                url: "/api/extensions/local/" + extension.Id,
-                success: successCallback,
-                error: function (jqXhr, textStatus, errorThrown) {
-                    displayError(textStatus + ": " + errorThrown);
-                },
-                complete: function () {
-                    self.populateActiveTab(completionCallback);
-                }
-            });
-        };
-
         self.details = function (extension) {
             self.detailedSiteExtension(extension);
         };
 
         // Initialization
         self.populateAllTabs();
-    }
+    };
 
     ko.applyBindings(new extensionsViewModel());
 })();

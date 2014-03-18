@@ -1,29 +1,38 @@
-﻿img.icon {
-    height: 72px;
-    width: 72px;
-    display: inline-block;
+﻿img.tile-icon {
+    height: 32px;
+    width: 32px;
+    float:left;
 }
 
-.thumbnail {
-    text-align: center;
-    height: 300px;
+img.modal-icon {
+    height: 64px;
+    width: 64px;
+    float:left;
 }
 
 .button-bottom-left {
-    position: absolute;
-    width: 70px;
-    left: 20px;
+    margin-left: 5px;
+    float: left;
     bottom: 25px;
+}
+
+.button-top-right {
+    float: right;
 }
 
 .button-bottom-right {
-    position: absolute;
-    right: 20px;
+    float: right;
     bottom: 25px;
 }
 
-.text-description {
-    height: 50%;
+.text-4line {
+    height: 5.6em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.text-1line {
+    max-height: 1em;
     overflow: hidden;
     text-overflow: ellipsis;
 }
