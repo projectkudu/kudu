@@ -52,20 +52,21 @@ namespace Kudu.Services.Editor
 
         protected override Task<HttpResponseMessage> CreateItemGetResponse(FileSystemInfoBase info, string localFilePath)
         {
-            
+
             // Get current etag
             EntityTagHeaderValue currentEtag = CreateEntityTag(info);
 
+            // Check whether we have a range request (taking If-Range condition into account)
+            bool isRangeRequest = IsRangeRequest(currentEtag);
+
             // Check whether we have a conditional If-None-Match request
-            if (IsIfNoneMatchRequest(currentEtag))
+            // Unless it is a range request (see RFC2616 sec 14.35.2 Range Retrieval Requests)
+            if (!isRangeRequest && IsIfNoneMatchRequest(currentEtag))
             {
                 HttpResponseMessage notModifiedResponse = Request.CreateResponse(HttpStatusCode.NotModified);
                 notModifiedResponse.Headers.ETag = currentEtag;
                 return Task.FromResult(notModifiedResponse);
             }
-
-            // Check whether we have a conditional range request containing both a Range and If-Range header field
-            bool isRangeRequest = IsRangeRequest(currentEtag);
 
             // Generate file response
             Stream fileStream = null;
@@ -157,7 +158,7 @@ namespace Kudu.Services.Editor
                     try
                     {
                         await Request.Content.CopyToAsync(fileStream);
-                    } 
+                    }
                     catch (Exception ex)
                     {
                         Tracer.TraceError(ex);
@@ -178,7 +179,7 @@ namespace Kudu.Services.Editor
                 info.Refresh();
                 successFileResponse.Headers.ETag = CreateEntityTag(info);
                 return successFileResponse;
-                
+
             }
             catch (Exception ex)
             {
@@ -186,7 +187,7 @@ namespace Kudu.Services.Editor
                 HttpResponseMessage errorResponse =
                     Request.CreateErrorResponse(HttpStatusCode.Conflict,
                     RS.Format(Resources.VfsController_WriteConflict, localFilePath, ex.Message), ex);
-                
+
                 return errorResponse;
             }
         }
