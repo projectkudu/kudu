@@ -243,15 +243,15 @@ namespace Kudu.Services.Infrastructure
         /// </summary>
         protected bool IsRangeRequest(EntityTagHeaderValue currentEtag)
         {
-            if (currentEtag != null && Request.Headers.IfRange != null && Request.Headers.Range != null)
+            if (Request.Headers.Range == null)
             {
-                // First check that the etag matches so that we can consider the range request
-                if (currentEtag.Equals(Request.Headers.IfRange.EntityTag))
-                {
-                    return true;
-                }
+                return false;
             }
-            return false;
+            if (Request.Headers.IfRange != null)
+            {
+                return Request.Headers.IfRange.EntityTag.Equals(currentEtag);
+            }
+            return true;
         }
 
         /// <summary>
