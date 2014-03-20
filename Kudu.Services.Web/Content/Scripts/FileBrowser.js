@@ -35,10 +35,11 @@ $.connection.hub.start().done(function () {
             });
         },
 
-        addFiles: function (files) {
+        addFiles: function (files, unzip) {
             return whenArray(
                 $.map(files, function (item) {
-                    return Vfs.setContent({ href: viewModel.selected().href + item.name }, item.contents);
+                    var baseHref = unzip ? viewModel.selected().href.replace(/\/vfs\//, "/zip/") : viewModel.selected().href;
+                    return Vfs.setContent({ href: (baseHref + (unzip ? "" : item.name)) }, item.contents);
                 })
             );
         },
@@ -197,7 +198,7 @@ $.connection.hub.start().done(function () {
             root: root,
             specialDirs: ko.observableArray([]),
             selected: ko.observable(root),
-            processing: ko.observable(false),
+            koprocessing: ko.observable(false),
             fileEdit: ko.observable(null),
             editText: ko.observable(""),
             cancelEdit: function () {
@@ -209,7 +210,12 @@ $.connection.hub.start().done(function () {
                     item.selectNode();
                 }
             },
-            errorText: ko.observable()
+            errorText: ko.observable(),
+            inprocessing: 0,
+            processing: function (value) {
+                value ? viewModel.inprocessing++ : viewModel.inprocessing--;
+                viewModel.inprocessing > 0 ? viewModel.koprocessing(true) : viewModel.koprocessing(false);
+            }
         };
 
     viewModel.specialDirsIndex = ko.dependentObservable(function () {
@@ -220,7 +226,7 @@ $.connection.hub.start().done(function () {
         return result;
     }, viewModel),
 
-    viewModel.processing.subscribe(function (newValue) {
+    viewModel.koprocessing.subscribe(function (newValue) {
         if (newValue) {
             viewModel.errorText("");
         }
@@ -383,23 +389,52 @@ $.connection.hub.start().done(function () {
 
     // Drag and drop
     $("#fileList")
-      .on("dragenter dragover", function (e) {
-          e.preventDefault();
-          e.stopPropagation();
-      })
-      .on("drop", function (evt) {
-          evt.preventDefault();
-          evt.stopPropagation();
+        .on("dragenter dragover", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (_isZipFile(e)) {
+                $(".show-on-hover").addClass('upload-unzip-show');
+            }
+        })
+        .on("drop", function (evt) {
+            evt.preventDefault();
+            evt.stopPropagation();
 
-          var dir = viewModel.selected();
-          viewModel.processing(true);
-          _getInputFiles(evt).done(function (files) {
-              Vfs.addFiles(files).always(function () {
-                  dir.fetchChildren(/* force */ true);
-                  viewModel.processing(false);
-              });
-          });
-      });
+            $(".show-on-hover").removeClass('upload-unzip-show');
+            $(".show-on-hover").removeClass('upload-unzip-hover');
+            var dir = viewModel.selected();
+            viewModel.processing(true);
+            _getInputFiles(evt).done(function (files) {
+                Vfs.addFiles(files).always(function () {
+                    dir.fetchChildren( /* force */ true);
+                    viewModel.processing(false);
+                });
+            });
+        }).on("dragleave", function (e) {
+            $(".show-on-hover").removeClass('upload-unzip-show');
+        });
+
+    $("#upload-unzip")
+        .on("dragenter dragover", function(e) {
+            $(".show-on-hover").addClass('upload-unzip-hover');
+        })
+        .on("drop", function(evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+
+        $(".show-on-hover").removeClass('upload-unzip-show');
+        $(".show-on-hover").removeClass('upload-unzip-hover');
+        var dir = viewModel.selected();
+        viewModel.processing(true);
+        _getInputFiles(evt).done(function(files) {
+            Vfs.addFiles(files, _isZipFile(evt)).always(function() {
+                dir.fetchChildren( /* force */ true);
+                viewModel.processing(false);
+            });
+        });
+        }).on("dragleave", function (e) {
+            $(".show-on-hover").removeClass('upload-unzip-hover');
+        });
 
     var defaults = { fileList: '40%', console: '45%' };
     $('#resizeHandle .down')
@@ -456,6 +491,26 @@ $.connection.hub.start().done(function () {
             return $.Deferred().resolveWith(null, [$.map(dt.files, function (e) {
                 return { name: e.name, contents: e };
             })]);
+        }
+    }
+
+    function _isZipFile(evt) {
+        var items = evt.originalEvent.dataTransfer.items || evt.originalEvent.dataTransfer.files;
+        if (items) {
+            var filesArray = $.map(items, function(item) {
+                if (item.type === 'application/x-zip-compressed')
+                    return item;
+            });
+            if (filesArray && filesArray.length === items.length) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            //if both items and files are undefined, that means the browser (IE, FF)
+            //doesn't support showing files on dragging, only on dropping, then assume a zip file.
+            //Extracting will no-op if it's not a zip file anyway.
+            return true;
         }
     }
 
