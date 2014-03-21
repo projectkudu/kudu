@@ -184,7 +184,7 @@ namespace Kudu.Core.SiteExtensions
             </site>
         </sites>
     </system.applicationHost>
-<configuration>", id);
+</configuration>", id);
         }
 
         public void UpdateLocalInfo(SiteExtensionInfo info)

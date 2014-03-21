@@ -35,15 +35,15 @@ namespace Kudu.Services.SiteExtensions
         }
 
         [HttpGet]
-        public IEnumerable<SiteExtensionInfo> GetLocalExtensions(string filter = null, bool latestInfo = false)
+        public IEnumerable<SiteExtensionInfo> GetLocalExtensions(string filter = null, bool checkLatest = true)
         {
-            return _manager.GetLocalExtensions(filter, latestInfo);
+            return _manager.GetLocalExtensions(filter, checkLatest);
         }
 
         [HttpGet]
-        public SiteExtensionInfo GetLocalExtension(string id, bool latestInfo = false)
+        public SiteExtensionInfo GetLocalExtension(string id, bool checkLatest = true)
         {
-            SiteExtensionInfo extension = _manager.GetLocalExtension(id, latestInfo);
+            SiteExtensionInfo extension = _manager.GetLocalExtension(id, checkLatest);
             if (extension == null)
             {
                 throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, id));

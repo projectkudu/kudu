@@ -101,8 +101,6 @@
             data: JSON.stringify(data),
             success: function (result) {
                 result = processExtensions(result);
-                //displaySuccess("<strong>" + result.Title
-                //    + "</strong> is successfully installed. <strong>Restart Site </strong> to make it available.");
                 $("#restartButton").attr("data-content", "<strong>" + result.Title
                     + "</strong> is successfully installed. <strong>Restart Site </strong> to make it available.");
                 $("#restartButton").popover('show');
@@ -130,13 +128,25 @@
     });
 
     $(document).on("click", ".updateButton", function () {
-        var context = ko.contextFor(this);
-        var data = ko.dataFor(this);
-        buttonResponse(this, function (completionCallback) {
-            context.$root.install(data, completionCallback,
-                function () {
-                });
-        }, updateText);
+        var btn = this;
+        var context = ko.contextFor(btn);
+        var data = ko.dataFor(btn);
+        $(btn).html(activitySpin);
+        $(btn).prop("disabled", "disabled");
+        $.ajax({
+            type: "POST",
+            url: "/api/extensions",
+            contentType: "application/json",
+            data: JSON.stringify(data),
+            success: function (result) {
+            },
+            error: function (jqXhr, textStatus, errorThrown) {
+                displayError("Failed to update <strong>" + result.Title + "</strong>: " + textStatus + " - " + errorThrown);
+            },
+            complete: function () {
+                context.$root.populateAllTabs();
+            }
+        });
     });
 
     $(document).on("click", "#restartButton", function () {
