@@ -31,11 +31,14 @@
                     <i class="h4 glyphicon glyphicon-hdd" title="System Drive"></i>
                 </a>
                 <div class="spinner">
-                    <i data-bind="visible: processing()" class="fa fa-spinner fa-spin" title="Please wait"></i>
+                    <i data-bind="visible: koprocessing()" class="fa fa-spinner fa-spin" title="Please wait"></i>
                     <i data-bind="visible: errorText, attr: {title: errorText}" class="alert-warning glyphicon glyphicon-exclamation-sign"></i>
                 </div>
             </div>
             <div class="table-container">
+                <div id="upload-unzip" class="show-on-hover">
+                    <div class="zip-upload-text">Drag here to upload and unzip <br /><span class="glyphicon glyphicon-folder-open"></span></div>
+                </div>
                 <table class="table table-striped table-bordered table-hover table-condensed table-responsive">
                     <thead>
                         <tr>

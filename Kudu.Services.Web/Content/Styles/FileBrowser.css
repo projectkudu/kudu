@@ -33,18 +33,50 @@ div.spinner {
 }
 
 #fileList {
-    height: 32%;
+    height: 35%;
 }
 
     #fileList > div.table-container {
-        height: 90%;
+        height: 85%;
         overflow-y: auto;
         width: 100%;
+        position: relative;
     }
 
 #resizeHandle {
     cursor: pointer;
     text-align: center;
+}
+
+div.show-on-hover {
+    position: absolute;
+    width: 20%;
+    height: 100%;
+    top: 0;
+    right: 0;
+    z-index: 1;
+    border: 1px solid #36a2ff;
+    background-color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.55);
+    display: none;
+}
+
+div.upload-unzip-hover {
+    background-color: #36a2ff;
+    background-color: rgba(54, 162, 255, 0.8);
+    display: block;
+}
+
+div.upload-unzip-show {
+    display: block;
+}
+
+div.zip-upload-text {
+    font-family: 'Lucida Console', Consolas, 'Courier New', monospace;
+    font-size: large;
+    position: relative;
+    text-align: center;
+    top: 40%;
 }
 
 div.console {
