@@ -21,17 +21,17 @@
                 <div class="form-group">
                     <input type="text" class="form-control" id="searchText" data-bind="value: searchTerms" placeholder="Site Extension" />
                 </div>
-                <button class="btn btn-default" id="searchButton">
+                <button class="btn btn-default" type="button" id="searchButton">
                     <span>Search</span>
                 </button>
-                <a class="btn btn-default" id="clearButton">
+                <button class="btn btn-default" type="button" id="clearButton">
                     <span>Clear</span>
-                </a>
+                </button>
             </form>
         </div>
         <div class="col-xs-6 col-md-3">
             <form class="navbar-form">
-                <button class="btn btn-default button-top-right" id="restartButton" data-toggle="popover" data-placement="auto right"
+                <button class="btn btn-default button-top-right" type="button" id="restartButton" data-toggle="popover" data-placement="auto right"
                         data-animation="true" data-html="true" data-trigger="manual">
                     <span>Restart Site</span>
                 </button>
@@ -71,7 +71,7 @@
                             </a>
                         </div>
                         <div class="col-xs-9">
-                            <button class="btn btn-info button-bottom-left installButton" role="button" data-bind="visible: LocalPath == null"
+                            <button class="btn btn-info button-bottom-left installButton" role="button" data-bind="visible: !LocalPath"
                                     data-toggle="tooltip" data-placement="top" title="Install">
                                 <i class="fa fa-plus"></i>
                             </button>
@@ -106,7 +106,7 @@
                     <div data-bind="visible: Summary">
                         <p class="text-4line" data-bind="text: Summary"></p>
                     </div>
-                    <div data-bind="visible: Summary === null && Description">
+                    <div data-bind="visible: (!Summary) && Description">
                         <p class="text-4line" data-bind="text: Description"></p>
                     </div>
                 </div>
@@ -144,11 +144,15 @@
                     <strong data-bind="visible: Authors.length > 1">Authors</strong>
                     <p data-bind="text: Authors"></p>
                 </div>
+                <div id="detailsLicenseUrl" data-bind="visible: ProjectUrl">
+                    <strong>Project Homepage</strong>
+                    <p><a data-bind="text: ProjectUrl, attr: {href: ProjectUrl, target: '_blank'}"></a></p>
+                </div>
                 <div id="detailsLicenseUrl" data-bind="visible: LicenseUrl">
                     <strong>License</strong>
                     <p><a data-bind="text: LicenseUrl, attr: {href: LicenseUrl, target: '_blank'}"></a></p>
                 </div>
-                <div id="detailsPublishedDateTime" data-bind="visible: InstalledDateTime === null && PublishedDateTime">
+                <div id="detailsPublishedDateTime" data-bind="visible: (!InstalledDateTime) && PublishedDateTime">
                     <strong>Published Time</strong>
                     <p data-bind="text: PublishedDateTime"></p>
                 </div>
