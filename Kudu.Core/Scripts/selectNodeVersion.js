@@ -76,7 +76,7 @@ function saveNodePaths(tempDir, nodeExePath, npmPath) {
     }
 }
 
-function getNodeStartFile(sitePath) {
+function getNodeDefaultStartFile(sitePath) {
     var nodeStartFiles = ['server.js', 'app.js'];
 
     for (var i = 0; i < nodeStartFiles.length; i++) {
@@ -87,26 +87,6 @@ function getNodeStartFile(sitePath) {
     }
 
     return null;
-}
-
-function createIisNodeWebConfigIfNeeded(repoPath, wwwrootPath) {
-    // Check if web.config exists in the 'repository', if not generate it in 'wwwroot'
-    var webConfigRepoPath = path.join(repoPath, 'web.config'),
-        webConfigWwwRootPath = path.join(wwwrootPath, 'web.config');
-
-    if (!existsSync(webConfigRepoPath)) {
-        var nodeStartFilePath = getNodeStartFile(repoPath);
-        if (!nodeStartFilePath) {
-            console.log('Missing server.js/app.js files, web.config is not generated');
-            return;
-        }
-
-        var iisNodeConfigTemplatePath = path.join(__dirname, 'iisnode.config.template');
-        var webConfigContent = fs.readFileSync(iisNodeConfigTemplatePath, 'utf8');
-        webConfigContent = webConfigContent.replace(/\{NodeStartFile\}/g, nodeStartFilePath);
-
-        fs.writeFileSync(webConfigWwwRootPath, webConfigContent, 'utf8');
-    }
 }
 
 // Determine the installation location of node.js and iisnode
@@ -135,36 +115,89 @@ if (!existsSync(wwwroot) || !existsSync(repo) || (tempDir && !existsSync(tempDir
     throw new Error('Usage: node.exe selectNodeVersion.js <path_to_repo> <path_to_wwwroot> [path_to_temp]');
 }
 
-// If the web.config file does not exit in the repo, use a default one that is specific for node on IIS in Azure
-createIisNodeWebConfigIfNeeded(repo, wwwroot);
+var packageJson = path.resolve(repo, 'package.json'),
+    json = existsSync(packageJson) && JSON.parse(fs.readFileSync(packageJson, 'utf8'));
 
-// If the iinode.yml file does not exit in the repo but exists in wwwroot, remove it from wwwroot 
+// If the web.config file does not exist in the repo, use a default one that is specific for node on IIS in Azure, 
+// and generate it in 'wwwroot'
+// Obtain the start script from package.json or seach for app.js/server.js at the root of the repository.
+var nodeStartFilePath = (function createIisNodeWebConfigIfNeeded() {
+    var webConfigRepoPath = path.join(repo, 'web.config'),
+        webConfigWwwRootPath = path.join(wwwroot, 'web.config'),
+        nodeStartFilePath = null;
+
+    if (!existsSync(webConfigRepoPath)) {
+        // Check for {"scripts": {"start": < startupCommand > } } exists
+        if (typeof json === 'object' && typeof json.scripts === 'object' && typeof json.scripts.start === 'string') {
+            var startupCommand = json.scripts.start;
+            var defaultNode = "node ";
+            if (startupCommand.length > defaultNode.length && startupCommand.slice(0, defaultNode.length) === defaultNode) {
+                nodeStartFilePath = startupCommand.slice(defaultNode.length);
+                // For the path to be read by iisnode handler
+                if (nodeStartFilePath.slice(0, 2) === "./") {
+                    nodeStartFilePath = nodeStartFilePath.slice(2);
+                }
+                console.log('Using start-up script ' + nodeStartFilePath + ' specified in package.json.');
+            } else {
+                console.error('Invalid start-up command in package.json. Please use the format "node <script relative path>".');
+            }
+        }
+        
+        if (!nodeStartFilePath) {
+            console.log('Looking for app.js/server.js under site root.');
+            nodeStartFilePath = getNodeDefaultStartFile(repo);
+            if (!nodeStartFilePath) {
+                console.error('Missing server.js/app.js files, web.config is not generated');
+                return "";
+            }
+            console.log('Using start-up script ' + nodeStartFilePath);
+        }
+
+        var iisNodeConfigTemplatePath = path.join(__dirname, 'iisnode.config.template');
+        var webConfigContent = fs.readFileSync(iisNodeConfigTemplatePath, 'utf8');
+        webConfigContent = webConfigContent.replace(/\{NodeStartFile\}/g, nodeStartFilePath);
+
+        fs.writeFileSync(webConfigWwwRootPath, webConfigContent, 'utf8');
+
+        console.log('Generated web.config.');
+    }
+
+    return nodeStartFilePath;
+})();
+
+// The directory of the start up script.
+var nodeStartDirectory = (function() {
+    var index = nodeStartFilePath.lastIndexOf("/");
+    if (index === -1) {
+        return "";
+    } else {
+        return nodeStartFilePath.slice(0, index);
+    }
+})();
+
+// If the iinode.yml file does not exist in the repo but exists in wwwroot, remove it from wwwroot 
 // to prevent side-effects of previous deployments
-var iisnodeYml = path.resolve(repo, 'iisnode.yml');
-var wwwrootIisnodeYml = path.resolve(wwwroot, 'iisnode.yml');
-if (!existsSync(iisnodeYml) && existsSync(wwwrootIisnodeYml)) {
-    fs.unlinkSync(wwwrootIisnodeYml);
+var repoIisnodeYml = path.resolve(repo, nodeStartDirectory, 'iisnode.yml');
+var siteIisnodeYml = path.resolve(wwwroot, nodeStartDirectory, 'iisnode.yml');
+if (!existsSync(repoIisnodeYml) && existsSync(siteIisnodeYml)) {
+    fs.unlinkSync(siteIisnodeYml);
 }
 
 try {
     var nodeVersion = process.env.WEBSITE_NODE_DEFAULT_VERSION || process.versions.node,
         npmVersion = null,
-        yml = existsSync(iisnodeYml) ? fs.readFileSync(iisnodeYml, 'utf8') : '',
+        yml = existsSync(repoIisnodeYml) ? fs.readFileSync(repoIisnodeYml, 'utf8') : '',
         shouldUpdateIisNodeYml = false;
 
     if (yml.match(/^ *nodeProcessCommandLine *:/m)) {
         // If the iisnode.yml included with the application explicitly specifies the
         // nodeProcessCommandLine, exit this script. The presence of nodeProcessCommandLine
         // deactivates automatic version selection.
-
         console.log('The iisnode.yml file explicitly sets nodeProcessCommandLine. ' +
                     'Automatic node.js version selection is turned off.');
     } else {
         // If the package.json file is not included with the application 
         // or if it does not specify node.js version constraints, use WEBSITE_NODE_DEFAULT_VERSION. 
-        var packageJson = path.resolve(repo, 'package.json'),
-            json = existsSync(packageJson) && JSON.parse(fs.readFileSync(packageJson, 'utf8'));
-
         if (typeof json !== 'object' || typeof json.engines !== 'object' || typeof json.engines.node !== 'string') {
             // Attempt to read the pinned node version or fallback to the version of the executing node.exe.
             console.log('The package.json file does not specify node.js engine version constraints.');
@@ -203,17 +236,20 @@ try {
     saveNodePaths(tempDir, nodeExePath, npmPath);
 
     if (shouldUpdateIisNodeYml) {
-        // Save the version information to iisnode.yml in the wwwroot directory
+        // Save the version information to iisnode.yml in the start script directory
 
         if (yml !== '') {
             yml += '\r\n';
         }
 
         yml += 'nodeProcessCommandLine: "' + nodeExePath + '"';
-        fs.writeFileSync(wwwrootIisnodeYml, yml);
+
+        console.log('Updating iisnode.yml at ' + siteIisnodeYml);
+
+        fs.writeFileSync(siteIisnodeYml, yml);
     }
 
 } catch (ex) {
     console.error(ex.message);
-    return flushAndExit(-1);
+    flushAndExit(-1);
 }

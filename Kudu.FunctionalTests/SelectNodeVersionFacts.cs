@@ -161,5 +161,35 @@ namespace Kudu.FunctionalTests
                 });
             }
         }
+
+        [Fact]
+        public void TestNodeCustomStartScriptFromPackageJson()
+        {
+            // Arrange
+            string appName = "TestCustomStartScriptFromPackageJson";
+
+            using (var repo = Git.Clone("NodeWithCustomStartScript"))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // Act
+                    GitDeploymentResult deployResult = appManager.GitDeploy(repo.PhysicalPath);
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    // Assert deployment success
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+                    // Verify log output
+                    Assert.Contains("Using start-up script app/app.js", deployResult.GitTrace);
+                    Assert.Contains("Updating iisnode.yml", deployResult.GitTrace);
+                    // Verify that iisnode.yml is taking effect so version is as specified in package.json. 
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, "v0.10.26");
+                    // Verify that process.env.NODE_ENV is defined
+                    KuduAssert.VerifyUrl(appManager.SiteUrl, "process.env.NODE_ENV: production");
+                    // Verify that node-inspector works
+                    KuduAssert.VerifyUrl(appManager.SiteUrl + "/app/app.js/debug", "node-inspector");
+                });
+            }
+        }
     }
 }
