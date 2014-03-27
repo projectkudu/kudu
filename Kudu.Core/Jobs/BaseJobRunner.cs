@@ -114,6 +114,7 @@ namespace Kudu.Core.Jobs
                 //Status = "Worker is not running due to an error";
                 //TraceError("Failed to copy bin directory: " + ex);
                 logger.LogError("Failed to copy job files: " + ex);
+                _analytics.UnexpectedException(ex);
 
                 // job disabled
                 WorkingDirectory = null;
@@ -290,6 +291,7 @@ namespace Kudu.Core.Jobs
             catch (Exception ex)
             {
                 TraceFactory.GetTracer().TraceError(ex);
+                _analytics.UnexpectedException(ex);
             }
         }
 
