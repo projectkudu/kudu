@@ -1,0 +1,62 @@
+﻿@{
+    Layout = "~/_Layout.cshtml";
+    Page.Title = "Process Explorer";
+}
+
+@section PageHead {
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="/content/styles/ProcessExplorer.css" type="text/css" />
+    <link rel="stylesheet" href="/content/styles/jquery.contextMenu.css" type="text/css" />
+    <link rel="stylesheet" href="/content/Styles/jquery-ui-1.10.0.custom.css" type="text/css" />
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.2/css/font-awesome.css" rel="stylesheet" />
+}
+<div id="main" class="container">
+    <h2 style="text-align: center">Process Explorer</h2>
+    <div class="spinner">
+        <i id="proc-loading" class="fa fa-spinner fa-spin" title="Please wait" style="display: none"></i>
+    </div>
+    <button id="find-file-handle">Find Handle...</button>
+    <div style="text-align: right"><a id="SwitchConsoleLink" href="javascript:processExplorerSetupAsync();">Refresh</a></div>
+    <table id="proctable" class="table table-bordered table-condensed">
+        <tr>
+            <th style="width: 20%">name</th>
+            <th style="width: 5%">pid</th>
+            <th style="width: 8%">total_cpu_time</th>
+            <th style="width: 8%">working_set</th>
+            <th style="width: 8%">private_memory</th>
+            <th style="width: 7%">thread_count</th>
+        </tr>
+    </table>
+    <ul id="treeRoot" class="tree"></ul>
+</div>
+
+<div class="modal" id="process-details">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                <h4 class="modal-title"/>
+            </div><div class="container"></div>
+            <div class="modal-body">
+                Content for the dialog / modal goes here.
+            </div>
+            <div class="modal-footer">
+                <a href="#" data-dismiss="modal" class="btn">Close</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="dialog-form" title="Enter file name">
+    <form>
+        <fieldset>
+            <label for="name">File Name</label>
+            <input type="text" name="name" id="name" class="text ui-widget-content ui-corner-all" autocomplete="off" />
+        </fieldset>
+    </form>
+    <div id="handle-result"></div>
+</div>
+
+<script src="//ajax.aspnetcdn.com/ajax/jquery.ui/1.10.4/jquery-ui.min.js"></script>
+<script src="/content/scripts/jquery.contextMenu.js"></script>
+<script src="/content/scripts/ProcessExplorer.js"></script>
