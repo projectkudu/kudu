@@ -12,6 +12,8 @@ namespace Kudu.Core.Jobs
 {
     public class ContinuousJobRunner : BaseJobRunner, IDisposable
     {
+        private static readonly TimeSpan WarmupTimeSpan = TimeSpan.FromMinutes(2);
+
         private readonly LockFile _singletonLock;
 
         private int _started = 0;
@@ -81,6 +83,8 @@ namespace Kudu.Core.Jobs
                             continue;
                         }
 
+                        Stopwatch liveStopwatch = Stopwatch.StartNew();
+
                         _continuousJobLogger.StartingNewRun();
 
                         InitializeJobInstance(continuousJob, _continuousJobLogger);
@@ -88,7 +92,9 @@ namespace Kudu.Core.Jobs
 
                         if (_started == 1 && !IsDisabled)
                         {
-                            TimeSpan webJobsRestartTime = Settings.GetWebJobsRestartTime();
+                            // The wait time between WebJob invocations is either WebJobsRestartTime (60 seconds by default) or if the WebJob
+                            // Was running for at least 2 minutes there is no wait time.
+                            TimeSpan webJobsRestartTime = liveStopwatch.Elapsed < WarmupTimeSpan ? Settings.GetWebJobsRestartTime() : TimeSpan.Zero;
                             _continuousJobLogger.LogInformation("Process went down, waiting for {0} seconds".FormatInvariant(webJobsRestartTime.TotalSeconds));
                             _continuousJobLogger.ReportStatus(ContinuousJobStatus.PendingRestart);
                             WaitForTimeOrStop(webJobsRestartTime);
