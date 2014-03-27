@@ -113,14 +113,35 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Content\Images\collapse.gif" />
+    <Content Include="Content\Images\expand.gif" />
+    <Content Include="Content\Images\jquery-ui-theme\ui-bg_flat_0_aaaaaa_40x100.png" />
+    <Content Include="Content\Images\jquery-ui-theme\ui-bg_glass_55_fbf9ee_1x400.png" />
+    <Content Include="Content\Images\jquery-ui-theme\ui-bg_glass_65_ffffff_1x400.png" />
+    <Content Include="Content\Images\jquery-ui-theme\ui-bg_glass_75_dadada_1x400.png" />
+    <Content Include="Content\Images\jquery-ui-theme\ui-bg_glass_75_e6e6e6_1x400.png" />
+    <Content Include="Content\Images\jquery-ui-theme\ui-bg_glass_75_ffffff_1x400.png" />
+    <Content Include="Content\Images\jquery-ui-theme\ui-bg_highlight-soft_75_cccccc_1x100.png" />
+    <Content Include="Content\Images\jquery-ui-theme\ui-bg_inset-soft_95_fef1ec_1x100.png" />
+    <Content Include="Content\Images\jquery-ui-theme\ui-icons_222222_256x240.png" />
+    <Content Include="Content\Images\jquery-ui-theme\ui-icons_2e83ff_256x240.png" />
+    <Content Include="Content\Images\jquery-ui-theme\ui-icons_454545_256x240.png" />
+    <Content Include="Content\Images\jquery-ui-theme\ui-icons_888888_256x240.png" />
+    <Content Include="Content\Images\jquery-ui-theme\ui-icons_cd0a0a_256x240.png" />
+    <Content Include="Content\Images\jquery-ui-theme\ui-icons_f6cf3b_256x240.png" />
     <Content Include="Content\Images\Windows Azure Web Site.png" />
+    <Content Include="Content\Scripts\jquery.contextMenu.js" />
     <Content Include="Content\Scripts\KuduExec.js" />
+    <Content Include="Content\Scripts\ProcessExplorer.js" />
     <Content Include="Content\Scripts\SiteExtensions.js" />
     <Content Include="Content\Styles\FileBrowser.css" />
     <Content Include="Content\Scripts\jquery-console\jquery.console.js" />
     <Content Include="Content\Scripts\KuduExecV2.js" />
     <Content Include="Content\Scripts\FileBrowser.js" />
     <Content Include="Content\Scripts\jquery.signalR-1.1.3.min.js" />
+    <Content Include="Content\Styles\jquery-ui-1.10.0.custom.css" />
+    <Content Include="Content\Styles\jquery.contextMenu.css" />
+    <Content Include="Content\Styles\ProcessExplorer.css" />
     <Content Include="Content\Styles\SiteExtensions.css" />
     <Content Include="Web.config">
       <SubType>Designer</SubType>
@@ -174,6 +195,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <Content Include="ProcessExplorer\Default.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\Scripts\jquery-console\README" />
@@ -198,6 +220,7 @@
   <ItemGroup>
     <Content Include="SiteExtensions\Default.cshtml" />
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
