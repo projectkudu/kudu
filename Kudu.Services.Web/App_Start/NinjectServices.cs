@@ -212,7 +212,8 @@ namespace Kudu.Services.Web.App_Start
                 noContextTraceFactory,
                 kernel.Get<IEnvironment>(),
                 kernel.Get<IDeploymentSettingsManager>(),
-                kernel.Get<IAnalytics>());
+                kernel.Get<IAnalytics>(),
+                kernel.Get<IWebHooksManager>());
             kernel.Bind<ITriggeredJobsManager>().ToConstant(triggeredJobsManager)
                                              .InTransientScope();
 

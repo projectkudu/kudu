@@ -35,7 +35,7 @@ namespace Kudu.Core.Jobs
             get { return Settings.GetWebJobsIdleTimeout(); }
         }
 
-        public void StartJobRun(TriggeredJob triggeredJob)
+        public void StartJobRun(TriggeredJob triggeredJob, Action<string, string> reportAction)
         {
             if (Settings.IsWebJobsStopped())
             {
@@ -64,6 +64,7 @@ namespace Kudu.Core.Jobs
                     {
                         logger.ReportEndRun();
                         _lockFile.Release();
+                        reportAction(triggeredJob.Name, logger.Id);
                     }
                 });
             }
