@@ -43,6 +43,9 @@ namespace Kudu.Contracts.Jobs
         [DataMember(Name = "url")]
         public Uri Url { get; set; }
 
+        [DataMember(Name = "job_name")]
+        public string JobName { get; set; }
+
         public override int GetHashCode()
         {
             return HashHelpers.CalculateCompositeHash(Id, Status, Duration);

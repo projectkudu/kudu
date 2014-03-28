@@ -5,6 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Client;
@@ -12,7 +13,9 @@ using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Deployment;
+using Kudu.Core.Hooks;
 using Kudu.TestHarness;
+using Newtonsoft.Json;
 using Xunit;
 
 namespace Kudu.FunctionalTests.Jobs
@@ -282,6 +285,55 @@ namespace Kudu.FunctionalTests.Jobs
         }
 
         [Fact]
+        public void TriggeredJobCallsSubscribedWebHooks()
+        {
+            const string hook = "hookCalled/1";
+            const string jobName = "myjob";
+
+            using (new LatencyLogger("TriggeredJobCallsSubscribedWebHooks"))
+            {
+                RunScenario("TriggeredJobTriggers", appManager =>
+                {
+                    using (var hookAppRepository = Git.Clone("NodeWebHookTest"))
+                    {
+                        appManager.GitDeploy(hookAppRepository.PhysicalPath);
+
+                        string hookAddress = appManager.SiteUrl + hook;
+
+                        TestTracer.Trace("Subscribe web hook to " + hookAddress);
+                        appManager.WebHooksManager.SubscribeAsync(new WebHook(HookEventTypes.TriggeredJobFinished, hookAddress)).Wait();
+
+                        appManager.JobsManager.CreateTriggeredJobAsync(jobName, "run.cmd", JobScript).Wait();
+                        appManager.JobsManager.InvokeTriggeredJobAsync(jobName).Wait();
+
+                        WaitUntilAssertVerified(
+                            "verify webhook called",
+                            TimeSpan.FromSeconds(10),
+                            () =>
+                            {
+                                TestTracer.Trace("Verify webhook called");
+                                using (var httpClient = new HttpClient())
+                                {
+                                    var response = httpClient.GetAsync(hookAddress).Result;
+                                    string responseContent = response.Content.ReadAsStringAsync().Result;
+
+                                    TestTracer.Trace("Received response: {0}", responseContent);
+
+                                    string[] webHookResults = responseContent.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+                                    Assert.Equal(1, webHookResults.Count());
+
+                                    dynamic webHookResultJson = JsonConvert.DeserializeObject(webHookResults[0]);
+                                    var triggeredJobRun = JsonConvert.DeserializeObject<TriggeredJobRun>((string)webHookResultJson.body);
+                                    AssertTriggeredJobRun(appManager, triggeredJobRun, jobName, "Success", "echo ");
+                                }
+                            });
+                    }
+                });
+            }
+        }
+
+        [Fact]
         public void JobsSettingsSetSuccessfully()
         {
             RunScenario("JobsSettingsSetSuccessfully", appManager =>
@@ -411,7 +463,7 @@ namespace Kudu.FunctionalTests.Jobs
 
                     foreach (TriggeredJobRun triggeredJobRun in triggeredJobHistory.TriggeredJobRuns)
                     {
-                        AssertTriggeredJobRun(appManager, triggeredJobRun, expectedStatus, expectedOutput, expectedError);
+                        AssertTriggeredJobRun(appManager, triggeredJobRun, jobName, expectedStatus, expectedOutput, expectedError);
                     }
                 });
         }
@@ -576,9 +628,10 @@ namespace Kudu.FunctionalTests.Jobs
             }
         }
 
-        private void AssertTriggeredJobRun(ApplicationManager appManager, TriggeredJobRun actualTriggeredJobRun, string expectedStatus, string expectedOutput = null, string expectedError = null)
+        private void AssertTriggeredJobRun(ApplicationManager appManager, TriggeredJobRun actualTriggeredJobRun, string expectedJobName, string expectedStatus, string expectedOutput = null, string expectedError = null)
         {
             Assert.NotNull(actualTriggeredJobRun);
+            Assert.Equal(expectedJobName, actualTriggeredJobRun.JobName);
             Assert.Equal(expectedStatus, actualTriggeredJobRun.Status);
             Assert.NotNull(actualTriggeredJobRun.Duration);
             Assert.NotNull(actualTriggeredJobRun.EndTime);

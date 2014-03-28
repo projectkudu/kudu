@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.IO.Abstractions;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -317,6 +316,7 @@ namespace Kudu.Core.Deployment
                 // tolerate purge error
                 var tracer = _traceFactory.GetTracer();
                 tracer.TraceError(ex);
+                _analytics.UnexpectedException(ex);
             }
 
             return results;
@@ -821,7 +821,9 @@ namespace Kudu.Core.Deployment
             }
 
             public string ProjectType { get; set; }
+
             public string Result { get; set; }
+
             public string Error { get; set; }
 
             public void Dispose()

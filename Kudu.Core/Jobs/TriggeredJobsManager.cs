@@ -7,6 +7,7 @@ using System.IO.Abstractions;
 using System.Linq;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
+using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
@@ -17,9 +18,12 @@ namespace Kudu.Core.Jobs
         private readonly ConcurrentDictionary<string, TriggeredJobRunner> _triggeredJobRunners =
             new ConcurrentDictionary<string, TriggeredJobRunner>(StringComparer.OrdinalIgnoreCase);
 
-        public TriggeredJobsManager(ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics)
+        private readonly IWebHooksManager _hooksManager;
+
+        public TriggeredJobsManager(ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics, IWebHooksManager hooksManager)
             : base(traceFactory, environment, settings, analytics, Constants.TriggeredPath)
         {
+            _hooksManager = hooksManager;
         }
 
         public override IEnumerable<TriggeredJob> ListJobs()
@@ -159,6 +163,7 @@ namespace Kudu.Core.Jobs
             return new TriggeredJobRun()
             {
                 Id = runId,
+                JobName = jobName,
                 Status = triggeredJobStatus.Status,
                 StartTime = triggeredJobStatus.StartTime,
                 EndTime = triggeredJobStatus.EndTime,
@@ -193,7 +198,18 @@ namespace Kudu.Core.Jobs
                     jobName,
                     _ => new TriggeredJobRunner(triggeredJob.Name, Environment, Settings, TraceFactory, Analytics));
 
-            triggeredJobRunner.StartJobRun(triggeredJob);
+            triggeredJobRunner.StartJobRun(triggeredJob, ReportTriggeredJobFinished);
+        }
+
+        private async void ReportTriggeredJobFinished(string jobName, string jobRunId)
+        {
+            TriggeredJobRun triggeredJobRun = GetJobRun(jobName, jobRunId);
+            if (triggeredJobRun == null)
+            {
+                return;
+            }
+
+            await _hooksManager.PublishEventAsync(HookEventTypes.TriggeredJobFinished, triggeredJobRun);
         }
     }
 }
