@@ -151,6 +151,8 @@ namespace Kudu.Core.Jobs
         protected void RunJobInstance(JobBase job, IJobLogger logger, string runId)
         {
             string scriptFileName = Path.GetFileName(job.ScriptFilePath);
+            string scriptFileFullPath = Path.Combine(WorkingDirectory, job.RunCommand);
+            string workingDirectoryForScript = Path.GetDirectoryName(scriptFileFullPath);
 
             logger.LogInformation("Run script '{0}' with script host - '{1}'".FormatCurrentCulture(scriptFileName, job.ScriptHost.GetType().Name));
 
@@ -158,7 +160,7 @@ namespace Kudu.Core.Jobs
             {
                 try
                 {
-                    var exe = _externalCommandFactory.BuildCommandExecutable(job.ScriptHost.HostPath, WorkingDirectory, IdleTimeout, NullLogger.Instance);
+                    var exe = _externalCommandFactory.BuildCommandExecutable(job.ScriptHost.HostPath, workingDirectoryForScript, IdleTimeout, NullLogger.Instance);
 
                     // Set environment variable to be able to identify all processes spawned for this job
                     exe.EnvironmentVariables[GetJobEnvironmentKey()] = "true";
