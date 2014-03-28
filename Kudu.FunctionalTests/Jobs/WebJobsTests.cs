@@ -435,6 +435,8 @@ namespace Kudu.FunctionalTests.Jobs
                 Assert.Equal(2, triggeredJobs.Count());
                 Assert.Equal(2, continuousJobs.Count());
 
+                VerifyTriggeredJobTriggers(appManager, "job1", 1, "Success", "echo ");
+
                 appManager.JobsManager.DeleteTriggeredJobAsync("job1").Wait();
                 appManager.JobsManager.DeleteTriggeredJobAsync("job2").Wait();
                 appManager.JobsManager.DeleteContinuousJobAsync("job1").Wait();
