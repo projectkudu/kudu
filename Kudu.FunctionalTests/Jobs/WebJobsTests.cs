@@ -429,6 +429,17 @@ namespace Kudu.FunctionalTests.Jobs
                 appManager.JobsManager.CreateContinuousJobAsync("job1", zippedJobBinaries).Wait();
                 appManager.JobsManager.CreateContinuousJobAsync("job2", zippedJobBinaries).Wait();
 
+                // Disabling a continuous job should not affect the job count
+                WaitUntilAssertVerified(
+                    "disable continuous job",
+                    TimeSpan.FromSeconds(20),
+                    () => appManager.JobsManager.DisableContinuousJobAsync("job1").Wait());
+
+                // Adding a setting to a triggered job should not affect the job count
+                var jobSettings = new JobSettings();
+                jobSettings["one"] = 1;
+                appManager.JobsManager.SetTriggeredJobSettingsAsync("job1", jobSettings).Wait();
+
                 var triggeredJobs = appManager.JobsManager.ListTriggeredJobsAsync().Result;
                 var continuousJobs = appManager.JobsManager.ListContinuousJobsAsync().Result;
 

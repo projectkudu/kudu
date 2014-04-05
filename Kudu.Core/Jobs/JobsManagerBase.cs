@@ -216,7 +216,8 @@ namespace Kudu.Core.Jobs
                 RunCommand = runCommand,
                 JobType = _jobsTypePath,
                 ScriptHost = scriptHost,
-                UsingSdk = IsUsingSdk(GetSpecificJobDataPath(jobName))
+                UsingSdk = IsUsingSdk(GetSpecificJobDataPath(jobName)),
+                JobBinariesRootPath = jobScriptDirectory.FullName
             };
 
             UpdateJob(job);
@@ -228,11 +229,7 @@ namespace Kudu.Core.Jobs
         {
             return OperationManager.Attempt(() =>
             {
-                var jobDirectory = GetJobDirectory(jobName);
-                if (!jobDirectory.Exists)
-                {
-                    throw new JobNotFoundException();
-                }
+                var jobDirectory = GetJobBinariesDirectory(jobName);
 
                 var jobSettingsPath = GetJobSettingsPath(jobDirectory);
                 if (!FileSystemHelpers.FileExists(jobSettingsPath))
@@ -247,11 +244,7 @@ namespace Kudu.Core.Jobs
 
         public void SetJobSettings(string jobName, JobSettings jobSettings)
         {
-            var jobDirectory = GetJobDirectory(jobName);
-            if (!jobDirectory.Exists)
-            {
-                throw new JobNotFoundException();
-            }
+            var jobDirectory = GetJobBinariesDirectory(jobName);
 
             var jobSettingsPath = GetJobSettingsPath(jobDirectory);
             string jobSettingsContent = JsonConvert.SerializeObject(jobSettings);
@@ -332,6 +325,17 @@ namespace Kudu.Core.Jobs
         {
             string jobPath = Path.Combine(JobsBinariesPath, jobName);
             return FileSystemHelpers.DirectoryInfoFromDirectoryName(jobPath);
+        }
+
+        private DirectoryInfoBase GetJobBinariesDirectory(string jobName)
+        {
+            DirectoryInfoBase jobDirectory = GetJobDirectory(jobName);
+            if (!jobDirectory.Exists)
+            {
+                throw new JobNotFoundException();
+            }
+
+            return GetJobScriptDirectory(jobDirectory);
         }
 
         private DirectoryInfoBase GetJobScriptDirectory(DirectoryInfoBase jobDirectory)

@@ -31,6 +31,8 @@ namespace Kudu.Contracts.Jobs
 
         public string ScriptFilePath { get; set; }
 
+        public string JobBinariesRootPath { get; set; }
+
         public override int GetHashCode()
         {
             return HashHelpers.CalculateCompositeHash(Name, RunCommand, JobType, Error);
