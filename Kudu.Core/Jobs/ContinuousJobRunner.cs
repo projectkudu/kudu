@@ -20,15 +20,14 @@ namespace Kudu.Core.Jobs
         private Thread _continuousJobThread;
         private ContinuousJobLogger _continuousJobLogger;
         private JobSettings _jobSettings;
-
         private readonly string _disableFilePath;
 
-        public ContinuousJobRunner(string jobName, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
-            : base(jobName, Constants.ContinuousPath, environment, settings, traceFactory, analytics)
+        public ContinuousJobRunner(ContinuousJob continuousJob, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
+            : base(continuousJob.Name, Constants.ContinuousPath, environment, settings, traceFactory, analytics)
         {
-            _continuousJobLogger = new ContinuousJobLogger(jobName, Environment, TraceFactory);
+            _continuousJobLogger = new ContinuousJobLogger(continuousJob.Name, Environment, TraceFactory);
 
-            _disableFilePath = Path.Combine(JobBinariesPath, "disable.job");
+            _disableFilePath = Path.Combine(continuousJob.JobBinariesRootPath, "disable.job");
 
             _singletonLock = new LockFile(Path.Combine(JobDataPath, "singleton.job.lock"), TraceFactory);
         }
