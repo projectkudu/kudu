@@ -18,9 +18,9 @@ namespace Kudu.Contracts.SiteExtensions
             Summary = package.Summary;
             Description = package.Description;
             Version = package.Version.ToString();
-            ProjectUrl = package.ProjectUrl;
-            IconUrl = package.IconUrl;
-            LicenseUrl = package.LicenseUrl;
+            ProjectUrl = package.ProjectUrl == null ? null : package.ProjectUrl.ToString();
+            IconUrl = package.IconUrl == null ? null : package.IconUrl.ToString();
+            LicenseUrl = package.LicenseUrl == null ? null : package.LicenseUrl.ToString();
             Authors = package.Authors;
             PublishedDateTime = package.Published;
             IsLatestVersion = package.IsLatestVersion;
@@ -57,19 +57,25 @@ namespace Kudu.Contracts.SiteExtensions
             set;
         }
 
-        public Uri ProjectUrl
+        public string SiteUrl
         {
             get;
             set;
         }
 
-        public Uri IconUrl
+        public string ProjectUrl
         {
             get;
             set;
         }
 
-        public Uri LicenseUrl
+        public string IconUrl
+        {
+            get;
+            set;
+        }
+
+        public string LicenseUrl
         {
             get;
             set;
