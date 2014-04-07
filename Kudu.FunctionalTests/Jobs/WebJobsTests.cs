@@ -432,7 +432,7 @@ namespace Kudu.FunctionalTests.Jobs
                 // Disabling a continuous job should not affect the job count
                 WaitUntilAssertVerified(
                     "disable continuous job",
-                    TimeSpan.FromSeconds(20),
+                    TimeSpan.FromSeconds(60),
                     () => appManager.JobsManager.DisableContinuousJobAsync("job1").Wait());
 
                 // Adding a setting to a triggered job should not affect the job count
