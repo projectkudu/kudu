@@ -82,6 +82,34 @@ namespace Kudu.Services.Performance
         }
 
         [HttpGet]
+        public HttpResponseMessage GetModule(int id, string baseAddress)
+        {
+            using (_tracer.Step("ProcessController.GetModule"))
+            {
+
+                var module = GetProcessById(id).Modules.Cast<ProcessModule>().FirstOrDefault(t => t.BaseAddress.ToInt64() == Int64.Parse(baseAddress, NumberStyles.HexNumber));
+
+                if (module != null)
+                {
+                    return Request.CreateResponse(HttpStatusCode.OK, GetProcessModuleInfo(module, Request.RequestUri.AbsoluteUri, details: true));
+                }
+                else
+                {
+                    return Request.CreateResponse(HttpStatusCode.NotFound);
+                }
+            }
+        }
+
+        [HttpGet]
+        public HttpResponseMessage GetAllModules(int id)
+        {
+            using (_tracer.Step("ProcessController.GetAllModules"))
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, GetModules(GetProcessById(id), Request.RequestUri.AbsoluteUri.TrimEnd('/')));
+            }
+        }
+
+        [HttpGet]
         public HttpResponseMessage GetAllProcesses()
         {
             using (_tracer.Step("ProcessController.GetAllProcesses"))
@@ -307,6 +335,17 @@ namespace Kudu.Services.Performance
             return threads;
         }
 
+        private static IEnumerable<ProcessModuleInfo> GetModules(Process process, string href)
+        {
+            var modules = new List<ProcessModuleInfo>();
+            foreach (var module in process.Modules.Cast<ProcessModule>().OrderBy(m => Path.GetFileName(m.FileName)))
+            {
+                modules.Add(GetProcessModuleInfo(module, href.TrimEnd('/') + '/' + module.BaseAddress.ToInt64().ToString("x"), details: false));
+            }
+
+            return modules;
+        }
+
         private ProcessThreadInfo GetProcessThreadInfo(ProcessThread thread, string href, bool details = false)
         {
             var threadInfo = new ProcessThreadInfo
@@ -339,6 +378,30 @@ namespace Kudu.Services.Performance
             }
 
             return threadInfo;
+        }
+
+        private static ProcessModuleInfo GetProcessModuleInfo(ProcessModule module, string href, bool details = false)
+        {
+            var moduleInfo = new ProcessModuleInfo
+            {
+                BaseAddress = module.BaseAddress.ToInt64().ToString("x"),
+                FileName = Path.GetFileName(module.FileName),
+                FileVersion = module.FileVersionInfo.FileVersion,
+                Href = new Uri(href)
+            };
+
+            if (details)
+            {
+                moduleInfo.FilePath = module.FileName;
+                moduleInfo.ModuleMemorySize = module.ModuleMemorySize;
+                moduleInfo.FileDescription = module.FileVersionInfo.FileDescription;
+                moduleInfo.Product = module.FileVersionInfo.ProductName;
+                moduleInfo.ProductVersion = module.FileVersionInfo.ProductVersion;
+                moduleInfo.IsDebug = module.FileVersionInfo.IsDebug;
+                moduleInfo.Language = module.FileVersionInfo.Language;
+            }
+
+            return moduleInfo;
         }
 
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "")]
@@ -394,6 +457,7 @@ namespace Kudu.Services.Performance
                 info.Parent = new Uri(selfLink, SafeGetValue(() => process.GetParentId(_tracer), 0).ToString());
                 info.Children = SafeGetValue(() => process.GetChildren(_tracer, recursive: false), Enumerable.Empty<Process>()).Select(c => new Uri(selfLink, c.Id.ToString()));
                 info.Threads = SafeGetValue(() => GetThreads(process, selfLink.ToString()), Enumerable.Empty<ProcessThreadInfo>());
+                info.Modules = SafeGetValue(() => GetModules(process, selfLink.ToString().TrimEnd('/') + "/modules"), Enumerable.Empty<ProcessModuleInfo>());
             }
 
             return info;

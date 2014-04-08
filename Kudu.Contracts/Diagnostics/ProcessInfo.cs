@@ -36,6 +36,9 @@ namespace Kudu.Core.Diagnostics
         [DataMember(Name = "open_file_handles", EmitDefaultValue = false)]
         public IEnumerable<string> OpenFileHandles { get; set; }
 
+        [DataMember(Name = "modules", EmitDefaultValue = false)]
+        public IEnumerable<ProcessModuleInfo> Modules { get; set; }
+
         [DataMember(Name = "file_name", EmitDefaultValue = false)]
         public string FileName { get; set; }
 
