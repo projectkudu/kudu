@@ -43,6 +43,20 @@
                     <li><a href="~/WebHooks">Web hooks</a></li>
                     <li><a href="~/SiteExtensions/">Site extensions</a></li>
                 </ul>
+                @{
+                    string email = Request.Headers["X-MS-CLIENT-PRINCIPAL-NAME"];
+                    if (email != null && email.Contains("@"))
+                    {
+                        <ul class="nav navbar-nav navbar-right">
+                            <li class="dropdown">
+                                <a href="#" data-toggle="dropdown">@email</a>
+                                <ul class="dropdown-menu">
+                                    <li><a href="/logout">Logout</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    }
+                }
             </div>
         </div>
     </nav>
