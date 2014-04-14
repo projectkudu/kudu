@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Microsoft.Win32;
 
 namespace Kudu.Core.Jobs
 {
@@ -8,22 +7,8 @@ namespace Kudu.Core.Jobs
         private static readonly string[] Supported = { ".py" };
 
         public PythonScriptHost()
-            : base(DiscoverHostPath())
+            : base("python.exe")
         {
-        }
-
-        private static string DiscoverHostPath()
-        {
-            string pythonExePath = null;
-            using (RegistryKey key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\Python.exe"))
-            {
-                if (key != null)
-                {
-                    pythonExePath = (string)key.GetValue(null);
-                }
-            }
-
-            return pythonExePath;
         }
 
         public override IEnumerable<string> SupportedExtensions
