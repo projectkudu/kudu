@@ -23,5 +23,10 @@ namespace Kudu.Core
         {
             return String.IsNullOrEmpty(str) ? str : str.GetHashCode().ToString();
         }
+
+        public static string EscapeHashCharacter(this string str)
+        {
+            return str.Replace("#", Uri.EscapeDataString("#"));
+        }
     }
 }
