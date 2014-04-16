@@ -77,7 +77,7 @@ namespace Kudu.Services.Infrastructure
 
             if (!String.IsNullOrEmpty(LocalSiteRootPath))
             {
-                var dir = FileSystemHelpers.DirectoryInfoFromDirectoryName(LocalSiteRootPath + Path.DirectorySeparatorChar);
+                var dir = FileSystemHelpers.DirectoryInfoFromDirectoryName(LocalSiteRootPath);
                 yield return new VfsStatEntry
                 {
                     Name = LocalSiteRootFolder,

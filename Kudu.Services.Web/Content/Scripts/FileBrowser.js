@@ -250,7 +250,9 @@ $.connection.hub.start().done(function () {
         }
             
         workingDirChanging = true;
-        var relativeDir = getRelativePath(viewModel.root, newValue) || getRelativePath(viewModel.specialDirsIndex()["SystemDrive"], newValue),
+        var relativeDir = getRelativePath(viewModel.root, newValue) ||
+            getRelativePath(viewModel.specialDirsIndex()["SystemDrive"], newValue) ||
+            getRelativePath(viewModel.specialDirsIndex()["LocalSiteRoot"], newValue),
             deferred;
 
         if (!relativeDir || !relativeDir.relativePath) {
