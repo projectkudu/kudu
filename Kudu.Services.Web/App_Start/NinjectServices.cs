@@ -403,6 +403,8 @@ namespace Kudu.Services.Web.App_Start
             }
             routes.MapHttpRouteDual("all-threads", "diagnostics/processes/{id}/threads", new { controller = "Process", action = "GetAllThreads" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRouteDual("one-process-thread", "diagnostics/processes/{processId}/threads/{threadId}", new { controller = "Process", action = "GetThread" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("all-modules", "diagnostics/processes/{id}/modules", new { controller = "Process", action = "GetAllModules" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRouteDual("one-process-module", "diagnostics/processes/{id}/modules/{baseAddress}", new { controller = "Process", action = "GetModule" }, new { verb = new HttpMethodConstraint("GET") });
 
             // Runtime
             routes.MapHttpRouteDual("runtime", "diagnostics/runtime", new { controller = "Runtime", action = "GetRuntimeVersions" }, new { verb = new HttpMethodConstraint("GET") });
