@@ -40,14 +40,17 @@ namespace Kudu.Core.Test
         [Fact]
         public void LockFileConcurrentTest()
         {
+            FileSystemHelpers.Instance = new FileSystem();
+
             // Mock
-            var lockFile = MockLockFile(@"x:\path\file.lock");
+            var file = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
+            var lockFile = new LockFile(file, NullTracerFactory.Instance);
             int count = 10;
             int threads = 2;
             int totals = 0;
 
             // Test
-            Parallel.For(0, threads, i =>
+            var result = Parallel.For(0, threads, i =>
             {
                 for (int j = 0; j < count; ++j)
                 {
@@ -57,12 +60,14 @@ namespace Kudu.Core.Test
                         int val = totals;
                         Thread.Sleep(0);
                         totals = val + 1;
-                    }, TimeSpan.FromSeconds(20));
+                    }, TimeSpan.FromSeconds(60));
                 }
             });
 
             // Assert
+            Assert.True(result.IsCompleted);
             Assert.Equal(count * threads, totals);
+            FileSystemHelpers.DeleteFileSafe(file);
         }
 
         [Fact]
