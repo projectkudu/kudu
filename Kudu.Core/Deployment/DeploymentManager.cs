@@ -32,7 +32,6 @@ namespace Kudu.Core.Deployment
         private readonly IWebHooksManager _hooksManager;
 
         private const string LogFile = "log.xml";
-        private const string ManifestFile = "manifest";
         private const string TemporaryDeploymentIdPrefix = "temp-";
         public const int MaxSuccessDeploymentResults = 10;
 
@@ -587,10 +586,15 @@ namespace Kudu.Core.Deployment
 
                 if (context.PreviousManifestFilePath == null)
                 {
-                    // In the first deployment we want the wwwroot directory to be cleaned, we do that using a manifest file
-                    // That has the expected content of a clean deployment (only one file: hostingstart.html)
-                    // This will result in KuduSync cleaning this file.
-                    context.PreviousManifestFilePath = Path.Combine(_environment.ScriptPath, Constants.FirstDeploymentManifestFileName);
+                    // this file (/site/firstDeploymentManifest) capture the last active deployment when disconnecting SCM
+                    context.PreviousManifestFilePath = Path.Combine(_environment.SiteRootPath, Constants.FirstDeploymentManifestFileName);
+                    if (!FileSystemHelpers.FileExists(context.PreviousManifestFilePath))
+                    {
+                        // In the first deployment we want the wwwroot directory to be cleaned, we do that using a manifest file
+                        // That has the expected content of a clean deployment (only one file: hostingstart.html)
+                        // This will result in KuduSync cleaning this file.
+                        context.PreviousManifestFilePath = Path.Combine(_environment.ScriptPath, Constants.FirstDeploymentManifestFileName);
+                    }
                 }
 
                 using (tracer.Step("Building"))
@@ -736,6 +740,9 @@ namespace Kudu.Core.Deployment
                 MarkStatusComplete(currentStatus, success: true);
 
                 _status.ActiveDeploymentId = id;
+
+                // Delete first deployment manifest since it is no longer needed
+                FileSystemHelpers.DeleteFileSafe(Path.Combine(_environment.SiteRootPath, Constants.FirstDeploymentManifestFileName));
             }
         }
 
@@ -782,7 +789,7 @@ namespace Kudu.Core.Deployment
 
         private string GetDeploymentManifestPath(string id)
         {
-            return Path.Combine(GetRoot(id), ManifestFile);
+            return Path.Combine(GetRoot(id), Constants.ManifestFileName);
         }
 
         private string GetLogPath(string id, bool ensureDirectory = true)

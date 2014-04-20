@@ -256,7 +256,10 @@ namespace Kudu.FunctionalTests
         public async Task DeleteKuduSiteCleansProperly()
         {
             string appName = "DeleteKuduSiteCleansProperly";
+            // This file is part of HelloWorld repo
             string defaultHtmFile = "default.htm";
+            // This file is part of HelloKudu repo
+            string indexHtmFile = "index.htm";
 
             using (var repo = Git.Clone("HelloWorld"))
             {
@@ -274,6 +277,10 @@ namespace Kudu.FunctionalTests
                     // Verify default.htm file from HelloWorld exists
                     bool defaultHtmExists = appManager.VfsWebRootManager.Exists(defaultHtmFile);
                     Assert.True(defaultHtmExists, defaultHtmFile + " doesn't exist");
+
+                    // Verify index.htm file does not exist
+                    bool indexHtmExists = appManager.VfsWebRootManager.Exists(indexHtmFile);
+                    Assert.False(indexHtmExists, indexHtmFile + " exist");
 
                     // Add file to wwwroot not through deployment/repository
                     string extraFileName = "extra.file";
@@ -294,22 +301,30 @@ namespace Kudu.FunctionalTests
                     defaultHtmExists = appManager.VfsWebRootManager.Exists(defaultHtmFile);
                     Assert.True(defaultHtmExists, defaultHtmFile + " doesn't exist");
 
-                    // Redeploy HelloWorld repository
-                    appManager.GitDeploy(repo.PhysicalPath);
-                    results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
+                    // Redeploy with new Repo
+                    using (var newRepo = Git.Clone("HelloKudu"))
+                    {
+                        // Redeploy HelloKudu repository
+                        appManager.GitDeploy(newRepo.PhysicalPath);
+                        results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
 
-                    // Verify deployed properly
-                    Assert.Equal(1, results.Count);
-                    Assert.Equal(DeployStatus.Success, results[0].Status);
-                    Assert.NotNull(results[0].LastSuccessEndTime);
+                        // Verify deployed properly
+                        Assert.Equal(1, results.Count);
+                        Assert.Equal(DeployStatus.Success, results[0].Status);
+                        Assert.NotNull(results[0].LastSuccessEndTime);
 
-                    // Verify default.htm file from HelloWorld exists
-                    defaultHtmExists = appManager.VfsWebRootManager.Exists(defaultHtmFile);
-                    Assert.True(defaultHtmExists, defaultHtmFile + " doesn't exist");
+                        // Verify default.htm file from HelloWorld does not exist
+                        defaultHtmExists = appManager.VfsWebRootManager.Exists(defaultHtmFile);
+                        Assert.False(defaultHtmExists, defaultHtmFile + " exist");
 
-                    // Verify extra.file there
-                    extraFileExists = appManager.VfsWebRootManager.Exists(extraFileName);
-                    Assert.True(extraFileExists, extraFileName + " doesn't exist");
+                        // Verify index.htm file from HelloKudu exists
+                        indexHtmExists = appManager.VfsWebRootManager.Exists(indexHtmFile);
+                        Assert.True(indexHtmExists, indexHtmFile + " doesn't exist");
+
+                        // Verify extra.file there
+                        extraFileExists = appManager.VfsWebRootManager.Exists(extraFileName);
+                        Assert.True(extraFileExists, extraFileName + " doesn't exist");
+                    }
                 });
             }
         }
