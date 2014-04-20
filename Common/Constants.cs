@@ -30,6 +30,7 @@ namespace Kudu
         public const string ScriptsPath = "scripts";
         public const string NodeModulesPath = "node_modules";
         public const string FirstDeploymentManifestFileName = "firstDeploymentManifest";
+        public const string ManifestFileName = "manifest";
 
         public const string AppDataPath = "App_Data";
         public const string DataPath = "data";

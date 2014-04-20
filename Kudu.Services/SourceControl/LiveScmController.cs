@@ -20,18 +20,21 @@ namespace Kudu.Services.SourceControl
         private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
         private readonly IEnvironment _environment;
+        private readonly IDeploymentStatusManager _status;
 
         public LiveScmController(ITracer tracer,
                                  IOperationLock deploymentLock,
                                  IEnvironment environment,
                                  IRepository repository,
-                                 IServerConfiguration serverConfiguration)
+                                 IServerConfiguration serverConfiguration,
+                                 IDeploymentStatusManager status)
         {
             _tracer = tracer;
             _deploymentLock = deploymentLock;
             _environment = environment;
             _repository = repository;
             _serverConfiguration = serverConfiguration;
+            _status = status;
         }
 
         /// <summary>
@@ -98,6 +101,13 @@ namespace Kudu.Services.SourceControl
                     }
                 }
 
+                using (_tracer.Step("Updating initial deployment manifest"))
+                {
+                    // The active deployment manifest becomes the baseline initial deployment manifest
+                    // When SCM is reconnected, the new deployment will use this manifest to clean the wwwroot
+                    SaveInitialDeploymentManifest();
+                }
+
                 using (_tracer.Step("Deleting deployment cache"))
                 {
                     // Delete the deployment cache
@@ -119,6 +129,24 @@ namespace Kudu.Services.SourceControl
         public void Clean()
         {
             _repository.Clean();
+        }
+
+        private void SaveInitialDeploymentManifest()
+        {
+            // Delete any existing one for robustness
+            string firstDeploymentManifest = Path.Combine(_environment.SiteRootPath, Constants.FirstDeploymentManifestFileName);
+            FileSystemHelpers.DeleteFileSafe(firstDeploymentManifest);
+
+            // Write the new file
+            string activeDeploymentId = _status.ActiveDeploymentId;
+            if (!String.IsNullOrEmpty(activeDeploymentId))
+            {
+                string activeDeploymentManifest = Path.Combine(_environment.DeploymentsPath, activeDeploymentId, Constants.ManifestFileName);
+                if (FileSystemHelpers.FileExists(activeDeploymentManifest))
+                {
+                    FileSystemHelpers.CopyFile(activeDeploymentManifest, firstDeploymentManifest, overwrite: true);
+                }
+            }
         }
     }
 }
