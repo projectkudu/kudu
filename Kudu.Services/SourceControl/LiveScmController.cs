@@ -99,13 +99,18 @@ namespace Kudu.Services.SourceControl
                         // real semantic is more to reset the site to a fully clean state
                         FileSystemHelpers.DeleteDirectorySafe(_environment.DiagnosticsPath, ignoreErrors != 0);
                     }
-                }
 
-                using (_tracer.Step("Updating initial deployment manifest"))
+                    // Delete first deployment manifest since it is no longer needed
+                    FileSystemHelpers.DeleteFileSafe(Path.Combine(_environment.SiteRootPath, Constants.FirstDeploymentManifestFileName));
+                }
+                else
                 {
-                    // The active deployment manifest becomes the baseline initial deployment manifest
-                    // When SCM is reconnected, the new deployment will use this manifest to clean the wwwroot
-                    SaveInitialDeploymentManifest();
+                    using (_tracer.Step("Updating initial deployment manifest"))
+                    {
+                        // The active deployment manifest becomes the baseline initial deployment manifest
+                        // When SCM is reconnected, the new deployment will use this manifest to clean the wwwroot
+                        SaveInitialDeploymentManifest();
+                    }
                 }
 
                 using (_tracer.Step("Deleting deployment cache"))
