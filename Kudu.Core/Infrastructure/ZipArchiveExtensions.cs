@@ -23,7 +23,7 @@ namespace Kudu.Core.Infrastructure
                 var subDirectoryInfo = info as DirectoryInfoBase;
                 if (subDirectoryInfo != null)
                 {
-                    string childName = Path.Combine(directoryNameInArchive, subDirectoryInfo.Name);
+                    string childName = ForwardSlashCombine(directoryNameInArchive, subDirectoryInfo.Name);
                     zipArchive.AddDirectory(subDirectoryInfo, tracer, childName);
                 }
                 else
@@ -37,6 +37,11 @@ namespace Kudu.Core.Infrastructure
                 // If the directory did not have any files or folders, add a entry for it
                 zipArchive.CreateEntry(EnsureTrailingSlash(directoryNameInArchive));
             }
+        }
+
+        private static string ForwardSlashCombine(string part1, string part2)
+        {
+            return "{0}/{1}".FormatInvariant(part1.TrimEnd('/'), part2.TrimStart('/'));
         }
 
         public static void AddFile(this ZipArchive zipArchive, string filePath, ITracer tracer, string directoryNameInArchive = "")
@@ -62,7 +67,7 @@ namespace Kudu.Core.Infrastructure
 
             try
             {
-                string fileName = Path.Combine(directoryNameInArchive, file.Name);
+                string fileName = ForwardSlashCombine(directoryNameInArchive, file.Name);
                 ZipArchiveEntry entry = zipArchive.CreateEntry(fileName, CompressionLevel.Fastest);
                 entry.LastWriteTime = file.LastWriteTime;
 
@@ -107,7 +112,7 @@ namespace Kudu.Core.Infrastructure
 
         private static string EnsureTrailingSlash(string input)
         {
-            return input.EndsWith("\\", StringComparison.Ordinal) ? input : input + Path.DirectorySeparatorChar;
+            return input.EndsWith("/", StringComparison.Ordinal) ? input : input + "/";
         }
     }
 }
