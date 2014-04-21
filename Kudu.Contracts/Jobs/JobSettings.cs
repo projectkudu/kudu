@@ -21,5 +21,18 @@ namespace Kudu.Contracts.Jobs
         {
             this[key] = value;
         }
+
+        public bool IsSingleton
+        {
+            get
+            {
+                return GetSetting(JobSettingsKeys.IsSingleton, false);
+            }
+        }
+
+        public TimeSpan GetStoppingWaitTime(int defaultTime)
+        {
+            return TimeSpan.FromSeconds(GetSetting(JobSettingsKeys.StoppingWaitTime, defaultTime));
+        }
     }
 }

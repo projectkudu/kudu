@@ -23,6 +23,7 @@ namespace Kudu.Core.Jobs
 
         private readonly ExternalCommandFactory _externalCommandFactory;
         private readonly IAnalytics _analytics;
+        private string _shutdownNotificationFilePath;
 
         protected BaseJobRunner(string jobName, string jobsTypePath, IEnvironment environment,
             IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
@@ -46,7 +47,7 @@ namespace Kudu.Core.Jobs
 
         protected ITraceFactory TraceFactory { get; private set; }
 
-        protected string JobName { get; private set; }
+        public string JobName { get; private set; }
 
         protected string JobBinariesPath { get; private set; }
 
@@ -162,6 +163,8 @@ namespace Kudu.Core.Jobs
                 {
                     var exe = _externalCommandFactory.BuildCommandExecutable(job.ScriptHost.HostPath, workingDirectoryForScript, IdleTimeout, NullLogger.Instance);
 
+                    _shutdownNotificationFilePath = RefreshShutdownNotificationFilePath(job.Name, job.JobType);
+
                     // Set environment variable to be able to identify all processes spawned for this job
                     exe.EnvironmentVariables[GetJobEnvironmentKey()] = "true";
                     exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsRootPath] = WorkingDirectory;
@@ -169,6 +172,7 @@ namespace Kudu.Core.Jobs
                     exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsType] = job.JobType;
                     exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsDataPath] = JobDataPath;
                     exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsRunId] = runId;
+                    exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsShutdownNotificationFile] = _shutdownNotificationFilePath;
 
                     UpdateStatus(logger, "Running");
 
@@ -238,6 +242,27 @@ namespace Kudu.Core.Jobs
             {
                 logger.LogWarning(ex.ToString());
             }
+        }
+
+        protected void NotifyShutdownJob()
+        {
+            try
+            {
+                FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(_shutdownNotificationFilePath));
+                OperationManager.Attempt(() => FileSystemHelpers.WriteAllText(_shutdownNotificationFilePath, DateTime.UtcNow.ToString()));
+            }
+            catch (Exception ex)
+            {
+                TraceFactory.GetTracer().TraceError(ex);
+                _analytics.UnexpectedException(ex);
+            }
+        }
+
+        private string RefreshShutdownNotificationFilePath(string jobName, string jobsTypePath)
+        {
+            string shutdownFilesDirectory = Path.Combine(Environment.TempPath, "JobsShutdown", jobsTypePath, jobName);
+            FileSystemHelpers.DeleteDirectoryContentsSafe(shutdownFilesDirectory, ignoreErrors: true);
+            return Path.Combine(shutdownFilesDirectory, Path.GetRandomFileName());
         }
 
         private void UpdateAppConfigs(string tempJobInstancePath)

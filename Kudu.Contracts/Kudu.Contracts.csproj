@@ -76,6 +76,7 @@
     <Compile Include="Jobs\IScriptHost.cs" />
     <Compile Include="Jobs\ITriggeredJobsManager.cs" />
     <Compile Include="Jobs\JobBase.cs" />
+    <Compile Include="Jobs\JobSettingsKeys.cs" />
     <Compile Include="Jobs\TriggeredJob.cs" />
     <Compile Include="Jobs\TriggeredJobHistory.cs" />
     <Compile Include="Jobs\TriggeredJobRun.cs" />

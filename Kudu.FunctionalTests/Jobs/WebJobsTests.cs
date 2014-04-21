@@ -157,7 +157,7 @@ namespace Kudu.FunctionalTests.Jobs
                 JobSettings continuousJobSettings =
                     appManager.JobsManager.GetContinuousJobSettingsAsync(expectedContinuousJob.Name).Result;
 
-                Assert.False(continuousJobSettings.GetSetting<bool>("is_singleton"));
+                Assert.False(continuousJobSettings.IsSingleton);
 
                 continuousJobSettings.SetSetting("is_singleton", true);
                 appManager.JobsManager.SetContinuousJobSettingsAsync(expectedContinuousJob.Name, continuousJobSettings).Wait();
