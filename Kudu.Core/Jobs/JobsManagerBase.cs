@@ -6,8 +6,10 @@ using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
+using System.Web.Hosting;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Newtonsoft.Json;
@@ -40,7 +42,7 @@ namespace Kudu.Core.Jobs
         }
     }
 
-    public abstract class JobsManagerBase<TJob> : JobsManagerBase, IJobsManager<TJob> where TJob : JobBase, new()
+    public abstract class JobsManagerBase<TJob> : JobsManagerBase, IJobsManager<TJob>, IRegisteredObject where TJob : JobBase, new()
     {
         private const string DefaultScriptFileName = "run";
 
@@ -73,6 +75,8 @@ namespace Kudu.Core.Jobs
 
             JobsBinariesPath = Path.Combine(Environment.JobsBinariesPath, jobsTypePath);
             JobsDataPath = Path.Combine(Environment.JobsDataPath, jobsTypePath);
+
+            HostingEnvironment.RegisterObject(this);
         }
 
         public abstract IEnumerable<TJob> ListJobs();
@@ -227,19 +231,31 @@ namespace Kudu.Core.Jobs
 
         public JobSettings GetJobSettings(string jobName)
         {
-            return OperationManager.Attempt(() =>
+            JobSettings jobSettings;
+
+            try
             {
-                var jobDirectory = GetJobBinariesDirectory(jobName);
-
-                var jobSettingsPath = GetJobSettingsPath(jobDirectory);
-                if (!FileSystemHelpers.FileExists(jobSettingsPath))
+                jobSettings = OperationManager.Attempt(() =>
                 {
-                    return new JobSettings();
-                }
+                    var jobDirectory = GetJobBinariesDirectory(jobName);
 
-                string jobSettingsContent = FileSystemHelpers.ReadAllTextFromFile(jobSettingsPath);
-                return JsonConvert.DeserializeObject<JobSettings>(jobSettingsContent);
-            });
+                    var jobSettingsPath = GetJobSettingsPath(jobDirectory);
+                    if (!FileSystemHelpers.FileExists(jobSettingsPath))
+                    {
+                        return null;
+                    }
+
+                    string jobSettingsContent = FileSystemHelpers.ReadAllTextFromFile(jobSettingsPath);
+                    return JsonConvert.DeserializeObject<JobSettings>(jobSettingsContent);
+                });
+            }
+            catch (Exception ex)
+            {
+                TraceFactory.GetTracer().TraceError(ex.ToString());
+                jobSettings = null;
+            }
+
+            return jobSettings ?? new JobSettings();
         }
 
         public void SetJobSettings(string jobName, JobSettings jobSettings)
@@ -250,6 +266,22 @@ namespace Kudu.Core.Jobs
             string jobSettingsContent = JsonConvert.SerializeObject(jobSettings);
             FileSystemHelpers.WriteAllTextToFile(jobSettingsPath, jobSettingsContent);
         }
+
+        public void Stop(bool immediate)
+        {
+            if (IsShuttingdown)
+            {
+                return;
+            }
+
+            IsShuttingdown = true;
+            OnShutdown();
+            HostingEnvironment.UnregisterObject(this);
+        }
+
+        protected abstract void OnShutdown();
+
+        protected bool IsShuttingdown { get; private set; }
 
         private static string GetJobSettingsPath(DirectoryInfoBase jobDirectory)
         {

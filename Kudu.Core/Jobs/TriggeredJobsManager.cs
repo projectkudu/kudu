@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
+using System.Threading;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Hooks;
@@ -15,6 +16,8 @@ namespace Kudu.Core.Jobs
 {
     public class TriggeredJobsManager : JobsManagerBase<TriggeredJob>, ITriggeredJobsManager
     {
+        private const int DefaultTriggeredJobStoppingWaitTimeInSeconds = 30;
+
         private readonly ConcurrentDictionary<string, TriggeredJobRunner> _triggeredJobRunners =
             new ConcurrentDictionary<string, TriggeredJobRunner>(StringComparer.OrdinalIgnoreCase);
 
@@ -95,6 +98,33 @@ namespace Kudu.Core.Jobs
             DirectoryInfoBase triggeredJobRunDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(triggeredJobRunPath);
 
             return BuildJobRun(triggeredJobRunDirectory, jobName, isLatest: true);
+        }
+
+        protected override void OnShutdown()
+        {
+            TimeSpan maxTimeout = TimeSpan.MinValue;
+            var waitHandles = new List<WaitHandle>();
+            foreach (TriggeredJobRunner triggeredJobRunner in _triggeredJobRunners.Values)
+            {
+                WaitHandle waitHandle = triggeredJobRunner.CurrentRunningJobWaitHandle;
+                if (waitHandle != null)
+                {
+                    waitHandles.Add(waitHandle);
+
+                    // Determine the maximum timeout for all currently running jobs
+                    JobSettings jobSettings = GetJobSettings(triggeredJobRunner.JobName);
+
+                    // By default wait for 30 seconds until the triggered WebJob is done
+                    TimeSpan stoppingWaitTime = jobSettings.GetStoppingWaitTime(DefaultTriggeredJobStoppingWaitTimeInSeconds);
+                    maxTimeout = stoppingWaitTime > maxTimeout ? stoppingWaitTime : maxTimeout;
+                }
+            }
+
+            // Wait until all running jobs are finished up to the maximum timeout
+            if (waitHandles.Any())
+            {
+                WaitHandle.WaitAll(waitHandles.ToArray(), maxTimeout);
+            }
         }
 
         protected override void UpdateJob(TriggeredJob job)
@@ -191,6 +221,11 @@ namespace Kudu.Core.Jobs
             if (triggeredJob == null)
             {
                 throw new JobNotFoundException();
+            }
+
+            if (IsShuttingdown)
+            {
+                throw new WebJobsStoppedException();
             }
 
             TriggeredJobRunner triggeredJobRunner =

@@ -12,6 +12,8 @@ namespace Kudu.Core.Jobs
 {
     public class ContinuousJobRunner : BaseJobRunner, IDisposable
     {
+        private const int DefaultContinuousJobStoppingWaitTimeInSeconds = 5;
+
         private static readonly TimeSpan WarmupTimeSpan = TimeSpan.FromMinutes(2);
 
         private readonly LockFile _singletonLock;
@@ -115,7 +117,7 @@ namespace Kudu.Core.Jobs
 
         private bool TryGetLockIfSingleton()
         {
-            bool isSingleton = _jobSettings.GetSetting("is_singleton", defaultValue: false);
+            bool isSingleton = _jobSettings.IsSingleton;
             if (!isSingleton)
             {
                 return true;
@@ -133,13 +135,15 @@ namespace Kudu.Core.Jobs
         public void StopJob()
         {
             Interlocked.Exchange(ref _started, 0);
-            SafeKillAllRunningJobInstances(_continuousJobLogger);
+
+            _continuousJobLogger.ReportStatus(ContinuousJobStatus.Stopping);
+
+            NotifyShutdownJob();
 
             if (_continuousJobThread != null)
             {
-                _continuousJobLogger.ReportStatus(ContinuousJobStatus.Stopping);
-
-                if (!_continuousJobThread.Join(TimeSpan.FromMinutes(1)))
+                // By default give the continuous job 5 seconds before killing it (after notifying the continuous job)
+                if (!_continuousJobThread.Join(_jobSettings.GetStoppingWaitTime(DefaultContinuousJobStoppingWaitTimeInSeconds)))
                 {
                     _continuousJobThread.Abort();
                 }
@@ -147,6 +151,8 @@ namespace Kudu.Core.Jobs
                 _continuousJobThread = null;
                 _continuousJobLogger.ReportStatus(ContinuousJobStatus.Stopped);
             }
+
+            SafeKillAllRunningJobInstances(_continuousJobLogger);
         }
 
         public void RefreshJob(ContinuousJob continuousJob, JobSettings jobSettings)

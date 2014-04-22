@@ -10,14 +10,20 @@ using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Jobs
 {
-    public class TriggeredJobRunner : BaseJobRunner
+    public class TriggeredJobRunner : BaseJobRunner, IDisposable
     {
+        private ManualResetEvent _currentRunningJobWaitHandle;
         private readonly LockFile _lockFile;
 
         public TriggeredJobRunner(string jobName, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
             : base(jobName, Constants.TriggeredPath, environment, settings, traceFactory, analytics)
         {
             _lockFile = BuildTriggeredJobRunnerLockFile(JobDataPath, TraceFactory);
+        }
+
+        public WaitHandle CurrentRunningJobWaitHandle
+        {
+            get { return _currentRunningJobWaitHandle; }
         }
 
         public static LockFile BuildTriggeredJobRunnerLockFile(string jobDataPath, ITraceFactory traceFactory)
@@ -54,6 +60,14 @@ namespace Kudu.Core.Jobs
             {
                 InitializeJobInstance(triggeredJob, logger);
 
+                if (_currentRunningJobWaitHandle != null)
+                {
+                    _currentRunningJobWaitHandle.Dispose();
+                    _currentRunningJobWaitHandle = null;
+                }
+
+                _currentRunningJobWaitHandle = new ManualResetEvent(false);
+
                 ThreadPool.QueueUserWorkItem(_ =>
                 {
                     try
@@ -65,6 +79,7 @@ namespace Kudu.Core.Jobs
                         logger.ReportEndRun();
                         _lockFile.Release();
                         reportAction(triggeredJob.Name, logger.Id);
+                        _currentRunningJobWaitHandle.Set();
                     }
                 });
             }
@@ -79,6 +94,24 @@ namespace Kudu.Core.Jobs
         protected override void UpdateStatus(IJobLogger logger, string status)
         {
             ((TriggeredJobRunLogger)logger).ReportStatus(status);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (_currentRunningJobWaitHandle != null)
+                {
+                    _currentRunningJobWaitHandle.Dispose();
+                    _currentRunningJobWaitHandle = null;
+                }
+            }
         }
     }
 }

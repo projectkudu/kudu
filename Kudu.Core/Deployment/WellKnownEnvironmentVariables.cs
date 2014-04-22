@@ -26,6 +26,7 @@
         public const string WebJobsDataPath = "WEBJOBS_DATA_PATH";
         public const string WebJobsExtraUrlPath = "WEBJOBS_EXTRA_INFO_URL_PATH";
         public const string WebJobsRunId = "WEBJOBS_RUN_ID";
+        public const string WebJobsShutdownNotificationFile = "WEBJOBS_SHUTDOWN_FILE";
 
         public const string CommitId = "SCM_COMMIT_ID";
     }
