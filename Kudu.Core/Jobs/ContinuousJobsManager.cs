@@ -82,6 +82,19 @@ namespace Kudu.Core.Jobs
             return continuousJobRunner;
         }
 
+        protected override void OnShutdown()
+        {
+            lock (_lockObject)
+            {
+                StopWatcher();
+
+                foreach (ContinuousJobRunner continuousJobRunner in _continuousJobRunners.Values)
+                {
+                    continuousJobRunner.StopJob();
+                }
+            }
+        }
+
         protected override void UpdateJob(ContinuousJob job)
         {
             string jobsSpecificDataPath = Path.Combine(JobsDataPath, job.Name);
@@ -289,6 +302,12 @@ namespace Kudu.Core.Jobs
                 _fileSystemWatcher.Dispose();
                 _fileSystemWatcher = null;
             }
+        }
+
+        private void StopWatcher()
+        {
+            DisposeWatcher();
+            _startFileWatcherTimer.Change(Timeout.Infinite, Timeout.Infinite);
         }
 
         private void OnChanged(object sender, FileSystemEventArgs e)
