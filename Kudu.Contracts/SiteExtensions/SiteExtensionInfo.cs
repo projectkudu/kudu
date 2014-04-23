@@ -57,7 +57,7 @@ namespace Kudu.Contracts.SiteExtensions
             set;
         }
 
-        public string SiteUrl
+        public string ExtensionUrl
         {
             get;
             set;
