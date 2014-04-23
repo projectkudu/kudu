@@ -221,6 +221,7 @@ namespace Kudu.Core.SiteExtensions
                 if (latestPackage != null)
                 {
                     info.LocalIsLatestVersion = package.Version == latestPackage.Version;
+                    info.DownloadCount = package.DownloadCount;
                 }
             }
 
