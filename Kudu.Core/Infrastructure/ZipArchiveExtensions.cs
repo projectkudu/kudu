@@ -41,7 +41,7 @@ namespace Kudu.Core.Infrastructure
 
         private static string ForwardSlashCombine(string part1, string part2)
         {
-            return "{0}/{1}".FormatInvariant(part1.TrimEnd('/'), part2.TrimStart('/'));
+            return Path.Combine(part1, part2).Replace('\\', '/');
         }
 
         public static void AddFile(this ZipArchive zipArchive, string filePath, ITracer tracer, string directoryNameInArchive = "")
