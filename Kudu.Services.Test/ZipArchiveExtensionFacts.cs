@@ -15,8 +15,8 @@ namespace Kudu.Services.Test
     public class ZipArchiveExtensionFacts
     {
         [Theory]
-        [InlineData("/Foo.txt", "This was a triumph")]
-        [InlineData("/Bar/Qux/Foo.txt", "I'm making a note here")]
+        [InlineData("Foo.txt", "This was a triumph")]
+        [InlineData("Bar/Qux/Foo.txt", "I'm making a note here")]
         public void AddFileToArchiveCreatesEntryUnderDirectory(string fileName, string content)
         {
             // Arrange
@@ -59,11 +59,11 @@ namespace Kudu.Services.Test
             zip.Dispose();
             zip = new ZipArchive(ReOpen(stream));
             Assert.Equal(5, zip.Entries.Count);
-            AssertZipEntry(zip, "/log.txt", "log content");
-            AssertZipEntry(zip, "/site/home.aspx", "home content");
-            AssertZipEntry(zip, "/site/site.css", "some css");
-            AssertZipEntry(zip, "/site/empty-dir/", null);
-            AssertZipEntry(zip, "/zero-length-file", null);
+            AssertZipEntry(zip, "log.txt", "log content");
+            AssertZipEntry(zip, "site/home.aspx", "home content");
+            AssertZipEntry(zip, "site/site.css", "some css");
+            AssertZipEntry(zip, "site/empty-dir/", null);
+            AssertZipEntry(zip, "zero-length-file", null);
         }
 
         [Fact]
