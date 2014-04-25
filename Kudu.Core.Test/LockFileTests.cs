@@ -60,6 +60,12 @@ namespace Kudu.Core.Test
                         int val = totals;
                         Thread.Sleep(0);
                         totals = val + 1;
+
+                        using (var reader = new StreamReader(FileSystemHelpers.OpenFile(file, FileMode.Open, FileAccess.Read, FileShare.Write))) 
+                        {
+                            Assert.Contains("at Kudu.Core.Test.LockFileTests", reader.ReadToEnd());
+                        }
+
                     }, TimeSpan.FromSeconds(60));
                 }
             });
@@ -90,7 +96,7 @@ namespace Kudu.Core.Test
                      .Returns(true);
             fileSystem.SetupGet(f => f.File)
                       .Returns(file.Object);
-            file.Setup(f => f.Open(lockFileName, FileMode.Create, FileAccess.Write, FileShare.None))
+            file.Setup(f => f.Open(lockFileName, FileMode.Create, FileAccess.Write, FileShare.Read))
                 .Returns(Mock.Of<Stream>());
             repositoryFactory.Setup(f => f.GetRepository())
                              .Returns(repository.Object);
@@ -119,12 +125,15 @@ namespace Kudu.Core.Test
                       {
                           locked = false;
                       });
+                stream.Setup(s => s.Write(It.IsAny<byte[]>(), 0, It.IsAny<int>()));
+                stream.Setup(s => s.Flush());
+
                 fs.Setup(f => f.Directory.Exists(Path.GetDirectoryName(path)))
                   .Returns(true);
                 fs.Setup(f => f.File.Exists(path))
                   .Returns(() => true);
                 fs.Setup(f => f.File.Delete(path));
-                fs.Setup(f => f.File.Open(path, It.IsAny<FileMode>(), FileAccess.Write, FileShare.None))
+                fs.Setup(f => f.File.Open(path, It.IsAny<FileMode>(), FileAccess.Write, FileShare.Read))
                   .Returns(() =>
                   {
                       lock (stream)

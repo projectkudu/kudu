@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
@@ -78,7 +79,7 @@ namespace Kudu.Core.Infrastructure
                 {
                     // If there is a file, lets see if someone has an open handle to it, or if it's
                     // just hanging there for no reason
-                    using (FileSystemHelpers.OpenFile(_path, FileMode.Open, FileAccess.Write, FileShare.None)) { }
+                    using (FileSystemHelpers.OpenFile(_path, FileMode.Open, FileAccess.Write, FileShare.Read)) { }
                 }
                 catch (Exception ex)
                 {
@@ -100,7 +101,9 @@ namespace Kudu.Core.Infrastructure
             {
                 FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(_path));
 
-                _lockStream = FileSystemHelpers.OpenFile(_path, FileMode.Create, FileAccess.Write, FileShare.None);
+                _lockStream = FileSystemHelpers.OpenFile(_path, FileMode.Create, FileAccess.Write, FileShare.Read);
+
+                WriteLockInfo();
 
                 OnLockAcquired();
 
@@ -117,6 +120,19 @@ namespace Kudu.Core.Infrastructure
         protected virtual void OnLockAcquired()
         {
             // no-op
+        }
+
+        // we only write the lock info at lock's enter since
+        // lock file will be cleaned up at release
+        private void WriteLockInfo()
+        {
+            var strb = new StringBuilder();
+            strb.Append(DateTime.UtcNow.ToString("s"));
+            strb.AppendLine(System.Environment.StackTrace);
+
+            var bytes = Encoding.UTF8.GetBytes(strb.ToString());
+            _lockStream.Write(bytes, 0, bytes.Length);
+            _lockStream.Flush();
         }
 
         /// <summary>
