@@ -588,7 +588,7 @@ namespace Kudu.FunctionalTests.Jobs
         {
             WaitUntilAssertVerified(
                 "continuous job disabled",
-                TimeSpan.FromSeconds(30),
+                TimeSpan.FromSeconds(40),
                 () =>
                 {
                     var jobs = appManager.JobsManager.ListContinuousJobsAsync().Result;
@@ -598,7 +598,7 @@ namespace Kudu.FunctionalTests.Jobs
 
             WaitUntilAssertVerified(
                 "make sure process is down",
-                TimeSpan.FromSeconds(30),
+                TimeSpan.FromSeconds(40),
                 () =>
                 {
                     var allProcesses = appManager.ProcessManager.GetProcessesAsync().Result;
