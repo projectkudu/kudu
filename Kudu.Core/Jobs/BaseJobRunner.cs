@@ -226,7 +226,7 @@ namespace Kudu.Core.Jobs
                     {
                         try
                         {
-                            process.Kill();
+                            process.Kill(true, TraceFactory.GetTracer());
                         }
                         catch (Exception ex)
                         {
@@ -248,8 +248,11 @@ namespace Kudu.Core.Jobs
         {
             try
             {
-                FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(_shutdownNotificationFilePath));
-                OperationManager.Attempt(() => FileSystemHelpers.WriteAllText(_shutdownNotificationFilePath, DateTime.UtcNow.ToString()));
+                if (_shutdownNotificationFilePath != null)
+                {
+                    FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(_shutdownNotificationFilePath));
+                    OperationManager.Attempt(() => FileSystemHelpers.WriteAllText(_shutdownNotificationFilePath, DateTime.UtcNow.ToString()));
+                }
             }
             catch (Exception ex)
             {
