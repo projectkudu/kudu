@@ -36,7 +36,7 @@ namespace Kudu.Core.Deployment.Generator
             try
             {
                 GenerateScript(context, buildLogger);
-                string deploymentScriptPath = Path.GetFullPath(Path.Combine(Environment.DeploymentToolsPath, DeploymentScriptFileName));
+                string deploymentScriptPath = String.Format("\"{0}\"", Path.GetFullPath(Path.Combine(Environment.DeploymentToolsPath, DeploymentScriptFileName)));
                 RunCommand(context, deploymentScriptPath);
                 tcs.SetResult(null);
             }
