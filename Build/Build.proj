@@ -137,7 +137,7 @@
         </PropertyGroup>
         <RemoveDir Directories="$(NugetTargetPath)" Condition=" Exists('$(NugetTargetPath)') " />
         <MakeDir Directories="$(NugetTargetPath)" />
-        <Exec Command="nuget pack -Properties &quot;version=$(Version);SourceDirectory=$(SourceDirectory)&quot; -OutputDirectory $(NugetTargetPath) $(MsBuildThisFileDirectory)kudu.nuspec" />
+        <Exec Command="nuget pack -Properties &quot;version=$(Version);SourceDirectory=$(SourceDirectory)&quot; -OutputDirectory &quot;$(NugetTargetPath)&quot; &quot;$(MsBuildThisFileDirectory)kudu.nuspec&quot;" />
       </Target>
 
       <Target Name="CopySymbols">
