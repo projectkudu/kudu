@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>kudu</id>
+    <title>Kudu</title>
+    <version>$version$</version>
+    <authors>Project Kudu</authors>
+    <licenseUrl>http://opensource.org/licenses/Apache-2.0</licenseUrl>
+    <projectUrl>https://github.com/projectkudu/kudu</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>The engine which implements git, WebJobs, and several other Azure Web Sites features. Note that Kudu comes built in with Azure Web Sites, so you should only install this if you want to run a different version. This version is not fully supported, so remember to uninstall it once you;re done testing it.</description>
+    <tags>kudu</tags>
+  </metadata>
+  <files>
+    <file src="$SourceDirectory$\**\*.*" target="content" />
+  </files>
+</package>

@@ -5,7 +5,7 @@
 
     <PropertyGroup>
         <Configuration Condition="$(Configuration) == ''">Debug</Configuration>
-        <ProjectRoot>$(MSBuildProjectDirectory)\..</ProjectRoot>
+        <ProjectRoot>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..'))</ProjectRoot>
         <ToolsPath>$(ProjectRoot)\tools\</ToolsPath>
         <XunitPath>$(ProjectRoot)xunit\</XunitPath>
         <ArtifactsPath>$(ProjectRoot)\artifacts\$(Configuration)</ArtifactsPath>
@@ -39,7 +39,7 @@
         <RegexTransform Items="@(RegexTransform)" />
     </Target>
     
-    <Target Name="RunAll" DependsOnTargets="UpdateVersion; RestorePackages; Build; ReportFxCopResults; RunTests; BuildSites; BuildZips; CopySymbols" />
+    <Target Name="RunAll" DependsOnTargets="UpdateVersion; RestorePackages; Build; ReportFxCopResults; RunTests; BuildSites; BuildZips; CopySymbols; BuildNuget" />
 
     <Target Name="CreateOutputPath">
         <MakeDir Directories="$(ArtifactsPath)\symbols" Condition="!Exists('$(ArtifactsPath)\symbols')" />
@@ -130,6 +130,16 @@
         </Task>
       </UsingTask>
       
+      <Target Name="BuildNuget" Condition="'$(BUILD_NUMBER)' != ''">
+        <PropertyGroup>
+          <SourceDirectory>$(ArtifactsPath)\SiteExtensions\Kudu</SourceDirectory>
+          <NugetTargetPath>$(ArtifactsPath)\nuget</NugetTargetPath>
+        </PropertyGroup>
+        <RemoveDir Directories="$(NugetTargetPath)" Condition=" Exists('$(NugetTargetPath)') " />
+        <MakeDir Directories="$(NugetTargetPath)" />
+        <Exec Command="nuget pack -Properties &quot;version=$(Version);SourceDirectory=$(SourceDirectory)&quot; -OutputDirectory $(NugetTargetPath) $(MsBuildThisFileDirectory)kudu.nuspec" />
+      </Target>
+
       <Target Name="CopySymbols">
         <ItemGroup>
           <SymbolFilesToCopy Include="$(ProjectRoot)\Kudu.*\obj\$(Configuration)\Kudu*.pdb" />
