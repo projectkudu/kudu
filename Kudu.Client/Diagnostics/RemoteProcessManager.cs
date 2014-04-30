@@ -12,8 +12,9 @@ namespace Kudu.Client.Diagnostics
 {
     public class RemoteProcessManager : KuduRemoteClientBase
     {
-        public RemoteProcessManager(string serviceUrl, ICredentials credentials = null, HttpMessageHandler handler = null)
-            : base(serviceUrl, credentials, handler)
+        // default useCookies to true to make sure client sticky to instances
+        public RemoteProcessManager(string serviceUrl, ICredentials credentials = null, HttpMessageHandler handler = null, bool useCookies = true)
+            : base(serviceUrl, credentials, handler, useCookies)
         {
         }
 

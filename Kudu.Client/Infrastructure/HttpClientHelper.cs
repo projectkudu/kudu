@@ -12,14 +12,14 @@ namespace Kudu.Client.Infrastructure
     {
         private static readonly char[] uriPathSeparator = new char[] { '/' };
 
-        public static HttpClient CreateClient(string serviceUrl, ICredentials credentials = null, HttpMessageHandler handler = null)
+        public static HttpClient CreateClient(string serviceUrl, ICredentials credentials = null, HttpMessageHandler handler = null, bool useCookies = false)
         {
             if (serviceUrl == null)
             {
                 throw new ArgumentNullException("serviceUrl");
             }
 
-            HttpMessageHandler effectiveHandler = handler ?? CreateClientHandler(serviceUrl, credentials);
+            HttpMessageHandler effectiveHandler = handler ?? CreateClientHandler(serviceUrl, credentials, useCookies);
             Uri serviceAddr = new Uri(serviceUrl);
             HttpClient client = new HttpClient(effectiveHandler)
             {
@@ -32,7 +32,7 @@ namespace Kudu.Client.Infrastructure
             return client;
         }
 
-        public static HttpClientHandler CreateClientHandler(string serviceUrl, ICredentials credentials)
+        public static HttpClientHandler CreateClientHandler(string serviceUrl, ICredentials credentials, bool useCookies = false)
         {
             if (serviceUrl == null)
             {
@@ -56,6 +56,10 @@ namespace Kudu.Client.Infrastructure
                 clientHandler.Credentials = credentialCache;
                 clientHandler.PreAuthenticate = true;
             }
+
+            // HttpClient's default UseCookies is true (meaning always roundtripping cookie back)
+            // However, our api will default to false to cover multiple instance scenarios
+            clientHandler.UseCookies = useCookies;
 
             // Our handler is ready
             return clientHandler;

@@ -66,7 +66,7 @@ namespace Kudu.TestHarness
                     }
                     else
                     {
-                        yield return new TestHarnessCommand(attribute, testCommand);
+                        yield return new TestHarnessCommand(attribute, testCommand, testMethod);
                     }
                 }
             }
@@ -76,23 +76,27 @@ namespace Kudu.TestHarness
                 private readonly int _runs;
                 private readonly int _retries;
                 private readonly bool _suppressError;
+                private readonly IMethodInfo _testMethod;
 
-                public TestHarnessCommand(TestHarnessClassCommandAttribute attribute, ITestCommand inner)
+                public TestHarnessCommand(TestHarnessClassCommandAttribute attribute, ITestCommand inner, IMethodInfo testMethod)
                     : base(inner)
                 {
-                    if (!Int32.TryParse(KuduUtils.GetTestSetting(RunsSettingKey), out _runs))
+                    _testMethod = testMethod;
+
+                    // prefer imperative over config settings
+                    if (attribute.Runs != DefaultRuns || !Int32.TryParse(KuduUtils.GetTestSetting(RunsSettingKey), out _runs))
                     {
                         _runs = attribute.Runs;
                     }
                     _runs = Math.Max(DefaultRuns, _runs);
 
-                    if (!Int32.TryParse(KuduUtils.GetTestSetting(RetriesSettingKey), out _retries))
+                    if (attribute.Retries != DefaultRetries || !Int32.TryParse(KuduUtils.GetTestSetting(RetriesSettingKey), out _retries))
                     {
                         _retries = attribute.Retries;
                     }
                     _retries = Math.Max(DefaultRetries, _retries);
 
-                    if (!Boolean.TryParse(KuduUtils.GetTestSetting(SuppressErrorSettingKey), out _suppressError))
+                    if (attribute.SuppressError != DefaultSuppressError || !Boolean.TryParse(KuduUtils.GetTestSetting(SuppressErrorSettingKey), out _suppressError))
                     {
                         _suppressError = attribute.SuppressError;
                     }
