@@ -6,7 +6,7 @@ namespace Kudu.Client.Infrastructure
 {
     public abstract class KuduRemoteClientBase
     {
-        protected KuduRemoteClientBase(string serviceUrl, ICredentials credentials = null, HttpMessageHandler handler = null)
+        protected KuduRemoteClientBase(string serviceUrl, ICredentials credentials = null, HttpMessageHandler handler = null, bool useCookie = false)
         {
             if (serviceUrl == null)
             {
@@ -15,7 +15,7 @@ namespace Kudu.Client.Infrastructure
 
             ServiceUrl = UrlUtility.EnsureTrailingSlash(serviceUrl);
             Credentials = credentials;
-            Client = HttpClientHelper.CreateClient(ServiceUrl, credentials, handler);
+            Client = HttpClientHelper.CreateClient(ServiceUrl, credentials, handler, useCookie);
         }
 
         public string ServiceUrl { get; private set; }
