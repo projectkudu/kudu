@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
-using Kudu.Core;
+using System.Runtime.Serialization;
 using Xunit;
 using Xunit.Sdk;
 
@@ -26,6 +25,8 @@ namespace Kudu.TestHarness
         public const string RunsSettingKey = "TestHarness.Runs";
         public const string RetriesSettingKey = "TestHarness.Retries";
         public const string SuppressErrorSettingKey = "TestHarness.SuppressError";
+
+        public const string DividerBar = "====================================================================================";
 
         public TestHarnessClassCommandAttribute()
             : base(typeof(TestHarnessClassCommand))
@@ -124,6 +125,7 @@ namespace Kudu.TestHarness
                     Exception exception = null;
                     MethodResult result = null;
                     MethodResult failedResult = null;
+                    string retryMessage = null;
                     for (int i = 0; i < _retries + 1; ++i)
                     {
                         try
@@ -136,7 +138,8 @@ namespace Kudu.TestHarness
                             }
                             else
                             {
-                                TraceIf(_retries > 0 && i > 0, "Retry {0}/{1} passed successfully.", i, _retries);
+                                retryMessage = String.Format("Retry {0}/{1} passed successfully.", i, _retries);
+                                TraceIf(_retries > 0 && i > 0, retryMessage);
                                 break;
                             }
                         }
@@ -164,7 +167,15 @@ namespace Kudu.TestHarness
 
                     if (exception != null)
                     {
-                        ExceptionUtility.RethrowWithNoStackTraceLoss(exception);
+                        if (String.IsNullOrEmpty(retryMessage))
+                        {
+                            ExceptionUtility.RethrowWithNoStackTraceLoss(exception);
+                        }
+
+                        if (failedResult == null)
+                        {
+                            failedResult = new FailedResult(_testMethod, new RetrySuccessfulException(retryMessage, exception), DisplayName);
+                        }
                     }
 
                     return failedResult ?? result;
@@ -177,8 +188,22 @@ namespace Kudu.TestHarness
             if (condition)
             {
                 TestTracer.Trace(messageFormat, args);
-                TestTracer.Trace("====================================================================================\r\n");
+                TestTracer.Trace("{0}{1}", TestHarnessClassCommandAttribute.DividerBar, System.Environment.NewLine);
             }
+        }
+    }
+
+    [Serializable]
+    public class RetrySuccessfulException : AssertException
+    {
+        public RetrySuccessfulException(string message, Exception innerException)
+            : base(String.Format("{0}{1}{2}", message, System.Environment.NewLine, TestHarnessClassCommandAttribute.DividerBar), innerException)
+        {
+        }
+
+        protected RetrySuccessfulException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
         }
     }
 }
