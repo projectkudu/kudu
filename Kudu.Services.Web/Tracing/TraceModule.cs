@@ -73,7 +73,8 @@ namespace Kudu.Services.Web.Tracing
 
             foreach (string key in httpContext.Request.Headers)
             {
-                if (!key.Equals("Authorization", StringComparison.OrdinalIgnoreCase))
+                if (!key.Equals("Authorization", StringComparison.OrdinalIgnoreCase) &&
+                    !key.Equals("X-MS-CLIENT-PRINCIPAL-NAME", StringComparison.OrdinalIgnoreCase))
                 {
                     attribs[key] = httpContext.Request.Headers[key];
                 }
