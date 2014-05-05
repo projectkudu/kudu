@@ -75,14 +75,19 @@ namespace Kudu.Core.SiteExtensions
             return ConvertLocalPackageToSiteExtensionInfo(package, checkLatest);
         }
 
-        public SiteExtensionInfo InstallExtension(SiteExtensionInfo info)
+        public SiteExtensionInfo InstallExtension(string id, string version)
         {
-            return InstallExtension(info.Id);
-        }
+            IPackage repoPackage;
+            if (version == null)
+            {
+                repoPackage = _remoteRepository.FindPackage(id);
+            }
+            else
+            {
+                // If a version is explicitly specified, allow both prerelease & unlisted (like package restore)
+                repoPackage = _remoteRepository.FindPackage(id, new SemanticVersion(version), allowPrereleaseVersions: true, allowUnlisted: true);
+            }
 
-        public SiteExtensionInfo InstallExtension(string id)
-        {
-            IPackage repoPackage = _remoteRepository.FindPackage(id);
             if (repoPackage == null)
             {
                 return null;

@@ -51,13 +51,13 @@ namespace Kudu.Services.SiteExtensions
             return extension;
         }
 
-        [HttpPost]
-        public SiteExtensionInfo InstallExtension(SiteExtensionInfo info)
+        [HttpPut]
+        public SiteExtensionInfo InstallExtension(string id, string version = null)
         {
-            SiteExtensionInfo extension = _manager.InstallExtension(info);
+            SiteExtensionInfo extension = _manager.InstallExtension(id, version);
             if (extension == null)
             {
-                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, info.ToString()));
+                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, id));
             }
             return extension;
         }

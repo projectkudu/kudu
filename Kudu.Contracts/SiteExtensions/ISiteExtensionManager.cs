@@ -15,7 +15,7 @@ namespace Kudu.Contracts.SiteExtensions
 
         SiteExtensionInfo GetLocalExtension(string id, bool checkLatest);
 
-        SiteExtensionInfo InstallExtension(SiteExtensionInfo info);
+        SiteExtensionInfo InstallExtension(string id, string version = null);
 
         bool UninstallExtension(string id);
     }
