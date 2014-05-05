@@ -19,7 +19,7 @@ namespace Kudu.Client.SiteExtensions
         public async Task<IEnumerable<SiteExtensionInfo>> GetRemoteExtensions(string filter = null, bool allowPrereleaseVersions = false)
         {
             var url = new StringBuilder(ServiceUrl);
-            url.Append("remote");
+            url.Append("extensionfeed");
 
             var separator = '?';
             if (!String.IsNullOrEmpty(filter))
@@ -43,7 +43,7 @@ namespace Kudu.Client.SiteExtensions
         public async Task<SiteExtensionInfo> GetRemoteExtension(string id, string version = null)
         {
             var url = new StringBuilder(ServiceUrl);
-            url.Append("remote/");
+            url.Append("extensionfeed/");
             url.Append(id);
 
             if (!String.IsNullOrEmpty(version))
@@ -58,7 +58,7 @@ namespace Kudu.Client.SiteExtensions
         public async Task<IEnumerable<SiteExtensionInfo>> GetLocalExtensions(string filter = null, bool checkLatest = true)
         {
             var url = new StringBuilder(ServiceUrl);
-            url.Append("local");
+            url.Append("siteextensions");
 
             var separator = '?';
             if (!String.IsNullOrEmpty(filter))
@@ -83,7 +83,7 @@ namespace Kudu.Client.SiteExtensions
         public async Task<SiteExtensionInfo> GetLocalExtension(string id, bool checkLatest = true)
         {
             var url = new StringBuilder(ServiceUrl);
-            url.Append("local/");
+            url.Append("siteextensions/");
             url.Append(id);
 
             if (checkLatest)
@@ -95,15 +95,15 @@ namespace Kudu.Client.SiteExtensions
             return await Client.GetJsonAsync<SiteExtensionInfo>(url.ToString());
         }
 
-        public async Task<SiteExtensionInfo> InstallExtension(SiteExtensionInfo info)
+        public async Task<SiteExtensionInfo> InstallExtension(string id)
         {
-            return await Client.PostJsonAsync<SiteExtensionInfo, SiteExtensionInfo>(String.Empty, info);
+            return await Client.PutJsonAsync<string, SiteExtensionInfo>("siteextensions/" + id, null);
         }
 
         public async Task<bool> UninstallExtension(string id)
         {
             var url = new StringBuilder(ServiceUrl);
-            url.Append("local/");
+            url.Append("siteextensions/");
             url.Append(id);
 
             HttpResponseMessage result = await Client.DeleteAsync(new Uri(url.ToString()));

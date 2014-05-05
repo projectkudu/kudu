@@ -106,10 +106,8 @@
         var data = context.$root.detailedSiteExtension();
         data.primaryAction('Wait');
         $.ajax({
-            type: "POST",
-            url: "/api/extensions",
-            contentType: "application/json",
-            data: JSON.stringify(data),
+            type: "PUT",
+            url: "/api/siteextensions/" + data.Id,
             success: function (result) {
                 result = processExtensions(result);
                 context.$root.addInstalled(result);
@@ -146,10 +144,8 @@
         $(btn).html(activitySpin);
         $(btn).prop("disabled", "disabled");
         $.ajax({
-            type: "POST",
-            url: "/api/extensions",
-            contentType: "application/json",
-            data: JSON.stringify(data),
+            type: "PUT",
+            url: "/api/siteextensions/" + data.Id,
             success: function (result) {
             },
             error: function (jqXhr, textStatus, errorThrown) {
@@ -194,7 +190,7 @@
             self.loadingGallery(true);
             $.ajax({
                 type: "GET",
-                url: "/api/extensions/remote?" + $.param({ "filter": filter }),
+                url: "/api/extensionfeed?" + $.param({ "filter": filter }),
                 dataType: "json",
                 success: function (data) {
                     data.forEach(processExtensions);
@@ -219,7 +215,7 @@
             self.loadingInstalled(true);
             $.ajax({
                 type: "GET",
-                url: "/api/extensions/local?" + $.param({ "filter": filter }),
+                url: "/api/siteextensions?" + $.param({ "filter": filter }),
                 dataType: "json",
                 success: function (data) {
                     data.forEach(processExtensions);
@@ -256,7 +252,7 @@
         self.remove = function (extension, completionCallback, successCallback) {
             $.ajax({
                 type: "DELETE",
-                url: "/api/extensions/local/" + extension.Id,
+                url: "/api/siteextensions/" + extension.Id,
                 success: successCallback,
                 error: function (jqXhr, textStatus, errorThrown) {
                     displayError(textStatus + ": " + errorThrown);

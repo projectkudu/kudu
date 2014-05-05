@@ -28,7 +28,7 @@ namespace Kudu.FunctionalTests
                 Assert.Equal(expected.Id, result.Id);
 
                 // install/update
-                result = await manager.InstallExtension(expected);
+                result = await manager.InstallExtension(expected.Id);
                 Assert.Equal(expected.Id, result.Id);
 
                 // list

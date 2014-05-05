@@ -55,7 +55,7 @@ namespace Kudu.TestHarness
             RepositoryManager = new RemoteRepositoryManager(site.ServiceUrl + "scm", credentials);
             JobsManager = new RemoteJobsManager(site.ServiceUrl + "jobs", credentials);
             LogFilesManager = new RemoteLogFilesManager(site.ServiceUrl + "/api/logs", credentials);
-            SiteExtensionManager = new RemoteSiteExtensionManager(site.ServiceUrl + "api/extensions", credentials);
+            SiteExtensionManager = new RemoteSiteExtensionManager(site.ServiceUrl + "api", credentials);
 
             var repositoryInfo = RepositoryManager.GetRepositoryInfo().Result;
             GitUrl = repositoryInfo.GitUrl.OriginalString;
