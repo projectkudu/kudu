@@ -61,7 +61,8 @@ namespace Kudu.Services
         protected override Task OnReceived(IRequest request, string connectionId, string data)
         {
             ProcessInfo process;
-            var shell = request.QueryString != null ? request.QueryString["shell"] : null;
+            data = data ?? String.Empty;
+            var shell = request.QueryString != null ? request.QueryString["shell"] : String.Empty;
             if (!_processes.TryGetValue(connectionId, out process) || process.Process.HasExited)
             {
                 process = _processes.AddOrUpdate(connectionId, cId => StartProcess(cId, shell), (s, p) => StartProcess(s, shell));
