@@ -1,24 +1,23 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.IO.Abstractions;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Services.Diagnostics;
 using Kudu.Services.Infrastructure;
-using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.Performance
 {
     public class DiagnosticsController : ApiController
     {
-        private readonly JsonSettings _settings;
+        private readonly DiagnosticsSettingsManager _settingsManager;
         private readonly string[] _paths;
         private readonly ITracer _tracer;
         private readonly IApplicationLogsReader _applicationLogsReader;
@@ -35,9 +34,9 @@ namespace Kudu.Services.Performance
                 Path.Combine(environment.WebRootPath, Constants.NpmDebugLogFile),
             };
 
-            _settings = new JsonSettings(Path.Combine(environment.DiagnosticsPath, Constants.SettingsJsonFile));
             _applicationLogsReader = applicationLogsReader;
             _tracer = tracer;
+            _settingsManager = new DiagnosticsSettingsManager(Path.Combine(environment.DiagnosticsPath, Constants.SettingsJsonFile), _tracer);
         }
 
         /// <summary>
@@ -104,14 +103,14 @@ namespace Kudu.Services.Performance
             }
         }
 
-        public HttpResponseMessage Set(JObject newSettings)
+        public HttpResponseMessage Set(DiagnosticsSettings newSettings)
         {
             if (newSettings == null)
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest);
             }
 
-            _settings.SetValues(newSettings);
+            _settingsManager.UpdateSettings(newSettings);
 
             return Request.CreateResponse(HttpStatusCode.NoContent);
         }
@@ -123,14 +122,14 @@ namespace Kudu.Services.Performance
                 return Request.CreateResponse(HttpStatusCode.BadRequest);
             }
 
-            _settings.DeleteValue(key);
+            _settingsManager.DeleteSetting(key);
 
             return Request.CreateResponse(HttpStatusCode.NoContent);
         }
 
         public HttpResponseMessage GetAll()
         {
-            return Request.CreateResponse(HttpStatusCode.OK, _settings.GetValues());
+            return Request.CreateResponse(HttpStatusCode.OK, _settingsManager.GetSettings());
         }
 
         public HttpResponseMessage Get(string key)
@@ -140,7 +139,7 @@ namespace Kudu.Services.Performance
                 return Request.CreateResponse(HttpStatusCode.BadRequest);
             }
 
-            string value = _settings.GetValue(key);
+            object value = _settingsManager.GetSetting(key);
 
             if (value == null)
             {

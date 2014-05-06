@@ -39,7 +39,7 @@ namespace Kudu.FunctionalTests
                         using (var reader = new JsonTextReader(new StreamReader(response.Content.ReadAsStreamAsync().Result)))
                         {
                             JObject json = (JObject)JToken.ReadFrom(reader);
-                            Assert.Equal(0, json.Count);
+                            Assert.Equal(6, json.Count);
                         }
                     }
 
@@ -192,6 +192,56 @@ namespace Kudu.FunctionalTests
             }
         }
 
+        [Fact]
+        public void DiagnosticsSettingsExpectedValuesReturned()
+        {
+            const string expectedEmptyResponse =
+                "{\"AzureDriveEnabled\":false,\"AzureDriveTraceLevel\":\"Error\"," +
+                "\"AzureTableEnabled\":false,\"AzureTableTraceLevel\":\"Error\"," +
+                "\"AzureBlobEnabled\":false,\"AzureBlobTraceLevel\":\"Error\"}";
+
+            const string settingsContentWithNumbers = "{AzureDriveEnabled: true,AzureDriveTraceLevel: \"4\"}";
+            const string expectedNumbersResponse =
+                "{\"AzureDriveEnabled\":true,\"AzureDriveTraceLevel\":\"Warning\"," +
+                "\"AzureTableEnabled\":false,\"AzureTableTraceLevel\":\"Error\"," +
+                "\"AzureBlobEnabled\":false,\"AzureBlobTraceLevel\":\"Error\"}";
+
+            const string settingsContentWithNulls = "{AzureDriveEnabled: null,AzureDriveTraceLevel: \"4\"}";
+
+            const string repositoryName = "Mvc3Application";
+            const string appName = "DiagnosticsSettingsExpectedValuesReturned";
+
+            using (var repo = Git.CreateLocalRepository(repositoryName))
+            {
+                ApplicationManager.Run(appName, appManager =>
+                {
+                    // verify values
+                    using (HttpClient client = HttpClientHelper.CreateClient(appManager.ServiceUrl, appManager.DeploymentManager.Credentials))
+                    {
+                        // Empty settings.json should return default values
+                        string responseContent = DownloadDiagnosticsSettings(client);
+                        Assert.Equal(expectedEmptyResponse, responseContent);
+
+                        // Expected string value for enums
+                        appManager.VfsManager.WriteAllText("site/diagnostics/settings.json", settingsContentWithNumbers);
+                        responseContent = DownloadDiagnosticsSettings(client);
+                        Assert.Equal(expectedNumbersResponse, responseContent);
+
+                        // Invalid json we expect default values
+                        appManager.VfsManager.WriteAllText("site/diagnostics/settings.json", settingsContentWithNulls);
+                        responseContent = DownloadDiagnosticsSettings(client);
+                        Assert.Equal(expectedEmptyResponse, responseContent);
+                    }
+                });
+            }
+        }
+
+        private string DownloadDiagnosticsSettings(HttpClient client)
+        {
+            HttpResponseMessage response = client.GetAsync("diagnostics/settings").Result.EnsureSuccessful();
+            return response.Content.ReadAsStringAsync().Result;
+        }
+
         private void VerifyValues(ApplicationManager appManager, params KeyValuePair<string, string>[] values)
         {
             using (HttpClient client = HttpClientHelper.CreateClient(appManager.ServiceUrl, appManager.DeploymentManager.Credentials))
@@ -200,7 +250,7 @@ namespace Kudu.FunctionalTests
                 using (var reader = new JsonTextReader(new StreamReader(response.Content.ReadAsStreamAsync().Result)))
                 {
                     JObject json = (JObject)JToken.ReadFrom(reader);
-                    Assert.Equal(values.Length, json.Count);
+                    Assert.Equal(values.Length + 6, json.Count);
                     foreach (KeyValuePair<string, string> value in values)
                     {
                         Assert.Equal(value.Value, json[value.Key].Value<string>());
@@ -262,7 +312,7 @@ namespace Kudu.FunctionalTests
                 Assert.Contains(path, trace, StringComparison.OrdinalIgnoreCase);
 
                 // Test runtime object by checking for one Node version
-                RuntimeInfo runtimeInfo  = await appManager.RuntimeManager.GetRuntimeInfo();
+                RuntimeInfo runtimeInfo = await appManager.RuntimeManager.GetRuntimeInfo();
                 Assert.True(runtimeInfo.NodeVersions.Any(dict => dict["version"] == "0.8.2"));
             });
         }
@@ -281,13 +331,13 @@ namespace Kudu.FunctionalTests
                     appManager.GitDeploy(localRepo.PhysicalPath);
                 }
 
-                await appManager.CommandExecutor.ExecuteCommand("rm *.txt", @"LogFiles/Application");                
+                await appManager.CommandExecutor.ExecuteCommand("rm *.txt", @"LogFiles/Application");
                 results = await appManager.LogFilesManager.GetRecentLogEntriesAsync(10);
-                
+
                 // All the log files have been deleted so this API should return an empty array.
                 Assert.Equal(0, results.Count);
 
-                var logFile = 
+                var logFile =
 @"2013-12-06T00:29:20  PID[20108] Information this is a log
 2013-12-06T00:29:21  PID[20108] Warning     this is a warning
 that spans
@@ -317,25 +367,25 @@ several lines
         {
             Assert.Equal(DateTimeOffset.Parse(timeStamp, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal), entry.TimeStamp);
             Assert.Equal(level, entry.Level);
-            Assert.Equal(message, entry.Message);            
+            Assert.Equal(message, entry.Message);
         }
 
         private static async Task WriteLogText(string siteUrl, string filePath, string log)
         {
             using (var client = new HttpClient())
             {
-                client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Kudu-Test", "1.0"));                
-                var content = new FormUrlEncodedContent(new Dictionary<string, string>() { 
+                client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Kudu-Test", "1.0"));
+                var content = new FormUrlEncodedContent(new Dictionary<string, string>() {
                     { "path", filePath },
-                    { "content", log } 
+                    { "content", log }
                 });
 
-                HttpResponseMessage response = await client.PostAsync(siteUrl, content);                
+                HttpResponseMessage response = await client.PostAsync(siteUrl, content);
                 string responseBody = await response.Content.ReadAsStringAsync();
 
                 Assert.True(response.StatusCode == HttpStatusCode.OK,
                     String.Format("For {0}, Expected Status Code: {1} Actual Status Code: {2}. \r\n Response: {3}", siteUrl, 200, response.StatusCode, responseBody));
-            }                        
+            }
         }
     }
 }
