@@ -38,6 +38,8 @@ function LoadConsoleV2() {
 
     window.KuduExec.changeDir = _changeDir;
     // call make console after this first command so the current working directory is set.
+    var originalMatchString = undefined;
+    var currentMatchIndex = 0;
     var lastLine = "";
     var lastUserInput = null;
     var kuduExecConsole = $('<div class="console">');
@@ -86,18 +88,31 @@ function LoadConsoleV2() {
             _sendCommand("\x03");
         },
         completeHandle: function (line) {
+            if (originalMatchString === undefined) {
+                originalMatchString = line;
+                currentMatchIndex = 0;
+            }
             var cdRegex = /^cd\s+(.+)$/,
                         matches;
             var result = [];
-            if (matches = line.match(cdRegex)) {
+            if (matches = originalMatchString.match(cdRegex)) {
                 result = window.KuduExec.completePath(matches[1], /* dirOnly */ true);
-            } else if (matches = line.split(" ")) {
+            } else if (matches = originalMatchString.split(" ")) {
                 result = window.KuduExec.completePath(matches.pop());
             }
             if (result.length > 0) {
-                $(".jquery-console-prompt-box").last().css("display", "block");
+                var fullLength = result.length;
+                result = result.slice(currentMatchIndex, currentMatchIndex + 1);
+                result[0] = originalMatchString + result[0];
+                currentMatchIndex = (currentMatchIndex + 1) % fullLength;
             }
             return result;
+        },
+        userInputHandle: function (keycode) {
+            //reset the string we match on if the user type anything other than tab => 9
+            if (keycode !== 9) {
+                originalMatchString = undefined;
+            }
         },
         cols: 3,
         autofocus: true,

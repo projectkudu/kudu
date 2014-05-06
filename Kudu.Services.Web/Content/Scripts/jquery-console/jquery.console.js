@@ -286,6 +286,9 @@
 				return false;
 			}
 			if (acceptInput) {
+			    if (typeof config.userInputHandle == 'function') {
+			        config.userInputHandle(keyCode);
+			    }
 				if (keyCode in keyCodes) {
 					cancelKeyPress = keyCode;
 					(keyCodes[keyCode])();
@@ -648,7 +651,7 @@
 				}
 				var len = completions.length;
 				if (len === 1) {
-					extern.promptText(promptText + completions[0]);
+					extern.promptText(completions[0]);
 				} else if (len > 1 && config.cols) {
 					var prompt = promptText;
 					// Compute the number of rows that will fit in the width
