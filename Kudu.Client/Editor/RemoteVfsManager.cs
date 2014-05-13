@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Kudu.Client.Infrastructure;
+using Kudu.Contracts.Editor;
 
 namespace Kudu.Client.Editor
 {
@@ -28,6 +30,11 @@ namespace Kudu.Client.Editor
                                 .Content
                                 .ReadAsStringAsync();
             }
+        }
+
+        public Task<IEnumerable<VfsStatEntry>> ListAsync(string path)
+        {
+            return Client.GetJsonAsync<IEnumerable<VfsStatEntry>>(path);
         }
 
         public string ReadAllText(string path)
@@ -84,4 +91,3 @@ namespace Kudu.Client.Editor
         }
     }
 }
-
