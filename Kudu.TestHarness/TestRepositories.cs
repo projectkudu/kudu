@@ -12,9 +12,9 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("git@github.com:KuduQAOrg/RepoWithPrivateSubModule.git",         "4820516"),
             new TestRepositoryInfo("https://github.com/KuduApps/AppWithPostBuildEvent.git",         "083b651"),
             new TestRepositoryInfo("https://github.com/KuduApps/Bakery.git",                        "2f29dc6"),
-            new TestRepositoryInfo("https://github.com/KuduApps/BasicConsoleWorker",                "ce1ec74"),
+            new TestRepositoryInfo("https://github.com/KuduApps/BasicConsoleWorker.git",            "ce1ec74"),
             new TestRepositoryInfo("https://github.com/KuduApps/ConditionalCompilation.git",        "a104578"),
-            new TestRepositoryInfo("https://github.com/KuduApps/ConsoleWorker",                     "50c6cf5"),
+            new TestRepositoryInfo("https://github.com/KuduApps/ConsoleWorker.git",                 "b21f597"),
             new TestRepositoryInfo("https://github.com/KuduApps/CustomBuildScript.git",             "2c156bd"),
             new TestRepositoryInfo("https://github.com/KuduApps/CustomDeploymentSettingsTest.git",  "bc0ce04"),
             new TestRepositoryInfo("https://github.com/KuduApps/Dev11_Net45_Mvc4_WebAPI.git",       "bb9e6b4"),
@@ -91,6 +91,7 @@ namespace Kudu.TestHarness
         }
 
         public string Url { get; set; }
+
         public string CommitId { get; set; }
     }
 }
