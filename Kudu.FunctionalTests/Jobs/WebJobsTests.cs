@@ -631,14 +631,32 @@ namespace Kudu.FunctionalTests.Jobs
         private void VerifyVerificationFile(ApplicationManager appManager, string[] expectedContentLines)
         {
             var logFiles = appManager.VfsManager.ListAsync("LogFiles").Result;
-            var verificationFileName = logFiles.First(logFile => logFile.Name.StartsWith("verification.txt", StringComparison.OrdinalIgnoreCase)).Name;
-            string verificationFileContent = appManager.VfsManager.ReadAllText("LogFiles/" + verificationFileName).TrimEnd();
-            Assert.NotNull(verificationFileContent);
-            string[] lines = verificationFileContent.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-            Assert.Equal(expectedContentLines.Length, lines.Length);
-            for (int i = 0; i < expectedContentLines.Length; i++)
+            string[] verificationFileNames = logFiles.Where(logFile => logFile.Name.StartsWith("verification.txt", StringComparison.OrdinalIgnoreCase)).Select(logFile => logFile.Name).ToArray();
+
+            for (int fileIndex = 0; fileIndex < verificationFileNames.Length; fileIndex++)
             {
-                Assert.Equal(expectedContentLines[i], lines[i].Trim());
+                // Make sure at least one file is verified
+                try
+                {
+                    string verificationFileName = verificationFileNames[fileIndex];
+                    string verificationFileContent = appManager.VfsManager.ReadAllText("LogFiles/" + verificationFileName).TrimEnd();
+                    Assert.NotNull(verificationFileContent);
+                    string[] lines = verificationFileContent.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+                    Assert.Equal(expectedContentLines.Length, lines.Length);
+                    for (int i = 0; i < expectedContentLines.Length; i++)
+                    {
+                        Assert.Equal(expectedContentLines[i], lines[i].Trim());
+                    }
+
+                    return;
+                }
+                catch
+                {
+                    if (fileIndex == verificationFileNames.Length - 1)
+                    {
+                        throw;
+                    }
+                }
             }
         }
 
