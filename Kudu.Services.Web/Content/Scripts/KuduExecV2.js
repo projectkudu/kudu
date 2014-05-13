@@ -39,7 +39,7 @@ function LoadConsoleV2() {
     window.KuduExec.changeDir = _changeDir;
     // call make console after this first command so the current working directory is set.
     var originalMatchString = undefined;
-    var currentMatchIndex = 0;
+    var currentMatchIndex = -1;
     var lastLine = "";
     var lastUserInput = null;
     var kuduExecConsole = $('<div class="console">');
@@ -87,30 +87,47 @@ function LoadConsoleV2() {
             //sending CTRL+C character (^C) to the server to cancel the current command
             _sendCommand("\x03");
         },
-        completeHandle: function (line) {
+        completeHandle: function (line, reverse) {
             if (originalMatchString === undefined) {
                 originalMatchString = line;
-                currentMatchIndex = 0;
+                currentMatchIndex = -1;
             }
-            var cdRegex = /^cd\s+(.+)$/,
+            var cdRegex = /^(cd\s+)(.+)$/,
                         matches;
             var result = [];
+            var dirOnly = false;
             if (matches = originalMatchString.match(cdRegex)) {
-                result = window.KuduExec.completePath(matches[1], /* dirOnly */ true);
+                dirOnly = true;
+                result = window.KuduExec.completePath(matches[2], /* dirOnly */ dirOnly);
             } else if (matches = originalMatchString.split(" ")) {
                 result = window.KuduExec.completePath(matches.pop());
             }
             if (result.length > 0) {
+                result = $.map(result, function (elm) {
+                    if (elm.indexOf(" ") !== -1) {
+                        elm = '"' + elm + '"';
+                    }
+                    if (dirOnly) {
+                        elm = matches[1] + elm;
+                    } else {
+                        var prefix = "";
+                        for (var i = 0; i < matches.length; i++) {
+                            prefix += matches[i] + " ";
+                        }
+                        elm = prefix + elm;
+                    }
+                     return elm;
+                });
                 var fullLength = result.length;
+                currentMatchIndex = (currentMatchIndex + (reverse ? -1 : 1)) % fullLength;
+                currentMatchIndex = currentMatchIndex < 0 ? fullLength - 1 : currentMatchIndex;
                 result = result.slice(currentMatchIndex, currentMatchIndex + 1);
-                result[0] = originalMatchString + result[0];
-                currentMatchIndex = (currentMatchIndex + 1) % fullLength;
             }
             return result;
         },
         userInputHandle: function (keycode) {
-            //reset the string we match on if the user type anything other than tab => 9
-            if (keycode !== 9) {
+            //reset the string we match on if the user type anything other than tab == 9
+            if (keycode !== 9 && keycode != 16) {
                 originalMatchString = undefined;
             }
         },

@@ -291,7 +291,7 @@
 			    }
 				if (keyCode in keyCodes) {
 					cancelKeyPress = keyCode;
-					(keyCodes[keyCode])();
+					(keyCodes[keyCode])(e);
 					return false;
 				} else if (e.ctrlKey && keyCode in ctrlCodes) {
 					cancelKeyPress = keyCode;
@@ -643,9 +643,9 @@
 			return false;
 		};
 
-		function doComplete() {
+		function doComplete(e) {
 			if(typeof config.completeHandle == 'function') {
-				var completions = config.completeHandle(promptText);
+				var completions = config.completeHandle(promptText, e.shiftKey);
 				if (!completions) {
 					return;
 				}

@@ -308,7 +308,7 @@ $.connection.hub.start().done(function () {
             }
         }
         if (cur) {
-            return $.map(cur, function (elm) { return elm.name().substring(curToken.length); });
+            return $.map(cur, function (elm) { return elm.name(); });
         }
     };
 
