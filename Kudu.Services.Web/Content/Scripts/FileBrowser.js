@@ -14,7 +14,7 @@ $.connection.hub.start().done(function () {
 
         setContent: function (item, text) {
             return $.ajax({
-                url: item.href,
+                url: item.href.replace(/#/g, encodeURIComponent("#")),
                 data: text,
                 method: "PUT",
                 processData: false,
@@ -30,7 +30,7 @@ $.connection.hub.start().done(function () {
 
         createFolder: function (folder) {
             return $.ajax({
-                url: folder.href + "/",
+                url: folder.href.replace(/#/g, encodeURIComponent("#")) + "/",
                 method: "PUT"
             });
         },
