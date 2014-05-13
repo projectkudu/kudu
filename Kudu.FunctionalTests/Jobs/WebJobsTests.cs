@@ -23,12 +23,11 @@ namespace Kudu.FunctionalTests.Jobs
     [TestHarnessClassCommand]
     public class WebJobsTests
     {
-        private const string VerificationFilePath = "LogFiles/verification.txt";
         private const string JobsBinPath = "Site/wwwroot/App_Data/jobs";
         private const string JobsDataPath = "data/jobs";
         private const string ExpectedVerificationFileContent = "Verified!!!";
         private const string ExpectedChangedFileContent = "Changed!!!";
-        private const string JobScript = "echo " + ExpectedVerificationFileContent + " >> %WEBROOT_PATH%\\..\\..\\LogFiles\\verification.txt\n";
+        private const string JobScript = "echo " + ExpectedVerificationFileContent + " >> %WEBROOT_PATH%\\..\\..\\LogFiles\\verification.txt.%WEBSITE_INSTANCE_ID%\n";
 
         private const string ContinuousJobsBinPath = JobsBinPath + "/continuous";
         private const string ConsoleWorkerJobPath = ContinuousJobsBinPath + "/deployedJob";
@@ -631,7 +630,9 @@ namespace Kudu.FunctionalTests.Jobs
 
         private void VerifyVerificationFile(ApplicationManager appManager, string[] expectedContentLines)
         {
-            string verificationFileContent = appManager.VfsManager.ReadAllText(VerificationFilePath).TrimEnd();
+            var logFiles = appManager.VfsManager.ListAsync("LogFiles").Result;
+            var verificationFileName = logFiles.First(logFile => logFile.Name.StartsWith("verification.txt", StringComparison.OrdinalIgnoreCase)).Name;
+            string verificationFileContent = appManager.VfsManager.ReadAllText("LogFiles/" + verificationFileName).TrimEnd();
             Assert.NotNull(verificationFileContent);
             string[] lines = verificationFileContent.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
             Assert.Equal(expectedContentLines.Length, lines.Length);
@@ -711,7 +712,16 @@ namespace Kudu.FunctionalTests.Jobs
                 {
                     appManager.VfsManager.Delete(JobsBinPath, recursive: true);
                     appManager.VfsManager.Delete(JobsDataPath, recursive: true);
-                    appManager.VfsManager.Delete(VerificationFilePath);
+
+                    var logFiles = appManager.VfsManager.ListAsync("LogFiles").Result;
+                    foreach (var logFile in logFiles)
+                    {
+                        if (logFile.Name.StartsWith("appSettings.txt", StringComparison.OrdinalIgnoreCase) ||
+                            logFile.Name.StartsWith("verification.txt", StringComparison.OrdinalIgnoreCase))
+                        {
+                            appManager.VfsManager.Delete("LogFiles/" + logFile.Name);
+                        }
+                    }
                 });
         }
 
