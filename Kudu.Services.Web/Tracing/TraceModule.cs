@@ -47,7 +47,8 @@ namespace Kudu.Services.Web.Tracing
                 (httpRequest.FilePath.EndsWith(".cshtml", StringComparison.OrdinalIgnoreCase) ||
                 httpRequest.FilePath.EndsWith(".vbhtml", StringComparison.OrdinalIgnoreCase)))
             {
-                httpContext.Server.TransferRequest(httpRequest.FilePath + Constants.DummyRazorExtension);
+                httpContext.Server.TransferRequest(httpRequest.FilePath + Constants.DummyRazorExtension, preserveForm: true);
+                return;
             }
 
             // Always trace the startup request.
