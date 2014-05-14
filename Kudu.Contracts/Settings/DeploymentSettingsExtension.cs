@@ -15,7 +15,7 @@ namespace Kudu.Contracts.Settings
 
         public const int DefaultMaxJobRunsHistoryCount = 50;
 
-        public static readonly string DefaultSiteExtensionRemoteUrl = "http://siteextensions.azurewebsites.net/api/v2/";
+        public static readonly string DefaultSiteExtensionFeedUrl = "http://www.siteextensions.net/api/v2/";
 
         public static string GetValue(this IDeploymentSettingsManager settings, string key)
         {
@@ -194,8 +194,8 @@ namespace Kudu.Contracts.Settings
 
         public static string GetSiteExtensionRemoteUrl(this IDeploymentSettingsManager settings)
         {
-            string value = settings.GetValue(SettingsKeys.SiteExtensionRemoteUrl);
-            return !String.IsNullOrEmpty(value) ? value : DefaultSiteExtensionRemoteUrl;
+            string value = settings.GetValue(SettingsKeys.SiteExtensionsFeedUrl);
+            return !String.IsNullOrEmpty(value) ? value : DefaultSiteExtensionFeedUrl;
         }
     }
 }
