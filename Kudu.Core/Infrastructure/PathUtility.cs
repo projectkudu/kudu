@@ -129,6 +129,12 @@ namespace Kudu.Core.Infrastructure
             return File.Exists(npmExePath) ? npmExePath : null;
         }
 
+        internal static string ResolveNpmGlobalPath()
+        {
+            string appDataDirectory = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ApplicationData);
+            return Path.Combine(appDataDirectory, "npm");
+        }
+
         /// <summary>
         /// Returns the path to the version of node.exe that is used for KuduScript generation and select node version
         /// </summary>
