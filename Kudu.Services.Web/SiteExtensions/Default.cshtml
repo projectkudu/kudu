@@ -66,7 +66,7 @@
                     <div class="row">
                         <div class="col-xs-3">
                             <a href="#">
-                                <img data-bind="attr: { src: IconUrl }, click: $parent.details"
+                                <img data-bind="attr: { src: icon_url }, click: $parent.details"
                                      alt="Icon" class="tile-icon" data-toggle="modal" data-target="#detailsModal" />
                             </a>
                         </div>
@@ -79,7 +79,7 @@
                                     data-toggle="modal" data-target="#installModal" data-placement="top" title="Wait" disabled>
                                 <i class="fa fa-spinner fa-spin"></i>
                             </button>
-                            <a class="btn btn-info button-bottom-left" role="button" data-bind="visible: primaryAction() === 'Launch', attr: {href : ExtensionUrl, target : '_blank'}"
+                            <a class="btn btn-info button-bottom-left" role="button" data-bind="visible: primaryAction() === 'Launch', attr: {href : extension_url, target : '_blank'}"
                                data-placement="top" title="Launch">
                                 <i class="fa fa-play"></i>
                             </a>
@@ -88,30 +88,30 @@
                                     data-placement="top" title="Details">
                                 <i class="fa fa-info-circle"></i>
                             </button>
-                            <button class="btn btn-info button-bottom-left updateButton" role="button" data-bind="visible: LocalIsLatestVersion === false"
+                            <button class="btn btn-info button-bottom-left updateButton" role="button" data-bind="visible: local_is_latest_version === false"
                                     data-placement="top" title="Update">
                                 <i class="fa fa-arrow-up"></i>
                             </button>
-                            <button class="btn btn-info button-bottom-right removeButton" role="button" data-bind="visible: LocalPath"
+                            <button class="btn btn-info button-bottom-right removeButton" role="button" data-bind="visible: local_path"
                                     data-placement="top" title="Remove">
                                 <i class="fa fa-times"></i>
                             </button>
                         </div>
                     </div>
-                    <h4 data-bind="text: Title"></h4>
-                    <div data-bind="visible: Version">
+                    <h4 data-bind="text: title"></h4>
+                    <div data-bind="visible: version">
                         <strong>Version </strong>
-                        <span class="text-1line" data-bind="text: Version"></span>
+                        <span class="text-1line" data-bind="text: version"></span>
                     </div>
-                    <div data-bind="visible: Authors">
+                    <div data-bind="visible: authors">
                         <strong>By </strong>
-                        <span class="text-1line" data-bind="text: Authors"></span>
+                        <span class="text-1line" data-bind="text: authors"></span>
                     </div>
-                    <div data-bind="visible: Summary">
-                        <p class="text-4line" data-bind="text: Summary"></p>
+                    <div data-bind="visible: summary">
+                        <p class="text-4line" data-bind="text: summary"></p>
                     </div>
-                    <div data-bind="visible: (!Summary) && Description">
-                        <p class="text-4line" data-bind="text: Description"></p>
+                    <div data-bind="visible: (!summary) && description">
+                        <p class="text-4line" data-bind="text: description"></p>
                     </div>
                 </div>
             </div>
@@ -127,54 +127,54 @@
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                 <div class="row">
                     <div class="col-xs-2">
-                        <img data-bind="attr: { src: IconUrl }" alt="Icon" class="modal-icon" />
+                        <img data-bind="attr: { src: icon_url }" alt="Icon" class="modal-icon" />
                     </div>
                     <div class="col-xs-10">
-                        <h3 class="modal-title" data-bind="text: Title"></h3>
+                        <h3 class="modal-title" data-bind="text: title"></h3>
                     </div>
                 </div>
             </div>
             <div class="modal-body" data-bind="with: detailedSiteExtension">
                 <strong>ID</strong>
-                <p data-bind="text: Id"></p>
+                <p data-bind="text: id"></p>
                 <strong>Version</strong>
-                <p data-bind="text: Version"></p>
-                <div id="detailsDownloadCount" data-bind="visible: DownloadCount">
+                <p data-bind="text: version"></p>
+                <div id="detailsDownloadCount" data-bind="visible: download_count">
                     <strong>Download Count</strong>
-                    <p data-bind="text: DownloadCount"></p>
+                    <p data-bind="text: download_count"></p>
                 </div>
-                <div id="detailsAuthors" data-bind="visible: Authors">
-                    <strong data-bind="visible: Authors.length === 1">Author</strong>
-                    <strong data-bind="visible: Authors.length > 1">Authors</strong>
-                    <p data-bind="text: Authors"></p>
+                <div id="detailsAuthors" data-bind="visible: authors">
+                    <strong data-bind="visible: authors.length === 1">Author</strong>
+                    <strong data-bind="visible: authors.length > 1">Authors</strong>
+                    <p data-bind="text: authors"></p>
                 </div>
-                <div id="detailsLicenseUrl" data-bind="visible: ProjectUrl">
+                <div id="detailsLicenseUrl" data-bind="visible: project_url">
                     <strong>Project Homepage</strong>
-                    <p><a data-bind="text: ProjectUrl, attr: {href: ProjectUrl, target: '_blank'}"></a></p>
+                    <p><a data-bind="text: project_url, attr: {href: project_url, target: '_blank'}"></a></p>
                 </div>
-                <div id="detailsLicenseUrl" data-bind="visible: LicenseUrl">
+                <div id="detailsLicenseUrl" data-bind="visible: license_url">
                     <strong>License</strong>
-                    <p><a data-bind="text: LicenseUrl, attr: {href: LicenseUrl, target: '_blank'}"></a></p>
+                    <p><a data-bind="text: license_url, attr: {href: license_url, target: '_blank'}"></a></p>
                 </div>
-                <div id="detailsPublishedDateTime" data-bind="visible: (!InstalledDateTime) && PublishedDateTime">
+                <div id="detailsPublishedDateTime" data-bind="visible: (!installed_date_time) && published_date_time">
                     <strong>Published Time</strong>
-                    <p data-bind="text: PublishedDateTime"></p>
+                    <p data-bind="text: published_date_time"></p>
                 </div>
-                <div id="detailsLocalPath" data-bind="visible: LocalPath">
+                <div id="detailsLocalPath" data-bind="visible: local_path">
                     <strong>Installed Path</strong>
-                    <p data-bind="text: LocalPath"></p>
+                    <p data-bind="text: local_path"></p>
                 </div>
-                <div id="detailsInstalledDateTime" data-bind="visible: InstalledDateTime">
+                <div id="detailsInstalledDateTime" data-bind="visible: installed_date_time">
                     <strong>Installed Time</strong>
-                    <p data-bind="text: InstalledDateTime"></p>
+                    <p data-bind="text: installed_date_time"></p>
                 </div>
-                <div id="detailsSummary" data-bind="visible: Summary">
+                <div id="detailsSummary" data-bind="visible: summary">
                     <strong>Summary</strong>
-                    <p data-bind="text: Summary"></p>
+                    <p data-bind="text: summary"></p>
                 </div>
-                <div id="detailsDescription" data-bind="visible: Description">
+                <div id="detailsDescription" data-bind="visible: description">
                     <strong>Description</strong>
-                    <p data-bind="text: Description"></p>
+                    <p data-bind="text: description"></p>
                 </div>
             </div>
             <div class="modal-footer">
@@ -194,9 +194,9 @@
             <div class="modal-body" data-bind="with: detailedSiteExtension">
                 <span>
                     By clicking the <strong>Install</strong> button, I acknowledge that I am getting
-                    <strong data-bind="text: Title"></strong> from
-                    <strong data-bind="text: Authors"></strong>
-                    and that the <a data-bind="attr: {href: LicenseUrl, target: '_blank'}">legal terms</a> of <strong data-bind="text: Authors"></strong> apply to it.
+                    <strong data-bind="text: title"></strong> from
+                    <strong data-bind="text: authors"></strong>
+                    and that the <a data-bind="attr: {href: license_url, target: '_blank'}">legal terms</a> of <strong data-bind="text: authors"></strong> apply to it.
                     Microsoft does not provide rights for third-party software.
                 </span>
             </div>

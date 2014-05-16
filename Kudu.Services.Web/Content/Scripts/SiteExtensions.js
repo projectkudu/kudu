@@ -48,16 +48,16 @@
     $('#tabHeadings a[href="' + window.location.hash + '"]').tab('show');
 
     function processExtensions(ext) {
-        if (!ext.IconUrl) {
-            ext.IconUrl = "../Content/Images/Windows Azure Web Site.png";
+        if (!ext.icon_url) {
+            ext.icon_url = "../Content/Images/Windows Azure Web Site.png";
         }
-        if (ext.DownloadCount < 0) {
-            ext.DownloadCount = null;
+        if (ext.download_count < 0) {
+            ext.download_count = null;
         }
-        if (!ext.Title) {
-            ext.Title = ext.Id;
+        if (!ext.title) {
+            ext.title = ext.id;
         }
-        if (ext.ExtensionUrl) {
+        if (ext.extension_url) {
             ext.primaryAction = ko.observable('Launch');
         } else {
             ext.primaryAction = ko.observable('Install');
@@ -107,11 +107,11 @@
         data.primaryAction('Wait');
         $.ajax({
             type: "PUT",
-            url: "/api/siteextensions/" + data.Id,
+            url: "/api/siteextensions/" + data.id,
             success: function (result) {
                 result = processExtensions(result);
                 context.$root.addInstalled(result);
-                $("#restartButton").attr("data-content", "<strong>" + result.Title
+                $("#restartButton").attr("data-content", "<strong>" + result.title
                     + "</strong> is successfully installed. <strong>Restart Site </strong> to make it available.");
                 $("#restartButton").popover('show');
                 setTimeout(function () {
@@ -119,7 +119,7 @@
                 }, 5000);
             },
             error: function (jqXhr, textStatus, errorThrown) {
-                displayError("Failed to install <strong>" + data.Title + "</strong>: " + textStatus + " - " + errorThrown);
+                displayError("Failed to install <strong>" + data.title + "</strong>: " + textStatus + " - " + errorThrown);
             },
             complete: function () {
                 // no op
@@ -145,11 +145,11 @@
         $(btn).prop("disabled", "disabled");
         $.ajax({
             type: "PUT",
-            url: "/api/siteextensions/" + data.Id,
+            url: "/api/siteextensions/" + data.id,
             success: function (result) {
             },
             error: function (jqXhr, textStatus, errorThrown) {
-                displayError("Failed to update <strong>" + result.Title + "</strong>: " + textStatus + " - " + errorThrown);
+                displayError("Failed to update <strong>" + result.title + "</strong>: " + textStatus + " - " + errorThrown);
             },
             complete: function () {
                 context.$root.populateAllTabs();
@@ -252,7 +252,7 @@
         self.remove = function (extension, completionCallback, successCallback) {
             $.ajax({
                 type: "DELETE",
-                url: "/api/siteextensions/" + extension.Id,
+                url: "/api/siteextensions/" + extension.id,
                 success: successCallback,
                 error: function (jqXhr, textStatus, errorThrown) {
                     displayError(textStatus + ": " + errorThrown);
@@ -270,7 +270,7 @@
         self.addInstalled = function (newExt) {
             var index = -1;
             self.installed().forEach(function(installedExt, i) {
-                if (newExt.Id === installedExt.Id) {
+                if (newExt.id === installedExt.id) {
                     index = i;
                     return true;
                 }
@@ -284,7 +284,7 @@
 
             index = -1;
             self.gallery().forEach(function (galleryExt, i) {
-                if (newExt.Id === galleryExt.Id) {
+                if (newExt.id === galleryExt.id) {
                     index = i;
                     return true;
                 }
