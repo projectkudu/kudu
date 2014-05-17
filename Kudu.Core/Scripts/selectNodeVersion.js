@@ -132,14 +132,22 @@ var nodeStartFilePath = (function createIisNodeWebConfigIfNeeded() {
             var startupCommand = json.scripts.start;
             var defaultNode = "node ";
             if (startupCommand.length > defaultNode.length && startupCommand.slice(0, defaultNode.length) === defaultNode) {
-                nodeStartFilePath = startupCommand.slice(defaultNode.length);
-                // For the path to be read by iisnode handler
-                if (nodeStartFilePath.slice(0, 2) === "./") {
-                    nodeStartFilePath = nodeStartFilePath.slice(2);
+                var startFile = path.resolve(repo, startupCommand.slice(defaultNode.length));
+                var startFileJs = path.resolve(repo, startupCommand.slice(defaultNode.length) + ".js");
+                if (existsSync(startFile)) {
+                    nodeStartFilePath = path.relative(repo, startFile);
+                } else if (existsSync(startFileJs)) {
+                    nodeStartFilePath = path.relative(repo, startFileJs);
                 }
-                console.log('Using start-up script ' + nodeStartFilePath + ' specified in package.json.');
+                if (nodeStartFilePath) {
+                    // iisnode requires forward-slash in paths
+                    nodeStartFilePath = nodeStartFilePath.replace(/\\/g, '/');
+                    console.log('Using start-up script ' + nodeStartFilePath + ' from package.json.');
+                } else {
+                    console.log('Start script "' + startupCommand.slice(defaultNode.length) + '" from package.json is not found.');
+                }
             } else {
-                console.error('Invalid start-up command in package.json. Please use the format "node <script relative path>".');
+                console.error('Invalid start-up command "' + startupCommand + '" in package.json. Please use the format "node <script relative path>".');
             }
         }
         
