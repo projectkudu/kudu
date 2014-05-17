@@ -3,16 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
-using System.Net.Http.Formatting;
 using System.Text.RegularExpressions;
 using System.Web.Http;
-using System.Web.Http.Controllers;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
-using Newtonsoft.Json;
 
 namespace Kudu.Services.Diagnostics
 {
+    [LowerCaseFormatterConfig]
     public class RuntimeController : ApiController
     {
         private const string VersionKey = "version";
@@ -22,19 +20,6 @@ namespace Kudu.Services.Diagnostics
         public RuntimeController(ITracer tracer)
         {
             _tracer = tracer;
-        }
-
-        protected override void Initialize(HttpControllerContext controllerContext)
-        {
-            base.Initialize(controllerContext);
-
-            controllerContext.Configuration.Formatters.Clear();
-
-            var settings = new JsonSerializerSettings
-            {
-                ContractResolver = new LowerCasePropertyNamesContractResolver()
-            };
-            controllerContext.Configuration.Formatters.Add(new JsonMediaTypeFormatter { SerializerSettings = settings });
         }
 
         [HttpGet]
