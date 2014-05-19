@@ -57,6 +57,12 @@
         if (!ext.title) {
             ext.title = ext.id;
         }
+        if (!ext.authors) {
+            ext.authors = "";
+        }
+        if (!ext.description) {
+            ext.description = "";
+        }
         if (ext.extension_url) {
             ext.primaryAction = ko.observable('Launch');
         } else {
@@ -188,6 +194,7 @@
 
         self.populateGallery = function (filter, completionCallback) {
             self.loadingGallery(true);
+            
             $.ajax({
                 type: "GET",
                 url: "/api/extensionfeed?" + $.param({ "filter": filter }),
@@ -196,7 +203,7 @@
                     data.forEach(processExtensions);
                     self.gallery(data);
                     if ($("#gallery").hasClass("active")) {
-                        self.display(data);
+                        self.display(self.gallery());
                     }
                 },
                 error: function (jqXhr, textStatus, errorThrown) {
@@ -213,6 +220,7 @@
 
         self.populateInstalled = function (filter, completionCallback) {
             self.loadingInstalled(true);
+
             $.ajax({
                 type: "GET",
                 url: "/api/siteextensions?" + $.param({ "filter": filter }),
@@ -221,7 +229,7 @@
                     data.forEach(processExtensions);
                     self.installed(data);
                     if ($("#installed").hasClass("active")) {
-                        self.display(data);
+                        self.display(self.installed());
                     }
                 },
                 error: function (jqXhr, textStatus, errorThrown) {

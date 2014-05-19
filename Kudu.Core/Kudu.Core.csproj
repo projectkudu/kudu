@@ -95,6 +95,7 @@
     <Compile Include="Jobs\WebJobsStoppedException.cs" />
     <Compile Include="Jobs\WindowsScriptHost.cs" />
     <Compile Include="Settings\DiagnosticsSettingsManager.cs" />
+    <Compile Include="SiteExtensions\SemanticVersion.cs" />
     <Compile Include="SiteExtensions\SiteExtensionManager.cs" />
     <Compile Include="Tracing\KuduSiteExtensionLogEvent.cs" />
     <Compile Include="Tracing\NullTracer.cs" />

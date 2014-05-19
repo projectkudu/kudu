@@ -12,13 +12,33 @@ namespace Kudu.Contracts.SiteExtensions
         {
         }
 
+        public SiteExtensionInfo(SiteExtensionInfo info)
+        {
+            Id = info.Id;
+            Title = info.Title;
+            Summary = info.Summary;
+            Description = info.Description;
+            Version = info.Version;
+            ExtensionUrl = info.ExtensionUrl;
+            ProjectUrl = info.ProjectUrl;
+            IconUrl = info.IconUrl;
+            LicenseUrl = info.LicenseUrl;
+            Authors = info.Authors;
+            PublishedDateTime = info.PublishedDateTime;
+            IsLatestVersion = info.IsLatestVersion;
+            DownloadCount = info.DownloadCount;
+            LocalIsLatestVersion = info.LocalIsLatestVersion;
+            LocalPath = info.LocalPath;
+            InstalledDateTime = info.InstalledDateTime;
+        }
+
         public SiteExtensionInfo(IPackage package)
         {
             Id = package.Id;
             Title = package.Title;
             Summary = package.Summary;
             Description = package.Description;
-            Version = package.Version.ToString();
+            Version = package.Version == null ? null : package.Version.ToString();
             ProjectUrl = package.ProjectUrl == null ? null : package.ProjectUrl.ToString();
             IconUrl = package.IconUrl == null ? null : package.IconUrl.ToString();
             LicenseUrl = package.LicenseUrl == null ? null : package.LicenseUrl.ToString();
