@@ -101,41 +101,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Components\CommandBar\commandBar.css" />
-    <Content Include="Components\CommandBar\commandBar.htm" />
-    <Content Include="Components\CommandBar\commandbar.js" />
-    <Content Include="Components\CommitViewer\commitViewer.htm" />
-    <Content Include="Components\CommitViewer\commitViewer.js" />
-    <Content Include="Components\CommitViewer\commitViewer.css" />
-    <Content Include="Components\Console\console.css" />
-    <Content Include="Components\Console\console.htm" />
-    <Content Include="Components\Console\console.js" />
-    <Content Include="Components\Dialogs\dialogs.js" />
-    <Content Include="Components\DiffViewer\diffViewer.css" />
-    <Content Include="Components\DiffViewer\diffViewer.htm" />
-    <Content Include="Components\DiffViewer\diffViewer.js" />
-    <Content Include="Components\DiffViewer\templates.htm" />
-    <Content Include="Components\Editor\editor.js" />
-    <Content Include="Components\FileExplorer\fileExplorer.js" />
-    <Content Include="Components\FileExplorer\fileExplorer.css" />
-    <Content Include="Components\FileExplorer\fileExplorer.htm" />
-    <Content Include="Components\FileExplorer\templates.htm" />
-    <Content Include="Components\FileSystem\fileSystem.js" />
-    <Content Include="Components\IDE\ide.css" />
-    <Content Include="Components\IDE\ide.js" />
-    <Content Include="Components\Loader\loader.htm" />
-    <Content Include="Components\Loader\loader.js" />
-    <Content Include="Components\NotificationBar\notificationbar.js" />
-    <Content Include="Components\NotificationBar\notificationbar.css" />
-    <Content Include="Components\Shared\base.css" />
-    <Content Include="Components\Shared\utils.js" />
-    <Content Include="Components\Shared\icons.js" />
-    <Content Include="Components\Shared\icons.css" />
-    <Content Include="Components\SiteManager\siteManager.js" />
-    <Content Include="Components\TabManager\tabManager.css" />
-    <Content Include="Components\TabManager\tabManager.htm" />
-    <Content Include="Components\TabManager\tabManager.js" />
-    <Content Include="Components\TabManager\templates.htm" />
     <Content Include="Content\bootstrap-responsive.css" />
     <Content Include="Content\bootstrap-responsive.min.css" />
     <Content Include="Content\bootstrap.css" />
@@ -153,19 +118,11 @@
     <Content Include="images\expand.png" />
     <Content Include="images\prompt-loading.gif" />
     <Content Include="images\world_go.png" />
-    <Content Include="Components\Editor\codemirror\mode\markdown\markdown.css" />
-    <Content Include="Components\Editor\codemirror\mode\markdown\markdown.js" />
-    <Content Include="Components\Editor\codemirror\mode\yaml\yaml.js" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
     <Content Include="Scripts\jquery-1.7-vsdoc.js" />
     <Content Include="Scripts\jquery-1.7.js" />
     <Content Include="Scripts\jquery-1.7.min.js" />
-    <Content Include="Scripts\jquery-ui-1.8.16.custom.min.js" />
-    <Content Include="Scripts\jquery.render.min.js" />
-    <Content Include="Components\Editor\codemirror\codemirror.css" />
-    <Content Include="Components\Editor\codemirror\default-settings.css" />
-    <Content Include="Scripts\loader.js" />
     <Content Include="images\addfile.png" />
     <Content Include="images\application_side_list.png" />
     <Content Include="images\asax-edit.png" />
@@ -218,24 +175,6 @@
     <Content Include="images\tick.png" />
     <Content Include="images\tt.png" />
     <Content Include="images\warning.png" />
-    <Content Include="Components\Editor\codemirror\codemirror.js" />
-    <Content Include="Components\Editor\codemirror\mode\clike\clike.css" />
-    <Content Include="Components\Editor\codemirror\mode\clike\clike.js" />
-    <Content Include="Components\Editor\codemirror\mode\css\css.css" />
-    <Content Include="Components\Editor\codemirror\mode\css\css.js" />
-    <Content Include="Components\Editor\codemirror\mode\diff\diff.css" />
-    <Content Include="Components\Editor\codemirror\mode\diff\diff.js" />
-    <Content Include="Components\Editor\codemirror\mode\htmlmixed\htmlmixed.js" />
-    <Content Include="Components\Editor\codemirror\mode\javascript\javascript.css" />
-    <Content Include="Components\Editor\codemirror\mode\javascript\javascript.js" />
-    <Content Include="Components\Editor\codemirror\mode\php\php.js" />
-    <Content Include="Components\Editor\codemirror\mode\razor\razor.css" />
-    <Content Include="Components\Editor\codemirror\mode\razor\razor.js" />
-    <Content Include="Components\Editor\codemirror\mode\xml\xml.css" />
-    <Content Include="Components\Editor\codemirror\mode\xml\xml.js" />
-    <Content Include="Scripts\jquery.cookie.js" />
-    <Content Include="Scripts\jquery.hotkeys-patched.js" />
-    <Content Include="Scripts\jquery.timeago.js" />
     <Content Include="Styles\trace.css" />
     <Content Include="Styles\ui-lightness\images\ui-bg_diagonals-thick_18_b81900_40x40.png" />
     <Content Include="Styles\ui-lightness\images\ui-bg_diagonals-thick_20_666666_40x40.png" />
@@ -269,7 +208,6 @@
     <Content Include="Views\Shared\_Tools.cshtml" />
     <Content Include="Views\Shared\_TraceView.cshtml" />
     <Content Include="Views\Application\Trace.cshtml" />
-    <Content Include="Views\Application\Develop.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\Common\Constants.cs">
@@ -335,9 +273,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\Settings\Index.cshtml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Views\Application\Editor.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\Deployments\Index.cshtml" />

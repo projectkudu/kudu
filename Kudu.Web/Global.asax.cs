@@ -54,10 +54,6 @@ namespace Kudu.Web
                             "trace/{slug}",
                             new { controller = "Application", action = "Trace" });
 
-            routes.MapRoute("Develop",
-                            "develop/{slug}",
-                            new { controller = "Application", action = "Develop" });
-
             routes.MapRoute(
                 "Default", // Route name
                 "{controller}/{action}/{slug}", // URL with parameters
