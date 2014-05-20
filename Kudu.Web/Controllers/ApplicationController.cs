@@ -102,11 +102,6 @@ namespace Kudu.Web.Controllers
             return View(document);
         }
 
-        public ActionResult Develop(string slug)
-        {
-            return RedirectToAction("Details", new { slug });
-        }
-
         [HttpPost]
         [ActionName("add-custom-site-binding")]
         public async Task<ActionResult> AddCustomSiteBinding(string slug, string siteBinding)
