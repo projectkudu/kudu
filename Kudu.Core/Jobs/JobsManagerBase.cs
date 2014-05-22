@@ -304,7 +304,7 @@ namespace Kudu.Core.Jobs
                     return null;
                 }
 
-                _urlPrefix = "{0}/jobs/{1}/".FormatInvariant(AppBaseUrlPrefix, _jobsTypePath);
+                _urlPrefix = "{0}/api/{1}jobs/".FormatInvariant(AppBaseUrlPrefix, _jobsTypePath);
             }
 
             return new Uri(_urlPrefix + relativeUrl);

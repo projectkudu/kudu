@@ -10,9 +10,18 @@ namespace Kudu.Services.Web.Infrastructure
 {
     public static class RouteCollectionExtensions
     {
+        public static void MapHttpWebJobsRoute(this RouteCollection routes, string name, string jobType, string routeTemplate, object defaults, object constraints = null)
+        {
+            // e.g. api/triggeredjobs/foo/history/17
+            routes.MapHttpRoute(name, String.Format("api/{0}jobs{1}", jobType, routeTemplate), defaults, constraints);
+
+            // e.g. jobs/triggered/foo/history/17 and api/jobs/triggered/foo/history/17
+            routes.MapHttpRouteDual(name + "-old", String.Format("jobs/{0}{1}", jobType, routeTemplate), defaults, constraints);
+        }
+
         public static void MapHttpRouteDual(this RouteCollection routes, string name, string routeTemplate, object defaults, object constraints = null)
         {
-            routes.MapHttpRoute(name + "-old", routeTemplate, defaults, constraints);
+            routes.MapHttpRoute(name + "-noapi", routeTemplate, defaults, constraints);
             routes.MapHttpRoute(name, "api/" + routeTemplate, defaults, constraints);
         }
 
