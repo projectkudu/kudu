@@ -83,10 +83,14 @@ namespace Kudu.Services.Deployment
                     try
                     {
                         bool clean = false;
+                        bool needFileUpdate = true;
 
                         if (result != null)
                         {
                             clean = result.Value<bool>("clean");
+                            JToken needFileUpdateToken;
+                            if (result.TryGetValue("needFileUpdate", out needFileUpdateToken))
+                                needFileUpdate = needFileUpdateToken.Value<bool>();
                         }
 
                         string username = null;
@@ -108,7 +112,7 @@ namespace Kudu.Services.Deployment
                             }
                         }
 
-                        await _deploymentManager.DeployAsync(repository, changeSet, username, clean);
+                        await _deploymentManager.DeployAsync(repository, changeSet, username, clean, needFileUpdate);
                     }
                     catch (FileNotFoundException ex)
                     {
