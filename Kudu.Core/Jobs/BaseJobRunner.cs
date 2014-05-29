@@ -5,8 +5,11 @@ using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
+using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Xml.Linq;
+using System.Xml.XPath;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
@@ -275,7 +278,70 @@ namespace Kudu.Core.Jobs
             foreach (string configFilePath in configFilePaths)
             {
                 UpdateAppConfig(configFilePath);
+                UpdateAppConfigAddTraceListeners(configFilePath);
             }
+        }
+
+        /// <summary>
+        /// Updates the app.config using XML directly for injecting trace providers.
+        /// </summary>
+        private void UpdateAppConfigAddTraceListeners(string configFilePath)
+        {
+            try
+            {
+                var xmlConfig = XDocument.Load(configFilePath);
+
+                // Make sure the trace listeners section available otherwise create it
+                var configurationElement = GetOrCreateElement(xmlConfig, "configuration");
+                var systemDiagnosticsElement = GetOrCreateElement(configurationElement, "system.diagnostics");
+                var traceElement = GetOrCreateElement(systemDiagnosticsElement, "trace");
+                var listenersElement = GetOrCreateElement(traceElement, "listeners");
+
+                // Inject existing trace providers to the target app.config
+                foreach (TraceListener listener in Trace.Listeners)
+                {
+                    // Ignore the default trace provider
+                    if (String.Equals(listener.Name, "default", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    // Do not add a trace provider if it already exists (by name)
+                    XElement listenerElement = listenersElement.Elements().FirstOrDefault(xElement =>
+                    {
+                        XAttribute nameAttribute = xElement.Attribute("name");
+                        return nameAttribute != null && String.Equals(nameAttribute.Value, listener.Name, StringComparison.OrdinalIgnoreCase);
+                    });
+
+                    if (listenerElement == null)
+                    {
+                        var addElement = new XElement("add");
+                        addElement.Add(new XAttribute("name", listener.Name));
+                        addElement.Add(new XAttribute("type", listener.GetType().AssemblyQualifiedName));
+                        listenersElement.AddFirst(addElement);
+                    }
+                }
+
+                FileSystemHelpers.WriteAllText(configFilePath, xmlConfig.ToString());
+            }
+            catch (Exception ex)
+            {
+                TraceFactory.GetTracer().TraceError(ex);
+                _analytics.UnexpectedException(ex);
+            }
+        }
+
+        private static XElement GetOrCreateElement(XContainer root, string name)
+        {
+            var element = root.XPathSelectElement(name);
+
+            if (element == null)
+            {
+                element = new XElement(name);
+                root.Add(element);
+            }
+
+            return element;
         }
 
         private void UpdateAppConfig(string configFilePath)
