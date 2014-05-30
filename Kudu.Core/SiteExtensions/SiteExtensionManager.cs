@@ -32,16 +32,52 @@ namespace Kudu.Core.SiteExtensions
                 {
                     Id = "monaco",
                     Title = "Visual Studio Online \"Monaco\"",
+                    Type = SiteExtensionInfo.SiteExtensionType.PreInstalledNonKudu,
                     Authors = new [] {"Chris Dias"},
+                    IconUrl = "https://www.siteextensions.net/Content/Images/packageDefaultIcon-50x50.png",
                     LicenseUrl = "http://azure.microsoft.com/en-us/support/legal/",
                     ProjectUrl = "http://blogs.msdn.com/b/monaco/",
                     Description = "A full featured browser based development environment for editing your website",
                     // API will return a full url instead of this relative url.
                     ExtensionUrl = "/dev"
                 }
+            },
+            {
+                "process_explorer",
+                new SiteExtensionInfo
+                {
+                    Id = "process_explorer",
+                    Title = "Process Explorer",
+                    Type = SiteExtensionInfo.SiteExtensionType.PreInstalledKuduModule,
+                    Authors = new [] {"Ahmed ElSayed"},
+                    IconUrl = "https://www.siteextensions.net/Content/Images/packageDefaultIcon-50x50.png",
+                    LicenseUrl = "https://github.com/projectkudu/kudu/blob/master/LICENSE.txt",
+                    ProjectUrl = "https://github.com/projectkudu/kudu",
+                    Description = "List & manage running processes.",
+                    Version = typeof(SiteExtensionManager).Assembly.GetName().Version.ToString(),
+                    // API will return a full url instead of this relative url.
+                    ExtensionUrl = "/ProcessExplorer"
+                }
+            },
+            {
+                "debug_console",
+                new SiteExtensionInfo
+                {
+                    Id = "debug_console",
+                    Title = "Debug Console",
+                    Type = SiteExtensionInfo.SiteExtensionType.PreInstalledKuduModule,
+                    Authors = new [] {"Project Kudu Team"},
+                    IconUrl = "https://www.siteextensions.net/Content/Images/packageDefaultIcon-50x50.png",
+                    LicenseUrl = "https://github.com/projectkudu/kudu/blob/master/LICENSE.txt",
+                    ProjectUrl = "https://github.com/projectkudu/kudu",
+                    Description = "Command-line Terminal for your Azure Web Sites.",
+                    Version = typeof(SiteExtensionManager).Assembly.GetName().Version.ToString(),
+                    // API will return a full url instead of this relative url.
+                    ExtensionUrl = "/DebugConsole"
+                }
             }
         };
-        
+
         public SiteExtensionManager(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, HttpContextBase context)
         {
             _localRepository = new LocalPackageRepository(environment.RootPath + "\\SiteExtensions");
@@ -97,43 +133,6 @@ namespace Kudu.Core.SiteExtensions
             return info;
         }
 
-        private IEnumerable<SiteExtensionInfo> GetPreInstalledExtensions(string filter, bool showEnabledOnly)
-        {
-            var list = new List<SiteExtensionInfo>();
-
-            foreach (SiteExtensionInfo info in _preInstalledExtensionDictionary.Values)
-            {
-                if (String.IsNullOrEmpty(filter) ||
-                    JsonConvert.SerializeObject(info).IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    var extension = GetPreInstalledExtension(info.Id);
-
-                    if (!showEnabledOnly || extension.ExtensionUrl != null)
-                    {
-                        list.Add(extension);
-                    }
-                }
-            }
-
-            return list;
-        }
-
-        private SiteExtensionInfo GetPreInstalledExtension(string id)
-        {
-            if (_preInstalledExtensionDictionary.ContainsKey(id))
-            {
-                var info = new SiteExtensionInfo(_preInstalledExtensionDictionary[id]);
-                SetLocalInfo(info);
-                info.Version = GetLatestPreInstalledExtensionVersion(info.Id);
-
-                return info;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
         public IEnumerable<SiteExtensionInfo> GetLocalExtensions(string filter, bool checkLatest = true)
         {
             IEnumerable<SiteExtensionInfo> preInstalledExtensions = GetPreInstalledExtensions(filter, showEnabledOnly: true);
@@ -161,11 +160,48 @@ namespace Kudu.Core.SiteExtensions
             return ConvertLocalPackageToSiteExtensionInfo(package, checkLatest);
         }
 
+        private IEnumerable<SiteExtensionInfo> GetPreInstalledExtensions(string filter, bool showEnabledOnly)
+        {
+            var list = new List<SiteExtensionInfo>();
+
+            foreach (SiteExtensionInfo extension in _preInstalledExtensionDictionary.Values)
+            {
+                if (String.IsNullOrEmpty(filter) ||
+                    JsonConvert.SerializeObject(extension).IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    SiteExtensionInfo info = GetPreInstalledExtension(extension.Id);
+
+                    if (!showEnabledOnly || info.ExtensionUrl != null)
+                    {
+                        list.Add(info);
+                    }
+                }
+            }
+
+            return list;
+        }
+
+        private SiteExtensionInfo GetPreInstalledExtension(string id)
+        {
+            if (_preInstalledExtensionDictionary.ContainsKey(id))
+            {
+                var info = new SiteExtensionInfo(_preInstalledExtensionDictionary[id]);
+
+                SetLocalInfo(info);
+
+                return info;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         public SiteExtensionInfo InstallExtension(string id, string version)
         {
             if (_preInstalledExtensionDictionary.ContainsKey(id))
             {
-                return EnablePreInstalledExtension(id);
+                return EnablePreInstalledExtension(_preInstalledExtensionDictionary[id]);
             }
             else
             {
@@ -230,8 +266,9 @@ namespace Kudu.Core.SiteExtensions
             return _localRepository.FindPackage(package.Id);
         }
 
-        private SiteExtensionInfo EnablePreInstalledExtension(string id)
+        private SiteExtensionInfo EnablePreInstalledExtension(SiteExtensionInfo info)
         {
+            string id = info.Id;
             string installationDirectory = GetInstallationDirectory(id);
 
             try
@@ -241,7 +278,18 @@ namespace Kudu.Core.SiteExtensions
                     FileSystemHelpers.DeleteDirectorySafe(installationDirectory);
                 }
 
-                GenerateApplicationHostXdt(installationDirectory, _preInstalledExtensionDictionary[id].ExtensionUrl, isPreInstalled: true);
+                if (ExtensionRequiresApplicationHost(info))
+                {
+                    if (info.Type == SiteExtensionInfo.SiteExtensionType.PreInstalledNonKudu)
+                    {
+                        GenerateApplicationHostXdt(installationDirectory,
+                            _preInstalledExtensionDictionary[id].ExtensionUrl, isPreInstalled: true);
+                    }
+                }
+                else
+                {
+                    FileSystemHelpers.CreateDirectory(installationDirectory);
+                }
             }
             catch (Exception ex)
             {
@@ -312,21 +360,36 @@ namespace Kudu.Core.SiteExtensions
                 info.InstalledDateTime = FileSystemHelpers.GetLastWriteTimeUtc(info.LocalPath);
             }
 
-            if (FileSystemHelpers.FileExists(Path.Combine(localPath, _applicationHostFile)))
+            if (ExtensionRequiresApplicationHost(info))
             {
-                SetLocalExtensionUrl(info);
-            }
-            else if (IsPreInstalledExtensionEnabledInPortal(info.Id))
-            {
-                info.ExtensionUrl = _baseUrl + info.ExtensionUrl + "/";
+                if (FileSystemHelpers.FileExists(Path.Combine(localPath, _applicationHostFile)))
+                {
+                    info.ExtensionUrl = GetUrlFromApplicationHost(info);
+                }
+                else
+                {
+                    info.ExtensionUrl = null;
+                }
+
+                if (info.Type == SiteExtensionInfo.SiteExtensionType.PreInstalledNonKudu)
+                {
+                    info.Version = GetLatestPreInstalledExtensionVersion(info.Id);
+                }
             }
             else
             {
-                info.ExtensionUrl = null;
+                if (!String.IsNullOrEmpty(info.LocalPath))
+                {
+                    info.ExtensionUrl = _baseUrl + info.ExtensionUrl + "/";
+                }
+                else
+                {
+                    info.ExtensionUrl = null;
+                }
             }
         }
 
-        private void SetLocalExtensionUrl(SiteExtensionInfo info)
+        private string GetUrlFromApplicationHost(SiteExtensionInfo info)
         {
             try
             {
@@ -334,13 +397,13 @@ namespace Kudu.Core.SiteExtensions
                 appHostDoc.Load(Path.Combine(info.LocalPath, _applicationHostFile));
 
                 // Get the 'path' property of the first 'application' element, which is the relative url.
-                XmlNode appNode = appHostDoc.SelectSingleNode("//application[@path]/@path");
+                XmlNode pathPropertyNode = appHostDoc.SelectSingleNode("//application[@path]/@path");
 
-                info.ExtensionUrl = _baseUrl + appNode.Value + "/";
+                return _baseUrl + pathPropertyNode.Value + "/";
             }
             catch (SystemException)
             {
-                info.ExtensionUrl = null;
+                return null;
             }
         }
 
@@ -376,16 +439,14 @@ namespace Kudu.Core.SiteExtensions
                 }
             }
 
-
-
             return info;
         }
 
-        private static bool IsPreInstalledExtensionEnabledInPortal(string id)
+        private static bool ExtensionRequiresApplicationHost(SiteExtensionInfo info)
         {
-            string appSettingName = id.ToUpper(CultureInfo.CurrentCulture) + "_EXTENSION_VERSION";
+            string appSettingName = info.Id.ToUpper(CultureInfo.CurrentCulture) + "_EXTENSION_VERSION";
             bool enabledInSetting = ConfigurationManager.AppSettings[appSettingName] == "beta";
-            return enabledInSetting;
+            return !(enabledInSetting || info.Type == SiteExtensionInfo.SiteExtensionType.PreInstalledKuduModule);
         }
 
         private static string GetLatestPreInstalledExtensionVersion(string id)

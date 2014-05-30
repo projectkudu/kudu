@@ -48,9 +48,6 @@
     $('#tabHeadings a[href="' + window.location.hash + '"]').tab('show');
 
     function processExtensions(ext) {
-        if (!ext.icon_url) {
-            ext.icon_url = "../Content/Images/Windows Azure Web Site.png";
-        }
         if (ext.download_count < 0) {
             ext.download_count = null;
         }

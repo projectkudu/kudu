@@ -8,6 +8,13 @@ namespace Kudu.Contracts.SiteExtensions
     // This is equivalent to NuGet.IPackage
     public class SiteExtensionInfo
     {
+        public enum SiteExtensionType
+        {
+            Gallery,
+            PreInstalledNonKudu,
+            PreInstalledKuduModule
+        }
+
         public SiteExtensionInfo()
         {
         }
@@ -16,6 +23,7 @@ namespace Kudu.Contracts.SiteExtensions
         {
             Id = info.Id;
             Title = info.Title;
+            Type = info.Type;
             Summary = info.Summary;
             Description = info.Description;
             Version = info.Version;
@@ -36,11 +44,12 @@ namespace Kudu.Contracts.SiteExtensions
         {
             Id = package.Id;
             Title = package.Title;
+            Type = SiteExtensionType.Gallery;
             Summary = package.Summary;
             Description = package.Description;
             Version = package.Version == null ? null : package.Version.ToString();
             ProjectUrl = package.ProjectUrl == null ? null : package.ProjectUrl.ToString();
-            IconUrl = package.IconUrl == null ? null : package.IconUrl.ToString();
+            IconUrl = package.IconUrl == null ? "https://www.siteextensions.net/Content/Images/packageDefaultIcon-50x50.png" : package.IconUrl.ToString();
             LicenseUrl = package.LicenseUrl == null ? null : package.LicenseUrl.ToString();
             Authors = package.Authors;
             PublishedDateTime = package.Published;
@@ -59,6 +68,13 @@ namespace Kudu.Contracts.SiteExtensions
         public string Title
         {
             get;
+            set;
+        }
+
+        [JsonIgnore]
+        public SiteExtensionType Type
+        {
+            get; 
             set;
         }
 
