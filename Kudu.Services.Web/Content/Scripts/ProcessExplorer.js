@@ -228,7 +228,7 @@ var Process = (function () {
         configurable: true
     });
 
-    Object.defineProperty(Process.prototype, "Minidumb", {
+    Object.defineProperty(Process.prototype, "Minidump", {
         get: function () {
             return this._json.minidump;
         },
