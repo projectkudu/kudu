@@ -2,7 +2,7 @@
 {
     public interface ITriggeredJobsManager : IJobsManager<TriggeredJob>
     {
-        void InvokeTriggeredJob(string jobName);
+        void InvokeTriggeredJob(string jobName, string arguments);
 
         TriggeredJobHistory GetJobHistory(string jobName, string etag, out string currentETag);
 

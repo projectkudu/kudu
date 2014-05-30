@@ -7,7 +7,7 @@ namespace Kudu.Core.Jobs
         private static readonly string[] Supported = { ".cmd", ".bat", ".exe" };
 
         public WindowsScriptHost()
-            : base("cmd", "/c {0}")
+            : base("cmd", "/c {0}{1}")
         {
         }
 

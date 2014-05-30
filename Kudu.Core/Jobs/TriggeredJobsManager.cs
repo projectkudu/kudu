@@ -215,13 +215,15 @@ namespace Kudu.Core.Jobs
             return null;
         }
 
-        public void InvokeTriggeredJob(string jobName)
+        public void InvokeTriggeredJob(string jobName, string arguments)
         {
             TriggeredJob triggeredJob = GetJob(jobName);
             if (triggeredJob == null)
             {
                 throw new JobNotFoundException();
             }
+
+            triggeredJob.CommandArguments = arguments;
 
             if (IsShuttingdown)
             {

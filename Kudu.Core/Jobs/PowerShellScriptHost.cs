@@ -7,7 +7,7 @@ namespace Kudu.Core.Jobs
         private static readonly string[] Supported = { ".ps1" };
 
         public PowerShellScriptHost()
-            : base("PowerShell.exe", "-ExecutionPolicy RemoteSigned -File {0}")
+            : base("PowerShell.exe", "-ExecutionPolicy RemoteSigned -File {0}{1}")
         {
         }
 

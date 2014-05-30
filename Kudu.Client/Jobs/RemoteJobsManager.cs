@@ -68,9 +68,16 @@ namespace Kudu.Client.Jobs
             await Client.PutJsonAsync<JobSettings, object>("continuous/" + jobName + "/settings", jobSettings);
         }
 
-        public async Task InvokeTriggeredJobAsync(string jobName)
+        public async Task InvokeTriggeredJobAsync(string jobName, string arguments = null)
         {
-            await Client.PostAsync("triggered/" + jobName + "/run");
+            if (arguments != null)
+            {
+                await Client.PostAsync("triggered/" + jobName + "/run?arguments=" + arguments);
+            }
+            else
+            {
+                await Client.PostAsync("triggered/" + jobName + "/run");
+            }
         }
 
         public async Task CreateContinuousJobAsync(string jobName, string scriptFileName, string content = null)

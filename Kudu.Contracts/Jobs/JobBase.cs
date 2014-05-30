@@ -33,6 +33,8 @@ namespace Kudu.Contracts.Jobs
 
         public string JobBinariesRootPath { get; set; }
 
+        public string CommandArguments { get; set; }
+
         public override int GetHashCode()
         {
             return HashHelpers.CalculateCompositeHash(Name, RunCommand, JobType, Error);

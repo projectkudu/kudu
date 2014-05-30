@@ -176,6 +176,7 @@ namespace Kudu.Core.Jobs
                     exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsDataPath] = JobDataPath;
                     exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsRunId] = runId;
                     exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsShutdownNotificationFile] = _shutdownNotificationFilePath;
+                    exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsCommandArguments] = job.CommandArguments;
 
                     UpdateStatus(logger, "Running");
 
@@ -185,7 +186,8 @@ namespace Kudu.Core.Jobs
                             logger.LogStandardOutput,
                             logger.LogStandardError,
                             job.ScriptHost.ArgumentsFormat,
-                            scriptFileName);
+                            scriptFileName,
+                            job.CommandArguments != null ? " " + job.CommandArguments : String.Empty);
 
                     if (exitCode != 0)
                     {

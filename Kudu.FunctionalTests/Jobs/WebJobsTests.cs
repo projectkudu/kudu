@@ -284,6 +284,30 @@ namespace Kudu.FunctionalTests.Jobs
         }
 
         [Fact]
+        public void TriggeredJobAcceptsArguments()
+        {
+            RunScenario("TriggeredJobAcceptsArguments", appManager =>
+            {
+                const string jobName = "job1";
+
+                TestTracer.Trace("Copying the script to the triggered job directory");
+
+                appManager.JobsManager.CreateTriggeredJobAsync(jobName, "run.cmd", "echo %*").Wait();
+
+                var expectedTriggeredJob = new TriggeredJob()
+                {
+                    Name = jobName,
+                    JobType = "triggered",
+                    RunCommand = "run.cmd"
+                };
+
+                TestTracer.Trace("Trigger the job");
+
+                VerifyTriggeredJobTriggers(appManager, jobName, 1, "Success", "echo test arguments", expectedError: null, arguments: "test arguments");
+            });
+        }
+
+        [Fact]
         public void TriggeredJobCallsSubscribedWebHooks()
         {
             const string hook = "hookCalled/1";
@@ -460,9 +484,9 @@ namespace Kudu.FunctionalTests.Jobs
             });
         }
 
-        private void VerifyTriggeredJobTriggers(ApplicationManager appManager, string jobName, int expectedNumberOfRuns, string expectedStatus, string expectedOutput = null, string expectedError = null)
+        private void VerifyTriggeredJobTriggers(ApplicationManager appManager, string jobName, int expectedNumberOfRuns, string expectedStatus, string expectedOutput = null, string expectedError = null, string arguments = null)
         {
-            appManager.JobsManager.InvokeTriggeredJobAsync(jobName).Wait();
+            appManager.JobsManager.InvokeTriggeredJobAsync(jobName, arguments).Wait();
 
             WaitUntilAssertVerified(
                 "verify triggered job run",
