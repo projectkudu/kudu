@@ -141,7 +141,7 @@ namespace Kudu.Contracts.SiteExtensions
             set;
         }
 
-        [JsonProperty(PropertyName = "is_latest_version")]
+        [JsonIgnore]
         public bool IsLatestVersion
         {
             get;
