@@ -8,13 +8,8 @@ namespace Kudu.Core.Jobs
         private static readonly string[] Supported = { ".js" };
 
         public NodeScriptHost()
-            : base(DiscoverHostPath())
+            : base("node.exe")
         {
-        }
-
-        private static string DiscoverHostPath()
-        {
-            return PathUtility.ResolveNodePath();
         }
 
         public override IEnumerable<string> SupportedExtensions

@@ -87,20 +87,9 @@ namespace Kudu.Core.Deployment.Generator
                 _environment.ScriptPath
             };
 
-            string nodeExePath = PathUtility.ResolveNodePath();
-            if (!String.IsNullOrEmpty(nodeExePath))
-            {
-                // If IIS node path is available prepend it to the path list so that it's discovered before any other node versions in the path.
-                toolsPaths.Add(Path.GetDirectoryName(nodeExePath));
-            }
-
-            string npmExePath = PathUtility.ResolveNpmCmdPath();
-            if (!String.IsNullOrEmpty(npmExePath))
-            {
-                toolsPaths.Add(Path.GetDirectoryName(npmExePath));
-            }
+            toolsPaths.AddRange(PathUtility.ResolveNodeNpmPaths());
             
-            toolsPaths.Add(PathUtility.ResolveNpmGlobalPath());
+            toolsPaths.Add(PathUtility.ResolveNpmGlobalPrefix());
 
             exe.PrependToPath(toolsPaths);
             return exe;

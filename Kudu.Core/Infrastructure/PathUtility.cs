@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using SystemEnvironment = System.Environment;
 
@@ -9,14 +10,14 @@ namespace Kudu.Core.Infrastructure
         private const string ProgramFiles64bitKey = "ProgramW6432";
 
         /// <summary>
-        /// The version of Node.exe that we'd use for running KuduScript and selectNodeVersion.js
+        /// The version of node.exe that would be on PATH, when the user does not specify/specifies invalid node versions.
         /// </summary>
-        private const string DefaultNodeVersion = "0.10.5";
+        private const string DefaultNodeVersion = "0.10.28";
 
         /// <summary>
         /// Maps to the version of NPM that shipped with the DefaultNodeVersion
         /// </summary>
-        private const string DefaultNpmVersion = "1.3.21";
+        private const string DefaultNpmVersion = "1.4.9";
 
         internal static string ResolveGitPath()
         {
@@ -80,10 +81,11 @@ namespace Kudu.Core.Infrastructure
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             string npmCliPath = Path.Combine("node_modules", "npm", "bin", "npm-cli.js");
+            string npmVersion = ResolveNpmVersion();
 
             // 1. Attempt to look for the file under the S24 updated path that looks like
             // "C:\Program Files (x86)\npm\1.3.8\node_modules\npm\bin\npm-cli.js"
-            string npmPath = Path.Combine(programFiles, "npm", DefaultNpmVersion, npmCliPath);
+            string npmPath = Path.Combine(programFiles, "npm", npmVersion, npmCliPath);
             if (File.Exists(npmPath))
             {
                 return npmPath;
@@ -91,7 +93,7 @@ namespace Kudu.Core.Infrastructure
 
             // 2. Attempt to look for the file under the pre-S24 npm path
             // "C:\Program Files (x86)\npm\1.3.8\bin\npm-cli.js"
-            npmPath = Path.Combine(programFiles, "npm", DefaultNpmVersion, "bin", "npm-cli.js");
+            npmPath = Path.Combine(programFiles, "npm", npmVersion, "bin", "npm-cli.js");
             if (File.Exists(npmPath))
             {
                 return npmPath;
@@ -120,33 +122,81 @@ namespace Kudu.Core.Infrastructure
             return Path.Combine(programFiles, "Microsoft SQL Server", "110", "Tools", "Binn", "sqlcmd.exe");
         }
 
-        internal static string ResolveNpmCmdPath()
-        {
-            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
-
-            string npmExePath = Path.Combine(programFiles, "npm", DefaultNpmVersion, "npm.cmd");
-
-            return File.Exists(npmExePath) ? npmExePath : null;
-        }
-
-        internal static string ResolveNpmGlobalPath()
+        internal static string ResolveNpmGlobalPrefix()
         {
             string appDataDirectory = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ApplicationData);
             return Path.Combine(appDataDirectory, "npm");
         }
 
-        /// <summary>
-        /// Returns the path to the version of node.exe that is used for KuduScript generation and select node version
-        /// </summary>
-        /// <returns>
-        /// The path to DefaultNodeVersion if available, null otherwise.
-        /// </remarks>
-        internal static string ResolveNodePath()
+        private static string ResolveNodeVersion()
+        {
+            bool fromAppSetting;
+            return ResolveNodeVersion(out fromAppSetting);
+        }
+
+        private static string ResolveNodeVersion(out bool fromAppSetting)
+        {
+            string appSettingNodeVersion = SystemEnvironment.GetEnvironmentVariable("APPSETTING_WEBSITE_NODE_DEFAULT_VERSION");
+
+            if (IsNodeVersionInstalled(appSettingNodeVersion))
+            {
+                fromAppSetting = true;
+                return appSettingNodeVersion;
+            }
+            else
+            {
+                fromAppSetting = false;
+                return DefaultNodeVersion;
+            }
+        }
+
+        private static string ResolveNpmVersion()
+        {
+            return ResolveNpmVersion(ResolveNodeVersion());
+        }
+
+        private static string ResolveNpmVersion(string nodeVersion)
         {
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
 
-            string nodePath = Path.Combine(programFiles, "nodejs", DefaultNodeVersion, "node.exe");
-            return File.Exists(nodePath) ? nodePath : null;
+            string npmTxtPath = Path.Combine(programFiles, "nodejs", nodeVersion, "npm.txt");
+
+            return FileSystemHelpers.FileExists(npmTxtPath) ? FileSystemHelpers.ReadAllTextFromFile(npmTxtPath).Trim() : DefaultNpmVersion;
+        }
+
+        private static bool IsNodeVersionInstalled(string version)
+        {
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            return (!String.IsNullOrEmpty(version)) &&
+                   FileSystemHelpers.FileExists(Path.Combine(programFiles, "nodejs", version, "node.exe"));
+        }
+
+        internal static List<string> ResolveNodeNpmPaths()
+        {
+            var paths = new List<string>();
+            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+            bool fromAppSetting;
+            string nodeVersion = ResolveNodeVersion(out fromAppSetting);
+
+            // Only set node.exe path when WEBSITE_NODE_DEFAULT_VERSION is not set in app setting and the path is invalid.
+            if (!fromAppSetting)
+            {
+                string nodePath = Path.Combine(programFiles, "nodejs", nodeVersion);
+                if (FileSystemHelpers.FileExists(Path.Combine(nodePath, "node.exe")))
+                {
+                    paths.Add(nodePath);
+                }
+            }
+
+            // Only set npm.cmd path when npm.cmd can be found
+            string npmVersion = ResolveNpmVersion(nodeVersion);
+            string npmPath = Path.Combine(programFiles, "npm", npmVersion);
+            if (FileSystemHelpers.FileExists(Path.Combine(npmPath, "npm.cmd")))
+            {
+                paths.Add(npmPath);
+            }
+            
+            return paths;
         }
 
         internal static string CleanPath(string path)
