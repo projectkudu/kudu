@@ -192,7 +192,7 @@ $.connection.hub.start().done(function () {
     }
 
     var root = new node({ name: "/", type: "dir", href: "/vfs/" }),
-        ignoreWorkingDirChange = true,
+        ignoreWorkingDirChange = false,
         workingDirChanging = false,
         viewModel = {
             root: root,
