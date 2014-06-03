@@ -83,12 +83,21 @@ namespace Kudu.Core.Jobs
         {
             if (WorkingDirectory != null)
             {
-                int currentHash = CalculateHashForJob(JobBinariesPath);
-                int lastHash = CalculateHashForJob(WorkingDirectory);
-
-                if (lastHash == currentHash)
+                try
                 {
-                    return;
+                    int currentHash = CalculateHashForJob(JobBinariesPath);
+                    int lastHash = CalculateHashForJob(WorkingDirectory);
+
+                    if (lastHash == currentHash)
+                    {
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log error and ignore it as it's not critical to cache job binaries
+                    logger.LogError("Failed to calculate hash for WebJob: " + ex);
+                    _analytics.UnexpectedException(ex);
                 }
             }
 
