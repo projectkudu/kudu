@@ -37,10 +37,9 @@ function LoadConsoleV2() {
     };
 
     window.KuduExec.changeDir = _changeDir;
-    // call make console after this first command so the current working directory is set.
     var originalMatchString = undefined;
     var currentMatchIndex = -1;
-    var lastLine = "";
+    var lastLine;
     var lastUserInput = null;
     var kuduExecConsole = $('<div class="console">');
     var curReportFun;
@@ -74,8 +73,10 @@ function LoadConsoleV2() {
                 _sendCommand(line);
                 controller.resetHistory();
                 DisplayAndUpdate(lastLine);
-                lastLine.Output = "";
-                lastLine.Error = "";
+                lastLine = {
+                    Output: "",
+                    Error: ""
+                };
                 DisplayAndUpdate(lastLine);
                 fileExplorerChanged = false;
                 if (line.trim().toUpperCase() == "EXIT") {
@@ -104,6 +105,9 @@ function LoadConsoleV2() {
             }
             if (result.length > 0) {
                 result = $.map(result, function (elm) {
+                    if (getShell().toUpperCase() === "POWERSHELL") {
+                        elm = ".\\" + elm;
+                    }
                     if (elm.indexOf(" ") !== -1) {
                         elm = '"' + elm + '"';
                     }
