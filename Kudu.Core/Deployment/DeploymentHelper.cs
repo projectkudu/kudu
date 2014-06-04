@@ -10,7 +10,7 @@ namespace Kudu.Core.Deployment
 {
     public static class DeploymentHelper
     {
-        private static readonly string[] _projectFileExtensions = new[] { ".csproj", ".vbproj" };
+        private static readonly string[] _projectFileExtensions = new[] { ".csproj", ".vbproj", ".fsproj" };
 
         public static readonly string[] ProjectFileLookup = _projectFileExtensions.Select(p => "*" + p).ToArray();
 
