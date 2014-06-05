@@ -3,16 +3,19 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Globalization;
 using System.IO;
+using System.IO.Abstractions;
 using System.Linq;
 using System.Web;
 using System.Xml;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.SiteExtensions;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Deployment.Generator;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Newtonsoft.Json;
 using NuGet;
+using NullLogger = Kudu.Core.Deployment.NullLogger;
 
 namespace Kudu.Core.SiteExtensions
 {
@@ -20,7 +23,10 @@ namespace Kudu.Core.SiteExtensions
     {
         private readonly IPackageRepository _remoteRepository;
         private readonly IPackageRepository _localRepository;
+        private readonly IEnvironment _environment;
+        private readonly IDeploymentSettingsManager _settings;
         private readonly ITraceFactory _traceFactory;
+
         private const string _applicationHostFile = "applicationHost.xdt";
         private readonly string _baseUrl;
         private static readonly Dictionary<string, SiteExtensionInfo> _preInstalledExtensionDictionary
@@ -60,9 +66,14 @@ namespace Kudu.Core.SiteExtensions
             }
         };
 
+        private const string _installScriptName = "install.cmd";
+        private const string _uninstallScriptName = "uninstall.cmd";
+
         public SiteExtensionManager(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, HttpContextBase context)
         {
             _localRepository = new LocalPackageRepository(environment.RootPath + "\\SiteExtensions");
+            _environment = environment;
+            _settings = settings;
             _traceFactory = traceFactory;
 
             var remoteSource = new Uri(settings.GetSiteExtensionRemoteUrl());
@@ -171,7 +182,7 @@ namespace Kudu.Core.SiteExtensions
 
                 SetLocalInfo(info);
 
-                SetLatestPreInstalledExtensionVersion(info);
+                SetPreInstalledExtensionInfo(info);
 
                 return info;
             }
@@ -237,6 +248,15 @@ namespace Kudu.Core.SiteExtensions
                     Stream readStream = package.GetStream(), writeStream = FileSystemHelpers.OpenWrite(packageFilePath))
                 {
                     OperationManager.Attempt(() => readStream.CopyTo(writeStream));
+                }
+
+                var externalCommandFactory = new ExternalCommandFactory(_environment, _settings, installationDirectory);
+                string installScript = Path.Combine(installationDirectory, _installScriptName);
+                if (FileSystemHelpers.FileExists(installScript))
+                {
+                    Executable exe = externalCommandFactory.BuildCommandExecutable(installScript, installationDirectory,
+                        _settings.GetCommandIdleTimeout(), NullLogger.Instance);
+                    exe.ExecuteWithProgressWriter(NullLogger.Instance, _traceFactory.GetTracer(), String.Empty);
                 }
             }
             catch (Exception ex)
@@ -307,7 +327,19 @@ namespace Kudu.Core.SiteExtensions
                 throw new DirectoryNotFoundException(installationDirectory);
             }
 
-            OperationManager.Attempt(() => FileSystemHelpers.DeleteDirectorySafe(installationDirectory));
+            OperationManager.Attempt(() =>
+            {
+                var externalCommandFactory = new ExternalCommandFactory(_environment, _settings, installationDirectory);
+                string uninstallScript = Path.Combine(installationDirectory, _uninstallScriptName);
+                if (FileSystemHelpers.FileExists(uninstallScript))
+                {
+                    Executable exe = externalCommandFactory.BuildCommandExecutable(uninstallScript, installationDirectory,
+                        _settings.GetCommandIdleTimeout(), NullLogger.Instance);
+                    exe.ExecuteWithProgressWriter(NullLogger.Instance, _traceFactory.GetTracer(), String.Empty);
+                }
+                
+                FileSystemHelpers.DeleteDirectorySafe(installationDirectory);
+            });
 
             return !FileSystemHelpers.DirectoryExists(installationDirectory);
         }
@@ -421,6 +453,7 @@ namespace Kudu.Core.SiteExtensions
                 {
                     info.LocalIsLatestVersion = package.Version == latestPackage.Version;
                     info.DownloadCount = package.DownloadCount;
+                    info.PublishedDateTime = package.Published;
                 }
             }
 
@@ -434,13 +467,15 @@ namespace Kudu.Core.SiteExtensions
             return !(enabledInSetting || info.Type == SiteExtensionInfo.SiteExtensionType.PreInstalledKuduModule);
         }
 
-        private static void SetLatestPreInstalledExtensionVersion(SiteExtensionInfo info)
+        private static void SetPreInstalledExtensionInfo(SiteExtensionInfo info)
         {
             try
             {
+                string directory = GetPreInstalledDirectory(info.Id);
+
                 if (info.Type == SiteExtensionInfo.SiteExtensionType.PreInstalledNonKudu)
                 {
-                    IEnumerable<string> pathStrings = FileSystemHelpers.GetDirectories(GetPreInstalledDirectory(info.Id));
+                    IEnumerable<string> pathStrings = FileSystemHelpers.GetDirectories(directory);
                     
                     SemanticVersion maxVersion = pathStrings.Max(path =>
                     {
