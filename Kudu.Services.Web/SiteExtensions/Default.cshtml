@@ -99,19 +99,21 @@
                         </div>
                     </div>
                     <h4 data-bind="text: title"></h4>
-                    <div data-bind="visible: version">
-                        <strong>Version </strong>
-                        <span class="text-1line" data-bind="text: version"></span>
-                    </div>
-                    <div data-bind="visible: authors">
-                        <strong>By </strong>
-                        <span class="text-1line" data-bind="text: authors"></span>
-                    </div>
-                    <div data-bind="visible: summary">
-                        <p class="text-4line" data-bind="text: summary"></p>
-                    </div>
-                    <div data-bind="visible: (!summary) && description">
-                        <p class="text-4line" data-bind="text: description"></p>
+                    <div class="text-6line">
+                        <div data-bind="visible: version">
+                            <strong>Version </strong>
+                            <span class="text-1line" data-bind="text: version"></span>
+                        </div>
+                        <div data-bind="visible: authors">
+                            <strong>By </strong>
+                            <span class="text-1line" data-bind="text: authors"></span>
+                        </div>
+                        <div data-bind="visible: summary">
+                            <p class="text-4line" data-bind="text: summary"></p>
+                        </div>
+                        <div data-bind="visible: (!summary) && description">
+                            <p class="text-4line" data-bind="text: description"></p>
+                        </div>
                     </div>
                 </div>
             </div>

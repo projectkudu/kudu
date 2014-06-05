@@ -59,7 +59,7 @@ namespace Kudu.Core.SiteExtensions
                     IconUrl = "https://www.siteextensions.net/Content/Images/packageDefaultIcon-50x50.png",
                     LicenseUrl = "https://github.com/projectkudu/kudu/blob/master/LICENSE.txt",
                     ProjectUrl = "https://github.com/projectkudu/kudu",
-                    Description = "Site adimistration and management tools for your Azure Web Sites, including a terminal, process viewer and more!",
+                    Description = "Site administration and management tools for your Azure Websites, including a terminal, process viewer and more!",
                     // API will return a full url instead of this relative url.
                     ExtensionUrl = "/"
                 }

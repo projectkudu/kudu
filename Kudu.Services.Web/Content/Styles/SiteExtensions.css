@@ -32,7 +32,13 @@ img.modal-icon {
 }
 
 .text-1line {
-    max-height: 1em;
+    height: 1.4em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.text-6line {
+    height: 8.5em;
     overflow: hidden;
     text-overflow: ellipsis;
 }
