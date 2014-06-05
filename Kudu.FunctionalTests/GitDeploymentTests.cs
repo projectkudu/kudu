@@ -65,6 +65,12 @@ namespace Kudu.FunctionalTests
             PushAndDeployApps("AppWithPostBuildEvent", "master", "Hello Kudu", HttpStatusCode.OK, "Deployment successful");
         }
 
+        [Fact]
+        public void PushAndDeployFSharpWebApplication()
+        {
+            PushAndDeployApps("fsharp-owin-sample", "master", "Owin Sample with F#", HttpStatusCode.OK, "");
+        }
+
         // Node apps
 
         [Fact]
