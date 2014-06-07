@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Security.Cryptography.X509Certificates;
 using System.Web.Http;
 using Kudu.Contracts.SiteExtensions;
+using Kudu.Core.Infrastructure;
+using Newtonsoft.Json;
 
 namespace Kudu.Services.SiteExtensions
 {
@@ -54,24 +57,69 @@ namespace Kudu.Services.SiteExtensions
         [HttpPut]
         public SiteExtensionInfo InstallExtension(string id, string version = null)
         {
-            SiteExtensionInfo extension = _manager.InstallExtension(id, version);
-            if (extension == null)
+            try
             {
-                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, id));
+                SiteExtensionInfo extension = _manager.InstallExtension(id, version);
+                if (extension == null)
+                {
+                    throw new Exception("Install process failed.");
+                }
+                return extension;
             }
-            return extension;
+            catch (Exception ex)
+            {
+                var response = new HttpResponseMessage(HttpStatusCode.InternalServerError)
+                {
+                    Content = new StringContent(JsonConvert.SerializeObject(new
+                    {
+                        Message = ex.Message.Replace(Environment.NewLine, " ")
+                    }))
+                };
+                throw new HttpResponseException(response);
+            }
         }
 
         [HttpDelete]
         public bool UninstallExtension(string id)
         {
+            return TryOperation(() =>
+            {
+                bool success = _manager.UninstallExtension(id);
+                if (!success)
+                {
+                    throw new Exception("Uninstall process is not complete.");
+                }
+                return true;
+            });
+        }
+
+        private T TryOperation<T>(Func<T> func)
+        {
             try
             {
-                return _manager.UninstallExtension(id);
+                return func();
             }
-            catch (DirectoryNotFoundException ex)
+            catch (CommandLineException ex)
             {
-                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, ex));
+                var response = new HttpResponseMessage(HttpStatusCode.InternalServerError)
+                {
+                    Content = new StringContent(JsonConvert.SerializeObject(new
+                    {
+                        Message = ex.Error.Replace(Environment.NewLine, " ")
+                    }))
+                };
+                throw new HttpResponseException(response);
+            }
+            catch (Exception ex)
+            {
+                var response = new HttpResponseMessage(HttpStatusCode.InternalServerError)
+                {
+                    Content = new StringContent(JsonConvert.SerializeObject(new
+                    {
+                        Message = ex.Message.Replace(Environment.NewLine, " ")
+                    }))
+                };
+                throw new HttpResponseException(response);
             }
         }
     }

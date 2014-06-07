@@ -264,7 +264,7 @@ namespace Kudu.Core.SiteExtensions
                 ITracer tracer = _traceFactory.GetTracer();
                 tracer.TraceError(ex);
                 FileSystemHelpers.DeleteDirectorySafe(installationDirectory);
-                return null;
+                throw;
             }
 
             return _localRepository.FindPackage(package.Id);
@@ -300,7 +300,7 @@ namespace Kudu.Core.SiteExtensions
                 ITracer tracer = _traceFactory.GetTracer();
                 tracer.TraceError(ex);
                 FileSystemHelpers.DeleteDirectorySafe(installationDirectory);
-                return null;
+                throw;
             }
 
             return GetPreInstalledExtension(id);
@@ -324,7 +324,7 @@ namespace Kudu.Core.SiteExtensions
 
             if (!FileSystemHelpers.DirectoryExists(installationDirectory))
             {
-                throw new DirectoryNotFoundException(installationDirectory);
+                throw new Exception("Site Extension " + id + " is not found");
             }
 
             OperationManager.Attempt(() =>
