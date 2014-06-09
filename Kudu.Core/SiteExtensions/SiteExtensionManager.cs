@@ -357,7 +357,15 @@ namespace Kudu.Core.SiteExtensions
 
         private static string CreateDefaultXdtFile(string relativeUrl, bool isPreInstalled)
         {
-            string physicalPath = isPreInstalled ? "%XDT_LATEST_EXTENSIONPATH%" : "%XDT_EXTENSIONPATH%";
+            // Hack - will be reverted.
+            string physicalPath = "%XDT_EXTENSIONPATH%"; // "%XDT_LATEST_EXTENSIONPATH%"
+            if (isPreInstalled && relativeUrl == "/dev")
+            {
+                string id = "Monaco";
+                string directory = GetPreInstalledDirectory(id);
+                string version = GetPreInstalledLatestVersion(directory);
+                physicalPath = Path.Combine(directory, version);
+            }
             return String.Format("<?xml version=\"1.0\" encoding=\"utf-8\"" + @"?>
 <configuration " + "xmlns:xdt=\"http://schemas.microsoft.com/XML-Document-Transform\"" + @">
     <system.applicationHost>
@@ -471,27 +479,10 @@ namespace Kudu.Core.SiteExtensions
         {
             try
             {
-                string directory = GetPreInstalledDirectory(info.Id);
-
                 if (info.Type == SiteExtensionInfo.SiteExtensionType.PreInstalledNonKudu)
                 {
-                    IEnumerable<string> pathStrings = FileSystemHelpers.GetDirectories(directory);
-                    
-                    SemanticVersion maxVersion = pathStrings.Max(path =>
-                    {
-                        string versionString = FileSystemHelpers.DirectoryInfoFromDirectoryName(path).Name;
-                        SemanticVersion semVer;
-                        if (SemanticVersion.TryParse(versionString, out semVer))
-                        {
-                            return semVer;
-                        }
-                        else
-                        {
-                            return new SemanticVersion(0, 0, 0, 0);
-                        }
-                    });
-
-                    info.Version = maxVersion.ToString();
+                    string directory = GetPreInstalledDirectory(info.Id);
+                    info.Version = GetPreInstalledLatestVersion(directory);
                 }
                 else if (info.Type == SiteExtensionInfo.SiteExtensionType.PreInstalledKuduModule)
                 {
@@ -504,6 +495,27 @@ namespace Kudu.Core.SiteExtensions
             }
 
             info.LocalIsLatestVersion = true;
+        }
+
+        private static string GetPreInstalledLatestVersion(string directory)
+        {
+            IEnumerable<string> pathStrings = FileSystemHelpers.GetDirectories(directory);
+
+            SemanticVersion maxVersion = pathStrings.Max(path =>
+            {
+                string versionString = FileSystemHelpers.DirectoryInfoFromDirectoryName(path).Name;
+                SemanticVersion semVer;
+                if (SemanticVersion.TryParse(versionString, out semVer))
+                {
+                    return semVer;
+                }
+                else
+                {
+                    return new SemanticVersion(0, 0, 0, 0);
+                }
+            });
+
+            return maxVersion.ToString();
         }
     }
 }
