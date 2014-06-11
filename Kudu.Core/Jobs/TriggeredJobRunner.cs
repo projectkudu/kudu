@@ -91,6 +91,12 @@ namespace Kudu.Core.Jobs
             }
         }
 
+        protected override string RefreshShutdownNotificationFilePath(string jobName, string jobsTypePath)
+        {
+            // Since we don't use the shutdown notification file for triggered WebJobs we return null
+            return null;
+        }
+
         protected override void UpdateStatus(IJobLogger logger, string status)
         {
             ((TriggeredJobRunLogger)logger).ReportStatus(status);
