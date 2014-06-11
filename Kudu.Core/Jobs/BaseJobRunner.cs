@@ -184,8 +184,12 @@ namespace Kudu.Core.Jobs
                     exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsType] = job.JobType;
                     exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsDataPath] = JobDataPath;
                     exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsRunId] = runId;
-                    exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsShutdownNotificationFile] = _shutdownNotificationFilePath;
                     exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsCommandArguments] = job.CommandArguments;
+
+                    if (_shutdownNotificationFilePath != null)
+                    {
+                        exe.EnvironmentVariables[WellKnownEnvironmentVariables.WebJobsShutdownNotificationFile] = _shutdownNotificationFilePath;
+                    }
 
                     UpdateStatus(logger, "Running");
 
@@ -275,7 +279,7 @@ namespace Kudu.Core.Jobs
             }
         }
 
-        private string RefreshShutdownNotificationFilePath(string jobName, string jobsTypePath)
+        protected virtual string RefreshShutdownNotificationFilePath(string jobName, string jobsTypePath)
         {
             string shutdownFilesDirectory = Path.Combine(Environment.TempPath, "JobsShutdown", jobsTypePath, jobName);
             FileSystemHelpers.DeleteDirectoryContentsSafe(shutdownFilesDirectory, ignoreErrors: true);
