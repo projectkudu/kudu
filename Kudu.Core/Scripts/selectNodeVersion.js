@@ -245,7 +245,11 @@ try {
         npmPath = resolveNpmPath(npmRootPath, npmVersion || getDefaultNpmVersion(nodeVersionPath));
 
     // Save the node version in a temporary path for kudu service usage
-    saveNodePaths(tempDir, nodeExePath, npmPath);
+    if (existsSync(nodeExePath) && existsSync(npmPath)) {
+        saveNodePaths(tempDir, nodeExePath, npmPath);
+    } else {
+        console.log("One or more of the selected node/npm paths do not exist.");
+    }
 
     if (shouldUpdateIisNodeYml) {
         // Save the version information to iisnode.yml in the start script directory
