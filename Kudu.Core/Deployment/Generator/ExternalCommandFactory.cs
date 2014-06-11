@@ -36,7 +36,6 @@ namespace Kudu.Core.Deployment.Generator
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.PostDeploymentActionsDirectoryKey, PostDeploymentActionsDir, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.SelectNodeVersionCommandKey, SelectNodeVersionCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.WebJobsDeployCommandKey, WebJobsDeployCommand, logger);
-            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.WebJobsDeployCommandKeyOld, WebJobsDeployCommand, logger);
 
             bool isInPlace = false;
             string project = _deploymentSettings.GetValue(SettingsKeys.Project);

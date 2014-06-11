@@ -19,7 +19,6 @@
         public const string PostDeploymentActionsDirectoryKey = "POST_DEPLOYMENT_ACTIONS_DIR";
 
         public const string WebJobsDeployCommandKey = "WEBJOBS_DEPLOY_CMD";
-        public const string WebJobsDeployCommandKeyOld = "WEB_JOB_DEPLOY_CMD";
         public const string WebJobsRootPath = "WEBJOBS_PATH";
         public const string WebJobsName = "WEBJOBS_NAME";
         public const string WebJobsType = "WEBJOBS_TYPE";
