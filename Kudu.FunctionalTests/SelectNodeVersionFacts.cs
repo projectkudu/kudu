@@ -185,7 +185,7 @@ namespace Kudu.FunctionalTests
                     // Verify app works. 
                     KuduAssert.VerifyUrl(appManager.SiteUrl, "Hello Main App!");
                     // Verify that node-inspector works
-                    //KuduAssert.VerifyUrl(appManager.SiteUrl + "/app/app.js/debug", "node-inspector");
+                    KuduAssert.VerifyUrl(appManager.SiteUrl + "/app/app.js/debug", "inspector");
                 });
             }
         }
