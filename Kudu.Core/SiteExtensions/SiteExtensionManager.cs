@@ -37,10 +37,10 @@ namespace Kudu.Core.SiteExtensions
                 new SiteExtensionInfo
                 {
                     Id = "Monaco",
-                    Title = "Visual Studio Online \"Monaco\"",
+                    Title = "Visual Studio Online",
                     Type = SiteExtensionInfo.SiteExtensionType.PreInstalledNonKudu,
-                    Authors = new [] {"Chris Dias"},
-                    IconUrl = "https://www.siteextensions.net/Content/Images/packageDefaultIcon-50x50.png",
+                    Authors = new [] {"Microsoft"},
+                    IconUrl = "https://www.siteextensions.net/Content/Images/vso50x50.png",
                     LicenseUrl = "http://azure.microsoft.com/en-us/support/legal/",
                     ProjectUrl = "http://blogs.msdn.com/b/monaco/",
                     Description = "A full featured browser based development environment for editing your website",
