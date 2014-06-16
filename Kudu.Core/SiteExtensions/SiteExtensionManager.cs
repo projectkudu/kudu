@@ -56,7 +56,7 @@ namespace Kudu.Core.SiteExtensions
                     Title = "Site Admin Tools",
                     Type = SiteExtensionInfo.SiteExtensionType.PreInstalledKuduModule,
                     Authors = new [] {"Project Kudu Team"},
-                    IconUrl = "https://www.siteextensions.net/Content/Images/packageDefaultIcon-50x50.png",
+                    IconUrl = "https://www.siteextensions.net/Content/Images/kudu50x50.png",
                     LicenseUrl = "https://github.com/projectkudu/kudu/blob/master/LICENSE.txt",
                     ProjectUrl = "https://github.com/projectkudu/kudu",
                     Description = "Site administration and management tools for your Azure Websites, including a terminal, process viewer and more!",
