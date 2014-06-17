@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Globalization;
 using System.IO;
-using System.IO.Abstractions;
 using System.Linq;
 using System.Web;
 using System.Xml;
@@ -79,7 +78,7 @@ namespace Kudu.Core.SiteExtensions
             var remoteSource = new Uri(settings.GetSiteExtensionRemoteUrl());
             _remoteRepository = new DataServicePackageRepository(remoteSource);
 
-            _baseUrl = context.Request.Url == null ? "" : context.Request.Url.GetLeftPart(UriPartial.Authority).TrimEnd('/');
+            _baseUrl = context.Request.Url == null ? String.Empty : context.Request.Url.GetLeftPart(UriPartial.Authority).TrimEnd('/');
         }
 
         public IEnumerable<SiteExtensionInfo> GetRemoteExtensions(string filter, bool allowPrereleaseVersions = false)
@@ -359,7 +358,7 @@ namespace Kudu.Core.SiteExtensions
         {
             // Hack - will be reverted.
             string physicalPath = "%XDT_EXTENSIONPATH%"; // "%XDT_LATEST_EXTENSIONPATH%"
-            if (isPreInstalled && relativeUrl == "/dev")
+            if (isPreInstalled && relativeUrl == "/Dev")
             {
                 string id = "Monaco";
                 string directory = GetPreInstalledDirectory(id);
@@ -394,7 +393,7 @@ namespace Kudu.Core.SiteExtensions
             {
                 if (FileSystemHelpers.FileExists(Path.Combine(localPath, _applicationHostFile)))
                 {
-                    info.ExtensionUrl = GetUrlFromApplicationHost(info);
+                    info.ExtensionUrl = GetFullUrl(GetUrlFromApplicationHost(info));
                 }
                 else
                 {
@@ -405,7 +404,7 @@ namespace Kudu.Core.SiteExtensions
             {
                 if (!String.IsNullOrEmpty(info.LocalPath))
                 {
-                    info.ExtensionUrl = _baseUrl + info.ExtensionUrl + "/";
+                    info.ExtensionUrl = GetFullUrl(info.ExtensionUrl);
                 }
                 else
                 {
@@ -414,7 +413,7 @@ namespace Kudu.Core.SiteExtensions
             }
         }
 
-        private string GetUrlFromApplicationHost(SiteExtensionInfo info)
+        private static string GetUrlFromApplicationHost(SiteExtensionInfo info)
         {
             try
             {
@@ -424,7 +423,7 @@ namespace Kudu.Core.SiteExtensions
                 // Get the 'path' property of the first 'application' element, which is the relative url.
                 XmlNode pathPropertyNode = appHostDoc.SelectSingleNode("//application[@path]/@path");
 
-                return _baseUrl + pathPropertyNode.Value + "/";
+                return pathPropertyNode.Value;
             }
             catch (SystemException)
             {
@@ -499,23 +498,31 @@ namespace Kudu.Core.SiteExtensions
 
         private static string GetPreInstalledLatestVersion(string directory)
         {
-            IEnumerable<string> pathStrings = FileSystemHelpers.GetDirectories(directory);
+            if (!FileSystemHelpers.DirectoryExists(directory))
+            {
+                return String.Empty;
+            }
 
-            SemanticVersion maxVersion = pathStrings.Max(path =>
+            IEnumerable<string> pathStrings = FileSystemHelpers.GetDirectories(directory);
+            
+            return pathStrings.Max(path =>
             {
                 string versionString = FileSystemHelpers.DirectoryInfoFromDirectoryName(path).Name;
                 SemanticVersion semVer;
                 if (SemanticVersion.TryParse(versionString, out semVer))
                 {
-                    return semVer;
+                    return semVer.ToString();
                 }
                 else
                 {
-                    return new SemanticVersion(0, 0, 0, 0);
+                    return String.Empty;
                 }
             });
+        }
 
-            return maxVersion.ToString();
+        private string GetFullUrl(string url)
+        {
+            return url == null ? null : new Uri(new Uri(_baseUrl), url).ToString().Trim('/') + "/";
         }
     }
 }
