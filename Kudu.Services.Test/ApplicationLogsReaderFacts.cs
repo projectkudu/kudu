@@ -392,6 +392,7 @@ several lines
             FileSystemHelpers.Instance = fileSystemMock.Object;
 
             var fileMock = new Mock<FileInfoBase>();
+            fileMock.SetupGet(p => p.LastWriteTimeUtc).Returns(new DateTime(2000, 1, 1));
 
             var tracerMock = new Mock<ITracer>(MockBehavior.Strict);
             tracerMock.Setup(t => t.Trace("Error occurred", It.IsAny<Dictionary<string,string>>())).Verifiable();
