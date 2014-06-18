@@ -17,15 +17,14 @@
     </PropertyGroup>
     
     <PropertyGroup>
-        <MajorVersion>1</MajorVersion>
-        <MinorVersion>27</MinorVersion>
+        <MajorVersion>28</MajorVersion>
         <!-- Ensure that we come up with a new version every 65535 years -->
         <VersionStartYear>2012</VersionStartYear>
         
         <!-- Build number is of the format (CurrentYear - VersionStartYear + 1)(2 digit month)(2 digit day) -->
-        <Build>$([MSBuild]::Add(1, $([MSBuild]::Subtract($([System.DateTime]::UtcNow.Year), $(VersionStartYear)))))$([System.DateTime]::UtcNow.ToString("MMdd"))</Build>
-        <Revision>$(BUILD_NUMBER)</Revision>
-        <Version>$(MajorVersion).$(MinorVersion).$(Build).$(Revision)</Version>
+        <MinorVersion>$([MSBuild]::Add(1, $([MSBuild]::Subtract($([System.DateTime]::UtcNow.Year), $(VersionStartYear)))))$([System.DateTime]::UtcNow.ToString("MMdd"))</MinorVersion>
+        <Build>$(BUILD_NUMBER)</Build>
+        <Version>$(MajorVersion).$(MinorVersion).$(Build)</Version>
     </PropertyGroup>
     
    <ItemGroup>
