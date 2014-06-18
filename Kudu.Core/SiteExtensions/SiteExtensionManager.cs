@@ -459,8 +459,8 @@ namespace Kudu.Core.SiteExtensions
                 if (latestPackage != null)
                 {
                     info.LocalIsLatestVersion = package.Version == latestPackage.Version;
-                    info.DownloadCount = package.DownloadCount;
-                    info.PublishedDateTime = package.Published;
+                    info.DownloadCount = latestPackage.DownloadCount;
+                    info.PublishedDateTime = latestPackage.Published;
                 }
             }
 
@@ -476,21 +476,25 @@ namespace Kudu.Core.SiteExtensions
 
         private static void SetPreInstalledExtensionInfo(SiteExtensionInfo info)
         {
-            try
+            string directory = GetPreInstalledDirectory(info.Id);
+
+            if (FileSystemHelpers.DirectoryExists(directory))
             {
                 if (info.Type == SiteExtensionInfo.SiteExtensionType.PreInstalledNonKudu)
                 {
-                    string directory = GetPreInstalledDirectory(info.Id);
                     info.Version = GetPreInstalledLatestVersion(directory);
                 }
                 else if (info.Type == SiteExtensionInfo.SiteExtensionType.PreInstalledKuduModule)
                 {
                     info.Version = typeof(SiteExtensionManager).Assembly.GetName().Version.ToString();
                 }
+
+                info.PublishedDateTime = FileSystemHelpers.GetLastWriteTimeUtc(directory);
             }
-            catch (IOException)
+            else
             {
                 info.Version = null;
+                info.PublishedDateTime = null;
             }
 
             info.LocalIsLatestVersion = true;
