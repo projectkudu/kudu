@@ -458,6 +458,7 @@ namespace Kudu.Services.Performance
                 info.Children = SafeGetValue(() => process.GetChildren(_tracer, recursive: false), Enumerable.Empty<Process>()).Select(c => new Uri(selfLink, c.Id.ToString()));
                 info.Threads = SafeGetValue(() => GetThreads(process, selfLink.ToString()), Enumerable.Empty<ProcessThreadInfo>());
                 info.Modules = SafeGetValue(() => GetModules(process, selfLink.ToString().TrimEnd('/') + "/modules"), Enumerable.Empty<ProcessModuleInfo>());
+                info.TimeStamp = DateTime.UtcNow;
             }
 
             return info;

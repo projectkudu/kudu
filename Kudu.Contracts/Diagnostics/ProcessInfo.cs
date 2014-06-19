@@ -95,5 +95,8 @@ namespace Kudu.Core.Diagnostics
 
         [DataMember(Name = "peak_paged_memory", EmitDefaultValue = false)]
         public Int64 PeakPagedMemorySize64 { get; set; }
+
+        [DataMember(Name = "time_stamp", EmitDefaultValue = false)]
+        public DateTime TimeStamp { get; set; }
     }
 }
