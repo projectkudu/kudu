@@ -199,7 +199,7 @@ namespace Kudu.Core.Infrastructure
             return Instance.Directory.GetFileSystemEntries(path);
         }
 
-        public static IEnumerable<string> GetDirectories(string path)
+        public static string[] GetDirectories(string path)
         {
             return Instance.Directory.GetDirectories(path);
         }

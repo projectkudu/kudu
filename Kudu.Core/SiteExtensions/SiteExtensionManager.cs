@@ -356,15 +356,7 @@ namespace Kudu.Core.SiteExtensions
 
         private static string CreateDefaultXdtFile(string relativeUrl, bool isPreInstalled)
         {
-            // Hack - will be reverted.
-            string physicalPath = "%XDT_EXTENSIONPATH%"; // "%XDT_LATEST_EXTENSIONPATH%"
-            if (isPreInstalled && relativeUrl == "/Dev")
-            {
-                string id = "Monaco";
-                string directory = GetPreInstalledDirectory(id);
-                string version = GetPreInstalledLatestVersion(directory);
-                physicalPath = Path.Combine(directory, version);
-            }
+            string physicalPath = isPreInstalled ? "%XDT_LATEST_EXTENSIONPATH%" : "%XDT_EXTENSIONPATH%";
             return String.Format("<?xml version=\"1.0\" encoding=\"utf-8\"" + @"?>
 <configuration " + "xmlns:xdt=\"http://schemas.microsoft.com/XML-Document-Transform\"" + @">
     <system.applicationHost>
@@ -504,24 +496,29 @@ namespace Kudu.Core.SiteExtensions
         {
             if (!FileSystemHelpers.DirectoryExists(directory))
             {
-                return String.Empty;
+                return null;
             }
 
-            IEnumerable<string> pathStrings = FileSystemHelpers.GetDirectories(directory);
-            
+            string[] pathStrings = FileSystemHelpers.GetDirectories(directory);
+
+            if (pathStrings.IsEmpty())
+            {
+                return null;
+            }
+
             return pathStrings.Max(path =>
             {
                 string versionString = FileSystemHelpers.DirectoryInfoFromDirectoryName(path).Name;
                 SemanticVersion semVer;
                 if (SemanticVersion.TryParse(versionString, out semVer))
                 {
-                    return semVer.ToString();
+                    return semVer;
                 }
                 else
                 {
-                    return String.Empty;
+                    return new SemanticVersion(0, 0, 0, 0);
                 }
-            });
+            }).ToString();
         }
 
         private string GetFullUrl(string url)
