@@ -11,7 +11,7 @@
 <div id="main" class="container">
     <div class="view main-view" data-bind="visible: !fileEdit()">
         <div id="fileList">
-            <div id="operations" class="h3">
+            <div id="operations" class="h3" style="position: relative">
                 <span data-bind="visible: selected().parent">
                     <a href="#" data-bind="click: selected().selectParent, attr: { title: selected().parent && ('Up to ' + selected().parent.name()) }">...</a> /
                 </span>
