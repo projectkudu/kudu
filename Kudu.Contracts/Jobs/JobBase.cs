@@ -1,38 +1,41 @@
 ﻿using System;
-using System.Runtime.Serialization;
+using Newtonsoft.Json;
 
 namespace Kudu.Contracts.Jobs
 {
-    [DataContract]
     public abstract class JobBase
     {
-        [DataMember(Name = "name")]
+        [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
 
-        [DataMember(Name = "run_command")]
+        [JsonProperty(PropertyName = "run_command")]
         public string RunCommand { get; set; }
 
-        [DataMember(Name = "url")]
+        [JsonProperty(PropertyName = "url")]
         public Uri Url { get; set; }
 
-        [DataMember(Name = "extra_info_url")]
+        [JsonProperty(PropertyName = "extra_info_url")]
         public Uri ExtraInfoUrl { get; set; }
 
-        [DataMember(Name = "type")]
+        [JsonProperty(PropertyName = "type")]
         public string JobType { get; set; }
 
-        [DataMember(Name = "error")]
+        [JsonProperty(PropertyName = "error")]
         public string Error { get; set; }
 
-        [DataMember(Name = "using_sdk")]
+        [JsonProperty(PropertyName = "using_sdk")]
         public bool UsingSdk { get; set; }
 
+        [JsonIgnore]
         public IScriptHost ScriptHost { get; set; }
 
+        [JsonIgnore]
         public string ScriptFilePath { get; set; }
 
+        [JsonIgnore]
         public string JobBinariesRootPath { get; set; }
 
+        [JsonIgnore]
         public string CommandArguments { get; set; }
 
         public override int GetHashCode()

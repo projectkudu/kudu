@@ -1,68 +1,67 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Runtime.Serialization;
+using Newtonsoft.Json;
 
 namespace Kudu.Core.Deployment
 {
     [DebuggerDisplay("{Id} {Status}")]
-    [DataContract]
     public class DeployResult
     {
-        [DataMember(Name = "id")]
+        [JsonProperty(PropertyName = "id")]
         public string Id { get; set; }
 
-        [DataMember(Name = "status")]
+        [JsonProperty(PropertyName = "status")]
         public DeployStatus Status { get; set; }
 
-        [DataMember(Name = "status_text")]
+        [JsonProperty(PropertyName = "status_text")]
         public string StatusText { get; set; }
 
-        [DataMember(Name = "author_email")]
+        [JsonProperty(PropertyName = "author_email")]
         public string AuthorEmail { get; set; }
 
-        [DataMember(Name = "author")]
+        [JsonProperty(PropertyName = "author")]
         public string Author { get; set; }
 
-        [DataMember(Name = "deployer")]
+        [JsonProperty(PropertyName = "deployer")]
         public string Deployer { get; set; }
 
-        [DataMember(Name = "message")]
+        [JsonProperty(PropertyName = "message")]
         public string Message { get; set; }
 
-        [DataMember(Name = "progress")]
+        [JsonProperty(PropertyName = "progress")]
         public string Progress { get; set; }
 
-        [DataMember(Name = "received_time")]
+        [JsonProperty(PropertyName = "received_time")]
         public DateTime ReceivedTime { get; set; }
 
-        [DataMember(Name = "start_time")]
+        [JsonProperty(PropertyName = "start_time")]
         public DateTime StartTime { get; set; }
 
-        [DataMember(Name = "end_time")]
+        [JsonProperty(PropertyName = "end_time")]
         public DateTime? EndTime { get; set; }
 
-        [DataMember(Name = "last_success_end_time")]
+        [JsonProperty(PropertyName = "last_success_end_time")]
         public DateTime? LastSuccessEndTime { get; set; }
 
-        [DataMember(Name = "complete")]
+        [JsonProperty(PropertyName = "complete")]
         public bool Complete { get; set; }
 
-        [DataMember(Name = "active")]
+        [JsonProperty(PropertyName = "active")]
         public bool Current { get; set; }
 
-        [DataMember(Name = "is_temp")]
+        [JsonProperty(PropertyName = "is_temp")]
         public bool IsTemporary { get; set; }
 
-        [DataMember(Name = "is_readonly")]
+        [JsonProperty(PropertyName = "is_readonly")]
         public bool IsReadOnly { get; set; }
 
-        [DataMember(Name = "url")]
+        [JsonProperty(PropertyName = "url")]
         public Uri Url { get; set; }
 
-        [DataMember(Name = "log_url")]
+        [JsonProperty(PropertyName = "log_url")]
         public Uri LogUrl { get; set; }
 
-        [DataMember(Name = "site_name")]
+        [JsonProperty(PropertyName = "site_name")]
         public string SiteName { get; set; }
     }
 }

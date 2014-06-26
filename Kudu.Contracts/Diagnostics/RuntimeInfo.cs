@@ -1,12 +1,11 @@
 ﻿using System.Collections.Generic;
-using System.Runtime.Serialization;
+using Newtonsoft.Json;
 
 namespace Kudu.Services.Diagnostics
 {
-    [DataContract(Name = "runtime")]
     public class RuntimeInfo
     {
-        [DataMember(Name = "nodejs")]
+        [JsonProperty(PropertyName = "nodejs")]
         public IEnumerable<Dictionary<string, string>> NodeVersions { get; set; }
     }
 }

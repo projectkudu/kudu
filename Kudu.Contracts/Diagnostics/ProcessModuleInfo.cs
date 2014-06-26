@@ -1,43 +1,43 @@
 ﻿using System;
-using System.Runtime.Serialization;
+using Newtonsoft.Json;
 
 
 namespace Kudu.Core.Diagnostics
 {
-    [DataContract(Name = "processmodule")]
+    [JsonObject()]
     public class ProcessModuleInfo
     {
-        [DataMember(Name = "base_address")]
+        [JsonProperty(PropertyName = "base_address")]
         public string BaseAddress { get; set; }
 
-        [DataMember(Name = "file_name")]
+        [JsonProperty(PropertyName = "file_name")]
         public string FileName { get; set; }
 
-        [DataMember(Name = "href", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "href", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Uri Href { get; set; }
 
-        [DataMember(Name = "file_path", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "file_path", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string FilePath { get; set; }
 
-        [DataMember(Name = "module_memory_size", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "module_memory_size", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public int ModuleMemorySize { get; set; }
 
-        [DataMember(Name = "file_version")]
+        [JsonProperty(PropertyName = "file_version")]
         public string FileVersion { get; set; }
 
-        [DataMember(Name = "file_description", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "file_description", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string FileDescription { get; set; }
 
-        [DataMember(Name = "product", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "product", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string Product { get; set; }
 
-        [DataMember(Name = "product_version", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "product_version", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string ProductVersion { get; set; }
 
-        [DataMember(Name = "is_debug", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "is_debug", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool? IsDebug { get; set; }
 
-        [DataMember(Name = "language", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "language", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string Language { get; set; }
     }
 }

@@ -1,26 +1,21 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace Kudu.Contracts.Diagnostics
 {
-    [DataContract]
     public class ApplicationLogEntry
     {
-        [DataMember(Name = "timestamp")]
+        [JsonProperty(PropertyName = "timestamp")]
         public DateTimeOffset TimeStamp { get; set; }
 
-        [DataMember(Name = "level")]
+        [JsonProperty(PropertyName = "level")]
         public string Level { get; set; }
 
-        [DataMember(Name = "pid")]
+        [JsonProperty(PropertyName = "pid")]
         public int PID { get; set; }
 
-        [DataMember(Name = "message")]
+        [JsonProperty(PropertyName = "message")]
         public string Message { get; set; }
 
         public ApplicationLogEntry()

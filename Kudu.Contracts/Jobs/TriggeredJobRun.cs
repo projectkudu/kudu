@@ -1,24 +1,23 @@
 ﻿using System;
-using System.Runtime.Serialization;
+using Newtonsoft.Json;
 
 namespace Kudu.Contracts.Jobs
 {
-    [DataContract]
     public class TriggeredJobRun
     {
-        [DataMember(Name = "id")]
+        [JsonProperty(PropertyName = "id")]
         public string Id { get; set; }
 
-        [DataMember(Name = "status")]
+        [JsonProperty(PropertyName = "status")]
         public string Status { get; set; }
 
-        [DataMember(Name = "start_time")]
+        [JsonProperty(PropertyName = "start_time")]
         public DateTime StartTime { get; set; }
 
-        [DataMember(Name = "end_time")]
+        [JsonProperty(PropertyName = "end_time")]
         public DateTime EndTime { get; set; }
 
-        [DataMember(Name = "duration")]
+        [JsonProperty(PropertyName = "duration")]
         public string Duration
         {
             get
@@ -34,16 +33,16 @@ namespace Kudu.Contracts.Jobs
             }
         }
 
-        [DataMember(Name = "output_url")]
+        [JsonProperty(PropertyName = "output_url")]
         public Uri OutputUrl { get; set; }
 
-        [DataMember(Name = "error_url")]
+        [JsonProperty(PropertyName = "error_url")]
         public Uri ErrorUrl { get; set; }
 
-        [DataMember(Name = "url")]
+        [JsonProperty(PropertyName = "url")]
         public Uri Url { get; set; }
 
-        [DataMember(Name = "job_name")]
+        [JsonProperty(PropertyName = "job_name")]
         public string JobName { get; set; }
 
         public override int GetHashCode()

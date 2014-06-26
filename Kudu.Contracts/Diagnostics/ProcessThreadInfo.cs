@@ -1,50 +1,47 @@
 ﻿﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Runtime.Serialization;
+using Newtonsoft.Json;
 
 namespace Kudu.Core.Diagnostics
 {
-    [DataContract(Name = "processthread")]
     public class ProcessThreadInfo
     {
-        [DataMember(Name = "id")]
+        [JsonProperty(PropertyName = "id")]
         public int Id { get; set; }
 
-        [DataMember(Name = "href", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "href", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Uri Href { get; set; }
 
-        [DataMember(Name = "process", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "process", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Uri Process { get; set; }
 
-        [DataMember(Name = "start_address", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "start_address", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string StartAddress { get; set; }
 
-        [DataMember(Name = "current_priority", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "current_priority", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public int CurrentPriority { get; set; }
 
-        [DataMember(Name = "priority_level", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "priority_level", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string PriorityLevel { get; set; }
 
-        [DataMember(Name = "base_priority", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "base_priority", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public int BasePriority { get; set; }
 
-        [DataMember(Name = "start_time", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "start_time", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public DateTime StartTime { get; set; }
 
-        [DataMember(Name = "total_processor_time", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "total_processor_time", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public TimeSpan TotalProcessorTime { get; set; }
 
-        [DataMember(Name = "user_processor_time", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "user_processor_time", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public TimeSpan UserProcessorTime { get; set; }
 
-        [DataMember(Name = "priviledged_processor_time", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "priviledged_processor_time", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public TimeSpan PriviledgedProcessorTime { get; set; }
 
-        [DataMember(Name = "state", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "state", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string State { get; set; }
 
-        [DataMember(Name = "wait_reason", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "wait_reason", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string WaitReason { get; set; }
     }
 }

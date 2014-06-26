@@ -11,7 +11,6 @@ namespace Kudu.Contracts.Settings
     /// This class hold the diagnostics settings which consists of 6 required properties (with default values)
     /// and can also hold other arbitrary settings.
     /// </summary>
-    [DataContract]
     public class DiagnosticsSettings
     {
         // Holds the required settings
