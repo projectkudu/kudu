@@ -1,26 +1,26 @@
 ﻿using System;
-using System.Runtime.Serialization;
+using Newtonsoft.Json;
 
 namespace Kudu.Core.Deployment
 {
-    [DataContract]
     public class LogEntry
     {
-        [DataMember(Name = "log_time")]
+        [JsonProperty(PropertyName = "log_time")]
         public DateTime LogTime { get; set; }
 
-        [DataMember(Name = "id")]
+        [JsonProperty(PropertyName = "id")]
         public string Id { get; set; }
 
-        [DataMember(Name = "message")]
+        [JsonProperty(PropertyName = "message")]
         public string Message { get; set; }
 
-        [DataMember(Name = "type")]
+        [JsonProperty(PropertyName = "type")]
         public LogEntryType Type { get; set; }
 
-        [DataMember(Name = "details_url")]
+        [JsonProperty(PropertyName = "details_url")]
         public Uri DetailsUrl { get; set; }
 
+        [JsonIgnore]
         public bool HasDetails { get; set; }
 
         public LogEntry()

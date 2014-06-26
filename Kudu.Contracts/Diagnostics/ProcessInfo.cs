@@ -1,102 +1,101 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.Serialization;
+using Newtonsoft.Json;
 
 namespace Kudu.Core.Diagnostics
 {
     [DebuggerDisplay("{Id} {Name}")]
-    [DataContract(Name = "process")]
     public class ProcessInfo
     {
-        [DataMember(Name = "id")]
+        [JsonProperty(PropertyName = "id")]
         public int Id { get; set; }
 
-        [DataMember(Name = "name")]
+        [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
 
-        [DataMember(Name = "href", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "href", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Uri Href { get; set; }
 
-        [DataMember(Name = "minidump", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "minidump", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Uri MiniDump { get; set; }
 
-        [DataMember(Name = "gcdump", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "gcdump", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Uri GCDump { get; set; }
 
-        [DataMember(Name = "parent", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "parent", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Uri Parent { get; set; }
 
-        [DataMember(Name = "children", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "children", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public IEnumerable<Uri> Children { get; set; }
 
-        [DataMember(Name = "threads", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "threads", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public IEnumerable<ProcessThreadInfo> Threads { get; set; }
 
-        [DataMember(Name = "open_file_handles", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "open_file_handles", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public IEnumerable<string> OpenFileHandles { get; set; }
 
-        [DataMember(Name = "modules", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "modules", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public IEnumerable<ProcessModuleInfo> Modules { get; set; }
 
-        [DataMember(Name = "file_name", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "file_name", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string FileName { get; set; }
 
-        //[DataMember(Name = "arguments", EmitDefaultValue = false)]
+        //[JsonProperty(PropertyName = "arguments", DefaultValueHandling = DefaultValueHandling.Ignore)]
         //public string Arguments { get; set; }
 
-        //[DataMember(Name = "username", EmitDefaultValue = false)]
+        //[JsonProperty(PropertyName = "username", DefaultValueHandling = DefaultValueHandling.Ignore)]
         //public string UserName { get; set; }
 
-        [DataMember(Name = "handle_count", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "handle_count", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public int HandleCount { get; set; }
 
-        [DataMember(Name = "module_count", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "module_count", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public int ModuleCount { get; set; }
 
-        [DataMember(Name = "thread_count", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "thread_count", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public int ThreadCount { get; set; }
 
-        [DataMember(Name = "start_time", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "start_time", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public DateTime StartTime { get; set; }
 
-        [DataMember(Name = "total_cpu_time", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "total_cpu_time", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public TimeSpan TotalProcessorTime { get; set; }
 
-        [DataMember(Name = "user_cpu_time", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "user_cpu_time", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public TimeSpan UserProcessorTime { get; set; }
 
-        [DataMember(Name = "privileged_cpu_time", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "privileged_cpu_time", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public TimeSpan PrivilegedProcessorTime { get; set; }
 
-        [DataMember(Name = "working_set", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "working_set", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Int64 WorkingSet64 { get; set; }
 
-        [DataMember(Name = "peak_working_set", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "peak_working_set", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Int64 PeakWorkingSet64 { get; set; }
 
-        [DataMember(Name = "private_memory", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "private_memory", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Int64 PrivateMemorySize64 { get; set; }
 
-        [DataMember(Name = "virtual_memory", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "virtual_memory", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Int64 VirtualMemorySize64 { get; set; }
 
-        [DataMember(Name = "peak_virtual_memory", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "peak_virtual_memory", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Int64 PeakVirtualMemorySize64 { get; set; }
 
-        [DataMember(Name = "paged_system_memory", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "paged_system_memory", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Int64 PagedSystemMemorySize64 { get; set; }
 
-        [DataMember(Name = "non_paged_system_memory", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "non_paged_system_memory", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Int64 NonpagedSystemMemorySize64 { get; set; }
 
-        [DataMember(Name = "paged_memory", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "paged_memory", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Int64 PagedMemorySize64 { get; set; }
 
-        [DataMember(Name = "peak_paged_memory", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "peak_paged_memory", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Int64 PeakPagedMemorySize64 { get; set; }
 
-        [DataMember(Name = "time_stamp", EmitDefaultValue = false)]
+        [JsonProperty(PropertyName = "time_stamp", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public DateTime TimeStamp { get; set; }
     }
 }

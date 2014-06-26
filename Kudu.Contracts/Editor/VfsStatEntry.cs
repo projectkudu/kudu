@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Runtime.Serialization;
+using Newtonsoft.Json;
 
 namespace Kudu.Contracts.Editor
 {
@@ -7,25 +7,24 @@ namespace Kudu.Contracts.Editor
     /// Represents a directory structure. Used by <see cref="VfsControllerBase"/> to browse
     /// a Kudu file system or the git repository.
     /// </summary>
-    [DataContract]
     public class VfsStatEntry
     {
-        [DataMember(Name = "name")]
+        [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
 
-        [DataMember(Name = "size")]
+        [JsonProperty(PropertyName = "size")]
         public long Size { get; set; }
 
-        [DataMember(Name = "mtime")]
+        [JsonProperty(PropertyName = "mtime")]
         public DateTimeOffset MTime { get; set; }
 
-        [DataMember(Name = "mime")]
+        [JsonProperty(PropertyName = "mime")]
         public string Mime { get; set; }
 
-        [DataMember(Name = "href")]
+        [JsonProperty(PropertyName = "href")]
         public string Href { get; set; }
 
-        [DataMember(Name = "path")]
+        [JsonProperty(PropertyName = "path")]
         public string Path { get; set; }
     }
 }
