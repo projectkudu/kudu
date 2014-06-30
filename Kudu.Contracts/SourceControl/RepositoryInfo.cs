@@ -5,10 +5,12 @@ namespace Kudu.Core.SourceControl
 {
     public class RepositoryInfo
     {
-        [JsonProperty(PropertyName = "repository_type")]
+        // Omitting the JsonProperty's to avoid a breaking change. We previously had [DataMember] attribs
+        // but they were not working because there was no [DataContract] on the class
+        //[JsonProperty(PropertyName = "repository_type")]
         public RepositoryType Type { get; set; }
 
-        [JsonProperty(PropertyName = "git_url")]
+        //[JsonProperty(PropertyName = "git_url")]
         public Uri GitUrl { get; set; }
     }
 }
