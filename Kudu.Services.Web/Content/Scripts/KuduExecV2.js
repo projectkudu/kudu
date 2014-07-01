@@ -70,7 +70,7 @@ function LoadConsoleV2() {
                 } else {
                     lastLine.Output = lastUserInput;
                 }
-                _sendCommand(line);
+                _sendCommand(lastUserInput);
                 controller.resetHistory();
                 DisplayAndUpdate(lastLine);
                 lastLine = {

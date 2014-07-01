@@ -52,7 +52,7 @@ namespace Kudu.Core.Test
             var settings = new Mock<IDeploymentSettingsManager>();
             var process = new Mock<IProcess>();
             var connectionId = Guid.NewGuid().ToString();
-            var data = Guid.NewGuid().ToString();
+            var data = Guid.NewGuid().ToString() + "\n";
             var mem = new MemoryStream();
 
             using (var controller = new PersistentCommandTest(env.Object, settings.Object, tracer.Object, process.Object))
@@ -78,8 +78,8 @@ namespace Kudu.Core.Test
 
                     mem.Position = 0;
                     var result = new StreamReader(mem).ReadToEnd();
-                    Assert.True(result.EndsWith("\r\n"));
-                    Assert.Equal(data, result.Substring(0, result.Length - 2));
+                    Assert.True(result.EndsWith("\n"));
+                    Assert.Equal(data, result);
                 }
                 else
                 {
