@@ -117,8 +117,13 @@ namespace Kudu.Core.SSHKey.Test
             var directory = new Mock<DirectoryBase>();
             directory.Setup(d => d.Exists(sshPath)).Returns(true);
             var fileSystem = new Mock<IFileSystem>();
+            var fileInfoFactory = new Mock<IFileInfoFactory>();
+            var fileInfo = new Mock<FileInfoBase>();
             fileSystem.SetupGet(f => f.File).Returns(fileBase.Object);
+            fileSystem.SetupGet(fs => fs.FileInfo).Returns(fileInfoFactory.Object);
             fileSystem.SetupGet(f => f.Directory).Returns(directory.Object);
+            fileInfoFactory.Setup(f => f.FromFileName(sshPath + @"\id_rsa.pub")).Returns(() => fileInfo.Object);
+            fileInfo.Setup(f => f.Exists).Returns(true);
             FileSystemHelpers.Instance = fileSystem.Object;
 
             var environment = new Mock<IEnvironment>();
@@ -132,7 +137,7 @@ namespace Kudu.Core.SSHKey.Test
 
             // Assert
             fileBase.Verify(s => s.WriteAllText(sshPath + @"\id_rsa", It.IsAny<string>()), Times.Exactly(2));
-            fileBase.Verify(s => s.Delete(sshPath + @"\id_rsa.pub"), Times.Exactly(1));
+            fileInfo.Verify(f => f.Delete());
         }
 
         [Theory]

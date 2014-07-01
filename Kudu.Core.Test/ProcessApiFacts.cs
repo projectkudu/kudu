@@ -26,14 +26,22 @@ namespace Kudu.Core.Test
             var path = @"x:\temp\minidump.dmp";
             var fileSystem = new Mock<IFileSystem>();
             var file = new Mock<FileBase>();
+            var fileInfoFactory = new Mock<IFileInfoFactory>();
+            var fileInfo = new Mock<FileInfoBase>();
 
             // Setup
             fileSystem.SetupGet(fs => fs.File)
                       .Returns(file.Object);
+            fileSystem.SetupGet(fs => fs.FileInfo)
+                      .Returns(fileInfoFactory.Object);
             file.Setup(f => f.Exists(path))
                       .Returns(true);
             file.Setup(f => f.OpenRead(path))
                       .Returns(() => new MemoryStream());
+            fileInfoFactory.Setup(f => f.FromFileName(path))
+                           .Returns(() => fileInfo.Object);
+            fileInfo.Setup(f => f.Exists)
+                    .Returns(true);
             FileSystemHelpers.Instance = fileSystem.Object;
 
             // Test
@@ -42,7 +50,7 @@ namespace Kudu.Core.Test
             }
 
             // Assert
-            file.Verify(f => f.Delete(path), Times.Once());
+            fileInfo.Verify(f => f.Delete(), Times.Once());
         }
 
         [Fact]
@@ -52,14 +60,22 @@ namespace Kudu.Core.Test
             var path = @"x:\temp\minidump.dmp";
             var fileSystem = new Mock<IFileSystem>();
             var file = new Mock<FileBase>();
+            var fileInfoFactory = new Mock<IFileInfoFactory>();
+            var fileInfo = new Mock<FileInfoBase>();
 
             // Setup
             fileSystem.SetupGet(fs => fs.File)
                       .Returns(file.Object);
+            fileSystem.SetupGet(fs => fs.FileInfo)
+                      .Returns(fileInfoFactory.Object);
             file.Setup(f => f.Exists(path))
                       .Returns(true);
             file.Setup(f => f.OpenRead(path))
                       .Returns(() => new MemoryStream());
+            fileInfoFactory.Setup(f => f.FromFileName(path))
+                           .Returns(() => fileInfo.Object);
+            fileInfo.Setup(f => f.Exists)
+                    .Returns(true);
             FileSystemHelpers.Instance = fileSystem.Object;
 
             // Test
@@ -67,7 +83,7 @@ namespace Kudu.Core.Test
             stream.Close();
 
             // Assert
-            file.Verify(f => f.Delete(path), Times.Once());
+            fileInfo.Verify(f => f.Delete(), Times.Once());
         }
 
         [Fact]

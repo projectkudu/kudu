@@ -233,20 +233,10 @@ namespace Kudu.Core.Infrastructure
             Instance.File.Delete(path);
         }
 
-        public static bool DeleteFileSafe(string path)
+        public static void DeleteFileSafe(string path)
         {
-            try
-            {
-                if (FileExists(path))
-                {
-                    DeleteFile(path);
-                    return true;
-                }
-            }
-            catch (UnauthorizedAccessException) { }
-            catch (FileNotFoundException) { }
-
-            return false;
+            var info = Instance.FileInfo.FromFileName(path);
+            DeleteFileSystemInfo(info, ignoreErrors: true);
         }
 
         public static void DeleteDirectorySafe(string path, bool ignoreErrors = true)
