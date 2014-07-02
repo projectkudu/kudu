@@ -14,7 +14,7 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/Bakery.git",                        "2f29dc6"),
             new TestRepositoryInfo("https://github.com/KuduApps/BasicConsoleWorker.git",            "ce1ec74"),
             new TestRepositoryInfo("https://github.com/KuduApps/ConditionalCompilation.git",        "a104578"),
-            new TestRepositoryInfo("https://github.com/KuduApps/ConsoleWorker.git",                 "b21f597"),
+            new TestRepositoryInfo("https://github.com/KuduApps/ConsoleWorker.git",                 "a2c2bc7"),
             new TestRepositoryInfo("https://github.com/KuduApps/CustomBuildScript.git",             "2c156bd"),
             new TestRepositoryInfo("https://github.com/KuduApps/CustomDeploymentSettingsTest.git",  "bc0ce04"),
             new TestRepositoryInfo("https://github.com/KuduApps/Dev11_Net45_Mvc4_WebAPI.git",       "bb9e6b4"),

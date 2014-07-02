@@ -9,7 +9,7 @@ namespace Kudu.Contracts.Jobs
         {
             object value;
 
-            if (TryGetValue(key, out value))
+            if (TryGetValue(key, out value) && value is T)
             {
                 return (T)value;
             }
@@ -30,7 +30,7 @@ namespace Kudu.Contracts.Jobs
             }
         }
 
-        public TimeSpan GetStoppingWaitTime(int defaultTime)
+        public TimeSpan GetStoppingWaitTime(long defaultTime)
         {
             return TimeSpan.FromSeconds(GetSetting(JobSettingsKeys.StoppingWaitTime, defaultTime));
         }
