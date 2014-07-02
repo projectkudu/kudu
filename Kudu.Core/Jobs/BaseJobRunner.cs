@@ -282,6 +282,7 @@ namespace Kudu.Core.Jobs
         protected virtual string RefreshShutdownNotificationFilePath(string jobName, string jobsTypePath)
         {
             string shutdownFilesDirectory = Path.Combine(Environment.TempPath, "JobsShutdown", jobsTypePath, jobName);
+            FileSystemHelpers.EnsureDirectory(shutdownFilesDirectory);
             FileSystemHelpers.DeleteDirectoryContentsSafe(shutdownFilesDirectory, ignoreErrors: true);
             return Path.Combine(shutdownFilesDirectory, Path.GetRandomFileName());
         }
