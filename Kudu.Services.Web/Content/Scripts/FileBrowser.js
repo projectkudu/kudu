@@ -1,4 +1,4 @@
-﻿$.connection.hub.url = "/filesystemhub";
+﻿$.connection.hub.url = "/api/filesystemhub";
 var fileSystemHub = $.connection.fileSystemHub;
 fileSystemHub.client.fileExplorerChanged = function () {
     window.viewModel.selected().fetchChildren(true);
@@ -191,7 +191,7 @@ $.connection.hub.start().done(function () {
         }
     }
 
-    var root = new node({ name: "/", type: "dir", href: "/vfs/" }),
+    var root = new node({ name: "/", type: "dir", href: "/api/vfs/" }),
         ignoreWorkingDirChange = false,
         workingDirChanging = false,
         viewModel = {

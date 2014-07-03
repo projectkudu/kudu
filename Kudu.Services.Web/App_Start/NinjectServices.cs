@@ -283,8 +283,8 @@ namespace Kudu.Services.Web.App_Start
 
             // Register the default hubs route: ~/signalr
             GlobalHost.DependencyResolver = new SignalRNinjectDependencyResolver(kernel);
-            RouteTable.Routes.MapConnection<PersistentCommandController>("commandstream", "/commandstream");
-            RouteTable.Routes.MapHubs("/filesystemhub", new HubConfiguration());
+            RouteTable.Routes.MapConnection<PersistentCommandController>("commandstream", "/api/commandstream");
+            RouteTable.Routes.MapHubs("/api/filesystemhub", new HubConfiguration());
         }
 
         public class SignalRNinjectDependencyResolver : DefaultDependencyResolver

@@ -147,7 +147,7 @@ function LoadConsoleV2() {
         $("div.jquery-console-inner").css("background-color", "#012456");
     }
 
-    var connection = $.connection('/commandstream', "shell=" + getShell(), true);
+    var connection = $.connection('/api/commandstream', "shell=" + getShell(), true);
     window.$KuduExecConsole.data('connection', connection);
 
     connection.start({
