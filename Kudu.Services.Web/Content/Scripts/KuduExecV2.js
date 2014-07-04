@@ -26,10 +26,10 @@ function LoadConsoleV2() {
         if (getShell().toUpperCase() === "POWERSHELL") {
             //PowerShell doesn't return a new line after CD, so let's add a new line in the UI 
             DisplayAndUpdate({ Error: "", Output: "\n" });
-            _sendCommand("cd \"" + value + "\"");
+            _sendCommand("cd \"" + value + "\"\n");
         } else {
             //CMD can't CD into different drives without /d and it's harmless for normal directories
-            _sendCommand("cd /d \"" + value + "\"");
+            _sendCommand("cd /d \"" + value + "\"\n");
         }
         //the change notification goes both ways (console <--> file explorer)
         //the console uses this flag to break the loop
