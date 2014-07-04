@@ -232,6 +232,13 @@ $.connection.hub.start().done(function () {
         }
     });
 
+    viewModel.showSiteRoot = ko.computed(function () {
+        if ($.isEmptyObject(viewModel.specialDirsIndex())) {
+            return true;
+        }
+        return viewModel.specialDirsIndex()['LocalSiteRoot'] !== undefined;
+    }, viewModel);
+
     root.fetchChildren();
     ko.applyBindings(viewModel, document.getElementById("#main"));
     setupFileSystemWatcher();
