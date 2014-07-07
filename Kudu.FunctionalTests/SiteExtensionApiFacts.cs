@@ -11,6 +11,22 @@ namespace Kudu.FunctionalTests
     [TestHarnessClassCommand]
     public class SiteExtensionApiFacts
     {
+        private static readonly Dictionary<string, string> _galleryInstalledExtensions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) 
+        {
+            {"sitereplicator", "Site"},
+            {"websitelogs", "Log Browser"},
+            {"phpmyadmin", "php"},
+            {"AzureImageOptimizer", "Image Optimizer"},
+            {"AzureMinifier", "Minifier"},
+        };
+
+        private static readonly Dictionary<string, string> _preInstalledExtensions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            {"Monaco", "Visual Studio Online"},
+            {"Kudu", "Kudu"},
+            {"DaaS", "Site Diagnostics"}
+        };
+
         [Fact]
         public async Task SiteExtensionBasicTests()
         {
@@ -25,8 +41,9 @@ namespace Kudu.FunctionalTests
                 Assert.True(results.Any(), "GetRemoteExtensions expects results > 0");
 
                 // get
-                var expected = results.Last();
-                var result = await manager.GetRemoteExtension(expected.Id);
+                var expectedId = _galleryInstalledExtensions.Keys.ToArray()[new Random().Next(_galleryInstalledExtensions.Count)];
+                var expected = results.Find(ext => String.Equals(ext.Id, expectedId, StringComparison.OrdinalIgnoreCase));
+                var result = await manager.GetRemoteExtension(expectedId);
                 Assert.Equal(expected.Id, result.Id);
                 Assert.Equal(expected.Version, result.Version);
 
@@ -74,8 +91,9 @@ namespace Kudu.FunctionalTests
                 Assert.True(results.Any(), "GetRemoteExtensions expects results > 0");
 
                 // get
-                var expected = results.Find(ext => StringComparer.OrdinalIgnoreCase.Equals(ext.Id, "monaco"));
-                var result = await manager.GetRemoteExtension(expected.Id);
+                var expectedId = _preInstalledExtensions.Keys.ToArray()[new Random().Next(_preInstalledExtensions.Count)];
+                var expected = results.Find(ext => String.Equals(ext.Id, expectedId, StringComparison.OrdinalIgnoreCase));
+                var result = await manager.GetRemoteExtension(expectedId);
                 Assert.Equal(expected.Id, result.Id);
                 Assert.Equal(expected.Version, result.Version);
 
