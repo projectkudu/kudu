@@ -25,8 +25,17 @@ namespace Kudu.FunctionalTests
                 Assert.True(results.Any(), "GetRemoteExtensions expects results > 0");
 
                 // get
-                var expected = results.Last();
-                var result = await manager.GetRemoteExtension(expected.Id);
+                var targets = new Dictionary<string, string> 
+                {
+                    {"sitereplicator", "Site"},
+                    {"websitelogs", "Log Browser"},
+                    {"phpmyadmin", "php"},
+                    {"AzureImageOptimizer", "Image Optimizer"},
+                    {"AzureMinifier", "Minifier"},
+                };
+                var expectedId = targets.Keys.ToArray()[new Random().Next(targets.Count)];
+                var expected = results.Find(ext => ext.Id == expectedId);
+                var result = await manager.GetRemoteExtension(expectedId);
                 Assert.Equal(expected.Id, result.Id);
                 Assert.Equal(expected.Version, result.Version);
 
@@ -74,8 +83,15 @@ namespace Kudu.FunctionalTests
                 Assert.True(results.Any(), "GetRemoteExtensions expects results > 0");
 
                 // get
-                var expected = results.Find(ext => StringComparer.OrdinalIgnoreCase.Equals(ext.Id, "monaco"));
-                var result = await manager.GetRemoteExtension(expected.Id);
+                var targets = new Dictionary<string, string> 
+                {
+                    {"monaco", "Visual Studio Online"},
+                    {"kudu", "Kudu"},
+                    {"daas", "Site Diagnostics"}
+                };
+                var expectedId = targets.Keys.ToArray()[new Random().Next(targets.Count)];
+                var expected = results.Find(ext => ext.Id == expectedId);
+                var result = await manager.GetRemoteExtension(expectedId);
                 Assert.Equal(expected.Id, result.Id);
                 Assert.Equal(expected.Version, result.Version);
 

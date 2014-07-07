@@ -399,25 +399,17 @@ namespace Kudu.Core.SiteExtensions
 
             if (ExtensionRequiresApplicationHost(info))
             {
-                if (FileSystemHelpers.FileExists(Path.Combine(localPath, _applicationHostFile)))
-                {
-                    info.ExtensionUrl = GetFullUrl(GetUrlFromApplicationHost(info));
-                }
-                else
-                {
-                    info.ExtensionUrl = null;
-                }
+                info.ExtensionUrl = FileSystemHelpers.FileExists(Path.Combine(localPath, _applicationHostFile)) 
+                    ? GetFullUrl(GetUrlFromApplicationHost(info)) : null;
+            }
+            else if (String.Equals(info.Id, "Monaco", StringComparison.OrdinalIgnoreCase))
+            {
+                // Monaco does not need ApplicationHost only when it is enabled through app setting 
+                info.ExtensionUrl = GetFullUrl(info.ExtensionUrl);
             }
             else
             {
-                if (!String.IsNullOrEmpty(info.LocalPath))
-                {
-                    info.ExtensionUrl = GetFullUrl(info.ExtensionUrl);
-                }
-                else
-                {
-                    info.ExtensionUrl = null;
-                }
+                info.ExtensionUrl = String.IsNullOrEmpty(info.LocalPath) ? null : GetFullUrl(info.ExtensionUrl);
             }
         }
 
