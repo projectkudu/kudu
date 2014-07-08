@@ -11,8 +11,8 @@ namespace Kudu.Contracts.SiteExtensions
         public enum SiteExtensionType
         {
             Gallery,
-            PreInstalledNonKudu,
-            PreInstalledKuduModule
+            PreInstalledMonaco,
+            PreInstalledEnabled
         }
 
         public SiteExtensionInfo()

@@ -37,7 +37,7 @@ namespace Kudu.Core.SiteExtensions
                 {
                     Id = "Monaco",
                     Title = "Visual Studio Online",
-                    Type = SiteExtensionInfo.SiteExtensionType.PreInstalledNonKudu,
+                    Type = SiteExtensionInfo.SiteExtensionType.PreInstalledMonaco,
                     Authors = new [] {"Microsoft"},
                     IconUrl = "https://www.siteextensions.net/Content/Images/vso50x50.png",
                     LicenseUrl = "http://azure.microsoft.com/en-us/support/legal/",
@@ -53,7 +53,7 @@ namespace Kudu.Core.SiteExtensions
                 {
                     Id = "Kudu",
                     Title = "Site Admin Tools",
-                    Type = SiteExtensionInfo.SiteExtensionType.PreInstalledKuduModule,
+                    Type = SiteExtensionInfo.SiteExtensionType.PreInstalledEnabled,
                     Authors = new [] {"Project Kudu Team"},
                     IconUrl = "https://www.siteextensions.net/Content/Images/kudu50x50.png",
                     LicenseUrl = "https://github.com/projectkudu/kudu/blob/master/LICENSE.txt",
@@ -61,6 +61,22 @@ namespace Kudu.Core.SiteExtensions
                     Description = "Site administration and management tools for your Azure Websites, including a terminal, process viewer and more!",
                     // API will return a full url instead of this relative url.
                     ExtensionUrl = "/"
+                }
+            },
+            {
+                "daas",
+                new SiteExtensionInfo
+                {
+                    Id = "Daas",
+                    Title = "Diagnostics as a Service",
+                    Type = SiteExtensionInfo.SiteExtensionType.PreInstalledEnabled,
+                    Authors = new [] {"Microsoft"},
+                    IconUrl = "https://www.siteextensions.net/Content/Images/DaaS50x50.png",
+                    LicenseUrl = "http://azure.microsoft.com/en-us/support/legal/",
+                    ProjectUrl = "http://azure.microsoft.com/blog/?p=157471",
+                    Description = "Site diagnostic tools, including Event Viewer logs, memory dumps and http logs.",
+                    // API will return a full url instead of this relative url.
+                    ExtensionUrl = "/DaaS"
                 }
             }
         };
@@ -283,7 +299,7 @@ namespace Kudu.Core.SiteExtensions
 
                 if (ExtensionRequiresApplicationHost(info))
                 {
-                    if (info.Type == SiteExtensionInfo.SiteExtensionType.PreInstalledNonKudu)
+                    if (info.Type == SiteExtensionInfo.SiteExtensionType.PreInstalledMonaco)
                     {
                         GenerateApplicationHostXdt(installationDirectory,
                             _preInstalledExtensionDictionary[id].ExtensionUrl, isPreInstalled: true);
@@ -463,7 +479,7 @@ namespace Kudu.Core.SiteExtensions
         {
             string appSettingName = info.Id.ToUpper(CultureInfo.CurrentCulture) + "_EXTENSION_VERSION";
             bool enabledInSetting = ConfigurationManager.AppSettings[appSettingName] == "beta";
-            return !(enabledInSetting || info.Type == SiteExtensionInfo.SiteExtensionType.PreInstalledKuduModule);
+            return !(enabledInSetting || info.Type == SiteExtensionInfo.SiteExtensionType.PreInstalledEnabled);
         }
 
         private static void SetPreInstalledExtensionInfo(SiteExtensionInfo info)
@@ -472,11 +488,11 @@ namespace Kudu.Core.SiteExtensions
 
             if (FileSystemHelpers.DirectoryExists(directory))
             {
-                if (info.Type == SiteExtensionInfo.SiteExtensionType.PreInstalledNonKudu)
+                if (info.Type == SiteExtensionInfo.SiteExtensionType.PreInstalledMonaco)
                 {
                     info.Version = GetPreInstalledLatestVersion(directory);
                 }
-                else if (info.Type == SiteExtensionInfo.SiteExtensionType.PreInstalledKuduModule)
+                else if (info.Type == SiteExtensionInfo.SiteExtensionType.PreInstalledEnabled)
                 {
                     info.Version = typeof(SiteExtensionManager).Assembly.GetName().Version.ToString();
                 }
