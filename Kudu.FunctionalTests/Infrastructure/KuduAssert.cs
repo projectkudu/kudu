@@ -80,14 +80,16 @@ namespace Kudu.FunctionalTests.Infrastructure
             }
         }
 
-        public static void VerifyUrl(string url, string content = null, HttpStatusCode statusCode = HttpStatusCode.OK, string httpMethod = "GET", string jsonPayload = "")
+        public static void VerifyUrl(string url, string content = null, HttpStatusCode statusCode = HttpStatusCode.OK,
+            string httpMethod = "GET", string jsonPayload = "", ICredentials credentials = null)
         {
             VerifyUrlAsync(url, content, statusCode, httpMethod, jsonPayload).Wait();
         }
 
-        public static async Task VerifyUrlAsync(string url, string content = null, HttpStatusCode statusCode = HttpStatusCode.OK, string httpMethod = "GET", string jsonPayload = "")
+        public static async Task VerifyUrlAsync(string url, string content = null, HttpStatusCode statusCode = HttpStatusCode.OK, 
+            string httpMethod = "GET", string jsonPayload = "", ICredentials credentials = null)
         {
-            using (var client = new HttpClient())
+            using (var client = new HttpClient(HttpClientHelper.CreateClientHandler(url, credentials)))
             {
                 client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Kudu-Test", "1.0"));
                 HttpResponseMessage response = null;
