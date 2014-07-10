@@ -13,6 +13,10 @@
             padding-top: 60px;
         }
     </style>
+    <script type="text/javascript">
+        appRoot = "@System.Web.VirtualPathUtility.ToAbsolute("~/")";
+    </script>
+
 </head>
 
 <body>
@@ -25,7 +29,7 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="/">Kudu</a>
+                <a class="navbar-brand" href="~/">Kudu</a>
             </div>
             <div class="collapse navbar-collapse">
                 <ul class="nav navbar-nav">
@@ -33,8 +37,8 @@
                     <li class="dropdown">
                         <a href="#" data-toggle="dropdown" class="dropdown-toggle">Debug console <b class="caret"></b></a>
                         <ul class="dropdown-menu">
-                            <li><a href="/DebugConsole">CMD</a></li>
-                            <li><a href="/DebugConsole/?shell=powershell">PowerShell</a></li>
+                            <li><a href="~/DebugConsole">CMD</a></li>
+                            <li><a href="~/DebugConsole/?shell=powershell">PowerShell</a></li>
                         </ul>
                     </li>
                     <li><a href="~/ProcessExplorer/">Process explorer</a></li>

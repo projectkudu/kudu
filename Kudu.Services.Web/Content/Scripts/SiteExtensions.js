@@ -110,7 +110,7 @@
         data.primaryAction('Wait');
         $.ajax({
             type: "PUT",
-            url: "/api/siteextensions/" + data.id,
+            url: appRoot + "api/siteextensions/" + data.id,
             success: function (result) {
                 result = processExtensions(result);
                 context.$root.addInstalled(result);
@@ -148,7 +148,7 @@
         $(btn).prop("disabled", "disabled");
         $.ajax({
             type: "PUT",
-            url: "/api/siteextensions/" + data.id,
+            url: appRoot + "api/siteextensions/" + data.id,
             success: function (result) {
             },
             error: function (jqXhr, textStatus, errorThrown) {
@@ -164,7 +164,7 @@
         buttonResponse(this, function (completionCallback) {
             $.ajax({
                 type: "DELETE",
-                url: "/diagnostics/processes/0",
+                url: appRoot + "api/diagnostics/processes/0",
                 error: function () {
                     // no op
                 },
@@ -194,7 +194,7 @@
             
             $.ajax({
                 type: "GET",
-                url: "/api/extensionfeed?" + $.param({ "filter": filter }),
+                url: appRoot + "api/extensionfeed?" + $.param({ "filter": filter }),
                 dataType: "json",
                 success: function (data) {
                     data.forEach(processExtensions);
@@ -220,7 +220,7 @@
 
             $.ajax({
                 type: "GET",
-                url: "/api/siteextensions?" + $.param({ "filter": filter }),
+                url: appRoot + "api/siteextensions?" + $.param({ "filter": filter }),
                 dataType: "json",
                 success: function (data) {
                     data.forEach(processExtensions);
@@ -257,7 +257,7 @@
         self.remove = function (extension, completionCallback, successCallback) {
             $.ajax({
                 type: "DELETE",
-                url: "/api/siteextensions/" + extension.id,
+                url: appRoot + "api/siteextensions/" + extension.id,
                 success: successCallback,
                 error: function (jqXhr, textStatus, errorThrown) {
                     displayError(textStatus + ": " + errorThrown);

@@ -676,7 +676,7 @@ function processExplorerSetupAsync() {
     var processTree = new Tree();
     nodeList = [];
     var deferred = [];
-    $.getJSON("/diagnostics/processes", function (data) {
+    $.getJSON(appRoot + "api/diagnostics/processes", function (data) {
         for (var i = 0; i < data.length; i++) {
             deferred.push($.getJSON(data[i].href, function (response) {
                 var p = new Process(response);
