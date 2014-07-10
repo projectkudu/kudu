@@ -245,5 +245,10 @@ namespace Kudu.Core
         {
             get { return _jobsBinariesPath; }
         }
+
+        public static bool IsAzureEnvironment()
+        {
+            return !String.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("WEBSITE_INSTANCE_ID"));
+        }
     }
 }
