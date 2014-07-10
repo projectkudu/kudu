@@ -597,6 +597,8 @@ namespace Kudu.Core.Deployment
                     }
                 }
 
+                PreDeployment(tracer);
+
                 using (tracer.Step("Building"))
                 {
                     try
@@ -628,6 +630,25 @@ namespace Kudu.Core.Deployment
             {
                 // Clean the temp folder up
                 CleanBuild(tracer, buildTempPath);
+            }
+        }
+
+        private void PreDeployment(ITracer tracer)
+        {
+            if (Environment.IsAzureEnvironment() && FileSystemHelpers.DirectoryExists(_environment.SSHKeyPath))
+            {
+                string src = Path.GetFullPath(_environment.SSHKeyPath);
+                string dst = Path.GetFullPath(Path.Combine(System.Environment.GetEnvironmentVariable("USERPROFILE"), Constants.SSHKeyPath));
+
+                if (!String.Equals(src, dst, StringComparison.OrdinalIgnoreCase))
+                {
+                    // copy %HOME%\.ssh to %USERPROFILE%\.ssh key to workaround 
+                    // npm with private ssh git dependency
+                    using (tracer.Step("Copying SSH keys"))
+                    {
+                        FileSystemHelpers.CopyDirectoryRecursive(src, dst, overwrite: true);
+                    }
+                }
             }
         }
 
