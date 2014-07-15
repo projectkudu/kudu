@@ -40,9 +40,12 @@ namespace Kudu.FunctionalTests
                 List<SiteExtensionInfo> results = (await manager.GetRemoteExtensions()).ToList();
                 Assert.True(results.Any(), "GetRemoteExtensions expects results > 0");
 
-                // get
+                // pick site extension
                 var expectedId = _galleryInstalledExtensions.Keys.ToArray()[new Random().Next(_galleryInstalledExtensions.Count)];
                 var expected = results.Find(ext => String.Equals(ext.Id, expectedId, StringComparison.OrdinalIgnoreCase));
+                TestTracer.Trace("Testing Against Site Extension {0}", expectedId);
+
+                // get
                 var result = await manager.GetRemoteExtension(expectedId);
                 Assert.Equal(expected.Id, result.Id);
                 Assert.Equal(expected.Version, result.Version);
@@ -90,9 +93,12 @@ namespace Kudu.FunctionalTests
                 List<SiteExtensionInfo> results = (await manager.GetRemoteExtensions()).ToList();
                 Assert.True(results.Any(), "GetRemoteExtensions expects results > 0");
 
-                // get
+                // pick site extension
                 var expectedId = _preInstalledExtensions.Keys.ToArray()[new Random().Next(_preInstalledExtensions.Count)];
                 var expected = results.Find(ext => String.Equals(ext.Id, expectedId, StringComparison.OrdinalIgnoreCase));
+                TestTracer.Trace("Testing Against Site Extension {0}", expectedId);
+
+                // get
                 var result = await manager.GetRemoteExtension(expectedId);
                 Assert.Equal(expected.Id, result.Id);
                 Assert.Equal(expected.Version, result.Version);
