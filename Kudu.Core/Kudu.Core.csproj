@@ -178,6 +178,7 @@
     <Content Include="Scripts\starter.cmd">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <EmbeddedResource Include="SiteExtensions\applicationHost.xdt.xml" />
     <None Include="packages.config" />
     <Content Include="Scripts\kudusync.cmd">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

@@ -373,19 +373,9 @@ namespace Kudu.Core.SiteExtensions
         private static string CreateDefaultXdtFile(string relativeUrl, bool isPreInstalled)
         {
             string physicalPath = isPreInstalled ? "%XDT_LATEST_EXTENSIONPATH%" : "%XDT_EXTENSIONPATH%";
-            return String.Format("<?xml version=\"1.0\" encoding=\"utf-8\"" + @"?>
-<configuration " + "xmlns:xdt=\"http://schemas.microsoft.com/XML-Document-Transform\"" + @">
-    <system.applicationHost>
-        <sites>
-            <site " + "name=\"%XDT_SCMSITENAME%\" xdt:Locator=\"Match(name)\"" + @" >
-                <application " + "path=\"{0}\" xdt:Locator=\"Match(path)\" xdt:Transform=\"Remove\"" + @"/>
-                <application " + "path=\"{0}\" applicationPool=\"%XDT_APPPOOLNAME%\" xdt:Transform=\"Insert\"" + @">
-                    <virtualDirectory " + "path=\"/\" physicalPath=\"{1}\"" + @"/>
-                </application>
-            </site>
-        </sites>
-    </system.applicationHost>
-</configuration>", relativeUrl, physicalPath);
+            string template = typeof(SiteExtensionManager).Assembly
+                .GetManifestResourceStream("Kudu.Core.SiteExtensions." + _applicationHostFile + ".xml").ReadToEnd();
+            return String.Format(template, relativeUrl, physicalPath);
         }
 
         private void SetLocalInfo(SiteExtensionInfo info)
