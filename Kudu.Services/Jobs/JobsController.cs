@@ -12,6 +12,7 @@ using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Hooks;
 using Kudu.Core.Jobs;
+using Kudu.Core.Tracing;
 
 namespace Kudu.Services.Jobs
 {

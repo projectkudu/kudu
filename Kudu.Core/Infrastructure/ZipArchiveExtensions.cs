@@ -3,6 +3,7 @@ using System.IO;
 using System.IO.Abstractions;
 using System.IO.Compression;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Infrastructure
 {

@@ -14,6 +14,7 @@ using Kudu.Contracts.Editor;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Tracing;
 
 namespace Kudu.Services.Infrastructure
 {

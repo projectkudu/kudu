@@ -15,6 +15,7 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Diagnostics;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Tracing;
 using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.Performance

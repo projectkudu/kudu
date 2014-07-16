@@ -6,6 +6,7 @@ using System.Web.Http;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.SSHKey;
+using Kudu.Core.Tracing;
 using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.SSHKey

@@ -10,6 +10,7 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
+using Kudu.Core.Tracing;
 using Kudu.Services.Diagnostics;
 using Kudu.Services.Infrastructure;
 

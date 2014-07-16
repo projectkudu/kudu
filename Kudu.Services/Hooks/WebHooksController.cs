@@ -6,6 +6,7 @@ using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Hooks;
+using Kudu.Core.Tracing;
 
 namespace Kudu.Services.Hooks
 {

@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Threading;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
+using Kudu.Core.Tracing;
 using Microsoft.AspNet.SignalR;
 using System.Collections.Concurrent;
 using System.IO;

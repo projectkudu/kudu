@@ -13,6 +13,7 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
+using Kudu.Core.Tracing;
 using Kudu.Services.Infrastructure;
 
 using Environment = System.Environment;

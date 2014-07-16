@@ -7,6 +7,7 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Commands;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Tracing;
 using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.Commands

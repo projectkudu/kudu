@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Web.Http;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Tracing;
 
 namespace Kudu.Services.Diagnostics
 {

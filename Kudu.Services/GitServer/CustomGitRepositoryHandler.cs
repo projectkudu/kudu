@@ -7,6 +7,7 @@ using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
+using Kudu.Core.Tracing;
 
 namespace Kudu.Services.GitServer
 {

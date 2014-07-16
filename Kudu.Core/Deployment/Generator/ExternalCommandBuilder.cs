@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Kudu.Contracts.Settings;
-using Kudu.Contracts.Tracing;
+using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Deployment.Generator
 {

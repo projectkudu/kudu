@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Infrastructure
 {

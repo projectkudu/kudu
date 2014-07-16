@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Web.Http.Filters;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Tracing;
 
 namespace Kudu.Services.Web.Tracing
 {

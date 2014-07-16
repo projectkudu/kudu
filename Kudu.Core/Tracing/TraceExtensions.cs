@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Web;
+using Kudu.Contracts.Tracing;
 
-namespace Kudu.Contracts.Tracing
+namespace Kudu.Core.Tracing
 {
     public static class TraceExtensions
     {

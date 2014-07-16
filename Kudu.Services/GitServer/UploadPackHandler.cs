@@ -27,6 +27,7 @@ using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl.Git;
+using Kudu.Core.Tracing;
 
 namespace Kudu.Services.GitServer
 {

@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Web;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Tracing;
 
 namespace Kudu.Services.Performance
 {

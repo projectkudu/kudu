@@ -9,6 +9,7 @@ using Kudu.Contracts.Diagnostics;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Tracing;
 
 namespace Kudu.Services.Diagnostics
 {
