@@ -81,3 +81,13 @@ p em {
 #log li i {
     margin-right: 5px;
 }
+
+button.plain {
+    background: none;
+    border: 0;
+    padding: 0 0 0 0;
+}
+
+a.site-item {
+    vertical-align: middle;
+}
