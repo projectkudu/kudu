@@ -699,6 +699,71 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public async Task PullApiTestGitSimpleFormatWithSpecificCommitId()
+        {
+            await ApplicationManager.RunAsync("GitSimpleFormatWithBranch", async appManager =>
+            {
+                var gitUrl = "https://github.com/KuduApps/HelloKudu2.git";
+
+                await PostDeploymentAndVerifyUrl(appManager, gitUrl + "#58063e4", false, DeployStatus.Success, "<h1>Hello again Kudu</h1>");
+
+                await PostDeploymentAndVerifyUrl(appManager, gitUrl + "#2370e44", false, DeployStatus.Success, "<h1>Hello Kudu</h1>");
+
+                await PostDeploymentAndVerifyUrl(appManager, gitUrl, false, DeployStatus.Success, "<h1>Hello again Kudu</h1>");
+
+                var badRevision = Guid.NewGuid().ToString();
+                var error = await KuduAssert.ThrowsUnwrappedAsync<HttpUnsuccessfulRequestException>(() => PostDeploymentAndVerifyUrl(appManager, gitUrl + "#" + badRevision, false, DeployStatus.Failed));
+                Assert.Equal(HttpStatusCode.InternalServerError, error.ResponseMessage.StatusCode);
+                Assert.Contains("Invalid revision '" + badRevision + "'!", error.ResponseMessage.ExceptionMessage);
+            });
+        }
+
+        [Fact]
+        public async Task PullApiTestHgSimpleFormatWithSpecificCommitId()
+        {
+            await ApplicationManager.RunAsync("HgSimpleFormatWithBranch", async appManager =>
+            {
+                var hgUrl = "https://bitbucket.org/kudutest/hellomercurial";
+
+                await appManager.SettingsManager.SetValue("branch", "default");
+
+                await PostDeploymentAndVerifyUrl(appManager, hgUrl + "#e39d1ff", true, DeployStatus.Success, "Hello mercurial Commit 1", "/Hello.txt");
+
+                await PostDeploymentAndVerifyUrl(appManager, hgUrl + "#478b0d4", true, DeployStatus.Success, "Hello mercurial Commit 2", "/Hello.txt");
+                
+                await PostDeploymentAndVerifyUrl(appManager, hgUrl, true, DeployStatus.Success, "Hello mercurial!", "/Hello.txt");
+
+                var badRevision = Guid.NewGuid().ToString();
+                var error = await KuduAssert.ThrowsUnwrappedAsync<HttpUnsuccessfulRequestException>(() => PostDeploymentAndVerifyUrl(appManager, hgUrl + "#" + badRevision, true, DeployStatus.Failed));
+                Assert.Equal(HttpStatusCode.InternalServerError, error.ResponseMessage.StatusCode);
+                Assert.Contains("Invalid revision '" + badRevision + "'!", error.ResponseMessage.ExceptionMessage);
+            });
+        }
+
+        private async Task PostDeploymentAndVerifyUrl(ApplicationManager appManager, string url, bool isMercurial, DeployStatus status, string content = null, string path = null)
+        {
+            TestTracer.Trace("PostDeploymentAndVerifyUrl: {0}", url);
+
+            var payload = new JObject();
+            payload["url"] = url;
+            payload["format"] = "basic";
+            if (isMercurial)
+            {
+                payload["scm"] = "hg";
+            }
+
+            await DeployPayloadHelperAsync(appManager, client => client.PostAsJsonAsync("deploy", payload));
+            
+            var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
+            Assert.True(results.Count > 0);
+            Assert.Equal(status, results[0].Status);
+            if (!String.IsNullOrEmpty(content))
+            {
+                KuduAssert.VerifyUrl(appManager.SiteUrl + path, content);
+            }
+        }
+
+        [Fact]
         public async Task PullApiTestRepoWithLongPath()
         {
             var payload = new JObject();
