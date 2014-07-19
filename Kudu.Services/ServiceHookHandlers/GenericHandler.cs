@@ -43,12 +43,29 @@ namespace Kudu.Services.ServiceHookHandlers
             }
 
             deploymentInfo = new DeploymentInfo();
-            deploymentInfo.RepositoryUrl = url;
+            SetRepositoryUrl(deploymentInfo, url);
             deploymentInfo.RepositoryType = is_hg ? RepositoryType.Mercurial : RepositoryType.Git;
             deploymentInfo.Deployer = GetDeployerFromUrl(url);
             deploymentInfo.TargetChangeset = DeploymentManager.CreateTemporaryChangeSet(message: "Fetch from " + url);
 
             return DeployAction.ProcessDeployment;
+        }
+
+        public static void SetRepositoryUrl(DeploymentInfo deploymentInfo, string url)
+        {
+            string commitId = null;
+            int index = url.LastIndexOf('#');
+            if (index >= 0)
+            {
+                if (index + 1 < url.Length)
+                {
+                    commitId = url.Substring(index + 1);
+                }
+                url = url.Substring(0, index);
+            }
+
+            deploymentInfo.RepositoryUrl = url;
+            deploymentInfo.CommitId = commitId;
         }
     }
 }

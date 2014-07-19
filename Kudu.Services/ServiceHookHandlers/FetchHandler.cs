@@ -193,14 +193,24 @@ namespace Kudu.Services
                         // set to null as Deploy() below takes over logging
                         innerLogger = null;
 
+                        // The branch or commit id to deploy
+                        string deployBranch = !String.IsNullOrEmpty(deploymentInfo.CommitId) ? deploymentInfo.CommitId : targetBranch;
+
                         // In case the commit or perhaps fetch do no-op.
-                        if (deploymentInfo.TargetChangeset != null && ShouldDeploy(repository, deploymentInfo, targetBranch))
+                        if (deploymentInfo.TargetChangeset != null && ShouldDeploy(repository, deploymentInfo, deployBranch))
                         {
                             // Perform the actual deployment
-                            var changeSet = repository.GetChangeSet(targetBranch);
+                            var changeSet = repository.GetChangeSet(deployBranch);
+
+                            if (changeSet == null && !String.IsNullOrEmpty(deploymentInfo.CommitId))
+                            {
+                                throw new InvalidOperationException(String.Format("Invalid revision '{0}'!", deploymentInfo.CommitId));
+                            }
 
                             // Here, we don't need to update the working files, since we know Fetch left them in the correct state
-                            await _deploymentManager.DeployAsync(repository, changeSet, deploymentInfo.Deployer, clean: false, needFileUpdate: false);
+                            // unless for GenericHandler where specific commitId is specified
+                            bool deploySpecificCommitId = !String.IsNullOrEmpty(deploymentInfo.CommitId);
+                            await _deploymentManager.DeployAsync(repository, changeSet, deploymentInfo.Deployer, clean: false, needFileUpdate: deploySpecificCommitId);
                         }
                     }
                     catch (Exception ex)

@@ -91,6 +91,25 @@ namespace Kudu.Services.Test
         }
 
         [Theory]
+        [InlineData("http://scm1.com/repo", "http://scm1.com/repo", null)]
+        [InlineData("http://scm1.com/repo#", "http://scm1.com/repo", null)]
+        [InlineData("http://scm1.com/repo#1234567", "http://scm1.com/repo", "1234567")]
+        [InlineData("http://###:###@scm1.com/repo# 678 ", "http://###:###@scm1.com/repo", " 678 ")]
+        [InlineData("#", "", null)]
+        [InlineData("## ", "#", " ")]
+        public void GenericHandlerBranchTest(string url, string repoUrl, string commitId)
+        {
+            // Act
+            var deploymentInfo = new DeploymentInfo();
+
+            GenericHandler.SetRepositoryUrl(deploymentInfo, url);
+            
+            // Assert
+            Assert.Equal(repoUrl, deploymentInfo.RepositoryUrl);
+            Assert.Equal(commitId, deploymentInfo.CommitId);
+        }
+
+        [Theory]
         [InlineData("invalid_url")]
         [InlineData("git@scm.com")]
         [InlineData("scm.com:user/repo")]
