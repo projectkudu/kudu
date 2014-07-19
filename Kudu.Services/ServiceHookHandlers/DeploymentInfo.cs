@@ -19,6 +19,11 @@ namespace Kudu.Services.ServiceHookHandlers
         public bool IsContinuous { get; set; }
         public IServiceHookHandler Handler { get; set; }
 
+        // this is only set by GenericHandler
+        // the RepositoryUrl can specify specific commitid to deploy
+        // for instance, http://github.com/kuduapps/hellokudu.git#<commitid>
+        public string CommitId { get; set; }
+
         public bool IsValid()
         {
             return !String.IsNullOrEmpty(Deployer);
