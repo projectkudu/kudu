@@ -4,7 +4,6 @@ using System.IO;
 using System.Threading;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
-using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
@@ -100,6 +99,9 @@ namespace Kudu.Core.Jobs
                             _continuousJobLogger.ReportStatus(ContinuousJobStatus.PendingRestart);
                             WaitForTimeOrStop(webJobsRestartTime);
                         }
+
+                        // Make sure lock is released before re-iterating and trying to get the lock again
+                        ReleaseSingletonLock();
                     }
                 }
                 catch (Exception ex)
