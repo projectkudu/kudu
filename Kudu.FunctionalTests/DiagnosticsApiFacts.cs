@@ -65,13 +65,13 @@ namespace Kudu.FunctionalTests
                 DateTime startTime = process.StartTime;
                 Assert.NotNull(process);
                 Assert.Contains("w3wp", process.Name);
-                Assert.Contains("/diagnostics/processes/" + currentId, process.Href.AbsoluteUri);
+                Assert.Contains("/api/processes/" + currentId, process.Href.AbsoluteUri);
 
                 // Test get process by id
                 process = await appManager.ProcessManager.GetProcessAsync(currentId);
                 Assert.NotNull(process);
                 Assert.Contains("w3wp", process.Name);
-                Assert.Contains("/diagnostics/processes/" + currentId, process.Href.AbsoluteUri);
+                Assert.Contains("/api/processes/" + currentId, process.Href.AbsoluteUri);
 
                 // Test get not running process id
                 var notfound = await KuduAssert.ThrowsUnwrappedAsync<HttpUnsuccessfulRequestException>(() => appManager.ProcessManager.GetProcessAsync(99999));

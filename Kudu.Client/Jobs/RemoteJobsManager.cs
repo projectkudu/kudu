@@ -20,94 +20,94 @@ namespace Kudu.Client.Jobs
 
         public Task<IEnumerable<ContinuousJob>> ListContinuousJobsAsync()
         {
-            return Client.GetJsonAsync<IEnumerable<ContinuousJob>>("continuous");
+            return Client.GetJsonAsync<IEnumerable<ContinuousJob>>("continuouswebjobs");
         }
 
         public Task<IEnumerable<TriggeredJob>> ListTriggeredJobsAsync()
         {
-            return Client.GetJsonAsync<IEnumerable<TriggeredJob>>("triggered");
+            return Client.GetJsonAsync<IEnumerable<TriggeredJob>>("triggeredwebjobs");
         }
 
         public Task<ContinuousJob> GetContinuousJobAsync(string jobName)
         {
-            return Client.GetJsonAsync<ContinuousJob>("continuous/" + jobName);
+            return Client.GetJsonAsync<ContinuousJob>("continuouswebjobs/" + jobName);
         }
 
         public Task<TriggeredJob> GetTriggeredJobAsync(string jobName)
         {
-            return Client.GetJsonAsync<TriggeredJob>("triggered/" + jobName);
+            return Client.GetJsonAsync<TriggeredJob>("triggeredwebjobs/" + jobName);
         }
 
         public Task<TriggeredJobHistory> GetTriggeredJobHistoryAsync(string jobName)
         {
-            return Client.GetJsonAsync<TriggeredJobHistory>("triggered/" + jobName + "/history");
+            return Client.GetJsonAsync<TriggeredJobHistory>("triggeredwebjobs/" + jobName + "/history");
         }
 
         public Task<TriggeredJobRun> GetTriggeredJobRunAsync(string jobName, string runId)
         {
-            return Client.GetJsonAsync<TriggeredJobRun>("triggered/" + jobName + "/history/" + runId);
+            return Client.GetJsonAsync<TriggeredJobRun>("triggeredwebjobs/" + jobName + "/history/" + runId);
         }
 
         public async Task EnableContinuousJobAsync(string jobName)
         {
-            await Client.PostAsync("continuous/" + jobName + "/start");
+            await Client.PostAsync("continuouswebjobs/" + jobName + "/start");
         }
 
         public async Task DisableContinuousJobAsync(string jobName)
         {
-            await Client.PostAsync("continuous/" + jobName + "/stop");
+            await Client.PostAsync("continuouswebjobs/" + jobName + "/stop");
         }
 
         public async Task<JobSettings> GetContinuousJobSettingsAsync(string jobName)
         {
-            return await Client.GetJsonAsync<JobSettings>("continuous/" + jobName + "/settings");
+            return await Client.GetJsonAsync<JobSettings>("continuouswebjobs/" + jobName + "/settings");
         }
 
         public async Task SetContinuousJobSettingsAsync(string jobName, JobSettings jobSettings)
         {
-            await Client.PutJsonAsync<JobSettings, object>("continuous/" + jobName + "/settings", jobSettings);
+            await Client.PutJsonAsync<JobSettings, object>("continuouswebjobs/" + jobName + "/settings", jobSettings);
         }
 
         public async Task InvokeTriggeredJobAsync(string jobName, string arguments = null)
         {
             if (arguments != null)
             {
-                await Client.PostAsync("triggered/" + jobName + "/run?arguments=" + arguments);
+                await Client.PostAsync("triggeredwebjobs/" + jobName + "/run?arguments=" + arguments);
             }
             else
             {
-                await Client.PostAsync("triggered/" + jobName + "/run");
+                await Client.PostAsync("triggeredwebjobs/" + jobName + "/run");
             }
         }
 
         public async Task CreateContinuousJobAsync(string jobName, string scriptFileName, string content = null)
         {
-            await UploadJobScriptFile("continuous/" + jobName, scriptFileName, content);
+            await UploadJobScriptFile("continuouswebjobs/" + jobName, scriptFileName, content);
         }
 
         public async Task CreateTriggeredJobAsync(string jobName, string scriptFileName, string content = null)
         {
-            await UploadJobScriptFile("triggered/" + jobName, scriptFileName, content);
+            await UploadJobScriptFile("triggeredwebjobs/" + jobName, scriptFileName, content);
         }
 
         public async Task DeleteContinuousJobAsync(string jobName)
         {
-            await Client.DeleteSafeAsync("continuous/" + jobName);
+            await Client.DeleteSafeAsync("continuouswebjobs/" + jobName);
         }
 
         public async Task DeleteTriggeredJobAsync(string jobName)
         {
-            await Client.DeleteSafeAsync("triggered/" + jobName);
+            await Client.DeleteSafeAsync("triggeredwebjobs/" + jobName);
         }
 
         public async Task<JobSettings> GetTriggeredJobSettingsAsync(string jobName)
         {
-            return await Client.GetJsonAsync<JobSettings>("triggered/" + jobName + "/settings");
+            return await Client.GetJsonAsync<JobSettings>("triggeredwebjobs/" + jobName + "/settings");
         }
 
         public async Task SetTriggeredJobSettingsAsync(string jobName, JobSettings jobSettings)
         {
-            await Client.PutJsonAsync<JobSettings, object>("triggered/" + jobName + "/settings", jobSettings);
+            await Client.PutJsonAsync<JobSettings, object>("triggeredwebjobs/" + jobName + "/settings", jobSettings);
         }
 
         private async Task UploadJobScriptFile(string urlPath, string filePath, string content = null)

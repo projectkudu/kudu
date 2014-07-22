@@ -40,21 +40,21 @@ namespace Kudu.TestHarness
             SiteUrl = site.SiteUrl;
             ServiceUrl = site.ServiceUrl;
 
-            DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "deployments", credentials);
+            DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "api/deployments", credentials);
             SettingsManager = new RemoteDeploymentSettingsManager(site.ServiceUrl + "settings", credentials);
-            LogStreamManager = new RemoteLogStreamManager(site.ServiceUrl + "logstream", credentials);
-            SSHKeyManager = new RemoteSSHKeyManager(site.ServiceUrl + "sshkey", credentials);
-            VfsManager = new RemoteVfsManager(site.ServiceUrl + "vfs", credentials);
-            VfsWebRootManager = new RemoteVfsManager(site.ServiceUrl + "vfs/site/wwwroot", credentials);
-            LiveScmVfsManager = new RemoteVfsManager(site.ServiceUrl + "scmvfs", credentials);
-            ZipManager = new RemoteZipManager(site.ServiceUrl + "zip", credentials);
-            RuntimeManager = new RemoteRuntimeManager(site.ServiceUrl + "diagnostics/runtime", credentials);
-            CommandExecutor = new RemoteCommandExecutor(site.ServiceUrl + "command", credentials);
-            ProcessManager = new RemoteProcessManager(site.ServiceUrl + "diagnostics/processes", credentials);
-            WebHooksManager = new RemoteWebHooksManager(site.ServiceUrl + "hooks", credentials);
-            RepositoryManager = new RemoteRepositoryManager(site.ServiceUrl + "scm", credentials);
-            JobsManager = new RemoteJobsManager(site.ServiceUrl + "jobs", credentials);
-            LogFilesManager = new RemoteLogFilesManager(site.ServiceUrl + "/api/logs", credentials);
+            LogStreamManager = new RemoteLogStreamManager(site.ServiceUrl + "api/logstream", credentials);
+            SSHKeyManager = new RemoteSSHKeyManager(site.ServiceUrl + "api/sshkey", credentials);
+            VfsManager = new RemoteVfsManager(site.ServiceUrl + "api/vfs", credentials);
+            VfsWebRootManager = new RemoteVfsManager(site.ServiceUrl + "api/vfs/site/wwwroot", credentials);
+            LiveScmVfsManager = new RemoteVfsManager(site.ServiceUrl + "api/scmvfs", credentials);
+            ZipManager = new RemoteZipManager(site.ServiceUrl + "api/zip", credentials);
+            RuntimeManager = new RemoteRuntimeManager(site.ServiceUrl + "api/diagnostics/runtime", credentials);
+            CommandExecutor = new RemoteCommandExecutor(site.ServiceUrl + "api/command", credentials);
+            ProcessManager = new RemoteProcessManager(site.ServiceUrl + "api/processes", credentials);
+            WebHooksManager = new RemoteWebHooksManager(site.ServiceUrl + "api/hooks", credentials);
+            RepositoryManager = new RemoteRepositoryManager(site.ServiceUrl + "api/scm", credentials);
+            JobsManager = new RemoteJobsManager(site.ServiceUrl + "api", credentials);
+            LogFilesManager = new RemoteLogFilesManager(site.ServiceUrl + "api/logs", credentials);
             SiteExtensionManager = new RemoteSiteExtensionManager(site.ServiceUrl + "api", credentials);
 
             var repositoryInfo = RepositoryManager.GetRepositoryInfo().Result;
