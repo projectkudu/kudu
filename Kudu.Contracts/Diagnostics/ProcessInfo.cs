@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using Newtonsoft.Json;
 
@@ -97,5 +98,8 @@ namespace Kudu.Core.Diagnostics
 
         [JsonProperty(PropertyName = "time_stamp", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public DateTime TimeStamp { get; set; }
+
+        [JsonProperty(PropertyName = "environment_variables", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public StringDictionary EnvironmentVariables { get; set; }
     }
 }

@@ -36,7 +36,7 @@ var Utilities = (function () {
                     $(this).dialog("close");
                 }
             }
-        }).css("min-width", 600);
+        }).css("min-width", 600).css("max-width", 1000);
     };
 
     Utilities.makeArrayTable = function (id, headers, objects, attachedData) {
@@ -104,7 +104,7 @@ var Utilities = (function () {
         for (var i = 0; i < tabsHeaders.length; i++) {
             var tab = document.createElement("li");
             var anchor = document.createElement("a");
-            anchor.setAttribute("href", "#" + baseId + "-" + tabsHeaders[i].toLowerCase() + "-tab");
+            anchor.setAttribute("href", "#" + baseId + "-" + tabsHeaders[i].toLowerCase().replace(" ", "-") + "-tab");
             anchor.textContent = tabsHeaders[i];
             tab.appendChild(anchor);
             ul.appendChild(tab);
@@ -202,6 +202,10 @@ var Process = (function () {
         });
         this._json.open_file_handles = Utilities.getArrayFromJson(json.open_file_handles, function (h) {
             return new Handle(h);
+        });
+
+        this._json.environment_variables = Utilities.getArrayFromJson(json.environment_variables, function (e) {
+            return new EnvironmentVariable(e);
         });
     }
     Object.defineProperty(Process.prototype, "Id", {
@@ -327,6 +331,7 @@ var Process = (function () {
         this.getModulesTab().appendTo(div);
         this.getOpenHandlesTab().appendTo(div);
         this.getThreadsTab().appendTo(div);
+        this.getEnvironmentVariablesTab().appendTo(div);
 
         return Utilities.makeDialog($(div).tabs(), 800);
     };
@@ -417,8 +422,17 @@ var Process = (function () {
         return $(div).hide();
     };
 
+    Process.prototype.getEnvironmentVariablesTab = function () {
+        var _this = this;
+        var div = Utilities.createDiv(this._json.id.toString() + "-environment-variables-tab");
+
+        var table = Utilities.makeArrayTable(div.id + "-table", ["Key", "Value"], this._json.environment_variables);
+        div.appendChild(table);
+        return $(div).hide();
+    };
+
     Process.prototype.getProcessDatailsTabsHeaders = function () {
-        return Utilities.createTabs(this._json.id.toString(), ["General", "Modules", "Handles", "Threads"]);
+        return Utilities.createTabs(this._json.id.toString(), ["General", "Modules", "Handles", "Threads", "Environment Variables"]);
     };
 
     Process.prototype.kill = function () {
@@ -565,6 +579,25 @@ var Handle = (function () {
         throw "Not Implemented";
     };
     return Handle;
+})();
+
+var EnvironmentVariable = (function () {
+    function EnvironmentVariable(keyValue) {
+        this.key = keyValue._key;
+        this.value = keyValue._value;
+    }
+    EnvironmentVariable.prototype.dialog = function () {
+        throw "Not Implemented";
+    };
+
+    EnvironmentVariable.prototype.tableCells = function () {
+        return [this.key, this.value];
+    };
+
+    EnvironmentVariable.prototype.updateSelf = function () {
+        throw "Not Implemented";
+    };
+    return EnvironmentVariable;
 })();
 
 var Tree = (function () {
