@@ -169,7 +169,7 @@ namespace Kudu.Core.Jobs
 
             logger.LogInformation("Run script '{0}' with script host - '{1}'".FormatCurrentCulture(scriptFileName, job.ScriptHost.GetType().Name));
 
-            using (var jobStartedReporter = new JobStartedReporter(_analytics, job, Settings.GetWebSitePolicy(), JobDataPath))
+            using (var jobStartedReporter = new JobStartedReporter(_analytics, job, Settings.GetWebSiteSku(), JobDataPath))
             {
                 try
                 {

@@ -162,22 +162,15 @@ namespace Kudu.Contracts.Settings
             return settings.GetValue(SettingsKeys.DisableSubmodules) != "1";
         }
 
-        public static string GetWebSitePolicy(this IDeploymentSettingsManager settings)
+        public static string GetWebSiteSku(this IDeploymentSettingsManager settings)
         {
-            // Azure may flow this as typical env variables
-            string computeModeEnv = Environment.GetEnvironmentVariable(SettingsKeys.WebSiteComputeMode);
-            if (String.IsNullOrEmpty(computeModeEnv))
+            string siteSku = Environment.GetEnvironmentVariable(SettingsKeys.WebSiteSku);
+            if (String.IsNullOrEmpty(siteSku))
             {
-                computeModeEnv = settings.GetValue(SettingsKeys.WebSiteComputeMode);
+                siteSku = settings.GetValue(SettingsKeys.WebSiteSku);
             }
 
-            string siteModeEnv = Environment.GetEnvironmentVariable(SettingsKeys.WebSiteSiteMode);
-            if (String.IsNullOrEmpty(siteModeEnv))
-            {
-                siteModeEnv = settings.GetValue(SettingsKeys.WebSiteSiteMode);
-            }
-
-            return computeModeEnv + '|' + siteModeEnv;
+            return siteSku;
         }
 
         private static TimeSpan GetTimeSpan(IDeploymentSettingsManager settings, string settingsKey, TimeSpan defaultValue)
