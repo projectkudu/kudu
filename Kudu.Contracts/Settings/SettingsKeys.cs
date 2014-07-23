@@ -23,8 +23,8 @@
         public const string TargetPath = "SCM_TARGET_PATH";
         public const string RepositoryPath = "SCM_REPOSITORY_PATH";
         public const string NoRepository = "SCM_NO_REPOSITORY";
-        public const string WebSiteComputeMode = "WEBSITE_COMPUTE_MODE";
-        public const string WebSiteSiteMode = "WEBSITE_SITE_MODE";
+        // Free, Shared, Basic, Standard, Premium
+        public const string WebSiteSku = "WEBSITE_SKU";
         public const string WebJobsRestartTime = "WEBJOBS_RESTART_TIME";
         public const string WebJobsIdleTimeoutInSeconds = "WEBJOBS_IDLE_TIMEOUT";
         public const string WebJobsHistorySize = "WEBJOBS_HISTORY_SIZE";

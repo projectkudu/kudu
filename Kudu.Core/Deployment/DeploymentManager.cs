@@ -845,7 +845,7 @@ namespace Kudu.Core.Deployment
             public DeploymentAnalytics(IAnalytics analytics, IDeploymentSettingsManager settings)
             {
                 _analytics = analytics;
-                _siteMode = settings.GetWebSitePolicy();
+                _siteMode = settings.GetWebSiteSku();
             }
 
             public string ProjectType { get; set; }

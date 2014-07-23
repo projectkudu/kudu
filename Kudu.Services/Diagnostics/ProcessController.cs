@@ -22,7 +22,7 @@ namespace Kudu.Services.Performance
 {
     public class ProcessController : ApiController
     {
-        private const string FreeSitePolicy = "Shared|Limited";
+        private const string FreeSiteSku = "Free";
 
         private readonly ITracer _tracer;
         private readonly IEnvironment _environment;
@@ -152,11 +152,11 @@ namespace Kudu.Services.Performance
                         String.Format(CultureInfo.CurrentCulture, Resources.Error_DumpFormatNotSupported, dumpFormat));
                 }
 
-                string sitePolicy = _settings.GetWebSitePolicy();
-                if ((MINIDUMP_TYPE)dumpType == MINIDUMP_TYPE.WithFullMemory && sitePolicy.Equals(FreeSitePolicy, StringComparison.OrdinalIgnoreCase))
+                string siteSku = _settings.GetWebSiteSku();
+                if ((MINIDUMP_TYPE)dumpType == MINIDUMP_TYPE.WithFullMemory && siteSku.Equals(FreeSiteSku, StringComparison.OrdinalIgnoreCase))
                 {
                     return Request.CreateErrorResponse(HttpStatusCode.InternalServerError,
-                        String.Format(CultureInfo.CurrentCulture, Resources.Error_FullMiniDumpNotSupported, sitePolicy));
+                        String.Format(CultureInfo.CurrentCulture, Resources.Error_FullMiniDumpNotSupported, siteSku));
                 }
 
                 var process = GetProcessById(id);

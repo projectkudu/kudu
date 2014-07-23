@@ -94,10 +94,8 @@ namespace Kudu.Core.Test
 
             // Setup
             controller.Object.Request = new HttpRequestMessage();
-            settings.Setup(s => s.GetValue(SettingsKeys.WebSiteComputeMode, It.IsAny<bool>()))
-                    .Returns("Shared");
-            settings.Setup(s => s.GetValue(SettingsKeys.WebSiteSiteMode, It.IsAny<bool>()))
-                    .Returns("Limited");
+            settings.Setup(s => s.GetValue(SettingsKeys.WebSiteSku, It.IsAny<bool>()))
+                    .Returns("Free");
 
             // Test
             var response = controller.Object.MiniDump(0, 2);
@@ -106,7 +104,7 @@ namespace Kudu.Core.Test
             Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
 
             var error = response.Content.ReadAsAsync<JObject>().Result;
-            Assert.Equal("Site mode (Shared|Limited) does not support full minidump.", error.Value<string>("Message"));
+            Assert.Equal("Site sku (Free) does not support full minidump.", error.Value<string>("Message"));
         }
 
         [Fact]
