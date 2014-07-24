@@ -255,23 +255,26 @@ namespace Kudu.Core.SiteExtensions
                 // If there is no xdt file, generate default.
                 GenerateApplicationHostXdt(installationDirectory, '/' + package.Id, isPreInstalled: false);
 
-                // Copy nupkg file for package list/lookup
-                FileSystemHelpers.CreateDirectory(installationDirectory);
-                string packageFilePath = Path.Combine(installationDirectory,
-                    String.Format("{0}.{1}.nupkg", package.Id, package.Version));
-                using (
-                    Stream readStream = package.GetStream(), writeStream = FileSystemHelpers.OpenWrite(packageFilePath))
-                {
-                    OperationManager.Attempt(() => readStream.CopyTo(writeStream));
-                }
-
                 var externalCommandFactory = new ExternalCommandFactory(_environment, _settings, installationDirectory);
                 string installScript = Path.Combine(installationDirectory, _installScriptName);
                 if (FileSystemHelpers.FileExists(installScript))
                 {
-                    Executable exe = externalCommandFactory.BuildCommandExecutable(installScript, installationDirectory,
-                        _settings.GetCommandIdleTimeout(), NullLogger.Instance);
-                    exe.ExecuteWithProgressWriter(NullLogger.Instance, _traceFactory.GetTracer(), String.Empty);
+                    OperationManager.Attempt(() =>
+                    {
+                        Executable exe = externalCommandFactory.BuildCommandExecutable(installScript,
+                            installationDirectory,
+                            _settings.GetCommandIdleTimeout(), NullLogger.Instance);
+                        exe.ExecuteWithProgressWriter(NullLogger.Instance, _traceFactory.GetTracer(), String.Empty);
+                    });
+                }
+
+                // Copy nupkg file for package list/lookup
+                FileSystemHelpers.CreateDirectory(installationDirectory);
+                string packageFilePath = GetNuGetPackageFile(package.Id, package.Version.ToString());
+                using (
+                    Stream readStream = package.GetStream(), writeStream = FileSystemHelpers.OpenWrite(packageFilePath))
+                {
+                    OperationManager.Attempt(() => readStream.CopyTo(writeStream));
                 }
             }
             catch (Exception ex)
@@ -337,31 +340,43 @@ namespace Kudu.Core.SiteExtensions
         {
             string installationDirectory = GetInstallationDirectory(id);
 
-            if (!FileSystemHelpers.DirectoryExists(installationDirectory))
+            SiteExtensionInfo info = GetLocalExtension(id, checkLatest: false);
+
+            if (info == null || !FileSystemHelpers.DirectoryExists(info.LocalPath))
             {
                 throw new DirectoryNotFoundException(installationDirectory);
             }
 
-            OperationManager.Attempt(() =>
+            var externalCommandFactory = new ExternalCommandFactory(_environment, _settings, installationDirectory);
+
+            string uninstallScript = Path.Combine(installationDirectory, _uninstallScriptName);
+
+            if (FileSystemHelpers.FileExists(uninstallScript))
             {
-                var externalCommandFactory = new ExternalCommandFactory(_environment, _settings, installationDirectory);
-                string uninstallScript = Path.Combine(installationDirectory, _uninstallScriptName);
-                if (FileSystemHelpers.FileExists(uninstallScript))
+                OperationManager.Attempt(() =>
                 {
-                    Executable exe = externalCommandFactory.BuildCommandExecutable(uninstallScript, installationDirectory,
+                    Executable exe = externalCommandFactory.BuildCommandExecutable(uninstallScript,
+                        installationDirectory,
                         _settings.GetCommandIdleTimeout(), NullLogger.Instance);
                     exe.ExecuteWithProgressWriter(NullLogger.Instance, _traceFactory.GetTracer(), String.Empty);
-                }
-                
-                FileSystemHelpers.DeleteDirectorySafe(installationDirectory);
-            });
+                });
+            }
 
-            return !FileSystemHelpers.DirectoryExists(installationDirectory);
+            OperationManager.Attempt(() => FileSystemHelpers.DeleteFileSafe(GetNuGetPackageFile(info.Id, info.Version)));
+
+            OperationManager.Attempt(() => FileSystemHelpers.DeleteDirectorySafe(installationDirectory));
+
+            return GetLocalExtension(id, checkLatest: false) == null;
         }
 
         private string GetInstallationDirectory(string id)
         {
             return Path.Combine(_localRepository.Source, id);
+        }
+
+        private string GetNuGetPackageFile(string id, string version)
+        {
+            return Path.Combine(GetInstallationDirectory(id), String.Format("{0}.{1}.nupkg", id, version));
         }
 
         private static string GetPreInstalledDirectory(string id)
