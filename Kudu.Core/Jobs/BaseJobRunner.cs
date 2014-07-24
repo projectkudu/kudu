@@ -12,7 +12,6 @@ using System.Xml.Linq;
 using System.Xml.XPath;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
-using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
 using Kudu.Core.Deployment.Generator;
 using Kudu.Core.Infrastructure;
@@ -268,8 +267,11 @@ namespace Kudu.Core.Jobs
             {
                 if (_shutdownNotificationFilePath != null)
                 {
-                    FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(_shutdownNotificationFilePath));
-                    OperationManager.Attempt(() => FileSystemHelpers.WriteAllText(_shutdownNotificationFilePath, DateTime.UtcNow.ToString()));
+                    OperationManager.Attempt(() =>
+                    {
+                        FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(_shutdownNotificationFilePath));
+                        FileSystemHelpers.WriteAllText(_shutdownNotificationFilePath, DateTime.UtcNow.ToString());
+                    });
                 }
             }
             catch (Exception ex)
