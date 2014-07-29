@@ -104,6 +104,10 @@ namespace Kudu.Core.Jobs
                         ReleaseSingletonLock();
                     }
                 }
+                catch (ThreadAbortException)
+                {
+                    TraceFactory.GetTracer().TraceWarning("Thread was aborted, make sure WebJob was about to stop.");
+                }
                 catch (Exception ex)
                 {
                     TraceFactory.GetTracer().TraceError(ex);
@@ -138,12 +142,12 @@ namespace Kudu.Core.Jobs
         {
             Interlocked.Exchange(ref _started, 0);
 
-            _continuousJobLogger.ReportStatus(ContinuousJobStatus.Stopping);
-
-            NotifyShutdownJob();
-
             if (_continuousJobThread != null)
             {
+                _continuousJobLogger.ReportStatus(ContinuousJobStatus.Stopping);
+
+                NotifyShutdownJob();
+
                 // By default give the continuous job 5 seconds before killing it (after notifying the continuous job)
                 if (!_continuousJobThread.Join(_jobSettings.GetStoppingWaitTime(DefaultContinuousJobStoppingWaitTimeInSeconds)))
                 {
@@ -151,10 +155,11 @@ namespace Kudu.Core.Jobs
                 }
 
                 _continuousJobThread = null;
-                _continuousJobLogger.ReportStatus(ContinuousJobStatus.Stopped);
             }
 
             SafeKillAllRunningJobInstances(_continuousJobLogger);
+
+            _continuousJobLogger.ReportStatus(ContinuousJobStatus.Stopped);
         }
 
         public void RefreshJob(ContinuousJob continuousJob, JobSettings jobSettings)

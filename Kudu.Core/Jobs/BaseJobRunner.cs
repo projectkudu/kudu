@@ -114,12 +114,15 @@ namespace Kudu.Core.Jobs
 
             try
             {
-                var tempJobInstancePath = Path.Combine(JobTempPath, Path.GetRandomFileName());
+                OperationManager.Attempt(() =>
+                {
+                    var tempJobInstancePath = Path.Combine(JobTempPath, Path.GetRandomFileName());
 
-                FileSystemHelpers.CopyDirectoryRecursive(JobBinariesPath, tempJobInstancePath);
-                UpdateAppConfigs(tempJobInstancePath);
+                    FileSystemHelpers.CopyDirectoryRecursive(JobBinariesPath, tempJobInstancePath);
+                    UpdateAppConfigs(tempJobInstancePath);
 
-                WorkingDirectory = tempJobInstancePath;
+                    WorkingDirectory = tempJobInstancePath;
+                });
             }
             catch (Exception ex)
             {
@@ -212,18 +215,15 @@ namespace Kudu.Core.Jobs
                         UpdateStatus(logger, "Success");
                     }
                 }
+                catch (ThreadAbortException)
+                {
+                    // We kill the process when refreshing the job
+                    logger.LogInformation("WebJob process was aborted");
+                    UpdateStatus(logger, "Stopped");
+                }
                 catch (Exception ex)
                 {
-                    if (ex is ThreadAbortException)
-                    {
-                        // We kill the process when refreshing the job
-                        logger.LogInformation("Job aborted");
-                        UpdateStatus(logger, "Aborted");
-                        return;
-                    }
-
                     logger.LogError(ex.ToString());
-
                     jobStartedReporter.Error = ex.Message;
                 }
             }
