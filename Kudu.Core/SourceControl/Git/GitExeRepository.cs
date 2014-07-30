@@ -401,38 +401,7 @@ echo $i > pushinfo
                 throw new NotSupportedException("Only paths relative to the repository root path are supported, path provided: '{0}' is not a child folder of '{1}'".FormatCurrentCulture(path, RepositoryPath));
             }
 
-            if (Directory.Exists(path))
-            {
-                // TODO: Consider an implementation where the gitExe returns the list of files as a list (not storing the files list output as a blob)
-                // In-order to conserve memory consumption
-                string output = Execute(@"ls-files {0}", String.Join(" ", lookupList), RepositoryPath);
-
-                if (!String.IsNullOrEmpty(output))
-                {
-                    IEnumerable<string> lines = output.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-                    lines = lines
-                        .Select(line => Path.Combine(RepositoryPath, line.Trim().Replace('/', '\\')))
-                        .Where(p => p.StartsWith(path, StringComparison.OrdinalIgnoreCase));
-
-                    switch (searchOption)
-                    {
-                        case SearchOption.TopDirectoryOnly:
-                            lines = lines.Where(line => !line.Substring(path.Length).TrimStart('\\').Contains('\\'));
-                            break;
-
-                        case SearchOption.AllDirectories:
-                            break;
-
-                        default:
-                            throw new NotSupportedException("Search option {0} is not supported".FormatCurrentCulture(searchOption));
-                    }
-
-                    return lines;
-                }
-            }
-
-            return Enumerable.Empty<string>();
+            return FileSystemHelpers.ListFiles(path, searchOption, lookupList);
         }
 
         private string Execute(string arguments, params object[] args)
