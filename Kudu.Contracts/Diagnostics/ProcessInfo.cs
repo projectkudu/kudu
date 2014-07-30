@@ -100,6 +100,6 @@ namespace Kudu.Core.Diagnostics
         public DateTime TimeStamp { get; set; }
 
         [JsonProperty(PropertyName = "environment_variables", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        public StringDictionary EnvironmentVariables { get; set; }
+        public Dictionary<string, string> EnvironmentVariables { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -10,12 +11,12 @@ namespace Kudu.Core.Infrastructure
     // Source: http://eazfuscator.blogspot.com/2011/06/reading-environment-variables-from.html
     public static class ProcessEnvironment
     {
-        public static StringDictionary GetEnvironmentVariables(Process process)
+        public static Dictionary<string, string> GetEnvironmentVariables(Process process)
         {
             return GetEnvironmentVariablesCore(process.Handle);
         }
 
-        public static bool TryGetEnvironmentVariables(Process process, out StringDictionary environmentVariables)
+        public static bool TryGetEnvironmentVariables(Process process, out Dictionary<string, string> environmentVariables)
         {
             try
             {
@@ -29,7 +30,7 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        private static StringDictionary GetEnvironmentVariablesCore(IntPtr hProcess)
+        private static Dictionary<string, string> GetEnvironmentVariablesCore(IntPtr hProcess)
         {
             IntPtr penv = GetPenv(hProcess);
 
@@ -62,9 +63,9 @@ namespace Kudu.Core.Infrastructure
             return EnvToDictionary(envData);
         }
 
-        private static StringDictionary EnvToDictionary(byte[] env)
+        private static Dictionary<string, string> EnvToDictionary(byte[] env)
         {
-            var result = new StringDictionary();
+            var result = new Dictionary<string, string>();
 
             int len = env.Length;
             if (len < 4)
