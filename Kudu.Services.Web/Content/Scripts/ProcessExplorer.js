@@ -82,6 +82,14 @@ var Utilities = (function () {
         return array;
     };
 
+    Utilities.getArrayFromJsonObject = function (jsonObject, action) {
+        var array = [];
+        for (var propertyName in jsonObject) {
+            array.push(action(propertyName, jsonObject[propertyName]));
+        }
+        return array;
+    };
+
     Utilities.createDiv = function (id) {
         var div = document.createElement("div");
         div.id = id;
@@ -204,8 +212,8 @@ var Process = (function () {
             return new Handle(h);
         });
 
-        this._json.environment_variables = Utilities.getArrayFromJson(json.environment_variables, function (e) {
-            return new EnvironmentVariable(e);
+        this._json.environment_variables = Utilities.getArrayFromJsonObject(json.environment_variables, function (key, value) {
+            return new EnvironmentVariable(key, value);
         });
     }
     Object.defineProperty(Process.prototype, "Id", {
@@ -582,9 +590,9 @@ var Handle = (function () {
 })();
 
 var EnvironmentVariable = (function () {
-    function EnvironmentVariable(keyValue) {
-        this.key = keyValue._key;
-        this.value = keyValue._value;
+    function EnvironmentVariable(key, value) {
+        this.key = key;
+        this.value = value;
     }
     EnvironmentVariable.prototype.dialog = function () {
         throw "Not Implemented";
