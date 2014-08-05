@@ -405,14 +405,14 @@ echo $i > pushinfo
             {
                 // TODO: Consider an implementation where the gitExe returns the list of files as a list (not storing the files list output as a blob)
                 // In-order to conserve memory consumption
-                string output = Execute(@"ls-files {0}", String.Join(" ", lookupList), RepositoryPath);
+                string output = DecodeGitLsOutput(Execute(@"ls-files {0}", String.Join(" ", lookupList), RepositoryPath));
 
                 if (!String.IsNullOrEmpty(output))
                 {
                     IEnumerable<string> lines = output.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
                     lines = lines
-                        .Select(line => Path.Combine(RepositoryPath, line.Trim().Replace('/', '\\')))
+                        .Select(line => Path.Combine(RepositoryPath, line.Trim().Trim('"').Replace('/', '\\')))
                         .Where(p => p.StartsWith(path, StringComparison.OrdinalIgnoreCase));
 
                     switch (searchOption)
@@ -433,6 +433,24 @@ echo $i > pushinfo
             }
 
             return Enumerable.Empty<string>();
+        }
+
+        public static string DecodeGitLsOutput(string original)
+        {
+            string output = original;
+
+            // When characters are represented as the octal values of its utf8 encoding
+            // e.g. å becomes \303\245 in git.exe output
+            if (original.Contains('"'))
+            {
+                output = System.Text.RegularExpressions.Regex.Unescape(original);
+
+                byte[] rawBytes = Encoding.GetEncoding(1252).GetBytes(output);
+
+                output = Encoding.UTF8.GetString(rawBytes);
+            }
+
+            return output;
         }
 
         private string Execute(string arguments, params object[] args)
