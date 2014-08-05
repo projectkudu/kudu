@@ -405,7 +405,7 @@ echo $i > pushinfo
             {
                 // TODO: Consider an implementation where the gitExe returns the list of files as a list (not storing the files list output as a blob)
                 // In-order to conserve memory consumption
-                string output = DecodeGitOutput(Execute(@"ls-files {0}", String.Join(" ", lookupList), RepositoryPath));
+                string output = DecodeGitLsOutput(Execute(@"ls-files {0}", String.Join(" ", lookupList), RepositoryPath));
 
                 if (!String.IsNullOrEmpty(output))
                 {
@@ -435,7 +435,7 @@ echo $i > pushinfo
             return Enumerable.Empty<string>();
         }
 
-        private static string DecodeGitOutput(string original)
+        public static string DecodeGitLsOutput(string original)
         {
             string output = original;
 
@@ -445,7 +445,7 @@ echo $i > pushinfo
             {
                 output = System.Text.RegularExpressions.Regex.Unescape(original);
 
-                byte[] rawBytes = Encoding.GetEncoding("Windows-1252").GetBytes(output);
+                byte[] rawBytes = Encoding.GetEncoding(1252).GetBytes(output);
 
                 output = Encoding.UTF8.GetString(rawBytes);
             }
