@@ -61,6 +61,12 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public void PushAndDeployAspNetAppUnicodeName()
+        {
+            PushAndDeployApps("-benr-", "master", "Hello!", HttpStatusCode.OK, "");
+        }
+
+        [Fact]
         public void PushAndDeployAspNetAppAppWithPostBuildEvent()
         {
             PushAndDeployApps("AppWithPostBuildEvent", "master", "Hello Kudu", HttpStatusCode.OK, "Deployment successful");
