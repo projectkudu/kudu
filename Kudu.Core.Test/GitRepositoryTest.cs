@@ -58,6 +58,15 @@ Date:   Thu Jul 7 19:05:40 2011 -0700
         }
 
         [Theory]
+        [InlineData(" a b c \\d e f", " a b c \\d e f")]
+        [InlineData("\"\\303\\245benr\\303\\245.sln\"", "\"åbenrå.sln\"")]
+        [InlineData("\"\\303\\245benr\\303\\245/\\303\\245benr\\303\\245.csproj\"", "\"åbenrå/åbenrå.csproj\"")]
+        public void DecodeGitExeOutputToUtf8(string original, string expected)
+        {
+            Assert.Equal(GitExeRepository.DecodeGitLsOutput(original), expected);
+        }
+
+        [Theory]
         [InlineData(null, 1)]
         [InlineData("This is non-retryable exception", 1)]
         [InlineData("Unknown SSL protocol error in connection to github.com:443", 3)]
