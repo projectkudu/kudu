@@ -44,7 +44,10 @@
         </hiddenSegments>
       </requestFiltering>
     </security>
-    
+
+    <!-- Make sure error responses are left untouched -->
+    <httpErrors existingResponse="PassThrough" />
+
     <!--
       You can control how Node is hosted within IIS using the following options:
         * watchedFiles: semi-colon separated list of files that will be watched for changes to restart the server
