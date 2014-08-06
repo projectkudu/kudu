@@ -87,8 +87,11 @@ namespace Kudu.Core.Jobs
 
                         _continuousJobLogger.StartingNewRun();
 
-                        InitializeJobInstance(continuousJob, _continuousJobLogger);
-                        RunJobInstance(continuousJob, _continuousJobLogger, String.Empty);
+                        using (new Timer(LogStillRunning, null, TimeSpan.FromHours(1), TimeSpan.FromHours(12)))
+                        {
+                            InitializeJobInstance(continuousJob, _continuousJobLogger);
+                            RunJobInstance(continuousJob, _continuousJobLogger, String.Empty);
+                        }
 
                         if (_started == 1 && !IsDisabled)
                         {
@@ -121,6 +124,18 @@ namespace Kudu.Core.Jobs
             _continuousJobThread.Start();
         }
 
+        private void LogStillRunning(object state)
+        {
+            try
+            {
+                _continuousJobLogger.LogInformation("WebJob is still running");
+            }
+            catch
+            {
+                // Ignore as this is a best effort call
+            }
+        }
+
         private bool TryGetLockIfSingleton()
         {
             bool isSingleton = _jobSettings.IsSingleton;
@@ -142,8 +157,12 @@ namespace Kudu.Core.Jobs
         {
             Interlocked.Exchange(ref _started, 0);
 
+            bool logStopped = false;
+
             if (_continuousJobThread != null)
             {
+                logStopped = true;
+
                 _continuousJobLogger.ReportStatus(ContinuousJobStatus.Stopping);
 
                 NotifyShutdownJob();
@@ -159,7 +178,10 @@ namespace Kudu.Core.Jobs
 
             SafeKillAllRunningJobInstances(_continuousJobLogger);
 
-            _continuousJobLogger.ReportStatus(ContinuousJobStatus.Stopped);
+            if (logStopped)
+            {
+                UpdateStatusIfChanged(ContinuousJobStatus.Stopped);
+            }
         }
 
         public void RefreshJob(ContinuousJob continuousJob, JobSettings jobSettings)
