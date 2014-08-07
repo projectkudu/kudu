@@ -172,10 +172,20 @@ $.connection.hub.start().done(function () {
             var that = this;
             viewModel.editText("Fetching changes...");
             viewModel.fileEdit(this);
-            Vfs.getContent(this)
-               .done(function (data) {
-                   viewModel.editText(data);
-               }).fail(showError);
+            if(this.mime == "text/xml")
+            {
+                Vfs.getContent(this)
+                   .done(function (data) {
+                       viewModel.editText(vkbeautify.xml(data));
+                   }).fail(showError);
+            }
+            else
+            {
+                Vfs.getContent(this)
+                   .done(function (data) {
+                       viewModel.editText(data);
+                   }).fail(showError);
+            }
         }
 
         this.saveItem = function () {
