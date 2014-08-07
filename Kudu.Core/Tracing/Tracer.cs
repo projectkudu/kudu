@@ -50,7 +50,8 @@ namespace Kudu.Core.Tracing
         {
             var newStep = new TraceStep(title);
             var newStepElement = new XElement("step", new XAttribute("title", title),
-                                                      new XAttribute("date", DateTime.UtcNow.ToString("MM/dd H:mm:ss")));
+                                                      new XAttribute("date", DateTime.UtcNow.ToString("MM/dd H:mm:ss")),
+                                                      new XAttribute("instance", InstanceIdUtility.GetShortInstanceId()));
 
             foreach (var pair in attributes)
             {

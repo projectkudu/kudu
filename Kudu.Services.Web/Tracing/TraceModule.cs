@@ -199,8 +199,7 @@ namespace Kudu.Services.Web.Tracing
                 {
                     { "url", httpContext.Request.RawUrl },
                     { "method", httpContext.Request.HttpMethod },
-                    { "type", "request" },
-                    { "instance", InstanceIdUtility.GetShortInstanceId() }
+                    { "type", "request" }
                 };
 
             // Add an attribute containing the process, AppDomain and Thread ids to help debugging
