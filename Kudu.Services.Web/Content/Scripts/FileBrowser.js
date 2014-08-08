@@ -517,7 +517,7 @@ $.connection.hub.start().done(function () {
         var items = evt.originalEvent.dataTransfer.items || evt.originalEvent.dataTransfer.files;
         if (items) {
             var filesArray = $.map(items, function(item) {
-                if (item.type === 'application/x-zip-compressed')
+                if (item.type === 'application/x-zip-compressed' || item.type === 'application/zip' || item.type === '')
                     return item;
             });
             if (filesArray && filesArray.length === items.length) {
