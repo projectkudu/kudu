@@ -461,6 +461,7 @@ namespace Kudu.Services.Performance
                 info.Modules = SafeGetValue(() => GetModules(process, selfLink.ToString().TrimEnd('/') + "/modules"), Enumerable.Empty<ProcessModuleInfo>());
                 info.TimeStamp = DateTime.UtcNow;
                 info.EnvironmentVariables = SafeGetValue(process.GetEnvironmentVariables, null);
+                info.CommandLine = SafeGetValue(process.GetCommandLine, null);
             }
 
             return info;
