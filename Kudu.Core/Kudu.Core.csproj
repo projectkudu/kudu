@@ -62,7 +62,6 @@
     <Compile Include="Deployment\Generator\SiteBuilderFactory.cs" />
     <Compile Include="Hooks\WebHooksManager.cs" />
     <Compile Include="Infrastructure\InstanceIdUtility.cs" />
-    <Compile Include="Infrastructure\ProcessEnvironment.cs" />
     <Compile Include="Infrastructure\SettingsProcessor.cs" />
     <Compile Include="Infrastructure\ZipArchiveExtensions.cs" />
     <Compile Include="Jobs\ContinuousJobLogger.cs" />
