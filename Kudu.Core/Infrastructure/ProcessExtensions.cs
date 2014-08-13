@@ -222,6 +222,11 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
+        public static string GetCommandLine(this Process process)
+        {
+            return GetCommandLineCore(process.Handle);
+        }
+
         private static async Task CopyStreamAsync(Stream from, Stream to, IdleManager idleManager, CancellationToken cancellationToken, bool closeAfterCopy = false)
         {
             try
@@ -393,6 +398,62 @@ namespace Kudu.Core.Infrastructure
             }
 
             return EnvToDictionary(envData);
+        }
+
+        private static string GetCommandLineCore(IntPtr hProcess)
+        {
+            int targetProcessBitness = GetProcessBitness(hProcess);
+            
+            if (targetProcessBitness == 64 && !System.Environment.Is64BitProcess)
+            {
+                throw new Win32Exception(
+                    "The current process should run in 64 bit mode to be able to get the environment of another 64 bit process.");
+            }
+
+            var pPeb = targetProcessBitness == 64 ? GetPeb64(hProcess) : GetPeb32(hProcess);
+            //dt -r ntdll!PEB for offset values of the PEB
+            var offset = targetProcessBitness == 64 ? 0x20 : 0x10;
+            var unicodeStringOffset = targetProcessBitness == 64 ? 0x70 : 0x40;
+
+            IntPtr ptr;
+            if (!TryReadIntPtr(hProcess, pPeb + offset, out ptr))
+            {
+                throw new Win32Exception("Unable to read PEB.");
+            }
+
+            int commandLineLength;
+            IntPtr commandLineBuffer;
+            if ((targetProcessBitness == 64 && System.Environment.Is64BitProcess) ||
+                (targetProcessBitness == 32 && !System.Environment.Is64BitProcess))
+            {
+                //we running same bitness as the target process, use native UNICODE_STRING
+                var unicodeString = new ProcessNativeMethods.UNICODE_STRING();
+                if (!ProcessNativeMethods.ReadProcessMemory(hProcess, ptr + unicodeStringOffset, ref unicodeString, new IntPtr(Marshal.SizeOf(unicodeString)), IntPtr.Zero))
+                {
+                    throw new Win32Exception(String.Format("Unable to read command line, win32 error {0}", Marshal.GetLastWin32Error()));
+                }
+                commandLineLength = unicodeString.Length;
+                commandLineBuffer = unicodeString.Buffer;
+            }
+            else
+            {
+                //we are running 64 but target process is 32, use UNICODE_STRING_32
+                var unicodeString = new ProcessNativeMethods.UNICODE_STRING_32();
+                if (!ProcessNativeMethods.ReadProcessMemory(hProcess, ptr + unicodeStringOffset, ref unicodeString, new IntPtr(Marshal.SizeOf(unicodeString)), IntPtr.Zero))
+                {
+                    throw new Win32Exception(String.Format("Unable to read command line, win32 error {0}", Marshal.GetLastWin32Error()));
+                }
+                commandLineLength = unicodeString.Length;
+                commandLineBuffer = new IntPtr(unicodeString.Buffer);
+            }
+
+            var bytes = new byte[commandLineLength];
+            if (!ProcessNativeMethods.ReadProcessMemory(hProcess, commandLineBuffer, bytes, new IntPtr(commandLineLength), IntPtr.Zero))
+            {
+                throw new Win32Exception(String.Format("Unable to read command line, win32 error {0}", Marshal.GetLastWin32Error()));
+            }
+
+            return Encoding.Unicode.GetString(bytes);
         }
 
         private static Dictionary<string, string> EnvToDictionary(byte[] env)
@@ -640,7 +701,20 @@ namespace Kudu.Core.Infrastructure
         internal static class ProcessNativeMethods
         {
             [DllImport("ntdll.dll")]
-            public static extern int NtQueryInformationProcess(IntPtr processHandle, int processInformationClass, ref ProcessInformation processInformation, int processInformationLength, out int returnLength);
+            public static extern int NtQueryInformationProcess(
+                IntPtr processHandle,
+                int processInformationClass,
+                ref ProcessInformation processInformation,
+                int processInformationLength,
+                out int returnLength);
+
+            [DllImport("ntdll.dll", SetLastError = true)]
+            public static extern int NtQueryInformationProcess(
+                IntPtr processHandle,
+                int processInformationClass,
+                ref IntPtr processInformation,
+                int processInformationLength,
+                ref int returnLength);
 
             [StructLayout(LayoutKind.Sequential)]
             public struct ProcessInformation
@@ -657,14 +731,6 @@ namespace Kudu.Core.Infrastructure
             public const int ProcessBasicInformation = 0;
             public const int ProcessWow64Information = 26;
 
-            [DllImport("ntdll.dll", SetLastError = true)]
-            public static extern int NtQueryInformationProcess(
-                IntPtr hProcess,
-                int pic,
-                ref IntPtr pi,
-                int cb,
-                ref int pSize);
-
             [DllImport("kernel32.dll", SetLastError = true)]
             [return: MarshalAs(UnmanagedType.Bool)]
             public static extern bool ReadProcessMemory(
@@ -679,9 +745,36 @@ namespace Kudu.Core.Infrastructure
             public static extern bool ReadProcessMemory(
                 IntPtr hProcess,
                 IntPtr lpBaseAddress,
+                [Out] byte[] lpBuffer,
+                IntPtr dwSize,
+                IntPtr lpNumberOfBytesRead);
+
+            [DllImport("kernel32.dll", SetLastError = true)]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            public static extern bool ReadProcessMemory(
+                IntPtr hProcess,
+                IntPtr lpBaseAddress,
                 out IntPtr lpPtr,
                 IntPtr dwSize,
                 ref IntPtr lpNumberOfBytesRead);
+
+            [DllImport("kernel32.dll", SetLastError = true)]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            public static extern bool ReadProcessMemory(
+                IntPtr hProcess,
+                IntPtr lpBaseAddress,
+                ref UNICODE_STRING lpBuffer,
+                IntPtr dwSize,
+                IntPtr lpNumberOfBytesRead);
+
+            [DllImport("kernel32.dll", SetLastError = true)]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            public static extern bool ReadProcessMemory(
+                IntPtr hProcess,
+                IntPtr lpBaseAddress,
+                ref UNICODE_STRING_32 lpBuffer,
+                IntPtr dwSize,
+                IntPtr lpNumberOfBytesRead);
 
             [StructLayout(LayoutKind.Sequential)]
             public struct MEMORY_BASIC_INFORMATION
@@ -704,6 +797,22 @@ namespace Kudu.Core.Infrastructure
             [DllImport("kernel32.dll")]
             [return: MarshalAs(UnmanagedType.Bool)]
             public static extern bool IsWow64Process(IntPtr hProcess, [MarshalAs(UnmanagedType.Bool)]out bool wow64Process);
+
+            [StructLayout(LayoutKind.Sequential)]
+            public struct UNICODE_STRING
+            {
+                public ushort Length;
+                public ushort MaximumLength;
+                public IntPtr Buffer;
+            }
+
+            [StructLayout(LayoutKind.Sequential)]
+            public struct UNICODE_STRING_32
+            {
+                public ushort Length;
+                public ushort MaximumLength;
+                public int Buffer;
+            }
         }
     }
 }

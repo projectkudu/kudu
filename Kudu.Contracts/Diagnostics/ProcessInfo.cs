@@ -42,6 +42,9 @@ namespace Kudu.Core.Diagnostics
         [JsonProperty(PropertyName = "file_name", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string FileName { get; set; }
 
+        [JsonProperty(PropertyName = "command_line", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public string CommandLine { get; set; }
+
         //[JsonProperty(PropertyName = "arguments", DefaultValueHandling = DefaultValueHandling.Ignore)]
         //public string Arguments { get; set; }
 

@@ -562,6 +562,7 @@ var Module = (function () {
             div.appendChild(Utilities.toRow("product version", _this._json.product_version));
             div.appendChild(Utilities.toRow("is debug", _this._json.is_debug));
             div.appendChild(Utilities.toRow("language", _this._json.language));
+            div.appendChild(Utilities.toRow("command line", _this._json.command_line));
         }).fail(function () {
             div.appendChild(Utilities.errorDiv("Couldn't retrive module details"));
         });
