@@ -238,7 +238,7 @@ namespace Kudu.Core.Jobs
                 foreach (Process process in processes)
                 {
                     Dictionary<string, string> processEnvironment;
-                    bool success = ProcessEnvironment.TryGetEnvironmentVariables(process, out processEnvironment);
+                    bool success = process.TryGetEnvironmentVariables(out processEnvironment);
                     if (success && processEnvironment.ContainsKey(GetJobEnvironmentKey()))
                     {
                         try

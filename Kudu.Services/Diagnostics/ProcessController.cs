@@ -460,7 +460,8 @@ namespace Kudu.Services.Performance
                 info.Threads = SafeGetValue(() => GetThreads(process, selfLink.ToString()), Enumerable.Empty<ProcessThreadInfo>());
                 info.Modules = SafeGetValue(() => GetModules(process, selfLink.ToString().TrimEnd('/') + "/modules"), Enumerable.Empty<ProcessModuleInfo>());
                 info.TimeStamp = DateTime.UtcNow;
-                info.EnvironmentVariables = SafeGetValue(() => ProcessEnvironment.GetEnvironmentVariables(process), null);
+                info.EnvironmentVariables = SafeGetValue(process.GetEnvironmentVariables, null);
+                info.CommandLine = SafeGetValue(process.GetCommandLine, null);
             }
 
             return info;
