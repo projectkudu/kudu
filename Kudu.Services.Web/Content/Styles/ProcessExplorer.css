@@ -35,7 +35,10 @@ table th {
 }
 
 .erow {
-    padding-top: 10px;
+    margin-top: 10px;
+    margin-left: 30px;
+    margin-right: 0;
+    max-width: 800px;
 }
 
 .buttons-row {

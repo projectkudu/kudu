@@ -3,15 +3,16 @@ var Utilities = (function () {
     }
     Utilities.toRow = function (name, value) {
         var div = document.createElement("div");
-        div.className = "erow col-s-12";
+        div.className = "row erow col-s-12";
 
         var namediv = document.createElement("div");
-        namediv.className = "col-xs-5";
+        namediv.className = "col-xs-4";
         var strong = document.createElement("strong");
         strong.textContent = name ? name.toString() : "NaN";
         namediv.appendChild(strong);
 
         var valuediv = document.createElement("div");
+        valuediv.className = "col-xs-8";
         valuediv.textContent = typeof (value) !== "undefined" ? value.toString() : "NaN";
 
         div.appendChild(namediv);
@@ -377,6 +378,7 @@ var Process = (function () {
         div.appendChild(Utilities.toRow("id", this._json.id));
         div.appendChild(Utilities.toRow("name", this._json.name));
         div.appendChild(Utilities.toRow("file name", this._json.file_name));
+        div.appendChild(Utilities.toRow("command line", _this._json.command_line));
         div.appendChild(Utilities.toRow("handle count", Utilities.commaSeparateNumber(this._json.handle_count)));
         div.appendChild(Utilities.toRow("module countid", Utilities.commaSeparateNumber(this._json.module_count)));
         div.appendChild(Utilities.toRow("thread count", Utilities.commaSeparateNumber(this._json.thread_count)));
@@ -562,7 +564,6 @@ var Module = (function () {
             div.appendChild(Utilities.toRow("product version", _this._json.product_version));
             div.appendChild(Utilities.toRow("is debug", _this._json.is_debug));
             div.appendChild(Utilities.toRow("language", _this._json.language));
-            div.appendChild(Utilities.toRow("command line", _this._json.command_line));
         }).fail(function () {
             div.appendChild(Utilities.errorDiv("Couldn't retrive module details"));
         });
