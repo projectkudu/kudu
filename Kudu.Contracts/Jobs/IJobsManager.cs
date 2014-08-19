@@ -19,5 +19,7 @@ namespace Kudu.Contracts.Jobs
         JobSettings GetJobSettings(string jobName);
 
         void SetJobSettings(string jobName, JobSettings jobSettings);
+
+        void CleanupDeletedJobs();
     }
 }

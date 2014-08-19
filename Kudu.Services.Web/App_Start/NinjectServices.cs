@@ -222,6 +222,10 @@ namespace Kudu.Services.Web.App_Start
                 kernel.Get<IEnvironment>(),
                 kernel.Get<IDeploymentSettingsManager>(),
                 kernel.Get<IAnalytics>());
+
+            triggeredJobsManager.CleanupDeletedJobs();
+            continuousJobManager.CleanupDeletedJobs();
+
             kernel.Bind<IContinuousJobsManager>().ToConstant(continuousJobManager)
                                              .InTransientScope();
 

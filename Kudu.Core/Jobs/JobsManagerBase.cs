@@ -145,6 +145,24 @@ namespace Kudu.Core.Jobs
             }, retries: 3, delayBeforeRetry: 2000);
         }
 
+        public void CleanupDeletedJobs()
+        {
+            IEnumerable<TJob> jobs = ListJobs();
+            IEnumerable<string> jobNames = jobs.Select(j => j.Name);
+            DirectoryInfoBase jobsDataDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(JobsDataPath);
+            if (jobsDataDirectory.Exists)
+            {
+                DirectoryInfoBase[] jobDataDirectories = jobsDataDirectory.GetDirectories("*", SearchOption.TopDirectoryOnly);
+                IEnumerable<string> allJobDataDirectories = jobDataDirectories.Select(j => j.Name);
+                IEnumerable<string> directoriesToRemove = allJobDataDirectories.Except(jobNames, StringComparer.OrdinalIgnoreCase);
+                foreach (string directoryToRemove in directoriesToRemove)
+                {
+                    TraceFactory.GetTracer().Trace("Removed job data path as the job was already deleted: " + directoryToRemove);
+                    FileSystemHelpers.DeleteDirectorySafe(Path.Combine(JobsDataPath, directoryToRemove));
+                }
+            }
+        }
+
         private string GetSpecificJobDataPath(string jobName)
         {
             return Path.Combine(JobsDataPath, jobName);
