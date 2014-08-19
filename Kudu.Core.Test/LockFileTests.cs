@@ -154,5 +154,42 @@ namespace Kudu.Core.Test
 
             return new LockFile(path, traceFactory);
         }
+
+        [Fact]
+        public void LockFailOnLockAcquiredTest()
+        {
+            FileSystemHelpers.Instance = new FileSystem();
+
+            // Mock
+            var file = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
+            var lockFile = new FailOnLockAcquiredLock(file);
+
+            // 1st attempt lock unsuccessful since OnLockAcquired failed
+            Assert.False(lockFile.Lock());
+
+            // Next attempt successful
+            Assert.True(lockFile.Lock());
+            lockFile.Release();
+
+            FileSystemHelpers.DeleteFileSafe(file);
+        }
+
+        class FailOnLockAcquiredLock : LockFile
+        {
+            private int _attempt = 0;
+
+            public FailOnLockAcquiredLock(string path)
+                : base(path)
+            {
+            }
+
+            protected override void OnLockAcquired()
+            {
+                if (_attempt++ == 0)
+                {
+                    throw new InvalidOperationException("fail OnLockAcquired!");
+                }
+            }
+        }
     }
 }

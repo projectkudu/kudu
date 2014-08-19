@@ -113,6 +113,12 @@ namespace Kudu.Core.Infrastructure
             {
                 TraceIfUnknown(ex);
 
+                if (_lockStream != null)
+                {
+                    _lockStream.Close();
+                    _lockStream = null;
+                }
+
                 return false;
             }
         }
