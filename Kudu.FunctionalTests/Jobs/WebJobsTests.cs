@@ -484,6 +484,39 @@ namespace Kudu.FunctionalTests.Jobs
             });
         }
 
+        [Fact]
+        public void PushVsToolingCreatedWebSiteWithWebJob()
+        {
+            RunScenario("PushVsToolingCreatedWebSiteWithWebJob", appManager =>
+            {
+                using (TestRepository testRepository = Git.Clone("VsWebsiteWithWebJob"))
+                {
+                    appManager.GitDeploy(testRepository.PhysicalPath);
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+
+                    var expectedContinuousJob = new ContinuousJob()
+                    {
+                        Name = "MyWebJob",
+                        JobType = "continuous",
+                        Status = "Running",
+                        RunCommand = "MyWebJob.exe"
+                    };
+
+                    WaitUntilAssertVerified(
+                        "verify continuous job",
+                        TimeSpan.FromSeconds(60),
+                        () =>
+                        {
+                            ContinuousJob deployedJob = appManager.JobsManager.GetContinuousJobAsync(expectedContinuousJob.Name).Result;
+                            AssertContinuousJob(expectedContinuousJob, deployedJob);
+                        });
+                }
+            });
+        }
+
         private void VerifyTriggeredJobTriggers(ApplicationManager appManager, string jobName, int expectedNumberOfRuns, string expectedStatus, string expectedOutput = null, string expectedError = null, string arguments = null)
         {
             appManager.JobsManager.InvokeTriggeredJobAsync(jobName, arguments).Wait();

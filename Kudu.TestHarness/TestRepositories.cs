@@ -49,6 +49,7 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/TargetPathTest.git",                "7446104"),
             new TestRepositoryInfo("https://github.com/KuduApps/VersionPinnedNodeJsApp.git",        "5f6c64f"),
             new TestRepositoryInfo("https://github.com/KuduApps/VersionPinnedNodeJsAppCustom.git",  "8d43d4e"),
+            new TestRepositoryInfo("https://github.com/KuduApps/VsWebsiteWithWebJob.git",           "f3bfa7b"),
             new TestRepositoryInfo("https://github.com/KuduApps/WaitForUserInput.git",              "cb35610"),
             new TestRepositoryInfo("https://github.com/KuduApps/WarningsAsErrors.git",              "51b6a48"),
             new TestRepositoryInfo("https://github.com/KuduApps/waws.git",                          "7652a66"),
