@@ -133,7 +133,7 @@ namespace Kudu.Core.Infrastructure
 
         // we only write the lock info at lock's enter since
         // lock file will be cleaned up at release
-        private void WriteLockInfo(Stream lockStream)
+        private static void WriteLockInfo(Stream lockStream)
         {
             var strb = new StringBuilder();
             strb.Append(DateTime.UtcNow.ToString("s"));
