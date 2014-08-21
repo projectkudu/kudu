@@ -134,6 +134,7 @@
     <Content Include="Content\Scripts\KuduExec.js" />
     <Content Include="Content\Scripts\ProcessExplorer.js" />
     <Content Include="Content\Scripts\SiteExtensions.js" />
+    <Content Include="Content\Scripts\vkbeautify.0.99.00.beta.js" />
     <Content Include="Content\Styles\FileBrowser.css" />
     <Content Include="Content\Scripts\jquery-console\jquery.console.js" />
     <Content Include="Content\Scripts\KuduExecV2.js" />
