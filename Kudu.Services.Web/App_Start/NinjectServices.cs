@@ -279,6 +279,9 @@ namespace Kudu.Services.Web.App_Start
 
             MigrateSite(environment, noContextDeploymentsSettingsManager);
 
+            // Temporary fix for https://github.com/npm/npm/issues/5905
+            EnsureNpmGlobalDirectory();
+
             RegisterRoutes(kernel, RouteTable.Routes);
 
             // Register the default hubs route: ~/signalr
@@ -485,6 +488,19 @@ namespace Kudu.Services.Web.App_Start
 
                 // Delete the old folder
                 oldSSHDirInfo.Delete(recursive: true);
+            }
+        }
+
+        private static void EnsureNpmGlobalDirectory()
+        {
+            try
+            {
+                string appData = System.Environment.GetEnvironmentVariable("APPDATA");
+                FileSystemHelpers.EnsureDirectory(Path.Combine(appData, "npm"));
+            }
+            catch
+            {
+                // no op
             }
         }
 
