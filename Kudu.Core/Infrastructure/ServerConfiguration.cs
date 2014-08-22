@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Web;
 
-namespace Kudu.Services.Web
+namespace Kudu.Core.Infrastructure
 {
     public class ServerConfiguration : IServerConfiguration
     {
-        string _applicationName;
+        private string _applicationName;
+
         public string ApplicationName
         {
             get
@@ -32,13 +32,19 @@ namespace Kudu.Services.Web
 
         static private string GetApplicationName()
         {
-            var applicationName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME");
+            var applicationName = System.Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME");
             if(!string.IsNullOrEmpty(applicationName))
             {
                 return applicationName;
             }
-            applicationName = Environment.GetEnvironmentVariable("APP_POOL_ID");
-            return applicationName;
+
+            applicationName = System.Environment.GetEnvironmentVariable("APP_POOL_ID");
+            if (applicationName != null)
+            {
+                return applicationName;
+            }
+
+            return String.Empty;
         }
     }
 }

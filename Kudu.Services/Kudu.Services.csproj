@@ -135,7 +135,6 @@
     <Compile Include="GitServer\InfoRefsController.cs" />
     <Compile Include="GitServer\ReceivePackHandler.cs" />
     <Compile Include="Infrastructure\AuthUtility.cs" />
-    <Compile Include="Infrastructure\IServerConfiguration.cs" />
     <Compile Include="Diagnostics\DiagnosticsController.cs" />
     <Compile Include="Infrastructure\LockExtensions.cs" />
     <Compile Include="Infrastructure\MemoryStreamExtensions.cs" />
