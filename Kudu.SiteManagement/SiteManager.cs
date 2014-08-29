@@ -152,7 +152,7 @@ namespace Kudu.SiteManagement
                     await OperationManager.AttemptAsync(() => WaitForSiteAsync(serviceUrls[0]));
 
                     // Set initial ScmType state to LocalGit
-                    var settings = new RemoteDeploymentSettingsManager(serviceUrls.First() + "settings");
+                    var settings = new RemoteDeploymentSettingsManager(serviceUrls.First() + "api/settings");
                     await settings.SetValue(SettingsKeys.ScmType, ScmType.LocalGit);
 
                     var siteUrls = new List<string>();

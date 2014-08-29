@@ -43,29 +43,7 @@ namespace Kudu.Client.Deployment
             }
         }
 
-        public async Task<NameValueCollection> GetValuesLegacy()
-        {
-            var obj = await Client.GetJsonAsync<JArray>(String.Empty);
-
-            var nvc = new NameValueCollection();
-
-            foreach (JObject value in obj)
-            {
-                try
-                {
-                    nvc[GetProperty(value, "key")] = GetProperty(value, "value");
-                }
-                catch (Exception e)
-                {
-                    // Include the payload in the exception for diagnostic
-                    throw new Exception("Payload: " + obj.ToString(), e);
-                }
-            }
-
-            return nvc;
-        }
-
-        private static string GetProperty(JObject obj, string name)
+        protected static string GetProperty(JObject obj, string name)
         {
             JToken token;
             if (!obj.TryGetValue(name, out token))

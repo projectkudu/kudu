@@ -158,6 +158,7 @@
     <Compile Include="..\Common\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="App_Start\TraceDeprecatedActionAttribute.cs" />
     <Compile Include="Infrastruture\HttpHandlerRouteHandler.cs" />
     <Compile Include="Infrastruture\RouteCollectionExtensions.cs" />
     <Compile Include="Security\BlockLocalhostModule.cs" />

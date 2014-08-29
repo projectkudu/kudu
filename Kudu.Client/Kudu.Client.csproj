@@ -53,6 +53,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Deployment\RemoteDeploymentManager.cs" />
     <Compile Include="RemoteEnvironmentManager.cs" />
+    <Compile Include="Settings\RemoteDeploymentLegacySettingsManager.cs" />
     <Compile Include="Settings\RemoteDeploymentSettingsManager.cs" />
     <Compile Include="SiteExtensions\RemoteSiteExtensionManager.cs" />
     <Compile Include="SourceControl\RemoteRepositoryManager.cs" />

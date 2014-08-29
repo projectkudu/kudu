@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Net.Http;
+using System.Net.Http.Headers;
 
 namespace Kudu.Core.Tracing
 {
@@ -9,5 +11,7 @@ namespace Kudu.Core.Tracing
         void JobStarted(string jobName, string scriptExtension, string jobType, string siteMode, string error);
 
         void UnexpectedException(Exception ex);
+
+        void DeprecatedApiUsed(string route, string userAgent, string method, string path);
     }
 }

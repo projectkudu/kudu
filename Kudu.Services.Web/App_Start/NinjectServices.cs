@@ -292,6 +292,10 @@ namespace Kudu.Services.Web.App_Start
             GlobalHost.DependencyResolver = new SignalRNinjectDependencyResolver(kernel);
             RouteTable.Routes.MapConnection<PersistentCommandController>("commandstream", "/api/commandstream");
             RouteTable.Routes.MapHubs("/api/filesystemhub", new HubConfiguration());
+            GlobalConfiguration.Configuration.Filters.Add(
+                new TraceDeprecatedActionAttribute(
+                    kernel.Get<IAnalytics>(),
+                    kernel.Get<ITraceFactory>()));
         }
 
         public class SignalRNinjectDependencyResolver : DefaultDependencyResolver
@@ -330,18 +334,18 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("git-info-refs", configuration.GitServerRoot + "/info/refs", new { controller = "InfoRefs", action = "Execute" });
 
             // Push url
-            routes.MapHandler<ReceivePackHandler>(kernel, "git-receive-pack-root", "git-receive-pack");
-            routes.MapHandler<ReceivePackHandler>(kernel, "git-receive-pack", configuration.GitServerRoot + "/git-receive-pack");
+            routes.MapHandler<ReceivePackHandler>(kernel, "git-receive-pack-root", "git-receive-pack", deprecated: false);
+            routes.MapHandler<ReceivePackHandler>(kernel, "git-receive-pack", configuration.GitServerRoot + "/git-receive-pack", deprecated: false);
 
             // Fetch Hook
-            routes.MapHandler<FetchHandler>(kernel, "fetch", "deploy");
+            routes.MapHandler<FetchHandler>(kernel, "fetch", "deploy", deprecated: false);
 
             // Clone url
-            routes.MapHandler<UploadPackHandler>(kernel, "git-upload-pack-root", "git-upload-pack");
-            routes.MapHandler<UploadPackHandler>(kernel, "git-upload-pack", configuration.GitServerRoot + "/git-upload-pack");
+            routes.MapHandler<UploadPackHandler>(kernel, "git-upload-pack-root", "git-upload-pack", deprecated: false);
+            routes.MapHandler<UploadPackHandler>(kernel, "git-upload-pack", configuration.GitServerRoot + "/git-upload-pack", deprecated: false);
 
             // Custom GIT repositories, which can be served from any directory that has a git repo
-            routes.MapHandler<CustomGitRepositoryHandler>(kernel, "git-custom-repository", "git/{*path}");
+            routes.MapHandler<CustomGitRepositoryHandler>(kernel, "git-custom-repository", "git/{*path}", deprecated: false);
 
             // Scm (deployment repository)
             routes.MapHttpRouteDual("scm-info", "scm/info", new { controller = "LiveScm", action = "GetRepositoryInfo" });
@@ -424,8 +428,7 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRouteDual("subscribe-hook", "hooks", new { controller = "WebHooks", action = "Subscribe" }, new { verb = new HttpMethodConstraint("POST") });
 
             // Jobs
-            routes.MapHttpRoute("api-list-all-jobs", "api/webjobs", new { controller = "Jobs", action = "ListAllJobs" }, new { verb = new HttpMethodConstraint("GET") });
-            routes.MapHttpRouteDual("list-all-jobs", "jobs", new { controller = "Jobs", action = "ListAllJobs" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpWebJobsRoute("list-all-jobs", "", "", new { controller = "Jobs", action = "ListAllJobs" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpWebJobsRoute("list-triggered-jobs", "triggered", "", new { controller = "Jobs", action = "ListTriggeredJobs" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpWebJobsRoute("get-triggered-job", "triggered", "/{jobName}", new { controller = "Jobs", action = "GetTriggeredJob" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpWebJobsRoute("invoke-triggered-job", "triggered", "/{jobName}/run", new { controller = "Jobs", action = "InvokeTriggeredJob" }, new { verb = new HttpMethodConstraint("POST") });

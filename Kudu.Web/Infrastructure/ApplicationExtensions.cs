@@ -15,13 +15,13 @@ namespace Kudu.Web.Infrastructure
     {
         public static Task<RepositoryInfo> GetRepositoryInfo(this IApplication application, ICredentials credentials)
         {
-            var repositoryManager = new RemoteRepositoryManager(application.ServiceUrl + "scm", credentials);
+            var repositoryManager = new RemoteRepositoryManager(application.ServiceUrl + "api/scm", credentials);
             return repositoryManager.GetRepositoryInfo();
         }
 
         public static RemoteDeploymentManager GetDeploymentManager(this IApplication application, ICredentials credentials)
         {
-            var deploymentManager = new RemoteDeploymentManager(application.ServiceUrl + "deployments", credentials);
+            var deploymentManager = new RemoteDeploymentManager(application.ServiceUrl + "api/deployments", credentials);
             return deploymentManager;
         }
 
@@ -32,7 +32,7 @@ namespace Kudu.Web.Infrastructure
 
         public static RemoteDeploymentSettingsManager GetSettingsManager(this IApplication application, ICredentials credentials)
         {
-            var deploymentSettingsManager = new RemoteDeploymentSettingsManager(application.ServiceUrl + "settings", credentials);
+            var deploymentSettingsManager = new RemoteDeploymentSettingsManager(application.ServiceUrl + "api/settings", credentials);
             return deploymentSettingsManager;
         }
 
@@ -42,7 +42,7 @@ namespace Kudu.Web.Infrastructure
             {
                 using (var client = new HttpClient(clientHandler))
                 {
-                    HttpResponseMessage response = await client.GetAsync(application.ServiceUrl + "dump");
+                    HttpResponseMessage response = await client.GetAsync(application.ServiceUrl + "api/dump");
 
                     Stream stream = await response.EnsureSuccessStatusCode().Content.ReadAsStreamAsync();
 

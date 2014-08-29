@@ -60,5 +60,16 @@ namespace Kudu.Core.Tracing
 
             _siteExtensionLogManager.Log(o);
         }
+
+        public void DeprecatedApiUsed(string route, string userAgent, string method, string path)
+        {
+            var o = new KuduSiteExtensionLogEvent("DeprecatedApiUsed");
+            o["route"] = route;
+            o["userAgent"] = userAgent;
+            o["method"] = method;
+            o["path"] = path;
+
+            _siteExtensionLogManager.Log(o);
+        }
     }
 }

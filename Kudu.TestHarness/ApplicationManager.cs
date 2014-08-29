@@ -41,7 +41,8 @@ namespace Kudu.TestHarness
             ServiceUrl = site.ServiceUrl;
 
             DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "api/deployments", credentials);
-            SettingsManager = new RemoteDeploymentSettingsManager(site.ServiceUrl + "settings", credentials);
+            SettingsManager = new RemoteDeploymentSettingsManager(site.ServiceUrl + "api/settings", credentials);
+            LegacySettingsManager = new RemoteDeploymentLegacySettingsManager(site.ServiceUrl + "settings", credentials);
             LogStreamManager = new RemoteLogStreamManager(site.ServiceUrl + "api/logstream", credentials);
             SSHKeyManager = new RemoteSSHKeyManager(site.ServiceUrl + "api/sshkey", credentials);
             VfsManager = new RemoteVfsManager(site.ServiceUrl + "api/vfs", credentials);
@@ -90,6 +91,12 @@ namespace Kudu.TestHarness
         }
 
         public RemoteDeploymentSettingsManager SettingsManager
+        {
+            get;
+            private set;
+        }
+
+        public RemoteDeploymentLegacySettingsManager LegacySettingsManager
         {
             get;
             private set;
