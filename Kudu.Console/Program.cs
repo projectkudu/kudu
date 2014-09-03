@@ -80,7 +80,8 @@ namespace Kudu.Console
 
             IRepository gitRepository = new GitExeRepository(env, settingsManager, traceFactory);
 
-            IAnalytics analytics = new Analytics(settingsManager, tracer, analyticsPath);
+            IServerConfiguration serverConfiguration = new ServerConfiguration();
+            IAnalytics analytics = new Analytics(settingsManager, serverConfiguration);
 
             IWebHooksManager hooksManager = new WebHooksManager(tracer, env, hooksLock);
             var logger = new ConsoleLogger();

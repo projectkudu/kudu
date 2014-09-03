@@ -1,44 +1,29 @@
 ﻿using System;
 using System.Text;
 using Kudu.Contracts.Settings;
-using Kudu.Contracts.Tracing;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Tracing
 {
     public class Analytics : IAnalytics
     {
-        private readonly SiteExtensionLogManager _siteExtensionLogManager;
         private readonly IDeploymentSettingsManager _settings;
+        private readonly IServerConfiguration _serverConfiguration;
 
-        public Analytics(IDeploymentSettingsManager settings, ITracer tracer, string directoryPath)
+        public Analytics(IDeploymentSettingsManager settings, IServerConfiguration serverConfiguration)
         {
             _settings = settings;
-            _siteExtensionLogManager = new SiteExtensionLogManager(tracer, directoryPath);
+            _serverConfiguration = serverConfiguration;
         }
 
         public void ProjectDeployed(string projectType, string result, string error, long deploymentDurationInMilliseconds, string siteMode)
         {
-            var o = new KuduSiteExtensionLogEvent("SiteDeployed");
-            o["SiteType"] = projectType;
-            o["ScmType"] = _settings.GetValue(SettingsKeys.ScmType);
-            o["Result"] = result;
-            o["Error"] = error;
-            o["Latency"] = deploymentDurationInMilliseconds;
-            o["SiteMode"] = siteMode;
-
-            _siteExtensionLogManager.Log(o);
+            KuduEventSource.Log.ProjectDeployed(_serverConfiguration.ApplicationName, projectType, result, error, deploymentDurationInMilliseconds, siteMode, _settings.GetValue(SettingsKeys.ScmType));
         }
 
         public void JobStarted(string jobName, string scriptExtension, string jobType, string siteMode, string error)
         {
-            var o = new KuduSiteExtensionLogEvent("JobStarted");
-            o["JobName"] = jobName;
-            o["ScriptExtension"] = scriptExtension;
-            o["JobType"] = jobType;
-            o["SiteMode"] = siteMode;
-            o["Error"] = error;
-
-            _siteExtensionLogManager.Log(o);
+            KuduEventSource.Log.WebJobStarted(_serverConfiguration.ApplicationName, jobName, scriptExtension, jobType, siteMode, error);
         }
 
         public void UnexpectedException(Exception exception)
@@ -55,21 +40,12 @@ namespace Kudu.Core.Tracing
                 }
             }
 
-            var o = new KuduSiteExtensionLogEvent("UnexpectedException");
-            o["Error"] = strb.ToString();
-
-            _siteExtensionLogManager.Log(o);
+            KuduEventSource.Log.KuduUnexpectedException(_serverConfiguration.ApplicationName, strb.ToString());
         }
 
         public void DeprecatedApiUsed(string route, string userAgent, string method, string path)
         {
-            var o = new KuduSiteExtensionLogEvent("DeprecatedApiUsed");
-            o["route"] = route;
-            o["userAgent"] = userAgent;
-            o["method"] = method;
-            o["path"] = path;
-
-            _siteExtensionLogManager.Log(o);
+            KuduEventSource.Log.DeprecatedApiUsed(_serverConfiguration.ApplicationName, route, userAgent, method, path);
         }
     }
 }

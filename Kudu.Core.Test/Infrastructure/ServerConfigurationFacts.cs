@@ -18,7 +18,7 @@ namespace Kudu.Core.Infrastructure.Test
                 WithEnvVarUnset(AppPoolIdKey, () =>
                     {
                         var config = new ServerConfiguration();
-                        Assert.Null(config.ApplicationName);
+                        Assert.Equal(String.Empty, config.ApplicationName);
                         Assert.Equal("git", config.GitServerRoot);
                     });
             });
