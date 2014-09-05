@@ -17,6 +17,7 @@
         public const string NextManifestPath = "NEXT_MANIFEST_PATH";
         public const string InPlaceDeployment = "IN_PLACE_DEPLOYMENT";
         public const string PostDeploymentActionsDirectoryKey = "POST_DEPLOYMENT_ACTIONS_DIR";
+        public const string ApplicationPoolId = "APP_POOL_ID";
 
         public const string WebJobsDeployCommandKey = "WEBJOBS_DEPLOY_CMD";
         public const string WebJobsRootPath = "WEBJOBS_PATH";

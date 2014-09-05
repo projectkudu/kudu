@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Deployment;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Infrastructure
@@ -225,6 +226,22 @@ namespace Kudu.Core.Infrastructure
         public static string GetCommandLine(this Process process)
         {
             return GetCommandLineCore(process.Handle);
+        }
+
+        public static bool GetIsScmSite(Dictionary<string, string> environment)
+        {
+            return environment[WellKnownEnvironmentVariables.ApplicationPoolId].StartsWith("~1", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static bool GetIsWebJob(Dictionary<string, string> environment)
+        {
+            return environment.ContainsKey(WellKnownEnvironmentVariables.WebJobsName);
+        }
+
+        public static string GetDescription(Dictionary<string, string> environment)
+        {
+            const string webJobTemplate = "WebJob: {0}, Type: {1}";
+            return String.Format(webJobTemplate, environment[WellKnownEnvironmentVariables.WebJobsName], environment[WellKnownEnvironmentVariables.WebJobsType]);
         }
 
         private static async Task CopyStreamAsync(Stream from, Stream to, IdleManager idleManager, CancellationToken cancellationToken, bool closeAfterCopy = false)

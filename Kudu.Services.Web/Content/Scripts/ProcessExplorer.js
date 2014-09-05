@@ -306,10 +306,16 @@ var Process = (function () {
 
         var td = document.createElement('td');
         td.style.paddingLeft = (level === 0 ? 5 : level * 30) + 'px';
+        var suffix = "";
+        if (this._json.is_webjob) {
+            suffix = " <span class='label label-info'>webjob</span>";
+        } else if (this._json.is_scm_site) {
+            suffix = " <span class='label label-primary'>scm</span>";
+        }
         if (this._json.children.length > 0) {
-            $(td).wrapInner('<span class="toggle"></span>    ' + this.FullName);
+            $(td).wrapInner('<span class="toggle"></span>    ' + this.FullName + suffix);
         } else {
-            td.textContent = this.FullName;
+            $(td).wrapInner(this.FullName + suffix);
         }
         tr.appendChild(td);
         tr.appendChild(Utilities.ToTd(this._json.id));
@@ -378,7 +384,10 @@ var Process = (function () {
         div.appendChild(Utilities.toRow("id", this._json.id));
         div.appendChild(Utilities.toRow("name", this._json.name));
         div.appendChild(Utilities.toRow("file name", this._json.file_name));
-        div.appendChild(Utilities.toRow("command line", _this._json.command_line));
+        div.appendChild(Utilities.toRow("command line", this._json.command_line));
+        div.appendChild(Utilities.toRow("description", this._json.description ? this._json.description : ""));
+        div.appendChild(Utilities.toRow("is scm site", this._json.is_scm_site));
+        div.appendChild(Utilities.toRow("is webjob", this._json.is_scm_site));
         div.appendChild(Utilities.toRow("handle count", Utilities.commaSeparateNumber(this._json.handle_count)));
         div.appendChild(Utilities.toRow("module countid", Utilities.commaSeparateNumber(this._json.module_count)));
         div.appendChild(Utilities.toRow("thread count", Utilities.commaSeparateNumber(this._json.thread_count)));

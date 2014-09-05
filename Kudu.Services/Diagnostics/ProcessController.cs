@@ -462,6 +462,9 @@ namespace Kudu.Services.Performance
                 info.TimeStamp = DateTime.UtcNow;
                 info.EnvironmentVariables = SafeGetValue(process.GetEnvironmentVariables, null);
                 info.CommandLine = SafeGetValue(process.GetCommandLine, null);
+                info.IsScmSite = SafeGetValue(() => ProcessExtensions.GetIsScmSite(info.EnvironmentVariables), false);
+                info.IsWebJob = SafeGetValue(() => ProcessExtensions.GetIsWebJob(info.EnvironmentVariables), false);
+                info.Description = SafeGetValue(() => ProcessExtensions.GetDescription(info.EnvironmentVariables), null);
             }
 
             return info;

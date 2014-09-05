@@ -104,5 +104,14 @@ namespace Kudu.Core.Diagnostics
 
         [JsonProperty(PropertyName = "environment_variables", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Dictionary<string, string> EnvironmentVariables { get; set; }
+
+        [JsonProperty(PropertyName = "is_scm_site", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public bool IsScmSite { get; set; }
+
+        [JsonProperty(PropertyName = "is_webjob", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public bool IsWebJob { get; set; }
+
+        [JsonProperty(PropertyName = "description", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public string Description { get; set; }
     }
 }
