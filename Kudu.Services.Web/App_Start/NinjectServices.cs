@@ -38,13 +38,16 @@ using Kudu.Services.Web.Infrastructure;
 using Kudu.Services.Web.Services;
 using Kudu.Services.Web.Tracing;
 using Microsoft.AspNet.SignalR;
+using Microsoft.Owin;
 using Ninject;
 using Ninject.Activation;
 using Ninject.Web.Common;
+using Owin;
 using XmlSettings;
 
 [assembly: WebActivator.PreApplicationStartMethod(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Start")]
 [assembly: WebActivator.ApplicationShutdownMethodAttribute(typeof(Kudu.Services.Web.App_Start.NinjectServices), "Stop")]
+[assembly: OwinStartup(typeof(Kudu.Services.Web.App_Start.NinjectServices.SignalRStartup))]
 
 namespace Kudu.Services.Web.App_Start
 {
@@ -289,12 +292,19 @@ namespace Kudu.Services.Web.App_Start
 
             // Register the default hubs route: ~/signalr
             GlobalHost.DependencyResolver = new SignalRNinjectDependencyResolver(kernel);
-            RouteTable.Routes.MapConnection<PersistentCommandController>("commandstream", "/api/commandstream");
-            RouteTable.Routes.MapHubs("/api/filesystemhub", new HubConfiguration());
             GlobalConfiguration.Configuration.Filters.Add(
                 new TraceDeprecatedActionAttribute(
                     kernel.Get<IAnalytics>(),
                     kernel.Get<ITraceFactory>()));
+        }
+
+        public static class SignalRStartup
+        {
+            public static void Configuration(IAppBuilder app)
+            {
+                app.MapSignalR<PersistentCommandController>("/api/commandstream");
+                app.MapSignalR("/api/filesystemhub", new HubConfiguration());
+            }
         }
 
         public class SignalRNinjectDependencyResolver : DefaultDependencyResolver

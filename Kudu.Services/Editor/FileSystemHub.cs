@@ -46,14 +46,14 @@ namespace Kudu.Services.Editor
             }
         }
 
-        public override async Task OnDisconnected()
+        public override async Task OnDisconnected(bool stopCalled)
         {
             using (
                 _tracer.Step(String.Format("Client with connectionId {0} disconnected.",
                     Context.ConnectionId)))
             {
                 RemoveFileSystemWatcher(Context.ConnectionId, _tracer);
-                await base.OnDisconnected();
+                await base.OnDisconnected(stopCalled);
             }
         }
 

@@ -48,13 +48,13 @@ namespace Kudu.Services
             }
         }
 
-        protected override Task OnDisconnected(IRequest request, string connectionId)
+        protected override Task OnDisconnected(IRequest request, string connectionId, bool stopCalled)
         {
             using (_tracer.Step("Client Disconected with connectionId = " + connectionId))
             {
                 KillProcess(connectionId, _tracer);
 
-                return base.OnDisconnected(request, connectionId);
+                return base.OnDisconnected(request, connectionId, stopCalled);
             }
         }
 

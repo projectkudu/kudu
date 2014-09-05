@@ -138,7 +138,7 @@ namespace Kudu.Core.Test
 
         public Task TestDisconnect()
         {
-            return OnDisconnected();
+            return OnDisconnected(stopCalled: false);
         }
 
         public new void Dispose()

@@ -200,7 +200,7 @@ namespace Kudu.Core.Test
 
             public Task Disconnect(IRequest request, string connectionId)
             {
-                return OnDisconnected(request, connectionId);
+                return OnDisconnected(request, connectionId, stopCalled: false);
             }
 
             public Task Receive(IRequest request, string connectionId, string data)
