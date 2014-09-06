@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -49,6 +51,10 @@ namespace Kudu.FunctionalTests
 
                 ex = await ExceptionAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.GetLogEntryDetailsAsync(id, "fakeId"));
                 Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
+
+                ex = await ExceptionAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.GetDeploymentScriptAsync());
+                Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
+                Assert.Contains("Need to deploy website to get deployment script.", ex.ResponseMessage.ExceptionMessage);
             });
         }
 
@@ -131,6 +137,14 @@ namespace Kudu.FunctionalTests
                     Assert.True(nested.Count > 0);
 
                     KuduAssert.VerifyLogOutput(appManager, result.Id, "Cleaning Git repository");
+
+                    // Get deployment script
+                    var stream = await appManager.DeploymentManager.GetDeploymentScriptAsync();
+                    using (var zipFile = new ZipArchive(stream))
+                    {
+                        // Verify 2 files exist
+                        Assert.Equal(2, zipFile.Entries.Count);
+                    }
 
                     // Can't delete the active one
                     var ex = await ExceptionAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.DeleteAsync(result.Id));

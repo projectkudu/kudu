@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.IO.Abstractions;
+using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -11,7 +13,10 @@ using System.Web.Http;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.SourceControl;
 using Kudu.Contracts.Tracing;
+using Kudu.Core;
 using Kudu.Core.Deployment;
+using Kudu.Core.Infrastructure;
+using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
 using Kudu.Services.Infrastructure;
@@ -228,6 +233,41 @@ namespace Kudu.Services.Deployment
                 result.LogUrl = UriHelper.MakeRelative(Request.RequestUri, "log");
 
                 return result;
+            }
+        }
+
+        /// <summary>
+        /// Get the list of all deployments
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        public HttpResponseMessage GetDeploymentScript()
+        {
+            using (_tracer.Step("DeploymentService.GetDeploymentScript"))
+            {
+                if (!_deploymentManager.GetResults().Any())
+                {
+                    throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, "Need to deploy website to get deployment script."));
+                }
+
+                string deploymentScriptContent = _deploymentManager.GetDeploymentScriptContent();
+
+                if (deploymentScriptContent == null)
+                {
+                    throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, "Operation only supported if not using a custom deployment script"));
+                }
+
+                HttpResponseMessage response = Request.CreateResponse();
+                response.Content = ZipStreamContent.Create("deploymentscript.zip", _tracer, zip =>
+                {
+                    // Add deploy.cmd to zip file
+                    zip.AddFile(DeploymentManager.DeploymentScriptFileName, deploymentScriptContent);
+
+                    // Add .deployment to cmd file
+                    zip.AddFile(DeploymentSettingsProvider.DeployConfigFile, "[config]\ncommand = {0}\n".FormatInvariant(DeploymentManager.DeploymentScriptFileName));
+                });
+
+                return response;
             }
         }
 

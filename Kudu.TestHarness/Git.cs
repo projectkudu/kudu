@@ -218,7 +218,7 @@ namespace Kudu.TestHarness
 
         public static GitDeploymentResult GitDeploy(string kuduServiceUrl, string localRepoPath, string remoteRepoUrl, string localBranchName, string remoteBranchName)
         {
-            var deploymentManager = new RemoteDeploymentManager(kuduServiceUrl + "deployments"); 
+            var deploymentManager = new RemoteDeploymentManager(kuduServiceUrl); 
             return GitDeploy(deploymentManager, kuduServiceUrl, localRepoPath, remoteRepoUrl, localBranchName, remoteBranchName);
         }
 

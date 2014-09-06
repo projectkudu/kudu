@@ -18,10 +18,10 @@ namespace Kudu.Core.Deployment
         /// <summary>
         /// Creates a temporary deployment that is used as a placeholder until changeset details are available.
         /// </summary>
-        /// <param name="statusText"></param>
-        /// <returns></returns>
         IDisposable CreateTemporaryDeployment(string statusText, out ChangeSet tempChangeSet, ChangeSet changeset = null, string deployedBy = null);
 
         ILogger GetLogger(string id);
+
+        string GetDeploymentScriptContent();
     }
 }

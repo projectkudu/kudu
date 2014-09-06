@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -16,38 +19,54 @@ namespace Kudu.Client.Deployment
 
         public Task<IEnumerable<DeployResult>> GetResultsAsync()
         {
-            return Client.GetJsonAsync<IEnumerable<DeployResult>>("");
+            return Client.GetJsonAsync<IEnumerable<DeployResult>>(BuildUrl());
         }
 
         public Task<DeployResult> GetResultAsync(string id)
         {
-            return Client.GetJsonAsync<DeployResult>(id);
+            return Client.GetJsonAsync<DeployResult>(BuildUrl(id));
         }
 
         public Task<IEnumerable<LogEntry>> GetLogEntriesAsync(string id)
         {
-            return Client.GetJsonAsync<IEnumerable<LogEntry>>(id + "/log");
+            return Client.GetJsonAsync<IEnumerable<LogEntry>>(BuildUrl(id, "log"));
         }
 
         public Task<IEnumerable<LogEntry>> GetLogEntryDetailsAsync(string id, string logId)
         {
-            return Client.GetJsonAsync<IEnumerable<LogEntry>>(id + "/log/" + logId);
+            return Client.GetJsonAsync<IEnumerable<LogEntry>>(BuildUrl(id, "log", logId));
+        }
+
+        public async Task<Stream> GetDeploymentScriptAsync()
+        {
+            HttpResponseMessage response = await Client.GetAsync("deploymentscript");
+
+            return response
+                .EnsureSuccessful()
+                .Content
+                .ReadAsStreamAsync()
+                .Result; 
         }
 
         public Task DeleteAsync(string id)
         {
-            return Client.DeleteSafeAsync(id);
+            return Client.DeleteSafeAsync(BuildUrl(id));
         }
 
         public Task DeployAsync(string id)
         {
-            return Client.PutAsync(id);
+            return Client.PutAsync(BuildUrl(id));
         }
 
         public Task DeployAsync(string id, bool clean)
         {
             var param = new KeyValuePair<string, string>("clean", clean.ToString());
-            return Client.PutAsync(id, param);
+            return Client.PutAsync(BuildUrl(id), param);
+        }
+
+        private static string BuildUrl(params string[] parameters)
+        {
+            return "deployments/" + String.Join("/", parameters);
         }
     }
 }

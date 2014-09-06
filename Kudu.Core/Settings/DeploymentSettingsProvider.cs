@@ -6,7 +6,7 @@ namespace Kudu.Core.Settings
 {
     public class DeploymentSettingsProvider : BasicSettingsProvider
     {
-        internal const string DeployConfigFile = ".deployment";
+        public const string DeployConfigFile = ".deployment";
 
         public DeploymentSettingsProvider(string path)
             : base(GetValues(path), SettingsProvidersPriority.PerDeployment)

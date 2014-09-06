@@ -10,7 +10,6 @@ namespace Kudu.Core.Deployment.Generator
     public abstract class GeneratorSiteBuilder : ExternalCommandBuilder
     {
         private const string ScriptGeneratorCommandArgumentsFormat = "-y --no-dot-deployment -r \"{0}\" -o \"{1}\" {2}";
-        private const string DeploymentScriptFileName = "deploy.cmd";
         private const string DeploymentCommandCacheKeyFileName = "deploymentCacheKey";
 
         private static readonly string KuduVersion = typeof(GeneratorSiteBuilder).Assembly.GetName().Version.ToString();
@@ -36,7 +35,7 @@ namespace Kudu.Core.Deployment.Generator
             try
             {
                 GenerateScript(context, buildLogger);
-                string deploymentScriptPath = String.Format("\"{0}\"", Path.GetFullPath(Path.Combine(Environment.DeploymentToolsPath, DeploymentScriptFileName)));
+                string deploymentScriptPath = String.Format("\"{0}\"", DeploymentManager.GetCachedDeploymentScriptPath(Environment));
                 RunCommand(context, deploymentScriptPath);
                 tcs.SetResult(null);
             }
@@ -124,7 +123,7 @@ namespace Kudu.Core.Deployment.Generator
         private bool UseCachedDeploymentScript(string scriptGeneratorCommand, DeploymentContext context)
         {
             string cacheKeyFilePath = Path.Combine(Environment.DeploymentToolsPath, DeploymentCommandCacheKeyFileName);
-            string deploymentScriptPath = Path.Combine(Environment.DeploymentToolsPath, DeploymentScriptFileName);
+            string deploymentScriptPath = DeploymentManager.GetCachedDeploymentScriptPath(Environment);
 
             try
             {

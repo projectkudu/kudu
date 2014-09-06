@@ -19,6 +19,8 @@ namespace Kudu.Core.Deployment
 {
     public class DeploymentManager : IDeploymentManager
     {
+        public const string DeploymentScriptFileName = "deploy.cmd";
+
         private static readonly Random _random = new Random();
 
         private readonly ISiteBuilderFactory _builderFactory;
@@ -794,6 +796,27 @@ namespace Kudu.Core.Deployment
             var path = GetLogPath(id);
             var xmlLogger = new XmlLogger(path, _analytics);
             return new ProgressLogger(id, _status, new CascadeLogger(xmlLogger, _globalLogger));
+        }
+
+        /// <summary>
+        /// Prepare a directory with the deployment script and .deployment file.
+        /// </summary>
+        /// <returns>The directory path for the files or null if no deployment script exists.</returns>
+        public string GetDeploymentScriptContent()
+        {
+            var cachedDeploymentScriptPath = GetCachedDeploymentScriptPath(_environment);
+
+            if (!FileSystemHelpers.FileExists(cachedDeploymentScriptPath))
+            {
+                return null;
+            }
+
+            return FileSystemHelpers.ReadAllText(cachedDeploymentScriptPath);
+        }
+
+        public static string GetCachedDeploymentScriptPath(IEnvironment environment)
+        {
+            return Path.GetFullPath(Path.Combine(environment.DeploymentToolsPath, DeploymentScriptFileName));
         }
 
         private string GetActiveDeploymentManifestPath()

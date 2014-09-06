@@ -21,7 +21,7 @@ namespace Kudu.Web.Infrastructure
 
         public static RemoteDeploymentManager GetDeploymentManager(this IApplication application, ICredentials credentials)
         {
-            var deploymentManager = new RemoteDeploymentManager(application.ServiceUrl + "api/deployments", credentials);
+            var deploymentManager = new RemoteDeploymentManager(application.ServiceUrl + "api", credentials);
             return deploymentManager;
         }
 

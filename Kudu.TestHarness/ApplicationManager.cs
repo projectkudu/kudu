@@ -40,7 +40,7 @@ namespace Kudu.TestHarness
             SiteUrl = site.SiteUrl;
             ServiceUrl = site.ServiceUrl;
 
-            DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "api/deployments", credentials);
+            DeploymentManager = new RemoteDeploymentManager(site.ServiceUrl + "api", credentials);
             SettingsManager = new RemoteDeploymentSettingsManager(site.ServiceUrl + "api/settings", credentials);
             LegacySettingsManager = new RemoteDeploymentLegacySettingsManager(site.ServiceUrl + "settings", credentials);
             LogStreamManager = new RemoteLogStreamManager(site.ServiceUrl + "api/logstream", credentials);

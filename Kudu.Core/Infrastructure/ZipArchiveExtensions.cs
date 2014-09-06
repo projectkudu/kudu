@@ -83,6 +83,15 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
+        public static void AddFile(this ZipArchive zip, string fileName, string fileContent)
+        {
+            ZipArchiveEntry entry = zip.CreateEntry(fileName, CompressionLevel.Fastest);
+            using (var writer = new StreamWriter(entry.Open()))
+            {
+                writer.Write(fileContent);
+            }
+        }
+
         public static void Extract(this ZipArchive archive, string directoryName)
         {
             foreach (ZipArchiveEntry entry in archive.Entries)

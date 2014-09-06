@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Kudu.Client;
 using Kudu.Contracts.Settings;
 using Kudu.Core;
 using Kudu.Core.Deployment;
@@ -99,7 +100,7 @@ namespace Kudu.FunctionalTests
         // Other apps
 
         [Fact]
-        public void CustomDeploymentScriptShouldHaveDeploymentSetting()
+        public async Task CustomDeploymentScriptShouldHaveDeploymentSetting()
         {
             // use a fresh guid so its impossible to accidently see the right output just by chance.
             var guidtext = Guid.NewGuid().ToString();
@@ -111,7 +112,7 @@ namespace Kudu.FunctionalTests
             var expectedLogFeedback = "Using custom deployment setting for {0} custom value is '{1}'.".FormatCurrentCulture(kuduSetVar, kuduSetVarText);
 
             string randomTestName = "CustomDeploymentScriptShouldHaveDeploymentSetting";
-            ApplicationManager.Run(randomTestName, appManager =>
+            await ApplicationManager.RunAsync(randomTestName, async appManager =>
             {
                 appManager.SettingsManager.SetValue(normalVar, normalVarText).Wait();
                 appManager.SettingsManager.SetValue(kuduSetVar, kuduSetVarText).Wait();
@@ -134,6 +135,10 @@ namespace Kudu.FunctionalTests
                     kuduSetVar + "=" + kuduSetVarText,
                     expectedLogFeedback };
                 KuduAssert.VerifyLogOutput(appManager, results[0].Id, expectedStrings);
+
+                var ex = await ExceptionAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.GetDeploymentScriptAsync());
+                Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
+                Assert.Contains("Operation only supported if not using a custom deployment script", ex.ResponseMessage.ExceptionMessage);
             });
         }
 

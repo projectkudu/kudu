@@ -207,6 +207,11 @@ namespace Kudu.Services.Test
                 return Mock.Of<ILogger>();
             }
 
+            public string GetDeploymentScriptContent()
+            {
+                return null;
+            }
+
             public class NoopDisposable : IDisposable
             {
                 public void Dispose()
