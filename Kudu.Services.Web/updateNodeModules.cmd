@@ -9,7 +9,7 @@ set counter=0
 :retry
 set /a counter+=1
 echo Attempt %counter% out of %attempts%
-
+cmd /c npm config set ca ""
 cmd /c npm install https://github.com/projectkudu/KuduScript/tarball/d3274bbb96fbe0272b5c55918c0365e7b961c577
 IF %ERRORLEVEL% NEQ 0 goto error
 
