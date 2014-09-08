@@ -69,7 +69,6 @@ namespace Kudu.Console
             string deploymentLockPath = Path.Combine(lockPath, Constants.DeploymentLockFile);
             string statusLockPath = Path.Combine(lockPath, Constants.StatusLockFile);
             string hooksLockPath = Path.Combine(lockPath, Constants.HooksLockFile);
-            string analyticsPath = env.AnalyticsPath;
 
             IOperationLock deploymentLock = new LockFile(deploymentLockPath, traceFactory);
             IOperationLock statusLock = new LockFile(statusLockPath, traceFactory);
