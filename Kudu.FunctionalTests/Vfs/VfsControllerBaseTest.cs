@@ -35,6 +35,7 @@ namespace Kudu.FunctionalTests
         private static readonly MediaTypeHeaderValue _conflictMediaType = MediaTypeHeaderValue.Parse("text/plain");
 
         private bool _testConflictingUpdates;
+        private bool _isScmEditorTest;
 
         public VfsControllerBaseTest(RemoteVfsManager client, bool testConflictingUpdates, RemoteVfsManager deploymentClient = null)
         {
@@ -49,6 +50,7 @@ namespace Kudu.FunctionalTests
             }
 
             _testConflictingUpdates = testConflictingUpdates;
+            _isScmEditorTest = deploymentClient != null;
         }
 
         protected string BaseAddress { get; private set; }
@@ -108,11 +110,18 @@ namespace Kudu.FunctionalTests
             EntityTagHeaderValue originalEtag = response.Headers.ETag;
             Assert.NotNull(originalEtag);
 
+            DateTimeOffset? lastModified = response.Content.Headers.LastModified;
+            if (!_isScmEditorTest)
+            {
+                Assert.NotNull(lastModified);
+            }
+
             // Check that we get a 200 (OK) on created file with the correct etag
             TestTracer.Trace("==== Check that we get a 200 (OK) on created file with the correct etag");
             response = await HttpGetAsync(fileAddress);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.Equal(originalEtag, response.Headers.ETag);
+            Assert.Equal(lastModified, response.Content.Headers.LastModified);
             Assert.Equal(_fileMediaType, response.Content.Headers.ContentType);
 
             // Check that we get a 200 (OK) on created file using HEAD with the correct etag

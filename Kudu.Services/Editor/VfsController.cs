@@ -56,6 +56,7 @@ namespace Kudu.Services.Editor
 
             // Get current etag
             EntityTagHeaderValue currentEtag = CreateEntityTag(info);
+            DateTime lastModified = info.LastWriteTimeUtc;
 
             // Check whether we have a range request (taking If-Range condition into account)
             bool isRangeRequest = IsRangeRequest(currentEtag);
@@ -65,7 +66,7 @@ namespace Kudu.Services.Editor
             if (!isRangeRequest && IsIfNoneMatchRequest(currentEtag))
             {
                 HttpResponseMessage notModifiedResponse = Request.CreateResponse(HttpStatusCode.NotModified);
-                notModifiedResponse.Headers.ETag = currentEtag;
+                notModifiedResponse.SetEntityTagHeader(currentEtag, lastModified);
                 return Task.FromResult(notModifiedResponse);
             }
 
@@ -88,7 +89,7 @@ namespace Kudu.Services.Editor
                 }
 
                 // Set etag for the file
-                successFileResponse.Headers.ETag = currentEtag;
+                successFileResponse.SetEntityTagHeader(currentEtag, lastModified);
                 return Task.FromResult(successFileResponse);
             }
             catch (InvalidByteRangeException invalidByteRangeException)
@@ -178,7 +179,7 @@ namespace Kudu.Services.Editor
 
                 // Set updated etag for the file
                 info.Refresh();
-                successFileResponse.Headers.ETag = CreateEntityTag(info);
+                successFileResponse.SetEntityTagHeader(CreateEntityTag(info), info.LastWriteTimeUtc);
                 return successFileResponse;
 
             }
