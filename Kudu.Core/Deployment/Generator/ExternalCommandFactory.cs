@@ -149,7 +149,12 @@ namespace Kudu.Core.Deployment.Generator
         {
             get
             {
-                return System.Environment.Is64BitProcess ? "x64" : "x86";
+                var bitness = System.Environment.GetEnvironmentVariable(WellKnownEnvironmentVariables.SiteBitness);
+                if (bitness == null)
+                {
+                    return System.Environment.Is64BitProcess ? "x64" : "x86";
+                }
+                return bitness.Equals(Constants.X64Bit, StringComparison.OrdinalIgnoreCase) ? "x64" : "x86";
             }
         }
 

@@ -33,10 +33,20 @@ namespace Kudu.Client.Diagnostics
             return Client.GetJsonAsync<ProcessInfo>(id.ToString());
         }
 
-        public async Task KillProcessAsync(int id)
+        public async Task KillProcessAsync(int id, bool throwOnError = true)
         {
-            HttpResponseMessage response = await Client.DeleteAsync(id.ToString());
-            response.EnsureSuccessful().Dispose();
+            try
+            {
+                HttpResponseMessage response = await Client.DeleteAsync(id.ToString());
+                response.EnsureSuccessful().Dispose();
+            }
+            catch (Exception)
+            {
+                if (throwOnError)
+                {
+                    throw;
+                }
+            }
         }
 
         public async Task<Stream> MiniDump(int id = 0, int dumpType = 0, string format = null)

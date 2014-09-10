@@ -55,6 +55,9 @@ namespace Kudu
         public const string KreDefaultClr = "svr50";
         public const string KreDefaultNugetApiUrl = "https://www.myget.org/F/aspnetmaster/api/v2";
 
+        public const string X64Bit = "AMD64";
+        public const string X86Bit = "x86";
+
         private static readonly TimeSpan _maxAllowedExectionTime = TimeSpan.FromMinutes(30);
 
         public static TimeSpan MaxAllowedExecutionTime

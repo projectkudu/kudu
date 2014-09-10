@@ -121,6 +121,8 @@ namespace Kudu.Services.Web.App_Start
             // Make sure %HOME% is correctly set
             EnsureHomeEnvironmentVariable();
 
+            EnsureSiteBitnessEnvironmentVariable();
+
             IEnvironment environment = GetEnvironment();
 
             // Per request environment
@@ -628,6 +630,14 @@ namespace Kudu.Services.Web.App_Start
             {
                 path = Path.GetFullPath(path);
                 System.Environment.SetEnvironmentVariable("HOME", path);
+            }
+        }
+
+        private static void EnsureSiteBitnessEnvironmentVariable()
+        {
+            if (System.Environment.GetEnvironmentVariable("SITE_BITNESS") == null)
+            {
+                System.Environment.SetEnvironmentVariable("SITE_BITNESS", System.Environment.Is64BitProcess ? Constants.X64Bit : Constants.X86Bit);
             }
         }
 

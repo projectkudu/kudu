@@ -83,6 +83,16 @@ namespace Kudu.TestHarness
                 };
 
                 // In site reuse mode, clean out the existing site so we start clean
+                // Enumrate all w3wp processes and make sure to kill any process with an open handle to klr.host.dll
+                foreach (var process in (await appManager.ProcessManager.GetProcessesAsync()).Where(p => p.Name.Equals("w3wp", StringComparison.OrdinalIgnoreCase)))
+                {
+                    var extendedProcess = await appManager.ProcessManager.GetProcessAsync(process.Id);
+                    if (extendedProcess.OpenFileHandles.Any(h => h.IndexOf("klr.host.dll", StringComparison.OrdinalIgnoreCase) != -1))
+                    {
+                        await appManager.ProcessManager.KillProcessAsync(extendedProcess.Id, throwOnError:false);
+                    }
+                }
+
                 await appManager.RepositoryManager.Delete(deleteWebRoot: true, ignoreErrors: true);
 
                 // Make sure we start with the correct default file as some tests expect it
