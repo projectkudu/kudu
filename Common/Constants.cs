@@ -51,6 +51,10 @@ namespace Kudu
 
         public const string HostingStartHtml = "hostingstart.html";
 
+        public const string KreDefaultVersion = "1.0.0-alpha3";
+        public const string KreDefaultClr = "svr50";
+        public const string KreDefaultNugetApiUrl = "https://www.myget.org/F/aspnetmaster/api/v2";
+
         private static readonly TimeSpan _maxAllowedExectionTime = TimeSpan.FromMinutes(30);
 
         public static TimeSpan MaxAllowedExecutionTime

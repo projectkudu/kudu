@@ -87,7 +87,7 @@ namespace Kudu.Core.Deployment.Generator
             // figure out with some heuristic, which one to deploy.
 
             // TODO: Pick only 1 and throw if there's more than one
-            VsSolutionProject project = solution.Projects.Where(p => p.IsWap || p.IsWebSite).FirstOrDefault();
+            VsSolutionProject project = solution.Projects.Where(p => p.IsWap || p.IsWebSite || p.IsProjectK).FirstOrDefault();
 
             if (project == null)
             {
@@ -116,6 +116,15 @@ namespace Kudu.Core.Deployment.Generator
                                       repositoryRoot,
                                       project.AbsolutePath,
                                       solution.Path);
+            }
+
+            if (project.IsProjectK)
+            {
+                return new ProjectKBuilder(_environment,
+                                      settings,
+                                      _propertyProvider,
+                                      repositoryRoot,
+                                      project.AbsolutePath);
             }
 
             return new WebSiteBuilder(_environment,

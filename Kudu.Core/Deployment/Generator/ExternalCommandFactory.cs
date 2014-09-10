@@ -36,6 +36,10 @@ namespace Kudu.Core.Deployment.Generator
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.PostDeploymentActionsDirectoryKey, PostDeploymentActionsDir, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.SelectNodeVersionCommandKey, SelectNodeVersionCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.WebJobsDeployCommandKey, WebJobsDeployCommand, logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KreVersion, Constants.KreDefaultVersion, logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KreClr, Constants.KreDefaultClr, logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KreNugetApiUrl, Constants.KreDefaultNugetApiUrl, logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KvmPath, KvmPath, logger);
 
             bool isInPlace = false;
             string project = _deploymentSettings.GetValue(SettingsKeys.Project);
@@ -129,6 +133,14 @@ namespace Kudu.Core.Deployment.Generator
             get
             {
                 return Path.Combine(_environment.ScriptPath, StarterScriptName);
+            }
+        }
+
+        private string KvmPath
+        {
+            get
+            {
+                return Path.Combine(_environment.ScriptPath, "kvm.ps1");
             }
         }
 

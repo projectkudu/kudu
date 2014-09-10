@@ -17,6 +17,7 @@ namespace Kudu.Core.Infrastructure
         private static readonly PropertyInfo _projectNameProperty;
         private static readonly PropertyInfo _relativePathProperty;
         private static readonly PropertyInfo _projectTypeProperty;
+        private static readonly PropertyInfo _projectExtensionProperty;
         private static readonly PropertyInfo _aspNetConfigurationsProperty;
 
         static VsSolutionProject()
@@ -28,6 +29,7 @@ namespace Kudu.Core.Infrastructure
                 _projectNameProperty = ReflectionUtility.GetInternalProperty(_projectInSolutionType, "ProjectName");
                 _relativePathProperty = ReflectionUtility.GetInternalProperty(_projectInSolutionType, "RelativePath");
                 _projectTypeProperty = ReflectionUtility.GetInternalProperty(_projectInSolutionType, "ProjectType");
+                _projectExtensionProperty = ReflectionUtility.GetInternalProperty(_projectInSolutionType, "Extension");
                 _aspNetConfigurationsProperty = ReflectionUtility.GetInternalProperty(_projectInSolutionType, "AspNetConfigurations");
             }
         }
@@ -38,6 +40,7 @@ namespace Kudu.Core.Infrastructure
         private bool _isWap;
         private bool _isWebSite;
         private bool _isExecutable;
+        private bool _isProjectK;
         private IEnumerable<Guid> _projectTypeGuids;
         private string _projectName;
         private string _absolutePath;
@@ -98,6 +101,15 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
+        public bool IsProjectK
+        {
+            get
+            {
+                EnsureProperties();
+                return _isProjectK;
+            }
+        }
+
         public VsSolutionProject(string solutionPath, object project)
         {
             _solutionPath = solutionPath;
@@ -113,6 +125,7 @@ namespace Kudu.Core.Infrastructure
 
             _projectName = _projectNameProperty.GetValue<string>(_projectInstance);
             var projectType = _projectTypeProperty.GetValue<SolutionProjectType>(_projectInstance);
+            var projectExtension = _projectExtensionProperty.GetValue<string>(_projectInstance);
             var relativePath = _relativePathProperty.GetValue<string>(_projectInstance);
             _isWebSite = projectType == SolutionProjectType.WebProject;
 
@@ -147,6 +160,12 @@ namespace Kudu.Core.Infrastructure
                 _isWap = VsHelper.IsWap(_projectTypeGuids);
 
                 _isExecutable = VsHelper.IsExecutableProject(_absolutePath);
+            }
+            else if (projectExtension.Equals(".kproj", StringComparison.OrdinalIgnoreCase) && File.Exists(_absolutePath))
+            {
+                _isProjectK = true;
+                _absolutePath = Path.Combine(Path.GetDirectoryName(_absolutePath), "project.json");
+                _projectTypeGuids = Enumerable.Empty<Guid>();
             }
             else
             {

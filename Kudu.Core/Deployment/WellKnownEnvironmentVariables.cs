@@ -30,5 +30,9 @@
         public const string WebJobsCommandArguments = "WEBJOBS_COMMAND_ARGUMENTS";
 
         public const string CommitId = "SCM_COMMIT_ID";
+        public const string KreVersion = "SCM_KRE_VERSION";
+        public const string KreClr = "SCM_KRE_CLR";
+        public const string KreNugetApiUrl = "SCM_KRE_NUGET_API_URL";
+        public const string KvmPath = "SCM_KVM_PATH";
     }
 }

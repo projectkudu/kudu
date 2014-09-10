@@ -45,6 +45,7 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/PreviewMvc5.git",                   "f361ad3"),
             new TestRepositoryInfo("https://github.com/KuduApps/PreviewSpa5.git",                   "9f6cde2"),
             new TestRepositoryInfo("https://github.com/KuduApps/PreviewWebApi5.git",                "74a0ce0"),
+            new TestRepositoryInfo("https://github.com/KuduApps/ProjectKWebApplication",            "9cfc1be"), 
             new TestRepositoryInfo("https://github.com/KuduApps/ProjectWithNoSolution.git",         "5460398"),
             new TestRepositoryInfo("https://github.com/KuduApps/TargetPathTest.git",                "7446104"),
             new TestRepositoryInfo("https://github.com/KuduApps/VersionPinnedNodeJsApp.git",        "5f6c64f"),

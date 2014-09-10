@@ -222,6 +222,12 @@ namespace Kudu.FunctionalTests
             PushAndDeployApps("PreviewMvc5", "master", "ASP.NET Preview MVC5 App", HttpStatusCode.OK, "Deployment successful");
         }
 
+        [Fact]
+        public void PushAndDeployProjectKWebApplication()
+        {
+            PushAndDeployApps("ProjectKWebApplication", "master", "ASP.NET ProjectK Web Application", HttpStatusCode.OK, "Deployment successful");
+        }
+
         //Common code
         internal static void PushAndDeployApps(string repoCloneUrl, string defaultBranchName, string verificationText, 
                                               HttpStatusCode expectedResponseCode, string verificationLogText, 
