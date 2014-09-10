@@ -38,6 +38,7 @@ namespace Kudu.Core.Deployment.Generator
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.WebJobsDeployCommandKey, WebJobsDeployCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KreVersion, Constants.KreDefaultVersion, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KreClr, Constants.KreDefaultClr, logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KreBitness, KreBitness, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KreNugetApiUrl, Constants.KreDefaultNugetApiUrl, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KvmPath, KvmPath, logger);
 
@@ -141,6 +142,14 @@ namespace Kudu.Core.Deployment.Generator
             get
             {
                 return Path.Combine(_environment.ScriptPath, "kvm.ps1");
+            }
+        }
+
+        private static string KreBitness
+        {
+            get
+            {
+                return System.Environment.Is64BitProcess ? "x64" : "x86";
             }
         }
 

@@ -33,6 +33,7 @@
         public const string KreVersion = "SCM_KRE_VERSION";
         public const string KreClr = "SCM_KRE_CLR";
         public const string KreNugetApiUrl = "SCM_KRE_NUGET_API_URL";
-        public const string KvmPath = "SCM_KVM_PATH";
+        public const string KvmPath = "SCM_KVM_PS_PATH";
+        public const string KreBitness = "SCM_KRE_ARCH";
     }
 }
