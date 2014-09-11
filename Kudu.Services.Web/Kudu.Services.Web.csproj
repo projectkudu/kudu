@@ -231,6 +231,9 @@
   <ItemGroup>
     <Content Include="SiteExtensions\Default.cshtml" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Support\Default.cshtml" />
+  </ItemGroup>
   <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

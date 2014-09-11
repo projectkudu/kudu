@@ -1,0 +1,33 @@
+﻿@using System.Configuration
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="EN">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Azure Websites Support</title>
+        <style type="text/css">
+            html {
+                overflow: auto;
+            }
+            html, body, div, iframe {
+                margin: 0;
+                padding: 0;
+                height: 100%;
+                border: none;
+            }
+            iframe {
+                display: block;
+                width: 100%;
+                border: none;
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+        </style>
+    </head>
+    <body>
+        <iframe id="tree" name="tree"
+                src=@("https://mawssupport.trafficmanager.net/?SiteName=" + @ConfigurationManager.AppSettings["WEBSITE_SITE_NAME"])
+                marginheight="0" marginwidth="0" width="100%" height="100%" scrolling="auto">
+        </iframe>
+    </body>
+</html>
