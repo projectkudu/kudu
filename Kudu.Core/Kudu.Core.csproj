@@ -182,6 +182,7 @@
     <Compile Include="SourceControl\Hg\HgRepository.cs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Scripts\EnableNodeDebugging.xml" />
     <Content Include="Scripts\starter.cmd">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.SiteExtensions;
 using Kudu.Core.Tracing;
 using Newtonsoft.Json;
 
@@ -12,11 +14,13 @@ namespace Kudu.Core.Settings
     public class DiagnosticsSettingsManager
     {
         private readonly string _path;
+        private readonly IEnvironment _environment;
         private readonly ITracer _tracer;
 
-        public DiagnosticsSettingsManager(string path, ITracer tracer)
+        public DiagnosticsSettingsManager(string path, IEnvironment environment, ITracer tracer)
         {
             _path = path;
+            _environment = environment;
             _tracer = tracer;
         }
 
@@ -82,6 +86,39 @@ namespace Kudu.Core.Settings
 
             string fileContent = JsonConvert.SerializeObject(diagnosticsSettings);
             FileSystemHelpers.WriteAllTextToFile(_path, fileContent);
+        }
+
+        private void ApplySettings(DiagnosticsSettings diagnosticsSettings)
+        {
+            SetNodeDebugging(diagnosticsSettings.GetSetting("NodeInspectorUrl"));
+        }
+
+        private void SetNodeDebugging(object nodeInspectorUrl)
+        {
+            if (nodeInspectorUrl is string)
+            {
+                var url = nodeInspectorUrl as string;
+                
+                string destinationDirectory = Path.Combine(_environment.SiteExtensionsRootPath, "EnableNodeDebugging");
+
+                if (url == String.Empty)
+                {
+                    FileSystemHelpers.DeleteDirectorySafe(destinationDirectory);
+
+
+                }
+                else
+                {
+                    var source = Assembly.GetExecutingAssembly().GetManifestResourceStream("Kudu.Core.Scripts.EnableNodeDebugging.xml");
+
+                    FileSystemHelpers.CreateDirectory(destinationDirectory);
+
+                    using (Stream file = File.Create(Path.Combine(destinationDirectory, Constants.ApplicationHostFile)))
+                    {
+                        source.CopyTo(file);
+                    }
+                }
+            }
         }
     }
 }

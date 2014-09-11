@@ -37,7 +37,7 @@ namespace Kudu.Services.Performance
 
             _applicationLogsReader = applicationLogsReader;
             _tracer = tracer;
-            _settingsManager = new DiagnosticsSettingsManager(Path.Combine(environment.DiagnosticsPath, Constants.SettingsJsonFile), _tracer);
+            _settingsManager = new DiagnosticsSettingsManager(Path.Combine(environment.DiagnosticsPath, Constants.SettingsJsonFile), environment, _tracer);
         }
 
         /// <summary>

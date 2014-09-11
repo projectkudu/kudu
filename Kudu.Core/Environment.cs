@@ -24,6 +24,7 @@ namespace Kudu.Core
         private readonly string _dataPath;
         private readonly string _jobsDataPath;
         private readonly string _jobsBinariesPath;
+        private readonly string _siteExtensionsRootPath;
 
         // This ctor is used only in unit tests
         public Environment(
@@ -94,6 +95,7 @@ namespace Kudu.Core
             _dataPath = Path.Combine(rootPath, Constants.DataPath);
             _jobsDataPath = Path.Combine(_dataPath, Constants.JobsPath);
             _jobsBinariesPath = Path.Combine(_webRootPath, Constants.AppDataPath, Constants.JobsPath);
+            _siteExtensionsRootPath = Path.Combine(SiteRootPath, Constants.SiteExtensionsDirectory);
         }
 
         public string RepositoryPath

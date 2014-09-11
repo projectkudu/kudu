@@ -26,7 +26,6 @@ namespace Kudu.Core.SiteExtensions
         private readonly IDeploymentSettingsManager _settings;
         private readonly ITraceFactory _traceFactory;
 
-        private const string _applicationHostFile = "applicationHost.xdt";
         private readonly string _baseUrl;
         private static readonly Dictionary<string, SiteExtensionInfo> _preInstalledExtensionDictionary
             = new Dictionary<string, SiteExtensionInfo>(StringComparer.OrdinalIgnoreCase)
@@ -84,9 +83,9 @@ namespace Kudu.Core.SiteExtensions
         private const string _installScriptName = "install.cmd";
         private const string _uninstallScriptName = "uninstall.cmd";
 
-        public SiteExtensionManager(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, HttpContextBase context)
+        public SiteExtensionManager(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, HttpContextBase context) 
         {
-            _localRepository = new LocalPackageRepository(environment.RootPath + "\\SiteExtensions");
+            _localRepository = new LocalPackageRepository(environment.SiteExtensionsRootPath);
             _environment = environment;
             _settings = settings;
             _traceFactory = traceFactory;
@@ -328,7 +327,7 @@ namespace Kudu.Core.SiteExtensions
         {
             // If there is no xdt file, generate default.
             FileSystemHelpers.CreateDirectory(installationDirectory);
-            string xdtPath = Path.Combine(installationDirectory, _applicationHostFile);
+            string xdtPath = Path.Combine(installationDirectory, Constants.ApplicationHostFile);
             if (!FileSystemHelpers.FileExists(xdtPath))
             {
                 string xdtContent = CreateDefaultXdtFile(relativeUrl, isPreInstalled);
@@ -389,7 +388,7 @@ namespace Kudu.Core.SiteExtensions
         {
             string physicalPath = isPreInstalled ? "%XDT_LATEST_EXTENSIONPATH%" : "%XDT_EXTENSIONPATH%";
             string template = typeof(SiteExtensionManager).Assembly
-                .GetManifestResourceStream("Kudu.Core.SiteExtensions." + _applicationHostFile + ".xml").ReadToEnd();
+                .GetManifestResourceStream("Kudu.Core.SiteExtensions.applicationHost.xdt.xml").ReadToEnd();
             return String.Format(template, relativeUrl, physicalPath);
         }
 
@@ -404,7 +403,7 @@ namespace Kudu.Core.SiteExtensions
 
             if (ExtensionRequiresApplicationHost(info))
             {
-                info.ExtensionUrl = FileSystemHelpers.FileExists(Path.Combine(localPath, _applicationHostFile)) 
+                info.ExtensionUrl = FileSystemHelpers.FileExists(Path.Combine(localPath, Constants.ApplicationHostFile)) 
                     ? GetFullUrl(GetUrlFromApplicationHost(info)) : null;
             }
             else if (String.Equals(info.Id, "Monaco", StringComparison.OrdinalIgnoreCase))
@@ -423,7 +422,7 @@ namespace Kudu.Core.SiteExtensions
             try
             {
                 var appHostDoc = new XmlDocument();
-                appHostDoc.Load(Path.Combine(info.LocalPath, _applicationHostFile));
+                appHostDoc.Load(Path.Combine(info.LocalPath, Constants.ApplicationHostFile));
 
                 // Get the 'path' property of the first 'application' element, which is the relative url.
                 XmlNode pathPropertyNode = appHostDoc.SelectSingleNode("//application[@path]/@path");

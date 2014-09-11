@@ -40,6 +40,9 @@ namespace Kudu
 
         public const string DummyRazorExtension = ".kudu777";
 
+        public const string SiteExtensionsDirectory = "SiteExtensions";
+        public const string ApplicationHostFile = "applicationHost.xdt";
+
         // Kudu trace text file related
         public const string DeploymentTracePath = LogFilesPath + @"\Git\deployment";
 
