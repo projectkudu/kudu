@@ -315,8 +315,6 @@ namespace Kudu.Core.Deployment
             catch (Exception ex)
             {
                 // tolerate purge error
-                var tracer = _traceFactory.GetTracer();
-                tracer.TraceError(ex);
                 _analytics.UnexpectedException(ex);
             }
 

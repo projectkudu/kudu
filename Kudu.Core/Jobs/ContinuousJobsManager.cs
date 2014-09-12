@@ -248,35 +248,45 @@ namespace Kudu.Core.Jobs
 
         private void StartWatcher(object state)
         {
-            lock (_lockObject)
+            try
             {
-                // Check if there is a directory we can listen on
-                if (!FileSystemHelpers.DirectoryExists(JobsBinariesPath))
+                lock (_lockObject)
                 {
-                    // If not check again in 30 seconds
-                    _startFileWatcherTimer.Change(CheckForWatcherTimeout, Timeout.Infinite);
-                    return;
-                }
+                    // Check if there is a directory we can listen on
+                    if (!FileSystemHelpers.DirectoryExists(JobsBinariesPath))
+                    {
+                        // If not check again in 30 seconds
+                        _startFileWatcherTimer.Change(CheckForWatcherTimeout, Timeout.Infinite);
+                        return;
+                    }
 
-                // Start file system watcher
-                _fileSystemWatcher = new FileSystemWatcher(JobsBinariesPath);
-                _fileSystemWatcher.Created += OnChanged;
-                _fileSystemWatcher.Changed += OnChanged;
-                _fileSystemWatcher.Deleted += OnChanged;
-                _fileSystemWatcher.Renamed += OnChanged;
-                _fileSystemWatcher.Error += OnError;
-                _fileSystemWatcher.NotifyFilter = NotifyFilters.CreationTime | NotifyFilters.DirectoryName | NotifyFilters.FileName |
-                                                  NotifyFilters.LastWrite;
-                _fileSystemWatcher.IncludeSubdirectories = true;
-                _fileSystemWatcher.EnableRaisingEvents = true;
+                    // Start file system watcher
+                    _fileSystemWatcher = new FileSystemWatcher(JobsBinariesPath);
+                    _fileSystemWatcher.Created += OnChanged;
+                    _fileSystemWatcher.Changed += OnChanged;
+                    _fileSystemWatcher.Deleted += OnChanged;
+                    _fileSystemWatcher.Renamed += OnChanged;
+                    _fileSystemWatcher.Error += OnError;
+                    _fileSystemWatcher.NotifyFilter = NotifyFilters.CreationTime | NotifyFilters.DirectoryName | NotifyFilters.FileName |
+                                                      NotifyFilters.LastWrite;
+                    _fileSystemWatcher.IncludeSubdirectories = true;
+                    _fileSystemWatcher.EnableRaisingEvents = true;
 
-                // Refresh all jobs
-                IEnumerable<ContinuousJob> continuousJobs = ListJobs();
-                IEnumerable<string> continuousJobsNames = _continuousJobRunners.Keys.Union(continuousJobs.Select(j => j.Name));
-                foreach (string continuousJobName in continuousJobsNames)
-                {
-                    MarkJobUpdated(continuousJobName);
+                    // Refresh all jobs
+                    IEnumerable<ContinuousJob> continuousJobs = ListJobs();
+                    IEnumerable<string> continuousJobsNames = _continuousJobRunners.Keys.Union(continuousJobs.Select(j => j.Name));
+                    foreach (string continuousJobName in continuousJobsNames)
+                    {
+                        MarkJobUpdated(continuousJobName);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                Analytics.UnexpectedException(ex);
+
+                // Retry in 30 seconds.
+                _startFileWatcherTimer.Change(CheckForWatcherTimeout, Timeout.Infinite);
             }
         }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Xml.Linq;
@@ -98,7 +99,7 @@ namespace Kudu.Core.Deployment
             }
             catch (Exception ex)
             {
-                _analytics.UnexpectedException(ex);
+                _analytics.UnexpectedException(ex, trace: false);
             }
 
             return new XDocument(new XElement("entries"));

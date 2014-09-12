@@ -199,20 +199,59 @@ namespace Kudu.Core.Jobs
 
         protected TJob BuildJob(DirectoryInfoBase jobDirectory, bool nullJobOnError = true)
         {
-            if (!jobDirectory.Exists)
+            try
             {
-                return null;
+                if (!jobDirectory.Exists)
+                {
+                    return null;
+                }
+
+                DirectoryInfoBase jobScriptDirectory = GetJobScriptDirectory(jobDirectory);
+
+                string jobName = jobDirectory.Name;
+                FileInfoBase[] files = jobScriptDirectory.GetFiles("*.*", SearchOption.TopDirectoryOnly);
+                IScriptHost scriptHost;
+                string scriptFilePath = FindCommandToRun(files, out scriptHost);
+
+                if (scriptFilePath == null)
+                {
+                    // Return a job representing an error for no runnable script file found for job
+                    if (nullJobOnError)
+                    {
+                        return null;
+                    }
+
+                    return new TJob
+                    {
+                        Name = jobName,
+                        JobType = _jobsTypePath,
+                        Error = Resources.Error_NoRunnableScriptForJob,
+                    };
+                }
+
+                string runCommand = scriptFilePath.Substring(jobDirectory.FullName.Length + 1);
+
+                var job = new TJob
+                {
+                    Name = jobName,
+                    Url = BuildJobsUrl(jobName),
+                    ExtraInfoUrl = BuildExtraInfoUrl(jobName),
+                    ScriptFilePath = scriptFilePath,
+                    RunCommand = runCommand,
+                    JobType = _jobsTypePath,
+                    ScriptHost = scriptHost,
+                    UsingSdk = IsUsingSdk(GetSpecificJobDataPath(jobName)),
+                    JobBinariesRootPath = jobScriptDirectory.FullName
+                };
+
+                UpdateJob(job);
+
+                return job;
             }
-
-            DirectoryInfoBase jobScriptDirectory = GetJobScriptDirectory(jobDirectory);
-
-            string jobName = jobDirectory.Name;
-            FileInfoBase[] files = jobScriptDirectory.GetFiles("*.*", SearchOption.TopDirectoryOnly);
-            IScriptHost scriptHost;
-            string scriptFilePath = FindCommandToRun(files, out scriptHost);
-
-            if (scriptFilePath == null)
+            catch (Exception ex)
             {
+                Analytics.UnexpectedException(ex);
+
                 // Return a job representing an error for no runnable script file found for job
                 if (nullJobOnError)
                 {
@@ -221,30 +260,10 @@ namespace Kudu.Core.Jobs
 
                 return new TJob
                 {
-                    Name = jobName,
                     JobType = _jobsTypePath,
-                    Error = Resources.Error_NoRunnableScriptForJob,
+                    Error = ex.Message,
                 };
             }
-
-            string runCommand = scriptFilePath.Substring(jobDirectory.FullName.Length + 1);
-
-            var job = new TJob
-            {
-                Name = jobName,
-                Url = BuildJobsUrl(jobName),
-                ExtraInfoUrl = BuildExtraInfoUrl(jobName),
-                ScriptFilePath = scriptFilePath,
-                RunCommand = runCommand,
-                JobType = _jobsTypePath,
-                ScriptHost = scriptHost,
-                UsingSdk = IsUsingSdk(GetSpecificJobDataPath(jobName)),
-                JobBinariesRootPath = jobScriptDirectory.FullName
-            };
-
-            UpdateJob(job);
-
-            return job;
         }
 
         public JobSettings GetJobSettings(string jobName)

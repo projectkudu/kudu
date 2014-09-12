@@ -276,7 +276,6 @@ namespace Kudu.Core.Jobs
             }
             catch (Exception ex)
             {
-                TraceFactory.GetTracer().TraceError(ex);
                 _analytics.UnexpectedException(ex);
             }
         }
@@ -344,7 +343,6 @@ namespace Kudu.Core.Jobs
             }
             catch (Exception ex)
             {
-                TraceFactory.GetTracer().TraceError(ex);
                 _analytics.UnexpectedException(ex);
             }
         }
@@ -404,7 +402,6 @@ namespace Kudu.Core.Jobs
             }
             catch (Exception ex)
             {
-                TraceFactory.GetTracer().TraceError(ex);
                 _analytics.UnexpectedException(ex);
             }
         }

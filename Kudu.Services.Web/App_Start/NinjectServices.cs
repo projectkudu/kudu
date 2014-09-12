@@ -163,14 +163,27 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IOperationLock>().ToConstant(hooksLock).WhenInjectedInto<WebHooksManager>();
             kernel.Bind<IOperationLock>().ToConstant(_deploymentLock);
 
-            kernel.Bind<IAnalytics>().ToMethod(context => new Analytics(context.Kernel.Get<IDeploymentSettingsManager>(),
-                                                                        context.Kernel.Get<IServerConfiguration>()));
-
             var shutdownDetector = new ShutdownDetector();
             shutdownDetector.Initialize();
 
             IDeploymentSettingsManager noContextDeploymentsSettingsManager =
                 new DeploymentSettingsManager(new XmlSettings.Settings(GetSettingsPath(environment)));
+
+            var noContextTraceFactory = new TracerFactory(() => GetTracerWithoutContext(environment, noContextDeploymentsSettingsManager));
+
+            kernel.Bind<IAnalytics>().ToMethod(context => new Analytics(context.Kernel.Get<IDeploymentSettingsManager>(),
+                                                                        context.Kernel.Get<IServerConfiguration>(),
+                                                                        noContextTraceFactory));
+
+            // Trace unhandled (crash) exceptions.
+            AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
+            {
+                var ex = args.ExceptionObject as Exception;
+                if (ex != null)
+                {
+                    kernel.Get<IAnalytics>().UnexpectedException(ex);
+                }
+            };
 
             // Trace shutdown event
             // Cannot use shutdownDetector.Token.Register because of race condition
@@ -207,8 +220,6 @@ namespace Kudu.Services.Web.App_Start
 
             kernel.Bind<IWebHooksManager>().To<WebHooksManager>()
                                              .InRequestScope();
-
-            var noContextTraceFactory = new TracerFactory(() => GetTracerWithoutContext(environment, noContextDeploymentsSettingsManager));
 
             ITriggeredJobsManager triggeredJobsManager = new TriggeredJobsManager(
                 noContextTraceFactory,

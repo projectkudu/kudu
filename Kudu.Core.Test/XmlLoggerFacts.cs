@@ -97,7 +97,7 @@ namespace Kudu.Core.Test
 
             // Assert
             Assert.Equal(0, entries.Count());
-            analytics.Verify(a => a.UnexpectedException(It.IsAny<Exception>()), Times.Once);
+            analytics.Verify(a => a.UnexpectedException(It.IsAny<Exception>(), false), Times.Once);
         }
     }
 }

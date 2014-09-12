@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Kudu.Contracts.Settings;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Tracing
@@ -12,11 +13,13 @@ namespace Kudu.Core.Tracing
 
         private readonly IDeploymentSettingsManager _settings;
         private readonly IServerConfiguration _serverConfiguration;
+        private readonly ITraceFactory _traceFactory;
 
-        public Analytics(IDeploymentSettingsManager settings, IServerConfiguration serverConfiguration)
+        public Analytics(IDeploymentSettingsManager settings, IServerConfiguration serverConfiguration, ITraceFactory traceFactory)
         {
             _settings = settings;
             _serverConfiguration = serverConfiguration;
+            _traceFactory = traceFactory;
         }
 
         public void ProjectDeployed(string projectType, string result, string error, long deploymentDurationInMilliseconds, string siteMode)
@@ -42,8 +45,13 @@ namespace Kudu.Core.Tracing
                 NullToEmptyString(error));
         }
 
-        public void UnexpectedException(Exception exception)
+        public void UnexpectedException(Exception exception, bool trace = true)
         {
+            if (trace)
+            {
+                _traceFactory.GetTracer().TraceError(exception);
+            }
+
             var strb = new StringBuilder();
             strb.AppendLine(exception.ToString());
 
