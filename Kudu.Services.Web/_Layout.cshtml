@@ -55,17 +55,25 @@
                     <li><a href="~/SiteExtensions/">Site extensions</a></li>
                 </ul>
                 @{
-                    string email = Request.Headers["X-MS-CLIENT-PRINCIPAL-NAME"];
+                    var email = Request.Headers["X-MS-CLIENT-PRINCIPAL-NAME"];
+                    var displayName = Request.Headers["X-MS-CLIENT-DISPLAY-NAME"] ?? email;
                     if (email != null && email.Contains("@"))
                     {
-                        <ul class="nav navbar-nav navbar-right">
-                            <li class="dropdown">
-                                <a href="#" data-toggle="dropdown">@email</a>
-                                <ul class="dropdown-menu">
-                                    <li><a href="/logout">Logout</a></li>
-                                </ul>
-                            </li>
-                        </ul>
+                        using (var md5 = System.Security.Cryptography.MD5.Create())
+                        {
+                            var hash = md5.ComputeHash(System.Text.Encoding.UTF8.GetBytes(email.ToLowerInvariant().Trim()));
+                            var imageUrl = String.Format("https://secure.gravatar.com/avatar/{0}.jpg?d=mm",
+                                BitConverter.ToString(hash).ToLowerInvariant().Replace("-", String.Empty));
+                            <ul class="nav navbar-nav navbar-right">
+                                <li class="dropdown">
+                                        <img src="@imageUrl" style="height: 50px; padding-top: 1px"/>
+                                        <a href="#" data-toggle="dropdown" style="display: inline">@displayName</a>
+                                    <ul class="dropdown-menu">
+                                        <li><a href="/logout">Logout</a></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        }
                     }
                 }
             </div>
@@ -74,4 +82,5 @@
 
     @RenderBody()
 </body>
+
 </html>
