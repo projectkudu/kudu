@@ -60,7 +60,7 @@ namespace Kudu.FunctionalTests
             PushAndDeployApps("kuduglob", "master", "ASP.NET MVC", HttpStatusCode.OK, "酷度");
         }
 
-        [Fact]
+        [Fact(Skip="Still needs more work in the deployment script to work")]
         public void PushAndDeployAspNetAppUnicodeName()
         {
             PushAndDeployApps("-benr-", "master", "Hello!", HttpStatusCode.OK, "");

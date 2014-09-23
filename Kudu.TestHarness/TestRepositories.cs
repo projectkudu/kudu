@@ -10,7 +10,7 @@ namespace Kudu.TestHarness
         private static TestRepositoryInfo[] _repoList = new TestRepositoryInfo[]
         {
             new TestRepositoryInfo("git@github.com:KuduQAOrg/RepoWithPrivateSubModule.git",         "4820516"),
-            new TestRepositoryInfo("https://github.com/KuduApps/-benr-.git",                        "c553978"),                             
+            new TestRepositoryInfo("https://github.com/KuduApps/-benr-.git",                        "c553978"),
             new TestRepositoryInfo("https://github.com/KuduApps/AppWithPostBuildEvent.git",         "083b651"),
             new TestRepositoryInfo("https://github.com/KuduApps/Bakery.git",                        "2f29dc6"),
             new TestRepositoryInfo("https://github.com/KuduApps/BasicConsoleWorker.git",            "ce1ec74"),
