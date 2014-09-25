@@ -32,5 +32,6 @@
         public const string PostDeploymentActionsDirectory = "SCM_POST_DEPLOYMENT_ACTIONS_PATH";
         public const string DisableSubmodules = "SCM_DISABLE_SUBMODULES";
         public const string SiteExtensionsFeedUrl = "SCM_SITEEXTENSIONS_FEED_URL";
+        public const string DisableDeploymentOnPush = "SCM_DISABLE_DEPLOY_ON_PUSH";
     }
 }

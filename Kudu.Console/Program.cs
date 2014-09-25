@@ -35,6 +35,12 @@ namespace Kudu.Console
                 }
             }
 
+            if (System.Environment.GetEnvironmentVariable(SettingsKeys.DisableDeploymentOnPush) == "1")
+            {
+                System.Console.Out.WriteLine(Resources.Log_NoDeploymentOnPush);
+                return 0;
+            }
+
             if (args.Length < 2)
             {
                 System.Console.WriteLine("Usage: kudu.exe appRoot wapTargets [deployer]");
