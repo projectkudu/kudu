@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Web;
 using Kudu.Contracts.Tracing;
@@ -40,6 +42,15 @@ namespace Kudu.Services.Web.Tracing
 
             var httpContext = ((HttpApplication)sender).Context;
             var httpRequest = new HttpRequestWrapper(httpContext.Request);
+
+            // HACK: This is abusing the trace module
+            // Disallow GET requests from CSM extensions bridge
+            if (!String.IsNullOrEmpty(httpRequest.Headers["X-MS-VIA-EXTENSIONS-ROUTE"]) &&
+                httpRequest.HttpMethod.Equals(HttpMethod.Get.Method, StringComparison.OrdinalIgnoreCase))
+            {
+                httpContext.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                httpContext.Response.End();
+            }
 
             // HACK: If it's a Razor extension, add a dummy extension to prevent WebPages for blocking it,
             // as we need to serve those files via /vfs
