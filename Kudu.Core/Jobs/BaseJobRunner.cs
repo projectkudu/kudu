@@ -95,7 +95,7 @@ namespace Kudu.Core.Jobs
                 catch (Exception ex)
                 {
                     // Log error and ignore it as it's not critical to cache job binaries
-                    logger.LogError("Failed to calculate hash for WebJob: " + ex);
+                    logger.LogWarning("Failed to calculate hash for WebJob, continue to copy WebJob binaries (this will not affect WebJob run)\n" + ex);
                     _analytics.UnexpectedException(ex);
                 }
             }
