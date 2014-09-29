@@ -48,7 +48,6 @@ namespace Kudu.Core.Jobs
 
         private readonly string _jobsTypePath;
 
-        private string _appBaseUrlPrefix;
         private string _urlPrefix;
         private string _vfsUrlPrefix;
 
@@ -376,17 +375,12 @@ namespace Kudu.Core.Jobs
         {
             get
             {
-                if (_appBaseUrlPrefix == null)
+                if (HttpContext.Current == null)
                 {
-                    if (HttpContext.Current == null)
-                    {
-                        return null;
-                    }
-
-                    _appBaseUrlPrefix = HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority);
+                    return null;
                 }
 
-                return _appBaseUrlPrefix;
+                return HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority);
             }
         }
 
