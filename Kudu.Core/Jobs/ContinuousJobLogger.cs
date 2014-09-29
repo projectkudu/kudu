@@ -29,7 +29,41 @@ namespace Kudu.Core.Jobs
 
             // Lock status file (allowing read and write but not delete) as a way to notify that this status file is valid (shows status of a current working instance)
             _logFilePath = GetLogFilePath(JobLogFileName);
+            ResetLockedStatusFile();
+        }
+
+        private void ResetLockedStatusFile()
+        {
+            try
+            {
+                if (_lockedStatusFile != null)
+                {
+                    _lockedStatusFile.Dispose();
+                }
+            }
+            catch (Exception ex)
+            {
+                TraceFactory.GetTracer().TraceError(ex);
+            }
+
             _lockedStatusFile = File.Open(GetStatusFilePath(), FileMode.OpenOrCreate, FileAccess.Read, FileShare.ReadWrite);
+        }
+
+        protected override void ReportStatus<TJobStatus>(TJobStatus status, bool logStatus)
+        {
+            try
+            {
+                if (!FileSystemHelpers.FileExists(GetStatusFilePath()))
+                {
+                    ResetLockedStatusFile();
+                }
+            }
+            catch (Exception ex)
+            {
+                TraceFactory.GetTracer().TraceError(ex);
+            }
+
+            base.ReportStatus(status, logStatus);
         }
 
         internal static string GetStatusFileName()

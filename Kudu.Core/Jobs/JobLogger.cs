@@ -70,7 +70,7 @@ namespace Kudu.Core.Jobs
             ReportStatus(status, logStatus: true);
         }
 
-        protected void ReportStatus<TJobStatus>(TJobStatus status, bool logStatus) where TJobStatus : class, IJobStatus
+        protected virtual void ReportStatus<TJobStatus>(TJobStatus status, bool logStatus) where TJobStatus : class, IJobStatus
         {
             try
             {
