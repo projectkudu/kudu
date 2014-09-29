@@ -38,7 +38,7 @@ namespace Kudu.Services.Web.Infrastructure
             routes.MapHttpRoute(name, "api/" + routeTemplate, defaults, constraints, deprecated: bothDeprecated);
         }
 
-        private static void MapHttpRoute(this RouteCollection routes, string name, string routeTemplate, object defaults, object constraints, bool deprecated)
+        public static void MapHttpRoute(this RouteCollection routes, string name, string routeTemplate, object defaults, object constraints, bool deprecated)
         {
             if (deprecated)
             {
