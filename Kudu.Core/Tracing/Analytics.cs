@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 using Kudu.Contracts.Settings;
@@ -9,7 +10,7 @@ namespace Kudu.Core.Tracing
 {
     public class Analytics : IAnalytics
     {
-        private static readonly HashSet<string> _deprecatedApiPaths = new HashSet<string>();
+        private static readonly ConcurrentDictionary<string, string> DeprecatedApiPaths = new ConcurrentDictionary<string, string>();
 
         private readonly IDeploymentSettingsManager _settings;
         private readonly IServerConfiguration _serverConfiguration;
@@ -72,7 +73,7 @@ namespace Kudu.Core.Tracing
             path = NullToEmptyString(path);
 
             // Try not to send the same event (on the same path) more than once.
-            if (_deprecatedApiPaths.Contains(path))
+            if (DeprecatedApiPaths.ContainsKey(path))
             {
                 return;
             }
@@ -84,7 +85,7 @@ namespace Kudu.Core.Tracing
                 NullToEmptyString(method),
                 path);
 
-            _deprecatedApiPaths.Add(path);
+            DeprecatedApiPaths[path] = path;
         }
 
         private static string NullToEmptyString(string s)
