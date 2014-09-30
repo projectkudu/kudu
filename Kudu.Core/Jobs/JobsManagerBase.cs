@@ -48,8 +48,7 @@ namespace Kudu.Core.Jobs
 
         private readonly string _jobsTypePath;
 
-        private string _urlPrefix;
-        private string _vfsUrlPrefix;
+        private string _lastKnownAppBaseUrlPrefix;
 
         protected IEnvironment Environment { get; private set; }
 
@@ -333,32 +332,22 @@ namespace Kudu.Core.Jobs
 
         protected Uri BuildJobsUrl(string relativeUrl)
         {
-            if (_urlPrefix == null)
+            if (AppBaseUrlPrefix == null)
             {
-                if (AppBaseUrlPrefix == null)
-                {
-                    return null;
-                }
-
-                _urlPrefix = "{0}/api/{1}webjobs/".FormatInvariant(AppBaseUrlPrefix, _jobsTypePath);
+                return null;
             }
 
-            return new Uri(_urlPrefix + relativeUrl);
+            return new Uri("{0}/api/{1}webjobs/{2}".FormatInvariant(AppBaseUrlPrefix, _jobsTypePath, relativeUrl));
         }
 
         protected Uri BuildVfsUrl(string relativeUrl)
         {
-            if (_vfsUrlPrefix == null)
+            if (AppBaseUrlPrefix == null)
             {
-                if (AppBaseUrlPrefix == null)
-                {
-                    return null;
-                }
-
-                _vfsUrlPrefix = "{0}/vfs/data/jobs/{1}/".FormatInvariant(AppBaseUrlPrefix, _jobsTypePath);
+                return null;
             }
 
-            return new Uri(_vfsUrlPrefix + relativeUrl);
+            return new Uri("{0}/vfs/data/jobs/{1}/{2}".FormatInvariant(AppBaseUrlPrefix, _jobsTypePath, relativeUrl));
         }
 
         private Uri BuildExtraInfoUrl(string jobName)
@@ -377,10 +366,11 @@ namespace Kudu.Core.Jobs
             {
                 if (HttpContext.Current == null)
                 {
-                    return null;
+                    return _lastKnownAppBaseUrlPrefix;
                 }
 
-                return HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority);
+                _lastKnownAppBaseUrlPrefix = HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority);
+                return _lastKnownAppBaseUrlPrefix;
             }
         }
 
