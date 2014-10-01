@@ -910,7 +910,7 @@ namespace Kudu.FunctionalTests
             yield return new RepoInvalidInfo("http://abcdefghigkl.com/", "abort: error: getaddrinfo failed.*hg.exe pull", "hg");
             yield return new RepoInvalidInfo("https://abcdefghigkl.com/", "Could.*n.*t resolve host.*abcdefghigkl.com", null);
             yield return new RepoInvalidInfo("https://abcdefghigkl.com/", "abort: error: getaddrinfo failed.*hg.exe pull", "hg");
-            yield return new RepoInvalidInfo("git@abcdefghigkl.com:Invalid/Invalid.git", "ssh: abcdefghigkl.com: no address associated with name", null);
+            yield return new RepoInvalidInfo("git@abcdefghigkl.com:Invalid/Invalid.git", "no address associated with name", null);
             yield return new RepoInvalidInfo("ssh://hg@abcdefghigkl.com/Invalid/Invalid.git", "abort: no suitable response from remote hg.*hg.exe pull", "hg");
             yield return new RepoInvalidInfo("git@github.com:Invalid/Invalid.git", "Permission denied [(]publickey[)]", null);
             yield return new RepoInvalidInfo("git@bitbucket.org:Invalid/Invalid.git", "Permission denied [(]publickey[)]", null);
