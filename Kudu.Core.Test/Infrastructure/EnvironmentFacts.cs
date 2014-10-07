@@ -15,7 +15,7 @@ namespace Kudu.Core.Test
 
             // Act and Assert
             var ex = Assert.Throws<ArgumentNullException>(() =>
-                new Environment(null, null, null, null, null, null, null, null, null, null, null));
+                new Environment(null, null, null, null, null, null, null, null, null, null, null, null));
 
             Assert.Equal("repositoryPath", ex.ParamName);
         }
@@ -121,6 +121,7 @@ namespace Kudu.Core.Test
             string webRootPath = null,
             string deploymentsPath = ".",
             string diagnosticsPath = null,
+            string locksPath = null,
             string sshKeyPath = null,
             string scriptPath = null,
             string nodeModulesPath = null,
@@ -139,6 +140,7 @@ namespace Kudu.Core.Test
                     webRootPath,
                     deploymentsPath,
                     diagnosticsPath,
+                    locksPath,
                     sshKeyPath,
                     scriptPath,
                     nodeModulesPath,

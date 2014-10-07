@@ -9,6 +9,7 @@
         string DeploymentsPath { get; }         // e.g. /site/deployments
         string DeploymentToolsPath { get; }     // e.g. /site/deployments/tools
         string DiagnosticsPath { get; }         // e.g. /site/diagnostics
+        string LocksPath { get; }               // e.g. /site/locks
         string SSHKeyPath { get; }
         string TempPath { get; }
         string ScriptPath { get; }

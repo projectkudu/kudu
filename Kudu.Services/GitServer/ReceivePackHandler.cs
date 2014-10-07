@@ -38,15 +38,18 @@ namespace Kudu.Services.GitServer
     public class ReceivePackHandler : GitServerHttpHandler
     {
         private readonly IRepositoryFactory _repositoryFactory;
-        
+        private readonly IAutoSwapHandler _autoSwapHandler;
+
         public ReceivePackHandler(ITracer tracer,
                                   IGitServer gitServer,
                                   IOperationLock deploymentLock,
                                   IDeploymentManager deploymentManager,
-                                  IRepositoryFactory repositoryFactory)
+                                  IRepositoryFactory repositoryFactory,
+                                  IAutoSwapHandler autoSwapHandler)
             : base(tracer, gitServer, deploymentLock, deploymentManager)
         {
             _repositoryFactory = repositoryFactory;
+            _autoSwapHandler = autoSwapHandler;
         }
 
         public override void ProcessRequestBase(HttpContextBase context)
@@ -67,6 +70,16 @@ namespace Kudu.Services.GitServer
 
                 bool acquired = DeploymentLock.TryLockOperation(() =>
                 {
+                    context.Response.ContentType = "application/x-git-receive-pack-result";
+
+                    if (_autoSwapHandler.IsAutoSwapOngoing())
+                    {
+                        context.Response.StatusCode = (int)HttpStatusCode.Conflict;
+                        context.Response.Write(Resources.Error_AutoSwapDeploymentOngoing);
+                        context.ApplicationInstance.CompleteRequest();
+                        return;
+                    }
+
                     string username = null;
                     if (AuthUtility.TryExtractBasicAuthUser(context.Request, out username))
                     {
@@ -75,14 +88,16 @@ namespace Kudu.Services.GitServer
 
                     UpdateNoCacheForResponse(context.Response);
 
-                    context.Response.ContentType = "application/x-git-receive-pack-result";
-
                     // This temporary deployment is for ui purposes only, it will always be deleted via finally.
                     ChangeSet tempChangeSet;
                     using (DeploymentManager.CreateTemporaryDeployment(Resources.ReceivingChanges, out tempChangeSet))
                     {
                         GitServer.Receive(context.Request.GetInputStream(), context.Response.OutputStream);
                     }
+
+                    // TODO: Currently we do not support auto-swap for git push due to an issue where we already sent the headers at the
+                    // beginning of the deployment and cannot flag at this point to make the auto swap (by sending the proper headers).
+                    //_autoSwapHandler.HandleAutoSwap(verifyActiveDeploymentIdChanged: true);
                 }, TimeSpan.Zero);
 
                 if (!acquired)

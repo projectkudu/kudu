@@ -7,6 +7,7 @@ using Kudu.Client;
 using Kudu.Contracts.Settings;
 using Kudu.Core;
 using Kudu.Core.Deployment;
+using Kudu.Core.Infrastructure;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
 using Xunit;
@@ -145,6 +146,37 @@ namespace Kudu.FunctionalTests
                 var ex = await ExceptionAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.GetDeploymentScriptAsync());
                 Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
                 Assert.Contains("Operation only supported if not using a custom deployment script", ex.ResponseMessage.ExceptionMessage);
+            });
+        }
+
+        [Fact]
+        public async Task PushHelloKuduAutoSwapSecondPushShouldFail()
+        {
+            const string randomTestName = "PushHelloKuduAutoSwapSecondPushShouldFail";
+            await ApplicationManager.RunAsync(randomTestName, async appManager =>
+            {
+                await appManager.SettingsManager.SetValue("WEBSITE_SWAP_SLOTNAME", "someslot");
+
+                // Act
+                using (TestRepository testRepository = Git.Clone("HelloKudu"))
+                {
+                    appManager.GitDeploy(testRepository.PhysicalPath);
+                    var results = appManager.DeploymentManager.GetResultsAsync().Result.ToList();
+
+                    // Assert
+                    Assert.Equal(1, results.Count);
+                    Assert.Equal(DeployStatus.Success, results[0].Status);
+
+                    testRepository.WriteFile("somefile.txt", String.Empty);
+                    Git.Commit(testRepository.PhysicalPath, "some commit");
+
+                    // TODO: Add this assert when auto swap is enabled for git push
+                    // var ex = Assert.Throws<CommandLineException>(() => appManager.GitDeploy(testRepository.PhysicalPath, retries: 1));
+                    // Assert.Contains("HTTP code = 409", ex.Error);
+
+                    // Currently this succeeds as auto swap will not occur on git push
+                    appManager.GitDeploy(testRepository.PhysicalPath);
+                }
             });
         }
 

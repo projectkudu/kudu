@@ -43,12 +43,12 @@ namespace Kudu.Client.Infrastructure
             }
         }
 
-        public static async Task<HttpResponseMessage> PutAsync(this HttpClient client, string requestUri)
+        public static async Task<HttpResponseMessage> PutAsync(this HttpClient client, string requestUri, bool ensureSuccessful = true)
         {
             using (var stringContent = new StringContent(String.Empty))
             {
                 HttpResponseMessage result = await client.PutAsync(requestUri, stringContent);
-                return result.EnsureSuccessful();
+                return ensureSuccessful ? result.EnsureSuccessful() : result;
             }
         }
 

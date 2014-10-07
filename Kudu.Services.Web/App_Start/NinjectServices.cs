@@ -254,6 +254,8 @@ namespace Kudu.Services.Web.App_Start
 
             kernel.Bind<IDeploymentManager>().To<DeploymentManager>()
                                              .InRequestScope();
+            kernel.Bind<IAutoSwapHandler>().To<AutoSwapHandler>()
+                                             .InRequestScope();
             kernel.Bind<ISSHKeyManager>().To<SSHKeyManager>()
                                              .InRequestScope();
 

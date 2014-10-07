@@ -53,9 +53,14 @@ namespace Kudu.Client.Deployment
             return Client.DeleteSafeAsync(BuildUrl(id));
         }
 
-        public Task DeployAsync(string id)
+        public Task<HttpResponseMessage> DeployAsync(string id)
         {
             return Client.PutAsync(BuildUrl(id));
+        }
+
+        public Task<HttpResponseMessage> DeployWithoutEnsureSuccessfulAsync(string id)
+        {
+            return Client.PutAsync(BuildUrl(id), ensureSuccessful: false);
         }
 
         public Task DeployAsync(string id, bool clean)

@@ -46,6 +46,12 @@ namespace Kudu.TestHarness
             set;
         }
 
+        public string LocksPath
+        {
+            get;
+            set;
+        }
+
         public string SSHKeyPath
         {
             get;

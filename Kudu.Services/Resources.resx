@@ -270,4 +270,7 @@
   <data name="Error_WebJobsStopped" xml:space="preserve">
     <value>WebJobs are currently in "stopped" state.</value>
   </data>
+  <data name="Error_AutoSwapDeploymentOngoing" xml:space="preserve">
+    <value>There is an auto swap deployment currently ongoing please try again when it completes.</value>
+  </data>
 </root>

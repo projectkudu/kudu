@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.IO.Abstractions;
-using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -31,18 +29,21 @@ namespace Kudu.Services.Deployment
         private readonly ITracer _tracer;
         private readonly IOperationLock _deploymentLock;
         private readonly IRepositoryFactory _repositoryFactory;
+        private readonly IAutoSwapHandler _autoSwapHandler;
 
         public DeploymentController(ITracer tracer,
                                     IDeploymentManager deploymentManager,
                                     IDeploymentStatusManager status,
                                     IOperationLock deploymentLock,
-                                    IRepositoryFactory repositoryFactory)
+                                    IRepositoryFactory repositoryFactory,
+                                    IAutoSwapHandler autoSwapHandler)
         {
             _tracer = tracer;
             _deploymentManager = deploymentManager;
             _status = status;
             _deploymentLock = deploymentLock;
             _repositoryFactory = repositoryFactory;
+            _autoSwapHandler = autoSwapHandler;
         }
 
         /// <summary>
@@ -88,6 +89,11 @@ namespace Kudu.Services.Deployment
                 {
                     try
                     {
+                        if (_autoSwapHandler.IsAutoSwapOngoing())
+                        {
+                            throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, Resources.Error_AutoSwapDeploymentOngoing));
+                        }
+
                         bool clean = false;
                         bool needFileUpdate = true;
 
@@ -119,6 +125,8 @@ namespace Kudu.Services.Deployment
                         }
 
                         await _deploymentManager.DeployAsync(repository, changeSet, username, clean, needFileUpdate);
+
+                        _autoSwapHandler.HandleAutoSwap(verifyActiveDeploymentIdChanged: false);
                     }
                     catch (FileNotFoundException ex)
                     {
@@ -301,7 +309,7 @@ namespace Kudu.Services.Deployment
             catch
             {
                 // We're going to return null here since we don't want to force a breaking change
-                // on the client side. If the incoming request isn't application/json, we want this 
+                // on the client side. If the incoming request isn't application/json, we want this
                 // to return null.
                 return null;
             }

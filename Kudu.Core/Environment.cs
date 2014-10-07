@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.IO.Abstractions;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core
@@ -11,6 +10,7 @@ namespace Kudu.Core
         private readonly string _deploymentsPath;
         private readonly string _deploymentToolsPath;
         private readonly string _diagnosticsPath;
+        private readonly string _locksPath;
         private readonly string _sshKeyPath;
         private readonly string _tempPath;
         private readonly string _scriptPath;
@@ -34,6 +34,7 @@ namespace Kudu.Core
                 string webRootPath,
                 string deploymentsPath,
                 string diagnosticsPath,
+                string locksPath,
                 string sshKeyPath,
                 string scriptPath,
                 string nodeModulesPath,
@@ -52,6 +53,7 @@ namespace Kudu.Core
             _deploymentsPath = deploymentsPath;
             _deploymentToolsPath = Path.Combine(_deploymentsPath, Constants.DeploymentToolsPath);
             _diagnosticsPath = diagnosticsPath;
+            _locksPath = locksPath;
             _sshKeyPath = sshKeyPath;
             _scriptPath = scriptPath;
             _nodeModulesPath = nodeModulesPath;
@@ -83,6 +85,7 @@ namespace Kudu.Core
             _deploymentsPath = Path.Combine(SiteRootPath, Constants.DeploymentCachePath);
             _deploymentToolsPath = Path.Combine(_deploymentsPath, Constants.DeploymentToolsPath);
             _diagnosticsPath = Path.Combine(SiteRootPath, Constants.DiagnosticsPath);
+            _locksPath = Path.Combine(SiteRootPath, Constants.LocksPath);
             _sshKeyPath = Path.Combine(rootPath, Constants.SSHKeyPath);
             _scriptPath = Path.Combine(binPath, Constants.ScriptsPath);
             _nodeModulesPath = Path.Combine(binPath, Constants.NodeModulesPath);
@@ -138,6 +141,14 @@ namespace Kudu.Core
             get
             {
                 return FileSystemHelpers.EnsureDirectory(_diagnosticsPath);
+            }
+        }
+
+        public string LocksPath
+        {
+            get
+            {
+                return FileSystemHelpers.EnsureDirectory(_locksPath);
             }
         }
 

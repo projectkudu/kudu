@@ -47,6 +47,7 @@ namespace Kudu
         public const string TraceFileEnvKey = "KUDU_TRACE_FILE";
 
         public const string DiagnosticsPath = @"diagnostics";
+        public const string LocksPath = @"locks";
         public const string SettingsJsonFile = @"settings.json";
 
         public const string HostingStartHtml = "hostingstart.html";

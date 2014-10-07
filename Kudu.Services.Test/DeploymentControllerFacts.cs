@@ -27,12 +27,11 @@ namespace Kudu.Services.Test
             var opLock = new Mock<IOperationLock>();
             opLock.Setup(f => f.Lock()).Returns(true);
             var controller = new DeploymentController(Mock.Of<ITracer>(), Mock.Of<IDeploymentManager>(), Mock.Of<IDeploymentStatusManager>(),
-                                                      opLock.Object, repoFactory.Object);
+                                                      opLock.Object, repoFactory.Object, Mock.Of<IAutoSwapHandler>());
             controller.Request = GetRequest();
-            
 
             // Act
-            var response = await ExceptionAssert.ThrowsAsync<HttpResponseException>(async() => await controller.Deploy());
+            var response = await ExceptionAssert.ThrowsAsync<HttpResponseException>(async () => await controller.Deploy());
 
             // Assert
             Assert.Equal(HttpStatusCode.NotFound, response.Response.StatusCode);
@@ -51,7 +50,7 @@ namespace Kudu.Services.Test
             var opLock = new Mock<IOperationLock>();
             opLock.Setup(f => f.Lock()).Returns(true);
             var controller = new DeploymentController(Mock.Of<ITracer>(), Mock.Of<IDeploymentManager>(), Mock.Of<IDeploymentStatusManager>(),
-                                                      opLock.Object, repoFactory.Object);
+                                                      opLock.Object, repoFactory.Object, Mock.Of<IAutoSwapHandler>());
             controller.Request = GetRequest();
 
             // Act
