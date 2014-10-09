@@ -80,6 +80,11 @@ namespace Kudu.Services.SourceControl
                     }
                 }
 
+                using (_tracer.Step("Delete auto swap lock file"))
+                {
+                    FileSystemHelpers.DeleteFileSafe(Path.Combine(_environment.LocksPath, AutoSwapHandler.AutoSwapLockFile));
+                }
+
                 using (_tracer.Step("Deleting ssh key"))
                 {
                     // Delete the ssh key

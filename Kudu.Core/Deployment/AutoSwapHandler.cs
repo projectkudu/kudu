@@ -12,6 +12,8 @@ namespace Kudu.Core.Deployment
 {
     public class AutoSwapHandler : IAutoSwapHandler
     {
+        public const string AutoSwapLockFile = "autoswap.lock";
+
         private readonly IDeploymentManager _deploymentManager;
         private readonly IDeploymentStatusManager _deploymentStatusManager;
         private readonly ITraceFactory _traceFactory;
@@ -25,7 +27,7 @@ namespace Kudu.Core.Deployment
             _deploymentStatusManager = deploymentStatusManager;
             _traceFactory = traceFactory;
             _autoSwapSlotName = settings.GetValue("WEBSITE_SWAP_SLOTNAME");
-            _autoSwapLockFilePath = Path.Combine(environment.LocksPath, "autoswap.lock");
+            _autoSwapLockFilePath = Path.Combine(environment.LocksPath, AutoSwapLockFile);
         }
 
         public bool IsAutoSwapOngoing()
