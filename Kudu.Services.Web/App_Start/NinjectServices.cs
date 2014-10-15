@@ -346,7 +346,7 @@ namespace Kudu.Services.Web.App_Start
         {
             var configuration = kernel.Get<IServerConfiguration>();
             GlobalConfiguration.Configuration.Formatters.Clear();
-            GlobalConfiguration.Configuration.IncludeErrorDetailPolicy = IncludeErrorDetailPolicy.LocalOnly;
+            GlobalConfiguration.Configuration.IncludeErrorDetailPolicy = IncludeErrorDetailPolicy.Always;
 
             var jsonFormatter = new JsonMediaTypeFormatter();
             GlobalConfiguration.Configuration.Formatters.Add(jsonFormatter);

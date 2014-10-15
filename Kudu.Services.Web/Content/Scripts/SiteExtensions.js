@@ -14,7 +14,18 @@
         $("#successNotification").slideDown();
     }
 
-    function displayError(message) {
+    function displayError(message, jqXhr) {
+        if (jqXhr.responseJSON) {
+            if (jqXhr.responseJSON.Message) {
+                message += " - " + jqXhr.responseJSON.Message;
+            }
+            if (jqXhr.responseJSON.ExceptionType) {
+                message += " - " + jqXhr.responseJSON.ExceptionType;
+            }
+            if (jqXhr.responseJSON.ExceptionMessage) {
+                message += " - " + jqXhr.responseJSON.ExceptionMessage;
+            }
+        }
         $("#errorNotificationText").html(message);
         $("#errorNotification").slideDown();
     }
@@ -122,7 +133,8 @@
                 }, 5000);
             },
             error: function (jqXhr, textStatus, errorThrown) {
-                displayError("Failed to install <strong>" + data.title + "</strong>: " + textStatus + " - " + errorThrown);
+                displayError("Failed to install <strong>" + data.title + "</strong>", jqXhr);
+                data.primaryAction('Install');
             },
             complete: function () {
                 // no op
@@ -152,7 +164,8 @@
             success: function (result) {
             },
             error: function (jqXhr, textStatus, errorThrown) {
-                displayError("Failed to update <strong>" + result.title + "</strong>: " + textStatus + " - " + errorThrown);
+                displayError("Failed to update <strong>" + data.title + "</strong>", jqXhr);
+                data.primaryAction('Install');
             },
             complete: function () {
                 context.$root.populateAllTabs();
@@ -204,7 +217,7 @@
                     }
                 },
                 error: function (jqXhr, textStatus, errorThrown) {
-                    displayError(textStatus + ": " + errorThrown);
+                    displayError("Failed to retrieve site extensions from Gallery", jqXhr);
                 },
                 complete: function () {
                     self.loadingGallery(false);
@@ -230,7 +243,7 @@
                     }
                 },
                 error: function (jqXhr, textStatus, errorThrown) {
-                    displayError(textStatus + ": " + errorThrown);
+                    displayError("Failed to retrieve installed site extensions", jqXhr);
                 },
                 complete: function () {
                     self.loadingInstalled(false);
@@ -260,7 +273,7 @@
                 url: appRoot + "api/siteextensions/" + extension.id,
                 success: successCallback,
                 error: function (jqXhr, textStatus, errorThrown) {
-                    displayError(textStatus + ": " + errorThrown);
+                    displayError("Failed to remove <strong>" + extension.title + "</strong>", jqXhr);
                 },
                 complete: function () {
                     self.populateAllTabs(completionCallback);

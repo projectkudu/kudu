@@ -282,7 +282,7 @@ namespace Kudu.Core.SiteExtensions
                 ITracer tracer = _traceFactory.GetTracer();
                 tracer.TraceError(ex);
                 FileSystemHelpers.DeleteDirectorySafe(installationDirectory);
-                return null;
+                throw;
             }
 
             return _localRepository.FindPackage(package.Id);
