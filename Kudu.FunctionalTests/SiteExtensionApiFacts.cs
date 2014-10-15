@@ -77,6 +77,17 @@ namespace Kudu.FunctionalTests
                 // list installed
                 results = (await manager.GetLocalExtensions()).ToList();
                 Assert.False(results.Exists(ext => ext.Id == expected.Id), "After deletion extension " + expected.Id + " should not exist.");
+
+                // install from non-default endpoint
+                result = await manager.InstallExtension("bootstrap", version: "3.0.0", feedUrl: "http://www.nuget.org/api/v2/");
+                Assert.Equal("bootstrap", result.Id);
+                Assert.Equal("3.0.0", result.Version);
+                Assert.Equal("http://www.nuget.org/api/v2/", result.FeedUrl);
+
+                // update site extension installed from non-default endpoint
+                result = await manager.InstallExtension("bootstrap");
+                Assert.Equal("bootstrap", result.Id);
+                Assert.Equal("http://www.nuget.org/api/v2/", result.FeedUrl);
             });
         }
 

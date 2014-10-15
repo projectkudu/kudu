@@ -150,7 +150,11 @@
                     <strong data-bind="visible: authors.length > 1">Authors</strong>
                     <p data-bind="text: authors"></p>
                 </div>
-                <div id="detailsLicenseUrl" data-bind="visible: project_url">
+                <div id="detailsFeedUrl" data-bind="visible: feed_url">
+                    <strong>Feed Endpoint</strong>
+                    <p><a data-bind="text: feed_url, attr: {href: feed_url, target: '_blank'}"></a></p>
+                </div>
+                <div id="detailsProjectUrl" data-bind="visible: project_url">
                     <strong>Project Homepage</strong>
                     <p><a data-bind="text: project_url, attr: {href: project_url, target: '_blank'}"></a></p>
                 </div>

@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Web.Http;
 using Kudu.Contracts.SiteExtensions;
+using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.SiteExtensions
 {
@@ -18,19 +19,21 @@ namespace Kudu.Services.SiteExtensions
         }
 
         [HttpGet]
-        public IEnumerable<SiteExtensionInfo> GetRemoteExtensions(string filter = null, bool allowPrereleaseVersions = false)
+        public IEnumerable<SiteExtensionInfo> GetRemoteExtensions(string filter = null, bool allowPrereleaseVersions = false, string feedUrl = null)
         {
-            return _manager.GetRemoteExtensions(filter, allowPrereleaseVersions);
+            return _manager.GetRemoteExtensions(filter, allowPrereleaseVersions, feedUrl);
         }
 
         [HttpGet]
-        public SiteExtensionInfo GetRemoteExtension(string id, string version = null)
+        public SiteExtensionInfo GetRemoteExtension(string id, string version = null, string feedUrl = null)
         {
-            SiteExtensionInfo extension = _manager.GetRemoteExtension(id, version);
+            SiteExtensionInfo extension = _manager.GetRemoteExtension(id, version, feedUrl);
+
             if (extension == null)
             {
                 throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, id));
             }
+
             return extension;
         }
 
@@ -52,13 +55,20 @@ namespace Kudu.Services.SiteExtensions
         }
 
         [HttpPut]
-        public SiteExtensionInfo InstallExtension(string id, string version = null)
+        public SiteExtensionInfo InstallExtension(string id, SiteExtensionInfo requestInfo)
         {
-            SiteExtensionInfo extension = _manager.InstallExtension(id, version);
+            if (requestInfo == null)
+            {
+                requestInfo = new SiteExtensionInfo();
+            }
+
+            SiteExtensionInfo extension = _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl);
+
             if (extension == null)
             {
-                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, id));
+                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, "Could not find " + id));
             }
+
             return extension;
         }
 

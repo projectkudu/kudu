@@ -127,6 +127,13 @@ namespace Kudu.Contracts.SiteExtensions
             set;
         }
 
+        [JsonProperty(PropertyName = "feed_url")]
+        public string FeedUrl
+        {
+            get;
+            set;
+        }
+
         [JsonProperty(PropertyName = "authors")]
         public IEnumerable<string> Authors
         {
