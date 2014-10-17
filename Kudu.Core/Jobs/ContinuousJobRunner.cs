@@ -149,7 +149,8 @@ namespace Kudu.Core.Jobs
                 return true;
             }
 
-            _continuousJobLogger.ReportStatus(ContinuousJobStatus.InactiveInstance);
+            UpdateStatusIfChanged(ContinuousJobStatus.InactiveInstance);
+
             return false;
         }
 
