@@ -45,6 +45,7 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AppDomainHelper.cs" />
     <Compile Include="ApplicationManager.cs" />
     <Compile Include="ApplicationManagerExtensions.cs" />
     <Compile Include="TestHarnessClassCommandAttribute.cs" />

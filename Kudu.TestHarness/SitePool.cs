@@ -34,7 +34,7 @@ namespace Kudu.TestHarness
 
         private static async void EnsureNextApplication()
         {
-            await Task.Run(async () => 
+            await AppDomainHelper.RunTask(async () => 
             {
                 await _semaphore.WaitAsync();
                 try
