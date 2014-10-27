@@ -141,6 +141,10 @@ namespace Kudu.Core.Deployment.Generator
             {
                 return new NodeSiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
             }
+            else if (IsPythonSite(projectPath ?? repositoryRoot))
+            {
+                return new PythonSiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
+            }
 
             return new BasicBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
         }
@@ -148,6 +152,10 @@ namespace Kudu.Core.Deployment.Generator
         private static bool IsNodeSite(string projectPath)
         {
             return NodeSiteEnabler.LooksLikeNode(projectPath);
+        }
+
+        private static bool IsPythonSite(string projectPath) {
+            return PythonSiteEnabler.LooksLikePython(projectPath);
         }
 
         private ISiteBuilder ResolveProject(string repositoryRoot, IDeploymentSettingsManager perDeploymentSettings, IFileFinder fileFinder, bool tryWebSiteProject = false, SearchOption searchOption = SearchOption.AllDirectories)
