@@ -55,6 +55,8 @@
     <Compile Include="Deployment\Generator\DotNetConsoleBuilder.cs" />
     <Compile Include="Deployment\Generator\CustomGeneratorCommandSiteBuilder.cs" />
     <Compile Include="Deployment\Generator\ExternalCommandFactory.cs" />
+    <Compile Include="Deployment\Generator\PythonSiteEnabler.cs" />
+    <Compile Include="Deployment\Generator\PythonSiteBuilder.cs" />
     <Compile Include="Deployment\Generator\ProjectKBuilder.cs" />
     <Compile Include="Deployment\ProgressLogger.cs" />
     <Compile Include="Deployment\Generator\BasicBuilder.cs" />

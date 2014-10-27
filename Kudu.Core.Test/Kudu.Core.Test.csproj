@@ -75,6 +75,7 @@
     <Compile Include="AuthUtilityFacts.cs" />
     <Compile Include="AsyncLockFileTests.cs" />
     <Compile Include="DebugConsoleFacts.cs" />
+    <Compile Include="Deployment\PythonSiteEnablerTests.cs" />
     <Compile Include="Deployment\NodeSiteEnablerTests.cs" />
     <Compile Include="Deployment\DeploymentManagerFacts.cs" />
     <Compile Include="FileSystemHubFacts.cs" />
