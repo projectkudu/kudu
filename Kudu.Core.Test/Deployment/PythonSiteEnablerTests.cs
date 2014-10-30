@@ -35,8 +35,8 @@ namespace Kudu.Core.Deployment.Generator.Test
             fileSystemMock.Setup(f => f.File).Returns(fileMock.Object);
             FileSystemHelpers.Instance = fileSystemMock.Object;
 
-            bool looksLikeNodeResult = PythonSiteEnabler.LooksLikePython("site");
-            Assert.Equal(looksLikePythonExpectedResult, looksLikeNodeResult);
+            bool looksLikePythonResult = PythonSiteEnabler.LooksLikePython("site");
+            Assert.Equal(looksLikePythonExpectedResult, looksLikePythonResult);
         }
     }
 }
