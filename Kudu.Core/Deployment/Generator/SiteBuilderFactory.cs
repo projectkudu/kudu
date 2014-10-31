@@ -154,7 +154,8 @@ namespace Kudu.Core.Deployment.Generator
             return NodeSiteEnabler.LooksLikeNode(projectPath);
         }
 
-        private static bool IsPythonSite(string projectPath) {
+        private static bool IsPythonSite(string projectPath)
+        {
             return PythonSiteEnabler.LooksLikePython(projectPath);
         }
 
