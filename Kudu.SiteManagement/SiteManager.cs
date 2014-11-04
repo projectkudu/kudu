@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.NetworkInformation;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Client.Deployment;
@@ -230,51 +231,41 @@ namespace Kudu.SiteManagement
             }
         }
 
-        private static string GetProtocol(string binding)
+        private static string NormalizeBinding(string binding)
         {
-            return binding.StartsWith("https://", StringComparison.OrdinalIgnoreCase) 
-                ? "https" : (binding.StartsWith("http://", StringComparison.OrdinalIgnoreCase) 
-                ? "http" : null);
+            //Note: Seems like http and https is the two IIS allows when adding bindings to a site, nothing else.
+            if (binding.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                return binding;
+
+            if (binding.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+                return binding;
+
+            return "http://" + binding;
         }
 
         public bool AddSiteBinding(string applicationName, string siteBinding, SiteType siteType)
         {
-            IIS.Site site;
-
-            string protocol = GetProtocol(siteBinding);
-            if (string.IsNullOrEmpty(protocol))
-            {
-                siteBinding = "http://" + siteBinding;
-                protocol = "http";
-            }
-
-            var uri = new Uri(siteBinding);
-
+            var uri = new Uri(NormalizeBinding(siteBinding));
             try
             {
-                using (var iis = GetServerManager())
+                using (ServerManager iis = GetServerManager())
                 {
                     if (!IsAvailable(uri.Host, uri.Port, iis))
                     {
                         return false;
                     }
 
-                    if (siteType == SiteType.Live)
-                    {
-                        site = iis.Sites[GetLiveSite(applicationName)];
-                    }
-                    else
-                    {
-                        site = iis.Sites[GetServiceSite(applicationName)];
-                    }
+                    IIS.Site site = siteType == SiteType.Live
+                        ? iis.Sites[GetLiveSite(applicationName)] 
+                        : iis.Sites[GetServiceSite(applicationName)];
 
-                    if (site != null)
-                    {
-                        site.Bindings.Add("*:" + uri.Port + ":" + uri.Host, protocol);
-                        iis.CommitChanges();
+                    if (site == null)
+                        return true;
 
-                        Thread.Sleep(1000);
-                    }
+                    site.Bindings.Add("*:" + uri.Port + ":" + uri.Host, uri.Scheme);
+                    iis.CommitChanges();
+
+                    Thread.Sleep(1000);
                 }
                 return true;
             }
@@ -286,38 +277,30 @@ namespace Kudu.SiteManagement
 
         public bool RemoveSiteBinding(string applicationName, string siteBinding, SiteType siteType)
         {
-            IIS.Site site;
-
             try
             {
                 using (var iis = GetServerManager())
                 {
-                    if (siteType == SiteType.Live)
-                    {
-                        site = iis.Sites[GetLiveSite(applicationName)];
-                    }
-                    else
-                    {
-                        site = iis.Sites[GetServiceSite(applicationName)];
-                    }
+                    IIS.Site site = siteType == SiteType.Live 
+                        ? iis.Sites[GetLiveSite(applicationName)] 
+                        : iis.Sites[GetServiceSite(applicationName)];
 
-                    if (site != null)
-                    {
-                        var uri = new Uri(siteBinding);
-                        var binding = site.Bindings.FirstOrDefault(x => x.Host.Equals(uri.Host)
-                                && x.EndPoint.Port.Equals(uri.Port)
-                                && x.Protocol.Equals(uri.Scheme));
+                    if (site == null) 
+                        return true;
+                    
+                    var uri = new Uri(siteBinding);
+                    var binding = site.Bindings
+                        .FirstOrDefault(x => x.Host.Equals(uri.Host)
+                            && x.EndPoint.Port.Equals(uri.Port)
+                            && x.Protocol.Equals(uri.Scheme));
 
-                        if (binding != null)
-                        {
-                            site.Bindings.Remove(binding);
-                            iis.CommitChanges();
-
-                            Thread.Sleep(1000);
-                        }
-                    }
+                    if (binding == null) 
+                        return true;
+                        
+                    site.Bindings.Remove(binding);
+                    iis.CommitChanges();
+                    Thread.Sleep(1000);
                 }
-
                 return true;
             }
             catch
