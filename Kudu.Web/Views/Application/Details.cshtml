@@ -79,7 +79,7 @@
             {
                 <label class="control-label"><strong>Add application site binding</strong></label>           
                 @Html.ValidationSummary()
-                <span>http://</span> @Html.TextBox("siteBinding", "", new { placeholder = "example.org" })
+                @Html.TextBox("siteBinding", "", new { placeholder = "example.org", style = "width: 50%" })
                 <button id="add_sitebinding" type="submit" class="btn btn-primary">Add binding</button>
             }
 
@@ -134,7 +134,7 @@
             {
                 <label class="control-label"><strong>Add service site binding</strong></label>           
                 @Html.ValidationSummary()
-                <span>http://</span> @Html.TextBox("siteBinding", "", new { placeholder = "example.org" })
+                @Html.TextBox("siteBinding", "", new { placeholder = "example.org", style = "width: 50%" })
                 <button id="add_sitebinding" type="submit" class="btn btn-primary">Add binding</button>
             }
 

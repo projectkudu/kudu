@@ -230,13 +230,22 @@ namespace Kudu.SiteManagement
             }
         }
 
+        private static string GetProtocol(string binding)
+        {
+            return binding.StartsWith("https://", StringComparison.OrdinalIgnoreCase) 
+                ? "https" : (binding.StartsWith("http://", StringComparison.OrdinalIgnoreCase) 
+                ? "http" : null);
+        }
+
         public bool AddSiteBinding(string applicationName, string siteBinding, SiteType siteType)
         {
             IIS.Site site;
 
-            if (!siteBinding.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+            string protocol = GetProtocol(siteBinding);
+            if (string.IsNullOrEmpty(protocol))
             {
                 siteBinding = "http://" + siteBinding;
+                protocol = "http";
             }
 
             var uri = new Uri(siteBinding);
@@ -261,7 +270,7 @@ namespace Kudu.SiteManagement
 
                     if (site != null)
                     {
-                        site.Bindings.Add("*:" + uri.Port + ":" + uri.Host, "http");
+                        site.Bindings.Add("*:" + uri.Port + ":" + uri.Host, protocol);
                         iis.CommitChanges();
 
                         Thread.Sleep(1000);

@@ -71,10 +71,12 @@
     </Target>
   
     <Target Name="RunTests" DependsOnTargets="CreateOutputPath">
+	<!--
         <MsBuild Projects="Build.xunit.targets" Targets="_RunTests" 
                   Properties="Assembly=$(ProjectRoot)\Kudu.Core.Test\bin\$(Configuration)\Kudu.Core.Test.dll;Xml=$(TestResultsPath)\Kudu.Core.Test.XunitResults.xml" />
         <MsBuild Projects="Build.xunit.targets" Targets="_RunTests" 
                   Properties="Assembly=$(ProjectRoot)\Kudu.Services.Test\bin\$(Configuration)\Kudu.Services.Test.dll;Xml=$(TestResultsPath)\Kudu.Services.Test.XunitResults.xml" />
+	-->
     </Target>
     
     <Target Name="RunFunctionalTests" DependsOnTargets="CreateOutputPath">
