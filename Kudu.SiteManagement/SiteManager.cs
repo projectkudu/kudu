@@ -85,7 +85,7 @@ namespace Kudu.SiteManagement
                 return null;
             }
 
-            foreach (IIS.Binding binding in site.Bindings)
+            foreach (Binding binding in site.Bindings)
             {
                 var builder = new UriBuilder
                 {
@@ -188,7 +188,7 @@ namespace Kudu.SiteManagement
             {
                 // Get the app pool for this application
                 string appPoolName = GetAppPool(applicationName);
-                IIS.ApplicationPool kuduPool = iis.ApplicationPools[appPoolName];
+                ApplicationPool kuduPool = iis.ApplicationPools[appPoolName];
 
                 if (kuduPool == null)
                 {
@@ -326,7 +326,7 @@ namespace Kudu.SiteManagement
             }
         }
 
-        private static void MapServiceSitePath(IIS.ServerManager iis, string applicationName, string path, string siteRoot)
+        private static void MapServiceSitePath(ServerManager iis, string applicationName, string path, string siteRoot)
         {
             string serviceSiteName = GetServiceSite(applicationName);
 
@@ -341,7 +341,7 @@ namespace Kudu.SiteManagement
             site.Applications.Add(path, siteRoot);
         }
 
-        private static IIS.ApplicationPool EnsureAppPool(IIS.ServerManager iis, string appName)
+        private static ApplicationPool EnsureAppPool(ServerManager iis, string appName)
         {
             string appPoolName = GetAppPool(appName);
             var kuduAppPool = iis.ApplicationPools[appPoolName];
@@ -350,7 +350,7 @@ namespace Kudu.SiteManagement
                 iis.ApplicationPools.Add(appPoolName);
                 iis.CommitChanges();
                 kuduAppPool = iis.ApplicationPools[appPoolName];
-                kuduAppPool.ManagedPipelineMode = IIS.ManagedPipelineMode.Integrated;
+                kuduAppPool.ManagedPipelineMode = ManagedPipelineMode.Integrated;
                 kuduAppPool.ManagedRuntimeVersion = "v4.0";
                 kuduAppPool.AutoStart = true;
                 kuduAppPool.ProcessModel.LoadUserProfile = true;
@@ -372,7 +372,7 @@ namespace Kudu.SiteManagement
             return siteBindings;
         }
 
-        private static int GetRandomPort(IIS.ServerManager iis)
+        private static int GetRandomPort(ServerManager iis)
         {
             int randomPort = portNumberGenRnd.Next(1025, 65535);
             while (!IsAvailable(randomPort, iis))
@@ -383,48 +383,23 @@ namespace Kudu.SiteManagement
             return randomPort;
         }
 
-        private static bool IsAvailable(int port, IIS.ServerManager iis)
+        private static bool IsAvailable(int port, ServerManager iis)
         {
             var tcpConnections = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpConnections();
-            foreach (var connectionInfo in tcpConnections)
-            {
-                if (connectionInfo.LocalEndPoint.Port == port)
-                {
-                    return false;
-                }
-            }
-
-            foreach (var iisSite in iis.Sites)
-            {
-                foreach (var binding in iisSite.Bindings)
-                {
-                    if (binding.EndPoint != null && binding.EndPoint.Port == port)
-                    {
-                        return false;
-                    }
-                }
-            }
-
-            return true;
+            return tcpConnections.All(connectionInfo => connectionInfo.LocalEndPoint.Port != port)
+                && iis.Sites
+                    .SelectMany(iisSite => iisSite.Bindings)
+                    .All(binding => binding.EndPoint == null || binding.EndPoint.Port != port);
         }
 
-        private static bool IsAvailable(string host, int port, IIS.ServerManager iis)
+        private static bool IsAvailable(string host, int port, ServerManager iis)
         {
-            foreach (var iisSite in iis.Sites)
-            {
-                foreach (var binding in iisSite.Bindings)
-                {
-                    if (binding.EndPoint != null && binding.EndPoint.Port == port && binding.Host == host)
-                    {
-                        return false;
-                    }
-                }
-            }
-
-            return true;
+            return iis.Sites
+                .SelectMany(iisSite => iisSite.Bindings)
+                .All(binding => binding.EndPoint == null || binding.EndPoint.Port != port || binding.Host != host);
         }
 
-        private IIS.Site CreateSiteAsync(IIS.ServerManager iis, string applicationName, string siteName, string siteRoot, List<string> siteBindings)
+        private IIS.Site CreateSiteAsync(ServerManager iis, string applicationName, string siteName, string siteRoot, List<string> siteBindings)
         {
             var pool = EnsureAppPool(iis, applicationName);
 
@@ -453,7 +428,7 @@ namespace Kudu.SiteManagement
             return site;
         }
 
-        private static void EnsureDefaultDocument(IIS.ServerManager iis)
+        private static void EnsureDefaultDocument(ServerManager iis)
         {
             Configuration applicationHostConfiguration = iis.GetApplicationHostConfiguration();
             ConfigurationSection defaultDocumentSection = applicationHostConfiguration.GetSection("system.webServer/defaultDocument");
@@ -510,7 +485,7 @@ namespace Kudu.SiteManagement
             return String.Format("{0}:{1}:{2}", ip, port, applicationName + "." + host);
         }
 
-        private static Task DeleteSiteAsync(IIS.ServerManager iis, string siteName, bool deletePhysicalFiles = true)
+        private static Task DeleteSiteAsync(ServerManager iis, string siteName, bool deletePhysicalFiles = true)
         {
             var site = iis.Sites[siteName];
             if (site != null)
@@ -559,7 +534,7 @@ namespace Kudu.SiteManagement
 
         private static ServerManager GetServerManager()
         {
-            return new IIS.ServerManager(Environment.ExpandEnvironmentVariables("%windir%\\system32\\inetsrv\\config\\applicationHost.config"));
+            return new ServerManager(Environment.ExpandEnvironmentVariables("%windir%\\system32\\inetsrv\\config\\applicationHost.config"));
         }
 
         private static async Task WaitForSiteAsync(string serviceUrl)
