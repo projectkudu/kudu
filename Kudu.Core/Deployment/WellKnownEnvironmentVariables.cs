@@ -11,6 +11,7 @@
         public const string NuGetExeCommandKey = "NUGET_EXE";
         public const string PostDeploymentActionsCommandKey = "POST_DEPLOYMENT_ACTION";
         public const string SelectNodeVersionCommandKey = "KUDU_SELECT_NODE_VERSION_CMD";
+        public const string SelectPythonVersionCommandKey = "KUDU_SELECT_PYTHON_VERSION_CMD";
         public const string NpmJsPathKey = "NPM_JS_PATH";
         public const string BuildTempPath = "DEPLOYMENT_TEMP";
         public const string PreviousManifestPath = "PREVIOUS_MANIFEST_PATH";

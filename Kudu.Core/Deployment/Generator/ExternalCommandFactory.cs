@@ -35,6 +35,7 @@ namespace Kudu.Core.Deployment.Generator
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.PostDeploymentActionsCommandKey, PostDeploymentActionsCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.PostDeploymentActionsDirectoryKey, PostDeploymentActionsDir, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.SelectNodeVersionCommandKey, SelectNodeVersionCommand, logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.SelectPythonVersionCommandKey, SelectPythonVersionCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.WebJobsDeployCommandKey, WebJobsDeployCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KreVersion, Constants.KreDefaultVersion, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KreClr, Constants.KreDefaultClr, logger);
@@ -121,6 +122,14 @@ namespace Kudu.Core.Deployment.Generator
             get
             {
                 return "node " + QuotePath(Path.Combine(_environment.ScriptPath, "selectNodeVersion"));
+            }
+        }
+
+        private string SelectPythonVersionCommand
+        {
+            get
+            {
+                return "python " + QuotePath(Path.Combine(_environment.ScriptPath, "select_python_version.py"));
             }
         }
 
