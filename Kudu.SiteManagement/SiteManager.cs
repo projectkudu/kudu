@@ -20,12 +20,11 @@ namespace Kudu.SiteManagement
     public class SiteManager : ISiteManager
     {
         private const string HostingStartHtml = "hostingstart.html";
-
         private readonly static Random portNumberGenRnd = new Random((int)DateTime.UtcNow.Ticks);
 
-        private readonly IPathResolver _pathResolver;
-        private readonly bool _traceFailedRequests;
         private readonly string _logPath;
+        private readonly bool _traceFailedRequests;
+        private readonly IPathResolver _pathResolver;
         private readonly ISettingsResolver _settingsResolver;
 
         public SiteManager(IPathResolver pathResolver, ISettingsResolver settingsResolver)
@@ -103,7 +102,7 @@ namespace Kudu.SiteManagement
 
         public async Task<Site> CreateSiteAsync(string applicationName)
         {
-            using (var iis = GetServerManager())
+            using (ServerManager iis = GetServerManager())
             {
                 try
                 {
@@ -122,18 +121,18 @@ namespace Kudu.SiteManagement
                     string webRoot = Path.Combine(siteRoot, Constants.WebRoot);
 
                     FileSystemHelpers.EnsureDirectory(webRoot);
-                    File.WriteAllText(Path.Combine(webRoot, HostingStartHtml), @"<html> 
-<head>
-<title>This web site has been successfully created</title>
-<style type=""text/css"">
- BODY { color: #444444; background-color: #E5F2FF; font-family: verdana; margin: 0px; text-align: center; margin-top: 100px; }
- H1 { font-size: 16pt; margin-bottom: 4px; }
-</style>
-</head>
-<body>
-<h1>This web site has been successfully created</h1><br/>
-</body> 
-</html>");
+                    File.WriteAllText(Path.Combine(webRoot, HostingStartHtml), @"<html>
+                        <head>
+                        <title>This web site has been successfully created</title>
+                        <style type=""text/css"">
+                         BODY { color: #444444; background-color: #E5F2FF; font-family: verdana; margin: 0px; text-align: center; margin-top: 100px; }
+                         H1 { font-size: 16pt; margin-bottom: 4px; }
+                        </style>
+                        </head>
+                        <body>
+                        <h1>This web site has been successfully created</h1><br/>
+                        </body> 
+                        </html>");
 
                     var site = CreateSiteAsync(iis, applicationName, siteName, webRoot, siteBindings);
 

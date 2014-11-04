@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Kudu.SiteManagement.Configuration;
 
 namespace Kudu.SiteManagement
 {
@@ -21,6 +22,7 @@ namespace Kudu.SiteManagement
             get
             {
                 // If the default path to the kudu service exists then use it
+                // Q: Why are we prioritizing a default value over a configured value? o.O
                 string path = Environment.ExpandEnvironmentVariables(DefaultKuduServicePath);
                 if (Directory.Exists(path))
                 {

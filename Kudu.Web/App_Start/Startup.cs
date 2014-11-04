@@ -4,6 +4,7 @@ using System.IO;
 using System.Web;
 using Kudu.Client.Infrastructure;
 using Kudu.SiteManagement;
+using Kudu.SiteManagement.Configuration;
 using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
 using Ninject;
@@ -68,8 +69,10 @@ namespace Kudu.Web.App_Start
             string serviceSitesBaseUrl = ConfigurationManager.AppSettings["serviceUrlBaseValue"];
             string customHostNames = ConfigurationManager.AppSettings["enableCustomHostNames"];
 
-            serviceSitePath = Path.Combine(root, serviceSitePath);
-            sitesPath = Path.Combine(root, sitesPath);
+            IKuduConfiguration configuration = KuduConfiguration.Load();
+            kernel.Bind<IKuduConfiguration>().ToConstant(configuration);
+            serviceSitePath = Path.Combine(root, configuration.ServiceSite.Path);
+            sitesPath = Path.Combine(root, configuration.Applications.Path);
 
             var pathResolver = new DefaultPathResolver(serviceSitePath, sitesPath);
             var settingsResolver = new DefaultSettingsResolver(sitesBaseUrl, serviceSitesBaseUrl, customHostNames);
