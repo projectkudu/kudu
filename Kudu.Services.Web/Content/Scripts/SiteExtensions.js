@@ -181,7 +181,7 @@
         buttonResponse(this, function (completionCallback) {
             $.ajax({
                 type: "DELETE",
-                url: appRoot + "api/diagnostics/processes/0",
+                url: appRoot + "api/processes/0",
                 error: function () {
                     // no op
                 },

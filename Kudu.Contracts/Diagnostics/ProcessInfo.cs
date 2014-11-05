@@ -48,8 +48,8 @@ namespace Kudu.Core.Diagnostics
         //[JsonProperty(PropertyName = "arguments", DefaultValueHandling = DefaultValueHandling.Ignore)]
         //public string Arguments { get; set; }
 
-        //[JsonProperty(PropertyName = "username", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        //public string UserName { get; set; }
+        [JsonProperty(PropertyName = "user_name", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public string UserName { get; set; }
 
         [JsonProperty(PropertyName = "handle_count", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public int HandleCount { get; set; }

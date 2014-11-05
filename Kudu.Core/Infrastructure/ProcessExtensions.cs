@@ -6,12 +6,14 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Security.Principal;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment;
 using Kudu.Core.Tracing;
+using Microsoft.Win32.SafeHandles;
 
 namespace Kudu.Core.Infrastructure
 {
@@ -220,6 +222,36 @@ namespace Kudu.Core.Infrastructure
             {
                 environmentVariables = null;
                 return false;
+            }
+        }
+
+        public static string GetUserName(this Process process)
+        {
+            IntPtr processHandle = IntPtr.Zero;
+            try
+            {
+                // for public kudu, this may fail due to access denied.
+                // handle the exception to reduce noises in trace errors.
+                processHandle = process.Handle;
+            }
+            catch (Win32Exception)
+            {
+                return null;
+            }
+
+            IntPtr processToken;
+            if (!ProcessNativeMethods.OpenProcessToken(processHandle, ProcessNativeMethods.TOKEN_QUERY, out processToken))
+            {
+                throw new Win32Exception();
+            }
+
+            // ensure we call CloseHandle on processToken
+            using (new SafeFileHandle(processToken, ownsHandle: true))
+            {
+                using (var identity = new WindowsIdentity(processToken))
+                {
+                    return identity.Name;
+                }
             }
         }
 
@@ -717,6 +749,8 @@ namespace Kudu.Core.Infrastructure
         [SuppressUnmanagedCodeSecurity]
         internal static class ProcessNativeMethods
         {
+            public const uint TOKEN_QUERY = 0x0008;
+
             [DllImport("ntdll.dll")]
             public static extern int NtQueryInformationProcess(
                 IntPtr processHandle,
@@ -792,6 +826,13 @@ namespace Kudu.Core.Infrastructure
                 ref UNICODE_STRING_32 lpBuffer,
                 IntPtr dwSize,
                 IntPtr lpNumberOfBytesRead);
+
+            [DllImport("advapi32.dll", SetLastError = true)]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            public static extern bool OpenProcessToken(
+                IntPtr hProcess, 
+                UInt32 dwDesiredAccess,
+                out IntPtr processToken);
 
             [StructLayout(LayoutKind.Sequential)]
             public struct MEMORY_BASIC_INFORMATION

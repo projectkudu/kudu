@@ -298,6 +298,18 @@ var Process = (function () {
         configurable: true
     });
 
+    Object.defineProperty(Process.prototype, "UserName", {
+        get: function () {
+            if (!this._json.user_name) {
+                return "  ?";
+            }
+            var parts = this._json.user_name.split("\\");
+            return parts[1];
+        },
+        enumerable: true,
+        configurable: true
+    });
+
     Process.prototype.tableRow = function (level) {
         var _this = this;
         var tr = document.createElement('tr');
@@ -319,6 +331,7 @@ var Process = (function () {
         }
         tr.appendChild(td);
         tr.appendChild(Utilities.ToTd(this._json.id));
+        tr.appendChild(Utilities.ToTd(this.UserName));
         tr.appendChild(Utilities.ToTd(this.TotalCpuTime));
         tr.appendChild(Utilities.ToTd(Utilities.commaSeparateNumber(this._json.working_set / 1024) + " KB"));
         tr.appendChild(Utilities.ToTd(Utilities.commaSeparateNumber(this._json.private_memory / 1024) + " KB"));
@@ -386,6 +399,7 @@ var Process = (function () {
         div.appendChild(Utilities.toRow("file name", this._json.file_name));
         div.appendChild(Utilities.toRow("command line", this._json.command_line));
         div.appendChild(Utilities.toRow("description", this._json.description ? this._json.description : ""));
+        div.appendChild(Utilities.toRow("user name", this._json.user_name));
         div.appendChild(Utilities.toRow("is scm site", this._json.is_scm_site));
         div.appendChild(Utilities.toRow("is webjob", this._json.is_scm_site));
         div.appendChild(Utilities.toRow("handle count", Utilities.commaSeparateNumber(this._json.handle_count)));
@@ -728,12 +742,15 @@ function processExplorerSetupAsync() {
     var processTree = new Tree();
     nodeList = [];
     var deferred = [];
-    $.getJSON(appRoot + "api/diagnostics/processes", function (data) {
+    $.getJSON(appRoot + "api/processes", function (data) {
+        var ids = $.map(data, function (item, index) {
+            return item.id;
+        });
         for (var i = 0; i < data.length; i++) {
             deferred.push($.getJSON(data[i].href, function (response) {
                 var p = new Process(response);
                 var processNode = new ProcessNode(p);
-                if (p.ParentId === -1) {
+                if (p.ParentId === -1 || $.inArray(p.ParentId, ids) < 0) {
                     processTree.roots.push(processNode);
                 }
                 nodeList.push(new ProcessNode(p));
