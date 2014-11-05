@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
-using System.IO.Abstractions;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -111,11 +110,15 @@ namespace Kudu.Services.Performance
         }
 
         [HttpGet]
-        public HttpResponseMessage GetAllProcesses()
+        public HttpResponseMessage GetAllProcesses(bool allUsers = false)
         {
             using (_tracer.Step("ProcessController.GetAllProcesses"))
             {
-                var results = Process.GetProcesses().Select(p => GetProcessInfo(p, Request.RequestUri.AbsoluteUri.TrimEnd('/') + '/' + p.Id)).OrderBy(p => p.Name.ToLowerInvariant()).ToList();
+                var currentUser = Process.GetCurrentProcess().GetUserName();
+                var results = Process.GetProcesses()
+                    .Where(p => allUsers || String.Equals(currentUser, SafeGetValue(p.GetUserName, null), StringComparison.OrdinalIgnoreCase))
+                    .Select(p => GetProcessInfo(p, Request.RequestUri.AbsoluteUri.TrimEnd('/') + '/' + p.Id)).OrderBy(p => p.Name.ToLowerInvariant())
+                    .ToList();
                 return Request.CreateResponse(HttpStatusCode.OK, results);
             }
         }
@@ -419,7 +422,8 @@ namespace Kudu.Services.Performance
             {
                 Id = process.Id,
                 Name = process.ProcessName,
-                Href = selfLink
+                Href = selfLink,
+                UserName = SafeGetValue(process.GetUserName, null)
             };
 
             if (details)
@@ -432,7 +436,6 @@ namespace Kudu.Services.Performance
 
                 // always return empty
                 //info.Arguments = SafeGetValue(() => process.StartInfo.Arguments, "N/A");
-                //info.UserName = SafeGetValue(() => process.StartInfo.UserName, "N/A");
 
                 info.StartTime = SafeGetValue(() => process.StartTime.ToUniversalTime(), DateTime.MinValue);
                 info.TotalProcessorTime = SafeGetValue(() => process.TotalProcessorTime, TimeSpan.FromSeconds(-1));

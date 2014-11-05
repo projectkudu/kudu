@@ -18,9 +18,14 @@ namespace Kudu.Client.Diagnostics
         {
         }
 
-        public Task<IEnumerable<ProcessInfo>> GetProcessesAsync()
+        public Task<IEnumerable<ProcessInfo>> GetProcessesAsync(bool allUsers = false)
         {
-            return Client.GetJsonAsync<IEnumerable<ProcessInfo>>(String.Empty);
+            if (!allUsers)
+            {
+                return Client.GetJsonAsync<IEnumerable<ProcessInfo>>(String.Empty);
+            }
+
+            return Client.GetJsonAsync<IEnumerable<ProcessInfo>>("?allUsers=" + allUsers);
         }
 
         public Task<ProcessInfo> GetCurrentProcessAsync()
