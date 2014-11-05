@@ -133,11 +133,17 @@ namespace Kudu.Core.Infrastructure
         /// </summary>
         public static Process GetParentProcess(this Process process, ITracer tracer)
         {
+            IntPtr processHandle;
+            if (!process.TryGetProcessHandle(out processHandle))
+            {
+                return null;
+            }
+
             var pbi = new ProcessNativeMethods.ProcessInformation();
             try
             {
                 int returnLength;
-                int status = ProcessNativeMethods.NtQueryInformationProcess(process.Handle, 0, ref pbi, Marshal.SizeOf(pbi), out returnLength);
+                int status = ProcessNativeMethods.NtQueryInformationProcess(processHandle, 0, ref pbi, Marshal.SizeOf(pbi), out returnLength);
                 if (status != 0)
                 {
                     throw new Win32Exception(status);
@@ -208,7 +214,13 @@ namespace Kudu.Core.Infrastructure
         // Source: http://eazfuscator.blogspot.com/2011/06/reading-environment-variables-from.html
         public static Dictionary<string, string> GetEnvironmentVariables(this Process process)
         {
-            return GetEnvironmentVariablesCore(process.Handle);
+            IntPtr processHandle;
+            if (!process.TryGetProcessHandle(out processHandle))
+            {
+                return null;
+            }
+
+            return GetEnvironmentVariablesCore(processHandle);
         }
 
         public static bool TryGetEnvironmentVariables(this Process process, out Dictionary<string, string> environmentVariables)
@@ -227,14 +239,8 @@ namespace Kudu.Core.Infrastructure
 
         public static string GetUserName(this Process process)
         {
-            IntPtr processHandle = IntPtr.Zero;
-            try
-            {
-                // for public kudu, this may fail due to access denied.
-                // handle the exception to reduce noises in trace errors.
-                processHandle = process.Handle;
-            }
-            catch (Win32Exception)
+            IntPtr processHandle;
+            if (!process.TryGetProcessHandle(out processHandle))
             {
                 return null;
             }
@@ -257,7 +263,13 @@ namespace Kudu.Core.Infrastructure
 
         public static string GetCommandLine(this Process process)
         {
-            return GetCommandLineCore(process.Handle);
+            IntPtr processHandle;
+            if (!process.TryGetProcessHandle(out processHandle))
+            {
+                return null;
+            }
+
+            return GetCommandLineCore(processHandle);
         }
 
         public static bool GetIsScmSite(Dictionary<string, string> environment)
@@ -274,6 +286,27 @@ namespace Kudu.Core.Infrastructure
         {
             const string webJobTemplate = "WebJob: {0}, Type: {1}";
             return String.Format(webJobTemplate, environment[WellKnownEnvironmentVariables.WebJobsName], environment[WellKnownEnvironmentVariables.WebJobsType]);
+        }
+
+        private static bool TryGetProcessHandle(this Process process, out IntPtr processHandle)
+        {
+            try
+            {
+                // for public kudu, this may fail due to access denied.
+                // handle the exception to reduce noises in trace errors.
+                processHandle = process.Handle;
+            }
+            catch (Win32Exception ex)
+            {
+                if (ex.NativeErrorCode != 5)
+                {
+                    throw;
+                }
+
+                processHandle = IntPtr.Zero;
+            }
+
+            return processHandle != IntPtr.Zero;
         }
 
         private static async Task CopyStreamAsync(Stream from, Stream to, IdleManager idleManager, CancellationToken cancellationToken, bool closeAfterCopy = false)

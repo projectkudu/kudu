@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -117,7 +118,7 @@ namespace Kudu.Services.Performance
                 var currentUser = Process.GetCurrentProcess().GetUserName();
                 var results = Process.GetProcesses()
                     .Where(p => allUsers || String.Equals(currentUser, SafeGetValue(p.GetUserName, null), StringComparison.OrdinalIgnoreCase))
-                    .Select(p => GetProcessInfo(p, Request.RequestUri.AbsoluteUri.TrimEnd('/') + '/' + p.Id)).OrderBy(p => p.Name.ToLowerInvariant())
+                    .Select(p => GetProcessInfo(p, Request.RequestUri.GetLeftPart(UriPartial.Path).TrimEnd('/') + '/' + p.Id)).OrderBy(p => p.Name.ToLowerInvariant())
                     .ToList();
                 return Request.CreateResponse(HttpStatusCode.OK, results);
             }
@@ -465,9 +466,12 @@ namespace Kudu.Services.Performance
                 info.TimeStamp = DateTime.UtcNow;
                 info.EnvironmentVariables = SafeGetValue(process.GetEnvironmentVariables, null);
                 info.CommandLine = SafeGetValue(process.GetCommandLine, null);
-                info.IsScmSite = SafeGetValue(() => ProcessExtensions.GetIsScmSite(info.EnvironmentVariables), false);
-                info.IsWebJob = SafeGetValue(() => ProcessExtensions.GetIsWebJob(info.EnvironmentVariables), false);
-                info.Description = SafeGetValue(() => ProcessExtensions.GetDescription(info.EnvironmentVariables), null);
+                if (info.EnvironmentVariables != null)
+                {
+                    info.IsScmSite = SafeGetValue(() => ProcessExtensions.GetIsScmSite(info.EnvironmentVariables), false);
+                    info.IsWebJob = SafeGetValue(() => ProcessExtensions.GetIsWebJob(info.EnvironmentVariables), false);
+                    info.Description = SafeGetValue(() => ProcessExtensions.GetDescription(info.EnvironmentVariables), null);
+                }
             }
 
             return info;
@@ -493,7 +497,12 @@ namespace Kudu.Services.Performance
             }
             catch (Exception ex)
             {
-                _tracer.TraceError(ex);
+                // skip the known access denied to reduce noise in trace
+                var win32Exception = ex as Win32Exception;
+                if (win32Exception == null || win32Exception.NativeErrorCode != 5)
+                {
+                    _tracer.TraceError(ex);
+                }
             }
 
             return defaultValue;
