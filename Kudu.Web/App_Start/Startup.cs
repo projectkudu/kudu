@@ -62,23 +62,12 @@ namespace Kudu.Web.App_Start
 
         private static void SetupKuduServices(IKernel kernel)
         {
-            string root = HttpRuntime.AppDomainAppPath;
-            string serviceSitePath = ConfigurationManager.AppSettings["serviceSitePath"];
-            string sitesPath = ConfigurationManager.AppSettings["sitesPath"];
-            string sitesBaseUrl = ConfigurationManager.AppSettings["urlBaseValue"];
-            string serviceSitesBaseUrl = ConfigurationManager.AppSettings["serviceUrlBaseValue"];
-            string customHostNames = ConfigurationManager.AppSettings["enableCustomHostNames"];
-
-            IKuduConfiguration configuration = KuduConfiguration.Load();
+            IKuduConfiguration configuration = KuduConfiguration.Load(HttpRuntime.AppDomainAppPath);
             kernel.Bind<IKuduConfiguration>().ToConstant(configuration);
-            serviceSitePath = Path.Combine(root, configuration.ServiceSite.Path);
-            sitesPath = Path.Combine(root, configuration.Applications.Path);
 
-            var pathResolver = new DefaultPathResolver(serviceSitePath, sitesPath);
-            var settingsResolver = new DefaultSettingsResolver(sitesBaseUrl, serviceSitesBaseUrl, customHostNames);
+            var pathResolver = new DefaultPathResolver(configuration.ServiceSitePath, configuration.SitesPath);
 
             kernel.Bind<IPathResolver>().ToConstant(pathResolver);
-            kernel.Bind<ISettingsResolver>().ToConstant(settingsResolver);
             kernel.Bind<ISiteManager>().To<SiteManager>().InSingletonScope();
             kernel.Bind<KuduEnvironment>().ToMethod(_ => new KuduEnvironment
             {
@@ -94,7 +83,7 @@ namespace Kudu.Web.App_Start
             kernel.Bind<ISettingsService>().To<SettingsService>();
 
             // Sql CE setup
-            Directory.CreateDirectory(Path.Combine(root, "App_Data"));
+            Directory.CreateDirectory(Path.Combine(configuration.RootPath, "App_Data"));
         }
     }
 }

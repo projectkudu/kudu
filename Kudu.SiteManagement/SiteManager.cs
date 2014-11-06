@@ -5,13 +5,13 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.NetworkInformation;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Client.Deployment;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Core.Infrastructure;
+using Kudu.SiteManagement.Configuration;
 using Microsoft.Web.Administration;
 using IIS = Microsoft.Web.Administration;
 
@@ -20,24 +20,37 @@ namespace Kudu.SiteManagement
     public class SiteManager : ISiteManager
     {
         private const string HostingStartHtml = "hostingstart.html";
+        private const string HostingStartHtmlContents = @"<html>
+<head>
+<title>This web site has been successfully created</title>
+<style type=""text/css"">
+    BODY { color: #444444; background-color: #E5F2FF; font-family: verdana; margin: 0px; text-align: center; margin-top: 100px; }
+    H1 { font-size: 16pt; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<h1>This web site has been successfully created</h1><br/>
+</body> 
+</html>";
+
         private readonly static Random portNumberGenRnd = new Random((int)DateTime.UtcNow.Ticks);
 
         private readonly string _logPath;
         private readonly bool _traceFailedRequests;
         private readonly IPathResolver _pathResolver;
-        private readonly ISettingsResolver _settingsResolver;
+        private readonly IKuduConfiguration _configuration;
 
-        public SiteManager(IPathResolver pathResolver, ISettingsResolver settingsResolver)
-            : this(pathResolver, traceFailedRequests: false, logPath: null, settingsResolver: settingsResolver)
+        public SiteManager(IPathResolver pathResolver, IKuduConfiguration configuration)
+            : this(pathResolver, configuration, false, null)
         {
         }
 
-        public SiteManager(IPathResolver pathResolver, bool traceFailedRequests, string logPath, ISettingsResolver settingsResolver)
+        public SiteManager(IPathResolver pathResolver, IKuduConfiguration configuration, bool traceFailedRequests, string logPath)
         {
             _logPath = logPath;
             _pathResolver = pathResolver;
             _traceFailedRequests = traceFailedRequests;
-            _settingsResolver = settingsResolver;
+            _configuration = configuration;
         }
 
         public IEnumerable<string> GetSites()
@@ -107,12 +120,11 @@ namespace Kudu.SiteManagement
                 try
                 {
                     // Determine the host header values
-                    List<string> siteBindings = GetDefaultBindings(applicationName, _settingsResolver.SitesBaseUrl);
-                    List<string> serviceSiteBindings = GetDefaultBindings(applicationName, _settingsResolver.ServiceSitesBaseUrl);
+                    List<string> siteBindings = BuildDefaultBindings(applicationName, _configuration.ApplicationBase).ToList();
+                    List<string> serviceSiteBindings = BuildDefaultBindings(applicationName, _configuration.ServiceBase).ToList();
 
                     // Create the service site for this site
-                    string serviceSiteName = GetServiceSite(applicationName);
-                    var serviceSite = CreateSiteAsync(iis, applicationName, serviceSiteName, _pathResolver.ServiceSitePath, serviceSiteBindings);
+                    var serviceSite = CreateSiteAsync(iis, applicationName, GetServiceSite(applicationName), _configuration.ServiceSitePath, serviceSiteBindings);
 
                     // Create the main site
                     string siteName = GetLiveSite(applicationName);
@@ -121,18 +133,7 @@ namespace Kudu.SiteManagement
                     string webRoot = Path.Combine(siteRoot, Constants.WebRoot);
 
                     FileSystemHelpers.EnsureDirectory(webRoot);
-                    File.WriteAllText(Path.Combine(webRoot, HostingStartHtml), @"<html>
-                        <head>
-                        <title>This web site has been successfully created</title>
-                        <style type=""text/css"">
-                         BODY { color: #444444; background-color: #E5F2FF; font-family: verdana; margin: 0px; text-align: center; margin-top: 100px; }
-                         H1 { font-size: 16pt; margin-bottom: 4px; }
-                        </style>
-                        </head>
-                        <body>
-                        <h1>This web site has been successfully created</h1><br/>
-                        </body> 
-                        </html>");
+                    File.WriteAllText(Path.Combine(webRoot, HostingStartHtml), HostingStartHtmlContents);
 
                     var site = CreateSiteAsync(iis, applicationName, siteName, webRoot, siteBindings);
 
@@ -180,6 +181,11 @@ namespace Kudu.SiteManagement
                     throw;
                 }
             }
+        }
+
+        private IEnumerable<string> BuildDefaultBindings(string applicationName, IUrlConfiguration baseUrl)
+        {
+            if(baseUrl != null) yield return CreateBindingInformation(applicationName, baseUrl.Url);
         }
 
         public async Task DeleteSiteAsync(string applicationName)
@@ -343,16 +349,6 @@ namespace Kudu.SiteManagement
             return kuduAppPool;
         }
 
-        private static List<String> GetDefaultBindings(string applicationName, string baseUrl)
-        {
-            var siteBindings = new List<string>();
-            if (!String.IsNullOrWhiteSpace(baseUrl))
-            {
-                string binding = CreateBindingInformation(applicationName, baseUrl);
-                siteBindings.Add(binding);
-            }
-            return siteBindings;
-        }
 
         private static int GetRandomPort(ServerManager iis)
         {
@@ -412,20 +408,19 @@ namespace Kudu.SiteManagement
 
         private static void EnsureDefaultDocument(ServerManager iis)
         {
-            Configuration applicationHostConfiguration = iis.GetApplicationHostConfiguration();
+            IIS.Configuration applicationHostConfiguration = iis.GetApplicationHostConfiguration();
             ConfigurationSection defaultDocumentSection = applicationHostConfiguration.GetSection("system.webServer/defaultDocument");
 
             ConfigurationElementCollection filesCollection = defaultDocumentSection.GetCollection("files");
 
-            if (!filesCollection.Any(ConfigurationElementContainsHostingStart))
-            {
-                ConfigurationElement addElement = filesCollection.CreateElement("add");
+            if (filesCollection.Any(ConfigurationElementContainsHostingStart))
+                return;
 
-                addElement["value"] = HostingStartHtml;
-                filesCollection.Add(addElement);
+            ConfigurationElement addElement = filesCollection.CreateElement("add");
+            addElement["value"] = HostingStartHtml;
+            filesCollection.Add(addElement);
 
-                iis.CommitChanges();
-            }
+            iis.CommitChanges();
         }
 
         private static bool ConfigurationElementContainsHostingStart(ConfigurationElement configurationElement)

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Web.Mvc;
 using Kudu.Client.Infrastructure;
 using Kudu.SiteManagement;
+using Kudu.SiteManagement.Configuration;
 using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
 
@@ -14,18 +15,18 @@ namespace Kudu.Web.Controllers
     {
         private readonly IApplicationService _applicationService;
         private readonly KuduEnvironment _environment;
+        private readonly IKuduConfiguration _configuration;
         private readonly ICredentialProvider _credentialProvider;
-        private readonly ISettingsResolver _settingsResolver;
 
         public ApplicationController(IApplicationService applicationService,
                                      ICredentialProvider credentialProvider,
                                      KuduEnvironment environment,
-                                     ISettingsResolver settingsResolver)
+                                     IKuduConfiguration configuration)
         {
             _applicationService = applicationService;
             _credentialProvider = credentialProvider;
             _environment = environment;
-            _settingsResolver = settingsResolver;
+            _configuration = configuration;
         }
 
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
@@ -172,7 +173,7 @@ namespace Kudu.Web.Controllers
 
             ICredentials credentials = _credentialProvider.GetCredentials();
             var repositoryInfo = await application.GetRepositoryInfo(credentials);
-            var appViewModel = new ApplicationViewModel(application, _settingsResolver);
+            var appViewModel = new ApplicationViewModel(application, _configuration);
             appViewModel.RepositoryInfo = repositoryInfo;
 
             ViewBag.slug = slug;

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Kudu.SiteManagement.Configuration
+namespace Kudu.SiteManagement.Configuration.Section
 {
     [Flags]
     public enum UriScheme

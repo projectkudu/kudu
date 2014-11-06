@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Kudu.SiteManagement;
+using Kudu.SiteManagement.Configuration;
 
 namespace Kudu.TestHarness
 {
@@ -69,15 +70,14 @@ namespace Kudu.TestHarness
             string operationName = "SitePool.CreateApplicationInternal " + applicationName;
             
             var pathResolver = new DefaultPathResolver(PathHelper.ServiceSitePath, PathHelper.SitesPath);
-            var settingsResolver = new DefaultSettingsResolver();
 
-            var siteManager = GetSiteManager(pathResolver, settingsResolver);
+            var siteManager = GetSiteManager(pathResolver);
 
             Site site = siteManager.GetSite(applicationName);
             if (site != null)
             {
                 TestTracer.Trace("{0} Site already exists at {1}. Reusing site", operationName, site.SiteUrl);
-                var appManager = new ApplicationManager(siteManager, site, applicationName, settingsResolver)
+                var appManager = new ApplicationManager(siteManager, site, applicationName)
                 {
                     SitePoolIndex = siteIndex
                 };
@@ -107,16 +107,18 @@ namespace Kudu.TestHarness
                 site = await siteManager.CreateSiteAsync(applicationName);
 
                 TestTracer.Trace("{0} Created new site at {1}", operationName, site.SiteUrl);
-                return new ApplicationManager(siteManager, site, applicationName, settingsResolver)
+                return new ApplicationManager(siteManager, site, applicationName)
                 {
                     SitePoolIndex = siteIndex
                 };
             }
         }
 
-        private static ISiteManager GetSiteManager(DefaultPathResolver pathResolver, DefaultSettingsResolver settingsResolver)
+
+
+        private static ISiteManager GetSiteManager(DefaultPathResolver pathResolver)
         {
-            return new SiteManager(pathResolver, traceFailedRequests: true, logPath: PathHelper.TestResultsPath, settingsResolver: settingsResolver);
+            return new SiteManager(pathResolver, new KuduTestConfiguration(), true, PathHelper.TestResultsPath);
         }
 
         // Try to write index.html.  In case of failure with 502, we will include
@@ -150,6 +152,22 @@ namespace Kudu.TestHarness
 
                 throw;
             }
+        }
+    }
+
+    public class KuduTestConfiguration : IKuduConfiguration
+    {
+        public string RootPath { get; private set; }
+        public string SitesPath { get; private set; }
+        public string ServiceSitePath { get; private set; }
+        public bool CustomHostNamesEnabled { get; private set; }
+        public IUrlConfiguration ServiceBase { get; private set; }
+        public IUrlConfiguration ApplicationBase { get; private set; }
+
+        public KuduTestConfiguration()
+        {
+            SitesPath = PathHelper.SitesPath;
+            ServiceSitePath = PathHelper.ServiceSitePath;
         }
     }
 }

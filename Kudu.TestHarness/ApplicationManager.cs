@@ -23,16 +23,14 @@ namespace Kudu.TestHarness
     {
         private static bool _testFailureOccured;
         private readonly ISiteManager _siteManager;
-        private readonly ISettingsResolver _settingsResolver;
         private readonly Site _site;
         private readonly string _appName;
 
-        internal ApplicationManager(ISiteManager siteManager, Site site, string appName, ISettingsResolver settingsResolver)
+        internal ApplicationManager(ISiteManager siteManager, Site site, string appName)
         {
             _siteManager = siteManager;
             _site = site;
             _appName = appName;
-            _settingsResolver = settingsResolver;
 
             // Always null in public Kudu, but makes the code more similar to private Kudu
             NetworkCredential credentials = null;
@@ -251,14 +249,7 @@ namespace Kudu.TestHarness
                 return;
             }
 
-            try
-            {
-                await RunNoCatch(testName, action);
-            }
-            catch
-            {
-                throw;
-            }
+            await RunNoCatch(testName, action);
         }
 
         public static async Task RunNoCatch(string testName, Func<ApplicationManager, Task> action)
@@ -282,13 +273,10 @@ namespace Kudu.TestHarness
             catch (Exception ex)
             {
                 KuduUtils.DownloadDump(appManager.ServiceUrl, dumpPath);
-
                 TestTracer.Trace("Run failed with exception\n{0}", ex);
 
                 succcess = false;
-
                 _testFailureOccured = true;
-
                 throw;
             }
             finally

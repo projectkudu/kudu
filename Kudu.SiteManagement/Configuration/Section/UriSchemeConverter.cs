@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Configuration;
 using System.Globalization;
 
-namespace Kudu.SiteManagement.Configuration
+namespace Kudu.SiteManagement.Configuration.Section
 {
     public class UriSchemeConverter : ConfigurationConverterBase
     {

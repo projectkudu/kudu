@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
 using Kudu.SiteManagement;
+using Kudu.SiteManagement.Configuration;
 
 namespace Kudu.Web.Models
 {
@@ -12,14 +13,15 @@ namespace Kudu.Web.Models
         {
         }
 
-        public ApplicationViewModel(IApplication application, ISettingsResolver settingsResolver)
+        public ApplicationViewModel(IApplication application, IKuduConfiguration configuration)
         {
             Name = application.Name;
             SiteUrl = application.SiteUrl;
             SiteUrls = application.SiteUrls;
             ServiceUrl = application.ServiceUrl;
             ServiceUrls = application.ServiceUrls;
-            CustomHostNames = settingsResolver.CustomHostNames;
+
+            CustomHostNames = configuration.CustomHostNamesEnabled;
         }
 
         [Required]

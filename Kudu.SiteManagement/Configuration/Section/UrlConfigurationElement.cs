@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Configuration;
 
-namespace Kudu.SiteManagement.Configuration
+namespace Kudu.SiteManagement.Configuration.Section
 {
     public class UrlConfigurationElement : ConfigurationElement
     {
