@@ -62,6 +62,7 @@ namespace Kudu.FunctionalTests
                 // Test current process
                 var process = await appManager.ProcessManager.GetCurrentProcessAsync();
                 int currentId = process.Id;
+                var currentUser = process.UserName;
                 DateTime startTime = process.StartTime;
                 Assert.NotNull(process);
                 Assert.Contains("w3wp", process.Name);
@@ -82,6 +83,13 @@ namespace Kudu.FunctionalTests
                 var processes = await appManager.ProcessManager.GetProcessesAsync();
                 Assert.True(processes.Count() >= 1);
                 Assert.True(processes.Any(p => p.Id == currentId));
+                Assert.True(processes.All(p => p.UserName == currentUser));
+
+                // Test all-users process list
+                var allProcesses = await appManager.ProcessManager.GetProcessesAsync(allUsers: true);
+                Assert.True(allProcesses.Count() >= processes.Count());
+                Assert.True(allProcesses.Any(p => p.Id == currentId));
+                Assert.True(allProcesses.Any(p => p.UserName == currentUser));
 
                 // Test process dumps
                 foreach (var format in new[] { "raw", "zip", "diagsession" })

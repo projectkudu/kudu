@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Abstractions;
 using System.Net;
 using System.Net.Http;
+using System.Security.Principal;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -235,6 +236,18 @@ namespace Kudu.Core.Test
             {
                 ProcessExtensions.StandardOutputDrainTimeout = timeout;
             }
+        }
+
+        [Fact]
+        public void GetProcessUserNameTests()
+        {
+            var identity = WindowsIdentity.GetCurrent();
+            var process = Process.GetCurrentProcess();
+
+            var userName = process.GetUserName();
+
+            // Assert
+            Assert.Equal(userName, identity.Name);
         }
     }
 }
