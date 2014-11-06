@@ -46,7 +46,7 @@ namespace Kudu.Core.SourceControl.Git
         {
             get
             {
-                return Resolve("HEAD");
+                return ResolveHeadPeeledTargetId();
             }
         }
 
@@ -182,9 +182,14 @@ echo $i > pushinfo
             }
         }
 
-        private string Resolve(string id)
+        private string ResolveHeadPeeledTargetId()
         {
-            return Execute("rev-parse {0}", id).Trim();
+            using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
+            {
+                var headTip = repo.Head.Tip;
+
+                return headTip == null ? null : headTip.Sha;
+            }
         }
 
         public ChangeSet GetChangeSet(string id)
