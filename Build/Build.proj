@@ -109,17 +109,23 @@
             IncludeBaseDirectory="true" />
         <Copy SourceFiles="$(ProjectRoot)\Setup\DeployPrivateKudu.cmd" DestinationFiles="$(ZipTargetPath)\DeployPrivateKudu.cmd" SkipUnchangedFiles="true" />
      </Target>
-     
-     <UsingTask TaskName="CreateZipFileFromDirectory" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+
+    <!-- From https://github.com/sayedihashimi/slow-cheetah/blob/7681c20d9c1796b3628702b3e1288cc6c47884d1/.nuget/NuGet.targets#L101-L105 -->
+    <PropertyGroup Condition=" '$(ls-msbuildtasks-path)'=='' ">
+      <ls-msbuildtasks-path>$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll</ls-msbuildtasks-path>
+      <ls-msbuildtasks-path Condition=" !Exists('$(ls-msbuildtasks-path)')">$(MSBuildFrameworkToolsPath)\Microsoft.Build.Tasks.v4.0.dll</ls-msbuildtasks-path>
+      <ls-msbuildtasks-path Condition=" !Exists('$(ls-msbuildtasks-path)')">$(windir)\Microsoft.NET\Framework\v4.0.30319\Microsoft.Build.Tasks.v4.0.dll</ls-msbuildtasks-path>
+    </PropertyGroup>
+
+     <UsingTask TaskName="CreateZipFileFromDirectory" TaskFactory="CodeTaskFactory" AssemblyFile="$(ls-msbuildtasks-path)">
         <ParameterGroup>
           <DestinationArchive ParameterType="System.String" Required="true"/>
           <SourceDirectory ParameterType="System.String" Required="true" />
           <IncludeBaseDirectory ParameterType="System.Boolean" Required="true" />
         </ParameterGroup>
         <Task>
-          <!-- System.IO.Compression should come with .net framework -->
-          <Reference Include="System.IO.Compression" />
-          <Reference Include="System.IO.Compression.FileSystem" />
+          <Reference Include="$(ls-msbuildtasks-path)\..\System.IO.Compression.dll"/>
+          <Reference Include="$(ls-msbuildtasks-path)\..\System.IO.Compression.FileSystem.dll"/>
           <Using Namespace="System.IO" />
           <Using Namespace="System.IO.Compression" />
           <Code Type="Fragment" Language="cs">

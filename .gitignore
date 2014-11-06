@@ -24,3 +24,4 @@ _app/
 nuget.exe
 Kudu.Services.Web/commit.txt
 Setup/WebPiCmdSetup.log
+Kudu.Services.Web/node_modules/
