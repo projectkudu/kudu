@@ -62,7 +62,17 @@ namespace Kudu.Services.SiteExtensions
                 requestInfo = new SiteExtensionInfo();
             }
 
-            SiteExtensionInfo extension = _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl);
+            SiteExtensionInfo extension;
+
+            try
+            {
+                extension = _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl);
+            }
+            catch (WebException e)
+            {
+                // This can happen for example if a bad feed URL is passed
+                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Site extension download failure", e));
+            }
 
             if (extension == null)
             {
