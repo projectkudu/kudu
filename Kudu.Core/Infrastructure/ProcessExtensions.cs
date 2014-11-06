@@ -228,13 +228,13 @@ namespace Kudu.Core.Infrastructure
             try
             {
                 environmentVariables = GetEnvironmentVariables(process);
-                return true;
             }
             catch
             {
                 environmentVariables = null;
-                return false;
             }
+
+            return environmentVariables != null;
         }
 
         public static string GetUserName(this Process process)
