@@ -182,7 +182,7 @@ echo $i > pushinfo
             }
         }
 
-        public string Resolve(string id)
+        private string Resolve(string id)
         {
             return Execute("rev-parse {0}", id).Trim();
         }
