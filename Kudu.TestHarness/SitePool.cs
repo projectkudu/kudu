@@ -69,9 +69,7 @@ namespace Kudu.TestHarness
 
             string operationName = "SitePool.CreateApplicationInternal " + applicationName;
             
-            var pathResolver = new DefaultPathResolver(PathHelper.ServiceSitePath, PathHelper.SitesPath);
-
-            var siteManager = GetSiteManager(pathResolver);
+            var siteManager = GetSiteManager(new KuduTestConfiguration());
 
             Site site = siteManager.GetSite(applicationName);
             if (site != null)
@@ -101,24 +99,22 @@ namespace Kudu.TestHarness
                 TestTracer.Trace("{0} completed", operationName);
                 return appManager;
             }
-            else
-            {
-                TestTracer.Trace("{0} Creating new site", operationName);
-                site = await siteManager.CreateSiteAsync(applicationName);
+            TestTracer.Trace("{0} Creating new site", operationName);
+            site = await siteManager.CreateSiteAsync(applicationName);
 
-                TestTracer.Trace("{0} Created new site at {1}", operationName, site.SiteUrl);
-                return new ApplicationManager(siteManager, site, applicationName)
-                {
-                    SitePoolIndex = siteIndex
-                };
-            }
+            TestTracer.Trace("{0} Created new site at {1}", operationName, site.SiteUrl);
+            return new ApplicationManager(siteManager, site, applicationName)
+            {
+                SitePoolIndex = siteIndex
+            };
         }
 
 
 
-        private static ISiteManager GetSiteManager(DefaultPathResolver pathResolver)
+        private static ISiteManager GetSiteManager(IKuduConfiguration config)
         {
-            return new SiteManager(pathResolver, new KuduTestConfiguration(), true, PathHelper.TestResultsPath);
+            //TODO: Mock Searcher.
+            return new SiteManager(new PathResolver(config), config, new CertificateSearcher(), true, PathHelper.TestResultsPath);
         }
 
         // Try to write index.html.  In case of failure with 502, we will include
@@ -158,15 +154,16 @@ namespace Kudu.TestHarness
     public class KuduTestConfiguration : IKuduConfiguration
     {
         public string RootPath { get; private set; }
-        public string SitesPath { get; private set; }
+        public string ApplicationsPath { get; private set; }
         public string ServiceSitePath { get; private set; }
         public bool CustomHostNamesEnabled { get; private set; }
         public IUrlConfiguration ServiceBase { get; private set; }
         public IUrlConfiguration ApplicationBase { get; private set; }
+        public ICertificateConfiguration Certificate { get; private set; }
 
         public KuduTestConfiguration()
         {
-            SitesPath = PathHelper.SitesPath;
+            ApplicationsPath = PathHelper.SitesPath;
             ServiceSitePath = PathHelper.ServiceSitePath;
         }
     }

@@ -3,7 +3,7 @@
 namespace Kudu.SiteManagement.Configuration.Section
 {
     [Flags]
-    public enum UriScheme
+    public enum UriSchemes
     {
         None = 0,
         Http = 1,

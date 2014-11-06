@@ -8,13 +8,14 @@ namespace Kudu.SiteManagement.Configuration
     public interface IKuduConfiguration
     {
         string RootPath { get; }
-        string SitesPath { get; }
+        string ApplicationsPath { get; }
         string ServiceSitePath { get; }
-        
         bool CustomHostNamesEnabled { get; }
 
         IUrlConfiguration ServiceBase { get; }
         IUrlConfiguration ApplicationBase { get; }
+
+        ICertificateConfiguration Certificate { get; }
     }
 
     public class KuduConfiguration : IKuduConfiguration
@@ -24,15 +25,18 @@ namespace Kudu.SiteManagement.Configuration
             return new KuduConfiguration(root, ConfigurationManager.GetSection("kudu.management") as KuduConfigurationSection);
         }
 
-        //Note: Simple delegation for now. Ideally we would like this incapsulation for a number of reasons:
-        //      - Deal with legacy settings defined directly in appsettings. (If we wan't to maintain backwards compatibility)
-        //      - We can provide meaningfull default values for more complex configurations with more ease.
-        //      - Mocking purposes in tests.
-        //
-        //      Eventually this may replace the IPathResolver and ISettingsResolver
         private readonly KuduConfigurationSection _section;
 
         public string RootPath { get; private set; }
+
+        //TODO: Temporary dirty aproach to test it out in the IIS.
+        public ICertificateConfiguration Certificate
+        {
+            get
+            {
+                return _section != null ? new CertificateConfiguration(_section.Certificate) : null;
+            }
+        }
 
         public bool CustomHostNamesEnabled
         {
@@ -52,13 +56,22 @@ namespace Kudu.SiteManagement.Configuration
         {
             get
             {
+                //TODO: The original Path Resolver had this:
+                //      that seems a bit odd?
+                //      const string @default = @"%SystemDrive%\KuduService\wwwroot";
+                //                   @default = Environment.ExpandEnvironmentVariables(@default);
+                //      if(Directory.Exists(@default)) return @default;
+                //
+                //  - Do we wan't to do that, basically ignoring configuration?...
+
                 return _section == null
                     ? PathRelativeToRoot(ConfigurationManager.AppSettings["serviceSitePath"])
                     : PathRelativeToRoot(_section.ServiceSite.Path);
+
             }
         }
 
-        public string SitesPath
+        public string ApplicationsPath
         {
             get
             {
@@ -77,7 +90,7 @@ namespace Kudu.SiteManagement.Configuration
 
                 string legacy = ConfigurationManager.AppSettings["serviceUrlBaseValue"];
                 return legacy != null 
-                    ? new UrlConfiguration(legacy.TrimStart('.'), UriScheme.Http) 
+                    ? new UrlConfiguration(legacy.TrimStart('.'), UriSchemes.Http) 
                     : null;
 
                 //TODO: Can we return a meaningfull "null" implementation here instead?
@@ -93,7 +106,7 @@ namespace Kudu.SiteManagement.Configuration
 
                 string legacy = ConfigurationManager.AppSettings["urlBaseValue"];
                 return legacy != null 
-                    ? new UrlConfiguration(legacy.TrimStart('.'), UriScheme.Http) 
+                    ? new UrlConfiguration(legacy.TrimStart('.'), UriSchemes.Http) 
                     : null;
 
                 //TODO: Can we return a meaningfull "null" implementation here instead?
@@ -108,7 +121,7 @@ namespace Kudu.SiteManagement.Configuration
 
         public string PathRelativeToRoot(string path)
         {
-            return Path.Combine(RootPath, path);
+            return Path.GetFullPath(Path.Combine(RootPath, path));
         }
     }
 }

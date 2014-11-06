@@ -14,9 +14,9 @@ namespace Kudu.SiteManagement.Configuration.Section
 
         [ConfigurationProperty("scheme", IsRequired = false)]
         [TypeConverter(typeof(UriSchemeConverter))]
-        public UriScheme Scheme
+        public UriSchemes Scheme
         {
-            get { return (UriScheme)this["scheme"]; }
+            get { return (UriSchemes)this["scheme"]; }
         }
     }
 }

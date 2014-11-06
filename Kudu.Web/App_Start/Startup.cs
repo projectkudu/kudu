@@ -64,17 +64,17 @@ namespace Kudu.Web.App_Start
         {
             IKuduConfiguration configuration = KuduConfiguration.Load(HttpRuntime.AppDomainAppPath);
             kernel.Bind<IKuduConfiguration>().ToConstant(configuration);
-
-            var pathResolver = new DefaultPathResolver(configuration.ServiceSitePath, configuration.SitesPath);
-
-            kernel.Bind<IPathResolver>().ToConstant(pathResolver);
+            kernel.Bind<IPathResolver>().To<PathResolver>();
             kernel.Bind<ISiteManager>().To<SiteManager>().InSingletonScope();
+            kernel.Bind<ICertificateSearcher>().To<CertificateSearcher>();
+
+            //TODO: Instantialte from container instead of factory.
             kernel.Bind<KuduEnvironment>().ToMethod(_ => new KuduEnvironment
             {
                 RunningAgainstLocalKuduService = true,
                 IsAdmin = IdentityHelper.IsAnAdministrator(),
-                ServiceSitePath = pathResolver.ServiceSitePath,
-                SitesPath = pathResolver.SitesPath
+                ServiceSitePath = configuration.ServiceSitePath,
+                SitesPath = configuration.ApplicationsPath
             });
 
             // TODO: Integrate with membership system

@@ -58,14 +58,16 @@
     <Compile Include="..\Common\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="Configuration\ICertificateConfiguration.cs" />
     <Compile Include="Configuration\KuduConfiguration.cs" />
+    <Compile Include="Configuration\Section\CertificateConfigurationElement.cs" />
     <Compile Include="Configuration\Section\KuduConfigurationSection.cs" />
     <Compile Include="Configuration\Section\PathConfigurationElement.cs" />
-    <Compile Include="Configuration\Section\UriScheme.cs" />
+    <Compile Include="Configuration\Section\UriSchemes.cs" />
     <Compile Include="Configuration\Section\UriSchemeConverter.cs" />
     <Compile Include="Configuration\Section\UrlConfigurationElement.cs" />
     <Compile Include="Configuration\UrlConfiguration.cs" />
-    <Compile Include="DefaultPathResolver.cs">
+    <Compile Include="PathResolver.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="IPathResolver.cs" />
@@ -74,6 +76,7 @@
     <Compile Include="Site.cs" />
     <Compile Include="SiteManager.cs" />
     <Compile Include="SiteType.cs" />
+    <Compile Include="X509StoreSearcher.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

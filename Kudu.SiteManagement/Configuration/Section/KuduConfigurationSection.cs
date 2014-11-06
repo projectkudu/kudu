@@ -10,6 +10,13 @@ namespace Kudu.SiteManagement.Configuration.Section
             get { return (bool)this["enableCustomHostNames"]; }
         }
 
+        //TODO: Quick and dirty for testing certificates.
+        [ConfigurationProperty("certificate", IsRequired = false)]
+        public CertificateConfigurationElement Certificate
+        {
+            get { return (CertificateConfigurationElement)this["certificate"]; }
+        }
+
         [ConfigurationProperty("serviceSite", IsRequired = true)]
         public PathConfigurationElement ServiceSite
         {

@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.NetworkInformation;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Client.Deployment;
@@ -12,6 +13,7 @@ using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Core.Infrastructure;
 using Kudu.SiteManagement.Configuration;
+using Kudu.SiteManagement.Configuration.Section;
 using Microsoft.Web.Administration;
 using IIS = Microsoft.Web.Administration;
 
@@ -39,18 +41,20 @@ namespace Kudu.SiteManagement
         private readonly bool _traceFailedRequests;
         private readonly IPathResolver _pathResolver;
         private readonly IKuduConfiguration _configuration;
+        private readonly ICertificateSearcher _certificateSearcher;
 
-        public SiteManager(IPathResolver pathResolver, IKuduConfiguration configuration)
-            : this(pathResolver, configuration, false, null)
+        public SiteManager(IPathResolver pathResolver, IKuduConfiguration configuration, ICertificateSearcher certificateSearcher)
+            : this(pathResolver, configuration, certificateSearcher, false, null)
         {
         }
 
-        public SiteManager(IPathResolver pathResolver, IKuduConfiguration configuration, bool traceFailedRequests, string logPath)
+        public SiteManager(IPathResolver pathResolver, IKuduConfiguration configuration, ICertificateSearcher certificateSearcher, bool traceFailedRequests, string logPath)
         {
             _logPath = logPath;
             _pathResolver = pathResolver;
             _traceFailedRequests = traceFailedRequests;
             _configuration = configuration;
+            _certificateSearcher = certificateSearcher;
         }
 
         public IEnumerable<string> GetSites()
@@ -120,12 +124,12 @@ namespace Kudu.SiteManagement
                 try
                 {
                     // Determine the host header values
-                    List<string> siteBindings = BuildDefaultBindings(applicationName, _configuration.ApplicationBase).ToList();
-                    List<string> serviceSiteBindings = BuildDefaultBindings(applicationName, _configuration.ServiceBase).ToList();
+                    List<BindingInformation> siteBindings = BuildDefaultBindings(applicationName, _configuration.ApplicationBase).ToList();
+                    List<BindingInformation> serviceSiteBindings = BuildDefaultBindings(applicationName, _configuration.ServiceBase).ToList();
 
                     // Create the service site for this site
                     var serviceSite = CreateSiteAsync(iis, applicationName, GetServiceSite(applicationName), _configuration.ServiceSitePath, serviceSiteBindings);
-
+                    
                     // Create the main site
                     string siteName = GetLiveSite(applicationName);
                     string root = _pathResolver.GetApplicationPath(applicationName);
@@ -143,24 +147,20 @@ namespace Kudu.SiteManagement
                     // Commit the changes to iis
                     iis.CommitChanges();
 
-                    var serviceUrls = new List<string>();
-                    foreach (var url in serviceSite.Bindings)
-                    {
-                        serviceUrls.Add(String.Format("http://{0}:{1}/", String.IsNullOrEmpty(url.Host) ? "localhost" : url.Host, url.EndPoint.Port));
-                    }
+                    var serviceUrls = serviceSite.Bindings
+                        .Select(url => String.Format("{0}://{1}:{2}/", url.Protocol, String.IsNullOrEmpty(url.Host) ? "localhost" : url.Host, url.EndPoint.Port))
+                        .ToList();
 
                     // Wait for the site to start
-                    await OperationManager.AttemptAsync(() => WaitForSiteAsync(serviceUrls[0]));
+                    await OperationManager.AttemptAsync(() => WaitForSiteAsync(serviceUrls.First()));
 
                     // Set initial ScmType state to LocalGit
                     var settings = new RemoteDeploymentSettingsManager(serviceUrls.First() + "api/settings");
                     await settings.SetValue(SettingsKeys.ScmType, ScmType.LocalGit);
 
-                    var siteUrls = new List<string>();
-                    foreach (var url in site.Bindings)
-                    {
-                        siteUrls.Add(String.Format("http://{0}:{1}/", String.IsNullOrEmpty(url.Host) ? "localhost" : url.Host, url.EndPoint.Port));
-                    }
+                    var siteUrls = site.Bindings
+                        .Select(url => String.Format("{0}://{1}:{2}/", url.Protocol, String.IsNullOrEmpty(url.Host) ? "localhost" : url.Host, url.EndPoint.Port))
+                        .ToList();
 
                     return new Site
                     {
@@ -183,9 +183,21 @@ namespace Kudu.SiteManagement
             }
         }
 
-        private IEnumerable<string> BuildDefaultBindings(string applicationName, IUrlConfiguration baseUrl)
+        private struct BindingInformation {
+            public string Binding { get; set; }
+            public string Protocol { get; set; }
+        }
+
+        private IEnumerable<BindingInformation> BuildDefaultBindings(string applicationName, IUrlConfiguration baseUrl)
         {
-            if(baseUrl != null) yield return CreateBindingInformation(applicationName, baseUrl.Url);
+            if(baseUrl == null)
+                yield break;
+
+            if (baseUrl.Scheme.HasFlag(UriSchemes.Http))
+                yield return new BindingInformation { Binding = CreateBindingInformation(applicationName, baseUrl.Url, "*", "80"), Protocol = "http"};
+            
+            if (baseUrl.Scheme.HasFlag(UriSchemes.Https))
+                yield return new BindingInformation { Binding = CreateBindingInformation(applicationName, baseUrl.Url, "*", "443"), Protocol = "https" };
         }
 
         public async Task DeleteSiteAsync(string applicationName)
@@ -268,6 +280,7 @@ namespace Kudu.SiteManagement
                         return true;
 
                     site.Bindings.Add("*:" + uri.Port + ":" + uri.Host, uri.Scheme);
+
                     iis.CommitChanges();
 
                     Thread.Sleep(1000);
@@ -377,31 +390,56 @@ namespace Kudu.SiteManagement
                 .All(binding => binding.EndPoint == null || binding.EndPoint.Port != port || binding.Host != host);
         }
 
-        private IIS.Site CreateSiteAsync(ServerManager iis, string applicationName, string siteName, string siteRoot, List<string> siteBindings)
+        private IIS.Site CreateSiteAsync(ServerManager iis, string applicationName, string siteName, string siteRoot, List<SiteManager.BindingInformation> bindings)
         {
             var pool = EnsureAppPool(iis, applicationName);
 
             IIS.Site site;
-
-            if (siteBindings != null && siteBindings.Count > 0)
+            if (bindings.Any())
             {
-                site = iis.Sites.Add(siteName, "http", siteBindings.First(), siteRoot);
+                BindingInformation first = bindings.First();
+                //TODO: Quick and dirty!!!
+                if (first.Protocol == "https")
+                {
+                    var cert = _certificateSearcher.LookupX509Certificate2(_configuration.Certificate.Name, _configuration.Certificate.Store);
+                    site = iis.Sites.Add(siteName, first.Binding, siteRoot, cert.GetCertHash());
+                }
+                else
+                {
+                    site = iis.Sites.Add(siteName, first.Protocol, first.Binding, siteRoot);
+                }
+
+                foreach (BindingInformation binding in bindings.Skip(1))
+                {
+                    //TODO: Quick and dirty!!!
+                    if (binding.Protocol == "https")
+                    {
+                        var cert = _certificateSearcher.LookupX509Certificate2(_configuration.Certificate.Name, _configuration.Certificate.Store);
+                        //TODO: This seems to work, we can't see the associated certificate in the IIS manager, but when we
+                        //      navigate to the site it seems to pick it up fine, but this is a bit annoying.
+                        //       - Certificate data should also be pulled out into the page.
+                        site.Bindings.Add(binding.Binding, cert.GetCertHash(), _configuration.Certificate.Store);
+                    }
+                    else
+                    {
+                        site.Bindings.Add(binding.Binding, binding.Protocol);
+                    }
+                }
             }
             else
             {
-                int sitePort = GetRandomPort(iis);
-                site = iis.Sites.Add(siteName, siteRoot, sitePort);
+                site = iis.Sites.Add(siteName, siteRoot, GetRandomPort(iis));
             }
-
+            
             site.ApplicationDefaults.ApplicationPoolName = pool.Name;
 
-            if (_traceFailedRequests)
-            {
-                site.TraceFailedRequestsLogging.Enabled = true;
-                string path = Path.Combine(_logPath, applicationName, "Logs");
-                Directory.CreateDirectory(path);
-                site.TraceFailedRequestsLogging.Directory = path;
-            }
+            if (!_traceFailedRequests) 
+                return site;
+            
+            site.TraceFailedRequestsLogging.Enabled = true;
+            string path = Path.Combine(_logPath, applicationName, "Logs");
+            Directory.CreateDirectory(path);
+            site.TraceFailedRequestsLogging.Directory = path;
 
             return site;
         }

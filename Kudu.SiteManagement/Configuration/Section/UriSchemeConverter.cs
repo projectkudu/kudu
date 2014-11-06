@@ -9,9 +9,9 @@ namespace Kudu.SiteManagement.Configuration.Section
     {
         public override object ConvertFrom(ITypeDescriptorContext ctx, CultureInfo ci, object data)
         {
-            UriScheme scheme;
+            UriSchemes scheme;
             if (data == null || !Enum.TryParse(data.ToString(), true, out scheme))
-                return UriScheme.Http;
+                return UriSchemes.Http;
             return scheme;
         }
     }
