@@ -17,7 +17,6 @@ namespace Kudu.Core.SourceControl
         /// <summary>
         /// Initialize a new repository using the given configuration.
         /// </summary>
-        /// <param name="configuration">The configuration to use.</param>
         void Initialize();
 
         ChangeSet GetChangeSet(string id);
