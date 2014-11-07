@@ -79,7 +79,7 @@ namespace Kudu.Core.SourceControl.Git
 
                 try
                 {
-                    string output = Execute("rev-parse --git-dir");
+                    string output = ParseGitDirectory();
                     // If no exception and the output is .git (not a full directory to .git which means somewhere there's a git repository which is a parent of this directory)
                     // Then git repository directory found
                     return String.Equals(output.Trim(), ".git", StringComparison.OrdinalIgnoreCase);
@@ -451,6 +451,53 @@ echo $i > pushinfo
             }
 
             return output;
+        }
+
+        private string ParseGitDirectory()
+        {
+            const string revParseArgs = "rev-parse --git-dir";
+            try
+            {
+                return Execute(revParseArgs);
+            }
+            catch (Exception)
+            {
+                if (!TryFixCorruptedGit())
+                {
+                    throw;
+                }
+            }
+
+            return Execute(revParseArgs);
+        }
+
+        // Corrupted git where .git/HEAD exists but only contains \0.
+        // we've since this issue on a few occasions but don't really understand what causes it
+        private bool TryFixCorruptedGit()
+        {
+            var headFile = Path.Combine(_gitExe.WorkingDirectory, ".git", "HEAD");
+            if (FileSystemHelpers.FileExists(headFile))
+            {
+                bool isCorrupted;
+                using (var stream = FileSystemHelpers.OpenRead(headFile))
+                {
+                    isCorrupted = stream.ReadByte() == 0;
+                }
+
+                if (isCorrupted)
+                {
+                    ITracer tracer = _tracerFactory.GetTracer();
+                    using (tracer.Step(@"Fix corrupted .git\HEAD file"))
+                    {
+                        FileSystemHelpers.DeleteFile(headFile);
+                        Execute(tracer, "init");
+                    }
+
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private string Execute(string arguments, params object[] args)

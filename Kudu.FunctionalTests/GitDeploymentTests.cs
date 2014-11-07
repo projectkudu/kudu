@@ -181,6 +181,48 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public async Task PushHelloKuduWithCorruptedGitTests()
+        {
+            const string randomTestName = "PushHelloKuduWithCorruptedGitTests";
+            await ApplicationManager.RunAsync(randomTestName, async appManager =>
+            {
+                // Act
+                using (TestRepository testRepository = Git.Clone("HelloKudu"))
+                {
+                    appManager.GitDeploy(testRepository.PhysicalPath);
+                    var results = await appManager.DeploymentManager.GetResultsAsync();
+
+                    // Assert
+                    Assert.Equal(1, results.Count());
+                    Assert.Equal(DeployStatus.Success, results.ElementAt(0).Status);
+
+                    var content = await appManager.VfsManager.ReadAllTextAsync("site/repository/.git/HEAD");
+                    Assert.Equal("ref: refs/heads/master", content.Trim());
+
+                    // Corrupt the .git/HEAD file
+                    appManager.VfsManager.WriteAllBytes("site/repository/.git/HEAD", new byte[23]);
+                    content = await appManager.VfsManager.ReadAllTextAsync("site/repository/.git/HEAD");
+                    Assert.Equal('\0', content[0]);
+
+                    testRepository.WriteFile("somefile.txt", String.Empty);
+                    Git.Commit(testRepository.PhysicalPath, "some commit");
+
+                    var result = appManager.GitDeploy(testRepository.PhysicalPath);
+
+                    content = await appManager.VfsManager.ReadAllTextAsync("site/repository/.git/HEAD");
+                    Assert.Equal("ref: refs/heads/master", content.Trim());
+
+                    results = await appManager.DeploymentManager.GetResultsAsync();
+
+                    // Assert
+                    Assert.Equal(2, results.Count());
+                    Assert.Equal(DeployStatus.Success, results.ElementAt(0).Status);
+                    Assert.Equal(DeployStatus.Success, results.ElementAt(1).Status);
+                }
+            });
+        }
+
+        [Fact]
         public async Task CustomGeneratorArgs()
         {
             await ApplicationManager.RunAsync("UpdatedTargetPathShouldChangeDeploymentDestination", async appManager =>
