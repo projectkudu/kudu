@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -56,6 +57,18 @@ namespace Kudu.Client.Editor
                 request.RequestUri = new Uri(path, UriKind.Relative);
                 request.Headers.IfMatch.Add(EntityTagHeaderValue.Any);
                 request.Content = new StringContent(content);
+                Client.SendAsync(request).Result.EnsureSuccessful();
+            }
+        }
+
+        public void WriteAllBytes(string path, byte[] buffer)
+        {
+            using (var request = new HttpRequestMessage())
+            {
+                request.Method = HttpMethod.Put;
+                request.RequestUri = new Uri(path, UriKind.Relative);
+                request.Headers.IfMatch.Add(EntityTagHeaderValue.Any);
+                request.Content = new StreamContent(new MemoryStream(buffer));
                 Client.SendAsync(request).Result.EnsureSuccessful();
             }
         }
