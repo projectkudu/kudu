@@ -3,6 +3,7 @@
   <system.applicationHost>
     <sites>
       <site name="%XDT_SCMSITENAME%" xdt:Locator="Match(name)">
+        <application path="{0}" xdt:Locator="Match(path)" xdt:Transform="Remove" />
         <application path="{0}" applicationPool="%XDT_APPPOOLNAME%" xdt:Transform="Insert">
           <virtualDirectory path="/" physicalPath="{1}" />
         </application>
