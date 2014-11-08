@@ -116,27 +116,29 @@ namespace Kudu.Core.SourceControl.Git
             var tracer = _tracerFactory.GetTracer();
             using (tracer.Step("GitExeRepository.Initialize"))
             {
-                Execute(tracer, "init");
+                string gitdir = LibGit2Sharp.Repository.Init(RepositoryPath);
 
-                Execute(tracer, "config core.autocrlf true");
-
-                // This speeds up git operations like 'git checkout', especially on slow drives like in Azure
-                Execute(tracer, "config core.preloadindex true");
-
-                Execute(tracer, @"config user.name ""{0}""", _settings.GetGitUsername());
-
-                Execute(tracer, @"config user.email ""{0}""", _settings.GetGitEmail());
-
-                using (tracer.Step("Configure git server"))
+                using (var repo = new LibGit2Sharp.Repository(gitdir))
                 {
-                    // Allow getting pushes even though we're not bare
-                    Execute(tracer, "config receive.denyCurrentBranch ignore");
-                }
+                    repo.Config.Set("core.autocrlf", true);
 
-                // to disallow browsing to this folder in case of in-place repo
-                using (tracer.Step("Create deny users for .git folder"))
-                {
-                    string content = "<?xml version=\"1.0\"" + @"?>
+                    // This speeds up git operations like 'git checkout', especially on slow drives like in Azure
+                    repo.Config.Set("core.preloadindex", true);
+
+                    repo.Config.Set("user.name", _settings.GetGitUsername());
+
+                    repo.Config.Set("user.email", _settings.GetGitEmail());
+
+                    using (tracer.Step("Configure git server"))
+                    {
+                        // Allow getting pushes even though we're not bare
+                        repo.Config.Set("receive.denyCurrentBranch", "ignore");
+                    }
+
+                    // to disallow browsing to this folder in case of in-place repo
+                    using (tracer.Step("Create deny users for .git folder"))
+                    {
+                        string content = "<?xml version=\"1.0\"" + @"?>
 <configuration>
   <system.web>
     <authorization>
@@ -145,24 +147,25 @@ namespace Kudu.Core.SourceControl.Git
   </system.web>
 <configuration>";
 
-                    File.WriteAllText(Path.Combine(_gitExe.WorkingDirectory, ".git", "web.config"), content);
-                }
+                        File.WriteAllText(Path.Combine(_gitExe.WorkingDirectory, ".git", "web.config"), content);
+                    }
 
-                // Server env does not support interactive cred prompt; hence, we intercept any credential provision
-                // for git fetch/clone with http/https scheme and return random invalid u/p forcing 'fatal: Authentication failed.'
-                using (tracer.Step("Configure git-credential"))
-                {
-                    FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(GitCredentialHookPath));
+                    // Server env does not support interactive cred prompt; hence, we intercept any credential provision
+                    // for git fetch/clone with http/https scheme and return random invalid u/p forcing 'fatal: Authentication failed.'
+                    using (tracer.Step("Configure git-credential"))
+                    {
+                        FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(GitCredentialHookPath));
 
-                    string content = @"#!/bin/sh
+                        string content = @"#!/bin/sh
 if [ " + "\"$1\" = \"get\"" + @" ]; then
       echo username=dummyUser
       echo password=dummyPassword
 fi" + "\n";
 
-                    File.WriteAllText(GitCredentialHookPath, content);
+                        File.WriteAllText(GitCredentialHookPath, content);
 
-                    Execute(tracer, "config credential.helper \"!'{0}'\"", GitCredentialHookPath);
+                        repo.Config.Set("credential.helper", string.Format("!'{0}'", GitCredentialHookPath));
+                    }
                 }
 
                 using (tracer.Step("Setup post receive hook"))
