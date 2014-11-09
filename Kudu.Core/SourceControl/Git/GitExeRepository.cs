@@ -315,7 +315,11 @@ echo $i > pushinfo
 
         public void Update(string id)
         {
-            Execute("checkout {0} --force", id);
+            using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
+            {
+                repo.Checkout(id,
+                    new CheckoutOptions { CheckoutModifiers = CheckoutModifiers.Force });
+            }
         }
 
         public void Update()
