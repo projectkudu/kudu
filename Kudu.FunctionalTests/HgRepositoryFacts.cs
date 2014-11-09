@@ -141,7 +141,7 @@ namespace Kudu.FunctionalTests
                 var ex = Assert.Throws<CommandLineException>(() => executable.Execute(NullTracer.Instance, "pull https://bitbucket.org/kudutest/hellomercurial"));
 
                 // Assert
-                Assert.Contains("abort: abandoned transaction found - run hg recover!", ex.Message);
+                Assert.Contains("abort: abandoned transaction found", ex.Message);
                 
             }
         }
