@@ -213,7 +213,10 @@ echo $i > pushinfo
 
         public void AddFile(string path)
         {
-            Execute("add {0}", path);
+            using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
+            {
+                repo.Stage(path);
+            }
         }
 
         public bool Commit(string message, string authorName = null)
