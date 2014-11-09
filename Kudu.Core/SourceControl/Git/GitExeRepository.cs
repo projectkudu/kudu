@@ -8,6 +8,7 @@ using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
+using LibGit2Sharp;
 
 namespace Kudu.Core.SourceControl.Git
 {
@@ -197,22 +198,17 @@ echo $i > pushinfo
 
         public ChangeSet GetChangeSet(string id)
         {
-            string output = null;
-            try
+            using (LibGit2Sharp.IRepository repo = new LibGit2Sharp.Repository(RepositoryPath))
             {
-                output = Execute("log -n 1 {0} --", id);
-            }
-            catch (CommandLineException ex)
-            {
-                if (!String.IsNullOrEmpty(ex.Message) && ex.Message.IndexOf("bad revision ", StringComparison.OrdinalIgnoreCase) != -1)
+                LibGit2Sharp.Commit commit = repo.Lookup<LibGit2Sharp.Commit>(id);
+
+                if (commit == null)
                 {
-                    // Indicates the changeset does not exist in the repo.
                     return null;
                 }
-                throw;
+
+                return new ChangeSet(commit.Sha, commit.Author.Name, commit.Author.Email, commit.Message, commit.Author.When);
             }
-            var commitReader = output.AsReader();
-            return ParseCommit(commitReader);
         }
 
         public void AddFile(string path)
@@ -567,66 +563,6 @@ echo $i > pushinfo
 
                 return false;
             });
-        }
-
-        internal static ChangeSet ParseCommit(IStringReader reader)
-        {
-            // commit hash
-            reader.ReadUntilWhitespace();
-            reader.SkipWhitespace();
-            string id = reader.ReadUntilWhitespace();
-
-            // Merges will have (from hash) so we're skipping that
-            reader.ReadLine();
-
-            string author = null;
-            string email = null;
-            string date = null;
-
-            while (!reader.Done)
-            {
-                string line = reader.ReadLine();
-
-                if (ParserHelpers.IsSingleNewLine(line))
-                {
-                    break;
-                }
-
-                var subReader = line.AsReader();
-                string key = subReader.ReadUntil(':');
-                // Skip :
-                subReader.Skip();
-                subReader.SkipWhitespace();
-                string value = subReader.ReadToEnd().Trim();
-
-                if (key.Equals("Author", StringComparison.OrdinalIgnoreCase))
-                {
-                    // Author <email>
-                    var authorReader = value.AsReader();
-                    author = authorReader.ReadUntil('<').Trim();
-                    authorReader.Skip();
-                    email = authorReader.ReadUntil('>');
-                }
-                else if (key.Equals("Date", StringComparison.OrdinalIgnoreCase))
-                {
-                    date = value;
-                }
-            }
-
-            var messageBuilder = new StringBuilder();
-            while (!reader.Done)
-            {
-                string line = reader.ReadLine();
-
-                if (ParserHelpers.IsSingleNewLine(line))
-                {
-                    break;
-                }
-                messageBuilder.Append(line);
-            }
-
-            string message = messageBuilder.ToString().Trim();
-            return new ChangeSet(id, author, email, message, DateTimeOffset.ParseExact(date, "ddd MMM d HH:mm:ss yyyy zzz", CultureInfo.InvariantCulture));
         }
     }
 }
