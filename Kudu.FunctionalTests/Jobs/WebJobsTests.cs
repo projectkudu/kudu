@@ -397,6 +397,65 @@ namespace Kudu.FunctionalTests.Jobs
         }
 
         [Fact]
+        public void InPlaceJobRunsInPlace()
+        {
+            RunScenario("InPlaceJobRunsInPlace", appManager =>
+            {
+                const string jobName = "joba";
+                const string expectedTempStr = "Temp\\jobs\\triggered\\" + jobName;
+                const string expectedAppDataStr = "App_Data\\jobs\\triggered\\" + jobName;
+
+                TestTracer.Trace("Create the triggered WebJob");
+                appManager.JobsManager.CreateTriggeredJobAsync(jobName, "run.cmd", "cd\n").Wait();
+
+                TestTracer.Trace("Trigger the triggered WebJob");
+                VerifyTriggeredJobTriggers(appManager, jobName, 1, "Success", expectedTempStr);
+
+                var jobSettings = new JobSettings();
+
+                TestTracer.Trace("Set triggered WebJob to is_in_place true");
+                jobSettings.SetSetting("is_in_place", true);
+                appManager.JobsManager.SetTriggeredJobSettingsAsync(jobName, jobSettings).Wait();
+
+                TestTracer.Trace("Trigger the triggered WebJob");
+                VerifyTriggeredJobTriggers(appManager, jobName, 2, "Success", expectedAppDataStr);
+
+                TestTracer.Trace("Set triggered WebJob to is_in_place false");
+                jobSettings.SetSetting("is_in_place", false);
+                appManager.JobsManager.SetTriggeredJobSettingsAsync(jobName, jobSettings).Wait();
+
+                TestTracer.Trace("Trigger the triggered WebJob");
+                VerifyTriggeredJobTriggers(appManager, jobName, 3, "Success", expectedTempStr);
+
+                TestTracer.Trace("Create the continuous WebJob");
+                appManager.JobsManager.CreateContinuousJobAsync(jobName, "run.cmd", "cd > %WEBROOT_PATH%\\..\\..\\LogFiles\\verification.txt.%WEBSITE_INSTANCE_ID%\n").Wait();
+
+                WaitUntilAssertVerified(
+                    "verification file",
+                    TimeSpan.FromSeconds(30),
+                    () => VerifyVerificationFile(appManager, new[] { expectedTempStr }));
+
+                TestTracer.Trace("Set continuous WebJob to is_in_place true");
+                jobSettings.SetSetting("is_in_place", true);
+                appManager.JobsManager.SetContinuousJobSettingsAsync(jobName, jobSettings).Wait();
+
+                WaitUntilAssertVerified(
+                    "verification file",
+                    TimeSpan.FromSeconds(30),
+                    () => VerifyVerificationFile(appManager, new[] { expectedAppDataStr }));
+
+                TestTracer.Trace("Set continuous WebJob to is_in_place false");
+                jobSettings.SetSetting("is_in_place", false);
+
+                appManager.JobsManager.SetContinuousJobSettingsAsync(jobName, jobSettings).Wait();
+                WaitUntilAssertVerified(
+                    "verification file",
+                    TimeSpan.FromSeconds(30),
+                    () => VerifyVerificationFile(appManager, new[] { expectedTempStr }));
+            });
+        }
+
+        [Fact]
         public void CreateSameTriggeredJobTwiceUpdatesJobBinaries()
         {
             RunScenario("CreateSameTriggeredJobTwiceUpdatesJobBinaries", appManager =>
@@ -497,10 +556,8 @@ namespace Kudu.FunctionalTests.Jobs
                     Assert.NotNull(triggeredJobHistory);
                     Assert.Equal(expectedNumberOfRuns, triggeredJobHistory.TriggeredJobRuns.Count());
 
-                    foreach (TriggeredJobRun triggeredJobRun in triggeredJobHistory.TriggeredJobRuns)
-                    {
-                        AssertTriggeredJobRun(appManager, triggeredJobRun, jobName, expectedStatus, expectedOutput, expectedError);
-                    }
+                    TriggeredJobRun triggeredJobRun = triggeredJobHistory.TriggeredJobRuns.FirstOrDefault();
+                    AssertTriggeredJobRun(appManager, triggeredJobRun, jobName, expectedStatus, expectedOutput, expectedError);
                 });
         }
 
@@ -714,7 +771,7 @@ namespace Kudu.FunctionalTests.Jobs
                     var content = await response.Content.ReadAsStringAsync();
                     TestTracer.Trace("Request to: {0}\nStatus code: {1}\nContent: {2}", address, response.StatusCode, content);
 
-                    Assert.True(content.Contains(expectedContent), "Expected content: " + expectedContent);
+                    Assert.True(content.IndexOf(expectedContent, StringComparison.OrdinalIgnoreCase) >= 0, "Expected content: " + expectedContent);
                 }
             }
         }

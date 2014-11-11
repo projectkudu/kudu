@@ -20,7 +20,6 @@ namespace Kudu.Core.Jobs
         private int _started = 0;
         private Thread _continuousJobThread;
         private ContinuousJobLogger _continuousJobLogger;
-        private JobSettings _jobSettings;
         private readonly string _disableFilePath;
 
         public ContinuousJobRunner(ContinuousJob continuousJob, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
@@ -138,7 +137,7 @@ namespace Kudu.Core.Jobs
 
         private bool TryGetLockIfSingleton()
         {
-            bool isSingleton = _jobSettings.IsSingleton;
+            bool isSingleton = JobSettings.IsSingleton;
             if (!isSingleton)
             {
                 return true;
@@ -169,7 +168,7 @@ namespace Kudu.Core.Jobs
                 NotifyShutdownJob();
 
                 // By default give the continuous job 5 seconds before killing it (after notifying the continuous job)
-                if (!_continuousJobThread.Join(_jobSettings.GetStoppingWaitTime(DefaultContinuousJobStoppingWaitTimeInSeconds)))
+                if (!_continuousJobThread.Join(JobSettings.GetStoppingWaitTime(DefaultContinuousJobStoppingWaitTimeInSeconds)))
                 {
                     _continuousJobThread.Abort();
                 }
@@ -188,7 +187,7 @@ namespace Kudu.Core.Jobs
         public void RefreshJob(ContinuousJob continuousJob, JobSettings jobSettings)
         {
             StopJob();
-            _jobSettings = jobSettings;
+            JobSettings = jobSettings;
             StartJob(continuousJob);
         }
 

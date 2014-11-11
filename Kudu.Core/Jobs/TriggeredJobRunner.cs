@@ -41,8 +41,10 @@ namespace Kudu.Core.Jobs
             get { return Settings.GetWebJobsIdleTimeout(); }
         }
 
-        public void StartJobRun(TriggeredJob triggeredJob, Action<string, string> reportAction)
+        public void StartJobRun(TriggeredJob triggeredJob, JobSettings jobSettings, Action<string, string> reportAction)
         {
+            JobSettings = jobSettings;
+
             if (Settings.IsWebJobsStopped())
             {
                 throw new WebJobsStoppedException();
@@ -58,8 +60,6 @@ namespace Kudu.Core.Jobs
 
             try
             {
-                InitializeJobInstance(triggeredJob, logger);
-
                 if (_currentRunningJobWaitHandle != null)
                 {
                     _currentRunningJobWaitHandle.Dispose();
@@ -72,7 +72,12 @@ namespace Kudu.Core.Jobs
                 {
                     try
                     {
+                        InitializeJobInstance(triggeredJob, logger);
                         RunJobInstance(triggeredJob, logger, logger.Id);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError("WebJob run failed due to: " + ex);
                     }
                     finally
                     {

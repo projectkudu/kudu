@@ -26,6 +26,8 @@ namespace Kudu.Core.Jobs
         private readonly ExternalCommandFactory _externalCommandFactory;
         private readonly IAnalytics _analytics;
         private string _shutdownNotificationFilePath;
+        private string _workingDirectory;
+        private string _inPlaceWorkingDirectory;
 
         protected BaseJobRunner(string jobName, string jobsTypePath, IEnvironment environment,
             IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
@@ -57,13 +59,18 @@ namespace Kudu.Core.Jobs
 
         protected string JobDataPath { get; private set; }
 
-        protected string WorkingDirectory { get; private set; }
+        protected string WorkingDirectory
+        {
+            get { return _inPlaceWorkingDirectory ?? _workingDirectory; }
+        }
 
         protected abstract string JobEnvironmentKeyPrefix { get; }
 
         protected abstract TimeSpan IdleTimeout { get; }
 
         protected abstract void UpdateStatus(IJobLogger logger, string status);
+
+        protected JobSettings JobSettings { get; set; }
 
         private static int CalculateHashForJob(string jobBinariesPath)
         {
@@ -78,8 +85,19 @@ namespace Kudu.Core.Jobs
             return updateDatesString.ToString().GetHashCode();
         }
 
-        private void CacheJobBinaries(IJobLogger logger)
+        private void CacheJobBinaries(JobBase job, IJobLogger logger)
         {
+            bool isInPlaceDefault = job.ScriptHost.GetType() == typeof(NodeScriptHost);
+            if (JobSettings.GetIsInPlace(isInPlaceDefault))
+            {
+                _inPlaceWorkingDirectory = JobBinariesPath;
+                SafeKillAllRunningJobInstances(logger);
+                UpdateAppConfigs(WorkingDirectory);
+                return;
+            }
+
+            _inPlaceWorkingDirectory = null;
+
             if (WorkingDirectory != null)
             {
                 try
@@ -121,7 +139,7 @@ namespace Kudu.Core.Jobs
                     FileSystemHelpers.CopyDirectoryRecursive(JobBinariesPath, tempJobInstancePath);
                     UpdateAppConfigs(tempJobInstancePath);
 
-                    WorkingDirectory = tempJobInstancePath;
+                    _workingDirectory = tempJobInstancePath;
                 });
             }
             catch (Exception ex)
@@ -132,7 +150,7 @@ namespace Kudu.Core.Jobs
                 _analytics.UnexpectedException(ex);
 
                 // job disabled
-                WorkingDirectory = null;
+                _workingDirectory = null;
             }
         }
 
@@ -155,7 +173,7 @@ namespace Kudu.Core.Jobs
                 throw new InvalidOperationException("Missing job script to run - {0}".FormatInvariant(job.ScriptFilePath));
             }
 
-            CacheJobBinaries(logger);
+            CacheJobBinaries(job, logger);
 
             if (WorkingDirectory == null)
             {

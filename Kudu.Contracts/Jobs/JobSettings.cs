@@ -34,5 +34,10 @@ namespace Kudu.Contracts.Jobs
         {
             return TimeSpan.FromSeconds(GetSetting(JobSettingsKeys.StoppingWaitTime, defaultTime));
         }
+
+        public bool GetIsInPlace(bool defaultValue)
+        {
+            return GetSetting(JobSettingsKeys.IsInPlace, defaultValue);
+        }
     }
 }
