@@ -90,7 +90,7 @@ namespace Kudu.Core.Jobs
 
                 foreach (ContinuousJobRunner continuousJobRunner in _continuousJobRunners.Values)
                 {
-                    continuousJobRunner.StopJob();
+                    continuousJobRunner.StopJob(isShutdown: true);
                 }
             }
         }

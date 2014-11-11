@@ -153,7 +153,7 @@ namespace Kudu.Core.Jobs
             return false;
         }
 
-        public void StopJob()
+        public void StopJob(bool isShutdown = false)
         {
             Interlocked.Exchange(ref _started, 0);
 
@@ -162,6 +162,11 @@ namespace Kudu.Core.Jobs
             if (_continuousJobThread != null)
             {
                 logStopped = true;
+
+                if (isShutdown)
+                {
+                    _continuousJobLogger.LogInformation("WebJob is stopping due to website shutting down");
+                }
 
                 _continuousJobLogger.ReportStatus(ContinuousJobStatus.Stopping);
 
