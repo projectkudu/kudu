@@ -14,7 +14,6 @@ namespace Kudu
         public const string SSHKeyLockFile = "sshkey.lock";
         public const string HooksLockFile = "hooks.lock";
         public const string SSHKeyPath = ".ssh";
-        public const string TraceLockFile = "trace.lock";
         public const string NpmDebugLogFile = "npm-debug.log";
 
         public const string DeploymentCachePath = "deployments";
@@ -26,7 +25,6 @@ namespace Kudu
         public const string SiteExtensionLogsDirectory = "siteExtLogs";
         public const string DeploySettingsPath = "settings.xml";
         public const string ActiveDeploymentFile = "active";
-        public const string TraceFile = "trace.xml";
         public const string ScriptsPath = "scripts";
         public const string NodeModulesPath = "node_modules";
         public const string FirstDeploymentManifestFileName = "firstDeploymentManifest";

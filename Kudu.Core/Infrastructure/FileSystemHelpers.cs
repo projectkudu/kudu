@@ -133,6 +133,12 @@ namespace Kudu.Core.Infrastructure
             Instance.File.Copy(sourceFileName, destFileName, overwrite);
         }
 
+        public static void MoveFile(string sourceFileName, string destFileName)
+        {
+            FileSystemHelpers.DeleteFileSafe(destFileName);
+            Instance.File.Move(sourceFileName, destFileName);
+        }
+
         // From MSDN: http://msdn.microsoft.com/en-us/library/bb762914.aspx
         public static void CopyDirectoryRecursive(string sourceDirPath, string destinationDirPath, bool overwrite = true)
         {
