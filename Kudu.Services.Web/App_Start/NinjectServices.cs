@@ -548,11 +548,8 @@ namespace Kudu.Services.Web.App_Start
             TraceLevel level = kernel.Get<IDeploymentSettingsManager>().GetTraceLevel();
             if (level > TraceLevel.Off && TraceServices.CurrentRequestTraceFile != null)
             {
-                string tracePath = Path.Combine(environment.TracePath, Constants.TraceFile);
                 string textPath = Path.Combine(environment.TracePath, TraceServices.CurrentRequestTraceFile);
-                string traceLockPath = Path.Combine(environment.TracePath, Constants.TraceLockFile);
-                var traceLock = new LockFile(traceLockPath);
-                return new CascadeTracer(new Tracer(tracePath, level, traceLock), new TextTracer(textPath, level));
+                return new CascadeTracer(new XmlTracer(environment.TracePath, level), new TextTracer(textPath, level));
             }
 
             return NullTracer.Instance;
@@ -563,10 +560,7 @@ namespace Kudu.Services.Web.App_Start
             TraceLevel level = settings.GetTraceLevel();
             if (level > TraceLevel.Off)
             {
-                string tracePath = Path.Combine(environment.TracePath, Constants.TraceFile);
-                string traceLockPath = Path.Combine(environment.TracePath, Constants.TraceLockFile);
-                var traceLock = new LockFile(traceLockPath);
-                return new Tracer(tracePath, level, traceLock);
+                return new XmlTracer(environment.TracePath, level);
             }
 
             return NullTracer.Instance;
@@ -587,7 +581,7 @@ namespace Kudu.Services.Web.App_Start
 
             attribs.Add("lastrequesttime", TraceModule.LastRequestTime.ToString());
 
-            tracer.Trace("Process Shutdown", attribs);
+            tracer.Trace(XmlTracer.ProcessShutdownTrace, attribs);
         }
 
         private static ILogger GetLogger(IEnvironment environment, IKernel kernel)

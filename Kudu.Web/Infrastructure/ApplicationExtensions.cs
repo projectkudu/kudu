@@ -35,20 +35,5 @@ namespace Kudu.Web.Infrastructure
             var deploymentSettingsManager = new RemoteDeploymentSettingsManager(application.ServiceUrl + "api/settings", credentials);
             return deploymentSettingsManager;
         }
-
-        public static async Task<XDocument> DownloadTrace(this IApplication application, ICredentials credentials)
-        {
-            using (var clientHandler = HttpClientHelper.CreateClientHandler(application.ServiceUrl, credentials))
-            {
-                using (var client = new HttpClient(clientHandler))
-                {
-                    HttpResponseMessage response = await client.GetAsync(application.ServiceUrl + "api/dump");
-
-                    Stream stream = await response.EnsureSuccessStatusCode().Content.ReadAsStreamAsync();
-
-                    return ZipHelper.ExtractTrace(stream);
-                }
-            }
-        }
     }
 }

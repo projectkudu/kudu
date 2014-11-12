@@ -278,7 +278,7 @@ namespace Kudu.Core.Infrastructure
 
         private IDisposable GetProcessStep(ITracer tracer, string arguments)
         {
-            return tracer.Step("Executing external process", new Dictionary<string, string>
+            return tracer.Step(XmlTracer.ExecutingExternalProcessTrace, new Dictionary<string, string>
             {
                 { "type", "process" },
                 { "path", System.IO.Path.GetFileName(Path) },

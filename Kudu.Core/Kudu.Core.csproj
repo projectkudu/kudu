@@ -152,9 +152,9 @@
     <Compile Include="Tracing\NullTracerFactory.cs" />
     <Compile Include="Tracing\TextTracer.cs" />
     <Compile Include="Tracing\TraceExtensions.cs" />
-    <Compile Include="Tracing\Tracer.cs" />
     <Compile Include="Tracing\TracerFactory.cs" />
     <Compile Include="Tracing\TraceStep.cs" />
+    <Compile Include="Tracing\XmlTracer.cs" />
     <Compile Include="Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

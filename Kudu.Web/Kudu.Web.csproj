@@ -175,7 +175,6 @@
     <Content Include="images\tick.png" />
     <Content Include="images\tt.png" />
     <Content Include="images\warning.png" />
-    <Content Include="Styles\trace.css" />
     <Content Include="Styles\ui-lightness\images\ui-bg_diagonals-thick_18_b81900_40x40.png" />
     <Content Include="Styles\ui-lightness\images\ui-bg_diagonals-thick_20_666666_40x40.png" />
     <Content Include="Styles\ui-lightness\images\ui-bg_flat_10_000000_40x100.png" />
@@ -204,10 +203,6 @@
     <Content Include="Views\Shared\Error.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\_ViewStart.cshtml" />
-    <Content Include="Views\Analysis\Trace.cshtml" />
-    <Content Include="Views\Shared\_Tools.cshtml" />
-    <Content Include="Views\Shared\_TraceView.cshtml" />
-    <Content Include="Views\Application\Trace.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\Common\Constants.cs">
@@ -215,7 +210,6 @@
     </Compile>
     <Compile Include="App_Start\Startup.cs" />
     <Compile Include="Controllers\AdminController.cs" />
-    <Compile Include="Controllers\AnalysisController.cs" />
     <Compile Include="Controllers\ApplicationController.cs" />
     <Compile Include="Controllers\DeploymentsController.cs" />
     <Compile Include="Controllers\SettingsController.cs" />
@@ -226,7 +220,6 @@
     <Compile Include="Infrastructure\IdentityHelper.cs" />
     <Compile Include="Infrastructure\KuduEnvironment.cs" />
     <Compile Include="Infrastructure\SlugGenerator.cs" />
-    <Compile Include="Infrastructure\ZipHelper.cs" />
     <Compile Include="Models\Application.cs" />
     <Compile Include="Models\ApplicationService.cs" />
     <Compile Include="Models\ApplicationViewModel.cs" />

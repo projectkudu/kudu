@@ -212,7 +212,7 @@ namespace Kudu.Services.Test
             get
             {
                 yield return new object[] { "https://localhost/vfs", SiteRootPath };
-                yield return new object[] { "https://localhost/vfs/LogFiles/Git", SiteRootPath + @"\LogFiles\Git" };
+                yield return new object[] { "https://localhost/vfs/LogFiles/kudu", SiteRootPath + @"\LogFiles\kudu" };
                 
                 yield return new object[] { "https://localhost/vfs/SystemDrive", "%SystemDrive%" };
                 yield return new object[] { "https://localhost/vfs/SystemDrive/windows", @"%SystemDrive%\windows" };

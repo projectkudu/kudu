@@ -106,7 +106,7 @@
     <Compile Include="Settings\DeploymentSettingsPrioritiesTests.cs" />
     <Compile Include="Settings\SettingsProvidersTests.cs" />
     <Compile Include="SSHKeyManagerFacts.cs" />
-    <Compile Include="Tracing\TracerTests.cs" />
+    <Compile Include="Tracing\XmlTracerTests.cs" />
     <Compile Include="Tracing\SiteExtensionLogManagerTests.cs" />
     <Compile Include="XmlLoggerFacts.cs" />
   </ItemGroup>

@@ -5,11 +5,9 @@ using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Reflection;
 using System.Web;
 using System.Xml.Linq;
-using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Moq;
@@ -18,42 +16,39 @@ using Xunit.Extensions;
 
 namespace Kudu.Core.Test.Tracing
 {
-    public class TracerTests
+    public class XmlTracerTests
     {
         [Fact]
-        public void TracerMaxLogEntriesTest()
+        public void TracerMaxXmlFilesTest()
         {
             // Mock
-            var path = @"x:\git\trace\trace.xml";
-            var traceLock = new OperationLockTests.MockOperationLock();
-            var threads = 5;
-            var tasks = new List<Task>(threads);
-            var total = 0;
+            var path = @"x:\kudu\trace";
+            var tracer = new XmlTracer(path, TraceLevel.Verbose);
             FileSystemHelpers.Instance = GetMockFileSystem();
 
-            // Test writing 5*50 traces which > 200 limits
-            // also test concurrency and locking with multiple threads
-            for (int i = 0; i < threads; i++)
+            try
             {
-                tasks.Add(Task.Factory.StartNew(() =>
+                var total = XmlTracer.MaxXmlFiles + 10;
+                for (int i = 0; i < total; ++i)
                 {
-                    var tracer = new Tracer(path, TraceLevel.Verbose, traceLock);
+                    tracer.Trace(Guid.NewGuid().ToString(), new Dictionary<string, string>());
+                }
 
-                    for (int j = 0; j < 50; ++j)
-                    {
-                        tracer.Trace(Guid.NewGuid().ToString(), new Dictionary<string, string>());
-                        Interlocked.Increment(ref total);
-                    }
-                }));
+                var files = FileSystemHelpers.GetFiles(path, "*.xml");
+                Assert.Equal(total, files.Length);
+
+                // wait till interval and write another trace
+                typeof(XmlTracer).GetField("_lastCleanup", BindingFlags.Static | BindingFlags.NonPublic).SetValue(null, DateTime.MinValue);
+                tracer.Trace(Guid.NewGuid().ToString(), new Dictionary<string, string>());
+
+                files = FileSystemHelpers.GetFiles(path, "*.xml");
+                Assert.True(files.Length < XmlTracer.MaxXmlFiles);
             }
-
-            Task.WaitAll(tasks.ToArray());
-
-            XDocument document = ReadTraceFile(path);
-
-            // Assert
-            Assert.True(total > Tracer.MaxLogEntries);
-            Assert.Equal(Tracer.MaxLogEntries, document.Root.Elements().Count());
+            catch (Exception)
+            {
+                FileSystemHelpers.Instance = null;
+                throw;
+            }
         }
 
         [Theory]
@@ -61,33 +56,43 @@ namespace Kudu.Core.Test.Tracing
         public void TracerRequestsTest(TraceLevel traceLevel, RequestInfo[] requests)
         {
             // Mock
-            var path = @"x:\git\trace\trace.xml";
-            var traceLock = new OperationLockTests.MockOperationLock();
-            var tracer = new Tracer(path, traceLevel, traceLock);
+            var path = @"x:\kudu\trace";
+            var tracer = new XmlTracer(path, traceLevel);
             FileSystemHelpers.Instance = GetMockFileSystem();
 
-            // Test
-            IntializeTraceFile(path);
-
-            foreach (var request in requests)
+            try
             {
-                Dictionary<string, string> attribs = new Dictionary<string, string>
+                foreach (var request in requests)
                 {
-                    { "url", request.Url },
-                    { "statusCode", ((int)request.StatusCode).ToString() },
-                };
+                    Dictionary<string, string> attribs = new Dictionary<string, string>
+                    {
+                        { "url", request.Url },
+                        { "method", "GET" },
+                        { "statusCode", ((int)request.StatusCode).ToString() },
+                    };
 
-                using (tracer.Step("Incoming Request", attribs))
-                {
-                    tracer.Trace("Outgoing response", attribs);
+                    using (tracer.Step("Incoming Request", attribs))
+                    {
+                        tracer.Trace("Outgoing response", attribs);
+                    }
                 }
+
+                var traces = new List<RequestInfo>();
+                foreach (var file in FileSystemHelpers.GetFiles(path, "*.xml").OrderBy(n => n))
+                {
+                    var document = XDocument.Load(FileSystemHelpers.OpenRead(file));
+                    var trace = new RequestInfo { Url = document.Root.Attribute("url").Value };
+                    traces.Add(trace);
+                }
+
+                // Assert
+                Assert.Equal(requests.Where(r => r.Traced), traces, RequestInfoComparer.Instance);
             }
-
-            XDocument document = ReadTraceFile(path);
-            IEnumerable<RequestInfo> traces = document.Root.Elements().Select(e => new RequestInfo { Url = e.Attribute("url").Value });
-
-            // Assert
-            Assert.Equal(requests.Where(r => r.Traced), traces, RequestInfoComparer.Instance);
+            catch (Exception)
+            {
+                FileSystemHelpers.Instance = null;
+                throw;
+            }
         }
 
         [Theory]
@@ -152,44 +157,34 @@ namespace Kudu.Core.Test.Tracing
             }
         }
 
-        private void IntializeTraceFile(string path)
-        {
-            using (var writer = new StreamWriter(FileSystemHelpers.OpenFile(path, FileMode.Create, FileAccess.Write, FileShare.Read)))
-            {
-                writer.WriteLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
-                writer.WriteLine("<trace/>");
-            }
-        }
-
-        private XDocument ReadTraceFile(string path)
-        {
-            using (var stream = FileSystemHelpers.OpenRead(path))
-            {
-                return XDocument.Load(stream);
-            }
-        }
-
         private IFileSystem GetMockFileSystem()
         {
             var files = new Dictionary<string, MemoryStream>();
             var fs = new Mock<IFileSystem>(MockBehavior.Strict);
             var fileBase = new Mock<FileBase>(MockBehavior.Strict);
+            var fileInfoFactoryBase = new Mock<IFileInfoFactory>(MockBehavior.Strict);
             var dirBase = new Mock<DirectoryBase>(MockBehavior.Strict);
             var dirInfoBase = new Mock<DirectoryInfoBase>(MockBehavior.Strict);
 
             // Setup
-            fs.Setup(f => f.File)
-              .Returns(fileBase.Object);
-            fs.Setup(f => f.Directory)
-              .Returns(dirBase.Object);
+            fs.SetupGet(f => f.File)
+              .Returns(() => fileBase.Object);
+            fs.SetupGet(f => f.FileInfo)
+              .Returns(() => fileInfoFactoryBase.Object);
+            fs.SetupGet(f => f.Directory)
+              .Returns(() => dirBase.Object);
 
             fileBase.Setup(f => f.Exists(It.IsAny<string>()))
                     .Returns((string path) => files.ContainsKey(path));
-            fileBase.Setup(f => f.Open(It.IsAny<string>(), FileMode.Create, FileAccess.Write, FileShare.Read))
+            fileBase.Setup(f => f.Open(It.IsAny<string>(), FileMode.Append, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete))
                     .Returns((string path, FileMode fileMode, FileAccess fileAccess, FileShare fileShare) =>
                     {
-                        var stream = MockMemoryStream();
-                        files[path] = stream;
+                        MemoryStream stream;
+                        if (!files.TryGetValue(path, out stream))
+                        {
+                            stream = MockMemoryStream();
+                            files[path] = stream;
+                        }
                         return stream;
                     });
             fileBase.Setup(f => f.OpenRead(It.IsAny<string>()))
@@ -199,11 +194,30 @@ namespace Kudu.Core.Test.Tracing
                         stream.Position = 0;
                         return stream;
                     });
+            fileBase.Setup(f => f.Move(It.IsAny<string>(), It.IsAny<string>()))
+                    .Callback((string sourceFileName, string destFileName) =>
+                    {
+                        files[destFileName] = files[sourceFileName];
+                        files.Remove(sourceFileName);
+                    });
 
+
+            fileInfoFactoryBase.Setup(f => f.FromFileName(It.IsAny<string>()))
+                        .Returns((string file) =>
+                        {
+                            var fileInfoBase = new Mock<FileInfoBase>(MockBehavior.Strict);
+                            fileInfoBase.SetupGet(f => f.Exists)
+                                        .Returns(() => files.ContainsKey(file));
+                            fileInfoBase.SetupSet(f => f.Attributes = It.IsAny<FileAttributes>());
+                            fileInfoBase.Setup(f => f.Delete())
+                                        .Callback(() => files.Remove(file));
+                            return fileInfoBase.Object;
+                        });
+
+            dirBase.Setup(d => d.GetFiles(It.IsAny<string>(), It.IsAny<string>()))
+                   .Returns(() => files.Keys.ToArray());
             dirBase.Setup(d => d.CreateDirectory(It.IsAny<string>()))
                    .Returns(dirInfoBase.Object);
-
-            FileSystemHelpers.Instance = fs.Object;
 
             return fs.Object;
         }

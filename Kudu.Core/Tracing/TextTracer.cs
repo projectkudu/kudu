@@ -168,7 +168,7 @@ namespace Kudu.Core.Tracing
         private static class CleanupHelper
         {
             private const int TimerInterval = 10000; // 10sec
-            private const int FileStaleMinutes = 60; // 60min
+            private const int FileStaleMinutes = 5; // 5min
 
             private static object _lock = new object();
             private static bool _init = false;
@@ -189,13 +189,9 @@ namespace Kudu.Core.Tracing
                         var parent = new DirectoryInfo(Path.Combine(path, @"..\.."));
                         if (parent.Exists)
                         {
-                            var utcNow = DateTime.UtcNow;
                             foreach (FileInfoBase child in parent.GetFiles("*.txt", SearchOption.AllDirectories))
                             {
-                                if (utcNow.Subtract(child.LastWriteTimeUtc).TotalMinutes >= FileStaleMinutes)
-                                {
-                                    _files.Add(child.FullName, child.LastWriteTimeUtc);
-                                }
+                                _files.Add(child.FullName, child.LastWriteTimeUtc.AddMinutes(FileStaleMinutes));
                             }
 
                             EnsureTimer();

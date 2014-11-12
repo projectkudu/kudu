@@ -100,7 +100,7 @@ namespace Kudu.Console
                                                           GetLogger(env, level, logger),
                                                           hooksManager);
 
-            var step = tracer.Step("Executing external process", new Dictionary<string, string>
+            var step = tracer.Step(XmlTracer.ExecutingExternalProcessTrace, new Dictionary<string, string>
             {
                 { "type", "process" },
                 { "path", "kudu.exe" },
@@ -137,9 +137,7 @@ namespace Kudu.Console
         {
             if (level > TraceLevel.Off)
             {
-                string traceLockPath = Path.Combine(env.TracePath, Constants.TraceLockFile);
-                var traceLock = new LockFile(traceLockPath, NullTracerFactory.Instance);
-                var tracer = new Tracer(Path.Combine(env.TracePath, Constants.TraceFile), level, traceLock);
+                var tracer = new XmlTracer(env.TracePath, level);
                 string logFile = System.Environment.GetEnvironmentVariable(Constants.TraceFileEnvKey);
                 if (!String.IsNullOrEmpty(logFile))
                 {
