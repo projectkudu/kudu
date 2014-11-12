@@ -395,5 +395,29 @@ several lines
                     String.Format("For {0}, Expected Status Code: {1} Actual Status Code: {2}. \r\n Response: {3}", siteUrl, 200, response.StatusCode, responseBody));
             }
         }
+
+        [Fact]
+        public async Task Error404UnknownRouteTests()
+        {
+            string appName = "Error404UnknownRouteTests";
+
+            await ApplicationManager.RunAsync(appName, async appManager =>
+            {
+                using (var client = HttpClientHelper.CreateClient(appManager.ServiceUrl, appManager.DeploymentManager.Credentials))
+                {
+                    var path = "/api/badroute";
+                    using (var response = await client.GetAsync(path))
+                    {
+                        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+                        var content = await response.Content.ReadAsStringAsync();
+
+                        // assert
+                        Assert.True(content.Contains("No route registered for"));
+                        Assert.True(content.Contains(path));
+                    }
+                }
+            });
+        }
     }
 }
