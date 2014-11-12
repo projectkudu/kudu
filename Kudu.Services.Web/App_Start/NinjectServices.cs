@@ -481,6 +481,9 @@ namespace Kudu.Services.Web.App_Start
             routes.MapHttpRoute("api-get-local-extension", "api/siteextensions/{id}", new { controller = "SiteExtension", action = "GetLocalExtension" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("api-uninstall-extension", "api/siteextensions/{id}", new { controller = "SiteExtension", action = "UninstallExtension" }, new { verb = new HttpMethodConstraint("DELETE") });
             routes.MapHttpRoute("api-install-update-extension", "api/siteextensions/{id}", new { controller = "SiteExtension", action = "InstallExtension" }, new { verb = new HttpMethodConstraint("PUT") });
+
+            // handle not found
+            routes.MapHttpRoute("error-404", "{*path}", new { controller = "Error404", action = "Handle" });
         }
 
         // Perform migration tasks to deal with legacy sites that had different file layout
