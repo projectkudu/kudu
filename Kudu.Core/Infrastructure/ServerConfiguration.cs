@@ -30,11 +30,19 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        static private string GetApplicationName()
+        public static string GetApplicationName()
         {
             var applicationName = System.Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME");
             if(!string.IsNullOrEmpty(applicationName))
             {
+                // Yank everything after the first underscore to work around
+                // a slot issue where WEBSITE_SITE_NAME gets set incorrectly
+                int underscoreIndex = applicationName.IndexOf('_');
+                if (underscoreIndex > 0)
+                {
+                    applicationName = applicationName.Substring(0, underscoreIndex);
+                }
+
                 return applicationName;
             }
 

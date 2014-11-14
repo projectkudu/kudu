@@ -202,8 +202,7 @@ namespace Kudu.Core.Deployment
         private static string GetSiteName(IEnvironment environment)
         {
             // Try to get the site name from the environment (WAWS will set it)
-            string siteName = System.Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME");
-
+            string siteName = ServerConfiguration.GetApplicationName();
             if (String.IsNullOrEmpty(siteName))
             {
                 // Otherwise get it from the root directory name
