@@ -95,7 +95,7 @@ namespace Kudu.Console
                                                           traceFactory,
                                                           analytics,
                                                           settingsManager,
-                                                          new DeploymentStatusManager(env, statusLock),
+                                                          new DeploymentStatusManager(env, analytics, statusLock),
                                                           deploymentLock,
                                                           GetLogger(env, level, logger),
                                                           hooksManager);

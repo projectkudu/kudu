@@ -167,6 +167,7 @@
     <Compile Include="Deployment\ISiteBuilderFactory.cs" />
     <Compile Include="Deployment\XmlLogger.cs" />
     <Compile Include="Environment.cs" />
+    <Compile Include="XmlUtils.cs" />
     <Compile Include="Infrastructure\FileSystemHelpers.cs" />
     <Compile Include="Deployment\LoggerExtensions.cs" />
     <Compile Include="Infrastructure\ParserHelpers.cs" />
