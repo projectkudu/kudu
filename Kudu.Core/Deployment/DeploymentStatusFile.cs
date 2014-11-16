@@ -4,6 +4,7 @@ using System.IO.Abstractions;
 using System.Xml.Linq;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Deployment
 {
@@ -47,24 +48,33 @@ namespace Kudu.Core.Deployment
             };
         }
 
-        public static DeploymentStatusFile Open(string id, IEnvironment environment, IOperationLock statusLock)
+        public static DeploymentStatusFile Open(string id, IEnvironment environment, IAnalytics analytics, IOperationLock statusLock)
         {
             return statusLock.LockOperation(() =>
             {
                 string path = Path.Combine(environment.DeploymentsPath, id, StatusFile);
-                XDocument document = null;
 
-                if (!FileSystemHelpers.FileExists(path))
+                try
                 {
+                    XDocument document = null;
+                    using (var stream = FileSystemHelpers.OpenRead(path))
+                    {
+                        document = XDocument.Load(stream);
+                    }
+
+                    return new DeploymentStatusFile(id, environment, statusLock, document);
+                }
+                catch (Exception ex)
+                {
+                    // in the scenario where w3wp is abruptly terminated while xml is being written,
+                    // we may end up with corrupted xml.  we will handle the error and remove the problematic directory.
+                    analytics.UnexpectedException(ex);
+
+                    FileSystemHelpers.DeleteDirectorySafe(Path.GetDirectoryName(path), ignoreErrors: true);
+
+                    // it is ok to return null as callers already handle null.
                     return null;
                 }
-
-                using (var stream = FileSystemHelpers.OpenRead(path))
-                {
-                    document = XDocument.Load(stream);
-                }
-
-                return new DeploymentStatusFile(id, environment, statusLock, document);
             }, DeploymentStatusManager.LockTimeout);
         }
 
@@ -145,10 +155,10 @@ namespace Kudu.Core.Deployment
 
             var document = new XDocument(new XElement("deployment",
                     new XElement("id", Id),
-                    new XElement("author", Author),
+                    new XElement("author", XmlUtility.Sanitize(Author)),
                     new XElement("deployer", Deployer),
                     new XElement("authorEmail", AuthorEmail),
-                    new XElement("message", Message),
+                    new XElement("message", XmlUtility.Sanitize(Message)),
                     new XElement("progress", Progress),
                     new XElement("status", Status),
                     new XElement("statusText", StatusText),

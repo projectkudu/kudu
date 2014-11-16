@@ -7,6 +7,15 @@ namespace Kudu.Core.Infrastructure
 {
     internal static class XmlUtility
     {
+        private static List<KeyValuePair<string, string>> EscapeXmlChars = new List<KeyValuePair<string, string>>
+        {
+            new KeyValuePair<string, string>("&", "&amp;"),
+            new KeyValuePair<string, string>("<", "&lt;"),
+            new KeyValuePair<string, string>(">", "&gt;"),
+            new KeyValuePair<string, string>("\"", "&quot;"),
+            new KeyValuePair<string, string>("'", "&apos;"),
+        };
+
         // Based on http://stackoverflow.com/questions/157646/best-way-to-encode-text-data-for-xml/732135#732135
         //          http://github.com/mkropat/.NET-Snippets/blob/master/XmlTextEncoder.cs
         public static string Sanitize(string xml)
@@ -55,6 +64,20 @@ namespace Kudu.Core.Infrastructure
                 (character >= 0xE000 && character <= 0xFFFD)    ||
                  character >= 0x10000
             );
+        }
+
+        // http://weblogs.sqlteam.com/mladenp/archive/2008/10/21/Different-ways-how-to-escape-an-XML-string-in-C.aspx
+        public static string EscapeXmlText(string value)
+        {
+            string result = value;
+            foreach (var pair in EscapeXmlChars)
+            {
+                if (result.Contains(pair.Key))
+                {
+                    result = result.Replace(pair.Key, pair.Value);
+                }
+            }
+            return result;
         }
     }
 }

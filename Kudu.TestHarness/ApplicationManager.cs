@@ -308,7 +308,7 @@ namespace Kudu.TestHarness
                 // Set to verbose level
                 appManager.SettingsManager.SetValue("trace_level", "4").Wait();
 
-                RemoteLogStreamManager mgr = appManager.CreateLogStreamManager("Git");
+                RemoteLogStreamManager mgr = appManager.CreateLogStreamManager("kudu");
                 waitHandle = new LogStreamWaitHandle(mgr.GetStream().Result);
                 task = Task.Factory.StartNew(() =>
                 {

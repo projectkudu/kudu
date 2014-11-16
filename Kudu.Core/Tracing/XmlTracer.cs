@@ -24,15 +24,6 @@ namespace Kudu.Core.Tracing
         public const int MaxXmlFiles = 200;
         public const int CleanUpIntervalSecs = 10;
 
-        private static List<KeyValuePair<string, string>> SpecialChars = new List<KeyValuePair<string, string>>
-        {
-            new KeyValuePair<string, string>("&", "&amp;"),
-            new KeyValuePair<string, string>("<", "&lt;"),
-            new KeyValuePair<string, string>(">", "&gt;"),
-            new KeyValuePair<string, string>("\"", "&quot;"),
-            new KeyValuePair<string, string>("'", "&apos;"),
-        };
-
         private const string PendingXml = "_pending.xml";
         private static long _salt = 0;
         private static DateTime _lastCleanup = DateTime.MinValue;
@@ -95,7 +86,7 @@ namespace Kudu.Core.Tracing
                 }
 
                 strb.Append(new String(' ', _infos.Count * 2));
-                strb.AppendFormat("<step title=\"{0}\" ", EncodeXml(title));
+                strb.AppendFormat("<step title=\"{0}\" ", XmlUtility.EscapeXmlText(title));
                 strb.AppendFormat("date=\"{0}\" ", DateTime.UtcNow.ToString("yyy-MM-ddTHH:mm:ss.fff"));
                 if (_infos.Count == 0)
                 {
@@ -109,7 +100,7 @@ namespace Kudu.Core.Tracing
                         continue;
                     }
 
-                    strb.AppendFormat("{0}=\"{1}\" ", attrib.Key, EncodeXml(attrib.Value));
+                    strb.AppendFormat("{0}=\"{1}\" ", attrib.Key, XmlUtility.EscapeXmlText(attrib.Value));
                 }
 
                 FileSystemHelpers.AppendAllTextToFile(_file, strb.ToString());
@@ -249,20 +240,6 @@ namespace Kudu.Core.Tracing
             return Path.Combine(_path, strb.ToString());
         }
 
-        // http://weblogs.sqlteam.com/mladenp/archive/2008/10/21/Different-ways-how-to-escape-an-XML-string-in-C.aspx
-        private static string EncodeXml(string value)
-        {
-            string result = value;
-            foreach (var pair in SpecialChars)
-            {
-                if (result.Contains(pair.Key))
-                {
-                    result = result.Replace(pair.Key, pair.Value);
-                }
-            }
-            return result;
-        }
-
         private void WriteUnexpectedException(Exception ex)
         {
             try
@@ -274,8 +251,8 @@ namespace Kudu.Core.Tracing
                     Interlocked.Increment(ref _salt) % 1000);
 
                 FileSystemHelpers.AppendAllTextToFile(
-                    Path.Combine(_path, strb.ToString()), 
-                    String.Format("<exception>{0}</exception>", EncodeXml(ex.ToString())));
+                    Path.Combine(_path, strb.ToString()),
+                    String.Format("<exception>{0}</exception>", XmlUtility.EscapeXmlText(ex.ToString())));
             }
             catch
             {

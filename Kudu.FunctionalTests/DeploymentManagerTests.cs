@@ -623,6 +623,29 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
+        public async Task PullApiTestRepoCommitTextWithSpecialChar()
+        {
+            var payload = new JObject();
+            payload["url"] = "https://github.com/KuduApps/RepoCommitTextWithSpecialChar";
+            payload["format"] = "basic";
+            string appName = "RepoCommitTextWithSpecialChar";
+
+            await ApplicationManager.RunAsync(appName, async appManager =>
+            {
+                // Fetch master branch from first repo
+                await DeployPayloadHelperAsync(appManager, client => client.PostAsJsonAsync("deploy", payload));
+
+                var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
+                Assert.Equal(1, results.Count);
+                Assert.Equal(DeployStatus.Success, results[0].Status);
+                Assert.Equal("GitHub", results[0].Deployer);
+                Assert.Equal("invalid char is ", results[0].Message);
+
+                KuduAssert.VerifyUrl(appManager.SiteUrl, "Hello World");
+            });
+        }
+
+        [Fact]
         public async Task PullApiTestSimpleFormatMultiBranchWithUpdates()
         {
             var payload = new JObject();
