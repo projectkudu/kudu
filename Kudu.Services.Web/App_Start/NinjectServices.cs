@@ -581,7 +581,7 @@ namespace Kudu.Services.Web.App_Start
 
             attribs.Add("lastrequesttime", TraceModule.LastRequestTime.ToString());
 
-            tracer.Trace("Process Shutdown", attribs);
+            tracer.Trace(XmlTracer.ProcessShutdownTrace, attribs);
         }
 
         private static ILogger GetLogger(IEnvironment environment, IKernel kernel)

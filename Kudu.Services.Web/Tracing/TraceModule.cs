@@ -93,7 +93,7 @@ namespace Kudu.Services.Web.Tracing
                 }
             }
 
-            httpContext.Items[_stepKey] = tracer.Step("Incoming Request", attribs);
+            httpContext.Items[_stepKey] = tracer.Step(XmlTracer.IncomingRequestTrace, attribs);
         }
 
         private static void OnEndRequest(object sender, EventArgs e)
@@ -131,7 +131,7 @@ namespace Kudu.Services.Web.Tracing
                 }
             }
 
-            tracer.Trace("Outgoing response", attribs);
+            tracer.Trace(XmlTracer.OutgoingResponseTrace, attribs);
 
             var requestStep = (IDisposable)httpContext.Items[_stepKey];
 
@@ -197,7 +197,7 @@ namespace Kudu.Services.Web.Tracing
                         }
                     }
 
-                    tracer.Trace("Startup Request", attribs);
+                    tracer.Trace(XmlTracer.StartupRequestTrace, attribs);
                 }
             }
 

@@ -22,7 +22,7 @@ namespace Kudu.Core.Test.Tracing
         public void TracerMaxXmlFilesTest()
         {
             // Mock
-            var path = @"x:\git\trace";
+            var path = @"x:\kudu\trace";
             var tracer = new XmlTracer(path, TraceLevel.Verbose);
             FileSystemHelpers.Instance = GetMockFileSystem();
 
@@ -56,7 +56,7 @@ namespace Kudu.Core.Test.Tracing
         public void TracerRequestsTest(TraceLevel traceLevel, RequestInfo[] requests)
         {
             // Mock
-            var path = @"x:\git\trace";
+            var path = @"x:\kudu\trace";
             var tracer = new XmlTracer(path, traceLevel);
             FileSystemHelpers.Instance = GetMockFileSystem();
 

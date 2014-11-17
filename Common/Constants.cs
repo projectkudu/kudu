@@ -21,7 +21,7 @@ namespace Kudu
         public const string SiteFolder = @"site";
         public const string LogFilesPath = @"LogFiles";
         public const string ApplicationLogFilesDirectory = "Application";
-        public const string TracePath = LogFilesPath + @"\Git\trace";
+        public const string TracePath = LogFilesPath + @"\kudu\trace";
         public const string SiteExtensionLogsDirectory = "siteExtLogs";
         public const string DeploySettingsPath = "settings.xml";
         public const string ActiveDeploymentFile = "active";
@@ -39,7 +39,7 @@ namespace Kudu
         public const string DummyRazorExtension = ".kudu777";
 
         // Kudu trace text file related
-        public const string DeploymentTracePath = LogFilesPath + @"\Git\deployment";
+        public const string DeploymentTracePath = LogFilesPath + @"\kudu\deployment";
 
         public const string TraceFileFormat = "{0}-{1}.txt";
         public const string TraceFileEnvKey = "KUDU_TRACE_FILE";

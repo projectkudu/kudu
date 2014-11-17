@@ -100,7 +100,7 @@ namespace Kudu.Console
                                                           GetLogger(env, level, logger),
                                                           hooksManager);
 
-            var step = tracer.Step("Executing external process", new Dictionary<string, string>
+            var step = tracer.Step(XmlTracer.ExecutingExternalProcessTrace, new Dictionary<string, string>
             {
                 { "type", "process" },
                 { "path", "kudu.exe" },

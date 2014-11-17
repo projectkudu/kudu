@@ -11,8 +11,16 @@ using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Tracing
 {
+    // This writes traces for each request.  Each request will be traced in a different file.
+    // The format is XML.  There is a MaxXmlFiles limit to keep the most recent traces.
     public class XmlTracer : ITracer
     {
+        public const string IncomingRequestTrace = "Incoming Request";
+        public const string OutgoingResponseTrace = "Outgoing response";
+        public const string StartupRequestTrace = "Startup Request";
+        public const string ProcessShutdownTrace = "Process Shutdown";
+        public const string ExecutingExternalProcessTrace = "Executing external process";
+        
         public const int MaxXmlFiles = 200;
         public const int CleanUpIntervalSecs = 10;
 
@@ -138,7 +146,7 @@ namespace Kudu.Core.Tracing
                 _isStartElement = false;
 
                 // adjust filename with statusCode
-                if (info.Title == "Outgoing response" && _file.EndsWith(PendingXml, StringComparison.OrdinalIgnoreCase))
+                if (info.Title == XmlTracer.OutgoingResponseTrace && _file.EndsWith(PendingXml, StringComparison.OrdinalIgnoreCase))
                 {
                     var file = _file.Replace(PendingXml, String.Format("_{0}.xml", info.Attributes["statusCode"]));
                     FileSystemHelpers.MoveFile(_file, file);
@@ -200,6 +208,7 @@ namespace Kudu.Core.Tracing
         }
 
         // such as <datetime>_<instance>_<salt>_get_<url>_<statusCode>.xml
+        // sample: 2014-11-17T04-59-21_d10e51_366_GET_api-deployments_200.xml
         private string GenerateFileName(TraceInfo info)
         {
             var strb = new StringBuilder();
@@ -211,21 +220,21 @@ namespace Kudu.Core.Tracing
                 InstanceIdUtility.GetShortInstanceId(),
                 Interlocked.Increment(ref _salt) % 1000);
 
-            if (info.Title == "Incoming Request")
+            if (info.Title == XmlTracer.IncomingRequestTrace)
             {
                 var path = info.Attributes["url"].Split('?')[0].Trim('/');
                 strb.AppendFormat("_{0}_{1}", info.Attributes["method"], path.Replace('/', '-'));
             }
-            else if (info.Title == "Startup Request")
+            else if (info.Title == XmlTracer.StartupRequestTrace)
             {
                 var path = info.Attributes["url"].Split('?')[0].Trim('/');
                 strb.AppendFormat("_Startup_{0}_{1}", info.Attributes["method"], path.Replace('/', '-'));
             }
-            else if (info.Title == "Process Shutdown")
+            else if (info.Title == XmlTracer.ProcessShutdownTrace)
             {
                 strb.Append("_Shutdown");
             }
-            else if (info.Title == "Executing external process")
+            else if (info.Title == XmlTracer.ExecutingExternalProcessTrace)
             {
                 var path = info.Attributes["path"].Split('\\').Last();
                 strb.AppendFormat("_{0}", path);
@@ -259,10 +268,10 @@ namespace Kudu.Core.Tracing
             try
             {
                 var strb = new StringBuilder();
-                strb.AppendFormat("{0}_{1:000}_{2}_UnexpectedException.xml",
+                strb.AppendFormat("{0}_{1}_{2:000}_UnexpectedException.xml",
                     DateTime.UtcNow.ToString("yyyy-MM-ddTHH-mm-ss"),
-                    Interlocked.Increment(ref _salt) % 1000,
-                    InstanceIdUtility.GetShortInstanceId());
+                    InstanceIdUtility.GetShortInstanceId(),
+                    Interlocked.Increment(ref _salt) % 1000);
 
                 FileSystemHelpers.AppendAllTextToFile(
                     Path.Combine(_path, strb.ToString()), 

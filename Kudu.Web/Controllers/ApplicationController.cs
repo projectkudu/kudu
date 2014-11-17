@@ -88,20 +88,6 @@ namespace Kudu.Web.Controllers
             return HttpNotFound();
         }
 
-        public async Task<ActionResult> Trace(string slug)
-        {
-            IApplication application = _applicationService.GetApplication(slug);
-
-            if (application == null)
-            {
-                return HttpNotFound();
-            }
-
-            ICredentials credentials = _credentialProvider.GetCredentials();
-            var document = await application.DownloadTrace(credentials);
-            return View(document);
-        }
-
         [HttpPost]
         [ActionName("add-custom-site-binding")]
         public async Task<ActionResult> AddCustomSiteBinding(string slug, string siteBinding)

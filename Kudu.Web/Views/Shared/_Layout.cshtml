@@ -45,7 +45,6 @@
           <div class="nav-collapse">
             <ul class="nav">
               <li>@Html.RouteLink("Create Application", "ApplicationCreate")</li>
-              @RenderPage("_Tools.cshtml")
             </ul>
             <ul class="nav pull-right">
               <li>@Html.ActionLink("Admin", "index", "admin")</li>               
@@ -72,8 +71,6 @@
               {<text>class="active"</text> }>@Html.RouteLink("Deployments", "Deployments", new { slug = ViewBag.slug }, null)</li>
           <li @if (ViewBag.tab == "configuration")
               {<text>class="active"</text> }>@Html.RouteLink("Configuration", "Configuration", new { slug = ViewBag.slug }, null)</li>
-          <li @if (ViewBag.tab == "trace")
-              {<text>class="active"</text> }>@Html.RouteLink("Trace", "Trace", new { slug = ViewBag.slug }, null)</li>
         </ul>
     </div>
         
