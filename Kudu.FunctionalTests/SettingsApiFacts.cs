@@ -86,11 +86,9 @@ namespace Kudu.FunctionalTests
                     appManager.SettingsManager.SetValue("y", "2").Wait();
                     appManager.SettingsManager.SetValue("z", "3").Wait();
 
-                    NameValueCollection resultsLegacy = appManager.LegacySettingsManager.GetValues().Result;
                     NameValueCollection results = appManager.SettingsManager.GetValues().Result;
 
                     // Assert
-                    CheckSettings(resultsLegacy);
                     CheckSettings(results);
                 });
             }

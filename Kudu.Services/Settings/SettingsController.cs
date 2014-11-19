@@ -103,37 +103,9 @@ namespace Kudu.Services.Settings
         /// Get the list of all settings
         /// </summary>
         /// <returns></returns>
-        public HttpResponseMessage GetAll(int version = 1)
+        public HttpResponseMessage GetAll()
         {
-            /*
-            Old format looks like this:
-            [
-                {
-                    Key: "branch",
-                    Value: "master"
-                },
-                {
-                    Key: "foo",
-                    Value: "123"
-                }
-            ]
-
-            New format looks like:
-            {
-                branch: "master",
-                foo: "123"
-            }
-            */
-
-            var values = _settingsManager.GetValues();
-
-            if (version < 2)
-            {
-                var legacyValues = values.Select(pair => new Dictionary<string, string> { { "key", pair.Key }, { "value", pair.Value } });
-                return Request.CreateResponse(HttpStatusCode.OK, legacyValues);
-            }
-
-            return Request.CreateResponse(HttpStatusCode.OK, values);
+            return Request.CreateResponse(HttpStatusCode.OK, _settingsManager.GetValues());
         }
 
         /// <summary>
