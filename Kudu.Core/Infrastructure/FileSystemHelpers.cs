@@ -247,12 +247,12 @@ namespace Kudu.Core.Infrastructure
 
         public static void DeleteDirectorySafe(string path, bool ignoreErrors = true)
         {
-            DeleteFileSystemInfo(new DirectoryInfoWrapper(new DirectoryInfo(path)), ignoreErrors);
+            DeleteFileSystemInfo(Instance.DirectoryInfo.FromDirectoryName(path), ignoreErrors);
         }
 
         public static void DeleteDirectoryContentsSafe(string path, bool ignoreErrors = true)
         {
-            DeleteDirectoryContentsSafe(new DirectoryInfoWrapper(new DirectoryInfo(path)), ignoreErrors);
+            DeleteDirectoryContentsSafe(Instance.DirectoryInfo.FromDirectoryName(path), ignoreErrors);
         }
 
         private static void DeleteDirectoryContentsSafe(DirectoryInfoBase directoryInfo, bool ignoreErrors)

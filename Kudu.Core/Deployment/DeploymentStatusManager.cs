@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Abstractions;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Deployment
 {
@@ -11,13 +12,16 @@ namespace Kudu.Core.Deployment
     {
         public static readonly TimeSpan LockTimeout = TimeSpan.FromSeconds(60);
         private readonly IEnvironment _environment;
+        private readonly IAnalytics _analytics;
         private readonly IOperationLock _statusLock;
         private readonly string _activeFile;
 
         public DeploymentStatusManager(IEnvironment environment,
+                                       IAnalytics analytics,
                                        IOperationLock statusLock)
         {
             _environment = environment;
+            _analytics = analytics;
             _statusLock = statusLock;
             _activeFile = Path.Combine(environment.DeploymentsPath, Constants.ActiveDeploymentFile);
         }
@@ -29,7 +33,7 @@ namespace Kudu.Core.Deployment
 
         public IDeploymentStatusFile Open(string id)
         {
-            return DeploymentStatusFile.Open(id, _environment, _statusLock);
+            return DeploymentStatusFile.Open(id, _environment, _analytics, _statusLock);
         }
 
         public void Delete(string id)
