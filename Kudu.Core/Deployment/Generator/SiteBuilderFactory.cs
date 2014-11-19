@@ -87,7 +87,7 @@ namespace Kudu.Core.Deployment.Generator
             // figure out with some heuristic, which one to deploy.
 
             // TODO: Pick only 1 and throw if there's more than one
-            VsSolutionProject project = solution.Projects.Where(p => p.IsWap || p.IsWebSite || p.IsProjectK).FirstOrDefault();
+            VsSolutionProject project = solution.Projects.Where(p => p.IsWap || p.IsWebSite || p.IsAspNet5).FirstOrDefault();
 
             if (project == null)
             {
@@ -118,9 +118,9 @@ namespace Kudu.Core.Deployment.Generator
                                       solution.Path);
             }
 
-            if (project.IsProjectK)
+            if (project.IsAspNet5)
             {
-                return new ProjectKBuilder(_environment,
+                return new AspNet5Builder(_environment,
                                       settings,
                                       _propertyProvider,
                                       repositoryRoot,
@@ -215,6 +215,17 @@ namespace Kudu.Core.Deployment.Generator
                 throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,
                                                                   Resources.Error_ProjectDoesNotExist,
                                                                   targetPath));
+            }
+
+            // Check for ASP.NET 5 project without VS solution or project
+            string projectJson;
+            if (AspNet5Helper.TryAspNet5Project(targetPath, out projectJson))
+            {
+                return new AspNet5Builder(_environment,
+                                           perDeploymentSettings,
+                                           _propertyProvider,
+                                           repositoryRoot,
+                                           projectJson);
             }
 
             // If there's none then use the basic builder (the site is xcopy deployable)

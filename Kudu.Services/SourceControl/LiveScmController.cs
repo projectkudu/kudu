@@ -109,9 +109,9 @@ namespace Kudu.Services.SourceControl
                         FileSystemHelpers.DeleteDirectorySafe(_environment.DiagnosticsPath, ignoreErrors != 0);
                     }
 
-                    using (_tracer.Step("Deleting ProjectK approot"))
+                    using (_tracer.Step("Deleting ASP.NET 5 approot"))
                     {
-                        // Delete the approot folder used by ProjectK apps
+                        // Delete the approot folder used by ASP.NET 5 apps
                         FileSystemHelpers.DeleteDirectorySafe(Path.Combine(_environment.SiteRootPath, "approot"), ignoreErrors != 0);
                     }
 

@@ -161,9 +161,9 @@ namespace Kudu.Core.Deployment.Generator
                 var bitness = System.Environment.GetEnvironmentVariable(WellKnownEnvironmentVariables.SiteBitness);
                 if (bitness == null)
                 {
-                    return System.Environment.Is64BitProcess ? "x64" : "x86";
+                    return System.Environment.Is64BitProcess ? "amd64" : "x86";
                 }
-                return bitness.Equals(Constants.X64Bit, StringComparison.OrdinalIgnoreCase) ? "x64" : "x86";
+                return bitness.Equals(Constants.X64Bit, StringComparison.OrdinalIgnoreCase) ? "amd64" : "x86";
             }
         }
 

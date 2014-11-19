@@ -303,9 +303,15 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public void PushAndDeployProjectKWebApplication()
+        public void PushAndDeployAspNet5WithSln()
         {
-            PushAndDeployApps("ProjectKWebApplication", "master", "ASP.NET ProjectK Web Application", HttpStatusCode.OK, "Deployment successful");
+            PushAndDeployApps("AspNet5With2ProjectsAndSlnFile", "master", "Welcome from ClassLibrary", HttpStatusCode.OK, "Deployment successful");
+        }
+
+        [Fact]
+        public void PushAndDeployAspNet5NoSln()
+        {
+            PushAndDeployApps("AspNet5With2ProjectsNoSlnFile", "master", "Welcome from ClassLibrary", HttpStatusCode.OK, "Deployment successful");
         }
 
         //Common code
