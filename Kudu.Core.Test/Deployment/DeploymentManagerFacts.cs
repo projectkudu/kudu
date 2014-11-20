@@ -142,7 +142,7 @@ namespace Kudu.Core.Test.Deployment
                     Assert.Null(status);
 
                     Mock.Get(FileSystemHelpers.Instance.DirectoryInfo.FromDirectoryName(Path.Combine(deploymentPath, id)))
-                        .Verify(d => d.Delete(), Times.Once());
+                        .Verify(d => d.Delete(), content != null ? Times.Once() : Times.Never());
                 }
                 else
                 {
@@ -194,7 +194,7 @@ namespace Kudu.Core.Test.Deployment
 
                 // missing status.xml
                 string missingContent = null;
-                yield return new object[] { missingContent, true, true };
+                yield return new object[] { missingContent, true, false };
 
                 // invalid xml
                 var partialContent = "<?xml version=\"1.0\" encoding=\"utf-8\"" + @"?>

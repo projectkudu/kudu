@@ -54,6 +54,11 @@ namespace Kudu.Core.Deployment
             {
                 string path = Path.Combine(environment.DeploymentsPath, id, StatusFile);
 
+                if (!FileSystemHelpers.FileExists(path))
+                {
+                    return null;
+                }
+
                 try
                 {
                     XDocument document = null;
