@@ -5,6 +5,10 @@ using System.Threading.Tasks;
 using System.Web.Mvc;
 using Kudu.Client.Infrastructure;
 using Kudu.SiteManagement;
+using Kudu.SiteManagement.Certificates;
+using Kudu.SiteManagement.Configuration;
+using Kudu.SiteManagement.Configuration.Section;
+using Kudu.SiteManagement.Context;
 using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
 
@@ -14,18 +18,21 @@ namespace Kudu.Web.Controllers
     {
         private readonly IApplicationService _applicationService;
         private readonly KuduEnvironment _environment;
+        private readonly IKuduContext _context;
+        private readonly ICertificateSearcher _certificates;
         private readonly ICredentialProvider _credentialProvider;
-        private readonly ISettingsResolver _settingsResolver;
 
         public ApplicationController(IApplicationService applicationService,
                                      ICredentialProvider credentialProvider,
                                      KuduEnvironment environment,
-                                     ISettingsResolver settingsResolver)
+                                     IKuduContext context, 
+                                     ICertificateSearcher certificates)
         {
             _applicationService = applicationService;
             _credentialProvider = credentialProvider;
             _environment = environment;
-            _settingsResolver = settingsResolver;
+            _context = context;
+            _certificates = certificates;
         }
 
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
@@ -90,7 +97,7 @@ namespace Kudu.Web.Controllers
 
         [HttpPost]
         [ActionName("add-custom-site-binding")]
-        public async Task<ActionResult> AddCustomSiteBinding(string slug, string siteBinding)
+        public async Task<ActionResult> AddCustomSiteBinding(string slug, string siteSchema, string siteIp, string sitePort, string siteHost, string siteRequireSni, string siteCertificate)
         {
             IApplication application = _applicationService.GetApplication(slug);
 
@@ -99,7 +106,15 @@ namespace Kudu.Web.Controllers
                 return HttpNotFound();
             }
 
-            _applicationService.AddLiveSiteBinding(slug, siteBinding);
+            _applicationService.AddSiteBinding(slug, new KuduBinding {
+                Schema = siteSchema.Equals("https://", StringComparison.OrdinalIgnoreCase) ? UriScheme.Https : UriScheme.Http,
+                Ip = siteIp,
+                Port = int.Parse(sitePort),
+                Host = siteHost,
+                Sni = bool.Parse(siteRequireSni),
+                Certificate = siteCertificate,
+                SiteType = SiteType.Live
+            });
 
             return await GetApplicationView("settings", "Details", slug);
         }
@@ -122,7 +137,7 @@ namespace Kudu.Web.Controllers
 
         [HttpPost]
         [ActionName("add-service-site-binding")]
-        public async Task<ActionResult> AddServiceSiteBinding(string slug, string siteBinding)
+        public async Task<ActionResult> AddServiceSiteBinding(string slug, string siteSchema, string siteIp, string sitePort, string siteHost, string siteRequireSni, string siteCertificate)
         {
             IApplication application = _applicationService.GetApplication(slug);
 
@@ -131,7 +146,15 @@ namespace Kudu.Web.Controllers
                 return HttpNotFound();
             }
 
-            _applicationService.AddServiceSiteBinding(slug, siteBinding);
+            _applicationService.AddSiteBinding(slug, new KuduBinding {
+                Schema = siteSchema.Equals("https://", StringComparison.OrdinalIgnoreCase) ? UriScheme.Https : UriScheme.Http,
+                Ip = siteIp,
+                Port = int.Parse(sitePort),
+                Host = siteHost,
+                Sni = bool.Parse(siteRequireSni),
+                Certificate = siteCertificate,
+                SiteType = SiteType.Service
+            });
 
             return await GetApplicationView("settings", "Details", slug);
         }
@@ -158,7 +181,7 @@ namespace Kudu.Web.Controllers
 
             ICredentials credentials = _credentialProvider.GetCredentials();
             var repositoryInfo = await application.GetRepositoryInfo(credentials);
-            var appViewModel = new ApplicationViewModel(application, _settingsResolver);
+            var appViewModel = new ApplicationViewModel(application, _context, _certificates.FindAll());
             appViewModel.RepositoryInfo = repositoryInfo;
 
             ViewBag.slug = slug;
