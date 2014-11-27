@@ -1,9 +1,13 @@
 using System;
 using System.Configuration;
 using System.IO;
+using System.Linq;
 using System.Web;
 using Kudu.Client.Infrastructure;
 using Kudu.SiteManagement;
+using Kudu.SiteManagement.Certificates;
+using Kudu.SiteManagement.Configuration;
+using Kudu.SiteManagement.Context;
 using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
 using Ninject;
@@ -61,29 +65,22 @@ namespace Kudu.Web.App_Start
 
         private static void SetupKuduServices(IKernel kernel)
         {
-            string root = HttpRuntime.AppDomainAppPath;
-            string serviceSitePath = ConfigurationManager.AppSettings["serviceSitePath"];
-            string sitesPath = ConfigurationManager.AppSettings["sitesPath"];
-            string sitesBaseUrl = ConfigurationManager.AppSettings["urlBaseValue"];
-            string serviceSitesBaseUrl = ConfigurationManager.AppSettings["serviceUrlBaseValue"];
-            string customHostNames = ConfigurationManager.AppSettings["enableCustomHostNames"];
-
-            serviceSitePath = Path.Combine(root, serviceSitePath);
-            sitesPath = Path.Combine(root, sitesPath);
-
-            var pathResolver = new DefaultPathResolver(serviceSitePath, sitesPath);
-            var settingsResolver = new DefaultSettingsResolver(sitesBaseUrl, serviceSitesBaseUrl, customHostNames);
-
-            kernel.Bind<IPathResolver>().ToConstant(pathResolver);
-            kernel.Bind<ISettingsResolver>().ToConstant(settingsResolver);
+            IKuduConfiguration configuration = KuduConfiguration.Load(HttpRuntime.AppDomainAppPath);
+            kernel.Bind<IKuduConfiguration>().ToConstant(configuration);
+            kernel.Bind<IPathResolver>().To<PathResolver>();
             kernel.Bind<ISiteManager>().To<SiteManager>().InSingletonScope();
+            kernel.Bind<ICertificateSearcher>().To<CertificateSearcher>();
+            kernel.Bind<IKuduContext>().To<KuduContext>();
+
+            //TODO: Instantialte from container instead of factory.
             kernel.Bind<KuduEnvironment>().ToMethod(_ => new KuduEnvironment
             {
                 RunningAgainstLocalKuduService = true,
                 IsAdmin = IdentityHelper.IsAnAdministrator(),
-                ServiceSitePath = pathResolver.ServiceSitePath,
-                SitesPath = pathResolver.SitesPath
+                ServiceSitePath = configuration.ServiceSitePath,
+                SitesPath = configuration.ApplicationsPath
             });
+
 
             // TODO: Integrate with membership system
             kernel.Bind<ICredentialProvider>().ToConstant(new BasicAuthCredentialProvider("admin", "kudu"));
@@ -91,7 +88,7 @@ namespace Kudu.Web.App_Start
             kernel.Bind<ISettingsService>().To<SettingsService>();
 
             // Sql CE setup
-            Directory.CreateDirectory(Path.Combine(root, "App_Data"));
+            Directory.CreateDirectory(Path.Combine(configuration.RootPath, "App_Data"));
         }
     }
 }

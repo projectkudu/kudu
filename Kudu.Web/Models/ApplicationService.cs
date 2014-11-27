@@ -58,17 +58,6 @@ namespace Kudu.Web.Models
             };
         }
 
-        public bool AddLiveSiteBinding(string name, string siteBinding)
-        {
-            var application = GetApplication(name);
-            if (application == null)
-            {
-                return false;
-            }
-
-            return _siteManager.AddSiteBinding(name, siteBinding, SiteType.Live);
-        }
-
         public bool RemoveLiveSiteBinding(string name, string siteBinding)
         {
             var application = GetApplication(name);
@@ -78,17 +67,6 @@ namespace Kudu.Web.Models
             }
 
             return _siteManager.RemoveSiteBinding(name, siteBinding, SiteType.Live);
-        }
-
-        public bool AddServiceSiteBinding(string name, string siteBinding)
-        {
-            var application = GetApplication(name);
-            if (application == null)
-            {
-                return false;
-            }
-
-            return _siteManager.AddSiteBinding(name, siteBinding, SiteType.Service);
         }
 
         public bool RemoveServiceSiteBinding(string name, string siteBinding)
@@ -101,6 +79,17 @@ namespace Kudu.Web.Models
 
             return _siteManager.RemoveSiteBinding(name, siteBinding, SiteType.Service);
         }
+
+        public bool AddSiteBinding(string name, KuduBinding binding)
+        {
+            var application = GetApplication(name);
+            if (application == null)
+            {
+                return false;
+            }
+
+            return _siteManager.AddSiteBinding(name, binding);
+        }
     }
 
     public class SiteExistsException : InvalidOperationException
@@ -110,4 +99,8 @@ namespace Kudu.Web.Models
     public class SiteNotFoundException : InvalidOperationException
     {
     }
+
+
+
+    
 }
