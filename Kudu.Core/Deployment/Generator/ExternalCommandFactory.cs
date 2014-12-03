@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Infrastructure;
 
@@ -93,7 +94,13 @@ namespace Kudu.Core.Deployment.Generator
             };
 
             toolsPaths.AddRange(PathUtility.ResolveNodeNpmPaths());
-            
+            toolsPaths.AddRange(new[]
+            {
+                PathUtility.ResolveBowerPath(),
+                PathUtility.ResolveGruntPath(),
+                PathUtility.ResolveGulpPath()
+            }.Where(p => !String.IsNullOrEmpty(p)).Select(Path.GetDirectoryName));
+
             toolsPaths.Add(PathUtility.ResolveNpmGlobalPrefix());
 
             exe.PrependToPath(toolsPaths);
