@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
+using System.Linq;
 using SystemEnvironment = System.Environment;
 
 namespace Kudu.Core.Infrastructure
@@ -136,7 +138,7 @@ namespace Kudu.Core.Infrastructure
 
         private static string ResolveNodeVersion(out bool fromAppSetting)
         {
-            string appSettingNodeVersion = SystemEnvironment.GetEnvironmentVariable("APPSETTING_WEBSITE_NODE_DEFAULT_VERSION");
+            string appSettingNodeVersion = ConfigurationManager.AppSettings["APPSETTING_WEBSITE_NODE_DEFAULT_VERSION"];
 
             if (IsNodeVersionInstalled(appSettingNodeVersion))
             {
@@ -217,6 +219,48 @@ namespace Kudu.Core.Infrastructure
             }
 
             return String.Equals(CleanPath(path1), CleanPath(path2), StringComparison.OrdinalIgnoreCase);
+        }
+
+        internal static string ResolveBowerPath()
+        {
+            return ResolveNpmToolsPath("bower");
+        }
+
+        internal static string ResolveGulpPath()
+        {
+            return ResolveNpmToolsPath("gulp");
+        }
+
+        internal static string ResolveGruntPath()
+        {
+            return ResolveNpmToolsPath("grunt");
+        }
+
+        private static string ResolveNpmToolsPath(string toolName)
+        {
+            // If there is a TOOLNAME_PATH specified, then use that.
+            // Otherwise use the pre-installed one
+            var toolPath = ConfigurationManager.AppSettings[String.Format("APPSETTING_{0}_PATH", toolName)];
+            if (String.IsNullOrEmpty(toolPath))
+            {
+                var programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
+                var toolRootPath = Path.Combine(programFiles, "npmTools", toolName);
+                if (Directory.Exists(toolRootPath))
+                {
+                    // If there is a TOOLNAME_VERSION defined, use that.
+                    // Otherwise use the latest one.
+                    var userVersion =
+                        ConfigurationManager.AppSettings[String.Format("APPSETTING_{0}_VERSION", toolName)];
+
+                    toolPath = String.IsNullOrEmpty(userVersion)
+                        ? Directory.GetDirectories(toolRootPath).OrderByDescending(p => p, StringComparer.OrdinalIgnoreCase).FirstOrDefault()
+                        : Path.Combine(toolRootPath, userVersion);
+                }
+            }
+
+            return String.IsNullOrEmpty(toolPath)
+                ? String.Empty
+                : Path.Combine(toolPath, String.Format("{0}.cmd", toolName));
         }
     }
 }
