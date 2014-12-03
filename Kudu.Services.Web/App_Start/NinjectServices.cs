@@ -299,6 +299,7 @@ namespace Kudu.Services.Web.App_Start
                                            .InRequestScope();
 
             MigrateSite(environment, noContextDeploymentsSettingsManager);
+            RemoveOldTracePath(environment);
 
             // Temporary fix for https://github.com/npm/npm/issues/5905
             EnsureNpmGlobalDirectory();
@@ -486,6 +487,12 @@ namespace Kudu.Services.Web.App_Start
             // this is to work arounf the issue in TraceModule where we see double OnBeginRequest call
             // for the same request (404 and then 200 statusCode).
             routes.MapHttpRoute("error-404", "{*path}", new { controller = "Error404", action = "Handle" });
+        }
+
+        // remove old LogFiles/Git trace
+        private static void RemoveOldTracePath(IEnvironment environment)
+        {
+            FileSystemHelpers.DeleteDirectorySafe(Path.Combine(environment.LogFilesPath, "Git"), ignoreErrors: true);
         }
 
         // Perform migration tasks to deal with legacy sites that had different file layout

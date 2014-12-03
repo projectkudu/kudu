@@ -188,9 +188,6 @@ namespace Kudu.Core.Tracing
                 {
                     FileSystemHelpers.DeleteFileSafe(file);
                 }
-
-                // delete old style trace.xml
-                FileSystemHelpers.DeleteFileSafe(Path.Combine(_path, "trace.xml"));
             }
             catch
             {
