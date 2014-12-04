@@ -9,6 +9,7 @@ using Kudu.Client.Infrastructure;
 using Kudu.Core.Deployment;
 using Kudu.Core.SourceControl;
 using Kudu.SiteManagement;
+using Kudu.SiteManagement.Configuration;
 using Kudu.Web.Infrastructure;
 using Kudu.Web.Models;
 
@@ -18,15 +19,15 @@ namespace Kudu.Web.Controllers
     {
         private readonly IApplicationService _applicationService;
         private readonly ICredentialProvider _credentialProvider;
-        private readonly ISettingsResolver _settingsResolver;
+        private readonly IKuduConfiguration _configuration;
 
         public DeploymentsController(IApplicationService applicationService,
                                      ICredentialProvider credentialProvider,
-                                     ISettingsResolver settingsResolver)
+                                     IKuduConfiguration configuration)
         {
             _applicationService = applicationService;
             _credentialProvider = credentialProvider;
-            _settingsResolver = settingsResolver;
+            _configuration = configuration;
         }
 
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
@@ -53,7 +54,7 @@ namespace Kudu.Web.Controllers
 
             await Task.WhenAll(deployResults, repositoryInfo);
 
-            var appViewModel = new ApplicationViewModel(application, _settingsResolver)
+            var appViewModel = new ApplicationViewModel(application, _configuration)
             {
                 RepositoryInfo = repositoryInfo.Result,
                 Deployments = deployResults.Result.ToList()

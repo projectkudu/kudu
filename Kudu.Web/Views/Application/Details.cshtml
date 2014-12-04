@@ -35,11 +35,14 @@
     <div class="well">
         <div class="control-group">
             <label class="control-label"><strong>Custom Application Site Bindings</strong></label>
+
             <p class="help-block">
-            Specify additional site bindings for the service site.  Can be of the format 'hostname', 'hostname:port', 'example.org' or 'example.org:port'.
-        </p>
+                Specify additional site bindings for the service site.
+                Can be of the format 'hostname', 'hostname:port', 'example.org' or 'example.org:port'.
+            </p>
             <p class="help-block">
-                Protocol is limited to http only and all bindings entered will be set to http.
+                Http will be used as the default protocol, start your binding with 'https://' to use https instead,
+                e.g: 'https://example.org' or 'https://example.org:port'
             </p>
 
             @if (Model.SiteUrls.Any())
@@ -79,7 +82,8 @@
             {
                 <label class="control-label"><strong>Add application site binding</strong></label>           
                 @Html.ValidationSummary()
-                <span>http://</span> @Html.TextBox("siteBinding", "", new { placeholder = "example.org" })
+                //@Html.DropDownList("siteProtocol", "http://|https://".Split('|').Select(str => new SelectListItem{Text = str, Value = str, Selected = str=="http://"}))
+                @Html.TextBox("siteBinding", "", new { placeholder = "example.org", style = "width: 50%" })
                 <button id="add_sitebinding" type="submit" class="btn btn-primary">Add binding</button>
             }
 
@@ -91,10 +95,12 @@
             <label class="control-label"><strong>Custom Service Site Bindings</strong></label>
             
             <p class="help-block">
-            Specify additional site bindings for the service site.  Can be of the format 'hostname', 'hostname:port', 'example.org' or 'example.org:port'.
-        </p>
+                Specify additional site bindings for the service site.
+                Can be of the format 'hostname', 'hostname:port', 'example.org' or 'example.org:port'.
+            </p>
             <p class="help-block">
-            Protocol is limited to http only and all bindings entered will be set to http.
+                Http will be used as the default protocol, start your binding with 'https://' to use https instead, 
+                e.g: 'https://example.org' or 'https://example.org:port'
             </p>
 
             @if (Model.ServiceUrls.Any())
@@ -134,7 +140,8 @@
             {
                 <label class="control-label"><strong>Add service site binding</strong></label>           
                 @Html.ValidationSummary()
-                <span>http://</span> @Html.TextBox("siteBinding", "", new { placeholder = "example.org" })
+                //@Html.DropDownList("siteProtocol", "http://|https://".Split('|').Select(str => new SelectListItem{Text = str, Value = str, Selected = str=="http://"}), new { style="width: 120px;"})
+                @Html.TextBox("siteBinding", "", new { placeholder = "example.org", style = "width: 50%" })
                 <button id="add_sitebinding" type="submit" class="btn btn-primary">Add binding</button>
             }
 
