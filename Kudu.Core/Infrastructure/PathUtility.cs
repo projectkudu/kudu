@@ -244,7 +244,7 @@ namespace Kudu.Core.Infrastructure
             if (String.IsNullOrEmpty(toolPath))
             {
                 var programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
-                var toolRootPath = Path.Combine(programFiles, "npmTools", toolName);
+                var toolRootPath = Path.Combine(programFiles, toolName);
                 if (Directory.Exists(toolRootPath))
                 {
                     // If there is a TOOLNAME_VERSION defined, use that.
