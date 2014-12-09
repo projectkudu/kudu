@@ -150,6 +150,12 @@ function LoadConsoleV2() {
     var connection = $.connection(appRoot + 'api/commandstream', "shell=" + getShell(), true);
     window.$KuduExecConsole.data('connection', connection);
 
+    connection.error(function (error) {
+        if (error && error.context.status === 403) {
+            $('#403-error-modal').modal();
+        }
+    });
+
     connection.start({
         waitForPageLoad: true,
         transport: "auto"

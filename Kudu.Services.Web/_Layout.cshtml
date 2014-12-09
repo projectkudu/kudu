@@ -15,6 +15,11 @@
     </style>
     <script type="text/javascript">
         appRoot = "@System.Web.VirtualPathUtility.ToAbsolute("~/")";
+        $(document).ajaxError(function (event, jqxhr, settings, thrownError) {
+            if (jqxhr.status === 403) {
+                $('#403-error-modal').modal();
+            }
+        });
     </script>
 
 </head>
@@ -66,8 +71,8 @@
                                 BitConverter.ToString(hash).ToLowerInvariant().Replace("-", String.Empty));
                             <ul class="nav navbar-nav navbar-right">
                                 <li class="dropdown">
-                                        <img src="@imageUrl" style="height: 50px; padding-top: 1px"/>
-                                        <a href="#" data-toggle="dropdown" style="display: inline">@displayName</a>
+                                    <img src="@imageUrl" style="height: 50px; padding-top: 1px"/>
+                                    <a href="#" data-toggle="dropdown" style="display: inline">@displayName</a>
                                     <ul class="dropdown-menu">
                                         <li><a href="/logout">Logout</a></li>
                                     </ul>
@@ -79,6 +84,24 @@
             </div>
         </div>
     </nav>
+    
+    <!-- 403 error modal -->
+    <div class="modal fade" id="403-error-modal" tabindex="-1" role="dialog" aria-labelledby="errorTitle" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title" id="errorTitle">Session expired</h4>
+                </div>
+                <div class="modal-body">
+                    Your session has expired. Please refresh your browser.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     @RenderBody()
 </body>

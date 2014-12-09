@@ -562,6 +562,9 @@ $.connection.hub.start().done(function () {
     }
 
     function showError(error) {
+        if (error.status === 403) {
+            $('#403-error-modal').modal();
+        }
         viewModel.processing(false);
         viewModel.errorText(JSON.parse(error.responseText).Message);
     }
