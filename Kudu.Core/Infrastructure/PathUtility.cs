@@ -138,7 +138,9 @@ namespace Kudu.Core.Infrastructure
 
         private static string ResolveNodeVersion(out bool fromAppSetting)
         {
-            string appSettingNodeVersion = ConfigurationManager.AppSettings["APPSETTING_WEBSITE_NODE_DEFAULT_VERSION"];
+            // We can't use ConfigurationManager.AppSettings[] here because during git push this runs in kudu.exe context
+            // which doesn't have access to Azure ConfigurationManager.AppSettings[] of the site
+            string appSettingNodeVersion = SystemEnvironment.GetEnvironmentVariable("APPSETTING_WEBSITE_NODE_DEFAULT_VERSION");
 
             if (IsNodeVersionInstalled(appSettingNodeVersion))
             {
@@ -240,7 +242,7 @@ namespace Kudu.Core.Infrastructure
         {
             // If there is a TOOLNAME_PATH specified, then use that.
             // Otherwise use the pre-installed one
-            var toolPath = ConfigurationManager.AppSettings[String.Format("APPSETTING_{0}_PATH", toolName)];
+            var toolPath = SystemEnvironment.GetEnvironmentVariable(String.Format("APPSETTING_{0}_PATH", toolName));
             if (String.IsNullOrEmpty(toolPath))
             {
                 var programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
@@ -249,8 +251,7 @@ namespace Kudu.Core.Infrastructure
                 {
                     // If there is a TOOLNAME_VERSION defined, use that.
                     // Otherwise use the latest one.
-                    var userVersion =
-                        ConfigurationManager.AppSettings[String.Format("APPSETTING_{0}_VERSION", toolName)];
+                    var userVersion = SystemEnvironment.GetEnvironmentVariable(String.Format("APPSETTING_{0}_VERSION", toolName));
 
                     toolPath = String.IsNullOrEmpty(userVersion)
                         ? Directory.GetDirectories(toolRootPath).OrderByDescending(p => p, StringComparer.OrdinalIgnoreCase).FirstOrDefault()
