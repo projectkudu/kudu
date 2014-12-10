@@ -73,6 +73,11 @@ namespace Kudu.Services.SiteExtensions
                 // This can happen for example if a bad feed URL is passed
                 throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Site extension download failure", e));
             }
+            catch (Exception e)
+            {
+                // This can happen for example if the exception package is corrupted
+                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Site extension install exception. The package might be invalid.", e));
+            }
 
             if (extension == null)
             {
