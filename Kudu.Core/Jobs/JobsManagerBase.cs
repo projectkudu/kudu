@@ -4,12 +4,12 @@ using System.IO;
 using System.IO.Abstractions;
 using System.IO.Compression;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Hosting;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
-using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Newtonsoft.Json;
@@ -124,23 +124,30 @@ namespace Kudu.Core.Jobs
             return BuildJob(jobDirectory, nullJobOnError: false);
         }
 
-        public async Task DeleteJobAsync(string jobName)
+        public void DeleteJob(string jobName)
         {
-            var jobDirectory = GetJobDirectory(jobName);
-            if (!jobDirectory.Exists)
+            try
             {
-                return;
+                var jobDirectory = GetJobDirectory(jobName);
+                if (!jobDirectory.Exists)
+                {
+                    return;
+                }
+
+                var jobsSpecificDataPath = GetSpecificJobDataPath(jobName);
+
+                // Remove both job binaries and data directories
+                OperationManager.Attempt(() =>
+                {
+                    FileSystemHelpers.DeleteDirectorySafe(jobDirectory.FullName, ignoreErrors: false);
+                    FileSystemHelpers.DeleteDirectorySafe(jobsSpecificDataPath, ignoreErrors: false);
+                }, retries: 3, delayBeforeRetry: 2000);
             }
-
-            var jobsSpecificDataPath = GetSpecificJobDataPath(jobName);
-
-            // Remove both job binaries and data directories
-            await OperationManager.AttemptAsync(() =>
+            catch (Exception ex)
             {
-                FileSystemHelpers.DeleteDirectorySafe(jobDirectory.FullName, ignoreErrors: false);
-                FileSystemHelpers.DeleteDirectorySafe(jobsSpecificDataPath, ignoreErrors: false);
-                return Task.FromResult(true);
-            }, retries: 3, delayBeforeRetry: 2000);
+                // Ignore failure to remove job here
+                TraceFactory.GetTracer().TraceError(ex.ToString());
+            }
         }
 
         public void CleanupDeletedJobs()
@@ -176,13 +183,7 @@ namespace Kudu.Core.Jobs
         {
             var jobs = new List<TJob>();
 
-            if (!FileSystemHelpers.DirectoryExists(JobsBinariesPath))
-            {
-                return Enumerable.Empty<TJob>();
-            }
-
-            DirectoryInfoBase jobsDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(JobsBinariesPath);
-            DirectoryInfoBase[] jobDirectories = jobsDirectory.GetDirectories("*", SearchOption.TopDirectoryOnly);
+            IEnumerable<DirectoryInfoBase> jobDirectories = ListJobDirectories(JobsBinariesPath);
             foreach (DirectoryInfoBase jobDirectory in jobDirectories)
             {
                 TJob job = BuildJob(jobDirectory);
@@ -262,6 +263,46 @@ namespace Kudu.Core.Jobs
                     Error = ex.Message,
                 };
             }
+        }
+
+        /// <summary>
+        /// Deploy (external) jobs from {sourcePath} by moving them over to the main jobs directory (JobsBinariesPath)
+        /// These external jobs usually come from site extensions
+        /// </summary>
+        public void SyncExternalJobs(string sourcePath, string sourceName)
+        {
+            sourcePath = Path.Combine(sourcePath, "App_Data\\jobs", _jobsTypePath);
+
+            CleanupExternalJobs(sourceName);
+
+            // Move jobs from source path
+            IEnumerable<DirectoryInfoBase> sourceJobDirectories = ListJobDirectories(sourcePath);
+            foreach (DirectoryInfoBase sourceJobDirectory in sourceJobDirectories)
+            {
+                // Check whether job was already copied by checking existence of file job.copied
+                string jobPath = sourceJobDirectory.FullName;
+                MoveExternalJob(jobPath, sourceName);
+            }
+        }
+
+        public void CleanupExternalJobs(string sourceName)
+        {
+            // Find all jobs for the source name provided
+            // Job name will look like: {source name}({job name}) for example: "daas(sitepinger)"
+            IEnumerable<DirectoryInfoBase> jobDirectories = ListJobDirectories(JobsBinariesPath, sourceName + "(*)");
+            foreach (DirectoryInfoBase jobDirectory in jobDirectories)
+            {
+                DeleteJob(jobDirectory.Name);
+            }
+        }
+
+        private void MoveExternalJob(string sourcePath, string sourceName)
+        {
+            string jobName = "{0}({1})".FormatInvariant(sourceName, Path.GetFileName(sourcePath));
+            string toPath = Path.Combine(JobsBinariesPath, jobName);
+            FileSystemHelpers.DeleteDirectorySafe(toPath);
+            FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(toPath));
+            Directory.Move(sourcePath, toPath);
         }
 
         public JobSettings GetJobSettings(string jobName)
@@ -372,6 +413,17 @@ namespace Kudu.Core.Jobs
                 _lastKnownAppBaseUrlPrefix = HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority);
                 return _lastKnownAppBaseUrlPrefix;
             }
+        }
+
+        private static IEnumerable<DirectoryInfoBase> ListJobDirectories(string path, string searchPattern = "*")
+        {
+            if (!FileSystemHelpers.DirectoryExists(path))
+            {
+                return Enumerable.Empty<DirectoryInfoBase>();
+            }
+
+            DirectoryInfoBase jobsDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName(path);
+            return jobsDirectory.GetDirectories(searchPattern, SearchOption.TopDirectoryOnly);
         }
 
         private DirectoryInfoBase GetJobDirectory(string jobName)

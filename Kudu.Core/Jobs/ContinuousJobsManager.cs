@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
-using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
@@ -327,9 +326,9 @@ namespace Kudu.Core.Jobs
             {
                 path = path.Substring(JobsBinariesPath.Length).TrimStart(Path.DirectorySeparatorChar);
                 int firstSeparator = path.IndexOf(Path.DirectorySeparatorChar);
-                if (firstSeparator > 0)
+                string jobName = firstSeparator >= 0 ? path.Substring(0, firstSeparator) : path;
+                if (!String.IsNullOrWhiteSpace(jobName))
                 {
-                    string jobName = path.Substring(0, firstSeparator);
                     MarkJobUpdated(jobName);
                 }
             }

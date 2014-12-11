@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Web;
 using System.Xml;
+using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.SiteExtensions;
 using Kudu.Contracts.Tracing;
@@ -14,7 +15,6 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.Tracing;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using NuGet;
 using NullLogger = Kudu.Core.Deployment.NullLogger;
 
@@ -33,6 +33,9 @@ namespace Kudu.Core.SiteExtensions
 
         private readonly string _rootPath;
         private readonly string _baseUrl;
+        private readonly IContinuousJobsManager _continuousJobManager;
+        private readonly ITriggeredJobsManager _triggeredJobManager;
+
         private static readonly Dictionary<string, SiteExtensionInfo> _preInstalledExtensionDictionary
             = new Dictionary<string, SiteExtensionInfo>(StringComparer.OrdinalIgnoreCase)
         {
@@ -89,11 +92,13 @@ namespace Kudu.Core.SiteExtensions
         private const string _installScriptName = "install.cmd";
         private const string _uninstallScriptName = "uninstall.cmd";
 
-        public SiteExtensionManager(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, HttpContextBase context)
+        public SiteExtensionManager(IContinuousJobsManager continuousJobManager, ITriggeredJobsManager triggeredJobManager, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, HttpContextBase context)
         {
             _rootPath = Path.Combine(environment.RootPath, "SiteExtensions");
             _baseUrl = context.Request.Url == null ? String.Empty : context.Request.Url.GetLeftPart(UriPartial.Authority).TrimEnd('/');
             _localRepository = new LocalPackageRepository(_rootPath);
+            _continuousJobManager = continuousJobManager;
+            _triggeredJobManager = triggeredJobManager;
             _environment = environment;
             _settings = settings;
             _traceFactory = traceFactory;
@@ -257,6 +262,8 @@ namespace Kudu.Core.SiteExtensions
                 // If there is no xdt file, generate default.
                 GenerateApplicationHostXdt(installationDirectory, '/' + package.Id, isPreInstalled: false);
 
+                OperationManager.Attempt(() => DeploySiteExtensionJobs(package.Id));
+
                 var externalCommandFactory = new ExternalCommandFactory(_environment, _settings, installationDirectory);
                 string installScript = Path.Combine(installationDirectory, _installScriptName);
                 if (FileSystemHelpers.FileExists(installScript))
@@ -364,6 +371,8 @@ namespace Kudu.Core.SiteExtensions
                 });
             }
 
+            OperationManager.Attempt(() => CleanupSiteExtensionJobs(id));
+
             OperationManager.Attempt(() => FileSystemHelpers.DeleteFileSafe(GetNuGetPackageFile(info.Id, info.Version)));
 
             OperationManager.Attempt(() => FileSystemHelpers.DeleteDirectorySafe(installationDirectory));
@@ -373,8 +382,8 @@ namespace Kudu.Core.SiteExtensions
 
         private IPackageRepository GetRemoteRepository(string feedUrl)
         {
-            return feedUrl == null ? 
-                new DataServicePackageRepository(new Uri(_settings.GetSiteExtensionRemoteUrl())) : 
+            return feedUrl == null ?
+                new DataServicePackageRepository(new Uri(_settings.GetSiteExtensionRemoteUrl())) :
                 new DataServicePackageRepository(new Uri(feedUrl));
         }
 
@@ -420,12 +429,12 @@ namespace Kudu.Core.SiteExtensions
 
             if (ExtensionRequiresApplicationHost(info))
             {
-                info.ExtensionUrl = FileSystemHelpers.FileExists(Path.Combine(localPath, _applicationHostFile)) 
+                info.ExtensionUrl = FileSystemHelpers.FileExists(Path.Combine(localPath, _applicationHostFile))
                     ? GetFullUrl(GetUrlFromApplicationHost(info)) : null;
             }
             else if (String.Equals(info.Id, "Monaco", StringComparison.OrdinalIgnoreCase))
             {
-                // Monaco does not need ApplicationHost only when it is enabled through app setting 
+                // Monaco does not need ApplicationHost only when it is enabled through app setting
                 info.ExtensionUrl = GetFullUrl(info.ExtensionUrl);
             }
             else
@@ -452,6 +461,19 @@ namespace Kudu.Core.SiteExtensions
             {
                 return null;
             }
+        }
+
+        private void DeploySiteExtensionJobs(string siteExtensionName)
+        {
+            string siteExtensionPath = Path.Combine(_rootPath, siteExtensionName);
+            _continuousJobManager.SyncExternalJobs(siteExtensionPath, siteExtensionName);
+            _triggeredJobManager.SyncExternalJobs(siteExtensionPath, siteExtensionName);
+        }
+
+        private void CleanupSiteExtensionJobs(string siteExtensionName)
+        {
+            _continuousJobManager.CleanupExternalJobs(siteExtensionName);
+            _triggeredJobManager.CleanupExternalJobs(siteExtensionName);
         }
 
         private SiteExtensionInfo ConvertRemotePackageToSiteExtensionInfo(IPackage package, string feedUrl)

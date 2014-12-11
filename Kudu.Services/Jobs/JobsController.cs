@@ -244,7 +244,7 @@ namespace Kudu.Services.Jobs
 
         private HttpResponseMessage RemoveJob<TJob>(string jobName, IJobsManager<TJob> jobsManager) where TJob : JobBase, new()
         {
-            jobsManager.DeleteJobAsync(jobName);
+            jobsManager.DeleteJob(jobName);
             return Request.CreateResponse(HttpStatusCode.OK);
         }
 
@@ -303,7 +303,7 @@ namespace Kudu.Services.Jobs
             // On error, delete job (if exists)
             if (errorMessage != null)
             {
-                await jobsManager.DeleteJobAsync(jobName);
+                jobsManager.DeleteJob(jobName);
                 return CreateErrorResponse(errorStatusCode, errorMessage);
             }
 

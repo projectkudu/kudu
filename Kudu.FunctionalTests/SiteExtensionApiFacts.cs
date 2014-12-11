@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Kudu.Contracts.SiteExtensions;
+using Kudu.Core.Infrastructure;
 using Kudu.TestHarness;
 using Xunit;
 
@@ -11,7 +12,7 @@ namespace Kudu.FunctionalTests
     [TestHarnessClassCommand]
     public class SiteExtensionApiFacts
     {
-        private static readonly Dictionary<string, string> _galleryInstalledExtensions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) 
+        private static readonly Dictionary<string, string> _galleryInstalledExtensions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             {"sitereplicator", "Site"},
             {"websitelogs", "Log Browser"},
@@ -141,6 +142,52 @@ namespace Kudu.FunctionalTests
                 // list installed
                 results = (await manager.GetLocalExtensions()).ToList();
                 Assert.False(results.Exists(ext => ext.Id == expected.Id), "After deletion extension " + expected.Id + " should not exist.");
+            });
+        }
+
+        [Fact]
+        public async Task SiteExtensionShouldDeployWebJobs()
+        {
+            const string appName = "SiteExtensionShouldDeployWebJobs";
+
+            await ApplicationManager.RunAsync(appName, async appManager =>
+            {
+                var manager = appManager.SiteExtensionManager;
+
+                TestTracer.Trace("Clean site extensions");
+                var results = (await manager.GetLocalExtensions()).ToList();
+                foreach (var ext in results)
+                {
+                    await manager.UninstallExtension(ext.Id);
+                }
+
+                TestTracer.Trace("Install site extension with jobs");
+                await manager.InstallExtension("filecounterwithwebjobs", null, "https://www.myget.org/F/amitaptest/");
+
+                TestTracer.Trace("Verify jobs were deployed");
+                await OperationManager.AttemptAsync(async () =>
+                {
+                    var continuousJobs = (await appManager.JobsManager.ListContinuousJobsAsync()).ToArray();
+                    Assert.Equal(1, continuousJobs.Length);
+                    Assert.Equal("filecounterwithwebjobs(cjoba)", continuousJobs[0].Name);
+                    TestTracer.Trace("Job status - {0}", continuousJobs[0].Status);
+                    Assert.Equal("PendingRestart", continuousJobs[0].Status);
+                }, 100, 500);
+
+                var triggeredJobs = (await appManager.JobsManager.ListTriggeredJobsAsync()).ToArray();
+                Assert.Equal(2, triggeredJobs.Length);
+                Assert.Equal("filecounterwithwebjobs(tjoba)", triggeredJobs[0].Name);
+                Assert.Equal("filecounterwithwebjobs(tjobb)", triggeredJobs[1].Name);
+
+                TestTracer.Trace("Uninstall site extension with jobs");
+                await manager.UninstallExtension("filecounterwithwebjobs");
+
+                TestTracer.Trace("Verify jobs removed");
+                var continuousJobs2 = (await appManager.JobsManager.ListContinuousJobsAsync()).ToArray();
+                Assert.Equal(0, continuousJobs2.Length);
+
+                triggeredJobs = (await appManager.JobsManager.ListTriggeredJobsAsync()).ToArray();
+                Assert.Equal(0, triggeredJobs.Length);
             });
         }
     }
