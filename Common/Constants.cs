@@ -52,7 +52,7 @@ namespace Kudu
 
         public const string KreDefaultVersion = "1.0.0-beta1";
         public const string KreDefaultClr = "CLR";
-        public const string KreDefaultNugetApiUrl = "https://www.myget.org/F/aspnetmaster/api/v2";
+        public const string KreDefaultNugetApiUrl = "https://www.nuget.org/api/v2";
 
         public const string X64Bit = "AMD64";
         public const string X86Bit = "x86";
