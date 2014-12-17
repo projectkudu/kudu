@@ -17,7 +17,7 @@ namespace Kudu.Core.Infrastructure
             Path = path;
             WorkingDirectory = workingDirectory;
             EnvironmentVariables = new Dictionary<string, string>();
-            Encoding = Encoding.UTF8;
+            Encoding = Console.OutputEncoding;
             IdleTimeout = idleTimeout;
         }
 
