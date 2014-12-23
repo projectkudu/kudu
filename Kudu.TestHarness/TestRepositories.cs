@@ -20,6 +20,7 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/ConsoleWorker.git",                 "a2c2bc7"),
             new TestRepositoryInfo("https://github.com/KuduApps/CustomBuildScript.git",             "2c156bd"),
             new TestRepositoryInfo("https://github.com/KuduApps/CustomDeploymentSettingsTest.git",  "bc0ce04"),
+            new TestRepositoryInfo("https://github.com/KuduApps/CSharp6Web.git",                    "41d748f"),
             new TestRepositoryInfo("https://github.com/KuduApps/Dev11_Net45_Mvc4_WebAPI.git",       "bb9e6b4"),
             new TestRepositoryInfo("https://github.com/KuduApps/Express-Template.git",              "0878ac7"),
             new TestRepositoryInfo("https://github.com/KuduApps/fsharp-owin-sample.git",            "c29e8ae"),

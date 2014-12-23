@@ -314,6 +314,12 @@ namespace Kudu.FunctionalTests
             PushAndDeployApps("AspNet5With2ProjectsNoSlnFile", "master", "Welcome from ClassLibrary", HttpStatusCode.OK, "Deployment successful");
         }
 
+        [Fact]
+        public void PushAndDeployCSharp6Web()
+        {
+            PushAndDeployApps("CSharp6Web", "master", "ASP.NET is a free web framework", HttpStatusCode.OK, "Deployment successful");
+        }
+
         //Common code
         internal static void PushAndDeployApps(string repoCloneUrl, string defaultBranchName, string verificationText, 
                                               HttpStatusCode expectedResponseCode, string verificationLogText, 
