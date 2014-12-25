@@ -8,6 +8,7 @@ using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
+using LibGit2Sharp;
 
 namespace Kudu.Core.SourceControl.Git
 {
@@ -46,7 +47,7 @@ namespace Kudu.Core.SourceControl.Git
         {
             get
             {
-                return Resolve("HEAD");
+                return ResolveHeadPeeledTargetId();
             }
         }
 
@@ -116,27 +117,29 @@ namespace Kudu.Core.SourceControl.Git
             var tracer = _tracerFactory.GetTracer();
             using (tracer.Step("GitExeRepository.Initialize"))
             {
-                Execute(tracer, "init");
+                string gitdir = LibGit2Sharp.Repository.Init(RepositoryPath);
 
-                Execute(tracer, "config core.autocrlf true");
-
-                // This speeds up git operations like 'git checkout', especially on slow drives like in Azure
-                Execute(tracer, "config core.preloadindex true");
-
-                Execute(tracer, @"config user.name ""{0}""", _settings.GetGitUsername());
-
-                Execute(tracer, @"config user.email ""{0}""", _settings.GetGitEmail());
-
-                using (tracer.Step("Configure git server"))
+                using (var repo = new LibGit2Sharp.Repository(gitdir))
                 {
-                    // Allow getting pushes even though we're not bare
-                    Execute(tracer, "config receive.denyCurrentBranch ignore");
-                }
+                    repo.Config.Set("core.autocrlf", true);
 
-                // to disallow browsing to this folder in case of in-place repo
-                using (tracer.Step("Create deny users for .git folder"))
-                {
-                    string content = "<?xml version=\"1.0\"" + @"?>
+                    // This speeds up git operations like 'git checkout', especially on slow drives like in Azure
+                    repo.Config.Set("core.preloadindex", true);
+
+                    repo.Config.Set("user.name", _settings.GetGitUsername());
+
+                    repo.Config.Set("user.email", _settings.GetGitEmail());
+
+                    using (tracer.Step("Configure git server"))
+                    {
+                        // Allow getting pushes even though we're not bare
+                        repo.Config.Set("receive.denyCurrentBranch", "ignore");
+                    }
+
+                    // to disallow browsing to this folder in case of in-place repo
+                    using (tracer.Step("Create deny users for .git folder"))
+                    {
+                        string content = "<?xml version=\"1.0\"" + @"?>
 <configuration>
   <system.web>
     <authorization>
@@ -145,24 +148,25 @@ namespace Kudu.Core.SourceControl.Git
   </system.web>
 <configuration>";
 
-                    File.WriteAllText(Path.Combine(_gitExe.WorkingDirectory, ".git", "web.config"), content);
-                }
+                        File.WriteAllText(Path.Combine(_gitExe.WorkingDirectory, ".git", "web.config"), content);
+                    }
 
-                // Server env does not support interactive cred prompt; hence, we intercept any credential provision
-                // for git fetch/clone with http/https scheme and return random invalid u/p forcing 'fatal: Authentication failed.'
-                using (tracer.Step("Configure git-credential"))
-                {
-                    FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(GitCredentialHookPath));
+                    // Server env does not support interactive cred prompt; hence, we intercept any credential provision
+                    // for git fetch/clone with http/https scheme and return random invalid u/p forcing 'fatal: Authentication failed.'
+                    using (tracer.Step("Configure git-credential"))
+                    {
+                        FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(GitCredentialHookPath));
 
-                    string content = @"#!/bin/sh
+                        string content = @"#!/bin/sh
 if [ " + "\"$1\" = \"get\"" + @" ]; then
       echo username=dummyUser
       echo password=dummyPassword
 fi" + "\n";
 
-                    File.WriteAllText(GitCredentialHookPath, content);
+                        File.WriteAllText(GitCredentialHookPath, content);
 
-                    Execute(tracer, "config credential.helper \"!'{0}'\"", GitCredentialHookPath);
+                        repo.Config.Set("credential.helper", string.Format("!'{0}'", GitCredentialHookPath));
+                    }
                 }
 
                 using (tracer.Step("Setup post receive hook"))
@@ -182,34 +186,37 @@ echo $i > pushinfo
             }
         }
 
-        public string Resolve(string id)
+        private string ResolveHeadPeeledTargetId()
         {
-            return Execute("rev-parse {0}", id).Trim();
+            using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
+            {
+                var headTip = repo.Head.Tip;
+
+                return headTip == null ? null : headTip.Sha;
+            }
         }
 
         public ChangeSet GetChangeSet(string id)
         {
-            string output = null;
-            try
+            using (LibGit2Sharp.IRepository repo = new LibGit2Sharp.Repository(RepositoryPath))
             {
-                output = Execute("log -n 1 {0} --", id);
-            }
-            catch (CommandLineException ex)
-            {
-                if (!String.IsNullOrEmpty(ex.Message) && ex.Message.IndexOf("bad revision ", StringComparison.OrdinalIgnoreCase) != -1)
+                LibGit2Sharp.Commit commit = repo.Lookup<LibGit2Sharp.Commit>(id);
+
+                if (commit == null)
                 {
-                    // Indicates the changeset does not exist in the repo.
                     return null;
                 }
-                throw;
+
+                return new ChangeSet(commit.Sha, commit.Author.Name, commit.Author.Email, commit.Message, commit.Author.When);
             }
-            var commitReader = output.AsReader();
-            return ParseCommit(commitReader);
         }
 
         public void AddFile(string path)
         {
-            Execute("add {0}", path);
+            using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
+            {
+                repo.Stage(path);
+            }
         }
 
         public bool Commit(string message, string authorName = null)
@@ -308,7 +315,11 @@ echo $i > pushinfo
 
         public void Update(string id)
         {
-            Execute("checkout {0} --force", id);
+            using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
+            {
+                repo.Checkout(id,
+                    new CheckoutOptions { CheckoutModifiers = CheckoutModifiers.Force });
+            }
         }
 
         public void Update()
@@ -559,66 +570,6 @@ echo $i > pushinfo
 
                 return false;
             });
-        }
-
-        internal static ChangeSet ParseCommit(IStringReader reader)
-        {
-            // commit hash
-            reader.ReadUntilWhitespace();
-            reader.SkipWhitespace();
-            string id = reader.ReadUntilWhitespace();
-
-            // Merges will have (from hash) so we're skipping that
-            reader.ReadLine();
-
-            string author = null;
-            string email = null;
-            string date = null;
-
-            while (!reader.Done)
-            {
-                string line = reader.ReadLine();
-
-                if (ParserHelpers.IsSingleNewLine(line))
-                {
-                    break;
-                }
-
-                var subReader = line.AsReader();
-                string key = subReader.ReadUntil(':');
-                // Skip :
-                subReader.Skip();
-                subReader.SkipWhitespace();
-                string value = subReader.ReadToEnd().Trim();
-
-                if (key.Equals("Author", StringComparison.OrdinalIgnoreCase))
-                {
-                    // Author <email>
-                    var authorReader = value.AsReader();
-                    author = authorReader.ReadUntil('<').Trim();
-                    authorReader.Skip();
-                    email = authorReader.ReadUntil('>');
-                }
-                else if (key.Equals("Date", StringComparison.OrdinalIgnoreCase))
-                {
-                    date = value;
-                }
-            }
-
-            var messageBuilder = new StringBuilder();
-            while (!reader.Done)
-            {
-                string line = reader.ReadLine();
-
-                if (ParserHelpers.IsSingleNewLine(line))
-                {
-                    break;
-                }
-                messageBuilder.Append(line);
-            }
-
-            string message = messageBuilder.ToString().Trim();
-            return new ChangeSet(id, author, email, message, DateTimeOffset.ParseExact(date, "ddd MMM d HH:mm:ss yyyy zzz", CultureInfo.InvariantCulture));
         }
     }
 }
