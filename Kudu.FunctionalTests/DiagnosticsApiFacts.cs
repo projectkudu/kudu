@@ -317,7 +317,8 @@ namespace Kudu.FunctionalTests
 
                 // Ensure trace
                 string trace = await appManager.VfsManager.ReadAllTextAsync("LogFiles/kudu/trace/");
-                Assert.Contains("_GET_dump_200.xml", trace, StringComparison.OrdinalIgnoreCase);
+                Assert.Contains("_GET_dump_200_", trace, StringComparison.OrdinalIgnoreCase);
+                Assert.Contains("s.xml", trace, StringComparison.OrdinalIgnoreCase);
                 Assert.Contains("_GET_api-vfs-LogFiles-kudu-trace_pending.xml", trace, StringComparison.OrdinalIgnoreCase);
 
                 // Test runtime object by checking for one Node version
