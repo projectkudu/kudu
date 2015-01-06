@@ -122,16 +122,19 @@ namespace Kudu.Core.Tracing
             try
             {
                 var info = _infos.Pop();
+                var elapsed = DateTime.UtcNow - info.StartTime;
                 var strb = new StringBuilder();
                 if (_isStartElement)
                 {
-                    strb.AppendLine("/>");
+                    strb.Append("/>");
                 }
                 else
                 {
                     strb.Append(new String(' ', _infos.Count * 2));
-                    strb.AppendLine("</step>");
+                    strb.Append("</step>");
                 }
+
+                strb.AppendLine(String.Format("<!-- duration: {0:0}ms -->", elapsed.TotalMilliseconds));
 
                 FileSystemHelpers.AppendAllTextToFile(_file, strb.ToString());
                 _isStartElement = false;
@@ -151,9 +154,15 @@ namespace Kudu.Core.Tracing
                     {
                         FileSystemHelpers.DeleteFileSafe(_file);
                     }
-                    else if (_file.EndsWith(PendingXml, StringComparison.OrdinalIgnoreCase))
+                    else
                     {
-                        var file = _file.Replace(PendingXml, ".xml");
+                        var file = _file;
+                        if (_file.EndsWith(PendingXml, StringComparison.OrdinalIgnoreCase))
+                        {
+                            file = file.Replace(PendingXml, ".xml");
+                        }
+
+                        file = file.Replace(".xml", String.Format("_{0:0}s.xml", elapsed.TotalSeconds));
                         FileSystemHelpers.MoveFile(_file, file);
                     }
 
@@ -261,11 +270,13 @@ namespace Kudu.Core.Tracing
         {
             private string _title;
             private IDictionary<string, string> _attribs;
+            private DateTime _startTime;
 
             public TraceInfo(string title, IDictionary<string, string> attribs)
             {
                 _title = title;
                 _attribs = attribs;
+                _startTime = DateTime.UtcNow;
             }
 
             public string Title 
@@ -276,6 +287,11 @@ namespace Kudu.Core.Tracing
             public IDictionary<string, string> Attributes 
             {
                 get { return _attribs; } 
+            }
+
+            public DateTime StartTime
+            {
+                get { return _startTime; }
             }
         }
     }

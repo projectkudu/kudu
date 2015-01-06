@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Web;
+using System.Xml;
 using System.Xml.Linq;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
@@ -78,10 +79,16 @@ namespace Kudu.Core.Test.Tracing
                 }
 
                 var traces = new List<RequestInfo>();
-                foreach (var file in FileSystemHelpers.GetFiles(path, "*.xml").OrderBy(n => n))
+                foreach (var file in FileSystemHelpers.GetFiles(path, "*s.xml").OrderBy(n => n))
                 {
                     var document = XDocument.Load(FileSystemHelpers.OpenRead(file));
                     var trace = new RequestInfo { Url = document.Root.Attribute("url").Value };
+                    var elapsed = document.Root.Nodes().Last();
+
+                    // Assert
+                    Assert.Equal(XmlNodeType.Comment, elapsed.NodeType);
+                    Assert.Contains("duration:", ((XComment)elapsed).Value);
+
                     traces.Add(trace);
                 }
 
