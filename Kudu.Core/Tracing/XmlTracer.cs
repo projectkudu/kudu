@@ -28,9 +28,20 @@ namespace Kudu.Core.Tracing
         private static long _salt = 0;
         private static DateTime _lastCleanup = DateTime.MinValue;
 
+        private readonly static TimeSpan ElapsedThreshold = TimeSpan.FromSeconds(10);
+        private readonly static string[] TraceFilters = new[]
+        {
+            // portal polling
+            "/api/webjobs",
+            "/api/siteextensions",
+            "/api/processes",
+            "/api/deployments",
+        };
+
         private Stack<TraceInfo> _infos;
         private string _path;
         private string _file;
+        private int _statusCode;
         private bool _isStartElement;
         private TraceLevel _level;
 
@@ -142,15 +153,16 @@ namespace Kudu.Core.Tracing
                 // adjust filename with statusCode
                 if (info.Title == XmlTracer.OutgoingResponseTrace && _file.EndsWith(PendingXml, StringComparison.OrdinalIgnoreCase))
                 {
-                    var file = _file.Replace(PendingXml, String.Format("_{0}.xml", info.Attributes["statusCode"]));
-                    FileSystemHelpers.MoveFile(_file, file);
-                    _file = file;
+                    if (!Int32.TryParse(info.Attributes["statusCode"], out _statusCode))
+                    {
+                        _statusCode = 0;
+                    }
                 }
 
                 if (_infos.Count == 0)
                 {
-                    // Suppress traces with NotModified statusCode to avoid client polling in nature
-                    if (_file.EndsWith("_304.xml", StringComparison.OrdinalIgnoreCase) && _level != System.Diagnostics.TraceLevel.Verbose)
+                    // avoid spamming the traces
+                    if (!ShouldTrace(_level, info, _statusCode))
                     {
                         FileSystemHelpers.DeleteFileSafe(_file);
                     }
@@ -159,7 +171,7 @@ namespace Kudu.Core.Tracing
                         var file = _file;
                         if (_file.EndsWith(PendingXml, StringComparison.OrdinalIgnoreCase))
                         {
-                            file = file.Replace(PendingXml, ".xml");
+                            file = file.Replace(PendingXml, _statusCode <= 0 ? ".xml" : String.Format("_{0}.xml", _statusCode));
                         }
 
                         file = file.Replace(".xml", String.Format("_{0:0}s.xml", elapsed.TotalSeconds));
@@ -173,6 +185,55 @@ namespace Kudu.Core.Tracing
             {
                 WriteUnexpectedException(ex);
             }
+        }
+
+        public static bool ShouldTrace(TraceLevel level, TraceInfo info, int statusCode)
+        {
+            // if SCM_TRACE_LEVEL is set to 4 (verbose), always trace.
+            if (level >= TraceLevel.Verbose)
+            {
+                return true;
+            }
+
+            // for api taking long time (>10s), always trace.
+            if (DateTime.UtcNow - info.StartTime >= ElapsedThreshold)
+            {
+                return true;
+            }
+
+            string type;
+            string method;
+            string path;
+            if (!info.Attributes.TryGetValue("type", out type)
+                || !info.Attributes.TryGetValue("method", out method)
+                || !info.Attributes.TryGetValue("url", out path))
+            {
+                return true;
+            }
+
+            // trace non get request
+            if (!String.Equals("request", type, StringComparison.OrdinalIgnoreCase)
+                || !String.Equals("GET", method, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            // NotModified
+            if (statusCode == 304)
+            {
+                return false;
+            }
+
+            // non OK
+            if (statusCode != 200)
+            {
+                return true;
+            }
+
+            // filter out those that may be polled by portal.
+            // remove query string
+            path = path.Split('?')[0].TrimEnd('/');
+            return !TraceFilters.Any(filter => String.Equals(filter, path, StringComparison.OrdinalIgnoreCase));
         }
 
         private void EnsureMaxXmlFiles()

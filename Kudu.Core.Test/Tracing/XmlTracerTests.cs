@@ -67,6 +67,7 @@ namespace Kudu.Core.Test.Tracing
                 {
                     Dictionary<string, string> attribs = new Dictionary<string, string>
                     {
+                        { "type", "request" },
                         { "url", request.Url },
                         { "method", "GET" },
                         { "statusCode", ((int)request.StatusCode).ToString() },
@@ -99,6 +100,135 @@ namespace Kudu.Core.Test.Tracing
             {
                 FileSystemHelpers.Instance = null;
                 throw;
+            }
+        }
+
+        [Theory]
+        [PropertyData("TraceRequests")]
+        public void TraceFiltersTests(bool expected, TraceLevel level, Kudu.Core.Tracing.XmlTracer.TraceInfo info, int statusCode)
+        {
+            Assert.Equal(expected, XmlTracer.ShouldTrace(level, info, statusCode));
+        }
+
+        public static IEnumerable<object[]> TraceRequests
+        {
+            get
+            {
+                // trace verbose
+                yield return new object[] 
+                { 
+                    true, 
+                    TraceLevel.Verbose,
+                    null, 
+                    200
+                };
+
+                // trace non get request
+                yield return new object[] 
+                { 
+                    true, 
+                    TraceLevel.Error,
+                    new Kudu.Core.Tracing.XmlTracer.TraceInfo("title", new Dictionary<string, string>()), 
+                    200
+                };
+
+                // trace non get request
+                yield return new object[] 
+                { 
+                    true, 
+                    TraceLevel.Error,
+                    new Kudu.Core.Tracing.XmlTracer.TraceInfo("title", new Dictionary<string, string>
+                        {
+                            { "type", "request" },
+                            { "method", "POST" },
+                            { "url", "/api/webjobs" },
+                        }), 
+                    200
+                };
+
+                // trace non success request
+                yield return new object[] 
+                { 
+                    true, 
+                    TraceLevel.Error,
+                    new Kudu.Core.Tracing.XmlTracer.TraceInfo("title", new Dictionary<string, string>
+                        {
+                            { "type", "request" },
+                            { "method", "GET" },
+                            { "url", "/api/webjobs" },
+                        }), 
+                    500
+                };
+
+                // filter NotModified
+                yield return new object[] 
+                { 
+                    false, 
+                    TraceLevel.Error,
+                    new Kudu.Core.Tracing.XmlTracer.TraceInfo("title", new Dictionary<string, string>
+                        {
+                            { "type", "request" },
+                            { "method", "GET" },
+                            { "url", "/api/settings" },
+                        }), 
+                    304
+                };
+
+                // filter success
+                yield return new object[] 
+                { 
+                    false, 
+                    TraceLevel.Error,
+                    new Kudu.Core.Tracing.XmlTracer.TraceInfo("title", new Dictionary<string, string>
+                        {
+                            { "type", "request" },
+                            { "method", "GET" },
+                            { "url", "/api/webjobs" },
+                        }), 
+                    200
+                };
+
+                // filter 
+                yield return new object[] 
+                { 
+                    false, 
+                    TraceLevel.Error,
+                    new Kudu.Core.Tracing.XmlTracer.TraceInfo("title", new Dictionary<string, string>
+                        {
+                            { "type", "request" },
+                            { "method", "GET" },
+                            { "url", "/api/siteextensions?a=b" },
+                        }), 
+                    200
+                };
+
+                // filter success
+                yield return new object[] 
+                { 
+                    false, 
+                    TraceLevel.Error,
+                    new Kudu.Core.Tracing.XmlTracer.TraceInfo("title", new Dictionary<string, string>
+                        {
+                            { "type", "request" },
+                            { "method", "GET" },
+                            { "url", "/api/processes" },
+                        }), 
+                    200
+                };
+
+                // filter success
+                yield return new object[] 
+                { 
+                    false, 
+                    TraceLevel.Error,
+                    new Kudu.Core.Tracing.XmlTracer.TraceInfo("title", new Dictionary<string, string>
+                        {
+                            { "type", "request" },
+                            { "method", "GET" },
+                            { "url", "/api/deployments?a=b" },
+                        }), 
+                    200
+                };
             }
         }
 
