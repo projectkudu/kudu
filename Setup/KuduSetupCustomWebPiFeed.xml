@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <title>Feed to setup Kudu for various scenarios.</title>
-  <updated>2013-5-06T01:00:00Z</updated>
+  <updated>2015-1-05T01:00:00Z</updated>
   <author>
     <name>Kudu Team</name>
     <uri>https://github.com/projectkudu</uri>
@@ -13,7 +13,7 @@
     <metadata>
       <title>Kudu Development Prerequisites</title>
       <summary>You only need this if you are modifying or testing Kudu.</summary>
-      <version>1.0.0</version>
+      <version>1.0.1</version>
       <author>
         <name>Kudu Team</name>
         <uri>https://github.com/projectkudu</uri>
@@ -23,20 +23,16 @@
     <dependency>
       <and>
         <dependency>
-          <productId>msysgit_1_8_0</productId>
+          <productId>msysgit_1_9_5</productId>
         </dependency>
         <dependency>
-          <productId>Hg_2_4_2</productId>
-        </dependency>
-        <!--
-          This entry is from the main feed and installs Node 0.6.2.0 and 0.8.2 side by side
-          It does all the steps including the "painful" step.
-         -->
-        <dependency>
-          <productId>NodeJS_0_8_2</productId>
+          <productId>Hg_3_2_4</productId>
         </dependency>
         <dependency>
-          <productId>iisnode</productId>
+          <productId>NodeJS_0_10_35</productId>
+        </dependency>
+        <dependency>
+          <productId>iisnode_0_2_11</productId>
         </dependency>
         <dependency>
           <productId>StaticContent</productId>
@@ -86,20 +82,20 @@
   </entry>
   <!-- entry for MSysGIT  locked to a known version -->
   <entry>
-    <productId>msysgit_1_8_0</productId>
+    <productId>msysgit_1_9_5</productId>
     <metadata>
       <title>Git for Windows (x86)</title>
-      <id>http://msysgit.googlecode.com/files/Git-1.8.0-preview20120201.exe</id>
-      <version>1.8.0</version>
-      <updated>2013-01-11</updated>
-      <published>2013-01-11</published>
+      <id>https://github.com/msysgit/msysgit/releases/download/Git-1.9.5-preview20141217/Git-1.9.5-preview20141217.exe</id>
+      <version>1.9.5</version>
+      <updated>2014-12-17</updated>
+      <published>2014-12-17</published>
       <summary>Git for Windows (x86)</summary>
       <longSummary>Git is a powerful distributed Source Code Management tool.</longSummary>
-      <link href="http://code.google.com/p/msysgit/" />
+      <link href="http://msysgit.github.io/" />
       <searchExclude />
       <author>
         <name>msysgit</name>
-        <uri>http://code.google.com/p/msysgit/</uri>
+        <uri>http://msysgit.github.io/</uri>
       </author>
       <images>
         <icon>http://www.microsoft.com/web/media/gallery/apps-screenshots/git32x32.png</icon>
@@ -113,7 +109,7 @@
             <valueName>MajorVersion</valueName>
             <valueValue>1</valueValue>
             <valueName>MinorVersion</valueName>
-            <valueValue>8</valueValue>
+            <valueValue>9</valueValue>
           </registry>
         </discoveryHint>
         <discoveryHint>
@@ -122,7 +118,7 @@
             <valueName>MajorVersion</valueName>
             <valueValue>1</valueValue>
             <valueName>MinorVersion</valueName>
-            <valueValue>8</valueValue>
+            <valueValue>9</valueValue>
           </registry>
         </discoveryHint>
       </or>
@@ -140,9 +136,9 @@
           </os>
         </osList>
         <installerFile>
-          <fileSize>13957</fileSize>
-          <installerURL>http://msysgit.googlecode.com/files/Git-1.8.0-preview20121022.exe</installerURL>
-          <sha1>012424f08c5fb9da9cbdab56123f00d6805f8ffc</sha1>
+          <fileSize>17811112</fileSize>
+          <installerURL>https://github.com/msysgit/msysgit/releases/download/Git-1.9.5-preview20141217/Git-1.9.5-preview20141217.exe</installerURL>
+          <sha1>21BD5187EF2F7E5124DD7BF1A0A8B7713A7C4953</sha1>
         </installerFile>
         <installCommands>
           <cmdLine>
@@ -155,14 +151,14 @@
   </entry>
   <!-- entry for mercurial locked to a known version -->
   <entry>
-    <productId>Hg_2_4_2</productId>
+    <productId>Hg_3_2_4</productId>
     <metadata>
-      <title>Mercurial for Windows (x86)</title>
-      <id>http://mercurial.selenic.com/release/windows/mercurial-2.4.2-x86.msi</id>
-      <version>2.4.2</version>
-      <updated>2013-05-06</updated>
-      <published>2013-05-06</published>
-      <summary>Mercurial for Windows (x86)</summary>
+      <title>Mercurial for Windows (x64)</title>
+      <id>https://bitbucket.org/tortoisehg/files/downloads/mercurial-3.2.3-x64.msi</id>
+      <version>3.2.3</version>
+      <updated>2014-12-18</updated>
+      <published>2014-12-18</published>
+      <summary>Mercurial for Windows (x64)</summary>
       <longSummary>Mercurial source control managementMercurial is a free, distributed source control management tool.</longSummary>
       <link href="http://mercurial.selenic.com/" />
       <author>
@@ -175,13 +171,13 @@
         <discoveryHint>
           <file>
             <filePath>%programfiles%\Mercurial\hg.exe</filePath>
-            <minimumVersion>2.4.2.0</minimumVersion>
+            <minimumVersion>3.2.3.0</minimumVersion>
           </file>
         </discoveryHint>
         <discoveryHint>
           <file>
             <filePath>%programfiles(x86)%\Mercurial\hg.exe</filePath>
-            <minimumVersion>2.4.2.0</minimumVersion>
+            <minimumVersion>3.2.3.0</minimumVersion>
           </file>
         </discoveryHint>
       </or>
@@ -199,9 +195,9 @@
           </os>
         </osList>
         <installerFile>
-          <fileSize>6082560</fileSize>
-          <installerURL>http://mercurial.selenic.com/release/windows/mercurial-2.4.2-x86.msi</installerURL>
-          <sha1>b7a6829ac3b51836bc0f051f619418664a46133f</sha1>
+          <fileSize>6844416</fileSize>
+          <installerURL>https://bitbucket.org/tortoisehg/files/downloads/mercurial-3.2.3-x64.msi</installerURL>
+          <sha1>F889ABE4813E62C3DA651C3FB45D07B193D28ADD</sha1>
         </installerFile>
         <installCommands>
           <msiInstall>
@@ -212,4 +208,123 @@
       </installer>
     </installers>
   </entry>
-</feed>
+  <!-- entry for iisnode locked to a known version -->
+  <entry>
+    <productId>iisnode_0_2_11</productId>
+    <metadata>
+      <title>iisnode for iis 7/8 (x64)</title>
+      <id>https://github.com/azure/iisnode/releases/download/v0.2.11/iisnode-full-v0.2.11-x64.msi</id>
+      <version>0.2.11</version>
+      <updated>2014-10-07</updated>
+      <published>2014-10-07</published>
+      <summary>iisnode for iis 7/8 (x64)</summary>
+      <longSummary>iisnode is a native IIS module that allows hosting of node.js applications in IIS on Windows.</longSummary>
+      <link href="https://github.com/tjanczuk/iisnode/" />
+      <author>
+        <name>iisnode</name>
+        <uri>https://github.com/tjanczuk/iisnode/</uri>
+      </author>
+    </metadata>
+	<discoveryHint>
+      <or>
+        <discoveryHint>
+          <file>
+            <filePath>%programfiles%\iisnode\iisnode.dll</filePath>
+            <minimumVersion>0.2.11.0</minimumVersion>
+          </file>
+        </discoveryHint>
+        <discoveryHint>
+          <file>
+            <filePath>%programfiles(x86)%\iisnode\iisnode.dll</filePath>
+            <minimumVersion>0.2.11.0</minimumVersion>
+          </file>
+        </discoveryHint>
+      </or>
+    </discoveryHint>
+    <installers>
+      <installer>
+        <id>1</id>
+        <languageId>en</languageId>
+        <osList>
+          <os>
+            <minimumVersion>
+              <osMajorVersion>6</osMajorVersion>
+              <osMinorVersion>0</osMinorVersion>
+            </minimumVersion>
+          </os>
+        </osList>
+        <installerFile>
+          <fileSize>2072576</fileSize>
+          <installerURL>https://github.com/azure/iisnode/releases/download/v0.2.11/iisnode-full-v0.2.11-x64.msi</installerURL>
+          <sha1>D2AA5A51D54B7695A93257E4B3507759789A9887</sha1>
+        </installerFile>
+        <installCommands>
+          <msiInstall>
+            <msi>%InstallerFile%</msi>
+            <commandLineArguments>/quiet /norestart</commandLineArguments>
+          </msiInstall>
+        </installCommands>
+      </installer>
+    </installers>
+  </entry>
+  <!-- entry for Node.js locked to a known version -->
+  <entry>
+    <productId>NodeJS_0_10_35</productId>
+    <metadata>
+      <title>Node.js (x64)</title>
+      <id>http://nodejs.org/dist/v0.10.35/x64/node-v0.10.35-x64.msi</id>
+      <version>0.10.35</version>
+      <updated>2014-12-22</updated>
+      <published>2014-12-22</published>
+      <summary>Node.js (x64)</summary>
+      <longSummary>Node.js® is a platform built on Chrome's JavaScript runtime for easily building fast, scalable network applications.</longSummary>
+      <link href="http://nodejs.org/" />
+      <author>
+        <name>nodejs</name>
+        <uri>http://nodejs.org/</uri>
+      </author>
+    </metadata>
+	<discoveryHint>
+      <or>
+        <discoveryHint>
+          <file>
+            <filePath>%programfiles%\nodejs\node.exe</filePath>
+            <minimumVersion>0.10.35.0</minimumVersion>
+          </file>
+        </discoveryHint>
+        <discoveryHint>
+          <file>
+            <filePath>%programfiles(x86)%\nodejs\node.exe</filePath>
+            <minimumVersion>0.10.35.0</minimumVersion>
+          </file>
+        </discoveryHint>
+      </or>
+    </discoveryHint>
+    <installers>
+      <installer>
+        <id>1</id>
+        <languageId>en</languageId>
+        <osList>
+          <os>
+            <minimumVersion>
+              <osMajorVersion>6</osMajorVersion>
+              <osMinorVersion>0</osMinorVersion>
+            </minimumVersion>
+          </os>
+        </osList>
+        <installerFile>
+          <fileSize>6209536</fileSize>
+          <installerURL>http://nodejs.org/dist/v0.10.35/x64/node-v0.10.35-x64.msi</installerURL>
+          <sha1>C95E8041B5B16488EB2522FA072061690F6EF0CB</sha1>
+        </installerFile>
+        <installCommands>
+          <msiInstall>
+            <msi>%InstallerFile%</msi>
+            <commandLineArguments>/quiet /norestart</commandLineArguments>
+          </msiInstall>
+        </installCommands>
+      </installer>
+    </installers>
+  </entry>
+  </feed>
+  

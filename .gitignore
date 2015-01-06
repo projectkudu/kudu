@@ -23,3 +23,4 @@ _app/
 *.ncrunchsolution
 nuget.exe
 Kudu.Services.Web/commit.txt
+Setup/WebPiCmdSetup.log
