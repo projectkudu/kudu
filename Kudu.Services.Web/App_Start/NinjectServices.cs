@@ -543,6 +543,11 @@ namespace Kudu.Services.Web.App_Start
             {
                 string appData = System.Environment.GetEnvironmentVariable("APPDATA");
                 FileSystemHelpers.EnsureDirectory(Path.Combine(appData, "npm"));
+
+                // discovered while adding npm 2.1.17
+                // this is to work around below issue with the very first npm install 
+                // npm ERR! uid must be an unsigned int
+                FileSystemHelpers.EnsureDirectory(Path.Combine(appData, "npm-cache"));
             }
             catch
             {
