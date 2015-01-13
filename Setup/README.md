@@ -7,9 +7,11 @@ Running Functional tests still require some manual steps see Known issue section
 Simply run the script as Admin, and accept the EULAs. Reboots are suppressed, so
 it probably a good idea to reboot after the install completes.
 
+if your machine does not have any visual studio 2013 installed, KuduDevSetup.cmd will quitely install visual studio 2013 community edition. If you would like your own choice of visual studio, please install visual studio before runing setup script.
+
 ## Known Issues
 There still are a few manual steps required in order to run the functional tests. What is
-missing is getting VS2010 project files and XUnit. This has not been
+missing is getting XUnit. This has not been
 tested on anything but Windows 8 and Server 2012 x64. You may run into issues
 on other OSes architectures, if you do please report them.
 
