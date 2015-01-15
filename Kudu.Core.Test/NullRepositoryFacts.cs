@@ -51,7 +51,7 @@ namespace Kudu.Core.Test
             var message = "this is testing";
             var author = "john doe";
             var email = "john.doe@live.com";
-            var success = repository.Commit(message, author + " <" + email + ">");
+            var success = repository.Commit(message, author, email);
 
             // Assert
             Assert.True(success);

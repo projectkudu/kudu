@@ -8,100 +8,36 @@ using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
-using LibGit2Sharp;
 
 namespace Kudu.Core.SourceControl.Git
 {
     /// <summary>
     /// Implementation of a git repository over git.exe
     /// </summary>
-    public class GitExeRepository : IRepository
+    public class GitExeRepository : BaseGitRepository
     {
-        private const string RemoteAlias = "external";
-
-        // From CIT experience, this is most common flakiness issue with github.com
-        private static readonly string[] RetriableFetchFailures =
-        {
-            "Unknown SSL protocol error in connection",
-            "The requested URL returned error: 403 while accessing",
-            "fatal: HTTP request failed",
-            "fatal: The remote end hung up unexpectedly"
-        };
-
-        private static readonly string[] _lockFileNames = new[] { "index.lock", "HEAD.lock" };
-
-        private readonly GitExecutable _gitExe;
-        private readonly ITraceFactory _tracerFactory;
-        private readonly IDeploymentSettingsManager _settings;
-
         public GitExeRepository(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory profilerFactory)
+            : base (environment, settings, profilerFactory)
         {
-            _gitExe = new GitExecutable(environment.RepositoryPath, settings.GetCommandIdleTimeout());
-            _tracerFactory = profilerFactory;
-            _settings = settings;
-            SkipPostReceiveHookCheck = false;
             _gitExe.SetHomePath(environment);
         }
 
-        public string CurrentId
+        public override string CurrentId
         {
             get
             {
-                return ResolveHeadPeeledTargetId();
+                return Resolve("HEAD");
             }
         }
 
-        public string RepositoryPath
+        public override string RepositoryPath
         {
             get { return _gitExe.WorkingDirectory; }
         }
 
-        public RepositoryType RepositoryType
+        public override RepositoryType RepositoryType
         {
             get { return RepositoryType.Git; }
-        }
-
-        public bool SkipPostReceiveHookCheck
-        {
-            get;
-            set;
-        }
-
-        public bool Exists
-        {
-            get
-            {
-                // The last thing we do in Initialize is create the post-receive hook, so if it's not there,
-                // treat the repo as incomplete, so that we'll fully initialize it again.
-                if (!SkipPostReceiveHookCheck && !File.Exists(PostReceiveHookPath))
-                {
-                    return false;
-                }
-
-                try
-                {
-                    string output = ParseGitDirectory();
-                    // If no exception and the output is .git (not a full directory to .git which means somewhere there's a git repository which is a parent of this directory)
-                    // Then git repository directory found
-                    return String.Equals(output.Trim(), ".git", StringComparison.OrdinalIgnoreCase);
-                }
-                catch (Exception ex)
-                {
-                    ITracer tracer = _tracerFactory.GetTracer();
-                    tracer.TraceError(ex);
-
-                    // If rev-parse fails for any reason, treat the repo as invalid
-                    return false;
-                }
-            }
-        }
-
-        private string PostReceiveHookPath
-        {
-            get
-            {
-                return Path.Combine(_gitExe.WorkingDirectory, ".git", "hooks", "post-receive");
-            }
         }
 
         private string GitCredentialHookPath
@@ -112,34 +48,32 @@ namespace Kudu.Core.SourceControl.Git
             }
         }
 
-        public void Initialize()
+        public override void Initialize()
         {
             var tracer = _tracerFactory.GetTracer();
             using (tracer.Step("GitExeRepository.Initialize"))
             {
-                string gitdir = LibGit2Sharp.Repository.Init(RepositoryPath);
+                Execute(tracer, "init");
 
-                using (var repo = new LibGit2Sharp.Repository(gitdir))
+                Execute(tracer, "config core.autocrlf true");
+
+                // This speeds up git operations like 'git checkout', especially on slow drives like in Azure
+                Execute(tracer, "config core.preloadindex true");
+
+                Execute(tracer, @"config user.name ""{0}""", _settings.GetGitUsername());
+
+                Execute(tracer, @"config user.email ""{0}""", _settings.GetGitEmail());
+
+                using (tracer.Step("Configure git server"))
                 {
-                    repo.Config.Set("core.autocrlf", true);
+                    // Allow getting pushes even though we're not bare
+                    Execute(tracer, "config receive.denyCurrentBranch ignore");
+                }
 
-                    // This speeds up git operations like 'git checkout', especially on slow drives like in Azure
-                    repo.Config.Set("core.preloadindex", true);
-
-                    repo.Config.Set("user.name", _settings.GetGitUsername());
-
-                    repo.Config.Set("user.email", _settings.GetGitEmail());
-
-                    using (tracer.Step("Configure git server"))
-                    {
-                        // Allow getting pushes even though we're not bare
-                        repo.Config.Set("receive.denyCurrentBranch", "ignore");
-                    }
-
-                    // to disallow browsing to this folder in case of in-place repo
-                    using (tracer.Step("Create deny users for .git folder"))
-                    {
-                        string content = "<?xml version=\"1.0\"" + @"?>
+                // to disallow browsing to this folder in case of in-place repo
+                using (tracer.Step("Create deny users for .git folder"))
+                {
+                    string content = "<?xml version=\"1.0\"" + @"?>
 <configuration>
   <system.web>
     <authorization>
@@ -148,25 +82,24 @@ namespace Kudu.Core.SourceControl.Git
   </system.web>
 <configuration>";
 
-                        File.WriteAllText(Path.Combine(_gitExe.WorkingDirectory, ".git", "web.config"), content);
-                    }
+                    File.WriteAllText(Path.Combine(_gitExe.WorkingDirectory, ".git", "web.config"), content);
+                }
 
-                    // Server env does not support interactive cred prompt; hence, we intercept any credential provision
-                    // for git fetch/clone with http/https scheme and return random invalid u/p forcing 'fatal: Authentication failed.'
-                    using (tracer.Step("Configure git-credential"))
-                    {
-                        FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(GitCredentialHookPath));
+                // Server env does not support interactive cred prompt; hence, we intercept any credential provision
+                // for git fetch/clone with http/https scheme and return random invalid u/p forcing 'fatal: Authentication failed.'
+                using (tracer.Step("Configure git-credential"))
+                {
+                    FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(GitCredentialHookPath));
 
-                        string content = @"#!/bin/sh
+                    string content = @"#!/bin/sh
 if [ " + "\"$1\" = \"get\"" + @" ]; then
       echo username=dummyUser
       echo password=dummyPassword
 fi" + "\n";
 
-                        File.WriteAllText(GitCredentialHookPath, content);
+                    File.WriteAllText(GitCredentialHookPath, content);
 
-                        repo.Config.Set("credential.helper", string.Format("!'{0}'", GitCredentialHookPath));
-                    }
+                    Execute(tracer, "config credential.helper \"!'{0}'\"", GitCredentialHookPath);
                 }
 
                 using (tracer.Step("Setup post receive hook"))
@@ -186,40 +119,37 @@ echo $i > pushinfo
             }
         }
 
-        private string ResolveHeadPeeledTargetId()
+        public string Resolve(string id)
         {
-            using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
-            {
-                var headTip = repo.Head.Tip;
-
-                return headTip == null ? null : headTip.Sha;
-            }
+            return Execute("rev-parse {0}", id).Trim();
         }
 
-        public ChangeSet GetChangeSet(string id)
+        public override ChangeSet GetChangeSet(string id)
         {
-            using (LibGit2Sharp.IRepository repo = new LibGit2Sharp.Repository(RepositoryPath))
+            string output = null;
+            try
             {
-                LibGit2Sharp.Commit commit = repo.Lookup<LibGit2Sharp.Commit>(id);
-
-                if (commit == null)
+                output = Execute("log -n 1 {0} --", id);
+            }
+            catch (CommandLineException ex)
+            {
+                if (!String.IsNullOrEmpty(ex.Message) && ex.Message.IndexOf("bad revision ", StringComparison.OrdinalIgnoreCase) != -1)
                 {
+                    // Indicates the changeset does not exist in the repo.
                     return null;
                 }
-
-                return new ChangeSet(commit.Sha, commit.Author.Name, commit.Author.Email, commit.Message, commit.Author.When);
+                throw;
             }
+            var commitReader = output.AsReader();
+            return ParseCommit(commitReader);
         }
 
-        public void AddFile(string path)
+        public override void AddFile(string path)
         {
-            using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
-            {
-                repo.Stage(path);
-            }
+            Execute("add {0}", path);
         }
 
-        public bool Commit(string message, string authorName = null)
+        public override bool Commit(string message, string authorName = null, string emailAddress = null)
         {
             ITracer tracer = _tracerFactory.GetTracer();
 
@@ -229,13 +159,13 @@ echo $i > pushinfo
             try
             {
                 string output;
-                if (authorName == null)
+                if (authorName == null || emailAddress == null)
                 {
                     output = Execute(tracer, "commit -m \"{0}\"", message);
                 }
                 else
                 {
-                    output = Execute(tracer, "commit -m \"{0}\" --author=\"{1}\"", message, authorName);
+                    output = Execute(tracer, "commit -m \"{0}\" --author=\"{1} <{2}>\"", message, authorName, emailAddress);
                 }
 
                 // No pending changes
@@ -256,24 +186,24 @@ echo $i > pushinfo
             }
         }
 
-        public void Clean()
+        public override void Clean()
         {
             // two f to remove submodule (dir with git).
             // see https://github.com/capistrano/capistrano/issues/135
             Execute(@"clean -xdff");
         }
 
-        public void Push()
+        public override void Push()
         {
             Execute(@"push origin master");
         }
 
-        public void FetchWithoutConflict(string remote, string branchName)
+        public override void FetchWithoutConflict(string remote, string branchName)
         {
             ITracer tracer = _tracerFactory.GetTracer();
             try
             {
-                TryUpdateRemote(remote, RemoteAlias, branchName, tracer);
+                TryUpdateRemote(remote, _remoteAlias, branchName, tracer);
 
                 string fetchCommand = @"fetch {0} --progress";
                 if (this.IsEmpty() && _settings.AllowShallowClones())
@@ -286,7 +216,7 @@ echo $i > pushinfo
 
                 try
                 {
-                    GitFetchWithRetry(() => Execute(tracer, fetchCommand, RemoteAlias));
+                    GitFetchWithRetry(() => Execute(tracer, fetchCommand, _remoteAlias));
                 }
                 catch (CommandLineException exception)
                 {
@@ -302,68 +232,38 @@ echo $i > pushinfo
 
                 // Set our branch to point to the remote branch we just fetched. This is a trivial branch pointer
                 // operation that doesn't touch any working files
-                Execute(tracer, @"update-ref refs/heads/{1} {0}/{1}", RemoteAlias, branchName);
+                Execute(tracer, @"update-ref refs/heads/{1} {0}/{1}", _remoteAlias, branchName);
 
                 // Now checkout out our branch, which points to the right place
                 Update(branchName);
             }
             finally
             {
-                TryDeleteRemote(RemoteAlias, tracer);
+                TryDeleteRemote(_remoteAlias, tracer);
             }
         }
 
-        public void Update(string id)
+        public override void Update(string id)
         {
-            using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
-            {
-                repo.Checkout(id,
-                    new CheckoutOptions { CheckoutModifiers = CheckoutModifiers.Force });
-            }
+            Execute("checkout {0} --force", id);
         }
 
-        public void Update()
+        public override void Update()
         {
             Update("master");
         }
 
-        public void UpdateSubmodules()
-        {
-            // submodule update only needed when submodule added/updated
-            // in case of submodule delete, the git database and .gitmodules already reflects that
-            // there may be a submodule folder leftover, one could clean it manually by /scm/clean
-            if (File.Exists(Path.Combine(_gitExe.WorkingDirectory, ".gitmodules")))
-            {
-                // in case the remote url is changed in .gitmodules for existing submodules
-                // git submodule sync will update related git/config to reflect that change
-                Execute("submodule sync");
-
-                GitFetchWithRetry(() => Execute("submodule update --init --recursive"));
-            }
-        }
-
-        public void CreateOrResetBranch(string branchName, string startPoint)
+        public override void CreateOrResetBranch(string branchName, string startPoint)
         {
             Execute("checkout -B \"{0}\" {1}", branchName, startPoint);
         }
 
-        public bool Rebase(string branchName)
-        {
-            string output = Execute("rebase \"{0}\"", branchName);
-            return output.Contains("is up to date");
-        }
-
-        public void RebaseAbort()
-        {
-            Execute("rebase --abort");
-        }
-
-        public void UpdateRef(string source)
+        public override void UpdateRef(string source)
         {
             Execute("update-ref refs/heads/master refs/heads/{0}", source);
         }
 
-        public bool DoesBranchContainCommit(string branch, string commit)
+        public override bool DoesBranchContainCommit(string branch, string commit)
         {
             if (String.IsNullOrEmpty(branch) || String.IsNullOrEmpty(commit))
             {
@@ -374,36 +274,12 @@ echo $i > pushinfo
             return output.IndexOf(match, StringComparison.OrdinalIgnoreCase) != -1;
         }
 
-        public void ClearLock()
-        {
-            // Delete the lock file from the .git folder
-            var lockFilesPath = Path.Combine(_gitExe.WorkingDirectory, ".git");
-
-            if (!Directory.Exists(lockFilesPath))
-            {
-                return;
-            }
-
-            var lockFiles = Directory.EnumerateFiles(lockFilesPath, "*.lock", SearchOption.AllDirectories)
-                                     .Where(fullPath => _lockFileNames.Contains(Path.GetFileName(fullPath), StringComparer.OrdinalIgnoreCase))
-                                     .ToList();
-            if (lockFiles.Count > 0)
-            {
-                ITracer tracer = _tracerFactory.GetTracer();
-                tracer.TraceWarning("Deleting left over lock file");
-                foreach (var file in lockFiles)
-                {
-                    FileSystemHelpers.DeleteFileSafe(file);
-                }
-            }
-        }
-
         public void SetTraceLevel(int level)
         {
             _gitExe.SetTraceLevel(level);
         }
 
-        public IEnumerable<string> ListFiles(string path, SearchOption searchOption, params string[] lookupList)
+        public override IEnumerable<string> ListFiles(string path, SearchOption searchOption, params string[] lookupList)
         {
             path = PathUtility.CleanPath(path);
 
@@ -464,75 +340,18 @@ echo $i > pushinfo
             return output;
         }
 
-        private string ParseGitDirectory()
-        {
-            const string revParseArgs = "rev-parse --git-dir";
-            try
-            {
-                return Execute(revParseArgs);
-            }
-            catch (Exception)
-            {
-                if (!TryFixCorruptedGit())
-                {
-                    throw;
-                }
-            }
-
-            return Execute(revParseArgs);
-        }
-
-        // Corrupted git where .git/HEAD exists but only contains \0.
-        // we've since this issue on a few occasions but don't really understand what causes it
-        private bool TryFixCorruptedGit()
-        {
-            var headFile = Path.Combine(_gitExe.WorkingDirectory, ".git", "HEAD");
-            if (FileSystemHelpers.FileExists(headFile))
-            {
-                bool isCorrupted;
-                using (var stream = FileSystemHelpers.OpenRead(headFile))
-                {
-                    isCorrupted = stream.ReadByte() == 0;
-                }
-
-                if (isCorrupted)
-                {
-                    ITracer tracer = _tracerFactory.GetTracer();
-                    using (tracer.Step(@"Fix corrupted .git\HEAD file"))
-                    {
-                        FileSystemHelpers.DeleteFile(headFile);
-                        Execute(tracer, "init");
-                    }
-
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private string Execute(string arguments, params object[] args)
-        {
-            return Execute(_tracerFactory.GetTracer(), arguments, args);
-        }
-
-        private string Execute(ITracer tracer, string arguments, params object[] args)
-        {
-            return _gitExe.Execute(tracer, arguments, args).Item1;
-        }
-
         private bool IsEmpty()
         {
             // REVIEW: Is this reliable
             return String.IsNullOrWhiteSpace(Execute("branch"));
         }
 
-        private void AddRemote(string remote, string remoteAlias, string branchName, ITracer tracer)
+        protected void AddRemote(string remote, string remoteAlias, string branchName, ITracer tracer)
         {
             Execute(tracer, @"remote add -t {2} {0} ""{1}""", remoteAlias, remote, branchName);
         }
 
-        private void TryUpdateRemote(string remote, string remoteAlias, string branchName, ITracer tracer)
+        protected void TryUpdateRemote(string remote, string remoteAlias, string branchName, ITracer tracer)
         {
             try
             {
@@ -547,7 +366,7 @@ echo $i > pushinfo
             }
         }
 
-        private void TryDeleteRemote(string remoteAlias, ITracer tracer)
+        protected void TryDeleteRemote(string remoteAlias, ITracer tracer)
         {
             try
             {
@@ -556,20 +375,64 @@ echo $i > pushinfo
             catch { }
         }
 
-        internal T GitFetchWithRetry<T>(Func<T> func)
+        internal static ChangeSet ParseCommit(IStringReader reader)
         {
-            // 3 retries with 1s interval
-            return OperationManager.Attempt(func, delayBeforeRetry: 1000, shouldRetry: ex =>
+            // commit hash
+            reader.ReadUntilWhitespace();
+            reader.SkipWhitespace();
+            string id = reader.ReadUntilWhitespace();
+
+            // Merges will have (from hash) so we're skipping that
+            reader.ReadLine();
+
+            string author = null;
+            string email = null;
+            string date = null;
+
+            while (!reader.Done)
             {
-                string error = ex.Message;
-                if (RetriableFetchFailures.Any(retriableFailureMessage => error.Contains(retriableFailureMessage)))
+                string line = reader.ReadLine();
+
+                if (ParserHelpers.IsSingleNewLine(line))
                 {
-                    _tracerFactory.GetTracer().Trace("Retry due to {0}", error);
-                    return true;
+                    break;
                 }
 
-                return false;
-            });
+                var subReader = line.AsReader();
+                string key = subReader.ReadUntil(':');
+                // Skip :
+                subReader.Skip();
+                subReader.SkipWhitespace();
+                string value = subReader.ReadToEnd().Trim();
+
+                if (key.Equals("Author", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Author <email>
+                    var authorReader = value.AsReader();
+                    author = authorReader.ReadUntil('<').Trim();
+                    authorReader.Skip();
+                    email = authorReader.ReadUntil('>');
+                }
+                else if (key.Equals("Date", StringComparison.OrdinalIgnoreCase))
+                {
+                    date = value;
+                }
+            }
+
+            var messageBuilder = new StringBuilder();
+            while (!reader.Done)
+            {
+                string line = reader.ReadLine();
+
+                if (ParserHelpers.IsSingleNewLine(line))
+                {
+                    break;
+                }
+                messageBuilder.Append(line);
+            }
+
+            string message = messageBuilder.ToString().Trim();
+            return new ChangeSet(id, author, email, message, DateTimeOffset.ParseExact(date, "ddd MMM d HH:mm:ss yyyy zzz", CultureInfo.InvariantCulture));
         }
     }
 }

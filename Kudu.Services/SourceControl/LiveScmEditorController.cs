@@ -245,7 +245,7 @@ namespace Kudu.Services.SourceControl
                 bool updateBranchIsUpToDate = true;
 
                 // Commit to local branch
-                bool commitResult = _repository.Commit(parameters.Message, authorName: null);
+                bool commitResult = _repository.Commit(parameters.Message, authorName: null, emailAddress: null);
                 if (!commitResult)
                 {
                     HttpResponseMessage noChangeResponse = Request.CreateResponse(HttpStatusCode.NoContent);
@@ -358,7 +358,7 @@ namespace Kudu.Services.SourceControl
             QueryParameters parameters = new QueryParameters(this.Request);
 
             // Commit to local branch
-            _repository.Commit(parameters.Message, authorName: null);
+            _repository.Commit(parameters.Message, authorName: null, emailAddress: null);
 
             bool rebasing = false;
             try

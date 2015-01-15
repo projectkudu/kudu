@@ -16,6 +16,47 @@ namespace Kudu.Core.Test
 {
     public class GitRepositoryTest
     {
+        [Fact]
+        public void ParseCommitParsesCommit()
+        {
+            string commitText = @"commit 307d8fe354ff30609decef49f91195e2e9719398
+Author: David Fowler <davidfowl@gmail.com>
+Date:   Thu Jul 7 19:05:40 2011 -0700
+
+    Initial commit";
+
+            ChangeSet changeSet = GitExeRepository.ParseCommit(commitText.AsReader());
+
+            Assert.Equal("307d8fe354ff30609decef49f91195e2e9719398", changeSet.Id);
+            Assert.Equal("David Fowler", changeSet.AuthorName);
+            Assert.Equal("davidfowl@gmail.com", changeSet.AuthorEmail);
+            Assert.Equal("Initial commit", changeSet.Message);
+        }
+
+        [Fact]
+        public void ParseCommitWithMultipleCommitsParsesOneCommit()
+        {
+            string commitText = @"commit d35697645e2472f5e327c0ec4b9f3489e806c276
+Author: John Doe
+Date:   Thu Jul 7 19:23:07 2011 -0700
+
+    Second commit
+
+commit 307d8fe354ff30609decef49f91195e2e9719398
+Author: David Fowler <davidfowl@gmail.com>
+Date:   Thu Jul 7 19:05:40 2011 -0700
+
+    Initial commit
+";
+
+            ChangeSet changeSet = GitExeRepository.ParseCommit(commitText.AsReader());
+
+            Assert.Equal("d35697645e2472f5e327c0ec4b9f3489e806c276", changeSet.Id);
+            Assert.Equal("John Doe", changeSet.AuthorName);
+            Assert.Null(changeSet.AuthorEmail);
+            Assert.Equal(@"Second commit", changeSet.Message);
+        }
+
         [Theory]
         [InlineData(" a b c \\d e f", " a b c \\d e f")]
         [InlineData("\"\\303\\245benr\\303\\245.sln\"", "\"åbenrå.sln\"")]
@@ -38,7 +79,7 @@ namespace Kudu.Core.Test
             var settings = new Mock<IDeploymentSettingsManager>();
             var trace = new Mock<ITraceFactory>();
 
-            var repository = new GitExeRepository(Mock.Of<IEnvironment>(), settings.Object, trace.Object);
+            var repository = new LibGit2SharpRepository(Mock.Of<IEnvironment>(), settings.Object, trace.Object);
             Exception exception = null;
             var actual = 0;
 

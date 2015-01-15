@@ -21,14 +21,14 @@ namespace Kudu.FunctionalTests
         private static readonly char[] _segmentDelimiters = new char[] { _segmentDelimiter };
 
         private static readonly byte[] _fileContent0 = Encoding.UTF8.GetBytes("aaa\r\nbbb\r\nccc\r\n");
-        private static readonly byte[] _fileContent1 = Encoding.UTF8.GetBytes("AAA\r\nbbb\r\nccc\r\n");
-        private static readonly byte[] _fileContent2 = Encoding.UTF8.GetBytes("aaa\r\nbbb\r\nCCC\r\n");
-        private static readonly byte[] _fileContent3 = Encoding.UTF8.GetBytes("AAA\r\nbbb\r\nCCC\r\n");
-        private static readonly byte[] _fileContent4 = Encoding.UTF8.GetBytes("CCC\r\nbbb\r\nAAA\r\n");
+        private static readonly byte[] _fileContent1 = Encoding.UTF8.GetBytes("AAAA\r\nbbb\r\nccc\r\n");
+        private static readonly byte[] _fileContent2 = Encoding.UTF8.GetBytes("aaa\r\nbbb\r\nCCCCC\r\n");
+        private static readonly byte[] _fileContent3 = Encoding.UTF8.GetBytes("AAAA\r\nbbb\r\nCCCCC\r\n");
+        private static readonly byte[] _fileContent4 = Encoding.UTF8.GetBytes("CCCCC\r\nbbb\r\nAAAAA\r\n");
 
         private static readonly ContentRangeHeaderValue _fileContentRange = new ContentRangeHeaderValue(_fileContent0.Length);
 
-        private static readonly string _conflict = "<<<<<<< HEAD\r\nAAA\r\nbbb\r\nCCC\r\n=======\r\nCCC\r\nbbb\r\nAAA\r\n>>>>>>>";
+        private static readonly string _conflict = "<<<<<<< HEAD\r\nAAAA\r\nbbb\r\nCCCCC\r\n=======\r\nCCCCC\r\nbbb\r\nAAAAA\r\n>>>>>>>";
 
         private static readonly MediaTypeHeaderValue _fileMediaType = MediaTypeHeaderValue.Parse("text/plain");
         private static readonly MediaTypeHeaderValue _dirMediaType = MediaTypeHeaderValue.Parse("application/json; charset=utf-8");
