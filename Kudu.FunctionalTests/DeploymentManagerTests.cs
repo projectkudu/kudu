@@ -639,7 +639,8 @@ namespace Kudu.FunctionalTests
                 Assert.Equal(1, results.Count);
                 Assert.Equal(DeployStatus.Success, results[0].Status);
                 Assert.Equal("GitHub", results[0].Deployer);
-                Assert.Equal("invalid char is ", results[0].Message);
+                // [0] => git.exe, [1] => LibGit2Sharp
+                KuduAssert.EqualsAny(new [] {"invalid char is ", "invalid char is \n"}, results[0].Message);
 
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "Hello World");
             });
@@ -815,7 +816,7 @@ namespace Kudu.FunctionalTests
                     await PostPayloadHelperAsync(appManager, client => client.PostAsJsonAsync("deploy", payload));
                 });
 
-                Assert.Contains("unable to create file symfony", exception.Message);
+                KuduAssert.ContainsAny(new[] { "unable to create file symfony", "The data area passed to a system call is too small" }, exception.Message);
 
                 var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
                 Assert.Equal(1, results.Count);
@@ -828,7 +829,7 @@ namespace Kudu.FunctionalTests
 
                 var details = (await appManager.DeploymentManager.GetLogEntryDetailsAsync(results[0].Id, entries[0].Id)).ToList();
                 Assert.True(details.Count > 0, "must have at one log detail entry.");
-                Assert.Contains("unable to create file symfony", details[0].Message);
+                KuduAssert.ContainsAny(new[] { "unable to create file symfony", "The data area passed to a system call is too small" }, details[0].Message);
                 Assert.Equal(LogEntryType.Error, details[0].Type);
 
                 // Must not have entry with "An unknown error has occurred"
@@ -1037,52 +1038,52 @@ namespace Kudu.FunctionalTests
                     });
 
                     // Assert
-                    KuduAssert.Match(info.Expect, exception.Message, info.ToString());
+                    KuduAssert.MatchAny(info.Expect, exception.Message, info.ToString());
                 }
             });
         }
 
         private static IEnumerable<RepoInvalidInfo> GetRepoInvalidInfos()
         {
-            yield return new RepoInvalidInfo("InvalidUrl", "Repository url 'InvalidUrl' is invalid.", null);
-            yield return new RepoInvalidInfo("InvalidUrl", "Repository url 'InvalidUrl' is invalid.", null);
-            yield return new RepoInvalidInfo(".", "Repository url '.' is invalid.", null);
-            yield return new RepoInvalidInfo("http://google.com/", "fatal:.*http://.*google.com.* not found", null);
-            yield return new RepoInvalidInfo("http://google.com/", "abort: 'http://www.google.com/' does not appear to be an hg repository", "hg");
-            yield return new RepoInvalidInfo("InvalidScheme://abcdefghigkl.com/", "fatal: Unable to find remote helper for 'InvalidScheme'", null);
-            yield return new RepoInvalidInfo("InvalidScheme://abcdefghigkl.com/", "abort: repository InvalidScheme://abcdefghigkl.com/ not found", "hg");
-            yield return new RepoInvalidInfo("http://abcdefghigkl.com/", "Could.*n.*t resolve host.*abcdefghigkl.com", null);
-            yield return new RepoInvalidInfo("http://abcdefghigkl.com/", "abort: error: getaddrinfo failed.*hg.exe pull", "hg");
-            yield return new RepoInvalidInfo("https://abcdefghigkl.com/", "Could.*n.*t resolve host.*abcdefghigkl.com", null);
-            yield return new RepoInvalidInfo("https://abcdefghigkl.com/", "abort: error: getaddrinfo failed.*hg.exe pull", "hg");
-            yield return new RepoInvalidInfo("git@abcdefghigkl.com:Invalid/Invalid.git", "no address associated with name", null);
-            yield return new RepoInvalidInfo("ssh://hg@abcdefghigkl.com/Invalid/Invalid.git", "abort: no suitable response from remote hg.*hg.exe pull", "hg");
-            yield return new RepoInvalidInfo("git@github.com:Invalid/Invalid.git", "Permission denied [(]publickey[)]", null);
-            yield return new RepoInvalidInfo("git@bitbucket.org:Invalid/Invalid.git", "Permission denied [(]publickey[)]", null);
-            yield return new RepoInvalidInfo("git@github.com:KuduApps/Invalid.git", "Permission denied [(]publickey[)]", null);
-            yield return new RepoInvalidInfo("git@bitbucket.org:kudutest/Invalid.git", "Permission denied [(]publickey[)]", null);
-            yield return new RepoInvalidInfo("git@github.com:KuduApps/HelloKudu.git", "Permission denied [(]publickey[)]", null);
-            yield return new RepoInvalidInfo("git@bitbucket.org:kudutest/jeanprivate.git", "Permission denied [(]publickey[)]", null);
+            yield return new RepoInvalidInfo("InvalidUrl", new [] {"Repository url 'InvalidUrl' is invalid."}, null);
+            yield return new RepoInvalidInfo("InvalidUrl", new [] {"Repository url 'InvalidUrl' is invalid."}, null);
+            yield return new RepoInvalidInfo(".", new [] {"Repository url '.' is invalid."}, null);
+            yield return new RepoInvalidInfo("http://google.com/", new [] {"fatal:.*http://.*google.com.* not found", "\\[LibGit2SharpException: Too many redirects or authentication replays\\]"}, null);
+            yield return new RepoInvalidInfo("http://google.com/", new [] {"abort: 'http://www.google.com/' does not appear to be an hg repository"}, "hg");
+            yield return new RepoInvalidInfo("InvalidScheme://abcdefghigkl.com/", new [] {"fatal: Unable to find remote helper for 'InvalidScheme'"}, null);
+            yield return new RepoInvalidInfo("InvalidScheme://abcdefghigkl.com/", new [] {"abort: repository InvalidScheme://abcdefghigkl.com/ not found"}, "hg");
+            yield return new RepoInvalidInfo("http://abcdefghigkl.com/", new [] {"Could.*n.*t resolve host.*abcdefghigkl.com", "LibGit2SharpException: failed to send request: The server name or address could not be resolved"}, null);
+            yield return new RepoInvalidInfo("http://abcdefghigkl.com/", new [] {"abort: error: getaddrinfo failed.*hg.exe pull"}, "hg");
+            yield return new RepoInvalidInfo("https://abcdefghigkl.com/", new [] {"Could.*n.*t resolve host.*abcdefghigkl.com", "LibGit2SharpException: failed to send request: The server name or address could not be resolved"}, null);
+            yield return new RepoInvalidInfo("https://abcdefghigkl.com/", new [] {"abort: error: getaddrinfo failed.*hg.exe pull"}, "hg");
+            yield return new RepoInvalidInfo("git@abcdefghigkl.com:Invalid/Invalid.git", new [] {"no address associated with name"}, null);
+            yield return new RepoInvalidInfo("ssh://hg@abcdefghigkl.com/Invalid/Invalid.git", new [] {"abort: no suitable response from remote hg.*hg.exe pull"}, "hg");
+            yield return new RepoInvalidInfo("git@github.com:Invalid/Invalid.git", new [] {"Permission denied [(]publickey[)]"}, null);
+            yield return new RepoInvalidInfo("git@bitbucket.org:Invalid/Invalid.git", new [] {"Permission denied [(]publickey[)]"}, null);
+            yield return new RepoInvalidInfo("git@github.com:KuduApps/Invalid.git", new [] {"Permission denied [(]publickey[)]"}, null);
+            yield return new RepoInvalidInfo("git@bitbucket.org:kudutest/Invalid.git", new [] {"Permission denied [(]publickey[)]"}, null);
+            yield return new RepoInvalidInfo("git@github.com:KuduApps/HelloKudu.git", new [] {"Permission denied [(]publickey[)]"}, null);
+            yield return new RepoInvalidInfo("git@bitbucket.org:kudutest/jeanprivate.git", new [] {"Permission denied [(]publickey[)]"}, null);
             // due to unreliable error from github
             // yield return new RepoInvalidInfo("https://github.com/KuduApps/HelloKudu.git", "abort: HTTP Error 406: Not Acceptable.*hg.exe pull https://github.com/KuduApps/HelloKudu.git", "hg");
-            yield return new RepoInvalidInfo("https://bitbucket.org/kudutest/hellomercurial/", "fatal:.*https://bitbucket.org/kudutest/hellomercurial.* not found", null);
-            yield return new RepoInvalidInfo("https://github.com/Invalid/Invalid.git", "fatal: Authentication failed.*git.exe fetch", null);
-            yield return new RepoInvalidInfo("https://github.com/KuduQAOrg/Invalid.git", "fatal: Authentication failed.*git.exe fetch", null);
-            yield return new RepoInvalidInfo("https://github.com/KuduQAOrg/PrivateSubModule.git", "fatal: Authentication failed.*git.exe fetch", null);
-            yield return new RepoInvalidInfo("https://KuduQAOrg@github.com/KuduQAOrg/PrivateSubModule.git", "fatal: Authentication failed.*git.exe fetch", null);
-            yield return new RepoInvalidInfo("https://wrongusr@github.com/KuduQAOrg/PrivateSubModule.git", "fatal: Authentication failed.*git.exe fetch", null);
-            yield return new RepoInvalidInfo("https://KuduQAOrg:wrongpwd@github.com/KuduQAOrg/PrivateSubModule.git", "fatal: Authentication failed.*git.exe fetch external", null);
-            yield return new RepoInvalidInfo("https://bitbucket.org/Invalid/Invalid.git", "fatal:.*https://bitbucket.org/Invalid/Invalid.git.* not found", null);
-            yield return new RepoInvalidInfo("https://bitbucket.org/kudutest/Invalid.git", "fatal:.*https://bitbucket.org/kudutest/Invalid.git.* not found", null);
-            yield return new RepoInvalidInfo("https://bitbucket.org/kudutest/jeanprivate.git", "fatal: Authentication failed.*git.exe fetch", null);
-            yield return new RepoInvalidInfo("https://kudutest@bitbucket.org/kudutest/jeanprivate.git", "fatal: Authentication failed.*git.exe fetch", null);
-            yield return new RepoInvalidInfo("https://wrongusr@bitbucket.org/kudutest/jeanprivate.git", "fatal: Authentication failed.*git.exe fetch", null);
-            yield return new RepoInvalidInfo("https://kudutest:wrongpwd@bitbucket.org/kudutest/jeanprivate.git", "fatal: Authentication failed.*git.exe fetch external", null);
+            yield return new RepoInvalidInfo("https://bitbucket.org/kudutest/hellomercurial/", new [] {"fatal:.*https://bitbucket.org/kudutest/hellomercurial.* not found", "\\[LibGit2SharpException: Request failed with status code: 404\\]"}, null);
+            yield return new RepoInvalidInfo("https://github.com/Invalid/Invalid.git", new [] {"fatal: Authentication failed.*git.exe fetch", "\\[LibGit2SharpException: Request failed with status code: 401\\]"}, null);
+            yield return new RepoInvalidInfo("https://github.com/KuduQAOrg/Invalid.git", new [] {"fatal: Authentication failed.*git.exe fetch", "\\[LibGit2SharpException: Request failed with status code: 401\\]"}, null);
+            yield return new RepoInvalidInfo("https://github.com/KuduQAOrg/PrivateSubModule.git", new [] {"fatal: Authentication failed.*git.exe fetch", "\\[LibGit2SharpException: Request failed with status code: 401\\]"}, null);
+            yield return new RepoInvalidInfo("https://KuduQAOrg@github.com/KuduQAOrg/PrivateSubModule.git", new [] {"fatal: Authentication failed.*git.exe fetch", "\\[LibGit2SharpException: Request failed with status code: 401\\]"}, null);
+            yield return new RepoInvalidInfo("https://wrongusr@github.com/KuduQAOrg/PrivateSubModule.git", new [] {"fatal: Authentication failed.*git.exe fetch", "\\[LibGit2SharpException: Request failed with status code: 401\\]"}, null);
+            yield return new RepoInvalidInfo("https://KuduQAOrg:wrongpwd@github.com/KuduQAOrg/PrivateSubModule.git", new [] {"fatal: Authentication failed.*git.exe fetch external", "\\[LibGit2SharpException: Request failed with status code: 401\\]"}, null);
+            yield return new RepoInvalidInfo("https://bitbucket.org/Invalid/Invalid.git", new [] {"fatal:.*https://bitbucket.org/Invalid/Invalid.git.* not found", "\\[LibGit2SharpException: Request failed with status code: 404\\]"}, null);
+            yield return new RepoInvalidInfo("https://bitbucket.org/kudutest/Invalid.git", new [] {"fatal:.*https://bitbucket.org/kudutest/Invalid.git.* not found", "\\[LibGit2SharpException: Request failed with status code: 404\\]"}, null);
+            yield return new RepoInvalidInfo("https://bitbucket.org/kudutest/jeanprivate.git", new [] {"fatal: Authentication failed.*git.exe fetch", "\\[LibGit2SharpException: Request failed with status code: 401\\]"}, null);
+            yield return new RepoInvalidInfo("https://kudutest@bitbucket.org/kudutest/jeanprivate.git", new [] {"fatal: Authentication failed.*git.exe fetch", "\\[LibGit2SharpException: Request failed with status code: 401\\]"}, null);
+            yield return new RepoInvalidInfo("https://wrongusr@bitbucket.org/kudutest/jeanprivate.git", new [] {"fatal: Authentication failed.*git.exe fetch", "\\[LibGit2SharpException: Request failed with status code: 401\\]"}, null);
+            yield return new RepoInvalidInfo("https://kudutest:wrongpwd@bitbucket.org/kudutest/jeanprivate.git", new [] {"fatal: Authentication failed.*git.exe fetch external", "\\[LibGit2SharpException: Request failed with status code: 401\\]"}, null);
         }
 
         public class RepoInvalidInfo
         {
-            public RepoInvalidInfo(string url, string expect, string scm)
+            public RepoInvalidInfo(string url, IEnumerable<string> expect, string scm)
             {
                 this.Url = url;
                 this.Expect = expect;
@@ -1097,7 +1098,7 @@ namespace Kudu.FunctionalTests
             }
 
             public string Url { get; set; }
-            public string Expect { get; set; }
+            public IEnumerable<string> Expect { get; set; }
             public string Scm { get; set; }
             public JObject Payload { get; set; }
             public override string ToString()

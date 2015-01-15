@@ -45,8 +45,8 @@ namespace Kudu.Core.SourceControl
         {
             get
             {
-                var gitExeRepository = new GitExeRepository(_environment, _settings, _traceFactory);
-                return gitExeRepository.Exists;
+                var gitRepository = CreateGitRepositoryInstance();
+                return gitRepository.Exists;
             }
         }
 
@@ -59,9 +59,9 @@ namespace Kudu.Core.SourceControl
         {
             get
             {
-                var gitExeRepository = new GitExeRepository(_environment, _settings, _traceFactory);
-                gitExeRepository.SkipPostReceiveHookCheck = true;
-                return gitExeRepository.Exists;
+                var gitRepository = CreateGitRepositoryInstance();
+                gitRepository.SkipPostReceiveHookCheck = true;
+                return gitRepository.Exists;
             }
         }
 
@@ -86,7 +86,7 @@ namespace Kudu.Core.SourceControl
             }
             else
             {
-                repository = new GitExeRepository(_environment, _settings, _traceFactory);
+                repository = CreateGitRepositoryInstance();
             }
 
             if (!repository.Exists)
@@ -107,7 +107,7 @@ namespace Kudu.Core.SourceControl
             else if (IsGitRepository)
             {
                 tracer.Trace("Assuming git repository at {0}", _environment.RepositoryPath);
-                return new GitExeRepository(_environment, _settings, _traceFactory);
+                return CreateGitRepositoryInstance();
             }
             else if (IsHgRepository)
             {
@@ -123,11 +123,16 @@ namespace Kudu.Core.SourceControl
             if (IsCustomGitRepository)
             {
                 tracer.Trace("Assuming custom git repository at {0}", _environment.RepositoryPath);
-                var ret = new GitExeRepository(_environment, _settings, _traceFactory);
+                var ret = CreateGitRepositoryInstance();
                 ret.SkipPostReceiveHookCheck = true;
                 return ret;
             }
             return null;
+        }
+
+        public IRepository GetGitRepository()
+        {
+            return CreateGitRepositoryInstance();
         }
 
         private bool TryGetExistingRepositoryType(out RepositoryType repositoryType)
@@ -150,6 +155,18 @@ namespace Kudu.Core.SourceControl
 
             repositoryType = default(RepositoryType);
             return false;
+        }
+
+        private IGitRepository CreateGitRepositoryInstance()
+        {
+            if (_settings.UseLibGit2SharpRepository())
+            {
+                return new LibGit2SharpRepository(_environment, _settings, _traceFactory);
+            }
+            else
+            {
+                return new GitExeRepository(_environment, _settings, _traceFactory);
+            }
         }
     }
 }

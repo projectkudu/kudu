@@ -47,13 +47,12 @@ namespace Kudu.Services.SourceControl
                                        IDeploymentManager deploymentManager,
                                        IOperationLock operationLock,
                                        IEnvironment environment,
-                                       IRepository repository,
                                        IRepositoryFactory repositoryFactory)
             : base(tracer, environment, environment.RepositoryPath)
         {
             _deploymentManager = deploymentManager;
             _operationLock = operationLock;
-            _repository = repository ?? repositoryFactory.GetRepository();
+            _repository = repositoryFactory.GetGitRepository();
         }
 
         public override async Task<HttpResponseMessage> GetItem()
@@ -245,7 +244,7 @@ namespace Kudu.Services.SourceControl
                 bool updateBranchIsUpToDate = true;
 
                 // Commit to local branch
-                bool commitResult = _repository.Commit(parameters.Message, authorName: null);
+                bool commitResult = _repository.Commit(parameters.Message, authorName: null, emailAddress: null);
                 if (!commitResult)
                 {
                     HttpResponseMessage noChangeResponse = Request.CreateResponse(HttpStatusCode.NoContent);
@@ -358,7 +357,7 @@ namespace Kudu.Services.SourceControl
             QueryParameters parameters = new QueryParameters(this.Request);
 
             // Commit to local branch
-            _repository.Commit(parameters.Message, authorName: null);
+            _repository.Commit(parameters.Message, authorName: null, emailAddress: null);
 
             bool rebasing = false;
             try

@@ -11,6 +11,7 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
 using Kudu.Services.Infrastructure;
+using Kudu.Contracts.SourceControl;
 
 namespace Kudu.Services.SourceControl
 {
@@ -26,14 +27,14 @@ namespace Kudu.Services.SourceControl
         public LiveScmController(ITracer tracer,
                                  IOperationLock deploymentLock,
                                  IEnvironment environment,
-                                 IRepository repository,
+                                 IRepositoryFactory repositoryFactory,
                                  IServerConfiguration serverConfiguration,
                                  IDeploymentStatusManager status)
         {
             _tracer = tracer;
             _deploymentLock = deploymentLock;
             _environment = environment;
-            _repository = repository;
+            _repository = repositoryFactory.GetGitRepository();
             _serverConfiguration = serverConfiguration;
             _status = status;
         }

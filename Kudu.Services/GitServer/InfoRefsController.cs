@@ -191,7 +191,7 @@ namespace Kudu.Services.GitServer
                 // Once repo is init, persist the new repo path
                 settings.SetValue(SettingsKeys.RepositoryPath, Constants.WebRoot);
 
-                repository.Commit("Initial Commit", authorName: null);
+                repository.Commit("Initial Commit", authorName: null, emailAddress: null);
 
             }, GitExeServer.InitTimeout);
         }

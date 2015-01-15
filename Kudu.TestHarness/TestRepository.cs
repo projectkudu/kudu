@@ -4,13 +4,14 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Test;
 using Kudu.Core.Tracing;
+using Kudu.Core.SourceControl;
 
 namespace Kudu.TestHarness
 {
     public class TestRepository : IDisposable
     {
         private readonly string _physicalPath;
-        private readonly GitExeRepository _repository;
+        private readonly IRepository _repository;
         private readonly IEnvironment _environment;
         private readonly bool _obliterateOnDispose;
 
@@ -24,7 +25,7 @@ namespace Kudu.TestHarness
         {
             _physicalPath = Git.GetRepositoryPath(repositoryName);
             _environment = new TestEnvironment { RepositoryPath = _physicalPath };
-            _repository = new GitExeRepository(_environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+            _repository = new LibGit2SharpRepository(_environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
             _obliterateOnDispose = obliterateOnDispose;
         }
 

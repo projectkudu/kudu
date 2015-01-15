@@ -15,13 +15,15 @@ namespace Kudu.FunctionalTests
     [TestHarnessClassCommand]
     public class GitRepositoryFacts
     {
-        [Fact]
-        public void GitGetChangeSetReturnsNullIfIdDoesNotExist()
+        [Theory]
+        [InlineData(typeof(LibGit2SharpRepository))]
+        [InlineData(typeof(GitExeRepository))]
+        public void GitGetChangeSetReturnsNullIfIdDoesNotExist(Type gitRepoType)
         {
             // Arrange
             using (TestRepository testRepository = GetRepository())
             {
-                var gitRepo = new GitExeRepository(testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                var gitRepo = (IGitRepository)Activator.CreateInstance(gitRepoType, testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
                 gitRepo.Initialize();
 
                 // Act
@@ -32,13 +34,15 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        [Fact]
-        public void GitInitializeCreatesPostCommitHook()
+        [Theory]
+        [InlineData(typeof(LibGit2SharpRepository))]
+        [InlineData(typeof(GitExeRepository))]
+        public void GitInitializeCreatesPostCommitHook(Type gitRepoType)
         {
             using (TestRepository testRepository = GetRepository())
             {
                 // Arrange
-                var gitRepo = new GitExeRepository(testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                var gitRepo = (IGitRepository)Activator.CreateInstance(gitRepoType, testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
                 string postCommitHookPath = Path.Combine(testRepository.PhysicalPath, ".git", "hooks", "post-receive");
                 string expected = "#!/bin/sh\r\nread i\r\necho $i > pushinfo\r\n\"$KUDU_EXE\" \"$KUDU_APPPATH\" \"$KUDU_MSBUILD\" \"$KUDU_DEPLOYER\"\n";
 
@@ -50,13 +54,15 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        [Fact]
-        public void FetchWithoutConflictOnGitEmptyRepo()
+        [Theory]
+        [InlineData(typeof(LibGit2SharpRepository))]
+        [InlineData(typeof(GitExeRepository))]
+        public void FetchWithoutConflictOnGitEmptyRepo(Type gitRepoType)
         {
             using (TestRepository testRepository = GetRepository())
             {
                 // Arrange
-                var gitRepo = new GitExeRepository(testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                var gitRepo = (IGitRepository)Activator.CreateInstance(gitRepoType, testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
 
                 // Act
                 gitRepo.Initialize();
@@ -64,33 +70,39 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        [Fact]
-        public void GitRepoDoesntExistBeforeInitialize()
+        [Theory]
+        [InlineData(typeof(LibGit2SharpRepository))]
+        [InlineData(typeof(GitExeRepository))]
+        public void GitRepoDoesntExistBeforeInitialize(Type gitRepoType)
         {
             using (TestRepository testRepository = GetRepository())
             {
-                var gitRepo = new GitExeRepository(testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                var gitRepo = (IGitRepository)Activator.CreateInstance(gitRepoType, testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
                 Assert.False(gitRepo.Exists, "git repository shouldn't exist yet");
             }
         }
 
-        [Fact]
-        public void GitRepoExistsAfterInitialize()
+        [Theory]
+        [InlineData(typeof(LibGit2SharpRepository))]
+        [InlineData(typeof(GitExeRepository))]
+        public void GitRepoExistsAfterInitialize(Type gitRepoType)
         {
             using (TestRepository testRepository = GetRepository())
             {
-                var gitRepo = new GitExeRepository(testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                var gitRepo = (IGitRepository) Activator.CreateInstance(gitRepoType, testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
                 gitRepo.Initialize();
                 Assert.True(gitRepo.Exists, "git repository should exist");
             }
         }
 
-        [Fact]
-        public void GitRepoDoesntExistIfCorrupted()
+        [Theory]
+        [InlineData(typeof(LibGit2SharpRepository))]
+        [InlineData(typeof(GitExeRepository))]
+        public void GitRepoDoesntExistIfCorrupted(Type gitRepoType)
         {
             using (TestRepository testRepository = GetRepository())
             {
-                var gitRepo = new GitExeRepository(testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                var gitRepo = (IGitRepository) Activator.CreateInstance(gitRepoType, testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
 
                 gitRepo.Initialize();
                 Assert.True(gitRepo.Exists, "git repository should exist");
@@ -101,12 +113,14 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        [Fact]
-        public void GitRepoExistIfCorruptedThenInitializedAgain()
+        [Theory]
+        [InlineData(typeof(LibGit2SharpRepository))]
+        [InlineData(typeof(GitExeRepository))]
+        public void GitRepoExistIfCorruptedThenInitializedAgain(Type gitRepoType)
         {
             using (TestRepository testRepository = GetRepository())
             {
-                var gitRepo = new GitExeRepository(testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                var gitRepo = (IGitRepository)Activator.CreateInstance(gitRepoType, testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
 
                 gitRepo.Initialize();
                 Assert.True(gitRepo.Exists, "git repository should exist");
@@ -120,20 +134,22 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        [Fact]
-        public void GitRepoDoesntExistIfGitRepoOnlyOnParentDirectory()
+        [Theory]
+        [InlineData(typeof(LibGit2SharpRepository))]
+        [InlineData(typeof(GitExeRepository))]
+        public void GitRepoDoesntExistIfGitRepoOnlyOnParentDirectory(Type gitRepoType)
         {
             using (TestRepository testRepository = GetRepository())
             {
                 // Create a repository
-                var gitRepo = new GitExeRepository(testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                var gitRepo = (IGitRepository)Activator.CreateInstance(gitRepoType, testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
                 gitRepo.Initialize();
 
                 // Checkout for existence in subdirectory
                 var testedPath = Path.Combine(testRepository.PhysicalPath, "subdirectory");
                 Directory.CreateDirectory(testedPath);
                 var environment = new TestEnvironment { RepositoryPath = testedPath };
-                gitRepo = new GitExeRepository(environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                gitRepo = (IGitRepository)Activator.CreateInstance(gitRepoType, environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
                 Assert.False(gitRepo.Exists, "git repository shouldn't exist yet");
             }
         }
@@ -142,20 +158,23 @@ namespace Kudu.FunctionalTests
         [PropertyData("ParseCommitData")]
         public void GitRepoParsesCommitDetails(string id, ChangeSet expectedChangeset)
         {
-            using (var testRepository = Git.Clone("Mvc3Application_NoSolution"))
+            foreach (Type gitRepoType in new[] { typeof(LibGit2SharpRepository), typeof(GitExeRepository) })
             {
-                // Arrange
-                var gitRepo = new GitExeRepository(testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                using (var testRepository = Git.Clone("Mvc3Application_NoSolution"))
+                {
+                    // Arrange
+                    var gitRepo = (IGitRepository)Activator.CreateInstance(gitRepoType, testRepository.Environment, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
 
-                // Act
-                var changeset = gitRepo.GetChangeSet(id);
+                    // Act
+                    var changeset = gitRepo.GetChangeSet(id);
 
-                // Assert
-                Assert.Equal(expectedChangeset.Id, changeset.Id);
-                Assert.Equal(expectedChangeset.AuthorName, changeset.AuthorName);
-                Assert.Equal(expectedChangeset.AuthorEmail, changeset.AuthorEmail);
-                Assert.Equal(expectedChangeset.Message, changeset.Message.Trim());
-                Assert.Equal(expectedChangeset.Timestamp, changeset.Timestamp);
+                    // Assert
+                    Assert.Equal(expectedChangeset.Id, changeset.Id);
+                    Assert.Equal(expectedChangeset.AuthorName, changeset.AuthorName);
+                    Assert.Equal(expectedChangeset.AuthorEmail, changeset.AuthorEmail);
+                    Assert.Equal(expectedChangeset.Message, changeset.Message.Trim());
+                    Assert.Equal(expectedChangeset.Timestamp, changeset.Timestamp);
+                }
             }
         }
 
@@ -168,8 +187,10 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        [Fact]
-        public void GitClearLockRemovesHeadAndIndexLocks()
+        [Theory]
+        [InlineData(typeof(LibGit2SharpRepository))]
+        [InlineData(typeof(GitExeRepository))]
+        public void GitClearLockRemovesHeadAndIndexLocks(Type gitRepoType)
         {
             using (var testRepo = GetRepository())
             {
@@ -183,7 +204,7 @@ namespace Kudu.FunctionalTests
                 {
                     RepositoryPath = testRepo.PhysicalPath
                 };
-                var gitRepo = new GitExeRepository(env, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
+                var gitRepo = (IGitRepository)Activator.CreateInstance(gitRepoType, env, new MockDeploymentSettingsManager(), NullTracerFactory.Instance);
 
 
                 // Assert - 1

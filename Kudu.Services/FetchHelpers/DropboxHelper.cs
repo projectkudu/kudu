@@ -188,7 +188,7 @@ namespace Kudu.Services
                 statusFile.UpdateProgress(String.Format(CultureInfo.CurrentCulture, Resources.Dropbox_Committing, _successCount));
 
                 // Commit anyway even partial change
-                if (repository.Commit(message, String.Format("{0} <{1}>", deployInfo.UserName, deployInfo.Email ?? deployInfo.UserName)))
+                if (repository.Commit(message, deployInfo.UserName, deployInfo.Email ?? deployInfo.UserName))
                 {
                     changeSet = repository.GetChangeSet("HEAD");
                 }

@@ -7,5 +7,6 @@ namespace Kudu.Contracts.SourceControl
         IRepository EnsureRepository(RepositoryType repositoryType);
         IRepository GetRepository();
         IRepository GetCustomRepository();
+        IRepository GetGitRepository();
     }
 }

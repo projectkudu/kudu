@@ -161,7 +161,7 @@ namespace Kudu.Core.SourceControl
             Repository.Remove(path);
         }
 
-        public bool Commit(string message, string authorName = "")
+        public bool Commit(string message, string authorName = null, string emailAddress = null)
         {
             if (!Repository.Status().Any())
             {
@@ -170,9 +170,16 @@ namespace Kudu.Core.SourceControl
 
             Repository.AddRemove();
 
+            var overrideAuthor = string.Empty;
+            if (!string.IsNullOrEmpty(authorName) &&
+                !string.IsNullOrEmpty(emailAddress))
+            {
+                overrideAuthor = string.Format("{0} <{1}>", authorName, emailAddress);
+            }
+
             var command = new CommitCommand
             {
-                OverrideAuthor = authorName ?? String.Empty,
+                OverrideAuthor = overrideAuthor,
                 Message = message
             };
 
