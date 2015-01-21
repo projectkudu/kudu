@@ -1,11 +1,11 @@
-﻿using System;
+﻿using Kudu.Contracts.SiteExtensions;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using System.Web.Http;
-using Kudu.Contracts.SiteExtensions;
-using Newtonsoft.Json.Linq;
 
 namespace Kudu.Services.SiteExtensions
 {
@@ -19,15 +19,15 @@ namespace Kudu.Services.SiteExtensions
         }
 
         [HttpGet]
-        public IEnumerable<SiteExtensionInfo> GetRemoteExtensions(string filter = null, bool allowPrereleaseVersions = false, string feedUrl = null)
+        public async Task<IEnumerable<SiteExtensionInfo>> GetRemoteExtensions(string filter = null, bool allowPrereleaseVersions = false, string feedUrl = null)
         {
-            return _manager.GetRemoteExtensions(filter, allowPrereleaseVersions, feedUrl);
+            return await _manager.GetRemoteExtensions(filter, allowPrereleaseVersions, feedUrl);
         }
 
         [HttpGet]
-        public SiteExtensionInfo GetRemoteExtension(string id, string version = null, string feedUrl = null)
+        public async Task<SiteExtensionInfo> GetRemoteExtension(string id, string version = null, string feedUrl = null)
         {
-            SiteExtensionInfo extension = _manager.GetRemoteExtension(id, version, feedUrl);
+            SiteExtensionInfo extension = await _manager.GetRemoteExtension(id, version, feedUrl);
 
             if (extension == null)
             {
@@ -38,15 +38,15 @@ namespace Kudu.Services.SiteExtensions
         }
 
         [HttpGet]
-        public IEnumerable<SiteExtensionInfo> GetLocalExtensions(string filter = null, bool checkLatest = true)
+        public async Task<IEnumerable<SiteExtensionInfo>> GetLocalExtensions(string filter = null, bool checkLatest = true)
         {
-            return _manager.GetLocalExtensions(filter, checkLatest);
+            return await _manager.GetLocalExtensions(filter, checkLatest);
         }
 
         [HttpGet]
-        public SiteExtensionInfo GetLocalExtension(string id, bool checkLatest = true)
+        public async Task<SiteExtensionInfo> GetLocalExtension(string id, bool checkLatest = true)
         {
-            SiteExtensionInfo extension = _manager.GetLocalExtension(id, checkLatest);
+            SiteExtensionInfo extension = await _manager.GetLocalExtension(id, checkLatest);
             if (extension == null)
             {
                 throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, id));
@@ -55,7 +55,7 @@ namespace Kudu.Services.SiteExtensions
         }
 
         [HttpPut]
-        public SiteExtensionInfo InstallExtension(string id, SiteExtensionInfo requestInfo)
+        public async Task<SiteExtensionInfo> InstallExtension(string id, SiteExtensionInfo requestInfo)
         {
             if (requestInfo == null)
             {
@@ -66,7 +66,7 @@ namespace Kudu.Services.SiteExtensions
 
             try
             {
-                extension = _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl);
+                extension = await _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl);
             }
             catch (WebException e)
             {
@@ -88,11 +88,11 @@ namespace Kudu.Services.SiteExtensions
         }
 
         [HttpDelete]
-        public bool UninstallExtension(string id)
+        public async Task<bool> UninstallExtension(string id)
         {
             try
             {
-                return _manager.UninstallExtension(id);
+                return await _manager.UninstallExtension(id);
             }
             catch (DirectoryNotFoundException ex)
             {

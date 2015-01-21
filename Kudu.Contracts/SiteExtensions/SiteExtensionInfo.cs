@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using NuGet;
 using Newtonsoft.Json;
+using NuGet.Client.VisualStudio;
 
 namespace Kudu.Contracts.SiteExtensions
 {
@@ -40,21 +41,38 @@ namespace Kudu.Contracts.SiteExtensions
             InstalledDateTime = info.InstalledDateTime;
         }
 
-        public SiteExtensionInfo(IPackage package)
+        public SiteExtensionInfo(UIPackageMetadata data)
         {
-            Id = package.Id;
-            Title = package.Title;
+            Id = data.Identity.Id;
+            Title = data.Identity.Id;
             Type = SiteExtensionType.Gallery;
-            Summary = package.Summary;
-            Description = package.Description;
-            Version = package.Version == null ? null : package.Version.ToString();
-            ProjectUrl = package.ProjectUrl == null ? null : package.ProjectUrl.ToString();
-            IconUrl = package.IconUrl == null ? "https://www.siteextensions.net/Content/Images/packageDefaultIcon-50x50.png" : package.IconUrl.ToString();
-            LicenseUrl = package.LicenseUrl == null ? null : package.LicenseUrl.ToString();
-            Authors = package.Authors;
-            PublishedDateTime = package.Published;
-            IsLatestVersion = package.IsLatestVersion;
-            DownloadCount = package.DownloadCount;
+            Summary = data.Summary;
+            Description = data.Description;
+            Version = data.Identity.Version.ToNormalizedString();
+            ProjectUrl = data.ProjectUrl == null ? null : data.ProjectUrl.ToString();
+            IconUrl = data.IconUrl == null ? "https://www.siteextensions.net/Content/Images/packageDefaultIcon-50x50.png" : data.IconUrl.ToString();
+            LicenseUrl = data.LicenseUrl == null ? null : data.LicenseUrl.ToString();
+            Authors = data.Authors.Split(new string[] { "  " }, StringSplitOptions.RemoveEmptyEntries);
+            PublishedDateTime = data.Published;
+            IsLatestVersion = true;
+            DownloadCount = data.DownloadCount;
+        }
+
+        public SiteExtensionInfo(UISearchMetadata data)
+        {
+            Id = data.Identity.Id;
+            Title = data.Identity.Id;
+            Type = SiteExtensionType.Gallery;
+            Summary = data.LatestPackageMetadata.Summary;
+            Description = data.LatestPackageMetadata.Description;
+            Version = data.Identity.Version.ToNormalizedString();
+            ProjectUrl = data.LatestPackageMetadata.ProjectUrl == null ? null : data.LatestPackageMetadata.ProjectUrl.ToString();
+            IconUrl = data.LatestPackageMetadata.IconUrl == null ? "https://www.siteextensions.net/Content/Images/packageDefaultIcon-50x50.png" : data.LatestPackageMetadata.IconUrl.ToString();
+            LicenseUrl = data.LatestPackageMetadata.LicenseUrl == null ? null : data.LatestPackageMetadata.LicenseUrl.ToString();
+            Authors = data.LatestPackageMetadata.Authors.Split(new string[] { "  " }, StringSplitOptions.RemoveEmptyEntries);
+            PublishedDateTime = data.LatestPackageMetadata.Published;
+            IsLatestVersion = data.Identity.Version.Equals(data.LatestPackageMetadata.Identity.Version);
+            DownloadCount = data.LatestPackageMetadata.DownloadCount;
         }
 
         [JsonProperty(PropertyName = "id")]
@@ -74,7 +92,7 @@ namespace Kudu.Contracts.SiteExtensions
         [JsonIgnore]
         public SiteExtensionType Type
         {
-            get; 
+            get;
             set;
         }
 
@@ -165,8 +183,8 @@ namespace Kudu.Contracts.SiteExtensions
         [JsonProperty(PropertyName = "local_is_latest_version")]
         public bool? LocalIsLatestVersion
         {
-            get; 
-            set; 
+            get;
+            set;
         }
 
         [JsonProperty(PropertyName = "local_path")]

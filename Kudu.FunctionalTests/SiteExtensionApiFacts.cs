@@ -1,11 +1,12 @@
-﻿using System;
+﻿using Kudu.Contracts.SiteExtensions;
+using Kudu.Core.Infrastructure;
+using Kudu.TestHarness;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Kudu.Contracts.SiteExtensions;
-using Kudu.Core.Infrastructure;
-using Kudu.TestHarness;
 using Xunit;
+using Xunit.Extensions;
 
 namespace Kudu.FunctionalTests
 {
@@ -27,6 +28,38 @@ namespace Kudu.FunctionalTests
             {"Kudu", "Kudu"},
             {"DaaS", "Site Diagnostics"}
         };
+
+        [Theory]
+        [InlineData("https://api.nuget.org/v3/index.json")]
+        [InlineData("http://www.nuget.org/api/v2/")]
+        public async Task SiteExtensionV2AndV3FeedTests(string feedEndpoint)
+        {
+            const string appName = "SiteExtensionV2AndV3FeedTests";
+            const string testPackageId = "bootstrap";
+            const string testPackageVersion = "3.0.0";
+            await ApplicationManager.RunAsync(appName, async appManager =>
+            {
+                var manager = appManager.SiteExtensionManager;
+
+                // list package
+                IEnumerable<SiteExtensionInfo> results = await manager.GetRemoteExtensions(
+                    filter: testPackageId,
+                    feedUrl: feedEndpoint);
+                Assert.True(results.Count() > 0, string.Format("GetRemoteExtensions for '{0}' package result should > 0", testPackageId));
+                
+                // get package
+                SiteExtensionInfo result = await manager.GetRemoteExtension(testPackageId, feedUrl: feedEndpoint);
+                Assert.Equal(testPackageId, result.Id);
+
+                // install
+                result = await manager.InstallExtension(testPackageId, version: testPackageVersion, feedUrl: feedEndpoint);
+                Assert.Equal(testPackageId, result.Id);
+                Assert.Equal(testPackageVersion, result.Version);
+
+                // uninstall
+                Assert.True(await manager.UninstallExtension(result.Id));
+            });
+        }
 
         [Fact]
         public async Task SiteExtensionBasicTests()

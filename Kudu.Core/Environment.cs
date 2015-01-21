@@ -187,7 +187,7 @@ namespace Kudu.Core
                 return _scriptPath;
             }
         }
-
+        
         public string NodeModulesPath
         {
             get
