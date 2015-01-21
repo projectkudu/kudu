@@ -13,17 +13,22 @@ using System.Text.RegularExpressions;
 
 namespace Kudu.Core.SourceControl.Git
 {
-    public class LibGit2SharpRepository : BaseGitRepository
+    public class LibGit2SharpRepository : IRepository
     {
-        private readonly string _repositoryPath;
+        private const string _remoteAlias = "external";
+        private readonly ITraceFactory _tracerFactory;
+        private readonly IDeploymentSettingsManager _settings;
+        private readonly GitExeRepository _legacyGitExeRepository;
 
         public LibGit2SharpRepository(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory tracerFactory)
-            : base (environment, settings, tracerFactory)
         {
-            _repositoryPath = environment.RepositoryPath;
+            _tracerFactory = tracerFactory;
+            _settings = settings;
+            RepositoryPath = environment.RepositoryPath;
+            _legacyGitExeRepository = new GitExeRepository(environment, settings, tracerFactory);
         }
 
-        public override string CurrentId
+        public string CurrentId
         {
             get 
             {
@@ -36,15 +41,9 @@ namespace Kudu.Core.SourceControl.Git
             }
         }
 
-        public override string RepositoryPath
-        {
-            get
-            {
-                return _repositoryPath;
-            }
-        }
+        public string RepositoryPath { get; private set; }
 
-        public override RepositoryType RepositoryType
+        public RepositoryType RepositoryType
         {
             get
             {
@@ -52,7 +51,7 @@ namespace Kudu.Core.SourceControl.Git
             }
         }
 
-        public override void Initialize()
+        public void Initialize()
         {
             var tracer = _tracerFactory.GetTracer();
             using (tracer.Step("LibGit2SharpRepository Initialize"))
@@ -128,11 +127,11 @@ echo $i > pushinfo
         {
             get
             {
-                return Path.Combine(_repositoryPath, ".git", "hooks", "git-credential-invalid.sh");
+                return Path.Combine(RepositoryPath, ".git", "hooks", "git-credential-invalid.sh");
             }
         }
 
-        public override ChangeSet GetChangeSet(string id)
+        public ChangeSet GetChangeSet(string id)
         {
             using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
             {
@@ -147,7 +146,7 @@ echo $i > pushinfo
             }
         }
 
-        public override void AddFile(string path)
+        public void AddFile(string path)
         {
             using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
             {
@@ -155,7 +154,7 @@ echo $i > pushinfo
             }
         }
 
-        public override bool Commit(string message, string authorName, string emailAddress)
+        public bool Commit(string message, string authorName, string emailAddress)
         {
             using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
             {
@@ -180,7 +179,7 @@ echo $i > pushinfo
             }
         }
 
-        public override void Update(string id)
+        public void Update(string id)
         {
             using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
             {
@@ -188,12 +187,12 @@ echo $i > pushinfo
             }
         }
 
-        public override void Update()
+        public void Update()
         {
             Update("master");
         }
 
-        public override void Push()
+        public void Push()
         {
             using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
             {
@@ -202,7 +201,7 @@ echo $i > pushinfo
             }
         }
 
-        public override void FetchWithoutConflict(string remoteUrl, string branchName)
+        public void FetchWithoutConflict(string remoteUrl, string branchName)
         {
             ITracer tracer = _tracerFactory.GetTracer();
             try
@@ -244,7 +243,7 @@ echo $i > pushinfo
             }
         }
 
-        public override void Clean()
+        public void Clean()
         {
             using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
             {
@@ -252,7 +251,7 @@ echo $i > pushinfo
             }
         }
 
-        public override void CreateOrResetBranch(string branchName, string startPoint)
+        public void CreateOrResetBranch(string branchName, string startPoint)
         {
             using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
             {
@@ -278,7 +277,7 @@ echo $i > pushinfo
             }
         }
 
-        public override void UpdateRef(string toBeUpdatedToAlias)
+        public void UpdateRef(string toBeUpdatedToAlias)
         {
             UpdateRawRef(string.Format("refs/heads/{0}", "master"), string.Format("refs/heads/{0}", toBeUpdatedToAlias));
         }
@@ -291,7 +290,7 @@ echo $i > pushinfo
             }
         }
 
-        public override bool DoesBranchContainCommit(string branchName, string commitOrBranchName)
+        public bool DoesBranchContainCommit(string branchName, string commitOrBranchName)
         {
             using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
             {
@@ -303,7 +302,7 @@ echo $i > pushinfo
             }
         }
 
-        public override IEnumerable<string> ListFiles(string path, SearchOption searchOption, params string[] lookupList)
+        public IEnumerable<string> ListFiles(string path, SearchOption searchOption, params string[] lookupList)
         {
             path = PathUtility.CleanPath(path);
 
@@ -337,6 +336,39 @@ echo $i > pushinfo
                 // Make sure to materialize the list before finalizing repo
                 return files.ToList();
             }
+        }
+
+        private string PostReceiveHookPath
+        {
+            get
+            {
+                return Path.Combine(RepositoryPath, ".git", "hooks", "post-receive");
+            }
+        }
+
+        public bool Exists
+        {
+            get { return _legacyGitExeRepository.Exists; }
+        }
+
+        public void UpdateSubmodules()
+        {
+            _legacyGitExeRepository.UpdateSubmodules();
+        }
+
+        public void ClearLock()
+        {
+            _legacyGitExeRepository.ClearLock();
+        }
+
+        public bool Rebase(string branchName)
+        {
+            return _legacyGitExeRepository.Rebase(branchName);
+        }
+
+        public void RebaseAbort()
+        {
+            _legacyGitExeRepository.RebaseAbort();
         }
     }
 }

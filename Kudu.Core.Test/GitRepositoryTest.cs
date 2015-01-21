@@ -79,7 +79,7 @@ Date:   Thu Jul 7 19:05:40 2011 -0700
             var settings = new Mock<IDeploymentSettingsManager>();
             var trace = new Mock<ITraceFactory>();
 
-            var repository = new LibGit2SharpRepository(Mock.Of<IEnvironment>(), settings.Object, trace.Object);
+            var repository = new GitExeRepository(Mock.Of<IEnvironment>(), settings.Object, trace.Object);
             Exception exception = null;
             var actual = 0;
 
@@ -90,7 +90,7 @@ Date:   Thu Jul 7 19:05:40 2011 -0700
             // Test
             try
             {
-                repository.GitFetchWithRetry(() =>
+                repository.ExecuteGenericGitCommandWithRetryAndCatchingWellKnownErrors(() =>
                 {
                     ++actual;
                     if (message == null)
