@@ -197,7 +197,7 @@ echo $i > pushinfo
         {
             using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
             {
-                var masterBranch = repo.Branches.FirstOrDefault(b => b.Name.Equals("master", StringComparison.OrdinalIgnoreCase));
+                var masterBranch = repo.Branches["master"];
                 repo.Network.Push(masterBranch);
             }
         }
@@ -268,7 +268,7 @@ echo $i > pushinfo
                 }
                 else
                 {
-                    var commit = repo.Commits.Single(c => c.Sha == startPoint);
+                    var commit = repo.Lookup<Commit>(startPoint);
                     if (commit != null)
                     {
                         repo.Checkout(branch);
@@ -296,12 +296,10 @@ echo $i > pushinfo
             using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
             {
                 var branch = repo.Branches[branchName];
-                var otherBranch = repo.Branches[commitOrBranchName];
                 if (branch == null) return false;
-                return repo.Commits.QueryBy(new CommitFilter { Since = branch }).Where(c => c.Sha == commitOrBranchName).Any() ||
-                       otherBranch != null
-                       ? repo.Commits.QueryBy(new CommitFilter { Since = branch }).Where(c => c.Sha == otherBranch.Tip.Sha).Any()
-                       : false;
+                return repo.Refs.ReachableFrom(
+                              new [] {repo.Refs[branch.CanonicalName]},
+                              new [] {repo.Lookup<Commit>(commitOrBranchName)}).Any();
             }
         }
 
@@ -320,7 +318,7 @@ echo $i > pushinfo
 
             using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
             {
-                var files = repo.Diff.Compare<TreeChanges>(null, DiffTargets.Index, lookupList, compareOptions: new CompareOptions(){IncludeUnmodified = true})
+                var files = repo.Diff.Compare<TreeChanges>(null, DiffTargets.Index, lookupList, compareOptions: new CompareOptions(){IncludeUnmodified = true, Similarity = SimilarityOptions.None})
                                       .Select(d => Path.Combine(repo.Info.WorkingDirectory, d.Path))
                                       .Where(p => p.StartsWith(path, StringComparison.OrdinalIgnoreCase));
 
