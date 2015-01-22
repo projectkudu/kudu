@@ -346,9 +346,31 @@ echo $i > pushinfo
             }
         }
 
+        public bool SkipPostReceiveHookCheck
+        {
+            get;
+            set;
+        }
+
         public bool Exists
         {
-            get { return _legacyGitExeRepository.Exists; }
+            get
+            {
+                if(!SkipPostReceiveHookCheck && !File.Exists(PostReceiveHookPath))
+                {
+                    return false;
+                }
+
+                if (LibGit2Sharp.Repository.IsValid(RepositoryPath) &&
+                    !RepositoryPath.TrimEnd(new [] {'/', '\\'}).EndsWith(".git"))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
         }
 
         public void UpdateSubmodules()

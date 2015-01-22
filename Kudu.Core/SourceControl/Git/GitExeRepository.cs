@@ -279,7 +279,7 @@ echo $i > pushinfo
 
                 try
                 {
-                    ExecuteGenericGitCommandWithRetryAndCatchingWellKnownErrors(() => Execute(tracer, fetchCommand, RemoteAlias));
+                    ExecuteGenericGitCommandWithRetryAndCatchingWellKnownGitErrors(() => Execute(tracer, fetchCommand, RemoteAlias));
                 }
                 catch (CommandLineException exception)
                 {
@@ -327,7 +327,7 @@ echo $i > pushinfo
                 // git submodule sync will update related git/config to reflect that change
                 Execute("submodule sync");
 
-                ExecuteGenericGitCommandWithRetryAndCatchingWellKnownErrors(() => Execute("submodule update --init --recursive"));
+                ExecuteGenericGitCommandWithRetryAndCatchingWellKnownGitErrors(() => Execute("submodule update --init --recursive"));
             }
         }
 
@@ -545,7 +545,7 @@ echo $i > pushinfo
             catch { }
         }
 
-        internal T ExecuteGenericGitCommandWithRetryAndCatchingWellKnownErrors<T>(Func<T> func)
+        internal T ExecuteGenericGitCommandWithRetryAndCatchingWellKnownGitErrors<T>(Func<T> func)
         {
             // 3 retries with 1s interval
             return OperationManager.Attempt(func, delayBeforeRetry: 1000, shouldRetry: ex =>

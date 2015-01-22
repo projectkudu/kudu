@@ -90,7 +90,7 @@ Date:   Thu Jul 7 19:05:40 2011 -0700
             // Test
             try
             {
-                repository.ExecuteGenericGitCommandWithRetryAndCatchingWellKnownErrors(() =>
+                repository.ExecuteGenericGitCommandWithRetryAndCatchingWellKnownGitErrors(() =>
                 {
                     ++actual;
                     if (message == null)
