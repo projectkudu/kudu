@@ -47,13 +47,12 @@ namespace Kudu.Services.SourceControl
                                        IDeploymentManager deploymentManager,
                                        IOperationLock operationLock,
                                        IEnvironment environment,
-                                       IRepository repository,
                                        IRepositoryFactory repositoryFactory)
             : base(tracer, environment, environment.RepositoryPath)
         {
             _deploymentManager = deploymentManager;
             _operationLock = operationLock;
-            _repository = repository ?? repositoryFactory.GetRepository();
+            _repository = repositoryFactory.GetGitRepository();
         }
 
         public override async Task<HttpResponseMessage> GetItem()

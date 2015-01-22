@@ -266,7 +266,7 @@ echo $i > pushinfo
                 var commit = repo.Lookup<Commit>(startPoint);
                 if (commit == null)
                 {
-                    throw new LibGit2Sharp.NotFoundException("Start point commit for reset was not found");
+                    throw new LibGit2Sharp.NotFoundException(string.Format("Start point \"{0}\" for reset was not found.", startPoint));
                 }
                 repo.Reset(ResetMode.Hard, commit);
             }

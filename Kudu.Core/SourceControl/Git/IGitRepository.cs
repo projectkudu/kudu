@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Kudu.Core.SourceControl.Git
 {
-    interface IGitRepository : IRepository
+    public interface IGitRepository : IRepository
     {
         bool SkipPostReceiveHookCheck { get; set; }
     }

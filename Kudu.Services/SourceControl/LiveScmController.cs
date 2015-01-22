@@ -34,7 +34,7 @@ namespace Kudu.Services.SourceControl
             _tracer = tracer;
             _deploymentLock = deploymentLock;
             _environment = environment;
-            _repository = repositoryFactory.EnsureRepository(RepositoryType.Git);
+            _repository = repositoryFactory.GetGitRepository();
             _serverConfiguration = serverConfiguration;
             _status = status;
         }

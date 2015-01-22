@@ -130,6 +130,11 @@ namespace Kudu.Core.SourceControl
             return null;
         }
 
+        public IRepository GetGitRepository()
+        {
+            return CreateGitRepositoryInstance();
+        }
+
         private bool TryGetExistingRepositoryType(out RepositoryType repositoryType)
         {
             if (IsNullRepository)
