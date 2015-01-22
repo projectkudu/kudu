@@ -160,7 +160,13 @@ echo $i > pushinfo
             {
                 try
                 {
-                    repo.Stage("*");
+                    var changes = repo.RetrieveStatus().Select(c => c.FilePath);
+                    if (!changes.Any())
+                    {
+                        return false;
+                    }
+
+                    repo.Stage(changes);
                     if (string.IsNullOrEmpty(authorName) ||
                         string.IsNullOrEmpty(emailAddress))
                     {
@@ -356,9 +362,11 @@ echo $i > pushinfo
                     return false;
                 }
 
-                if (LibGit2Sharp.Repository.IsValid(RepositoryPath) &&
-                    !RepositoryPath.TrimEnd(new [] {'/', '\\'}).EndsWith(".git"))
+                if (LibGit2Sharp.Repository.IsValid(RepositoryPath))
                 {
+                    // This should no-op if HEAD size > 0
+                    // Corrupted HEAD might happen if the process was terminated during a long running git operation.
+                    _legacyGitExeRepository.TryFixCorruptedGit();
                     return true;
                 }
                 else

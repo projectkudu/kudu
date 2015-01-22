@@ -473,7 +473,7 @@ echo $i > pushinfo
 
         // Corrupted git where .git/HEAD exists but only contains \0.
         // we've since this issue on a few occasions but don't really understand what causes it
-        private bool TryFixCorruptedGit()
+        internal bool TryFixCorruptedGit()
         {
             var headFile = Path.Combine(_gitExe.WorkingDirectory, ".git", "HEAD");
             if (FileSystemHelpers.FileExists(headFile))
