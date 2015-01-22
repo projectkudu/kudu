@@ -158,30 +158,28 @@ echo $i > pushinfo
         {
             using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
             {
-                try
+                var changes = repo.RetrieveStatus(new StatusOptions
                 {
-                    var changes = repo.RetrieveStatus().Select(c => c.FilePath);
-                    if (!changes.Any())
-                    {
-                        return false;
-                    }
+                    DetectRenamesInIndex = false,
+                    DetectRenamesInWorkDir = false
+                }).Select(c => c.FilePath);
 
-                    repo.Stage(changes);
-                    if (string.IsNullOrEmpty(authorName) ||
-                        string.IsNullOrEmpty(emailAddress))
-                    {
-                        repo.Commit(message);
-                    }
-                    else
-                    {
-                        repo.Commit(message, new Signature(authorName, emailAddress, DateTimeOffset.UtcNow));
-                    }
-                    return true;
-                }
-                catch(LibGit2Sharp.EmptyCommitException)
+                if (!changes.Any())
                 {
                     return false;
                 }
+
+                repo.Stage(changes);
+                if (string.IsNullOrEmpty(authorName) ||
+                    string.IsNullOrEmpty(emailAddress))
+                {
+                    repo.Commit(message);
+                }
+                else
+                {
+                    repo.Commit(message, new Signature(authorName, emailAddress, DateTimeOffset.UtcNow));
+                }
+                return true;
             }
         }
 
