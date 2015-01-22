@@ -13,7 +13,7 @@ using System.Text.RegularExpressions;
 
 namespace Kudu.Core.SourceControl.Git
 {
-    public class LibGit2SharpRepository : IRepository
+    public class LibGit2SharpRepository : IGitRepository
     {
         private const string _remoteAlias = "external";
         private readonly ITraceFactory _tracerFactory;

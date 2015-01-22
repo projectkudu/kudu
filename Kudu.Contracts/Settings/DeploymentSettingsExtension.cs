@@ -190,5 +190,10 @@ namespace Kudu.Contracts.Settings
             string value = settings.GetValue(SettingsKeys.SiteExtensionsFeedUrl);
             return !String.IsNullOrEmpty(value) ? value : DefaultSiteExtensionFeedUrl;
         }
+
+        public static bool UseGitExeRepository(this IDeploymentSettingsManager settings)
+        {
+            return settings.GetValue(SettingsKeys.UseGitExeRepository) == "1";
+        }
     }
 }

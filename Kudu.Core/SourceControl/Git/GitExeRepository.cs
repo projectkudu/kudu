@@ -14,7 +14,7 @@ namespace Kudu.Core.SourceControl.Git
     /// <summary>
     /// Implementation of a git repository over git.exe
     /// </summary>
-    public class GitExeRepository : IRepository
+    public class GitExeRepository : IGitRepository
     {
         private const string RemoteAlias = "external";
 

@@ -247,11 +247,6 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<ILogger>().ToMethod(context => GetLogger(environment, context.Kernel))
                                              .InRequestScope();
 
-            kernel.Bind<IRepository>().ToMethod(context => new GitExeRepository(context.Kernel.Get<IEnvironment>(),
-                                                                                context.Kernel.Get<IDeploymentSettingsManager>(),
-                                                                                context.Kernel.Get<ITraceFactory>()))
-                                                .InRequestScope();
-
             kernel.Bind<IDeploymentManager>().To<DeploymentManager>()
                                              .InRequestScope();
             kernel.Bind<IAutoSwapHandler>().To<AutoSwapHandler>()
