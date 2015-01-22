@@ -191,9 +191,9 @@ namespace Kudu.Contracts.Settings
             return !String.IsNullOrEmpty(value) ? value : DefaultSiteExtensionFeedUrl;
         }
 
-        public static bool UseGitExeRepository(this IDeploymentSettingsManager settings)
+        public static bool UseLibGit2SharpRepository(this IDeploymentSettingsManager settings)
         {
-            return settings.GetValue(SettingsKeys.UseGitExeRepository) == "1";
+            return settings.GetValue(SettingsKeys.UseLibGit2SharpRepository) == "1";
         }
     }
 }

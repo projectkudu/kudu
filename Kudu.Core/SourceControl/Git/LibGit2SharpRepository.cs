@@ -259,21 +259,16 @@ echo $i > pushinfo
                 if (branch == null)
                 {
                     branch = repo.CreateBranch(branchName, startPoint);
-                    repo.Checkout(branch);
                 }
-                else if (string.IsNullOrEmpty(startPoint))
+
+                repo.Checkout(branch);
+
+                var commit = repo.Lookup<Commit>(startPoint);
+                if (commit == null)
                 {
-                    repo.Checkout(branch);
+                    throw new LibGit2Sharp.NotFoundException("Start point commit for reset was not found");
                 }
-                else
-                {
-                    var commit = repo.Lookup<Commit>(startPoint);
-                    if (commit != null)
-                    {
-                        repo.Checkout(branch);
-                        repo.Reset(ResetMode.Hard, commit);
-                    }
-                }
+                repo.Reset(ResetMode.Hard, commit);
             }
         }
 

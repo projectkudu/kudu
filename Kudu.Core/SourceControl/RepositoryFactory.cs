@@ -154,13 +154,13 @@ namespace Kudu.Core.SourceControl
 
         private IGitRepository CreateGitRepositoryInstance()
         {
-            if (_settings.UseGitExeRepository())
+            if (_settings.UseLibGit2SharpRepository())
             {
-                return new GitExeRepository(_environment, _settings, _traceFactory);
+                return new LibGit2SharpRepository(_environment, _settings, _traceFactory);
             }
             else
             {
-                return new LibGit2SharpRepository(_environment, _settings, _traceFactory);
+                return new GitExeRepository(_environment, _settings, _traceFactory);
             }
         }
     }

@@ -84,13 +84,13 @@ namespace Kudu.Console
             ISiteBuilderFactory builderFactory = new SiteBuilderFactory(buildPropertyProvider, env);
 
             IRepository gitRepository;
-            if (settingsManager.UseGitExeRepository())
+            if (settingsManager.UseLibGit2SharpRepository())
             {
-                gitRepository = new GitExeRepository(env, settingsManager, traceFactory);
+                gitRepository = new LibGit2SharpRepository(env, settingsManager, traceFactory);
             }
             else
             {
-                gitRepository = new LibGit2SharpRepository(env, settingsManager, traceFactory);
+                gitRepository = new GitExeRepository(env, settingsManager, traceFactory);
             }
 
             IServerConfiguration serverConfiguration = new ServerConfiguration();
