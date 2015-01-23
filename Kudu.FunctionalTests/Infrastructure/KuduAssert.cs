@@ -159,5 +159,25 @@ namespace Kudu.FunctionalTests.Infrastructure
         {
             Assert.True(Regex.IsMatch(actual, pattern), String.Format("{0}\r\npattern: {1}\r\nactual: {2}\r\n", message, pattern, actual));
         }
+
+        public static void MatchAny(IEnumerable<string> patterns, string actual, string message = null)
+        {
+            Assert.True(patterns.Any(p => Regex.IsMatch(actual, p)),
+                        string.Format("{0}\r\npattern: {1}\r\nactual: {2}\r\n",
+                                      message,
+                                      patterns.Aggregate((a, b) => string.Format("{0}, {1}", a, b)),
+                                      actual)
+                         );
+        }
+
+        public static void EqualsAny(IEnumerable<string> options, string actual, string message = null)
+        {
+            Assert.True(options.Any(o => string.Equals(actual, o)),
+                        string.Format("{0}\r\npattern: {1}\r\nactual: {2}\r\n",
+                                      message,
+                                      options,
+                                      actual)
+                         );
+        }
     }
 }

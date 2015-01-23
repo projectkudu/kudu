@@ -193,7 +193,8 @@ namespace Kudu.Contracts.Settings
 
         public static bool UseLibGit2SharpRepository(this IDeploymentSettingsManager settings)
         {
-            return settings.GetValue(SettingsKeys.UseLibGit2SharpRepository) == "1";
+            return true;
+            //return settings.GetValue(SettingsKeys.UseLibGit2SharpRepository) == "1";
         }
     }
 }
