@@ -265,13 +265,14 @@ echo $i > pushinfo
                     branch = repo.CreateBranch(branchName, startPoint);
                 }
 
-                repo.Checkout(branch);
-
                 var commit = repo.Lookup<Commit>(startPoint);
                 if (commit == null)
                 {
                     throw new LibGit2Sharp.NotFoundException(string.Format("Start point \"{0}\" for reset was not found.", startPoint));
                 }
+
+                //we will only checkout the branch if startPoint is valid.
+                repo.Checkout(branch);
                 repo.Reset(ResetMode.Hard, commit);
             }
         }
