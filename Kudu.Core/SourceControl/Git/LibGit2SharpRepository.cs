@@ -170,8 +170,8 @@ echo $i > pushinfo
                 }
 
                 repo.Stage(changes);
-                if (string.IsNullOrEmpty(authorName) ||
-                    string.IsNullOrEmpty(emailAddress))
+                if (string.IsNullOrWhiteSpace(authorName) ||
+                    string.IsNullOrWhiteSpace(emailAddress))
                 {
                     repo.Commit(message);
                 }
