@@ -30,7 +30,7 @@ namespace Kudu.Core.SourceControl.Git
 
         public string CurrentId
         {
-            get 
+            get
             {
                 using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
                 {
@@ -238,6 +238,18 @@ echo $i > pushinfo
                     Update(branchName);
                 }
             }
+            catch (LibGit2SharpException exception)
+            {
+                if (exception.Message.Equals("Unsupported URL protocol"))
+                {
+                    // LibGit2Sharp doesn't support SSH yet. Use GitExeRepository
+                    _legacyGitExeRepository.FetchWithoutConflict(remoteUrl, branchName);
+                }
+                else
+                {
+                    throw exception;
+                }
+            }
             finally
             {
                 using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
@@ -259,21 +271,22 @@ echo $i > pushinfo
         {
             using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
             {
-                var branch = repo.Branches[branchName];
-                if (branch == null)
+                if (string.IsNullOrWhiteSpace(startPoint))
                 {
-                    branch = repo.CreateBranch(branchName, startPoint);
+                    var branch = repo.GetOrCreateBranch(branchName);
+                    repo.Checkout(branch);
                 }
-
-                var commit = repo.Lookup<Commit>(startPoint);
-                if (commit == null)
+                else
                 {
-                    throw new LibGit2Sharp.NotFoundException(string.Format("Start point \"{0}\" for reset was not found.", startPoint));
+                    var commit = repo.Lookup<Commit>(startPoint);
+                    if (commit == null)
+                    {
+                        throw new LibGit2Sharp.NotFoundException(string.Format("Start point \"{0}\" for reset was not found.", startPoint));
+                    }
+                    var branch = repo.GetOrCreateBranch(branchName);
+                    repo.Checkout(branch);
+                    repo.Reset(ResetMode.Hard, commit);
                 }
-
-                //we will only checkout the branch if startPoint is valid.
-                repo.Checkout(branch);
-                repo.Reset(ResetMode.Hard, commit);
             }
         }
 
@@ -297,8 +310,8 @@ echo $i > pushinfo
                 var branch = repo.Branches[branchName];
                 if (branch == null) return false;
                 return repo.Refs.ReachableFrom(
-                              new [] {repo.Refs[branch.CanonicalName]},
-                              new [] {repo.Lookup<Commit>(commitOrBranchName)}).Any();
+                              new[] { repo.Refs[branch.CanonicalName] },
+                              new[] { repo.Lookup<Commit>(commitOrBranchName) }).Any();
             }
         }
 
@@ -317,7 +330,7 @@ echo $i > pushinfo
 
             using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
             {
-                var files = repo.Diff.Compare<TreeChanges>(null, DiffTargets.Index, lookupList, compareOptions: new CompareOptions(){IncludeUnmodified = true, Similarity = SimilarityOptions.None})
+                var files = repo.Diff.Compare<TreeChanges>(null, DiffTargets.Index, lookupList, compareOptions: new CompareOptions() { IncludeUnmodified = true, Similarity = SimilarityOptions.None })
                                       .Select(d => Path.Combine(repo.Info.WorkingDirectory, d.Path))
                                       .Where(p => p.StartsWith(path, StringComparison.OrdinalIgnoreCase));
 
@@ -356,7 +369,7 @@ echo $i > pushinfo
         {
             get
             {
-                if(!SkipPostReceiveHookCheck && !File.Exists(PostReceiveHookPath))
+                if (!SkipPostReceiveHookCheck && !File.Exists(PostReceiveHookPath))
                 {
                     return false;
                 }
@@ -393,6 +406,14 @@ echo $i > pushinfo
         public void RebaseAbort()
         {
             _legacyGitExeRepository.RebaseAbort();
+        }
+    }
+
+    public static class RepositoryExtensions
+    {
+        public static Branch GetOrCreateBranch(this Repository repo, string branchName)
+        {
+            return repo.Branches[branchName] ?? repo.CreateBranch(branchName);
         }
     }
 }

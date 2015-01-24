@@ -162,22 +162,27 @@ namespace Kudu.FunctionalTests.Infrastructure
 
         public static void MatchAny(IEnumerable<string> patterns, string actual, string message = null)
         {
-            Assert.True(patterns.Any(p => Regex.IsMatch(actual, p)),
-                        string.Format("{0}\r\npattern: {1}\r\nactual: {2}\r\n",
-                                      message,
-                                      patterns.Aggregate((a, b) => string.Format("{0}, {1}", a, b)),
-                                      actual)
-                         );
+            GenericAnyAssert(patterns, (p) => Regex.IsMatch(actual, p), actual, message);
         }
 
         public static void EqualsAny(IEnumerable<string> options, string actual, string message = null)
         {
-            Assert.True(options.Any(o => string.Equals(actual, o)),
-                        string.Format("{0}\r\npattern: {1}\r\nactual: {2}\r\n",
+            GenericAnyAssert(options, (o) => string.Equals(actual, o), actual, message);
+        }
+
+        public static void ContainsAny(IEnumerable<string> options, string actual, string message = null)
+        {
+            GenericAnyAssert(options, (o) => actual.Contains(o), actual, message);
+        }
+
+        private static void GenericAnyAssert<T>(IEnumerable<T> options, Func<T, bool> assertFunc, T actual, string message = null)
+        {
+            Assert.True(options.Any(o => assertFunc(o)),
+                        string.Format("{0}\r\noptions: {1}\r\nactual: {2}\r\n",
                                       message,
-                                      options,
+                                      options.Select(o => o.ToString()).Aggregate((a, b) => string.Format("{0}, {1}", a, b)),
                                       actual)
-                         );
+                       );
         }
     }
 }
