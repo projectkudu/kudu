@@ -1,9 +1,10 @@
 ﻿using System;
+using Kudu.Contracts.Infrastructure;
 using Newtonsoft.Json;
 
 namespace Kudu.Contracts.Jobs
 {
-    public abstract class JobBase
+    public abstract class JobBase : INamedObject
     {
         [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
@@ -25,6 +26,9 @@ namespace Kudu.Contracts.Jobs
 
         [JsonProperty(PropertyName = "using_sdk")]
         public bool UsingSdk { get; set; }
+
+        [JsonProperty(PropertyName = "settings")]
+        public JobSettings Settings { get; set; }
 
         [JsonIgnore]
         public IScriptHost ScriptHost { get; set; }

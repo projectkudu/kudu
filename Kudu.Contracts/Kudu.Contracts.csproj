@@ -58,6 +58,7 @@
     <Compile Include="Hooks\HooksEventTypes.cs" />
     <Compile Include="Hooks\IWebHooksManager.cs" />
     <Compile Include="IEnvironment.cs" />
+    <Compile Include="Infrastructure\INamedObject.cs" />
     <Compile Include="Infrastructure\IOperationLock.cs" />
     <Compile Include="Infrastructure\LockExtensions.cs" />
     <Compile Include="Infrastructure\LockOperationException.cs" />

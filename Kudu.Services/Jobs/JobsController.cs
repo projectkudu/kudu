@@ -7,15 +7,19 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Web.Http;
+using System.Web.Http.ModelBinding;
 using Kudu.Contracts;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Hooks;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.Jobs;
 using Kudu.Core.Tracing;
+using Kudu.Services.Arm;
 
 namespace Kudu.Services.Jobs
 {
+    [ArmControllerConfiguration]
     public class JobsController : ApiController
     {
         private readonly ITracer _tracer;
@@ -54,7 +58,7 @@ namespace Kudu.Services.Jobs
             ContinuousJob continuousJob = _continuousJobsManager.GetJob(jobName);
             if (continuousJob != null)
             {
-                return Request.CreateResponse(HttpStatusCode.OK, continuousJob);
+                return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(continuousJob, Request));
             }
 
             return Request.CreateResponse(HttpStatusCode.NotFound);
@@ -114,7 +118,7 @@ namespace Kudu.Services.Jobs
             TriggeredJob triggeredJob = _triggeredJobsManager.GetJob(jobName);
             if (triggeredJob != null)
             {
-                return Request.CreateResponse(HttpStatusCode.OK, triggeredJob);
+                return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(triggeredJob, Request));
             }
 
             return Request.CreateResponse(HttpStatusCode.NotFound);
@@ -140,7 +144,10 @@ namespace Kudu.Services.Jobs
             }
             else
             {
-                response = Request.CreateResponse(HttpStatusCode.OK, history);
+                object triggeredJobHistoryResponse =
+                    history != null && ArmUtils.IsArmRequest(Request) ? ArmUtils.AddEnvelopeOnArmRequest(history.TriggeredJobRuns, Request) : history;
+
+                response = Request.CreateResponse(HttpStatusCode.OK, triggeredJobHistoryResponse);
             }
             response.Headers.ETag = new EntityTagHeaderValue(currentETag);
             return response;
@@ -152,7 +159,7 @@ namespace Kudu.Services.Jobs
             TriggeredJobRun triggeredJobRun = _triggeredJobsManager.GetJobRun(jobName, runId);
             if (triggeredJobRun != null)
             {
-                return Request.CreateResponse(HttpStatusCode.OK, triggeredJobRun);
+                return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(triggeredJobRun, Request));
             }
 
             return Request.CreateResponse(HttpStatusCode.NotFound);
@@ -186,6 +193,12 @@ namespace Kudu.Services.Jobs
             return CreateJob(jobName, _continuousJobsManager);
         }
 
+        [HttpPut]
+        public HttpResponseMessage CreateContinuousJobArm(string jobName, ArmEntry<ContinuousJob> armContinuousJob)
+        {
+            return SetJobSettings(jobName, armContinuousJob.Properties.Settings, _continuousJobsManager);
+        }
+
         [HttpDelete]
         public HttpResponseMessage RemoveContinuousJob(string jobName)
         {
@@ -196,6 +209,12 @@ namespace Kudu.Services.Jobs
         public Task<HttpResponseMessage> CreateTriggeredJob(string jobName)
         {
             return CreateJob(jobName, _triggeredJobsManager);
+        }
+
+        [HttpPut]
+        public HttpResponseMessage CreateTriggeredJobArm(string jobName, ArmEntry<TriggeredJob> armTriggeredJob)
+        {
+            return SetJobSettings(jobName, armTriggeredJob.Properties.Settings, _triggeredJobsManager);
         }
 
         [HttpDelete]
@@ -229,7 +248,7 @@ namespace Kudu.Services.Jobs
             }
             else
             {
-                response = Request.CreateResponse(HttpStatusCode.OK, jobs);
+                response = Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(jobs, Request));
             }
 
             response.Headers.ETag = new EntityTagHeaderValue(currentETag);

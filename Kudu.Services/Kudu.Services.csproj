@@ -85,6 +85,11 @@
     <Compile Include="..\Common\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="Arm\ArmActionSelector.cs" />
+    <Compile Include="Arm\ArmControllerConfiguration.cs" />
+    <Compile Include="Arm\ArmEntry.cs" />
+    <Compile Include="Arm\ArmListEntry.cs" />
+    <Compile Include="Arm\ArmUtils.cs" />
     <Compile Include="ByteRanges\HttpRequestMessageExtensions.cs" />
     <Compile Include="Commands\CommandController.cs" />
     <Compile Include="Commands\CommandsNativeMethods.cs" />
