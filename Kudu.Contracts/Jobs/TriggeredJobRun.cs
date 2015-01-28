@@ -1,12 +1,19 @@
 ﻿using System;
+using Kudu.Contracts.Infrastructure;
 using Newtonsoft.Json;
 
 namespace Kudu.Contracts.Jobs
 {
-    public class TriggeredJobRun
+    public class TriggeredJobRun : INamedObject
     {
         [JsonProperty(PropertyName = "id")]
         public string Id { get; set; }
+
+        [JsonProperty(PropertyName = "name")]
+        public string Name
+        {
+            get { return Id; }
+        }
 
         [JsonProperty(PropertyName = "status")]
         public string Status { get; set; }

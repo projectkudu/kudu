@@ -240,7 +240,8 @@ namespace Kudu.Core.Jobs
                     JobType = _jobsTypePath,
                     ScriptHost = scriptHost,
                     UsingSdk = IsUsingSdk(GetSpecificJobDataPath(jobName)),
-                    JobBinariesRootPath = jobScriptDirectory.FullName
+                    JobBinariesRootPath = jobScriptDirectory.FullName,
+                    Settings = GetJobSettings(jobName)
                 };
 
                 UpdateJob(job);

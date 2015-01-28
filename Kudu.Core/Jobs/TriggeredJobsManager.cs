@@ -235,7 +235,7 @@ namespace Kudu.Core.Jobs
                     jobName,
                     _ => new TriggeredJobRunner(triggeredJob.Name, Environment, Settings, TraceFactory, Analytics));
 
-            JobSettings jobSettings = GetJobSettings(triggeredJob.Name);
+            JobSettings jobSettings = triggeredJob.Settings;
 
             triggeredJobRunner.StartJobRun(triggeredJob, jobSettings, ReportTriggeredJobFinished);
         }

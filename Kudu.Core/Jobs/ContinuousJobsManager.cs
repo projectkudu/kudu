@@ -227,7 +227,7 @@ namespace Kudu.Core.Jobs
                 _continuousJobRunners.Add(continuousJob.Name, continuousJobRunner);
             }
 
-            JobSettings jobSettings = GetJobSettings(continuousJob.Name);
+            JobSettings jobSettings = continuousJob.Settings;
             continuousJobRunner.RefreshJob(continuousJob, jobSettings);
         }
 
