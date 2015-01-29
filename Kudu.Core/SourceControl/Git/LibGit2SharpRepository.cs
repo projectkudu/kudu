@@ -207,7 +207,6 @@ echo $i > pushinfo
 
         public void FetchWithoutConflict(string remoteUrl, string branchName)
         {
-            ITracer tracer = _tracerFactory.GetTracer();
             try
             {
                 using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
@@ -247,7 +246,7 @@ echo $i > pushinfo
                 }
                 else
                 {
-                    throw exception;
+                    throw;
                 }
             }
             finally
