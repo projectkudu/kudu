@@ -140,7 +140,7 @@ namespace Kudu.Contracts.Settings
             string repositoryPath = settings.GetValue(SettingsKeys.RepositoryPath);
             if (!String.IsNullOrEmpty(repositoryPath))
             {
-                return repositoryPath;
+                return System.Environment.ExpandEnvironmentVariables(repositoryPath);
             }
 
             // in case of no repository, we will default to webroot (preferring inplace).
@@ -150,6 +150,17 @@ namespace Kudu.Contracts.Settings
             }
 
             return Constants.RepositoryPath;
+        }
+
+        public static string GetTargetPath(this IDeploymentSettingsManager settings)
+        {
+            string targetPath = settings.GetValue(SettingsKeys.TargetPath);
+            if (!String.IsNullOrEmpty(targetPath))
+            {
+                return System.Environment.ExpandEnvironmentVariables(targetPath);
+            }
+
+            return null;
         }
 
         public static bool IsNullRepository(this IDeploymentSettingsManager settings)

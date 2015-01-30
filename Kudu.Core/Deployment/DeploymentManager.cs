@@ -683,7 +683,7 @@ namespace Kudu.Core.Deployment
 
         private static string GetOutputPath(IEnvironment environment, IDeploymentSettingsManager perDeploymentSettings)
         {
-            string targetPath = perDeploymentSettings.GetValue(SettingsKeys.TargetPath);
+            string targetPath = perDeploymentSettings.GetTargetPath();
 
             if (!String.IsNullOrEmpty(targetPath))
             {

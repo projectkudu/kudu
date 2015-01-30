@@ -51,6 +51,8 @@ namespace Kudu.FunctionalTests
                 {
                     yield return new object[] { scenario, setting };
                 }
+
+                yield return new object[] { new HelloKuduWithAboluteFolder(), new AbsoluteTargetPathSetting() };
             }
         }
 
@@ -477,6 +479,89 @@ namespace Kudu.FunctionalTests
             public override string DefaultDocument
             {
                 get { return "index.htm"; }
+            }
+        }
+
+        // Test: SCM_TARGET_PATH and SCM_REPOSITORY_PATH with absolute path
+        public class AbsoluteTargetPathSetting : Setting
+        {
+            public override string Name
+            {
+                get
+                {
+                    return "Scenario : AbsoluteTargetPathSetting, "
+                        + "Setting : SCM_REPOSITORY_PATH = " + RepositoryPath
+                        + ", PROJECT = " + Project
+                        + ", SCM_TARGET_PATH = " + TargetPath;
+                }
+            }
+
+            public override string RepositoryPath
+            {
+                get { return @"%HOME%\logFiles\repo"; }
+            }
+
+            public override string Project
+            {
+                get { return "."; }
+            }
+
+            public override string TargetPath
+            {
+                get { return @"%HOME%\logFiles\dest"; }
+            }
+
+            public override DeployStatus DeploymentStatus
+            {
+                get { return DeployStatus.Success; }
+            }
+
+            public override IEnumerable<string> ContainStrings
+            {
+                get
+                {
+                    return new[] 
+                    {
+                        @"logFiles\repo",
+                        @"logFiles\dest"
+                    };
+                }
+            }
+
+            public override void Verify(ApplicationManager appManager)
+            {
+                Assert.False(appManager.VfsManager.Exists(@"site\repository\.git"), @"Should not have site\repository\.git folder");
+                Assert.True(appManager.VfsManager.Exists(@"logFiles\repo\.git"), @"Should have logFiles\repo\.git folder");
+            }
+        }
+
+        public class HelloKuduWithAboluteFolder : Scenario
+        {
+            public override string Name
+            {
+                get { return "HelloKuduWithSubFolders"; }
+            }
+
+            public override string Content
+            {
+                get { return "Hello Kudu"; }
+            }
+
+            public override string BuilderTrace
+            {
+                get { return "Handling Basic Web Site deployment"; }
+            }
+
+            public override string DefaultDocument
+            {
+                get { return "index.htm"; }
+            }
+
+             public override void VerifyUrl(ApplicationManager appManager, string documentRoot)
+            {
+                Assert.True(appManager.VfsManager.Exists(@"logFiles\dest\index.htm"), @"Should have logFiles\dest\index.htm file");
+                Assert.True(appManager.VfsManager.Exists(@"logFiles\dest\subfolder1\index.htm"), @"Should have logFiles\dest\subfolder1\index.htm file");
+                Assert.True(appManager.VfsManager.Exists(@"logFiles\dest\subfolder2\index.htm"), @"Should have logFiles\dest\subfolder2\index.htm file");
             }
         }
     }
