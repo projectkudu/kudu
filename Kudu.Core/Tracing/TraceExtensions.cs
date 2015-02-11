@@ -33,6 +33,11 @@ namespace Kudu.Core.Tracing
             return tracer.Step(message, _empty);
         }
 
+        public static IDisposable Step(this ITracer tracer, string message, params object[] args)
+        {
+            return tracer.Step(String.Format(message, args), _empty);
+        }
+
         public static void Trace(this ITracer tracer, string message, params object[] args)
         {
             tracer.Trace(String.Format(message, args), _empty);
@@ -62,6 +67,15 @@ namespace Kudu.Core.Tracing
             {
                 { "type", "error" },
                 { "text", message }
+            });
+        }
+
+        public static void TraceError(this ITracer tracer, string message, params object[] args)
+        {
+            tracer.Trace("Error occurred", new Dictionary<string, string>
+            {
+                { "type", "error" },
+                { "text", String.Format(message, args) }
             });
         }
 

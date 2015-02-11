@@ -71,56 +71,84 @@ namespace Kudu.Core.SiteExtensions
         /// <summary>
         /// Helper function to download package from given url, and place package (only 'content' folder from package) to given folder
         /// </summary>
-        public static async Task DownloadPackageToFolder(this SourceRepository srcRepo, PackageIdentity identity, string destinationFolder)
+        /// <param name="identity">Package identity</param>
+        /// <param name="destinationFolder">Folder where we copy the package content (content folder only) to</param>
+        /// <param name="pathToLocalCopyOfNudpk">File path where we copy the nudpk to</param>
+        /// <returns></returns>
+        public static async Task DownloadPackageToFolder(this SourceRepository srcRepo, PackageIdentity identity, string destinationFolder, string pathToLocalCopyOfNudpk = null)
         {
             var downloadResource = await srcRepo.GetResourceAsync<DownloadResource>();
             using (Stream sourceStream = await downloadResource.GetStream(identity, CancellationToken.None))
             {
                 Stream packageStream = sourceStream;
-                if (!sourceStream.CanSeek)
+                try
                 {
-                    // V3 DownloadResource.GetStream does not support seek operations.
-                    // https://github.com/NuGet/NuGet.Protocol/issues/15
-
-                    MemoryStream memStream = new MemoryStream();
-
-                    try
+                    if (!sourceStream.CanSeek)
                     {
-                        byte[] buffer = new byte[2048];
+                        // V3 DownloadResource.GetStream does not support seek operations.
+                        // https://github.com/NuGet/NuGet.Protocol/issues/15
 
-                        int bytesRead = 0;
-                        do
+                        MemoryStream memStream = new MemoryStream();
+
+                        try
                         {
-                            bytesRead = sourceStream.Read(buffer, 0, buffer.Length);
-                            memStream.Write(buffer, 0, bytesRead);
-                        } while (bytesRead != 0);
+                            byte[] buffer = new byte[2048];
 
-                        await memStream.FlushAsync();
-                        memStream.Position = 0;
+                            int bytesRead = 0;
+                            do
+                            {
+                                bytesRead = sourceStream.Read(buffer, 0, buffer.Length);
+                                memStream.Write(buffer, 0, bytesRead);
+                            } while (bytesRead != 0);
 
-                        packageStream = memStream;
+                            await memStream.FlushAsync();
+                            memStream.Position = 0;
+
+                            packageStream = memStream;
+                        }
+                        catch
+                        {
+                            memStream.Dispose();
+                            throw;
+                        }
                     }
-                    catch
+
+                    if (!string.IsNullOrWhiteSpace(pathToLocalCopyOfNudpk))
                     {
-                        memStream.Dispose();
-                        throw;
+                        string packageFolderPath = Path.GetDirectoryName(pathToLocalCopyOfNudpk);
+                        FileSystemHelpers.CreateDirectory(packageFolderPath);
+                        using (Stream writeStream = FileSystemHelpers.OpenWrite(pathToLocalCopyOfNudpk))
+                        {
+                            OperationManager.Attempt(() => packageStream.CopyTo(writeStream));
+                        }
+
+                        // set position back to the head of stream
+                        packageStream.Position = 0;
+                    }
+
+                    using (ZipFile zipFile = ZipFile.Read(packageStream))
+                    {
+                        // we only care about stuff under "content" folder
+                        int substringStartIndex = @"content/".Length;
+                        IEnumerable<ZipEntry> contentEntries = zipFile.Entries.Where(e => e.FileName.StartsWith(@"content/", StringComparison.InvariantCultureIgnoreCase));
+                        foreach (var entry in contentEntries)
+                        {
+                            string fullPath = Path.Combine(destinationFolder, entry.FileName.Substring(substringStartIndex));
+                            FileSystemHelpers.CreateDirectory(Path.GetDirectoryName(fullPath));
+                            using (Stream writeStream = FileSystemHelpers.OpenWrite(fullPath))
+                            {
+                                // let the thread go with itself, so that once file finsihed writing, doesn`t need to request thread context from main thread
+                                await entry.OpenReader().CopyToAsync(writeStream).ConfigureAwait(false);
+                            }
+                        }
                     }
                 }
-
-                using (ZipFile zipFile = ZipFile.Read(packageStream))
+                finally
                 {
-                    // we only care about stuff under "content" folder
-                    int substringStartIndex = @"content/".Length;
-                    IEnumerable<ZipEntry> contentEntries = zipFile.Entries.Where(e => e.FileName.StartsWith(@"content/", StringComparison.InvariantCultureIgnoreCase));
-                    foreach (var entry in contentEntries)
+                    if (packageStream != null && !sourceStream.CanSeek)
                     {
-                        string fullPath = Path.Combine(destinationFolder, entry.FileName.Substring(substringStartIndex));
-                        FileSystemHelpers.CreateDirectory(Path.GetDirectoryName(fullPath));
-                        using (Stream writeStream = FileSystemHelpers.OpenWrite(fullPath))
-                        {
-                            // let the thread go with itself, so that once file finsihed writing, doesn`t need to request thread context from main thread
-                            await entry.OpenReader().CopyToAsync(writeStream).ConfigureAwait(false);
-                        }
+                        // in this case, we created a copy of the source stream in memoery, need to manually dispose
+                        packageStream.Dispose();
                     }
                 }
             }
