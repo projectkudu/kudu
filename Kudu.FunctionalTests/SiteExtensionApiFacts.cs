@@ -1,10 +1,10 @@
-﻿using Kudu.Contracts.SiteExtensions;
-using Kudu.Core.Infrastructure;
-using Kudu.TestHarness;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Kudu.Contracts.SiteExtensions;
+using Kudu.Core.Infrastructure;
+using Kudu.TestHarness;
 using Xunit;
 using Xunit.Extensions;
 
