@@ -34,6 +34,8 @@ namespace Kudu.FunctionalTests
         [InlineData("http://www.nuget.org/api/v2/")]
         public async Task SiteExtensionV2AndV3FeedTests(string feedEndpoint)
         {
+            TestTracer.Trace("Testing against feed: '{0}'", feedEndpoint);
+
             const string appName = "SiteExtensionV2AndV3FeedTests";
             const string testPackageId = "bootstrap";
             const string testPackageVersion = "3.0.0";
@@ -42,21 +44,30 @@ namespace Kudu.FunctionalTests
                 var manager = appManager.SiteExtensionManager;
 
                 // list package
+                TestTracer.Trace("Search extensions by id: '{0}'", testPackageId);
                 IEnumerable<SiteExtensionInfo> results = await manager.GetRemoteExtensions(
                     filter: testPackageId,
                     feedUrl: feedEndpoint);
                 Assert.True(results.Count() > 0, string.Format("GetRemoteExtensions for '{0}' package result should > 0", testPackageId));
-                
+
                 // get package
+                TestTracer.Trace("Get an extension by id: '{0}'", testPackageId);
                 SiteExtensionInfo result = await manager.GetRemoteExtension(testPackageId, feedUrl: feedEndpoint);
                 Assert.Equal(testPackageId, result.Id);
 
+                TestTracer.Trace("Get an extension by id: '{0}' and version: '{1}'", testPackageId, testPackageVersion);
+                result = await manager.GetRemoteExtension(testPackageId, version: testPackageVersion, feedUrl: feedEndpoint);
+                Assert.Equal(testPackageId, result.Id);
+                Assert.Equal(testPackageVersion, result.Version);
+
                 // install
+                TestTracer.Trace("Install an extension by id: '{0}' and version: '{1}'", testPackageId, testPackageVersion);
                 result = await manager.InstallExtension(testPackageId, version: testPackageVersion, feedUrl: feedEndpoint);
                 Assert.Equal(testPackageId, result.Id);
                 Assert.Equal(testPackageVersion, result.Version);
 
                 // uninstall
+                TestTracer.Trace("Uninstall an extension by id: '{0}'", testPackageId);
                 Assert.True(await manager.UninstallExtension(result.Id));
             });
         }
