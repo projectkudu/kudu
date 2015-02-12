@@ -6,7 +6,6 @@ using System.Configuration;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using System.Xml;
@@ -19,6 +18,7 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.Tracing;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NuGet.Client;
 using NuGet.Client.VisualStudio;
 using NuGet.Versioning;
@@ -39,6 +39,8 @@ namespace Kudu.Core.SiteExtensions
         private const string _applicationHostFile = "applicationHost.xdt";
         private const string _settingsFileName = "SiteExtensionSettings.json";
         private const string _feedUrlSetting = "feed_url";
+        private const string _installUtcTimestampSetting = "install_timestamp_utc";
+        private const string _versionSetting = "version";
 
         private readonly string _rootPath;
         private readonly string _baseUrl;
@@ -257,9 +259,11 @@ namespace Kudu.Core.SiteExtensions
             }
         }
 
+        // <inheritdoc />
         public async Task<SiteExtensionInfo> InstallExtension(string id, string version, string feedUrl)
         {
             ITracer tracer = _traceFactory.GetTracer();
+
             if (_preInstalledExtensionDictionary.ContainsKey(id))
             {
                 tracer.Trace("Pre-installed site extension found: {0}, not going to perform new installation.", id);
@@ -267,9 +271,19 @@ namespace Kudu.Core.SiteExtensions
             }
             else
             {
+                // Check if site extension already installed (id, version, feedUrl), if already install return right away
+                if (await this.IsSiteExtensionInstalled(id, version, feedUrl))
+                {
+                    // package already installed, return package from local repo.
+                    tracer.Trace("Site extension {0} with version {1} from {2} already installed.", id, version, feedUrl);
+                    return await GetLocalExtension(id);
+                }
+
+                JsonSettings siteExtensionSettings = GetSettingManager(id);
+
                 if (String.IsNullOrEmpty(feedUrl))
                 {
-                    feedUrl = GetSettingManager(id).GetValue(_feedUrlSetting);
+                    feedUrl = siteExtensionSettings.GetValue(_feedUrlSetting);
                 }
 
                 SourceRepository remoteRepo = GetRemoteRepository(feedUrl);
@@ -297,12 +311,58 @@ namespace Kudu.Core.SiteExtensions
                     {
                         string installationDirectory = GetInstallationDirectory(id);
                         localPackage = await InstallExtension(repoPackage, installationDirectory, feedUrl);
-                        GetSettingManager(id).SetValue(_feedUrlSetting, feedUrl);
+                        siteExtensionSettings.SetValues(new KeyValuePair<string, JToken>[] {
+                            new KeyValuePair<string, JToken>(_versionSetting, localPackage.Identity.Version.ToNormalizedString()),
+                            new KeyValuePair<string, JToken>(_feedUrlSetting, feedUrl),
+                            new KeyValuePair<string, JToken>(_installUtcTimestampSetting, DateTime.UtcNow.ToString("u"))
+                        });
                     }
                 }
 
                 return await ConvertLocalPackageToSiteExtensionInfo(localPackage, checkLatest: true);
             }
+        }
+
+        /// <summary>
+        /// <para> Return true if any of below cases is satisfied:</para>
+        /// <para>      1) Package with same version and from same feed already exist in local repo</para>
+        /// <para>      2) If given feedUrl is null</para>
+        /// <para>              Try to use feed from local package, if feed from local package also null, fallback to default feed</para>
+        /// <para>              Check if version from query is same as local package</para>
+        /// <para>      3) If given version and feedUrl are null</para>
+        /// <para>              Try to use feed from local package, if feed from local package also null, fallback to default feed</para>
+        /// <para>              Check if version from query is same as local package</para>
+        /// </summary>
+        private async Task<bool> IsSiteExtensionInstalled(string id, string version, string feedUrl)
+        {
+            JsonSettings siteExtensionSettings = GetSettingManager(id);
+            string localPackageVersion = siteExtensionSettings.GetValue(_versionSetting);
+            string localPackageFeedUrl = siteExtensionSettings.GetValue(_feedUrlSetting);
+            bool isInstalled = false;
+
+            // Try to use given feed
+            // If given feed is null, try with feed that from local package
+            // And GetRemoteRepository will fallback to use default feed if pass in feed param is null
+            SourceRepository remoteRepo = GetRemoteRepository(feedUrl ?? localPackageFeedUrl);
+
+            // case 1 and 2
+            if (!string.IsNullOrWhiteSpace(version)
+                && version.Equals(localPackageVersion, StringComparison.OrdinalIgnoreCase)
+                && remoteRepo.PackageSource.Source.Equals(localPackageFeedUrl, StringComparison.OrdinalIgnoreCase))
+            {
+                isInstalled = true;
+            }
+            else if (string.IsNullOrWhiteSpace(version) && string.IsNullOrWhiteSpace(feedUrl))
+            {
+                // case 3
+                UIPackageMetadata remotePackage = await remoteRepo.GetLatestPackageById(id);
+                if (remotePackage != null)
+                {
+                    isInstalled = remotePackage.Identity.Version.ToNormalizedString().Equals(localPackageVersion, StringComparison.OrdinalIgnoreCase);
+                }
+            }
+
+            return isInstalled;
         }
 
         /// <summary>

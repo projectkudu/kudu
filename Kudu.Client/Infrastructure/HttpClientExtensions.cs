@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Kudu.Contracts.SiteExtensions;
 using Newtonsoft.Json;
 
 namespace Kudu.Client.Infrastructure
@@ -87,9 +88,23 @@ namespace Kudu.Client.Infrastructure
 
         public static async Task<TOutput> PutJsonAsync<TInput, TOutput>(this HttpClient client, string url, TInput param)
         {
-            HttpResponseMessage result = await client.PutAsJsonAsync(url, param);
+            HttpResponseMessage response = await client.PutAsJsonAsync(url, param);
+            string content = await response.EnsureSuccessful().Content.ReadAsStringAsync();
 
-            string content = await result.EnsureSuccessful().Content.ReadAsStringAsync();
+            var outputType = typeof(TOutput);
+            if (HttpResponseResultUtils.IsTypeOfHttpResponseRresult(outputType))
+            {
+                Type bodyType = outputType.GenericTypeArguments[0]; // HttpResponseResult<T> takes one generic type
+                var bodyObject = JsonConvert.DeserializeObject(value: content, type: bodyType);
+                var headerDict = new Dictionary<string, IEnumerable<string>>();
+
+                foreach (var item in response.Headers)
+                {
+                    headerDict.Add(item.Key, item.Value);
+                }
+
+                return (TOutput)HttpResponseResultUtils.CreateHttpResponseResultInstance(outputType, headerDict, bodyObject);
+            }
 
             return JsonConvert.DeserializeObject<TOutput>(content);
         }

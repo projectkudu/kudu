@@ -63,5 +63,8 @@ namespace Kudu
         {
             get { return _maxAllowedExectionTime; }
         }
+
+        public const string SiteOperationHeaderKey = "X-MS-SITE-OPERATION";
+        public const string SiteOperationRestart = "restart";
     }
 }

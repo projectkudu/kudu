@@ -13,6 +13,9 @@ namespace Kudu.Contracts.SiteExtensions
 
         Task<SiteExtensionInfo> GetLocalExtension(string id, bool checkLatest);
 
+        /// <summary>
+        /// Install or update a site extension
+        /// </summary>
         Task<SiteExtensionInfo> InstallExtension(string id, string version, string feedUrl);
 
         Task<bool> UninstallExtension(string id);

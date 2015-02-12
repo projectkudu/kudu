@@ -51,6 +51,7 @@
     <Compile Include="Infrastructure\HttpResponseMessageExtensions.cs" />
     <Compile Include="Infrastructure\HttpClientExtensions.cs" />
     <Compile Include="Infrastructure\HttpClientHelper.cs" />
+    <Compile Include="Infrastructure\HttpResponseResult.cs" />
     <Compile Include="Infrastructure\ICredentialProvider.cs" />
     <Compile Include="Infrastructure\IEventProvider.cs" />
     <Compile Include="Infrastructure\KuduRemoteClientBase.cs" />
@@ -77,6 +78,10 @@
     <ProjectReference Include="..\Kudu.Contracts\Kudu.Contracts.csproj">
       <Project>{EC0ED988-2C60-4F31-A434-645E048BFD95}</Project>
       <Name>Kudu.Contracts</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Kudu.Services\Kudu.Services.csproj">
+      <Project>{d163e227-9eb6-4619-ad37-d8eef831aef0}</Project>
+      <Name>Kudu.Services</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(SolutionDir)\Build\Kudu.imports" Condition="$(KeyFile) != ''" />

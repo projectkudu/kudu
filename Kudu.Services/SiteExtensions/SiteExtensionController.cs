@@ -1,11 +1,13 @@
-﻿using Kudu.Contracts.SiteExtensions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Web;
 using System.Web.Http;
+using Kudu.Contracts.SiteExtensions;
+using Kudu.Services.Arm;
 
 namespace Kudu.Services.SiteExtensions
 {
@@ -55,18 +57,19 @@ namespace Kudu.Services.SiteExtensions
         }
 
         [HttpPut]
-        public async Task<SiteExtensionInfo> InstallExtension(string id, SiteExtensionInfo requestInfo)
+        public async Task<HttpResponseMessage> InstallExtension(string id, SiteExtensionInfo requestInfo)
         {
+            var startTime = DateTime.UtcNow;
             if (requestInfo == null)
             {
                 requestInfo = new SiteExtensionInfo();
             }
 
-            SiteExtensionInfo extension;
+            SiteExtensionInfo result;
 
             try
             {
-                extension = await _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl);
+                result = await _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl);
             }
             catch (WebException e)
             {
@@ -79,12 +82,26 @@ namespace Kudu.Services.SiteExtensions
                 throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Site extension install exception. The package might be invalid.", e));
             }
 
-            if (extension == null)
+            if (result == null)
             {
                 throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, "Could not find " + id));
             }
 
-            return extension;
+            // TODO: xiaowu, when update to real csm async, should return "Accepted" instead of "OK"
+            var responseMessage = Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(result, Request));
+
+            if (result != null  // result not null indicate instalation success, when move to async operation, will relying on provisionState instead
+                && result.InstalledDateTime.HasValue
+                && result.InstalledDateTime.Value > startTime
+                && ArmUtils.IsArmRequest(Request))
+            {
+                // Populate this header if 
+                //      Request is from ARM
+                //      Installation action is performed
+                responseMessage.Headers.Add("X-MS-SITE-OPERATION", Constants.SiteOperationRestart);
+            }
+
+            return responseMessage;
         }
 
         [HttpDelete]
