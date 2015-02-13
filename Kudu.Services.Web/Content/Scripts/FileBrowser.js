@@ -61,7 +61,7 @@ $.connection.hub.start().done(function () {
         }
     };
 
-    var MAX_VIEW_ITEMS = 100;
+    var MAX_VIEW_ITEMS = 200;
 
     var node = function (data, parent) {
         this.parent = parent;
