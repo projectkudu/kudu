@@ -9,6 +9,7 @@ namespace Kudu.Core
         private readonly string _webRootPath;
         private readonly string _deploymentsPath;
         private readonly string _deploymentToolsPath;
+        private readonly string _siteExtensionSettingsPath;
         private readonly string _diagnosticsPath;
         private readonly string _locksPath;
         private readonly string _sshKeyPath;
@@ -38,7 +39,8 @@ namespace Kudu.Core
                 string sshKeyPath,
                 string scriptPath,
                 string nodeModulesPath,
-                string dataPath)
+                string dataPath,
+                string siteExtensionSettingsPath)
         {
             if (repositoryPath == null)
             {
@@ -52,6 +54,7 @@ namespace Kudu.Core
             _webRootPath = webRootPath;
             _deploymentsPath = deploymentsPath;
             _deploymentToolsPath = Path.Combine(_deploymentsPath, Constants.DeploymentToolsPath);
+            _siteExtensionSettingsPath = siteExtensionSettingsPath;
             _diagnosticsPath = diagnosticsPath;
             _locksPath = locksPath;
             _sshKeyPath = sshKeyPath;
@@ -84,6 +87,7 @@ namespace Kudu.Core
             _webRootPath = Path.Combine(SiteRootPath, Constants.WebRoot);
             _deploymentsPath = Path.Combine(SiteRootPath, Constants.DeploymentCachePath);
             _deploymentToolsPath = Path.Combine(_deploymentsPath, Constants.DeploymentToolsPath);
+            _siteExtensionSettingsPath = Path.Combine(SiteRootPath, Constants.SiteExtensionsCachePath);
             _diagnosticsPath = Path.Combine(SiteRootPath, Constants.DiagnosticsPath);
             _locksPath = Path.Combine(SiteRootPath, Constants.LocksPath);
             _sshKeyPath = Path.Combine(rootPath, Constants.SSHKeyPath);
@@ -187,7 +191,7 @@ namespace Kudu.Core
                 return _scriptPath;
             }
         }
-        
+
         public string NodeModulesPath
         {
             get
@@ -255,6 +259,11 @@ namespace Kudu.Core
         public string JobsBinariesPath
         {
             get { return _jobsBinariesPath; }
+        }
+
+        public string SiteExtensionSettingsPath
+        {
+            get { return _siteExtensionSettingsPath; }
         }
 
         public static bool IsAzureEnvironment()

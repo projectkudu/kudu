@@ -105,7 +105,7 @@ namespace Kudu.Core.Test.Tracing
 
         [Theory]
         [PropertyData("TraceRequests")]
-        public void TraceFiltersTests(bool expected, TraceLevel level, Kudu.Core.Tracing.XmlTracer.TraceInfo info, int statusCode)
+        public void TraceFiltersTests(bool expected, TraceLevel level, TraceInfo info, int statusCode)
         {
             Assert.Equal(expected, XmlTracer.ShouldTrace(level, info, statusCode));
         }
@@ -128,7 +128,7 @@ namespace Kudu.Core.Test.Tracing
                 { 
                     true, 
                     TraceLevel.Error,
-                    new Kudu.Core.Tracing.XmlTracer.TraceInfo("title", new Dictionary<string, string>()), 
+                    new TraceInfo("title", new Dictionary<string, string>()), 
                     200
                 };
 
@@ -137,7 +137,7 @@ namespace Kudu.Core.Test.Tracing
                 { 
                     true, 
                     TraceLevel.Error,
-                    new Kudu.Core.Tracing.XmlTracer.TraceInfo("title", new Dictionary<string, string>
+                    new TraceInfo("title", new Dictionary<string, string>
                         {
                             { "type", "request" },
                             { "method", "POST" },
@@ -151,7 +151,7 @@ namespace Kudu.Core.Test.Tracing
                 { 
                     true, 
                     TraceLevel.Error,
-                    new Kudu.Core.Tracing.XmlTracer.TraceInfo("title", new Dictionary<string, string>
+                    new TraceInfo("title", new Dictionary<string, string>
                         {
                             { "type", "request" },
                             { "method", "GET" },
@@ -165,7 +165,7 @@ namespace Kudu.Core.Test.Tracing
                 { 
                     false, 
                     TraceLevel.Error,
-                    new Kudu.Core.Tracing.XmlTracer.TraceInfo("title", new Dictionary<string, string>
+                    new TraceInfo("title", new Dictionary<string, string>
                         {
                             { "type", "request" },
                             { "method", "GET" },
@@ -179,7 +179,7 @@ namespace Kudu.Core.Test.Tracing
                 { 
                     false, 
                     TraceLevel.Error,
-                    new Kudu.Core.Tracing.XmlTracer.TraceInfo("title", new Dictionary<string, string>
+                    new TraceInfo("title", new Dictionary<string, string>
                         {
                             { "type", "request" },
                             { "method", "GET" },
@@ -193,7 +193,7 @@ namespace Kudu.Core.Test.Tracing
                 { 
                     false, 
                     TraceLevel.Error,
-                    new Kudu.Core.Tracing.XmlTracer.TraceInfo("title", new Dictionary<string, string>
+                    new TraceInfo("title", new Dictionary<string, string>
                         {
                             { "type", "request" },
                             { "method", "GET" },
@@ -207,7 +207,7 @@ namespace Kudu.Core.Test.Tracing
                 { 
                     false, 
                     TraceLevel.Error,
-                    new Kudu.Core.Tracing.XmlTracer.TraceInfo("title", new Dictionary<string, string>
+                    new TraceInfo("title", new Dictionary<string, string>
                         {
                             { "type", "request" },
                             { "method", "GET" },
@@ -221,7 +221,7 @@ namespace Kudu.Core.Test.Tracing
                 { 
                     false, 
                     TraceLevel.Error,
-                    new Kudu.Core.Tracing.XmlTracer.TraceInfo("title", new Dictionary<string, string>
+                    new TraceInfo("title", new Dictionary<string, string>
                         {
                             { "type", "request" },
                             { "method", "GET" },

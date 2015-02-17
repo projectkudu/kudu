@@ -6,9 +6,11 @@ using System.Configuration;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using System.Web;
 using System.Xml;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.SiteExtensions;
@@ -23,7 +25,6 @@ using NuGet.Client;
 using NuGet.Client.VisualStudio;
 using NuGet.Versioning;
 using NullLogger = Kudu.Core.Deployment.NullLogger;
-
 namespace Kudu.Core.SiteExtensions
 {
     public class SiteExtensionManager : ISiteExtensionManager
@@ -188,18 +189,30 @@ namespace Kudu.Core.SiteExtensions
             IEnumerable<UIPackageMetadata> searchResult = null;
             List<SiteExtensionInfo> siteExtensionInfos = new List<SiteExtensionInfo>();
 
+            foreach (var item in preInstalledExtensions)
+            {
+                SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, item.Id);
+                armSettings.FillSiteExtensionInfo(item, defaultProvisionState: Constants.SiteExtensionProvisioningStateSucceeded);
+            }
+
             using (tracer.Step("Search packages locally with filter: {0}", filter))
             {
                 searchResult = await _localRepository.Search(filter);
                 foreach (var item in searchResult)
                 {
-                    siteExtensionInfos.Add(await ConvertLocalPackageToSiteExtensionInfo(item, checkLatest));
+                    SiteExtensionInfo info = await ConvertLocalPackageToSiteExtensionInfo(item, checkLatest);
+
+                    SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, info.Id);
+                    armSettings.FillSiteExtensionInfo(info, defaultProvisionState: Constants.SiteExtensionProvisioningStateSucceeded);
+
+                    siteExtensionInfos.Add(info);
                 }
             }
 
             return preInstalledExtensions.Concat(siteExtensionInfos);
         }
 
+        // <inheritdoc />
         public async Task<SiteExtensionInfo> GetLocalExtension(string id, bool checkLatest = true)
         {
             ITracer tracer = _traceFactory.GetTracer();
@@ -207,17 +220,22 @@ namespace Kudu.Core.SiteExtensions
             if (info != null && info.ExtensionUrl != null)
             {
                 tracer.Trace("Pre-installed site extension found: {0}", id);
-                return info;
             }
-
-            UIPackageMetadata package = await _localRepository.GetLatestPackageById(id);
-            if (package == null)
+            else
             {
-                tracer.Trace("No package found from local repo with id: {0}.", id);
-                return null;
+                UIPackageMetadata package = await _localRepository.GetLatestPackageById(id);
+                if (package == null)
+                {
+                    tracer.Trace("No package found from local repo with id: {0}.", id);
+                    return null;
+                }
+
+                info = await ConvertLocalPackageToSiteExtensionInfo(package, checkLatest);
             }
 
-            return await ConvertLocalPackageToSiteExtensionInfo(package, checkLatest);
+            SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id);
+            armSettings.FillSiteExtensionInfo(info);
+            return info;
         }
 
         private IEnumerable<SiteExtensionInfo> GetPreInstalledExtensions(string filter, bool showEnabledOnly)
@@ -260,109 +278,151 @@ namespace Kudu.Core.SiteExtensions
         }
 
         // <inheritdoc />
-        public async Task<SiteExtensionInfo> InstallExtension(string id, string version, string feedUrl)
+        public async Task<SiteExtensionInfo> InstallExtension(string id, string version, string feedUrl, ITracer tracer)
         {
-            ITracer tracer = _traceFactory.GetTracer();
+            var installationLock = SiteExtensionInstallationLock.CreateLock(_environment.SiteExtensionSettingsPath, id);
+
+            try
+            {
+                // hold on to lock till action complete (success or fail)
+                return await installationLock.LockOperationAsync<SiteExtensionInfo>(async () =>
+                {
+                    return await TryInstallExtension(id, version, feedUrl, tracer);
+                }, TimeSpan.Zero);
+            }
+            catch (Exception ex)
+            {
+                // handle unexpected exception
+                tracer.TraceError(ex);
+
+                var info = new SiteExtensionInfo();
+                info.Id = id;
+
+                SiteExtensionStatus armStatus = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id);
+                armStatus.Operation = Constants.SiteExtensionOperationInstall;
+                armStatus.ProvisioningState = Constants.SiteExtensionProvisioningStateFailed;
+                armStatus.Status = HttpStatusCode.BadRequest;
+                armStatus.FillSiteExtensionInfo(info);
+                tracer.Trace("Update arm settings for {0} installation. Status: {1}", id, armStatus.Status);
+                return info;
+            }
+        }
+
+        private async Task<SiteExtensionInfo> TryInstallExtension(string id, string version, string feedUrl, ITracer tracer)
+        {
+            SiteExtensionInfo info = null;
+            HttpStatusCode status = HttpStatusCode.OK;  // final status when success
+            bool alreadyInstalled = false;
 
             if (_preInstalledExtensionDictionary.ContainsKey(id))
             {
                 tracer.Trace("Pre-installed site extension found: {0}, not going to perform new installation.", id);
-                return EnablePreInstalledExtension(_preInstalledExtensionDictionary[id]);
+                info = EnablePreInstalledExtension(_preInstalledExtensionDictionary[id], tracer);
+                alreadyInstalled = true;
             }
             else
             {
-                // Check if site extension already installed (id, version, feedUrl), if already install return right away
-                if (await this.IsSiteExtensionInstalled(id, version, feedUrl))
+                try
                 {
-                    // package already installed, return package from local repo.
-                    tracer.Trace("Site extension {0} with version {1} from {2} already installed.", id, version, feedUrl);
-                    return await GetLocalExtension(id);
-                }
-
-                JsonSettings siteExtensionSettings = GetSettingManager(id);
-
-                if (String.IsNullOrEmpty(feedUrl))
-                {
-                    feedUrl = siteExtensionSettings.GetValue(_feedUrlSetting);
-                }
-
-                SourceRepository remoteRepo = GetRemoteRepository(feedUrl);
-                UIPackageMetadata localPackage = null;
-                UIPackageMetadata repoPackage = null;
-
-                if (string.IsNullOrWhiteSpace(version))
-                {
-                    using (tracer.Step("Version is null, search latest package by id: {0}", id))
+                    // Check if site extension already installed (id, version, feedUrl), if already install return right away
+                    if (await this.IsSiteExtensionInstalled(id, version, feedUrl))
                     {
-                        repoPackage = await remoteRepo.GetLatestPackageById(id);
+                        // package already installed, return package from local repo.
+                        tracer.Trace("Site extension {0} with version {1} from {2} already installed.", id, version, feedUrl);
+                        info = await GetLocalExtension(id);
+                        alreadyInstalled = true;
+                    }
+                    else
+                    {
+                        JsonSettings siteExtensionSettings = GetSettingManager(id);
+                        feedUrl = (string.IsNullOrEmpty(feedUrl) ? siteExtensionSettings.GetValue(_feedUrlSetting) : feedUrl);
+                        SourceRepository remoteRepo = GetRemoteRepository(feedUrl);
+                        UIPackageMetadata localPackage = null;
+                        UIPackageMetadata repoPackage = null;
+
+                        if (string.IsNullOrWhiteSpace(version))
+                        {
+                            using (tracer.Step("Version is null, search latest package by id: {0}", id))
+                            {
+                                repoPackage = await remoteRepo.GetLatestPackageById(id);
+                            }
+                        }
+                        else
+                        {
+                            using (tracer.Step("Search package by id: {0} and version: {1}", id, version))
+                            {
+                                repoPackage = await remoteRepo.GetPackageByIdentity(id, version);
+                            }
+                        }
+
+                        if (repoPackage != null)
+                        {
+                            using (tracer.Step("Install package: {0}.", id))
+                            {
+                                string installationDirectory = GetInstallationDirectory(id);
+                                localPackage = await InstallExtension(repoPackage, installationDirectory, feedUrl, tracer);
+                                siteExtensionSettings.SetValues(new KeyValuePair<string, JToken>[] {
+                                    new KeyValuePair<string, JToken>(_versionSetting, localPackage.Identity.Version.ToNormalizedString()),
+                                    new KeyValuePair<string, JToken>(_feedUrlSetting, feedUrl),
+                                    new KeyValuePair<string, JToken>(_installUtcTimestampSetting, DateTime.UtcNow.ToString("u"))
+                                });
+                            }
+                        }
+
+                        info = await ConvertLocalPackageToSiteExtensionInfo(localPackage, checkLatest: true);
                     }
                 }
-                else
+                catch (FileNotFoundException ex)
                 {
-                    using (tracer.Step("Search package by id: {0} and version: {1}", id, version))
-                    {
-                        repoPackage = await remoteRepo.GetPackageByIdentity(id, version);
-                    }
+                    tracer.TraceError(ex);
+                    info = new SiteExtensionInfo();
+                    info.Id = id;
+                    info.ProvisioningState = Constants.SiteExtensionProvisioningStateFailed;
+                    info.Comment = string.Format(Constants.SiteExtensionProvisioningStateNotFoundMessageFormat, id);
+                    status = HttpStatusCode.NotFound;
                 }
-
-                if (repoPackage != null)
+                catch (WebException ex)
                 {
-                    using (tracer.Step("Install package: {0}.", id))
-                    {
-                        string installationDirectory = GetInstallationDirectory(id);
-                        localPackage = await InstallExtension(repoPackage, installationDirectory, feedUrl);
-                        siteExtensionSettings.SetValues(new KeyValuePair<string, JToken>[] {
-                            new KeyValuePair<string, JToken>(_versionSetting, localPackage.Identity.Version.ToNormalizedString()),
-                            new KeyValuePair<string, JToken>(_feedUrlSetting, feedUrl),
-                            new KeyValuePair<string, JToken>(_installUtcTimestampSetting, DateTime.UtcNow.ToString("u"))
-                        });
-                    }
+                    tracer.TraceError(ex);
+                    info = new SiteExtensionInfo();
+                    info.Id = id;
+                    info.ProvisioningState = Constants.SiteExtensionProvisioningStateFailed;
+                    info.Comment = string.Format(Constants.SiteExtensionProvisioningStateDownloadFailureMessageFormat, id);
+                    status = HttpStatusCode.BadRequest;
                 }
-
-                return await ConvertLocalPackageToSiteExtensionInfo(localPackage, checkLatest: true);
+                catch (Exception ex)
+                {
+                    tracer.TraceError(ex);
+                    info = new SiteExtensionInfo();
+                    info.Id = id;
+                    info.ProvisioningState = Constants.SiteExtensionProvisioningStateFailed;
+                    info.Comment = string.Format(Constants.SiteExtensionProvisioningStateInvalidPackageMessageFormat, id);
+                    status = HttpStatusCode.BadRequest;
+                }
             }
-        }
 
-        /// <summary>
-        /// <para> Return true if any of below cases is satisfied:</para>
-        /// <para>      1) Package with same version and from same feed already exist in local repo</para>
-        /// <para>      2) If given feedUrl is null</para>
-        /// <para>              Try to use feed from local package, if feed from local package also null, fallback to default feed</para>
-        /// <para>              Check if version from query is same as local package</para>
-        /// <para>      3) If given version and feedUrl are null</para>
-        /// <para>              Try to use feed from local package, if feed from local package also null, fallback to default feed</para>
-        /// <para>              Check if version from query is same as local package</para>
-        /// </summary>
-        private async Task<bool> IsSiteExtensionInstalled(string id, string version, string feedUrl)
-        {
-            JsonSettings siteExtensionSettings = GetSettingManager(id);
-            string localPackageVersion = siteExtensionSettings.GetValue(_versionSetting);
-            string localPackageFeedUrl = siteExtensionSettings.GetValue(_feedUrlSetting);
-            bool isInstalled = false;
-
-            // Try to use given feed
-            // If given feed is null, try with feed that from local package
-            // And GetRemoteRepository will fallback to use default feed if pass in feed param is null
-            SourceRepository remoteRepo = GetRemoteRepository(feedUrl ?? localPackageFeedUrl);
-
-            // case 1 and 2
-            if (!string.IsNullOrWhiteSpace(version)
-                && version.Equals(localPackageVersion, StringComparison.OrdinalIgnoreCase)
-                && remoteRepo.PackageSource.Source.Equals(localPackageFeedUrl, StringComparison.OrdinalIgnoreCase))
+            if (info == null)
             {
-                isInstalled = true;
+                info = new SiteExtensionInfo();
+                info.ProvisioningState = Constants.SiteExtensionProvisioningStateFailed;
+                info.Comment = string.Format(Constants.SiteExtensionProvisioningStateNotFoundMessageFormat, id);
+                status = HttpStatusCode.NotFound;
             }
-            else if (string.IsNullOrWhiteSpace(version) && string.IsNullOrWhiteSpace(feedUrl))
+            else if (!string.Equals(Constants.SiteExtensionProvisioningStateFailed, info.ProvisioningState, StringComparison.OrdinalIgnoreCase))
             {
-                // case 3
-                UIPackageMetadata remotePackage = await remoteRepo.GetLatestPackageById(id);
-                if (remotePackage != null)
-                {
-                    isInstalled = remotePackage.Identity.Version.ToNormalizedString().Equals(localPackageVersion, StringComparison.OrdinalIgnoreCase);
-                }
+                info.ProvisioningState = Constants.SiteExtensionProvisioningStateSucceeded;
+                info.Comment = null;
             }
 
-            return isInstalled;
+            using (tracer.Step("Update arm settings for {0} installation. Status: {1}", id, status))
+            {
+                SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id);
+                armSettings.ReadSiteExtensionInfo(info);
+                armSettings.Status = status;
+                armSettings.Operation = alreadyInstalled ? null : Constants.SiteExtensionOperationInstall;
+            }
+
+            return info;
         }
 
         /// <summary>
@@ -371,10 +431,8 @@ namespace Kudu.Core.SiteExtensions
         /// <para>3. Deploy site extension job</para>
         /// <para>4. Execute install.cmd if exist</para>
         /// </summary>
-        private async Task<UIPackageMetadata> InstallExtension(UIPackageMetadata package, string installationDirectory, string feedUrl)
+        private async Task<UIPackageMetadata> InstallExtension(UIPackageMetadata package, string installationDirectory, string feedUrl, ITracer tracer)
         {
-            ITracer tracer = _traceFactory.GetTracer();
-
             try
             {
                 if (FileSystemHelpers.DirectoryExists(installationDirectory))
@@ -431,7 +489,49 @@ namespace Kudu.Core.SiteExtensions
             return await _localRepository.GetLatestPackageById(package.Identity.Id);
         }
 
-        private SiteExtensionInfo EnablePreInstalledExtension(SiteExtensionInfo info)
+        /// <summary>
+        /// <para> Return true if any of below cases is satisfied:</para>
+        /// <para>      1) Package with same version and from same feed already exist in local repo</para>
+        /// <para>      2) If given feedUrl is null</para>
+        /// <para>              Try to use feed from local package, if feed from local package also null, fallback to default feed</para>
+        /// <para>              Check if version from query is same as local package</para>
+        /// <para>      3) If given version and feedUrl are null</para>
+        /// <para>              Try to use feed from local package, if feed from local package also null, fallback to default feed</para>
+        /// <para>              Check if version from query is same as local package</para>
+        /// </summary>
+        private async Task<bool> IsSiteExtensionInstalled(string id, string version, string feedUrl)
+        {
+            JsonSettings siteExtensionSettings = GetSettingManager(id);
+            string localPackageVersion = siteExtensionSettings.GetValue(_versionSetting);
+            string localPackageFeedUrl = siteExtensionSettings.GetValue(_feedUrlSetting);
+            bool isInstalled = false;
+
+            // Try to use given feed
+            // If given feed is null, try with feed that from local package
+            // And GetRemoteRepository will fallback to use default feed if pass in feed param is null
+            SourceRepository remoteRepo = GetRemoteRepository(feedUrl ?? localPackageFeedUrl);
+
+            // case 1 and 2
+            if (!string.IsNullOrWhiteSpace(version)
+                && version.Equals(localPackageVersion, StringComparison.OrdinalIgnoreCase)
+                && remoteRepo.PackageSource.Source.Equals(localPackageFeedUrl, StringComparison.OrdinalIgnoreCase))
+            {
+                isInstalled = true;
+            }
+            else if (string.IsNullOrWhiteSpace(version) && string.IsNullOrWhiteSpace(feedUrl))
+            {
+                // case 3
+                UIPackageMetadata remotePackage = await remoteRepo.GetLatestPackageById(id);
+                if (remotePackage != null)
+                {
+                    isInstalled = remotePackage.Identity.Version.ToNormalizedString().Equals(localPackageVersion, StringComparison.OrdinalIgnoreCase);
+                }
+            }
+
+            return isInstalled;
+        }
+
+        private SiteExtensionInfo EnablePreInstalledExtension(SiteExtensionInfo info, ITracer tracer)
         {
             string id = info.Id;
             string installationDirectory = GetInstallationDirectory(id);
@@ -458,7 +558,6 @@ namespace Kudu.Core.SiteExtensions
             }
             catch (Exception ex)
             {
-                ITracer tracer = _traceFactory.GetTracer();
                 tracer.TraceError(ex);
                 FileSystemHelpers.DeleteDirectorySafe(installationDirectory);
                 return null;
@@ -521,10 +620,12 @@ namespace Kudu.Core.SiteExtensions
                 OperationManager.Attempt(() => CleanupSiteExtensionJobs(id));
             }
 
-            using (tracer.Step("Delete site extension package and directory"))
+            using (tracer.Step("Delete site extension package, directory and arm settings"))
             {
                 OperationManager.Attempt(() => FileSystemHelpers.DeleteFileSafe(GetNuGetPackageFile(info.Id, info.Version)));
                 OperationManager.Attempt(() => FileSystemHelpers.DeleteDirectorySafe(installationDirectory));
+                SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id);
+                await armSettings.RemoveArmSettings();
             }
 
             return await GetLocalExtension(id, checkLatest: false) == null;
@@ -545,7 +646,6 @@ namespace Kudu.Core.SiteExtensions
         private JsonSettings GetSettingManager(string id)
         {
             string filePath = Path.Combine(_rootPath, id, _settingsFileName);
-
             return new JsonSettings(filePath);
         }
 

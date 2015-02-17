@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 
@@ -20,7 +19,8 @@ namespace Kudu.Core.Tracing
         public const string StartupRequestTrace = "Startup Request";
         public const string ProcessShutdownTrace = "Process Shutdown";
         public const string ExecutingExternalProcessTrace = "Executing external process";
-        
+        public const string BackgroundTrace = "BackgroundTrace";
+
         public const int MaxXmlFiles = 200;
         public const int CleanUpIntervalSecs = 10;
 
@@ -254,7 +254,7 @@ namespace Kudu.Core.Tracing
                     return;
                 }
 
-                foreach (var file in files.OrderBy(n => n).Take(files.Length - (MaxXmlFiles * 80)/100))
+                foreach (var file in files.OrderBy(n => n).Take(files.Length - (MaxXmlFiles * 80) / 100))
                 {
                     FileSystemHelpers.DeleteFileSafe(file);
                 }
@@ -297,6 +297,11 @@ namespace Kudu.Core.Tracing
                 var path = info.Attributes["path"].Split('\\').Last();
                 strb.AppendFormat("_{0}", path);
             }
+            else if (string.Equals(XmlTracer.BackgroundTrace, info.Title, StringComparison.Ordinal))
+            {
+                var path = info.Attributes["url"].Split('?')[0].Trim('/');
+                strb.AppendFormat("_Background_{0}_{1}", info.Attributes["method"], path.Replace('/', '-'));
+            }
             else if (!String.IsNullOrEmpty(info.Title))
             {
                 strb.AppendFormat("_{0}", info.Title.Replace(' ', '-'));
@@ -324,35 +329,6 @@ namespace Kudu.Core.Tracing
             catch
             {
                 // no-op
-            }
-        }
-
-        public class TraceInfo
-        {
-            private string _title;
-            private IDictionary<string, string> _attribs;
-            private DateTime _startTime;
-
-            public TraceInfo(string title, IDictionary<string, string> attribs)
-            {
-                _title = title;
-                _attribs = attribs;
-                _startTime = DateTime.UtcNow;
-            }
-
-            public string Title 
-            { 
-                get { return _title; } 
-            }
-
-            public IDictionary<string, string> Attributes 
-            {
-                get { return _attribs; } 
-            }
-
-            public DateTime StartTime
-            {
-                get { return _startTime; }
             }
         }
     }

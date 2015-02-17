@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Kudu.Contracts.Tracing;
 
 namespace Kudu.Contracts.SiteExtensions
 {
@@ -16,7 +17,7 @@ namespace Kudu.Contracts.SiteExtensions
         /// <summary>
         /// Install or update a site extension
         /// </summary>
-        Task<SiteExtensionInfo> InstallExtension(string id, string version, string feedUrl);
+        Task<SiteExtensionInfo> InstallExtension(string id, string version, string feedUrl, ITracer tracer);
 
         Task<bool> UninstallExtension(string id);
     }

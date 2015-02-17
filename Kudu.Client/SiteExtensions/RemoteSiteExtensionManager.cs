@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using Kudu.Client.Infrastructure;
-using Kudu.Contracts.SiteExtensions;
 using Kudu.Services.Arm;
 using Newtonsoft.Json.Linq;
 
@@ -19,7 +17,7 @@ namespace Kudu.Client.SiteExtensions
         {
         }
 
-        public async Task<IEnumerable<SiteExtensionInfo>> GetRemoteExtensions(string filter = null, bool allowPrereleaseVersions = false, string feedUrl = null)
+        public async Task<HttpResponseMessage> GetRemoteExtensions(string filter = null, bool allowPrereleaseVersions = false, string feedUrl = null)
         {
             var url = new StringBuilder(ServiceUrl);
             url.Append("extensionfeed");
@@ -48,10 +46,10 @@ namespace Kudu.Client.SiteExtensions
                 url.Append(HttpUtility.UrlEncode(feedUrl));
             }
 
-            return await Client.GetJsonAsync<IEnumerable<SiteExtensionInfo>>(url.ToString());
+            return (await Client.GetAsync(url.ToString())).EnsureSuccessful();
         }
 
-        public async Task<SiteExtensionInfo> GetRemoteExtension(string id, string version = null, string feedUrl = null)
+        public async Task<HttpResponseMessage> GetRemoteExtension(string id, string version = null, string feedUrl = null)
         {
             var url = new StringBuilder(ServiceUrl);
             url.Append("extensionfeed/");
@@ -73,10 +71,10 @@ namespace Kudu.Client.SiteExtensions
                 url.Append(HttpUtility.UrlEncode(feedUrl));
             }
 
-            return await Client.GetJsonAsync<SiteExtensionInfo>(url.ToString());
+            return (await Client.GetAsync(url.ToString())).EnsureSuccessful();
         }
 
-        public async Task<IEnumerable<SiteExtensionInfo>> GetLocalExtensions(string filter = null, bool checkLatest = true)
+        public async Task<HttpResponseMessage> GetLocalExtensions(string filter = null, bool checkLatest = true)
         {
             var url = new StringBuilder(ServiceUrl);
             url.Append("siteextensions");
@@ -98,10 +96,10 @@ namespace Kudu.Client.SiteExtensions
                 separator = '&';
             }
 
-            return await Client.GetJsonAsync<IEnumerable<SiteExtensionInfo>>(url.ToString());
+            return (await Client.GetAsync(url.ToString())).EnsureSuccessful();
         }
 
-        public async Task<SiteExtensionInfo> GetLocalExtension(string id, bool checkLatest = true)
+        public async Task<HttpResponseMessage> GetLocalExtension(string id, bool checkLatest = true)
         {
             var url = new StringBuilder(ServiceUrl);
             url.Append("siteextensions/");
@@ -113,45 +111,25 @@ namespace Kudu.Client.SiteExtensions
                 url.Append(checkLatest);
             }
 
-            return await Client.GetJsonAsync<SiteExtensionInfo>(url.ToString());
+            return (await Client.GetAsync(url.ToString())).EnsureSuccessful();
         }
 
-        public async Task<HttpResponseResult<T>> InstallExtension<T>(string id, string version = null, string feedUrl = null)
+        public async Task<HttpResponseMessage> InstallExtension(string id, string version = null, string feedUrl = null)
         {
             var json = new JObject();
             json["version"] = version;
             json["feed_url"] = feedUrl;
 
-            UpdateHeaderIfGoingToBeArmRequest(typeof(T));
-            return await Client.PutJsonAsync<JObject, HttpResponseResult<T>>("siteextensions/" + id, json);
+            return (await Client.PutAsJsonAsync("siteextensions/" + id, json)).EnsureSuccessful();
         }
 
-        public async Task<bool> UninstallExtension(string id)
+        public async Task<HttpResponseMessage> UninstallExtension(string id)
         {
             var url = new StringBuilder(ServiceUrl);
             url.Append("siteextensions/");
             url.Append(id);
 
-            HttpResponseMessage result = await Client.DeleteAsync(new Uri(url.ToString()));
-            return await result.EnsureSuccessful().Content.ReadAsAsync<bool>();
-        }
-
-        private bool UpdateHeaderIfGoingToBeArmRequest(Type responseEntryType)
-        {
-            var armEntryType = typeof(ArmEntry<>);
-            var isArmRequest = responseEntryType.IsGenericType && armEntryType == responseEntryType.GetGenericTypeDefinition();
-            var containsArmHeader = Client.DefaultRequestHeaders.Contains(ArmUtils.GeoLocationHeaderKey);
-
-            if (isArmRequest && !containsArmHeader)
-            {
-                Client.DefaultRequestHeaders.Add(ArmUtils.GeoLocationHeaderKey, string.Empty);
-            }
-            else if (!isArmRequest && containsArmHeader)
-            {
-                Client.DefaultRequestHeaders.Remove(ArmUtils.GeoLocationHeaderKey);
-            }
-
-            return isArmRequest;
+            return (await Client.DeleteAsync(url.ToString())).EnsureSuccessful();
         }
     }
 }

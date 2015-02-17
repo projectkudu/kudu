@@ -43,18 +43,10 @@ namespace Kudu.Contracts.Infrastructure
                                                Func<Task> operation,
                                                TimeSpan timeout)
         {
-            var interval = TimeSpan.FromMilliseconds(250);
-            var elapsed = TimeSpan.Zero;
-
-            while (!lockObj.Lock())
+            bool isLocked = await WaitToLockAsync(lockObj, timeout);
+            if (!isLocked)
             {
-                if (elapsed >= timeout)
-                {
-                    return false;
-                }
-
-                await Task.Delay(_sleepInterval);
-                elapsed += _sleepInterval;
+                return false;
             }
 
             try
@@ -91,6 +83,42 @@ namespace Kudu.Contracts.Infrastructure
             }
 
             return result;
+        }
+
+        public static async Task<T> LockOperationAsync<T>(this IOperationLock lockObj, Func<Task<T>> operation, TimeSpan timeout)
+        {
+            bool isLocked = await WaitToLockAsync(lockObj, timeout);
+            if (!isLocked)
+            {
+                throw new LockOperationException(String.Format(CultureInfo.CurrentCulture, Resources.Error_OperationLockTimeout, timeout.TotalSeconds));
+            }
+
+            try
+            {
+                return await operation();
+            }
+            finally
+            {
+                lockObj.Release();
+            }
+        }
+
+        private static async Task<bool> WaitToLockAsync(IOperationLock lockObj, TimeSpan timeout)
+        {
+            var elapsed = TimeSpan.Zero;
+
+            while (!lockObj.Lock())
+            {
+                if (elapsed >= timeout)
+                {
+                    return false;
+                }
+
+                await Task.Delay(_sleepInterval);
+                elapsed += _sleepInterval;
+            }
+
+            return true;
         }
     }
 }

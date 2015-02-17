@@ -5,7 +5,6 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
-using Kudu.Contracts.Tracing;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Infrastructure
@@ -44,8 +43,8 @@ namespace Kudu.Core.Infrastructure
             // Set up lock file watcher. Note that depending on how the file is accessed the file watcher may generate multiple events.
             _lockFileWatcher = new FileSystemWatcher(Path.GetDirectoryName(_path), Path.GetFileName(_path));
             _lockFileWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName;
-            _lockFileWatcher.Changed += OnLockReleased;
-            _lockFileWatcher.Deleted += OnLockReleased;
+            _lockFileWatcher.Changed += OnLockReleasedInternal;
+            _lockFileWatcher.Deleted += OnLockReleasedInternal;
             _lockFileWatcher.EnableRaisingEvents = true;
         }
 
@@ -131,6 +130,11 @@ namespace Kudu.Core.Infrastructure
             // no-op
         }
 
+        protected virtual void OnLockRelease()
+        {
+            // no-op
+        }
+
         // we only write the lock info at lock's enter since
         // lock file will be cleaned up at release
         private static void WriteLockInfo(Stream lockStream)
@@ -169,7 +173,11 @@ namespace Kudu.Core.Infrastructure
         public void Release()
         {
             // Normally, this should never be null here, but currently some LiveScmEditorController code calls Release() incorrectly
-            if (_lockStream == null) return;
+            if (_lockStream == null)
+            {
+                OnLockRelease();
+                return;
+            }
 
             var temp = _lockStream;
             _lockStream = null;
@@ -178,6 +186,8 @@ namespace Kudu.Core.Infrastructure
             // cleanup inactive lock file.  technically, it is not needed
             // we just want to see the lock folder is clean, if no active lock.
             DeleteFileSafe();
+
+            OnLockRelease();
         }
 
         // we cannot use FileSystemHelpers.DeleteFileSafe.
@@ -207,7 +217,7 @@ namespace Kudu.Core.Infrastructure
         /// When a lock file change has been detected we check whether there are queued up lock requests.
         /// If so then we attempt to get the lock and dequeue the next request.
         /// </summary>
-        private void OnLockReleased(object sender, FileSystemEventArgs e)
+        private void OnLockReleasedInternal(object sender, FileSystemEventArgs e)
         {
             if (!_lockRequestQueue.IsEmpty)
             {

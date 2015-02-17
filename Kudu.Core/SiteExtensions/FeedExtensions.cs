@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -80,6 +81,12 @@ namespace Kudu.Core.SiteExtensions
             var downloadResource = await srcRepo.GetResourceAsync<DownloadResource>();
             using (Stream sourceStream = await downloadResource.GetStream(identity, CancellationToken.None))
             {
+                if (sourceStream == null)
+                {
+                    // package not exist from feed
+                    throw new FileNotFoundException(string.Format(CultureInfo.InvariantCulture, "Package {0} - {1} not found when try to download.", identity.Id, identity.Version.ToNormalizedString()));
+                }
+
                 Stream packageStream = sourceStream;
                 try
                 {

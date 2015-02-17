@@ -20,6 +20,7 @@ namespace Kudu.Core.Test
         {
             // Mock
             var lockFile = MockLockFile(@"x:\path\file.lock");
+            var lockFile2 = MockLockFile(@"x:\path\file.lock");
 
             for (int i = 0; i < 2; i++)
             {
@@ -31,9 +32,13 @@ namespace Kudu.Core.Test
                 Assert.Equal(true, lockFile.IsHeld);
                 Assert.Equal(false, lockFile.Lock());
 
+                Assert.Equal(true, lockFile2.IsHeld);
+                Assert.Equal(false, lockFile2.Lock());
+
                 // Release
                 lockFile.Release();
                 Assert.Equal(false, lockFile.IsHeld);
+                Assert.Equal(false, lockFile2.IsHeld);
             }
         }
 
@@ -61,7 +66,7 @@ namespace Kudu.Core.Test
                         Thread.Sleep(0);
                         totals = val + 1;
 
-                        using (var reader = new StreamReader(FileSystemHelpers.OpenFile(file, FileMode.Open, FileAccess.Read, FileShare.Write))) 
+                        using (var reader = new StreamReader(FileSystemHelpers.OpenFile(file, FileMode.Open, FileAccess.Read, FileShare.Write)))
                         {
                             Assert.Contains("at Kudu.Core.Test.LockFileTests", reader.ReadToEnd());
                         }

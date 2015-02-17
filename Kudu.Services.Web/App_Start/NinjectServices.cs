@@ -307,6 +307,7 @@ namespace Kudu.Services.Web.App_Start
                 new TraceDeprecatedActionAttribute(
                     kernel.Get<IAnalytics>(),
                     kernel.Get<ITraceFactory>()));
+            GlobalConfiguration.Configuration.Filters.Add(new EnsureRequestIdHandlerAttribute());
         }
 
         public static class SignalRStartup

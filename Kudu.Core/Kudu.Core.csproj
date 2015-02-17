@@ -176,7 +176,9 @@
     <Compile Include="Settings\DiagnosticsSettingsManager.cs" />
     <Compile Include="SiteExtensions\DummyReference.cs" />
     <Compile Include="SiteExtensions\FeedExtensions.cs" />
+    <Compile Include="SiteExtensions\SiteExtensionInstallationLock.cs" />
     <Compile Include="SiteExtensions\SemanticVersion.cs" />
+    <Compile Include="SiteExtensions\SiteExtensionArmSettings.cs" />
     <Compile Include="SiteExtensions\SiteExtensionManager.cs" />
     <Compile Include="SourceControl\Git\IGitRepository.cs" />
     <Compile Include="SourceControl\Git\LibGit2SharpRepository.cs" />
@@ -233,6 +235,7 @@
     <Compile Include="Tracing\NullTracerFactory.cs" />
     <Compile Include="Tracing\TextTracer.cs" />
     <Compile Include="Tracing\TraceExtensions.cs" />
+    <Compile Include="Tracing\TraceInfo.cs" />
     <Compile Include="Tracing\TracerFactory.cs" />
     <Compile Include="Tracing\TraceStep.cs" />
     <Compile Include="Tracing\XmlTracer.cs" />

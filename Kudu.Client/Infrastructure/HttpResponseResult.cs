@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Reflection;
 
 namespace Kudu.Client.Infrastructure
@@ -8,11 +9,16 @@ namespace Kudu.Client.Infrastructure
     {
         public IDictionary<string, IEnumerable<string>> Headers { get; set; }
         public T Body { get; set; }
+        public HttpStatusCode Status { get; set; }
 
-        private HttpResponseResult(IDictionary<string, IEnumerable<string>> headers, T body)
+        private HttpResponseResult(
+            IDictionary<string, IEnumerable<string>> headers,
+            T body,
+            HttpStatusCode statusCode)
         {
             Headers = headers;
             Body = body;
+            Status = statusCode;
         }
     }
 
@@ -30,7 +36,11 @@ namespace Kudu.Client.Infrastructure
                 && t.GetGenericTypeDefinition() == expectedType;
         }
 
-        public static object CreateHttpResponseResultInstance(Type httpResponseResultType, IDictionary<string, IEnumerable<string>> headers, object body)
+        public static object CreateHttpResponseResultInstance(
+            Type httpResponseResultType,
+            IDictionary<string, IEnumerable<string>> headers,
+            object body,
+            HttpStatusCode statusCode)
         {
             if (!IsTypeOfHttpResponseRresult(httpResponseResultType))
             {
@@ -40,10 +50,14 @@ namespace Kudu.Client.Infrastructure
             ConstructorInfo ctorInfo = httpResponseResultType.GetConstructor(
                 bindingAttr: BindingFlags.NonPublic | BindingFlags.Instance,
                 binder: null,
-                types: new Type[] { typeof(IDictionary<string, IEnumerable<string>>), httpResponseResultType.GenericTypeArguments[0] },
+                types: new Type[] {
+                    typeof(IDictionary<string, IEnumerable<string>>), 
+                    httpResponseResultType.GenericTypeArguments[0],
+                    typeof(HttpStatusCode)
+                },
                 modifiers: null);
 
-            return ctorInfo.Invoke(new object[] { headers, body });
+            return ctorInfo.Invoke(new object[] { headers, body, statusCode });
         }
     }
 }

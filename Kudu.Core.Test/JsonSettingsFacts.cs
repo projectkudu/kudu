@@ -19,7 +19,7 @@ namespace Kudu.Core.Test
         [Fact]
         public void ConstructorTest()
         {
-            IFileSystem fileSystem = GetMockFileSystem(SettingsPath);
+            FileSystemHelpers.Instance = GetMockFileSystem(SettingsPath);
 
             var settings = new JsonSettings(SettingsPath);
 
@@ -187,31 +187,49 @@ namespace Kudu.Core.Test
             Assert.False(settings.DeleteValue(value.Key));
         }
 
-        private IFileSystem GetMockFileSystem(string path, params KeyValuePair<string, string>[] values)
+        private IFileSystem GetMockFileSystem(string filePath, params KeyValuePair<string, string>[] values)
         {
-            MemoryStream mem = null;
-            var fileSystem = new Mock<IFileSystem>();
-            var file = new Mock<FileBase>();
-            var directory = new Mock<DirectoryBase>();
+            var files = new Dictionary<string, MemoryStream>();
+            var fs = new Mock<IFileSystem>(MockBehavior.Strict);
+            var fileBase = new Mock<FileBase>(MockBehavior.Strict);
+            var dirBase = new Mock<DirectoryBase>(MockBehavior.Strict);
 
-            // Arrange
-            file.Setup(f => f.Open(path, FileMode.Create, FileAccess.Write, FileShare.Read)).Returns(() => 
-            {
-                mem = new MemoryStream();
-                return mem;
-            });
-            file.Setup(f => f.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)).Returns(() =>
-            {
-                if (mem == null)
+            // Setup
+            fs.SetupGet(f => f.File)
+              .Returns(() => fileBase.Object);
+            fs.SetupGet(f => f.Directory)
+              .Returns(() => dirBase.Object);
+
+            fileBase.Setup(f => f.Exists(It.IsAny<string>()))
+                    .Returns((string path) => files.ContainsKey(path));
+            fileBase.Setup(f => f.Open(It.IsAny<string>(), FileMode.Create, FileAccess.Write, FileShare.Read))
+                    .Returns((string path, FileMode fileMode, FileAccess fileAccess, FileShare fileShare) =>
+                    {
+                        files[path] = MockMemoryStream();
+                        return files[path];
+                    });
+
+            fileBase.Setup(f => f.Open(It.IsAny<string>(), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                .Returns((string path, FileMode fileMode, FileAccess fileAccess, FileShare fileShare) =>
                 {
-                    throw new FileNotFoundException(path + " does not exist.");
-                }
+                    MemoryStream stream = files[path];
+                    stream.Position = 0;
+                    return stream;
+                });
 
-                byte[] bytes = mem.GetBuffer();
-                mem = new MemoryStream(bytes, 0, bytes.Length, writable: false, publiclyVisible: true);
-                return mem;
-            });
+            dirBase.Setup(d => d.Exists(It.IsAny<string>()))
+                .Returns((string dirPath) =>
+                {
+                    return files.Keys.FirstOrDefault(f => f.StartsWith(dirPath)) != null;
+                });
 
+            dirBase.Setup(d => d.CreateDirectory(It.IsAny<string>()))
+                .Returns((string path) =>
+                {
+                    return Mock.Of<DirectoryInfoBase>();
+                });
+
+            // populate default data if any
             if (values.Length > 0)
             {
                 JObject json = new JObject();
@@ -220,21 +238,27 @@ namespace Kudu.Core.Test
                     json[pair.Key] = pair.Value;
                 }
 
-                mem = new MemoryStream();
+                MemoryStream mem;
+                if (!files.TryGetValue(filePath, out mem))
+                {
+                    mem = MockMemoryStream();
+                    files[filePath] = mem;
+                }
                 using (var writer = new JsonTextWriter(new StreamWriter(mem)))
                 {
                     json.WriteTo(writer);
                 }
             }
 
-            file.Setup(f => f.Exists(path)).Returns(() => mem != null);
+            return fs.Object;
+        }
 
-            fileSystem.Setup(fs => fs.File).Returns(file.Object);
-            fileSystem.Setup(fs => fs.Directory).Returns(directory.Object);
-
-            FileSystemHelpers.Instance = fileSystem.Object;
-
-            return fileSystem.Object;
+        private MemoryStream MockMemoryStream()
+        {
+            // Override Close with no-op
+            var stream = new Mock<MemoryStream> { CallBase = true };
+            stream.Setup(s => s.Close());
+            return stream.Object;
         }
     }
 }

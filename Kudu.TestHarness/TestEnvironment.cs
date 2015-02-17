@@ -123,5 +123,11 @@ namespace Kudu.TestHarness
             get;
             set;
         }
+
+        public string SiteExtensionSettingsPath
+        {
+            get;
+            set;
+        }
     }
 }

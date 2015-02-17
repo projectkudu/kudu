@@ -1,33 +1,45 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
 using System.Web.Http;
 using Kudu.Contracts.SiteExtensions;
+using Kudu.Contracts.Tracing;
+using Kudu.Core;
+using Kudu.Core.SiteExtensions;
+using Kudu.Core.Tracing;
 using Kudu.Services.Arm;
 
 namespace Kudu.Services.SiteExtensions
 {
+    [EnsureRequestIdHandler]
     public class SiteExtensionController : ApiController
     {
         private readonly ISiteExtensionManager _manager;
+        private readonly IEnvironment _environment;
+        private readonly ITraceFactory _traceFactory;
 
-        public SiteExtensionController(ISiteExtensionManager manager)
+        public SiteExtensionController(ISiteExtensionManager manager, IEnvironment environment, ITraceFactory traceFactory)
         {
             _manager = manager;
+            _environment = environment;
+            _traceFactory = traceFactory;
         }
 
         [HttpGet]
-        public async Task<IEnumerable<SiteExtensionInfo>> GetRemoteExtensions(string filter = null, bool allowPrereleaseVersions = false, string feedUrl = null)
+        public async Task<HttpResponseMessage> GetRemoteExtensions(string filter = null, bool allowPrereleaseVersions = false, string feedUrl = null)
         {
-            return await _manager.GetRemoteExtensions(filter, allowPrereleaseVersions, feedUrl);
+            return Request.CreateResponse(
+                HttpStatusCode.OK,
+                ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(await _manager.GetRemoteExtensions(filter, allowPrereleaseVersions, feedUrl), Request));
         }
 
         [HttpGet]
-        public async Task<SiteExtensionInfo> GetRemoteExtension(string id, string version = null, string feedUrl = null)
+        public async Task<HttpResponseMessage> GetRemoteExtension(string id, string version = null, string feedUrl = null)
         {
             SiteExtensionInfo extension = await _manager.GetRemoteExtension(id, version, feedUrl);
 
@@ -36,85 +48,230 @@ namespace Kudu.Services.SiteExtensions
                 throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, id));
             }
 
-            return extension;
+            return Request.CreateResponse(
+                HttpStatusCode.OK,
+                ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(extension, Request));
         }
 
         [HttpGet]
-        public async Task<IEnumerable<SiteExtensionInfo>> GetLocalExtensions(string filter = null, bool checkLatest = true)
+        public async Task<HttpResponseMessage> GetLocalExtensions(string filter = null, bool checkLatest = true)
         {
-            return await _manager.GetLocalExtensions(filter, checkLatest);
+            return Request.CreateResponse(
+                HttpStatusCode.OK,
+                ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(await _manager.GetLocalExtensions(filter, checkLatest), Request));
         }
 
         [HttpGet]
-        public async Task<SiteExtensionInfo> GetLocalExtension(string id, bool checkLatest = true)
+        public async Task<HttpResponseMessage> GetLocalExtension(string id, bool checkLatest = true)
         {
-            SiteExtensionInfo extension = await _manager.GetLocalExtension(id, checkLatest);
-            if (extension == null)
-            {
-                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, id));
-            }
-            return extension;
-        }
+            var tracer = _traceFactory.GetTracer();
 
-        [HttpPut]
-        public async Task<HttpResponseMessage> InstallExtension(string id, SiteExtensionInfo requestInfo)
-        {
-            var startTime = DateTime.UtcNow;
-            if (requestInfo == null)
+            SiteExtensionInfo extension = null;
+            HttpResponseMessage responseMessage = null;
+            if (ArmUtils.IsArmRequest(Request))
             {
-                requestInfo = new SiteExtensionInfo();
-            }
+                tracer.Trace("Incoming GetLocalExtension is arm request.");
+                SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id);
 
-            SiteExtensionInfo result;
+                if (string.Equals(Constants.SiteExtensionOperationInstall, armSettings.Operation, StringComparison.OrdinalIgnoreCase))
+                {
+                    var installationLock = SiteExtensionInstallationLock.CreateLock(_environment.SiteExtensionSettingsPath, id);
+                    if (!installationLock.IsHeld
+                        && string.Equals(Constants.SiteExtensionProvisioningStateSucceeded, armSettings.ProvisioningState, StringComparison.OrdinalIgnoreCase))
+                    {
+                        extension = await _manager.GetLocalExtension(id, checkLatest);
+                        if (extension == null)
+                        {
+                            using (tracer.Step("Status indicate {0} installed, but not able to find it from local repo.", id))
+                            {
+                                // should NOT happen
+                                extension = new SiteExtensionInfo { Id = id };
+                                responseMessage = Request.CreateResponse(HttpStatusCode.NotFound);
+                                // package is gone, remove setting file
+                                await armSettings.RemoveArmSettings();
+                            }
+                        }
+                        else
+                        {
+                            using (tracer.Step("{0} finsihed installation. Will notify Antares GEO to restart website.", id))
+                            {
+                                responseMessage = Request.CreateResponse(armSettings.Status, ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(extension, Request));
+                                // Notify GEO to restart website
+                                responseMessage.Headers.Add(Constants.SiteOperationHeaderKey, Constants.SiteOperationRestart);
 
-            try
-            {
-                result = await _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl);
-            }
-            catch (WebException e)
-            {
-                // This can happen for example if a bad feed URL is passed
-                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Site extension download failure", e));
-            }
-            catch (Exception e)
-            {
-                // This can happen for example if the exception package is corrupted
-                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Site extension install exception. The package might be invalid.", e));
-            }
+                                // clear operation, since opeation is done
+                                armSettings.Operation = null;
+                            }
+                        }
+                    }
+                    else if (!installationLock.IsHeld && !armSettings.IsTerminalStatus())
+                    {
+                        // no background thread is working on instalation
+                        // app-pool must be recycled
+                        using (tracer.Step("{0} installation cancelled, background thread must be dead.", id))
+                        {
+                            extension = new SiteExtensionInfo { Id = id };
+                            extension.ProvisioningState = Constants.SiteExtensionProvisioningStateCanceled;
+                            responseMessage = Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(extension, Request));
+                        }
+                    }
+                    else
+                    {
+                        // on-going or failed, return status from setting
+                        using (tracer.Step("Installation {0}", armSettings.Status))
+                        {
+                            extension = new SiteExtensionInfo { Id = id };
+                            armSettings.FillSiteExtensionInfo(extension);
+                            responseMessage = Request.CreateResponse(armSettings.Status, ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(extension, Request));
+                        }
+                    }
+                }
 
-            if (result == null)
-            {
-                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, "Could not find " + id));
+                // normal GET request
+                if (responseMessage == null)
+                {
+                    tracer.Trace("ARM get : {0}", id);
+                    extension = await _manager.GetLocalExtension(id, checkLatest);
+                    if (extension == null)
+                    {
+                        extension = new SiteExtensionInfo { Id = id };
+                        responseMessage = Request.CreateResponse(HttpStatusCode.NotFound);
+                    }
+                    else
+                    {
+                        armSettings.FillSiteExtensionInfo(extension);
+                        responseMessage = Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(extension, Request));
+                    }
+                }
             }
-
-            // TODO: xiaowu, when update to real csm async, should return "Accepted" instead of "OK"
-            var responseMessage = Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(result, Request));
-
-            if (result != null  // result not null indicate instalation success, when move to async operation, will relying on provisionState instead
-                && result.InstalledDateTime.HasValue
-                && result.InstalledDateTime.Value > startTime
-                && ArmUtils.IsArmRequest(Request))
+            else
             {
-                // Populate this header if 
-                //      Request is from ARM
-                //      Installation action is performed
-                responseMessage.Headers.Add("X-MS-SITE-OPERATION", Constants.SiteOperationRestart);
+                tracer.Trace("Get : {0}", id);
+                extension = await _manager.GetLocalExtension(id, checkLatest);
+
+                if (extension == null)
+                {
+                    throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, id));
+                }
+
+                responseMessage = Request.CreateResponse(HttpStatusCode.OK, extension);
             }
 
             return responseMessage;
         }
 
+        [HttpPut]
+        public async Task<HttpResponseMessage> InstallExtension(string id, SiteExtensionInfo requestInfo)
+        {
+            var tracer = _traceFactory.GetTracer();
+            var installationLock = SiteExtensionInstallationLock.CreateLock(_environment.SiteExtensionSettingsPath, id);
+            if (installationLock.IsHeld)
+            {
+                tracer.Trace("{0} is installing with another request, reject current request with Conflict status.", id);
+                throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, id));
+            }
+
+            if (requestInfo == null)
+            {
+                requestInfo = new SiteExtensionInfo();
+            }
+
+            SiteExtensionInfo result = await InitInstallSiteExtension(id);
+
+            if (ArmUtils.IsArmRequest(Request))
+            {
+                // create a context free tracer
+                ITracer backgroundTracer = NullTracer.Instance;
+                IDictionary<string, string> traceAttributes = new Dictionary<string, string>();
+
+                if (tracer.TraceLevel == TraceLevel.Off)
+                {
+                    backgroundTracer = NullTracer.Instance;
+                }
+
+                if (tracer.TraceLevel > TraceLevel.Off)
+                {
+                    backgroundTracer = new XmlTracer(_environment.TracePath, tracer.TraceLevel);
+                    traceAttributes = new Dictionary<string, string>()
+                    {
+                        {"url", Request.RequestUri.AbsolutePath},
+                        {"method", Request.Method.Method}
+                    };
+
+                    foreach (var item in Request.Headers)
+                    {
+                        if (!traceAttributes.ContainsKey(item.Key))
+                        {
+                            traceAttributes.Add(item.Key, string.Join(",", item.Value));
+                        }
+                    }
+                }
+
+                // trigger installation, but do not wait. Expecting poll for status
+                ThreadPool.QueueUserWorkItem((object stateInfo) =>
+                {
+                    using (backgroundTracer.Step(XmlTracer.BackgroundTrace, attributes: traceAttributes))
+                    {
+                        _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, backgroundTracer).Wait();
+                    }
+                });
+
+                return Request.CreateResponse(HttpStatusCode.Created, ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(result, Request));
+            }
+            else
+            {
+                result = await _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, tracer);
+
+                if (string.Equals(Constants.SiteExtensionProvisioningStateFailed, result.ProvisioningState, StringComparison.OrdinalIgnoreCase))
+                {
+                    SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id);
+                    throw new HttpResponseException(Request.CreateErrorResponse(armSettings.Status, result.Comment));
+                }
+
+                return Request.CreateResponse(HttpStatusCode.OK, result);
+            }
+        }
+
         [HttpDelete]
-        public async Task<bool> UninstallExtension(string id)
+        public async Task<HttpResponseMessage> UninstallExtension(string id)
         {
             try
             {
-                return await _manager.UninstallExtension(id);
+                bool isUninstalled = await _manager.UninstallExtension(id);
+                if (ArmUtils.IsArmRequest(Request))
+                {
+                    if (isUninstalled)
+                    {
+                        return Request.CreateResponse(HttpStatusCode.OK);
+                    }
+                    else
+                    {
+                        var extension = new SiteExtensionInfo { Id = id };
+                        return Request.CreateResponse(HttpStatusCode.BadRequest, ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(extension, Request));
+                    }
+                }
+                else
+                {
+                    return Request.CreateResponse(HttpStatusCode.OK, isUninstalled);
+                }
             }
             catch (DirectoryNotFoundException ex)
             {
                 throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, ex));
             }
+        }
+
+        private async Task<SiteExtensionInfo> InitInstallSiteExtension(string id)
+        {
+            SiteExtensionStatus settings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id);
+            settings.ProvisioningState = Constants.SiteExtensionProvisioningStateCreated;
+            settings.Operation = Constants.SiteExtensionOperationInstall;
+            settings.Status = HttpStatusCode.Created;
+
+            SiteExtensionInfo info = new SiteExtensionInfo();
+            info.Id = id;
+            settings.FillSiteExtensionInfo(info);
+            return await Task.FromResult(info);
         }
     }
 }

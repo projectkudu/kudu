@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using Kudu.Contracts.Infrastructure;
 using Newtonsoft.Json;
 using NuGet.Client.VisualStudio;
@@ -184,10 +185,25 @@ namespace Kudu.Contracts.SiteExtensions
             set;
         }
 
+        // For Arm Request
         [JsonProperty(PropertyName = "name")]
         public string Name
         {
-            get { return this.Id; }
+            get { return Id; }
+        }
+
+        [JsonProperty(PropertyName = "provisioningState")]
+        public string ProvisioningState
+        {
+            get;
+            set;
+        }
+
+        [JsonProperty(PropertyName = "comment")]
+        public string Comment
+        {
+            get;
+            set;
         }
     }
 }

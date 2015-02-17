@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Kudu.Contracts.SiteExtensions;
 using Newtonsoft.Json;
 
 namespace Kudu.Client.Infrastructure
@@ -19,10 +18,8 @@ namespace Kudu.Client.Infrastructure
 
         public static async Task<T> GetJsonAsync<T>(this HttpClient client, string url)
         {
-            HttpResponseMessage result = await client.GetAsync(url);
-
-            string content = await result.EnsureSuccessful().Content.ReadAsStringAsync();
-
+            HttpResponseMessage response = await client.GetAsync(url);
+            string content = await response.EnsureSuccessful().Content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<T>(content);
         }
 
@@ -90,22 +87,6 @@ namespace Kudu.Client.Infrastructure
         {
             HttpResponseMessage response = await client.PutAsJsonAsync(url, param);
             string content = await response.EnsureSuccessful().Content.ReadAsStringAsync();
-
-            var outputType = typeof(TOutput);
-            if (HttpResponseResultUtils.IsTypeOfHttpResponseRresult(outputType))
-            {
-                Type bodyType = outputType.GenericTypeArguments[0]; // HttpResponseResult<T> takes one generic type
-                var bodyObject = JsonConvert.DeserializeObject(value: content, type: bodyType);
-                var headerDict = new Dictionary<string, IEnumerable<string>>();
-
-                foreach (var item in response.Headers)
-                {
-                    headerDict.Add(item.Key, item.Value);
-                }
-
-                return (TOutput)HttpResponseResultUtils.CreateHttpResponseResultInstance(outputType, headerDict, bodyObject);
-            }
-
             return JsonConvert.DeserializeObject<TOutput>(content);
         }
     }
