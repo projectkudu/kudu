@@ -1,15 +1,15 @@
-﻿using Ionic.Zip;
-using Kudu.Core.Infrastructure;
-using NuGet.Client;
-using NuGet.Client.VisualStudio;
-using NuGet.PackagingCore;
-using NuGet.Versioning;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Ionic.Zip;
+using Kudu.Core.Infrastructure;
+using NuGet.Client;
+using NuGet.Client.VisualStudio;
+using NuGet.PackagingCore;
+using NuGet.Versioning;
 
 namespace Kudu.Core.SiteExtensions
 {
@@ -21,7 +21,7 @@ namespace Kudu.Core.SiteExtensions
         /// <summary>
         /// Query result by search term, always include pre-released
         /// </summary>
-        public static async Task<IEnumerable<UISearchMetadata>> Search(this SourceRepository srcRepo, string searchTerm, SearchFilter filterOptions = null, int skip = 0, int take = 1000)
+        public static async Task<IEnumerable<UIPackageMetadata>> Search(this SourceRepository srcRepo, string searchTerm, SearchFilter filterOptions = null, int skip = 0, int take = 1000)
         {
             // always include pre-release package
             if (filterOptions == null)
@@ -30,7 +30,7 @@ namespace Kudu.Core.SiteExtensions
             }
 
             filterOptions.IncludePrerelease = true; // keep the good old behavior
-            var searchResource = await srcRepo.GetResourceAsync<UISearchResource>();
+            var searchResource = await srcRepo.GetResourceAsync<SearchLatestResource>();
             return await searchResource.Search(searchTerm, filterOptions, skip, take, CancellationToken.None);
         }
 

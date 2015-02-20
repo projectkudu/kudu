@@ -125,17 +125,17 @@ namespace Kudu.Core.SiteExtensions
             SearchFilter filterOptions = new SearchFilter();
             filterOptions.IncludePrerelease = allowPrereleaseVersions;
 
-            IEnumerable<UISearchMetadata> packages = null;
+            IEnumerable<UIPackageMetadata> packages = null;
 
             using (tracer.Step("Search site extensions by filter: {0}", filter))
             {
                 packages = (await remoteRepo.Search(string.IsNullOrWhiteSpace(filter) ? string.Empty : filter, filterOptions: filterOptions))
-                            .OrderByDescending(p => p.LatestPackageMetadata.DownloadCount);
+                            .OrderByDescending(p => p.DownloadCount);
             }
 
             using (tracer.Step("Convert search result to SiteExtensionInfos"))
             {
-                foreach (UISearchMetadata package in packages)
+                foreach (UIPackageMetadata package in packages)
                 {
                     extensions.Add(await ConvertRemotePackageToSiteExtensionInfo(package, feedUrl));
                 }
@@ -185,7 +185,7 @@ namespace Kudu.Core.SiteExtensions
         {
             ITracer tracer = _traceFactory.GetTracer();
             IEnumerable<SiteExtensionInfo> preInstalledExtensions = GetPreInstalledExtensions(filter, showEnabledOnly: true);
-            IEnumerable<UISearchMetadata> searchResult = null;
+            IEnumerable<UIPackageMetadata> searchResult = null;
             List<SiteExtensionInfo> siteExtensionInfos = new List<SiteExtensionInfo>();
 
             using (tracer.Step("Search packages locally with filter: {0}", filter))
@@ -632,11 +632,6 @@ namespace Kudu.Core.SiteExtensions
             _triggeredJobManager.CleanupExternalJobs(siteExtensionName);
         }
 
-        private async Task<SiteExtensionInfo> ConvertRemotePackageToSiteExtensionInfo(UISearchMetadata package, string feedUrl)
-        {
-            return await CheckRemotePackageLatestVersion(new SiteExtensionInfo(package), feedUrl);
-        }
-
         private async Task<SiteExtensionInfo> ConvertRemotePackageToSiteExtensionInfo(UIPackageMetadata package, string feedUrl)
         {
             return await CheckRemotePackageLatestVersion(new SiteExtensionInfo(package), feedUrl);
@@ -658,19 +653,6 @@ namespace Kudu.Core.SiteExtensions
         }
 
         private async Task<SiteExtensionInfo> ConvertLocalPackageToSiteExtensionInfo(UIPackageMetadata package, bool checkLatest)
-        {
-            if (package == null)
-            {
-                return null;
-            }
-
-            var info = new SiteExtensionInfo(package);
-            SetLocalInfo(info);
-            await TryCheckLocalPackageLatestVersionFromRemote(info, checkLatest);
-            return info;
-        }
-
-        private async Task<SiteExtensionInfo> ConvertLocalPackageToSiteExtensionInfo(UISearchMetadata package, bool checkLatest)
         {
             if (package == null)
             {
