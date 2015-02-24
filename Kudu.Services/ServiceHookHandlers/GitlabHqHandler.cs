@@ -7,15 +7,57 @@ namespace Kudu.Services.ServiceHookHandlers
 {
     public class GitlabHqHandler : GitHubCompatHandler
     {
+        //{
+        //  "before": "2370e44c850e732d71edd2db36920482558e3fe0",
+        //  "after": "2370e44c850e732d71edd2db36920482558e3fe0",
+        //  "ref": "refs/heads/master",
+        //  "checkout_sha": "2370e44c850e732d71edd2db36920482558e3fe0",
+        //  "user_id": 99630,
+        //  "user_name": "Suwat Bodin",
+        //  "project_id": 171368,
+        //  "repository": {
+        //    "name": "HelloKudu",
+        //    "url": "git@gitlab.com:KuduApps/HelloKudu.git",
+        //    "description": "",
+        //    "homepage": "https://gitlab.com/KuduApps/HelloKudu",
+        //    "git_http_url": "https://gitlab.com/KuduApps/HelloKudu.git",
+        //    "git_ssh_url": "git@gitlab.com:KuduApps/HelloKudu.git",
+        //    "visibility_level": 20
+        //  },
+        //  "commits": [
+        //    {
+        //      "id": "2370e44c850e732d71edd2db36920482558e3fe0",
+        //      "message": "Initial commit\n",
+        //      "timestamp": "2012-02-14T10:45:08-08:00",
+        //      "url": "https://gitlab.com/KuduApps/HelloKudu/commit/2370e44c850e732d71edd2db36920482558e3fe0",
+        //      "author": {
+        //        "name": "David Fowler",
+        //        "email": "davidfowl@gmail.com"
+        //      }
+        //    }
+        //  ],
+        //  "total_commits_count": 1
+        //}
+
+        private const int PublicVisibilityLevel = 20;
+
         protected override GitDeploymentInfo GetDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch)
         {
             var repository = payload.Value<JObject>("repository");
             var userid = payload.Value<int?>("user_id");
             var username = payload.Value<string>("user_name");
-
-            if (repository == null || userid == null || username == null)
+            var url = repository.Value<string>("url");
+            if (repository == null || userid == null || username == null || url == null)
             {
                 // doesn't look like GitlabHQ
+                return null;
+            }
+
+            // The format of ref is refs/something/something else
+            // For master it's normally refs/head/master
+            string @ref = payload.Value<string>("ref");
+            if (String.IsNullOrEmpty(@ref))
+            {
                 return null;
             }
 
@@ -24,50 +66,15 @@ namespace Kudu.Services.ServiceHookHandlers
             {
                 return null;
             }
+
             var commits = payload.Value<JArray>("commits");
             var info = new GitDeploymentInfo { RepositoryType = RepositoryType.Git };
             info.NewRef = payload.Value<string>("after");
             info.TargetChangeset = ParseChangeSet(info.NewRef, commits);
 
-            // gitlabHq format
-            // { "before":"34d62c0ad9387a8b9274ad77e878e195c342772b", "after":"02652ef69da7ee3d49134a961bffcb50702661ce", "ref":"refs/heads/master", "user_id":1, "user_name":"Remco Ros", "repository":{ "name":"inspectbin", "url":"http://gitlab.proscat.nl/inspectbin", "description":null, "homepage":"http://gitlab.proscat.nl/inspectbin"  }, "commits":[ { "id":"4109312962bb269ecc3a0d7a3c82a119dcd54c8b", "message":"add uservoice", "timestamp":"2012-11-11T14:32:02+01:00", "url":"http://gitlab.proscat.nl/inspectbin/commits/4109312962bb269ecc3a0d7a3c82a119dcd54c8b", "author":{ "name":"Remco Ros", "email":"r.ros@proscat.nl" }}], "total_commits_count":12 }
-            info.RepositoryUrl = repository.Value<string>("url");
-            
-
-            // Currently Gitlab url's are broken.
-            if (!info.RepositoryUrl.EndsWith(".git", StringComparison.Ordinal))
-            {
-                info.RepositoryUrl += ".git";
-            }
-
-            // work around missing 'private' property, if missing assume is private.
-            JToken priv;
-            bool isPrivate = true;
-            if (repository.TryGetValue("private", out priv))
-            {
-                isPrivate = priv.ToObject<bool>();
-            }
-
-            // The format of ref is refs/something/something else
-            // For master it's normally refs/head/master
-            string @ref = payload.Value<string>("ref");
-
-            if (String.IsNullOrEmpty(@ref))
-            {
-                return null;
-            }
+            var isPrivate = repository.Value<int>("visibility_level") != PublicVisibilityLevel;
+            info.RepositoryUrl = isPrivate ? repository.Value<string>("git_ssh_url") : repository.Value<string>("git_http_url");            
             info.Deployer = "GitlabHQ";
-
-            // private repo, use SSH
-            if (isPrivate)
-            {
-                Uri uri = new Uri(info.RepositoryUrl);
-                if (uri.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                {
-                    var host = "git@" + uri.Host;
-                    info.RepositoryUrl = host + ":" + uri.AbsolutePath.TrimStart('/');
-                }
-            }
 
             return info;
         }
