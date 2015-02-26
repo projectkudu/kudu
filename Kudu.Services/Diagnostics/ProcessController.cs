@@ -10,12 +10,14 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Web.Http;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Diagnostics;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
+using Kudu.Services.Arm;
 using Kudu.Services.Infrastructure;
 
 namespace Kudu.Services.Performance
@@ -38,15 +40,6 @@ namespace Kudu.Services.Performance
         }
 
         [HttpGet]
-        public HttpResponseMessage GetOpenFiles(int processId)
-        {
-            using (_tracer.Step("ProcessController.GetOpenFiles"))
-            {
-                return Request.CreateResponse(HttpStatusCode.OK, GetOpenFileHandles(processId));
-            }
-        }
-
-        [HttpGet]
         public HttpResponseMessage GetThread(int processId, int threadId)
         {
             using (_tracer.Step("ProcessController.GetThread"))
@@ -56,7 +49,7 @@ namespace Kudu.Services.Performance
 
                 if (thread != null)
                 {
-                    return Request.CreateResponse(HttpStatusCode.OK, GetProcessThreadInfo(thread, Request.RequestUri.AbsoluteUri, true));
+                    return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(GetProcessThreadInfo(thread, Request.RequestUri.AbsoluteUri, true), Request));
                 }
                 else
                 {
@@ -78,7 +71,7 @@ namespace Kudu.Services.Performance
                     results.Add(GetProcessThreadInfo(thread, Request.RequestUri.AbsoluteUri.TrimEnd('/') + '/' + thread.Id, false));
                 }
 
-                return Request.CreateResponse(HttpStatusCode.OK, results);
+                return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(results, Request));
             }
         }
 
@@ -92,7 +85,8 @@ namespace Kudu.Services.Performance
 
                 if (module != null)
                 {
-                    return Request.CreateResponse(HttpStatusCode.OK, GetProcessModuleInfo(module, Request.RequestUri.AbsoluteUri, details: true));
+                    var results = GetProcessModuleInfo(module, Request.RequestUri.AbsoluteUri, details: true);
+                    return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(results, Request));
                 }
                 else
                 {
@@ -106,7 +100,8 @@ namespace Kudu.Services.Performance
         {
             using (_tracer.Step("ProcessController.GetAllModules"))
             {
-                return Request.CreateResponse(HttpStatusCode.OK, GetModules(GetProcessById(id), Request.RequestUri.AbsoluteUri.TrimEnd('/')));
+                var results = GetModules(GetProcessById(id), Request.RequestUri.AbsoluteUri.TrimEnd('/'));
+                return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(results, Request));
             }
         }
 
@@ -120,7 +115,7 @@ namespace Kudu.Services.Performance
                     .Where(p => allUsers || String.Equals(currentUser, SafeGetValue(p.GetUserName, null), StringComparison.OrdinalIgnoreCase))
                     .Select(p => GetProcessInfo(p, Request.RequestUri.GetLeftPart(UriPartial.Path).TrimEnd('/') + '/' + p.Id)).OrderBy(p => p.Name.ToLowerInvariant())
                     .ToList();
-                return Request.CreateResponse(HttpStatusCode.OK, results);
+                return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(results, Request));
             }
         }
 
@@ -130,7 +125,7 @@ namespace Kudu.Services.Performance
             using (_tracer.Step("ProcessController.GetProcess"))
             {
                 var process = GetProcessById(id);
-                return Request.CreateResponse(HttpStatusCode.OK, GetProcessInfo(process, Request.RequestUri.AbsoluteUri, details: true));
+                return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(GetProcessInfo(process, Request.RequestUri.AbsoluteUri, details: true), Request));
             }
         }
 

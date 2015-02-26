@@ -20,6 +20,11 @@ namespace Kudu.Services.Arm
             return namedObject;
         }
 
+        public static object AddEnvelopeOnArmRequest<T>(List<T> namedObjects, HttpRequestMessage request) where T : INamedObject
+        {
+            return AddEnvelopeOnArmRequest((IEnumerable<T>)namedObjects, request);
+        }
+
         public static object AddEnvelopeOnArmRequest<T>(IEnumerable<T> namedObjects, HttpRequestMessage request) where T : INamedObject
         {
             if (IsArmRequest(request))
@@ -64,7 +69,7 @@ namespace Kudu.Services.Arm
                     armEntry.Id += '/';
                 }
 
-                armEntry.Id += o.Name;
+                armEntry.Id += ((INamedObject)o).Name;
             }
 
             // The Type and Name properties use alternating token starting with 'Microsoft.Web/sites'
