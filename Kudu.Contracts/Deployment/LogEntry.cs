@@ -1,10 +1,16 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
+using Kudu.Contracts.Infrastructure;
 using Newtonsoft.Json;
 
 namespace Kudu.Core.Deployment
 {
-    public class LogEntry
+    public class LogEntry : INamedObject
     {
+        [JsonIgnore]
+        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "to provide ARM spceific name")]
+        string INamedObject.Name { get { return Id; } }
+
         [JsonProperty(PropertyName = "log_time")]
         public DateTime LogTime { get; set; }
 

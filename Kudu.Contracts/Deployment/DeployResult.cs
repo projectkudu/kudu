@@ -1,12 +1,18 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using Kudu.Contracts.Infrastructure;
 using Newtonsoft.Json;
 
 namespace Kudu.Core.Deployment
 {
     [DebuggerDisplay("{Id} {Status}")]
-    public class DeployResult
+    public class DeployResult : INamedObject
     {
+        [JsonIgnore]
+        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "to provide ARM spceific name")]
+        string INamedObject.Name { get { return Id; } }
+
         [JsonProperty(PropertyName = "id")]
         public string Id { get; set; }
 

@@ -1,12 +1,18 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
+using Kudu.Contracts.Infrastructure;
 using Newtonsoft.Json;
 
 
 namespace Kudu.Core.Diagnostics
 {
     [JsonObject()]
-    public class ProcessModuleInfo
+    public class ProcessModuleInfo : INamedObject
     {
+        [JsonIgnore]
+        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "to provide ARM spceific name")]
+        string INamedObject.Name { get { return BaseAddress; } }
+
         [JsonProperty(PropertyName = "base_address")]
         public string BaseAddress { get; set; }
 

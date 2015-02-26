@@ -2,15 +2,21 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using Kudu.Contracts.Infrastructure;
 using Newtonsoft.Json;
 
 namespace Kudu.Core.Diagnostics
 {
     [DebuggerDisplay("{Id} {Name}")]
-    public class ProcessInfo
+    public class ProcessInfo : INamedObject
     {
         [JsonProperty(PropertyName = "id")]
         public int Id { get; set; }
+
+        [JsonIgnore]
+        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "to provide ARM spceific name")]
+        string INamedObject.Name { get { return Id.ToString(); } }
 
         [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }

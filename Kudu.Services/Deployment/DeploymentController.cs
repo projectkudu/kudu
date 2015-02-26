@@ -17,6 +17,7 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
+using Kudu.Services.Arm;
 using Kudu.Services.Infrastructure;
 using Newtonsoft.Json.Linq;
 
@@ -155,7 +156,7 @@ namespace Kudu.Services.Deployment
                 using (_tracer.Step("DeploymentService.GetDeployResults"))
                 {
                     IEnumerable<DeployResult> results = GetResults(Request).ToList();
-                    response = Request.CreateResponse(HttpStatusCode.OK, results);
+                    response = Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(results, Request));
                 }
             }
 
@@ -171,13 +172,13 @@ namespace Kudu.Services.Deployment
         /// <param name="id">id of the deployment</param>
         /// <returns></returns>
         [HttpGet]
-        public IEnumerable<LogEntry> GetLogEntry(string id)
+        public HttpResponseMessage GetLogEntry(string id)
         {
             using (_tracer.Step("DeploymentService.GetLogEntry"))
             {
                 try
                 {
-                    IEnumerable<LogEntry> deployments = _deploymentManager.GetLogEntries(id).ToList();
+                    var deployments = _deploymentManager.GetLogEntries(id).ToList();
                     foreach (var entry in deployments)
                     {
                         if (entry.HasDetails)
@@ -186,7 +187,7 @@ namespace Kudu.Services.Deployment
                         }
                     }
 
-                    return deployments;
+                    return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(deployments, Request));
                 }
                 catch (FileNotFoundException ex)
                 {
@@ -202,13 +203,14 @@ namespace Kudu.Services.Deployment
         /// <param name="logId">id of the log entry</param>
         /// <returns></returns>
         [HttpGet]
-        public IEnumerable<LogEntry> GetLogEntryDetails(string id, string logId)
+        public HttpResponseMessage GetLogEntryDetails(string id, string logId)
         {
             using (_tracer.Step("DeploymentService.GetLogEntryDetails"))
             {
                 try
                 {
-                    return _deploymentManager.GetLogEntryDetails(id, logId).ToList();
+                    var details = _deploymentManager.GetLogEntryDetails(id, logId).ToList();
+                    return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(details, Request));
                 }
                 catch (FileNotFoundException ex)
                 {
@@ -223,7 +225,7 @@ namespace Kudu.Services.Deployment
         /// <param name="id">id of the deployment</param>
         /// <returns></returns>
         [HttpGet]
-        public DeployResult GetResult(string id)
+        public HttpResponseMessage GetResult(string id)
         {
             using (_tracer.Step("DeploymentService.GetResult"))
             {
@@ -240,7 +242,7 @@ namespace Kudu.Services.Deployment
                 result.Url = Request.RequestUri;
                 result.LogUrl = UriHelper.MakeRelative(Request.RequestUri, "log");
 
-                return result;
+                return Request.CreateResponse(HttpStatusCode.OK, ArmUtils.AddEnvelopeOnArmRequest(result, Request));
             }
         }
 
