@@ -325,8 +325,6 @@ echo $i > pushinfo
 
             if (!Directory.Exists(path)) return Enumerable.Empty<string>();
 
-            var lookupPatterns = lookupList.Select(l => string.Format("^{0}$", Regex.Escape(l).Replace("\\*", ".*")));
-
             using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
             {
                 var files = repo.Diff.Compare<TreeChanges>(null, DiffTargets.Index, lookupList, compareOptions: new CompareOptions() { IncludeUnmodified = true, Similarity = SimilarityOptions.None })

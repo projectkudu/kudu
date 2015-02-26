@@ -32,7 +32,6 @@ namespace Kudu.Client.Infrastructure
 
         public static object CreateHttpResponseResultInstance(Type httpResponseResultType, IDictionary<string, IEnumerable<string>> headers, object body)
         {
-            var expectedType = typeof(HttpResponseResult<>);
             if (!IsTypeOfHttpResponseRresult(httpResponseResultType))
             {
                 throw new ArgumentException(string.Format("Unexpected HttpResponseResult type: '{0}'", httpResponseResultType.FullName));
