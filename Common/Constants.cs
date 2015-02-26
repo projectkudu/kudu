@@ -50,10 +50,11 @@ namespace Kudu
 
         public const string HostingStartHtml = "hostingstart.html";
 
-        public const string KreDefaultVersion = "1.0.0-beta1";
+        public const string KreDefaultVersion = "1.0.0-beta3";
         public const string KreDefaultClr = "CLR";
         public const string KreDefaultNugetApiUrl = "https://www.nuget.org/api/v2";
 
+        // These should match the ones that are set by Azure
         public const string X64Bit = "AMD64";
         public const string X86Bit = "x86";
 

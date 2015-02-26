@@ -38,7 +38,6 @@ namespace Kudu.Core.Deployment.Generator
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.SelectNodeVersionCommandKey, SelectNodeVersionCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.SelectPythonVersionCommandKey, SelectPythonVersionCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.WebJobsDeployCommandKey, WebJobsDeployCommand, logger);
-            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KreVersion, Constants.KreDefaultVersion, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KreClr, Constants.KreDefaultClr, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KreBitness, KreBitness, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KreNugetApiUrl, Constants.KreDefaultNugetApiUrl, logger);
@@ -168,9 +167,9 @@ namespace Kudu.Core.Deployment.Generator
                 var bitness = System.Environment.GetEnvironmentVariable(WellKnownEnvironmentVariables.SiteBitness);
                 if (bitness == null)
                 {
-                    return System.Environment.Is64BitProcess ? "amd64" : "x86";
+                    return System.Environment.Is64BitProcess ? "x64" : "x86";
                 }
-                return bitness.Equals(Constants.X64Bit, StringComparison.OrdinalIgnoreCase) ? "amd64" : "x86";
+                return bitness.Equals(Constants.X64Bit, StringComparison.OrdinalIgnoreCase) ? "x64" : "x86";
             }
         }
 

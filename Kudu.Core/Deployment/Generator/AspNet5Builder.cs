@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Kudu.Contracts.Settings;
+using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment.Generator
 {
@@ -15,6 +16,8 @@ namespace Kudu.Core.Deployment.Generator
             : base(environment, settings, propertyProvider, sourcePath)
         {
             _projectPath = projectPath;
+            var properties = propertyProvider.GetProperties();
+            properties.Add(WellKnownEnvironmentVariables.KreVersion, AspNet5Helper.GetAspNet5RuntimeVersion(sourcePath));
         }
 
         protected override string ScriptGeneratorCommandArguments

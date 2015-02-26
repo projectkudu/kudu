@@ -24,10 +24,29 @@ namespace Kudu.Core.Infrastructure
             }
         }
 
-        public static bool TryAspNet5Project(string projectDirectory, out string projectJsonPath)
+        public static string GetAspNet5RuntimeVersion(string rootPath)
+        {
+            var runtimeVersion = Constants.KreDefaultVersion;
+            var globalJson = Path.Combine(rootPath, "global.json");
+            if (File.Exists(globalJson))
+            {
+                using (var reader = new StreamReader(globalJson))
+                {
+                    var parsedGlobalJson = JObject.Parse(reader.ReadToEnd());
+                    if (parsedGlobalJson["sdk"] != null &&
+                        parsedGlobalJson["sdk"]["version"] != null)
+                    {
+                        runtimeVersion = parsedGlobalJson["sdk"]["version"].ToString();
+                    }
+                }
+            }
+            return runtimeVersion;
+        }
+
+        public static bool TryAspNet5Project(string rootPath, out string projectJsonPath)
         {
             projectJsonPath = null;
-            var projectJsonFiles = Directory.GetFiles(projectDirectory, "project.json", SearchOption.AllDirectories);
+            var projectJsonFiles = Directory.GetFiles(rootPath, "project.json", SearchOption.AllDirectories);
             foreach (var filePath in projectJsonFiles.Where(IsWebApplicationProjectJsonFile))
             {
                 projectJsonPath = filePath;
