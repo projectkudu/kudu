@@ -7,9 +7,11 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Http;
+using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.SiteExtensions;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
+using Kudu.Core.Infrastructure;
 using Kudu.Core.SiteExtensions;
 using Kudu.Core.Tracing;
 using Kudu.Services.Arm;
@@ -71,7 +73,7 @@ namespace Kudu.Services.SiteExtensions
             if (ArmUtils.IsArmRequest(Request))
             {
                 tracer.Trace("Incoming GetLocalExtension is arm request.");
-                SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id);
+                SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id, tracer);
 
                 if (string.Equals(Constants.SiteExtensionOperationInstall, armSettings.Operation, StringComparison.OrdinalIgnoreCase))
                 {
@@ -88,19 +90,37 @@ namespace Kudu.Services.SiteExtensions
                                 extension = new SiteExtensionInfo { Id = id };
                                 responseMessage = Request.CreateResponse(HttpStatusCode.NotFound);
                                 // package is gone, remove setting file
-                                await armSettings.RemoveArmSettings();
+                                await armSettings.RemoveStatus();
                             }
                         }
                         else
                         {
-                            using (tracer.Step("{0} finsihed installation. Will notify Antares GEO to restart website.", id))
+                            if (SiteExtensionInstallationLock.IsAnyPendingLock(_environment.SiteExtensionSettingsPath))
                             {
-                                responseMessage = Request.CreateResponse(armSettings.Status, ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(extension, Request));
-                                // Notify GEO to restart website
-                                responseMessage.Headers.Add(Constants.SiteOperationHeaderKey, Constants.SiteOperationRestart);
-
+                                using (tracer.Step("{0} finsihed installation. But there is other installation on-going, fake the status to be Created, so that we can restart once for all.", id))
+                                {
+                                    // if there is other pending installation, fake the status
+                                    extension.ProvisioningState = Constants.SiteExtensionProvisioningStateCreated;
+                                    responseMessage = Request.CreateResponse(HttpStatusCode.Created, ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(extension, Request));
+                                }
+                            }
+                            else
+                            {
                                 // clear operation, since opeation is done
-                                armSettings.Operation = null;
+                                if (UpdateArmSettingsForSuccessInstallation())
+                                {
+                                    using (tracer.Step("{0} finsihed installation and batch update lock aquired. Will notify Antares GEO to restart website.", id))
+                                    {
+                                        responseMessage = Request.CreateResponse(armSettings.Status, ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(extension, Request));
+                                        // Notify GEO to restart website
+                                        responseMessage.Headers.Add(Constants.SiteOperationHeaderKey, Constants.SiteOperationRestart);
+                                    }
+                                }
+                                else
+                                {
+                                    tracer.Trace("Not able to aquire batch update lock, there must be another batch update on-going. return Created status to user to let them poll again.");
+                                    responseMessage = Request.CreateResponse(HttpStatusCode.Created, ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(extension, Request));
+                                }
                             }
                         }
                     }
@@ -224,7 +244,7 @@ namespace Kudu.Services.SiteExtensions
 
                 if (string.Equals(Constants.SiteExtensionProvisioningStateFailed, result.ProvisioningState, StringComparison.OrdinalIgnoreCase))
                 {
-                    SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id);
+                    SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id, tracer);
                     throw new HttpResponseException(Request.CreateErrorResponse(armSettings.Status, result.Comment));
                 }
 
@@ -263,7 +283,7 @@ namespace Kudu.Services.SiteExtensions
 
         private async Task<SiteExtensionInfo> InitInstallSiteExtension(string id)
         {
-            SiteExtensionStatus settings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id);
+            SiteExtensionStatus settings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id, _traceFactory.GetTracer());
             settings.ProvisioningState = Constants.SiteExtensionProvisioningStateCreated;
             settings.Operation = Constants.SiteExtensionOperationInstall;
             settings.Status = HttpStatusCode.Created;
@@ -272,6 +292,46 @@ namespace Kudu.Services.SiteExtensions
             info.Id = id;
             settings.FillSiteExtensionInfo(info);
             return await Task.FromResult(info);
+        }
+
+        /// <summary>
+        /// <para>1. list all package</para>
+        /// <para>2. for each package: if operation is 'install' and provisionState is 'success' and no installation lock</para>
+        /// <para>      Update operation to null</para>
+        /// </summary>
+        private bool UpdateArmSettingsForSuccessInstallation()
+        {
+            var batchUpdateLock = SiteExtensionBatchUpdateStatusLock.CreateLock(_environment.SiteExtensionSettingsPath);
+
+            bool isAnyUpdate = false;
+
+            bool islocked = batchUpdateLock.TryLockOperation(() =>
+            {
+                var tracer = _traceFactory.GetTracer();
+                string[] packageDirs = FileSystemHelpers.GetDirectories(_environment.SiteExtensionSettingsPath);
+                foreach (var dir in packageDirs)
+                {
+                    var dirInfo = new DirectoryInfo(dir);   // arm setting folder name is same as package id
+                    SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, dirInfo.Name, tracer);
+                    if (string.Equals(armSettings.Operation, Constants.SiteExtensionOperationInstall, StringComparison.OrdinalIgnoreCase)
+                        && string.Equals(armSettings.ProvisioningState, Constants.SiteExtensionProvisioningStateSucceeded, StringComparison.OrdinalIgnoreCase))
+                    {
+                        try
+                        {
+                            armSettings.Operation = null;
+                            isAnyUpdate = true;
+                        }
+                        catch (Exception ex)
+                        {
+                            tracer.TraceError(ex);
+                            // no-op
+                        }
+                    }
+                }
+
+            }, TimeSpan.FromSeconds(5));
+
+            return islocked && isAnyUpdate;
         }
     }
 }

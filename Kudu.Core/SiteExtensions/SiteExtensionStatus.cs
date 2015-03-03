@@ -3,8 +3,11 @@ using System.IO;
 using System.Net;
 using System.Threading.Tasks;
 using Kudu.Contracts.SiteExtensions;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
+using Kudu.Core.Tracing;
+using Newtonsoft.Json.Linq;
 
 namespace Kudu.Core.SiteExtensions
 {
@@ -18,32 +21,30 @@ namespace Kudu.Core.SiteExtensions
 
         private string _filePath;
         private JsonSettings _jsonSettings;
+        private ITracer _tracer;
 
         public string ProvisioningState
         {
-            get { return _jsonSettings.GetValue(_provisioningStateSetting); }
-            set { _jsonSettings.SetValue(_provisioningStateSetting, value); }
+            get { return SafeRead(_provisioningStateSetting); }
+            set { SafeWrite(_provisioningStateSetting, value); }
         }
 
         public string Comment
         {
-            get { return _jsonSettings.GetValue(_commentMessageSetting); }
-            set
-            {
-                _jsonSettings.SetValue(_commentMessageSetting, value);
-            }
+            get { return SafeRead(_commentMessageSetting); }
+            set { SafeWrite(_commentMessageSetting, value); }
         }
 
         public HttpStatusCode Status
         {
             get
             {
-                string statusStr = _jsonSettings.GetValue(_statusSetting);
+                string statusStr = SafeRead(_statusSetting);
                 HttpStatusCode statusCode = HttpStatusCode.OK;
                 Enum.TryParse<HttpStatusCode>(statusStr, out statusCode);
                 return statusCode;
             }
-            set { _jsonSettings.SetValue(_statusSetting, Enum.GetName(typeof(HttpStatusCode), value)); }
+            set { SafeWrite(_statusSetting, Enum.GetName(typeof(HttpStatusCode), value)); }
         }
 
         /// <summary>
@@ -53,13 +54,14 @@ namespace Kudu.Core.SiteExtensions
         public string Operation
         {
             get { return _jsonSettings.GetValue(_operationSetting); }
-            set { _jsonSettings.SetValue(_operationSetting, value); }
+            set { SafeWrite(_operationSetting, value); }
         }
 
-        public SiteExtensionStatus(string rootPath, string id)
+        public SiteExtensionStatus(string rootPath, string id, ITracer tracer)
         {
             _filePath = GetFilePath(rootPath, id);
             _jsonSettings = new JsonSettings(_filePath);
+            _tracer = tracer;
         }
 
         public void FillSiteExtensionInfo(SiteExtensionInfo info, string defaultProvisionState = null)
@@ -74,7 +76,7 @@ namespace Kudu.Core.SiteExtensions
             Comment = info.Comment;
         }
 
-        public async Task RemoveArmSettings()
+        public async Task RemoveStatus()
         {
             try
             {
@@ -88,9 +90,10 @@ namespace Kudu.Core.SiteExtensions
                     FileSystemHelpers.DeleteDirectorySafe(dirName);
                 }
             }
-            catch
+            catch (Exception ex)
             {
                 // no-op
+                _tracer.TraceError(ex);
             }
         }
 
@@ -99,6 +102,44 @@ namespace Kudu.Core.SiteExtensions
             return string.Equals(Constants.SiteExtensionProvisioningStateSucceeded, ProvisioningState, StringComparison.OrdinalIgnoreCase)
                 || string.Equals(Constants.SiteExtensionProvisioningStateFailed, ProvisioningState, StringComparison.OrdinalIgnoreCase)
                 || string.Equals(Constants.SiteExtensionProvisioningStateCanceled, ProvisioningState, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private string SafeRead(string key)
+        {
+            try
+            {
+                return _jsonSettings.GetValue(key);
+            }
+            catch (Exception ex)
+            {
+                _tracer.TraceError(ex);
+                // if setting file happen to be invalid, e.g w3wp.exe was kill while writting
+                // treat it as failed, and suggest user to re-install or un-install
+                JObject newSettings = new JObject();
+                newSettings[_provisioningStateSetting] = Constants.SiteExtensionProvisioningStateFailed;
+                newSettings[_commentMessageSetting] = "Corrupted site extension, please re-install or uninstall extension.";
+                newSettings[_statusSetting] = Enum.GetName(typeof(HttpStatusCode), HttpStatusCode.BadRequest);
+                _jsonSettings.Save(newSettings);
+            }
+
+            return _jsonSettings.GetValue(key);
+        }
+
+        private void SafeWrite(string key, JToken value)
+        {
+            try
+            {
+                _jsonSettings.SetValue(key, value);
+            }
+            catch (Exception ex)
+            {
+                _tracer.TraceError(ex);
+                // if setting file happen to be invalid, e.g w3wp.exe was kill while writting
+                // clear all content, start from blank
+                JObject newSettings = new JObject();
+                newSettings[key] = value;
+                _jsonSettings.Save(newSettings);
+            }
         }
 
         private static string GetFilePath(string rootPath, string id)

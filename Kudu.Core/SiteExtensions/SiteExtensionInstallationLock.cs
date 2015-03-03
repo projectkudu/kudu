@@ -5,6 +5,8 @@ namespace Kudu.Core.SiteExtensions
 {
     public class SiteExtensionInstallationLock : LockFile
     {
+        private const string LockNameSuffix = "install.lock";
+
         private string _path;
         private SiteExtensionInstallationLock(string path)
             : base(path)
@@ -36,10 +38,55 @@ namespace Kudu.Core.SiteExtensions
         /// </summary>
         public static SiteExtensionInstallationLock CreateLock(string rootPath, string id)
         {
-            string lockFilePath = Path.Combine(rootPath, id, "install.lock");
+            string lockFilePath = Path.Combine(rootPath, id, LockNameSuffix);
             var installationLock = new SiteExtensionInstallationLock(lockFilePath);
             installationLock.InitializeAsyncLocks();
             return installationLock;
+        }
+
+        public static bool IsAnyPendingLock(string rootPath)
+        {
+            bool hasPendingLock = false;
+
+            try
+            {
+                string[] packageDirs = FileSystemHelpers.GetDirectories(rootPath);
+                foreach (var dir in packageDirs)
+                {
+                    string[] lockFiles = FileSystemHelpers.GetFiles(dir, string.Format("*{0}", LockNameSuffix));
+                    foreach (var file in lockFiles)
+                    {
+                        // If there's no file then there's no process holding onto it
+                        if (!FileSystemHelpers.FileExists(file))
+                        {
+                            continue;
+                        }
+
+                        try
+                        {
+                            // If there is a file, lets see if someone has an open handle to it, or if it's
+                            // just hanging there for no reason
+                            using (FileSystemHelpers.OpenFile(file, FileMode.Open, FileAccess.Write, FileShare.Read)) { }
+                        }
+                        catch
+                        {
+                            hasPendingLock = true;
+                            break;
+                        }
+                    }
+
+                    if (hasPendingLock)
+                    {
+                        break;
+                    }
+                }
+            }
+            catch
+            {
+                // no-op
+            }
+
+            return hasPendingLock;
         }
     }
 }

@@ -98,7 +98,7 @@ namespace Kudu.Core.Settings
             }, _timeout);
         }
 
-        private void Save(JObject json)
+        public void Save(JObject json)
         {
             _lock.LockOperation(() =>
             {

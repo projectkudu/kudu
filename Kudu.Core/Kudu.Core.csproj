@@ -176,9 +176,10 @@
     <Compile Include="Settings\DiagnosticsSettingsManager.cs" />
     <Compile Include="SiteExtensions\DummyReference.cs" />
     <Compile Include="SiteExtensions\FeedExtensions.cs" />
+    <Compile Include="SiteExtensions\SiteExtensionBatchUpdateStatusLock.cs" />
     <Compile Include="SiteExtensions\SiteExtensionInstallationLock.cs" />
     <Compile Include="SiteExtensions\SemanticVersion.cs" />
-    <Compile Include="SiteExtensions\SiteExtensionArmSettings.cs" />
+    <Compile Include="SiteExtensions\SiteExtensionStatus.cs" />
     <Compile Include="SiteExtensions\SiteExtensionManager.cs" />
     <Compile Include="SourceControl\Git\IGitRepository.cs" />
     <Compile Include="SourceControl\Git\LibGit2SharpRepository.cs" />

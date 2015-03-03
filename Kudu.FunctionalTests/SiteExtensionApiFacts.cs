@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -36,9 +37,8 @@ namespace Kudu.FunctionalTests
         };
 
         [Theory]
-        [InlineData(null, "sitereplicator", "1.1.2")]    // default site extension endpoint
-        [InlineData("https://www.nuget.org/api/v2/", "bootstrap", "3.0.0")]    // external v2 endpoint
-        [InlineData("https://api.nuget.org/v3/index.json", "bootstrap", "3.0.0")]    // external v3 endpoint
+        [InlineData(null, "sitereplicator", "1.1.2")]    // default site extension endpoint (v2)
+        [InlineData("https://api.nuget.org/v3/index.json", "bootstrap", "3.0.0")]    // v3 endpoint
         public async Task SiteExtensionV2AndV3FeedTests(string feedEndpoint, string testPackageId, string testPackageVersion)
         {
             TestTracer.Trace("Testing against feed: '{0}'", feedEndpoint);
@@ -267,9 +267,8 @@ namespace Kudu.FunctionalTests
         }
 
         [Theory]
-        [InlineData(null, "sitereplicator")]    // default site extension endpoint
-        [InlineData("https://www.nuget.org/api/v2/", "bootstrap")]    // external v2 endpoint
-        [InlineData("https://api.nuget.org/v3/index.json", "bootstrap")]    // external v3 endpoint
+        [InlineData(null, "sitereplicator")]    // default site extension endpoint (v2)
+        [InlineData("https://api.nuget.org/v3/index.json", "bootstrap")]    // v3 endpoint
         public async Task SiteExtensionInstallUninstallAsyncTest(string feedEndpoint, string testPackageId)
         {
             TestTracer.Trace("Testing against feed: '{0}'", feedEndpoint);
@@ -380,7 +379,7 @@ namespace Kudu.FunctionalTests
                 Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);
                 Assert.NotNull(armResultList);
                 Assert.NotEmpty(armResultList.Value);
-                Assert.Equal(externalPackageId, armResultList.Value.First<ArmEntry<SiteExtensionInfo>>().Properties.Id);
+                Assert.NotNull(armResultList.Value.Where(item => string.Equals(externalPackageId, item.Properties.Id, StringComparison.OrdinalIgnoreCase)));
                 Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
 
                 TestTracer.Trace("GetRemoteExtension with Arm header, expecting site extension info will be wrap inside Arm envelop");
@@ -404,9 +403,13 @@ namespace Kudu.FunctionalTests
                 Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);
                 Assert.NotNull(armResultList);
                 Assert.NotEmpty(armResultList.Value);
-                Assert.Equal(externalPackageId, armResultList.Value.First<ArmEntry<SiteExtensionInfo>>().Properties.Id);
+                Assert.NotNull(armResultList.Value.Where(item => string.Equals(externalPackageId, item.Properties.Id, StringComparison.OrdinalIgnoreCase)));
                 Assert.Equal(Constants.SiteExtensionProvisioningStateSucceeded, armResultList.Value.First<ArmEntry<SiteExtensionInfo>>().Properties.ProvisioningState);
                 Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
+                foreach (var item in armResultList.Value)
+                {
+                    Assert.Equal(Constants.SiteExtensionProvisioningStateSucceeded, item.Properties.ProvisioningState);
+                }
 
                 TestTracer.Trace("GetLocalExtensions (with filter) with Arm header, expecting site extension info will be wrap inside Arm envelop");
                 responseMessage = await manager.GetLocalExtensions(externalPackageId);
@@ -414,7 +417,7 @@ namespace Kudu.FunctionalTests
                 Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);
                 Assert.NotNull(armResultList);
                 Assert.NotEmpty(armResultList.Value);
-                Assert.Equal(externalPackageId, armResultList.Value.First<ArmEntry<SiteExtensionInfo>>().Properties.Id);
+                Assert.NotNull(armResultList.Value.Where(item => string.Equals(externalPackageId, item.Properties.Id, StringComparison.OrdinalIgnoreCase)));
                 Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
                 foreach (var item in armResultList.Value)
                 {
@@ -423,9 +426,73 @@ namespace Kudu.FunctionalTests
             });
         }
 
+        [Theory]
+        [InlineData(null, "sitereplicator", "filecounter", "filecountermvc")]    // default site extension endpoint (v2)
+        [InlineData("https://api.nuget.org/v3/index.json", "bootstrap", "knockoutjs", "angularjs")]    // v3 endpoint
+        public async Task SiteExtensionParallelInstallationTest(string feedEndpoint, string testPackageId1, string testPackageId2, string testPackageId3)
+        {
+            const string appName = "SiteExtensionParallelInstallationTest";
+            string[] packageIds = { testPackageId1, testPackageId2, testPackageId3 };
+            await ApplicationManager.RunAsync(appName, async appManager =>
+            {
+                var manager = appManager.SiteExtensionManager;
+                List<Task<HttpResponseMessage>> tasks = new List<Task<HttpResponseMessage>>();
+
+                TestTracer.Trace("Uninstalling packages: '{0}'", string.Join(",", packageIds));
+                try
+                {
+                    foreach (var packageId in packageIds)
+                    {
+                        tasks.Add(manager.UninstallExtension(packageId));
+                    }
+                    await Task.WhenAll(tasks);
+                }
+                catch
+                {
+                    // no-op
+                }
+
+                tasks.Clear();
+
+                UpdateHeaderIfGoingToBeArmRequest(manager.Client, true);
+
+                TestTracer.Trace("Start parallel install multiple extensions ...");
+                foreach (var packageId in packageIds)
+                {
+                    tasks.Add(Task.Run<HttpResponseMessage>(async () =>
+                    {
+                        TestTracer.Trace("Install package '{0}' fresh from '{1}' async", packageId, feedEndpoint);
+                        HttpResponseMessage responseMessage = await manager.InstallExtension(id: packageId, feedUrl: feedEndpoint);
+                        ArmEntry<SiteExtensionInfo> armResult = await responseMessage.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
+                        Assert.Equal(HttpStatusCode.Created, responseMessage.StatusCode);
+                        Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
+
+                        TestTracer.Trace("Poll '{0}' for status for '{1}'. Expecting 200 response eventually with site operation header.", feedEndpoint, packageId);
+                        responseMessage = await PollAndVerifyAfterArmInstallation(manager, packageId);
+                        armResult = await responseMessage.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
+                        Assert.Equal(feedEndpoint, armResult.Properties.FeedUrl);
+                        Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);
+                        Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
+                        return responseMessage;
+                    }));
+                }
+
+                await Task.WhenAll(tasks);
+
+                TestTracer.Trace("Installation are done, expecting only one site operation header return (trigger site restart)");
+                // should only trigger restart once
+                IEnumerable<Task<HttpResponseMessage>> responses = tasks.Where((task) =>
+                {
+                    return task.Result.Headers.Contains(Constants.SiteOperationHeaderKey);
+                });
+
+                Assert.Equal(1, responses.Count());
+            });
+        }
+
         private async Task<HttpResponseMessage> PollAndVerifyAfterArmInstallation(RemoteSiteExtensionManager manager, string packageId)
         {
-            TestTracer.Trace("Polling for status");
+            TestTracer.Trace("Polling for status for '{0}'", packageId);
             DateTime start = DateTime.UtcNow;
             HttpResponseMessage responseMessage = null;
 
@@ -436,23 +503,23 @@ namespace Kudu.FunctionalTests
 
                 if (HttpStatusCode.Created == responseMessage.StatusCode)
                 {
-                    TestTracer.Trace("Action is on-going, wait for 3 seconds for next poll.");
+                    TestTracer.Trace("Action is on-going, wait for 3 seconds for next poll. Package: '{0}'", packageId);
                     await Task.Delay(TimeSpan.FromSeconds(3));
                 }
                 else if (HttpStatusCode.OK == responseMessage.StatusCode)
                 {
-                    TestTracer.Trace("Action is done successfully.");
+                    TestTracer.Trace("Action is done successfully for package '{0}'.", packageId);
                     break;
                 }
 
                 Assert.True(
                     HttpStatusCode.Created == responseMessage.StatusCode
-                    || HttpStatusCode.OK == responseMessage.StatusCode, "Action failed.");
+                    || HttpStatusCode.OK == responseMessage.StatusCode, string.Format(CultureInfo.InvariantCulture, "Action failed. Package: '{0}'", packageId));
 
             } while ((DateTime.UtcNow - start).TotalSeconds < 30);
 
-            TestTracer.Trace("Polled for {0} seconds. Response status is {1}", (DateTime.UtcNow - start).TotalSeconds, responseMessage.StatusCode);
-            Assert.True(HttpStatusCode.OK == responseMessage.StatusCode, "Action failed.");
+            TestTracer.Trace("Polled for '{0}' seconds. Response status is '{1}'. Package: '{2}'", (DateTime.UtcNow - start).TotalSeconds, responseMessage.StatusCode, packageId);
+            Assert.True(HttpStatusCode.OK == responseMessage.StatusCode, string.Format(CultureInfo.InvariantCulture, "Action failed. Package: {0}", packageId));
             return responseMessage;
         }
 
