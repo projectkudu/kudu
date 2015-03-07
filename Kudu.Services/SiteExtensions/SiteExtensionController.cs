@@ -232,7 +232,7 @@ namespace Kudu.Services.SiteExtensions
                 {
                     using (backgroundTracer.Step(XmlTracer.BackgroundTrace, attributes: traceAttributes))
                     {
-                        _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, backgroundTracer).Wait();
+                        _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, backgroundTracer).Wait();
                     }
                 });
 
@@ -240,7 +240,7 @@ namespace Kudu.Services.SiteExtensions
             }
             else
             {
-                result = await _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, tracer);
+                result = await _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, tracer);
 
                 if (string.Equals(Constants.SiteExtensionProvisioningStateFailed, result.ProvisioningState, StringComparison.OrdinalIgnoreCase))
                 {

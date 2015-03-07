@@ -304,7 +304,7 @@ namespace Kudu.FunctionalTests
                 Assert.Equal(HttpStatusCode.Created, responseMessage.StatusCode);
                 Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
 
-                //TestTracer.Trace("Poll for status. Expecting 200 response eventually with site operation header.");
+                TestTracer.Trace("Poll for status. Expecting 200 response eventually with site operation header.");
                 responseMessage = await PollAndVerifyAfterArmInstallation(manager, testPackageId);
                 armResult = await responseMessage.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
                 // after successfully installed, should return SiteOperationHeader to notify GEO to restart website
@@ -520,7 +520,7 @@ namespace Kudu.FunctionalTests
                 {
                     Assert.NotEqual(unlistedVersion, item.Version);
                 }
-                
+
                 await manager.InstallExtension(externalPackageId, feedUrl: externalFeed);
                 Assert.Equal(externalPackageId, info.Id);
                 Assert.Equal(latestListedVersion, info.Version);
@@ -572,6 +572,150 @@ namespace Kudu.FunctionalTests
             });
         }
 
+        [Fact]
+        public async Task SiteExtensionInstallPackageToWebRootTests()
+        {
+            const string appName = "SiteExtensionMicroServicesTests";
+            const string externalPackageId = "SimpleSvc";
+            const string externalPackageVersion = "1.0.0";
+            const string externalFeed = "https://www.myget.org/F/simplesvc/";
+
+            await ApplicationManager.RunAsync(appName, async appManager =>
+            {
+                var manager = appManager.SiteExtensionManager;
+
+                // clear local extensions
+                try
+                {
+                    TestTracer.Trace("Clear micro-services '{0}'", externalPackageId);
+                    HttpResponseMessage deleteResponseMessage = await manager.UninstallExtension(externalPackageId);
+                    Assert.True(await deleteResponseMessage.Content.ReadAsAsync<bool>(), "Delete must return true");
+                }
+                catch
+                {
+                    // no-op
+                }
+
+                // install/update
+                TestTracer.Trace("Perform InstallExtension with id '{0}', version '{1}' from '{2}'", externalPackageId, externalPackageVersion, externalFeed);
+                HttpResponseMessage responseMessage = await manager.InstallExtension(externalPackageId, externalPackageVersion, externalFeed, SiteExtensionInfo.SiteExtensionType.WebRoot);
+                SiteExtensionInfo result = await responseMessage.Content.ReadAsAsync<SiteExtensionInfo>();
+                Assert.Equal(externalPackageId, result.Id);
+                Assert.Equal(externalPackageVersion, result.Version);
+                Assert.Equal(externalFeed, result.FeedUrl);
+
+                TestTracer.Trace("GET request to verify package content has been copied to wwwroot");
+                HttpClient client = new HttpClient();
+                responseMessage = await client.GetAsync(appManager.SiteUrl);
+                string responseContent = await responseMessage.Content.ReadAsStringAsync();
+                Assert.NotNull(responseContent);
+                Assert.True(responseContent.Contains(@"<h3>Site for testing</h3>"));
+
+                TestTracer.Trace("GetLocalExtension should return WebRoot type SiteExtensionInfo");
+                responseMessage = await manager.GetLocalExtension(externalPackageId);
+                result = await responseMessage.Content.ReadAsAsync<SiteExtensionInfo>();
+                Assert.Equal(SiteExtensionInfo.SiteExtensionType.WebRoot, result.Type);
+
+                responseMessage = await manager.GetLocalExtensions(externalPackageId);
+                var results = await responseMessage.Content.ReadAsAsync<List<SiteExtensionInfo>>();
+                foreach (var item in results)
+                {
+                    if (string.Equals(externalPackageId, item.Id, StringComparison.OrdinalIgnoreCase))
+                    {
+                        Assert.Equal(SiteExtensionInfo.SiteExtensionType.WebRoot, item.Type);
+                    }
+                }
+
+                // delete
+                TestTracer.Trace("Perform UninstallExtension with id '{0}' only.", externalPackageId);
+                responseMessage = await manager.UninstallExtension(externalPackageId);
+                bool deleteResult = await responseMessage.Content.ReadAsAsync<bool>();
+                Assert.True(deleteResult, "Delete must return true");
+
+                TestTracer.Trace("GET request to verify package content has been removed wwwroot");
+                responseMessage = await client.GetAsync(appManager.SiteUrl);
+                responseContent = await responseMessage.Content.ReadAsStringAsync();
+                Assert.NotNull(responseContent);
+                Assert.True(responseContent.Contains("Forbidden"));
+            });
+        }
+
+        [Fact]
+        public async Task SiteExtensionInstallPackageToWebRootAsyncTests()
+        {
+            const string appName = "SiteExtensionMicroServicesTests";
+            const string externalPackageId = "SimpleSvc";
+            const string externalPackageVersion = "1.0.0";
+            const string externalFeed = "https://www.myget.org/F/simplesvc/";
+
+            await ApplicationManager.RunAsync(appName, async appManager =>
+            {
+                var manager = appManager.SiteExtensionManager;
+
+                // clear local extensions
+                try
+                {
+                    TestTracer.Trace("Clear micro-services '{0}'", externalPackageId);
+                    HttpResponseMessage deleteResponseMessage = await manager.UninstallExtension(externalPackageId);
+                    Assert.True(await deleteResponseMessage.Content.ReadAsAsync<bool>(), "Delete must return true");
+                }
+                catch
+                {
+                    // no-op
+                }
+
+                // install/update
+                TestTracer.Trace("Perform InstallExtension with id '{0}', version '{1}' from '{2}'", externalPackageId, externalPackageVersion, externalFeed);
+                UpdateHeaderIfGoingToBeArmRequest(manager.Client, true);
+                HttpResponseMessage responseMessage = await manager.InstallExtension(externalPackageId, externalPackageVersion, externalFeed, SiteExtensionInfo.SiteExtensionType.WebRoot);
+                Assert.Equal(HttpStatusCode.Created, responseMessage.StatusCode);
+                Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
+
+                TestTracer.Trace("Poll for status. Expecting 200 response eventually with site operation header.");
+                responseMessage = await PollAndVerifyAfterArmInstallation(manager, externalPackageId);
+                ArmEntry<SiteExtensionInfo> armResult = await responseMessage.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
+                // after successfully installed, should return SiteOperationHeader to notify GEO to restart website
+                Assert.True(responseMessage.Headers.Contains(Constants.SiteOperationHeaderKey));
+                Assert.Equal(externalFeed, armResult.Properties.FeedUrl);
+                Assert.Equal(externalPackageVersion, armResult.Properties.Version);
+                Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);
+
+                TestTracer.Trace("GET request to verify package content has been copied to wwwroot");
+                HttpClient client = new HttpClient();
+                responseMessage = await client.GetAsync(appManager.SiteUrl);
+                string responseContent = await responseMessage.Content.ReadAsStringAsync();
+                Assert.NotNull(responseContent);
+                Assert.True(responseContent.Contains(@"<h3>Site for testing</h3>"));
+
+                TestTracer.Trace("GetLocalExtension should return WebRoot type SiteExtensionInfo");
+                responseMessage = await manager.GetLocalExtension(externalPackageId);
+                armResult = await responseMessage.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
+                Assert.Equal(SiteExtensionInfo.SiteExtensionType.WebRoot, armResult.Properties.Type);
+
+                responseMessage = await manager.GetLocalExtensions(externalPackageId);
+                var results = await responseMessage.Content.ReadAsAsync<ArmListEntry<SiteExtensionInfo>>();
+                foreach (var item in results.Value)
+                {
+                    if (string.Equals(externalPackageId, item.Properties.Id, StringComparison.OrdinalIgnoreCase))
+                    {
+                        Assert.Equal(SiteExtensionInfo.SiteExtensionType.WebRoot, item.Properties.Type);
+                    }
+                }
+
+                // delete
+                TestTracer.Trace("Perform UninstallExtension with id '{0}' only.", externalPackageId);
+                responseMessage = await manager.UninstallExtension(externalPackageId);
+                armResult = await responseMessage.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
+                Assert.Null(armResult);
+                Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);
+
+                TestTracer.Trace("GET request to verify package content has been removed wwwroot");
+                responseMessage = await client.GetAsync(appManager.SiteUrl);
+                responseContent = await responseMessage.Content.ReadAsStringAsync();
+                Assert.NotNull(responseContent);
+                Assert.True(responseContent.Contains("Forbidden"));
+            });
+        }
         private async Task<HttpResponseMessage> PollAndVerifyAfterArmInstallation(RemoteSiteExtensionManager manager, string packageId)
         {
             TestTracer.Trace("Polling for status for '{0}'", packageId);

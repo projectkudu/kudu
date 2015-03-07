@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using Kudu.Client.Infrastructure;
+using Kudu.Contracts.SiteExtensions;
 using Kudu.Services.Arm;
 using Newtonsoft.Json.Linq;
 
@@ -114,11 +115,15 @@ namespace Kudu.Client.SiteExtensions
             return (await Client.GetAsync(url.ToString())).EnsureSuccessful();
         }
 
-        public async Task<HttpResponseMessage> InstallExtension(string id, string version = null, string feedUrl = null)
+        public async Task<HttpResponseMessage> InstallExtension(string id, string version = null, string feedUrl = null, SiteExtensionInfo.SiteExtensionType? type = null)
         {
             var json = new JObject();
             json["version"] = version;
             json["feed_url"] = feedUrl;
+            if (type.HasValue)
+            {
+                json["type"] = Enum.GetName(typeof(SiteExtensionInfo.SiteExtensionType), type.Value);
+            }
 
             return (await Client.PutAsJsonAsync("siteextensions/" + id, json)).EnsureSuccessful();
         }
@@ -128,7 +133,6 @@ namespace Kudu.Client.SiteExtensions
             var url = new StringBuilder(ServiceUrl);
             url.Append("siteextensions/");
             url.Append(id);
-
             return (await Client.DeleteAsync(url.ToString())).EnsureSuccessful();
         }
     }
