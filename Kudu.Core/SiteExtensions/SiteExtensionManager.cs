@@ -41,6 +41,7 @@ namespace Kudu.Core.SiteExtensions
         private const string _settingsFileName = "SiteExtensionSettings.json";
         private const string _feedUrlSetting = "feed_url";
         private const string _installUtcTimestampSetting = "install_timestamp_utc";
+        private const string _packageType = "package_type";
         private const string _versionSetting = "version";
 
         private readonly string _rootPath;
@@ -278,7 +279,7 @@ namespace Kudu.Core.SiteExtensions
         }
 
         // <inheritdoc />
-        public async Task<SiteExtensionInfo> InstallExtension(string id, string version, string feedUrl, ITracer tracer)
+        public async Task<SiteExtensionInfo> InstallExtension(string id, string version, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer)
         {
             var installationLock = SiteExtensionInstallationLock.CreateLock(_environment.SiteExtensionSettingsPath, id);
 
@@ -287,7 +288,7 @@ namespace Kudu.Core.SiteExtensions
                 // hold on to lock till action complete (success or fail)
                 return await installationLock.LockOperationAsync<SiteExtensionInfo>(async () =>
                 {
-                    return await TryInstallExtension(id, version, feedUrl, tracer);
+                    return await TryInstallExtension(id, version, feedUrl, type, tracer);
                 }, TimeSpan.Zero);
             }
             catch (Exception ex)
@@ -308,7 +309,7 @@ namespace Kudu.Core.SiteExtensions
             }
         }
 
-        private async Task<SiteExtensionInfo> TryInstallExtension(string id, string version, string feedUrl, ITracer tracer)
+        private async Task<SiteExtensionInfo> TryInstallExtension(string id, string version, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer)
         {
             SiteExtensionInfo info = null;
             HttpStatusCode status = HttpStatusCode.OK;  // final status when success
@@ -328,7 +329,7 @@ namespace Kudu.Core.SiteExtensions
                     if (await this.IsSiteExtensionInstalled(id, version, feedUrl))
                     {
                         // package already installed, return package from local repo.
-                        tracer.Trace("Site extension {0} with version {1} from {2} already installed.", id, version, feedUrl);
+                        tracer.Trace("Package {0} with version {1} from {2} already installed.", id, version, feedUrl);
                         info = await GetLocalExtension(id);
                         alreadyInstalled = true;
                     }
@@ -360,11 +361,12 @@ namespace Kudu.Core.SiteExtensions
                             using (tracer.Step("Install package: {0}.", id))
                             {
                                 string installationDirectory = GetInstallationDirectory(id);
-                                localPackage = await InstallExtension(repoPackage, installationDirectory, feedUrl, tracer);
+                                localPackage = await InstallExtension(repoPackage, installationDirectory, feedUrl, type, tracer);
                                 siteExtensionSettings.SetValues(new KeyValuePair<string, JToken>[] {
                                     new KeyValuePair<string, JToken>(_versionSetting, localPackage.Identity.Version.ToNormalizedString()),
                                     new KeyValuePair<string, JToken>(_feedUrlSetting, feedUrl),
-                                    new KeyValuePair<string, JToken>(_installUtcTimestampSetting, DateTime.UtcNow.ToString("u"))
+                                    new KeyValuePair<string, JToken>(_installUtcTimestampSetting, DateTime.UtcNow.ToString("u")),
+                                    new KeyValuePair<string, JToken>(_packageType, Enum.GetName(typeof(SiteExtensionInfo.SiteExtensionType), type))
                                 });
                             }
                         }
@@ -431,7 +433,7 @@ namespace Kudu.Core.SiteExtensions
         /// <para>3. Deploy site extension job</para>
         /// <para>4. Execute install.cmd if exist</para>
         /// </summary>
-        private async Task<UIPackageMetadata> InstallExtension(UIPackageMetadata package, string installationDirectory, string feedUrl, ITracer tracer)
+        private async Task<UIPackageMetadata> InstallExtension(UIPackageMetadata package, string installationDirectory, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer)
         {
             try
             {
@@ -449,33 +451,47 @@ namespace Kudu.Core.SiteExtensions
                 string packageLocalFilePath = GetNuGetPackageFile(package.Identity.Id, package.Identity.Version.ToString());
                 using (tracer.Step("Download site extension: {0}", package.Identity))
                 {
-                    await remoteRepo.DownloadPackageToFolder(package.Identity, installationDirectory, pathToLocalCopyOfNudpk: packageLocalFilePath);
-                }
-
-                // If there is no xdt file, generate default.
-                using (tracer.Step("Check if applicationhost.xdt file existed."))
-                {
-                    GenerateApplicationHostXdt(installationDirectory, '/' + package.Identity.Id, isPreInstalled: false, tracer: tracer);
-                }
-
-                using (tracer.Step("Trigger site extension job"))
-                {
-                    OperationManager.Attempt(() => DeploySiteExtensionJobs(package.Identity.Id));
-                }
-
-                var externalCommandFactory = new ExternalCommandFactory(_environment, _settings, installationDirectory);
-                string installScript = Path.Combine(installationDirectory, _installScriptName);
-                if (FileSystemHelpers.FileExists(installScript))
-                {
-                    using (tracer.Step("Execute install.cmd"))
+                    string extractPath = installationDirectory;
+                    if (SiteExtensionInfo.SiteExtensionType.WebRoot == type)
                     {
-                        OperationManager.Attempt(() =>
+                        extractPath = _environment.WebRootPath;
+                        FileSystemHelpers.EnsureDirectory(extractPath);
+
+                        tracer.Trace("Generate xdt file to map application to run from wwwroot when request for /{0}", package.Identity.Id);
+                        GenerateRemapToWebRootApplicationHostXdt(installationDirectory, string.Format(CultureInfo.InvariantCulture, "/{0}", package.Identity.Id));
+                    }
+
+                    await remoteRepo.DownloadPackageToFolder(package.Identity, extractPath, pathToLocalCopyOfNudpk: packageLocalFilePath);
+                }
+
+                // ignore below action if we install packge to wwwroot
+                if (SiteExtensionInfo.SiteExtensionType.WebRoot != type)
+                {
+                    // If there is no xdt file, generate default.
+                    using (tracer.Step("Check if applicationhost.xdt file existed."))
+                    {
+                        GenerateApplicationHostXdt(installationDirectory, '/' + package.Identity.Id, isPreInstalled: false, tracer: tracer);
+                    }
+
+                    using (tracer.Step("Trigger site extension job"))
+                    {
+                        OperationManager.Attempt(() => DeploySiteExtensionJobs(package.Identity.Id));
+                    }
+
+                    var externalCommandFactory = new ExternalCommandFactory(_environment, _settings, installationDirectory);
+                    string installScript = Path.Combine(installationDirectory, _installScriptName);
+                    if (FileSystemHelpers.FileExists(installScript))
+                    {
+                        using (tracer.Step("Execute install.cmd"))
                         {
-                            Executable exe = externalCommandFactory.BuildCommandExecutable(installScript,
-                                installationDirectory,
-                                _settings.GetCommandIdleTimeout(), NullLogger.Instance);
-                            exe.ExecuteWithProgressWriter(NullLogger.Instance, _traceFactory.GetTracer(), String.Empty);
-                        });
+                            OperationManager.Attempt(() =>
+                            {
+                                Executable exe = externalCommandFactory.BuildCommandExecutable(installScript,
+                                    installationDirectory,
+                                    _settings.GetCommandIdleTimeout(), NullLogger.Instance);
+                                exe.ExecuteWithProgressWriter(NullLogger.Instance, _traceFactory.GetTracer(), String.Empty);
+                            });
+                        }
                     }
                 }
             }
@@ -578,9 +594,18 @@ namespace Kudu.Core.SiteExtensions
                     tracer.Trace("Missing xdt file, creating one.");
                 }
 
-                string xdtContent = CreateDefaultXdtFile(relativeUrl, isPreInstalled);
+                string physicalPath = isPreInstalled ? "%XDT_LATEST_EXTENSIONPATH%" : "%XDT_EXTENSIONPATH%";
+                string xdtContent = CreateDefaultXdtFile(relativeUrl, physicalPath);
                 OperationManager.Attempt(() => FileSystemHelpers.WriteAllText(xdtPath, xdtContent));
             }
+        }
+
+        private static void GenerateRemapToWebRootApplicationHostXdt(string extensionDirectory, string relativeUrl)
+        {
+            FileSystemHelpers.EnsureDirectory(extensionDirectory);
+            string xdtPath = Path.Combine(extensionDirectory, _applicationHostFile);
+            string xdtContent = CreateDefaultXdtFile(relativeUrl, @"%home%\site\wwwroot");
+            OperationManager.Attempt(() => FileSystemHelpers.WriteAllText(xdtPath, xdtContent));
         }
 
         public async Task<bool> UninstallExtension(string id)
@@ -597,27 +622,39 @@ namespace Kudu.Core.SiteExtensions
                 throw new DirectoryNotFoundException(installationDirectory);
             }
 
-            var externalCommandFactory = new ExternalCommandFactory(_environment, _settings, installationDirectory);
-
-            string uninstallScript = Path.Combine(installationDirectory, _uninstallScriptName);
-
-            if (FileSystemHelpers.FileExists(uninstallScript))
+            if (IsInstalledToWebRoot(id))
             {
-                using (tracer.Step("Execute uninstall.cmd"))
-                {
-                    OperationManager.Attempt(() =>
-                    {
-                        Executable exe = externalCommandFactory.BuildCommandExecutable(uninstallScript,
-                            installationDirectory,
-                            _settings.GetCommandIdleTimeout(), NullLogger.Instance);
-                        exe.ExecuteWithProgressWriter(NullLogger.Instance, _traceFactory.GetTracer(), String.Empty);
-                    });
-                }
+                // special handling for package that install in wwwroot instead of under site extension folder
+                tracer.Trace("Clear all content in wwwroot");
+                FileSystemHelpers.DeleteDirectoryContentsSafe(_environment.WebRootPath);
             }
-
-            using (tracer.Step("Remove site extension job"))
+            else
             {
-                OperationManager.Attempt(() => CleanupSiteExtensionJobs(id));
+                // default action for site extension uninstall
+
+                // only site extension has below infomation
+                var externalCommandFactory = new ExternalCommandFactory(_environment, _settings, installationDirectory);
+
+                string uninstallScript = Path.Combine(installationDirectory, _uninstallScriptName);
+
+                if (FileSystemHelpers.FileExists(uninstallScript))
+                {
+                    using (tracer.Step("Execute uninstall.cmd"))
+                    {
+                        OperationManager.Attempt(() =>
+                        {
+                            Executable exe = externalCommandFactory.BuildCommandExecutable(uninstallScript,
+                                installationDirectory,
+                                _settings.GetCommandIdleTimeout(), NullLogger.Instance);
+                            exe.ExecuteWithProgressWriter(NullLogger.Instance, _traceFactory.GetTracer(), String.Empty);
+                        });
+                    }
+                }
+
+                using (tracer.Step("Remove site extension job"))
+                {
+                    OperationManager.Attempt(() => CleanupSiteExtensionJobs(id));
+                }
             }
 
             using (tracer.Step("Delete site extension package, directory and arm settings"))
@@ -660,9 +697,8 @@ namespace Kudu.Core.SiteExtensions
             return Path.Combine(programFiles, "SiteExtensions", id);
         }
 
-        private static string CreateDefaultXdtFile(string relativeUrl, bool isPreInstalled)
+        private static string CreateDefaultXdtFile(string relativeUrl, string physicalPath)
         {
-            string physicalPath = isPreInstalled ? "%XDT_LATEST_EXTENSIONPATH%" : "%XDT_EXTENSIONPATH%";
             string template = null;
 
             Stream stream = typeof(SiteExtensionManager).Assembly.GetManifestResourceStream("Kudu.Core.SiteExtensions." + _applicationHostFile + ".xml");
@@ -760,6 +796,11 @@ namespace Kudu.Core.SiteExtensions
             }
 
             var info = new SiteExtensionInfo(package);
+            if (IsInstalledToWebRoot(info.Id))
+            {
+                info.Type = SiteExtensionInfo.SiteExtensionType.WebRoot;
+            }
+
             SetLocalInfo(info);
             await TryCheckLocalPackageLatestVersionFromRemote(info, checkLatest);
             return info;
@@ -847,6 +888,16 @@ namespace Kudu.Core.SiteExtensions
         private string GetFullUrl(string url)
         {
             return url == null ? null : new Uri(new Uri(_baseUrl), url).ToString().Trim('/') + "/";
+        }
+
+        private bool IsInstalledToWebRoot(string packageId)
+        {
+            JsonSettings siteExtensionSettings = GetSettingManager(packageId);
+            string packageTypeStr = siteExtensionSettings.GetValue(_packageType);
+            SiteExtensionInfo.SiteExtensionType packageType;
+
+            return (Enum.TryParse<SiteExtensionInfo.SiteExtensionType>(packageTypeStr, true, out packageType) 
+                && SiteExtensionInfo.SiteExtensionType.WebRoot == packageType);
         }
 
         /// <summary>

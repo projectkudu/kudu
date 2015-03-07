@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
 using Kudu.Contracts.Infrastructure;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using NuGet.Client.VisualStudio;
 
 namespace Kudu.Contracts.SiteExtensions
@@ -14,7 +14,8 @@ namespace Kudu.Contracts.SiteExtensions
         {
             Gallery,
             PreInstalledMonaco,
-            PreInstalledEnabled
+            PreInstalledEnabled,
+            WebRoot
         }
 
         public SiteExtensionInfo()
@@ -73,7 +74,8 @@ namespace Kudu.Contracts.SiteExtensions
             set;
         }
 
-        [JsonIgnore]
+        [JsonProperty(PropertyName = "type")]
+        [JsonConverter(typeof(StringEnumConverter))]
         public SiteExtensionType Type
         {
             get;
