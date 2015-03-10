@@ -491,11 +491,12 @@ namespace Kudu.FunctionalTests
         }
 
         [Fact]
-        public async Task SiteExtensionShouldNotSeeUnlistPackage()
+        public async Task SiteExtensionShouldNotSeeButAbleToInstallUnlistedPackage()
         {
             const string appName = "SiteExtensionShouldNotSeeUnlistPackage";
             const string externalPackageId = "SimpleSite";
             const string unlistedVersion = "3.0.0";
+            const string latestListedVersion = "2.0.0";
             const string externalFeed = "https://www.myget.org/F/simplesvc/";
 
             await ApplicationManager.RunAsync(appName, async appManager =>
@@ -519,6 +520,18 @@ namespace Kudu.FunctionalTests
                 {
                     Assert.NotEqual(unlistedVersion, item.Version);
                 }
+                
+                await manager.InstallExtension(externalPackageId, feedUrl: externalFeed);
+                Assert.Equal(externalPackageId, info.Id);
+                Assert.Equal(latestListedVersion, info.Version);
+                Assert.Equal(externalFeed, info.FeedUrl);
+
+                TestTracer.Trace("Should able to installed unlisted package if specify version");
+                response = await manager.InstallExtension(externalPackageId, version: unlistedVersion, feedUrl: externalFeed);
+                info = await response.Content.ReadAsAsync<SiteExtensionInfo>();
+                Assert.Equal(externalPackageId, info.Id);
+                Assert.Equal(unlistedVersion, info.Version);
+                Assert.Equal(externalFeed, info.FeedUrl);
 
                 UpdateHeaderIfGoingToBeArmRequest(manager.Client, isArmRequest: true);
                 response = await manager.GetRemoteExtension(externalPackageId, feedUrl: externalFeed);
@@ -538,6 +551,24 @@ namespace Kudu.FunctionalTests
                 {
                     Assert.NotEqual(unlistedVersion, item.Properties.Version);
                 }
+
+                response = await manager.InstallExtension(externalPackageId, feedUrl: externalFeed);
+                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+                await PollAndVerifyAfterArmInstallation(manager, externalPackageId);
+                response = await manager.GetLocalExtension(externalPackageId);
+                armInfo = await response.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
+                Assert.Equal(externalPackageId, armInfo.Properties.Id);
+                Assert.Equal(latestListedVersion, armInfo.Properties.Version);
+                Assert.Equal(externalFeed, armInfo.Properties.FeedUrl);
+
+                response = await manager.InstallExtension(externalPackageId, version: unlistedVersion, feedUrl: externalFeed);
+                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+                await PollAndVerifyAfterArmInstallation(manager, externalPackageId);
+                response = await manager.GetLocalExtension(externalPackageId);
+                armInfo = await response.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
+                Assert.Equal(externalPackageId, armInfo.Properties.Id);
+                Assert.Equal(unlistedVersion, armInfo.Properties.Version);
+                Assert.Equal(externalFeed, armInfo.Properties.FeedUrl);
             });
         }
 

@@ -342,16 +342,16 @@ namespace Kudu.Core.SiteExtensions
 
                         if (string.IsNullOrWhiteSpace(version))
                         {
-                            using (tracer.Step("Version is null, search latest package by id: {0}", id))
+                            using (tracer.Step("Version is null, search latest package by id: {0}, will not search for unlisted package.", id))
                             {
                                 repoPackage = await remoteRepo.GetLatestPackageById(id);
                             }
                         }
                         else
                         {
-                            using (tracer.Step("Search package by id: {0} and version: {1}", id, version))
+                            using (tracer.Step("Search package by id: {0} and version: {1}, will also search for unlisted package.", id, version))
                             {
-                                repoPackage = await remoteRepo.GetPackageByIdentity(id, version);
+                                repoPackage = await remoteRepo.GetPackageByIdentity(id, version, includeUnlisted: true);
                             }
                         }
 

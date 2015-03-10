@@ -38,11 +38,11 @@ namespace Kudu.Core.SiteExtensions
         /// <summary>
         /// Query source repository for latest package base given package id
         /// </summary>
-        public static async Task<UIPackageMetadata> GetLatestPackageById(this SourceRepository srcRepo, string packageId)
+        public static async Task<UIPackageMetadata> GetLatestPackageById(this SourceRepository srcRepo, string packageId, bool includePrerelease = true, bool includeUnlisted = false)
         {
             UIPackageMetadata latestPackage = null;
             var metadataResource = await srcRepo.GetResourceAsync<UIMetadataResource>();
-            IEnumerable<UIPackageMetadata> packages = await metadataResource.GetMetadata(packageId, includePrerelease: true, includeUnlisted: false, token: CancellationToken.None);
+            IEnumerable<UIPackageMetadata> packages = await metadataResource.GetMetadata(packageId, includePrerelease, includeUnlisted, token: CancellationToken.None);
             foreach (var p in packages)
             {
                 if (latestPackage == null ||
@@ -58,10 +58,10 @@ namespace Kudu.Core.SiteExtensions
         /// <summary>
         /// Query source repository for a package base given package id and version
         /// </summary>
-        public static async Task<UIPackageMetadata> GetPackageByIdentity(this SourceRepository srcRepo, string packageId, string version)
+        public static async Task<UIPackageMetadata> GetPackageByIdentity(this SourceRepository srcRepo, string packageId, string version, bool includePrerelease = true, bool includeUnlisted = false)
         {
             var metadataResource = await srcRepo.GetResourceAsync<UIMetadataResource>();
-            IEnumerable<UIPackageMetadata> packages = await metadataResource.GetMetadata(packageId, includePrerelease: true, includeUnlisted: false, token: CancellationToken.None);
+            IEnumerable<UIPackageMetadata> packages = await metadataResource.GetMetadata(packageId, includePrerelease, includeUnlisted, token: CancellationToken.None);
             NuGetVersion expectedVersion = NuGetVersion.Parse(version);
             return packages.FirstOrDefault((p) =>
             {
