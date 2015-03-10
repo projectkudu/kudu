@@ -490,6 +490,57 @@ namespace Kudu.FunctionalTests
             });
         }
 
+        [Fact]
+        public async Task SiteExtensionShouldNotSeeUnlistPackage()
+        {
+            const string appName = "SiteExtensionShouldNotSeeUnlistPackage";
+            const string externalPackageId = "SimpleSite";
+            const string unlistedVersion = "3.0.0";
+            const string externalFeed = "https://www.myget.org/F/simplesvc/";
+
+            await ApplicationManager.RunAsync(appName, async appManager =>
+            {
+                var manager = appManager.SiteExtensionManager;
+
+                HttpResponseMessage response = await manager.GetRemoteExtension(externalPackageId, feedUrl: externalFeed);
+                SiteExtensionInfo info = await response.Content.ReadAsAsync<SiteExtensionInfo>();
+                Assert.NotEqual(unlistedVersion, info.Version);
+
+                var ex = await KuduAssert.ThrowsUnwrappedAsync<HttpUnsuccessfulRequestException>(async () =>
+                {
+                    await manager.GetRemoteExtension(externalPackageId, version: unlistedVersion, feedUrl: externalFeed);
+                });
+                Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
+
+                response = await manager.GetRemoteExtensions(externalPackageId, allowPrereleaseVersions: true, feedUrl: externalFeed);
+                List<SiteExtensionInfo> infos = await response.Content.ReadAsAsync<List<SiteExtensionInfo>>();
+                Assert.NotEmpty(infos);
+                foreach (var item in infos)
+                {
+                    Assert.NotEqual(unlistedVersion, item.Version);
+                }
+
+                UpdateHeaderIfGoingToBeArmRequest(manager.Client, isArmRequest: true);
+                response = await manager.GetRemoteExtension(externalPackageId, feedUrl: externalFeed);
+                ArmEntry<SiteExtensionInfo> armInfo = await response.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
+                Assert.NotEqual(unlistedVersion, armInfo.Properties.Version);
+
+                ex = await KuduAssert.ThrowsUnwrappedAsync<HttpUnsuccessfulRequestException>(async () =>
+                {
+                    await manager.GetRemoteExtension(externalPackageId, version: unlistedVersion, feedUrl: externalFeed);
+                });
+                Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
+
+                response = await manager.GetRemoteExtensions(externalPackageId, allowPrereleaseVersions: true, feedUrl: externalFeed);
+                ArmListEntry<SiteExtensionInfo> armInfos = await response.Content.ReadAsAsync<ArmListEntry<SiteExtensionInfo>>();
+                Assert.NotEmpty(armInfos.Value);
+                foreach (var item in armInfos.Value)
+                {
+                    Assert.NotEqual(unlistedVersion, item.Properties.Version);
+                }
+            });
+        }
+
         private async Task<HttpResponseMessage> PollAndVerifyAfterArmInstallation(RemoteSiteExtensionManager manager, string packageId)
         {
             TestTracer.Trace("Polling for status for '{0}'", packageId);

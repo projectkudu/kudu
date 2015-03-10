@@ -42,7 +42,7 @@ namespace Kudu.Core.SiteExtensions
         {
             UIPackageMetadata latestPackage = null;
             var metadataResource = await srcRepo.GetResourceAsync<UIMetadataResource>();
-            IEnumerable<UIPackageMetadata> packages = await metadataResource.GetMetadata(packageId, true, true, CancellationToken.None);
+            IEnumerable<UIPackageMetadata> packages = await metadataResource.GetMetadata(packageId, includePrerelease: true, includeUnlisted: false, token: CancellationToken.None);
             foreach (var p in packages)
             {
                 if (latestPackage == null ||
@@ -61,7 +61,7 @@ namespace Kudu.Core.SiteExtensions
         public static async Task<UIPackageMetadata> GetPackageByIdentity(this SourceRepository srcRepo, string packageId, string version)
         {
             var metadataResource = await srcRepo.GetResourceAsync<UIMetadataResource>();
-            IEnumerable<UIPackageMetadata> packages = await metadataResource.GetMetadata(packageId, true, true, CancellationToken.None);
+            IEnumerable<UIPackageMetadata> packages = await metadataResource.GetMetadata(packageId, includePrerelease: true, includeUnlisted: false, token: CancellationToken.None);
             NuGetVersion expectedVersion = NuGetVersion.Parse(version);
             return packages.FirstOrDefault((p) =>
             {
