@@ -18,6 +18,7 @@ using Kudu.Services.Arm;
 
 namespace Kudu.Services.SiteExtensions
 {
+    [ArmControllerConfiguration]
     [EnsureRequestIdHandler]
     public class SiteExtensionController : ApiController
     {
@@ -181,6 +182,12 @@ namespace Kudu.Services.SiteExtensions
         }
 
         [HttpPut]
+        public async Task<HttpResponseMessage> InstallExtensionArm(string id, ArmEntry<SiteExtensionInfo> requestInfo)
+        {
+            return await InstallExtension(id, requestInfo.Properties);
+        }
+
+        [HttpPut]
         public async Task<HttpResponseMessage> InstallExtension(string id, SiteExtensionInfo requestInfo)
         {
             var tracer = _traceFactory.GetTracer();
@@ -287,6 +294,7 @@ namespace Kudu.Services.SiteExtensions
             settings.ProvisioningState = Constants.SiteExtensionProvisioningStateCreated;
             settings.Operation = Constants.SiteExtensionOperationInstall;
             settings.Status = HttpStatusCode.Created;
+            settings.Comment = null;
 
             SiteExtensionInfo info = new SiteExtensionInfo();
             info.Id = id;

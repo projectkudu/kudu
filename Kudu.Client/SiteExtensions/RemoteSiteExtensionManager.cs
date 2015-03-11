@@ -125,6 +125,20 @@ namespace Kudu.Client.SiteExtensions
                 json["type"] = Enum.GetName(typeof(SiteExtensionInfo.SiteExtensionType), type.Value);
             }
 
+            // if it is arm request, payload will be something like below
+            /*
+                {"properties":{
+                    "version": "1.0.0",
+                    "feed_url": "https://www.nuget.org/api/v2/"
+                }}
+             */
+            if (Client.DefaultRequestHeaders.Contains(ArmUtils.GeoLocationHeaderKey))
+            {
+                JObject armProperties = json;
+                json = new JObject();
+                json["properties"] = armProperties;
+            }
+
             return (await Client.PutAsJsonAsync("siteextensions/" + id, json)).EnsureSuccessful();
         }
 
