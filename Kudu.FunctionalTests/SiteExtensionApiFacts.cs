@@ -634,9 +634,7 @@ namespace Kudu.FunctionalTests
 
                 TestTracer.Trace("GET request to verify package content has been removed wwwroot");
                 responseMessage = await client.GetAsync(appManager.SiteUrl);
-                responseContent = await responseMessage.Content.ReadAsStringAsync();
-                Assert.NotNull(responseContent);
-                Assert.True(responseContent.Contains("Forbidden"));
+                Assert.Equal(HttpStatusCode.Forbidden, responseMessage.StatusCode);
             });
         }
 
@@ -711,11 +709,10 @@ namespace Kudu.FunctionalTests
 
                 TestTracer.Trace("GET request to verify package content has been removed wwwroot");
                 responseMessage = await client.GetAsync(appManager.SiteUrl);
-                responseContent = await responseMessage.Content.ReadAsStringAsync();
-                Assert.NotNull(responseContent);
-                Assert.True(responseContent.Contains("Forbidden"));
+                Assert.Equal(HttpStatusCode.Forbidden, responseMessage.StatusCode);
             });
         }
+
         private async Task<HttpResponseMessage> PollAndVerifyAfterArmInstallation(RemoteSiteExtensionManager manager, string packageId)
         {
             TestTracer.Trace("Polling for status for '{0}'", packageId);
