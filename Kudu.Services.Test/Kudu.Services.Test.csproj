@@ -65,6 +65,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ApplicationLogsReaderFacts.cs" />
+    <Compile Include="ArmUtilsFacts.cs" />
     <Compile Include="BitbucketHandlerFacts.cs" />
     <Compile Include="CodeBaseHqFacts.cs" />
     <Compile Include="CodePlexHandlerFacts.cs" />

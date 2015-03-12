@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using Kudu.Contracts.Infrastructure;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -188,11 +189,9 @@ namespace Kudu.Contracts.SiteExtensions
         }
 
         // For Arm Request
-        [JsonProperty(PropertyName = "name")]
-        public string Name
-        {
-            get { return Id; }
-        }
+        [JsonIgnore]
+        [SuppressMessage("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "to provide ARM spceific name")]
+        string INamedObject.Name { get { return Id; } }
 
         [JsonProperty(PropertyName = "provisioningState")]
         public string ProvisioningState

@@ -72,6 +72,8 @@ namespace Kudu.Services.Arm
                 armEntry.Id += ((INamedObject)o).Name;
             }
 
+            armEntry.Id = armEntry.Id.TrimEnd('/');
+
             // The Type and Name properties use alternating token starting with 'Microsoft.Web/sites'
             // e.g. /subscriptions/b0019e1d-2829-4226-9356-4a57a4a5cc90/resourcegroups/MyRG/providers/Microsoft.Web/sites/MySite/extensions/SettingsAPISample/settings/foo1
             // Type: Microsoft.Web/sites/extensions/settings
@@ -87,8 +89,8 @@ namespace Kudu.Services.Arm
                     armEntry.Type += "/" + idTokens[i];
                 }
 
-                armEntry.Name = String.Empty;
-                for (int i = 8; i < idTokens.Length; i += 2)
+                armEntry.Name = idTokens[8];
+                for (int i = 10; i < idTokens.Length; i += 2)
                 {
                     armEntry.Name += "/" + idTokens[i];
                 }
