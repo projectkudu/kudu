@@ -456,12 +456,30 @@ namespace Kudu.Core.SiteExtensions
                     {
                         extractPath = _environment.WebRootPath;
                         FileSystemHelpers.EnsureDirectory(extractPath);
-
-                        tracer.Trace("Generate xdt file to map application to run from wwwroot when request for /{0}", package.Identity.Id);
-                        GenerateRemapToWebRootApplicationHostXdt(installationDirectory, string.Format(CultureInfo.InvariantCulture, "/{0}", package.Identity.Id));
                     }
 
                     await remoteRepo.DownloadPackageToFolder(package.Identity, extractPath, pathToLocalCopyOfNudpk: packageLocalFilePath);
+
+                    if (SiteExtensionInfo.SiteExtensionType.WebRoot == type)
+                    {
+                        // if install to WebRoot, check if there is any xdt file come with package
+                        // if there is one, move it to site extension folder
+                        // if not, generate one to map request to wwwroot
+                        string xdtFile = Path.Combine(extractPath, _applicationHostFile);
+                        if (File.Exists(xdtFile))
+                        {
+                            tracer.Trace("Use xdt file from package.");
+                            string newXdtFile = Path.Combine(installationDirectory, _applicationHostFile);
+
+                            tracer.Trace("Moving {0} to {1}", xdtFile, newXdtFile);
+                            FileSystemHelpers.MoveFile(xdtFile, newXdtFile);
+                        }
+                        else
+                        {
+                            tracer.Trace("Generate xdt file to map application to run from wwwroot when request for /{0}", package.Identity.Id);
+                            GenerateRemapToWebRootApplicationHostXdt(installationDirectory, string.Format(CultureInfo.InvariantCulture, "/{0}", package.Identity.Id));
+                        }
+                    }
                 }
 
                 // ignore below action if we install packge to wwwroot
@@ -896,7 +914,7 @@ namespace Kudu.Core.SiteExtensions
             string packageTypeStr = siteExtensionSettings.GetValue(_packageType);
             SiteExtensionInfo.SiteExtensionType packageType;
 
-            return (Enum.TryParse<SiteExtensionInfo.SiteExtensionType>(packageTypeStr, true, out packageType) 
+            return (Enum.TryParse<SiteExtensionInfo.SiteExtensionType>(packageTypeStr, true, out packageType)
                 && SiteExtensionInfo.SiteExtensionType.WebRoot == packageType);
         }
 

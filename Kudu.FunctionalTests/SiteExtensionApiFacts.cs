@@ -580,6 +580,9 @@ namespace Kudu.FunctionalTests
             const string externalPackageVersion = "1.0.0";
             const string externalFeed = "https://www.myget.org/F/simplesvc/";
 
+            // site extension 'webrootxdttest' search for xdt files under site extension 'webrootxdttest' folder, and print out xdt content onto page
+            const string externalPackageWithXdtId = "webrootxdttest";
+
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 var manager = appManager.SiteExtensionManager;
@@ -589,7 +592,10 @@ namespace Kudu.FunctionalTests
                 {
                     TestTracer.Trace("Clear micro-services '{0}'", externalPackageId);
                     HttpResponseMessage deleteResponseMessage = await manager.UninstallExtension(externalPackageId);
-                    Assert.True(await deleteResponseMessage.Content.ReadAsAsync<bool>(), "Delete must return true");
+                    Assert.True(await deleteResponseMessage.Content.ReadAsAsync<bool>(), "Delete must return true: " + externalPackageId);
+
+                    deleteResponseMessage = await manager.UninstallExtension(externalPackageWithXdtId);
+                    Assert.True(await deleteResponseMessage.Content.ReadAsAsync<bool>(), "Delete must return true: " + externalPackageWithXdtId);
                 }
                 catch
                 {
@@ -635,6 +641,20 @@ namespace Kudu.FunctionalTests
                 TestTracer.Trace("GET request to verify package content has been removed wwwroot");
                 responseMessage = await client.GetAsync(appManager.SiteUrl);
                 Assert.Equal(HttpStatusCode.Forbidden, responseMessage.StatusCode);
+
+                // install package that with xdt file
+                TestTracer.Trace("Perform InstallExtension with id '{0}' from '{1}'", externalPackageWithXdtId, externalFeed);
+                responseMessage = await manager.InstallExtension(externalPackageWithXdtId, feedUrl: externalFeed, type: SiteExtensionInfo.SiteExtensionType.WebRoot);
+                result = await responseMessage.Content.ReadAsAsync<SiteExtensionInfo>();
+                Assert.Equal(externalPackageWithXdtId, result.Id);
+                Assert.Equal(externalFeed, result.FeedUrl);
+
+                TestTracer.Trace("GET request to verify package content has been copied to wwwroot");
+                responseMessage = await client.GetAsync(appManager.SiteUrl);
+                responseContent = await responseMessage.Content.ReadAsStringAsync();
+                Assert.NotNull(responseContent);
+                Assert.True(responseContent.Contains(@"1 files"));
+                Assert.True(responseContent.Contains(@"site\path\shall\not\be\found")); // xdt content
             });
         }
 
@@ -645,6 +665,9 @@ namespace Kudu.FunctionalTests
             const string externalPackageId = "SimpleSvc";
             const string externalPackageVersion = "1.0.0";
             const string externalFeed = "https://www.myget.org/F/simplesvc/";
+
+            // site extension 'webrootxdttest' search for xdt files under site extension 'webrootxdttest' folder, and print out xdt content onto page
+            const string externalPackageWithXdtId = "webrootxdttest";
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
@@ -710,6 +733,24 @@ namespace Kudu.FunctionalTests
                 TestTracer.Trace("GET request to verify package content has been removed wwwroot");
                 responseMessage = await client.GetAsync(appManager.SiteUrl);
                 Assert.Equal(HttpStatusCode.Forbidden, responseMessage.StatusCode);
+
+                // install package that with xdt file
+                TestTracer.Trace("Perform InstallExtension with id '{0}' from '{1}'", externalPackageWithXdtId, externalFeed);
+                responseMessage = await manager.InstallExtension(externalPackageWithXdtId, feedUrl: externalFeed, type: SiteExtensionInfo.SiteExtensionType.WebRoot);
+                Assert.Equal(HttpStatusCode.Created, responseMessage.StatusCode);
+
+                TestTracer.Trace("Poll for status. Expecting 200 response eventually with site operation header.");
+                responseMessage = await PollAndVerifyAfterArmInstallation(manager, externalPackageWithXdtId);
+                armResult = await responseMessage.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
+                Assert.Equal(externalFeed, armResult.Properties.FeedUrl);
+                Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);
+
+                TestTracer.Trace("GET request to verify package content has been copied to wwwroot");
+                responseMessage = await client.GetAsync(appManager.SiteUrl);
+                responseContent = await responseMessage.Content.ReadAsStringAsync();
+                Assert.NotNull(responseContent);
+                Assert.True(responseContent.Contains(@"1 files"));
+                Assert.True(responseContent.Contains(@"site\path\shall\not\be\found")); // xdt content
             });
         }
 
