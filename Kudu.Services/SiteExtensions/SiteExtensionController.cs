@@ -25,12 +25,14 @@ namespace Kudu.Services.SiteExtensions
         private readonly ISiteExtensionManager _manager;
         private readonly IEnvironment _environment;
         private readonly ITraceFactory _traceFactory;
+        private readonly IAnalytics _analytics;
 
-        public SiteExtensionController(ISiteExtensionManager manager, IEnvironment environment, ITraceFactory traceFactory)
+        public SiteExtensionController(ISiteExtensionManager manager, IEnvironment environment, ITraceFactory traceFactory, IAnalytics analytics)
         {
             _manager = manager;
             _environment = environment;
             _traceFactory = traceFactory;
+            _analytics = analytics;
         }
 
         [HttpGet]
@@ -107,14 +109,22 @@ namespace Kudu.Services.SiteExtensions
                             }
                             else
                             {
+                                // it is important to call "SiteExtensionStatus.IsAnyInstallationRequireRestart" before "UpdateArmSettingsForSuccessInstallation"
+                                // since "IsAnyInstallationRequireRestart" is depending on properties inside site extension status files 
+                                // while "UpdateArmSettingsForSuccessInstallation" will override some of the values
+                                bool requireRestart = SiteExtensionStatus.IsAnyInstallationRequireRestart(_environment.SiteExtensionSettingsPath, Path.Combine(_environment.RootPath, "SiteExtensions"), tracer, _analytics);
                                 // clear operation, since opeation is done
                                 if (UpdateArmSettingsForSuccessInstallation())
                                 {
                                     using (tracer.Step("{0} finsihed installation and batch update lock aquired. Will notify Antares GEO to restart website.", id))
                                     {
                                         responseMessage = Request.CreateResponse(armSettings.Status, ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(extension, Request));
-                                        // Notify GEO to restart website
-                                        responseMessage.Headers.Add(Constants.SiteOperationHeaderKey, Constants.SiteOperationRestart);
+
+                                        // Notify GEO to restart website if necessary
+                                        if (requireRestart)
+                                        {
+                                            responseMessage.Headers.Add(Constants.SiteOperationHeaderKey, Constants.SiteOperationRestart);
+                                        }
                                     }
                                 }
                                 else
@@ -203,7 +213,7 @@ namespace Kudu.Services.SiteExtensions
                 requestInfo = new SiteExtensionInfo();
             }
 
-            SiteExtensionInfo result = await InitInstallSiteExtension(id);
+            SiteExtensionInfo result = await InitInstallSiteExtension(id, requestInfo.Type);
 
             if (ArmUtils.IsArmRequest(Request))
             {
@@ -288,12 +298,13 @@ namespace Kudu.Services.SiteExtensions
             }
         }
 
-        private async Task<SiteExtensionInfo> InitInstallSiteExtension(string id)
+        private async Task<SiteExtensionInfo> InitInstallSiteExtension(string id, SiteExtensionInfo.SiteExtensionType type)
         {
             SiteExtensionStatus settings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id, _traceFactory.GetTracer());
             settings.ProvisioningState = Constants.SiteExtensionProvisioningStateCreated;
             settings.Operation = Constants.SiteExtensionOperationInstall;
             settings.Status = HttpStatusCode.Created;
+            settings.Type = type;
             settings.Comment = null;
 
             SiteExtensionInfo info = new SiteExtensionInfo();

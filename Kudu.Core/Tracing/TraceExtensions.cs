@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Web;
 using Kudu.Contracts.Tracing;
 
@@ -43,22 +44,15 @@ namespace Kudu.Core.Tracing
             tracer.Trace(String.Format(message, args), _empty);
         }
 
+        public static void TraceError(this ITracer tracer, Exception ex, string format, params object[] args)
+        {
+            var attribs = GetErrorAttribute(ex, string.Format(CultureInfo.InvariantCulture, format, args));
+            tracer.Trace("Error occurred", attribs);
+        }
+
         public static void TraceError(this ITracer tracer, Exception ex)
         {
-            var attribs = new Dictionary<string, string>
-            {
-                { "type", "error" },
-                { "text", ex.Message },
-                { "stackTrace", ex.StackTrace ?? String.Empty }
-            };
-
-            if (ex.InnerException != null)
-            {
-                attribs["innerText"] = ex.InnerException.Message;
-                attribs["innerStackTrace"] = ex.InnerException.StackTrace ?? String.Empty;
-            }
-
-            tracer.Trace("Error occurred", attribs);
+            tracer.Trace("Error occurred", GetErrorAttribute(ex));
         }
 
         public static void TraceError(this ITracer tracer, string message)
@@ -157,6 +151,34 @@ namespace Kudu.Core.Tracing
             }
 
             return TraceLevel.Verbose;
+        }
+
+        private static Dictionary<string, string> GetErrorAttribute(Exception ex, string message = null)
+        {
+            string errorMessage = null;
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                errorMessage = ex.Message;
+            }
+            else
+            {
+                errorMessage = string.Format(CultureInfo.InvariantCulture, "{0}: {1}", message, ex.Message);
+            }
+
+            var attribs = new Dictionary<string, string>
+            {
+                { "type", "error" },
+                { "text", errorMessage },
+                { "stackTrace", ex.StackTrace ?? String.Empty }
+            };
+
+            if (ex.InnerException != null)
+            {
+                attribs["innerText"] = ex.InnerException.Message;
+                attribs["innerStackTrace"] = ex.InnerException.StackTrace ?? String.Empty;
+            }
+
+            return attribs;
         }
     }
 }

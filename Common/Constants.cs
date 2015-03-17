@@ -66,6 +66,8 @@ namespace Kudu
             get { return _maxAllowedExectionTime; }
         }
 
+        public const string ApplicationHostXdtFileName = "applicationHost.xdt";
+
         public const string RequestIdHeader = "x-ms-request-id";
 
         public const string SiteOperationHeaderKey = "X-MS-SITE-OPERATION";

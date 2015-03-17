@@ -37,7 +37,6 @@ namespace Kudu.Core.SiteExtensions
         private readonly IDeploymentSettingsManager _settings;
         private readonly ITraceFactory _traceFactory;
 
-        private const string _applicationHostFile = "applicationHost.xdt";
         private const string _settingsFileName = "SiteExtensionSettings.json";
         private const string _feedUrlSetting = "feed_url";
         private const string _installUtcTimestampSetting = "install_timestamp_utc";
@@ -464,20 +463,18 @@ namespace Kudu.Core.SiteExtensions
                     {
                         // if install to WebRoot, check if there is any xdt file come with package
                         // if there is one, move it to site extension folder
-                        // if not, generate one to map request to wwwroot
-                        string xdtFile = Path.Combine(extractPath, _applicationHostFile);
+                        string xdtFile = Path.Combine(extractPath, Constants.ApplicationHostXdtFileName);
                         if (File.Exists(xdtFile))
                         {
                             tracer.Trace("Use xdt file from package.");
-                            string newXdtFile = Path.Combine(installationDirectory, _applicationHostFile);
+                            string newXdtFile = Path.Combine(installationDirectory, Constants.ApplicationHostXdtFileName);
 
                             tracer.Trace("Moving {0} to {1}", xdtFile, newXdtFile);
                             FileSystemHelpers.MoveFile(xdtFile, newXdtFile);
                         }
                         else
                         {
-                            tracer.Trace("Generate xdt file to map application to run from wwwroot when request for /{0}", package.Identity.Id);
-                            GenerateRemapToWebRootApplicationHostXdt(installationDirectory, string.Format(CultureInfo.InvariantCulture, "/{0}", package.Identity.Id));
+                            tracer.Trace("No xdt file come with package.");
                         }
                     }
                 }
@@ -604,7 +601,7 @@ namespace Kudu.Core.SiteExtensions
         {
             // If there is no xdt file, generate default.
             FileSystemHelpers.CreateDirectory(installationDirectory);
-            string xdtPath = Path.Combine(installationDirectory, _applicationHostFile);
+            string xdtPath = Path.Combine(installationDirectory, Constants.ApplicationHostXdtFileName);
             if (!FileSystemHelpers.FileExists(xdtPath))
             {
                 if (tracer != null)
@@ -616,14 +613,6 @@ namespace Kudu.Core.SiteExtensions
                 string xdtContent = CreateDefaultXdtFile(relativeUrl, physicalPath);
                 OperationManager.Attempt(() => FileSystemHelpers.WriteAllText(xdtPath, xdtContent));
             }
-        }
-
-        private static void GenerateRemapToWebRootApplicationHostXdt(string extensionDirectory, string relativeUrl)
-        {
-            FileSystemHelpers.EnsureDirectory(extensionDirectory);
-            string xdtPath = Path.Combine(extensionDirectory, _applicationHostFile);
-            string xdtContent = CreateDefaultXdtFile(relativeUrl, @"%home%\site\wwwroot");
-            OperationManager.Attempt(() => FileSystemHelpers.WriteAllText(xdtPath, xdtContent));
         }
 
         public async Task<bool> UninstallExtension(string id)
@@ -719,7 +708,7 @@ namespace Kudu.Core.SiteExtensions
         {
             string template = null;
 
-            Stream stream = typeof(SiteExtensionManager).Assembly.GetManifestResourceStream("Kudu.Core.SiteExtensions." + _applicationHostFile + ".xml");
+            Stream stream = typeof(SiteExtensionManager).Assembly.GetManifestResourceStream("Kudu.Core.SiteExtensions." + Constants.ApplicationHostXdtFileName + ".xml");
             using (StreamReader reader = new StreamReader(stream))
             {
                 template = reader.ReadToEnd();
@@ -739,7 +728,7 @@ namespace Kudu.Core.SiteExtensions
 
             if (ExtensionRequiresApplicationHost(info))
             {
-                info.ExtensionUrl = FileSystemHelpers.FileExists(Path.Combine(localPath, _applicationHostFile))
+                info.ExtensionUrl = FileSystemHelpers.FileExists(Path.Combine(localPath, Constants.ApplicationHostXdtFileName))
                     ? GetFullUrl(GetUrlFromApplicationHost(info)) : null;
             }
             else if (String.Equals(info.Id, "Monaco", StringComparison.OrdinalIgnoreCase))
@@ -760,7 +749,7 @@ namespace Kudu.Core.SiteExtensions
             try
             {
                 var appHostDoc = new XmlDocument();
-                appHostDoc.Load(Path.Combine(info.LocalPath, _applicationHostFile));
+                appHostDoc.Load(Path.Combine(info.LocalPath, Constants.ApplicationHostXdtFileName));
 
                 // Get the 'path' property of the first 'application' element, which is the relative url.
                 XmlNode pathPropertyNode = appHostDoc.SelectSingleNode("//application[@path]/@path");

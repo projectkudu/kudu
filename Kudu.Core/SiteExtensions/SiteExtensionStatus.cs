@@ -18,6 +18,7 @@ namespace Kudu.Core.SiteExtensions
         private const string _commentMessageSetting = "comment";
         private const string _statusSetting = "status";
         private const string _operationSetting = "operation";
+        private const string _siteExtensionType = "siteExtensionType";
 
         private string _filePath;
         private JsonSettings _jsonSettings;
@@ -45,6 +46,18 @@ namespace Kudu.Core.SiteExtensions
                 return statusCode;
             }
             set { SafeWrite(_statusSetting, Enum.GetName(typeof(HttpStatusCode), value)); }
+        }
+
+        public SiteExtensionInfo.SiteExtensionType Type
+        {
+            get
+            {
+                string typeStr = SafeRead(_siteExtensionType);
+                SiteExtensionInfo.SiteExtensionType type = SiteExtensionInfo.SiteExtensionType.Gallery;
+                Enum.TryParse<SiteExtensionInfo.SiteExtensionType>(typeStr, out type);
+                return type;
+            }
+            set { SafeWrite(_siteExtensionType, Enum.GetName(typeof(SiteExtensionInfo.SiteExtensionType), value)); }
         }
 
         /// <summary>
@@ -102,6 +115,72 @@ namespace Kudu.Core.SiteExtensions
             return string.Equals(Constants.SiteExtensionProvisioningStateSucceeded, ProvisioningState, StringComparison.OrdinalIgnoreCase)
                 || string.Equals(Constants.SiteExtensionProvisioningStateFailed, ProvisioningState, StringComparison.OrdinalIgnoreCase)
                 || string.Equals(Constants.SiteExtensionProvisioningStateCanceled, ProvisioningState, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// <para>Loop thru all site extension settings files under 'siteExtensionStatusRoot', check if there is any successful installation</para>
+        /// <para>if not install to webroot, will trigger restart; if install to webroot and with applicationHost.xdt file, trigger restart.</para>
+        /// </summary>
+        /// <param name="siteExtensionStatusRoot">should be $ROOT\site\siteextensions</param>
+        /// <param name="siteExtensionRoot">should be $ROOT\SiteExtensions</param>
+        public static bool IsAnyInstallationRequireRestart(string siteExtensionStatusRoot, string siteExtensionRoot, ITracer tracer, IAnalytics analytics)
+        {
+            try
+            {
+                string[] packageDirs = FileSystemHelpers.GetDirectories(siteExtensionStatusRoot);
+                foreach (var dir in packageDirs)
+                {
+                    try
+                    {
+                        DirectoryInfo dirInfo = new DirectoryInfo(dir);
+                        string[] settingFile = FileSystemHelpers.GetFiles(dir, _statusSettingsFileName);
+                        foreach (var file in settingFile)
+                        {
+                            var statusSettings = new SiteExtensionStatus(siteExtensionStatusRoot, dirInfo.Name, tracer);
+                            if (IsSiteExtensionRequireRestart(statusSettings, siteExtensionRoot))
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        analytics.UnexpectedException(ex, trace: false);
+                        tracer.TraceError(ex, "Failed to query {0} under {1}, continus to check others ...", _statusSettingsFileName, dir);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                analytics.UnexpectedException(ex, trace: false);
+                tracer.TraceError(ex, "Not able to query directory under {0}", siteExtensionStatusRoot);
+            }
+
+            return false;
+        }
+
+        private static bool IsSiteExtensionRequireRestart(SiteExtensionStatus statusSettings, string siteExtensionRoot)
+        {
+            if (statusSettings.Operation == Constants.SiteExtensionOperationInstall
+                && statusSettings.ProvisioningState == Constants.SiteExtensionProvisioningStateSucceeded)
+            {
+                if (statusSettings.Type != SiteExtensionInfo.SiteExtensionType.WebRoot)
+                {
+                    // normal path
+                    // if it is not installed to webroot and installation finish successfully, we should restart site
+                    return true;
+                }
+                else
+                {
+                    // if it is intalled to webroot, restart site ONLY if there is an applicationHost.xdt file under site extension folder
+                    DirectoryInfo dirInfo = new DirectoryInfo(Path.GetDirectoryName(statusSettings._filePath));
+                    // folder name is the id of the package
+                    string xdtFilePath = Path.Combine(siteExtensionRoot, dirInfo.Name, Constants.ApplicationHostXdtFileName);
+                    return File.Exists(xdtFilePath);
+                }
+            }
+
+            return false;
         }
 
         private string SafeRead(string key)

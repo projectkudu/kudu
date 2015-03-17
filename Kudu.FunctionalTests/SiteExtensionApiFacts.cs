@@ -695,8 +695,8 @@ namespace Kudu.FunctionalTests
                 TestTracer.Trace("Poll for status. Expecting 200 response eventually with site operation header.");
                 responseMessage = await PollAndVerifyAfterArmInstallation(manager, externalPackageId);
                 ArmEntry<SiteExtensionInfo> armResult = await responseMessage.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
-                // after successfully installed, should return SiteOperationHeader to notify GEO to restart website
-                Assert.True(responseMessage.Headers.Contains(Constants.SiteOperationHeaderKey));
+                // shouldn`t see restart header since package doesn`t come with XDT
+                Assert.False(responseMessage.Headers.Contains(Constants.SiteOperationHeaderKey));
                 Assert.Equal(externalFeed, armResult.Properties.FeedUrl);
                 Assert.Equal(externalPackageVersion, armResult.Properties.Version);
                 Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);
@@ -741,6 +741,8 @@ namespace Kudu.FunctionalTests
 
                 TestTracer.Trace("Poll for status. Expecting 200 response eventually with site operation header.");
                 responseMessage = await PollAndVerifyAfterArmInstallation(manager, externalPackageWithXdtId);
+                // after successfully installed, should return SiteOperationHeader to notify GEO to restart website
+                Assert.True(responseMessage.Headers.Contains(Constants.SiteOperationHeaderKey));
                 armResult = await responseMessage.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
                 Assert.Equal(externalFeed, armResult.Properties.FeedUrl);
                 Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);
