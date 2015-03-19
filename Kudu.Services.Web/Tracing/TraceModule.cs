@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
@@ -18,6 +19,10 @@ namespace Kudu.Services.Web.Tracing
         private static readonly object _stepKey = new object();
         private static int _traceStartup;
         private static DateTime _lastRequestDateTime;
+        private static string[] _rbacWhiteListPaths = new[] 
+        {
+            "/api/siteextensions"
+        };
 
         public static TimeSpan UpTime
         {
@@ -48,7 +53,8 @@ namespace Kudu.Services.Web.Tracing
             // Except if owner or coadmin (aka legacy or non-rbac) authorization
             if (!String.IsNullOrEmpty(httpRequest.Headers["X-MS-VIA-EXTENSIONS-ROUTE"]) &&
                 httpRequest.HttpMethod.Equals(HttpMethod.Get.Method, StringComparison.OrdinalIgnoreCase) &&
-                !String.Equals(httpRequest.Headers["X-MS-CLIENT-AUTHORIZATION-SOURCE"], "legacy", StringComparison.OrdinalIgnoreCase))
+                !String.Equals(httpRequest.Headers["X-MS-CLIENT-AUTHORIZATION-SOURCE"], "legacy", StringComparison.OrdinalIgnoreCase) &&
+                !IsRbacWhiteListPaths(httpRequest.Url.AbsolutePath))
             {
                 httpContext.Response.StatusCode = (int)HttpStatusCode.Forbidden;
                 httpContext.Response.End();
@@ -96,6 +102,11 @@ namespace Kudu.Services.Web.Tracing
             }
 
             httpContext.Items[_stepKey] = tracer.Step(XmlTracer.IncomingRequestTrace, attribs);
+        }
+
+        public static bool IsRbacWhiteListPaths(string path)
+        {
+            return _rbacWhiteListPaths.Any(p => path.StartsWith(p, StringComparison.OrdinalIgnoreCase));
         }
 
         private static void OnEndRequest(object sender, EventArgs e)

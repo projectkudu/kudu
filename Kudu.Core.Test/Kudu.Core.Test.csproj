@@ -111,6 +111,7 @@
     <Compile Include="SSHKeyManagerFacts.cs" />
     <Compile Include="Tracing\XmlTracerTests.cs" />
     <Compile Include="Tracing\SiteExtensionLogManagerTests.cs" />
+    <Compile Include="TraceModuleFacts.cs" />
     <Compile Include="XmlLoggerFacts.cs" />
   </ItemGroup>
   <ItemGroup>
