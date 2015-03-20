@@ -22,6 +22,7 @@ namespace Kudu.Core.SiteExtensions
         private string _filePath;
         private JsonSettings _jsonSettings;
         private ITracer _tracer;
+        private IAnalytics _analytics;
 
         public string ProvisioningState
         {
@@ -57,11 +58,12 @@ namespace Kudu.Core.SiteExtensions
             set { SafeWrite(_operationSetting, value); }
         }
 
-        public SiteExtensionStatus(string rootPath, string id, ITracer tracer)
+        public SiteExtensionStatus(string rootPath, string id, ITracer tracer, IAnalytics analytics)
         {
             _filePath = GetFilePath(rootPath, id);
             _jsonSettings = new JsonSettings(_filePath);
             _tracer = tracer;
+            _analytics = analytics;
         }
 
         public void FillSiteExtensionInfo(SiteExtensionInfo info, string defaultProvisionState = null)
@@ -92,6 +94,8 @@ namespace Kudu.Core.SiteExtensions
             }
             catch (Exception ex)
             {
+                _analytics.UnexpectedException(ex, trace: false);
+
                 // no-op
                 _tracer.TraceError(ex);
             }
@@ -112,6 +116,8 @@ namespace Kudu.Core.SiteExtensions
             }
             catch (Exception ex)
             {
+                _analytics.UnexpectedException(ex, trace: false);
+
                 _tracer.TraceError(ex);
                 // if setting file happen to be invalid, e.g w3wp.exe was kill while writting
                 // treat it as failed, and suggest user to re-install or un-install
@@ -133,6 +139,8 @@ namespace Kudu.Core.SiteExtensions
             }
             catch (Exception ex)
             {
+                _analytics.UnexpectedException(ex, trace: false);
+
                 _tracer.TraceError(ex);
                 // if setting file happen to be invalid, e.g w3wp.exe was kill while writting
                 // clear all content, start from blank
