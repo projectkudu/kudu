@@ -25,12 +25,14 @@ namespace Kudu.Services.SiteExtensions
         private readonly ISiteExtensionManager _manager;
         private readonly IEnvironment _environment;
         private readonly ITraceFactory _traceFactory;
+        private readonly IAnalytics _analytics;
 
-        public SiteExtensionController(ISiteExtensionManager manager, IEnvironment environment, ITraceFactory traceFactory)
+        public SiteExtensionController(ISiteExtensionManager manager, IEnvironment environment, ITraceFactory traceFactory, IAnalytics analytics)
         {
             _manager = manager;
             _environment = environment;
             _traceFactory = traceFactory;
+            _analytics = analytics;
         }
 
         [HttpGet]
@@ -74,7 +76,7 @@ namespace Kudu.Services.SiteExtensions
             if (ArmUtils.IsArmRequest(Request))
             {
                 tracer.Trace("Incoming GetLocalExtension is arm request.");
-                SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id, tracer);
+                SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id, tracer, _analytics);
 
                 if (string.Equals(Constants.SiteExtensionOperationInstall, armSettings.Operation, StringComparison.OrdinalIgnoreCase))
                 {
@@ -251,7 +253,7 @@ namespace Kudu.Services.SiteExtensions
 
                 if (string.Equals(Constants.SiteExtensionProvisioningStateFailed, result.ProvisioningState, StringComparison.OrdinalIgnoreCase))
                 {
-                    SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id, tracer);
+                    SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id, tracer, _analytics);
                     throw new HttpResponseException(Request.CreateErrorResponse(armSettings.Status, result.Comment));
                 }
 
@@ -290,7 +292,7 @@ namespace Kudu.Services.SiteExtensions
 
         private async Task<SiteExtensionInfo> InitInstallSiteExtension(string id)
         {
-            SiteExtensionStatus settings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id, _traceFactory.GetTracer());
+            SiteExtensionStatus settings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id, _traceFactory.GetTracer(), _analytics);
             settings.ProvisioningState = Constants.SiteExtensionProvisioningStateCreated;
             settings.Operation = Constants.SiteExtensionOperationInstall;
             settings.Status = HttpStatusCode.Created;
@@ -320,7 +322,7 @@ namespace Kudu.Services.SiteExtensions
                 foreach (var dir in packageDirs)
                 {
                     var dirInfo = new DirectoryInfo(dir);   // arm setting folder name is same as package id
-                    SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, dirInfo.Name, tracer);
+                    SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, dirInfo.Name, tracer, _analytics);
                     if (string.Equals(armSettings.Operation, Constants.SiteExtensionOperationInstall, StringComparison.OrdinalIgnoreCase)
                         && string.Equals(armSettings.ProvisioningState, Constants.SiteExtensionProvisioningStateSucceeded, StringComparison.OrdinalIgnoreCase))
                     {
