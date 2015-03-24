@@ -26,6 +26,7 @@ namespace Kudu.Services.SiteExtensions
         private readonly IEnvironment _environment;
         private readonly ITraceFactory _traceFactory;
         private readonly IAnalytics _analytics;
+        private readonly string _siteExtensionRoot;
 
         public SiteExtensionController(ISiteExtensionManager manager, IEnvironment environment, ITraceFactory traceFactory, IAnalytics analytics)
         {
@@ -33,6 +34,7 @@ namespace Kudu.Services.SiteExtensions
             _environment = environment;
             _traceFactory = traceFactory;
             _analytics = analytics;
+            _siteExtensionRoot = Path.Combine(_environment.RootPath, "SiteExtensions");
         }
 
         [HttpGet]
@@ -112,7 +114,7 @@ namespace Kudu.Services.SiteExtensions
                                 // it is important to call "SiteExtensionStatus.IsAnyInstallationRequireRestart" before "UpdateArmSettingsForSuccessInstallation"
                                 // since "IsAnyInstallationRequireRestart" is depending on properties inside site extension status files 
                                 // while "UpdateArmSettingsForSuccessInstallation" will override some of the values
-                                bool requireRestart = SiteExtensionStatus.IsAnyInstallationRequireRestart(_environment.SiteExtensionSettingsPath, Path.Combine(_environment.RootPath, "SiteExtensions"), tracer, _analytics);
+                                bool requireRestart = SiteExtensionStatus.IsAnyInstallationRequireRestart(_environment.SiteExtensionSettingsPath, _siteExtensionRoot, tracer, _analytics);
                                 // clear operation, since opeation is done
                                 if (UpdateArmSettingsForSuccessInstallation())
                                 {
@@ -244,14 +246,35 @@ namespace Kudu.Services.SiteExtensions
                     }
                 }
 
+                AutoResetEvent installationSignal = new AutoResetEvent(false);
+
                 // trigger installation, but do not wait. Expecting poll for status
                 ThreadPool.QueueUserWorkItem((object stateInfo) =>
                 {
                     using (backgroundTracer.Step(XmlTracer.BackgroundTrace, attributes: traceAttributes))
                     {
-                        _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, backgroundTracer).Wait();
+                        try
+                        {
+                            _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, backgroundTracer).Wait();
+                        }
+                        finally
+                        {
+                            installationSignal.Set();
+                        }
                     }
                 });
+
+                SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id, tracer);
+                if (installationSignal.WaitOne(TimeSpan.FromSeconds(15)))
+                {
+                    if (!armSettings.IsRestartRequired(_siteExtensionRoot))
+                    {
+                        // only skip polling if current installation doesn`t require restart, to avoid making race condition common
+                        // TODO: re-visit if we want to skip polling for case that need to restart
+                        tracer.Trace("Installation finish quick and not require restart, skip async polling, invoking GET to return actual status to caller.");
+                        return await GetLocalExtension(id);
+                    }
+                }
 
                 return Request.CreateResponse(HttpStatusCode.Created, ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(result, Request));
             }

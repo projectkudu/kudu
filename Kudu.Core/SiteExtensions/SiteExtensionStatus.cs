@@ -117,6 +117,12 @@ namespace Kudu.Core.SiteExtensions
                 || string.Equals(Constants.SiteExtensionProvisioningStateCanceled, ProvisioningState, StringComparison.OrdinalIgnoreCase);
         }
 
+        /// <param name="siteExtensionRoot">should be $ROOT\SiteExtensions</param>
+        public bool IsRestartRequired(string siteExtensionRoot)
+        {
+            return this.IsSiteExtensionRequireRestart(siteExtensionRoot);
+        }
+
         /// <summary>
         /// <para>Loop thru all site extension settings files under 'siteExtensionStatusRoot', check if there is any successful installation</para>
         /// <para>if not install to webroot, will trigger restart; if install to webroot and with applicationHost.xdt file, trigger restart.</para>
@@ -137,7 +143,7 @@ namespace Kudu.Core.SiteExtensions
                         foreach (var file in settingFile)
                         {
                             var statusSettings = new SiteExtensionStatus(siteExtensionStatusRoot, dirInfo.Name, tracer);
-                            if (IsSiteExtensionRequireRestart(statusSettings, siteExtensionRoot))
+                            if (statusSettings.IsSiteExtensionRequireRestart(siteExtensionRoot))
                             {
                                 return true;
                             }
@@ -159,12 +165,12 @@ namespace Kudu.Core.SiteExtensions
             return false;
         }
 
-        private static bool IsSiteExtensionRequireRestart(SiteExtensionStatus statusSettings, string siteExtensionRoot)
+        private bool IsSiteExtensionRequireRestart(string siteExtensionRoot)
         {
-            if (statusSettings.Operation == Constants.SiteExtensionOperationInstall
-                && statusSettings.ProvisioningState == Constants.SiteExtensionProvisioningStateSucceeded)
+            if (Operation == Constants.SiteExtensionOperationInstall
+                && ProvisioningState == Constants.SiteExtensionProvisioningStateSucceeded)
             {
-                if (statusSettings.Type != SiteExtensionInfo.SiteExtensionType.WebRoot)
+                if (Type != SiteExtensionInfo.SiteExtensionType.WebRoot)
                 {
                     // normal path
                     // if it is not installed to webroot and installation finish successfully, we should restart site
@@ -173,7 +179,7 @@ namespace Kudu.Core.SiteExtensions
                 else
                 {
                     // if it is intalled to webroot, restart site ONLY if there is an applicationHost.xdt file under site extension folder
-                    DirectoryInfo dirInfo = new DirectoryInfo(Path.GetDirectoryName(statusSettings._filePath));
+                    DirectoryInfo dirInfo = new DirectoryInfo(Path.GetDirectoryName(_filePath));
                     // folder name is the id of the package
                     string xdtFilePath = Path.Combine(siteExtensionRoot, dirInfo.Name, Constants.ApplicationHostXdtFileName);
                     return File.Exists(xdtFilePath);

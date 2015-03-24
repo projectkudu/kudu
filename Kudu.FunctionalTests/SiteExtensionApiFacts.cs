@@ -329,15 +329,10 @@ namespace Kudu.FunctionalTests
                 // Update should return right away, expecting code to look up from feed that store in local package
                 // since we had installed the latest package, there is nothing to update.
                 // We shouldn`t see any site operation header value
+                // And there is no polling, since it finsihed within 15 seconds
                 responseMessage = await manager.InstallExtension(testPackageId);
                 armResult = await responseMessage.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
                 Assert.Equal(string.Empty, armResult.Location);   // test "x-ms-geo-location" header is empty, same value should be assign to "Location"
-                Assert.Equal(HttpStatusCode.Created, responseMessage.StatusCode);
-                Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
-
-                TestTracer.Trace("Poll for status. Expecting 200 without site operation header, since no actual installation happened");
-                responseMessage = await PollAndVerifyAfterArmInstallation(manager, testPackageId);
-                armResult = await responseMessage.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
                 Assert.Equal(latestPackage.Id, armResult.Properties.Id);
                 Assert.Equal(feedEndpoint, armResult.Properties.FeedUrl);
                 Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);
@@ -437,6 +432,7 @@ namespace Kudu.FunctionalTests
             {
                 var manager = appManager.SiteExtensionManager;
                 List<Task<HttpResponseMessage>> tasks = new List<Task<HttpResponseMessage>>();
+                List<Task<HttpResponseMessage>> pollingTasks = new List<Task<HttpResponseMessage>>();
 
                 TestTracer.Trace("Uninstalling packages: '{0}'", string.Join(",", packageIds));
                 try
@@ -464,12 +460,21 @@ namespace Kudu.FunctionalTests
                         TestTracer.Trace("Install package '{0}' fresh from '{1}' async", packageId, feedEndpoint);
                         HttpResponseMessage responseMessage = await manager.InstallExtension(id: packageId, feedUrl: feedEndpoint);
                         ArmEntry<SiteExtensionInfo> armResult = await responseMessage.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
-                        Assert.Equal(HttpStatusCode.Created, responseMessage.StatusCode);
                         Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
+                        Assert.Equal(HttpStatusCode.Created, responseMessage.StatusCode);
+                        return responseMessage;
+                    }));
+                }
 
+                await Task.WhenAll(tasks);
+
+                foreach (var packageId in packageIds)
+                {
+                    pollingTasks.Add(Task.Run<HttpResponseMessage>(async () =>
+                    {
                         TestTracer.Trace("Poll '{0}' for status for '{1}'. Expecting 200 response eventually with site operation header.", feedEndpoint, packageId);
-                        responseMessage = await PollAndVerifyAfterArmInstallation(manager, packageId);
-                        armResult = await responseMessage.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
+                        HttpResponseMessage responseMessage = await PollAndVerifyAfterArmInstallation(manager, packageId);
+                        ArmEntry<SiteExtensionInfo> armResult = await responseMessage.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
                         Assert.Equal(feedEndpoint, armResult.Properties.FeedUrl);
                         Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);
                         Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
@@ -477,11 +482,11 @@ namespace Kudu.FunctionalTests
                     }));
                 }
 
-                await Task.WhenAll(tasks);
+                await Task.WhenAll(pollingTasks);
 
                 TestTracer.Trace("Installation are done, expecting only one site operation header return (trigger site restart)");
                 // should only trigger restart once
-                IEnumerable<Task<HttpResponseMessage>> responses = tasks.Where((task) =>
+                IEnumerable<Task<HttpResponseMessage>> responses = pollingTasks.Where((task) =>
                 {
                     return task.Result.Headers.Contains(Constants.SiteOperationHeaderKey);
                 });
@@ -502,6 +507,15 @@ namespace Kudu.FunctionalTests
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 var manager = appManager.SiteExtensionManager;
+
+                try
+                {
+                    await manager.UninstallExtension(externalPackageId);
+                }
+                catch
+                {
+                    // no-op
+                }
 
                 HttpResponseMessage response = await manager.GetRemoteExtension(externalPackageId, feedUrl: externalFeed);
                 SiteExtensionInfo info = await response.Content.ReadAsAsync<SiteExtensionInfo>();
@@ -575,7 +589,7 @@ namespace Kudu.FunctionalTests
         [Fact]
         public async Task SiteExtensionInstallPackageToWebRootTests()
         {
-            const string appName = "SiteExtensionMicroServicesTests";
+            const string appName = "SiteExtensionInstallPackageToWebRootTests";
             const string externalPackageId = "SimpleSvc";
             const string externalPackageVersion = "1.0.0";
             const string externalFeed = "https://www.myget.org/F/simplesvc/";
@@ -590,7 +604,7 @@ namespace Kudu.FunctionalTests
                 // clear local extensions
                 try
                 {
-                    TestTracer.Trace("Clear micro-services '{0}'", externalPackageId);
+                    TestTracer.Trace("Clear '{0}'", externalPackageId);
                     HttpResponseMessage deleteResponseMessage = await manager.UninstallExtension(externalPackageId);
                     Assert.True(await deleteResponseMessage.Content.ReadAsAsync<bool>(), "Delete must return true: " + externalPackageId);
 
@@ -661,7 +675,7 @@ namespace Kudu.FunctionalTests
         [Fact]
         public async Task SiteExtensionInstallPackageToWebRootAsyncTests()
         {
-            const string appName = "SiteExtensionMicroServicesTests";
+            const string appName = "SiteExtensionInstallPackageToWebRootAsyncTests";
             const string externalPackageId = "SimpleSvc";
             const string externalPackageVersion = "1.0.0";
             const string externalFeed = "https://www.myget.org/F/simplesvc/";
@@ -676,7 +690,7 @@ namespace Kudu.FunctionalTests
                 // clear local extensions
                 try
                 {
-                    TestTracer.Trace("Clear micro-services '{0}'", externalPackageId);
+                    TestTracer.Trace("Clear '{0}'", externalPackageId);
                     HttpResponseMessage deleteResponseMessage = await manager.UninstallExtension(externalPackageId);
                     Assert.True(await deleteResponseMessage.Content.ReadAsAsync<bool>(), "Delete must return true");
                 }
@@ -689,11 +703,7 @@ namespace Kudu.FunctionalTests
                 TestTracer.Trace("Perform InstallExtension with id '{0}', version '{1}' from '{2}'", externalPackageId, externalPackageVersion, externalFeed);
                 UpdateHeaderIfGoingToBeArmRequest(manager.Client, true);
                 HttpResponseMessage responseMessage = await manager.InstallExtension(externalPackageId, externalPackageVersion, externalFeed, SiteExtensionInfo.SiteExtensionType.WebRoot);
-                Assert.Equal(HttpStatusCode.Created, responseMessage.StatusCode);
-                Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
-
-                TestTracer.Trace("Poll for status. Expecting 200 response eventually with site operation header.");
-                responseMessage = await PollAndVerifyAfterArmInstallation(manager, externalPackageId);
+                TestTracer.Trace("Installation should be done within 15 seconds, no polling needed.");
                 ArmEntry<SiteExtensionInfo> armResult = await responseMessage.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
                 // shouldn`t see restart header since package doesn`t come with XDT
                 Assert.False(responseMessage.Headers.Contains(Constants.SiteOperationHeaderKey));
@@ -738,12 +748,13 @@ namespace Kudu.FunctionalTests
                 TestTracer.Trace("Perform InstallExtension with id '{0}' from '{1}'", externalPackageWithXdtId, externalFeed);
                 responseMessage = await manager.InstallExtension(externalPackageWithXdtId, feedUrl: externalFeed, type: SiteExtensionInfo.SiteExtensionType.WebRoot);
                 Assert.Equal(HttpStatusCode.Created, responseMessage.StatusCode);
-
+                Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
+                // package come with XDT, which would require site restart
                 TestTracer.Trace("Poll for status. Expecting 200 response eventually with site operation header.");
                 responseMessage = await PollAndVerifyAfterArmInstallation(manager, externalPackageWithXdtId);
+                armResult = await responseMessage.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
                 // after successfully installed, should return SiteOperationHeader to notify GEO to restart website
                 Assert.True(responseMessage.Headers.Contains(Constants.SiteOperationHeaderKey));
-                armResult = await responseMessage.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
                 Assert.Equal(externalFeed, armResult.Properties.FeedUrl);
                 Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);
 
