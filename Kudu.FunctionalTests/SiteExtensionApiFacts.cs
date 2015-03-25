@@ -703,8 +703,19 @@ namespace Kudu.FunctionalTests
                 TestTracer.Trace("Perform InstallExtension with id '{0}', version '{1}' from '{2}'", externalPackageId, externalPackageVersion, externalFeed);
                 UpdateHeaderIfGoingToBeArmRequest(manager.Client, true);
                 HttpResponseMessage responseMessage = await manager.InstallExtension(externalPackageId, externalPackageVersion, externalFeed, SiteExtensionInfo.SiteExtensionType.WebRoot);
-                TestTracer.Trace("Installation should be done within 15 seconds, no polling needed.");
-                ArmEntry<SiteExtensionInfo> armResult = await responseMessage.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
+                ArmEntry<SiteExtensionInfo> armResult = null;
+                if (responseMessage.StatusCode == HttpStatusCode.OK)
+                {
+                    TestTracer.Trace("Installation done within 15 seconds, no polling needed.");
+                    armResult = await responseMessage.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
+                }
+                else
+                {
+                    Assert.Equal(HttpStatusCode.Created, responseMessage.StatusCode);
+                    responseMessage = await PollAndVerifyAfterArmInstallation(manager, externalPackageId);
+                    armResult = await responseMessage.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
+                }
+
                 // shouldn`t see restart header since package doesn`t come with XDT
                 Assert.False(responseMessage.Headers.Contains(Constants.SiteOperationHeaderKey));
                 Assert.Equal(externalFeed, armResult.Properties.FeedUrl);
