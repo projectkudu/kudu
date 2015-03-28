@@ -12,6 +12,7 @@ using Kudu.Contracts.SiteExtensions;
 using Kudu.Contracts.Tracing;
 using Kudu.Core;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Settings;
 using Kudu.Core.SiteExtensions;
 using Kudu.Core.Tracing;
 using Kudu.Services.Arm;
@@ -202,6 +203,7 @@ namespace Kudu.Services.SiteExtensions
         [HttpPut]
         public async Task<HttpResponseMessage> InstallExtension(string id, SiteExtensionInfo requestInfo)
         {
+            var startTime = DateTime.UtcNow;
             var tracer = _traceFactory.GetTracer();
             var installationLock = SiteExtensionInstallationLock.CreateLock(_environment.SiteExtensionSettingsPath, id);
             if (installationLock.IsHeld)
@@ -260,6 +262,9 @@ namespace Kudu.Services.SiteExtensions
                         finally
                         {
                             installationSignal.Set();
+
+                            // will be a few millionseconds off if task finshed within 15 seconds.
+                            LogEndEvent(id, (DateTime.UtcNow - startTime), backgroundTracer);
                         }
                     }
                 });
@@ -276,6 +281,7 @@ namespace Kudu.Services.SiteExtensions
                     }
                 }
 
+                // do not log end event here, since it is not done yet
                 return Request.CreateResponse(HttpStatusCode.Created, ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(result, Request));
             }
             else
@@ -288,13 +294,16 @@ namespace Kudu.Services.SiteExtensions
                     throw new HttpResponseException(Request.CreateErrorResponse(armSettings.Status, result.Comment));
                 }
 
-                return Request.CreateResponse(HttpStatusCode.OK, result);
+                var response = Request.CreateResponse(HttpStatusCode.OK, result);
+                LogEndEvent(id, (DateTime.UtcNow - startTime), tracer);
+                return response;
             }
         }
 
         [HttpDelete]
         public async Task<HttpResponseMessage> UninstallExtension(string id)
         {
+            var startTime = DateTime.UtcNow;
             try
             {
                 bool isUninstalled = await _manager.UninstallExtension(id);
@@ -317,8 +326,34 @@ namespace Kudu.Services.SiteExtensions
             }
             catch (DirectoryNotFoundException ex)
             {
+                _analytics.UnexpectedException(ex, false);
                 throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, ex));
             }
+            catch (Exception ex)
+            {
+                _analytics.UnexpectedException(ex, false);
+                throw ex;
+            }
+            finally
+            {
+                LogEndEvent(id, (DateTime.UtcNow - startTime), _traceFactory.GetTracer());
+            }
+        }
+
+        /// <summary>
+        /// Log to MDS when installation/uninstallation finsihed
+        /// </summary>
+        private void LogEndEvent(string id, TimeSpan duration, ITracer tracer)
+        {
+            SiteExtensionStatus armStatus = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id, tracer);
+            string filePath = Path.Combine(_environment.RootPath, "SiteExtensions", id, "SiteExtensionSettings.json");
+            var jsonSetting = new JsonSettings(filePath);
+            _analytics.SiteExtensionEvent(
+                Request.Method.Method,
+                Request.RequestUri.AbsolutePath,
+                armStatus.ProvisioningState,
+                duration.TotalMilliseconds.ToString(),
+                jsonSetting.ToString());
         }
 
         private async Task<SiteExtensionInfo> InitInstallSiteExtension(string id, SiteExtensionInfo.SiteExtensionType type)

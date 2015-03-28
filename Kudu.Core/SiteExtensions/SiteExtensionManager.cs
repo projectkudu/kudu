@@ -36,6 +36,7 @@ namespace Kudu.Core.SiteExtensions
         private readonly IEnvironment _environment;
         private readonly IDeploymentSettingsManager _settings;
         private readonly ITraceFactory _traceFactory;
+        private readonly IAnalytics _analytics;
 
         private const string _settingsFileName = "SiteExtensionSettings.json";
         private const string _feedUrlSetting = "feed_url";
@@ -104,7 +105,7 @@ namespace Kudu.Core.SiteExtensions
         private const string _installScriptName = "install.cmd";
         private const string _uninstallScriptName = "uninstall.cmd";
 
-        public SiteExtensionManager(IContinuousJobsManager continuousJobManager, ITriggeredJobsManager triggeredJobManager, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, HttpContextBase context)
+        public SiteExtensionManager(IContinuousJobsManager continuousJobManager, ITriggeredJobsManager triggeredJobManager, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, HttpContextBase context, IAnalytics analytics)
         {
             _rootPath = Path.Combine(environment.RootPath, "SiteExtensions");
             _baseUrl = context.Request.Url == null ? String.Empty : context.Request.Url.GetLeftPart(UriPartial.Authority).TrimEnd('/');
@@ -115,6 +116,7 @@ namespace Kudu.Core.SiteExtensions
             _environment = environment;
             _settings = settings;
             _traceFactory = traceFactory;
+            _analytics = analytics;
         }
 
         public async Task<IEnumerable<SiteExtensionInfo>> GetRemoteExtensions(string filter, bool allowPrereleaseVersions, string feedUrl)
@@ -280,10 +282,9 @@ namespace Kudu.Core.SiteExtensions
         // <inheritdoc />
         public async Task<SiteExtensionInfo> InstallExtension(string id, string version, string feedUrl, SiteExtensionInfo.SiteExtensionType type, ITracer tracer)
         {
-            var installationLock = SiteExtensionInstallationLock.CreateLock(_environment.SiteExtensionSettingsPath, id);
-
             try
             {
+                var installationLock = SiteExtensionInstallationLock.CreateLock(_environment.SiteExtensionSettingsPath, id);
                 // hold on to lock till action complete (success or fail)
                 return await installationLock.LockOperationAsync<SiteExtensionInfo>(async () =>
                 {
@@ -292,6 +293,8 @@ namespace Kudu.Core.SiteExtensions
             }
             catch (Exception ex)
             {
+                _analytics.UnexpectedException(ex, trace: false);
+
                 // handle unexpected exception
                 tracer.TraceError(ex);
 
@@ -375,6 +378,8 @@ namespace Kudu.Core.SiteExtensions
                 }
                 catch (FileNotFoundException ex)
                 {
+                    _analytics.UnexpectedException(ex, trace: false);
+
                     tracer.TraceError(ex);
                     info = new SiteExtensionInfo();
                     info.Id = id;
@@ -384,6 +389,8 @@ namespace Kudu.Core.SiteExtensions
                 }
                 catch (WebException ex)
                 {
+                    _analytics.UnexpectedException(ex, trace: false);
+
                     tracer.TraceError(ex);
                     info = new SiteExtensionInfo();
                     info.Id = id;
@@ -393,6 +400,8 @@ namespace Kudu.Core.SiteExtensions
                 }
                 catch (Exception ex)
                 {
+                    _analytics.UnexpectedException(ex, trace: false);
+
                     tracer.TraceError(ex);
                     info = new SiteExtensionInfo();
                     info.Id = id;

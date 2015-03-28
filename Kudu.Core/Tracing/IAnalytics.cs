@@ -14,5 +14,7 @@ namespace Kudu.Core.Tracing
         void UnexpectedException(Exception ex, bool trace = true);
 
         void DeprecatedApiUsed(string route, string userAgent, string method, string path);
+
+        void SiteExtensionEvent(string method, string path, string result, string deploymentDurationInMilliseconds, string Message);
     }
 }

@@ -78,26 +78,6 @@ namespace Kudu.Core.Settings
             return false;
         }
 
-        private JObject Read()
-        {
-            // need to check file exist before aquire lock
-            // since aquire lock will generate lock file, and if folder not exist, will create folder
-            if (!FileSystemHelpers.FileExists(_path))
-            {
-                return new JObject();
-            }
-
-            return _lock.LockOperation(() =>
-            {
-                // opens file for FileAccess.Read but does allow other read/write (FileShare.ReadWrite).
-                // it is the most optimal where write is infrequent and dirty read is acceptable.
-                using (var reader = new JsonTextReader(new StreamReader(FileSystemHelpers.OpenFile(_path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))))
-                {
-                    return JObject.Load(reader);
-                }
-            }, _timeout);
-        }
-
         public void Save(JObject json)
         {
             _lock.LockOperation(() =>
@@ -114,6 +94,32 @@ namespace Kudu.Core.Settings
                     // prefer indented-readable format
                     writer.Formatting = Formatting.Indented;
                     json.WriteTo(writer);
+                }
+            }, _timeout);
+        }
+
+        public override string ToString()
+        {
+            // JObject.ToString() : Returns the indented JSON for this token.
+            return Read().ToString(Formatting.None);
+        }
+
+        private JObject Read()
+        {
+            // need to check file exist before aquire lock
+            // since aquire lock will generate lock file, and if folder not exist, will create folder
+            if (!FileSystemHelpers.FileExists(_path))
+            {
+                return new JObject();
+            }
+
+            return _lock.LockOperation(() =>
+            {
+                // opens file for FileAccess.Read but does allow other read/write (FileShare.ReadWrite).
+                // it is the most optimal where write is infrequent and dirty read is acceptable.
+                using (var reader = new JsonTextReader(new StreamReader(FileSystemHelpers.OpenFile(_path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))))
+                {
+                    return JObject.Load(reader);
                 }
             }, _timeout);
         }

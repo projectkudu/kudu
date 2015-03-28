@@ -88,6 +88,17 @@ namespace Kudu.Core.Tracing
             DeprecatedApiPaths[path] = path;
         }
 
+        public void SiteExtensionEvent(string method, string path, string result, string deploymentDurationInMilliseconds, string Message)
+        {
+            KuduEventSource.Log.KuduSiteExtensionEvent(
+                _serverConfiguration.ApplicationName,
+                NullToEmptyString(method),
+                NullToEmptyString(path),
+                NullToEmptyString(result),
+                NullToEmptyString(deploymentDurationInMilliseconds),
+                NullToEmptyString(Message));
+        }
+
         private static string NullToEmptyString(string s)
         {
             return s ?? String.Empty;

@@ -42,5 +42,14 @@ namespace Kudu.Core.Tracing
                 WriteEvent(65510, siteName, route, userAgent, method, path);
             }
         }
+
+        [Event(65511, Level = EventLevel.Informational, Message = "SiteExtension action for site {0}", Channel = EventChannel.Operational)]
+        public void KuduSiteExtensionEvent(string siteName, string method, string path, string result, string deploymentDurationInMilliseconds, string Message)
+        {
+            if (IsEnabled())
+            {
+                WriteEvent(65511, siteName, method, path, result, deploymentDurationInMilliseconds, Message);
+            }
+        }
     }
 }
