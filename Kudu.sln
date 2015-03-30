@@ -44,6 +44,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{627D3D
 		.nuget\packages.config = .nuget\packages.config
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kudu.SiteManagement.Test", "Kudu.SiteManagement.Test\Kudu.SiteManagement.Test.csproj", "{2100FDEB-2259-4364-93F5-75FD5FC699F6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -194,6 +196,16 @@ Global
 		{108774AC-560E-4E59-A602-80C9CBA906AE}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{108774AC-560E-4E59-A602-80C9CBA906AE}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{108774AC-560E-4E59-A602-80C9CBA906AE}.Release|x86.ActiveCfg = Release|Any CPU
+		{2100FDEB-2259-4364-93F5-75FD5FC699F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2100FDEB-2259-4364-93F5-75FD5FC699F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2100FDEB-2259-4364-93F5-75FD5FC699F6}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{2100FDEB-2259-4364-93F5-75FD5FC699F6}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{2100FDEB-2259-4364-93F5-75FD5FC699F6}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2100FDEB-2259-4364-93F5-75FD5FC699F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2100FDEB-2259-4364-93F5-75FD5FC699F6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2100FDEB-2259-4364-93F5-75FD5FC699F6}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{2100FDEB-2259-4364-93F5-75FD5FC699F6}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{2100FDEB-2259-4364-93F5-75FD5FC699F6}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -205,5 +217,6 @@ Global
 		{ACF3450A-8062-48D5-9C9D-8486261F290F} = {FA1EA7CE-E6A4-4E55-AD76-6B43572A9092}
 		{5DEE4A10-5CA1-484D-B7A3-64C972EA2546} = {FA1EA7CE-E6A4-4E55-AD76-6B43572A9092}
 		{108774AC-560E-4E59-A602-80C9CBA906AE} = {FA1EA7CE-E6A4-4E55-AD76-6B43572A9092}
+		{2100FDEB-2259-4364-93F5-75FD5FC699F6} = {FA1EA7CE-E6A4-4E55-AD76-6B43572A9092}
 	EndGlobalSection
 EndGlobal

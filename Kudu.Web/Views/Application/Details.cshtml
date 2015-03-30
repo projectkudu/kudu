@@ -1,9 +1,9 @@
-﻿@using Kudu.Core.SourceControl
+﻿@using System.Activities.Expressions
+@using Kudu.Core.SourceControl
 @using Kudu.Web.Models
 @using Kudu.Web.Infrastructure
 
 @model ApplicationViewModel
-
 @{
     ViewBag.Title = Model.Name;
 }
@@ -29,6 +29,152 @@
         </div>
     </div>
 </div>
+
+<script type="text/javascript">
+    //Note: Would be so nice with a proper frontend framework like, EmberJS, AngularJS or React!
+    function removeBinding(binding, element) {
+        if (confirm('Remove the following site binding: ' + binding)) {
+            $(element).val(binding).closest('form').submit();
+        }
+    }
+
+    var BindingForm = (function () {
+        //Note: Util
+        function getFormField(form, field) {
+            return $('#' + form + field);
+        }
+
+        function isDef(val) {
+            return typeof val !== 'undefined';
+        }
+
+        function propertyFn(formField) {
+            return function(value) {
+                if (isDef(value)) {
+                    getFormField(this.name, formField).val(value);
+                    return this;
+                }
+                return getFormField(this.name, formField).val();
+            }
+        }
+
+        function BindingForm(name) {
+            this.name = name;
+        }
+
+        //[0].checked
+
+        BindingForm.prototype.schema = propertyFn('SiteSchema');
+        BindingForm.prototype.port = propertyFn('SitePort');
+        BindingForm.prototype.hostName = propertyFn('SiteHost');
+
+        BindingForm.prototype.sniEnabled = function(value) {
+            if (isDef(value)) {
+                getFormField(this.name, 'SniEnabled')[0].checked = value;
+                return this;
+            }
+            return getFormField(this.name, 'SniEnabled')[0].checked;
+        }
+
+        BindingForm.prototype.certificate = function (value) {
+            if (isDef(value)) {
+                getFormField(this.name, 'SiteCertificate').val(null);
+            }
+            return getFormField(this.name, 'SiteCertificate').children('option:selected').text();
+        }
+
+        BindingForm.prototype.httpsFields = function () {
+            var selector = '.' + this.name + 'HttpsFields';
+            return $(selector);
+        }
+
+        BindingForm.prototype.hostNameField = function() {
+            return getFormField(this.name, 'SiteHost');
+        }
+
+        return BindingForm;
+    })();
+
+    function getForm(form) {
+        return new BindingForm(form);
+    }
+
+    function schemaChanged(form) {
+        form = getForm(form);
+        if (form.schema() == 'Https://') {
+            form.httpsFields().show();
+            form.port(443);
+        } else {
+            form.httpsFields().hide();
+            form.port(80);
+        }
+    }
+
+    function httpsChanged(form) {
+        form = getForm(form);
+        //Note: We know the form is HTTPS here.
+
+        var cert = form.certificate();
+        if (cert[0] === '*' || (supportsSni() && form.sniEnabled())) {
+            form.hostNameField().prop('disabled', false);
+        } else {
+            form.hostName("");
+            form.hostNameField().prop('disabled', true);
+        }
+    }
+
+    function supportsSni() {
+        return @Model.SupportsSni.ToString().ToLower();
+    }
+</script>
+
+@helper AddBindingForm(string name, string action, string controller)
+{
+    //Note: Lets mimic the entire IIS dialog instead so it is more familiar to IIS administrators.
+    using (Html.BeginForm(action, controller, new { slug = Model.Name.GenerateSlug() }, FormMethod.Post))
+    {
+        <label class="control-label"><strong>Add binding</strong></label>           
+        @Html.ValidationSummary()
+
+        <div class="row">
+            <div class="span2">
+                <label class="control-label">Type:</label>
+                @Html.DropDownList("siteSchema", Model.Schemas, new { onchange = "schemaChanged('" + name + "')", id = name + "SiteSchema", style = "width: 100%;" })
+            </div>
+            <div class="span4">
+                <label class="control-label">IP address:</label>
+                @Html.DropDownList("siteIp", Model.IpAddresses, new { style = "width: 100%", id = name + "SiteIp" })
+            </div>
+            <div class="span2">
+                <label class="control-label">Port:</label>
+                @Html.TextBox("sitePort", "80", new { style = "width: 50%", id = name + "SitePort" })
+            </div>
+        </div>
+        <div class="row">
+            <div class="span5">
+                <label>Host name:</label>
+                @Html.TextBox("siteHost", "", new { placeholder = "example.org", style = "width: 100%", id = name + "SiteHost" })
+            </div>
+        </div>
+        if (Model.SupportsSni)
+        {
+            <div style="display: none;" class="row @(name + "HttpsFields")">
+                <div class="span5">
+                    <label class="checkbox">
+                        @Html.CheckBox("siteRequireSni", false, new { id = name + "SniEnabled", onchange = "httpsChanged('" + name + "')" }) Require Server Name Indication
+                    </label>
+                </div>
+            </div>
+        }
+        <div style="display: none; margin-top: 20px;" class="row @(name + "HttpsFields")">
+            <div class="span5">
+                <label>SSL certificate:</label>
+                @Html.DropDownList("siteCertificate", Model.Certificates, "Select certificate...", new { onchange = "httpsChanged('" + name + "')", style = "width: 100%", id = name + "SiteCertificate" })
+            </div>
+        </div>
+        <button id="add_sitebinding" type="submit" class="btn btn-primary">Add binding</button>
+    }
+}
 
 @if (Model.CustomHostNames)
 {
@@ -58,7 +204,7 @@
                         
                         <tr>
                             <td>@uri.Scheme</td>
-                            <td>@uri.Host</td>
+                            <td><a href="@uri.AbsoluteUri">@uri.Host</a></td>
                             <td>@uri.Port</td>
                             <td class="actions">
                                 <button type="button" class="btn btn-primary" onclick=" removeBinding('@siteBinding', '#removesitebinding') ">Remove</button>
@@ -75,13 +221,7 @@
 
             }
             
-            @using (Html.BeginForm("add-custom-site-binding", "Application", new { slug = Model.Name.GenerateSlug() }, FormMethod.Post, new { @class = "form-inline" }))
-            {
-                <label class="control-label"><strong>Add application site binding</strong></label>           
-                @Html.ValidationSummary()
-                <span>http://</span> @Html.TextBox("siteBinding", "", new { placeholder = "example.org" })
-                <button id="add_sitebinding" type="submit" class="btn btn-primary">Add binding</button>
-            }
+            @AddBindingForm("app", "add-custom-site-binding", "Application")
 
         </div>
     </div>
@@ -113,7 +253,7 @@
                         
                         <tr>
                             <td>@uri.Scheme</td>
-                            <td>@uri.Host</td>
+                            <td><a href="@uri.AbsoluteUri">@uri.Host</a></td>
                             <td>@uri.Port</td>
                             <td class="actions">
                                 <button type="button" class="btn btn-primary" onclick=" removeBinding('@siteBinding', '#removeservicebinding') ">Remove</button>
@@ -127,27 +267,12 @@
                 {
                     @Html.Hidden("siteBinding", "", new { id = "removeservicebinding" })
                 }
-
             }
             
-            @using (Html.BeginForm("add-service-site-binding", "Application", new { slug = Model.Name.GenerateSlug() }, FormMethod.Post, new { @class = "form-inline" }))
-            {
-                <label class="control-label"><strong>Add service site binding</strong></label>           
-                @Html.ValidationSummary()
-                <span>http://</span> @Html.TextBox("siteBinding", "", new { placeholder = "example.org" })
-                <button id="add_sitebinding" type="submit" class="btn btn-primary">Add binding</button>
-            }
+            @AddBindingForm("scm", "add-service-site-binding", "Application")
 
         </div>
     </div>
-    
-    <script type="text/javascript">
-        function removeBinding(binding, element) {
-            if (confirm('Remove the following site binding: ' + binding)) {
-                $(element).val(binding).closest('form').submit();
-            }
-        }
-    </script>
 }
 
 @using (Html.BeginForm("Delete", "Application", new { slug = Model.Name.GenerateSlug() }))
