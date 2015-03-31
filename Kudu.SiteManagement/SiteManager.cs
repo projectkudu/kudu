@@ -114,9 +114,17 @@ namespace Kudu.SiteManagement
             {
                 try
                 {
+                    var siteBindingCongfigs = new List<IBindingConfiguration>();
+                    var svcSiteBindingCongfigs = new List<IBindingConfiguration>();
+                    if (_context.Configuration != null && _context.Configuration.Bindings != null)
+                    {
+                        siteBindingCongfigs = _context.Configuration.Bindings.Where(b => b.SiteType == SiteType.Live).ToList();
+                        svcSiteBindingCongfigs = _context.Configuration.Bindings.Where(b => b.SiteType == SiteType.Service).ToList();
+                    }
+
                     // Determine the host header values
-                    List<BindingInformation> siteBindings = BuildDefaultBindings(applicationName, _context.Configuration.Bindings.Where(b => b.SiteType == SiteType.Live)).ToList();
-                    List<BindingInformation> serviceSiteBindings = BuildDefaultBindings(applicationName, _context.Configuration.Bindings.Where(b => b.SiteType == SiteType.Service)).ToList();
+                    List<BindingInformation> siteBindings = BuildDefaultBindings(applicationName, siteBindingCongfigs).ToList();
+                    List<BindingInformation> serviceSiteBindings = BuildDefaultBindings(applicationName, svcSiteBindingCongfigs).ToList();
 
                     // Create the service site for this site
                     var serviceSite = CreateSiteAsync(iis, applicationName, GetServiceSite(applicationName), _context.Configuration.ServiceSitePath, serviceSiteBindings);
