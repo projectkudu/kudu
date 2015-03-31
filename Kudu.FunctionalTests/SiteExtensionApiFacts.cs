@@ -37,9 +37,9 @@ namespace Kudu.FunctionalTests
         };
 
         [Theory]
-        [InlineData(null, "sitereplicator", "1.1.2")]    // default site extension endpoint (v2)
-        [InlineData("https://api.nuget.org/v3/index.json", "bootstrap", "3.0.0")]    // v3 endpoint
-        public async Task SiteExtensionV2AndV3FeedTests(string feedEndpoint, string testPackageId, string testPackageVersion)
+        [InlineData(null, "sitereplicator")]    // default site extension endpoint (v2)
+        [InlineData("https://api.nuget.org/v3/index.json", "bootstrap")]    // v3 endpoint
+        public async Task SiteExtensionV2AndV3FeedTests(string feedEndpoint, string testPackageId)
         {
             TestTracer.Trace("Testing against feed: '{0}'", feedEndpoint);
 
@@ -58,6 +58,8 @@ namespace Kudu.FunctionalTests
                 TestTracer.Trace("Get an extension by id: '{0}'", testPackageId);
                 SiteExtensionInfo result = await (await manager.GetRemoteExtension(testPackageId, feedUrl: feedEndpoint)).Content.ReadAsAsync<SiteExtensionInfo>();
                 Assert.Equal(testPackageId, result.Id);
+
+                string testPackageVersion = result.Version;
 
                 TestTracer.Trace("Get an extension by id: '{0}' and version: '{1}'", testPackageId, testPackageVersion);
                 result = await (await manager.GetRemoteExtension(testPackageId, version: testPackageVersion, feedUrl: feedEndpoint)).Content.ReadAsAsync<SiteExtensionInfo>();
@@ -521,11 +523,9 @@ namespace Kudu.FunctionalTests
                 SiteExtensionInfo info = await response.Content.ReadAsAsync<SiteExtensionInfo>();
                 Assert.NotEqual(unlistedVersion, info.Version);
 
-                var ex = await KuduAssert.ThrowsUnwrappedAsync<HttpUnsuccessfulRequestException>(async () =>
-                {
-                    await manager.GetRemoteExtension(externalPackageId, version: unlistedVersion, feedUrl: externalFeed);
-                });
-                Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
+                response = await manager.GetRemoteExtension(externalPackageId, version: unlistedVersion, feedUrl: externalFeed);
+                info = await response.Content.ReadAsAsync<SiteExtensionInfo>();
+                Assert.Equal(unlistedVersion, info.Version);
 
                 response = await manager.GetRemoteExtensions(externalPackageId, allowPrereleaseVersions: true, feedUrl: externalFeed);
                 List<SiteExtensionInfo> infos = await response.Content.ReadAsAsync<List<SiteExtensionInfo>>();
@@ -535,7 +535,8 @@ namespace Kudu.FunctionalTests
                     Assert.NotEqual(unlistedVersion, item.Version);
                 }
 
-                await manager.InstallExtension(externalPackageId, feedUrl: externalFeed);
+                response = await manager.InstallExtension(externalPackageId, feedUrl: externalFeed);
+                info = await response.Content.ReadAsAsync<SiteExtensionInfo>();
                 Assert.Equal(externalPackageId, info.Id);
                 Assert.Equal(latestListedVersion, info.Version);
                 Assert.Equal(externalFeed, info.FeedUrl);
@@ -551,13 +552,7 @@ namespace Kudu.FunctionalTests
                 response = await manager.GetRemoteExtension(externalPackageId, feedUrl: externalFeed);
                 ArmEntry<SiteExtensionInfo> armInfo = await response.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
                 Assert.NotEqual(unlistedVersion, armInfo.Properties.Version);
-
-                ex = await KuduAssert.ThrowsUnwrappedAsync<HttpUnsuccessfulRequestException>(async () =>
-                {
-                    await manager.GetRemoteExtension(externalPackageId, version: unlistedVersion, feedUrl: externalFeed);
-                });
-                Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
-
+                
                 response = await manager.GetRemoteExtensions(externalPackageId, allowPrereleaseVersions: true, feedUrl: externalFeed);
                 ArmListEntry<SiteExtensionInfo> armInfos = await response.Content.ReadAsAsync<ArmListEntry<SiteExtensionInfo>>();
                 Assert.NotEmpty(armInfos.Value);
@@ -717,7 +712,7 @@ namespace Kudu.FunctionalTests
                 }
 
                 // shouldn`t see restart header since package doesn`t come with XDT
-                Assert.False(responseMessage.Headers.Contains(Constants.SiteOperationHeaderKey));
+                Assert.False(responseMessage.Headers.Contains(Constants.SiteOperationHeaderKey), "Must not contain restart header");
                 Assert.Equal(externalFeed, armResult.Properties.FeedUrl);
                 Assert.Equal(externalPackageVersion, armResult.Properties.Version);
                 Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);

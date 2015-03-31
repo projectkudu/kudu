@@ -354,7 +354,7 @@ namespace Kudu.Core.SiteExtensions
                         {
                             using (tracer.Step("Search package by id: {0} and version: {1}, will also search for unlisted package.", id, version))
                             {
-                                repoPackage = await remoteRepo.GetPackageByIdentity(id, version, includeUnlisted: true);
+                                repoPackage = await remoteRepo.GetPackageByIdentity(id, version);
                             }
                         }
 

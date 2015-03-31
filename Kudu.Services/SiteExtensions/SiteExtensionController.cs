@@ -217,6 +217,7 @@ namespace Kudu.Services.SiteExtensions
                 requestInfo = new SiteExtensionInfo();
             }
 
+            tracer.Trace("Installing {0} - {1} from {2} synchronously", id, requestInfo.Version, requestInfo.FeedUrl);
             SiteExtensionInfo result = await InitInstallSiteExtension(id, requestInfo.Type);
 
             if (ArmUtils.IsArmRequest(Request))
@@ -257,6 +258,7 @@ namespace Kudu.Services.SiteExtensions
                     {
                         try
                         {
+                            backgroundTracer.Trace("Background thread started for {0} installation", id);
                             _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, backgroundTracer).Wait();
                         }
                         finally

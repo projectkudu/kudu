@@ -56,17 +56,18 @@ namespace Kudu.Core.SiteExtensions
         }
 
         /// <summary>
-        /// Query source repository for a package base given package id and version
+        /// <para>Query source repository for a package base on given package id and version</para>
+        /// <para>Will also query pre-release and unlisted packages</para>
         /// </summary>
-        public static async Task<UIPackageMetadata> GetPackageByIdentity(this SourceRepository srcRepo, string packageId, string version, bool includePrerelease = true, bool includeUnlisted = false)
+        /// <param name="packageId">Package id, must not be null</param>
+        /// <param name="version">Package version, must not be null</param>
+        /// <returns>Package metadata</returns>
+        public static async Task<UIPackageMetadata> GetPackageByIdentity(this SourceRepository srcRepo, string packageId, string version)
         {
             var metadataResource = await srcRepo.GetResourceAsync<UIMetadataResource>();
-            IEnumerable<UIPackageMetadata> packages = await metadataResource.GetMetadata(packageId, includePrerelease, includeUnlisted, token: CancellationToken.None);
             NuGetVersion expectedVersion = NuGetVersion.Parse(version);
-            return packages.FirstOrDefault((p) =>
-            {
-                return p.Identity.Version.Equals(expectedVersion);
-            });
+            var identity = new PackageIdentity(packageId, expectedVersion);
+            return await metadataResource.GetMetadata(identity, CancellationToken.None);
         }
 
         /// <summary>
