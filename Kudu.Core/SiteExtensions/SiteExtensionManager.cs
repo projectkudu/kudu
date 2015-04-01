@@ -293,7 +293,13 @@ namespace Kudu.Core.SiteExtensions
             }
             catch (Exception ex)
             {
-                _analytics.UnexpectedException(ex, trace: false);
+                _analytics.UnexpectedException(
+                        ex,
+                        method: "PUT",
+                        path: string.Format(CultureInfo.InvariantCulture, "/api/siteextensions/{0}", id),
+                        result: Constants.SiteExtensionProvisioningStateFailed,
+                        message: string.Format(CultureInfo.InvariantCulture, "{{\"version\": {0}, \"feed_url\": {1}}}", version, feedUrl),
+                        trace: false);
 
                 // handle unexpected exception
                 tracer.TraceError(ex);
@@ -378,7 +384,13 @@ namespace Kudu.Core.SiteExtensions
                 }
                 catch (FileNotFoundException ex)
                 {
-                    _analytics.UnexpectedException(ex, trace: false);
+                    _analytics.UnexpectedException(
+                        ex,
+                        method: "PUT",
+                        path: string.Format(CultureInfo.InvariantCulture, "/api/siteextensions/{0}", id),
+                        result: Constants.SiteExtensionProvisioningStateFailed,
+                        message: string.Format(CultureInfo.InvariantCulture, "{{\"version\": {0}, \"feed_url\": {1}}}", version, feedUrl),
+                        trace: false);
 
                     tracer.TraceError(ex);
                     info = new SiteExtensionInfo();
@@ -389,7 +401,13 @@ namespace Kudu.Core.SiteExtensions
                 }
                 catch (WebException ex)
                 {
-                    _analytics.UnexpectedException(ex, trace: false);
+                    _analytics.UnexpectedException(
+                        ex,
+                        method: "PUT",
+                        path: string.Format(CultureInfo.InvariantCulture, "/api/siteextensions/{0}", id),
+                        result: Constants.SiteExtensionProvisioningStateFailed,
+                        message: string.Format(CultureInfo.InvariantCulture, "{{\"version\": {0}, \"feed_url\": {1}}}", version, feedUrl),
+                        trace: false);
 
                     tracer.TraceError(ex);
                     info = new SiteExtensionInfo();
@@ -400,7 +418,13 @@ namespace Kudu.Core.SiteExtensions
                 }
                 catch (Exception ex)
                 {
-                    _analytics.UnexpectedException(ex, trace: false);
+                    _analytics.UnexpectedException(
+                        ex,
+                        method: "PUT",
+                        path: string.Format(CultureInfo.InvariantCulture, "/api/siteextensions/{0}", id),
+                        result: Constants.SiteExtensionProvisioningStateFailed,
+                        message: string.Format(CultureInfo.InvariantCulture, "{{\"version\": {0}, \"feed_url\": {1}}}", version, feedUrl),
+                        trace: false);
 
                     tracer.TraceError(ex);
                     info = new SiteExtensionInfo();
@@ -413,6 +437,15 @@ namespace Kudu.Core.SiteExtensions
 
             if (info == null)
             {
+                // treat this as an error case since no result return from repo
+                _analytics.UnexpectedException(
+                        new FileNotFoundException(id),
+                        method: "PUT",
+                        path: string.Format(CultureInfo.InvariantCulture, "/api/siteextensions/{0}", id),
+                        result: Constants.SiteExtensionProvisioningStateFailed,
+                        message: string.Format(CultureInfo.InvariantCulture, "{{\"version\": {0}, \"feed_url\": {1}}}", version, feedUrl),
+                        trace: false);
+
                 info = new SiteExtensionInfo();
                 info.ProvisioningState = Constants.SiteExtensionProvisioningStateFailed;
                 info.Comment = string.Format(Constants.SiteExtensionProvisioningStateNotFoundMessageFormat, id);

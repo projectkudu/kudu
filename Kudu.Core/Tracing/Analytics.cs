@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
@@ -48,24 +49,32 @@ namespace Kudu.Core.Tracing
 
         public void UnexpectedException(Exception exception, bool trace = true)
         {
-            if (trace)
-            {
-                _traceFactory.GetTracer().TraceError(exception);
-            }
+            KuduEventSource.Log.KuduUnexpectedException(
+                _serverConfiguration.ApplicationName,
+                GetExceptionContent(exception, trace));
+        }
 
-            var strb = new StringBuilder();
-            strb.AppendLine(exception.ToString());
+        public void UnexpectedException(Exception ex, string method, string path, string result, string message, bool trace = true)
+        {
+            // ETW event for KuduException is not existed yet in current Antares deployment
+            // "duplicate" log with KuduUnexpectedException so that we will have some data for trouble shooting for now
+            // TODO: once next antares release is out, KuduUnexpectedException will be merge into KuduException
+            KuduEventSource.Log.KuduUnexpectedException(
+                 _serverConfiguration.ApplicationName,
+                 string.Format(CultureInfo.InvariantCulture, "Method: {0}, Path: {1}, Result: {2}, Message: {3}, Exception: {4}",
+                     NullToEmptyString(method),
+                     NullToEmptyString(path),
+                     NullToEmptyString(result),
+                     NullToEmptyString(message),
+                     GetExceptionContent(ex, trace)));
 
-            var aggregate = exception as AggregateException;
-            if (aggregate != null)
-            {
-                foreach (var inner in aggregate.Flatten().InnerExceptions)
-                {
-                    strb.AppendLine(inner.ToString());
-                }
-            }
-
-            KuduEventSource.Log.KuduUnexpectedException(_serverConfiguration.ApplicationName, strb.ToString());
+            KuduEventSource.Log.KuduException(
+                _serverConfiguration.ApplicationName,
+                NullToEmptyString(method),
+                NullToEmptyString(path),
+                NullToEmptyString(result),
+                NullToEmptyString(message),
+                GetExceptionContent(ex, trace));
         }
 
         public void DeprecatedApiUsed(string route, string userAgent, string method, string path)
@@ -88,7 +97,7 @@ namespace Kudu.Core.Tracing
             DeprecatedApiPaths[path] = path;
         }
 
-        public void SiteExtensionEvent(string method, string path, string result, string deploymentDurationInMilliseconds, string Message)
+        public void SiteExtensionEvent(string method, string path, string result, string deploymentDurationInMilliseconds, string message)
         {
             KuduEventSource.Log.KuduSiteExtensionEvent(
                 _serverConfiguration.ApplicationName,
@@ -96,12 +105,34 @@ namespace Kudu.Core.Tracing
                 NullToEmptyString(path),
                 NullToEmptyString(result),
                 NullToEmptyString(deploymentDurationInMilliseconds),
-                NullToEmptyString(Message));
+                NullToEmptyString(message));
         }
 
         private static string NullToEmptyString(string s)
         {
             return s ?? String.Empty;
+        }
+
+        private string GetExceptionContent(Exception exception, bool trace)
+        {
+            if (trace)
+            {
+                _traceFactory.GetTracer().TraceError(exception);
+            }
+
+            var strb = new StringBuilder();
+            strb.AppendLine(exception.ToString());
+
+            var aggregate = exception as AggregateException;
+            if (aggregate != null)
+            {
+                foreach (var inner in aggregate.Flatten().InnerExceptions)
+                {
+                    strb.AppendLine(inner.ToString());
+                }
+            }
+
+            return strb.ToString();
         }
     }
 }

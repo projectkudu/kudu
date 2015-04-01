@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -308,44 +309,56 @@ namespace Kudu.Services.SiteExtensions
             var startTime = DateTime.UtcNow;
             try
             {
+                HttpResponseMessage response = null;
                 bool isUninstalled = await _manager.UninstallExtension(id);
                 if (ArmUtils.IsArmRequest(Request))
                 {
                     if (isUninstalled)
                     {
-                        return Request.CreateResponse(HttpStatusCode.OK);
+                        response = Request.CreateResponse(HttpStatusCode.OK);
                     }
                     else
                     {
                         var extension = new SiteExtensionInfo { Id = id };
-                        return Request.CreateResponse(HttpStatusCode.BadRequest, ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(extension, Request));
+                        response = Request.CreateResponse(HttpStatusCode.BadRequest, ArmUtils.AddEnvelopeOnArmRequest<SiteExtensionInfo>(extension, Request));
                     }
                 }
                 else
                 {
-                    return Request.CreateResponse(HttpStatusCode.OK, isUninstalled);
+                    response = Request.CreateResponse(HttpStatusCode.OK, isUninstalled);
                 }
+
+                LogEndEvent(id, (DateTime.UtcNow - startTime), _traceFactory.GetTracer(), defaultResult: Constants.SiteExtensionProvisioningStateSucceeded);
+                return response;
             }
             catch (DirectoryNotFoundException ex)
             {
-                _analytics.UnexpectedException(ex, false);
+                _analytics.UnexpectedException(
+                        ex,
+                        method: "DELETE",
+                        path: string.Format(CultureInfo.InvariantCulture, "/api/siteextensions/{0}", id),
+                        result: Constants.SiteExtensionProvisioningStateFailed,
+                        message: null,
+                        trace: false);
                 throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, ex));
             }
             catch (Exception ex)
             {
-                _analytics.UnexpectedException(ex, false);
+                _analytics.UnexpectedException(
+                        ex,
+                        method: "DELETE",
+                        path: string.Format(CultureInfo.InvariantCulture, "/api/siteextensions/{0}", id),
+                        result: Constants.SiteExtensionProvisioningStateFailed,
+                        message: null,
+                        trace: false);
                 throw ex;
-            }
-            finally
-            {
-                LogEndEvent(id, (DateTime.UtcNow - startTime), _traceFactory.GetTracer());
             }
         }
 
         /// <summary>
         /// Log to MDS when installation/uninstallation finsihed
         /// </summary>
-        private void LogEndEvent(string id, TimeSpan duration, ITracer tracer)
+        private void LogEndEvent(string id, TimeSpan duration, ITracer tracer, string defaultResult = null)
         {
             SiteExtensionStatus armStatus = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id, tracer);
             string filePath = Path.Combine(_environment.RootPath, "SiteExtensions", id, "SiteExtensionSettings.json");
@@ -353,7 +366,7 @@ namespace Kudu.Services.SiteExtensions
             _analytics.SiteExtensionEvent(
                 Request.Method.Method,
                 Request.RequestUri.AbsolutePath,
-                armStatus.ProvisioningState,
+                armStatus.ProvisioningState ?? defaultResult,
                 duration.TotalMilliseconds.ToString(),
                 jsonSetting.ToString());
         }

@@ -47,6 +47,7 @@ namespace Kudu.FunctionalTests
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 var manager = appManager.SiteExtensionManager;
+                await CleanSiteExtensions(manager);
 
                 // list package
                 TestTracer.Trace("Search extensions by id: '{0}'", testPackageId);
@@ -89,6 +90,7 @@ namespace Kudu.FunctionalTests
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 var manager = appManager.SiteExtensionManager;
+                await CleanSiteExtensions(manager);
 
                 // list
                 List<SiteExtensionInfo> results = await (await manager.GetRemoteExtensions()).Content.ReadAsAsync<List<SiteExtensionInfo>>();
@@ -175,6 +177,7 @@ namespace Kudu.FunctionalTests
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 var manager = appManager.SiteExtensionManager;
+                await CleanSiteExtensions(manager);
 
                 // list
                 List<SiteExtensionInfo> results = await (await manager.GetRemoteExtensions()).Content.ReadAsAsync<List<SiteExtensionInfo>>();
@@ -230,13 +233,7 @@ namespace Kudu.FunctionalTests
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 var manager = appManager.SiteExtensionManager;
-
-                TestTracer.Trace("Clean site extensions");
-                List<SiteExtensionInfo> results = await (await manager.GetLocalExtensions()).Content.ReadAsAsync<List<SiteExtensionInfo>>();
-                foreach (var ext in results)
-                {
-                    await manager.UninstallExtension(ext.Id);
-                }
+                await CleanSiteExtensions(manager);
 
                 TestTracer.Trace("Install site extension with jobs");
                 await manager.InstallExtension("filecounterwithwebjobs", null, "https://www.myget.org/F/amitaptest/");
@@ -280,22 +277,12 @@ namespace Kudu.FunctionalTests
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 var manager = appManager.SiteExtensionManager;
+                await CleanSiteExtensions(manager);
 
                 // Get the latest package, make sure that call will return right away when we try to update
                 TestTracer.Trace("Get latest package '{0}' from '{1}'", testPackageId, feedEndpoint);
                 SiteExtensionInfo latestPackage = await (await manager.GetRemoteExtension(testPackageId, feedUrl: feedEndpoint)).Content.ReadAsAsync<SiteExtensionInfo>();
                 Assert.Equal(testPackageId, latestPackage.Id);
-
-                TestTracer.Trace("Uninstall package '{0}'", testPackageId);
-                try
-                {
-                    // uninstall package if it is there
-                    await manager.UninstallExtension(testPackageId);
-                }
-                catch
-                {
-                    // ignore exception
-                }
 
                 // install from non-default endpoint
                 UpdateHeaderIfGoingToBeArmRequest(manager.Client, true);
@@ -368,6 +355,7 @@ namespace Kudu.FunctionalTests
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 var manager = appManager.SiteExtensionManager;
+                await CleanSiteExtensions(manager);
 
                 UpdateHeaderIfGoingToBeArmRequest(manager.Client, true);
                 TestTracer.Trace("GetRemoteExtensions with Arm header, expecting site extension info will be wrap inside Arm envelop");
@@ -433,27 +421,12 @@ namespace Kudu.FunctionalTests
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 var manager = appManager.SiteExtensionManager;
+                await CleanSiteExtensions(manager);
+
                 List<Task<HttpResponseMessage>> tasks = new List<Task<HttpResponseMessage>>();
                 List<Task<HttpResponseMessage>> pollingTasks = new List<Task<HttpResponseMessage>>();
 
-                TestTracer.Trace("Uninstalling packages: '{0}'", string.Join(",", packageIds));
-                try
-                {
-                    foreach (var packageId in packageIds)
-                    {
-                        tasks.Add(manager.UninstallExtension(packageId));
-                    }
-                    await Task.WhenAll(tasks);
-                }
-                catch
-                {
-                    // no-op
-                }
-
-                tasks.Clear();
-
                 UpdateHeaderIfGoingToBeArmRequest(manager.Client, true);
-
                 TestTracer.Trace("Start parallel install multiple extensions ...");
                 foreach (var packageId in packageIds)
                 {
@@ -509,15 +482,7 @@ namespace Kudu.FunctionalTests
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 var manager = appManager.SiteExtensionManager;
-
-                try
-                {
-                    await manager.UninstallExtension(externalPackageId);
-                }
-                catch
-                {
-                    // no-op
-                }
+                await CleanSiteExtensions(manager);
 
                 HttpResponseMessage response = await manager.GetRemoteExtension(externalPackageId, feedUrl: externalFeed);
                 SiteExtensionInfo info = await response.Content.ReadAsAsync<SiteExtensionInfo>();
@@ -552,7 +517,7 @@ namespace Kudu.FunctionalTests
                 response = await manager.GetRemoteExtension(externalPackageId, feedUrl: externalFeed);
                 ArmEntry<SiteExtensionInfo> armInfo = await response.Content.ReadAsAsync<ArmEntry<SiteExtensionInfo>>();
                 Assert.NotEqual(unlistedVersion, armInfo.Properties.Version);
-                
+
                 response = await manager.GetRemoteExtensions(externalPackageId, allowPrereleaseVersions: true, feedUrl: externalFeed);
                 ArmListEntry<SiteExtensionInfo> armInfos = await response.Content.ReadAsAsync<ArmListEntry<SiteExtensionInfo>>();
                 Assert.NotEmpty(armInfos.Value);
@@ -595,21 +560,7 @@ namespace Kudu.FunctionalTests
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 var manager = appManager.SiteExtensionManager;
-
-                // clear local extensions
-                try
-                {
-                    TestTracer.Trace("Clear '{0}'", externalPackageId);
-                    HttpResponseMessage deleteResponseMessage = await manager.UninstallExtension(externalPackageId);
-                    Assert.True(await deleteResponseMessage.Content.ReadAsAsync<bool>(), "Delete must return true: " + externalPackageId);
-
-                    deleteResponseMessage = await manager.UninstallExtension(externalPackageWithXdtId);
-                    Assert.True(await deleteResponseMessage.Content.ReadAsAsync<bool>(), "Delete must return true: " + externalPackageWithXdtId);
-                }
-                catch
-                {
-                    // no-op
-                }
+                await CleanSiteExtensions(manager);
 
                 // install/update
                 TestTracer.Trace("Perform InstallExtension with id '{0}', version '{1}' from '{2}'", externalPackageId, externalPackageVersion, externalFeed);
@@ -681,18 +632,7 @@ namespace Kudu.FunctionalTests
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 var manager = appManager.SiteExtensionManager;
-
-                // clear local extensions
-                try
-                {
-                    TestTracer.Trace("Clear '{0}'", externalPackageId);
-                    HttpResponseMessage deleteResponseMessage = await manager.UninstallExtension(externalPackageId);
-                    Assert.True(await deleteResponseMessage.Content.ReadAsAsync<bool>(), "Delete must return true");
-                }
-                catch
-                {
-                    // no-op
-                }
+                await CleanSiteExtensions(manager);
 
                 // install/update
                 TestTracer.Trace("Perform InstallExtension with id '{0}', version '{1}' from '{2}'", externalPackageId, externalPackageVersion, externalFeed);
@@ -817,6 +757,26 @@ namespace Kudu.FunctionalTests
             else if (!isArmRequest && containsArmHeader)
             {
                 client.DefaultRequestHeaders.Remove(ArmUtils.GeoLocationHeaderKey);
+            }
+        }
+
+        private static async Task CleanSiteExtensions(RemoteSiteExtensionManager manager)
+        {
+            try
+            {
+                TestTracer.Trace("Clean site extensions");
+                List<SiteExtensionInfo> results = await (await manager.GetLocalExtensions()).Content.ReadAsAsync<List<SiteExtensionInfo>>();
+                List<Task> tasks = new List<Task>();
+                foreach (var ext in results)
+                {
+                    tasks.Add(manager.UninstallExtension(ext.Id));
+                }
+
+                await Task.WhenAll(tasks);
+            }
+            catch (Exception ex)
+            {
+                TestTracer.Trace("Failed to perform cleanup, might cause testcase failure. {0}", ex.ToString());
             }
         }
     }
