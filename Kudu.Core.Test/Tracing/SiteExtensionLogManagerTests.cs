@@ -104,7 +104,7 @@ namespace Kudu.Core.Test.Tracing
                             {
                                 if (!expectDelete)
                                 {
-                                    throw new AssertException("Delete not expected");
+                                    throw new InvalidOperationException("Delete not expected");
                                 }
 
                                 _deleteCalled = true;

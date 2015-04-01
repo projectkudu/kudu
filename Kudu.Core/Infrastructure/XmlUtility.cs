@@ -62,7 +62,7 @@ namespace Kudu.Core.Infrastructure
                  character == 0x85                              ||
                 (character >= 0x100 && character <= 0xD7FF)     ||
                 (character >= 0xE000 && character <= 0xFFFD)    ||
-                 character >= 0x10000
+                (character >= 0x10000 && character <= 0x10FFFF)
             );
         }
 

@@ -18,14 +18,14 @@ using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.Services;
 using Kudu.TestHarness;
+using Kudu.TestHarness.Xunit;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.FunctionalTests
 {
-    [TestHarnessClassCommand]
+    [KuduXunitTestClass]
     public class DropboxTests
     {
         private const string OAuth20Token = "";

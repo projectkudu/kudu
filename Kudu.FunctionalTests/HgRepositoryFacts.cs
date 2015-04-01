@@ -7,12 +7,12 @@ using Kudu.Core.SourceControl;
 using Kudu.Core.Test;
 using Kudu.Core.Tracing;
 using Kudu.TestHarness;
+using Kudu.TestHarness.Xunit;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.FunctionalTests
 {
-    [TestHarnessClassCommand]
+    [KuduXunitTestClass]
     public class HgRepositoryFacts
     {
         [Fact]

@@ -9,12 +9,13 @@ using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.Services;
 using Kudu.TestHarness;
-using Xunit.Extensions;
+using Kudu.TestHarness.Xunit;
+using Xunit;
 using TimeoutException = System.TimeoutException;
 
 namespace Kudu.FunctionalTests
 {
-    [TestHarnessClassCommand]
+    [KuduXunitTestClass]
     public class LargeRepoTests
     {
         private static readonly bool shouldRunLargeRepoTests = !String.IsNullOrEmpty(Environment.GetEnvironmentVariable("RUN_LARGE_REPO_TESTS"));

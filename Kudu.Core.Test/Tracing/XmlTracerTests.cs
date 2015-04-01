@@ -13,7 +13,6 @@ using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 using Moq;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Core.Test.Tracing
 {
@@ -53,7 +52,7 @@ namespace Kudu.Core.Test.Tracing
         }
 
         [Theory]
-        [PropertyData("Requests")]
+        [MemberData("Requests")]
         public void TracerRequestsTest(TraceLevel traceLevel, RequestInfo[] requests)
         {
             // Mock
@@ -104,7 +103,7 @@ namespace Kudu.Core.Test.Tracing
         }
 
         [Theory]
-        [PropertyData("TraceRequests")]
+        [MemberData("TraceRequests")]
         public void TraceFiltersTests(bool expected, TraceLevel level, TraceInfo info, int statusCode)
         {
             Assert.Equal(expected, XmlTracer.ShouldTrace(level, info, statusCode));

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Kudu.Contracts.Settings;
@@ -7,7 +6,6 @@ using Kudu.Core.Settings;
 using Moq;
 using XmlSettings;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Core.Test
 {
@@ -15,7 +13,7 @@ namespace Kudu.Core.Test
     {
         private static readonly ISettingsProvider DefaultSettingsProvider = new DefaultSettingsProvider();
 
-        [Theory, ClassData(typeof(CommandIdleTimeoutData))]
+        [Theory, MemberData("CommandIdleTimeoutData")]
         public void CommandIdleTimeoutTests(string value, int expected)
         {
             // Act
@@ -26,7 +24,7 @@ namespace Kudu.Core.Test
             Assert.Equal(TimeSpan.FromSeconds(expected), settings.GetCommandIdleTimeout());
         }
 
-        [Theory, ClassData(typeof(LogStreamTimeoutData))]
+        [Theory, MemberData("LogStreamTimeoutData")]
         public void LogStreamTimeoutTests(string value, int expected)
         {
             // Act
@@ -37,7 +35,7 @@ namespace Kudu.Core.Test
             Assert.Equal(TimeSpan.FromSeconds(expected), settings.GetLogStreamTimeout());
         }
 
-        [Theory, ClassData(typeof(TraceLevelData))]
+        [Theory, MemberData("TraceLevelData")]
         public void TraceLevelTests(string value, TraceLevel expected)
         {
             // Act
@@ -179,50 +177,31 @@ namespace Kudu.Core.Test
             return settingsProviders;
         }
 
-        private class CommandIdleTimeoutData : SettingsData
+        public static IEnumerable<object[]> CommandIdleTimeoutData
         {
-            protected override object DefaultValue
-            {
-                get { return (int)DeploymentSettingsExtension.DefaultCommandIdleTimeout.TotalSeconds; }
-            }
+            get { return GetSettingsData((int)DeploymentSettingsExtension.DefaultCommandIdleTimeout.TotalSeconds); }
         }
 
-        private class LogStreamTimeoutData : SettingsData
+        public static IEnumerable<object[]> LogStreamTimeoutData
         {
-            protected override object DefaultValue
-            {
-                get { return (int)DeploymentSettingsExtension.DefaultLogStreamTimeout.TotalSeconds; }
-            }
+            get { return GetSettingsData((int)DeploymentSettingsExtension.DefaultLogStreamTimeout.TotalSeconds); }
         }
 
-        private class TraceLevelData : SettingsData
+        public static IEnumerable<object[]> TraceLevelData
         {
-            protected override object DefaultValue
-            {
-                get { return DeploymentSettingsExtension.DefaultTraceLevel; }
-            }
+            get { return GetSettingsData((int)DeploymentSettingsExtension.DefaultTraceLevel); }
         }
 
-        private abstract class SettingsData : IEnumerable<object[]>
+        public static IEnumerable<object[]> GetSettingsData(int defaultValue)
         {
-            protected abstract object DefaultValue { get; }
-
-            public IEnumerator<object[]> GetEnumerator()
-            {
-                yield return new object[] { "0", 0 };
-                yield return new object[] { "-0", 0 };
-                yield return new object[] { "4", 4 };
-                yield return new object[] { "-4", 0 };
-                yield return new object[] { "", DefaultValue };
-                yield return new object[] { "a", DefaultValue };
-                yield return new object[] { " ", DefaultValue };
-                yield return new object[] { null, DefaultValue };
-            }
-
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                return GetEnumerator();
-            }
+            yield return new object[] { "0", 0 };
+            yield return new object[] { "-0", 0 };
+            yield return new object[] { "4", 4 };
+            yield return new object[] { "-4", 0 };
+            yield return new object[] { "", defaultValue };
+            yield return new object[] { "a", defaultValue };
+            yield return new object[] { " ", defaultValue };
+            yield return new object[] { null, defaultValue };
         }
     }
 }

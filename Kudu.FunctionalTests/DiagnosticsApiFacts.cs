@@ -14,13 +14,14 @@ using Kudu.Core.Infrastructure;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.Services.Diagnostics;
 using Kudu.TestHarness;
+using Kudu.TestHarness.Xunit;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace Kudu.FunctionalTests
 {
-    [TestHarnessClassCommand]
+    [KuduXunitTestClass]
     public class DiagnosticsApiFacts
     {
         [Fact]

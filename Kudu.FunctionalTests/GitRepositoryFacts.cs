@@ -7,12 +7,12 @@ using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Test;
 using Kudu.Core.Tracing;
 using Kudu.TestHarness;
+using Kudu.TestHarness.Xunit;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.FunctionalTests
 {
-    [TestHarnessClassCommand]
+    [KuduXunitTestClass]
     public class GitRepositoryFacts
     {
         [Theory]
@@ -155,7 +155,7 @@ namespace Kudu.FunctionalTests
         }
 
         [Theory]
-        [PropertyData("ParseCommitData")]
+        [MemberData("ParseCommitData")]
         public void GitRepoParsesCommitDetails(string id, ChangeSet expectedChangeset)
         {
             foreach (Type gitRepoType in new[] { typeof(LibGit2SharpRepository), typeof(GitExeRepository) })

@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using Kudu.Core;
 using Kudu.TestHarness;
+using Kudu.TestHarness.Xunit;
 using Xunit;
 
 namespace Kudu.FunctionalTests
 {
-    [TestHarnessClassCommand]
+    [KuduXunitTestClass]
     public class CommandExecutorTests
     {
         [Fact]

@@ -31,7 +31,7 @@ namespace Kudu.Services.Test
             controller.Request = GetRequest();
 
             // Act
-            var response = await ExceptionAssert.ThrowsAsync<HttpResponseException>(async () => await controller.Deploy());
+            var response = await Assert.ThrowsAsync<HttpResponseException>(async () => await controller.Deploy());
 
             // Assert
             Assert.Equal(HttpStatusCode.NotFound, response.Response.StatusCode);
@@ -54,7 +54,7 @@ namespace Kudu.Services.Test
             controller.Request = GetRequest();
 
             // Act
-            var response = await ExceptionAssert.ThrowsAsync<HttpResponseException>(async () => await controller.Deploy("1234"));
+            var response = await Assert.ThrowsAsync<HttpResponseException>(async () => await controller.Deploy("1234"));
 
             // Assert
             Assert.Equal(HttpStatusCode.NotFound, response.Response.StatusCode);

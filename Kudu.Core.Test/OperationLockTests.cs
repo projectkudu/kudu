@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Core.Test
 {

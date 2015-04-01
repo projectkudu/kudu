@@ -5,16 +5,16 @@ using Kudu.Contracts.Settings;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
+using Kudu.TestHarness.Xunit;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.FunctionalTests
 {
-    [TestHarnessClassCommand]
+    [KuduXunitTestClass]
     public class InPlaceDeploymentTest
     {
         [Theory]
-        [PropertyData("ScenarioSettings")]
+        [MemberData("ScenarioSettings")]
         public async Task InPlaceDeploymentBasicTests(Scenario scenario, Setting setting)
         {
             var appName = scenario.Name;

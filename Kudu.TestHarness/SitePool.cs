@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
@@ -15,59 +16,29 @@ namespace Kudu.TestHarness
     public static class SitePool
     {
         private const int MaxSiteNameIndex = 5;
-        private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(initialCount: 1);
         private static readonly string _sitePrefix = KuduUtils.SiteReusedForAllTests;
         private static readonly ConcurrentStack<int> _availableSiteIndex = new ConcurrentStack<int>(Enumerable.Range(1, MaxSiteNameIndex).Reverse());
-        private static ApplicationManager _nextAppManager;
 
         public static async Task<ApplicationManager> CreateApplicationAsync()
         {
-            await _semaphore.WaitAsync();
-            ApplicationManager appManager = _nextAppManager;
-            _nextAppManager = null;
-            _semaphore.Release();
-
-            if (appManager == null)
-            {
-                appManager = await CreateApplicationInternal();
-            }
-
-            EnsureNextApplication();
-            return appManager;
-        }
-
-        private static async void EnsureNextApplication()
-        {
-            await AppDomainHelper.RunTask(async () => 
-            {
-                await _semaphore.WaitAsync();
-                try
-                {
-                    _nextAppManager = await CreateApplicationInternal();
-                }
-                finally
-                {
-                    _semaphore.Release();
-                }
-            });
+            return await CreateApplicationInternal();
         }
 
         public static void ReportTestCompletion(ApplicationManager applicationManager, bool success)
         {
-            if (success || _availableSiteIndex.Count <= 1)
-            {
-                _availableSiteIndex.Push(applicationManager.SitePoolIndex);
-            }
-            else
-            {
-                TestTracer.Trace("SitePool.ReportTestCompletion Removing application {0} from pool", applicationManager.ApplicationName);
-            }
+            _availableSiteIndex.Push(applicationManager.SitePoolIndex);
         }
 
         private static async Task<ApplicationManager> CreateApplicationInternal()
         {
             int siteIndex;
-            _availableSiteIndex.TryPop(out siteIndex);
+
+            // try till succeeded
+            while (!_availableSiteIndex.TryPop(out siteIndex))
+            {
+                await Task.Delay(5000);
+            }
+
             string applicationName = _sitePrefix + siteIndex;
 
             string operationName = "SitePool.CreateApplicationInternal " + applicationName;

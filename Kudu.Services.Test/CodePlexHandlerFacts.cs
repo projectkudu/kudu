@@ -4,7 +4,6 @@ using Kudu.Services.ServiceHookHandlers;
 using Moq;
 using Newtonsoft.Json.Linq;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Services.Test
 {

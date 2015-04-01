@@ -4,12 +4,12 @@
         <PackagesDir>$(ProjectRoot)..\packages</PackagesDir>
     </PropertyGroup>
     <ItemGroup>
-        <XunitAssembly Include="$(PackagesDir)\xunit.*\lib\*\xunit.runner.msbuild.dll" />
+        <XunitAssembly Include="$(PackagesDir)\xunit.runner.msbuild.*\build\*\xunit.runner.msbuild.dll" />
     </ItemGroup>    
 
     <UsingTask AssemblyFile="@(XunitAssembly)" TaskName="Xunit.Runner.MSBuild.xunit" />
     
     <Target Name="_RunTests">
-        <xunit Verbose="true" Assembly="$(Assembly)" Xml="$(Xml)" />
+        <xunit Verbose="true" Assemblies="$(Assembly)" Xml="$(Xml)" />
     </Target>
 </Project>

@@ -15,12 +15,13 @@ using Kudu.Contracts.Settings;
 using Kudu.Core.Deployment;
 using Kudu.Core.Hooks;
 using Kudu.TestHarness;
+using Kudu.TestHarness.Xunit;
 using Newtonsoft.Json;
 using Xunit;
 
 namespace Kudu.FunctionalTests.Jobs
 {
-    [TestHarnessClassCommand]
+    [KuduXunitTestClass]
     public class WebJobsTests
     {
         private const string JobsBinPath = "Site/wwwroot/App_Data/jobs";

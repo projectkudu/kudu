@@ -6,7 +6,6 @@ using Kudu.Core.Deployment;
 using Kudu.Core.Tracing;
 using Moq;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Core.Test
 {
@@ -15,7 +14,7 @@ namespace Kudu.Core.Test
         private static int _id;
 
         [Theory]
-        [PropertyData("DeployResults")]
+        [MemberData("DeployResults")]
         public void PurgeBasicTest(IEnumerable<DeployResult> actual)
         {
             // Mock

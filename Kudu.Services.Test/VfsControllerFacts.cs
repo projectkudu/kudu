@@ -15,7 +15,6 @@ using Kudu.Services.Editor;
 using Kudu.Services.Infrastructure;
 using Moq;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Services.Test
 {
@@ -143,7 +142,7 @@ namespace Kudu.Services.Test
         }
 
         [Theory]
-        [PropertyData("DeleteItemDeletesFileIfETagMatchesData")]
+        [MemberData("DeleteItemDeletesFileIfETagMatchesData")]
         public async Task DeleteItemDeletesFileIfETagMatches(EntityTagHeaderValue etag)
         {
             // Arrange
@@ -170,7 +169,7 @@ namespace Kudu.Services.Test
         }
 
         [Theory]
-        [PropertyData("MapRouteToLocalPathData")]
+        [MemberData("MapRouteToLocalPathData")]
         public void MapRouteToLocalPathTests(string requestUri, string expected)
         {
             FileSystemHelpers.Instance = new FileSystem();

@@ -1,19 +1,15 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Web;
 using Kudu.Core.SourceControl;
 using Kudu.Services.ServiceHookHandlers;
-using Moq;
 using Newtonsoft.Json.Linq;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Services.Test
 {
     public class GenericHandlerFacts
     {
-        [Theory, PropertyData("SimpleTestData")]
+        [Theory, MemberData("SimpleTestData")]
         public void GenericHandlerSimpleTest(DeployAction expected, IDictionary<string, object> values)
         {
             // Arrange

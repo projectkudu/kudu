@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Net.Http.Headers;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Services.Infrastructure.Test
 {

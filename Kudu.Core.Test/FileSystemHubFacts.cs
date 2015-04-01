@@ -1,14 +1,12 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
 using Kudu.Services.Editor;
 using Microsoft.AspNet.SignalR;
 using Microsoft.AspNet.SignalR.Hubs;
 using Moq;
-using System;
-using System.Threading.Tasks;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Core.Test
 {

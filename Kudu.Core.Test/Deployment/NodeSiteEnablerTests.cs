@@ -3,7 +3,6 @@ using System.IO.Abstractions;
 using Kudu.Core.Infrastructure;
 using Moq;
 using Xunit;
-using Xunit.Extensions;
 
 //             "default.htm", "default.html", "default.asp", "index.htm", "index.html", "iisstart.htm", "default.aspx", "index.php"
 

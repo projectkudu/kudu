@@ -1,6 +1,5 @@
 ﻿using Kudu.Services.Web.Tracing;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Core.Test
 {

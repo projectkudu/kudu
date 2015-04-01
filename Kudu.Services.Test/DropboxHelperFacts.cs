@@ -82,7 +82,7 @@ namespace Kudu.Services.Test
             var helper = CreateDropboxHelper(handler);
 
             // Act
-            await ExceptionAssert.ThrowsAsync<HttpRequestException>(async() =>
+            await Assert.ThrowsAsync<HttpRequestException>(async() =>
                 await helper.ProcessFileAsync(CreateHttpClient(handler), path, @"foo/qux/", DateTime.UtcNow));
 
             // Assert
@@ -157,7 +157,7 @@ namespace Kudu.Services.Test
             });
 
             // Act
-            await ExceptionAssert.ThrowsAsync<HttpRequestException>(async() => await helper.ApplyChangesCore(deployInfo, useOAuth20: false));
+            await Assert.ThrowsAsync<HttpRequestException>(async () => await helper.ApplyChangesCore(deployInfo, useOAuth20: false));
 
             // Assert
             // Ensure we processed other files

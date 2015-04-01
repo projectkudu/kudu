@@ -1,6 +1,5 @@
 ﻿using Kudu.Contracts.Settings;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Core.Infrastructure.Test
 {

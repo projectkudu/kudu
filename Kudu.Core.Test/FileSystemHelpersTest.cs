@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Abstractions;
-using System.Linq;
-using Kudu.Core.Deployment;
+﻿using System.IO.Abstractions;
 using Kudu.Core.Infrastructure;
 using Moq;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Core.Test
 {

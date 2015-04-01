@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO.Abstractions;
 using System.Security.Cryptography;
 using System.Text;
 using Kudu.Core.Infrastructure;
 using Moq;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Core.SSHKey.Test
 {

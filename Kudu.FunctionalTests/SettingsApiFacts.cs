@@ -1,18 +1,18 @@
 ﻿using System.Collections.Specialized;
 using System.IO;
 using System.Net;
-using System.Net.Http;
 using System.Threading.Tasks;
 using Kudu.Client;
 using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
+using Kudu.TestHarness.Xunit;
 using Xunit;
 
 namespace Kudu.FunctionalTests
 {
-    [TestHarnessClassCommand]
+    [KuduXunitTestClass]
     public class SettingsApiFacts
     {
         [Fact]

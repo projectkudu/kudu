@@ -16,7 +16,6 @@ using Kudu.Core.SourceControl.Git;
 using Kudu.Services.GitServer;
 using Moq;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Services.Test
 {
@@ -201,7 +200,7 @@ namespace Kudu.Services.Test
         }
 
         [Theory]
-        [PropertyData("WebRootContents")]
+        [MemberData("WebRootContents")]
         public void InfoRefsControllerIsDefaultWebRootContentTests(IWebRootContent scenario)
         {
             // Arrange

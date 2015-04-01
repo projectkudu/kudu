@@ -10,7 +10,6 @@ using Kudu.Services;
 using Microsoft.AspNet.SignalR;
 using Moq;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Core.Test
 {

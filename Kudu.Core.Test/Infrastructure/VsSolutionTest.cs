@@ -2,7 +2,6 @@
 using System.IO;
 using System.Linq;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Core.Infrastructure.Test
 {

@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Kudu.Contracts.Settings;
 using Kudu.Core.Settings;
 using Moq;
 using XmlSettings;
 using Xunit;
-using Xunit.Extensions;
-using System.Linq;
-using System.IO;
 
 namespace Kudu.Core.Test.Settings
 {

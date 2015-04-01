@@ -7,14 +7,14 @@ using Kudu.Client;
 using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Hooks;
-using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
+using Kudu.TestHarness.Xunit;
 using Newtonsoft.Json;
 using Xunit;
 
 namespace Kudu.FunctionalTests
 {
-    [TestHarnessClassCommand]
+    [KuduXunitTestClass]
     public class WebHooksTests
     {
         [Fact]
@@ -136,7 +136,7 @@ namespace Kudu.FunctionalTests
 
                     await hookAppManager.WebHooksManager.SubscribeAsync(new WebHook(customHookEventType, hookAddress));
 
-                    var thrownException = await ExceptionAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(async () =>
+                    var thrownException = await Assert.ThrowsAsync<HttpUnsuccessfulRequestException>(async () =>
                     {
                         await hookAppManager.WebHooksManager.SubscribeAsync(new WebHook(customHookEventType + "_DifferentEvent", hookAddress));
                     });

@@ -8,7 +8,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Kudu.Contracts.Diagnostics;
 using Kudu.Contracts.Tracing;
-using Kudu.Core;
 using Kudu.Core.Infrastructure;
 using Kudu.Services.Diagnostics;
 using Kudu.TestHarness;
@@ -16,7 +15,7 @@ using Moq;
 using Xunit;
 
 namespace Kudu.Services.Test
-{    
+{
     public class ApplicationLogsReaderFacts
     {
         [Fact]

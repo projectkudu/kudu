@@ -6,7 +6,6 @@ using System.Text;
 using Kudu.Core.Infrastructure;
 using Moq;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Core.Deployment.Generator.Test
 {

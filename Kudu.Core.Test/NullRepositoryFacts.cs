@@ -8,7 +8,6 @@ using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
 using Moq;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Core.Test
 {

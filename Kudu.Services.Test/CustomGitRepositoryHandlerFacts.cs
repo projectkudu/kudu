@@ -12,7 +12,6 @@ using Kudu.Core.SourceControl.Git;
 using Kudu.Services.GitServer;
 using Moq;
 using Xunit;
-using Xunit.Extensions;
 using GitServerRequestType = Kudu.Services.GitServer.CustomGitRepositoryHandler.GitServerRequestType;
 
 namespace Kudu.Services.Test
@@ -154,7 +153,7 @@ namespace Kudu.Services.Test
         }
 
         [Theory]
-        [PropertyData("RequestScenarios")]
+        [MemberData("RequestScenarios")]
         public void CustomGitRepositoryHandlerBasic(IScenario scenario)
         {
             var headers = new System.Collections.Specialized.NameValueCollection();

@@ -231,7 +231,8 @@ namespace Kudu.TestHarness
 
             return new GitDeploymentResult
             {
-                GitTrace = trace,
+                // To work around Xunit invalid Xml character issue
+                GitTrace = XmlUtility.Sanitize(trace),
                 TotalResponseTime = sw.Elapsed
             };
         }

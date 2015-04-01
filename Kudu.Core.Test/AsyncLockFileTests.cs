@@ -27,11 +27,11 @@ namespace Kudu.Core.Test
         }
 
         [Fact]
-        public void AsyncLock_ThrowsIfNotInitialized()
+        public async Task AsyncLock_ThrowsIfNotInitialized()
         {
             string lockFilePath = Path.Combine(PathHelper.TestLockPath, "uninitialized.lock");
             LockFile uninitialized = new LockFile(lockFilePath, NullTracerFactory.Instance);
-            Assert.Throws<InvalidOperationException>(() => uninitialized.LockAsync());
+            await Assert.ThrowsAsync<InvalidOperationException>(() => uninitialized.LockAsync());
         }
 
         [Fact]
@@ -76,7 +76,7 @@ namespace Kudu.Core.Test
                 }
             });
 
-            done.WaitOne();
+            Assert.True(done.WaitOne(10000), "lock timeout!");
             Assert.Equal(MaxCount, count);
         }
 
@@ -116,10 +116,10 @@ namespace Kudu.Core.Test
         }
 
         [Fact]
-        public void LockAsync_ThrowsAfterTerminateAsyncLocks()
+        public async Task LockAsync_ThrowsAfterTerminateAsyncLocks()
         {
             _lockFile.TerminateAsyncLocks();
-            Assert.Throws<InvalidOperationException>(() => _lockFile.LockAsync());
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _lockFile.LockAsync());
         }
     }
 }

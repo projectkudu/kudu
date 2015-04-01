@@ -1,11 +1,12 @@
 ﻿using System.IO;
 using System.IO.Compression;
 using Kudu.TestHarness;
+using Kudu.TestHarness.Xunit;
 using Xunit;
 
 namespace Kudu.FunctionalTests
 {
-    [TestHarnessClassCommand]
+    [KuduXunitTestClass]
     public class ZipTests
     {
         [Fact]

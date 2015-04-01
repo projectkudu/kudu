@@ -1,12 +1,10 @@
 ﻿using System.Collections.Specialized;
 using System.Web;
 using Kudu.Core.SourceControl;
-using Kudu.Core.SourceControl.Git;
 using Kudu.Services.ServiceHookHandlers;
 using Moq;
 using Newtonsoft.Json.Linq;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Services.Test
 {

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
@@ -17,13 +16,13 @@ using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
+using Kudu.TestHarness.Xunit;
 using Newtonsoft.Json.Linq;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.FunctionalTests
 {
-    [TestHarnessClassCommand]
+    [KuduXunitTestClass]
     public class DeploymentManagerTests
     {
         [Fact]
@@ -34,25 +33,25 @@ namespace Kudu.FunctionalTests
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
                 string id = "foo";
-                var ex = await ExceptionAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.DeleteAsync(id));
+                var ex = await Assert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.DeleteAsync(id));
                 Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
 
-                ex = await ExceptionAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.DeployAsync(id));
+                ex = await Assert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.DeployAsync(id));
                 Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
 
-                ex = await ExceptionAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.DeployAsync(id, clean: true));
+                ex = await Assert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.DeployAsync(id, clean: true));
                 Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
 
-                ex = await ExceptionAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.GetLogEntriesAsync(id));
+                ex = await Assert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.GetLogEntriesAsync(id));
                 Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
 
-                ex = await ExceptionAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.GetResultAsync(id));
+                ex = await Assert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.GetResultAsync(id));
                 Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
 
-                ex = await ExceptionAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.GetLogEntryDetailsAsync(id, "fakeId"));
+                ex = await Assert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.GetLogEntryDetailsAsync(id, "fakeId"));
                 Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
 
-                ex = await ExceptionAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.GetDeploymentScriptAsync());
+                ex = await Assert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.GetDeploymentScriptAsync());
                 Assert.Equal(HttpStatusCode.NotFound, ex.ResponseMessage.StatusCode);
                 Assert.Contains("Need to deploy website to get deployment script.", ex.ResponseMessage.ExceptionMessage);
             });
@@ -147,14 +146,14 @@ namespace Kudu.FunctionalTests
                     }
 
                     // Can't delete the active one
-                    var ex = await ExceptionAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.DeleteAsync(result.Id));
+                    var ex = await Assert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.DeleteAsync(result.Id));
                     Assert.Equal(HttpStatusCode.Conflict, ex.ResponseMessage.StatusCode);
 
                     // Corrupt git repository by removing HEAD file from it
                     // And verify git repository is not identified
                     appManager.VfsManager.Delete("site\\repository\\.git\\HEAD");
 
-                    var notFoundException = await ExceptionAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.DeployAsync(null));
+                    var notFoundException = await Assert.ThrowsAsync<HttpUnsuccessfulRequestException>(() => appManager.DeploymentManager.DeployAsync(null));
 
                     // Expect a not found failure as no repository is found (since the git repository is now corrupted)
                     Assert.Equal(HttpStatusCode.NotFound, notFoundException.ResponseMessage.StatusCode);
@@ -811,7 +810,7 @@ namespace Kudu.FunctionalTests
 
             await ApplicationManager.RunAsync(appName, async appManager =>
             {
-                var exception = await ExceptionAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(async () =>
+                var exception = await Assert.ThrowsAsync<HttpUnsuccessfulRequestException>(async () =>
                 {
                     await PostPayloadHelperAsync(appManager, client => client.PostAsJsonAsync("deploy", payload));
                 });
@@ -1032,7 +1031,7 @@ namespace Kudu.FunctionalTests
                     TestTracer.Trace("Scenario: " + info);
 
                     // Test
-                    var exception = await ExceptionAssert.ThrowsAsync<HttpUnsuccessfulRequestException>(async () =>
+                    var exception = await Assert.ThrowsAsync<HttpUnsuccessfulRequestException>(async () =>
                     {
                         await PostPayloadHelperAsync(appManager, client => client.PostAsJsonAsync("deploy", info.Payload));
                     });

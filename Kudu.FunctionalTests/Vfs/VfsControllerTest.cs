@@ -5,11 +5,12 @@ using System.Threading.Tasks;
 using Kudu.Client;
 using Kudu.Client.Editor;
 using Kudu.TestHarness;
+using Kudu.TestHarness.Xunit;
 using Xunit;
 
 namespace Kudu.FunctionalTests
 {
-    [TestHarnessClassCommand]
+    [KuduXunitTestClass]
     public class VfsControllerTest
     {
         [Fact]

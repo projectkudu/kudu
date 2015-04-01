@@ -15,14 +15,13 @@ using Kudu.Core.SourceControl;
 using Kudu.Services.ServiceHookHandlers;
 using Moq;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Services.Test
 {
     public class FetchHandlerFacts
     {
         [Theory]
-        [PropertyData("Scenarios")]
+        [MemberData("Scenarios")]
         public async Task FetchHandlerBasicTests(IScenario scenario)
         {
             // Arrange

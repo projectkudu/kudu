@@ -7,16 +7,16 @@ using Kudu.Contracts.Settings;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
+using Kudu.TestHarness.Xunit;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.FunctionalTests
 {
-    [TestHarnessClassCommand]
+    [KuduXunitTestClass]
     public class InitialCloneTest
     {
         [Theory]
-        [PropertyData("Scenarios")]
+        [MemberData("Scenarios")]
         public async Task InitialCloneBasicTests(IScenario scenario)
         {
             // this contains zip files for each scenario

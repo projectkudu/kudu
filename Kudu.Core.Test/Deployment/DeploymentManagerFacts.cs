@@ -13,7 +13,6 @@ using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
 using Moq;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Core.Test.Deployment
 {
@@ -120,7 +119,7 @@ namespace Kudu.Core.Test.Deployment
         }
 
         [Theory]
-        [PropertyData("DeploymentStatusFileScenarios")]
+        [MemberData("DeploymentStatusFileScenarios")]
         public void CorruptedDeploymentStatusFileTests(string content, bool expectedNull, bool expectedError)
         {
             var id = Guid.NewGuid().ToString();

@@ -1,10 +1,11 @@
 ﻿using System.Threading.Tasks;
 using Kudu.TestHarness;
+using Kudu.TestHarness.Xunit;
 using Xunit;
 
 namespace Kudu.FunctionalTests
 {
-    [TestHarnessClassCommand]
+    [KuduXunitTestClass]
     public class LiveScmEditorControllerTest
     {
         [Fact]

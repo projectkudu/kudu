@@ -1,11 +1,9 @@
 ﻿using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.SSHKey;
-using Kudu.Services.Infrastructure;
 using Kudu.Services.SSHKey;
 using Moq;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Services.Test
 {

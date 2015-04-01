@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using Kudu.Core.Infrastructure;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Kudu.Core.Test.Infrastructure.cs
 {
     public class XmlUtilityFacts
     {
         [Theory]
-        [PropertyData("ValidCharacterSet")]
+        [MemberData("ValidCharacterSet")]
         public void XmlUtilityReturnsValidCharacterStringsUnchanged(string input)
         {
             // Act
@@ -20,15 +19,18 @@ namespace Kudu.Core.Test.Infrastructure.cs
             Assert.Equal(input, output);
         }
 
-        [Theory]
-        [PropertyData("InvalidCharacterSet")]
-        public void XmlUtilityRemovesInvalidCharacters(string input)
+        // cannot use [Theory, InlineData] due to https://github.com/xunit/xunit/issues/380
+        [Fact]
+        public void XmlUtilityRemovesInvalidCharacters()
         {
-            // Act
-            string output = XmlUtility.Sanitize(input);
+            foreach (var inputs in InvalidCharacterSet)
+            {
+                // Act
+                string output = XmlUtility.Sanitize((string)inputs[0]);
 
-            // Assert
-            Assert.Equal("ABC", output);
+                // Assert
+                Assert.Equal("ABC", output);
+            }
         }
 
         [Fact]
