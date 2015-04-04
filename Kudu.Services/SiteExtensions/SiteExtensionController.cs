@@ -87,6 +87,7 @@ namespace Kudu.Services.SiteExtensions
                     if (!installationLock.IsHeld
                         && string.Equals(Constants.SiteExtensionProvisioningStateSucceeded, armSettings.ProvisioningState, StringComparison.OrdinalIgnoreCase))
                     {
+                        tracer.Trace("Package {0} was just installed.", id);
                         extension = await _manager.GetLocalExtension(id, checkLatest);
                         if (extension == null)
                         {
@@ -101,7 +102,7 @@ namespace Kudu.Services.SiteExtensions
                         }
                         else
                         {
-                            if (SiteExtensionInstallationLock.IsAnyPendingLock(_environment.SiteExtensionSettingsPath))
+                            if (SiteExtensionInstallationLock.IsAnyPendingLock(_environment.SiteExtensionSettingsPath, tracer))
                             {
                                 using (tracer.Step("{0} finsihed installation. But there is other installation on-going, fake the status to be Created, so that we can restart once for all.", id))
                                 {
@@ -164,8 +165,11 @@ namespace Kudu.Services.SiteExtensions
                 // normal GET request
                 if (responseMessage == null)
                 {
-                    tracer.Trace("ARM get : {0}", id);
-                    extension = await _manager.GetLocalExtension(id, checkLatest);
+                    using (tracer.Step("ARM get : {0}", id))
+                    {
+                        extension = await _manager.GetLocalExtension(id, checkLatest);
+                    }
+
                     if (extension == null)
                     {
                         extension = new SiteExtensionInfo { Id = id };
@@ -180,8 +184,10 @@ namespace Kudu.Services.SiteExtensions
             }
             else
             {
-                tracer.Trace("Get : {0}", id);
-                extension = await _manager.GetLocalExtension(id, checkLatest);
+                using (tracer.Step("Get: {0}, is not a ARM request.", id))
+                {
+                    extension = await _manager.GetLocalExtension(id, checkLatest);
+                }
 
                 if (extension == null)
                 {
@@ -258,8 +264,10 @@ namespace Kudu.Services.SiteExtensions
                     {
                         try
                         {
-                            backgroundTracer.Trace("Background thread started for {0} installation", id);
-                            _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, backgroundTracer).Wait();
+                            using (backgroundTracer.Step("Background thread started for {0} installation", id))
+                            {
+                                _manager.InstallExtension(id, requestInfo.Version, requestInfo.FeedUrl, requestInfo.Type, backgroundTracer).Wait();
+                            }
                         }
                         finally
                         {
@@ -380,37 +388,41 @@ namespace Kudu.Services.SiteExtensions
         /// </summary>
         private bool UpdateArmSettingsForSuccessInstallation()
         {
-            var batchUpdateLock = SiteExtensionBatchUpdateStatusLock.CreateLock(_environment.SiteExtensionSettingsPath);
-
-            bool isAnyUpdate = false;
-
-            bool islocked = batchUpdateLock.TryLockOperation(() =>
+            var tracer = _traceFactory.GetTracer();
+            using (tracer.Step("Checking if there is any installation finsihed recently, if there is one, update its status."))
             {
-                var tracer = _traceFactory.GetTracer();
-                string[] packageDirs = FileSystemHelpers.GetDirectories(_environment.SiteExtensionSettingsPath);
-                foreach (var dir in packageDirs)
+                var batchUpdateLock = SiteExtensionBatchUpdateStatusLock.CreateLock(_environment.SiteExtensionSettingsPath);
+
+                bool isAnyUpdate = false;
+
+                bool islocked = batchUpdateLock.TryLockOperation(() =>
                 {
-                    var dirInfo = new DirectoryInfo(dir);   // arm setting folder name is same as package id
-                    SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, dirInfo.Name, tracer);
-                    if (string.Equals(armSettings.Operation, Constants.SiteExtensionOperationInstall, StringComparison.OrdinalIgnoreCase)
-                        && string.Equals(armSettings.ProvisioningState, Constants.SiteExtensionProvisioningStateSucceeded, StringComparison.OrdinalIgnoreCase))
+                    string[] packageDirs = FileSystemHelpers.GetDirectories(_environment.SiteExtensionSettingsPath);
+                    foreach (var dir in packageDirs)
                     {
-                        try
+                        var dirInfo = new DirectoryInfo(dir);   // arm setting folder name is same as package id
+                        SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, dirInfo.Name, tracer);
+                        if (string.Equals(armSettings.Operation, Constants.SiteExtensionOperationInstall, StringComparison.OrdinalIgnoreCase)
+                            && string.Equals(armSettings.ProvisioningState, Constants.SiteExtensionProvisioningStateSucceeded, StringComparison.OrdinalIgnoreCase))
                         {
-                            armSettings.Operation = null;
-                            isAnyUpdate = true;
-                        }
-                        catch (Exception ex)
-                        {
-                            tracer.TraceError(ex);
-                            // no-op
+                            try
+                            {
+                                armSettings.Operation = null;
+                                isAnyUpdate = true;
+                                tracer.Trace("Updated {0}", dir);
+                            }
+                            catch (Exception ex)
+                            {
+                                tracer.TraceError(ex);
+                                // no-op
+                            }
                         }
                     }
-                }
 
-            }, TimeSpan.FromSeconds(5));
+                }, TimeSpan.FromSeconds(5));
 
-            return islocked && isAnyUpdate;
+                return islocked && isAnyUpdate;
+            }
         }
     }
 }

@@ -142,6 +142,7 @@
     <Compile Include="Settings\DeploymentSettingsExtension.cs" />
     <Compile Include="Settings\IDeploymentSettingsManager.cs" />
     <Compile Include="Settings\SettingsKeys.cs" />
+    <Compile Include="SiteExtensions\InvalidEndpointException.cs" />
     <Compile Include="SiteExtensions\ISiteExtensionManager.cs" />
     <Compile Include="SiteExtensions\SiteExtensionInfo.cs" />
     <Compile Include="SourceControl\IFileFinder.cs" />
