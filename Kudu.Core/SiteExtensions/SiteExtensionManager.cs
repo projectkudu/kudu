@@ -7,6 +7,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using System.Xml;
@@ -138,10 +139,14 @@ namespace Kudu.Core.SiteExtensions
 
             using (tracer.Step("Convert search result to SiteExtensionInfos"))
             {
-                foreach (UIPackageMetadata package in packages)
-                {
-                    extensions.Add(await ConvertRemotePackageToSiteExtensionInfo(package, feedUrl));
-                }
+                var convertedResult = await ConvertNuGetPackagesToSiteExtensionInfos(
+                    packages,
+                    async (uiPackage) =>
+                    {
+                        return await ConvertRemotePackageToSiteExtensionInfo(uiPackage, feedUrl);
+                    });
+
+                extensions.AddRange(convertedResult);
             }
 
             return extensions;
@@ -200,15 +205,15 @@ namespace Kudu.Core.SiteExtensions
             using (tracer.Step("Search packages locally with filter: {0}", filter))
             {
                 searchResult = await _localRepository.Search(filter);
-                foreach (var item in searchResult)
-                {
-                    SiteExtensionInfo info = await ConvertLocalPackageToSiteExtensionInfo(item, checkLatest);
-
-                    SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, info.Id, tracer);
-                    armSettings.FillSiteExtensionInfo(info, defaultProvisionState: Constants.SiteExtensionProvisioningStateSucceeded);
-
-                    siteExtensionInfos.Add(info);
-                }
+                siteExtensionInfos = await ConvertNuGetPackagesToSiteExtensionInfos(
+                    searchResult,
+                    async (uiPackage) =>
+                    {
+                        SiteExtensionInfo info = await ConvertLocalPackageToSiteExtensionInfo(uiPackage, checkLatest, tracer);
+                        SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, info.Id, tracer);
+                        armSettings.FillSiteExtensionInfo(info, defaultProvisionState: Constants.SiteExtensionProvisioningStateSucceeded);
+                        return info;
+                    });
             }
 
             return preInstalledExtensions.Concat(siteExtensionInfos);
@@ -225,14 +230,22 @@ namespace Kudu.Core.SiteExtensions
             }
             else
             {
-                UIPackageMetadata package = await _localRepository.GetLatestPackageById(id);
+                UIPackageMetadata package = null;
+                using (tracer.Step("{0} is not a pre-installed package. Now querying from local repo.", id))
+                {
+                    package = await _localRepository.GetLatestPackageById(id);
+                }
+
                 if (package == null)
                 {
                     tracer.Trace("No package found from local repo with id: {0}.", id);
                     return null;
                 }
 
-                info = await ConvertLocalPackageToSiteExtensionInfo(package, checkLatest);
+                using (tracer.Step("Converting NuGet object to SiteExtensionInfo"))
+                {
+                    info = await ConvertLocalPackageToSiteExtensionInfo(package, checkLatest, tracer: tracer);
+                }
             }
 
             SiteExtensionStatus armSettings = new SiteExtensionStatus(_environment.SiteExtensionSettingsPath, id, tracer);
@@ -379,7 +392,7 @@ namespace Kudu.Core.SiteExtensions
                             }
                         }
 
-                        info = await ConvertLocalPackageToSiteExtensionInfo(localPackage, checkLatest: true);
+                        info = await ConvertLocalPackageToSiteExtensionInfo(localPackage, checkLatest: true, tracer: tracer);
                     }
                 }
                 catch (FileNotFoundException ex)
@@ -414,6 +427,17 @@ namespace Kudu.Core.SiteExtensions
                     info.Id = id;
                     info.ProvisioningState = Constants.SiteExtensionProvisioningStateFailed;
                     info.Comment = string.Format(Constants.SiteExtensionProvisioningStateDownloadFailureMessageFormat, id);
+                    status = HttpStatusCode.BadRequest;
+                }
+                catch (InvalidEndpointException ex)
+                {
+                    _analytics.UnexpectedException(ex, trace: false);
+
+                    tracer.TraceError(ex);
+                    info = new SiteExtensionInfo();
+                    info.Id = id;
+                    info.ProvisioningState = Constants.SiteExtensionProvisioningStateFailed;
+                    info.Comment = ex.Message;
                     status = HttpStatusCode.BadRequest;
                 }
                 catch (Exception ex)
@@ -837,7 +861,7 @@ namespace Kudu.Core.SiteExtensions
             return info;
         }
 
-        private async Task<SiteExtensionInfo> ConvertLocalPackageToSiteExtensionInfo(UIPackageMetadata package, bool checkLatest)
+        private async Task<SiteExtensionInfo> ConvertLocalPackageToSiteExtensionInfo(UIPackageMetadata package, bool checkLatest, ITracer tracer = null)
         {
             if (package == null)
             {
@@ -851,23 +875,33 @@ namespace Kudu.Core.SiteExtensions
             }
 
             SetLocalInfo(info);
-            await TryCheckLocalPackageLatestVersionFromRemote(info, checkLatest);
+            await TryCheckLocalPackageLatestVersionFromRemote(info, checkLatest, tracer);
             return info;
         }
 
-        private async Task TryCheckLocalPackageLatestVersionFromRemote(SiteExtensionInfo info, bool checkLatest)
+        private async Task TryCheckLocalPackageLatestVersionFromRemote(SiteExtensionInfo info, bool checkLatest, ITracer tracer = null)
         {
             if (checkLatest)
             {
-                // FindPackage gets back the latest version.
-                SourceRepository remoteRepo = GetRemoteRepository(info.FeedUrl);
-                UIPackageMetadata latestPackage = await remoteRepo.GetLatestPackageById(info.Id);
-                if (latestPackage != null)
+                try
                 {
-                    NuGetVersion currentVersion = NuGetVersion.Parse(info.Version);
-                    info.LocalIsLatestVersion = NuGetVersion.Parse(info.Version).Equals(latestPackage.Identity.Version);
-                    info.DownloadCount = latestPackage.DownloadCount;
-                    info.PublishedDateTime = latestPackage.Published;
+                    // FindPackage gets back the latest version.
+                    SourceRepository remoteRepo = GetRemoteRepository(info.FeedUrl);
+                    UIPackageMetadata latestPackage = await remoteRepo.GetLatestPackageById(info.Id);
+                    if (latestPackage != null)
+                    {
+                        NuGetVersion currentVersion = NuGetVersion.Parse(info.Version);
+                        info.LocalIsLatestVersion = NuGetVersion.Parse(info.Version).Equals(latestPackage.Identity.Version);
+                        info.DownloadCount = latestPackage.DownloadCount;
+                        info.PublishedDateTime = latestPackage.Published;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (tracer != null)
+                    {
+                        tracer.TraceError(ex);
+                    }
                 }
             }
         }
@@ -967,6 +1001,41 @@ namespace Kudu.Core.SiteExtensions
             aggregateCatalog.Catalogs.Add(directoryCatalog);
             var container = new CompositionContainer(aggregateCatalog);
             return container.GetExports<INuGetResourceProvider, INuGetResourceProviderMetadata>();
+        }
+
+        private async Task<List<SiteExtensionInfo>> ConvertNuGetPackagesToSiteExtensionInfos(
+            IEnumerable<UIPackageMetadata> packages,
+            Func<UIPackageMetadata, Task<SiteExtensionInfo>> convertor)
+        {
+            List<SiteExtensionInfo> siteExtensionInfos = new List<SiteExtensionInfo>();
+            List<Task<SiteExtensionInfo>> convertTasks = new List<Task<SiteExtensionInfo>>();
+
+            // in case there are a large amount of package come back from search result, we limited number of concurrent requests to be the number of CPU cores
+            SemaphoreSlim throttler = new SemaphoreSlim(System.Environment.ProcessorCount);
+
+            foreach (var item in packages)
+            {
+                convertTasks.Add(Task.Run(async () =>
+                {
+                    try
+                    {
+                        await throttler.WaitAsync();
+                        return await convertor(item);
+                    }
+                    finally
+                    {
+                        throttler.Release();
+                    }
+                }));
+            }
+
+            await Task.WhenAll(convertTasks);
+            foreach (var item in convertTasks)
+            {
+                siteExtensionInfos.Add(item.Result);
+            }
+
+            return siteExtensionInfos;
         }
     }
 }

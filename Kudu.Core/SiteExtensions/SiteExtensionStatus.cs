@@ -133,26 +133,29 @@ namespace Kudu.Core.SiteExtensions
         {
             try
             {
-                string[] packageDirs = FileSystemHelpers.GetDirectories(siteExtensionStatusRoot);
-                foreach (var dir in packageDirs)
+                using (tracer.Step("Checking if there is any installation require site restart ..."))
                 {
-                    try
+                    string[] packageDirs = FileSystemHelpers.GetDirectories(siteExtensionStatusRoot);
+                    foreach (var dir in packageDirs)
                     {
-                        DirectoryInfo dirInfo = new DirectoryInfo(dir);
-                        string[] settingFile = FileSystemHelpers.GetFiles(dir, _statusSettingsFileName);
-                        foreach (var file in settingFile)
+                        try
                         {
-                            var statusSettings = new SiteExtensionStatus(siteExtensionStatusRoot, dirInfo.Name, tracer);
-                            if (statusSettings.IsSiteExtensionRequireRestart(siteExtensionRoot))
+                            DirectoryInfo dirInfo = new DirectoryInfo(dir);
+                            string[] settingFile = FileSystemHelpers.GetFiles(dir, _statusSettingsFileName);
+                            foreach (var file in settingFile)
                             {
-                                return true;
+                                var statusSettings = new SiteExtensionStatus(siteExtensionStatusRoot, dirInfo.Name, tracer);
+                                if (statusSettings.IsSiteExtensionRequireRestart(siteExtensionRoot))
+                                {
+                                    return true;
+                                }
                             }
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        analytics.UnexpectedException(ex, trace: false);
-                        tracer.TraceError(ex, "Failed to query {0} under {1}, continus to check others ...", _statusSettingsFileName, dir);
+                        catch (Exception ex)
+                        {
+                            analytics.UnexpectedException(ex, trace: false);
+                            tracer.TraceError(ex, "Failed to query {0} under {1}, continus to check others ...", _statusSettingsFileName, dir);
+                        }
                     }
                 }
             }
