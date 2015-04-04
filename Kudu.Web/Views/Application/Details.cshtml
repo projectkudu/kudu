@@ -1,5 +1,6 @@
 ﻿@using System.Activities.Expressions
 @using Kudu.Core.SourceControl
+@using Kudu.SiteManagement
 @using Kudu.Web.Models
 @using Kudu.Web.Infrastructure
 
@@ -17,14 +18,14 @@
     <div class="control-group">
         <label class="control-label"><strong>Application URL</strong></label>
         <div class="controls">
-            <a href="@Model.SiteUrl" target="_blank">@Model.SiteUrl</a>
+            <a href="@Model.PrimarySiteUrl" target="_blank">@Model.PrimarySiteUrl</a>
             <p class="help-block">This is the link to your website.</p>
         </div>
     </div>
     <div class="control-group">
         <label class="control-label"><strong>Service URL</strong></label>
         <div class="controls">
-            <a href="@Model.ServiceUrl" target="_blank">@Model.ServiceUrl</a>
+            <a href="@Model.PrimaryServiceUrl" target="_blank">@Model.PrimaryServiceUrl</a>
             <p class="help-block">This is the link to the kudu service.</p>
         </div>
     </div>
@@ -188,26 +189,30 @@
                 Protocol is limited to http only and all bindings entered will be set to http.
             </p>
 
-            @if (Model.SiteUrls.Any())
+            @if (Model.SiteBindings.Any())
             {
 
                 <table id="custom-site-bindings" class="table">
                     <tr>
                         <th>Protocol</th>
                         <th>Hostname</th>
+                        <th>Ip</th>
                         <th>Port</th>
                         <th></th>
                     </tr>
-                    @foreach (string siteBinding in Model.SiteUrls.Skip(1))
+                    @foreach (KuduBinding binding in Model.SiteBindings.Skip(1))
                     {
-                        var uri = new Uri(siteBinding);
-                        
+                        string ip = binding.Ip == "0.0.0.0" ? "*" : binding.Ip;
+                        string url = binding.ToString("T");
+                        string reference = binding.ToString("B");
                         <tr>
-                            <td>@uri.Scheme</td>
-                            <td><a href="@uri.AbsoluteUri">@uri.Host</a></td>
-                            <td>@uri.Port</td>
+                            <td>@binding.Scheme</td>
+                            <td>@binding.Host</td>
+                            <td>@ip</td>
+                            <td>@binding.Port</td>
                             <td class="actions">
-                                <button type="button" class="btn btn-primary" onclick=" removeBinding('@siteBinding', '#removesitebinding') ">Remove</button>
+                                <a href="@url" class="btn" target="_blank">Browse</a>
+                                <button type="button" class="btn btn-primary" onclick=" removeBinding('@reference', '#removesitebinding') ">Remove</button>
                             </td>
                         </tr>
                     }
@@ -237,26 +242,30 @@
             Protocol is limited to http only and all bindings entered will be set to http.
             </p>
 
-            @if (Model.ServiceUrls.Any())
+            @if (Model.ServiceBindings.Any())
             {
 
                 <table id="custom-site-bindings" class="table">
                     <tr>
                         <th>Protocol</th>
                         <th>Hostname</th>
+                        <th>Ip</th>
                         <th>Port</th>
                         <th></th>
                     </tr>
-                    @foreach (string siteBinding in Model.ServiceUrls.Skip(1))
+                    @foreach (KuduBinding binding in Model.ServiceBindings.Skip(1))
                     {
-                        var uri = new Uri(siteBinding);
-                        
+                        string ip = binding.Ip == "0.0.0.0" ? "*" : binding.Ip;
+                        string url = binding.ToString("T");
+                        string reference = binding.ToString("B");
                         <tr>
-                            <td>@uri.Scheme</td>
-                            <td><a href="@uri.AbsoluteUri">@uri.Host</a></td>
-                            <td>@uri.Port</td>
+                            <td>@binding.Scheme</td>
+                            <td>@binding.Host</td>
+                            <td>@ip</td>
+                            <td>@binding.Port</td>
                             <td class="actions">
-                                <button type="button" class="btn btn-primary" onclick=" removeBinding('@siteBinding', '#removeservicebinding') ">Remove</button>
+                                <a href="@url" class="btn" target="_blank">Browse</a>
+                                <button type="button" class="btn btn-primary" onclick=" removeBinding('@reference', '#removeservicebinding') ">Remove</button>
                             </td>
                         </tr>
                     }

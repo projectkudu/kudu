@@ -44,7 +44,7 @@ namespace Kudu.Web.Models
 
         public IApplication GetApplication(string name)
         {
-            var site = _siteManager.GetSite(name);
+            Site site = _siteManager.GetSite(name);
             if (site == null)
             {
                 throw new SiteNotFoundException();
@@ -53,12 +53,12 @@ namespace Kudu.Web.Models
             return new Application
             {
                 Name = name,
-                SiteUrls = site.SiteUrls,
-                ServiceUrls = site.ServiceUrls
+                SiteBindings = site.SiteBindings,
+                ServiceBindings = site.ServiceBindings
             };
         }
 
-        public bool RemoveLiveSiteBinding(string name, string siteBinding)
+        public bool RemoveLiveSiteBinding(string name, KuduBinding siteBinding)
         {
             var application = GetApplication(name);
             if (application == null)
@@ -69,7 +69,7 @@ namespace Kudu.Web.Models
             return _siteManager.RemoveSiteBinding(name, siteBinding, SiteType.Live);
         }
 
-        public bool RemoveServiceSiteBinding(string name, string siteBinding)
+        public bool RemoveServiceSiteBinding(string name, KuduBinding siteBinding)
         {
             var application = GetApplication(name);
             if (application == null)

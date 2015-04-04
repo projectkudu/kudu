@@ -28,10 +28,10 @@ namespace Kudu.Web.Models
         {
             //Certificates = certificates;
             Name = application.Name;
-            SiteUrl = application.SiteUrl;
-            SiteUrls = application.SiteUrls;
-            ServiceUrl = application.ServiceUrl;
-            ServiceUrls = application.ServiceUrls;
+            PrimarySiteBinding = application.PrimarySiteBinding;
+            SiteBindings = application.SiteBindings;
+            PrimaryServiceBinding = application.PrimaryServiceBinding;
+            ServiceBindings = application.ServiceBindings;
 
             CustomHostNames = context.Configuration.CustomHostNamesEnabled;
 
@@ -48,10 +48,12 @@ namespace Kudu.Web.Models
 
         [Required]
         public string Name { get; set; }
-        public string SiteUrl { get; set; }
-        public IEnumerable<string> SiteUrls { get; set; }
-        public string ServiceUrl { get; set; }
-        public IEnumerable<string> ServiceUrls { get; set; }
+        public string PrimarySiteUrl { get { return PrimarySiteBinding.ToString("T"); } }
+        public KuduBinding PrimarySiteBinding { get; set; }
+        public IEnumerable<KuduBinding> SiteBindings { get; set; }
+        public string PrimaryServiceUrl { get { return PrimaryServiceBinding.ToString("T"); } }
+        public KuduBinding PrimaryServiceBinding { get; set; }
+        public IEnumerable<KuduBinding> ServiceBindings { get; set; }
         public bool CustomHostNames { get; private set; }
         public RepositoryInfo RepositoryInfo { get; set; }
         public bool SupportsSni { get; set; }

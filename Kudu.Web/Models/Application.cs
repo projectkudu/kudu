@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using Kudu.SiteManagement;
 
 namespace Kudu.Web.Models
 {
@@ -7,25 +9,29 @@ namespace Kudu.Web.Models
     {
         public Application()
         {
-            SiteUrls = new List<string>();
+            SiteBindings = new List<KuduBinding>();
+            ServiceBindings = new List<KuduBinding>();
         }
 
         public string Name { get; set; }
-        public string ServiceUrl
+
+        public KuduBinding PrimaryServiceBinding
         {
             get
             {
-                return ServiceUrls[0];
+                return ServiceBindings.First();
             }
         }
-        public string SiteUrl
+
+        public KuduBinding PrimarySiteBinding
         {
             get
             {
-                return SiteUrls[0];
+                return SiteBindings.First();
             }
         }
-        public IList<string> SiteUrls { get; set; }
-        public IList<string> ServiceUrls { get; set; }
+
+        public IList<KuduBinding> SiteBindings { get; set; }
+        public IList<KuduBinding> ServiceBindings { get; set; }
     }
 }
