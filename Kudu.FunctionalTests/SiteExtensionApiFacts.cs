@@ -106,7 +106,6 @@ namespace Kudu.FunctionalTests
                 HttpResponseMessage responseMessage = await manager.GetRemoteExtension(expectedId);
                 SiteExtensionInfo result = await responseMessage.Content.ReadAsAsync<SiteExtensionInfo>();
                 Assert.Equal(expected.Id, result.Id);
-                Assert.Equal(expected.Version, result.Version);
                 Assert.True(responseMessage.Headers.Contains(Constants.RequestIdHeader));
 
                 // clear local extensions

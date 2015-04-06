@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ionic.Zip;
+using Kudu.Contracts.SiteExtensions;
 using Kudu.Core.Infrastructure;
 using NuGet.Client;
 using NuGet.Client.VisualStudio;
@@ -31,7 +32,7 @@ namespace Kudu.Core.SiteExtensions
             }
 
             filterOptions.IncludePrerelease = true; // keep the good old behavior
-            var searchResource = await srcRepo.GetResourceAsync<SearchLatestResource>();
+            var searchResource = await srcRepo.GetResourceAndValidateAsync<SearchLatestResource>();
             return await searchResource.Search(searchTerm, filterOptions, skip, take, CancellationToken.None);
         }
 
@@ -41,7 +42,7 @@ namespace Kudu.Core.SiteExtensions
         public static async Task<UIPackageMetadata> GetLatestPackageById(this SourceRepository srcRepo, string packageId, bool includePrerelease = true, bool includeUnlisted = false)
         {
             UIPackageMetadata latestPackage = null;
-            var metadataResource = await srcRepo.GetResourceAsync<UIMetadataResource>();
+            var metadataResource = await srcRepo.GetResourceAndValidateAsync<UIMetadataResource>();
             IEnumerable<UIPackageMetadata> packages = await metadataResource.GetMetadata(packageId, includePrerelease, includeUnlisted, token: CancellationToken.None);
             foreach (var p in packages)
             {
@@ -64,7 +65,7 @@ namespace Kudu.Core.SiteExtensions
         /// <returns>Package metadata</returns>
         public static async Task<UIPackageMetadata> GetPackageByIdentity(this SourceRepository srcRepo, string packageId, string version)
         {
-            var metadataResource = await srcRepo.GetResourceAsync<UIMetadataResource>();
+            var metadataResource = await srcRepo.GetResourceAndValidateAsync<UIMetadataResource>();
             NuGetVersion expectedVersion = NuGetVersion.Parse(version);
             var identity = new PackageIdentity(packageId, expectedVersion);
             return await metadataResource.GetMetadata(identity, CancellationToken.None);
@@ -79,7 +80,7 @@ namespace Kudu.Core.SiteExtensions
         /// <returns></returns>
         public static async Task DownloadPackageToFolder(this SourceRepository srcRepo, PackageIdentity identity, string destinationFolder, string pathToLocalCopyOfNudpk = null)
         {
-            var downloadResource = await srcRepo.GetResourceAsync<DownloadResource>();
+            var downloadResource = await srcRepo.GetResourceAndValidateAsync<DownloadResource>();
             using (Stream sourceStream = await downloadResource.GetStream(identity, CancellationToken.None))
             {
                 if (sourceStream == null)
@@ -160,6 +161,21 @@ namespace Kudu.Core.SiteExtensions
                     }
                 }
             }
+        }
+
+        private static async Task<T> GetResourceAndValidateAsync<T>(this SourceRepository srcRepo) where T : class, INuGetResource
+        {
+            var resource = await srcRepo.GetResourceAsync<T>();
+            if (resource == null)
+            {
+                // if endpoint is invalid, NuGet client would return us a null resource
+                // throw a specific error, so that caller will have a clear understanding what is happening
+
+                string feed = srcRepo.PackageSource != null ? srcRepo.PackageSource.Source : string.Empty;
+                throw new InvalidEndpointException(string.Format("Invalid remote feed url: {0}", feed));
+            }
+
+            return resource;
         }
     }
 }
