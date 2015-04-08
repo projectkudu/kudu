@@ -26,9 +26,16 @@ namespace Kudu.TestHarness
             message = String.Format(CultureInfo.CurrentCulture, "{0}Z {1}", messageDateTime.ToUniversalTime().ToString("s"), message.Replace("\n", "\n\t"));
 
             var strb = (StringBuilder)CallContext.LogicalGetData(TestTracer.DataSlotName);
-            lock (strb)
+            if (strb != null)
             {
-                strb.AppendLine(message);
+                lock (strb)
+                {
+                    strb.AppendLine(message);
+                }
+            }
+            else
+            {
+                System.Diagnostics.Trace.WriteLine(message);
             }
         }
 
@@ -45,10 +52,15 @@ namespace Kudu.TestHarness
         public static string GetTraceString()
         {
             var strb = (StringBuilder)CallContext.LogicalGetData(TestTracer.DataSlotName);
-            lock (strb)
+            if (strb != null)
             {
-                return strb.ToString();
+                lock (strb)
+                {
+                    return strb.ToString();
+                }
             }
+
+            return String.Empty;
         }
 
         public static void Trace(string messageFormat, params object[] args)
