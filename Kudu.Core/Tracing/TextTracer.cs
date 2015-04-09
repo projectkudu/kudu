@@ -32,7 +32,16 @@ namespace Kudu.Core.Tracing
 
         public IDisposable Step(string title, IDictionary<string, string> attributes)
         {
-            _logFile.WriteLine(title, attributes, _depth);
+            try
+            {
+                _logFile.WriteLine(title, attributes, _depth);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex);
+                return DisposableAction.Noop;
+            }
+
             ++_depth;
 
             return new DisposableAction(() =>
@@ -51,7 +60,14 @@ namespace Kudu.Core.Tracing
 
         public void Trace(string message, IDictionary<string, string> attributes)
         {
-            _logFile.WriteLine(message, attributes, _depth);
+            try
+            {
+                _logFile.WriteLine(message, attributes, _depth);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex);
+            }
         }
 
         private class LogFileHelper
