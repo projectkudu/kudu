@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Kudu.Core.Infrastructure;
 using Xunit.Abstractions;
 using Xunit.Sdk;
 
@@ -141,7 +142,7 @@ namespace Kudu.TestHarness.Xunit
                         reason.AppendLine(String.Join(Environment.NewLine, failed.Messages));
                         reason.AppendLine(String.Join(Environment.NewLine, failed.StackTraces));
 
-                        var skipped = new TestSkipped(failed.Test, reason.ToString());
+                        var skipped = new TestSkipped(failed.Test, XmlUtility.Sanitize(reason.ToString()));
                         skipped.SetOutput(failed.Output);
                         _innerBus.QueueMessage(skipped);
                     }

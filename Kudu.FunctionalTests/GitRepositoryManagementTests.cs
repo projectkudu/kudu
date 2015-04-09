@@ -20,7 +20,7 @@ using Xunit;
 namespace Kudu.FunctionalTests
 {
     [KuduXunitTestClass]
-    public class GitRepositoryManagementTests
+    public class PushRepoWithMultipleProjectsShouldDeployTests : GitRepositoryManagementTests
     {
         [Fact]
         public void PushRepoWithMultipleProjectsShouldDeploy()
@@ -44,7 +44,11 @@ namespace Kudu.FunctionalTests
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PushSimpleWapWithInlineCommandTests : GitRepositoryManagementTests
+    {
         // Has been disabled for ages. Commenting out attribute to avoid warning. Should probably just delete
         //[Fact(Skip = "Dangerous")]
         public void PushSimpleWapWithInlineCommand()
@@ -72,7 +76,11 @@ command = msbuild SimpleWebApplication/SimpleWebApplication.csproj /t:pipelinePr
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PushSimpleWapWithCustomDeploymentScriptTests : GitRepositoryManagementTests
+    {
         // Has been disabled for ages. Commenting out attribute to avoid warning. Should probably just delete
         //[Fact(Skip = "Dangerous")]
         public void PushSimpleWapWithCustomDeploymentScript()
@@ -100,7 +108,11 @@ command = deploy.cmd");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PushSimpleWapWithFailingCustomDeploymentScriptTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void PushSimpleWapWithFailingCustomDeploymentScript()
         {
@@ -128,7 +140,11 @@ command = deploy.cmd");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class CommandSettingOverridesDotDeploymentFileTests : GitRepositoryManagementTests
+    {
         [Fact]
         public async Task CommandSettingOverridesDotDeploymentFile()
         {
@@ -160,7 +176,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class WarningsAsErrorsTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void WarningsAsErrors()
         {
@@ -185,7 +205,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PushRepoWithProjectAndNoSolutionShouldDeployTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void PushRepoWithProjectAndNoSolutionShouldDeploy()
         {
@@ -208,7 +232,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PushRepositoryWithNoDeployableProjectsTreatsAsWebsiteTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void PushRepositoryWithNoDeployableProjectsTreatsAsWebsite()
         {
@@ -230,7 +258,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class WapBuildsReleaseModeTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void WapBuildsReleaseMode()
         {
@@ -252,7 +284,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class WebsiteWithIISExpressWorksTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void WebsiteWithIISExpressWorks()
         {
@@ -274,7 +310,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PushAppChangesShouldTriggerBuildTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void PushAppChangesShouldTriggerBuild()
         {
@@ -300,7 +340,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class AppNameWithSignalRWorksTests : GitRepositoryManagementTests
+    {
         // This test was only interesting when we used signalR (routing issue), which we don't anymore
         //[Fact]
         public void AppNameWithSignalRWorks()
@@ -325,7 +369,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class DeletesToRepositoryArePropagatedForWapsTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void DeletesToRepositoryArePropagatedForWaps()
         {
@@ -361,7 +409,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PushShouldOverwriteModifiedFilesInRepoTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void PushShouldOverwriteModifiedFilesInRepo()
         {
@@ -405,7 +457,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class GoingBackInTimeShouldOverwriteModifiedFilesInRepoTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void GoingBackInTimeShouldOverwriteModifiedFilesInRepo()
         {
@@ -453,7 +509,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class DeletesToRepositoryArePropagatedForNonWapsTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void DeletesToRepositoryArePropagatedForNonWaps()
         {
@@ -486,7 +546,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class FirstPushDeletesHostingStartHtmlFileTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void FirstPushDeletesHostingStartHtmlFile()
         {
@@ -510,7 +574,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PushingToNonMasterBranchNoOpsTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void PushingToNonMasterBranchNoOps()
         {
@@ -532,7 +600,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PushingConfiguredBranchTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void PushingConfiguredBranch()
         {
@@ -572,7 +644,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PushingNonMasterBranchToMasterBranchShouldDeployTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void PushingNonMasterBranchToMasterBranchShouldDeploy()
         {
@@ -594,7 +670,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class CloneFromEmptyRepoAndPushShouldDeployTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void CloneFromEmptyRepoAndPushShouldDeploy()
         {
@@ -620,7 +700,11 @@ project = myproject");
                 }
             });
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PushThenCloneTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void PushThenClone()
         {
@@ -641,7 +725,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class CloneFromNewRepoShouldHaveBeEmptyTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void CloneFromNewRepoShouldHaveBeEmpty()
         {
@@ -656,7 +744,11 @@ project = myproject");
                 }
             });
         }
+    }
 
+    [KuduXunitTestClass]
+    public class ClonesInParallelTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void ClonesInParallel()
         {
@@ -678,7 +770,11 @@ project = myproject");
                 Assert.False(repo.FileExists("index.html"));
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class GoingBackInTimeDeploysOldFilesTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void GoingBackInTimeDeploysOldFiles()
         {
@@ -718,7 +814,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class NpmSiteInstallsPackagesTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void NpmSiteInstallsPackages()
         {
@@ -739,7 +839,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class FailedNpmFailsDeploymentTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void FailedNpmFailsDeployment()
         {
@@ -763,7 +867,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class CustomNodeScriptTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void CustomNodeScript()
         {
@@ -787,7 +895,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class NodeHelloWorldNoConfigTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void NodeHelloWorldNoConfig()
         {
@@ -813,7 +925,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class NodeWithSolutionsUnderNodeModulesShouldBeDeployedTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void NodeWithSolutionsUnderNodeModulesShouldBeDeployed()
         {
@@ -836,7 +952,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class RedeployNodeSiteTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void RedeployNodeSite()
         {
@@ -882,7 +1002,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class GetResultsTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void GetResults()
         {
@@ -932,7 +1056,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class RepoWithPublicSubModuleTestTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void RepoWithPublicSubModuleTest()
         {
@@ -957,7 +1085,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class RepoWithPrivateSubModuleTestTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void RepoWithPrivateSubModuleTest()
         {
@@ -989,7 +1121,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class HangProcessTestTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void HangProcessTest()
         {
@@ -1019,7 +1155,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class WaitForUserInputProcessTestTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void WaitForUserInputProcessTest()
         {
@@ -1044,7 +1184,11 @@ project = myproject");
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class HookForbiddenForSomeScmTypesTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void HookForbiddenForSomeScmTypes()
         {
@@ -1091,7 +1235,11 @@ project = myproject");
             HttpResponseMessage response = client.PostAsync("deploy", new FormUrlEncodedContent(post)).Result;
             Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         }
+    }
 
+    [KuduXunitTestClass]
+    public class SpecificDeploymentConfigurationTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void SpecificDeploymentConfiguration()
         {
@@ -1099,7 +1247,11 @@ project = myproject");
                                           "WebApplication1",
                                           "This is the application I want deployed");
         }
+    }
 
+    [KuduXunitTestClass]
+    public class Tests : GitRepositoryManagementTests
+    {
         [Fact]
         public void SpecificDeploymentConfigurationForProjectFile()
         {
@@ -1107,7 +1259,11 @@ project = myproject");
                                           "WebApplication1/WebApplication1.csproj",
                                           "This is the application I want deployed");
         }
+    }
 
+    [KuduXunitTestClass]
+    public class SpecificDeploymentConfigurationForWebsiteTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void SpecificDeploymentConfigurationForWebsite()
         {
@@ -1115,7 +1271,11 @@ project = myproject");
                                           "WebSite1",
                                           "This is a website!");
         }
+    }
 
+    [KuduXunitTestClass]
+    public class SpecificDeploymentConfigurationForWebsiteWithSlashTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void SpecificDeploymentConfigurationForWebsiteWithSlash()
         {
@@ -1131,7 +1291,11 @@ project = myproject");
                                           "WebSiteRemovedFromSolution",
                                           "This web site was removed from solution!");
         }
+    }
 
+    [KuduXunitTestClass]
+    public class SpecificDeploymentConfigurationForWebProjectNotPartOfSolutionTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void SpecificDeploymentConfigurationForWebProjectNotPartOfSolution()
         {
@@ -1139,7 +1303,11 @@ project = myproject");
                                           "MvcApplicationRemovedFromSolution",
                                           "This web project was removed from solution!");
         }
+    }
 
+    [KuduXunitTestClass]
+    public class SpecificDeploymentConfigurationForNonDeployableProjectFileTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void SpecificDeploymentConfigurationForNonDeployableProjectFile()
         {
@@ -1148,7 +1316,11 @@ project = myproject");
                                           KuduAssert.DefaultPageContent,
                                           DeployStatus.Failed);
         }
+    }
 
+    [KuduXunitTestClass]
+    public class SpecificDeploymentConfigurationForNonDeployableProjectTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void SpecificDeploymentConfigurationForNonDeployableProject()
         {
@@ -1158,7 +1330,11 @@ project = myproject");
                                           DeployStatus.Failed,
                                           "is not a deployable project");
         }
+    }
 
+    [KuduXunitTestClass]
+    public class SpecificDeploymentConfigurationForDirectoryThatDoesNotExistTests : GitRepositoryManagementTests
+    {
         [Fact]
         public void SpecificDeploymentConfigurationForDirectoryThatDoesNotExist()
         {
@@ -1167,8 +1343,11 @@ project = myproject");
                                           KuduAssert.DefaultPageContent,
                                           DeployStatus.Failed);
         }
+    }
 
-        private static HttpClient CreateClient(ApplicationManager appManager)
+    public abstract class GitRepositoryManagementTests
+    {
+        internal static HttpClient CreateClient(ApplicationManager appManager)
         {
             HttpClientHandler handler = HttpClientHelper.CreateClientHandler(appManager.ServiceUrl, appManager.DeploymentManager.Credentials);
             return new HttpClient(handler)
@@ -1178,7 +1357,7 @@ project = myproject");
             };
         }
 
-        private static string GetLog(ApplicationManager appManager, string resultId)
+        internal static string GetLog(ApplicationManager appManager, string resultId)
         {
             var entries = appManager.DeploymentManager.GetLogEntriesAsync(resultId).Result;
             var allDetails = entries.Where(e => e.DetailsUrl != null)
@@ -1187,7 +1366,7 @@ project = myproject");
             return String.Join("\n", allEntries.Select(entry => entry.Message));
         }
 
-        private void VerifyDeploymentConfiguration(string siteName, string targetProject, string expectedText, DeployStatus expectedStatus = DeployStatus.Success, string expectedLog = null)
+        internal void VerifyDeploymentConfiguration(string siteName, string targetProject, string expectedText, DeployStatus expectedStatus = DeployStatus.Success, string expectedLog = null)
         {
             string name = siteName;
             string cloneUrl = "https://github.com/KuduApps/SpecificDeploymentConfiguration.git";

@@ -23,7 +23,7 @@ using Xunit;
 namespace Kudu.FunctionalTests
 {
     [KuduXunitTestClass]
-    public class DeploymentManagerTests
+    public class DeploymentApisReturn404IfDeploymentIdDoesntExistTests
     {
         [Fact]
         public async Task DeploymentApisReturn404IfDeploymentIdDoesntExist()
@@ -56,7 +56,11 @@ namespace Kudu.FunctionalTests
                 Assert.Contains("Need to deploy website to get deployment script.", ex.ResponseMessage.ExceptionMessage);
             });
         }
+    }
 
+    [KuduXunitTestClass]
+    public class DeploymentApisTests
+    {
         [Fact]
         public async Task DeploymentApis()
         {
@@ -170,7 +174,11 @@ namespace Kudu.FunctionalTests
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class DeploymentVerifyEtagTests
+    {
         [Fact]
         public async Task DeploymentVerifyEtag()
         {
@@ -239,7 +247,11 @@ namespace Kudu.FunctionalTests
                 }
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class DeploymentManagerExtensibilityTests
+    {
         [Fact]
         public async Task DeploymentManagerExtensibility()
         {
@@ -264,7 +276,11 @@ namespace Kudu.FunctionalTests
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class DeleteKuduSiteCleansProperlyTests
+    {
         [Fact]
         public async Task DeleteKuduSiteCleansProperly()
         {
@@ -341,7 +357,11 @@ namespace Kudu.FunctionalTests
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PullApiTestGitHubFormatTests : DeploymentManagerTests
+    {
         [Fact]
         public async Task PullApiTestGitHubFormat()
         {
@@ -371,7 +391,11 @@ namespace Kudu.FunctionalTests
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "Welcome to ASP.NET!");
             });
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PullApiTestBitbucketFormatTests : DeploymentManagerTests
+    {
         [Fact]
         public async Task PullApiTestBitbucketFormat()
         {
@@ -404,7 +428,11 @@ namespace Kudu.FunctionalTests
                 Assert.True(results[0].Deployer.StartsWith("Bitbucket"));
             });
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PullApiTestBitbucketFormatWithMercurialTests : DeploymentManagerTests
+    {
         [Fact]
         public async Task PullApiTestBitbucketFormatWithMercurial()
         {
@@ -433,7 +461,11 @@ namespace Kudu.FunctionalTests
                 KuduAssert.VerifyUrl(appManager.SiteUrl + "Hello.txt", "Hello mercurial");
             });
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PullApiTestBitbucketFormatWithPrivateMercurialRepositoryTests : DeploymentManagerTests
+    {
         [Fact]
         public async Task PullApiTestBitbucketFormatWithPrivateMercurialRepository()
         {
@@ -466,7 +498,11 @@ namespace Kudu.FunctionalTests
                 KuduAssert.VerifyUrl(appManager.SiteUrl + "Hello.txt", "Hello mercurial!");
             });
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PullApiTestGitlabHQFormatTests : DeploymentManagerTests
+    {
         [Fact]
         public async Task PullApiTestGitlabHQFormat()
         {
@@ -484,7 +520,11 @@ namespace Kudu.FunctionalTests
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "Welcome to ASP.NET!");
             });
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PullApiTestCodebaseFormatTests : DeploymentManagerTests
+    {
         [Fact]
         public async Task PullApiTestCodebaseFormat()
         {
@@ -511,7 +551,11 @@ namespace Kudu.FunctionalTests
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "Welcome to ASP.NET!");
             });
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PullApiTestKilnHgFormatTests : DeploymentManagerTests
+    {
         [Fact]
         public async Task PullApiTestKilnHgFormat()
         {
@@ -541,7 +585,11 @@ namespace Kudu.FunctionalTests
                 KuduAssert.VerifyUrl(appManager.SiteUrl + "Hello.txt", "Hello mercurial");
             });
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PullApiTestGenericFormatTests : DeploymentManagerTests
+    {
         [Fact]
         public async Task PullApiTestGenericFormat()
         {
@@ -570,7 +618,11 @@ namespace Kudu.FunctionalTests
                 // Verify the deployment status
             });
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PullApiTestGenericFormatCustomBranchTests : DeploymentManagerTests
+    {
         [Fact]
         public async Task PullApiTestGenericFormatCustomBranch()
         {
@@ -595,7 +647,11 @@ namespace Kudu.FunctionalTests
                 Assert.Equal("CodePlex", results[0].Deployer);
             });
         }
+    }
 
+    [KuduXunitTestClass]
+    public class DeployingBranchThatExistsTests : DeploymentManagerTests
+    {
         [Fact]
         public async Task DeployingBranchThatExists()
         {
@@ -620,7 +676,11 @@ namespace Kudu.FunctionalTests
                 Assert.Equal("CodePlex", results[0].Deployer);
             });
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PullApiTestRepoCommitTextWithSpecialCharTests : DeploymentManagerTests
+    {
         [Fact]
         public async Task PullApiTestRepoCommitTextWithSpecialChar()
         {
@@ -644,7 +704,11 @@ namespace Kudu.FunctionalTests
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "Hello World");
             });
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PullApiTestSimpleFormatMultiBranchWithUpdatesTests : DeploymentManagerTests
+    {
         [Fact]
         public async Task PullApiTestSimpleFormatMultiBranchWithUpdates()
         {
@@ -683,7 +747,11 @@ namespace Kudu.FunctionalTests
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "<h1>Hi Kudu foo</h1>");
             });
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PullApiTestSimpleFormatWithMercurialTests : DeploymentManagerTests
+    {
         [Fact]
         public async Task PullApiTestSimpleFormatWithMercurial()
         {
@@ -711,7 +779,11 @@ namespace Kudu.FunctionalTests
                 KuduAssert.VerifyUrl(appManager.SiteUrl + "Hello.txt", "Hello mercurial");
             });
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PullApiTestSimpleFormatWithScmTypeNoneTests : DeploymentManagerTests
+    {
         [Fact]
         public async Task PullApiTestSimpleFormatWithScmTypeNone()
         {
@@ -734,7 +806,11 @@ namespace Kudu.FunctionalTests
                 KuduAssert.VerifyUrl(appManager.SiteUrl, "Hello Kudu");
             });
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PullApiTestGitSimpleFormatWithSpecificCommitIdTests : DeploymentManagerTests
+    {
         [Fact]
         public async Task PullApiTestGitSimpleFormatWithSpecificCommitId()
         {
@@ -754,7 +830,11 @@ namespace Kudu.FunctionalTests
                 Assert.Contains("Invalid revision '" + badRevision + "'!", error.ResponseMessage.ExceptionMessage);
             });
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PullApiTestHgSimpleFormatWithSpecificCommitIdTests : DeploymentManagerTests
+    {
         [Fact]
         public async Task PullApiTestHgSimpleFormatWithSpecificCommitId()
         {
@@ -776,30 +856,11 @@ namespace Kudu.FunctionalTests
                 Assert.Contains("Invalid revision '" + badRevision + "'!", error.ResponseMessage.ExceptionMessage);
             });
         }
+    }
 
-        private async Task PostDeploymentAndVerifyUrl(ApplicationManager appManager, string url, bool isMercurial, DeployStatus status, string content = null, string path = null)
-        {
-            TestTracer.Trace("PostDeploymentAndVerifyUrl: {0}", url);
-
-            var payload = new JObject();
-            payload["url"] = url;
-            payload["format"] = "basic";
-            if (isMercurial)
-            {
-                payload["scm"] = "hg";
-            }
-
-            await DeployPayloadHelperAsync(appManager, client => client.PostAsJsonAsync("deploy", payload));
-            
-            var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
-            Assert.True(results.Count > 0);
-            Assert.Equal(status, results[0].Status);
-            if (!String.IsNullOrEmpty(content))
-            {
-                KuduAssert.VerifyUrl(appManager.SiteUrl + path, content);
-            }
-        }
-
+    [KuduXunitTestClass]
+    public class PullApiTestRepoWithLongPathTests : DeploymentManagerTests
+    {
         [Fact]
         public async Task PullApiTestRepoWithLongPath()
         {
@@ -838,7 +899,11 @@ namespace Kudu.FunctionalTests
                 }
             });
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PullApiTestAutoSwapTests : DeploymentManagerTests
+    {
         [Fact]
         public async Task PullApiTestAutoSwap()
         {
@@ -896,26 +961,11 @@ namespace Kudu.FunctionalTests
                 });
             });
         }
+    }
 
-        private static void AssertAutoSwapResponse(HttpResponseMessage response, string expectedSlotName)
-        {
-            IEnumerable<string> values;
-
-            response.Headers.TryGetValues("X-MS-SWAP-OPERATIONID", out values);
-            string operationId = values != null ? values.FirstOrDefault() : null;
-            TestTracer.Trace("Operation id is " + operationId);
-            Assert.False(String.IsNullOrEmpty(operationId));
-
-            response.Headers.TryGetValues("X-MS-SWAP-SLOTNAME", out values);
-            string slotName = values.FirstOrDefault();
-            Assert.Equal(expectedSlotName, slotName);
-
-            response.Headers.TryGetValues("X-MS-SWAP-DEPLOYMENTID", out values);
-            string deploymentId = values.FirstOrDefault();
-            TestTracer.Trace("Deployment id is " + deploymentId);
-            Assert.False(String.IsNullOrEmpty(deploymentId));
-        }
-
+    [KuduXunitTestClass]
+    public class DeployAndAutoSwapWithDeployApiTests : DeploymentManagerTests
+    {
         [Fact]
         public async Task DeployAndAutoSwapWithDeployApi()
         {
@@ -960,7 +1010,11 @@ namespace Kudu.FunctionalTests
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PullApiTestEmptyRepoTests : DeploymentManagerTests
+    {
         [Theory]
         [InlineData("https://github.com/KuduApps/EmptyGitRepo", null)]
         [InlineData("https://bitbucket.org/kudutest/emptyhgrepo", "hg")]
@@ -984,7 +1038,11 @@ namespace Kudu.FunctionalTests
                 Assert.Equal(0, results.Count);
             });
         }
+    }
 
+    [KuduXunitTestClass]
+    public class DeployHookWithInvalidHttpMethodTests : DeploymentManagerTests
+    {
         [Fact]
         public async Task DeployHookWithInvalidHttpMethod()
         {
@@ -1012,7 +1070,11 @@ namespace Kudu.FunctionalTests
                 }
             });
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PullApiTestRepoInvalidUrlTests : DeploymentManagerTests
+    {
         [Theory]
         [InlineData(null)]
         [InlineData("hg")]
@@ -1105,13 +1167,58 @@ namespace Kudu.FunctionalTests
                 return String.Format("RepoInvalidInfo(url: \"{0},\" expect: \"{1}\", scm: \"{2}\")", this.Url, this.Expect, this.Scm);
             }
         }
+    }
 
-        private static async Task DeployPayloadHelperAsync(ApplicationManager appManager, Func<HttpClient, Task<HttpResponseMessage>> func)
+    public abstract class DeploymentManagerTests
+    {
+        internal async Task PostDeploymentAndVerifyUrl(ApplicationManager appManager, string url, bool isMercurial, DeployStatus status, string content = null, string path = null)
+        {
+            TestTracer.Trace("PostDeploymentAndVerifyUrl: {0}", url);
+
+            var payload = new JObject();
+            payload["url"] = url;
+            payload["format"] = "basic";
+            if (isMercurial)
+            {
+                payload["scm"] = "hg";
+            }
+
+            await DeployPayloadHelperAsync(appManager, client => client.PostAsJsonAsync("deploy", payload));
+
+            var results = (await appManager.DeploymentManager.GetResultsAsync()).ToList();
+            Assert.True(results.Count > 0);
+            Assert.Equal(status, results[0].Status);
+            if (!String.IsNullOrEmpty(content))
+            {
+                KuduAssert.VerifyUrl(appManager.SiteUrl + path, content);
+            }
+        }
+
+        internal static void AssertAutoSwapResponse(HttpResponseMessage response, string expectedSlotName)
+        {
+            IEnumerable<string> values;
+
+            response.Headers.TryGetValues("X-MS-SWAP-OPERATIONID", out values);
+            string operationId = values != null ? values.FirstOrDefault() : null;
+            TestTracer.Trace("Operation id is " + operationId);
+            Assert.False(String.IsNullOrEmpty(operationId));
+
+            response.Headers.TryGetValues("X-MS-SWAP-SLOTNAME", out values);
+            string slotName = values.FirstOrDefault();
+            Assert.Equal(expectedSlotName, slotName);
+
+            response.Headers.TryGetValues("X-MS-SWAP-DEPLOYMENTID", out values);
+            string deploymentId = values.FirstOrDefault();
+            TestTracer.Trace("Deployment id is " + deploymentId);
+            Assert.False(String.IsNullOrEmpty(deploymentId));
+        }
+
+        internal static async Task DeployPayloadHelperAsync(ApplicationManager appManager, Func<HttpClient, Task<HttpResponseMessage>> func)
         {
             (await PostPayloadHelperAsync(appManager, func)).EnsureSuccessful().Dispose();
         }
 
-        private static async Task<HttpResponseMessage> PostPayloadHelperAsync(ApplicationManager appManager, Func<HttpClient, Task<HttpResponseMessage>> func)
+        internal static async Task<HttpResponseMessage> PostPayloadHelperAsync(ApplicationManager appManager, Func<HttpClient, Task<HttpResponseMessage>> func)
         {
             using (HttpClient client = CreateClient(appManager))
             {
@@ -1126,7 +1233,7 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        private static HttpClient CreateClient(ApplicationManager appManager)
+        internal static HttpClient CreateClient(ApplicationManager appManager)
         {
             HttpClientHandler handler = HttpClientHelper.CreateClientHandler(appManager.ServiceUrl, appManager.DeploymentManager.Credentials);
             return new HttpClient(handler)
@@ -1136,7 +1243,7 @@ namespace Kudu.FunctionalTests
             };
         }
 
-        private async Task WaitForAnyBuildingDeploymentAsync(ApplicationManager appManager)
+        internal async Task WaitForAnyBuildingDeploymentAsync(ApplicationManager appManager)
         {
             bool deploying = false;
             int breakLoop = 0;
@@ -1157,16 +1264,16 @@ namespace Kudu.FunctionalTests
             }
             while (!deploying);
         }
+    }
 
-        private class FakeMessageHandler : DelegatingHandler
+    class FakeMessageHandler : DelegatingHandler
+    {
+        public Uri Url { get; set; }
+
+        protected override System.Threading.Tasks.Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, System.Threading.CancellationToken cancellationToken)
         {
-            public Uri Url { get; set; }
-
-            protected override System.Threading.Tasks.Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, System.Threading.CancellationToken cancellationToken)
-            {
-                Url = request.RequestUri;
-                return base.SendAsync(request, cancellationToken);
-            }
+            Url = request.RequestUri;
+            return base.SendAsync(request, cancellationToken);
         }
     }
 }
