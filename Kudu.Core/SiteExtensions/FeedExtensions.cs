@@ -7,7 +7,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Ionic.Zip;
 using Kudu.Contracts.SiteExtensions;
+using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Tracing;
 using NuGet.Client;
 using NuGet.Client.VisualStudio;
 using NuGet.PackagingCore;
@@ -76,74 +78,91 @@ namespace Kudu.Core.SiteExtensions
         /// </summary>
         /// <param name="identity">Package identity</param>
         /// <param name="destinationFolder">Folder where we copy the package content (content folder only) to</param>
-        /// <param name="pathToLocalCopyOfNudpk">File path where we copy the nudpk to</param>
+        /// <param name="pathToLocalCopyOfNupkg">File path where we copy the nudpk to</param>
         /// <returns></returns>
-        public static async Task DownloadPackageToFolder(this SourceRepository srcRepo, PackageIdentity identity, string destinationFolder, string pathToLocalCopyOfNudpk = null)
+        public static async Task DownloadPackageToFolder(this SourceRepository srcRepo, PackageIdentity identity, string destinationFolder, string pathToLocalCopyOfNupkg)
         {
             var downloadResource = await srcRepo.GetResourceAndValidateAsync<DownloadResource>();
-            using (Stream sourceStream = await downloadResource.GetStream(identity, CancellationToken.None))
+            using (Stream packageStream = await srcRepo.GetPackageStream(identity))
             {
-                if (sourceStream == null)
+                WriteStreamToFile(packageStream, pathToLocalCopyOfNupkg);
+                // set position back to the head of stream
+                packageStream.Position = 0;
+
+                using (ZipFile zipFile = ZipFile.Read(packageStream))
                 {
-                    // package not exist from feed
-                    throw new FileNotFoundException(string.Format(CultureInfo.InvariantCulture, "Package {0} - {1} not found when try to download.", identity.Id, identity.Version.ToNormalizedString()));
+                    // we only care about stuff under "content" folder
+                    int substringStartIndex = @"content/".Length;
+                    IEnumerable<ZipEntry> contentEntries = zipFile.Entries.Where(e => e.FileName.StartsWith(@"content/", StringComparison.InvariantCultureIgnoreCase));
+                    foreach (var entry in contentEntries)
+                    {
+                        string fullPath = Path.Combine(destinationFolder, entry.FileName.Substring(substringStartIndex));
+                        FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(fullPath));
+                        using (Stream writeStream = FileSystemHelpers.OpenWrite(fullPath))
+                        {
+                            // let the thread go with itself, so that once file finsihed writing, doesn`t need to request thread context from main thread
+                            await entry.OpenReader().CopyToAsync(writeStream).ConfigureAwait(false);
+                        }
+                    }
                 }
+            }
+        }
 
-                Stream packageStream = sourceStream;
-                try
+        public static async Task UpdateLocalPackage(this SourceRepository srcRepo, SourceRepository localRepo, PackageIdentity identity, string destinationFolder, string pathToLocalCopyOfNupkg, ITracer tracer)
+        {
+            tracer.Trace("Performing incremental package update for {0}", identity.Id);
+            using (Stream newPackageStream = await srcRepo.GetPackageStream(identity))
+            {
+                // update file
+                var localPackage = await localRepo.GetLatestPackageById(identity.Id);
+                if (localPackage == null)
                 {
-                    if (!sourceStream.CanSeek)
+                    throw new FileNotFoundException(string.Format(CultureInfo.InvariantCulture, "Package {0} not found from local repo.", identity.Id));
+                }
+                using (Stream oldPackageStream = await localRepo.GetPackageStream(localPackage.Identity))
+                using (ZipFile oldPackageZip = ZipFile.Read(oldPackageStream))
+                using (ZipFile newPackageZip = ZipFile.Read(newPackageStream))
+                {
+                    // we only care about stuff under "content" folder
+                    IEnumerable<ZipEntry> oldContentEntries = oldPackageZip.Entries.Where(e => e.FileName.StartsWith(@"content/", StringComparison.InvariantCultureIgnoreCase));
+                    IEnumerable<ZipEntry> newContentEntries = newPackageZip.Entries.Where(e => e.FileName.StartsWith(@"content/", StringComparison.InvariantCultureIgnoreCase));
+                    List<ZipEntry> filesNeedToUpdate = new List<ZipEntry>();
+                    Dictionary<string, ZipEntry> indexedOldFiles = new Dictionary<string, ZipEntry>();
+                    foreach (var item in oldContentEntries)
                     {
-                        // V3 DownloadResource.GetStream does not support seek operations.
-                        // https://github.com/NuGet/NuGet.Protocol/issues/15
+                        indexedOldFiles.Add(item.FileName.ToLowerInvariant(), item);
+                    }
 
-                        MemoryStream memStream = new MemoryStream();
-
-                        try
+                    foreach (var newEntry in newContentEntries)
+                    {
+                        var fileName = newEntry.FileName.ToLowerInvariant();
+                        if (indexedOldFiles.ContainsKey(fileName))
                         {
-                            byte[] buffer = new byte[2048];
-
-                            int bytesRead = 0;
-                            do
+                            // file name existed, only update if file has been touched
+                            ZipEntry oldEntry = indexedOldFiles[fileName];
+                            if (oldEntry.LastModified != newEntry.LastModified)
                             {
-                                bytesRead = sourceStream.Read(buffer, 0, buffer.Length);
-                                memStream.Write(buffer, 0, bytesRead);
-                            } while (bytesRead != 0);
+                                filesNeedToUpdate.Add(newEntry);
+                            }
 
-                            await memStream.FlushAsync();
-                            memStream.Position = 0;
-
-                            packageStream = memStream;
+                            // remove from old index files buffer, the rest will be files that need to be deleted
+                            indexedOldFiles.Remove(fileName);
                         }
-                        catch
+                        else
                         {
-                            memStream.Dispose();
-                            throw;
+                            // new files
+                            filesNeedToUpdate.Add(newEntry);
                         }
                     }
 
-                    if (!string.IsNullOrWhiteSpace(pathToLocalCopyOfNudpk))
-                    {
-                        string packageFolderPath = Path.GetDirectoryName(pathToLocalCopyOfNudpk);
-                        FileSystemHelpers.CreateDirectory(packageFolderPath);
-                        using (Stream writeStream = FileSystemHelpers.OpenWrite(pathToLocalCopyOfNudpk))
-                        {
-                            OperationManager.Attempt(() => packageStream.CopyTo(writeStream));
-                        }
+                    int substringStartIndex = @"content/".Length;
 
-                        // set position back to the head of stream
-                        packageStream.Position = 0;
-                    }
-
-                    using (ZipFile zipFile = ZipFile.Read(packageStream))
+                    foreach (var entry in filesNeedToUpdate)
                     {
-                        // we only care about stuff under "content" folder
-                        int substringStartIndex = @"content/".Length;
-                        IEnumerable<ZipEntry> contentEntries = zipFile.Entries.Where(e => e.FileName.StartsWith(@"content/", StringComparison.InvariantCultureIgnoreCase));
-                        foreach (var entry in contentEntries)
+                        string fullPath = Path.Combine(destinationFolder, entry.FileName.Substring(substringStartIndex));
+                        using (tracer.Step("Adding/Updating {0}", fullPath))
                         {
-                            string fullPath = Path.Combine(destinationFolder, entry.FileName.Substring(substringStartIndex));
-                            FileSystemHelpers.CreateDirectory(Path.GetDirectoryName(fullPath));
+                            FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(fullPath));
                             using (Stream writeStream = FileSystemHelpers.OpenWrite(fullPath))
                             {
                                 // let the thread go with itself, so that once file finsihed writing, doesn`t need to request thread context from main thread
@@ -151,13 +170,33 @@ namespace Kudu.Core.SiteExtensions
                             }
                         }
                     }
-                }
-                finally
-                {
-                    if (packageStream != null && !sourceStream.CanSeek)
+
+                    foreach (var entry in indexedOldFiles.Values)
                     {
-                        // in this case, we created a copy of the source stream in memoery, need to manually dispose
-                        packageStream.Dispose();
+                        string fullPath = Path.Combine(destinationFolder, entry.FileName.Substring(substringStartIndex));
+                        using (tracer.Step("Deleting {0}", fullPath))
+                        {
+                            FileSystemHelpers.DeleteFileSafe(fullPath);
+                        }
+                    }
+                }
+
+                // update nupkg
+                newPackageStream.Position = 0;
+                using (tracer.Step("Updating nupkg file."))
+                {
+                    WriteStreamToFile(newPackageStream, pathToLocalCopyOfNupkg);
+                    if (!identity.Version.Equals(localPackage.Identity.Version))
+                    {
+                        using (tracer.Step("New package has difference version {0} from old package {1}. Remove old nupkg file.", identity.Version, localPackage.Identity.Version))
+                        {
+                            // if version is difference, nupkg file name will be difference. will need to clean up the old one.
+                            var oldNupkg = pathToLocalCopyOfNupkg.Replace(
+                                string.Format(CultureInfo.InvariantCulture, "{0}.{1}.nupkg", identity.Id, identity.Version.ToNormalizedString()),
+                                string.Format(CultureInfo.InvariantCulture, "{0}.{1}.nupkg", localPackage.Identity.Id, localPackage.Identity.Version.ToNormalizedString()));
+
+                            FileSystemHelpers.DeleteFileSafe(oldNupkg);
+                        }
                     }
                 }
             }
@@ -176,6 +215,88 @@ namespace Kudu.Core.SiteExtensions
             }
 
             return resource;
+        }
+
+        private static void WriteStreamToFile(Stream stream, string filePath)
+        {
+            string packageFolderPath = Path.GetDirectoryName(filePath);
+            FileSystemHelpers.EnsureDirectory(packageFolderPath);
+            using (Stream writeStream = FileSystemHelpers.OpenWrite(filePath))
+            {
+                OperationManager.Attempt(() => stream.CopyTo(writeStream));
+            }
+        }
+
+        private static async Task<Stream> GetPackageStream(this SourceRepository srcRepo, PackageIdentity identity)
+        {
+            var downloadResource = await srcRepo.GetResourceAsync<DownloadResource>();
+            Stream sourceStream = null;
+            Stream packageStream = null;
+
+            try
+            {
+                sourceStream = await downloadResource.GetStream(identity, CancellationToken.None);
+                if (sourceStream == null)
+                {
+                    // package not exist from feed
+                    throw new FileNotFoundException(string.Format(CultureInfo.InvariantCulture, "Package {0} - {1} not found when try to download.", identity.Id, identity.Version.ToNormalizedString()));
+                }
+
+                packageStream = sourceStream;
+                if (!sourceStream.CanSeek)
+                {
+                    // V3 DownloadResource.GetStream does not support seek operations.
+                    // https://github.com/NuGet/NuGet.Protocol/issues/15
+
+                    MemoryStream memStream = new MemoryStream();
+
+                    try
+                    {
+                        byte[] buffer = new byte[2048];
+
+                        int bytesRead = 0;
+                        do
+                        {
+                            bytesRead = sourceStream.Read(buffer, 0, buffer.Length);
+                            memStream.Write(buffer, 0, bytesRead);
+                        } while (bytesRead != 0);
+
+                        await memStream.FlushAsync();
+                        memStream.Position = 0;
+
+                        packageStream = memStream;
+                    }
+                    catch
+                    {
+                        memStream.Dispose();
+                        throw;
+                    }
+                }
+
+                return packageStream;
+            }
+            catch
+            {
+                if (packageStream != null && packageStream != sourceStream)
+                {
+                    packageStream.Dispose();
+                }
+
+                if (sourceStream != null)
+                {
+                    sourceStream.Dispose();
+                }
+
+                throw;
+            }
+            finally
+            {
+                if (packageStream != null && sourceStream != null && !sourceStream.CanSeek)
+                {
+                    // packageStream is a copy of sourceStream, dispose sourceStream
+                    sourceStream.Dispose();
+                }
+            }
         }
     }
 }

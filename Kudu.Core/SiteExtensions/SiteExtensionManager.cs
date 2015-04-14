@@ -502,16 +502,9 @@ namespace Kudu.Core.SiteExtensions
         {
             try
             {
-                if (FileSystemHelpers.DirectoryExists(installationDirectory))
-                {
-                    FileSystemHelpers.DeleteDirectorySafe(installationDirectory);
-                }
-
+                bool packageExisted = FileSystemHelpers.DirectoryExists(installationDirectory);
                 SourceRepository remoteRepo = GetRemoteRepository(feedUrl);
 
-                // Copy content folder
-                // Copy nupkg file for package list/lookup
-                FileSystemHelpers.CreateDirectory(installationDirectory);
                 // package path from local repo
                 string packageLocalFilePath = GetNuGetPackageFile(package.Identity.Id, package.Identity.Version.ToString());
                 using (tracer.Step("Download site extension: {0}", package.Identity))
@@ -523,7 +516,17 @@ namespace Kudu.Core.SiteExtensions
                         FileSystemHelpers.EnsureDirectory(extractPath);
                     }
 
-                    await remoteRepo.DownloadPackageToFolder(package.Identity, extractPath, pathToLocalCopyOfNudpk: packageLocalFilePath);
+                    // Copy/update content folder
+                    // Copy/update nupkg file for package list/lookup
+                    if (packageExisted)
+                    {
+                        await remoteRepo.UpdateLocalPackage(_localRepository, package.Identity, extractPath, packageLocalFilePath, tracer);
+                    }
+                    else
+                    {
+                        FileSystemHelpers.EnsureDirectory(installationDirectory);
+                        await remoteRepo.DownloadPackageToFolder(package.Identity, extractPath, packageLocalFilePath);
+                    }
 
                     if (SiteExtensionInfo.SiteExtensionType.WebRoot == type)
                     {
@@ -761,7 +764,7 @@ namespace Kudu.Core.SiteExtensions
 
         private string GetNuGetPackageFile(string id, string version)
         {
-            return Path.Combine(GetInstallationDirectory(id), String.Format("{0}.{1}.nupkg", id, version));
+            return Path.Combine(GetInstallationDirectory(id), String.Format(CultureInfo.InvariantCulture, "{0}.{1}.nupkg", id, version));
         }
 
         private static string GetPreInstalledDirectory(string id)

@@ -15,7 +15,7 @@ using Kudu.TestHarness;
 using Kudu.TestHarness.Xunit;
 using Xunit;
 
-namespace Kudu.FunctionalTests
+namespace Kudu.FunctionalTests.SiteExtensions
 {
     [KuduXunitTestClass]
     public class SiteExtensionApiFacts
@@ -759,7 +759,7 @@ namespace Kudu.FunctionalTests
             }
         }
 
-        private static async Task CleanSiteExtensions(RemoteSiteExtensionManager manager)
+        public static async Task CleanSiteExtensions(RemoteSiteExtensionManager manager)
         {
             try
             {
