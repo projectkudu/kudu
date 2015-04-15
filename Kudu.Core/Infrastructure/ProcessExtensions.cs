@@ -23,38 +23,14 @@ namespace Kudu.Core.Infrastructure
     {
         internal static TimeSpan StandardOutputDrainTimeout = TimeSpan.FromSeconds(5);
 
-        private const string GCDump32Exe = @"%ProgramFiles(x86)%\vsdiagagent\x86\GCDump32.exe";
-        private const string GCDump64Exe = @"%ProgramFiles(x86)%\vsdiagagent\x64\GCDump64.exe";
-
         private readonly static Lazy<string> _clrRuntimeDirectory = new Lazy<string>(() =>
         {
             return RuntimeEnvironment.GetRuntimeDirectory();
         });
 
-        private readonly static Lazy<string> _gcDumpExe = new Lazy<string>(() =>
-        {
-            string gcDumpExe = System.Environment.ExpandEnvironmentVariables(GCDump32Exe);
-            if (ClrRuntimeDirectory.IndexOf(@"\Framework64\", StringComparison.OrdinalIgnoreCase) > 0)
-            {
-                gcDumpExe = System.Environment.ExpandEnvironmentVariables(GCDump64Exe);
-            }
-
-            return gcDumpExe;
-        });
-
-        private readonly static Lazy<bool> _supportGCDump = new Lazy<bool>(() =>
-        {
-            return File.Exists(_gcDumpExe.Value);
-        });
-
         public static string ClrRuntimeDirectory
         {
             get { return _clrRuntimeDirectory.Value; }
-        }
-
-        public static bool SupportGCDump
-        {
-            get { return _supportGCDump.Value; }
         }
 
         public static void Kill(this Process process, bool includesChildren, ITracer tracer)
@@ -179,12 +155,6 @@ namespace Kudu.Core.Infrastructure
                     throw new Win32Exception(Marshal.GetLastWin32Error());
                 }
             }
-        }
-
-        public static void GCDump(this Process process, string dumpFile, string resourcePath, int maxDumpCountK, ITracer tracer, TimeSpan idleTimeout)
-        {
-            var exe = new Executable(_gcDumpExe.Value, Path.GetDirectoryName(dumpFile), idleTimeout);
-            exe.Execute(tracer, "\"{0}\" \"{1}\" \"{2}\" \"{3}\"", process.Id, dumpFile, resourcePath, maxDumpCountK);  
         }
 
         public static async Task<int> Start(this IProcess process, ITracer tracer, Stream output, Stream error, Stream input = null, IdleManager idleManager = null)

@@ -74,26 +74,5 @@ namespace Kudu.Client.Diagnostics
             HttpResponseMessage response = await Client.GetAsync(path.ToString());
             return await response.EnsureSuccessful().Content.ReadAsStreamAsync();
         }
-
-        public async Task<Stream> GCDump(int id = 0, int maxDumpCountK = 0, string format = null)
-        {
-            var path = new StringBuilder();
-            path.AppendFormat("{0}/gcdump", id);
-
-            var separator = '?';
-            if (maxDumpCountK > 0)
-            {
-                path.AppendFormat("{0}maxDumpCountK={1}", separator, maxDumpCountK);
-                separator = '&';
-            }
-            if (!String.IsNullOrEmpty(format))
-            {
-                path.AppendFormat("{0}format={1}", separator, format);
-                separator = '&';
-            }
-
-            HttpResponseMessage response = await Client.GetAsync(path.ToString());
-            return await response.EnsureSuccessful().Content.ReadAsStreamAsync();
-        }
     }
 }

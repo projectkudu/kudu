@@ -27,9 +27,6 @@ namespace Kudu.Core.Diagnostics
         [JsonProperty(PropertyName = "minidump", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Uri MiniDump { get; set; }
 
-        [JsonProperty(PropertyName = "gcdump", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        public Uri GCDump { get; set; }
-
         [JsonProperty(PropertyName = "parent", DefaultValueHandling = DefaultValueHandling.Ignore)]
         public Uri Parent { get; set; }
 

@@ -225,65 +225,6 @@ namespace Kudu.Services.Performance
             }
         }
 
-        [HttpGet]
-        public HttpResponseMessage GCDump(int id, int maxDumpCountK = 0, string format = null)
-        {
-            using (_tracer.Step("ProcessController.GCDump"))
-            {
-                DumpFormat dumpFormat = ParseDumpFormat(format, DumpFormat.DiagSession);
-                var process = GetProcessById(id);
-                var ext = dumpFormat == DumpFormat.DiagSession ? "diagsession" : "gcdump";
-
-                string dumpFile = Path.Combine(_environment.LogFilesPath, "minidump", "dump." + ext);
-                FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(dumpFile));
-                FileSystemHelpers.DeleteFileSafe(dumpFile);
-
-                string resourcePath = GetResponseFileName(process.ProcessName, "gcdump");
-                try
-                {
-                    using (_tracer.Step(String.Format("GCDump pid={0}, name={1}, file={2}", process.Id, process.ProcessName, dumpFile)))
-                    {
-                        process.GCDump(dumpFile, resourcePath, maxDumpCountK, _tracer, _settings.GetCommandIdleTimeout());
-                        _tracer.Trace("GCDump size={0}", new FileInfo(dumpFile).Length);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _tracer.TraceError(ex);
-                    FileSystemHelpers.DeleteFileSafe(dumpFile);
-                    return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
-                }
-
-                if (dumpFormat == DumpFormat.Zip)
-                {
-                    string responseFileName = GetResponseFileName(process.ProcessName, "zip");
-                    HttpResponseMessage response = Request.CreateResponse();
-                    response.Content = ZipStreamContent.Create(responseFileName, _tracer, zip =>
-                    {
-                        try
-                        {
-                            zip.AddFile(dumpFile, _tracer, String.Empty);
-                        }
-                        finally
-                        {
-                            FileSystemHelpers.DeleteFileSafe(dumpFile);
-                        }
-                    });
-                    return response;
-                }
-                else
-                {
-                    string responseFileName = GetResponseFileName(process.ProcessName, ext);
-                    HttpResponseMessage response = Request.CreateResponse();
-                    response.Content = new StreamContent(FileStreamWrapper.OpenRead(dumpFile));
-                    response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-                    response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment");
-                    response.Content.Headers.ContentDisposition.FileName = responseFileName;
-                    return response;
-                }
-            }
-        }
-
         private static string GetResponseFileName(string prefix, string ext)
         {
             return String.Format(CultureInfo.InvariantCulture, "{0}-{1}-{2:MM-dd-HH-mm-ss}.{3}", prefix, InstanceIdUtility.GetShortInstanceId(), DateTime.UtcNow, ext);
@@ -449,10 +390,6 @@ namespace Kudu.Services.Performance
                 info.PrivateMemorySize64 = SafeGetValue(() => process.PrivateMemorySize64, -1);
 
                 info.MiniDump = new Uri(selfLink + "/dump");
-                if (ProcessExtensions.SupportGCDump)
-                {
-                    info.GCDump = new Uri(selfLink + "/gcdump");
-                }
                 info.OpenFileHandles = SafeGetValue(() => GetOpenFileHandles(process.Id), Enumerable.Empty<string>());
                 info.Parent = new Uri(selfLink, SafeGetValue(() => process.GetParentId(_tracer), 0).ToString());
                 info.Children = SafeGetValue(() => process.GetChildren(_tracer, recursive: false), Enumerable.Empty<Process>()).Select(c => new Uri(selfLink, c.Id.ToString()));
@@ -507,7 +444,6 @@ namespace Kudu.Services.Performance
         {
             Raw,
             Zip,
-            DiagSession,
         }
 
         public class FileStreamWrapper : DelegatingStream

@@ -249,14 +249,6 @@ var Process = (function () {
         configurable: true
     });
 
-    Object.defineProperty(Process.prototype, "Gcdump", {
-        get: function () {
-            return this._json.gcdump;
-        },
-        enumerable: true,
-        configurable: true
-    });
-
     Object.defineProperty(Process.prototype, "ChildrenIds", {
         get: function () {
             var childrenIds = [];
@@ -433,10 +425,6 @@ var Process = (function () {
 
         buttonDiv.appendChild(Utilities.getButton("ui-button-info", div.id + "-dumb", "Download memory dump", function () {
             Utilities.downloadURL(_this._json.minidump);
-        }));
-
-        buttonDiv.appendChild(Utilities.getButton("ui-button-info", div.id + "-gcdumb", "Download GC dump", function () {
-            Utilities.downloadURL(_this._json.gcdump);
         }));
 
         div.appendChild(buttonDiv);
@@ -830,10 +818,6 @@ function overrideRightClickMenu() {
                 case "dump2":
                     Utilities.downloadURL(process.Minidump + "?dumpType=2");
                     break;
-                case "gcdump":
-                    Utilities.downloadURL(process.Gcdump);
-                    processExplorerSetupAsync();
-                    break;
                 case "properties":
                     process.dialog().dialog("open");
                     $("li")[0].click();
@@ -850,7 +834,6 @@ function overrideRightClickMenu() {
                     "dump2": { name: "Full Dump" }
                 }
             },
-            "gcdump": { name: "Download GC Dump" },
             "sep1": "---------",
             "properties": { name: "Properties" }
         },
