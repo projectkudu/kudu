@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -96,6 +97,38 @@ namespace Kudu.TestHarness.Xunit
             }
         }
 
+        // making sure all texts are Xml valid
+        public static IMessageSinkMessage SanitizeXml(this IMessageSinkMessage message)
+        {
+            var failed = message as TestFailed;
+            if (failed != null)
+            {
+                return new TestFailed(failed.Test,
+                                      failed.ExecutionTime,
+                                      XmlUtility.Sanitize(failed.Output),
+                                      failed.ExceptionTypes,
+                                      failed.Messages == null ? null : failed.Messages.Select(m => XmlUtility.Sanitize(m)).ToArray(),
+                                      failed.StackTraces,
+                                      failed.ExceptionParentIndices);
+            }
+
+            var skipped = message as TestSkipped;
+            if (skipped != null)
+            {
+                skipped = new TestSkipped(skipped.Test, XmlUtility.Sanitize(skipped.Reason));
+                skipped.SetOutput(XmlUtility.Sanitize(skipped.Output));
+                return skipped;
+            }
+
+            var passed = message as TestPassed;
+            if (passed != null)
+            {
+                return new TestPassed(passed.Test, passed.ExecutionTime, XmlUtility.Sanitize(passed.Output));
+            }
+
+            return message;
+        }
+
         public class DelayedMessageBus : IMessageBus
         {
             private readonly IMessageBus _innerBus;
@@ -142,13 +175,13 @@ namespace Kudu.TestHarness.Xunit
                         reason.AppendLine(String.Join(Environment.NewLine, failed.Messages));
                         reason.AppendLine(String.Join(Environment.NewLine, failed.StackTraces));
 
-                        var skipped = new TestSkipped(failed.Test, XmlUtility.Sanitize(reason.ToString()));
+                        var skipped = new TestSkipped(failed.Test, reason.ToString());
                         skipped.SetOutput(failed.Output);
-                        _innerBus.QueueMessage(skipped);
+                        _innerBus.QueueMessage(skipped.SanitizeXml());
                     }
                     else
                     {
-                        _innerBus.QueueMessage(message);
+                        _innerBus.QueueMessage(message.SanitizeXml());
                     }
                 }
             }

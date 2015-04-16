@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Linq;
-using Kudu.Core.Infrastructure;
 using Xunit.Abstractions;
 using Xunit.Sdk;
 
@@ -23,20 +21,7 @@ namespace Kudu.TestHarness.Xunit
                 result.SetOutput(TestTracer.GetTraceString());
             }
 
-            var failed = message as TestFailed;
-            if (failed != null && failed.Messages != null && failed.Messages.Length > 0)
-            {
-                // this is to workaround failed.Messages contains invalid Xml chars
-                message = new TestFailed(failed.Test, 
-                                         failed.ExecutionTime, 
-                                         failed.Output,
-                                         failed.ExceptionTypes,
-                                         failed.Messages.Select(m => XmlUtility.Sanitize(m)).ToArray(),
-                                         failed.StackTraces,
-                                         failed.ExceptionParentIndices);
-            }
-
-            return _innerBus.QueueMessage(message);
+            return _innerBus.QueueMessage(message.SanitizeXml());
         }
 
         public void Dispose()

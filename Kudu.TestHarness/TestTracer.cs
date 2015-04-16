@@ -3,7 +3,6 @@ using System.Globalization;
 using System.Linq;
 using System.Runtime.Remoting.Messaging;
 using System.Text;
-using Kudu.Core.Infrastructure;
 
 namespace Kudu.TestHarness
 {
@@ -16,11 +15,11 @@ namespace Kudu.TestHarness
             string message;
             if (args != null && args.Length > 0)
             {
-                message = XmlUtility.Sanitize(String.Format(CultureInfo.CurrentCulture, messageFormat, args));
+                message = String.Format(CultureInfo.CurrentCulture, messageFormat, args);
             }
             else
             {
-                message = XmlUtility.Sanitize(messageFormat);
+                message = messageFormat;
             }
 
             message = String.Format(CultureInfo.CurrentCulture, "{0}Z {1}", messageDateTime.ToUniversalTime().ToString("s"), message.Replace("\n", "\n\t"));

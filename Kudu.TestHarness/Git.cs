@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Kudu.Client.Deployment;
-using Kudu.Contracts.Settings;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl.Git;
 using SystemEnvironment = System.Environment;
@@ -231,8 +230,7 @@ namespace Kudu.TestHarness
 
             return new GitDeploymentResult
             {
-                // To work around Xunit invalid Xml character issue
-                GitTrace = XmlUtility.Sanitize(trace),
+                GitTrace = trace,
                 TotalResponseTime = sw.Elapsed
             };
         }
