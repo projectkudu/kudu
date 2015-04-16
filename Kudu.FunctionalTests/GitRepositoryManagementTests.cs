@@ -478,17 +478,17 @@ project = myproject");
                 {
                     string url = appManager.SiteUrl + "/Content/Site.css";
                     // Act
-                    appManager.GitDeploy(repositoryName);
+                    appManager.GitDeploy(repo.PhysicalPath);
 
                     KuduAssert.VerifyUrl(url, verificationText);
 
                     repo.AppendFile(@"Mvc3Application\Content\Site.css", "Say Whattttt!");
 
                     // Make a small changes and commit them to the local repo
-                    Git.Commit(repositoryName, "This is a small changes");
+                    Git.Commit(repo.PhysicalPath, "This is a small changes");
 
                     // Push those changes
-                    appManager.GitDeploy(repositoryName);
+                    appManager.GitDeploy(repo.PhysicalPath);
 
                     // Make a server site change and verify it shows up
                     appManager.VfsWebRootManager.WriteAllText("Content/Site.css", "Hello world!");
