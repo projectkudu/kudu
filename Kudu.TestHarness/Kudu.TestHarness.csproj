@@ -67,7 +67,6 @@
     <Compile Include="TestTracer.cs" />
     <Compile Include="HttpUtils.cs" />
     <Compile Include="KuduUtils.cs" />
-    <Compile Include="DeploymentManagerExtensions.cs" />
     <Compile Include="Git.cs" />
     <Compile Include="GitDeploymentResult.cs" />
     <Compile Include="LogStreamWaitHandle.cs" />

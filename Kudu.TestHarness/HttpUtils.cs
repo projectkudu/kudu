@@ -3,59 +3,75 @@ using System.Net;
 using System.Net.Cache;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Threading;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Kudu.TestHarness
 {
     public class HttpUtils
     {
-        public static HttpResponseMessage WaitForSite(string siteUrl, ICredentials credentials = null, int retries = 5, int delayBeforeFirstTry = 0, int delayBeforeRetry = 250, HttpStatusCode statusCode = HttpStatusCode.OK)
+        public static HttpResponseMessage WaitForSite(string siteUrl, ICredentials credentials = null, int retries = 5, int delayBeforeFirstTry = 0, int delayBeforeRetry = 250, HttpStatusCode statusCode = HttpStatusCode.OK, string httpMethod = "GET", string jsonPayload = "")
         {
-            Thread.Sleep(delayBeforeFirstTry);
+            return WaitForSiteAsync(siteUrl, credentials, retries, delayBeforeFirstTry, delayBeforeRetry, statusCode, httpMethod, jsonPayload).Result;
+        }
+
+        public static async Task<HttpResponseMessage> WaitForSiteAsync(string siteUrl, ICredentials credentials = null, int retries = 5, int delayBeforeFirstTry = 0, int delayBeforeRetry = 250, HttpStatusCode statusCode = HttpStatusCode.OK, string httpMethod = "GET", string jsonPayload = "")
+        {
+            if (delayBeforeFirstTry > 0)
+            {
+                await Task.Delay(delayBeforeFirstTry);
+            }
 
             HttpResponseMessage response = null;
-
-            var client = new HttpClient(new WebRequestHandler()
+            HttpClient client = new HttpClient(new WebRequestHandler
             {
                 Credentials = credentials,
                 // Disable caching to make sure we always get fresh data from the test site
                 CachePolicy = new RequestCachePolicy(RequestCacheLevel.NoCacheNoStore)
             });
-
             client.Timeout = TimeSpan.FromSeconds(200);
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Kudu-Test", "1.0"));
             client.MaxResponseContentBufferSize = 30 * 1024 * 1024;
-            while (retries > 0)
+
+            Exception lastException = null;
+            while (true)
             {
                 try
                 {
-                    response = client.GetAsync(siteUrl).Result;
+                    if (String.Equals(httpMethod, "POST"))
+                    {
+                        response = await client.PostAsync(siteUrl, new StringContent(jsonPayload, Encoding.UTF8, "application/json"));
+                    }
+                    else
+                    {
+                        response = await client.GetAsync(siteUrl);
+                    }
+
                     if (response.StatusCode == statusCode)
                     {
-                        break;
+                        return response;
                     }
+
+                    throw new Exception(string.Format("Mismatch response status {0} != {1}", statusCode, response.StatusCode));
                 }
-                catch
+                catch (Exception ex)
                 {
-                    if (retries == 0)
-                    {
-                        throw;
-                    }
+                    lastException = ex;
                 }
 
                 retries--;
 
+                var message = string.Format("Wait for site {0} failed with {1}", siteUrl, lastException.Message);
+
                 if (retries > 0)
                 {
-                    Thread.Sleep(delayBeforeRetry);
+                    await Task.Delay(delayBeforeRetry);
                 }
                 else
                 {
-                    throw new Exception(string.Format("Web site {0} is not available", siteUrl));
+                    throw new Exception(message, lastException);
                 }
             }
-
-            return response;
         }
     }
 }
