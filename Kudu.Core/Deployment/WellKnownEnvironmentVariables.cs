@@ -37,5 +37,7 @@
         public const string DnxBitness = "SCM_DNX_ARCH";
 
         public const string SiteBitness = "SITE_BITNESS";
+
+        public const string GoWebConfigTemplate = "GO_WEB_CONFIG_TEMPLATE";
     }
 }

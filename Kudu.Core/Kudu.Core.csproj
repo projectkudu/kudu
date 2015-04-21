@@ -129,6 +129,8 @@
     <Compile Include="Deployment\Generator\DotNetConsoleBuilder.cs" />
     <Compile Include="Deployment\Generator\CustomGeneratorCommandSiteBuilder.cs" />
     <Compile Include="Deployment\Generator\ExternalCommandFactory.cs" />
+    <Compile Include="Deployment\Generator\GoSiteBuilder.cs" />
+    <Compile Include="Deployment\Generator\GoSiteEnabler.cs" />
     <Compile Include="Deployment\Generator\PythonSiteEnabler.cs" />
     <Compile Include="Deployment\Generator\PythonSiteBuilder.cs" />
     <Compile Include="Deployment\Generator\AspNet5Builder.cs" />
@@ -306,6 +308,10 @@
     </Content>
     <Content Include="Scripts\semver.js">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Scripts\go.web.config.template">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
     </Content>
     <None Include="Scripts\dnvm.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

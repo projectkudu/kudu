@@ -41,6 +41,7 @@ namespace Kudu.Core.Deployment.Generator
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.DnxClr, Constants.DnxDefaultClr, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.DnxBitness, DnxBitness, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.DnvmPath, DnvmPath, logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.GoWebConfigTemplate, GoWebConfigTemplate, logger);
 
             bool isInPlace = false;
             string project = _deploymentSettings.GetValue(SettingsKeys.Project);
@@ -169,6 +170,14 @@ namespace Kudu.Core.Deployment.Generator
                     return System.Environment.Is64BitProcess ? "x64" : "x86";
                 }
                 return bitness.Equals(Constants.X64Bit, StringComparison.OrdinalIgnoreCase) ? "x64" : "x86";
+            }
+        }
+
+        private string GoWebConfigTemplate
+        {
+            get
+            {
+                return Path.Combine(_environment.ScriptPath, "go.web.config.template");
             }
         }
 

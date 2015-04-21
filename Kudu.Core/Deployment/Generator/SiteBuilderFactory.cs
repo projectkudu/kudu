@@ -137,16 +137,26 @@ namespace Kudu.Core.Deployment.Generator
 
         private ISiteBuilder ResolveNonAspProject(string repositoryRoot, string projectPath, IDeploymentSettingsManager perDeploymentSettings)
         {
-            if (IsNodeSite(projectPath ?? repositoryRoot))
+            string sourceProjectPath = projectPath ?? repositoryRoot;
+            if (IsNodeSite(sourceProjectPath))
             {
                 return new NodeSiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
             }
-            else if (IsPythonSite(projectPath ?? repositoryRoot))
+            else if (IsPythonSite(sourceProjectPath))
             {
                 return new PythonSiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
             }
+            else if (IsGoSite(sourceProjectPath))
+            {
+                return new GoSiteBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
+            }
 
             return new BasicBuilder(_environment, perDeploymentSettings, _propertyProvider, repositoryRoot, projectPath);
+        }
+
+        private static bool IsGoSite(string projectPath)
+        {
+            return GoSiteEnabler.LooksLikeGo(projectPath);
         }
 
         private static bool IsNodeSite(string projectPath)

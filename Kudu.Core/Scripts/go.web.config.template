@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <system.webServer>
+        <handlers>
+            <add name="httpplatformhandler" path="*" verb="*" modules="httpPlatformHandler" resourceType="Unspecified" />
+        </handlers>
+        <!-- For Go webapp, we always generate azureapp.exe in wwwroot -->
+        <httpPlatform processPath="D:\home\site\wwwroot\azureapp.exe" startupTimeLimit="60">
+        </httpPlatform>
+    </system.webServer>
+</configuration>
