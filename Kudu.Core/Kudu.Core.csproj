@@ -307,7 +307,7 @@
     <Content Include="Scripts\semver.js">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <None Include="Scripts\kvm.ps1">
+    <None Include="Scripts\dnvm.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

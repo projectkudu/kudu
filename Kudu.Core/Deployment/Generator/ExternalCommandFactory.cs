@@ -38,10 +38,9 @@ namespace Kudu.Core.Deployment.Generator
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.SelectNodeVersionCommandKey, SelectNodeVersionCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.SelectPythonVersionCommandKey, SelectPythonVersionCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.WebJobsDeployCommandKey, WebJobsDeployCommand, logger);
-            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KreClr, Constants.KreDefaultClr, logger);
-            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KreBitness, KreBitness, logger);
-            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KreNugetApiUrl, Constants.KreDefaultNugetApiUrl, logger);
-            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KvmPath, KvmPath, logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.DnxClr, Constants.DnxDefaultClr, logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.DnxBitness, DnxBitness, logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.DnvmPath, DnvmPath, logger);
 
             bool isInPlace = false;
             string project = _deploymentSettings.GetValue(SettingsKeys.Project);
@@ -152,15 +151,15 @@ namespace Kudu.Core.Deployment.Generator
             }
         }
 
-        private string KvmPath
+        private string DnvmPath
         {
             get
             {
-                return Path.Combine(_environment.ScriptPath, "kvm.ps1");
+                return Path.Combine(_environment.ScriptPath, "dnvm.ps1");
             }
         }
 
-        private static string KreBitness
+        private static string DnxBitness
         {
             get
             {

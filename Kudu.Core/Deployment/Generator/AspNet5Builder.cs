@@ -17,7 +17,7 @@ namespace Kudu.Core.Deployment.Generator
         {
             _projectPath = projectPath;
             var properties = propertyProvider.GetProperties();
-            properties[WellKnownEnvironmentVariables.KreVersion] = AspNet5Helper.GetAspNet5RuntimeVersion(sourcePath);
+            properties[WellKnownEnvironmentVariables.DnxVersion] = AspNet5Helper.GetAspNet5RuntimeVersion(sourcePath);
         }
 
         protected override string ScriptGeneratorCommandArguments

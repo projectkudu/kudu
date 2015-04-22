@@ -31,11 +31,10 @@
         public const string WebJobsCommandArguments = "WEBJOBS_COMMAND_ARGUMENTS";
 
         public const string CommitId = "SCM_COMMIT_ID";
-        public const string KreVersion = "SCM_KRE_VERSION";
-        public const string KreClr = "SCM_KRE_CLR";
-        public const string KreNugetApiUrl = "SCM_KRE_NUGET_API_URL";
-        public const string KvmPath = "SCM_KVM_PS_PATH";
-        public const string KreBitness = "SCM_KRE_ARCH";
+        public const string DnxVersion = "SCM_DNX_VERSION";
+        public const string DnxClr = "SCM_DNX_CLR";
+        public const string DnvmPath = "SCM_DNVM_PS_PATH";
+        public const string DnxBitness = "SCM_DNX_ARCH";
 
         public const string SiteBitness = "SITE_BITNESS";
     }

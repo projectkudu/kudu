@@ -26,7 +26,7 @@ namespace Kudu.Core.Infrastructure
 
         public static string GetAspNet5RuntimeVersion(string rootPath)
         {
-            var runtimeVersion = Constants.KreDefaultVersion;
+            var runtimeVersion = Constants.DnxDefaultVersion;
             var globalJson = Path.Combine(rootPath, "global.json");
             if (File.Exists(globalJson))
             {

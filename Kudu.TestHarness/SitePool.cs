@@ -59,7 +59,7 @@ namespace Kudu.TestHarness
                 foreach (var process in (await appManager.ProcessManager.GetProcessesAsync()).Where(p => p.Name.Equals("w3wp", StringComparison.OrdinalIgnoreCase)))
                 {
                     var extendedProcess = await appManager.ProcessManager.GetProcessAsync(process.Id);
-                    if (extendedProcess.OpenFileHandles.Any(h => h.IndexOf("kre.host.dll", StringComparison.OrdinalIgnoreCase) != -1))
+                    if (extendedProcess.OpenFileHandles.Any(h => h.IndexOf("dnx.host.dll", StringComparison.OrdinalIgnoreCase) != -1))
                     {
                         await appManager.ProcessManager.KillProcessAsync(extendedProcess.Id, throwOnError:false);
                     }

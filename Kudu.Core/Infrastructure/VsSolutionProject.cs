@@ -161,7 +161,7 @@ namespace Kudu.Core.Infrastructure
 
                 _isExecutable = VsHelper.IsExecutableProject(_absolutePath);
             }
-            else if (projectExtension.Equals(".kproj", StringComparison.OrdinalIgnoreCase) && File.Exists(_absolutePath))
+            else if (projectExtension.Equals(".xproj", StringComparison.OrdinalIgnoreCase) && File.Exists(_absolutePath))
             {
                 var projectPath = Path.Combine(Path.GetDirectoryName(_absolutePath), "project.json");
                 if (AspNet5Helper.IsWebApplicationProjectJsonFile(projectPath))
