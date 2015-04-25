@@ -224,7 +224,7 @@ namespace Kudu.Services.SiteExtensions
                 requestInfo = new SiteExtensionInfo();
             }
 
-            tracer.Trace("Installing {0} - {1} from {2} synchronously", id, requestInfo.Version, requestInfo.FeedUrl);
+            tracer.Trace("Installing {0}, version: {1} from feed: {2}", id, requestInfo.Version, requestInfo.FeedUrl);
             SiteExtensionInfo result = await InitInstallSiteExtension(id, requestInfo.Type);
 
             if (ArmUtils.IsArmRequest(Request))
