@@ -37,7 +37,6 @@ namespace Kudu.Console
 
             if (System.Environment.GetEnvironmentVariable(SettingsKeys.DisableDeploymentOnPush) == "1")
             {
-                System.Console.Out.WriteLine(Resources.Log_NoDeploymentOnPush);
                 return 0;
             }
 

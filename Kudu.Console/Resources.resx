@@ -120,7 +120,4 @@
   <data name="Log_DeploymentError" xml:space="preserve">
     <value>Error - Changes committed to remote repository but deployment to website failed.</value>
   </data>
-  <data name="Log_NoDeploymentOnPush" xml:space="preserve">
-    <value>Skipping deployment. Remove SCM_DISABLE_DEPLOY_ON_PUSH=1 in app setting to reenable.</value>
-  </data>
 </root>
