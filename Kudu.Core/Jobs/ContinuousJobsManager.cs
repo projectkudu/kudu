@@ -30,6 +30,8 @@ namespace Kudu.Core.Jobs
 
         private bool _makingChanges;
 
+        private bool _firstTimeMakingChanges = true;
+
         public ContinuousJobsManager(ITraceFactory traceFactory, IEnvironment environment, IDeploymentSettingsManager settings, IAnalytics analytics)
             : base(traceFactory, environment, settings, analytics, Constants.ContinuousPath)
         {
@@ -68,7 +70,7 @@ namespace Kudu.Core.Jobs
                 throw new InvalidOperationException("Missing job runner for an existing job - " + jobName);
             }
 
-            continuousJobRunner.EnableJob(continuousJob);
+            continuousJobRunner.EnableJob();
         }
 
         private ContinuousJobRunner GetJobRunner(string jobName)
@@ -206,7 +208,7 @@ namespace Kudu.Core.Jobs
                     }
                     else
                     {
-                        RefreshJob(continuousJob);
+                        RefreshJob(continuousJob, logRefresh: !_firstTimeMakingChanges);
                     }
                 }
                 catch (Exception ex)
@@ -216,9 +218,10 @@ namespace Kudu.Core.Jobs
             }
 
             _makingChanges = false;
+            _firstTimeMakingChanges = false;
         }
 
-        private void RefreshJob(ContinuousJob continuousJob)
+        private void RefreshJob(ContinuousJob continuousJob, bool logRefresh)
         {
             ContinuousJobRunner continuousJobRunner;
             if (!_continuousJobRunners.TryGetValue(continuousJob.Name, out continuousJobRunner))
@@ -228,7 +231,7 @@ namespace Kudu.Core.Jobs
             }
 
             JobSettings jobSettings = continuousJob.Settings;
-            continuousJobRunner.RefreshJob(continuousJob, jobSettings);
+            continuousJobRunner.RefreshJob(continuousJob, jobSettings, logRefresh);
         }
 
         private void RemoveJob(string updatedJobName)
@@ -326,7 +329,21 @@ namespace Kudu.Core.Jobs
             {
                 path = path.Substring(JobsBinariesPath.Length).TrimStart(Path.DirectorySeparatorChar);
                 int firstSeparator = path.IndexOf(Path.DirectorySeparatorChar);
-                string jobName = firstSeparator >= 0 ? path.Substring(0, firstSeparator) : path;
+                string jobName;
+                if (firstSeparator >= 0)
+                {
+                    jobName = path.Substring(0, firstSeparator);
+                }
+                else
+                {
+                    if (e.ChangeType == WatcherChangeTypes.Changed)
+                    {
+                        return;
+                    }
+
+                    jobName = path;
+                }
+
                 if (!String.IsNullOrWhiteSpace(jobName))
                 {
                     MarkJobUpdated(jobName);

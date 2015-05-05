@@ -189,8 +189,13 @@ namespace Kudu.Core.Jobs
             }
         }
 
-        public void RefreshJob(ContinuousJob continuousJob, JobSettings jobSettings)
+        public void RefreshJob(ContinuousJob continuousJob, JobSettings jobSettings, bool logRefresh)
         {
+            if (logRefresh)
+            {
+                _continuousJobLogger.LogInformation("Detected WebJob file/s were updated, refreshing WebJob");
+            }
+
             StopJob();
             JobSettings = jobSettings;
             StartJob(continuousJob);
@@ -200,13 +205,11 @@ namespace Kudu.Core.Jobs
         {
             OperationManager.Attempt(() => FileSystemHelpers.WriteAllBytes(_disableFilePath, new byte[0]));
             _continuousJobLogger.ReportStatus(ContinuousJobStatus.Disabling);
-            StopJob();
         }
 
-        public void EnableJob(ContinuousJob continuousJob)
+        public void EnableJob()
         {
             OperationManager.Attempt(() => FileSystemHelpers.DeleteFile(_disableFilePath));
-            StartJob(continuousJob);
         }
 
         protected override void UpdateStatus(IJobLogger logger, string status)
