@@ -50,6 +50,8 @@ namespace Kudu.Core.SiteExtensions
         private readonly IContinuousJobsManager _continuousJobManager;
         private readonly ITriggeredJobsManager _triggeredJobManager;
 
+        private static readonly string _toBeDeletedDirectoryPath = System.Environment.ExpandEnvironmentVariables(@"%HOME%\data\Temp\SiteExtensions");
+
         private static readonly Dictionary<string, SiteExtensionInfo> _preInstalledExtensionDictionary
             = new Dictionary<string, SiteExtensionInfo>(StringComparer.OrdinalIgnoreCase)
         {
@@ -502,11 +504,12 @@ namespace Kudu.Core.SiteExtensions
         {
             try
             {
+                EnsureInstallationEnviroment(installationDirectory, tracer);
+
+                string packageLocalFilePath = GetNuGetPackageFile(package.Identity.Id, package.Identity.Version.ToString());
                 bool packageExisted = FileSystemHelpers.DirectoryExists(installationDirectory);
                 SourceRepository remoteRepo = GetRemoteRepository(feedUrl);
 
-                // package path from local repo
-                string packageLocalFilePath = GetNuGetPackageFile(package.Identity.Id, package.Identity.Version.ToString());
                 using (tracer.Step("Download site extension: {0}", package.Identity))
                 {
                     string extractPath = installationDirectory;
@@ -587,6 +590,48 @@ namespace Kudu.Core.SiteExtensions
             }
 
             return await _localRepository.GetLatestPackageById(package.Identity.Id);
+        }
+
+        /// <summary>
+        /// <para>Check if there is damanged leftover data</para>
+        /// <para>If there is leftover data, will try to cleanup.</para>
+        /// <para>If fail to cleanup, will move leftover data to Temp folder</para>
+        /// </summary>
+        private static void EnsureInstallationEnviroment(string installationDir, ITracer tracer)
+        {
+            // folder is there but nupkg is gone, means previous uninstallation must encounter some error
+            bool isInstalledPackageBroken = FileSystemHelpers.DirectoryExists(installationDir) && FileSystemHelpers.GetFiles(installationDir, "*.nupkg").Length == 0;
+            if (!isInstalledPackageBroken)
+            {
+                return;
+            }
+
+            using (tracer.Step("There was leftover data from previous uninstallation. Trying to cleanup now."))
+            {
+                try
+                {
+                    OperationManager.Attempt(() => FileSystemHelpers.DeleteDirectorySafe(installationDir, ignoreErrors: false));
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    tracer.TraceError(ex);
+                }
+
+                FileSystemHelpers.EnsureDirectory(_toBeDeletedDirectoryPath);
+                DirectoryInfo dirInfo = new DirectoryInfo(installationDir);
+                string tmpFoder = Path.Combine(
+                    _toBeDeletedDirectoryPath,
+                    string.Format(CultureInfo.InvariantCulture, "{0}-{1}", dirInfo.Name, Guid.NewGuid().ToString("N").Substring(0, 8)));
+
+                using (tracer.Step("Failed to cleanup. Moving leftover data to {0}", tmpFoder))
+                {
+                    // if failed, let exception bubble up to trigger bad request
+                    OperationManager.Attempt(() => FileSystemHelpers.MoveDirectory(installationDir, tmpFoder));
+                }
+            }
+
+            FileSystemHelpers.DeleteDirectoryContentsSafe(_toBeDeletedDirectoryPath);
         }
 
         /// <summary>
@@ -702,7 +747,7 @@ namespace Kudu.Core.SiteExtensions
             {
                 // special handling for package that install in wwwroot instead of under site extension folder
                 tracer.Trace("Clear all content in wwwroot");
-                FileSystemHelpers.DeleteDirectoryContentsSafe(_environment.WebRootPath);
+                OperationManager.Attempt(() => FileSystemHelpers.DeleteDirectoryContentsSafe(_environment.WebRootPath));
             }
             else
             {

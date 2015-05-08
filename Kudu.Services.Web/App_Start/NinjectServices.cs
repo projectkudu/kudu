@@ -295,6 +295,7 @@ namespace Kudu.Services.Web.App_Start
 
             MigrateSite(environment, noContextDeploymentsSettingsManager);
             RemoveOldTracePath(environment);
+            RemoveTempFileFromUserDrive(environment);
 
             // Temporary fix for https://github.com/npm/npm/issues/5905
             EnsureNpmGlobalDirectory();
@@ -488,6 +489,11 @@ namespace Kudu.Services.Web.App_Start
         private static void RemoveOldTracePath(IEnvironment environment)
         {
             FileSystemHelpers.DeleteDirectorySafe(Path.Combine(environment.LogFilesPath, "Git"), ignoreErrors: true);
+        }
+
+        private static void RemoveTempFileFromUserDrive(IEnvironment environment)
+        {
+            FileSystemHelpers.DeleteDirectorySafe(Path.Combine(environment.RootPath, "data", "Temp"), ignoreErrors: true);
         }
 
         // Perform migration tasks to deal with legacy sites that had different file layout

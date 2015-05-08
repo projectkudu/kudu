@@ -85,10 +85,6 @@ namespace Kudu.Core.SiteExtensions
             var downloadResource = await srcRepo.GetResourceAndValidateAsync<DownloadResource>();
             using (Stream packageStream = await srcRepo.GetPackageStream(identity))
             {
-                WriteStreamToFile(packageStream, pathToLocalCopyOfNupkg);
-                // set position back to the head of stream
-                packageStream.Position = 0;
-
                 using (ZipFile zipFile = ZipFile.Read(packageStream))
                 {
                     // we only care about stuff under "content" folder
@@ -105,6 +101,12 @@ namespace Kudu.Core.SiteExtensions
                         }
                     }
                 }
+
+                // set position back to the head of stream
+                packageStream.Position = 0;
+
+                // save a copy of the nupkg at last
+                WriteStreamToFile(packageStream, pathToLocalCopyOfNupkg);                
             }
         }
 

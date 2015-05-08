@@ -84,8 +84,8 @@ namespace Kudu.Services.SiteExtensions
 
                 if (string.Equals(Constants.SiteExtensionOperationInstall, armSettings.Operation, StringComparison.OrdinalIgnoreCase))
                 {
-                    var installationLock = SiteExtensionInstallationLock.CreateLock(_environment.SiteExtensionSettingsPath, id);
-                    if (!installationLock.IsHeld
+                    bool isInstallationLockHeld = IsInstallationLockHeldSafeCheck(id);
+                    if (!isInstallationLockHeld
                         && string.Equals(Constants.SiteExtensionProvisioningStateSucceeded, armSettings.ProvisioningState, StringComparison.OrdinalIgnoreCase))
                     {
                         tracer.Trace("Package {0} was just installed.", id);
@@ -140,7 +140,7 @@ namespace Kudu.Services.SiteExtensions
                             }
                         }
                     }
-                    else if (!installationLock.IsHeld && !armSettings.IsTerminalStatus())
+                    else if (!isInstallationLockHeld && !armSettings.IsTerminalStatus())
                     {
                         // no background thread is working on instalation
                         // app-pool must be recycled
@@ -212,8 +212,8 @@ namespace Kudu.Services.SiteExtensions
         {
             var startTime = DateTime.UtcNow;
             var tracer = _traceFactory.GetTracer();
-            var installationLock = SiteExtensionInstallationLock.CreateLock(_environment.SiteExtensionSettingsPath, id);
-            if (installationLock.IsHeld)
+
+            if (IsInstallationLockHeldSafeCheck(id))
             {
                 tracer.Trace("{0} is installing with another request, reject current request with Conflict status.", id);
                 throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.Conflict, id));
@@ -315,6 +315,7 @@ namespace Kudu.Services.SiteExtensions
         public async Task<HttpResponseMessage> UninstallExtension(string id)
         {
             var startTime = DateTime.UtcNow;
+            var tracer = _traceFactory.GetTracer();
             try
             {
                 HttpResponseMessage response = null;
@@ -336,7 +337,7 @@ namespace Kudu.Services.SiteExtensions
                     response = Request.CreateResponse(HttpStatusCode.OK, isUninstalled);
                 }
 
-                LogEndEvent(id, (DateTime.UtcNow - startTime), _traceFactory.GetTracer(), defaultResult: Constants.SiteExtensionProvisioningStateSucceeded);
+                LogEndEvent(id, (DateTime.UtcNow - startTime), tracer, defaultResult: Constants.SiteExtensionProvisioningStateSucceeded);
                 return response;
             }
             catch (DirectoryNotFoundException ex)
@@ -348,6 +349,8 @@ namespace Kudu.Services.SiteExtensions
                         result: Constants.SiteExtensionProvisioningStateFailed,
                         message: null,
                         trace: false);
+
+                tracer.TraceError(ex, "Failed to uninstall {0}", id);
                 throw new HttpResponseException(Request.CreateErrorResponse(HttpStatusCode.NotFound, ex));
             }
             catch (Exception ex)
@@ -359,6 +362,8 @@ namespace Kudu.Services.SiteExtensions
                         result: Constants.SiteExtensionProvisioningStateFailed,
                         message: null,
                         trace: false);
+
+                tracer.TraceError(ex, "Failed to uninstall {0}", id);
                 throw ex;
             }
         }
@@ -435,6 +440,23 @@ namespace Kudu.Services.SiteExtensions
                 }, TimeSpan.FromSeconds(5));
 
                 return islocked && isAnyUpdate;
+            }
+        }
+
+        private bool IsInstallationLockHeldSafeCheck(string id)
+        {
+            SiteExtensionInstallationLock installationLock = null;
+            try
+            {
+                installationLock = SiteExtensionInstallationLock.CreateLock(_environment.SiteExtensionSettingsPath, id);
+                return installationLock.IsHeld;
+            }
+            finally
+            {
+                if (installationLock != null)
+                {
+                    installationLock.Release();
+                }
             }
         }
     }

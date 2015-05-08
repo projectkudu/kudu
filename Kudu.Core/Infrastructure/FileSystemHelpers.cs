@@ -35,6 +35,31 @@ namespace Kudu.Core.Infrastructure
             return path;
         }
 
+        public static void MoveDirectory(string sourceDirName, string destDirName)
+        {
+            // Instance.Directory.Move will result in access denied sometime. Do it ourself!
+
+            EnsureDirectory(destDirName);
+
+            string[] files = Instance.Directory.GetFiles(sourceDirName);
+            string[] dirs = Instance.Directory.GetDirectories(sourceDirName);
+
+            foreach (var filePath in files)
+            {
+                var fi = new FileInfo(filePath);
+                MoveFile(filePath, Path.Combine(destDirName, fi.Name));
+            }
+
+            foreach (var dirPath in dirs)
+            {
+                var di = new DirectoryInfo(dirPath);
+                MoveDirectory(dirPath, Path.Combine(destDirName, di.Name));
+                Instance.Directory.Delete(dirPath, false);
+            }
+
+            Instance.Directory.Delete(sourceDirName, false);
+        }
+
         public static bool FileExists(string path)
         {
             return Instance.File.Exists(path);
