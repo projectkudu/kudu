@@ -44,10 +44,16 @@ namespace Kudu.Services.ServiceHookHandlers
         protected override GitDeploymentInfo GetDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch)
         {
             var repository = payload.Value<JObject>("repository");
+            if (repository == null)
+            {
+                // doesn't look like GitlabHQ
+                return null;
+            }
+
             var userid = payload.Value<int?>("user_id");
             var username = payload.Value<string>("user_name");
             var url = repository.Value<string>("url");
-            if (repository == null || userid == null || username == null || url == null)
+            if (userid == null || username == null || url == null)
             {
                 // doesn't look like GitlabHQ
                 return null;
