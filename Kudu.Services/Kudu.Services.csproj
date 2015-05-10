@@ -136,6 +136,7 @@
     <Compile Include="ServiceHookHandlers\IServiceHookHandler.cs" />
     <Compile Include="ServiceHookHandlers\BitbucketHandler.cs" />
     <Compile Include="ServiceHookHandlers\GitHubHandler.cs" />
+    <Compile Include="ServiceHookHandlers\VSOHandler.cs" />
     <Compile Include="GitServer\UploadPackHandler.cs" />
     <Compile Include="Infrastructure\ShutdownDetector.cs" />
     <Compile Include="Infrastructure\DelegatingStream.cs" />

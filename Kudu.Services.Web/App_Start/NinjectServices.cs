@@ -285,6 +285,7 @@ namespace Kudu.Services.Web.App_Start
             kernel.Bind<IServiceHookHandler>().To<GitlabHqHandler>().InRequestScope();
             kernel.Bind<IServiceHookHandler>().To<GitHubCompatHandler>().InRequestScope();
             kernel.Bind<IServiceHookHandler>().To<KilnHgHandler>().InRequestScope();
+            kernel.Bind<IServiceHookHandler>().To<VSOHandler>().InRequestScope();
 
             // SiteExtensions
             kernel.Bind<ISiteExtensionManager>().To<SiteExtensionManager>().InRequestScope();

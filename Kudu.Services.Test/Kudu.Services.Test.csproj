@@ -90,10 +90,12 @@
     <Compile Include="TestMessageHandler.cs" />
     <Compile Include="VfsControllerFacts.cs" />
     <Compile Include="ZipArchiveExtensionFacts.cs" />
+    <Compile Include="VSOHandlerFacts.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
+    <EmbeddedResource Include="vsopayload.json" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Kudu.Contracts\Kudu.Contracts.csproj">
