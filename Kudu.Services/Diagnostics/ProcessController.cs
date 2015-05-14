@@ -398,15 +398,21 @@ namespace Kudu.Services.Performance
                 info.TimeStamp = DateTime.UtcNow;
                 info.EnvironmentVariables = SafeGetValue(process.GetEnvironmentVariables, null);
                 info.CommandLine = SafeGetValue(process.GetCommandLine, null);
-                if (info.EnvironmentVariables != null)
-                {
-                    info.IsScmSite = SafeGetValue(() => ProcessExtensions.GetIsScmSite(info.EnvironmentVariables), false);
-                    info.IsWebJob = SafeGetValue(() => ProcessExtensions.GetIsWebJob(info.EnvironmentVariables), false);
-                    info.Description = SafeGetValue(() => ProcessExtensions.GetDescription(info.EnvironmentVariables), null);
-                }
+
+                SetEnvironmentInfo(info);
             }
 
             return info;
+        }
+
+        internal void SetEnvironmentInfo(ProcessInfo processInfo)
+        {
+            if (processInfo.EnvironmentVariables != null)
+            {
+                processInfo.IsScmSite = SafeGetValue(() => ProcessExtensions.GetIsScmSite(processInfo.EnvironmentVariables), false);
+                processInfo.IsWebJob = SafeGetValue(() => ProcessExtensions.GetIsWebJob(processInfo.EnvironmentVariables), false);
+                processInfo.Description = SafeGetValue(() => ProcessExtensions.GetDescription(processInfo.EnvironmentVariables), null);
+            }
         }
 
         private Process GetProcessById(int id)

@@ -74,6 +74,7 @@
     <Compile Include="CodePlexHandlerFacts.cs" />
     <Compile Include="CustomGitRepositoryHandlerFacts.cs" />
     <Compile Include="DeploymentControllerFacts.cs" />
+    <Compile Include="Diagnostics\ProcessControllerFacts.cs" />
     <Compile Include="DropboxHelperFacts.cs" />
     <Compile Include="FileInfoBase.cs" />
     <Compile Include="FetchHandlerFacts.cs" />

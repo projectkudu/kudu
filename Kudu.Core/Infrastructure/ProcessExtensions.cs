@@ -244,7 +244,14 @@ namespace Kudu.Core.Infrastructure
 
         public static bool GetIsScmSite(Dictionary<string, string> environment)
         {
-            return environment[WellKnownEnvironmentVariables.ApplicationPoolId].StartsWith("~1", StringComparison.OrdinalIgnoreCase);
+            string appPool = null;
+            if (environment.TryGetValue(WellKnownEnvironmentVariables.ApplicationPoolId, out appPool) &&
+                !string.IsNullOrEmpty(appPool))
+            {
+                return appPool.StartsWith("~1", StringComparison.OrdinalIgnoreCase);
+            }
+
+            return false;
         }
 
         public static bool GetIsWebJob(Dictionary<string, string> environment)
@@ -255,7 +262,16 @@ namespace Kudu.Core.Infrastructure
         public static string GetDescription(Dictionary<string, string> environment)
         {
             const string webJobTemplate = "WebJob: {0}, Type: {1}";
-            return String.Format(webJobTemplate, environment[WellKnownEnvironmentVariables.WebJobsName], environment[WellKnownEnvironmentVariables.WebJobsType]);
+
+            string webJobName = null;
+            string webJobType = null;
+            if (environment.TryGetValue(WellKnownEnvironmentVariables.WebJobsName, out webJobName) &&
+                environment.TryGetValue(WellKnownEnvironmentVariables.WebJobsType, out webJobType))
+            {
+                return String.Format(webJobTemplate, webJobName, webJobType);
+            }
+
+            return null;
         }
 
         private static bool TryGetProcessHandle(this Process process, out IntPtr processHandle)
