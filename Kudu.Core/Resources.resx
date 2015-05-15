@@ -216,4 +216,7 @@
   <data name="Log_MaxJobLogLinesReached" xml:space="preserve">
     <value>Reached maximum allowed output lines for this run, to see all of the job's logs you can enable website application diagnostics</value>
   </data>
+  <data name="Warning_EnableAlwaysOn" xml:space="preserve">
+    <value>'Always On' doesn't appear to be enabled for this Web App. To ensure your continuous job doesn't stop running when the SCM host is idle for too long, consider enabling 'Always On' in the configuration settings for your Web App. Note: 'Always On' is available only in Basic, Standard and Premium modes.</value>
+  </data>
 </root>

@@ -32,6 +32,8 @@ namespace Kudu.Core.Jobs
             ResetLockedStatusFile();
         }
 
+        public event Action RolledLogFile;
+
         private void ResetLockedStatusFile()
         {
             try
@@ -154,6 +156,12 @@ namespace Kudu.Core.Jobs
                         string prevLogFilePath = GetLogFilePath(JobPrevLogFileName);
                         FileSystemHelpers.DeleteFileSafe(prevLogFilePath);
                         logFile.MoveTo(prevLogFilePath);
+
+                        Action rollEventHandler = RolledLogFile;
+                        if (rollEventHandler != null)
+                        {
+                            rollEventHandler();
+                        }       
                     }
                 }
             }
