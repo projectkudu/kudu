@@ -11,6 +11,7 @@ namespace Kudu.Core.Jobs
 {
     public class ContinuousJobRunner : BaseJobRunner, IDisposable
     {
+        public const string WebsiteSCMAlwaysOnEnabledKey = "WEBSITE_SCM_ALWAYS_ON_ENABLED";
         private const int DefaultContinuousJobStoppingWaitTimeInSeconds = 5;
 
         private static readonly TimeSpan WarmupTimeSpan = TimeSpan.FromMinutes(2);
@@ -21,11 +22,13 @@ namespace Kudu.Core.Jobs
         private Thread _continuousJobThread;
         private ContinuousJobLogger _continuousJobLogger;
         private readonly string _disableFilePath;
+        private bool _alwaysOnWarningLogged;
 
         public ContinuousJobRunner(ContinuousJob continuousJob, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
             : base(continuousJob.Name, Constants.ContinuousPath, environment, settings, traceFactory, analytics)
         {
             _continuousJobLogger = new ContinuousJobLogger(continuousJob.Name, Environment, TraceFactory);
+            _continuousJobLogger.RolledLogFile += OnLogFileRolled;
 
             _disableFilePath = Path.Combine(continuousJob.JobBinariesRootPath, "disable.job");
 
@@ -54,7 +57,6 @@ namespace Kudu.Core.Jobs
         private void StartJob(ContinuousJob continuousJob)
         {
             // Do not go further if already started or job is disabled
-
             if (IsDisabled)
             {
                 UpdateStatusIfChanged(ContinuousJobStatus.Stopped);
@@ -67,6 +69,8 @@ namespace Kudu.Core.Jobs
             }
 
             _continuousJobLogger.ReportStatus(ContinuousJobStatus.Starting);
+
+            CheckAlwaysOn();
 
             _continuousJobThread = new Thread(() =>
             {
@@ -121,6 +125,45 @@ namespace Kudu.Core.Jobs
             });
 
             _continuousJobThread.Start();
+        }
+
+        /// <summary>
+        /// Always On is considered disabled IFF the environment setting is there
+        /// and is set to 0.
+        /// </summary>
+        internal static bool AlwaysOnNotEnabled()
+        {
+            string value = System.Environment.GetEnvironmentVariable(WebsiteSCMAlwaysOnEnabledKey);
+            if (value == null)
+            {
+                // taking into account Non-Azure scenarios as well, where the setting
+                // won't be there
+                return false;
+            }
+            return string.Compare("0", value, StringComparison.OrdinalIgnoreCase) == 0;
+        }
+
+        /// <summary>
+        /// If Always On is not enabled, log a warning to the job log on startup.
+        /// </summary>
+        internal void CheckAlwaysOn()
+        {
+            if (AlwaysOnNotEnabled() && !_alwaysOnWarningLogged)
+            {
+                _continuousJobLogger.LogWarning(Resources.Warning_EnableAlwaysOn);
+
+                // we don't want to pollute the logs with this
+                _alwaysOnWarningLogged = true;
+            }
+        }
+
+        internal void OnLogFileRolled()
+        {
+            // We only want to log the warning once per log file. When
+            // we move to a new log file, we want to write the warning
+            // if required
+            _alwaysOnWarningLogged = false;
+            CheckAlwaysOn();
         }
 
         private void LogStillRunning(object state)
