@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Cache;
 using System.Net.Http;
@@ -52,7 +54,7 @@ namespace Kudu.TestHarness
                         return response;
                     }
 
-                    throw new Exception(string.Format("Mismatch response status {0} != {1}", statusCode, response.StatusCode));
+                    throw new Exception(string.Format("Mismatch response status {0} != {1}, IsApplicationError: {2}", statusCode, response.StatusCode, IsApplicationError(response)));
                 }
                 catch (Exception ex)
                 {
@@ -72,6 +74,14 @@ namespace Kudu.TestHarness
                     throw new Exception(message, lastException);
                 }
             }
+        }
+
+        // this targets Azure env in order to distinguish between Azure or Application error.
+        public static bool IsApplicationError(HttpResponseMessage response)
+        {
+            IEnumerable<string> values;
+            return response.Headers.TryGetValues("X-Powered-By", out values)
+                && values.Contains("ASP.NET");
         }
     }
 }
