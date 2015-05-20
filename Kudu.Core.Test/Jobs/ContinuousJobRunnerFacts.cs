@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
@@ -13,7 +14,7 @@ using Xunit;
 
 namespace Kudu.Core.Test.Jobs
 {
-    public class ContinuousJobRunnerFacts
+    public class ContinuousJobRunnerFacts : IDisposable
     {
         private ContinuousJob _job;
         private ContinuousJobRunner _runner;
@@ -134,6 +135,14 @@ namespace Kudu.Core.Test.Jobs
 
             string expectedWarning = "SYS WARN] " + Resources.Warning_EnableAlwaysOn;
             Assert.Equal(1, logEntries.Count(p => p.Trim().EndsWith(expectedWarning)));
+        }
+
+        public void Dispose()
+        {
+            if (_runner != null)
+            {
+                _runner.Dispose();
+            }
         }
     }
 }
