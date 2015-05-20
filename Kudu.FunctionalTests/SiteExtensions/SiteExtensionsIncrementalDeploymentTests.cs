@@ -63,5 +63,79 @@ namespace Kudu.FunctionalTests.SiteExtensions
                 Assert.Equal(HttpStatusCode.NotFound, responseMessage.StatusCode);
             });
         }
+
+        /// <summary>
+        /// <para>Test package that are not zip by nuget tool</para>
+        /// <para>Differences are, package zip by nuget tool will not include 'folder', others might</para>
+        /// </summary>
+        [Fact]
+        public async Task CanInstallAndUpdateWithAbnormalPackage()
+        {
+            const string appName = "IncrementalDeploymentWithComplexPackageTests";
+            const string packageId = "microsoft.com.azuremediaservicesconnector";
+            const string packageOldVersion = "0.1.1";
+            const string packageNewerVersion = "0.1.3";
+            const string packageLatestVersion = "0.1.4";
+            const string externalFeed = "https://www.myget.org/F/simplesvc/";
+
+            await ApplicationManager.RunAsync(appName, async appManager =>
+            {
+                var manager = appManager.SiteExtensionManager;
+                await SiteExtensionApiFacts.CleanSiteExtensions(manager);
+
+                TestTracer.Trace("Perform InstallExtension with id '{0}', version '{1}' from '{2}'", packageId, packageOldVersion, externalFeed);
+                HttpResponseMessage responseMessage = await manager.InstallExtension(packageId, packageOldVersion, externalFeed, SiteExtensionInfo.SiteExtensionType.WebRoot);
+                Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);
+
+                HttpClient client = new HttpClient();
+                TestTracer.Trace("Package is installed to wwwroot, perform get to verify content.");
+
+                TestTracer.Trace("Should see web.config.txt");
+                responseMessage = await client.GetAsync(appManager.SiteUrl + "web.config.txt");
+                Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);
+
+                TestTracer.Trace(@"Should see NewFolder/NewFile.txt");
+                responseMessage = await client.GetAsync(appManager.SiteUrl + @"NewFolder/NewFile.txt");
+                Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);
+
+                TestTracer.Trace("Perform InstallExtension with id '{0}', version '{1}' from '{2}'", packageId, packageNewerVersion, externalFeed);
+                responseMessage = await manager.InstallExtension(packageId, packageNewerVersion, externalFeed, SiteExtensionInfo.SiteExtensionType.WebRoot);
+
+                TestTracer.Trace(@"Should NOT see web.config.txt");
+                responseMessage = await client.GetAsync(appManager.SiteUrl + "web.config.txt");
+                Assert.Equal(HttpStatusCode.NotFound, responseMessage.StatusCode);
+
+                TestTracer.Trace(@"Should NOT see NewFolder/NewFile.txt");
+                responseMessage = await client.GetAsync(appManager.SiteUrl + @"NewFolder/NewFile.txt");
+                Assert.Equal(HttpStatusCode.NotFound, responseMessage.StatusCode);
+
+                TestTracer.Trace(@"Should see metadata/UIDefinition.txt");
+                responseMessage = await client.GetAsync(appManager.SiteUrl + @"metadata/UIDefinition.txt");
+                Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);
+
+                TestTracer.Trace("Perform InstallExtension with id '{0}', version '{1}' from '{2}'", packageId, packageLatestVersion, externalFeed);
+                responseMessage = await manager.InstallExtension(packageId, packageLatestVersion, externalFeed, SiteExtensionInfo.SiteExtensionType.WebRoot);
+
+                TestTracer.Trace(@"Should NOT see web.config.txt");
+                responseMessage = await client.GetAsync(appManager.SiteUrl + "web.config.txt");
+                Assert.Equal(HttpStatusCode.NotFound, responseMessage.StatusCode);
+
+                TestTracer.Trace(@"Should NOT see NewFolder/NewFile.txt");
+                responseMessage = await client.GetAsync(appManager.SiteUrl + @"NewFolder/NewFile.txt");
+                Assert.Equal(HttpStatusCode.NotFound, responseMessage.StatusCode);
+
+                TestTracer.Trace(@"Should NOT see metadata/UIDefinition.txt");
+                responseMessage = await client.GetAsync(appManager.SiteUrl + @"metadata/UIDefinition.txt");
+                Assert.Equal(HttpStatusCode.NotFound, responseMessage.StatusCode);
+
+                TestTracer.Trace(@"Should see metadata/NewFile.txt");
+                responseMessage = await client.GetAsync(appManager.SiteUrl + @"metadata/NewFile.txt");
+                Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);
+
+                TestTracer.Trace(@"Should see apiapp.txt");
+                responseMessage = await client.GetAsync(appManager.SiteUrl + @"apiapp.txt");
+                Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);
+            });
+        }
     }
 }

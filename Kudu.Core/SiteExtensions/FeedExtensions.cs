@@ -93,6 +93,13 @@ namespace Kudu.Core.SiteExtensions
                     foreach (var entry in contentEntries)
                     {
                         string fullPath = Path.Combine(destinationFolder, entry.FileName.Substring(substringStartIndex));
+
+                        if (entry.IsDirectory)
+                        {
+                            FileSystemHelpers.EnsureDirectory(fullPath.Replace('/', '\\'));
+                            continue;
+                        }
+
                         FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(fullPath));
                         using (Stream writeStream = FileSystemHelpers.OpenWrite(fullPath))
                         {
@@ -106,7 +113,7 @@ namespace Kudu.Core.SiteExtensions
                 packageStream.Position = 0;
 
                 // save a copy of the nupkg at last
-                WriteStreamToFile(packageStream, pathToLocalCopyOfNupkg);                
+                WriteStreamToFile(packageStream, pathToLocalCopyOfNupkg);
             }
         }
 
@@ -162,7 +169,18 @@ namespace Kudu.Core.SiteExtensions
                     foreach (var entry in filesNeedToUpdate)
                     {
                         string fullPath = Path.Combine(destinationFolder, entry.FileName.Substring(substringStartIndex));
-                        using (tracer.Step("Adding/Updating {0}", fullPath))
+
+                        if (entry.IsDirectory)
+                        {
+                            using (tracer.Step("Ensure directory: {0}", fullPath))
+                            {
+                                FileSystemHelpers.EnsureDirectory(fullPath.Replace('/', '\\'));
+                            }
+
+                            continue;
+                        }
+
+                        using (tracer.Step("Adding/Updating file: {0}", fullPath))
                         {
                             FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(fullPath));
                             using (Stream writeStream = FileSystemHelpers.OpenWrite(fullPath))
@@ -176,7 +194,24 @@ namespace Kudu.Core.SiteExtensions
                     foreach (var entry in indexedOldFiles.Values)
                     {
                         string fullPath = Path.Combine(destinationFolder, entry.FileName.Substring(substringStartIndex));
-                        using (tracer.Step("Deleting {0}", fullPath))
+
+                        if (entry.IsDirectory)
+                        {
+                            // in case the two zip file was created from different tool. some tool will include folder as seperate entry, some don`t.
+                            // to be sure that foder is meant to be deleted, double check there is no files under it
+                            var entryNameInLower = entry.FileName.ToLower();
+                            if (!string.Equals(destinationFolder, fullPath, StringComparison.OrdinalIgnoreCase)
+                                && newContentEntries.FirstOrDefault(e => e.FileName.ToLowerInvariant().StartsWith(entryNameInLower)) == null)
+                            {
+                                using (tracer.Step("Deleting directory: {0}", fullPath))
+                                {
+                                    FileSystemHelpers.DeleteDirectorySafe(fullPath);
+                                }
+                            }
+                            continue;
+                        }
+
+                        using (tracer.Step("Deleting file: {0}", fullPath))
                         {
                             FileSystemHelpers.DeleteFileSafe(fullPath);
                         }
