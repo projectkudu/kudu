@@ -67,6 +67,8 @@ namespace Kudu.TestHarness
 
                 if (retries > 0)
                 {
+                    TestTracer.Trace("retries: {0}, {1}", retries, message);
+
                     await Task.Delay(delayBeforeRetry);
                 }
                 else
