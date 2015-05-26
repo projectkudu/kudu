@@ -175,8 +175,12 @@ namespace Kudu.TestHarness.Xunit
                         reason.AppendLine(String.Join(Environment.NewLine, failed.Messages));
                         reason.AppendLine(String.Join(Environment.NewLine, failed.StackTraces));
 
+                        // xunit does not report output if skipped (ignored) tests.
+                        // put it as reason instead.
+                        reason.AppendLine("====================================================================================");
+                        reason.AppendLine(failed.Output);
+
                         var skipped = new TestSkipped(failed.Test, reason.ToString());
-                        skipped.SetOutput(failed.Output);
                         _innerBus.QueueMessage(skipped.SanitizeXml());
                     }
                     else
