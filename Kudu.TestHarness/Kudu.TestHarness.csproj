@@ -15,6 +15,8 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\DotNetZip.1.9.1.8\lib\net20\Ionic.Zip.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.Build.Framework" />
+    <Reference Include="Microsoft.Build.Utilities.v4.0" />
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Newtonsoft.Json.6.0.6\lib\net45\Newtonsoft.Json.dll</HintPath>
@@ -52,6 +54,14 @@
     <Reference Include="xunit.execution.desktop, Version=2.0.0.2929, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
       <HintPath>..\packages\xunit.extensibility.execution.2.0.0\lib\net45\xunit.execution.desktop.dll</HintPath>
     </Reference>
+    <Reference Include="xunit.runner.msbuild, Version=99.99.99.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\xunit.runner.msbuild.2.0.0\build\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.runner.msbuild.dll</HintPath>
+    </Reference>
+    <Reference Include="xunit.runner.utility.desktop, Version=99.99.99.0, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\xunit.runner.msbuild.2.0.0\build\portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS\xunit.runner.utility.desktop.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AppDomainHelper.cs" />
@@ -75,6 +85,8 @@
     <Compile Include="RemoteLogStreamManager.cs" />
     <Compile Include="TestRepository.cs" />
     <Compile Include="TestRepositoryExtensions.cs" />
+    <Compile Include="Xunit\KuduXunitMSBuildRunner.cs" />
+    <Compile Include="Xunit\KuduXunitTeamCityVisitor.cs" />
     <Compile Include="Xunit\KuduXunitTestRunnerUtils.cs" />
     <Compile Include="Xunit\KuduXunitTheoryTestCaseRunner.cs" />
     <Compile Include="Xunit\KuduXunitTheoryTestCase.cs" />

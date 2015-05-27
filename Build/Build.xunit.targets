@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-    <PropertyGroup>
-        <PackagesDir>$(ProjectRoot)..\packages</PackagesDir>
-    </PropertyGroup>
     <ItemGroup>
-        <XunitAssembly Include="$(PackagesDir)\xunit.runner.msbuild.*\build\*\xunit.runner.msbuild.dll" />
+        <XunitAssembly Include="..\Kudu.TestHarness\bin\$(Configuration)\Kudu.TestHarness.dll" />
     </ItemGroup>    
 
-    <UsingTask AssemblyFile="@(XunitAssembly)" TaskName="Xunit.Runner.MSBuild.xunit" />
+    <UsingTask AssemblyFile="@(XunitAssembly)" TaskName="Kudu.TestHarness.Xunit.xunit" />
     
     <Target Name="_RunTests">
         <xunit Verbose="true" Assemblies="$(Assembly)" Xml="$(Xml)" />
