@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Web;
 using Kudu.Contracts.Tracing;
@@ -19,9 +20,14 @@ namespace Kudu.Services.Web.Tracing
         private static readonly object _stepKey = new object();
         private static int _traceStartup;
         private static DateTime _lastRequestDateTime;
-        private static string[] _rbacWhiteListPaths = new[] 
+
+        // (/|$) means either "/" or end-of-line
+        // {0,2} means repeat pattern 0 to 2 times
+        private static Regex[] _rbacWhiteListPaths = new[] 
         {
-            "/api/siteextensions"
+            new Regex(@"^/api/siteextensions(/|$)", RegexOptions.IgnoreCase),
+            new Regex(@"^/api/deployments((/|$)([^/]*|$)){0,2}(/|$)$", RegexOptions.IgnoreCase),
+            new Regex(@"^/api/(processes|webjobs|triggeredwebjobs|continuouswebjobs)((/|$)([^/]*|$)){0,1}(/|$)$", RegexOptions.IgnoreCase),
         };
 
         public static TimeSpan UpTime
@@ -106,7 +112,7 @@ namespace Kudu.Services.Web.Tracing
 
         public static bool IsRbacWhiteListPaths(string path)
         {
-            return _rbacWhiteListPaths.Any(p => path.StartsWith(p, StringComparison.OrdinalIgnoreCase));
+            return _rbacWhiteListPaths.Any(r => r.IsMatch(path));
         }
 
         private static void OnEndRequest(object sender, EventArgs e)
