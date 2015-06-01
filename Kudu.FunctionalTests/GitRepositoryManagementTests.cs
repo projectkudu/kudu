@@ -12,6 +12,7 @@ using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.SourceControl;
 using Kudu.Core.Deployment;
+using Kudu.Core.Infrastructure;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.TestHarness;
 using Kudu.TestHarness.Xunit;
@@ -1143,8 +1144,16 @@ project = myproject");
 
                     // This HangProcess repo spew out activity at 2s, 4s, 6s and 30s respectively
                     // we should receive the one < 10s and terminate otherwise.
-                    GitDeploymentResult result = appManager.GitDeploy(repo.PhysicalPath, retries: 1);
-                    string trace = result.GitTrace;
+                    string trace;
+                    try
+                    {
+                        GitDeploymentResult result = appManager.GitDeploy(repo.PhysicalPath, retries: 1);
+                        trace = result.GitTrace;
+                    }
+                    catch (CommandLineException ex)
+                    {
+                        trace = ex.Message;
+                    }
 
                     Assert.Contains("remote: Sleep(2000)", trace);
                     Assert.Contains("remote: Sleep(4000)", trace);
