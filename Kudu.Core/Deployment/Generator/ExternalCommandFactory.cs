@@ -93,14 +93,14 @@ namespace Kudu.Core.Deployment.Generator
             };
 
             toolsPaths.AddRange(PathUtility.ResolveNodeNpmPaths());
+            toolsPaths.Add(PathUtility.ResolveNpmGlobalPrefix());
+
             toolsPaths.AddRange(new[]
             {
                 PathUtility.ResolveBowerPath(),
                 PathUtility.ResolveGruntPath(),
                 PathUtility.ResolveGulpPath()
             }.Where(p => !String.IsNullOrEmpty(p)).Select(Path.GetDirectoryName));
-
-            toolsPaths.Add(PathUtility.ResolveNpmGlobalPrefix());
 
             exe.PrependToPath(toolsPaths);
             return exe;
