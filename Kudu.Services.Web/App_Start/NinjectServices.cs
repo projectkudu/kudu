@@ -300,6 +300,7 @@ namespace Kudu.Services.Web.App_Start
 
             // Temporary fix for https://github.com/npm/npm/issues/5905
             EnsureNpmGlobalDirectory();
+            EnsureUserProfileDirectory();
 
             RegisterRoutes(kernel, RouteTable.Routes);
 
@@ -550,6 +551,20 @@ namespace Kudu.Services.Web.App_Start
                 // this is to work around below issue with the very first npm install 
                 // npm ERR! uid must be an unsigned int
                 FileSystemHelpers.EnsureDirectory(Path.Combine(appData, "npm-cache"));
+            }
+            catch
+            {
+                // no op
+            }
+        }
+
+        private static void EnsureUserProfileDirectory()
+        {
+            try
+            {
+                //this is for gulp 3.9.0 which fails if UserProfile is not there
+                string userProfile = System.Environment.GetEnvironmentVariable("USERPROFILE");
+                FileSystemHelpers.EnsureDirectory(userProfile);
             }
             catch
             {
