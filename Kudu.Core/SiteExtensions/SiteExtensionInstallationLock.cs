@@ -24,7 +24,7 @@ namespace Kudu.Core.SiteExtensions
             try
             {
                 string folder = Path.GetDirectoryName(_path);
-                if (FileSystemHelpers.GetFiles(folder, "*").Length == 0)
+                if (FileSystemHelpers.DirectoryExists(folder) && FileSystemHelpers.GetFiles(folder, "*").Length == 0)
                 {
                     FileSystemHelpers.DeleteDirectorySafe(folder);
                 }
@@ -39,11 +39,16 @@ namespace Kudu.Core.SiteExtensions
         /// <para>Will create a file lock like this: {rootPath}/{site extension id}/install.lock</para>
         /// <para>e.g 'D:\home\site\siteextension\filecounter\install.lock'</para>
         /// </summary>
-        public static SiteExtensionInstallationLock CreateLock(string rootPath, string id)
+        public static SiteExtensionInstallationLock CreateLock(string rootPath, string id, bool enableAsync = false)
         {
             string lockFilePath = Path.Combine(rootPath, id, LockNameSuffix);
             var installationLock = new SiteExtensionInstallationLock(lockFilePath);
-            installationLock.InitializeAsyncLocks();
+
+            if (enableAsync)
+            {
+                installationLock.InitializeAsyncLocks();
+            }
+
             return installationLock;
         }
 

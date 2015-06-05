@@ -299,7 +299,7 @@ namespace Kudu.Core.SiteExtensions
         {
             try
             {
-                var installationLock = SiteExtensionInstallationLock.CreateLock(_environment.SiteExtensionSettingsPath, id);
+                var installationLock = SiteExtensionInstallationLock.CreateLock(_environment.SiteExtensionSettingsPath, id, enableAsync: true);
                 // hold on to lock till action complete (success or fail)
                 return await installationLock.LockOperationAsync<SiteExtensionInfo>(async () =>
                 {
