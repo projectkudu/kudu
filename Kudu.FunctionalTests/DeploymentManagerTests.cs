@@ -1113,9 +1113,9 @@ namespace Kudu.FunctionalTests
             yield return new RepoInvalidInfo("http://google.com/", new [] {"abort: 'http://www.google.com/' does not appear to be an hg repository"}, "hg");
             yield return new RepoInvalidInfo("InvalidScheme://abcdefghigkl.com/", new [] {"fatal: Unable to find remote helper for 'InvalidScheme'"}, null);
             yield return new RepoInvalidInfo("InvalidScheme://abcdefghigkl.com/", new [] {"abort: repository InvalidScheme://abcdefghigkl.com/ not found"}, "hg");
-            yield return new RepoInvalidInfo("http://abcdefghigkl.com/", new [] {"Could.*n.*t resolve host.*abcdefghigkl.com", "LibGit2SharpException: failed to send request: The server name or address could not be resolved"}, null);
+            yield return new RepoInvalidInfo("http://abcdefghigkl.com/", new [] {"Could.*n.*t resolve host.*abcdefghigkl.com", "LibGit2SharpException: failed to send request: The server name or address could not be resolved", "LibGit2SharpException: Request failed with status code: 502"}, null);
             yield return new RepoInvalidInfo("http://abcdefghigkl.com/", new [] {"abort: error: getaddrinfo failed.*hg.exe pull"}, "hg");
-            yield return new RepoInvalidInfo("https://abcdefghigkl.com/", new [] {"Could.*n.*t resolve host.*abcdefghigkl.com", "LibGit2SharpException: failed to send request: The server name or address could not be resolved"}, null);
+            yield return new RepoInvalidInfo("https://abcdefghigkl.com/", new[] { "Could.*n.*t resolve host.*abcdefghigkl.com", "LibGit2SharpException: failed to send request: The server name or address could not be resolved", "LibGit2SharpException: Request failed with status code: 502"}, null);
             yield return new RepoInvalidInfo("https://abcdefghigkl.com/", new [] {"abort: error: getaddrinfo failed.*hg.exe pull"}, "hg");
             yield return new RepoInvalidInfo("git@abcdefghigkl.com:Invalid/Invalid.git", new [] {"no address associated with name"}, null);
             yield return new RepoInvalidInfo("ssh://hg@abcdefghigkl.com/Invalid/Invalid.git", new [] {"abort: no suitable response from remote hg.*hg.exe pull"}, "hg");
