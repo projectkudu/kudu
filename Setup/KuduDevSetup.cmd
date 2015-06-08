@@ -129,33 +129,6 @@ xcopy node.exe %node0105Path% /E /H /R /V /C /Q /Y
 :: clean up
 del node.exe /F /Q
 
-:: *** System.Web.Mvc.dll *** 
-echo Installing System.Web.Mvc.dll 3.0.0.0 to GAC
-set gacUtilExe="%PROGRAMFILES(X86)%\Microsoft SDKs\Windows\v8.1A\bin\NETFX 4.5.1 Tools\x64\gacutil.exe"
-if not exist %gacUtilExe% (
-    set gacUtilExe="%PROGRAMFILES(X86)%\Microsoft SDKs\Windows\v8.1A\bin\NETFX 4.5.1 Tools\gacutil.exe"
-) 
-if not exist %gacUtilExe% (
-    set gacUtilExe="%PROGRAMFILES(X86)%\Microsoft SDKs\Windows\v8.0A\bin\NETFX 4.0 Tools\x64\gacutil.exe"
-) 
-if not exist %gacUtilExe% (
-    set gacUtilExe="%PROGRAMFILES(X86)%\Microsoft SDKs\Windows\v8.0A\bin\NETFX 4.0 Tools\gacutil.exe"
-) 
-if not exist %gacUtilExe% (
-    set gacUtilExe="%PROGRAMFILES(X86)%\Microsoft SDKs\Windows\v7.0A\Bin\x64\gacutil.exe"
-) 
-if not exist %gacUtilExe% (
-    set gacUtilExe="%PROGRAMFILES(X86)%\Microsoft SDKs\Windows\v7.0A\Bin\gacutil.exe"
-) 
-if not exist %gacUtilExe% (
-    call :ColorText 0c "Missing gacutil.exe, failed to install ver 3.0.0.0 System.Web.Mvc.dll to your machine"
-)
-
-%curlExe% -S -s -o System.Web.Mvc.dll https://dl.dropboxusercontent.com/u/2209341/System.Web.Mvc.dll
-%gacUtilExe% /i System.Web.Mvc.dll
-:: clean up
-del System.Web.Mvc.dll /F /Q
-
 goto :EOF
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::: AddLegacyDependencies End :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 

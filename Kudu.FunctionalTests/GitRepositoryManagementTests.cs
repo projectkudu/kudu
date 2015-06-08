@@ -1378,8 +1378,7 @@ project = myproject");
         internal void VerifyDeploymentConfiguration(string siteName, string targetProject, string expectedText, DeployStatus expectedStatus = DeployStatus.Success, string expectedLog = null)
         {
             string name = siteName;
-            string cloneUrl = "https://github.com/KuduApps/SpecificDeploymentConfiguration.git";
-            using (var repo = Git.Clone(name, cloneUrl))
+            using (var repo = Git.Clone("SpecificDeploymentConfiguration"))
             {
                 ApplicationManager.Run(name, appManager =>
                 {
