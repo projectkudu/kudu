@@ -109,11 +109,6 @@
     <EmbeddedResource Include="Vfs\DotDeployment.txt" />
     <EmbeddedResource Include="Test-Files\Hg\journal" />
     <EmbeddedResource Include="Test-Files\Hg\requires" />
-    <None Include="ZippedRepositories\Mvc3Application.zip" />
-    <None Include="ZippedRepositories\Mvc3Application_NoSolution.zip" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="ZippedRepositories\repos.txt" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Kudu.Client\Kudu.Client.csproj">
