@@ -19,9 +19,6 @@ namespace Kudu.TestHarness
 
         internal static readonly string TestResultsPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "TestResults"));
 
-        internal static readonly string ZippedRepositoriesDir = "ZippedRepositories";
-        internal static readonly string ZippedWebSitesPath = "ZippedWebSites";
-
         internal static string LocalRepositoriesDir
         {
             get

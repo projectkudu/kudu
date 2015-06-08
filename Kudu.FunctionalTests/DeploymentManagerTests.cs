@@ -259,7 +259,7 @@ namespace Kudu.FunctionalTests
             string repositoryName = "Mvc3Application";
             string appName = "DeploymentApis";
 
-            using (var repo = Git.CreateLocalRepository(repositoryName))
+            using (var repo = Git.Clone(repositoryName))
             {
                 await ApplicationManager.RunAsync(appName, async appManager =>
                 {

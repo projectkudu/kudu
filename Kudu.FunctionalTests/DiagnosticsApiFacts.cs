@@ -29,7 +29,7 @@ namespace Kudu.FunctionalTests
             string repositoryName = "Mvc3Application";
             string appName = "ConstructorTest";
 
-            using (var repo = Git.CreateLocalRepository(repositoryName))
+            using (var repo = Git.Clone(repositoryName))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -141,7 +141,7 @@ namespace Kudu.FunctionalTests
             string repositoryName = "Mvc3Application";
             string appName = "SetGetDeleteValue";
 
-            using (var repo = Git.CreateLocalRepository(repositoryName))
+            using (var repo = Git.Clone(repositoryName))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -201,7 +201,7 @@ namespace Kudu.FunctionalTests
             const string repositoryName = "Mvc3Application";
             const string appName = "DiagnosticsSettingsExpectedValuesReturned";
 
-            using (var repo = Git.CreateLocalRepository(repositoryName))
+            using (var repo = Git.Clone(repositoryName))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {

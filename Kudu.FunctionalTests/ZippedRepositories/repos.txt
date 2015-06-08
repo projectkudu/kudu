@@ -1,2 +1,0 @@
-﻿Mvc3Application.zip  : repository contains a solution with an MVC3 project and corresponding test project. 
-Mvc3Application_NoSolution.zip  : repository contains an MVC3 project without a solution. 

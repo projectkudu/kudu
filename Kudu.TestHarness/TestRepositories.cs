@@ -32,6 +32,7 @@ namespace Kudu.TestHarness
             new TestRepositoryInfo("https://github.com/KuduApps/Html5Test.git",                     "7262300"),
             new TestRepositoryInfo("https://github.com/KuduApps/kuduglob.git",                      "2c84bbe"),
             new TestRepositoryInfo("https://github.com/KuduApps/LogTester.git",                     "f20ab64"),
+            new TestRepositoryInfo("https://github.com/KuduApps/Mvc3Application.git",               "853d564"),
             new TestRepositoryInfo("https://github.com/KuduApps/Mvc3Application_NoSolution.git",    "4e36ca3"),
             new TestRepositoryInfo("https://github.com/KuduApps/Mvc3AppWithTestProject.git",        "5df86e3"),
             new TestRepositoryInfo("https://github.com/KuduApps/MvcApplicationEFSqlCompact.git",    "c2fa9c0"),

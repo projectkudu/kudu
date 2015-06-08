@@ -235,23 +235,6 @@ namespace Kudu.TestHarness
             };
         }
 
-        public static TestRepository CreateLocalRepository(string repositoryName)
-        {
-            string targetPath = Path.Combine(PathHelper.ZippedRepositoriesDir, repositoryName + ".zip");
-
-            // Get the path to the repository
-            string zippedPath = PathHelper.GetPath(targetPath);
-
-            // Local repository path
-            string localRepositoriesDir = Path.Combine(Path.GetDirectoryName(PathHelper.LocalRepositoriesDir), Path.GetRandomFileName());
-            PathHelper.EnsureDirectory(localRepositoriesDir);
-
-            // Unzip it
-            ZipUtils.Unzip(zippedPath, localRepositoriesDir);
-
-            return new TestRepository(Path.Combine(localRepositoriesDir, repositoryName));
-        }
-
         public static string GetRepositoryPath(string repositoryPath)
         {
             if (Path.IsPathRooted(repositoryPath))
@@ -260,19 +243,6 @@ namespace Kudu.TestHarness
             }
 
             return Path.Combine(PathHelper.LocalRepositoriesDir, repositoryPath);
-        }
-
-        private static string ResolveGitPath()
-        {
-            string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
-            string path = Path.Combine(programFiles, "Git", "bin", "git.exe");
-
-            if (!File.Exists(path))
-            {
-                throw new InvalidOperationException("Unable to locate git.exe");
-            }
-
-            return path;
         }
 
         private static Executable GetGitExe(string repositoryPath, IDictionary<string, string> environments = null)

@@ -324,7 +324,7 @@ project = myproject");
             string appName = "PushAppChanges";
             string verificationText = "Welcome to ASP.NET MVC!";
 
-            using (var repo = Git.CreateLocalRepository(repositoryName))
+            using (var repo = Git.Clone(repositoryName))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -355,7 +355,7 @@ project = myproject");
             string appName = "signalroverflow";
             string verificationText = "Welcome to ASP.NET MVC!";
 
-            using (var repo = Git.CreateLocalRepository(repositoryName))
+            using (var repo = Git.Clone(repositoryName))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -381,7 +381,7 @@ project = myproject");
             string repositoryName = "Mvc3Application";
             string appName = "DeletesToRepoForWaps";
 
-            using (var repo = Git.CreateLocalRepository(repositoryName))
+            using (var repo = Git.Clone(repositoryName))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -423,7 +423,7 @@ project = myproject");
             string appName = "PushOverwriteModified";
             string verificationText = "The base color for this template is #5c87b2";
 
-            using (var repo = Git.CreateLocalRepository(repositoryName))
+            using (var repo = Git.Clone(repositoryName))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
@@ -471,7 +471,7 @@ project = myproject");
             string appName = "GoBackOverwriteModified";
             string verificationText = "The base color for this template is #5c87b2";
 
-            using (var repo = Git.CreateLocalRepository(repositoryName))
+            using (var repo = Git.Clone(repositoryName))
             {
                 string id = repo.CurrentId;
 
@@ -1015,7 +1015,7 @@ project = myproject");
             string repositoryName = "Mvc3Application";
             string appName = "RsltMaxItemXcldFailed";
 
-            using (var repo = Git.CreateLocalRepository(repositoryName))
+            using (var repo = Git.Clone(repositoryName))
             {
                 ApplicationManager.Run(appName, appManager =>
                 {
