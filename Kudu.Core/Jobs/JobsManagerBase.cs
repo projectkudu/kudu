@@ -56,7 +56,7 @@ namespace Kudu.Core.Jobs
 
         protected ITraceFactory TraceFactory { get; private set; }
 
-        protected string JobsBinariesPath { get; private set; }
+        public string JobsBinariesPath { get; private set; }
 
         protected string JobsDataPath { get; private set; }
 
@@ -362,7 +362,7 @@ namespace Kudu.Core.Jobs
 
         private static string GetJobSettingsPath(DirectoryInfoBase jobDirectory)
         {
-            return Path.Combine(jobDirectory.FullName, "settings.job");
+            return Path.Combine(jobDirectory.FullName, JobSettings.JobSettingsFileName);
         }
 
         protected abstract void UpdateJob(TJob job);

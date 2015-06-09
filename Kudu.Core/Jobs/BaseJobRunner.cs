@@ -181,7 +181,7 @@ namespace Kudu.Core.Jobs
             }
         }
 
-        protected void RunJobInstance(JobBase job, IJobLogger logger, string runId)
+        protected void RunJobInstance(JobBase job, IJobLogger logger, string runId, string trigger)
         {
             string scriptFileName = Path.GetFileName(job.ScriptFilePath);
             string scriptFileFullPath = Path.Combine(WorkingDirectory, job.RunCommand);
@@ -189,7 +189,7 @@ namespace Kudu.Core.Jobs
 
             logger.LogInformation("Run script '{0}' with script host - '{1}'".FormatCurrentCulture(scriptFileName, job.ScriptHost.GetType().Name));
 
-            using (var jobStartedReporter = new JobStartedReporter(_analytics, job, Settings.GetWebSiteSku(), JobDataPath))
+            using (var jobStartedReporter = new JobStartedReporter(_analytics, job, trigger, Settings.GetWebSiteSku(), JobDataPath))
             {
                 try
                 {
@@ -388,6 +388,13 @@ namespace Kudu.Core.Jobs
 
                 // Read app.config
                 string exeFilePath = configFilePath.Substring(0, configFilePath.Length - ".config".Length);
+
+                // Only continue to update config file if the corresponding exe file exists
+                if (!FileSystemHelpers.FileExists(exeFilePath))
+                {
+                    return;
+                }
+
                 Configuration config = ConfigurationManager.OpenExeConfiguration(exeFilePath);
 
                 foreach (var appSetting in settings.AppSettings)
@@ -433,16 +440,18 @@ namespace Kudu.Core.Jobs
 
             private readonly IAnalytics _analytics;
             private readonly JobBase _job;
+            private readonly string _trigger;
             private readonly string _siteMode;
             private readonly string _jobDataPath;
 
             private Timer _timer;
             private int _reported;
 
-            public JobStartedReporter(IAnalytics analytics, JobBase job, string siteMode, string jobDataPath)
+            public JobStartedReporter(IAnalytics analytics, JobBase job, string trigger, string siteMode, string jobDataPath)
             {
                 _analytics = analytics;
                 _job = job;
+                _trigger = trigger;
                 _siteMode = siteMode;
                 _jobDataPath = jobDataPath;
 
@@ -467,7 +476,7 @@ namespace Kudu.Core.Jobs
                         jobType += "/SDK";
                     }
 
-                    _analytics.JobStarted(_job.Name.Fuzz(), scriptFileExtension, jobType, _siteMode, Error);
+                    _analytics.JobStarted(_job.Name.Fuzz(), scriptFileExtension, jobType, _siteMode, Error, _trigger);
                 }
             }
 

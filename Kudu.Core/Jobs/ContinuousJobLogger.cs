@@ -1,34 +1,24 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Abstractions;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Jobs
 {
-    public class ContinuousJobLogger : JobLogger, IDisposable
+    public class ContinuousJobLogger : FilePerJobLogger, IDisposable
     {
-        public const string JobLogFileName = "job_log.txt";
-        public const string JobPrevLogFileName = "job_prev_log.txt";
         public const int MaxContinuousLogFileSize = 1 * 1024 * 1024;
-        public const int MaxConsoleLogLines = 200;
-
-        private readonly string _historyPath;
-        private readonly string _logFilePath;
+        public const string JobLogFileName = "job_log.txt";
 
         private FileStream _lockedStatusFile;
 
         private int _consoleLogLinesCount;
 
         public ContinuousJobLogger(string jobName, IEnvironment environment, ITraceFactory traceFactory)
-            : base(GetStatusFileName(), environment, traceFactory)
+            : base(jobName, Constants.ContinuousPath, GetStatusFileName(), JobLogFileName, environment, traceFactory)
         {
-            _historyPath = Path.Combine(Environment.JobsDataPath, Constants.ContinuousPath, jobName);
-            FileSystemHelpers.EnsureDirectory(_historyPath);
-
             // Lock status file (allowing read and write but not delete) as a way to notify that this status file is valid (shows status of a current working instance)
-            _logFilePath = GetLogFilePath(JobLogFileName);
             ResetLockedStatusFile();
         }
 
@@ -73,35 +63,6 @@ namespace Kudu.Core.Jobs
             return ContinuousJobStatus.FileNamePrefix + InstanceIdUtility.GetShortInstanceId();
         }
 
-        private string GetLogFilePath(string logFileName)
-        {
-            return Path.Combine(_historyPath, logFileName);
-        }
-
-        protected override string HistoryPath
-        {
-            get
-            {
-                FileSystemHelpers.EnsureDirectory(_historyPath);
-                return _historyPath;
-            }
-        }
-
-        public override void LogError(string error)
-        {
-            Log(Level.Err, error, isSystem: true);
-        }
-
-        public override void LogWarning(string warning)
-        {
-            Log(Level.Warn, warning, isSystem: true);
-        }
-
-        public override void LogInformation(string message)
-        {
-            Log(Level.Info, message, isSystem: true);
-        }
-
         public override void LogStandardOutput(string message)
         {
             Trace.TraceInformation(message);
@@ -120,6 +81,15 @@ namespace Kudu.Core.Jobs
             _consoleLogLinesCount = 0;
         }
 
+        protected override void OnRolledLogFile()
+        {
+            Action rollEventHandler = RolledLogFile;
+            if (rollEventHandler != null)
+            {
+                rollEventHandler();
+            }
+        }
+
         private void LogConsole(string message, Level level)
         {
             if (_consoleLogLinesCount < MaxConsoleLogLines)
@@ -131,43 +101,6 @@ namespace Kudu.Core.Jobs
             {
                 _consoleLogLinesCount++;
                 Log(Level.Warn, Resources.Log_MaxJobLogLinesReached, isSystem: false);
-            }
-        }
-
-        private void Log(Level level, string message, bool isSystem)
-        {
-            CleanupLogFileIfNeeded();
-            SafeLogToFile(_logFilePath, GetFormattedMessage(level, message, isSystem));
-        }
-
-        private void CleanupLogFileIfNeeded()
-        {
-            try
-            {
-                FileInfoBase logFile = FileSystemHelpers.FileInfoFromFileName(_logFilePath);
-
-                if (logFile.Length > MaxContinuousLogFileSize)
-                {
-                    // lock file and only allow deleting it
-                    // this is for allowing only the first (instance) trying to roll the log file
-                    using (File.Open(_logFilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.Delete))
-                    {
-                        // roll log file, currently allow only 2 log files to exist at the same time
-                        string prevLogFilePath = GetLogFilePath(JobPrevLogFileName);
-                        FileSystemHelpers.DeleteFileSafe(prevLogFilePath);
-                        logFile.MoveTo(prevLogFilePath);
-
-                        Action rollEventHandler = RolledLogFile;
-                        if (rollEventHandler != null)
-                        {
-                            rollEventHandler();
-                        }       
-                    }
-                }
-            }
-            catch
-            {
-                // best effort for this method
             }
         }
 

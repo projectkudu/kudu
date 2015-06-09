@@ -30,6 +30,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Microsoft.Web.Xdt.2.1.1\lib\net40\Microsoft.Web.XmlTransform.dll</HintPath>
     </Reference>
+    <Reference Include="NCrontab">
+      <HintPath>..\packages\ncrontab.2.0.0\lib\net20\NCrontab.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Newtonsoft.Json.6.0.6\lib\net45\Newtonsoft.Json.dll</HintPath>
@@ -153,16 +156,19 @@
     <Compile Include="Infrastructure\ZipArchiveExtensions.cs" />
     <Compile Include="Jobs\ContinuousJobLogger.cs" />
     <Compile Include="Jobs\ContinuousJobRunner.cs" />
+    <Compile Include="Jobs\JobsFileWatcher.cs" />
     <Compile Include="Jobs\ContinuousJobsManager.cs" />
     <Compile Include="Jobs\BaseJobRunner.cs" />
     <Compile Include="Jobs\BashScriptHost.cs" />
     <Compile Include="Jobs\ContinuousJobStatus.cs" />
+    <Compile Include="Jobs\FilePerJobLogger.cs" />
     <Compile Include="Jobs\IJobLogger.cs" />
     <Compile Include="Jobs\IJobStatus.cs" />
     <Compile Include="Jobs\JobLogger.cs" />
     <Compile Include="Jobs\JobNotFoundException.cs" />
     <Compile Include="Jobs\JobStatus.cs" />
     <Compile Include="Jobs\PowerShellScriptHost.cs" />
+    <Compile Include="Jobs\Schedule.cs" />
     <Compile Include="Jobs\TriggeredJobRunLogger.cs" />
     <Compile Include="Jobs\TriggeredJobRunner.cs" />
     <Compile Include="Jobs\JobsManagerBase.cs" />
@@ -170,10 +176,13 @@
     <Compile Include="Jobs\PhpScriptHost.cs" />
     <Compile Include="Jobs\PythonScriptHost.cs" />
     <Compile Include="Jobs\ScriptHostBase.cs" />
+    <Compile Include="Jobs\TriggeredJobSchedule.cs" />
+    <Compile Include="Jobs\TriggeredJobSchedulerLogger.cs" />
     <Compile Include="Jobs\TriggeredJobsManager.cs" />
     <Compile Include="Jobs\TriggeredJobStatus.cs" />
     <Compile Include="Jobs\WebJobsStoppedException.cs" />
     <Compile Include="Jobs\WindowsScriptHost.cs" />
+    <Compile Include="Jobs\TriggeredJobsScheduler.cs" />
     <Compile Include="Settings\DiagnosticsSettingsManager.cs" />
     <Compile Include="SiteExtensions\DummyReference.cs" />
     <Compile Include="SiteExtensions\FeedExtensions.cs" />

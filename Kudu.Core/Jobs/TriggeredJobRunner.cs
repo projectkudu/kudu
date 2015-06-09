@@ -41,7 +41,7 @@ namespace Kudu.Core.Jobs
             get { return Settings.GetWebJobsIdleTimeout(); }
         }
 
-        public void StartJobRun(TriggeredJob triggeredJob, JobSettings jobSettings, Action<string, string> reportAction)
+        public void StartJobRun(TriggeredJob triggeredJob, JobSettings jobSettings, string trigger, Action<string, string> reportAction)
         {
             JobSettings = jobSettings;
 
@@ -55,7 +55,7 @@ namespace Kudu.Core.Jobs
                 throw new ConflictException();
             }
 
-            TriggeredJobRunLogger logger = TriggeredJobRunLogger.LogNewRun(triggeredJob, Environment, TraceFactory, Settings);
+            TriggeredJobRunLogger logger = TriggeredJobRunLogger.LogNewRun(triggeredJob, trigger, Environment, TraceFactory, Settings);
             Debug.Assert(logger != null);
 
             try
@@ -73,7 +73,7 @@ namespace Kudu.Core.Jobs
                     try
                     {
                         InitializeJobInstance(triggeredJob, logger);
-                        RunJobInstance(triggeredJob, logger, logger.Id);
+                        RunJobInstance(triggeredJob, logger, logger.Id, trigger);
                     }
                     catch (Exception ex)
                     {

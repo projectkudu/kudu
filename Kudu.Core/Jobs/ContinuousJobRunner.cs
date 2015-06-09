@@ -93,7 +93,7 @@ namespace Kudu.Core.Jobs
                         using (new Timer(LogStillRunning, null, TimeSpan.FromHours(1), TimeSpan.FromHours(12)))
                         {
                             InitializeJobInstance(continuousJob, _continuousJobLogger);
-                            RunJobInstance(continuousJob, _continuousJobLogger, String.Empty);
+                            RunJobInstance(continuousJob, _continuousJobLogger, String.Empty, String.Empty);
                         }
 
                         if (_started == 1 && !IsDisabled)

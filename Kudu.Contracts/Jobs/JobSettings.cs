@@ -5,6 +5,8 @@ namespace Kudu.Contracts.Jobs
 {
     public class JobSettings : Dictionary<string, object>
     {
+        public const string JobSettingsFileName = "settings.job";
+
         public T GetSetting<T>(string key, T defaultValue = default(T))
         {
             object value;
@@ -38,6 +40,11 @@ namespace Kudu.Contracts.Jobs
         public bool GetIsInPlace(bool defaultValue)
         {
             return GetSetting(JobSettingsKeys.IsInPlace, defaultValue);
+        }
+
+        public string GetSchedule()
+        {
+            return GetSetting<string>(JobSettingsKeys.Schedule);
         }
     }
 }

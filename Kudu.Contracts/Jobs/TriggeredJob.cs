@@ -11,6 +11,9 @@ namespace Kudu.Contracts.Jobs
         [JsonProperty(PropertyName = "history_url")]
         public Uri HistoryUrl { get; set; }
 
+        [JsonProperty(PropertyName = "scheduler_logs_url")]
+        public Uri SchedulerLogsUrl { get; set; }
+
         public override int GetHashCode()
         {
             return HashHelpers.CalculateCompositeHash(LatestRun, base.GetHashCode());

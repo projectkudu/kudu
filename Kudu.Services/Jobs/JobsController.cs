@@ -179,7 +179,7 @@ namespace Kudu.Services.Jobs
         {
             try
             {
-                _triggeredJobsManager.InvokeTriggeredJob(jobName, arguments);
+                _triggeredJobsManager.InvokeTriggeredJob(jobName, arguments, "External - " + Request.Headers.UserAgent);
                 return Request.CreateResponse(HttpStatusCode.Accepted);
             }
             catch (JobNotFoundException)

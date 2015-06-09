@@ -242,6 +242,15 @@ namespace Kudu.Services.Web.App_Start
             continuousJobManager.CleanupDeletedJobs();
 
             kernel.Bind<IContinuousJobsManager>().ToConstant(continuousJobManager)
+                                 .InTransientScope();
+
+            TriggeredJobsScheduler triggeredJobsScheduler = new TriggeredJobsScheduler(
+                triggeredJobsManager,
+                noContextTraceFactory,
+                kernel.Get<IAnalytics>(),
+                environment);
+
+            kernel.Bind<TriggeredJobsScheduler>().ToConstant(triggeredJobsScheduler)
                                              .InTransientScope();
 
             kernel.Bind<ILogger>().ToMethod(context => GetLogger(environment, context.Kernel))

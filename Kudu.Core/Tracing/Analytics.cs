@@ -36,7 +36,7 @@ namespace Kudu.Core.Tracing
                 NullToEmptyString(_settings.GetValue(SettingsKeys.ScmType)));
         }
 
-        public void JobStarted(string jobName, string scriptExtension, string jobType, string siteMode, string error)
+        public void JobStarted(string jobName, string scriptExtension, string jobType, string siteMode, string error, string trigger)
         {
             KuduEventSource.Log.WebJobStarted(
                 _serverConfiguration.ApplicationName,
@@ -44,7 +44,8 @@ namespace Kudu.Core.Tracing
                 NullToEmptyString(scriptExtension),
                 NullToEmptyString(jobType),
                 NullToEmptyString(siteMode),
-                NullToEmptyString(error));
+                NullToEmptyString(error),
+                NullToEmptyString(trigger));
         }
 
         public void UnexpectedException(Exception exception, bool trace = true)

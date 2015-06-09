@@ -6,7 +6,7 @@ namespace Kudu.Core.Tracing
     {
         void ProjectDeployed(string projectType, string result, string error, long deploymentDurationInMilliseconds, string siteMode);
 
-        void JobStarted(string jobName, string scriptExtension, string jobType, string siteMode, string error);
+        void JobStarted(string jobName, string scriptExtension, string jobType, string siteMode, string error, string trigger);
 
         void UnexpectedException(Exception ex, bool trace = true);
 

@@ -52,6 +52,9 @@ namespace Kudu.Contracts.Jobs
         [JsonProperty(PropertyName = "job_name")]
         public string JobName { get; set; }
 
+        [JsonProperty(PropertyName = "trigger")]
+        public string Trigger { get; set; }
+
         public override int GetHashCode()
         {
             return HashHelpers.CalculateCompositeHash(Id, Status, Duration);

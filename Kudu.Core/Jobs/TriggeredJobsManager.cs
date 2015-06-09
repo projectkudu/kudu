@@ -130,10 +130,16 @@ namespace Kudu.Core.Jobs
         protected override void UpdateJob(TriggeredJob job)
         {
             job.HistoryUrl = BuildJobsUrl(job.Name + "/history");
-            job.LatestRun = BuildLatestJobRun(job.Name);
+            job.LatestRun = GetLatestJobRun(job.Name);
+
+            string triggeredJobSchedulerLogFilePath = Path.Combine(JobsDataPath, job.Name, TriggeredJobSchedulerLogger.LogFileName);
+            if (FileSystemHelpers.FileExists(triggeredJobSchedulerLogFilePath))
+            {
+                job.SchedulerLogsUrl = BuildVfsUrl("{0}/{1}".FormatInvariant(job.Name, TriggeredJobSchedulerLogger.LogFileName));
+            }
         }
 
-        private TriggeredJobRun BuildLatestJobRun(string jobName)
+        public TriggeredJobRun GetLatestJobRun(string jobName)
         {
             DirectoryInfoBase[] jobRunsDirectories = GetJobRunsDirectories(jobName);
             if (jobRunsDirectories == null || jobRunsDirectories.Length == 0)
@@ -194,6 +200,7 @@ namespace Kudu.Core.Jobs
             {
                 Id = runId,
                 JobName = jobName,
+                Trigger = triggeredJobStatus.Trigger,
                 Status = triggeredJobStatus.Status,
                 StartTime = triggeredJobStatus.StartTime,
                 EndTime = triggeredJobStatus.EndTime,
@@ -215,7 +222,7 @@ namespace Kudu.Core.Jobs
             return null;
         }
 
-        public void InvokeTriggeredJob(string jobName, string arguments)
+        public void InvokeTriggeredJob(string jobName, string arguments, string trigger)
         {
             TriggeredJob triggeredJob = GetJob(jobName);
             if (triggeredJob == null)
@@ -237,7 +244,7 @@ namespace Kudu.Core.Jobs
 
             JobSettings jobSettings = triggeredJob.Settings;
 
-            triggeredJobRunner.StartJobRun(triggeredJob, jobSettings, ReportTriggeredJobFinished);
+            triggeredJobRunner.StartJobRun(triggeredJob, jobSettings, trigger, ReportTriggeredJobFinished);
         }
 
         private async void ReportTriggeredJobFinished(string jobName, string jobRunId)
