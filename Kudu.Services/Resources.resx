@@ -273,4 +273,25 @@
   <data name="Error_AutoSwapDeploymentOngoing" xml:space="preserve">
     <value>There is an auto swap deployment currently ongoing please try again when it completes.</value>
   </data>
+  <data name="OneDriveInvalidRequestUri" xml:space="preserve">
+    <value>Invalid request uri '{0}'</value>
+  </data>
+  <data name="OneDriveUnableToSync" xml:space="preserve">
+    <value>Unable to sync OneDrive, @changes.resync is {0}</value>
+  </data>
+  <data name="OneDriveApplyingChanges" xml:space="preserve">
+    <value>Applying {0} changes ...</value>
+  </data>
+  <data name="OneDriveApplyResult" xml:space="preserve">
+    <value>{0} successed, {1} failed.</value>
+  </data>
+  <data name="OneDriveDeletedDirectory" xml:space="preserve">
+    <value>Deleted directory {0} ...</value>
+  </data>
+  <data name="OneDriveDeletedFile" xml:space="preserve">
+    <value>Deleted file {0} ...</value>
+  </data>
+  <data name="OneDriveNoChangesFound" xml:space="preserve">
+    <value>No changes found.</value>
+  </data>
 </root>

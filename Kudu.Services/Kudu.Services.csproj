@@ -105,6 +105,10 @@
     <Compile Include="Diagnostics\LogStreamManager.cs" />
     <Compile Include="EnsureRequestIdHandlerAttribute.cs" />
     <Compile Include="Error404Controller.cs" />
+    <Compile Include="FetchHelpers\OneDriveHelper.cs" />
+    <Compile Include="FetchHelpers\OneDriveInfo.cs" />
+    <Compile Include="FetchHelpers\OneDriveModel.cs" />
+    <Compile Include="FetchHelpers\RateLimiter.cs" />
     <Compile Include="Infrastructure\HttpResponseMessageExtensions.cs" />
     <Compile Include="Infrastructure\LowerCaseFormatterConfigAttribute.cs" />
     <Compile Include="Diagnostics\ProcessController.cs" />
@@ -136,6 +140,7 @@
     <Compile Include="ServiceHookHandlers\IServiceHookHandler.cs" />
     <Compile Include="ServiceHookHandlers\BitbucketHandler.cs" />
     <Compile Include="ServiceHookHandlers\GitHubHandler.cs" />
+    <Compile Include="ServiceHookHandlers\OneDriveHandler.cs" />
     <Compile Include="ServiceHookHandlers\VSOHandler.cs" />
     <Compile Include="GitServer\UploadPackHandler.cs" />
     <Compile Include="Infrastructure\ShutdownDetector.cs" />

@@ -16,6 +16,7 @@ using Kudu.Core.Deployment;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.SourceControl;
 using Kudu.Core.Tracing;
+using Kudu.Services.FetchHelpers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -83,14 +84,14 @@ namespace Kudu.Services
 
             dropboxInfo.OldCursor = currentCursor;
             string parentPath = dropboxInfo.Path.TrimEnd('/') + '/';
-            
+
             using (_tracer.Step("Updating deploy info"))
             using (var client = CreateDropboxV2HttpClient(DeltaApiUri, dropboxToken))
             {
                 while (true)
                 {
                     LogInfo("Fetching delta for cursor '{0}'.", currentCursor);
-                    string url = String.IsNullOrEmpty(currentCursor) ? String.Empty : 
+                    string url = String.IsNullOrEmpty(currentCursor) ? String.Empty :
                                                                       ("?cursor=" + HttpUtility.UrlPathEncode(currentCursor));
                     using (var response = await client.PostAsync(url, content: null))
                     {
@@ -520,63 +521,6 @@ namespace Kudu.Services
             }
 
             return false;
-        }
-
-        public sealed class RateLimiter : IDisposable
-        {
-            private readonly int _limit;
-            private readonly TimeSpan _interval;
-            private readonly SemaphoreSlim _semaphore;
-            private int _current = 0;
-            private DateTime _last = DateTime.UtcNow;
-
-            public RateLimiter(int limit, TimeSpan interval)
-            {
-                _limit = limit;
-                _interval = interval;
-                _semaphore = new SemaphoreSlim(1, 1);
-            }
-
-            public async Task ThrottleAsync()
-            {
-                await _semaphore.WaitAsync();
-                try
-                {
-                    await ThrottleCore();
-                }
-                finally
-                {
-                    _semaphore.Release();
-                }
-            }
-
-            private async Task ThrottleCore()
-            {
-                _current++;
-                if (_current > _limit)
-                {
-                    DateTime now = DateTime.UtcNow;
-                    TimeSpan ts = now - _last;
-                    TimeSpan waitDuration = _interval - ts;
-
-                    if (waitDuration > TimeSpan.Zero)
-                    {
-                        await Task.Delay(waitDuration);
-                        _last = DateTime.UtcNow;
-                    }
-                    else
-                    {
-                        _last = now;
-                    }
-
-                    _current = 0;
-                }
-            }
-
-            public void Dispose()
-            {
-                _semaphore.Dispose();
-            }
         }
     }
 }

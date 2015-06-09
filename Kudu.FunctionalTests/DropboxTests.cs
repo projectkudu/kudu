@@ -17,6 +17,7 @@ using Kudu.Contracts.Settings;
 using Kudu.Core.Deployment;
 using Kudu.FunctionalTests.Infrastructure;
 using Kudu.Services;
+using Kudu.Services.FetchHelpers;
 using Kudu.TestHarness;
 using Kudu.TestHarness.Xunit;
 using Newtonsoft.Json;
@@ -174,7 +175,7 @@ namespace Kudu.FunctionalTests
         public async Task TestDropboxRateLimiter(int limit, int total)
         {
             var interval = 1;
-            var rateLimiter = new DropboxHelper.RateLimiter(limit, TimeSpan.FromSeconds(interval));
+            var rateLimiter = new RateLimiter(limit, TimeSpan.FromSeconds(interval));
             var duration = TimeSpan.FromSeconds(total / limit - interval - 0.5);
             var start = DateTime.Now;
             while (--total > 0)

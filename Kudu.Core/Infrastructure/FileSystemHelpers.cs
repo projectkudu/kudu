@@ -210,6 +210,16 @@ namespace Kudu.Core.Infrastructure
             Instance.File.SetLastWriteTimeUtc(path, lastWriteTimeUtc);
         }
 
+        public static DateTime GetDirectoryLastWriteTimeUtc(string path)
+        {
+            return Instance.Directory.GetLastWriteTimeUtc(path);
+        }
+
+        public static void SetDirectoryLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc)
+        {
+            Instance.Directory.SetLastWriteTimeUtc(path, lastWriteTimeUtc);
+        }
+
         public static FileInfoBase FileInfoFromFileName(string fileName)
         {
             return Instance.FileInfo.FromFileName(fileName);
