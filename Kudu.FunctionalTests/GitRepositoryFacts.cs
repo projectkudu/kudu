@@ -182,7 +182,7 @@ namespace Kudu.FunctionalTests
         {
             get
             {
-                yield return new object[] { "HEAD", new ChangeSet("4e36ca31aa30ea08a5e5d38c65652a020d48e1d0", "Raquel Almeida", "raquel_soares@msn.com", "Chaning Index view", new DateTimeOffset(2011, 11, 23, 10, 30, 16, TimeSpan.FromHours(-8))) };
+                yield return new object[] { "HEAD", new ChangeSet("6c2f65d22c23461b2ef750fcb98531d645de0a70", "davidebbo", "david.ebbo@microsoft.com", "Reference Mvc 3.0.0.1", new DateTimeOffset(2015, 06, 07, 22, 13, 17, TimeSpan.FromHours(-7))) };
                 yield return new object[] { "89d70221f6a86d4243af3df7a8c80e65a29429af", new ChangeSet("89d70221f6a86d4243af3df7a8c80e65a29429af", "Raquel Almeida", "raquel_soares@msn.com", "Initial commit", new DateTimeOffset(2011, 11, 23, 10, 02, 34, TimeSpan.FromHours(-8))) };
             }
         }
