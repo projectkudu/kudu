@@ -78,6 +78,7 @@ namespace Kudu.Core.Jobs
             if (triggeredJobSchedule != null)
             {
                 _traceFactory.GetTracer().Trace("Removing schedule for triggered WebJob {0}".FormatCurrentCulture(jobName));
+                triggeredJobSchedule.Logger.LogInformation("Removing current schedule from WebJob");
 
                 triggeredJobSchedule.Dispose();
                 _triggeredJobsSchedules.Remove(jobName);

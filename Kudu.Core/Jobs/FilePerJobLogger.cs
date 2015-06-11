@@ -17,7 +17,7 @@ namespace Kudu.Core.Jobs
         protected FilePerJobLogger(string jobName, string jobType, string statusFileName, string jobLogFileName, IEnvironment environment, ITraceFactory traceFactory)
             : base(statusFileName, environment, traceFactory)
         {
-            _historyPath = Path.Combine(Environment.JobsDataPath, jobType, jobName);
+            _historyPath = Path.Combine(environment.JobsDataPath, jobType, jobName);
             FileSystemHelpers.EnsureDirectory(_historyPath);
 
             _logFilePath = GetLogFilePath(jobLogFileName);

@@ -98,6 +98,9 @@
     <Compile Include="Infrastructure\XmlUtilityFacts.cs" />
     <Compile Include="DeploymentSettingsFacts.cs" />
     <Compile Include="Jobs\ContinuousJobRunnerFacts.cs" />
+    <Compile Include="Jobs\ScheduleFacts.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="JsonSettingsFacts.cs" />
     <Compile Include="FileSystemHelpersTest.cs" />
     <Compile Include="GitRepositoryTest.cs" />

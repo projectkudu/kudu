@@ -12,12 +12,15 @@ using Kudu.Client;
 using Kudu.Client.Infrastructure;
 using Kudu.Contracts.Jobs;
 using Kudu.Contracts.Settings;
+using Kudu.Core;
 using Kudu.Core.Deployment;
 using Kudu.Core.Hooks;
+using Kudu.Core.Jobs;
 using Kudu.TestHarness;
 using Kudu.TestHarness.Xunit;
 using Newtonsoft.Json;
 using Xunit;
+using Environment = System.Environment;
 
 namespace Kudu.FunctionalTests.Jobs
 {
@@ -285,6 +288,95 @@ namespace Kudu.FunctionalTests.Jobs
         }
 
         [Fact]
+        public void ScheduledTriggeredJobIsInvokedOnSchedule()
+        {
+            RunScenario("ScheduledTriggeredJobIsInvokedOnSchedule", appManager =>
+            {
+                const string jobName = "job1";
+
+                TestTracer.Trace("Copying the script to the triggered job directory");
+
+                appManager.JobsManager.CreateTriggeredJobAsync(jobName, "run.cmd", JobScript).Wait();
+
+                // Wait for file watcher to pick up
+                Thread.Sleep(30 * 1000);
+
+                appManager.VfsManager.WriteAllText(TriggeredJobBinPath + "/" + jobName + "/settings.job", "{\"schedule\": \"*/10 * * * * *\"}");
+
+                Stopwatch stopwatch = Stopwatch.StartNew();
+
+                TestTracer.Trace("Expect schedule to trigger the job");
+
+                VerifyTriggeredJobTriggers(appManager, jobName, 1, "Success", "echo ", null, null, scheduledTriggeredJob: true);
+
+                VerifyVerificationFile(appManager, new string[] { ExpectedVerificationFileContent });
+
+                TestTracer.Trace("Expect schedule to trigger the job again");
+
+                VerifyTriggeredJobTriggers(appManager, jobName, 2, "Success", "echo ", null, null, scheduledTriggeredJob: true);
+
+                VerifyVerificationFile(appManager, new string[] { ExpectedVerificationFileContent, ExpectedVerificationFileContent });
+
+                stopwatch.Stop();
+
+                Assert.InRange(stopwatch.ElapsedMilliseconds, 10*1000, 30*1000);
+            });
+        }
+
+        [Fact]
+        public void ScheduledTriggeredJobWithExactTimeIsInvokedOnSchedule()
+        {
+            RunScenario("ScheduledTriggeredJobWithExactTimeIsInvokedOnSchedule", appManager =>
+            {
+                const string jobName = "job1";
+
+                TestTracer.Trace("Copying the script to the triggered job directory");
+
+                appManager.JobsManager.CreateTriggeredJobAsync(jobName, "run.cmd", JobScript).Wait();
+
+                // Wait for file watcher to pick up
+                Thread.Sleep(30 * 1000);
+
+                CommandResult dateTimeResult = appManager.CommandExecutor.ExecuteCommand("echo %date% %time%", String.Empty).Result;
+                DateTime currentDateTime = DateTime.Parse(dateTimeResult.Output.Trim());
+                DateTime scheduledDateTime = currentDateTime.AddSeconds(10);
+
+                string cronExpression =
+                    "{{\"schedule\": \"{0} {1} {2} {3} {4} *\"}}".FormatInvariant(scheduledDateTime.Second, scheduledDateTime.Minute, scheduledDateTime.Hour, scheduledDateTime.Day, scheduledDateTime.Month);
+
+                TestTracer.Trace("Scheduling triggered job to " + cronExpression);
+
+                appManager.VfsManager.WriteAllText(TriggeredJobBinPath + "/" + jobName + "/settings.job", cronExpression);
+
+                TestTracer.Trace("Expect schedule to trigger the job");
+
+                Thread.Sleep(10*1000);
+
+                try
+                {
+                    VerifyTriggeredJobTriggers(appManager, jobName, 1, "Success", "echo ", null, null, scheduledTriggeredJob: true);
+                }
+                catch (Exception)
+                {
+                    try
+                    {
+                        string schedulerLog = appManager.VfsManager.ReadAllText(JobsDataPath + "/triggered/" + jobName + "/job_scheduler.log");
+                        TestTracer.Trace("Scheduler log - " + schedulerLog);
+                    }
+                    catch
+                    {
+                    }
+
+                    throw;
+                }
+
+                VerifyVerificationFile(appManager, new string[] { ExpectedVerificationFileContent });
+
+                TestTracer.Trace("Expect schedule to not trigger the job again");
+            });
+        }
+
+        [Fact]
         public void TriggeredJobAcceptsArguments()
         {
             RunScenario("TriggeredJobAcceptsArguments", appManager =>
@@ -544,22 +636,45 @@ namespace Kudu.FunctionalTests.Jobs
             });
         }
 
-        private void VerifyTriggeredJobTriggers(ApplicationManager appManager, string jobName, int expectedNumberOfRuns, string expectedStatus, string expectedOutput = null, string expectedError = null, string arguments = null)
+        private void VerifyTriggeredJobTriggers(ApplicationManager appManager, string jobName, int expectedNumberOfRuns, string expectedStatus, string expectedOutput = null, string expectedError = null, string arguments = null, bool scheduledTriggeredJob = false)
         {
-            appManager.JobsManager.InvokeTriggeredJobAsync(jobName, arguments).Wait();
+            if (!scheduledTriggeredJob)
+            {
+                appManager.JobsManager.InvokeTriggeredJobAsync(jobName, arguments).Wait();
+            }
 
-            WaitUntilAssertVerified(
-                "verify triggered job run",
-                TimeSpan.FromSeconds(20),
-                () =>
+            try
+            {
+                WaitUntilAssertVerified(
+                    "verify triggered job run",
+                    TimeSpan.FromSeconds(30),
+                    () =>
+                    {
+                        TriggeredJobHistory triggeredJobHistory = appManager.JobsManager.GetTriggeredJobHistoryAsync(jobName).Result;
+                        Assert.NotNull(triggeredJobHistory);
+                        Assert.Equal(expectedNumberOfRuns, triggeredJobHistory.TriggeredJobRuns.Count());
+
+                        TriggeredJobRun triggeredJobRun = triggeredJobHistory.TriggeredJobRuns.FirstOrDefault();
+                        AssertTriggeredJobRun(appManager, triggeredJobRun, jobName, expectedStatus, expectedOutput, expectedError);
+                    });
+            }
+            catch
+            {
+                // On error trace the scheduler log if it is a scheduler job
+                if (scheduledTriggeredJob)
                 {
-                    TriggeredJobHistory triggeredJobHistory = appManager.JobsManager.GetTriggeredJobHistoryAsync(jobName).Result;
-                    Assert.NotNull(triggeredJobHistory);
-                    Assert.Equal(expectedNumberOfRuns, triggeredJobHistory.TriggeredJobRuns.Count());
+                    try
+                    {
+                        string schedulerLog = appManager.VfsManager.ReadAllText(JobsDataPath + "/triggered/" + jobName + "/job_scheduler.log");
+                        TestTracer.Trace("Scheduler log - " + schedulerLog);
+                    }
+                    catch
+                    {
+                    }
+                }
 
-                    TriggeredJobRun triggeredJobRun = triggeredJobHistory.TriggeredJobRuns.FirstOrDefault();
-                    AssertTriggeredJobRun(appManager, triggeredJobRun, jobName, expectedStatus, expectedOutput, expectedError);
-                });
+                throw;
+            }
         }
 
         private async Task VerifyTriggeredJobDoesNotTrigger(ApplicationManager appManager, string jobName)

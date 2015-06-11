@@ -10,6 +10,7 @@ namespace Kudu.Core.Jobs
     {
         private readonly CrontabSchedule _crontabSchedule;
         private readonly TriggeredJobSchedulerLogger _logger;
+        private IDateTimeNowProvider _dateTimeNowProvider = DateTimeNowProvider.Instance;
 
         private Schedule(CrontabSchedule crontabSchedule, TriggeredJobSchedulerLogger logger)
         {
@@ -33,7 +34,7 @@ namespace Kudu.Core.Jobs
 
         public TimeSpan GetNextInterval(DateTime lastSchedule, bool ignoreMissed = false)
         {
-            DateTime now = DateTime.Now;
+            DateTime now = _dateTimeNowProvider.Now;
 
             lastSchedule = lastSchedule == DateTime.MinValue ? now : lastSchedule.ToLocalTime();
 
@@ -66,6 +67,26 @@ namespace Kudu.Core.Jobs
         public override string ToString()
         {
             return _crontabSchedule.ToString();
+        }
+
+        internal void SetDateTimeProvider(IDateTimeNowProvider dateTimeNowProvider)
+        {
+            _dateTimeNowProvider = dateTimeNowProvider;
+        }
+
+        internal interface IDateTimeNowProvider
+        {
+            DateTime Now { get; }
+        }
+
+        internal class DateTimeNowProvider : IDateTimeNowProvider
+        {
+            public static readonly DateTimeNowProvider Instance = new DateTimeNowProvider();
+
+            public DateTime Now
+            {
+                get { return DateTime.Now; }
+            }
         }
     }
 }

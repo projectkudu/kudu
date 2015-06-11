@@ -11,6 +11,8 @@ namespace Kudu.Core.Jobs
     /// </summary>
     public class TriggeredJobSchedule : IDisposable
     {
+        private static readonly TimeSpan MaximumTimeSpanInterval = TimeSpan.FromDays(40);
+
         private readonly Action<TriggeredJobSchedule> _onSchedule;
 
         private Timer _timer;
@@ -35,6 +37,9 @@ namespace Kudu.Core.Jobs
             Schedule = schedule ?? Schedule;
 
             var nextInterval = Schedule.GetNextInterval(lastRun);
+
+            // Limit next interval to 40 days so it won't conflict with the maximum time allowed to set a timer.
+            nextInterval = nextInterval < MaximumTimeSpanInterval ? nextInterval : MaximumTimeSpanInterval;
 
             if (schedule != null)
             {
