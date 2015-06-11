@@ -98,7 +98,8 @@ namespace Kudu.FunctionalTests.SiteExtensions
 
                 // pick site extension
                 var expectedId = _galleryInstalledExtensions.Keys.ToArray()[new Random().Next(_galleryInstalledExtensions.Count)];
-                var expected = results.Find(ext => String.Equals(ext.Id, expectedId, StringComparison.OrdinalIgnoreCase));
+                var expected = results.Find(ext => string.Equals(ext.Id, expectedId, StringComparison.OrdinalIgnoreCase));
+                Assert.True(expected != null, string.Format(CultureInfo.InvariantCulture, "Should able to find {0} from search result", expectedId));
                 TestTracer.Trace("Testing Against Site Extension '{0}' - '{1}'", expectedId, expected.Version);
 
                 // get

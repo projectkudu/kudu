@@ -16,7 +16,7 @@ using Kudu.Core.Tracing;
 
 namespace Kudu.Services.FetchHelpers
 {
-    internal class OneDriveHelper
+    public class OneDriveHelper
     {
         private const string JsonMediaType = "application/json";
         private const string FormUrlEncodedMediaType = "application/x-www-form-urlencoded";
@@ -100,7 +100,7 @@ namespace Kudu.Services.FetchHelpers
                 Logger.Log(format, args);
             }
         }
-        
+
         private void TraceMessage(string format, params object[] args)
         {
             lock (_tracer)
@@ -109,7 +109,7 @@ namespace Kudu.Services.FetchHelpers
             }
         }
 
-        private static HttpClient CreateHttpClient(string accessToken)
+        public virtual HttpClient CreateHttpClient(string accessToken)
         {
             HttpClient client = new HttpClient();
             client.MaxResponseContentBufferSize = 1024 * 1024 * 10;
@@ -363,13 +363,13 @@ namespace Kudu.Services.FetchHelpers
                 if (FileSystemHelpers.FileExists(fullPath))
                 {
                     FileSystemHelpers.DeleteFile(fullPath);
-                    TraceMessage("Deleted file {0}", change.Path);
+                    TraceMessage("Deleted file {0}", fullPath);
                     LogMessage(Resources.OneDriveDeletedFile, fullPath);
                 }
                 else if (FileSystemHelpers.DirectoryExists(fullPath))
                 {
                     FileSystemHelpers.DeleteDirectorySafe(fullPath, ignoreErrors: false);
-                    TraceMessage("Deleted directory {0}", change.Path);
+                    TraceMessage("Deleted directory {0}", fullPath);
                     LogMessage(Resources.OneDriveDeletedDirectory, fullPath);
                 }
                 else
@@ -422,10 +422,9 @@ namespace Kudu.Services.FetchHelpers
                         string downloadUrl = (string)fileResponse["@content.downloadUrl"];
 
                         using (HttpResponseMessage downloadResponse = await client.GetAsync(downloadUrl))
-                        using (FileStream fs = new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.Read, bufferSize: DefaultBufferSize, useAsync: true))
                         using (Stream stream = await downloadResponse.EnsureSuccessStatusCode().Content.ReadAsStreamAsync())
                         {
-                            await stream.CopyToAsync(fs);
+                            await WriteToFile(stream, fullPath);
                         }
                     }
 
@@ -438,11 +437,26 @@ namespace Kudu.Services.FetchHelpers
             }
             else
             {
-                if (!FileSystemHelpers.DirectoryExists(fullPath))
+                if (FileSystemHelpers.DirectoryExists(fullPath))
+                {
+                    TraceMessage("Existed directory {0}, no action performed.", fullPath);
+                }
+                else
                 {
                     TraceMessage("Creating directory {0} ...", fullPath);
                     FileSystemHelpers.CreateDirectory(fullPath);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Make this method "public virtual" to workaround the fact that we cannot mock FileStream
+        /// </summary>
+        public virtual async Task WriteToFile(Stream srcStream, string targetFilePath)
+        {
+            using (FileStream fs = new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read, bufferSize: DefaultBufferSize, useAsync: true))
+            {
+                await srcStream.CopyToAsync(fs);
             }
         }
 
