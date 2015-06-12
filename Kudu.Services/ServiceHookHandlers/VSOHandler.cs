@@ -50,10 +50,14 @@ namespace Kudu.Services.ServiceHookHandlers
             info.Deployer = GetDeployer(request);
             info.NewRef = refUpdates.Last.Value<string>("newObjectId");
 
-            var builder = new UriBuilder(repository.Value<string>("remoteUrl"));
-            builder.UserName = sessionToken.Value<string>("token");
-            builder.Password = String.Empty;
-            info.RepositoryUrl = builder.Uri.AbsoluteUri;
+            // even it is empty password we need to explicitly say so (with colon).
+            // without colon, LibGit2Sharp is not working
+            Uri remoteUrl = new Uri(repository.Value<string>("remoteUrl"));
+            info.RepositoryUrl = String.Format("{0}://{1}:@{2}{3}",
+                remoteUrl.Scheme,
+                sessionToken.Value<string>("token"),
+                remoteUrl.Authority,
+                remoteUrl.PathAndQuery);
 
             var commits = resource.Value<JArray>("commits");
             info.CommitId = refUpdates.Last.Value<string>("newObjectId");

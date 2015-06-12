@@ -38,7 +38,7 @@ namespace Kudu.Services.Test
             Assert.Equal("https", repositoryUri.Scheme);
             Assert.Equal("test01.vsoalm.tfsallin.net", repositoryUri.Host);
             Assert.Equal("/DefaultCollection/_git/testgit01", repositoryUri.AbsolutePath);
-            Assert.Equal("this_is_vso_token", repositoryUri.UserInfo);
+            Assert.Equal("this_is_vso_token:", repositoryUri.UserInfo);
         }
 
         [Fact]
