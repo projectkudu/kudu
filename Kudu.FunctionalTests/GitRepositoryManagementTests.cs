@@ -21,7 +21,7 @@ using Xunit;
 namespace Kudu.FunctionalTests
 {
     [KuduXunitTestClass]
-    public class PushRepoWithMultipleProjectsShouldDeployTests : GitRepositoryManagementTests
+    public class RepoWithMultipleProjectsShouldDeployTests : GitRepositoryManagementTests
     {
         [Fact]
         public void PushRepoWithMultipleProjectsShouldDeploy()
@@ -48,7 +48,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushSimpleWapWithInlineCommandTests : GitRepositoryManagementTests
+    public class SimpleWapWithInlineCommandTests : GitRepositoryManagementTests
     {
         // Has been disabled for ages. Commenting out attribute to avoid warning. Should probably just delete
         //[Fact(Skip = "Dangerous")]
@@ -80,7 +80,7 @@ command = msbuild SimpleWebApplication/SimpleWebApplication.csproj /t:pipelinePr
     }
 
     [KuduXunitTestClass]
-    public class PushSimpleWapWithCustomDeploymentScriptTests : GitRepositoryManagementTests
+    public class SimpleWapWithCustomDeploymentScriptTests : GitRepositoryManagementTests
     {
         // Has been disabled for ages. Commenting out attribute to avoid warning. Should probably just delete
         //[Fact(Skip = "Dangerous")]
@@ -112,7 +112,7 @@ command = deploy.cmd");
     }
 
     [KuduXunitTestClass]
-    public class PushSimpleWapWithFailingCustomDeploymentScriptTests : GitRepositoryManagementTests
+    public class SimpleWapWithFailingCustomDeploymentScriptTests : GitRepositoryManagementTests
     {
         [Fact]
         public void PushSimpleWapWithFailingCustomDeploymentScript()
@@ -209,7 +209,7 @@ project = myproject");
     }
 
     [KuduXunitTestClass]
-    public class PushRepoWithProjectAndNoSolutionShouldDeployTests : GitRepositoryManagementTests
+    public class RepoWithProjectAndNoSolutionShouldDeployTests : GitRepositoryManagementTests
     {
         [Fact]
         public void PushRepoWithProjectAndNoSolutionShouldDeploy()
@@ -236,7 +236,7 @@ project = myproject");
     }
 
     [KuduXunitTestClass]
-    public class PushRepositoryWithNoDeployableProjectsTreatsAsWebsiteTests : GitRepositoryManagementTests
+    public class RepositoryWithNoDeployableProjectsTreatsAsWebsiteTests : GitRepositoryManagementTests
     {
         [Fact]
         public void PushRepositoryWithNoDeployableProjectsTreatsAsWebsite()
@@ -314,7 +314,7 @@ project = myproject");
     }
 
     [KuduXunitTestClass]
-    public class PushAppChangesShouldTriggerBuildTests : GitRepositoryManagementTests
+    public class AppChangesShouldTriggerBuildTests : GitRepositoryManagementTests
     {
         [Fact]
         public void PushAppChangesShouldTriggerBuild()
@@ -413,7 +413,7 @@ project = myproject");
     }
 
     [KuduXunitTestClass]
-    public class PushShouldOverwriteModifiedFilesInRepoTests : GitRepositoryManagementTests
+    public class ShouldOverwriteModifiedFilesInRepoTests : GitRepositoryManagementTests
     {
         [Fact]
         public void PushShouldOverwriteModifiedFilesInRepo()

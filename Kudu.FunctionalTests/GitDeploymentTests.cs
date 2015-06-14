@@ -15,7 +15,7 @@ using Xunit;
 namespace Kudu.FunctionalTests
 {
     [KuduXunitTestClass]
-    public class PushAndDeployAspNetAppOrchardTests : GitDeploymentTests
+    public class AspNetAppOrchardTests : GitDeploymentTests
     {
         // ASP.NET apps
 
@@ -27,7 +27,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushAndDeployAspNetAppProjectWithNoSolutionTests : GitDeploymentTests
+    public class AspNetAppProjectWithNoSolutionTests : GitDeploymentTests
     {
         [Fact]
         public void PushAndDeployAspNetAppProjectWithNoSolution()
@@ -37,7 +37,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushAndDeployAspNetAppHiddenFoldersAndFilesTests : GitDeploymentTests
+    public class AspNetAppHiddenFoldersAndFilesTests : GitDeploymentTests
     {
         [Fact]
         public void PushAndDeployAspNetAppHiddenFoldersAndFiles()
@@ -47,7 +47,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushAndDeployWebApiAppTests : GitDeploymentTests
+    public class WebApiAppTests : GitDeploymentTests
     {
         [Fact]
         public void PushAndDeployWebApiApp()
@@ -57,7 +57,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushAndDeployAspNetAppWebSiteInSolutionTests : GitDeploymentTests
+    public class AspNetAppWebSiteInSolutionTests : GitDeploymentTests
     {
         [Fact]
         public void PushAndDeployAspNetAppWebSiteInSolution()
@@ -67,7 +67,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushAndDeployAspNetAppWebSiteInSolutionWithDeploymentFileTests : GitDeploymentTests
+    public class AspNetAppWebSiteInSolutionWithDeploymentFileTests : GitDeploymentTests
     {
         [Fact]
         public void PushAndDeployAspNetAppWebSiteInSolutionWithDeploymentFile()
@@ -77,7 +77,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushAndDeployAspNetAppKuduGlobTests : GitDeploymentTests
+    public class AspNetAppKuduGlobTests : GitDeploymentTests
     {
         [Fact]
         public void PushAndDeployAspNetAppKuduGlob()
@@ -87,7 +87,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushAndDeployAspNetAppUnicodeNameTests : GitDeploymentTests
+    public class AspNetAppUnicodeNameTests : GitDeploymentTests
     {
         // Still needs more work in the deployment script to work
         // [Fact]
@@ -98,7 +98,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushAndDeployAspNetAppAppWithPostBuildEventTests : GitDeploymentTests
+    public class AspNetAppAppWithPostBuildEventTests : GitDeploymentTests
     {
         [Fact]
         public void PushAndDeployAspNetAppAppWithPostBuildEvent()
@@ -108,7 +108,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushAndDeployFSharpWebApplicationTests : GitDeploymentTests
+    public class FSharpWebApplicationTests : GitDeploymentTests
     {
         [Fact]
         public void PushAndDeployFSharpWebApplication()
@@ -118,7 +118,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushAndDeployNodeAppExpressTests : GitDeploymentTests
+    public class NodeAppExpressTests : GitDeploymentTests
     {
         // Node apps
 
@@ -133,7 +133,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushAndDeployHtml5WithAppJsTests : GitDeploymentTests
+    public class Html5WithAppJsTests : GitDeploymentTests
     {
         [Fact]
         public void PushAndDeployHtml5WithAppJs()
@@ -143,7 +143,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushAndDeployEFMVC45AppSqlCompactMAPEIATests : GitDeploymentTests
+    public class EFMVC45AppSqlCompactMAPEIATests : GitDeploymentTests
     {
         //Entity Framework 4.5 MVC Project with SQL Compact DB (.sdf file)
         //and Metadata Artifact Processing set to 'Embed in Assembly'
@@ -204,7 +204,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushHelloKuduAutoSwapSecondPushShouldFailTests : GitDeploymentTests
+    public class HelloKuduAutoSwapSecondPushShouldFailTests : GitDeploymentTests
     {
         [Fact]
         public async Task PushHelloKuduAutoSwapSecondPushShouldFail()
@@ -239,7 +239,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushHelloKuduWithCorruptedGitTestsTests : GitDeploymentTests
+    public class HelloKuduWithCorruptedGitTestsTests : GitDeploymentTests
     {
         [Fact]
         public async Task PushHelloKuduWithCorruptedGitTests()
@@ -331,7 +331,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushAndDeployMVCAppWithLatestNugetTests : GitDeploymentTests
+    public class MVCAppWithLatestNugetTests : GitDeploymentTests
     {
         [Fact]
         public void PushAndDeployMVCAppWithLatestNuget()
@@ -341,7 +341,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushAndDeployMVCAppWithNuGetAutoRestoreTests : GitDeploymentTests
+    public class MVCAppWithNuGetAutoRestoreTests : GitDeploymentTests
     {
         [Fact]
         public void PushAndDeployMVCAppWithNuGetAutoRestore()
@@ -351,7 +351,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushAndDeployMvcAppWithAutoRestoreFailsIfRestoreFailsTests : GitDeploymentTests
+    public class MvcAppWithAutoRestoreFailsIfRestoreFailsTests : GitDeploymentTests
     {
         [Fact]
         public void PushAndDeployMvcAppWithAutoRestoreFailsIfRestoreFails()
@@ -361,7 +361,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushAndDeployMvcAppWithTypeScriptTests : GitDeploymentTests
+    public class MvcAppWithTypeScriptTests : GitDeploymentTests
     {
         [Fact]
         public void PushAndDeployMvcAppWithTypeScript()
@@ -371,7 +371,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushAndDeployPreviewWebApi5Tests : GitDeploymentTests
+    public class PreviewWebApi5Tests : GitDeploymentTests
     {
         [Fact]
         public void PushAndDeployPreviewWebApi5()
@@ -381,7 +381,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushAndDeployPreviewSpa5Tests : GitDeploymentTests
+    public class PreviewSpa5Tests : GitDeploymentTests
     {
         [Fact]
         public void PushAndDeployPreviewSpa5()
@@ -391,7 +391,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushAndDeployPreviewMvc5Tests : GitDeploymentTests
+    public class PreviewMvc5Tests : GitDeploymentTests
     {
         [Fact]
         public void PushAndDeployPreviewMvc5()
@@ -401,7 +401,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushAndDeployAspNet5WithSlnTests : GitDeploymentTests
+    public class AspNet5WithSlnTests : GitDeploymentTests
     {
         [Fact]
         public void PushAndDeployAspNet5WithSln()
@@ -411,7 +411,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushAndDeployAspNet5NoSlnTests : GitDeploymentTests
+    public class AspNet5NoSlnTests : GitDeploymentTests
     {
         [Fact]
         public void PushAndDeployAspNet5NoSln()
@@ -421,7 +421,7 @@ namespace Kudu.FunctionalTests
     }
 
     [KuduXunitTestClass]
-    public class PushAndDeployCSharp6WebTests : GitDeploymentTests
+    public class CSharp6WebTests : GitDeploymentTests
     {
         [Fact]
         public void PushAndDeployCSharp6Web()
