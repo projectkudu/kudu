@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Globalization;
 using System.Linq;
-using System.Runtime.Remoting.Messaging;
-using System.Text;
 
 namespace Kudu.TestHarness
 {
     public static class TestTracer
     {
-        public const string DataSlotName = "TraceOutput";
-
         public static void Trace(DateTime messageDateTime, string messageFormat, params object[] args)
         {
             string message;
@@ -24,7 +20,8 @@ namespace Kudu.TestHarness
 
             message = String.Format(CultureInfo.CurrentCulture, "{0}Z {1}", messageDateTime.ToUniversalTime().ToString("s"), message.Replace("\n", "\n\t"));
 
-            var strb = (StringBuilder)CallContext.LogicalGetData(TestTracer.DataSlotName);
+            var context = TestContext.Current;
+            var strb = context != null ? context.Traces : null;
             if (strb != null)
             {
                 lock (strb)
@@ -38,19 +35,10 @@ namespace Kudu.TestHarness
             }
         }
 
-        public static void InitializeContext()
-        {
-            CallContext.LogicalSetData(TestTracer.DataSlotName, new StringBuilder());
-        }
-
-        public static void FreeContext()
-        {
-            CallContext.FreeNamedDataSlot(TestTracer.DataSlotName);
-        }
-
         public static string GetTraceString()
         {
-            var strb = (StringBuilder)CallContext.LogicalGetData(TestTracer.DataSlotName);
+            var context = TestContext.Current;
+            var strb = context != null ? context.Traces : null;
             if (strb != null)
             {
                 lock (strb)

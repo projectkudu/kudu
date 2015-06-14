@@ -139,6 +139,15 @@ namespace Kudu.TestHarness
             {
                 // If we're allowed to cache the repository, check if it already exists. If not clone it.
                 string repoName = Path.GetFileNameWithoutExtension(source.Split('/').Last());
+
+                // repo cached per test class to support test parallel run
+                var context = TestContext.Current;
+                if (context != null)
+                {
+                    var className = context.Test.TestCase.TestMethod.TestClass.Class.Name;
+                    repoName = String.Format("{0}_{1}", repoName, className.Substring(className.LastIndexOf(".") + 1));
+                }
+
                 cachedPath = Path.Combine(PathHelper.RepositoryCachePath, repoName);
 
                 // Check for the actually .git folder, in case some bogus parent exists but is not an actual repo

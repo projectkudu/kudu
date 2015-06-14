@@ -8,7 +8,7 @@ using Xunit;
 namespace Kudu.FunctionalTests
 {
     [KuduXunitTestClass]
-    public class DeploymentActionsTests
+    public class PostDeploymentActionsShouldBeCalledOnSuccessfulDeploymentTests
     {
         [Fact]
         public void PostDeploymentActionsShouldBeCalledOnSuccessfulDeployment()
@@ -62,7 +62,11 @@ namespace Kudu.FunctionalTests
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PostDeploymentActionWhichFailsShouldFailDeploymentTests
+    {
         [Fact]
         public void PostDeploymentActionWhichFailsShouldFailDeployment()
         {
@@ -123,7 +127,11 @@ namespace Kudu.FunctionalTests
                 });
             }
         }
+    }
 
+    [KuduXunitTestClass]
+    public class PostDeploymentActionsShouldNotBeCalledOnFailedDeploymentTests
+    {
         [Fact]
         public void PostDeploymentActionsShouldNotBeCalledOnFailedDeployment()
         {

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO.Abstractions;
 using Kudu.Core.Infrastructure;
+using Kudu.TestHarness;
 using Moq;
 using Xunit;
 
@@ -31,7 +32,7 @@ namespace Kudu.Core.Deployment.Generator.Test
         [InlineData(false, new string[] { "site.aspx", "index2.aspx" })]
         public void TestLooksLikeNode(bool looksLikeNodeExpectedResult, string[] existingFiles)
         {
-            Console.WriteLine("Testing: {0}", String.Join(", ", existingFiles));
+            TestTracer.Trace("Testing: {0}", String.Join(", ", existingFiles));
 
             var fileMock = new Mock<FileBase>();
             var fileSystemMock = new Mock<IFileSystem>();

@@ -74,6 +74,7 @@
     <Compile Include="SitePool.cs" />
     <Compile Include="TestEnvironment.cs" />
     <Compile Include="TestRepositories.cs" />
+    <Compile Include="TestContext.cs" />
     <Compile Include="TestTracer.cs" />
     <Compile Include="HttpUtils.cs" />
     <Compile Include="KuduUtils.cs" />

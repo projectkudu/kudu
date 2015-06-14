@@ -86,14 +86,14 @@ namespace Kudu.TestHarness.Xunit
 
         private static async Task<RunSummary> RunTestInternalAsync(XunitTestRunner runner)
         {
-            TestTracer.InitializeContext();
+            TestContext.InitializeContext(runner.GetTest());
             try
             {
                 return await runner.RunAsync();
             }
             finally
             {
-                TestTracer.FreeContext();
+                TestContext.FreeContext();
             }
         }
 
