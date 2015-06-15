@@ -207,6 +207,7 @@ echo $i > pushinfo
 
         public void FetchWithoutConflict(string remoteUrl, string branchName)
         {
+            var tracer = _tracerFactory.GetTracer();
             try
             {
                 using (var repo = new LibGit2Sharp.Repository(RepositoryPath))
@@ -239,9 +240,15 @@ echo $i > pushinfo
             }
             catch (LibGit2SharpException exception)
             {
-                if (exception.Message.Equals("Unsupported URL protocol"))
+                tracer.TraceWarning("LibGit2SharpRepository fetch failed with {0}", exception);
+
+                // LibGit2Sharp doesn't support SSH yet. Use GitExeRepository
+                // LibGit2Sharp only supports smart Http protocol
+                if (exception.Message.Equals("Unsupported URL protocol") ||
+                    exception.Message.Equals("Received unexpected content-type"))
                 {
-                    // LibGit2Sharp doesn't support SSH yet. Use GitExeRepository
+                    tracer.TraceWarning("LibGit2SharpRepository fallback to git.exe");
+
                     _legacyGitExeRepository.FetchWithoutConflict(remoteUrl, branchName);
                 }
                 else
