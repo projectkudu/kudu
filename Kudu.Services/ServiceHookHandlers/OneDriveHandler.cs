@@ -25,7 +25,7 @@ namespace Kudu.Services.ServiceHookHandlers
         public DeployAction TryParseDeploymentInfo(HttpRequestBase request, JObject payload, string targetBranch, out DeploymentInfo deploymentInfo)
         {
             deploymentInfo = null;
-            string url = payload.Value<string>("url");
+            string url = payload.Value<string>("RepositoryUrl");
             if (string.IsNullOrWhiteSpace(url) || !url.ToLowerInvariant().Contains("api.onedrive.com"))
             {
                 return DeployAction.UnknownPayload;
@@ -34,15 +34,15 @@ namespace Kudu.Services.ServiceHookHandlers
             /*
                  Expecting payload to be:
                  {
-                    "url": "xxx",
-                    "access_token": "xxx"
+                    "RepositoryUrl": "xxx",
+                    "AccessToken": "xxx"
                  }
              */
             deploymentInfo = new OneDriveInfo()
             {
                 Deployer = "OneDrive",
-                RepositoryUrl = payload.Value<string>("url"),
-                AccessToken = payload.Value<string>("access_token")
+                RepositoryUrl = url,
+                AccessToken = payload.Value<string>("AccessToken")
             };
 
             return DeployAction.ProcessDeployment;

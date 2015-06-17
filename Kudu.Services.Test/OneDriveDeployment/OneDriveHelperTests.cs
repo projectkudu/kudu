@@ -33,10 +33,15 @@ namespace Kudu.Services.Test.OneDriveDeployment
 
             var fileSystem = new Mock<IFileSystem>();
             var fileBase = new Mock<FileBase>();
+            var fileInfoFactory = new Mock<IFileInfoFactory>();
+            var fileInfo = new Mock<FileInfoBase>();
             var dirBase = new Mock<DirectoryBase>();
             var dirInfoFactory = new Mock<IDirectoryInfoFactory>(); // mock dirInfo to make FileSystemHelpers.DeleteDirectorySafe not throw exception
             var dirInfoBase = new Mock<DirectoryInfoBase>();
             fileSystem.Setup(f => f.File).Returns(fileBase.Object);
+            fileSystem.Setup(f => f.FileInfo).Returns(fileInfoFactory.Object);
+            fileInfoFactory.Setup(f => f.FromFileName(It.IsAny<string>()))
+                           .Returns(() => fileInfo.Object);
             fileSystem.Setup(f => f.Directory).Returns(dirBase.Object);
             fileSystem.Setup(f => f.DirectoryInfo).Returns(dirInfoFactory.Object);
             dirInfoFactory.Setup(d => d.FromDirectoryName(It.IsAny<string>())).Returns(dirInfoBase.Object);
@@ -95,34 +100,36 @@ namespace Kudu.Services.Test.OneDriveDeployment
 
             // verification
             /*
-             There are 6 changes
-                2 deletion
-                  f2\f-delete       (existed as file)
-                  f2\f-delete-dir   (existed as folder)
+             Sycing f2 to wwwroot:
+             
+                 There are 6 changes
+                    2 deletion
+                      f2\f-delete       (existed as file)
+                      f2\f-delete-dir   (existed as folder)
   
-                2 file changes
-                  f2\foo.txt        (not existed)
-                  f2\f22\bar.txt    (existed)
+                    2 file changes
+                      f2\foo.txt        (not existed)
+                      f2\f22\bar.txt    (existed)
 
-                2 folder chagnes
-                  f2                (existed)
-                  f2\f22            (not existed)
+                    2 folder chagnes
+                      f2                (existed)
+                      f2\f22            (not existed)
              */
 
             // deletion
-            mockTracer.Verify(t => t.Trace(@"Deleted file D:\home\site\wwwroot\f2\f-delete", It.Is<IDictionary<string, string>>(d => d.Count == 0)));
-            mockTracer.Verify(t => t.Trace(@"Deleted directory D:\home\site\wwwroot\f2\f-delete-dir", It.Is<IDictionary<string, string>>(d => d.Count == 0)));
+            mockTracer.Verify(t => t.Trace(@"Deleted file D:\home\site\wwwroot\f-delete", It.Is<IDictionary<string, string>>(d => d.Count == 0)));
+            mockTracer.Verify(t => t.Trace(@"Deleted directory D:\home\site\wwwroot\f-delete-dir", It.Is<IDictionary<string, string>>(d => d.Count == 0)));
 
             // file changes
-            mockTracer.Verify(t => t.Trace(@"Creating file D:\home\site\wwwroot\f2\foo.txt ...", It.Is<IDictionary<string, string>>(d => d.Count == 0)));
-            mockTracer.Verify(t => t.Trace(@"Updating file D:\home\site\wwwroot\f2\f22\bar.txt ...", It.Is<IDictionary<string, string>>(d => d.Count == 0)));
+            mockTracer.Verify(t => t.Trace(@"Creating file D:\home\site\wwwroot\foo.txt ...", It.Is<IDictionary<string, string>>(d => d.Count == 0)));
+            mockTracer.Verify(t => t.Trace(@"Updating file D:\home\site\wwwroot\f22\bar.txt ...", It.Is<IDictionary<string, string>>(d => d.Count == 0)));
 
-            mockTracer.Verify(t => t.Trace(@"Deleted file D:\home\site\wwwroot\f2\f-delete", It.Is<IDictionary<string, string>>(d => d.Count == 0)));
-            mockTracer.Verify(t => t.Trace(@"Deleted directory D:\home\site\wwwroot\f2\f-delete-dir", It.Is<IDictionary<string, string>>(d => d.Count == 0)));
+            mockTracer.Verify(t => t.Trace(@"Deleted file D:\home\site\wwwroot\f-delete", It.Is<IDictionary<string, string>>(d => d.Count == 0)));
+            mockTracer.Verify(t => t.Trace(@"Deleted directory D:\home\site\wwwroot\f-delete-dir", It.Is<IDictionary<string, string>>(d => d.Count == 0)));
 
             // directory changes
-            mockTracer.Verify(t => t.Trace(@"Existed directory D:\home\site\wwwroot\f2, no action performed.", It.Is<IDictionary<string, string>>(d => d.Count == 0)));
-            mockTracer.Verify(t => t.Trace(@"Creating directory D:\home\site\wwwroot\f2\f22 ...", It.Is<IDictionary<string, string>>(d => d.Count == 0)));
+            mockTracer.Verify(t => t.Trace(@"Ignore folder f2", It.Is<IDictionary<string, string>>(d => d.Count == 0)));
+            mockTracer.Verify(t => t.Trace(@"Creating directory D:\home\site\wwwroot\f22 ...", It.Is<IDictionary<string, string>>(d => d.Count == 0)));
         }
 
         private static OneDriveHelper CreateMockOneDriveHelper(TestMessageHandler handler, ITracer tracer, IDeploymentSettingsManager settings = null, IEnvironment env = null)
