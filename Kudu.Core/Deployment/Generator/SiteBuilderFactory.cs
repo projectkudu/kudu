@@ -194,6 +194,17 @@ namespace Kudu.Core.Deployment.Generator
             {
                 return DetermineProject(repositoryRoot, projects[0], perDeploymentSettings, fileFinder);
             }
+            
+            // Check for ASP.NET 5 project without VS solution or project
+            string projectJson;
+            if (AspNet5Helper.TryAspNet5Project(targetPath, out projectJson))
+            {
+                return new AspNet5Builder(_environment,
+                                           perDeploymentSettings,
+                                           _propertyProvider,
+                                           repositoryRoot,
+                                           projectJson);
+            }
 
             if (tryWebSiteProject)
             {
@@ -225,17 +236,6 @@ namespace Kudu.Core.Deployment.Generator
                 throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture,
                                                                   Resources.Error_ProjectDoesNotExist,
                                                                   targetPath));
-            }
-
-            // Check for ASP.NET 5 project without VS solution or project
-            string projectJson;
-            if (AspNet5Helper.TryAspNet5Project(targetPath, out projectJson))
-            {
-                return new AspNet5Builder(_environment,
-                                           perDeploymentSettings,
-                                           _propertyProvider,
-                                           repositoryRoot,
-                                           projectJson);
             }
 
             // If there's none then use the basic builder (the site is xcopy deployable)
