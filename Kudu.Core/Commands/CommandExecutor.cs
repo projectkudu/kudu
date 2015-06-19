@@ -88,11 +88,11 @@ namespace Kudu.Core.Commands
             }
             else
             {
-                workingDirectory = Path.Combine(_rootDirectory, relativeWorkingDirectory);
+                workingDirectory = Path.Combine(_rootDirectory, System.Environment.ExpandEnvironmentVariables(relativeWorkingDirectory));
             }
 
             Executable exe = _externalCommandFactory.BuildExternalCommandExecutable(workingDirectory, _environment.WebRootPath, NullLogger.Instance);
-            _executingProcess = exe.CreateProcess(command);
+            _executingProcess = exe.CreateProcess(System.Environment.ExpandEnvironmentVariables(command));
 
             var commandEvent = CommandEvent;
 
