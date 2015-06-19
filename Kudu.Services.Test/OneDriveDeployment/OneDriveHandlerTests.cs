@@ -27,7 +27,7 @@ namespace Kudu.Services.Test.OneDriveDeployment
         public void TryParseDeploymentInfoShouldReturnProcessDeployment()
         {
             var oneDriveHandler = new OneDriveHandler(Mock.Of<ITracer>(), Mock.Of<IDeploymentSettingsManager>(), Mock.Of<IEnvironment>());
-            JObject payload = JObject.FromObject(new { url = "https://api.onedrive.com", access_token = "one-drive-access-token" });
+            JObject payload = JObject.FromObject(new { RepositoryUrl = "https://api.onedrive.com", AccessToken = "one-drive-access-token" });
             DeploymentInfo deploymentInfo = null;
 
             DeployAction result = oneDriveHandler.TryParseDeploymentInfo(null, payload, null, out deploymentInfo);
