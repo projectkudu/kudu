@@ -92,7 +92,7 @@ namespace Kudu.Core.Commands
             }
 
             Executable exe = _externalCommandFactory.BuildExternalCommandExecutable(workingDirectory, _environment.WebRootPath, NullLogger.Instance);
-            _executingProcess = exe.CreateProcess(System.Environment.ExpandEnvironmentVariables(command));
+            _executingProcess = exe.CreateProcess(command);
 
             var commandEvent = CommandEvent;
 
